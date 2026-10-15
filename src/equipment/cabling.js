@@ -9,7 +9,7 @@ import { EQUIP, evsLayout, mixInputs } from '../equip.js';
 // Chaque câble relie (appareil, numéro, port) à (appareil, numéro, port).
 // ----------------------------------------------------------------------------------
 export const DEV_NAMES = {
-  cam: 'Caméra', ccu: 'CCU', rcp: 'RCP', pdc: 'Pied de car', router: 'Grille', mixer: 'Mélangeur XVS-6000', mixpanel: 'Pupitre ICP-X7000', siu: 'Interface MKS-X7700', mv: 'Multiviewer', evs: 'Serveur XT4K', lsm: 'Télécommande LSM', ipd: 'Poste IPDirector', xnet: 'Switch XNet',
+  cam: 'Caméra', ccu: 'CCU', rcp: 'RCP', pdc: 'Pied de car', router: 'Grille', mixer: 'Mélangeur XVS-6000', mixpanel: 'Pupitre ICP-X7000', siu: 'Interface MKS-X7700', mv: 'Multiviewer', evs: 'Serveur XT4K', lsm: 'Télécommande LSM', ipd: 'Poste IPDirector', xnet: 'Switch XNet', swred: 'Commutateur IP rouge', swblue: 'Commutateur IP bleu', gw: 'Passerelle SDI/IP', nmos: 'Contrôleur NMOS', evsmon: 'Écran du serveur EVS',
   spg: 'Générateur de synchro', da: 'Distributeur de référence', icom: 'Matrice intercom', cns: 'Switch réseau caméras (CNS)', msu: 'MSU (pupitre maître)', gfx: 'Moteur graphique',
   rx: 'Récepteur HF', conv: 'Convertisseur fibre', emb: 'Embedder audio', tx1: 'Encodeur TX1', tx2: 'Encodeur satellite TX2', audio: 'Console son', grade1: 'Moniteur Grade 1', giant: 'Écran géant', ups: 'Onduleur / distribution', localtv: 'Local technique TV', headset: 'Casque cadreur', lens: 'Optique', vf: 'Viseur', battery: 'Batterie', txhf: 'Émetteur HF',
 };
@@ -159,6 +159,22 @@ export function buildCabling() {
   add(P('mixer', 1, 'utillan'), P('cns', 1, 'tally'), 'Ethernet Cat6', 'ip', 3, 'Tally IP et noms de sources (TSL UMD) vers le multiviewer et les CCU');
   add(P('icom', 1, 'pdc'), P('pdc', 1, 'icom'), 'Câble 4 fils', 'comms', 4, 'Ordres avec la chaîne et les commentateurs');
   add(P('pdc', 1, 'power'), P('ups', 1, 'in'), 'Câble énergie P17 63 A tri', 'power', 4, 'Arrivée groupe électrogène / réseau stade');
+  // car IP : la grille SDI est remplacée par deux réseaux (rouge et bleu) et des passerelles
+  if (S.ipMode) {
+    const keep = C.filter((c) => c.a.dev !== 'router' && c.b.dev !== 'router');
+    C.length = 0; C.push(...keep);
+    const ipLink = (dev, n, port, note) => { add(P(dev, n, port), P('swred', 1, `${dev}${n}`), 'Fibre SM 25/100 GbE', 'ip', 3, note + ' · réseau rouge'); add(P(dev, n, port), P('swblue', 1, `${dev}${n}`), 'Fibre SM 25/100 GbE', 'ip', 3, note + ' · réseau bleu (ST 2022-7)'); };
+    for (const c of sys) ipLink('ccu', c.id, 'opt', `Flux ST 2110 de la CAM ${c.id}`);
+    ipLink('mixer', 1, 'ip1', 'Entrées / sorties du mélangeur (carte 100G)');
+    for (let k = 1; k <= L.servers; k++) ipLink('evs', k, 'ipio', `Serveur XT4K n° ${k}`);
+    ipLink('gw', 1, 'ip', 'Sources SDI restantes (HF, mini-caméras, habillage, duplex) converties en ST 2110');
+    ipLink('mv', 1, 'lan', 'Multiviewer IP');
+    ipLink('tx1', 1, 'ip', 'Départ vers la chaîne');
+    add(P('spg', 1, 'ptp1'), P('swred', 1, 'ptp'), 'Fibre / Ethernet', 'ip', 2, 'Grand maître PTP 1 (ST 2059-2) · réseau rouge');
+    add(P('spg', 1, 'ptp1'), P('swblue', 1, 'ptp'), 'Fibre / Ethernet', 'ip', 2, 'Grand maître PTP 1 · réseau bleu');
+    add(P('nmos', 1, 'lan'), P('cns', 1, 'nmos'), 'Ethernet Cat6', 'ip', 2, 'Registre et contrôleur NMOS (IS-04 / IS-05) sur le réseau de contrôle');
+    C.forEach((c, i) => { c.n = 'C' + String(i + 1).padStart(3, '0'); });
+  }
   CACHE = { key, cables: C };
   return C;
 }

@@ -8,6 +8,7 @@ import { rtSize, lineupStep } from './bcam.js';
 import { makeCanvas, tc, clockStr, clamp, roundRect } from './util.js';
 import { EQUIP, mixInputs, evsLayout } from './equip.js';
 import { routerInOf, physToLogical, destFeed } from './patch.js';
+import { NET, netOk, ptpLocked, mvCapacity } from './ipnet.js';
 
 const FONT = '"Saira Condensed", "Arial Narrow", sans-serif';
 const MONO = '"JetBrains Mono", ui-monospace, monospace';
@@ -140,6 +141,7 @@ export function routeRec(ch, src, silent = false, dryRun = false) {
 }
 
 export function route(dest, src) {
+  if (S.ipMode && !NET.nmos) return 'Registre NMOS injoignable : le contrôleur ne peut plus établir de connexion (IS-05). Les flux déjà établis continuent.';
   if (dest.startsWith('ME') && +dest.slice(2) > mixInputs()) return `Entrée ${dest.slice(2)} indisponible : en 4K, le ${EQUIP.mixer} n'a que ${mixInputs()} entrées dans cette configuration.`;
   if (dest.startsWith('REC')) { const err = routeRec(+dest.slice(3), src); if (!err) emit('router', { dest, src }); return err; }
   ROUTER.map[dest] = src;
@@ -420,6 +422,7 @@ function blit(renderer, mat, target) { fsQuad.material = mat; renderer.setRender
 export const P = { rts: {}, delay: { rts: [], times: [], idx: 0, n: 44, k: 0, delay: 1.35 }, mvDirty: true };
 export function resolve(id, depth = 0, direct = false) {
   if (!id) return { tex: TEX.black, scale: SC, alarm: '' };
+  if (S.ipMode && depth === 0 && !direct && !netOk()) return { tex: noSignalTex('PERTE RÉSEAU', 'Réseaux rouge et bleu coupés'), scale: SC, alarm: 'NO FLOW' };
   // exercice de brassage : ce qui arrive réellement sur l'entrée de grille de cette source
   if (S.patch.on && depth === 0 && !direct) {
     const n = routerInOf(id);
@@ -512,6 +515,8 @@ export function tallyOf(src) {
   return t;
 }
 
+// car IP : le multiviewer ne reçoit pas plus de flux que son lien ne peut en porter
+function mvRefused(role) { return S.ipMode && role.startsWith('MV') && +role.slice(2) > mvCapacity() - 2; }
 function drawOverlay() {
   const g = MV.overlay.ctx; const W_ = MV.w;
   g.clearRect(0, 0, W_, MV.h);
@@ -521,7 +526,7 @@ function drawOverlay() {
     if (t.role === 'PGM') { src = meSource(MIX.pgm); label = 'PGM · ' + sourceLabel(src); }
     else if (t.role === 'PVW') { src = meSource(MIX.pst); label = 'PVW · ' + sourceLabel(src); }
     else { src = ROUTER.map[t.role]; label = sourceLabel(src); }
-    const r = resolve(src, 0, t.role === 'PGM' || t.role === 'PVW');
+    const r = mvRefused(t.role) ? { alarm: 'FLUX REFUSÉ' } : resolve(src, 0, t.role === 'PGM' || t.role === 'PVW');
     const tal = t.role === 'PGM' ? 2 : t.role === 'PVW' ? 1 : tallyOf(src);
     const big = t.w > 500;
     // bordure
@@ -554,7 +559,7 @@ function drawOverlay() {
   g.fillStyle = 'rgba(0,0,0,0.85)'; roundRect(g, 960 - 170, 540 - 80, 340, 64, 6); g.fill();
   g.strokeStyle = '#3a4048'; g.lineWidth = 2; g.stroke();
   g.fillStyle = '#ffd23f'; g.font = `600 34px ${MONO}`; g.textAlign = 'center'; g.fillText(tc(tod), 960, 540 - 48);
-  g.fillStyle = '#9aa4ad'; g.font = `500 16px ${FONT}`; g.fillText(`TC · ${S.format === 'UHD' ? '2160p50 HDR' : S.format === 'HD' ? '1080p50' : '1080i50'} · RÉF. GPS ${S.faults.gps ? 'HOLDOVER' : 'OK'}`, 960, 540 - 22);
+  g.fillStyle = '#9aa4ad'; g.font = `500 16px ${FONT}`; g.fillText(`TC · ${S.format === 'UHD' ? '2160p50 HDR' : S.format === 'HD' ? '1080p50' : '1080i50'} · ${S.ipMode ? 'ST 2110 · PTP ' + (ptpLocked() ? (NET.gm1 ? 'GM1' : 'GM2') : 'PERDU') + (NET.red && NET.blue ? '' : ' · 2022-7 DÉGRADÉ') : 'RÉF. GPS ' + (S.faults.gps ? 'HOLDOVER' : 'OK')}`, 960, 540 - 22);
   MV.overlay.tex.needsUpdate = true;
 }
 function drawDyn() {
@@ -620,12 +625,12 @@ function updateScope(renderer) {
   const interval = SCOPE.active ? 0.12 : 0.5;
   if (S.time - SCOPE.last < interval) return;
   SCOPE.last = S.time;
-  const r = resolve(SCOPE.src);
+  const r = SCOPE.hdr && S.hdrView ? { tex: P.rts.hdr.texture, scale: 1 } : resolve(SCOPE.src);
   copyMat.uniforms.map.value = r.tex; copyMat.uniforms.uGain.value = r.scale; // reste dans le domaine stocké (/1.1)
   blit(renderer, copyMat, SCOPE.rt);
   renderer.readRenderTargetPixels(SCOPE.rt, 0, 0, SCOPE.w, SCOPE.h, SCOPE.buf);
   SCOPE.data = SCOPE.buf;
-  drawScopes(SCOPE.canvas.getContext('2d'), 512, 288, SCOPE.buf, SCOPE.mode, sourceLabel(SCOPE.src));
+  drawScopes(SCOPE.canvas.getContext('2d'), 512, 288, SCOPE.buf, SCOPE.mode, sourceLabel(SCOPE.src) + (SCOPE.hdr && S.hdrView ? ' · HLG' : ''));
   SCOPE.tex.needsUpdate = true;
   emit('scope');
 }
@@ -660,6 +665,7 @@ export function drawScopes(g, w, h, buf, mode = 'luma', title = '') {
   for (const v of [0, 0.25, 0.5, 0.75, 1.0]) { const y = yOf(v); g.beginPath(); g.moveTo(pad, y); g.lineTo(pad + ww, y); g.stroke(); g.fillText(String(Math.round(v * 100)), pad - 3, y + 4); }
   g.strokeStyle = 'rgba(255,80,80,0.6)'; const y109 = yOf(1.09); g.setLineDash([4, 4]); g.beginPath(); g.moveTo(pad, y109); g.lineTo(pad + ww, y109); g.stroke(); g.setLineDash([]);
   g.fillStyle = '#ff7070'; g.fillText('109', pad - 3, y109 + 4);
+  if (SCOPE.hdr && S.hdrView) { const y75 = yOf(0.75); g.strokeStyle = 'rgba(70,198,242,0.8)'; g.setLineDash([6, 4]); g.beginPath(); g.moveTo(pad, y75); g.lineTo(pad + ww, y75); g.stroke(); g.setLineDash([]); g.fillStyle = '#46c6f2'; g.textAlign = 'left'; g.fillText('blanc réf. HLG 75 %', pad + 4, y75 - 4); g.textAlign = 'right'; }
   g.textAlign = 'left'; g.fillStyle = '#9aa4ad'; g.font = `500 12px ${FONT}`;
   g.fillText(mode === 'parade' ? 'PARADE R G B (%)' : 'WAVEFORM LUMINANCE (%)', pad, h - 8);
   if (title) { g.textAlign = 'right'; g.fillStyle = '#ffd23f'; g.fillText(title, pad + ww, h - 8); }
@@ -695,6 +701,7 @@ export function initPipeline() {
   P.rts.pgm = mk(960, 540); P.rts.clean = mk(960, 540); P.rts.pvw = mk(960, 540); P.rts.gfx = mk(960, 540);
   const mvw = S.quality === 'basse' ? 1280 : 1920;
   P.rts.mv = mk(mvw, Math.round(mvw * 9 / 16));
+  { const [hw, hh] = rtSize(); P.rts.hdr = mk(hw, hh); }
   const [w, h] = rtSize();
   for (const c of EVS.ch) c.rt = mk(w, h);
   for (let i = 0; i < P.delay.n; i++) { P.delay.rts.push(mk(320, 180)); P.delay.times.push(null); }
@@ -779,6 +786,8 @@ export function renderPipeline(renderer, dt) {
   if (!restored) applySnapshot(LIVE);
   for (const m of W.screens) m.uniforms.uLin.value = 0;
 
+  // --- sortie HDR (HLG) de la CCU de la caméra au moniteur de référence ---
+  if (S.hdrView) { const src = feedOf('GRADE1'); const cam = src && src.startsWith('CAM') ? camById(+src.slice(3)) : null; if (cam && cam.signalOK) cam.paintTo(renderer, P.rts.hdr, true); }
   // --- habillage (source GFX) ---
   gfxFillMat.uniforms.tD.value = GFX.main.tex; blit(renderer, gfxFillMat, P.rts.gfx);
 
@@ -813,7 +822,7 @@ export function renderPipeline(renderer, dt) {
   // --- multiview ---
   for (const t of MV.tiles) {
     let src = t.role === 'PGM' ? 'PGM' : t.role === 'PVW' ? 'PVW' : ROUTER.map[t.role];
-    const r = resolve(src, 0, t.role === 'PGM' || t.role === 'PVW');
+    const r = mvRefused(t.role) ? { tex: noSignalTex('FLUX REFUSÉ', 'Lien du multiviewer saturé'), scale: SC } : resolve(src, 0, t.role === 'PGM' || t.role === 'PVW');
     t.mesh.material.uniforms.map.value = r.tex; t.mesh.material.uniforms.uGain.value = 1.1 * r.scale;
   }
   const key = `${MIX.pgm}|${MIX.pst}|${MIX.key1.on}|${MIX.auto}|${MIX.pos > 0}|${MIX.ftb.on}|${S.cams.map((c) => c.id + (c.signalOK ? 'o' : 'x') + (c.paint.bars ? 'b' : '') + (c.rf ? c.rf.state : '') + c.lens).join(',')}|${EVS.ch.map((c) => c.mode + c.cam + c.playing + Math.round(c.speed * 100)).join(',')}`;
@@ -842,9 +851,28 @@ export function renderPipeline(renderer, dt) {
 // ----------------------------------------------------------------------------------
 // "Slots" : zones HTML dans lesquelles on dessine une texture vidéo (multiview, moniteurs)
 // ----------------------------------------------------------------------------------
-const slotScene = new THREE.Scene(); const slotQuad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), copyMat.clone()); slotQuad.frustumCulled = false; slotScene.add(slotQuad);
+const slotMat = new THREE.ShaderMaterial({
+  uniforms: { map: { value: null }, uGain: { value: 1 }, uHDR: { value: 0 } },
+  vertexShader: `varying vec2 vUv; void main(){ vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }`,
+  fragmentShader: `uniform sampler2D map; uniform float uGain; uniform float uHDR; varying vec2 vUv;
+    vec3 hlgInv(vec3 E){ vec3 lo = E * E / 3.0; vec3 hi = (exp((E - 0.55991073) / 0.17883277) + 0.28466892) / 12.0; return mix(lo, hi, step(0.5, E)); }
+    void main(){
+      vec3 c = clamp(texture2D(map, vUv).rgb * uGain, 0.0, 1.0);
+      if (uHDR > 0.5) {
+        // signal HLG -> lumière de scène -> écran HDR 1000 cd/m² (OOTF gamma 1,2) -> écran SDR avec compression douce des hautes lumières
+        vec3 L = hlgInv(c); float Y = dot(L, vec3(0.2627, 0.6780, 0.0593));
+        vec3 D = L * pow(max(Y, 1e-6), 0.2) * 1000.0;
+        vec3 n = D / 203.0 * 0.75; c = n / (1.0 + n * 0.28);
+        c = pow(clamp(c * 1.12, 0.0, 1.0), vec3(1.0 / 2.2));
+      }
+      gl_FragColor = vec4(c, 1.0); }`,
+  depthTest: false, depthWrite: false,
+});
+const slotScene = new THREE.Scene(); const slotQuad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), slotMat); slotQuad.frustumCulled = false; slotScene.add(slotQuad);
 export function slotTexture(id) {
   if (id === 'mv') return { tex: P.rts.mv.texture, gain: 1 };
+  if (id === 'HDR') return { tex: P.rts.hdr.texture, gain: 1.1, hdr: 1 };
+  if (id === 'HLGRAW') return { tex: P.rts.hdr.texture, gain: 1.1 };
   if (id === 'scope') return { tex: SCOPE.tex, gain: 1 };
   if (id === 'camop' && P.rts.camop) return { tex: P.rts.camop.texture, gain: 1.1 };
   if (id.startsWith('AUX_')) { const d = { AUX_TX1: 'TX1', AUX_TX2: 'TX2', AUX_GIANT: 'GIANT', AUX_VISION: 'GRADE1' }[id]; const r = resolve(feedOf(d)); return { tex: r.tex, gain: 1.1 * r.scale }; }
@@ -865,7 +893,7 @@ export function drawSlots(renderer, list) {
     if (box) { const b = box.getBoundingClientRect(); cl = Math.max(cl, b.left); ct = Math.max(ct, b.top); cr = Math.min(cr, b.right); cb = Math.min(cb, b.bottom); }
     if (cr - cl < 2 || cb - ct < 2) continue;
     const s = slotTexture(el.dataset.gl);
-    slotQuad.material.uniforms.map.value = s.tex; slotQuad.material.uniforms.uGain.value = s.gain;
+    slotQuad.material.uniforms.map.value = s.tex; slotQuad.material.uniforms.uGain.value = s.gain; slotQuad.material.uniforms.uHDR.value = s.hdr || 0;
     const y = H - r.bottom;
     renderer.setViewport(r.left, y, r.width, r.height); renderer.setScissor(cl, H - cb, cr - cl, cb - ct);
     renderer.render(slotScene, fsCam);

@@ -29,7 +29,7 @@ export function buildSynoptique() {
 
   txt(10, 22, 'CAMÉRAS', { font: 'Saira Condensed, sans-serif', size: 13, fill: '#93a0ab', w: 600 });
   txt(250, 22, 'LIAISONS · CCU', { font: 'Saira Condensed, sans-serif', size: 13, fill: '#93a0ab', w: 600 });
-  txt(430, 22, 'GRILLE', { font: 'Saira Condensed, sans-serif', size: 13, fill: '#93a0ab', w: 600 });
+  txt(430, 22, S.ipMode ? 'RÉSEAU IP' : 'GRILLE', { font: 'Saira Condensed, sans-serif', size: 13, fill: '#93a0ab', w: 600 });
   txt(600, 22, 'TRAITEMENT', { font: 'Saira Condensed, sans-serif', size: 13, fill: '#93a0ab', w: 600 });
   txt(860, 22, 'SORTIES · TRANSMISSION', { font: 'Saira Condensed, sans-serif', size: 13, fill: '#93a0ab', w: 600 });
   txt(Wd - 10, H - 8, `Format : ${FORMATS[S.format].label} · ${FORMATS[S.format].sdi}`, { anchor: 'end', fill: '#ffb020', size: 12 });
@@ -46,7 +46,7 @@ export function buildSynoptique() {
     line(392, y + 12, rX, y + 12, '#5a6672');
   });
   if (!cams.length) txt(10, top + 14, 'Aucune caméra : ouvrez le plan (P).', { fill: '#93a0ab' });
-  box(rX, rY, 110, rH + 12, 'GRILLE', 'SDI / IP', { info: 'grille', fill: '#1b2530' });
+  box(rX, rY, 110, rH + 12, S.ipMode ? 'RÉSEAU IP' : 'GRILLE', S.ipMode ? 'ST 2110 rouge + bleu' : 'SDI', { info: 'grille', fill: '#1b2530' });
   // traitements
   const mx = 600;
   box(mx, top, 170, 92, 'MÉLANGEUR', 'M/E · keyers · DSK', { info: 'melangeur' });
@@ -80,7 +80,7 @@ export function buildSynoptique() {
   const sy = H - 70;
   box(300, sy, 240, 44, 'SPG · SYNCHRO', S.faults.gps ? 'HOLDOVER (GPS perdu)' : 'GPS · BB / tri-level · LTC · PTP', { info: 'synchro', stroke: S.faults.gps ? '#ffb020' : '#3a4652' });
   for (const x of [346, rX + 55, mx + 40, mx + 120]) line(x, sy, x, rY + rH + 16 > sy - 4 ? sy - 4 : rY + rH + 16, '#46c6f2', { dash: '2 4', arrow: false, w: 1.2 });
-  txt(548, sy + 26, 'référence vers CCU, grille, mélangeur, EVS', { size: 10.5, fill: '#46c6f2' });
+  txt(548, sy + 26, S.ipMode ? 'PTP (ST 2059-2) vers tous les appareils IP' : 'référence vers CCU, grille, mélangeur, EVS', { size: 10.5, fill: '#46c6f2' });
   box(ox, sy, 260, 44, 'INTERCOM', 'matrice · pupitres · 4 fils chaîne', { info: 'intercom' });
   box(10, sy, 260, 44, 'ÉNERGIE', 'groupe / réseau · onduleur · terre', { info: 'energie' });
   return svg;

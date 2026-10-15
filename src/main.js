@@ -21,6 +21,8 @@ import { initShared, CFG, SH } from './shared.js';
 import { openTrainer } from './ui/config.js';
 import { EQUIP, evsLayout, mixInputs } from './equip.js';
 import { patchEmpty } from './patch.js';
+import { updateScenario, SC } from './scenario.js';
+import { updateNet } from './ipnet.js';
 import { FORMATS } from './data.js';
 
 // ----------------------------------------------------------------------------------
@@ -496,7 +498,7 @@ function frame(now) {
   record(S.cams);
   rfAcc += dt; if (rfAcc > 0.1) { updateRF(rfAcc); rfAcc = 0; }
   if (S.mode === 'fps') updatePlayer(dt);
-  updateGfx(dt); updateAudio(dt); updateTruck(S.time); updateExercises(dt);
+  updateGfx(dt); updateAudio(dt); updateTruck(S.time); updateExercises(dt); updateScenario(dt); updateNet(dt);
   slowAcc += dt; if (slowAcc > 0.5) { slowAcc = 0; checkMissions(); updateFaults(); if (S.mode === 'fps') drawMissionCard(); }
 
   renderer.shadowMap.needsUpdate = S.quality !== 'basse' || S.frame % 2 === 0;

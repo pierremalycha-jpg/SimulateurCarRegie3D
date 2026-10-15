@@ -18,6 +18,7 @@ import { buildMixer } from './st_mixer.js';
 import { buildIPD } from './st_ipd.js';
 import { buildPatch } from './st_patch.js';
 import { mixInputs, EQUIP } from '../equip.js';
+import { NET, netStatus, flowGbps, mcastOf, mvCapacity } from '../ipnet.js';
 import { openDevice, openEquipmentIndex } from '../equipment/viewer.js';
 import { buildCabling, SIG, DEV_NAMES, endLabel } from '../equipment/cabling.js';
 import { DEVICE_LIST } from '../equipment/devices.js';
@@ -40,7 +41,7 @@ const STATIONS = {
   ipdirector: { title: 'IPDirector — base de clips EVS', build: buildIPD, layout: 'top sm', dev: 'ipd' },
   son: { title: 'Régie son', build: buildAudio, layout: 'top' },
   hf: { title: 'Régie HF', build: buildHF, layout: 'side', dev: 'rx' },
-  grille: { title: 'Grille de commutation', build: buildRouter, layout: 'top', dev: 'router' },
+  grille: { title: 'Grille de commutation', build: buildRouter, layout: 'top', dev: 'router', ipTitle: 'Contrôleur IP (ST 2110 / NMOS)' },
   brassage: { title: 'Baie de brassage (jackfield)', build: buildPatch, layout: 'top sm', dev: 'router' },
   ccu: { title: 'Baie CCU', build: buildCCU, layout: 'side', dev: 'ccu' },
   synchro: { title: 'Synchro et timecode', build: buildSync, layout: 'top sm', dev: 'spg' },
@@ -60,7 +61,7 @@ export function openStation(id, arg) {
   const devBtn = el('button', { class: 'btn small', title: 'Faces avant et arrière, connecteurs et raccordements', onclick: () => (def.dev ? openDevice(def.dev, S.selCam || 1) : openEquipmentIndex()) }, 'Matériel');
   const fmBtn = el('button', { class: 'btn small', title: 'Un écran déplaçable, au choix, par-dessus le poste', onclick: () => toggleFloatMon(document.getElementById('floatmon') ? null : 'PGM') }, 'Moniteur flottant');
   const head = el('div', { class: 'st-head' },
-    el('h2', {}, def.title),
+    el('h2', {}, S.ipMode && def.ipTitle ? def.ipTitle : def.title),
     el('div', { class: 'role' }, info.role ? info.role.split('. ')[0] + '.' : ''),
     devBtn, fmBtn,
     el('button', { class: 'btn small', onclick: () => openInfo(id) }, 'Le poste'),
@@ -392,6 +393,7 @@ export function statusItems() {
   const tx = ROUTER.map[S.txPath === 2 ? 'AUX_TX2' : 'AUX_TX1'];
   out.push({ t: 'Transmission', s: `Chemin TX${S.txPath} · source ${sourceLabel(tx)}${S.faults.tx && S.txPath === 1 ? ' · LIAISON COUPÉE' : ''}`, level: (S.faults.tx && S.txPath === 1) || tx !== 'PGM' ? 'err' : 'ok' });
   out.push({ t: 'Synchro', s: S.faults.gps ? 'SPG en holdover (GPS perdu) — référence stable quelques heures' : 'SPG verrouillé GPS', level: S.faults.gps ? 'warn' : 'ok' });
+  out.push(...netStatus());
   return out;
 }
 
@@ -570,15 +572,23 @@ function buildRouter(body, arg, ctx) {
   const sGrid = el('div', { class: 'hwrow' });
   const cur = el('div', { class: 'lcd amber' });
   const errBox = el('div', { class: 'note err' });
-  const take = hwBtn('TAKE', { cls: 'big', onclick: () => { if (!srcSel) return; const err = route(dest, srcSel); errBox.textContent = err || ''; if (!err) toast(`${labelDest(dest)} ← ${sourceLabel(srcSel)}`, 'good'); srcSel = null; } });
+  const ip = S.ipMode;
+  const take = hwBtn(ip ? 'CONNECT' : 'TAKE', { cls: 'big', onclick: () => { if (!srcSel) return; const err = route(dest, srcSel); errBox.textContent = err || ''; if (!err) { toast(`${labelDest(dest)} ← ${sourceLabel(srcSel)}`, 'good'); if (ip) explain(`IS-05 : le contrôleur demande au récepteur « ${labelDest(dest)} » de s'abonner au flux de ${sourceLabel(srcSel)} (multicast ${mcastOf(srcSel)}, ${String(flowGbps()).replace('.', ',')} Gb/s par réseau). La commutation se fait au changement d'image grâce au PTP.`, 'grille:take'); } else explain(err, 'warn'); srcSel = null; } });
   const labelDest = (id) => { const d = DESTS.find((x) => x.id === id); return d ? `${d.group} · ${d.label}` : id; };
   const buildTabs = () => { tabs.innerHTML = ''; for (const g of groups) tabs.appendChild(el('button', { class: 'tab' + (g === group ? ' on' : ''), onclick: () => { group = g; dest = DESTS.find((d) => d.group === g).id; srcSel = null; buildTabs(); buildDests(); } }, g)); };
   const buildDests = () => { dGrid.innerHTML = ''; for (const d of DESTS.filter((x) => x.group === group)) { const b = hwBtn(d.label.replace('Entrée ', '').replace('Tuile ', 'MV '), { sub: sourceLabel(ROUTER.map[d.id]), onclick: () => { dest = d.id; srcSel = null; explain(`Destination choisie : ${d.group} · ${d.label}, qui reçoit actuellement ${sourceLabel(ROUTER.map[d.id])}. Choisissez maintenant la source.`, 'grille:sel'); } }); b.dataset.d = d.id; dGrid.appendChild(b); } };
   const buildSrcs = () => { sGrid.innerHTML = ''; for (const s of allSources()) { const b = hwBtn(s.id.startsWith('CAM') ? 'CAM ' + s.short : s.short, { sub: s.id.startsWith('CAM') ? (s.cam ? s.cam.T.short : 'libre') : '', onclick: () => { srcSel = s.id; explain(`Source présélectionnée : ${sourceLabel(s.id)}. Rien n'est commuté tant que vous n'appuyez pas sur TAKE (sécurité contre les fausses manœuvres).`, 'grille:sel'); } }); b.dataset.s = s.id; if (!s.exists || (s.id.startsWith('CAM') && !s.cam)) b.classList.add('dead'); sGrid.appendChild(b); } };
   buildTabs(); buildDests(); buildSrcs();
-  body.append(el('div', { class: 'hwpanel' }, el('h3', {}, '1 · Destination'), tabs, dGrid),
-    el('div', { class: 'hwpanel' }, el('h3', {}, '2 · Source'), sGrid),
-    el('div', { class: 'hwpanel' }, el('h3', {}, '3 · Prendre'), el('div', { class: 'hwrow' }, cur, take,
+  const netBox = el('div', { class: 'list' });
+  const netPanel = ip ? el('div', { class: 'hwpanel' }, el('h3', {}, 'Réseau ST 2110 · contrôleur NMOS'),
+    el('p', { class: 'note' }, `Dans ce car IP, la « grille » est un réseau : deux commutateurs indépendants (rouge et bleu) transportent chaque flux en double (ST 2022-7), synchronisés par PTP. Un flux vidéo ${S.format === 'UHD' ? 'UHD' : 'HD'} fait ≈ ${String(flowGbps()).replace('.', ',')} Gb/s par réseau.`), netBox,
+    el('div', { class: 'hwrow' },
+      el('button', { class: 'btn small', onclick: () => { NET.red = true; NET.blue = true; explain('Liens réseau rétablis (optique SFP ou jarretière remplacée) : les flux arrivent de nouveau par les deux réseaux, la redondance ST 2022-7 est restaurée.'); } }, 'Rétablir les liens rouge/bleu'),
+      el('button', { class: 'btn small', onclick: () => { NET.nmos = true; explain('Registre NMOS redémarré : les appareils se réenregistrent (IS-04) et le contrôleur peut de nouveau établir des connexions (IS-05).'); } }, 'Redémarrer le registre NMOS'),
+      el('button', { class: 'btn small', onclick: () => { NET.mvLink = 100; NET.mvSat = false; emit('router', {}); explain(`Multiviewer basculé sur son uplink 100 GbE : il peut recevoir ${mvCapacity()} flux. En IP, la bande passante se réserve comme une ressource.`); } }, 'Multiviewer sur l\'uplink 100G'))) : null;
+  body.append(netPanel, el('div', { class: 'hwpanel' }, el('h3', {}, ip ? '1 · Récepteur (destination)' : '1 · Destination'), tabs, dGrid),
+    el('div', { class: 'hwpanel' }, el('h3', {}, ip ? '2 · Émetteur (source)' : '2 · Source'), sGrid),
+    el('div', { class: 'hwpanel' }, el('h3', {}, ip ? '3 · Connecter (IS-05)' : '3 · Prendre'), el('div', { class: 'hwrow' }, cur, take,
       el('button', { class: 'btn', onclick: () => { ROUTER.customMV = false; ROUTER.customREC = false; defaultRouting(true); emit('router', {}); toast('Salvo « match » rappelé : configuration par défaut de la grille'); explain('Salvo : un ensemble de points de croisement enregistré et rappelé en une seule action. On en prépare pour chaque configuration (avant-match, match, mi-temps).'); } }, 'Rappeler le salvo par défaut'),
       el('button', { class: 'btn', onclick: () => openDevice('router', 1) }, 'Voir le châssis de la grille')), errBox,
       el('p', { class: 'note' }, 'Une caméra super ralenti 3x occupe 3 entrées REC consécutives (une par phase). Le départ TX1 doit recevoir le PGM : vérifiez toujours le retour antenne après une manipulation.')));
@@ -590,8 +600,9 @@ function buildRouter(body, arg, ctx) {
       $$('button', dGrid).forEach((b) => b.classList.toggle('lit', b.dataset.d === dest));
       const curSrc = ROUTER.map[dest];
       $$('button', sGrid).forEach((b) => { b.classList.toggle('lit2', b.dataset.s === curSrc); b.classList.toggle('lit', b.dataset.s === srcSel); });
-      cur.textContent = `${labelDest(dest)} ← ${sourceLabel(curSrc)}${srcSel ? '  ⇒  ' + sourceLabel(srcSel) : ''}`;
+      cur.textContent = `${labelDest(dest)} ← ${sourceLabel(curSrc)}${ip ? ' (' + mcastOf(curSrc) + ')' : ''}${srcSel ? '  ⇒  ' + sourceLabel(srcSel) + (ip ? ' (' + mcastOf(srcSel) + ')' : '') : ''}`;
       take.classList.toggle('lit', !!srcSel);
+      if (ip) { netBox.innerHTML = ''; for (const it of netStatus()) netBox.appendChild(el('div', { class: 'item' }, el('span', { class: 'dot ' + (it.level === 'err' ? 'red' : it.level === 'warn' ? 'amber' : 'green') }), el('div', { class: 'grow' }, el('div', { class: 't' }, it.t), el('div', { class: 's' }, it.s)))); }
     },
   };
 }
@@ -650,7 +661,8 @@ function buildSync(body, arg, ctx) {
   body.append(el('div', { class: 'panelgrid' }, el('div', { class: 'hwpanel' }, el('h3', {}, 'Générateur de synchro principal'), tcB, st,
     el('div', { class: 'hwrow' }, el('button', { class: 'btn small', onclick: () => { S.faults.gps = !S.faults.gps; explain(S.faults.gps ? 'GPS perdu : le SPG passe en holdover. Son oscillateur (OCXO) continue de générer la référence avec une dérive de l\'ordre de quelques ns par heure : l\'antenne n\'est pas affectée.' : 'GPS retrouvé : le SPG se ré-asservit lentement (sans saut de phase) pour ne pas perturber les équipements.', 'sync:gps'); } }, 'Simuler une perte GPS'),
       el('button', { class: 'btn small', onclick: () => { for (const c of S.cams) c.genlock = true; toast('Toutes les CCU re-verrouillées sur la référence', 'good'); emit('repair', 'genlock'); explain('Toutes les CCU re-verrouillées : elles reçoivent le tri-level (ou black burst) du SPG par les distributeurs et alignent leur sortie sur la même phase.'); } }, 'Re-verrouiller toutes les CCU'),
-      el('button', { class: 'btn small', onclick: () => openDevice('spg', 1) }, 'Voir le SPG'), el('button', { class: 'btn small', onclick: () => openDevice('da', 1) }, 'Voir les DA de référence'))),
+      el('button', { class: 'btn small', onclick: () => openDevice('spg', 1) }, 'Voir le SPG'), el('button', { class: 'btn small', onclick: () => openDevice('da', 1) }, 'Voir les DA de référence')),
+      S.ipMode ? el('div', { class: 'hwrow' }, el('button', { class: 'btn small', onclick: () => { NET.gm1 = !NET.gm1; NET.lostPtpT = 0; explain(NET.gm1 ? 'Grand maître PTP 1 remis en service : avec la meilleure classe d\'horloge (GPS verrouillé), il est réélu par l\'algorithme BMCA.' : 'Grand maître 1 coupé : après quelques secondes sans messages Announce, les horloges relais (commutateurs) élisent le grand maître 2. Les appareils restent synchronisés.', 'sync:ptp'); } }, 'Couper / rétablir le grand maître PTP 1'), el('button', { class: 'btn small', onclick: () => { NET.gm2 = !NET.gm2; } }, 'Couper / rétablir le grand maître PTP 2')) : null),
     el('div', { class: 'hwpanel prose' }, el('h3', {}, 'Pourquoi synchroniser ?'), el('p', {}, STATION_INFO.synchro.role), el('p', {}, 'Le SPG est asservi au GPS. S\'il perd le GPS, il passe en « holdover » : son oscillateur interne garde la référence stable pendant des heures, l\'antenne continue. Si une CCU perd la référence, son image saute ou roule à la commutation : c\'est visible immédiatement au multiview.'))));
   return {
     update() {
@@ -658,6 +670,7 @@ function buildSync(body, arg, ctx) {
       st.innerHTML = '';
       const rows = [['Verrouillage', S.faults.gps ? 'HOLDOVER (GPS perdu)' : 'GPS LOCK · 11 satellites'], ['Sorties BB', 'Black burst 625 lignes 50 Hz × 4'], ['Sorties tri-level', S.format === 'HDi' ? '1080i50 × 4' : '1080p50 × 4'], ['Timecode', 'LTC 25 i/s, heure locale'], ['Horloge audio', 'Word clock 48 kHz'], ['PTP', 'Grand maître ST 2059-2, domaine 127'], ['Secours', 'SPG n°2 en veille, bascule automatique']];
       for (const [k, v] of rows) st.append(el('dt', {}, k), el('dd', {}, v));
+      if (S.ipMode) for (const it of netStatus().filter((x) => x.t === 'PTP')) st.append(el('dt', {}, 'PTP (car IP)'), el('dd', { class: it.level === 'ok' ? '' : it.level === 'warn' ? 'warn' : 'err' }, `${it.s} · domaine 127 · offsets < 100 ns`));
       const bad = S.cams.filter((c) => !c.genlock).map((c) => 'CAM ' + c.id);
       if (bad.length) st.append(el('dt', {}, 'Alarmes'), el('dd', { class: 'err' }, 'Référence non verrouillée : ' + bad.join(', ')));
     },

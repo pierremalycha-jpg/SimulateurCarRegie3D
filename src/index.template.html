@@ -200,6 +200,7 @@ canvas.scope { background: #05080a; border: 1px solid var(--line2); border-radiu
 .dockrow { display: flex; gap: 10px; min-width: 0; align-items: flex-start; }
 .st-main.top .st-dock > .dockrow, .st-main.top .st-dock > .monwrap { flex: 1 1 auto; min-width: 0; }
 .monwrap.grow { flex: 1 1 0; min-width: 0; }
+.refpair { display: flex; gap: 6px; } .refpair > .mon { flex: 1 1 0; min-width: 0; width: auto; }
 .mon.fill { width: 100%; }
 .st-main.top .mon.fill, .st-main.top canvas.scope.fill { width: min(100%, calc(var(--dockh) * 16 / 9)); max-width: none; }
 .st-main.top .st-dock > .explain { flex: 0 0 min(360px, 32%); contain: size; min-height: 150px; }
@@ -363,6 +364,16 @@ canvas.scope { background: #05080a; border: 1px solid var(--line2); border-radiu
 .item.review input { width: 100%; margin-top: 6px; }
 textarea { background: var(--bg); border: 1px solid var(--line2); border-radius: 4px; padding: 6px 8px; color: var(--fg); font: inherit; resize: vertical; }
 @media (max-width: 800px) { .photo-grid { grid-template-columns: minmax(0, 1fr); } }
+/* scénario jour de match */
+.scenario { position: fixed; z-index: 5; right: var(--gut-r); top: calc(110px + env(safe-area-inset-top, 0px)); width: min(360px, calc(100vw - 32px)); background: rgba(11,14,17,0.94); border: 1px solid var(--amber); border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,.5); }
+.scenario .sc-head { display: flex; gap: 8px; align-items: center; padding: 8px 10px; border-bottom: 1px solid var(--line); }
+.scenario .sc-head b { flex: 1; font-family: var(--f-disp); letter-spacing: .04em; font-size: 14px; color: var(--amber); }
+.scenario .sc-head .mono { font-size: 12px; } .scenario .sc-head .x { width: 26px; height: 26px; font-size: 14px; }
+.scenario .sc-body { padding: 8px 12px 10px; font-size: 13px; line-height: 1.45; }
+.scenario .sc-body p { margin: 0 0 6px; color: #c7d0d7; }
+.scenario .sc-body ul { margin: 0 0 8px; padding-left: 4px; list-style: none; }
+.scenario .sc-body li { color: var(--muted); } .scenario .sc-body li.ok { color: #8cf0a8; }
+.scenario.min .sc-body { display: none; }
 /* IPDirector */
 .ipd-grid { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 12px; align-items: start; }
 .ipd-log { max-height: 220px; overflow: auto; }

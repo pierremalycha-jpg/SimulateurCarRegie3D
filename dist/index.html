@@ -200,6 +200,7 @@ canvas.scope { background: #05080a; border: 1px solid var(--line2); border-radiu
 .dockrow { display: flex; gap: 10px; min-width: 0; align-items: flex-start; }
 .st-main.top .st-dock > .dockrow, .st-main.top .st-dock > .monwrap { flex: 1 1 auto; min-width: 0; }
 .monwrap.grow { flex: 1 1 0; min-width: 0; }
+.refpair { display: flex; gap: 6px; } .refpair > .mon { flex: 1 1 0; min-width: 0; width: auto; }
 .mon.fill { width: 100%; }
 .st-main.top .mon.fill, .st-main.top canvas.scope.fill { width: min(100%, calc(var(--dockh) * 16 / 9)); max-width: none; }
 .st-main.top .st-dock > .explain { flex: 0 0 min(360px, 32%); contain: size; min-height: 150px; }
@@ -363,6 +364,16 @@ canvas.scope { background: #05080a; border: 1px solid var(--line2); border-radiu
 .item.review input { width: 100%; margin-top: 6px; }
 textarea { background: var(--bg); border: 1px solid var(--line2); border-radius: 4px; padding: 6px 8px; color: var(--fg); font: inherit; resize: vertical; }
 @media (max-width: 800px) { .photo-grid { grid-template-columns: minmax(0, 1fr); } }
+/* scénario jour de match */
+.scenario { position: fixed; z-index: 5; right: var(--gut-r); top: calc(110px + env(safe-area-inset-top, 0px)); width: min(360px, calc(100vw - 32px)); background: rgba(11,14,17,0.94); border: 1px solid var(--amber); border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,.5); }
+.scenario .sc-head { display: flex; gap: 8px; align-items: center; padding: 8px 10px; border-bottom: 1px solid var(--line); }
+.scenario .sc-head b { flex: 1; font-family: var(--f-disp); letter-spacing: .04em; font-size: 14px; color: var(--amber); }
+.scenario .sc-head .mono { font-size: 12px; } .scenario .sc-head .x { width: 26px; height: 26px; font-size: 14px; }
+.scenario .sc-body { padding: 8px 12px 10px; font-size: 13px; line-height: 1.45; }
+.scenario .sc-body p { margin: 0 0 6px; color: #c7d0d7; }
+.scenario .sc-body ul { margin: 0 0 8px; padding-left: 4px; list-style: none; }
+.scenario .sc-body li { color: var(--muted); } .scenario .sc-body li.ok { color: #8cf0a8; }
+.scenario.min .sc-body { display: none; }
 /* IPDirector */
 .ipd-grid { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 12px; align-items: start; }
 .ipd-log { max-height: 220px; overflow: auto; }
@@ -5081,6 +5092,102 @@ function stingerLogo() {
 
 // src/pipeline.js
 import * as THREE8 from"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.min.js";
+
+// src/ipnet.js
+var NET = { red: true, blue: true, gm1: true, gm2: true, nmos: true, mvLink: 100, mvSat: false, gmActive: 1, lostPtpT: 0 };
+function flowGbps() {
+  return S.format === "UHD" ? 8.3 : S.format === "HD" ? 2.1 : 1.05;
+}
+function mcastOf(src) {
+  if (!src) return "—";
+  if (src.startsWith("CAM")) return `239.10.1.${+src.slice(3)}`;
+  const k = { EVSA: 17, EVSB: 18, GFX: 19, STUDIO: 21, BARS: 22, BLACK: 23, PGM: 24, CLEAN: 25, PVW: 26, RETANT: 27 }[src] || 99;
+  return `239.10.2.${k}`;
+}
+function netOk() {
+  return !S.ipMode || NET.red || NET.blue;
+}
+function ptpLocked() {
+  return !S.ipMode || NET.gm1 || NET.gm2;
+}
+function mvCapacity() {
+  return Math.floor(NET.mvLink / flowGbps());
+}
+function updateNet(dt) {
+  if (!S.ipMode) return;
+  if (!NET.gm1 && NET.gm2 && NET.gmActive === 1) {
+    NET.lostPtpT += dt;
+    if (NET.lostPtpT > 3) {
+      NET.gmActive = 2;
+      NET.lostPtpT = 0;
+    }
+  }
+  if (NET.gm1 && NET.gmActive === 2 && NET.lostPtpT === 0) NET.gmActive = 1;
+}
+function netStatus() {
+  const out = [];
+  if (!S.ipMode) return out;
+  out.push({ t: "Réseau rouge", s: NET.red ? "OK" : "COUPÉ — les flux passent par le réseau bleu (ST 2022-7)", level: NET.red ? "ok" : "warn" });
+  out.push({ t: "Réseau bleu", s: NET.blue ? "OK" : "COUPÉ — les flux passent par le réseau rouge (ST 2022-7)", level: NET.blue ? "ok" : "warn" });
+  out.push({ t: "PTP", s: NET.gm1 ? "Grand maître 1 (SPG, GPS)" : NET.gm2 ? `Grand maître 1 perdu → ${NET.gmActive === 2 ? "grand maître 2 élu (BMCA)" : "élection en cours"}` : "AUCUN GRAND MAÎTRE : appareils en maintien", level: NET.gm1 ? "ok" : NET.gm2 ? "warn" : "err" });
+  out.push({ t: "Registre NMOS", s: NET.nmos ? "OK (IS-04 / IS-05)" : "INJOIGNABLE : connexions impossibles, les flux existants continuent", level: NET.nmos ? "ok" : "err" });
+  out.push({ t: "Lien du multiviewer", s: `${NET.mvLink} GbE · ${mvCapacity()} flux ${S.format === "UHD" ? "UHD" : "HD"} au maximum`, level: NET.mvSat ? "err" : "ok" });
+  return out;
+}
+var IP_FAULTS = [
+  {
+    id: "ipred",
+    label: "Coupure du réseau rouge",
+    where: "Réseau IP (Grille / contrôleur)",
+    can: () => S.ipMode && NET.red,
+    inject() {
+      NET.red = false;
+      return {};
+    },
+    check: () => NET.red,
+    hint: "Rien ne se voit à l'image (ST 2022-7 : chaque flux arrive aussi par le réseau bleu), mais il n'y a plus de secours. Contrôleur IP : remplacer l'optique / la jarretière du lien rouge."
+  },
+  {
+    id: "ipgm",
+    label: "Perte du grand maître PTP principal",
+    where: "Synchro (PTP)",
+    can: () => S.ipMode && NET.gm1,
+    inject() {
+      NET.gm1 = false;
+      NET.lostPtpT = 0;
+      return {};
+    },
+    check: () => NET.gm1,
+    hint: "Alarme PTP : le grand maître de secours est élu (BMCA) et l'image continue. Synchro : vérifier le GPS et l'alimentation du SPG principal, puis le remettre en service."
+  },
+  {
+    id: "ipnmos",
+    label: "Registre NMOS injoignable",
+    where: "Grille / contrôleur IP",
+    can: () => S.ipMode && NET.nmos,
+    inject() {
+      NET.nmos = false;
+      return {};
+    },
+    check: () => NET.nmos,
+    hint: "Les images restent à l'antenne mais plus aucune prise (TAKE) n'est possible. Contrôleur IP : redémarrer le service de registre NMOS."
+  },
+  {
+    id: "ipmv",
+    label: "Lien du multiviewer saturé",
+    where: "Grille / contrôleur IP",
+    can: () => S.ipMode && !NET.mvSat,
+    inject() {
+      NET.mvSat = true;
+      NET.mvLink = 25;
+      return {};
+    },
+    check: () => !NET.mvSat,
+    hint: "Des tuiles du multiview passent au noir « FLUX REFUSÉ » : le lien 25 GbE ne porte pas tous les flux. Contrôleur IP : basculer le multiviewer sur son uplink 100 GbE."
+  }
+];
+
+// src/pipeline.js
 var FONT2 = '"Saira Condensed", "Arial Narrow", sans-serif';
 var MONO = '"JetBrains Mono", ui-monospace, monospace';
 var SC = 1 / 1.1;
@@ -5301,6 +5408,7 @@ function routeRec(ch, src, silent = false, dryRun = false) {
   return null;
 }
 function route(dest, src) {
+  if (S.ipMode && !NET.nmos) return "Registre NMOS injoignable : le contrôleur ne peut plus établir de connexion (IS-05). Les flux déjà établis continuent.";
   if (dest.startsWith("ME") && +dest.slice(2) > mixInputs()) return `Entrée ${dest.slice(2)} indisponible : en 4K, le ${EQUIP.mixer} n'a que ${mixInputs()} entrées dans cette configuration.`;
   if (dest.startsWith("REC")) {
     const err = routeRec(+dest.slice(3), src);
@@ -5802,6 +5910,7 @@ function blit(renderer2, mat, target2) {
 var P = { rts: {}, delay: { rts: [], times: [], idx: 0, n: 44, k: 0, delay: 1.35 }, mvDirty: true };
 function resolve(id, depth = 0, direct = false) {
   if (!id) return { tex: TEX.black, scale: SC, alarm: "" };
+  if (S.ipMode && depth === 0 && !direct && !netOk()) return { tex: noSignalTex("PERTE RÉSEAU", "Réseaux rouge et bleu coupés"), scale: SC, alarm: "NO FLOW" };
   if (S.patch.on && depth === 0 && !direct) {
     const n = routerInOf(id);
     if (n != null) {
@@ -5919,6 +6028,9 @@ function tallyOf(src) {
   if (MIX.key1.on && src === keySrc) t = 2;
   return t;
 }
+function mvRefused(role) {
+  return S.ipMode && role.startsWith("MV") && +role.slice(2) > mvCapacity() - 2;
+}
 function drawOverlay() {
   const g = MV.overlay.ctx;
   const W_ = MV.w;
@@ -5936,7 +6048,7 @@ function drawOverlay() {
       src = ROUTER.map[t.role];
       label = sourceLabel(src);
     }
-    const r = resolve(src, 0, t.role === "PGM" || t.role === "PVW");
+    const r = mvRefused(t.role) ? { alarm: "FLUX REFUSÉ" } : resolve(src, 0, t.role === "PGM" || t.role === "PVW");
     const tal = t.role === "PGM" ? 2 : t.role === "PVW" ? 1 : tallyOf(src);
     const big = t.w > 500;
     g.lineWidth = tal ? big ? 8 : 5 : 2;
@@ -5998,7 +6110,7 @@ function drawOverlay() {
   g.fillText(tc(tod), 960, 540 - 48);
   g.fillStyle = "#9aa4ad";
   g.font = `500 16px ${FONT2}`;
-  g.fillText(`TC · ${S.format === "UHD" ? "2160p50 HDR" : S.format === "HD" ? "1080p50" : "1080i50"} · RÉF. GPS ${S.faults.gps ? "HOLDOVER" : "OK"}`, 960, 540 - 22);
+  g.fillText(`TC · ${S.format === "UHD" ? "2160p50 HDR" : S.format === "HD" ? "1080p50" : "1080i50"} · ${S.ipMode ? "ST 2110 · PTP " + (ptpLocked() ? NET.gm1 ? "GM1" : "GM2" : "PERDU") + (NET.red && NET.blue ? "" : " · 2022-7 DÉGRADÉ") : "RÉF. GPS " + (S.faults.gps ? "HOLDOVER" : "OK")}`, 960, 540 - 22);
   MV.overlay.tex.needsUpdate = true;
 }
 function drawDyn() {
@@ -6078,13 +6190,13 @@ function updateScope(renderer2) {
   const interval = SCOPE.active ? 0.12 : 0.5;
   if (S.time - SCOPE.last < interval) return;
   SCOPE.last = S.time;
-  const r = resolve(SCOPE.src);
+  const r = SCOPE.hdr && S.hdrView ? { tex: P.rts.hdr.texture, scale: 1 } : resolve(SCOPE.src);
   copyMat.uniforms.map.value = r.tex;
   copyMat.uniforms.uGain.value = r.scale;
   blit(renderer2, copyMat, SCOPE.rt);
   renderer2.readRenderTargetPixels(SCOPE.rt, 0, 0, SCOPE.w, SCOPE.h, SCOPE.buf);
   SCOPE.data = SCOPE.buf;
-  drawScopes(SCOPE.canvas.getContext("2d"), 512, 288, SCOPE.buf, SCOPE.mode, sourceLabel(SCOPE.src));
+  drawScopes(SCOPE.canvas.getContext("2d"), 512, 288, SCOPE.buf, SCOPE.mode, sourceLabel(SCOPE.src) + (SCOPE.hdr && S.hdrView ? " · HLG" : ""));
   SCOPE.tex.needsUpdate = true;
   emit("scope");
 }
@@ -6145,6 +6257,20 @@ function drawScopes(g, w, h, buf, mode = "luma", title = "") {
   g.setLineDash([]);
   g.fillStyle = "#ff7070";
   g.fillText("109", pad - 3, y109 + 4);
+  if (SCOPE.hdr && S.hdrView) {
+    const y75 = yOf(0.75);
+    g.strokeStyle = "rgba(70,198,242,0.8)";
+    g.setLineDash([6, 4]);
+    g.beginPath();
+    g.moveTo(pad, y75);
+    g.lineTo(pad + ww, y75);
+    g.stroke();
+    g.setLineDash([]);
+    g.fillStyle = "#46c6f2";
+    g.textAlign = "left";
+    g.fillText("blanc réf. HLG 75 %", pad + 4, y75 - 4);
+    g.textAlign = "right";
+  }
   g.textAlign = "left";
   g.fillStyle = "#9aa4ad";
   g.font = `500 12px ${FONT2}`;
@@ -6219,6 +6345,10 @@ function initPipeline() {
   P.rts.gfx = mk(960, 540);
   const mvw = S.quality === "basse" ? 1280 : 1920;
   P.rts.mv = mk(mvw, Math.round(mvw * 9 / 16));
+  {
+    const [hw, hh] = rtSize();
+    P.rts.hdr = mk(hw, hh);
+  }
   const [w, h] = rtSize();
   for (const c of EVS.ch) c.rt = mk(w, h);
   for (let i = 0; i < P.delay.n; i++) {
@@ -6345,6 +6475,11 @@ function renderPipeline(renderer2, dt) {
   }
   if (!restored) applySnapshot(LIVE);
   for (const m2 of W.screens) m2.uniforms.uLin.value = 0;
+  if (S.hdrView) {
+    const src = feedOf("GRADE1");
+    const cam2 = src && src.startsWith("CAM") ? camById(+src.slice(3)) : null;
+    if (cam2 && cam2.signalOK) cam2.paintTo(renderer2, P.rts.hdr, true);
+  }
   gfxFillMat.uniforms.tD.value = GFX.main.tex;
   blit(renderer2, gfxFillMat, P.rts.gfx);
   const a = resolve(meSource(MIX.pgm)), b = resolve(meSource(MIX.pst)), k = resolve(meSource(MIX.key1.src));
@@ -6393,7 +6528,7 @@ function renderPipeline(renderer2, dt) {
   }
   for (const t of MV.tiles) {
     let src = t.role === "PGM" ? "PGM" : t.role === "PVW" ? "PVW" : ROUTER.map[t.role];
-    const r = resolve(src, 0, t.role === "PGM" || t.role === "PVW");
+    const r = mvRefused(t.role) ? { tex: noSignalTex("FLUX REFUSÉ", "Lien du multiviewer saturé"), scale: SC } : resolve(src, 0, t.role === "PGM" || t.role === "PVW");
     t.mesh.material.uniforms.map.value = r.tex;
     t.mesh.material.uniforms.uGain.value = 1.1 * r.scale;
   }
@@ -6433,12 +6568,32 @@ function renderPipeline(renderer2, dt) {
   }
   renderer2.setRenderTarget(null);
 }
+var slotMat = new THREE8.ShaderMaterial({
+  uniforms: { map: { value: null }, uGain: { value: 1 }, uHDR: { value: 0 } },
+  vertexShader: `varying vec2 vUv; void main(){ vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }`,
+  fragmentShader: `uniform sampler2D map; uniform float uGain; uniform float uHDR; varying vec2 vUv;
+    vec3 hlgInv(vec3 E){ vec3 lo = E * E / 3.0; vec3 hi = (exp((E - 0.55991073) / 0.17883277) + 0.28466892) / 12.0; return mix(lo, hi, step(0.5, E)); }
+    void main(){
+      vec3 c = clamp(texture2D(map, vUv).rgb * uGain, 0.0, 1.0);
+      if (uHDR > 0.5) {
+        // signal HLG -> lumière de scène -> écran HDR 1000 cd/m² (OOTF gamma 1,2) -> écran SDR avec compression douce des hautes lumières
+        vec3 L = hlgInv(c); float Y = dot(L, vec3(0.2627, 0.6780, 0.0593));
+        vec3 D = L * pow(max(Y, 1e-6), 0.2) * 1000.0;
+        vec3 n = D / 203.0 * 0.75; c = n / (1.0 + n * 0.28);
+        c = pow(clamp(c * 1.12, 0.0, 1.0), vec3(1.0 / 2.2));
+      }
+      gl_FragColor = vec4(c, 1.0); }`,
+  depthTest: false,
+  depthWrite: false
+});
 var slotScene = new THREE8.Scene();
-var slotQuad = new THREE8.Mesh(new THREE8.PlaneGeometry(2, 2), copyMat.clone());
+var slotQuad = new THREE8.Mesh(new THREE8.PlaneGeometry(2, 2), slotMat);
 slotQuad.frustumCulled = false;
 slotScene.add(slotQuad);
 function slotTexture(id) {
   if (id === "mv") return { tex: P.rts.mv.texture, gain: 1 };
+  if (id === "HDR") return { tex: P.rts.hdr.texture, gain: 1.1, hdr: 1 };
+  if (id === "HLGRAW") return { tex: P.rts.hdr.texture, gain: 1.1 };
   if (id === "scope") return { tex: SCOPE.tex, gain: 1 };
   if (id === "camop" && P.rts.camop) return { tex: P.rts.camop.texture, gain: 1.1 };
   if (id.startsWith("AUX_")) {
@@ -6471,6 +6626,7 @@ function drawSlots(renderer2, list) {
     const s = slotTexture(el2.dataset.gl);
     slotQuad.material.uniforms.map.value = s.tex;
     slotQuad.material.uniforms.uGain.value = s.gain;
+    slotQuad.material.uniforms.uHDR.value = s.hdr || 0;
     const y = H - r.bottom;
     renderer2.setViewport(r.left, y, r.width, r.height);
     renderer2.setScissor(cl, H - cb, cr - cl, cb - ct);
@@ -6861,7 +7017,7 @@ function buildSynoptique() {
   svg.appendChild(defs);
   txt(10, 22, "CAMÉRAS", { font: "Saira Condensed, sans-serif", size: 13, fill: "#93a0ab", w: 600 });
   txt(250, 22, "LIAISONS · CCU", { font: "Saira Condensed, sans-serif", size: 13, fill: "#93a0ab", w: 600 });
-  txt(430, 22, "GRILLE", { font: "Saira Condensed, sans-serif", size: 13, fill: "#93a0ab", w: 600 });
+  txt(430, 22, S.ipMode ? "RÉSEAU IP" : "GRILLE", { font: "Saira Condensed, sans-serif", size: 13, fill: "#93a0ab", w: 600 });
   txt(600, 22, "TRAITEMENT", { font: "Saira Condensed, sans-serif", size: 13, fill: "#93a0ab", w: 600 });
   txt(860, 22, "SORTIES · TRANSMISSION", { font: "Saira Condensed, sans-serif", size: 13, fill: "#93a0ab", w: 600 });
   txt(Wd - 10, H - 8, `Format : ${FORMATS[S.format].label} · ${FORMATS[S.format].sdi}`, { anchor: "end", fill: "#ffb020", size: 12 });
@@ -6877,7 +7033,7 @@ function buildSynoptique() {
     line(392, y + 12, rX, y + 12, "#5a6672");
   });
   if (!cams.length) txt(10, top + 14, "Aucune caméra : ouvrez le plan (P).", { fill: "#93a0ab" });
-  box(rX, rY, 110, rH + 12, "GRILLE", "SDI / IP", { info: "grille", fill: "#1b2530" });
+  box(rX, rY, 110, rH + 12, S.ipMode ? "RÉSEAU IP" : "GRILLE", S.ipMode ? "ST 2110 rouge + bleu" : "SDI", { info: "grille", fill: "#1b2530" });
   const mx = 600;
   box(mx, top, 170, 92, "MÉLANGEUR", "M/E · keyers · DSK", { info: "melangeur" });
   box(mx, top + 104, 170, 60, "EVS (serveur ralenti)", `REC ${recordedCams().length} cam. · ${EVS.recording ? "enregistre" : "ARRÊTÉ"}`, { info: "evs", stroke: EVS.recording ? "#3a4652" : "#ff3b30" });
@@ -6912,7 +7068,7 @@ function buildSynoptique() {
   const sy = H - 70;
   box(300, sy, 240, 44, "SPG · SYNCHRO", S.faults.gps ? "HOLDOVER (GPS perdu)" : "GPS · BB / tri-level · LTC · PTP", { info: "synchro", stroke: S.faults.gps ? "#ffb020" : "#3a4652" });
   for (const x of [346, rX + 55, mx + 40, mx + 120]) line(x, sy, x, rY + rH + 16 > sy - 4 ? sy - 4 : rY + rH + 16, "#46c6f2", { dash: "2 4", arrow: false, w: 1.2 });
-  txt(548, sy + 26, "référence vers CCU, grille, mélangeur, EVS", { size: 10.5, fill: "#46c6f2" });
+  txt(548, sy + 26, S.ipMode ? "PTP (ST 2059-2) vers tous les appareils IP" : "référence vers CCU, grille, mélangeur, EVS", { size: 10.5, fill: "#46c6f2" });
   box(ox, sy, 260, 44, "INTERCOM", "matrice · pupitres · 4 fils chaîne", { info: "intercom" });
   box(10, sy, 260, 44, "ÉNERGIE", "groupe / réseau · onduleur · terre", { info: "energie" });
   return svg;
@@ -7044,6 +7200,7 @@ var FAULTS = [
     hint: "Une image est très sombre. Vision : rouvrir l'iris en surveillant le waveform."
   }
 ];
+FAULTS.push(...IP_FAULTS);
 var ACTIVE = [];
 S.faultsSolved = 0;
 function injectFault(id, hidden = false) {
@@ -7054,10 +7211,12 @@ function injectFault(id, hidden = false) {
     return;
   }
   const st = f.inject();
-  ACTIVE.push({ f, st, t0: S.time, hidden, done: false });
+  const entry = { f, st, t0: S.time, hidden, done: false };
+  ACTIVE.push(entry);
   toast(hidden ? "Une panne a été injectée. À vous de la trouver !" : `Panne injectée : ${f.label}`, "bad");
   if (hidden) intercom("CHAÎNE", "Problème signalé côté antenne ou régie, pouvez-vous vérifier ?", "bad");
   emit("fault");
+  return entry;
 }
 function updateFaults() {
   for (const a of ACTIVE) {
@@ -7094,6 +7253,7 @@ function clearFaults() {
   }
   S.faults.jam = null;
   S.faults.tx = false;
+  Object.assign(NET, { red: true, blue: true, gm1: true, gm2: true, nmos: true, mvLink: 100, mvSat: false, gmActive: 1, lostPtpT: 0 });
   emit("fault");
 }
 function faultPanel() {
@@ -8159,6 +8319,11 @@ var DEV_NAMES = {
   lsm: "Télécommande LSM",
   ipd: "Poste IPDirector",
   xnet: "Switch XNet",
+  swred: "Commutateur IP rouge",
+  swblue: "Commutateur IP bleu",
+  gw: "Passerelle SDI/IP",
+  nmos: "Contrôleur NMOS",
+  evsmon: "Écran du serveur EVS",
   spg: "Générateur de synchro",
   da: "Distributeur de référence",
   icom: "Matrice intercom",
@@ -8323,6 +8488,27 @@ function buildCabling() {
   add(P2("mixer", 1, "utillan"), P2("cns", 1, "tally"), "Ethernet Cat6", "ip", 3, "Tally IP et noms de sources (TSL UMD) vers le multiviewer et les CCU");
   add(P2("icom", 1, "pdc"), P2("pdc", 1, "icom"), "Câble 4 fils", "comms", 4, "Ordres avec la chaîne et les commentateurs");
   add(P2("pdc", 1, "power"), P2("ups", 1, "in"), "Câble énergie P17 63 A tri", "power", 4, "Arrivée groupe électrogène / réseau stade");
+  if (S.ipMode) {
+    const keep = C.filter((c) => c.a.dev !== "router" && c.b.dev !== "router");
+    C.length = 0;
+    C.push(...keep);
+    const ipLink = (dev, n, port, note) => {
+      add(P2(dev, n, port), P2("swred", 1, `${dev}${n}`), "Fibre SM 25/100 GbE", "ip", 3, note + " · réseau rouge");
+      add(P2(dev, n, port), P2("swblue", 1, `${dev}${n}`), "Fibre SM 25/100 GbE", "ip", 3, note + " · réseau bleu (ST 2022-7)");
+    };
+    for (const c of sys) ipLink("ccu", c.id, "opt", `Flux ST 2110 de la CAM ${c.id}`);
+    ipLink("mixer", 1, "ip1", "Entrées / sorties du mélangeur (carte 100G)");
+    for (let k = 1; k <= L.servers; k++) ipLink("evs", k, "ipio", `Serveur XT4K n° ${k}`);
+    ipLink("gw", 1, "ip", "Sources SDI restantes (HF, mini-caméras, habillage, duplex) converties en ST 2110");
+    ipLink("mv", 1, "lan", "Multiviewer IP");
+    ipLink("tx1", 1, "ip", "Départ vers la chaîne");
+    add(P2("spg", 1, "ptp1"), P2("swred", 1, "ptp"), "Fibre / Ethernet", "ip", 2, "Grand maître PTP 1 (ST 2059-2) · réseau rouge");
+    add(P2("spg", 1, "ptp1"), P2("swblue", 1, "ptp"), "Fibre / Ethernet", "ip", 2, "Grand maître PTP 1 · réseau bleu");
+    add(P2("nmos", 1, "lan"), P2("cns", 1, "nmos"), "Ethernet Cat6", "ip", 2, "Registre et contrôleur NMOS (IS-04 / IS-05) sur le réseau de contrôle");
+    C.forEach((c, i) => {
+      c.n = "C" + String(i + 1).padStart(3, "0");
+    });
+  }
   CACHE = { key, cables: C };
   return C;
 }
@@ -8494,6 +8680,10 @@ async function saveProgress() {
 }
 function addReport(where, text) {
   PROG.reports.push({ at: Date.now(), where: String(where).slice(0, 120), text: String(text).slice(0, 1e3) });
+  saveProgressSoon();
+}
+function addScenarioResult(r) {
+  PROG.scenarios.push({ at: Date.now(), ...r });
   saveProgressSoon();
 }
 on("mission", saveProgressSoon);
@@ -9261,23 +9451,44 @@ function buildVision(body, arg = 0, ctx) {
   if (arg && typeof arg === "object" && camById(arg.cam)) sel = arg.cam;
   const cam2 = () => camById(sel);
   const scopeC = el("canvas", { class: "scope", width: 640, height: 360 });
-  const modeBtns = { luma: el("button", { class: "minibtn" }, "LUMA"), parade: el("button", { class: "minibtn" }, "PARADE RVB") };
-  for (const k in modeBtns) modeBtns[k].onclick = () => {
+  const modeBtns = { luma: el("button", { class: "minibtn" }, "LUMA"), parade: el("button", { class: "minibtn" }, "PARADE RVB"), hlg: el("button", { class: "minibtn", title: "Mesurer la sortie HDR (HLG) de la CCU" }, "HLG") };
+  const monSDR = el("div", { class: "mon fill", "data-gl": "AUX_VISION", title: "Sortie SDR BT.709" });
+  const monHDR = el("div", { class: "mon fill", "data-gl": "HDR", title: "Sortie HDR HLG (simulation d'un moniteur HDR sur votre écran)", hidden: true });
+  let hdrMode = "sdr";
+  const hdrBtns = { sdr: el("button", { class: "minibtn" }, "SDR"), hlg: el("button", { class: "minibtn" }, "HDR HLG"), both: el("button", { class: "minibtn" }, "SDR | HDR") };
+  const setHdr = (m) => {
+    hdrMode = m;
+    S.hdrView = m !== "sdr";
+    if (!S.hdrView) SCOPE.hdr = false;
+    monSDR.hidden = m === "hlg";
+    monHDR.hidden = m === "sdr";
+    monSDR.parentElement && monSDR.parentElement.classList.toggle("both", m === "both");
+    for (const k in hdrBtns) hdrBtns[k].classList.toggle("on", k === m);
+    explain({ sdr: "Moniteur en SDR (BT.709) : c'est la sortie que règlent la plupart des ingénieurs vision, le blanc nominal est à 100 %.", hlg: "Sortie HDR (HLG) de la CCU, vue sur un moniteur HDR simulé : les hautes lumières (ciel, maillots au soleil, projecteurs) gardent du détail au lieu d'être écrêtées. Le blanc de référence est à 75 % du signal (ITU-R BT.2408).", both: "Les deux sorties de la même CCU côte à côte. En production « single stream » (type SR Live), on règle l'image sur la sortie SDR et la HDR suit : même iris, mêmes noirs, mêmes couleurs ; seule la courbe change." }[m], "rcp:hdr");
+  };
+  for (const k in hdrBtns) hdrBtns[k].onclick = () => setHdr(k);
+  modeBtns.hlg.onclick = () => {
+    if (!S.hdrView) setHdr("both");
+    SCOPE.hdr = !SCOPE.hdr;
+    explain(SCOPE.hdr ? "Oscilloscope sur la sortie HLG : le blanc de référence (une feuille blanche, un maillot blanc à l'ombre) doit tomber vers 75 % ; au-dessus, la marge pour les hautes lumières." : "Oscilloscope sur la sortie SDR.", "rcp:scope");
+  };
+  for (const k of ["luma", "parade"]) modeBtns[k].onclick = () => {
     SCOPE.mode = k;
     explain(k === "parade" ? "Parade RVB : les trois composantes côte à côte. Un blanc neutre a ses trois traces à la même hauteur ; un noir neutre aussi, en bas." : "Waveform luminance : hauteur = niveau de chaque colonne de l'image, de 0 % (noir) à 100 % (blanc nominal).");
   };
   const meterTxt = el("span", { class: "meter" });
   const chain = chainBox();
   ctx.dock.append(
-    el("div", { class: "monwrap" }, el("div", { class: "lab" }, "Moniteur de référence Grade 1 (caméra en preview)"), el("div", { class: "mon fill", "data-gl": "AUX_VISION" })),
+    el("div", { class: "monwrap" }, el("div", { class: "lab labrow" }, el("span", {}, "Moniteur de référence Grade 1"), hdrBtns.sdr, hdrBtns.hlg, hdrBtns.both), el("div", { class: "refpair" }, monSDR, monHDR)),
     el(
       "div",
       { class: "dockrow" },
-      el("div", { class: "monwrap grow" }, el("div", { class: "lab labrow" }, el("span", {}, "Oscilloscope"), modeBtns.luma, modeBtns.parade), scopeC),
+      el("div", { class: "monwrap grow" }, el("div", { class: "lab labrow" }, el("span", {}, "Oscilloscope"), modeBtns.luma, modeBtns.parade, modeBtns.hlg), scopeC),
       el("div", { class: "monwrap grow" }, el("div", { class: "lab labrow" }, el("span", {}, "Multiview"), meterTxt), el("div", { class: "mon fill", "data-gl": "mv" }))
     ),
     ctx.explainBox
   );
+  for (const k in hdrBtns) hdrBtns[k].classList.toggle("on", k === "sdr");
   const selRow = el("div", { class: "hwrow" });
   const camBtns = {};
   const rebuildSel = () => {
@@ -9608,7 +9819,8 @@ function buildVision(body, arg = 0, ctx) {
         const t2 = tallyOf("CAM" + c2.id);
         b.className = "hw" + (t2 === 2 ? " pgm" : t2 === 1 ? " pst" : "") + (c2.id === sel ? " selcam" : "");
       }
-      for (const k in modeBtns) modeBtns[k].classList.toggle("on", SCOPE.mode === k);
+      for (const k of ["luma", "parade"]) modeBtns[k].classList.toggle("on", SCOPE.mode === k);
+      modeBtns.hlg.classList.toggle("on", !!SCOPE.hdr);
       drawScopes(g, 640, 360, SCOPE.data, SCOPE.mode, "CAM " + sel);
       const c = cam2();
       if (!c) return;
@@ -9626,6 +9838,8 @@ function buildVision(body, arg = 0, ctx) {
     },
     close() {
       SCOPE.active = false;
+      S.hdrView = false;
+      SCOPE.hdr = false;
     }
   };
   function drawOverview() {
@@ -11106,7 +11320,7 @@ function openGuide(tab = "missions") {
     if (k === "glossaire") {
       const q = el("input", { type: "text", id: "glq", placeholder: "Rechercher un terme (SDI, genlock, DSK…)" });
       const list = el("div", { class: "list" });
-      const render = () => {
+      const render2 = () => {
         list.innerHTML = "";
         const s = q.value.trim().toLowerCase();
         for (const [t, d] of GLOSSARY) {
@@ -11114,9 +11328,9 @@ function openGuide(tab = "missions") {
           list.appendChild(el("div", { class: "item" }, el("div", { class: "grow" }, el("div", { class: "t" }, t), el("div", { class: "s", style: { fontSize: "13px", color: "#c7d0d7" } }, d))));
         }
       };
-      q.addEventListener("input", render);
+      q.addEventListener("input", render2);
       content.append(field("Recherche", q), list);
-      render();
+      render2();
     }
     if (k === "commandes") {
       const g = el("div", { class: "keys" });
@@ -11665,7 +11879,7 @@ var STATIONS = {
   ipdirector: { title: "IPDirector — base de clips EVS", build: buildIPD, layout: "top sm", dev: "ipd" },
   son: { title: "Régie son", build: buildAudio, layout: "top" },
   hf: { title: "Régie HF", build: buildHF, layout: "side", dev: "rx" },
-  grille: { title: "Grille de commutation", build: buildRouter, layout: "top", dev: "router" },
+  grille: { title: "Grille de commutation", build: buildRouter, layout: "top", dev: "router", ipTitle: "Contrôleur IP (ST 2110 / NMOS)" },
   brassage: { title: "Baie de brassage (jackfield)", build: buildPatch, layout: "top sm", dev: "router" },
   ccu: { title: "Baie CCU", build: buildCCU, layout: "side", dev: "ccu" },
   synchro: { title: "Synchro et timecode", build: buildSync, layout: "top sm", dev: "spg" },
@@ -11691,7 +11905,7 @@ function openStation(id, arg) {
   const head = el(
     "div",
     { class: "st-head" },
-    el("h2", {}, def.title),
+    el("h2", {}, S.ipMode && def.ipTitle ? def.ipTitle : def.title),
     el("div", { class: "role" }, info.role ? info.role.split(". ")[0] + "." : ""),
     devBtn,
     fmBtn,
@@ -11932,7 +12146,7 @@ function buildScripte(body, arg, ctx) {
   const tcBox = el("div", { class: "lcd amber big" }, "");
   const cd = el("div", { class: "lcd big" }, "");
   const list = el("div", { class: "list" });
-  const log = el("div", { class: "list" });
+  const log2 = el("div", { class: "list" });
   const rundown = [
     ["Mire + 1 kHz vers la chaîne", -20 * 60],
     ["Générique, prise d'antenne", -10 * 60],
@@ -11951,7 +12165,7 @@ function buildScripte(body, arg, ctx) {
       el("div", { class: "hwpanel" }, el("h3", {}, "Heure maître (timecode du SPG)"), tcBox, el("h3", {}, "Temps de jeu"), cd),
       el("div", { class: "hwpanel" }, el("h3", {}, "Conducteur"), list)
     ),
-    el("div", { class: "hwpanel" }, el("h3", {}, "Notes de scripte (actions marquantes)"), el("p", { class: "note" }, "Chaque action est notée avec son timecode. Un clic envoie le point d'entrée à l'EVS A (MARK IN 3 s avant)."), log)
+    el("div", { class: "hwpanel" }, el("h3", {}, "Notes de scripte (actions marquantes)"), el("p", { class: "note" }, "Chaque action est notée avec son timecode. Un clic envoie le point d'entrée à l'EVS A (MARK IN 3 s avant)."), log2)
   );
   for (const [t, off] of rundown) list.appendChild(el("div", { class: "item" }, el("span", { class: "lcd amber" }, tc(kickoff + off).slice(0, 8)), el("div", { class: "grow" }, el("div", { class: "t" }, t))));
   let lastN = -1;
@@ -11961,9 +12175,9 @@ function buildScripte(body, arg, ctx) {
       cd.textContent = mmss(M.clock) + `  ·  ${TEAMS[0].short} ${M.score[0]} - ${M.score[1]} ${TEAMS[1].short}`;
       if (S.events.length !== lastN) {
         lastN = S.events.length;
-        log.innerHTML = "";
+        log2.innerHTML = "";
         for (const e of S.events.slice(-14).reverse()) {
-          log.appendChild(el(
+          log2.appendChild(el(
             "div",
             { class: "item" },
             el("span", { class: "lcd amber" }, tc(S.tcOffset + e.t)),
@@ -12210,6 +12424,7 @@ function statusItems() {
   const tx = ROUTER.map[S.txPath === 2 ? "AUX_TX2" : "AUX_TX1"];
   out.push({ t: "Transmission", s: `Chemin TX${S.txPath} · source ${sourceLabel(tx)}${S.faults.tx && S.txPath === 1 ? " · LIAISON COUPÉE" : ""}`, level: S.faults.tx && S.txPath === 1 || tx !== "PGM" ? "err" : "ok" });
   out.push({ t: "Synchro", s: S.faults.gps ? "SPG en holdover (GPS perdu) — référence stable quelques heures" : "SPG verrouillé GPS", level: S.faults.gps ? "warn" : "ok" });
+  out.push(...netStatus());
   return out;
 }
 function buildAudio(body, arg, ctx) {
@@ -12523,11 +12738,15 @@ function buildRouter(body, arg, ctx) {
   const sGrid = el("div", { class: "hwrow" });
   const cur = el("div", { class: "lcd amber" });
   const errBox = el("div", { class: "note err" });
-  const take = hwBtn("TAKE", { cls: "big", onclick: () => {
+  const ip = S.ipMode;
+  const take = hwBtn(ip ? "CONNECT" : "TAKE", { cls: "big", onclick: () => {
     if (!srcSel) return;
     const err = route(dest, srcSel);
     errBox.textContent = err || "";
-    if (!err) toast(`${labelDest(dest)} ← ${sourceLabel(srcSel)}`, "good");
+    if (!err) {
+      toast(`${labelDest(dest)} ← ${sourceLabel(srcSel)}`, "good");
+      if (ip) explain(`IS-05 : le contrôleur demande au récepteur « ${labelDest(dest)} » de s'abonner au flux de ${sourceLabel(srcSel)} (multicast ${mcastOf(srcSel)}, ${String(flowGbps()).replace(".", ",")} Gb/s par réseau). La commutation se fait au changement d'image grâce au PTP.`, "grille:take");
+    } else explain(err, "warn");
     srcSel = null;
   } });
   const labelDest = (id) => {
@@ -12571,13 +12790,41 @@ function buildRouter(body, arg, ctx) {
   buildTabs();
   buildDests();
   buildSrcs();
+  const netBox = el("div", { class: "list" });
+  const netPanel = ip ? el(
+    "div",
+    { class: "hwpanel" },
+    el("h3", {}, "Réseau ST 2110 · contrôleur NMOS"),
+    el("p", { class: "note" }, `Dans ce car IP, la « grille » est un réseau : deux commutateurs indépendants (rouge et bleu) transportent chaque flux en double (ST 2022-7), synchronisés par PTP. Un flux vidéo ${S.format === "UHD" ? "UHD" : "HD"} fait ≈ ${String(flowGbps()).replace(".", ",")} Gb/s par réseau.`),
+    netBox,
+    el(
+      "div",
+      { class: "hwrow" },
+      el("button", { class: "btn small", onclick: () => {
+        NET.red = true;
+        NET.blue = true;
+        explain("Liens réseau rétablis (optique SFP ou jarretière remplacée) : les flux arrivent de nouveau par les deux réseaux, la redondance ST 2022-7 est restaurée.");
+      } }, "Rétablir les liens rouge/bleu"),
+      el("button", { class: "btn small", onclick: () => {
+        NET.nmos = true;
+        explain("Registre NMOS redémarré : les appareils se réenregistrent (IS-04) et le contrôleur peut de nouveau établir des connexions (IS-05).");
+      } }, "Redémarrer le registre NMOS"),
+      el("button", { class: "btn small", onclick: () => {
+        NET.mvLink = 100;
+        NET.mvSat = false;
+        emit("router", {});
+        explain(`Multiviewer basculé sur son uplink 100 GbE : il peut recevoir ${mvCapacity()} flux. En IP, la bande passante se réserve comme une ressource.`);
+      } }, "Multiviewer sur l'uplink 100G")
+    )
+  ) : null;
   body.append(
-    el("div", { class: "hwpanel" }, el("h3", {}, "1 · Destination"), tabs, dGrid),
-    el("div", { class: "hwpanel" }, el("h3", {}, "2 · Source"), sGrid),
+    netPanel,
+    el("div", { class: "hwpanel" }, el("h3", {}, ip ? "1 · Récepteur (destination)" : "1 · Destination"), tabs, dGrid),
+    el("div", { class: "hwpanel" }, el("h3", {}, ip ? "2 · Émetteur (source)" : "2 · Source"), sGrid),
     el(
       "div",
       { class: "hwpanel" },
-      el("h3", {}, "3 · Prendre"),
+      el("h3", {}, ip ? "3 · Connecter (IS-05)" : "3 · Prendre"),
       el(
         "div",
         { class: "hwrow" },
@@ -12612,8 +12859,12 @@ function buildRouter(body, arg, ctx) {
         b.classList.toggle("lit2", b.dataset.s === curSrc);
         b.classList.toggle("lit", b.dataset.s === srcSel);
       });
-      cur.textContent = `${labelDest(dest)} ← ${sourceLabel(curSrc)}${srcSel ? "  ⇒  " + sourceLabel(srcSel) : ""}`;
+      cur.textContent = `${labelDest(dest)} ← ${sourceLabel(curSrc)}${ip ? " (" + mcastOf(curSrc) + ")" : ""}${srcSel ? "  ⇒  " + sourceLabel(srcSel) + (ip ? " (" + mcastOf(srcSel) + ")" : "") : ""}`;
       take.classList.toggle("lit", !!srcSel);
+      if (ip) {
+        netBox.innerHTML = "";
+        for (const it of netStatus()) netBox.appendChild(el("div", { class: "item" }, el("span", { class: "dot " + (it.level === "err" ? "red" : it.level === "warn" ? "amber" : "green") }), el("div", { class: "grow" }, el("div", { class: "t" }, it.t), el("div", { class: "s" }, it.s))));
+      }
     }
   };
 }
@@ -12724,7 +12975,14 @@ function buildSync(body, arg, ctx) {
         } }, "Re-verrouiller toutes les CCU"),
         el("button", { class: "btn small", onclick: () => openDevice("spg", 1) }, "Voir le SPG"),
         el("button", { class: "btn small", onclick: () => openDevice("da", 1) }, "Voir les DA de référence")
-      )
+      ),
+      S.ipMode ? el("div", { class: "hwrow" }, el("button", { class: "btn small", onclick: () => {
+        NET.gm1 = !NET.gm1;
+        NET.lostPtpT = 0;
+        explain(NET.gm1 ? "Grand maître PTP 1 remis en service : avec la meilleure classe d'horloge (GPS verrouillé), il est réélu par l'algorithme BMCA." : "Grand maître 1 coupé : après quelques secondes sans messages Announce, les horloges relais (commutateurs) élisent le grand maître 2. Les appareils restent synchronisés.", "sync:ptp");
+      } }, "Couper / rétablir le grand maître PTP 1"), el("button", { class: "btn small", onclick: () => {
+        NET.gm2 = !NET.gm2;
+      } }, "Couper / rétablir le grand maître PTP 2")) : null
     ),
     el("div", { class: "hwpanel prose" }, el("h3", {}, "Pourquoi synchroniser ?"), el("p", {}, STATION_INFO.synchro.role), el("p", {}, "Le SPG est asservi au GPS. S'il perd le GPS, il passe en « holdover » : son oscillateur interne garde la référence stable pendant des heures, l'antenne continue. Si une CCU perd la référence, son image saute ou roule à la commutation : c'est visible immédiatement au multiview."))
   ));
@@ -12734,6 +12992,7 @@ function buildSync(body, arg, ctx) {
       st.innerHTML = "";
       const rows = [["Verrouillage", S.faults.gps ? "HOLDOVER (GPS perdu)" : "GPS LOCK · 11 satellites"], ["Sorties BB", "Black burst 625 lignes 50 Hz × 4"], ["Sorties tri-level", S.format === "HDi" ? "1080i50 × 4" : "1080p50 × 4"], ["Timecode", "LTC 25 i/s, heure locale"], ["Horloge audio", "Word clock 48 kHz"], ["PTP", "Grand maître ST 2059-2, domaine 127"], ["Secours", "SPG n°2 en veille, bascule automatique"]];
       for (const [k, v] of rows) st.append(el("dt", {}, k), el("dd", {}, v));
+      if (S.ipMode) for (const it of netStatus().filter((x) => x.t === "PTP")) st.append(el("dt", {}, "PTP (car IP)"), el("dd", { class: it.level === "ok" ? "" : it.level === "warn" ? "warn" : "err" }, `${it.s} · domaine 127 · offsets < 100 ns`));
       const bad = S.cams.filter((c) => !c.genlock).map((c) => "CAM " + c.id);
       if (bad.length) st.append(el("dt", {}, "Alarmes"), el("dd", { class: "err" }, "Référence non verrouillée : " + bad.join(", ")));
     }
@@ -13366,6 +13625,242 @@ function renderPanel() {
 }
 on("cams", () => {
   if (S.mode === "plan") renderPanel();
+});
+
+// src/scenario.js
+var isSys2 = (c) => c && c.link !== "hf" && !["pov", "ptz", "drone"].includes(c.type);
+var SC2 = { on: false, phase: -1, t0: 0, tp: 0, phases: [], log: [], line: {}, air: {}, faults: [] };
+var camOk = (c) => c.signalOK && c.genlock && c.meter.mean > 0.33 && c.meter.mean < 0.6 && c.meter.peak <= 1.04 && Math.abs(c.colorError().r) < 0.025 && Math.abs(c.colorError().b) < 0.025;
+var PHASES = [
+  {
+    id: "patch",
+    title: "Brassage du car",
+    max: 20,
+    minutes: 12,
+    brief: "Le car est vide : poste « Baie de brassage » (zone technique). Brassez les sources vers la grille, les sorties vers l'EVS et les départs, et la référence vers les CCU.",
+    goals: () => {
+      const s = patchScore();
+      return [[`Liaisons justes : ${s.ok} / ${s.total}`, s.pct >= 100], ["Aucune liaison croisée", !s.wrong.length]];
+    },
+    score: () => Math.round(patchScore().pct / 100 * 20),
+    done: () => patchScore().pct >= 100
+  },
+  {
+    id: "lineup",
+    title: "Line-up des caméras",
+    max: 25,
+    minutes: 10,
+    brief: "Poste Ingé vision : exposez et équilibrez chaque caméra système (niveau moyen 35-58 %, crêtes ≤ 103 %, écarts de couleur sous 2,5 %, référence verrouillée).",
+    goals: () => {
+      const sys = S.cams.filter(isSys2);
+      const ok = sys.filter(camOk).length;
+      return [[`Caméras réglées : ${ok} / ${sys.length}`, ok === sys.length], ["Toutes verrouillées sur la référence", sys.every((c) => c.genlock)]];
+    },
+    score: () => {
+      const sys = S.cams.filter(isSys2);
+      return sys.length ? Math.round(sys.filter(camOk).length / sys.length * 25) : 0;
+    },
+    done: () => {
+      const sys = S.cams.filter(isSys2);
+      return sys.length && sys.every(camOk);
+    }
+  },
+  {
+    id: "line",
+    title: "Test de ligne avec la chaîne",
+    max: 15,
+    minutes: 6,
+    brief: "Poste Transmission ou Grille : envoyez la mire sur le départ TX1 et le 1 kHz (Régie son : démuter « Mire 1 kHz »). Quand la chaîne confirme, remettez le PGM sur le départ et coupez le 1 kHz.",
+    goals: () => [["Mire envoyée sur le départ TX1", !!SC2.line.bars], ["1 kHz envoyé", !!SC2.line.tone], ["Réception confirmée par la chaîne", !!SC2.line.confirmed], ["PGM remis sur le départ, 1 kHz coupé", !!SC2.line.back]],
+    score: () => (SC2.line.bars ? 4 : 0) + (SC2.line.tone ? 4 : 0) + (SC2.line.back ? 7 : 0),
+    done: () => !!SC2.line.back
+  },
+  {
+    id: "air",
+    title: "À l'antenne",
+    max: 40,
+    minutes: 5,
+    brief: "Le match est à l'antenne. Réalisez (ou laissez faire le truquiste) et surtout surveillez : des pannes vont arriver sans prévenir. Mettez au moins un ralenti à l'antenne.",
+    goals: () => [[`Pannes résolues : ${SC2.faults.filter((f) => f.done).length} / ${SC2.faults.length}`, SC2.faults.length > 0 && SC2.faults.every((f) => f.done)], ["Un ralenti à l'antenne", !!SC2.air.replay], [`Secondes d'image en défaut à l'antenne : ${Math.round(SC2.air.bad || 0)}`, (SC2.air.bad || 0) < 3]],
+    score: () => {
+      let p = 0;
+      for (const f of SC2.faults) if (f.done) p += f.dt < 60 ? 12 : f.dt < 120 ? 8 : 4;
+      p = Math.min(24, p);
+      if (SC2.air.replay) p += 8;
+      p += Math.max(0, 8 - Math.floor((SC2.air.bad || 0) / 3));
+      return Math.min(40, p);
+    },
+    done: () => S.time - SC2.tp > 300
+  }
+];
+function startScenario() {
+  Object.assign(SC2, { on: true, phase: -1, t0: S.time, log: [], line: {}, air: {}, faults: [], phases: [] });
+  for (const c of S.cams) {
+    c.lineup = null;
+    c.paint.iris = Math.min(22, c.paint.iris * (1.4 + Math.random() * 1.2));
+    c.paint.wbR += Math.round((Math.random() - 0.5) * 50);
+    c.paint.wbB += Math.round((Math.random() - 0.5) * 50);
+    c.paint.autoIris = false;
+  }
+  log("Début du scénario : arrivée au car, tout est installé mais rien n'est brassé.");
+  intercom("CHEF DE CAR", "Bienvenue au car ! Tout est installé, à toi de brasser, de faire le line-up et le test de ligne avant l'antenne.", "ok");
+  nextPhase();
+}
+function log(t) {
+  SC2.log.push({ t: S.time - SC2.t0, text: t });
+}
+function nextPhase() {
+  if (SC2.phase >= 0) {
+    const P3 = PHASES[SC2.phase];
+    const pts = P3.score();
+    SC2.phases.push({ id: P3.id, title: P3.title, pts, max: P3.max, dur: Math.round(S.time - SC2.tp) });
+    log(`Fin de la phase « ${P3.title} » : ${pts} / ${P3.max} points en ${mmss(S.time - SC2.tp)}.`);
+  }
+  SC2.phase++;
+  SC2.tp = S.time;
+  if (SC2.phase >= PHASES.length) {
+    finish2();
+    return;
+  }
+  const P2 = PHASES[SC2.phase];
+  log(`Phase « ${P2.title} ».`);
+  if (P2.id === "air") {
+    intercom("RÉAL", "Antenne dans 10 secondes… 3, 2, 1, à vous !", "ok");
+    const pool = () => FAULTS.filter((f) => f.can() && !["router"].includes(f.id));
+    SC2.timers = [40, 140].map((d) => setTimeout(() => {
+      if (!SC2.on || PHASES[SC2.phase].id !== "air") return;
+      const f = randPick(pool());
+      if (!f) return;
+      const e = injectFault(f.id, true);
+      if (e) {
+        SC2.faults.push(e);
+        log(`Panne cachée injectée (${f.label}).`);
+      }
+    }, d * 1e3));
+  }
+  render(true);
+}
+function finish2() {
+  SC2.on = false;
+  for (const t of SC2.timers || []) clearTimeout(t);
+  const pts = SC2.phases.reduce((a, p) => a + p.pts, 0), max = SC2.phases.reduce((a, p) => a + p.max, 0);
+  const score = max ? Math.round(pts / max * 100) : 0;
+  const result = { score, phases: SC2.phases, duration: Math.round(S.time - SC2.t0), car: CFG.car.name || "" };
+  addScenarioResult(result);
+  log(`Fin du scénario : ${score} %.`);
+  const box = $("#scenario");
+  if (box) box.hidden = true;
+  const advice = [];
+  for (const p of SC2.phases) if (p.pts < p.max * 0.7) advice.push({ patch: "Brassage : reprenez la liste de câblage ligne par ligne ; vérifiez chaque nom au multiview.", lineup: "Line-up : exposez d'abord (iris, waveform), puis balance des blancs et noirs, puis matching au vecteurscope.", line: "Test de ligne : mire ET 1 kHz, attendre la confirmation de la chaîne, et surtout remettre le PGM avant l'antenne.", air: "Direct : surveillez en permanence le multiview et le retour antenne ; une panne se traite en isolant le maillon fautif." }[p.id]);
+  const rows = SC2.phases.map((p) => el("tr", {}, el("td", {}, p.title), el("td", {}, `${p.pts} / ${p.max}`), el("td", {}, mmss(p.dur))));
+  modal.open("Compte rendu · jour de match", el(
+    "div",
+    { class: "list" },
+    el("div", { class: "lcd amber big" }, `Score : ${score} %`),
+    el("div", { class: "tblwrap" }, el("table", { class: "tbl compact" }, el("thead", {}, el("tr", {}, el("th", {}, "Phase"), el("th", {}, "Points"), el("th", {}, "Durée"))), el("tbody", {}, ...rows))),
+    advice.length ? el("div", { class: "hwpanel prose" }, el("h3", {}, "À retravailler"), el("ul", { class: "steps" }, advice.map((a) => el("li", {}, a)))) : el("p", { class: "note ok" }, "Toutes les phases sont réussies à plus de 70 %. Bravo !"),
+    el("h3", { class: "eq-h" }, "Journal"),
+    el("ul", { class: "steps prose" }, SC2.log.map((l) => el("li", {}, `${mmss(l.t)} · ${l.text}`))),
+    el("div", { class: "hwrow" }, el("button", { class: "btn", onclick: () => offerDownload("compte-rendu-jour-de-match.html", reportHTML(result)) }, "Télécharger le compte rendu"), el("button", { class: "btn primary", onclick: () => modal.close() }, "Fermer")),
+    el("p", { class: "note" }, "Le résultat est enregistré dans votre suivi (visible du formateur).")
+  ), { width: 820 });
+}
+function reportHTML(r) {
+  const esc = (s) => String(s).replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" })[c]);
+  return `<!doctype html><html lang="fr"><head><meta charset="utf-8"><title>Compte rendu jour de match</title><style>body{font-family:system-ui,sans-serif;max-width:760px;margin:24px auto;padding:0 16px;color:#111}table{border-collapse:collapse}td,th{border:1px solid #ccc;padding:4px 8px}</style></head><body>
+<h1>Compte rendu · jour de match</h1><p>${esc(CFG.car.name || "Car régie")} · ${(/* @__PURE__ */ new Date()).toLocaleString("fr-FR")} · score ${r.score} %</p>
+<table><tr><th>Phase</th><th>Points</th><th>Durée</th></tr>${r.phases.map((p) => `<tr><td>${esc(p.title)}</td><td>${p.pts} / ${p.max}</td><td>${mmss(p.dur)}</td></tr>`).join("")}</table>
+<h2>Journal</h2><ul>${SC2.log.map((l) => `<li>${mmss(l.t)} · ${esc(l.text)}</li>`).join("")}</ul></body></html>`;
+}
+function stopScenario() {
+  if (!SC2.on) return;
+  SC2.on = false;
+  for (const t of SC2.timers || []) clearTimeout(t);
+  const b = $("#scenario");
+  if (b) b.hidden = true;
+  toast("Scénario abandonné");
+}
+var lastRender = 0;
+var confirmT = 0;
+function updateScenario(dt) {
+  if (!SC2.on) return;
+  const P2 = PHASES[SC2.phase];
+  if (P2.id === "line") {
+    const dep = feedOf("TX1");
+    if (dep === "BARS") SC2.line.bars = true;
+    if (AU.ch.tone && !AU.ch.tone.mute && AU.ch.tone.fader > -3) SC2.line.tone = true;
+    if (SC2.line.bars && SC2.line.tone && !SC2.line.confirmed) {
+      if (!confirmT) confirmT = S.time;
+      if (S.time - confirmT > 5) {
+        SC2.line.confirmed = true;
+        intercom("CHAÎNE", "Mire et 1 kHz bien reçus, niveaux conformes, ident OK. Vous pouvez repasser le programme.", "ok");
+        log("La chaîne confirme la réception de la mire et du 1 kHz.");
+      }
+    }
+    if (SC2.line.confirmed && dep === "PGM" && AU.ch.tone.mute) {
+      if (!SC2.line.back) log("PGM remis sur le départ, 1 kHz coupé.");
+      SC2.line.back = true;
+    }
+  }
+  if (P2.id === "air") {
+    const pgm = meSource(MIX.pgm);
+    if ((pgm === "EVSA" || pgm === "EVSB") && EVS.ch[pgm === "EVSA" ? 0 : 1].playing) {
+      if (!SC2.air.replay) log("Ralenti à l'antenne.");
+      SC2.air.replay = true;
+    }
+    const r = resolve(pgm);
+    if (r.alarm && !["MIRE", "BARRES"].includes(r.alarm) || pgm === "BLACK" || pgm === "BARS") SC2.air.bad = (SC2.air.bad || 0) + dt;
+  }
+  if (S.time - lastRender > 0.5) {
+    lastRender = S.time;
+    render();
+  }
+  if (P2.done() && P2.id !== "air" && !SC2.autoT) {
+    SC2.autoT = S.time;
+    toast(`Objectifs de la phase « ${P2.title} » atteints.`, "good");
+  }
+  if (P2.id === "air" && P2.done()) nextPhase();
+}
+function render(force) {
+  let box = $("#scenario");
+  if (!box) {
+    box = el("div", { id: "scenario", class: "scenario" });
+    document.body.appendChild(box);
+  }
+  if (!SC2.on) {
+    box.hidden = true;
+    return;
+  }
+  box.hidden = false;
+  const P2 = PHASES[SC2.phase];
+  const el_ = (t, a, ...c) => el(t, a, ...c);
+  const mins = (S.time - SC2.tp) / 60;
+  box.innerHTML = "";
+  box.append(
+    el_("div", { class: "sc-head" }, el_("b", {}, `Jour de match · ${SC2.phase + 1}/${PHASES.length} · ${P2.title}`), el_("span", { class: "mono " + (mins > P2.minutes ? "warn" : "") }, `${mmss(S.time - SC2.tp)} / ${P2.minutes} min`), el_("button", { class: "x", "aria-label": "Réduire", onclick: () => box.classList.toggle("min") }, "–")),
+    el_(
+      "div",
+      { class: "sc-body" },
+      el_("p", {}, P2.brief),
+      el_("ul", {}, ...P2.goals().map(([t, ok]) => el_("li", { class: ok ? "ok" : "" }, (ok ? "✓ " : "○ ") + t))),
+      el_(
+        "div",
+        { class: "hwrow" },
+        P2.id !== "air" ? el_("button", { class: "btn small primary", onclick: () => {
+          SC2.autoT = 0;
+          nextPhase();
+        } }, P2.done() ? "Phase suivante" : "Terminer la phase (score actuel)") : el_("span", { class: "note" }, "Fin automatique après 5 minutes d'antenne."),
+        el_("button", { class: "btn small", onclick: stopScenario }, "Abandonner")
+      )
+    )
+  );
+}
+on("startScenario", () => setTimeout(startScenario, 300));
+on("fault", () => {
+  for (const f of SC2.faults) if (f.done && !f.logged) {
+    f.logged = true;
+    log(`Panne « ${f.f.label} » résolue en ${Math.round(f.dt)} s.`);
+  }
 });
 
 // src/main.js
@@ -14131,6 +14626,8 @@ function frame(now) {
   updateAudio(dt);
   updateTruck(S.time);
   updateExercises(dt);
+  updateScenario(dt);
+  updateNet(dt);
   slowAcc += dt;
   if (slowAcc > 0.5) {
     slowAcc = 0;
