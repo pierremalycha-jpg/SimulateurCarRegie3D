@@ -66,7 +66,7 @@ export function initTruckMap(onGo, pl) {
   goTo = onGo; getPL = pl;
   const box = el('div', { id: 'truckmap', hidden: true, title: 'Plan du car (Tab pour l\'agrandir)' });
   const plan = drawPlan(16, false);
-  box.append(el('div', { class: 'tmap-head' }, el('b', {}, 'Plan du car'), el('span', {}, 'Tab : agrandir · clic sur un point : aller au poste')), plan.svg);
+  box.append(el('div', { class: 'tmap-head' }, el('b', {}, 'Plan du car'), el('span', {}, matchMedia('(pointer: coarse)').matches ? 'Toucher un point : aller au poste' : 'Tab : agrandir · clic sur un point : aller au poste')), plan.svg);
   box.addEventListener('click', () => openTruckPlan());
   $('#hud').appendChild(box);
   mini = plan;

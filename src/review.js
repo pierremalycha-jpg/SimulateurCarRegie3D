@@ -13,6 +13,7 @@ const SONY_XVS = 'Brochures Sony XVS (pro.sony, Gravity Media, AV Broadcast), fi
 const SONY_ICP = 'Pages produit Sony ICP-X7000';
 const NORMES = 'Normes et recommandations (SMPTE, ITU-R, EBU)';
 const SIMU = 'Choix de simulation (à valider avec vos habitudes)';
+const STADE = 'Recherches web : site du RC Lens (tribunes, billetterie), stadiumdb.com, architectes (Atelier Ferret), presse (France 3, 90min)';
 
 export const REVIEW_ITEMS = [
   ['cam1', 'Chaîne caméra', 'Tête HDC-5500 : connecteurs arrière (fibre 3K.93C, SDI 1/2/3, SDI MONI, TEST OUT, PROMPTER/GENLOCK, INTERCOM 1/2 XLR-5, AUDIO CH1/2, DC IN XLR-4 10,5-17 V, REMOTE, RET CTRL, TRACKER, CRANE).', SONY_HDC],
@@ -46,6 +47,11 @@ export const REVIEW_ITEMS = [
   ['aud1', 'Son', 'Synchro son / image : son en avance de 40 ms au plus, en retard de 60 ms au plus (EBU R37).', NORMES],
   ['aud2', 'Son', 'Plan de son par défaut : 1-2 PGM stéréo, 3-4 international, 5-8 silence (modifiable dans « Le car »).', SIMU],
   ['aud3', 'Son', 'Retard « asservi au tally » : la console ajoute la latence de la source à l\'antenne (caméra HF) ; le micro de la caméra HF est déjà calé sur son image.', SIMU],
+  ['std1', 'Stade', 'Orientation : Lepagnot au sud (tribune principale : vestiaires, presse, TV), Marek-Xercès au nord (kop Marek debout en bas), Trannin à l\'ouest (voie ferrée, visiteurs), Delacourt à l\'est.', STADE],
+  ['std2', 'Stade', 'Quatre pylônes d\'angle en treillis (≈ 72 m) portent un anneau de poutres auquel les toits sont suspendus ; angles ouverts ; toit ≈ 33 m.', STADE],
+  ['std3', 'Stade', 'Deux écrans géants d\'environ 40 m² dans les angles Trannin-Lepagnot et Marek-Delacourt.', STADE],
+  ['std4', 'Stade', 'Passerelle caméras sur le toit des loges de Lepagnot, compound TV derrière Lepagnot : emplacements supposés, à corriger avec votre plan d\'installation réel.', SIMU],
+  ['std5', 'Stade', 'Sièges blancs et gris mêlés (pas de sièges sang et or), terrils jumeaux de Loos-en-Gohelle à l\'ouest-nord-ouest.', STADE],
   ['ip1', 'IP', 'ST 2110-20 : ≈ 2,1 Gb/s en 1080p50 10 bits 4:2:2 ; ≈ 8,3 Gb/s en UHD p50. PTP ST 2059-2 ; NMOS IS-04/IS-05 ; ST 2022-7.', NORMES],
 ];
 export const REVIEW_STATUS = { '': 'À vérifier', ok: 'Validé', fix: 'À corriger' };

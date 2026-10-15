@@ -50,6 +50,22 @@ Le simulateur est réglé sur ce parc (modifiable dans l'Espace formateur → «
 - **Diagnostic de performance** (fluidité, carte graphique, qualité recommandée) et bouton « Signaler une
   erreur » partout.
 
+## Ce que contient la v4
+
+- **Car régie repensé** :
+  - allée continue côté porte et passage vers la 1re rangée ;
+  - zone technique accessible par sa propre porte ;
+  - poste visé allumé en orange, clic ou E pour s'y installer ;
+  - mini-plan et grand plan du car (Tab) ;
+  - pupitres et baies détaillés (CCU HDCU-5500, grille, XVS-6000, XT4K, patch, synchro, intercom, HF…).
+  - `tools/reach.mjs` vérifie que chaque poste est accessible à pied.
+- **Stade inspiré de Bollaert-Delelis (Lens)**, reconstitution non officielle :
+  - tribunes Lepagnot, Marek-Xercès (kop Marek debout), Trannin et Delacourt, angles ouverts ;
+  - pylônes d'angle, anneau de poutres, toits suspendus, deux écrans géants d'angle ;
+  - public sang et or ;
+  - voie ferrée et TER, cités minières, gare, terrils jumeaux et chevalements de la fosse 11/19 à l'horizon.
+- **Caméras 3D détaillées** : tête fluide, manivelles de zoom et de point, viseur 7", objectif box, portable ENG, Steadicam, grue, PTZ, drone.
+
 ## Construire et tester
 
 ```
@@ -79,6 +95,7 @@ node tools/func.mjs           # tests fonctionnels historiques
 | `shared.js` | Données partagées de la page publiée (configuration, progression) avec repli local |
 | `review.js` | Points techniques à faire relire par le formateur |
 | `gfx.js` | Habillage (score, bandeaux, statistiques) |
-| `ui/` | Postes (`stations.js`, `st_vision.js`, `st_evs.js`, `st_mixer.js`, `st_ipd.js`, `st_patch.js`), espace formateur (`config.js`), rapports (`report.js`), plan, guide, missions |
+| `truck.js` (car) | Intérieur du car : plan, postes, baies et pupitres détaillés, collisions |
+| `ui/` | Plan du car (`truckmap.js`), postes (`stations.js`, `st_vision.js`, `st_evs.js`, `st_mixer.js`, `st_ipd.js`, `st_patch.js`), espace formateur (`config.js`), rapports (`report.js`), plan, guide, missions |
 | `equipment/` | Visionneuse de matériel : appareils (`devices.js`), liste de câblage (`cabling.js`), rendu SVG et photos (`viewer.js`) |
 | `faults.js`, `exercises.js` | Simulateur de pannes, réalisateur virtuel et opérateur EVS automatique |
