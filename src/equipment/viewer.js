@@ -1,4 +1,4 @@
-import { S, camById } from '../state.js';
+import { S, camById, emit } from '../state.js';
 import { el, fmt, tc, clamp } from '../util.js';
 import { IRIS_STOPS, ND_FILTERS, SHUTTERS, LINKS } from '../data.js';
 import { modal } from '../ui/common.js';
@@ -348,7 +348,7 @@ export function openEquipmentIndex() {
   const groups = [
     ['Chaîne caméra', ['cam', 'ccu', 'rcp', 'conv']], ['Ralentis', ['evs', 'lsm', 'ipd']], ['Mélangeur', ['mixer', 'mixpanel', 'siu']], ['Commutation et traitement', ['router', 'mv']], ['Synchronisation', ['spg', 'da']], ['Liaisons', ['rx', 'pdc']],
   ];
-  const body = el('div', { class: 'list' }, el('p', { class: 'note' }, 'Faces avant et arrière, connecteurs, signaux et raccordements réels de votre installation.'));
+  const body = el('div', { class: 'list' }, el('p', { class: 'note' }, 'Faces avant et arrière, connecteurs, signaux et raccordements réels de votre installation.'), el('button', { class: 'btn', onclick: () => emit('openSynoptics') }, 'Synoptiques du car (vidéo, synchro, audio, intercom, réseaux, énergie, baies)'));
   for (const [g, keys] of groups) {
     body.append(el('h3', { class: 'eq-h' }, g));
     const row = el('div', { class: 'grid2' });

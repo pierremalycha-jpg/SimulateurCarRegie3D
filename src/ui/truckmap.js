@@ -1,4 +1,4 @@
-import { S } from '../state.js';
+import { S, emit } from '../state.js';
 import { el } from '../util.js';
 import { $, modal } from './common.js';
 import { STATION_INFO } from '../data.js';
@@ -23,7 +23,7 @@ function drawPlan(scale, labels) {
   const L = T.layout; const I = L.size;
   const W = (I.x1 - I.x0) * scale, H = (I.z1 - I.z0) * scale;
   const px = (lx) => (lx - I.x0) * scale, pz = (lz) => (lz - I.z0) * scale;
-  const svg = sv('svg', { viewBox: `-6 -6 ${W + 12} ${H + (labels ? 30 : 12)}`, class: 'tmap-svg', role: 'img', 'aria-label': 'Plan du car régie' });
+  const svg = sv('svg', { viewBox: labels ? `-6 -120 ${W + 12} ${H + 250}` : `-6 -6 ${W + 12} ${H + 12}`, class: 'tmap-svg', role: 'img', 'aria-label': 'Plan du car régie' });
   svg.append(sv('rect', { x: 0, y: 0, width: W, height: H, rx: 4, fill: '#14181d', stroke: '#5a6470', 'stroke-width': 2 }));
   for (const z of L.zones) {
     svg.append(sv('rect', { x: px(z.x0), y: 0, width: (z.x1 - z.x0) * scale, height: H, fill: z.color, opacity: 0.55 }));
@@ -49,8 +49,17 @@ function drawPlan(scale, labels) {
     if (labels) {
       const rack = s.zone === 'tech' && s.id !== 'hf';
       const tx = px(s.lx), ty = pz(s.lz) + (s.lz > 0 ? 18 : -11);
-      // baies serrées : étiquettes inclinées
-      g.append(sv('text', rack ? { x: tx, y: pz(s.lz) + (s.lz > 0 ? -12 : 14), 'text-anchor': s.lz > 0 ? 'start' : 'end', transform: `rotate(-38 ${tx} ${pz(s.lz) + (s.lz > 0 ? -12 : 14)})` } : { x: tx, y: ty, 'text-anchor': 'middle' }, s.label.length > 22 ? s.label.slice(0, 21) + '…' : s.label));
+      const lab = s.short || s.label;
+      if (rack) {
+        // baies serrées : étiquettes hors du car, reliées au point par un trait
+        const top = s.lz < 0, ey = top ? -10 : H + 10;
+        g.append(sv('line', { x1: tx, y1: pz(s.lz), x2: tx, y2: ey, stroke: '#5a6470', 'stroke-dasharray': '3 3' }));
+        g.append(sv('text', { x: tx, y: top ? ey - 4 : ey + 12, 'text-anchor': 'start', transform: `rotate(${top ? -40 : 40} ${tx} ${top ? ey - 4 : ey + 12})` }, lab));
+      } else {
+        // rangées serrées : une étiquette sur deux décalée
+        const alt = T.stations.filter((x) => x.zone === s.zone && Math.abs(x.lz - s.lz) < 0.1 && x.lx < s.lx).length % 2;
+        g.append(sv('text', { x: tx, y: ty + (alt ? (s.lz > 0 ? 13 : -13) : 0), 'text-anchor': 'middle' }, lab.length > 22 ? lab.slice(0, 21) + '…' : lab));
+      }
     }
     g.addEventListener('click', (e) => { e.stopPropagation(); if (goTo) goTo(s); });
     g.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.stopPropagation(); if (goTo) goTo(s); } });
@@ -100,6 +109,17 @@ export function openTruckPlan() {
   modal.open('Plan du car régie', el('div', { class: 'list' },
     el('p', { class: 'note' }, 'Vue de dessus. Le mur d\'écrans est en haut, la porte en bas. Une allée longe tout le car côté porte (de la cabine son à la zone technique) ; le passage entre la production et la vision mène à la 1re rangée. Cliquez sur un poste (point ou bouton) pour vous y rendre et l\'ouvrir.'),
     el('div', { class: 'tmap-big' }, plan.svg), zones,
+    el('button', { class: 'btn', onclick: () => emit('openSynoptics') }, 'Synoptiques techniques du car (Y)'),
     el('p', { class: 'note' }, 'Dans le car : Z Q S D pour marcher, souris pour regarder, E ou clic pour prendre le poste visé (il s\'allume en orange), I pour sa fiche, K pour voir son matériel, Tab pour ce plan.')), { width: 1000 });
 }
 export function closeTruckPlan() { bigPlan = null; }
+// plan détaillé pour les synoptiques (styles intégrés pour l'export SVG)
+export function planSVG() {
+  const p = drawPlan(48, true);
+  if (getPL) place(p, getPL());
+  const st = document.createElementNS(NS, 'style');
+  st.textContent = '.tmap-zone{font:600 15px "Saira Condensed",sans-serif;fill:rgba(230,236,242,.6);letter-spacing:.06em}.tmap-door{font:600 12px "Saira Condensed",sans-serif;fill:#30c060}.tmap-st circle{fill:#8a949e;stroke:#0b0d10;stroke-width:1.5;cursor:pointer}.tmap-st:hover circle{fill:#ffb020}.tmap-st text{font:600 11px "Saira Condensed",sans-serif;fill:#e6ecf2}.tmap-me circle{fill:#30c0ff;stroke:#fff;stroke-width:1.5}.tmap-me path{fill:#30c0ff}';
+  p.svg.prepend(st);
+  p.svg.style.minWidth = '900px';
+  return p.svg;
+}

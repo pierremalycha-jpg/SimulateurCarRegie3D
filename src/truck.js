@@ -195,7 +195,7 @@ function drawScripte(g, W, H) {
 
 // ---------------- baies : façades des appareils ----------------
 // unités : [hauteur en U, type, libellé]
-const RACKS = {
+export const RACKS = {
   ccu: { title: 'CCU 1-6', units: [[1, 'blank'], [3, 'hdcu2', 'HDCU-5500'], [3, 'hdcu2', 'HDCU-5500'], [3, 'hdcu2', 'HDCU-5500'], [1, 'vent'], [2, 'conv', 'CONV. FIBRE'], [1, 'blank'], [3, 'hdcu2', 'HDCU-5500'], [1, 'pdu', 'PDU'], [1, 'vent']], device: 'ccu' },
   ccu2: { title: 'CCU 7-12', units: [[1, 'blank'], [3, 'hdcu2', 'HDCU-5500'], [3, 'hdcu2', 'HDCU-5500'], [3, 'hdcu2', 'HDCU-5500'], [1, 'vent'], [2, 'msu', 'MSU'], [1, 'blank'], [2, 'conv', 'CONV. FIBRE'], [1, 'pdu', 'PDU']], device: 'ccu' },
   router: { title: 'Grille', units: [[1, 'blank'], [12, 'router', 'GRILLE VIDÉO 3G/12G 144×144'], [1, 'vent'], [2, 'panel', 'PANNEAU X-Y'], [1, 'pdu', 'PDU']], device: 'router' },
@@ -210,6 +210,8 @@ const RACKS = {
   rx: { title: 'Réception HF', units: [[1, 'blank'], [1, 'rx', 'RÉCEPTEUR HF 1'], [1, 'rx', 'RÉCEPTEUR HF 2'], [1, 'rx', 'RÉCEPTEUR HF 3'], [1, 'rx', 'RÉCEPTEUR HF 4'], [1, 'vent'], [2, 'dec', 'DÉCODEURS'], [2, 'frame', 'CONTRÔLE ANTENNES'], [1, 'pdu', 'PDU']], device: 'rx' },
   ups: { title: 'Énergie', units: [[1, 'blank'], [3, 'ups', 'ONDULEUR'], [3, 'ups', 'ONDULEUR'], [1, 'vent'], [2, 'pdu', 'DISTRIBUTION 230 V'], [2, 'pdu', 'SURVEILLANCE ÉNERGIE']] },
 };
+// rangées de baies de la zone technique : contre le mur d'écrans (côté gauche en entrant) et côté porte
+export const RACK_ROWS = { mur: ['ccu', 'ccu2', 'router', 'xvs', 'mv', 'evs', 'tx'], porte: ['spg', 'icom', 'patch', 'audio', 'rx', 'ups'] };
 const RU = 0.0445; // 1 U = 44,45 mm
 const LED_SPOTS = [];
 
@@ -410,8 +412,8 @@ export function buildTruck() {
 
   // ---------------- zone technique : baies ----------------
   const rackDefs = [];
-  ['ccu', 'ccu2', 'router', 'xvs', 'mv', 'evs', 'tx'].forEach((k, i) => rackDefs.push([k, 4.25 + i * 0.6, -1]));
-  ['spg', 'icom', 'patch', 'audio', 'rx', 'ups'].forEach((k, i) => rackDefs.push([k, 5.1 + i * 0.6, 1]));
+  RACK_ROWS.mur.forEach((k, i) => rackDefs.push([k, 4.25 + i * 0.6, -1]));
+  RACK_ROWS.porte.forEach((k, i) => rackDefs.push([k, 5.1 + i * 0.6, 1]));
   const rackPos = {};
   for (const [k, lx, side] of rackDefs) rackPos[k] = buildRack(B, k, lx, side);
   block(3.95, 8.15, IN.z0, IN.z0 + 0.85, 'rack', 'Baies');
@@ -510,12 +512,12 @@ export function buildTruck() {
     if (opts.zone === 'tech' && id !== 'hf') lab.position.y += (T.stations.filter((x) => x.zone === 'tech').length % 2) * 0.32;
     const ring = new THREE.Mesh(new THREE.RingGeometry(0.2, 0.26, 28), new THREE.MeshBasicMaterial({ color: 0x8a9098, transparent: true, opacity: 0.55, toneMapped: false, depthWrite: false }));
     ring.rotation.x = -Math.PI / 2; ring.position.set(X(lx), F + fy + 0.012, Z(lz)); scene.add(ring);
-    T.stations.push({ id, label, pos, look: lk, r: opts.r || 1.6, station: opts.station || id, arg: opts.arg, device: opts.device, zone: opts.zone, sprite: lab, ring, lx, lz });
+    T.stations.push({ id, label, short: opts.short, pos, look: lk, r: opts.r || 1.6, station: opts.station || id, arg: opts.arg, device: opts.device, zone: opts.zone, sprite: lab, ring, lx, lz });
   };
   st('son', 'Son', -6.75, -0.4, [-7.7, 0.9, -0.45], { zone: 'son', device: null });
   st('scripte', 'Scripte', -4.3, -0.75, [-4.3, 0.85, -1.55], { zone: 'prod' });
   st('realisateur', 'Réalisateur', -2.9, -0.75, [-2.9, 1.5, -2.5], { zone: 'prod' });
-  st('melangeur', 'Truquiste · XVS-6000', -1.3, -0.75, [-1.25, 0.85, -1.6], { zone: 'prod', device: 'mixpanel' });
+  st('melangeur', 'Truquiste · XVS-6000', -1.3, -0.75, [-1.25, 0.85, -1.6], { zone: 'prod', device: 'mixpanel', short: 'Truquiste' });
   st('habillage', 'Habillage', -4.3, 0.95, [-4.3, 1.0, 0.0], { zone: 'prod' });
   st('producteur', 'Production', -2.9, 0.95, [-2.9, 1.0, 0.0], { zone: 'prod' });
   st('chefdecar', 'Chef de car', -1.75, 0.95, [-1.75, 1.0, 0.0], { zone: 'prod' });
@@ -526,14 +528,14 @@ export function buildTruck() {
   const rk = (k, lzOff = 0) => [rackPos[k].lx, 1.25, (rackPos[k].faceZ - TRUCK.cz) + lzOff];
   st('ccu', 'Baie CCU', 4.55, -1.3, [4.55, 1.25, rackPos.ccu.faceZ - TRUCK.cz], { r: 1.3, zone: 'tech', device: 'ccu' });
   st('grille', 'Grille', 5.45, -1.3, rk('router'), { r: 1.2, zone: 'tech', device: 'router' });
-  st('xvsrack', 'Mélangeur (processeur)', 6.05, -1.3, rk('xvs'), { r: 1.1, station: 'melangeur', zone: 'tech', device: 'mixer' });
+  st('xvsrack', 'Mélangeur (processeur)', 6.05, -1.3, rk('xvs'), { r: 1.1, station: 'melangeur', zone: 'tech', device: 'mixer', short: 'Mélangeur (proc.)' });
   st('mvrack', 'Multiviewers', 6.65, -1.3, rk('mv'), { r: 1.1, station: 'grille', zone: 'tech', device: 'mv' });
   st('evsrack', 'Serveur EVS XT4K', 7.25, -1.3, rk('evs'), { r: 1.1, station: 'evs', arg: 0, zone: 'tech', device: 'evs' });
   st('transmission', 'Transmission', 7.85, -1.3, rk('tx'), { r: 1.1, zone: 'tech', device: 'conv' });
   st('synchro', 'Synchro (SPG)', 5.1, 1.3, rk('spg'), { r: 1.1, zone: 'tech', device: 'spg' });
   st('intercom', 'Intercom', 5.7, 1.3, rk('icom'), { r: 1.1, zone: 'tech' });
   st('mvproc', 'Baie de brassage', 6.3, 1.3, rk('patch'), { r: 1.1, station: 'brassage', zone: 'tech', device: 'pdc' });
-  st('audiorack', 'Audio (MADI, embedders)', 6.9, 1.3, rk('audio'), { r: 1.1, station: 'son', zone: 'tech' });
+  st('audiorack', 'Audio (MADI, embedders)', 6.9, 1.3, rk('audio'), { r: 1.1, station: 'son', zone: 'tech', short: 'Audio (MADI)' });
   st('hf', 'Régie HF', 7.75, -0.45, [8.65, 1.45, -0.45], { r: 1.3, zone: 'tech', device: 'rx' });
   return scene;
 }

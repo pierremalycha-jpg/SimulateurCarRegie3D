@@ -8,7 +8,7 @@ import { GFX, gfxTake, gfxOut } from '../gfx.js';
 import { AU, startAudio, applyFaders, resetLoudness, setMonitor, setLineDelay, setFollow, setSend, avOffsetMs, avOk, AV_TOL, videoLatencyMs, EMB_OPTIONS, SOUND_PLAN, soundPlanOk, embLabel } from '../audio.js';
 import { RF, LATENCY, channelInfo } from '../rf.js';
 import { maxAperture } from '../data.js';
-import { buildSynoptique } from './synoptique.js';
+import { synopticsPanel } from './synoptics.js';
 import { FAULTS, injectFault, activeFaults, faultPanel } from '../faults.js';
 import { EX, startExercise, stopExercise } from '../exercises.js';
 import { explainBox, explain, toggleFloatMon } from './widgets.js';
@@ -312,12 +312,12 @@ function buildChef(body, arg, ctx) {
   ctx.dock.append(dmon('mv', 'Multiview'));
   const tabs = el('div', { class: 'tabs' });
   const content = el('div', { class: 'list' });
-  const T = [['syn', 'Synoptique'], ['cables', 'Liste de câblage'], ['materiel', 'Matériel'], ['etat', 'État de l\'installation'], ['pannes', 'Simulateur de pannes'], ['lineup', 'Check-list line-up']];
+  const T = [['syn', 'Synoptiques'], ['cables', 'Liste de câblage'], ['materiel', 'Matériel'], ['etat', 'État de l\'installation'], ['pannes', 'Simulateur de pannes'], ['lineup', 'Check-list line-up']];
   let cur = 'syn'; let updater = null;
   const show = (k) => {
     cur = k; content.innerHTML = ''; updater = null;
     $$('.tab', tabs).forEach((b) => b.classList.toggle('on', b.dataset.k === k));
-    if (k === 'syn') { const w = el('div', { class: 'svgwrap' }); content.append(el('p', { class: 'note' }, 'Synoptique généré à partir de votre installation actuelle. Rouge = défaut. Cliquez sur un bloc pour son explication.'), w); const draw = () => { w.innerHTML = ''; w.appendChild(buildSynoptique()); }; draw(); let k2 = ''; updater = () => { const key = S.cams.map((c) => c.id + c.link + c.signalOK + (c.rf ? c.rf.state : '')).join() + Object.values(ROUTER.map).join() + JSON.stringify(S.faults) + EVS.recording + S.txPath; if (key !== k2) { k2 = key; draw(); } }; }
+    if (k === 'syn') { const p = synopticsPanel('video'); content.append(p.el); updater = p.update; }
     if (k === 'etat') { const box = el('div', { class: 'list' }); content.append(box); updater = () => { box.innerHTML = ''; for (const it of statusItems()) box.appendChild(el('div', { class: 'item' }, el('span', { class: 'dot ' + (it.level === 'err' ? 'red' : it.level === 'warn' ? 'amber' : 'green') }), el('div', { class: 'grow' }, el('div', { class: 't' }, it.t), el('div', { class: 's' }, it.s)))); }; }
     if (k === 'pannes') { const fp = faultPanel(); content.append(fp.el); updater = fp.update; }
     if (k === 'cables') { const cl = cablingList(); content.append(cl.el); updater = cl.update; }

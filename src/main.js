@@ -5,6 +5,7 @@ import { LIGHTING, TEAMS, STATION_INFO, CONTROLS_HELP } from './data.js';
 import { buildWorld, applyLighting, updateWorld, paintTruckSign, standAt, W, TRUCK, blockedOutside, groundHeight, inTruckFootprint } from './world.js';
 import { buildTruck, truckBlocked, truckFloorAt, updateTruck, updateTruckView, T } from './truck.js';
 import { initTruckMap, updateTruckMap, openTruckPlan } from './ui/truckmap.js';
+import { openSynoptics } from './ui/synoptics.js';
 import { initMatch, buildPlayers, stepMatch, initRecorder, record, M } from './match.js';
 import { loadPreset, lineUpCamera, updateRopes } from './bcam.js';
 import { updateRF } from './rf.js';
@@ -150,6 +151,7 @@ function buildToolbar() {
     b('Plan caméras', 'P', () => openPlan()),
     b('Aller à', 'T', () => teleportMenu()),
     b('Plan du car', 'Tab', () => openTruckPlan(), 'tb-truck'),
+    b('Synoptiques', 'Y', () => openSynoptics()),
     b('Guide', 'G', () => openGuide('missions')),
     b('Matériel', 'K', () => openEquipmentIndex()),
     b('Vol libre', 'V', () => { PL.fly = !PL.fly; updToolbar(); }, 'tb-fly'),
@@ -435,6 +437,7 @@ window.addEventListener('keydown', (e) => {
   if (e.code === 'KeyH') openGuide('commandes');
   if (e.code === 'KeyK') { if (target && target.kind === 'station' && target.device) openDevice(target.device, 1); else openEquipmentIndex(); }
   if (e.code === 'Tab' && S.inTruck) { e.preventDefault(); if (document.pointerLockElement) document.exitPointerLock(); openTruckPlan(); }
+  if (e.code === 'KeyY') openSynoptics();
   if (e.code === 'KeyM') $('#minimon').hidden = !$('#minimon').hidden;
 });
 window.addEventListener('keyup', (e) => { KEYS[e.code] = false; if (e.code === 'KeyR') returnHeld = false; if (e.key === '+') KEYS.Equal = false; if (e.key === '-') KEYS.Minus = false; });
@@ -495,6 +498,7 @@ window.addEventListener('resize', () => {
 // Événements de l'application
 // ----------------------------------------------------------------------------------
 on('takeCamera', (c) => takeCamera(c));
+on('openSynoptics', (t) => openSynoptics(t || 'video'));
 on('openStationNow', ({ id, cam }) => {
   const st = T.stations.find((s) => s.station === id);
   if (st) { PL.pos.set(st.pos.x, TRUCK.floor, st.pos.z); S.inTruck = true; PL.y = TRUCK.floor + 1.7; }
