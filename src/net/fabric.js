@@ -55,6 +55,8 @@ function leafPorts() {
 }
 function spinePorts() { const p = []; for (let i = 1; i <= 32; i++) p.push({ name: 'Ethernet' + i, type: 'QSFP28', speeds: ['100g', '40g', '25g', '10g'] }); return p; }
 function ctlPorts() { const p = []; for (let i = 1; i <= 48; i++) p.push({ name: 'Ethernet' + i, type: 'RJ45/SFP+', speeds: ['10g', '1g'] }); return p; }
+// port où se branche le PC de mesure (analyseur) sur chaque commutateur
+export const PROBE_PORT = { leaf: 'Ethernet48', spine: 'Ethernet32', ctl: 'Ethernet48' };
 export const SPEED_GBPS = { '1g': 1, '10g': 10, '25g': 25, '40g': 40, '100g': 100 };
 
 // ---------------- configurations ----------------
@@ -68,6 +70,7 @@ export function factoryConfig(sw) {
     vlans: { 1: { name: 'default', snooping: true, querier: false } }, svis: {},
     ptp: { mode: 'disabled', domain: 0, profile: 'default', announce: 1, sync: 0, delayReq: 0, priority1: 128, priority2: 128 },
     qos: { trust: 'none', ptpPriority: false },
+    monitor: {},
     ports,
   };
 }
@@ -95,13 +98,14 @@ export function referenceConfig(sw) {
       if (n >= 49 && n <= 52) {
         const s = n <= 50 ? 1 : 2, j = (n - 49) % 2;
         Object.assign(p, { mode: 'routed', vlan: 0, ip: `${p2p(c, k, s, j).leaf}/31`, pim: true, ospf: true, ptp: true, ptpRole: 'dynamic', speed: '100g', fec: 'rs', mtu: 9214, desc: `uplink spine-${c === 'red' ? 'r' : 'b'}${s} ${j ? 'b' : 'a'}` });
-      } else Object.assign(p, { mode: 'access', vlan: v, ptp: true, ptpRole: 'master', mtu: 9214, fec: 'auto' });
+      } else Object.assign(p, { mode: 'access', vlan: v, ptp: true, ptpRole: 'master', mtu: 9214, fec: 'auto', desc: n === 48 ? 'PC de mesure (analyseur)' : '' });
     }
   } else {
     for (const h of sw.hw) {
       const p = cfg.ports[h.name]; const n = +h.name.slice(8);
       if (n <= 24) { const k = Math.ceil(n / 2), j = (n - 1) % 2; if (k <= LEAVES.length) Object.assign(p, { mode: 'routed', vlan: 0, ip: `${p2p(c, k, sw.s, j).spine}/31`, pim: true, ospf: true, ptp: true, ptpRole: 'dynamic', speed: '100g', fec: 'rs', mtu: 9214, desc: `leaf-${c === 'red' ? 'r' : 'b'}${k} ${j ? 'b' : 'a'}` }); else p.shutdown = true; }
       else if (n === 31) Object.assign(p, { mode: 'routed', vlan: 0, ip: `${gmNet(c, sw.s).sw}/30`, pim: false, ospf: true, ptp: true, ptpRole: 'dynamic', speed: '10g', fec: 'none', mtu: 1500, desc: `grand maître PTP ${sw.s}` });
+      else if (n === 32) Object.assign(p, { mode: 'access', vlan: 1, desc: 'PC de mesure (analyseur)' });
       else p.shutdown = true;
     }
   }
@@ -146,7 +150,7 @@ const audioGbps = (ch) => ch * 0.0012 + 0.0004;
 export function topoKey() { return [S.format, S.cams.map((c) => c.id + c.link + c.T.model + c.T.hfr).join(','), mixInputs(), evsLayout().rec, EQUIP.evsServers].join('|'); }
 
 export function buildFabric() {
-  const old = FAB.switches;
+  const old = FAB.switches, oldDevs = FAB.devices;
   FAB.switches = {}; FAB.links = []; FAB.devices = {}; FAB.flows = {}; FAB.rx = {}; devIdx = 0;
   for (const c of COLORS) {
     for (const s of [1, 2]) FAB.switches[`SPINE-${c === 'red' ? 'R' : 'B'}${s}`] = mkSwitch(`SPINE-${c === 'red' ? 'R' : 'B'}${s}`, { role: 'spine', color: c, s, hostname: `spine-${c === 'red' ? 'r' : 'b'}${s}`, model: 'Spine 32 × 100 GbE (QSFP28)', loopback: loopSpine(c, s), mgmt: `10.10.0.${c === 'red' ? s : 4 + s}` });
@@ -227,6 +231,11 @@ export function buildFabric() {
   FAB.devices.nmos = { id: 'nmos', name: 'Registre NMOS + contrôleur', kind: 'nmos', leaf: 0, nics: {}, ctl: { sw: 'SW-CTRL', port: 'Ethernet17', vlan: 20 }, ctlIp: '10.20.0.10', ptp: {} };
   let cp = 18;
   for (const d of Object.values(FAB.devices)) { if (d.kind === 'nmos') continue; if (d.kind === 'gm') { d.ctl.port = 'Ethernet' + (12 + d.gm); continue; } d.ctl.port = 'Ethernet' + cp++; }
+  for (const d of Object.values(FAB.devices)) {
+    const o = oldDevs[d.id]; if (!o) continue;
+    for (const c of COLORS) if (d.nics[c] && o.nics && o.nics[c]) { d.nics[c].ip = o.nics[c].ip; d.nics[c].gw = o.nics[c].gw; }
+    if (o.ptp) Object.assign(d.ptp, o.ptp);
+  }
   if (!old['SW-CTRL']) { const C = FAB.switches['SW-CTRL']; for (const d of Object.values(FAB.devices)) for (const cf of [C.startup, C.running]) if (d.ctl.port) cf.ports[d.ctl.port].desc = d.kind === 'nmos' ? 'Registre NMOS' : d.name + ' (contrôle)'; }
   // ports de description sur les leaves
   for (const d of Object.values(FAB.devices)) for (const c of COLORS) {
@@ -248,6 +257,7 @@ function nicLink(d, c) {
   if (!hw.speeds.includes(p.speed) || !n.speeds.includes(p.speed)) return { up: false, reason: `vitesse ${p.speed} incompatible (carte : ${n.speeds.join('/')})` };
   const fecNeeded = p.speed === '25g' || p.speed === '100g' ? 'rs' : 'none';
   if (p.fec !== 'auto' && p.fec !== fecNeeded) return { up: false, reason: `FEC ${p.fec} ≠ ${fecNeeded} attendu à ${p.speed}` };
+  if (Object.values(sw.running.monitor || {}).some((m) => m.dest === n.port)) return { up: true, speed: SPEED_GBPS[p.speed], port: p, span: true };
   return { up: true, speed: SPEED_GBPS[p.speed], port: p };
 }
 function uplinkState(l) {
@@ -282,9 +292,9 @@ export function evaluate() {
   for (const d of Object.values(FAB.devices)) for (const c of COLORS) {
     if (!d.nics[c]) continue;
     const st = nicLink(d, c); const n = d.nics[c];
-    let reach = st.up;
-    let why = st.reason;
-    if (st.up && d.kind !== 'gm') {
+    let reach = st.up && !st.span;
+    let why = st.span ? `${n.port} est la destination d'une session miroir (SPAN) : il ne transporte plus que la copie du trafic` : st.reason;
+    if (st.up && !st.span && d.kind !== 'gm') {
       const sw = FAB.switches[n.sw]; const p = st.port; const v = vlanOf(c, d.leaf);
       if (p.mode !== 'access') { reach = false; why = `${n.port} n'est pas en mode accès`; }
       else if (p.vlan !== v) { reach = false; why = `${n.port} dans le VLAN ${p.vlan} au lieu du ${v}`; }
@@ -292,7 +302,7 @@ export function evaluate() {
       else if (!sw.running.svis[v] || sw.running.svis[v].shutdown || !inSubnet(n.ip, sw.running.svis[v].ip)) { reach = false; why = `pas de passerelle (SVI Vlan${v}) pour ${n.ip}`; }
       else if (!inSubnet(n.ip, `${sviIp(c, d.leaf)}/24`) || n.gw !== sviIp(c, d.leaf)) { reach = false; why = `adresse ${n.ip} / passerelle ${n.gw} incohérentes`; }
       else if (p.mtu < 1500) { reach = false; why = `MTU ${p.mtu} < 1500 : les paquets RTP de ~1 450 octets sont jetés`; }
-    } else if (st.up && d.kind === 'gm') {
+    } else if (st.up && !st.span && d.kind === 'gm') {
       const p = st.port; if (p.mode !== 'routed' || !p.ip || !inSubnet(n.ip, p.ip)) { reach = false; why = 'port du grand maître non routé ou mauvais sous-réseau'; }
     }
     R.nic[d.id + ':' + c] = { up: st.up, reach, why: reach ? '' : why, speed: st.speed || 0 };
@@ -578,6 +588,7 @@ export function portPeer(swId, port) {
       if (d.ctl && d.ctl.port) m['SW-CTRL|' + d.ctl.port] = { kind: 'ctl', dev: d };
     }
     for (const l of FAB.links) { m[l.a.sw + '|' + l.a.port] = { kind: 'link', link: l, side: 'a', other: l.b }; m[l.b.sw + '|' + l.b.port] = { kind: 'link', link: l, side: 'b', other: l.a }; }
+    for (const sw of Object.values(FAB.switches)) { const k = sw.id + '|' + PROBE_PORT[sw.role]; if (!m[k]) m[k] = { kind: 'probe', dev: { id: 'probe', name: 'PC de mesure (analyseur)' } }; }
     peerIdx = { b: FAB.build, m };
   }
   return peerIdx.m[swId + '|' + port] || null;
@@ -590,6 +601,7 @@ export function portState(swId, port) {
   if (p.shutdown) return { status: 'disabled', peer, reason: 'shutdown', inL: ld(''), outL: ld('') };
   if (!peer) return { status: 'notconnect', peer, reason: 'rien de raccordé', inL: ld(''), outL: ld('') };
   if (peer.kind === 'ctl') return { status: 'connected', peer, reason: '', inL: ld(''), outL: ld('') };
+  if (peer.kind === 'probe') { const mon = Object.values(sw.running.monitor || {}).find((m) => m.dest === port); return { status: 'connected', peer, reason: '', inL: ld(''), outL: mon ? spanLoad(sw.id, mon) : ld(''), span: mon }; }
   if (peer.kind === 'link') {
     const st = R.up[peer.link.id];
     const a = peer.side === 'a';
@@ -599,6 +611,15 @@ export function portState(swId, port) {
   // agrégat de deux liens : la charge se répartit sur les deux ports
   const half = (L) => (n.lanes === 2 ? { load: L.load / 2, cap: L.cap / 2, n: L.n } : peer.lane === 2 ? { load: 0, cap: 0, n: 0 } : L);
   return { status: n.up ? 'connected' : 'notconnect', peer, reason: n.reach ? (n.conflict ? 'conflit d\'adresse IP' : peer.lane === 2 && n.lanes !== 2 ? 'lien 2 hors agrégat (configuration différente)' : '') : n.why, inL: half(ld(`${peer.dev.id}:${peer.color}:up`)), outL: half(ld(`${peer.dev.id}:${peer.color}:down`)), nic: n };
+}
+// charge recopiée vers la destination d'une session miroir
+export function spanLoad(swId, mon) {
+  const sw = FAB.switches[swId]; const cap = SPEED_GBPS[sw.running.ports[mon.dest].speed];
+  if (!mon.src) return { load: 0, cap, n: 0 };
+  const st = portState(swId, mon.src); let load = 0, n = 0;
+  if (mon.dir !== 'tx') { load += st.inL.load; n += st.inL.n; }
+  if (mon.dir !== 'rx') { load += st.outL.load; n += st.outL.n; }
+  return { load, cap, n };
 }
 const hx = (n) => (n & 255).toString(16).padStart(2, '0');
 export function clockId(id) {
@@ -635,7 +656,7 @@ export function sdpOf(fid) {
 
 // remise à zéro complète (« tout réparer ») : configurations de référence, grands maîtres, registre
 export function resetFabric() {
-  FAB.switches = {}; FAB.mode = 'pim'; FAB.registryUp = true; FAB.timers = {};
+  FAB.switches = {}; FAB.devices = {}; FAB.mode = 'pim'; FAB.registryUp = true; FAB.timers = {};
   FAB.gm = { gm1: { up: true, gps: true, priority1: 100, priority2: 128 }, gm2: { up: true, gps: true, priority1: 110, priority2: 128 } };
   if (S.ipMode) buildFabric(); else FAB.key = '';
   markDirty();

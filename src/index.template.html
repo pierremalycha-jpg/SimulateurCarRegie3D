@@ -545,6 +545,44 @@ textarea { background: var(--bg); border: 1px solid var(--line2); border-radius:
 .net-cmdrow { display: flex; align-items: center; gap: 6px; border-top: 1px solid var(--line); padding-top: 6px; }
 .net-prompt { font-family: var(--f-mono); font-size: 13px; color: #ffd27a; white-space: nowrap; }
 .net-cmd { flex: 1; min-width: 0; font-family: var(--f-mono) !important; font-size: 13px; background: transparent !important; border: 0 !important; outline: none; color: #e8edf1; }
+
+/* ---------- Réseau IP : mesures et formation ---------- */
+.net-chart { display: block; width: 100%; height: auto; border: 1px solid var(--line); border-radius: 4px; margin-top: 6px; }
+.net-spark { display: block; width: 160px; height: 28px; }
+.net-an th { white-space: nowrap; }
+.net-an th.red { color: #ff8a80; } .net-an th.blue { color: #8ec2ff; }
+.net-decode details { background: var(--panel2); border: 1px solid var(--line); border-radius: 4px; padding: 4px 10px; margin-top: 6px; }
+.net-decode summary { font: 600 13px var(--f-disp); letter-spacing: .05em; text-transform: uppercase; cursor: pointer; color: #cfe3d0; }
+.net-pk { max-height: 380px; overflow: auto; }
+.net-tbl tr.warnrow td { background: rgba(255, 59, 48, .08); }
+.net-sdp { font-family: var(--f-mono); font-size: 12px; background: #07090b; border: 1px solid var(--line); border-radius: 4px; padding: 6px 8px; max-height: 60vh; overflow: auto; }
+.net-sdpl { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 12px; padding: 3px 0; border-bottom: 1px solid #141a20; }
+.net-sdpl.m { border-top: 1px solid var(--line2); margin-top: 4px; }
+.net-sdpl code { color: #cfe3d0; overflow-wrap: anywhere; } .net-sdpl .note { font-size: 12px; font-family: var(--f-body); }
+@media (max-width: 760px) { .net-sdpl { grid-template-columns: 1fr; gap: 2px; } }
+.net-cheat summary { cursor: pointer; font-size: 13px; color: var(--amber); }
+.net-progress { height: 6px; background: var(--raise); border-radius: 3px; overflow: hidden; }
+.net-progress i { display: block; height: 100%; background: linear-gradient(90deg, var(--amber), #2fd25a); }
+.net-missions { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 10px; }
+.net-mcard { background: var(--panel); border: 1px solid var(--line2); border-radius: 8px; padding: 10px 12px; display: flex; flex-direction: column; gap: 6px; }
+.net-mcard b { font-family: var(--f-disp); font-size: 16px; letter-spacing: .02em; }
+.net-mcard .k { font-family: var(--f-mono); font-size: 11px; color: var(--amber); letter-spacing: .06em; text-transform: uppercase; }
+.net-mcard.ok { border-color: #1f7a3c; } .net-mcard.on { border-color: var(--amber); box-shadow: 0 0 0 1px var(--amber) inset; }
+.net-mcard .note { margin: 0; flex: 1; }
+.net-mission { border-color: var(--amber); background: linear-gradient(180deg, rgba(255,176,32,.08), rgba(255,176,32,.02)); }
+.net-mission.compact { padding: 8px 12px; gap: 4px; }
+.net-mission.compact .net-obj li { font-size: 12.5px; }
+.net-done { border-color: #1f7a3c; background: linear-gradient(180deg, rgba(47,210,90,.10), rgba(47,210,90,.02)); }
+.net-obj { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+.net-obj li { display: flex; gap: 8px; align-items: baseline; font-size: 13.5px; color: #d6dde3; }
+.net-obj li.ok { color: #8cf0a8; }
+.net-obj .chk, .net-q .chk { font-family: var(--f-mono); width: 16px; flex: 0 0 16px; color: var(--amber); }
+.net-obj li.ok .chk, .net-q.ok .chk { color: #2fd25a; }
+.net-q { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; padding: 6px 8px; background: var(--panel2); border: 1px solid var(--line); border-radius: 5px; }
+.net-q.ok { border-color: #1f7a3c; }
+.net-q input { width: 200px; font-family: var(--f-mono); }
+.btn.net-opt { text-transform: none; font-family: var(--f-body); font-weight: 500; letter-spacing: 0; text-align: left; font-size: 14px; padding: 9px 12px; }
+.btn.net-opt.good { border-color: #2fd25a; background: #0d3d1b; } .btn.net-opt.bad { border-color: #ff3b30; background: #4a0f0c; } .btn.net-opt.dim { opacity: .55; }
 </style>
 
 <div id="input-layer"></div>

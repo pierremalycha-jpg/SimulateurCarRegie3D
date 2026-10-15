@@ -1,4 +1,4 @@
-import { FAB, COLORS, CLABEL, CNUM, LEAVES, vlanOf, ipToInt, inSubnet, SPEED_GBPS, markDirty, writeMemory, clone, portPeer, portState, clockId, PTP_REF, linkName } from './fabric.js';
+import { FAB, COLORS, CLABEL, CNUM, LEAVES, vlanOf, ipToInt, inSubnet, SPEED_GBPS, markDirty, writeMemory, clone, portPeer, portState, clockId, PTP_REF, linkName, spanLoad } from './fabric.js';
 
 // ----------------------------------------------------------------------------------
 // Ligne de commande des commutateurs, inspirée d'EOS / NX-OS (syntaxe simplifiée).
@@ -69,15 +69,16 @@ const SHOW = [
   C('show ip interface brief', 'interfaces IP (L3)', (s) => showIpBrief(swOf(s))),
   C('show ip route', 'table de routage', (s) => showRoute(swOf(s))),
   C('show ip arp', 'table ARP', (s) => showArp(swOf(s))),
-  C('show ip ospf neighbor', 'voisins OSPF', (s) => showOspf(swOf(s))),
-  C('show ip pim neighbor', 'voisins PIM', (s) => showPim(swOf(s))),
+  C('show ip ospf neighbor|neighbors', 'voisins OSPF', (s) => showOspf(swOf(s))),
+  C('show ip pim neighbor|neighbors', 'voisins PIM', (s) => showPim(swOf(s))),
   C('show ip mroute', 'routes multicast (S,G)', (s) => showMroute(swOf(s))),
   C('show ip igmp snooping groups', 'abonnements IGMPv3 par port', (s) => showIgmp(swOf(s))),
   C('show ip igmp snooping querier', 'querier IGMP par VLAN', (s) => showQuerier(swOf(s))),
   C('show ptp', 'état PTP (horloge frontière)', (s) => showPtp(swOf(s))),
   C('show ptp parent', 'maître et grand maître PTP', (s) => showPtpParent(swOf(s))),
   C('show ptp interface brief', 'état PTP de chaque port', (s) => showPtpInt(swOf(s))),
-  C('show lldp neighbors', 'voisins découverts (LLDP)', (s) => showLldp(swOf(s))),
+  C('show lldp neighbors|neighbor', 'voisins découverts (LLDP)', (s) => showLldp(swOf(s))),
+  C('show monitor session', 'sessions miroir (SPAN)', (s) => showMonitor(swOf(s))),
   C('show qos maps', 'correspondance DSCP → file', (s) => showQos(swOf(s))),
   C('show logging', 'journal (événements récents)', (s) => showLog(swOf(s))),
   C('show version', 'modèle et logiciel', (s) => showVersion(swOf(s))),
@@ -131,6 +132,10 @@ const CONFIG = [
   C('no qos trust', 'ignorer le DSCP', (s) => { cfgOf(s).qos.trust = 'none'; cfgOf(s).qos.ptpPriority = false; return ch(s); }),
   C('qos map dscp 46 to traffic-class 7', 'PTP dans la file prioritaire', (s) => { const q = cfgOf(s).qos; q.ptpPriority = true; if (q.trust !== 'dscp') { q.trust = 'dscp'; } return ch(s); }),
   C('no qos map dscp 46', 'PTP dans la file par défaut', (s) => { cfgOf(s).qos.ptpPriority = false; return ch(s); }),
+  C('monitor session <n> source <if>', 'port à recopier (entrée et sortie)', (s, a) => monSet(s, a.n, { src: a.if.names[0], dir: 'both' }, a.if)),
+  C('monitor session <n> source <if> rx|tx|both', 'port à recopier, sens choisi', (s, a) => monSet(s, a.n, { src: a.if.names[0], dir: a.lit }, a.if)),
+  C('monitor session <n> destination <if>', 'port où est branché l\'analyseur', (s, a) => monSet(s, a.n, { dest: a.if.names[0] }, a.if)),
+  C('no monitor session <n>', 'supprimer une session miroir', (s, a) => { delete (cfgOf(s).monitor || {})[a.n]; return ch(s); }),
   C('end', 'retour au mode exec', (s) => { s.mode = 'exec'; s.ctx = null; return ''; }),
   C('exit', 'remonter d\'un niveau', (s) => { s.mode = s.mode === 'config' ? 'exec' : 'config'; s.ctx = null; return ''; }),
 ];
@@ -187,6 +192,13 @@ const OSPFM = [
   C('max-lsa <n>', 'limite de LSA', () => '! Accepté (sans effet dans le simulateur)'),
 ];
 const ch = () => { markDirty(); return ''; };
+function monSet(s, n, o, I) {
+  if (I.type !== 'eth') return '% Une session miroir porte sur un port Ethernet';
+  const c = cfgOf(s); c.monitor = c.monitor || {};
+  const m = c.monitor[n] = { ...(c.monitor[n] || {}), ...o };
+  if (m.src && m.src === m.dest) { delete m.dest; return '% La source et la destination doivent être différentes'; }
+  return ch(s);
+}
 function vlanSet(s, n, o) { const c = cfgOf(s); if (!c.vlans[n]) return `% VLAN ${n} inexistant`; Object.assign(c.vlans[n], o); return ch(s); }
 function ptpIv(s, k, w) { const v = +w; if (!Number.isInteger(v) || v < -7 || v > 4) return '% Intervalle en log2 secondes (-7 à 4)'; cfgOf(s).ptp[k] = v; return ch(s); }
 function ifSet(s, o, l2, speed) {
@@ -215,8 +227,7 @@ function matchTok(pt, tok, sw) {
   if (pt === '<if>') { const r = parseIf(sw, tok); return r ? { if: r } : null; }
   const alts = pt.split('|'); const low = tok.toLowerCase();
   const hit = alts.filter((a) => a.startsWith(low));
-  if (hit.length === 1 || alts.includes(low)) return { lit: alts.includes(low) ? low : hit[0], word: true, cand: hit };
-  if (hit.length > 1) return { amb: true };
+  if (hit.length >= 1) return { lit: alts.includes(low) ? low : hit[0], word: true, cand: hit };
   return null;
 }
 function findCmd(list, toks, sw) {
@@ -281,6 +292,7 @@ export function runCli(s, line) {
   if (r.err) return r.err;
   // une commande du mode config tapée dans un sous-mode quitte ce sous-mode (comme sur un vrai commutateur)
   if (!fromOwn && own && CONFIG.includes(r.cmd) && !['end', 'exit'].includes(r.cmd.p[0])) { s.mode = 'config'; s.ctx = null; }
+  s.lastCmd = r.cmd.p.join(' ');
   let out = r.cmd.f(s, r.args) || '';
   if (filt && out) {
     const L = out.split('\n'); const v = filt.v.toLowerCase();
@@ -371,6 +383,8 @@ export function runningConfig(sw, only, startup) {
     if (c.mcastRouting) L.push('ip multicast-routing');
     if (c.ssmRange !== '232.0.0.0/8') L.push(`ip pim ssm range ${c.ssmRange}`);
     L.push('!');
+    for (const [n, m] of Object.entries(c.monitor || {})) { if (m.src) L.push(`monitor session ${n} source ${m.src}${m.dir && m.dir !== 'both' ? ' ' + m.dir : ''}`); if (m.dest) L.push(`monitor session ${n} destination ${m.dest}`); }
+    if (Object.keys(c.monitor || {}).length) L.push('!');
     if (c.ospf.enabled) L.push('router ospf 1', ...(c.ospf.routerId ? [`   router-id ${c.ospf.routerId}`] : []), '   max-lsa 12000', '!');
     L.push('end');
   }
@@ -615,9 +629,14 @@ function showLldp(sw) {
     const st = portState(sw.id, h.name); if (st.status !== 'connected' || !st.peer) continue;
     const p = st.peer;
     if (p.kind === 'link') rows.push([ifShort(h.name), FAB.switches[p.other.sw].running.hostname, p.other.port, 120]);
+    else if (p.kind === 'probe') rows.push([ifShort(h.name), 'analyseur-ip', 'eth0', 120]);
     else rows.push([ifShort(h.name), p.dev.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').slice(0, 24), p.kind === 'ctl' ? 'mgmt0' : p.color === 'red' ? 'media-a (rouge)' : 'media-b (bleu)', 120]);
   }
   return table(['Port', 'Neighbor Device ID', 'Neighbor Port ID', 'TTL'], rows, [6, 26, 18, 4]);
+}
+function showMonitor(sw) {
+  const M = sw.running.monitor || {}; if (!Object.keys(M).length) return 'Aucune session miroir.';
+  return Object.entries(M).map(([n, m]) => { const l = m.dest && m.src ? spanLoad(sw.id, m) : null; return [`Session ${n}`, '---------', `Source Ports:`, `   ${m.dir === 'rx' ? 'Rx Only' : m.dir === 'tx' ? 'Tx Only' : 'Both'}: ${m.src || '—'}`, `Destination Ports:`, `   ${m.dest || '—'} :  ${m.dest && m.src ? 'active' : 'inactive (session incomplète)'}`, l ? `   trafic recopié ≈ ${l.load.toFixed(2)} Gb/s pour un port de ${l.cap} Gb/s${l.load > l.cap ? '   ! la destination déborde : capture incomplète' : ''}` : ''].filter(Boolean).join('\n'); }).join('\n\n');
 }
 function showQos(sw) {
   const q = sw.running.qos;

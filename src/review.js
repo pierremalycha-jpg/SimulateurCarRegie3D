@@ -17,6 +17,10 @@ const NET2110 = 'Normes SMPTE ST 2110-10/-20/-21/-30/-40, ST 2022-7, ST 2059-2, 
 const STADE = 'Recherches web : site du RC Lens (tribunes, billetterie), stadiumdb.com, architectes (Atelier Ferret), presse (France 3, 90min)';
 
 export const REVIEW_ITEMS = [
+  ['net9', 'Mesures ST 2110', 'Géométrie retenue : 1 200 octets de vidéo par paquet, 4 paquets par ligne en 1080p (4 320 par image, 216 000 par seconde), 8 par ligne en UHD.', NET2110],
+  ['net10', 'Mesures ST 2110', 'ST 2110-21, émetteur étroit : CMAX = max(4, ⌊NPACKETS / (43 200 × RACTIVE × TFRAME)⌋), VRX_FULL = max(8, ⌊NPACKETS / (27 000 × TFRAME)⌋) ; TROFFSET ≈ 43 lignes (22 en entrelacé). Formules à vérifier dans la norme.', NET2110],
+  ['net11', 'Mesures ST 2110', 'Valeurs de l\'analyseur (gigue, CINST, VRX, latences, offsets PTP, transitoire au changement de grand maître) : simulées à partir de la charge des liens, ordres de grandeur seulement.', SIMU],
+  ['net12', 'Formation réseau', 'Barème : mission 10 points (−2 par indice, −5 si la configuration de référence est chargée) ; examen : 30 points par panne (20 + bonus de rapidité), −10 si la configuration n\'est pas enregistrée, −5 par alarme ajoutée.', SIMU],
   ['net1', 'Réseau ST 2110', 'Architecture : deux fabrics indépendantes (rouge / bleu), 2 spines 32 × 100 GbE et 6 leaves 48 × 25 GbE + 8 × 100 GbE par réseau, 2 × 100 GbE de chaque leaf vers chaque spine. À comparer au car réel (souvent moins de leaves dans un car).', SIMU],
   ['net2', 'Réseau ST 2110', 'Plan d\'adressage : VLAN 100 × réseau + leaf, 10.réseau.leaf.0/24, passerelle .1, loopbacks 10.0.x.y, /31 sur l\'underlay, groupes 239.réseau.leaf.n port 5004. Exemple pédagogique.', SIMU],
   ['net3', 'Réseau ST 2110', 'PTP ST 2059-2 : domaine 127, logAnnounceInterval −2, logSyncInterval −3, logMinDelayReqInterval −3, timeout Announce 3 ; grands maîtres priority1 100 / 110, clockClass 6 (GPS) et 7 (holdover).', NET2110],

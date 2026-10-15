@@ -428,6 +428,15 @@ export const STATION_INFO = {
 export const GLOSSARY = [
   ['SDI', 'Serial Digital Interface : vidéo numérique non compressée sur câble coaxial 75 Ω (BNC). HD-SDI 1,485 Gb/s (SMPTE ST 292), 3G-SDI 2,97 Gb/s (ST 424) pour le 1080p50, 12G-SDI 11,88 Gb/s (ST 2082) pour l\'UHD sur un seul câble. Transporte aussi l\'audio embeddé (16 canaux), le timecode et des données.'],
   ['Quad-link / 2SI', 'UHD transporté sur 4 liens 3G-SDI : découpage en quadrants (Square Division) ou entrelacement de 2 échantillons (2SI).'],
+  ['ST 2110-21', 'Norme de régularité d\'émission des paquets vidéo : émetteurs de type N (étroit, paquets réguliers) ou W (large, rafales), avec deux limites mesurables : CMAX et VRX_FULL.'],
+  ['CMAX / CINST', 'CINST : nombre de paquets arrivés en avance sur le rythme régulier (rafale instantanée). Il doit rester sous CMAX, calculé pour le format et le type d\'émetteur.'],
+  ['VRX_FULL', 'Taille du tampon du « récepteur virtuel » de ST 2110-21. Si le remplissage mesuré la dépasse, un récepteur conforme peut perdre des paquets.'],
+  ['RFC 4175', 'Format RTP de la vidéo non compressée utilisé par ST 2110-20 : chaque paquet indique sa ligne et son décalage en pixels.'],
+  ['Numéro de séquence RTP', 'Compteur de 16 bits incrémenté à chaque paquet : un trou dans la suite signale des paquets perdus.'],
+  ['SPAN / port miroir', 'Fonction d\'un commutateur qui recopie le trafic d\'un port vers un autre, où l\'on branche un analyseur (monitor session).'],
+  ['MAC multicast', '01:00:5e suivi des 23 bits de poids faible de l\'adresse du groupe IPv4 : 32 groupes partagent une même adresse MAC.'],
+  ['Offset PTP', 'Écart entre l\'horloge d\'un appareil et celle de son maître, mesuré à chaque message Sync. Quelques dizaines de ns quand tout va bien.'],
+  ['Écart 2022-7', 'Différence de temps de traversée entre les réseaux rouge et bleu, que le récepteur doit absorber dans son tampon de fusion.'],
   ['Spine-leaf', 'Architecture de réseau à deux étages (réseau de Clos) : chaque leaf (commutateur d\'accès) est reliée à chaque spine (commutateur de cœur). Tout chemin fait leaf → spine → leaf.'],
   ['Leaf / ToR', 'Commutateur d\'accès placé en haut de baie (Top of Rack), où se raccordent les appareils (25 GbE, 100 GbE).'],
   ['Réseaux rouge et bleu', 'Les deux réseaux média indépendants (A et B) d\'une installation ST 2022-7 : chaque flux est émis sur les deux, sans aucun lien entre eux.'],
@@ -809,6 +818,36 @@ export const GUIDE = [
 <li>Multicast : plage SSM, IGMPv3, PIM sur les SVI et les uplinks, show ip mroute le long du chemin.</li>
 <li>Bande passante, puis PTP (show ptp parent), puis enregistrement NMOS. Après réparation : write memory.</li></ol>
 <p class="note">Simplifications : syntaxe et sorties des commandes inspirées des constructeurs sans en être la copie ; pas de BGP/EVPN, d'agrégats LACP ni de QoS fine ; minuteries raccourcies ; débits arrondis. Plan d'adressage et numérotation des ports : exemple pédagogique, à adapter aux conventions de votre car.</p>`},
+  {
+    id: 'mesure2110', title: 'Mesurer et analyser un flux ST 2110', html: `
+<p>En SDI, un oscilloscope et un moniteur suffisaient. En IP, une image peut être parfaite et le réseau en danger (une seule jambe 2022-7 reçue), ou l'image dégradée alors que tous les commutateurs sont « verts ». Le poste <b>Réseau IP → Mesures</b> donne les trois instruments de base.</p>
+<h3>Anatomie d'un paquet vidéo ST 2110-20</h3>
+<table class="tbl"><tr><th>Couche</th><th>Ce qu'on y lit</th></tr>
+<tr><td>Ethernet</td><td>MAC de destination multicast : 01:00:5e + les 23 bits de poids faible du groupe (239.1.1.1 → 01:00:5e:01:01:01). 32 groupes partagent la même MAC : un plan d'adressage soigné évite les collisions.</td></tr>
+<tr><td>IPv4</td><td>Source (l'émetteur), destination (le groupe), DSCP (26 pour la vidéo dans ce car), TTL, « ne pas fragmenter ».</td></tr>
+<tr><td>UDP</td><td>Port 5004 dans ce car (défini par le SDP).</td></tr>
+<tr><td>RTP (RFC 3550)</td><td>Type de charge (96), numéro de séquence (un trou = un paquet perdu), horodatage 90 kHz aligné sur PTP, bit M sur le dernier paquet de l'image, SSRC.</td></tr>
+<tr><td>En-tête RFC 4175</td><td>Numéro de séquence étendu, longueur, numéro de ligne et décalage en pixels : le récepteur sait où placer chaque morceau d'image.</td></tr></table>
+<p>Ordre de grandeur en 1080p50 : 1 200 octets de vidéo par paquet (480 pixels), 4 paquets par ligne, 4 320 paquets par image, <b>216 000 paquets par seconde</b>. En UHD : 864 000 paquets par seconde.</p>
+<h3>Régularité : ST 2110-21</h3>
+<p>Un émetteur ne doit pas envoyer ses paquets en rafales, sinon les files d'attente des commutateurs et les tampons des récepteurs débordent. ST 2110-21 définit deux modèles :</p>
+<ul><li><b>Type N (étroit)</b> : paquets réguliers, petit tampon côté récepteur — typique des appareils matériels (caméras, mélangeurs).</li>
+<li><b>Type W (large)</b> : rafales tolérées, tampon plus grand — typique des logiciels sur serveur.</li></ul>
+<p>On mesure <b>CINST</b> (rafale instantanée, comparée à <b>CMAX</b>) et le remplissage du <b>récepteur virtuel</b> (comparé à <b>VRX_FULL</b>). Dans le simulateur, CMAX et VRX_FULL sont calculés pour le format choisi ; la gigue et CINST montent quand les liens traversés sont chargés.</p>
+<h3>ST 2022-7 : les deux jambes</h3>
+<p>L'analyseur compare les deux réseaux : débit et pertes de chaque jambe, <b>écart de temps</b> entre rouge et bleu (quelques microsecondes ici, car les deux fabrics sont identiques), paquets <b>réparés</b> par l'autre réseau et paquets <b>perdus définitivement</b>. Des paquets réparés en continu signalent une jambe malade, même si l'image est parfaite.</p>
+<h3>PTP : suivre l'offset</h3>
+<p>Chaque appareil mesure son écart (offset) avec son maître à chaque message Sync. Verrouillé : quelques dizaines de nanosecondes. Au changement de grand maître : un saut, puis la convergence de l'asservissement en quelques secondes. Bruit de plusieurs centaines de nanosecondes : PTP n'a pas la priorité dans les files des commutateurs et les liens sont chargés. Appareil verrouillé sur une horloge non traçable : l'offset paraît bon, mais tout le réseau dérive par rapport au GPS — d'où l'intérêt de regarder <i>qui</i> est le grand maître (show ptp parent).</p>
+<h3>La capture de paquets</h3>
+<p>On ne se branche pas « en coupure » sur un lien 100 GbE : on crée une <b>session miroir</b> (SPAN) qui recopie le trafic d'un port vers le port où est branché l'analyseur. Deux pièges :</p>
+<ul><li>si le port de destination est plus lent que le trafic recopié, c'est la <b>capture</b> qui perd des paquets, pas le réseau ;</li>
+<li>un port de destination de SPAN ne transporte plus le trafic normal : ne jamais choisir le port d'un appareil en service.</li></ul>
+<p>Dans la capture, on vérifie : les groupes et les sources attendus (filtre SSM), le DSCP, la continuité des numéros de séquence RTP, la présence des messages PTP (Announce, Sync, Follow_Up, Delay_Req / Delay_Resp, domaine 127), les rapports IGMPv3 du récepteur et la requête du querier.</p>
+<h3>Le SDP, ligne par ligne</h3>
+<p>Dans le poste, chaque ligne du SDP est commentée : <code>m=</code> (média, port, type de charge), <code>c=</code> (groupe), <code>a=source-filter</code> (SSM), <code>a=rtpmap</code> et <code>a=fmtp</code> (format), <code>a=ts-refclk</code> (horloge PTP), <code>a=group:DUP</code> et <code>a=mid</code> (les deux jambes 2022-7).</p>
+<h3>Parcours de formation</h3>
+<p>L'onglet <b>Formation</b> du poste Réseau IP propose quatorze missions (de la lecture de la topologie à la reconstruction d'une leaf), un quiz de dix questions tirées au sort et un examen de dépannage noté (trois pannes cachées, quinze minutes). Les résultats remontent au formateur dans l'Espace formateur → suivi des stagiaires.</p>
+<p class="note">Valeurs simulées : CINST, VRX, gigue, latences et offsets suivent l'état du réseau mais ne remplacent pas un analyseur réel. Les formules de CMAX et VRX_FULL suivent le modèle étroit de ST 2110-21 ; à faire vérifier pour vos formats.</p>`},
   {
     id: 'hdrguide', title: 'HDR, SDR et colorimétrie', html: `
 <h3>Gamut et courbe</h3>

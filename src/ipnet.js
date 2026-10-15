@@ -1,5 +1,6 @@
 import { S } from './state.js';
 import { FAB, updateFabric, videoGbps, SPEED_GBPS, setSwitchPower, markDirty, resetFabric, PTP_REF } from './net/fabric.js';
+import { updateAnalyzer } from './net/analyzer.js';
 
 // ----------------------------------------------------------------------------------
 // Car IP (SMPTE ST 2110) : façade simple sur le modèle réseau détaillé (net/fabric.js).
@@ -44,6 +45,7 @@ export function updateNet(dt, routeMap = {}, recPhase = {}) {
   if (!S.ipMode) return;
   updateFabric(dt, routeMap, recPhase);
   sync();
+  updateAnalyzer(dt);
 }
 export function netStatus() {
   const out = [];
@@ -118,9 +120,16 @@ export const IP_FAULTS = [
   },
   {
     id: 'rogue', net: true, label: 'Appareil élu grand maître PTP', where: 'Réseau IP (PTP)',
-    can: () => S.ipMode && FAB.devices.gfx && FAB.devices.gfx.ptp.slaveOnly !== false, inject() { Object.assign(FAB.devices.gfx.ptp, { slaveOnly: false, priority1: 50, clockClass: 248 }); for (const s of both(2)) port(s, 'Ethernet1').ptpRole = 'dynamic'; markDirty(); return {}; },
+    can: () => S.ipMode && !NET.rogue && Object.values(FAB.devices).some((d) => ['gfx', 'mon', 'tx', 'audio', 'gateway'].includes(d.kind)),
+    inject() {
+      const pool = Object.values(FAB.devices).filter((d) => ['gfx', 'mon', 'tx', 'audio', 'gateway'].includes(d.kind) && d.nics.red);
+      const d = pool[Math.floor(Math.random() * pool.length)];
+      Object.assign(d.ptp, { slaveOnly: false, priority1: 50, clockClass: 248 });
+      for (const c of ['red', 'blue']) port(d.nics[c].sw, d.nics[c].port).ptpRole = 'dynamic';
+      markDirty(); return { dev: d.id };
+    },
     check: () => !NET.rogue,
-    hint: 'Les caméras perdent leur verrouillage (images qui sautent) : le moteur d\'habillage, mis à jour, n\'est plus « slave only » et s\'annonce avec priority1 50. Réseau IP → PTP : le repasser en slave only, et protéger les ports d\'accès par « ptp role master ».',
+    hint: 'Les caméras perdent leur verrouillage (images qui sautent) : un appareil mis à jour n\'est plus « slave only » et s\'annonce avec priority1 50 ; le port de la leaf n\'est plus protégé. Réseau IP → PTP : trouver l\'appareil élu (show ptp parent), le repasser en slave only, et remettre « ptp role master » sur son port d\'accès.',
   },
   {
     id: 'fec', net: true, label: 'FEC incohérente sur le port d\'une CCU', where: 'Réseau IP (leaf caméras)',

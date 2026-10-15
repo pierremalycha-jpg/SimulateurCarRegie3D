@@ -77,6 +77,11 @@ function mergeProgress(d) {
   for (const r of d.reports || []) if (!seenR.has(r.at)) PROG.reports.push(r);
   PROG.perf = PROG.perf || d.perf || null;
   PROG.patchBest = Math.max(PROG.patchBest || 0, d.patchBest || 0);
+  if (d.net) {
+    const n = PROG.net = PROG.net || { missions: {}, quiz: [], exams: [] };
+    n.missions = { ...(d.net.missions || {}), ...n.missions };
+    for (const k of ['quiz', 'exams']) { const seen = new Set((n[k] || []).map((x) => x.at)); n[k] = n[k] || []; for (const x of d.net[k] || []) if (!seen.has(x.at)) n[k].push(x); }
+  }
 }
 function restoreProgress() {
   Object.assign(S.missionsDone, PROG.missions);

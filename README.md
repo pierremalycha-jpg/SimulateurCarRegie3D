@@ -102,6 +102,24 @@ Le simulateur est réglé sur ce parc (modifiable dans l'Espace formateur → «
 - Liste de câblage du car IP générée port par port, synoptiques réseau et PTP tirés de la vraie topologie, chapitre
   « Réseau ST 2110 spine-leaf » et 22 termes de glossaire.
 
+## Ce que contient la v7 : mesurer et former sur le réseau ST 2110
+
+- **Onglet Formation** du poste Réseau IP : 14 missions guidées (topologie, adressage, CLI, OSPF/ECMP, suivi d'un flux,
+  lecture d'un SDP, PTP, mesures, 5 dépannages, reconstruction d'une leaf depuis la configuration usine). Les objectifs
+  se cochent seuls (actions dans le poste, commandes tapées, état réel du réseau) ; questions intégrées, indices
+  payants, barème. Quiz de 10 questions tirées dans 26. **Examen** : 3 pannes cachées enregistrées dans la startup,
+  15 minutes, score et compte rendu téléchargeable. Résultats dans le suivi du formateur.
+- **Onglet Mesures** :
+  - analyseur de flux : débit, paquets/s, pertes, gigue, CINST / CMAX et VRX / VRX_FULL (ST 2110-21), latence,
+    décalage RTP → arrivée, écart rouge / bleu et paquets réparés / perdus (ST 2022-7), historiques sur 60 s ;
+  - suivi PTP : offset de chaque appareil ou commutateur, transitoire au changement de grand maître, dérive d'une
+    horloge non traçable ;
+  - capture sur port miroir (monitor session) : flux observés, paquets RTP / PTP / IGMP / OSPF / PIM décodés couche par
+    couche (Ethernet, IPv4/DSCP, UDP, RTP, RFC 4175), trous de séquence, débordement du port miroir ;
+  - charge des liens avec historique.
+- SDP commenté ligne par ligne, antisèche EOS / NX-OS / IOS-XE, alias NX-OS dans le CLI, adresses modifiées
+  conservées, panne « horloge pirate » sur un appareil au hasard, chapitre « Mesurer et analyser un flux ST 2110 ».
+
 ## Construire et tester
 
 ```
@@ -113,6 +131,7 @@ node tools/syn.mjs OUT sdi    # captures des synoptiques (aussi : faults, ip)
 node tools/reach.mjs          # chaque poste du car est-il accessible à pied ?
 node tools/netcli.mjs HD LEAF-R1 'sh ip route;;sh ptp'   # modèle réseau et CLI sans navigateur
 node tools/net.mjs OUT HD     # poste Réseau IP, terminal, pannes réseau et effets à l'image
+node tools/course.mjs OUT HD  # parcours de formation, mesures, capture, quiz, examen
 node tools/func.mjs           # tests fonctionnels historiques
 ```
 
@@ -132,12 +151,14 @@ node tools/func.mjs           # tests fonctionnels historiques
 | `ipnet.js` | Car IP : façade simple (état des réseaux, PTP, NMOS) et pannes réseau |
 | `net/fabric.js` | Réseau ST 2110 : topologie spine-leaf rouge / bleu, configurations des commutateurs, moteur d'évaluation (liens, OSPF, PIM-SSM / IGMPv3, bande passante, ST 2022-7, PTP BMCA, NMOS), SDP |
 | `net/cli.js` | Ligne de commande des commutateurs (syntaxe de type EOS / NX-OS) |
+| `net/analyzer.js` | Instruments : analyseur de flux ST 2110-21 / 2022-7, suivi PTP, capture de paquets décodée |
+| `net/course.js` | Parcours de formation réseau : missions vérifiées, quiz, examen noté |
 | `audio.js` | Console son : sources, bus PGM / INTL / N-1, retard de ligne, embedder, loudness EBU R128, pannes son |
 | `scenario.js` | Scénario « jour de match » chronométré et noté |
 | `shared.js` | Données partagées de la page publiée (configuration, progression) avec repli local |
 | `review.js` | Points techniques à faire relire par le formateur |
 | `gfx.js` | Habillage (score, bandeaux, statistiques) |
 | `truck.js` (car) | Intérieur du car : plan, postes, baies et pupitres détaillés, collisions |
-| `ui/` | Réseau IP (`st_network.js`), synoptiques (`synoptics.js`), plan du car (`truckmap.js`), postes (`stations.js`, `st_vision.js`, `st_evs.js`, `st_mixer.js`, `st_ipd.js`, `st_patch.js`), espace formateur (`config.js`), rapports (`report.js`), plan, guide, missions |
+| `ui/` | Réseau IP (`st_network.js`, `net_tools.js`, `net_course.js`), synoptiques (`synoptics.js`), plan du car (`truckmap.js`), postes (`stations.js`, `st_vision.js`, `st_evs.js`, `st_mixer.js`, `st_ipd.js`, `st_patch.js`), espace formateur (`config.js`), rapports (`report.js`), plan, guide, missions |
 | `equipment/` | Visionneuse de matériel : appareils (`devices.js`), liste de câblage (`cabling.js`), rendu SVG et photos (`viewer.js`) |
 | `faults.js`, `exercises.js` | Simulateur de pannes, réalisateur virtuel et opérateur EVS automatique |

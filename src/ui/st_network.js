@@ -5,6 +5,10 @@ import { explain } from './widgets.js';
 import { FAB, COLORS, CLABEL, LEAVES, vlanOf, subnetOf, sviIp, p2p, gmNet, SPEED_GBPS, PTP_REF, DSCP_REF, QUERIER_TIMEOUT, markDirty, evaluate, setSwitchPower, writeMemory, loadReference, loadFactory, portState, sdpOf, clockId, linkName, ipToInt, inSubnet, videoGbps, resetFabric, buildFabric, topoKey } from '../net/fabric.js';
 import { cliSession, runCli, cliPrompt, cliComplete, runningConfig, ptpPorts, ifShort } from '../net/cli.js';
 import { FAULTS, injectFault } from '../faults.js';
+import { tabMeasure, setMeasureSub } from './net_tools.js';
+import { tabCourse, missionCard } from './net_course.js';
+import { NC, NET_MISSIONS, objectivesOf } from '../net/course.js';
+import { selectRx, sdpExplain } from '../net/analyzer.js';
 import { offerDownload } from '../shared.js';
 
 // ----------------------------------------------------------------------------------
@@ -18,7 +22,8 @@ const V = { tab: 'topo', sw: 'LEAF-R1', port: 'Ethernet1', sub: 'ports', term: {
 const host = (id) => (FAB.switches[id] ? FAB.switches[id].running.hostname : id);
 const fmtG = (x) => (x >= 1 ? fmt(x, 1) + ' Gb/s' : x > 0 ? fmt(x * 1000, 0) + ' Mb/s' : '0');
 const dotCls = (lv) => 'dot ' + (lv === 'err' ? 'red' : lv === 'warn' ? 'amber' : lv === 'off' ? '' : 'green');
-const TABS = [['topo', 'Topologie'], ['switch', 'Commutateurs'], ['addr', 'Plan d\'adressage'], ['flows', 'Flux NMOS · SDP'], ['ptp', 'PTP'], ['diag', 'Diagnostic']];
+const TABS = [['learn', 'Formation'], ['topo', 'Topologie'], ['switch', 'Commutateurs'], ['addr', 'Plan d\'adressage'], ['flows', 'Flux NMOS · SDP'], ['meas', 'Mesures'], ['ptp', 'PTP'], ['diag', 'Diagnostic']];
+const log = (type, o = {}) => emit('netlog', { type, ...o });
 
 export function buildNetwork(body, arg, ctx) {
   ctx.dock.append(el('div', { class: 'monwrap grow' }, el('div', { class: 'lab' }, 'Multiview (les flux reçus par le multiviewer)'), el('div', { class: 'mon fill', 'data-gl': 'mv' })));
@@ -32,30 +37,39 @@ export function buildNetwork(body, arg, ctx) {
   if (!FAB.res || FAB.key !== topoKey()) buildFabric();
   if (arg && FAB.switches[arg]) { V.sw = arg; V.tab = 'switch'; }
   const summary = el('div', { class: 'net-sum' });
+  const mbox = el('div', { class: 'list' });
   const tabs = el('div', { class: 'tabs' });
   const content = el('div', { class: 'list net' });
-  body.append(summary, tabs, content);
-  const show = (k) => { V.tab = k; for (const b of tabs.children) b.classList.toggle('on', b.dataset.k === k); render(true); };
+  body.append(summary, mbox, tabs, content);
+  const show = (k) => { V.tab = k; for (const b of tabs.children) b.classList.toggle('on', b.dataset.k === k); log('tab', { tab: k }); render(true); };
   for (const [k, l] of TABS) tabs.append(el('button', { class: 'tab', 'data-k': k, onclick: () => show(k) }, l));
   let lastKey = '';
-  const R = { content, show, refresh: () => render(true) };
+  const R = { content, show, refresh: () => render(true), applyCli, live: null };
   function render(force) {
     const key = stateKey();
     if (!force && key === lastKey) return;
     lastKey = key;
     drawSummary(summary);
+    mbox.innerHTML = '';
+    if (V.tab !== 'learn' && (NC.active || NC.exam)) { if (NC.active) missionCard(mbox, R, true); else mbox.append(el('div', { class: 'hwpanel net-mission compact' }, el('div', { class: 'hwrow' }, el('h3', {}, NC.exam.over ? 'Examen terminé' : 'Examen réseau en cours'), el('button', { class: 'btn small', onclick: () => show('learn') }, 'Voir')))); }
     const a = document.activeElement;
     const typing = a && content.contains(a) && ['INPUT', 'SELECT', 'TEXTAREA'].includes(a.tagName);
     if (V.tab === 'switch' && V.sub === 'term' && !force) { refreshSwitchFrame(R); return; }
     if (typing && !force) { lastKey = ''; return; }
-    content.innerHTML = '';
-    ({ topo: tabTopo, switch: tabSwitch, addr: tabAddr, flows: tabFlows, ptp: tabPtp, diag: tabDiag })[V.tab](content, R);
+    content.innerHTML = ''; R.live = null;
+    ({ learn: tabCourse, topo: tabTopo, switch: tabSwitch, addr: tabAddr, flows: tabFlows, meas: tabMeasure, ptp: tabPtp, diag: tabDiag })[V.tab](content, R);
   }
-  R.go = (tab, o = {}) => { Object.assign(V, o); show(tab); };
+  R.go = (tab, o = {}) => { const { msub, keepCourse, ...rest } = o; for (const k in rest) if (rest[k] !== undefined) V[k] = rest[k]; if (msub) setMeasureSub(msub); show(tab); };
   show(V.tab);
-  return { update() { render(false); } };
+  return { update() { render(false); if (R.live) R.live(); } };
 }
-function stateKey() { return [FAB.ver, FAB.lastMap, FAB.mode, FAB.registryUp, JSON.stringify(FAB.gm), FAB.issues.map((i) => i.title + i.detail).join('|'), V.tab, V.sw, V.port, V.sub, V.sel && V.sel.id, V.rx, V.onlyConn].join('§'); }
+function courseKey() {
+  let k = (NC.active || '') + '|' + Object.keys(NC.answers).length + '|' + (NC.done ? NC.done.id : '') + '|' + (NC.hints[NC.active] || 0);
+  if (NC.active) { const m = NET_MISSIONS.find((x) => x.id === NC.active); if (m) k += objectivesOf(m).map((o) => (o.ok ? 1 : 0)).join(''); }
+  if (NC.exam) k += '|exam' + (NC.exam.over ? 'o' : 'r') + NC.exam.faults.length + NC.exam.faults.filter((f) => f.entry && f.entry.done).length;
+  return k;
+}
+function stateKey() { return [FAB.ver, FAB.lastMap, FAB.mode, FAB.registryUp, JSON.stringify(FAB.gm), FAB.issues.map((i) => i.title + i.detail).join('|'), V.tab, V.sw, V.port, V.sub, V.sel && V.sel.id, V.rx, V.onlyConn, courseKey()].join('§'); }
 
 // ---------------- bandeau de synthèse ----------------
 function drawSummary(box) {
@@ -107,7 +121,7 @@ function tabTopo(box, R) {
   const svg = sv('svg', { viewBox: `0 0 1400 ${H}`, class: 'net-topo', role: 'img', 'aria-label': 'Topologie spine-leaf des réseaux rouge et bleu' });
   svg.append(sv('rect', { x: 0, y: 0, width: 1400, height: H, fill: '#0b0e11' }));
   svg.append(sv('text', { x: 14, y: 18, class: 'nt-h red' }, 'RÉSEAU ROUGE (A)'), sv('text', { x: 14, y: H - 10, class: 'nt-h blue' }, 'RÉSEAU BLEU (B)'));
-  const click = (g, sel) => { g.style.cursor = 'pointer'; g.addEventListener('click', () => { if (sel.kind === 'sw' && V.sel && V.sel.id === sel.id) { R.go('switch', { sw: sel.id }); return; } V.sel = sel; R.refresh(); }); };
+  const click = (g, sel) => { g.style.cursor = 'pointer'; g.addEventListener('click', () => { if (sel.kind === 'sw' && V.sel && V.sel.id === sel.id) { R.go('switch', { sw: sel.id }); return; } V.sel = sel; log('sel', { kind: sel.kind, id: sel.id, role: sel.kind === 'sw' ? FAB.switches[sel.id].role : null }); R.refresh(); }); };
   // uplinks
   for (const l of FAB.links) {
     const red = l.color === 'red'; const st = linkStyle(l);
@@ -220,6 +234,7 @@ function applyCli(id, lines, why) {
   for (const l of ['configure terminal', ...lines, 'end']) { const r = runCli(s, l); if (r && r.startsWith('%')) errs.push(`${l} → ${r}`); }
   const T = termLog(id); T.lines.push({ t: 'gui', s: `! interface graphique :\n${lines.join('\n')}` });
   if (errs.length) { toast(errs[0], 'bad'); explain(errs[0], 'warn'); return false; }
+  log('gui', { sw: id, lines });
   explain(`${host(id)} : ${why} Équivalent CLI : configure terminal ⏎ ${lines.join(' ⏎ ')} ⏎ end (non enregistré tant que « write memory » n'est pas fait).`);
   return true;
 }
@@ -249,7 +264,7 @@ function switchFrame(R) {
     el('div', { class: 'hwrow' },
       el('button', { class: 'btn small', onclick: () => { setSwitchPower(sw.id, !sw.power); explain(sw.power ? `${sw.running.hostname} rallumé : il redémarre sur sa configuration de démarrage (startup-config). Ce qui n'avait pas été enregistré par « write memory » est perdu.` : `${sw.running.hostname} hors tension. ${sw.role === 'ctl' ? 'Le contrôle NMOS est perdu.' : `Les flux qui passaient par lui ne passent plus que par le réseau ${sw.color === 'red' ? 'bleu' : 'rouge'} : à l'image rien ne change (ST 2022-7), mais il n'y a plus de secours.`}`, sw.power ? 'warn' : ''); R.refresh(); } }, sw.power ? 'Couper l\'alimentation' : 'Rallumer'),
       el('button', { class: 'btn small' + (dirty ? ' primary' : ''), onclick: () => { writeMemory(sw.id); termLog(sw.id).lines.push({ t: 'gui', s: '! interface graphique :\nwrite memory' }); explain(`write memory : la configuration active (running-config) de ${sw.running.hostname} est copiée dans la configuration de démarrage (startup-config). Elle survivra à un redémarrage.`); R.refresh(); } }, 'Enregistrer (write memory)'),
-      el('button', { class: 'btn small', onclick: () => { loadReference(sw.id); explain(`Configuration de référence chargée dans la running-config de ${sw.running.hostname} (pensez à « write memory »).`); R.refresh(); } }, 'Charger la config de référence'),
+      el('button', { class: 'btn small', onclick: () => { loadReference(sw.id); log('refload', { sw: sw.id }); explain(`Configuration de référence chargée dans la running-config de ${sw.running.hostname} (pensez à « write memory »).`); R.refresh(); } }, 'Charger la config de référence'),
       el('button', { class: 'btn small danger', onclick: () => { if (!confirm(`Remettre ${sw.running.hostname} en configuration usine ? (running-config seulement)`)) return; loadFactory(sw.id); explain(`${sw.running.hostname} en configuration usine : plus de routage, de VLAN média, de PTP… Tout ce qui passait par lui est perdu. Exercice : reconstruire la configuration (ou recharger la référence).`, 'warn'); R.refresh(); } }, 'Config usine'),
       el('button', { class: 'btn small', onclick: () => offerDownload(`${sw.running.hostname}-running-config.txt`, runningConfig(sw)) }, 'Télécharger la config')));
   return el('div', { class: 'net-swframe' }, head, frontPanel(sw, R));
@@ -438,7 +453,9 @@ function subTerm(box, R) {
   };
   const run = (c) => {
     T.lines.push({ t: 'cmd', s: cliPrompt(T.s) + ' ' + c });
+    T.s.lastCmd = null;
     const r = runCli(T.s, c); if (r) T.lines.push({ t: r.startsWith('%') ? 'err' : 'out', s: r });
+    log('cli', { sw: V.sw, pat: T.s.lastCmd, raw: c, ok: !!T.s.lastCmd && !(r || '').startsWith('%') });
     T.hi = -1; draw(); drawSummary(R.content.parentNode.querySelector('.net-sum')); refreshSwitchFrame(R);
   };
   inp.addEventListener('keydown', (e) => {
@@ -452,9 +469,32 @@ function subTerm(box, R) {
   const quick = ['show interfaces status', 'show ip interface brief', 'show vlan', 'show ip ospf neighbor', 'show ip pim neighbor', 'show ip route', 'show ip mroute', 'show ip igmp snooping groups', 'show ptp', 'show ptp parent', 'show lldp neighbors', 'show logging', 'show running-config | section Vlan', 'write memory'];
   box.append(el('div', { class: 'hwpanel net-termbox' }, out, el('div', { class: 'net-cmdrow' }, prompt, inp),
     el('div', { class: 'hwrow' }, ...quick.map((q) => el('button', { class: 'btn small net-q', onclick: () => { run(q); inp.focus(); } }, q))),
-    el('p', { class: 'note' }, 'Syntaxe proche d\'Arista EOS / Cisco NX-OS, simplifiée. Mots abrégés acceptés (sh int st, conf t, int e1, wr). « ? » liste les suites possibles, Tab complète, ↑ ↓ rappellent l\'historique, « | include », « | section » filtrent la sortie, « do » exécute une commande exec en mode config. Exemple : conf t ⏎ int e5 ⏎ speed 10g ⏎ end ⏎ wr')));
+    el('p', { class: 'note' }, 'Syntaxe proche d\'Arista EOS / Cisco NX-OS, simplifiée. Mots abrégés acceptés (sh int st, conf t, int e1, wr). « ? » liste les suites possibles, Tab complète, ↑ ↓ rappellent l\'historique, « | include », « | section » filtrent la sortie, « do » exécute une commande exec en mode config. Exemple : conf t ⏎ int e5 ⏎ speed 10g ⏎ end ⏎ wr'), cheatSheet()));
   draw();
   setTimeout(() => inp.focus(), 30);
+}
+
+// antisèche : mêmes opérations chez trois constructeurs courants
+const CHEAT = [
+  ['État des ports', 'show interfaces status', 'show interface status', 'show interfaces status'],
+  ['Voisins OSPF', 'show ip ospf neighbor', 'show ip ospf neighbors', 'show ip ospf neighbor'],
+  ['Voisins PIM', 'show ip pim neighbor', 'show ip pim neighbor', 'show ip pim neighbor'],
+  ['Routes multicast (S,G)', 'show ip mroute', 'show ip mroute', 'show ip mroute'],
+  ['Abonnements IGMP', 'show ip igmp snooping groups', 'show ip igmp snooping groups', 'show ip igmp snooping groups'],
+  ['PTP : maître et grand maître', 'show ptp parent', 'show ptp parent', 'show ptp parent'],
+  ['Voisins LLDP', 'show lldp neighbors', 'show lldp neighbors', 'show lldp neighbors'],
+  ['Enregistrer', 'write memory', 'copy running-config startup-config', 'write memory'],
+  ['Port routé', 'no switchport', 'no switchport', 'no switchport'],
+  ['PIM sur une interface', 'pim ipv4 sparse-mode', 'ip pim sparse-mode', 'ip pim sparse-mode'],
+  ['OSPF sur une interface', 'ip ospf area 0.0.0.0', 'ip router ospf 1 area 0.0.0.0', 'ip ospf 1 area 0'],
+  ['Version IGMP', 'ip igmp version 3', 'ip igmp version 3', 'ip igmp version 3'],
+  ['Port miroir (SPAN)', 'monitor session 1 source Ethernet53', 'monitor session 1 ⏎ source interface ethernet1/53', 'monitor session 1 source interface Te1/0/53'],
+];
+function cheatSheet() {
+  const tb = el('tbody'); for (const r of CHEAT) tb.append(el('tr', {}, el('td', {}, r[0]), ...r.slice(1).map((c) => el('td', { class: 'mono' }, c))));
+  return el('details', { class: 'net-cheat' }, el('summary', {}, 'Antisèche : la même commande chez Arista (EOS), Cisco NX-OS et Cisco IOS-XE'),
+    el('div', { class: 'tblwrap' }, el('table', { class: 'tbl compact net-tbl' }, el('thead', {}, el('tr', {}, ...['Opération', 'Arista EOS', 'Cisco NX-OS', 'Cisco IOS-XE'].map((h) => el('th', {}, h)))), tb)),
+    el('p', { class: 'note' }, 'Le simulateur accepte la syntaxe EOS et plusieurs variantes NX-OS (ip pim sparse-mode, ip router ospf 1 area…, show ip ospf neighbors, copy running-config startup-config). Les noms d\'interfaces et certains détails varient selon les modèles et les versions : vérifiez toujours dans la documentation de votre constructeur.'));
 }
 
 // ---------------- plan d'adressage ----------------
@@ -491,7 +531,10 @@ function tabAddr(box) {
 }
 function openSdp(fid) {
   const f = FAB.flows[fid]; const txt = sdpOf(fid);
-  modal.open('SDP · ' + f.label, el('div', { class: 'list' }, el('p', { class: 'note' }, 'Le fichier SDP décrit le flux : adresses multicast des deux jambes (rouge = primary, bleu = secondary, regroupées par « a=group:DUP » pour ST 2022-7), format de l\'image ou du son, horloge PTP de référence. Le contrôleur NMOS le transmet au récepteur lors de la connexion IS-05.'), pre(txt), el('div', { class: 'hwrow' }, el('button', { class: 'btn small', onclick: () => offerDownload(fid.replace(/[^a-z0-9]+/gi, '_') + '.sdp', txt) }, 'Télécharger le .sdp'))), { width: 820 });
+  log('sdp', { fid });
+  const ann = el('div', { class: 'net-sdp' });
+  for (const line of txt.split('\n')) { const ex = sdpExplain(line); ann.append(el('div', { class: 'net-sdpl' + (/^m=/.test(line) ? ' m' : '') }, el('code', {}, line), el('span', { class: 'note' }, ex))); }
+  modal.open('SDP · ' + f.label, el('div', { class: 'list' }, el('p', { class: 'note' }, 'Le fichier SDP décrit le flux : adresses multicast des deux jambes (rouge = primary, bleu = secondary, regroupées par « a=group:DUP » pour ST 2022-7), format de l\'image ou du son, horloge PTP de référence. Le contrôleur NMOS le transmet au récepteur lors de la connexion IS-05. Chaque ligne est commentée à droite.'), ann, el('div', { class: 'hwrow' }, el('button', { class: 'btn small', onclick: () => offerDownload(fid.replace(/[^a-z0-9]+/gi, '_') + '.sdp', txt) }, 'Télécharger le .sdp'))), { width: 820 });
 }
 
 // ---------------- flux NMOS ----------------
@@ -508,7 +551,7 @@ function tabFlows(box, R) {
     const s = res.rxState[rx.id]; const f = s && FAB.flows[s.flow];
     const cell = (c) => { if (!s) return el('td', {}, '—'); const p = s.per[c]; return el('td', { class: p.ok ? (p.loss > 0 ? 'err' : 'ok') : 'err', title: p.reason || '' }, p.ok ? (p.loss > 0 ? `pertes ${fmt(p.loss * 100, 0)} %` : 'OK') : p.refused ? 'refusé' : 'NON'); };
     const state = !s ? ['', 'non connecté'] : !s.ok ? ['err', 'RIEN REÇU'] : s.loss > 0 ? ['err', `pertes ${fmt(s.loss * 100, 0)} %`] : !s.protected ? ['warn', 'sans protection'] : ['ok', 'protégé 2022-7'];
-    tb.append(el('tr', { class: V.rx === rx.id ? 'sel' : '', onclick: () => { V.rx = rx.id; R.refresh(); } }, el('td', {}, rx.label), el('td', {}, f ? f.label : '—'), el('td', { class: 'mono' }, f ? f.groups.red : ''), cell('red'), cell('blue'), el('td', { class: state[0] }, state[1]), el('td', { class: res.reg[rx.dev] ? '' : 'err' }, res.reg[rx.dev] ? 'IS-04' : 'absent')));
+    tb.append(el('tr', { class: V.rx === rx.id ? 'sel' : '', onclick: () => { V.rx = rx.id; log('rx', { rx: rx.id }); R.refresh(); } }, el('td', {}, rx.label), el('td', {}, f ? f.label : '—'), el('td', { class: 'mono' }, f ? f.groups.red : ''), cell('red'), cell('blue'), el('td', { class: state[0] }, state[1]), el('td', { class: res.reg[rx.dev] ? '' : 'err' }, res.reg[rx.dev] ? 'IS-04' : 'absent')));
   }
   const det = el('div', { class: 'hwpanel' });
   const s = V.rx && res.rxState[V.rx];
@@ -527,7 +570,7 @@ function tabFlows(box, R) {
         kv.append(el('dt', {}, `Chemin ${CLABEL[c]} (${p.group || f.groups[c]})`), el('dd', { class: p.ok && !(p.loss > 0) ? '' : 'err' }, path));
       }
       kv.append(el('dt', {}, 'Bilan'), el('dd', { class: !s.ok || s.loss > 0 ? 'err' : !s.protected ? 'warn' : '' }, s.reason || 'reçu sur les deux réseaux : le récepteur fusionne les deux flux paquet par paquet (ST 2022-7), une perte sur l\'un est comblée par l\'autre.'));
-      det.append(kv, el('div', { class: 'hwrow' }, el('button', { class: 'btn small', onclick: () => openSdp(f.id) }, 'Voir le SDP de l\'émetteur'), ...COLORS.map((c) => el('button', { class: 'btn small', onclick: () => R.go('switch', { sw: rd.nics[c].sw, port: rd.nics[c].port, sub: 'mcast' }) }, `Multicast sur ${host(rd.nics[c].sw)}`))));
+      det.append(kv, el('div', { class: 'hwrow' }, el('button', { class: 'btn small primary', onclick: () => { selectRx(V.rx); log('analyzer', { rx: V.rx }); R.go('meas', { msub: 'stream' }); } }, 'Analyser ce flux'), el('button', { class: 'btn small', onclick: () => openSdp(f.id) }, 'Voir le SDP de l\'émetteur'), ...COLORS.map((c) => el('button', { class: 'btn small', onclick: () => R.go('switch', { sw: rd.nics[c].sw, port: rd.nics[c].port, sub: 'mcast' }) }, `Multicast sur ${host(rd.nics[c].sw)}`))));
     }
   } else det.append(el('h3', {}, 'Détail'), el('p', { class: 'note' }, 'Cliquez une réception pour voir le chemin suivi sur chaque réseau.'));
   const tot = COLORS.map((c) => { let l = 0, cap = 0; for (const x of FAB.links) if (x.color === c && res.up[x.id].up) { l += ((res.linkLoad[x.id + ':up'] || {}).load || 0); cap += res.up[x.id].speed; } return `${CLABEL[c]} : ${fmtG(l)} montants sur ${cap} Gb/s d'uplinks`; });
@@ -589,7 +632,7 @@ function tabDiag(box, R) {
     el('div', { class: 'hwpanel' }, el('h3', {}, 'Actions'), el('div', { class: 'hwrow' },
       el('button', { class: 'btn small primary', onclick: () => { const pool = netFaults.filter((f) => f.can()); if (!pool.length) { toast('Aucune panne réseau possible maintenant', 'bad'); return; } injectFault(pool[Math.floor(Math.random() * pool.length)].id, true); R.refresh(); } }, 'Panne réseau surprise'),
       el('button', { class: 'btn small', onclick: () => { for (const id of Object.keys(FAB.switches)) if (FAB.switches[id].power) writeMemory(id); explain('write memory sur tous les commutateurs.'); R.refresh(); } }, 'write memory partout'),
-      el('button', { class: 'btn small', onclick: () => { resetFabric(); explain('Réseau remis en état de référence : commutateurs rallumés et reconfigurés (running = startup), adresses des appareils, grands maîtres et registre NMOS rétablis.'); R.refresh(); } }, 'Tout remettre en configuration de référence')),
+      el('button', { class: 'btn small', onclick: () => { resetFabric(); log('reset'); explain('Réseau remis en état de référence : commutateurs rallumés et reconfigurés (running = startup), adresses des appareils, grands maîtres et registre NMOS rétablis.'); R.refresh(); } }, 'Tout remettre en configuration de référence')),
     el('div', { class: 'list' }, ...netFaults.map((f) => el('div', { class: 'item' }, el('div', { class: 'grow' }, el('div', { class: 't' }, f.label), el('div', { class: 's' }, f.hint)), el('button', { class: 'btn small', onclick: () => { injectFault(f.id); R.refresh(); } }, 'Injecter'))))),
     el('div', { class: 'hwpanel prose' }, el('h3', {}, 'Méthode de dépannage'), el('ol', { class: 'steps' },
       el('li', {}, el('b', {}, 'Constater et délimiter : '), 'une seule réception ou toutes ? un seul réseau (rouge ou bleu) ou les deux ? À l\'image, une panne d\'un seul réseau ne se voit pas (2022-7) : seul ce poste et les alarmes la montrent.'),
