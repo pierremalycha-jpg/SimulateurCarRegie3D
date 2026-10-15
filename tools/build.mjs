@@ -9,6 +9,8 @@ const r = await esbuild.build({
 let js = r.outputFiles[0].text;
 js = js.replace(/from\s*["']three["']/g, `from"${CDN}"`);
 if (js.includes('</script')) js = js.replace(/<\/script/g, '<\\/script');
+// le caractère de remplacement U+FFFD n'apparaît que dans des chaînes JS : on l'écrit en échappement
+js = js.replace(/\uFFFD/g, '\\uFFFD');
 const tpl = fs.readFileSync('src/index.template.html', 'utf8');
 const out = tpl.replace('<!--APP-->', () => `<script type="module">\n${js}\n</script>`);
 fs.mkdirSync('dist', { recursive: true });

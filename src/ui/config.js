@@ -101,7 +101,7 @@ async function readCablingFile(file) {
   }
   const buf = await file.arrayBuffer();
   let text = new TextDecoder('utf-8').decode(buf);
-  if (text.includes('�')) text = new TextDecoder('windows-1252').decode(buf); // export Excel « CSV (séparateur ;) »
+  if (text.includes(String.fromCharCode(0xfffd))) text = new TextDecoder('windows-1252').decode(buf); // export Excel « CSV (séparateur ;) »
   return mapRows(parseCSV(text));
 }
 export function cablingCSV(rows) {
