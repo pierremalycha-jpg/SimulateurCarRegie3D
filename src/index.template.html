@@ -344,6 +344,14 @@ canvas.scope { background: #05080a; border: 1px solid var(--line2); border-radiu
 .xpt.pgm.on { background: var(--tally); border-color: #ff8a80; box-shadow: 0 0 12px rgba(255,59,48,.45); } .xpt.pgm.on .xn, .xpt.pgm.on small { color: #fff; }
 .xpt.pst.on { background: var(--pvw); border-color: #8cf0a8; box-shadow: 0 0 12px rgba(47,210,90,.35); } .xpt.pst.on .xn, .xpt.pst.on small { color: #04220e; }
 .xpt.dead { opacity: .45; }
+/* baie de brassage */
+.patch-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(260px, 340px); gap: 12px; align-items: start; }
+.patch-field svg { display: block; }
+.patch-field .jack { cursor: pointer; }
+.patch-field .jack:focus-visible circle:first-child { stroke: var(--amber); stroke-width: 3; }
+.patch-list { max-height: 60vh; overflow: auto; }
+.patch-list .item { padding: 4px 8px; }
+@media (max-width: 1000px) { .patch-grid { grid-template-columns: minmax(0, 1fr); } }
 /* IPDirector */
 .ipd-grid { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 12px; align-items: start; }
 .ipd-log { max-height: 220px; overflow: auto; }

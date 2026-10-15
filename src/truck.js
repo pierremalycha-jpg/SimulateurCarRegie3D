@@ -178,7 +178,7 @@ export function buildTruck() {
   st('evsB', 'IPDirector (EVS)', 2.8, 0.95, { station: 'ipdirector' });
   st('ccu', 'Baie CCU', 4.55, -1.4, { r: 1.2 });
   st('grille', 'Grille', 5.75, -1.4, { r: 1.2 });
-  st('mvproc', 'Multiview / Mélangeur (châssis)', 6.95, -1.4, { r: 1.2, station: 'grille' });
+  st('mvproc', 'Baie de brassage', 6.95, -1.4, { r: 1.2, station: 'brassage' });
   st('evsrack', 'Serveurs EVS', 8.2, -1.4, { r: 1.0, station: 'evs', arg: 0 });
   st('synchro', 'Synchro (SPG)', 4.55, 1.4, { r: 1.2 });
   st('intercom', 'Intercom', 5.75, 1.4, { r: 1.2 });

@@ -4,6 +4,7 @@ import { CAMERA_TYPES, LENSES, LINKS, SENSORS, SLOTS, ROLES, maxAperture, ND_FIL
 import { Builder, setLayer } from './geo.js';
 import { W, BOWL, TRUCK, PITCH, standHeight, bowlOffset, labelSprite } from './world.js';
 import { M } from './match.js';
+import { refPatched } from './patch.js';
 import { clamp, spring, springAngle, wrapAngle, DEG, rand, randRange, kelvinRGBNorm, gauss, lerp } from './util.js';
 
 export const K_EXPO = { k: 256 * 0.18 / 0.105 }; // calibré : jour, f/8, ND 1/4, 0 dB -> gris moyen correct
@@ -390,6 +391,9 @@ export class BCam {
     this.status = { ok, reason, power, warn };
   }
   get signalOK() { return this.status.ok && (!this.rf || this.rf.state !== 'lost'); }
+  // verrouillage sur la référence : état de la CCU et, en exercice de brassage, présence du cordon de référence
+  get genlock() { return this._gl !== false && (this.link === 'hf' || ['pov', 'ptz', 'drone'].includes(this.type) || refPatched(this.id)); }
+  set genlock(v) { this._gl = !!v; }
 
   // --- exposition ---
   effAperture() { return Math.max(this.paint.iris, maxAperture(this.L, this.focal / (this.ext ? 2 : 1) * 1, this.ext)); }

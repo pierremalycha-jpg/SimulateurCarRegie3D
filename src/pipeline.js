@@ -7,6 +7,7 @@ import { GFX, stingerLogo } from './gfx.js';
 import { rtSize, lineupStep } from './bcam.js';
 import { makeCanvas, tc, clockStr, clamp, roundRect } from './util.js';
 import { EQUIP, mixInputs, evsLayout } from './equip.js';
+import { routerInOf, physToLogical, destFeed } from './patch.js';
 
 const FONT = '"Saira Condensed", "Arial Narrow", sans-serif';
 const MONO = '"JetBrains Mono", ui-monospace, monospace';
@@ -168,12 +169,9 @@ function syncRecStarts() {
   for (const id of Object.keys(EVS.recStart)) if (!recorded.includes(+id)) delete EVS.recStart[id];
 }
 // source réellement reçue par l'entrée d'enregistrement k (tient compte du brassage)
-export function recSource(k) {
-  const P_ = S.patch;
-  if (!P_ || !P_.on) return ROUTER.map['REC' + k];
-  const o = Object.keys(P_.outputs).find((out) => P_.outputs[out] === 'EVSREC' + k);
-  return o && +o >= 41 && +o <= 48 ? ROUTER.map['REC' + (+o - 40)] : null;
-}
+export function recSource(k) { return destFeed('EVSREC' + k, ROUTER); }
+// source logique reçue par une destination de la grille (tient compte du brassage)
+export function feedOf(dest) { return destFeed(dest, ROUTER); }
 export function recordedCams() {
   const set = new Set();
   for (let i = 1; i <= evsLayout().rec; i++) { const s = recSource(i); if (s && s.startsWith('CAM') && camById(+s.slice(3))) set.add(+s.slice(3)); }
@@ -420,8 +418,19 @@ function blit(renderer, mat, target) { fsQuad.material = mat; renderer.setRender
 // Résolution d'une source vers une texture
 // ----------------------------------------------------------------------------------
 export const P = { rts: {}, delay: { rts: [], times: [], idx: 0, n: 44, k: 0, delay: 1.35 }, mvDirty: true };
-export function resolve(id, depth = 0) {
+export function resolve(id, depth = 0, direct = false) {
   if (!id) return { tex: TEX.black, scale: SC, alarm: '' };
+  // exercice de brassage : ce qui arrive réellement sur l'entrée de grille de cette source
+  if (S.patch.on && depth === 0 && !direct) {
+    const n = routerInOf(id);
+    if (n != null) {
+      const phys = S.patch.inputs[n];
+      if (!phys) return { tex: noSignalTex('ENTRÉE VIDE', `Grille IN ${n} non brassée`), scale: SC, alarm: 'NO SIG', none: true };
+      const lg = physToLogical(phys);
+      if (lg === 'GFXK') return { tex: noSignalTex('SIGNAL DE DÉCOUPE', 'GFX KEY brassé sur IN ' + n), scale: SC, alarm: 'KEY ?' };
+      if (lg !== id) { const r = resolve(lg, 1); return { ...r, alarm: r.alarm || 'SOURCE ?' }; }
+    }
+  }
   if (id.startsWith('CAM')) {
     const n = +id.slice(3); const c = camById(n);
     if (!c) return { tex: noSignalTex('PAS DE SIGNAL', `CCU ${n} non câblée`), scale: SC, alarm: 'NO SIG', none: true };
@@ -512,7 +521,7 @@ function drawOverlay() {
     if (t.role === 'PGM') { src = meSource(MIX.pgm); label = 'PGM · ' + sourceLabel(src); }
     else if (t.role === 'PVW') { src = meSource(MIX.pst); label = 'PVW · ' + sourceLabel(src); }
     else { src = ROUTER.map[t.role]; label = sourceLabel(src); }
-    const r = resolve(src);
+    const r = resolve(src, 0, t.role === 'PGM' || t.role === 'PVW');
     const tal = t.role === 'PGM' ? 2 : t.role === 'PVW' ? 1 : tallyOf(src);
     const big = t.w > 500;
     // bordure
@@ -730,7 +739,7 @@ export function renderPipeline(renderer, dt) {
   const scene = W.scene;
   for (const m of W.screens) m.uniforms.uLin.value = 1;
   // écran géant
-  const giant = resolve(ROUTER.map.AUX_GIANT);
+  const giant = resolve(feedOf('GIANT'));
   W.giantScreen.material.uniforms.map.value = giant.tex; W.giantScreen.material.uniforms.uGain.value = 1.1 * giant.scale;
   captureLive(S.cams);
   applySnapshot(LIVE);
@@ -794,8 +803,9 @@ export function renderPipeline(renderer, dt) {
   // --- retour antenne (délai) ---
   const D = P.delay; D.k++;
   if (D.k % 2 === 0) {
-    const tx = resolve(ROUTER.map[S.txPath === 2 ? 'AUX_TX2' : 'AUX_TX1']);
-    copyMat.uniforms.map.value = tx.out ? (ROUTER.map[S.txPath === 2 ? 'AUX_TX2' : 'AUX_TX1'] === 'PGM' ? P.rts.pgm.texture : ROUTER.map[S.txPath === 2 ? 'AUX_TX2' : 'AUX_TX1'] === 'CLEAN' ? P.rts.clean.texture : P.rts.pvw.texture) : tx.tex;
+    const txSrc = feedOf(S.txPath === 2 ? 'TX2' : 'TX1');
+    const tx = txSrc ? resolve(txSrc) : { tex: noSignalTex('PAS DE DÉPART', 'Sortie de grille non brassée'), scale: SC };
+    copyMat.uniforms.map.value = tx.tex;
     copyMat.uniforms.uGain.value = tx.scale;
     blit(renderer, copyMat, D.rts[D.idx]); D.times[D.idx] = S.time; D.idx = (D.idx + 1) % D.n;
   }
@@ -803,7 +813,7 @@ export function renderPipeline(renderer, dt) {
   // --- multiview ---
   for (const t of MV.tiles) {
     let src = t.role === 'PGM' ? 'PGM' : t.role === 'PVW' ? 'PVW' : ROUTER.map[t.role];
-    const r = resolve(src);
+    const r = resolve(src, 0, t.role === 'PGM' || t.role === 'PVW');
     t.mesh.material.uniforms.map.value = r.tex; t.mesh.material.uniforms.uGain.value = 1.1 * r.scale;
   }
   const key = `${MIX.pgm}|${MIX.pst}|${MIX.key1.on}|${MIX.auto}|${MIX.pos > 0}|${MIX.ftb.on}|${S.cams.map((c) => c.id + (c.signalOK ? 'o' : 'x') + (c.paint.bars ? 'b' : '') + (c.rf ? c.rf.state : '') + c.lens).join(',')}|${EVS.ch.map((c) => c.mode + c.cam + c.playing + Math.round(c.speed * 100)).join(',')}`;
@@ -820,10 +830,10 @@ export function renderPipeline(renderer, dt) {
 
   // --- écrans du car ---
   const sc = TR.screens;
-  const setS = (mat, id) => { const r = resolve(id); mat.uniforms.map.value = r.tex; mat.uniforms.uGain.value = 1.1 * r.scale; };
+  const setS = (mat, id) => { const r = resolve(id, 0, ['PGM', 'PVW', 'CLEAN', 'RETANT', 'EVSA', 'EVSB'].includes(id)); mat.uniforms.map.value = r.tex; mat.uniforms.uGain.value = 1.1 * r.scale; };
   sc.mv.uniforms.map.value = P.rts.mv.texture; sc.mv2.uniforms.map.value = P.rts.mv.texture; sc.audioMv.uniforms.map.value = P.rts.mv.texture;
   setS(sc.pgm, 'PGM'); setS(sc.pvw, 'PVW'); setS(sc.clean, 'CLEAN'); setS(sc.retant, 'RETANT');
-  setS(sc.ref, ROUTER.map.AUX_VISION); setS(sc.evsA, 'EVSA'); setS(sc.evsB, 'EVSB');
+  setS(sc.ref, feedOf('GRADE1')); setS(sc.evsA, 'EVSA'); setS(sc.evsB, 'EVSB');
   const hfc = S.cams.find((c) => c.rf); setS(sc.hfmon, hfc ? 'CAM' + hfc.id : 'BLACK');
   if (S.hfSpecTex) { sc.hfspec.uniforms.map.value = S.hfSpecTex; }
   renderer.setRenderTarget(null);
@@ -837,8 +847,8 @@ export function slotTexture(id) {
   if (id === 'mv') return { tex: P.rts.mv.texture, gain: 1 };
   if (id === 'scope') return { tex: SCOPE.tex, gain: 1 };
   if (id === 'camop' && P.rts.camop) return { tex: P.rts.camop.texture, gain: 1.1 };
-  if (id.startsWith('AUX_')) id = ROUTER.map[id];
-  const r = resolve(id); return { tex: r.tex, gain: 1.1 * r.scale };
+  if (id.startsWith('AUX_')) { const d = { AUX_TX1: 'TX1', AUX_TX2: 'TX2', AUX_GIANT: 'GIANT', AUX_VISION: 'GRADE1' }[id]; const r = resolve(feedOf(d)); return { tex: r.tex, gain: 1.1 * r.scale }; }
+  const r = resolve(id, 0, true); return { tex: r.tex, gain: 1.1 * r.scale };
 }
 export function drawSlots(renderer, list) {
   const els = list || document.querySelectorAll('[data-gl]');

@@ -296,6 +296,13 @@ export const STATION_INFO = {
     process: ['Line-up : balance des noirs (iris fermé), balance des blancs sur une charte, chargement des fichiers de scène', 'Matching : même niveau de noir, même balance des blancs, même gamma et même saturation pour toutes les caméras', 'Direct : « riding » de l\'iris en continu, ajustements fins des couleurs'],
     tips: ['Repères : pelouse en plein soleil vers 40-55 %, maillot blanc sous 100 %, noirs à 0-2 %.', 'Ouvrir l\'iris d\'un diaphragme double la lumière ; +6 dB de gain aussi, mais avec du bruit.', 'Au téléobjectif, l\'ouverture maximale diminue (ramping) : l\'image peut s\'assombrir quand le cadreur zoome.', 'Les caméras super ralenti reçoivent 3 ou 6 fois moins de lumière par image.'],
   },
+  brassage: {
+    title: 'Baie de brassage (jackfield)', where: 'Zone technique',
+    role: 'Panneaux de jacks vidéo, audio et référence placés entre les appareils et la grille : on y dérive, remplace ou contourne une liaison avec un cordon, sans toucher au câblage arrière.',
+    gear: ['Jackfields vidéo (prises « normalées » : sans cordon, le signal passe directement)', 'Cordons de brassage 75 Ω', 'Liste de câblage et étiquetage des deux extrémités'],
+    process: ['Installation : vérifier chaque liaison avec la liste de câblage', 'Dépannage : brasser une source de secours ou un appareil de remplacement', 'Toujours remettre les normales après un dépannage, et le noter'],
+    tips: ['Un cordon inséré coupe la normale : la destination ne reçoit plus que le cordon.', 'Erreur classique : caméra brassée sur la mauvaise entrée de grille → nom faux au multiview et tally faux.'],
+  },
   ipdirector: {
     title: 'IPDirector (gestion des médias EVS)', where: 'Régie ralentis',
     role: 'Gère la base de données des clips du serveur EVS : log des actions avec mots-clés pendant le direct, nommage et classement des clips, montage de playlists (résumés, meilleurs moments), contrôle des canaux, transferts vers le montage.',

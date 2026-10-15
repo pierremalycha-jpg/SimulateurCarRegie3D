@@ -16,6 +16,7 @@ import { buildVision } from './st_vision.js';
 import { buildEVS } from './st_evs.js';
 import { buildMixer } from './st_mixer.js';
 import { buildIPD } from './st_ipd.js';
+import { buildPatch } from './st_patch.js';
 import { mixInputs, EQUIP } from '../equip.js';
 import { openDevice, openEquipmentIndex } from '../equipment/viewer.js';
 import { buildCabling, SIG, DEV_NAMES, endLabel } from '../equipment/cabling.js';
@@ -38,6 +39,7 @@ const STATIONS = {
   son: { title: 'Régie son', build: buildAudio, layout: 'top' },
   hf: { title: 'Régie HF', build: buildHF, layout: 'side', dev: 'rx' },
   grille: { title: 'Grille de commutation', build: buildRouter, layout: 'top', dev: 'router' },
+  brassage: { title: 'Baie de brassage (jackfield)', build: buildPatch, layout: 'top sm', dev: 'router' },
   ccu: { title: 'Baie CCU', build: buildCCU, layout: 'side', dev: 'ccu' },
   synchro: { title: 'Synchro et timecode', build: buildSync, layout: 'top sm', dev: 'spg' },
   transmission: { title: 'Transmission', build: buildTX, layout: 'top' },
