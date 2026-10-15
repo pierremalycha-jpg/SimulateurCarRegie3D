@@ -2,13 +2,14 @@ import { S, camById } from '../state.js';
 import { LINKS, FORMATS } from '../data.js';
 import { ROUTER, DESTS, sourceLabel, recordedCams, EVS } from '../pipeline.js';
 import { RF } from '../rf.js';
+import { EQUIP, evsLayout, mixInputs } from '../equip.js';
 
 // ----------------------------------------------------------------------------------
 // Plan de câblage de l'installation, généré à partir de la configuration courante.
 // Chaque câble relie (appareil, numéro, port) à (appareil, numéro, port).
 // ----------------------------------------------------------------------------------
 export const DEV_NAMES = {
-  cam: 'Caméra', ccu: 'CCU', rcp: 'RCP', pdc: 'Pied de car', router: 'Grille', mixer: 'Mélangeur (châssis)', mv: 'Multiviewer', evs: 'Serveur EVS', lsm: 'Télécommande LSM',
+  cam: 'Caméra', ccu: 'CCU', rcp: 'RCP', pdc: 'Pied de car', router: 'Grille', mixer: 'Mélangeur XVS-6000', mixpanel: 'Pupitre ICP-X7000', siu: 'Interface MKS-X7700', mv: 'Multiviewer', evs: 'Serveur XT4K', lsm: 'Télécommande LSM', ipd: 'Poste IPDirector', xnet: 'Switch XNet',
   spg: 'Générateur de synchro', da: 'Distributeur de référence', icom: 'Matrice intercom', cns: 'Switch réseau caméras (CNS)', msu: 'MSU (pupitre maître)', gfx: 'Moteur graphique',
   rx: 'Récepteur HF', conv: 'Convertisseur fibre', emb: 'Embedder audio', tx1: 'Encodeur TX1', tx2: 'Encodeur satellite TX2', audio: 'Console son', grade1: 'Moniteur Grade 1', giant: 'Écran géant', ups: 'Onduleur / distribution', localtv: 'Local technique TV', headset: 'Casque cadreur', lens: 'Optique', vf: 'Viseur', battery: 'Batterie', txhf: 'Émetteur HF',
 };
@@ -53,7 +54,7 @@ export function routerCrosspoint(outIdx) {
 export const isSystemCam = (c) => c && !['pov', 'ptz', 'drone'].includes(c.type) && c.link !== 'hf';
 
 let CACHE = { key: '', cables: [] };
-function cfgKey() { return S.cams.map((c) => c.id + c.type + c.link + Math.round(c.route ? c.route.length : 0) + (c.fiberCut ? 'x' : '') + (c.genlock ? '' : 'g') + (c.powerOn === false ? 'p' : '')).join() + '|' + S.format + '|' + JSON.stringify(ROUTER.map) + RF.antennas.map((a) => a.on ? 1 : 0).join(''); }
+function cfgKey() { return S.cams.map((c) => c.id + c.type + c.link + Math.round(c.route ? c.route.length : 0) + (c.fiberCut ? 'x' : '') + (c.genlock ? '' : 'g') + (c.powerOn === false ? 'p' : '')).join() + '|' + S.format + '|' + JSON.stringify(EQUIP) + (S.ipMode ? 'ip' : '') + JSON.stringify(S.patch || {}) + JSON.stringify(ROUTER.map) + RF.antennas.map((a) => a.on ? 1 : 0).join(''); }
 
 export function buildCabling() {
   const key = cfgKey();
@@ -112,21 +113,27 @@ export function buildCabling() {
   RF.antennas.filter((a) => a.on).forEach((a, i) => add(P('localtv', 1, 'ant' + i), P('rx', 1, 'ant' + (i + 1)), 'RF sur fibre (fibre SM)', 'rf', 180, a.label));
   add(P('spg', 1, 'ref1'), P('rx', 1, 'ref'), 'Coax 75 Ω', 'ref', 2);
   // grille -> mélangeur, multiviewer, EVS, départs
-  for (let i = 1; i <= 22; i++) add(P('router', 1, 'out' + ROUT.me(i)), P('mixer', 1, 'in' + i), sdiType, 'video', 3, `Bus ${i} : ${sourceLabel(ROUTER.map['ME' + i])}`);
+  for (let i = 1; i <= mixInputs(); i++) add(P('router', 1, 'out' + ROUT.me(i)), P('mixer', 1, 'in' + i), sdiType, 'video', 3, `Bus ${i} : ${sourceLabel(ROUTER.map['ME' + i])}`);
   for (let i = 1; i <= 18; i++) add(P('router', 1, 'out' + ROUT.mv(i)), P('mv', 1, 'in' + i), sdiType, 'video', 3, `Tuile ${i} : ${sourceLabel(ROUTER.map['MV' + i])}`);
-  for (let i = 1; i <= 8; i++) add(P('router', 1, 'out' + ROUT.rec(i)), P('evs', 1, 'sdi' + i), sdiType, 'video', 3, `REC ${i} : ${ROUTER.map['REC' + i] ? sourceLabel(ROUTER.map['REC' + i]) + (ROUTER.phase['REC' + i] ? ' phase ' + 'ABCDEF'[ROUTER.phase['REC' + i]] : '') : 'libre'}`);
-  add(P('evs', 1, 'sdi9'), P('router', 1, 'in' + RIN.evsA), sdiType, 'video', 3, 'Sortie de lecture PGM1 (EVS A)');
-  add(P('evs', 1, 'sdi10'), P('router', 1, 'in' + RIN.evsB), sdiType, 'video', 3, 'Sortie de lecture PGM2 (EVS B)');
-  add(P('evs', 1, 'sdi11'), P('mv', 1, 'in19'), sdiType, 'video', 3, 'Multiviewer interne du serveur');
-  add(P('lsm', 1, 'lan'), P('evs', 1, 'mgmt1'), 'Ethernet Cat6', 'ip', 6, 'LSM-VIA : pilotage du serveur en IP');
-  add(P('lsm', 2, 'lan'), P('evs', 1, 'mgmt2'), 'Ethernet Cat6', 'ip', 6, 'Second opérateur (PGM2)');
+  // serveurs ralentis (XT4K) : répartition des canaux selon le format
+  const L = evsLayout();
+  for (let i = 1; i <= L.rec; i++) add(P('router', 1, 'out' + ROUT.rec(i)), P('evs', L.recServer(i), 'sdi' + L.recPort(i)), sdiType, 'video', 3, `REC ${i} : ${ROUTER.map['REC' + i] ? sourceLabel(ROUTER.map['REC' + i]) + (ROUTER.phase['REC' + i] ? ' phase ' + 'ABCDEF'[ROUTER.phase['REC' + i]] : '') : 'libre'}`);
+  for (let i = 0; i < L.plays; i++) add(P('evs', L.playServer(i), 'sdi' + L.playPort(i)), P('router', 1, 'in' + (i ? RIN.evsB : RIN.evsA)), sdiType, 'video', 3, `Sortie de lecture PGM${i + 1} (EVS ${i ? 'B' : 'A'})`);
+  if (!L.uhd && L.per >= 12 && L.servers === 1) add(P('evs', 1, 'sdi11'), P('mv', 1, 'in19'), sdiType, 'video', 3, 'Multiviewer interne du serveur');
+  for (let i = 1; i <= EQUIP.lsmCount; i++) add(P('lsm', i, 'rs422'), P('evs', Math.min(i, L.servers), 'rs' + i), 'Câble RS-422 (D-sub 9)', 'data', 6, EQUIP.lsmCount === 1 ? 'Télécommande LSM : pilote PGM1 et PGM2' : `Télécommande LSM ${i}`);
+  if (EQUIP.ipdirector) for (let k = 1; k <= L.servers; k++) add(P('ipd', 1, 'lan'), P('evs', k, 'gbe1'), 'Fibre / Ethernet 10 Gb/s', 'ip', 6, 'IPDirector : base de données des clips, playlists, contrôle des canaux');
+  if (L.servers > 1) for (let k = 1; k <= L.servers; k++) add(P('evs', k, 'xnet'), P('xnet', 1, 'p' + k), 'Réseau XNet', 'ip', 3, 'Partage des trains et des clips entre serveurs');
+  for (let k = 1; k <= L.servers; k++) add(P('evs', k, 'vga'), P('evsmon', k, 'vga'), 'Câble VGA', 'video', 3, 'Écran du serveur (clip screen Multicam)');
   add(P('mixer', 1, 'out1'), P('router', 1, 'in' + RIN.pgm), sdiType, 'video', 3, 'PGM (avec DSK)');
   add(P('mixer', 1, 'out2'), P('router', 1, 'in' + RIN.clean), sdiType, 'video', 3, 'Clean feed (sans DSK)');
   add(P('mixer', 1, 'out3'), P('router', 1, 'in' + RIN.pvw), sdiType, 'video', 3, 'Preview');
   add(P('gfx', 1, 'fill'), P('router', 1, 'in' + RIN.gfxFill), sdiType, 'video', 3, 'Remplissage (fill)');
   add(P('gfx', 1, 'key'), P('router', 1, 'in' + RIN.gfxKey), sdiType, 'video', 3, 'Découpe (key)');
-  add(P('gfx', 1, 'dsk1f'), P('mixer', 1, 'dsk1f'), sdiType, 'video', 3, 'DSK 1 fill (score)');
-  add(P('gfx', 1, 'dsk1k'), P('mixer', 1, 'dsk1k'), sdiType, 'video', 3, 'DSK 1 key');
+  add(P('gfx', 1, 'dsk1f'), P('mixer', 1, 'in23'), sdiType, 'video', 3, 'DSK 1 fill (score) : entrée directe du mélangeur');
+  add(P('gfx', 1, 'dsk1k'), P('mixer', 1, 'in24'), sdiType, 'video', 3, 'DSK 1 key');
+  add(P('mixpanel', 1, 'lan'), P('siu', 1, 'lanp'), 'Ethernet Cat6', 'ip', 6, 'Pupitre ICP-X7000 → unité d\'interface système');
+  add(P('siu', 1, 'lanm'), P('mixer', 1, 'mvslan'), 'Ethernet Cat6', 'ip', 3, 'Unité d\'interface → processeur (MVS LAN)');
+  add(P('siu', 1, 'tally1'), P('icom', 1, 'tally'), 'Multipaire D-sub 37', 'comms', 4, 'Tally parallèle (relais) vers la distribution tally des CCU');
   add(P('spg', 1, 'sdi1'), P('router', 1, 'in' + RIN.bars), sdiType, 'video', 3, 'Mire de test du générateur');
   add(P('router', 1, 'out' + ROUT.tx1), P('emb', 1, 'sdiin'), sdiType, 'video', 3, `Départ TX1 : ${sourceLabel(ROUTER.map.AUX_TX1)}`, ROUTER.map.AUX_TX1 === 'PGM');
   add(P('audio', 1, 'madi'), P('emb', 1, 'madi'), 'Coax MADI (AES10)', 'audio', 6, 'Son du programme (stéréo + 5.1 + international)');
@@ -139,17 +146,17 @@ export function buildCabling() {
   add(P('mv', 1, 'out1'), P('mv', 1, 'wall'), 'HDMI / 12G-SDI', 'video', 5, 'Mur d\'écrans production');
   // synchro
   add(P('spg', 1, 'tls1'), P('da', 1, 'in'), 'Coax 75 Ω', 'ref', 1, 'Tri-level vers le distributeur des CCU');
-  add(P('spg', 1, 'bb1'), P('mixer', 1, 'ref'), 'Coax 75 Ω', 'ref', 3, 'Black burst');
+  add(P('spg', 1, 'bb1'), P('mixer', 1, 'refin'), 'Coax 75 Ω', 'ref', 3, 'Black burst (REF IN avec boucle)');
   add(P('spg', 1, 'tls2'), P('router', 1, 'ref'), 'Coax 75 Ω', 'ref', 2);
-  add(P('spg', 1, 'tls3'), P('evs', 1, 'refin'), 'Coax 75 Ω', 'ref', 3);
+  for (let k = 1; k <= L.servers; k++) add(P('spg', 1, 'tls3'), P('evs', k, 'refin'), 'Coax 75 Ω', 'ref', 3);
   add(P('spg', 1, 'bb2'), P('mv', 1, 'ref'), 'Coax 75 Ω', 'ref', 2);
-  add(P('spg', 1, 'ltc1'), P('evs', 1, 'ltcin'), 'Câble LTC (audio symétrique)', 'ref', 3, 'Timecode heure du jour');
+  for (let k = 1; k <= L.servers; k++) add(P('spg', 1, 'ltc1'), P('evs', k, 'ltcin'), 'Câble LTC (audio symétrique)', 'ref', 3, 'Timecode heure du jour');
   add(P('spg', 1, 'wclk'), P('audio', 1, 'wclk'), 'Coax 75 Ω (word clock)', 'ref', 8, 'Horloge audio 48 kHz');
   add(P('spg', 1, 'ptp1'), P('cns', 1, 'ptp'), 'Fibre / Ethernet', 'ip', 2, 'PTP (ST 2059-2) pour les équipements IP');
   add(P('pdc', 1, 'gps'), P('spg', 1, 'gps'), 'Coax antenne GPS (SMA)', 'rf', 12, 'Antenne GPS sur le toit du car', !S.faults.gps);
   // réseau
   add(P('msu', 1, 'lan'), P('cns', 1, 'msu'), 'Ethernet Cat6', 'ip', 4, 'MSU : configuration de toutes les caméras');
-  add(P('mixer', 1, 'tally'), P('cns', 1, 'tally'), 'Ethernet Cat6', 'ip', 3, 'Tally vers les CCU (TSL UMD v5) et le multiviewer');
+  add(P('mixer', 1, 'utillan'), P('cns', 1, 'tally'), 'Ethernet Cat6', 'ip', 3, 'Tally IP et noms de sources (TSL UMD) vers le multiviewer et les CCU');
   add(P('icom', 1, 'pdc'), P('pdc', 1, 'icom'), 'Câble 4 fils', 'comms', 4, 'Ordres avec la chaîne et les commentateurs');
   add(P('pdc', 1, 'power'), P('ups', 1, 'in'), 'Câble énergie P17 63 A tri', 'power', 4, 'Arrivée groupe électrogène / réseau stade');
   CACHE = { key, cables: C };
@@ -159,7 +166,7 @@ export function buildCabling() {
 export function deviceCables(dev, n) { return buildCabling().filter((c) => (c.a.dev === dev && c.a.n === n) || (c.b.dev === dev && c.b.n === n)); }
 export function endLabel(e) {
   const name = DEV_NAMES[e.dev] || e.dev;
-  const multi = ['cam', 'ccu', 'rcp', 'lsm', 'conv', 'lens', 'vf', 'headset', 'battery', 'txhf'].includes(e.dev);
+  const multi = ['cam', 'ccu', 'rcp', 'lsm', 'conv', 'lens', 'vf', 'headset', 'battery', 'txhf'].includes(e.dev) || (e.dev === 'evs' && EQUIP.evsServers > 1);
   return `${name}${multi ? ' ' + e.n : ''} · ${portName(e.dev, e.port)}`;
 }
 export function portName(dev, port) {

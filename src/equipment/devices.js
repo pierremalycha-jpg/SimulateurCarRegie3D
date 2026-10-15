@@ -2,7 +2,8 @@
 // Base de données du matériel : faces avant/arrière (disposition schématique),
 // connecteurs et commandes avec leur rôle, signal et norme.
 // Sources : fiches techniques Sony HDC-5500 / HDCU-5500 / HDCU-5000 / RCP-3500,
-// fiche technique EVS XT-VIA (déc. 2022), pages produit EVS LSM-VIA, manuels EVS XT3 (génération précédente).
+// documentation de lancement EVS XT4K et manuels techniques XT (XT2/XT3/XT4K), manuels EVS Multicam LSM,
+// page produit EVS IPDirector, brochures Sony XVS / ICP-X7000 (mélangeur du car).
 // Les positions sont indicatives : seul l'inventaire des connecteurs suit la documentation.
 // ----------------------------------------------------------------------------------
 
@@ -229,94 +230,201 @@ function rcpDevice() {
   };
 }
 
-// ---------------------------------------------------------------- EVS
+// ---------------------------------------------------------------- EVS XT4K
 function evsDevice() {
   const P = {};
-  for (let i = 1; i <= 12; i++) P['sdi' + i] = M(`SDI ${i}`, BNC, 'video', 'io', '1,5G / 3G / 12G-SDI, choisi dans la configuration logicielle', 'Connecteur SDI configurable en entrée (enregistrement) ou en sortie (lecture, multiviewer). Dans ce car : SDI 1 à 8 = entrées REC, SDI 9 = PGM1 (EVS A), SDI 10 = PGM2 (EVS B), SDI 11 = multiviewer interne.');
+  for (let i = 1; i <= 12; i++) P['sdi' + i] = M(`SDI ${i}`, BNC, 'video', 'io', '12G-SDI (UHD-4K sur un seul câble) ou 3G/HD-SDI ; Quad 3G-SDI (2SI ou découpage en carrés) en option', 'Connecteur des modules codec, affecté en entrée (enregistrement) ou en sortie (lecture, multiviewer) dans la configuration du serveur. L\'affectation de votre car est donnée dans « Dans votre installation ».');
   Object.assign(P, {
-    ip1: M('IP 1', 'SFP+ 10GbE', 'ip', 'io', 'SMPTE ST 2110 / ST 2022-6, PTP, NMOS IS-04/IS-05', 'Entrées/sorties vidéo sur IP (installation ST 2110).'),
-    ip2: M('IP 2', 'SFP+ 10GbE', 'ip', 'io', 'ST 2022-7 (redondance)', 'Second port IP (chemin redondant).'),
-    xnet1: M('XNet-VIA 1', 'SFP+ 10GbE', 'ip', 'io', 'Réseau XNet-VIA 10 Gb/s', 'Partage des médias entre serveurs : un opérateur peut relire les enregistrements d\'un autre serveur.'),
-    xnet2: M('XNet-VIA 2', 'SFP+ 10GbE', 'ip', 'io', 'XNet-VIA', 'Second lien réseau média.'),
-    mgmt1: M('LAN gestion 1', 'RJ-45', 'ip', 'io', '1 GbE', 'Réseau de gestion et de commande (LSM-VIA, IPDirector). Doublé pour la redondance.'),
+    xnet: M('XNet', 'Réseau EVS', 'ip', 'io', 'Réseau de production XNet (3 Gb/s d\'après la documentation de lancement)', 'Partage des trains et des clips entre serveurs : un opérateur peut relire l\'enregistrement d\'un autre serveur comme s\'il était local.'),
+    gbe1: M('10GbE 1', 'SFP+', 'ip', 'io', '10 Gb/s Ethernet', 'Réseau de partage des médias : IPDirector, transferts de fichiers vers le montage, archivage.'),
+    gbe2: M('10GbE 2', 'SFP+', 'ip', 'io', '10 Gb/s Ethernet', 'Second port de partage des médias.'),
+    ipio: M('IP I/O', 'SFP', 'ip', 'io', 'Interface IP intégrée (ST 2022-6 / ST 2110 selon version)', 'Entrées/sorties vidéo sur IP, pour les cars IP.'),
+    mgmt1: M('LAN gestion 1', 'RJ-45', 'ip', 'io', '1 GbE', 'Réseau de gestion du serveur, doublé pour la redondance.'),
     mgmt2: M('LAN gestion 2', 'RJ-45', 'ip', 'io', '1 GbE', 'Réseau de gestion redondant.'),
-    refin: M('REF IN', BNC, 'ref', 'in', REF_STD, 'Référence de synchro (genlock) : black burst ou tri-level, choisi dans la configuration.'),
-    refloop: M('REF LOOP', BNC, 'ref', 'out', REF_STD, 'Boucle de la référence.'),
-    ltcin: M('LTC IN', 'XLR 3 broches', 'ref', 'in', 'SMPTE ST 12-1 (LTC)', 'Timecode heure du jour venant du SPG : toutes les caméras enregistrées partagent le même timecode, d\'où le multicam synchronisé.'),
-    ltcout: M('LTC OUT', 'XLR 3 broches', 'ref', 'out', 'LTC', 'Sortie timecode.'),
-    gpi: M('GPI', 'D-sub 25', 'data', 'io', 'Entrées opto-isolées et TTL (manuels XT3)', 'Déclenchements par contacts (ex. tally, démarrage d\'une lecture par le mélangeur).'),
-    rs1: M('RS-422 1', 'D-sub 9', 'data', 'io', 'Protocoles série (Sony BVW, VDCP, Odetics…)', 'Héritage : télécommandes série et automatismes tiers. Le LSM-VIA passe par IP.'),
-    rs2: M('RS-422 2', 'D-sub 9', 'data', 'io', 'Série', 'Port série.'), rs3: M('RS-422 3', 'D-sub 9', 'data', 'io', 'Série', 'Port série.'), rs4: M('RS-422 4', 'D-sub 9', 'data', 'io', 'Série', 'Port série.'),
-    aes: M('AES', 'D-sub 25', 'audio', 'io', 'AES3', 'Audio numérique AES (paires stéréo).'),
+    refin: M('REF IN', BNC, 'ref', 'in', REF_STD, 'Référence de synchro (genlock) venant du SPG.'),
+    refloop: M('REF LOOP', BNC, 'ref', 'out', REF_STD, 'Boucle de la référence (terminée si non utilisée).'),
+    ltcin: M('LTC IN', 'XLR / bornier', 'ref', 'in', 'SMPTE ST 12-1 (LTC)', 'Timecode heure du jour venant du SPG : toutes les entrées enregistrées partagent le même timecode, d\'où le multicam synchronisé.'),
+    ltcout: M('LTC OUT', 'XLR / bornier', 'ref', 'out', 'LTC', 'Sortie timecode.'),
+    gpi: M('GPI', 'D-sub', 'data', 'io', 'Entrées / sorties par contact (manuels XT)', 'Déclenchements par contacts : démarrer une lecture depuis le mélangeur, renvoyer un tally, etc.'),
+    rs1: M('RS-422 1', 'D-sub 9', 'data', 'io', 'Liaison série (19 200 bauds d\'après les manuels XT)', 'Port série de télécommande : sur les serveurs XT, la télécommande LSM s\'y raccorde. Vérifier l\'affectation des ports dans la configuration de votre serveur.'),
+    rs2: M('RS-422 2', 'D-sub 9', 'data', 'io', 'Série', 'Second port de télécommande (deuxième LSM ou protocole Sony/VDCP pour un automate ou le mélangeur).'),
+    rs3: M('RS-422 3', 'D-sub 9', 'data', 'io', 'Série', 'Port série (protocoles tiers).'),
+    rs4: M('RS-422 4', 'D-sub 9', 'data', 'io', 'Série', 'Port série (protocoles tiers).'),
+    aes: M('AES / analogique', 'D-sub', 'audio', 'io', 'AES3 et analogique', 'Audio associé aux images : jusqu\'à 192 pistes non compressées avec routeur audio interne (embeddé, AES, MADI, analogique).'),
     madiin: M('MADI IN', BNC, 'audio', 'in', 'AES10 (64 canaux)', 'Audio multicanal à enregistrer avec les images.'),
     madiout: M('MADI OUT', BNC, 'audio', 'out', 'AES10', 'Audio multicanal des sorties de lecture.'),
-    usb: M('USB', 'USB', 'data', 'io', '', 'Maintenance, export.'), disp: M('Écran', 'DisplayPort', 'video', 'out', '', 'Console locale de configuration.'),
+    vga: M('VGA', 'D-sub 15 HD', 'video', 'out', '', 'Écran du serveur : menus, configuration, et sur les systèmes Multicam l\'écran des clips (clip screen).'),
+    kbd: M('Clavier', 'PS/2 / USB', 'data', 'in', '', 'Clavier du serveur : nommage des clips, configuration.'),
+    usb: M('USB', 'USB', 'data', 'io', '', 'Maintenance, export.'),
     psu1: M('Alimentation 1', 'IEC', 'power', 'in', '100 à 240 V', 'Alimentations redondantes : on les branche sur deux circuits différents.'),
     psu2: M('Alimentation 2', 'IEC', 'power', 'in', '100 à 240 V', 'Seconde alimentation (redondance).'),
   });
   const C = {
-    disks: M('Disques (RAID)', 'Tiroirs', 'data', '', '', 'Stockage en RAID : la perte d\'un disque n\'interrompt pas l\'enregistrement.'),
+    disks: M('Disques (RAID)', 'Tiroirs', 'data', '', '', 'Stockage interne jusqu\'à 9 To (≈ 130 h d\'UHD-4K selon la compression), extensible ; en RAID : la perte d\'un disque n\'interrompt pas l\'enregistrement.'),
     leds: M('Voyants d\'état', 'LED', 'data', '', '', 'Alimentation, disques, réseau, enregistrement.'),
   };
-  const front = [{ t: 'body', x: 10, y: 10, w: 980, h: 500, r: 8 }, { t: 'text', x: 40, y: 60, s: 'SERVEUR DE PRODUCTION (type EVS XT-VIA)', size: 20, w: 700 }];
+  const front = [{ t: 'body', x: 10, y: 10, w: 980, h: 500, r: 8 }, { t: 'text', x: 40, y: 60, s: 'SERVEUR DE PRODUCTION (type EVS XT4K) · 6U', size: 20, w: 700 }];
   for (let r = 0; r < 2; r++) for (let c = 0; c < 6; c++) front.push({ t: 'disk', id: 'disks', x: 320 + c * 105, y: 120 + r * 170, w: 92, h: 150 });
   ['POWER', 'DISK', 'NET', 'REC', 'ALARM'].forEach((l, i) => front.push({ t: 'led', id: 'leds', x: 70, y: 140 + i * 50, c: i === 4 ? 'red' : i === 3 ? 'tally' : 'green', l }));
   const rear = [{ t: 'body', x: 10, y: 10, w: 980, h: 500, r: 8 }];
-  rear.push({ t: 'group', x: 30, y: 36, w: 390, h: 200, l: 'Carte codec A' }, { t: 'group', x: 30, y: 270, w: 390, h: 200, l: 'Carte codec B' });
+  rear.push({ t: 'group', x: 30, y: 36, w: 390, h: 200, l: 'Modules codec · SDI 1 à 6' }, { t: 'group', x: 30, y: 270, w: 390, h: 200, l: 'Modules codec · SDI 7 à 12' });
   for (let i = 0; i < 6; i++) { rear.push({ t: 'port', id: 'sdi' + (i + 1), k: 'bnc', x: 75 + i * 62, y: 120, l: 'SDI ' + (i + 1) }); rear.push({ t: 'port', id: 'sdi' + (i + 7), k: 'bnc', x: 75 + i * 62, y: 355, l: 'SDI ' + (i + 7) }); }
-  rear.push({ t: 'group', x: 440, y: 36, w: 370, h: 100, l: 'IP et réseau média' });
-  row(rear, ['ip1', 'ip2', 'xnet1', 'xnet2'], 485, 92, 85, 'sfp', ['IP 1', 'IP 2', 'XNET-VIA 1', 'XNET-VIA 2']);
+  rear.push({ t: 'group', x: 440, y: 36, w: 370, h: 100, l: 'Réseaux' });
+  rear.push({ t: 'port', id: 'xnet', k: 'sfp', x: 485, y: 92, l: 'XNET' });
+  row(rear, ['gbe1', 'gbe2', 'ipio'], 570, 92, 80, 'sfp', ['10GbE 1', '10GbE 2', 'IP I/O']);
   rear.push({ t: 'group', x: 440, y: 148, w: 370, h: 100, l: 'Synchronisation et timecode' });
   rear.push({ t: 'port', id: 'refin', k: 'bnc', x: 480, y: 200, l: 'REF IN' }, { t: 'port', id: 'refloop', k: 'bnc', x: 535, y: 200, l: 'REF LOOP' }, { t: 'port', id: 'ltcin', k: 'xlr', x: 610, y: 200, l: 'LTC IN' }, { t: 'port', id: 'ltcout', k: 'xlr', x: 680, y: 200, l: 'LTC OUT' }, { t: 'port', id: 'gpi', k: 'dsub25', x: 760, y: 200, l: 'GPI' });
   rear.push({ t: 'group', x: 440, y: 260, w: 370, h: 100, l: 'Commande' });
   rear.push({ t: 'port', id: 'mgmt1', k: 'rj45', x: 478, y: 312, l: 'LAN 1' }, { t: 'port', id: 'mgmt2', k: 'rj45', x: 530, y: 312, l: 'LAN 2' });
   row(rear, ['rs1', 'rs2', 'rs3', 'rs4'], 600, 312, 58, 'dsub9', ['RS422 1', 'RS422 2', 'RS422 3', 'RS422 4']);
   rear.push({ t: 'group', x: 440, y: 372, w: 370, h: 100, l: 'Audio et console' });
-  rear.push({ t: 'port', id: 'aes', k: 'dsub25', x: 490, y: 424, l: 'AES' }, { t: 'port', id: 'madiin', k: 'bnc', x: 570, y: 424, l: 'MADI IN' }, { t: 'port', id: 'madiout', k: 'bnc', x: 630, y: 424, l: 'MADI OUT' }, { t: 'port', id: 'usb', k: 'usb', x: 700, y: 424, l: 'USB' }, { t: 'port', id: 'disp', k: 'usb', x: 760, y: 424, l: 'DP' });
+  rear.push({ t: 'port', id: 'aes', k: 'dsub25', x: 490, y: 424, l: 'AES' }, { t: 'port', id: 'madiin', k: 'bnc', x: 562, y: 424, l: 'MADI IN' }, { t: 'port', id: 'madiout', k: 'bnc', x: 618, y: 424, l: 'MADI OUT' }, { t: 'port', id: 'vga', k: 'dsub9', x: 682, y: 424, l: 'VGA' }, { t: 'port', id: 'kbd', k: 'usb', x: 738, y: 424, l: 'CLAVIER' }, { t: 'port', id: 'usb', k: 'usb', x: 784, y: 424, l: 'USB' });
   rear.push({ t: 'psu', id: 'psu1', x: 830, y: 36, w: 140, h: 200, l: 'PSU 1' }, { t: 'psu', id: 'psu2', x: 830, y: 270, w: 140, h: 200, l: 'PSU 2' });
   return {
-    key: 'evs', title: 'Serveur ralenti (type EVS XT-VIA)', multi: false,
-    intro: 'Serveur de production « live » : il enregistre en boucle plusieurs flux caméras (les « trains » d\'enregistrement) et, en même temps, relit n\'importe quel moment sur ses sorties de lecture (PGM1, PGM2), à n\'importe quelle vitesse. Toutes les entrées partagent le timecode : l\'opérateur peut passer d\'un angle à l\'autre sur la même action (multicam).',
+    key: 'evs', title: 'Serveur ralenti (type EVS XT4K)', multi: true,
+    intro: 'Serveur de production « live » : il enregistre en boucle plusieurs flux caméras (les « trains » d\'enregistrement) et, en même temps, relit n\'importe quel moment sur ses sorties de lecture, à n\'importe quelle vitesse. Toutes les entrées partagent le timecode : l\'opérateur passe d\'un angle à l\'autre sur la même action (multicam). Le XT4K a apporté l\'UHD-4K sur un seul câble 12G-SDI.',
     views: { arriere: { label: 'Face arrière', w: 1000, h: 520, items: rear }, avant: { label: 'Face avant', w: 1000, h: 520, items: front } },
     ports: P, controls: C,
-    specs: [['Canaux', '12 canaux FHD/HD (720p, 1080i, 1080p) ; 6 canaux UHD-4K (avec conversion du 1080p) ; 2 canaux UHD-8K (édition spéciale) ; 6 canaux fill/key'], ['Super Motion (option)', 'HD/FHD de 2x à 16x, UHD-4K de 2x à 4x'], ['Vidéo', '1,5G / 3G / 12G-SDI, choisi dans la configuration logicielle'], ['IP', '10GbE SFP+ : ST 2022-6, ST 2110, PTP, NMOS IS-04/IS-05'], ['Réseau média', 'XNet-VIA (10 Gb/s Ethernet)'], ['Gestion', 'Réseaux 1G redondants'], ['Audio', 'Embeddé, AES, MADI'], ['Pilotage', 'LSM-VIA (IP), LSM RCU, IPDirector'], ['Configuration dans ce car', '8 entrées REC + 2 lectures (PGM1, PGM2) + 1 multiviewer']],
-    lesson: ['Une caméra super ralenti 3x arrive sur 3 connecteurs SDI (une phase par connecteur) : elle consomme 3 canaux d\'enregistrement.', 'Les alimentations sont doublées : branchez-les sur deux circuits différents de l\'onduleur.', 'Le genlock et le LTC doivent venir du même SPG que le reste du car.', 'Certaines connectiques (GPI, RS-422) sont décrites d\'après la génération précédente (XT3) : vérifiez la configuration exacte de votre serveur.'],
+    specs: [['Canaux', '4 canaux UHD-4K ou 8 canaux HD ; 12 canaux HD et plus avec la configuration ChannelMAX'], ['Vidéo', '12G-SDI (UHD sur un seul câble), Quad 3G-SDI 2SI / découpage en carrés en option ; IP intégrée'], ['Enregistrement', 'XAVC-4K en UHD, 10 bits, HDR'], ['Stockage', 'Interne jusqu\'à 9 To (≈ 130 h d\'UHD-4K annoncées), extensible en externe jusqu\'à 40 To'], ['Audio', 'Jusqu\'à 192 pistes non compressées, routeur audio interne ; analogique, AES, embeddé, MADI'], ['Réseaux', 'XNet (production), 2 × 10 GbE (partage des médias, IPDirector), LAN de gestion redondant'], ['Pilotage', 'Télécommande LSM (Multicam), IPDirector, protocoles série / IP'], ['Format', '6U'], ['Dans ce car', '(calculé selon le format : voir la configuration EVS au poste ralentis)']],
+    lesson: ['En UHD, un XT4K n\'a que 4 canaux : par exemple 3 REC + 1 PLAY. Une caméra super ralenti 3x occupe à elle seule les 3 canaux d\'enregistrement.', 'En HD, le même serveur offre 8 canaux (12 avec ChannelMAX) : c\'est souvent le format qui donne le plus d\'angles enregistrés.', 'Les alimentations sont doublées : branchez-les sur deux circuits différents de l\'onduleur.', 'Le genlock et le LTC doivent venir du même SPG que le reste du car.', 'Les connecteurs série et GPI sont décrits d\'après les manuels techniques XT (XT2, XT3, XT4K) : vérifiez l\'affectation exacte des ports de votre serveur.'],
   };
 }
 
-// ---------------------------------------------------------------- LSM
+// ---------------------------------------------------------------- télécommande LSM (Multicam)
 function lsmDevice() {
   const P = {
-    lan: M('LAN', 'RJ-45', 'ip', 'io', 'Ethernet', 'Pilotage du serveur en IP : plus de brassage RS-422 comme sur les anciennes télécommandes.'),
-    dcin: M('DC IN', 'Connecteur d\'alimentation', 'power', 'in', '', 'Alimentation de la télécommande.'),
-    usb: M('USB', 'USB', 'data', 'io', '', 'Clé de configuration, maintenance.'),
+    rs422: M('RS-422 (vers le serveur)', 'D-sub 9', 'data', 'io', 'Liaison série vers un port RS-422 du serveur', 'La télécommande pilote le serveur XT par liaison série (d\'après les manuels Multicam et XT). Un câble par télécommande.'),
+    dcin: M('Alimentation', 'Connecteur DC', 'power', 'in', '', 'Alimentation de la télécommande.'),
   };
   const C = {
-    screen: M('Écran tactile', 'Écran tactile rabattable', 'data', '', '', 'Écran tactile réglable en hauteur, dispositions configurables : barre d\'application (page, banque, emplacement des clips, serveur d\'enregistrement, canal PGM piloté), clips, playlists, trains.'),
-    fkeys: M('Touches F1 à F10', 'Boutons multicolores avec OLED', 'data', '', '', 'Appel ou sauvegarde des clips de la banque en cours. Chaque touche a un petit écran OLED qui affiche sa fonction du moment.'),
-    camkeys: M('Touches caméras A à F', 'Boutons', 'video', '', '', 'Choix de l\'angle (entrée enregistrée) sur la sortie pilotée. On change d\'angle en gardant le même timecode.'),
-    transport: M('Touches de transport', 'Boutons', 'data', '', '', 'MARK IN / MARK OUT, GOTO IN / OUT, PLAY, LIVE (E/E), RETURN, PLST (playlist).'),
-    shortcuts: M('Raccourcis programmables', 'Boutons', 'data', '', '', 'Fonctions affectables : Fast jog, Trains, Back to Local, PGM Speed, Var Max, Second Lever Range, Loop…'),
-    lever: M('Levier (T-bar)', 'Levier', 'data', '', '', 'Vitesse de lecture de 0 à 100 % (ou jusqu\'à la valeur « Var Max »). Un ralenti se joue en général entre 25 et 50 % ; 33 % pour une caméra 3x.'),
-    jog: M('Jog', 'Molette', 'data', '', '', 'Déplacement image par image pour trouver exactement le point d\'entrée. Le Fast Jog parcourt les médias de 2x à 20x plus vite.'),
+    display: M('Afficheur', 'Écran de la télécommande', 'data', '', '', 'Affiche le menu courant, le timecode, la vitesse, la caméra et les fonctions des touches F (« soft keys »).'),
+    fkeys: M('Touches F1 à F10', 'Boutons', 'data', '', '', 'Clips de la page en cours (rappel, ou sauvegarde avec la fonction d\'enregistrement de clip) ; avec SHIFT + PAGE, choix de la page 1 à 10. Selon le menu, elles prennent d\'autres fonctions (soft keys).'),
+    camkeys: M('Choix de l\'angle', 'Boutons', 'video', '', '', 'Sélection de la caméra (entrée enregistrée) sur le canal piloté : on change d\'angle en gardant le même timecode.'),
+    opblock: M('Bloc opérationnel', 'Boutons à double fonction', 'data', '', '', 'Chaque touche a une fonction principale et une secondaire (avec SHIFT) : IN / GOTO IN, OUT / GOTO OUT, PLST / BROWSE, LOOP, RETURN, PLAY, LIVE (E/E), FAST JOG, TAKE, MENU, CLEAR…'),
+    lever: M('Levier', 'Levier', 'data', '', '', 'Vitesse de lecture de 0 à 100 % ; avec la plage secondaire, de −100 à +100 % ou −200 à +200 %. Un ralenti se joue en général entre 25 et 50 % ; 33 % pour une caméra 3x.'),
+    jog: M('Jog', 'Molette', 'data', '', '', 'Recherche image par image (un tour ≈ 35 images d\'après le manuel Multicam). FAST JOG pour le recalage rapide (désactivé automatiquement après PLAY ou LIVE). En mode BROWSE, la molette fait défiler les clips.'),
   };
-  const top = [{ t: 'body', x: 10, y: 10, w: 960, h: 500, r: 16 }, { t: 'screen', id: 'screen', x: 40, y: 30, w: 620, h: 200 }];
-  for (let i = 0; i < 10; i++) top.push({ t: 'btn', id: 'fkeys', x: 40 + i * 62, y: 255, w: 56, h: 40, l: 'F' + (i + 1), oled: true });
-  ['A', 'B', 'C', 'D', 'E', 'F'].forEach((l, i) => top.push({ t: 'btn', id: 'camkeys', x: 40 + i * 62, y: 305, w: 56, h: 40, l: 'CAM ' + l, oled: true, c: 'cyan' }));
-  ['PAGE', 'BANK', 'SHIFT', 'MENU'].forEach((l, i) => top.push({ t: 'btn', id: 'transport', x: 412 + i * 62, y: 305, w: 56, h: 40, l, oled: true }));
-  ['MARK IN', 'MARK OUT', 'GOTO IN', 'GOTO OUT', 'PLST', 'RETURN', 'LIVE E/E', 'PLAY', 'PGM/PRV', 'LOOP'].forEach((l, i) => top.push({ t: 'btn', id: 'transport', x: 40 + i * 62, y: 355, w: 56, h: 40, l, oled: true, c: l === 'PLAY' ? 'green' : l.startsWith('MARK') ? 'amber' : null }));
-  ['FAST JOG', 'TRAINS', 'VAR MAX', 'LEVER 2', 'PGM SPD', 'LOCAL'].forEach((l, i) => top.push({ t: 'btn', id: 'shortcuts', x: 40 + i * 62, y: 410, w: 56, h: 36, l, oled: true, c: 'violet' }));
-  top.push({ t: 'lever', id: 'lever', x: 700, y: 40, w: 60, h: 300 });
+  const top = [{ t: 'body', x: 10, y: 10, w: 960, h: 500, r: 16 }, { t: 'lcd', id: 'display', x: 40, y: 30, w: 620, h: 96 }];
+  for (let i = 0; i < 10; i++) top.push({ t: 'btn', id: 'fkeys', x: 40 + i * 62, y: 140, w: 56, h: 40, l: 'F' + (i + 1) });
+  [['IN', 'GOTO IN'], ['OUT', 'GOTO OUT'], ['PLST', 'BROWSE'], ['LOOP', ''], ['RETURN', ''], ['PLAY', ''], ['LIVE E/E', ''], ['FAST JOG', ''], ['TAKE', ''], ['PGM/PRV', '']].forEach(([l], i) => top.push({ t: 'btn', id: 'opblock', x: 40 + i * 62, y: 210, w: 56, h: 40, l }));
+  ['A', 'B', 'C', 'D', 'E', 'F'].forEach((l, i) => top.push({ t: 'btn', id: 'camkeys', x: 40 + i * 62, y: 270, w: 56, h: 40, l: 'CAM ' + l }));
+  ['SHIFT', 'MENU', 'CLEAR', 'PAGE'].forEach((l, i) => top.push({ t: 'btn', id: 'opblock', x: 412 + i * 62, y: 270, w: 56, h: 40, l }));
+  top.push({ t: 'lever', id: 'lever', x: 720, y: 40, w: 60, h: 300 });
   top.push({ t: 'jog', id: 'jog', x: 860, y: 380, r: 88 });
-  const rear = [{ t: 'body', x: 10, y: 10, w: 960, h: 140, r: 10 }, { t: 'port', id: 'lan', k: 'rj45', x: 100, y: 80, l: 'LAN' }, { t: 'port', id: 'dcin', k: 'xlr', x: 200, y: 80, l: 'DC IN' }, { t: 'port', id: 'usb', k: 'usb', x: 300, y: 80, l: 'USB' }];
+  top.push({ t: 'text', x: 40, y: 350, s: 'Disposition simplifiée : se référer au manuel Multicam de votre version.', size: 11, w: 500 });
+  const rear = [{ t: 'body', x: 10, y: 10, w: 960, h: 140, r: 10 }, { t: 'port', id: 'rs422', k: 'dsub9', x: 120, y: 80, l: 'RS-422' }, { t: 'port', id: 'dcin', k: 'xlr', x: 240, y: 80, l: 'DC' }];
   return {
-    key: 'lsm', title: 'Télécommande de ralentis (type EVS LSM-VIA)', multi: true,
-    intro: 'La télécommande de l\'opérateur ralenti : écran tactile rabattable, touches multicolores à OLED de contexte, raccourcis programmables, molette jog et levier de vitesse « qualité EVS ». Elle pilote le serveur en IP.',
+    key: 'lsm', title: 'Télécommande de ralentis (type EVS LSM, logiciel Multicam)', multi: true,
+    intro: 'La télécommande de l\'opérateur ralenti : un afficheur, les touches F1 à F10 (clips et fonctions de menu), un bloc de touches à double fonction (SHIFT), le levier de vitesse et la molette jog. Utilisée par des milliers d\'opérateurs dans le sport en direct, elle pilote le serveur XT par liaison série.',
     views: { dessus: { label: 'Dessus (commandes)', w: 980, h: 520, items: top }, arriere: { label: 'Arrière', w: 980, h: 160, items: rear } },
     ports: P, controls: C,
-    specs: [['Liaison', 'IP vers le serveur (XT-VIA, XS-VIA, XT-GO)'], ['Commandes', 'Jog, levier, touches multicolores avec OLED, raccourcis programmables'], ['Écran', 'Tactile, rabattable, dispositions configurables'], ['Fast jog', '2x à 20x (réglable)']],
-    lesson: ['Méthode : sortie en LIVE pendant le jeu ; après l\'action, retour en arrière au jog, MARK IN, choix de l\'angle, puis lecture au levier quand le réalisateur envoie l\'EVS.', 'Le timecode partagé permet de passer de la caméra A à la caméra C sur la même image.'],
+    specs: [['Liaison', 'RS-422 vers le serveur (un port par télécommande)'], ['Logiciel', 'Multicam LSM (sur le serveur)'], ['Clips', '10 pages ; nommage page · banque · touche · angle (ex. 111A)'], ['Levier', '0 à 100 % ; plage secondaire −100/+100 % ou −200/+200 %'], ['Jog', '≈ 35 images par tour ; FAST JOG pour le recalage rapide']],
+    lesson: ['Méthode : sortie en LIVE pendant le jeu ; après l\'action, jog arrière, IN, choix de l\'angle, puis lecture au levier quand le réalisateur envoie l\'EVS.', 'RETURN : à l\'intérieur d\'un clip trop court, on retourne sur la même image dans le train d\'enregistrement pour prendre ce qu\'il y a avant ou après.', 'TAKE : en mode PGM + PRV, échange PGM et PRV ; en mode 2 PGM, échange le contenu des deux sorties.', 'Verrouiller la télécommande : CLEAR puis MENU dans les 2 secondes (d\'après le manuel Multicam).'],
   };
+}
+
+// ---------------------------------------------------------------- poste IPDirector
+function ipdDevice() {
+  return rackGeneric('ipd', 'Poste IPDirector (EVS)', 'Station de travail qui gère les médias des serveurs EVS : base de données des clips (recherche, métadonnées, mots-clés), log des actions (clip logger), montage de playlists, contrôle des canaux d\'enregistrement et de lecture, transferts vers le montage.', {
+    w: 760, h: 240, label: 'POSTE IPDIRECTOR · raccordements',
+    ports: [
+      { id: 'lan', k: 'rj45', x: 90, y: 130, l: 'LAN', meta: M('LAN', 'RJ-45 / SFP+', 'ip', 'io', 'Réseau de partage des médias EVS', 'Accès aux serveurs (base de données des clips, contrôle des canaux).') },
+      { id: 'video', k: 'bnc', x: 200, y: 130, l: 'SDI MON', meta: M('Moniteur', BNC, 'video', 'in', '', 'Moniteur de visualisation des canaux.') },
+      { id: 'kb', k: 'usb', x: 300, y: 130, l: 'USB', meta: M('Clavier / pupitre', 'USB', 'data', 'in', '', 'Clavier, souris, pupitre jog éventuel.') },
+      { id: 'pwr', k: 'iec', x: 400, y: 130, l: 'SECTEUR', meta: M('Alimentation', 'IEC', 'power', 'in', '', 'Secteur ondulé.') },
+    ],
+    specs: [['Fonctions', 'Contrôle multicam des enregistrements et lectures, revue des contenus en cours d\'enregistrement, base de données (clips, playlists), log, transferts'], ['Modules', 'Database explorer, Clip logger, Playlist, Control panel (selon licences)']],
+    lesson: ['IPDirector et la télécommande LSM travaillent sur les mêmes clips : un clip nommé dans IPDirector apparaît pour l\'opérateur ralenti.', 'Le logger note les actions avec des mots-clés pendant le direct : à la mi-temps, on retrouve tous les « TIR » d\'un joueur en une recherche.'],
+  });
+}
+
+// ---------------------------------------------------------------- mélangeur Sony XVS-6000
+function xvsDevice() {
+  const P = {}; const items = [{ t: 'body', x: 10, y: 10, w: 980, h: 580, r: 6 }, { t: 'text', x: 26, y: 34, s: 'XVS-6000 · processeur 6U · face arrière (disposition schématique)', size: 13, w: 700 }];
+  const boards = [['in', 'Carte d\'entrées 12G/3G-SDI', 1, 24, 'in'], ['out', 'Carte de sorties', 1, 16, 'out']];
+  let y = 90;
+  for (const [pre, l, from, count, d] of boards) {
+    items.push({ t: 'group', x: 30, y: y - 40, w: 760, h: count > 16 ? 160 : 100, l });
+    for (let i = 0; i < count; i++) {
+      const id = pre + (from + i); const c = i % 12, r = Math.floor(i / 12);
+      items.push({ t: 'port', id, k: 'bnc', x: 70 + c * 60, y: y + r * 62, l: (d === 'in' ? 'IN ' : 'OUT ') + (from + i), small: true });
+      P[id] = d === 'in' ? M(`INPUT ${from + i}`, BNC, 'video', 'in', SDI_STD, 'Entrée du mélangeur (bus de sources). Convertisseur de format possible sur chaque entrée selon les options.')
+        : M(`OUTPUT ${from + i}`, BNC, 'video', 'out', SDI_STD, 'Sortie assignable : PGM, clean, preview, AUX, multiviewer… selon la configuration (24 sorties assignables en HD, 6 en 4K dans la configuration de base).');
+    }
+    y += count > 16 ? 190 : 130;
+  }
+  items.push({ t: 'group', x: 30, y: y - 40, w: 760, h: 100, l: 'Option IP (ST 2110)' });
+  items.push({ t: 'port', id: 'ip1', k: 'sfp', x: 90, y, l: '100G IP 1' }, { t: 'port', id: 'ip2', k: 'sfp', x: 180, y, l: '100G IP 2' });
+  P.ip1 = M('Carte IP 100G', 'QSFP28', 'ip', 'io', 'SMPTE ST 2110, 4K et HD sur le même lien', 'Entrées/sorties sur réseau IP managé (option). Conversion de format côté entrée.');
+  P.ip2 = M('Carte IP 100G (2)', 'QSFP28', 'ip', 'io', 'ST 2110 / ST 2022-7', 'Second lien (réseau rouge / bleu).');
+  const side = [
+    { id: 'refin', k: 'bnc', x: 860, y: 90, l: 'REF IN', meta: M('REF IN', BNC + ' avec boucle', 'ref', 'in', REF_STD, 'Référence de synchro avec boucle : toutes les entrées doivent être en phase avec elle.') },
+    { id: 'refloop', k: 'bnc', x: 930, y: 90, l: 'LOOP', meta: M('REF LOOP', BNC, 'ref', 'out', REF_STD, 'Boucle de la référence (terminer à 75 Ω si inutilisée).') },
+    { id: 'mvslan', k: 'rj45', x: 860, y: 170, l: 'MVS LAN', meta: M('NETWORK (MVS LAN)', 'RJ-45 1000BASE-T', 'ip', 'io', 'Gigabit Ethernet', 'Réseau du mélangeur : liaison avec l\'unité d\'interface système (MKS-X7700) et le pupitre ICP.') },
+    { id: 'utillan', k: 'rj45', x: 930, y: 170, l: 'UTIL LAN', meta: M('NETWORK (UTIL LAN)', 'RJ-45 1000BASE-T', 'ip', 'io', 'Gigabit Ethernet', 'Réseau utilitaire : applications web (Virtual Menu, Virtual Shot Box), maintenance.') },
+    { id: 'stally', k: 'dsub25', x: 895, y: 250, l: 'TALLY', meta: M('Tally série / parallèle', 'D-sub', 'comms', 'out', 'Tally série, parallèle (via MKS-X7701) ou IP', 'Le mélangeur sait ce qui est à l\'antenne : il pilote le tally des caméras, du multiview et des serveurs.') },
+    { id: 'ac1', k: 'iec', x: 860, y: 340, l: 'AC 1', meta: M('Alimentation 1', 'IEC', 'power', 'in', '', 'Alimentations redondantes.') },
+    { id: 'ac2', k: 'iec', x: 930, y: 340, l: 'AC 2', meta: M('Alimentation 2', 'IEC', 'power', 'in', '', 'Seconde alimentation (sur un autre circuit).') },
+  ];
+  for (const p of side) { items.push({ t: 'port', id: p.id, k: p.k, x: p.x, y: p.y, l: p.l }); P[p.id] = p.meta; }
+  return {
+    key: 'mixer', title: 'Mélangeur — processeur (type Sony XVS-6000)', multi: false,
+    intro: 'Le pupitre du truquiste (ICP-X7000) n\'est qu\'une télécommande : le traitement est fait dans ce processeur, en baie. Il reçoit ses entrées de la grille et renvoie PGM, clean feed, preview et AUX. Il intègre aussi des multiviewers, une mémoire d\'images (frame memory) et des convertisseurs de format.',
+    views: { arriere: { label: 'Face arrière', w: 1000, h: 600, items } },
+    ports: P, controls: {},
+    specs: [['Gamme', 'Sony XVS (XVS-9000 / 8000 / 7000 / 6000)'], ['HD', 'Jusqu\'à 4 M/E selon les sources, 48 à 64 entrées, 24 sorties assignables, jusqu\'à 16 keyers'], ['4K (configuration de base)', '2 M/E, 16 entrées, 6 sorties, 8 keyers (4 full + 4 sub)'], ['Keyers', '4 par M/E, redimensionneur 2,5D sur chaque keyer ; DME 3D en option (XKS-8470 : 2 canaux HD ; XKS-8475 : 1 canal 4K)'], ['Frame memory', 'Stockage non volatil 480 Go : images fixes et clips, transitions « clip » (logo animé)'], ['Multiviewer', '2 canaux intégrés, découpages 4 / 10 / 13 / 16'], ['AUX', 'Transitions cut et mix ; correction colorimétrique primaire sur toutes les entrées et AUX'], ['Interfaces', '12G-SDI ; IP ST 2110 par cartes 100G (option)'], ['Réseau', 'MVS LAN et UTIL LAN (1000BASE-T)'], ['Référence', 'REF IN BNC 75 Ω avec boucle']],
+    lesson: ['Les chiffres d\'entrées varient selon les sources (48 ou 64 en HD) et selon les cartes installées : vérifiez la configuration de votre processeur.', 'En 4K, le nombre d\'entrées baisse fortement : dans ce simulateur, le mélangeur passe de 22 à 16 entrées utilisées en UHD.', 'Le pupitre et le processeur sont reliés par le réseau du mélangeur via l\'unité d\'interface système (MKS-X7700) : si le pupitre « gèle », le processeur continue de sortir l\'image.'],
+  };
+}
+function icpDevice() {
+  const C = {
+    xpt: M('Rangées de boutons XPT', 'Boutons RVB', 'video', '', '', 'Un bouton par source (20, 28 ou 36 par rangée selon le modèle). Rangée du haut : bus de clé (KEY) / AUX ; puis bus d\'arrière-plan A (PGM) et B (preset). Couleur du bouton selon le bus.'),
+    oled: M('Afficheurs OLED', 'OLED', 'data', '', '', 'Le nom de chaque source s\'affiche au-dessus de son bouton : il suit la grille et l\'affectation du mélangeur.'),
+    trans: M('Module de transition', 'Levier + boutons', 'data', '', '', 'Type de transition (MIX, WIPE, DME, CLIP), éléments concernés (BKGD, KEY 1 à 4), durée, AUTO TRANS, CUT et levier de transition (fader).'),
+    keyers: M('Keyers', 'Boutons', 'data', '', '', '4 keyers par M/E : source, type de découpe, redimensionneur 2,5D.'),
+    dsk: M('DSK / sortie', 'Boutons', 'data', '', '', 'Incrustations aval (habillage) et fondu au noir sur le bus de sortie.'),
+    menu: M('Pavé LCD / menu', 'Écran tactile', 'data', '', '', 'Menus de réglage et pavé de touches LCD : rappel des « snapshots », réglages des effets.'),
+    joy: M('Joystick (positionneur)', 'Joystick', 'data', '', '', 'Position, taille et rotation des images incrustées (DME, resizer).'),
+    snap: M('Snapshots / Shotbox', 'Boutons', 'data', '', '', 'Mémoires d\'état du mélangeur rappelées en une touche (ex. « image dans l\'image prête »).'),
+  };
+  const P = {
+    lan: M('LAN (vers MKS-X7700)', 'RJ-45', 'ip', 'io', 'Gigabit Ethernet', 'Le pupitre dialogue avec l\'unité d\'interface système, qui dialogue avec le processeur.'),
+    ac: M('Alimentation', 'IEC', 'power', 'in', '', 'Secteur ondulé.'),
+  };
+  const top = [{ t: 'body', x: 10, y: 10, w: 980, h: 520, r: 12 }, { t: 'text', x: 30, y: 40, s: 'PUPITRE ICP-X7000 · 1 rangée M/E (extrait, disposition schématique)', size: 13, w: 700 }];
+  for (let r = 0; r < 3; r++) {
+    top.push({ t: 'text', x: 30, y: 98 + r * 74, s: ['KEY/AUX', 'A · PGM', 'B · PST'][r], size: 11, w: 600 });
+    for (let i = 0; i < 12; i++) {
+      top.push({ t: 'btn', id: 'oled', x: 100 + i * 52, y: 70 + r * 74, w: 46, h: 16, l: String(i + 1), labelKey: 'oled:' + i, oled: true, c: 'cyan' });
+      top.push({ t: 'btn', id: 'xpt', x: 100 + i * 52, y: 90 + r * 74, w: 46, h: 36, l: String(i + 1), litKey: `xpt:${r}:${i}`, litColor: ['#c9a227', '#ff3b30', '#2fd25a'][r] });
+    }
+  }
+  [['MIX', 'trans'], ['WIPE', 'trans'], ['DME', 'trans'], ['CLIP', 'trans'], ['BKGD', 'trans'], ['KEY1', 'keyers'], ['KEY2', 'keyers'], ['CUT', 'trans'], ['AUTO', 'trans']].forEach(([l, id], i) => top.push({ t: 'btn', id, x: 100 + i * 62, y: 320, w: 56, h: 40, l }));
+  ['DSK1', 'DSK2', 'FTB'].forEach((l, i) => top.push({ t: 'btn', id: 'dsk', x: 100 + i * 62, y: 380, w: 56, h: 40, l }));
+  ['SNAP 1', 'SNAP 2', 'SNAP 3', 'SNAP 4'].forEach((l, i) => top.push({ t: 'btn', id: 'snap', x: 320 + i * 62, y: 380, w: 56, h: 40, l }));
+  top.push({ t: 'lever', id: 'trans', x: 760, y: 70, w: 50, h: 260, fader: true, l: 'FADER' });
+  top.push({ t: 'lcd', id: 'menu', x: 830, y: 70, w: 150, h: 116 });
+  top.push({ t: 'joy', id: 'joy', x: 900, y: 400, r: 55, l: 'POSITIONNEUR' });
+  const rear = [{ t: 'body', x: 10, y: 10, w: 980, h: 140, r: 10 }, { t: 'port', id: 'lan', k: 'rj45', x: 120, y: 80, l: 'LAN' }, { t: 'port', id: 'ac', k: 'iec', x: 220, y: 80, l: 'AC' }];
+  return {
+    key: 'mixpanel', title: 'Pupitre du mélangeur (type Sony ICP-X7000)', multi: false,
+    intro: 'Surface de commande modulaire des mélangeurs Sony XVS : 1 à 4 rangées M/E, 20, 28 ou 36 boutons de croisement (XPT) par rangée, afficheurs OLED des noms de sources, boutons RVB, pavé LCD. Le pupitre est relié au processeur par l\'unité d\'interface système MKS-X7700.',
+    views: { dessus: { label: 'Dessus (commandes)', w: 1000, h: 540, items: top }, arriere: { label: 'Arrière', w: 1000, h: 160, items: rear } },
+    ports: P, controls: C,
+    specs: [['Rangées', '1 à 4 M/E'], ['Boutons XPT', '20, 28 ou 36 par rangée ; châssis standard, étroit ou petit'], ['Affichage', 'OLED au-dessus des boutons, boutons RVB, pavé LCD'], ['Installation', 'À plat, incliné, ou séparé en deux positions'], ['Liaison', 'Unité d\'interface système MKS-X7700 ou MKS-X2700, station de contrôle du mélangeur'], ['À distance', 'Virtual Menu et Virtual Shot Box (applications web sur tablette ou PC)']],
+    lesson: ['Les noms OLED viennent de la configuration : si un nom est faux, l\'erreur est dans la table des sources (ou dans le brassage), pas dans le pupitre.', 'Snapshot : on mémorise un état complet (sources, clés, transitions) pour le rappeler instantanément en direct.'],
+  };
+}
+function siuDevice() {
+  return rackGeneric('siu', 'Unité d\'interface système (type Sony MKS-X7700)', 'Relie le ou les pupitres au processeur du mélangeur et porte les cartes de tally / GPI (MKS-X7701 : 3 connecteurs D-sub 37, 18 sorties relais par carte).', {
+    w: 900, h: 240, label: 'MKS-X7700 · face arrière (schématique)',
+    ports: [
+      { id: 'lanp', k: 'rj45', x: 80, y: 130, l: 'PANEL', meta: M('LAN pupitre', 'RJ-45', 'ip', 'io', 'Gigabit Ethernet', 'Vers le pupitre ICP-X7000.') },
+      { id: 'lanm', k: 'rj45', x: 160, y: 130, l: 'MVS LAN', meta: M('LAN processeur', 'RJ-45', 'ip', 'io', 'Gigabit Ethernet', 'Vers le processeur XVS (MVS LAN).') },
+      ...[1, 2, 3].map((i) => ({ id: 'tally' + i, k: 'dsub25', x: 270 + (i - 1) * 90, y: 130, l: 'TALLY ' + i, meta: M('TALLY / GPI ' + i, 'D-sub 37', 'comms', 'out', 'Contacts relais (carte MKS-X7701)', 'Sorties de tally parallèle : rouge (PGM) et vert (preset) vers les CCU et les moniteurs.') })),
+      { id: 'ac', k: 'iec', x: 620, y: 130, l: 'AC', meta: M('Alimentation', 'IEC', 'power', 'in', '', 'Secteur ondulé.') },
+    ],
+  });
 }
 
 // ---------------------------------------------------------------- appareils de baie (génériques)
@@ -355,21 +463,7 @@ DEV.router = rackGeneric('router', 'Grille de commutation (exemple de matrice 12
   specs: [['Format', '12G-SDI (UHD) / 3G / HD, ou IP ST 2110 sur les cars récents'], ['Commutation', 'Dans l\'intervalle de suppression (« clean switch ») si verrouillée sur la référence'], ['Contrôle', 'Panneaux X-Y, salvos, noms de sources (UMD), tally']],
   lesson: ['Le nom d\'une source suit le signal : la grille pousse les noms (UMD) vers le multiview.', 'Une erreur de prise sur une sortie « départ » envoie la mauvaise image à la chaîne : toujours vérifier au retour antenne.'],
 });
-DEV.mixer = rackGeneric('mixer', 'Mélangeur — châssis de traitement', 'Le pupitre du truquiste n\'est qu\'une télécommande : le traitement est fait dans ce châssis, en baie. Il reçoit ses entrées de la grille et renvoie PGM, clean feed, preview et AUX.', {
-  w: 1000, h: 460, label: 'MÉLANGEUR · châssis, face arrière',
-  groups: [
-    { l: 'Entrées 1 à 24', prefix: 'in', from: 1, count: 24, cols: 12, rows: 2, x: 66, y: 100, dx: 58, dy: 62, k: 'bnc', conn: BNC, s: 'video', d: 'in', std: SDI_STD, name: (i) => `IN ${i}`, desc: () => 'Entrée du mélangeur (bus de sources).' },
-    { l: 'Sorties', prefix: 'out', from: 1, count: 8, cols: 8, rows: 1, x: 66, y: 290, dx: 58, dy: 62, k: 'bnc', conn: BNC, s: 'video', d: 'out', std: SDI_STD, name: (i) => ['PGM', 'CLEAN', 'PVW', 'AUX 1', 'AUX 2', 'AUX 3', 'AUX 4', 'ME1 PVW'][i - 1], short: (i) => ['PGM', 'CLN', 'PVW', 'AUX1', 'AUX2', 'AUX3', 'AUX4', 'ME PV'][i - 1], desc: (i) => ['Programme avec habillage (DSK).', 'Programme sans DSK (clean feed) pour les diffuseurs étrangers.', 'Preview : ce qui passera à la prochaine transition.', 'Sortie auxiliaire.', 'Sortie auxiliaire.', 'Sortie auxiliaire.', 'Sortie auxiliaire.', 'Preview de l\'étage M/E.'][i - 1] },
-  ],
-  ports: [
-    { id: 'dsk1f', k: 'bnc', x: 600, y: 290, l: 'DSK1 F', meta: M('DSK 1 FILL', BNC, 'video', 'in', SDI_STD, 'Remplissage du DSK 1 (score) venant du moteur graphique.') },
-    { id: 'dsk1k', k: 'bnc', x: 655, y: 290, l: 'DSK1 K', meta: M('DSK 1 KEY', BNC, 'video', 'in', SDI_STD, 'Découpe du DSK 1.') },
-    { id: 'ref', k: 'bnc', x: 760, y: 290, l: 'REF', meta: M('REF IN', BNC, 'ref', 'in', REF_STD, 'Référence (black burst ou tri-level). Toutes les entrées doivent être en phase avec elle.') },
-    { id: 'tally', k: 'rj45', x: 840, y: 290, l: 'TALLY', meta: M('TALLY / GPI', 'RJ-45 / D-sub', 'comms', 'out', 'GPI ou IP (TSL UMD)', 'Le mélangeur sait ce qui est à l\'antenne : il envoie le tally aux CCU, au multiview, aux serveurs.') },
-    { id: 'panel', k: 'rj45', x: 900, y: 290, l: 'PANEL', meta: M('LAN pupitre', 'RJ-45', 'ip', 'io', '', 'Liaison avec le pupitre du truquiste.') },
-  ],
-  specs: [['Architecture', 'Pupitre (commande) + châssis (traitement) reliés en réseau'], ['Étages', '1 à 5 M/E selon la taille, keyers, DVE, DSK, mémoires d\'effets'], ['Entrées', 'Une entrée par source, verrouillée sur la référence']],
-});
+DEV.mixer = xvsDevice(); DEV.mixpanel = icpDevice(); DEV.siu = siuDevice(); DEV.ipd = ipdDevice();
 DEV.mv = rackGeneric('mv', 'Processeur multiview', 'Assemble jusqu\'à des dizaines de sources sur les écrans de la régie, avec les étiquettes (UMD), le tally, les horloges, les vumètres et les alarmes (perte de signal, image figée, noir).', {
   w: 1000, h: 420, label: 'MULTIVIEWER · face arrière',
   groups: [{ l: 'Entrées 1 à 40', prefix: 'in', from: 1, count: 40, cols: 20, rows: 2, x: 52, y: 100, dx: 46, dy: 62, k: 'bnc', conn: BNC, s: 'video', d: 'in', std: SDI_STD, name: (i) => `IN ${i}`, desc: (i) => i <= 18 ? 'Tuile alimentée par la grille.' : i === 19 ? 'Multiviewer interne de l\'EVS.' : i > 24 ? 'Sortie CHARACTER d\'une CCU.' : 'Entrée.' }],
@@ -434,10 +528,10 @@ DEV.conv = rackGeneric('conv', 'Convertisseur SDI / fibre', 'Petit boîtier qui 
   ],
 });
 
-const LINKMAP = { cam: 'cam', ccu: 'ccu', rcp: 'rcp', evs: 'evs', lsm: 'lsm', router: 'router', mixer: 'mixer', mv: 'mv', spg: 'spg', da: 'da', pdc: 'pdc', rx: 'rx', conv: 'conv' };
+const LINKMAP = { cam: 'cam', ccu: 'ccu', rcp: 'rcp', evs: 'evs', lsm: 'lsm', router: 'router', mixer: 'mixer', mixpanel: 'mixpanel', siu: 'siu', ipd: 'ipd', mv: 'mv', spg: 'spg', da: 'da', pdc: 'pdc', rx: 'rx', conv: 'conv' };
 export const DEVICES = DEV;
 export function deviceDef(key) { return DEV[LINKMAP[key] || key]; }
 export const DEVICE_LIST = [
-  ['cam', 'Caméra système (tête)'], ['ccu', 'CCU (voie caméra)'], ['rcp', 'RCP (pupitre vision)'], ['evs', 'Serveur ralenti EVS'], ['lsm', 'Télécommande LSM'],
-  ['router', 'Grille'], ['mixer', 'Mélangeur (châssis)'], ['mv', 'Multiviewer'], ['spg', 'Générateur de synchro'], ['da', 'Distributeur de référence'], ['rx', 'Récepteur HF'], ['conv', 'Convertisseur fibre'], ['pdc', 'Pied de car'],
+  ['cam', 'Caméra système (tête)'], ['ccu', 'CCU (voie caméra)'], ['rcp', 'RCP (pupitre vision)'], ['evs', 'Serveur ralenti EVS XT4K'], ['lsm', 'Télécommande LSM'], ['ipd', 'Poste IPDirector'],
+  ['router', 'Grille'], ['mixer', 'Mélangeur XVS-6000 (processeur)'], ['mixpanel', 'Pupitre ICP-X7000'], ['siu', 'Interface MKS-X7700 (tally)'], ['mv', 'Multiviewer'], ['spg', 'Générateur de synchro'], ['da', 'Distributeur de référence'], ['rx', 'Récepteur HF'], ['conv', 'Convertisseur fibre'], ['pdc', 'Pied de car'],
 ];

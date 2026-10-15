@@ -14,6 +14,9 @@ import { EX, startExercise, stopExercise } from '../exercises.js';
 import { explainBox, explain, toggleFloatMon } from './widgets.js';
 import { buildVision } from './st_vision.js';
 import { buildEVS } from './st_evs.js';
+import { buildMixer } from './st_mixer.js';
+import { buildIPD } from './st_ipd.js';
+import { mixInputs, EQUIP } from '../equip.js';
 import { openDevice, openEquipmentIndex } from '../equipment/viewer.js';
 import { buildCabling, SIG, DEV_NAMES, endLabel } from '../equipment/cabling.js';
 import { DEVICE_LIST } from '../equipment/devices.js';
@@ -23,14 +26,15 @@ export const ST = { cur: null, lastUpd: 0 };
 // layout : 'side' = écrans à gauche, commandes à droite · 'top' = écrans en haut · 'top sm' = bandeau d'écrans réduit · 'none' = sans écrans
 // dev : appareil ouvert par le bouton « Matériel »
 const STATIONS = {
-  melangeur: { title: 'Mélangeur — truquiste', build: buildMixer, layout: 'top', dev: 'mixer' },
+  melangeur: { title: 'Mélangeur — truquiste', build: buildMixer, layout: 'top', dev: 'mixpanel' },
   realisateur: { title: 'Réalisateur', build: buildDirector, layout: 'top', dev: 'mv' },
   scripte: { title: 'Scripte', build: buildScripte, layout: 'top sm' },
   habillage: { title: 'Habillage', build: buildGfx, layout: 'top' },
   producteur: { title: 'Production', build: buildProd, layout: 'top' },
   chefdecar: { title: 'Chef de car', build: buildChef, layout: 'top sm' },
   vision: { title: 'Ingénieur vision — RCP', build: buildVision, layout: 'side', dev: 'rcp' },
-  evs: { title: 'Ralentis — EVS / LSM', build: buildEVS, layout: 'top', dev: 'evs' },
+  evs: { title: 'Ralentis — EVS XT4K / LSM', build: buildEVS, layout: 'top', dev: 'lsm' },
+  ipdirector: { title: 'IPDirector — base de clips EVS', build: buildIPD, layout: 'top sm', dev: 'ipd' },
   son: { title: 'Régie son', build: buildAudio, layout: 'top' },
   hf: { title: 'Régie HF', build: buildHF, layout: 'side', dev: 'rx' },
   grille: { title: 'Grille de commutation', build: buildRouter, layout: 'top', dev: 'router' },
@@ -146,105 +150,6 @@ function srcButtonLabel(n) {
   if (id.startsWith('CAM')) { const c = camById(+id.slice(3)); return [`CAM ${id.slice(3)}`, c ? c.T.short : 'libre']; }
   return [s ? s.short : id, { EVSA: 'ralenti', EVSB: 'ralenti', GFX: 'graph.', STUDIO: 'duplex', BARS: 'mire', BLACK: 'noir' }[id] || ''];
 }
-function buildMixer(body, arg, ctx) {
-  ctx.dock.append(dmon('mv', 'Multiview (PGM, PVW et toutes les sources)'));
-  const buses = { key: [], pgm: [], pst: [] };
-  const rows = el('div', { class: 'hwpanel' }, el('h3', {}, 'Bus de sources (M/E 1)'));
-  for (const bus of ['key', 'pgm', 'pst']) {
-    const row = el('div', { class: 'hwrow' }, el('span', { class: 'rl' }, bus === 'key' ? 'KEY 1' : bus.toUpperCase()));
-    for (let n = 1; n <= 22; n++) {
-      const [l, sub] = srcButtonLabel(n);
-      const b = hwBtn(l, { sub, onclick: () => { if (bus === 'pgm') mixSetPgm(n); else if (bus === 'pst') mixSetPst(n); else MIX.key1.src = n; } });
-      buses[bus][n] = b; row.appendChild(b);
-    }
-    rows.appendChild(row);
-  }
-  body.appendChild(rows);
-  const grid = el('div', { class: 'panelgrid' });
-  // transitions
-  const tbtns = {};
-  const transP = el('div', { class: 'hwpanel' }, el('h3', {}, 'Transition'));
-  const tr = el('div', { class: 'hwrow' });
-  const TRANS_TXT = { mix: 'MIX (fondu enchaîné) : les deux images se superposent pendant la durée choisie.', wipe: 'VOLET : une forme (motif) découvre la nouvelle image.', dip: 'DIP : passage par une couleur (souvent le noir ou le blanc) au milieu de la transition.', dve: 'DVE PUSH : l\'image entrante pousse l\'ancienne hors du cadre (effet numérique).', stinger: 'VOLET LOGO (stinger) : une animation plein écran avec key masque la coupe au milieu. Typique avant et après un ralenti.' };
-  for (const k in TRANS) { const b = hwBtn(TRANS[k], { onclick: () => { MIX.trans = k; explain(TRANS_TXT[k] + ' Lancez avec AUTO ou la barre T.', 'mix:trans'); } }); tbtns[k] = b; tr.appendChild(b); }
-  transP.appendChild(tr);
-  const wbtns = [];
-  const wr = el('div', { class: 'hwrow' }, el('span', { class: 'rl' }, 'Motif'));
-  WIPES.forEach((w, i) => { const b = hwBtn(w.split(' ')[0], { onclick: () => { MIX.wipe = i; MIX.trans = 'wipe'; } }); wbtns.push(b); wr.appendChild(b); });
-  transP.appendChild(wr);
-  const rate = el('input', { type: 'number', min: 0, max: 200, value: MIX.rate, id: 'mixrate', style: { width: '80px' } });
-  rate.addEventListener('change', () => { MIX.rate = clamp(+rate.value || 0, 0, 200); explain(`Durée de transition : ${MIX.rate} images = ${fmt(MIX.rate / 50, 2)} s à 50 i/s. Un enchaîné classique dure 12 à 25 images.`, 'mix:rate'); });
-  const nb = hwBtn('BKGD', { onclick: () => { MIX.next.bkgd = !MIX.next.bkgd; if (!MIX.next.bkgd && !MIX.next.key1) MIX.next.key1 = true; } });
-  const nk = hwBtn('KEY 1', { onclick: () => { MIX.next.key1 = !MIX.next.key1; if (!MIX.next.bkgd && !MIX.next.key1) MIX.next.bkgd = true; } });
-  transP.appendChild(el('div', { class: 'hwrow' }, el('span', { class: 'rl' }, 'Durée'), rate, el('span', { class: 'note' }, 'images (50 i/s)'), el('span', { style: { flex: 1 } }), el('span', { class: 'rl' }, 'Next'), nb, nk));
-  const tbar = el('input', { type: 'range', min: 0, max: 100, step: 0.5, value: 0, class: 'tbar', id: 'tbar', 'aria-label': 'Barre de transition' });
-  tbar.addEventListener('input', () => { mixTbar(+tbar.value / 100); explain(`Barre T : ${Math.round(MIX.pos * 100)} % de la transition. Le truquiste la pousse à la main pour suivre le rythme de l'action (un enchaîné lent sur un plan large, par exemple).`, 'mix:tbar'); });
-  const cut = hwBtn('CUT', { cls: 'big', onclick: () => mixCut() });
-  const auto = hwBtn('AUTO', { cls: 'big', onclick: () => mixAuto() });
-  const prog = el('div', { class: 'lcd amber' }, '0 %');
-  transP.appendChild(el('div', { class: 'hwrow', style: { alignItems: 'flex-end', gap: '14px' } }, el('div', { class: 'hwrow' }, cut, auto), tbar, el('div', { class: 'list' }, el('span', { class: 'note' }, 'Barre T'), prog)));
-  grid.appendChild(transP);
-  // clé
-  const keyP = el('div', { class: 'hwpanel' }, el('h3', {}, 'Incrustation KEY 1 (DVE / image dans l\'image)'));
-  const kOn = hwBtn('KEY CUT', { onclick: () => keyToggle(false) });
-  const kAuto = hwBtn('KEY AUTO', { onclick: () => keyToggle(true) });
-  const corners = {};
-  const cr = el('div', { class: 'hwrow' }, el('span', { class: 'rl' }, 'Coin'));
-  for (const [k, l] of [['tl', '↖'], ['tr', '↗'], ['bl', '↙'], ['br', '↘']]) { const b = hwBtn(l, { onclick: () => { MIX.key1.corner = k; } }); corners[k] = b; cr.appendChild(b); }
-  const ks = knob('Taille', 15, 60, 1, Math.round(MIX.key1.size * 100), (v) => { MIX.key1.size = v / 100; explain(`Taille de l'image incrustée : ${v} %. Le DVE redimensionne la source KEY 1 en temps réel.`, 'mix:size'); }, (v) => v + ' %');
-  keyP.append(el('div', { class: 'hwrow' }, kOn, kAuto, el('span', { class: 'note' }, 'Source : bus KEY 1')), cr, ks);
-  grid.appendChild(keyP);
-  // DSK
-  const dskP = el('div', { class: 'hwpanel' }, el('h3', {}, 'DSK (habillage aval) et fondu au noir'));
-  const d1c = hwBtn('DSK 1 CUT', { sub: 'score', onclick: () => dskToggle(1, false) }), d1a = hwBtn('DSK 1 AUTO', { sub: 'score', onclick: () => dskToggle(1, true) });
-  const d2c = hwBtn('DSK 2 CUT', { sub: 'graph.', onclick: () => dskToggle(2, false) }), d2a = hwBtn('DSK 2 AUTO', { sub: 'graph.', onclick: () => dskToggle(2, true) });
-  const ftb = hwBtn('FTB', { sub: 'noir', onclick: () => ftbToggle() });
-  dskP.append(el('div', { class: 'hwrow' }, d1c, d1a), el('div', { class: 'hwrow' }, d2c, d2a), el('div', { class: 'hwrow' }, ftb),
-    el('p', { class: 'note' }, 'Les DSK sont au-dessus de tout : le score reste à l\'écran pendant les ralentis. Le clean feed est le programme sans DSK.'));
-  grid.appendChild(dskP);
-  body.appendChild(grid);
-  body.appendChild(el('p', { class: 'note' }, 'Raccourcis : 1 à 9 et 0 = préparer l\'entrée 1 à 10 sur le PST · Maj + chiffre = direct au PGM · Espace = CUT · Entrée = AUTO · W = volet · X = mix · L = volet logo.'));
-  let lastLabels = '';
-  return {
-    update() {
-      const labelsKey = Object.values(ROUTER.map).join(',') + S.cams.map((c) => c.id + c.type).join(',');
-      if (labelsKey !== lastLabels) {
-        lastLabels = labelsKey;
-        for (const bus of ['key', 'pgm', 'pst']) for (let n = 1; n <= 22; n++) { const [l, sub] = srcButtonLabel(n); const b = buses[bus][n]; b.firstChild.textContent = l; b.querySelector('small').textContent = sub; }
-      }
-      for (let n = 1; n <= 22; n++) {
-        const id = meSource(n); const dead = id && id.startsWith('CAM') && !camById(+id.slice(3));
-        buses.pgm[n].className = 'hw' + (MIX.pgm === n ? ' pgm' : '') + (dead ? ' dead' : '');
-        buses.pst[n].className = 'hw' + (MIX.pst === n ? ' pst' : '') + (dead ? ' dead' : '');
-        buses.key[n].className = 'hw' + (MIX.key1.src === n ? ' lit' : '') + (dead ? ' dead' : '');
-      }
-      for (const k in tbtns) tbtns[k].classList.toggle('lit', MIX.trans === k);
-      wbtns.forEach((b, i) => b.classList.toggle('lit2', MIX.wipe === i));
-      nb.classList.toggle('lit', MIX.next.bkgd); nk.classList.toggle('lit', MIX.next.key1);
-      kOn.classList.toggle('pgm', MIX.key1.on); kAuto.classList.toggle('pgm', MIX.key1.on);
-      for (const k in corners) corners[k].classList.toggle('lit2', MIX.key1.corner === k);
-      d1c.classList.toggle('pgm', MIX.dsk1.on); d1a.classList.toggle('pgm', MIX.dsk1.on);
-      d2c.classList.toggle('pgm', MIX.dsk2.on); d2a.classList.toggle('pgm', MIX.dsk2.on);
-      ftb.classList.toggle('pgm', MIX.ftb.on);
-      auto.classList.toggle('pgm', MIX.auto);
-      prog.textContent = Math.round(MIX.pos * 100) + ' %';
-      if (MIX.auto && document.activeElement !== tbar) tbar.value = (MIX.tbarDir > 0 ? MIX.pos : 1 - MIX.pos) * 100;
-      if (document.activeElement !== rate) rate.value = MIX.rate;
-    },
-    key(e) {
-      if (e.target && (e.target.tagName === 'INPUT' && e.target.type !== 'range')) return false;
-      const d = e.code.startsWith('Digit') ? +e.code.slice(5) : e.code.startsWith('Numpad') && /\d/.test(e.code.slice(6)) ? +e.code.slice(6) : null;
-      if (d != null) { const n = d === 0 ? 10 : d; if (e.shiftKey) mixSetPgm(n); else mixSetPst(n); return true; }
-      if (e.code === 'Space') { mixCut(); return true; }
-      if (e.code === 'Enter' || e.code === 'NumpadEnter') { mixAuto(); return true; }
-      if (e.code === 'KeyW') { MIX.trans = 'wipe'; return true; }
-      if (e.code === 'KeyX') { MIX.trans = 'mix'; return true; }
-      if (e.code === 'KeyL') { MIX.trans = 'stinger'; return true; }
-      return false;
-    },
-  };
-}
-
 // ----------------------------------------------------------------------------------
 // Réalisateur
 // ----------------------------------------------------------------------------------
@@ -253,7 +158,7 @@ function buildDirector(body, arg, ctx) {
   const p = el('div', { class: 'hwpanel' }, el('h3', {}, 'Ordres au truquiste'));
   const rowP = el('div', { class: 'hwrow' }, el('span', { class: 'rl' }, 'Prépare'));
   const btnsP = {};
-  const srcs = () => { const l = []; for (let n = 1; n <= 22; n++) { const id = meSource(n); if (!id) continue; if (id.startsWith('CAM') && !camById(+id.slice(3))) continue; if (['BLACK', 'BARS'].includes(id)) continue; l.push(n); } return l; };
+  const srcs = () => { const l = []; for (let n = 1; n <= mixInputs(); n++) { const id = meSource(n); if (!id) continue; if (id.startsWith('CAM') && !camById(+id.slice(3))) continue; if (['BLACK', 'BARS'].includes(id)) continue; l.push(n); } return l; };
   const build = () => {
     rowP.innerHTML = ''; rowP.appendChild(el('span', { class: 'rl' }, 'Prépare'));
     for (const n of srcs()) { const [l, sub] = srcButtonLabel(n); const b = hwBtn(l, { sub, onclick: () => order('prep', n) }); btnsP[n] = b; rowP.appendChild(b); }
@@ -451,7 +356,7 @@ function cablingList() {
   return { el: box, update() { const k = buildCabling().length + ':' + buildCabling().filter((c) => !c.ok).length; if (k !== lastKey) { lastKey = k; draw(); } } };
 }
 function materielTab() {
-  const box = el('div', { class: 'list' }, el('p', { class: 'note' }, 'Faces avant et arrière des appareils, d\'après les fiches techniques constructeurs (chaîne caméra type Sony HDC / HDCU / RCP, serveur EVS XT-VIA et télécommande LSM-VIA). Les connecteurs câblés dans votre installation sont entourés de la couleur du signal.'));
+  const box = el('div', { class: 'list' }, el('p', { class: 'note' }, 'Faces avant et arrière des appareils, d\'après les fiches techniques constructeurs (chaîne caméra type Sony HDC / HDCU / RCP, mélangeur Sony XVS-6000 et pupitre ICP-X7000, serveur EVS XT4K, télécommande LSM et IPDirector). Les connecteurs câblés dans votre installation sont entourés de la couleur du signal.'));
   const row = el('div', { class: 'grid2' });
   for (const [k, l] of DEVICE_LIST) row.appendChild(el('button', { class: 'choice', onclick: () => openDevice(k, k === 'cam' || k === 'ccu' || k === 'rcp' ? (S.cams[0] ? S.cams[0].id : 1) : 1) }, el('b', { style: { fontSize: '17px' } }, l), el('span', {}, DEV_NAMES[k] || '')));
   box.append(row);

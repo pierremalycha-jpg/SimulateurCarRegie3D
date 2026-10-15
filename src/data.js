@@ -264,7 +264,7 @@ export const STATION_INFO = {
   melangeur: {
     title: 'Truquiste (opérateur mélangeur)', where: 'Régie production – à droite du réalisateur',
     role: 'Exécute en temps réel les commutations demandées par le réalisateur : cut, enchaîné (mix), volet, transitions logo pour les ralentis, incrustations et habillage (DSK). Prépare les effets complexes.',
-    gear: ['Mélangeur de production (type Sony XVS, Grass Valley Kayenne/K-Frame, Ross Acuity) : pupitre + châssis de traitement dans la baie', 'Bus Programme (PGM, rouge) et Preset (PST, vert), barre T, sélecteurs de transition', 'Keyers (incrustations), DVE (image dans l\'image), DSK (habillage en aval)', 'Mémoires d\'effets (E-MEM) et macros'],
+    gear: ['Dans votre car : mélangeur Sony XVS-6000 (processeur 6U en baie) commandé par un pupitre ICP-X7000 via l\'unité d\'interface MKS-X7700', 'Bus A (programme, rouge) et B (preset, vert), levier de transition, MIX / WIPE / DME / CLIP', '4 keyers par M/E avec redimensionneur 2,5D, DME 3D en option, DSK (habillage aval)', 'Frame memory (images et clips de transition), snapshots et Shotbox, multiviewers intégrés'],
     process: ['La source annoncée est sélectionnée sur le bus PST (tally vert sur la caméra)', 'Au « Top », CUT ou AUTO (transition de durée réglée en images)', 'Le PST et le PGM s\'échangent après chaque transition (flip-flop)', 'Les DSK (score, logo) restent au-dessus de tout, y compris des ralentis'],
     tips: ['Raccourcis de ce simulateur : chiffres = préparer la source, Maj + chiffre = direct au PGM, Espace = CUT, Entrée = AUTO.', 'Une durée de mix de 12 à 25 images est courante ; un volet logo dure environ 1 s.', 'La sortie « clean feed » est le PGM sans les DSK : on la livre aux diffuseurs étrangers.'],
   },
@@ -296,10 +296,17 @@ export const STATION_INFO = {
     process: ['Line-up : balance des noirs (iris fermé), balance des blancs sur une charte, chargement des fichiers de scène', 'Matching : même niveau de noir, même balance des blancs, même gamma et même saturation pour toutes les caméras', 'Direct : « riding » de l\'iris en continu, ajustements fins des couleurs'],
     tips: ['Repères : pelouse en plein soleil vers 40-55 %, maillot blanc sous 100 %, noirs à 0-2 %.', 'Ouvrir l\'iris d\'un diaphragme double la lumière ; +6 dB de gain aussi, mais avec du bruit.', 'Au téléobjectif, l\'ouverture maximale diminue (ramping) : l\'image peut s\'assombrir quand le cadreur zoome.', 'Les caméras super ralenti reçoivent 3 ou 6 fois moins de lumière par image.'],
   },
+  ipdirector: {
+    title: 'IPDirector (gestion des médias EVS)', where: 'Régie ralentis',
+    role: 'Gère la base de données des clips du serveur EVS : log des actions avec mots-clés pendant le direct, nommage et classement des clips, montage de playlists (résumés, meilleurs moments), contrôle des canaux, transferts vers le montage.',
+    gear: ['Station de travail IPDirector reliée aux serveurs XT4K (réseau 10 GbE)', 'Moniteurs des canaux de lecture', 'Intercom avec l\'opérateur ralenti et le réalisateur'],
+    process: ['Pendant le jeu : logger chaque action (BUT, TIR, FAUTE…) au bon timecode', 'Transformer les logs en clips, les nommer, ajouter joueurs et notes', 'À la mi-temps et à la fin : monter les playlists du résumé et les envoyer à l\'antenne ou au montage'],
+    tips: ['Un clip créé ici apparaît aussi sur la télécommande LSM (même base de données).', 'Des mots-clés cohérents (toujours « TIR », jamais « frappe ») rendent la recherche instantanée.'],
+  },
   evs: {
     title: 'Opérateur ralenti (EVS / LSM)', where: 'Régie ralentis',
     role: 'Enregistre en permanence plusieurs caméras sur le serveur et sort les ralentis à la demande du réalisateur, avec le bon angle et la bonne vitesse. Prépare aussi les résumés et les moments forts.',
-    gear: ['Serveur de production (type EVS XT-VIA) : par exemple 8 entrées enregistrées en boucle et 2 sorties de lecture', 'Télécommande LSM : levier de vitesse, molette jog, touches de caméras, MARK IN / OUT', 'Moniteurs des sorties de lecture'],
+    gear: ['Dans votre car : serveur EVS XT4K (4 canaux UHD ou 8 à 12 canaux HD selon la configuration)', 'Télécommande LSM (logiciel Multicam) : levier, jog, touches F, IN / OUT, PLST, TAKE', 'Poste IPDirector : base de données des clips, log, playlists', 'Moniteurs des sorties de lecture et écran du serveur (clip screen)'],
     process: ['Après une action : retour en arrière, MARK IN quelques secondes avant', 'Choix de l\'angle (toutes les caméras enregistrées sont synchronisées en timecode)', 'Le réalisateur envoie la sortie EVS au mélangeur, l\'opérateur lance la lecture au levier (25 à 50 % le plus souvent)', 'Pour une caméra super ralenti (3x), 33 % reste parfaitement fluide'],
     tips: ['Une caméra 3x occupe 3 entrées d\'enregistrement (une par phase).', 'Ralentir une caméra 50 i/s à 25 % fait répéter chaque image 4 fois : le mouvement saccade.', 'Raccourcis : Espace = lecture/pause, I = MARK IN, O = MARK OUT, L = live, flèches = jog image par image.'],
   },
@@ -513,7 +520,18 @@ export const GLOSSARY = [
   ['Fast jog', 'Mode de la molette qui parcourt les enregistrements beaucoup plus vite qu\'image par image.'],
   ['Var Max', 'Réglage de la vitesse maximale du levier (par exemple pour aller au-delà de 100 %).'],
   ['Phases (super ralenti)', 'Une caméra 3x à 150 i/s sort trois flux à 50 i/s (phases A, B, C), enregistrés séparément puis recombinés par le serveur.'],
-  ['Super Motion', 'Option du serveur EVS pour les caméras rapides : de 2x à 16x en HD, de 2x à 4x en UHD sur une XT-VIA.'],
+  ['Super Motion', 'Enregistrement des caméras rapides (plusieurs phases) par le serveur EVS ; les phases d\'une même caméra vont sur le même serveur. En UHD, un XT4K n\'a que 4 canaux.'],
+  ['XT4K', 'Serveur EVS de génération UHD : 4 canaux UHD-4K sur un seul câble 12G-SDI, ou 8 canaux HD (12 avec ChannelMAX), stockage interne jusqu\'à 9 To.'],
+  ['ChannelMAX', 'Configuration EVS qui augmente le nombre de canaux HD d\'un serveur (12 et plus sur un XT4K).'],
+  ['Multicam (LSM)', 'Logiciel des serveurs EVS piloté par la télécommande LSM : trains, clips en pages et banques, playlists.'],
+  ['RETURN (LSM)', 'Dans un clip, retourne sur la même image du train d\'enregistrement pour aller au-delà des points IN/OUT.'],
+  ['TAKE (LSM)', 'Échange PGM et PRV (mode PGM + PRV) ou le contenu des deux PGM (mode 2 PGM).'],
+  ['BROWSE (LSM)', 'Parcourt les clips de la base avec la molette jog.'],
+  ['XVS-6000', 'Mélangeur de production Sony (processeur 6U) : en 4K, 2 M/E et 16 entrées dans la configuration de base ; davantage en HD.'],
+  ['ICP-X7000', 'Pupitre modulaire des mélangeurs Sony XVS : rangées M/E, boutons XPT RVB, afficheurs OLED des noms de sources.'],
+  ['Frame memory', 'Mémoire d\'images du mélangeur (480 Go sur la gamme XVS) : images fixes, clips, transitions « clip » (logo animé).'],
+  ['Snapshot', 'Mémoire d\'état du mélangeur (sources, clés, transitions) rappelée en une touche.'],
+  ['Bus A / B (flip-flop)', 'Sur les mélangeurs Sony, le bus A porte le programme et le B le preset : après chaque transition, ils s\'échangent pour que A reste à l\'antenne.'],
   ['XNet', 'Réseau qui relie les serveurs EVS entre eux pour partager trains et clips.'],
   ['IPDirector', 'Logiciel de gestion des serveurs EVS : log, clips, playlists, transferts.'],
   ['Codes 64-940', 'Niveaux de la vidéo numérique 10 bits : 64 = noir (0 %), 940 = blanc nominal (100 %), jusqu\'à 1019 pour les super-blancs.'],
@@ -644,9 +662,13 @@ export const GUIDE = [
 </ol>`},
   {
     id: 'evsarch', title: 'Le serveur ralenti en détail', html: `
-<p>Un serveur de production live (type EVS XT-VIA) enregistre en permanence plusieurs flux et, en même temps, relit n'importe quel instant de ces enregistrements, à n'importe quelle vitesse. Il est piloté par une télécommande dédiée (LSM-VIA) et, pour la gestion des clips, par un logiciel comme IPDirector.</p>
+<p>Un serveur de production live (dans votre car : <b>EVS XT4K</b>) enregistre en permanence plusieurs flux et, en même temps, relit n'importe quel instant de ces enregistrements, à n'importe quelle vitesse. Il est piloté par la <b>télécommande LSM</b> (logiciel Multicam) et, pour la gestion des clips, par <b>IPDirector</b>.</p>
 <h3>Les canaux : enregistrement et lecture</h3>
-<p>Le serveur dispose d'un nombre fixe de canaux (12 canaux HD ou 6 en UHD-4K sur une XT-VIA). On les répartit selon la production : par exemple <b>8 entrées REC + 2 sorties PLAY (PGM1, PGM2)</b>, ou 6 REC + 2 PLAY + 1 multiviewer intégré. Les entrées sont alimentées par la grille, les sorties retournent à la grille puis au mélangeur.</p>
+<p>Le serveur dispose d'un nombre fixe de canaux : sur un XT4K, <b>4 canaux en UHD-4K</b> ou <b>8 canaux en HD</b> (12 et plus avec la configuration ChannelMAX). On les répartit selon la production. Avec un seul XT4K :</p>
+<table><tr><th>Format</th><th>Répartition typique</th><th>Conséquence</th></tr>
+<tr><td>HD (1080p / 1080i)</td><td>8 REC + 2 PLAY (ChannelMAX 12 canaux) ou 6 REC + 2 PLAY (8 canaux)</td><td>Deux sorties de lecture (PGM1, PGM2) ; une caméra 3x prend 3 entrées</td></tr>
+<tr><td>UHD-4K</td><td>3 REC + 1 PLAY</td><td>Une seule sortie de lecture ; une caméra 3x occupe tout l'enregistrement</td></tr></table>
+<p>C'est pourquoi le format de production se décide avec le parc EVS : en UHD, on ajoute des serveurs ou on enregistre moins d'angles. Les entrées sont alimentées par la grille, les sorties retournent à la grille puis au mélangeur. Dans ce simulateur, le format se choisit sur l'écran d'accueil et la répartition suit automatiquement.</p>
 <h3>Les trains d'enregistrement</h3>
 <p>L'enregistrement est une boucle (des heures de capacité) : on parle de « trains ». Tant que l'enregistrement tourne, chaque image de chaque entrée est disponible. Tous les trains partagent le même <b>timecode</b> (LTC du car) : c'est ce qui permet de passer d'un angle à l'autre sur la même action (<b>multicam</b>). Si on arrête l'enregistrement, plus rien n'est disponible après l'arrêt : c'est la pire erreur au poste ralentis. Quand la boucle est pleine, les images les plus anciennes sont écrasées : tout ce qu'on veut garder doit être sauvegardé en clip.</p>
 <h3>Les clips</h3>
@@ -660,9 +682,19 @@ export const GUIDE = [
 <li><b>Playlist :</b> plusieurs clips enchaînés (cut, mix, volet) pour un résumé ou les meilleurs moments.</li>
 </ul>
 <h3>Super ralenti : les phases</h3>
-<p>Une caméra « 3x » tourne à 150 images/s (en Europe). Elle sort ces images sur <b>trois liaisons</b> à 50 i/s, appelées phases A, B, C (la phase A contient les images 1, 4, 7…, la B les images 2, 5, 8…). Le serveur enregistre chaque phase sur une entrée et les recombine : lue à 33 %, l'action est parfaitement fluide (chaque image affichée est une image différente). Une caméra standard lue à 33 % répète chaque image trois fois : le mouvement saccade. Sur l'XT-VIA, l'option Super Motion accepte de 2x à 16x en HD et de 2x à 4x en UHD.</p>
+<p>Une caméra « 3x » tourne à 150 images/s (en Europe). Elle sort ces images sur <b>trois liaisons</b> à 50 i/s, appelées phases A, B, C (la phase A contient les images 1, 4, 7…, la B les images 2, 5, 8…). Le serveur enregistre chaque phase sur une entrée et les recombine : lue à 33 %, l'action est parfaitement fluide (chaque image affichée est une image différente). Une caméra standard lue à 33 % répète chaque image trois fois : le mouvement saccade. Les phases d'une même caméra sont enregistrées sur le même serveur.</p>
+<h3>La télécommande LSM (Multicam)</h3>
+<ul>
+<li><b>Touches à double fonction</b> : IN / GOTO IN, OUT / GOTO OUT, PLST / BROWSE… la fonction secondaire s'obtient avec SHIFT.</li>
+<li><b>Pages</b> : SHIFT + PAGE puis une touche F choisit la page 1 à 10.</li>
+<li><b>RETURN</b> : dans un clip trop court, on revient sur la même image dans le train pour récupérer ce qu'il y a avant ou après.</li>
+<li><b>TAKE</b> : en mode PGM + PRV, échange PGM et PRV ; en mode 2 PGM, échange le contenu des deux sorties.</li>
+<li><b>Levier</b> : 0 à 100 %, plage secondaire −100/+100 % ou −200/+200 % ; <b>jog</b> : environ 35 images par tour.</li>
+</ul>
+<h3>IPDirector</h3>
+<p>Le poste IPDirector travaille sur les mêmes clips que la LSM : base de données (recherche par mots-clés, joueurs, notes), log des actions pendant le direct, montage de playlists, contrôle des canaux, transferts vers le montage. Dans le car, il occupe en général un second opérateur ralentis ou un logueur.</p>
 <h3>Raccordements</h3>
-<p>Entrées et sorties SDI (1,5G, 3G ou 12G selon la configuration) ou IP (ST 2110 / ST 2022-6 sur 10GbE, avec PTP et NMOS), référence et timecode, réseau XNet-VIA (10 Gb/s) pour partager les clips, réseau de gestion redondant, audio embeddé, AES ou MADI. Ouvrez « Serveur ralenti » dans la visionneuse de matériel pour voir chaque port.</p>`},
+<p>Entrées et sorties 12G-SDI (UHD sur un seul câble) ou 3G/HD-SDI, Quad 3G-SDI en option, IP intégrée ; référence et timecode ; réseau XNet pour partager les clips entre serveurs ; 2 × 10 GbE pour IPDirector et les transferts ; réseau de gestion redondant ; audio embeddé, AES, MADI, analogique ; liaison série RS-422 vers la télécommande LSM (d'après les manuels XT). Ouvrez « Serveur ralenti EVS XT4K » dans la visionneuse de matériel pour voir chaque port.</p>`},
   {
     id: 'ipguide', title: 'Production IP : ST 2110, PTP, NMOS', html: `
 <p>Dans un car « IP », les signaux ne voyagent plus sur des câbles coaxiaux point à point mais sur un <b>réseau Ethernet</b> (commutateurs 25 / 100 GbE). La grille de commutation devient un réseau piloté par un contrôleur.</p>

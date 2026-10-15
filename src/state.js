@@ -1,7 +1,7 @@
 // État global partagé de l'application
 export const S = {
   quality: 'moyenne',
-  format: 'UHD',
+  format: 'HD',
   lighting: 'jour',
   flickerLamps: false,
   mode: 'start', // start | fps | plan | station | camop
@@ -14,6 +14,8 @@ export const S = {
   player: null,
   inTruck: false,
   faults: {},
+  patch: { on: false, inputs: {}, outputs: {}, refs: {} },
+  ipMode: false,
   missionsDone: {},
   openedInfo: {},
   visited: {},

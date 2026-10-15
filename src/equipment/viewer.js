@@ -4,7 +4,8 @@ import { IRIS_STOPS, ND_FILTERS, SHUTTERS, LINKS } from '../data.js';
 import { modal } from '../ui/common.js';
 import { DEVICES, deviceDef, DEVICE_LIST } from './devices.js';
 import { buildCabling, deviceCables, endLabel, portName, DEV_NAMES, SIG, routerInLabel, routerOutLabel, routerCrosspoint, isSystemCam } from './cabling.js';
-import { EVS, ROUTER, recordedCams, tallyOf, MIX, meSource } from '../pipeline.js';
+import { EVS, ROUTER, recordedCams, tallyOf, MIX, meSource, sourceLabel, TRANS } from '../pipeline.js';
+import { EQUIP, evsLayout, mixInputs } from '../equip.js';
 
 const NS = 'http://www.w3.org/2000/svg';
 function E(tag, attrs = {}, parent, text) {
@@ -21,7 +22,7 @@ const FONT = 'Saira Condensed, Arial Narrow, sans-serif';
 // ----------------------------------------------------------------------------------
 function opticalLevel(c) { return c && c.route ? -4 - (c.route.length / 1000) * 0.4 - 1.5 - (c.id % 3) * 0.7 : null; }
 function liveState(key, n) {
-  const st = { led: {}, btn: {}, lcd: {}, knob: {}, bar: {}, joy: null, lever: null, screen: null };
+  const st = { led: {}, btn: {}, lcd: {}, knob: {}, bar: {}, label: {}, joy: null, lever: null, screen: null };
   if (key === 'ccu' || key === 'cam' || key === 'rcp') {
     const c = camById(n); if (!c) return st;
     const t = c.tallyState;
@@ -50,9 +51,19 @@ function liveState(key, n) {
     st.led.leds = 'green';
   }
   if (key === 'lsm') {
-    const ch = EVS.ch[(n - 1) % 2];
+    const ch = EVS.ch[EVS.lsmCh ?? 0];
     st.lever = ch.lever;
-    st.screen = { ch, n };
+    const T = (t) => tc(S.tcOffset + t);
+    st.lcd.display = [`PGM${(EVS.lsmCh ?? 0) + 1}  CAM ${ch.cam}  ${ch.mode === 'live' ? 'E/E' : ch.playing ? '▶ ' + Math.round(ch.speed * 100) + '%' : 'PAUSE'}`, `TC ${T(ch.mode === 'live' ? S.simTime : ch.t)}`, `IN ${ch.in != null ? T(ch.in).slice(3) : '--'}  OUT ${ch.out != null ? T(ch.out).slice(3) : '--'}`, `PAGE ${EVS.page || 1}  ${evsLayout().label.slice(0, 40)}`];
+  }
+  if (key === 'mixpanel') {
+    for (let i = 0; i < 12; i++) {
+      const src = meSource(i + 1); st.label['oled:' + i] = src ? sourceLabel(src).replace('CAM ', 'C').slice(0, 6) : '—';
+      st.btn[`xpt:0:${i}`] = MIX.key1.src === i + 1; st.btn[`xpt:1:${i}`] = MIX.pgm === i + 1; st.btn[`xpt:2:${i}`] = MIX.pst === i + 1;
+    }
+    st.lever = MIX.pos;
+    st.lcd.menu = [`${EQUIP.mixer}`, `TRANS ${TRANS[MIX.trans]}`, `RATE ${MIX.rate}f`, `PGM ${sourceLabel(meSource(MIX.pgm))}`, `PST ${sourceLabel(meSource(MIX.pst))}`];
+    st.btn.dsk = MIX.dsk1.on || MIX.dsk2.on;
   }
   return st;
 }
@@ -102,14 +113,14 @@ function drawItem(svg, it, st, def, conns, onPick) {
     case 'text': E('text', { x: it.x, y: it.y, fill: '#e8edf1', 'font-size': it.size || 12, 'font-family': FONT, 'font-weight': it.w || 600, 'letter-spacing': '0.04em' }, g, it.s); break;
     case 'port': drawPort(g, it, conns[it.id]); break;
     case 'led': { const on = st.led[it.id]; E('circle', { cx: it.x, cy: it.y, r: 6.5, fill: on ? LEDC[on] : '#2a2d31', stroke: '#111', filter: on ? 'url(#glow)' : null }, g); if (it.l) E('text', { x: it.x, y: it.y + 20, fill: '#aab4bd', 'font-size': 10, 'font-family': FONT, 'text-anchor': 'middle' }, g, it.l); break; }
-    case 'btn': { const lit = st.btn[it.id]; const col = it.oled ? '#0c0f12' : lit ? '#ffb020' : '#2f363e'; E('rect', { x: it.x, y: it.y, width: it.w, height: it.h, rx: 4, fill: col, stroke: lit ? '#ffd27a' : '#55606b' }, g); E('text', { x: it.x + it.w / 2, y: it.y + it.h / 2 + 4, fill: it.oled ? ({ cyan: '#46c6f2', green: '#2fd25a', amber: '#ffb020', violet: '#c77dff' }[it.c] || '#e8edf1') : lit ? '#1a1205' : '#dfe5ea', 'font-size': it.w < 60 ? 9.5 : 11, 'font-family': FONT, 'font-weight': 600, 'text-anchor': 'middle' }, g, it.l); break; }
+    case 'btn': { const lit = it.litKey ? st.btn[it.litKey] : st.btn[it.id]; const col = it.oled ? '#0c0f12' : lit ? (it.litColor || '#ffb020') : '#2f363e'; E('rect', { x: it.x, y: it.y, width: it.w, height: it.h, rx: 4, fill: col, stroke: lit ? '#ffd27a' : '#55606b' }, g); E('text', { x: it.x + it.w / 2, y: it.y + it.h / 2 + 4, fill: it.oled ? ({ cyan: '#46c6f2', green: '#2fd25a', amber: '#ffb020', violet: '#c77dff' }[it.c] || '#e8edf1') : lit ? '#1a1205' : '#dfe5ea', 'font-size': it.w < 60 ? 9.5 : 11, 'font-family': FONT, 'font-weight': 600, 'text-anchor': 'middle' }, g, (it.labelKey && st.label[it.labelKey]) || it.l); break; }
     case 'keys': { const arr = st.btn[it.id] || []; let k = 0; for (let r = 0; r < it.rows; r++) for (let c = 0; c < it.cols; c++) { const x = it.x + c * (it.w + it.gap), y = it.y + r * (it.h + it.gap); const lit = arr[k]; E('rect', { x, y, width: it.w, height: it.h, rx: 4, fill: lit ? '#1b4f73' : '#2f363e', stroke: lit ? '#46c6f2' : '#55606b' }, g); E('text', { x: x + it.w / 2, y: y + it.h / 2 + 4, fill: '#dfe5ea', 'font-size': 10, 'font-family': FONT, 'text-anchor': 'middle' }, g, it.labels[k]); k++; } break; }
     case 'knob': { const v = st.knob[`${it.id}:${it.l}`]; const a = (v != null ? clamp(v / 99, -1, 1) : 0) * 2.4 - Math.PI / 2; E('circle', { cx: it.x, cy: it.y, r: it.r, fill: '#3a424b', stroke: '#1a1d20', 'stroke-width': 2 }, g); E('line', { x1: it.x, y1: it.y, x2: it.x + Math.cos(a) * (it.r - 4), y2: it.y + Math.sin(a) * (it.r - 4), stroke: '#ffb020', 'stroke-width': 3, 'stroke-linecap': 'round' }, g); if (it.l) E('text', { x: it.x, y: it.y + it.r + 14, fill: '#aab4bd', 'font-size': 11, 'font-family': FONT, 'text-anchor': 'middle' }, g, it.l); break; }
     case 'sw': E('rect', { x: it.x - 9, y: it.y - 18, width: 18, height: 36, rx: 4, fill: '#15181b', stroke: '#6f777f' }, g); E('rect', { x: it.x - 5, y: it.y - 15, width: 10, height: 14, rx: 2, fill: '#c9ced3' }, g); E('text', { x: it.x, y: it.y + 32, fill: '#aab4bd', 'font-size': 10, 'font-family': FONT, 'text-anchor': 'middle' }, g, it.l); break;
     case 'lcd': { E('rect', { x: it.x, y: it.y, width: it.w, height: it.h, rx: 4, fill: '#0a1208', stroke: '#23401c' }, g); const lines = st.lcd[it.id] || ['—']; lines.forEach((l, i) => E('text', { x: it.x + 10, y: it.y + 20 + i * 18, fill: '#9dff8a', 'font-size': 13, 'font-family': 'JetBrains Mono, monospace' }, g, l)); break; }
     case 'bar': { const lv = st.bar[it.id] ?? 0.7; for (let i = 0; i < 10; i++) E('rect', { x: it.x + i * (it.w / 10), y: it.y, width: it.w / 10 - 2, height: it.h, fill: i / 10 < lv ? (i < 3 ? '#ffb020' : '#2fd25a') : '#22272c' }, g); E('text', { x: it.x + it.w + 8, y: it.y + 12, fill: '#aab4bd', 'font-size': 10, 'font-family': FONT }, g, it.l); break; }
-    case 'joy': { const j = st.joy || { y: 0.5, ring: 0 }; E('circle', { cx: it.x, cy: it.y, r: it.r, fill: '#1a1d21', stroke: '#4a525b', 'stroke-width': 2 }, g); E('circle', { cx: it.x, cy: it.y, r: it.r - 8, fill: 'none', stroke: '#ffb020', 'stroke-width': 3, 'stroke-dasharray': `${(j.ring + 1) * 60} 400`, transform: `rotate(-90 ${it.x} ${it.y})` }, g); E('line', { x1: it.x, y1: it.y - it.r + 14, x2: it.x, y2: it.y + it.r - 14, stroke: '#30363c', 'stroke-width': 6, 'stroke-linecap': 'round' }, g); const hy = it.y + (j.y - 0.5) * (it.r - 22) * 2; E('circle', { cx: it.x, cy: hy, r: 16, fill: '#c9ced3', stroke: '#6f777f', 'stroke-width': 2 }, g); E('text', { x: it.x, y: it.y + it.r + 16, fill: '#aab4bd', 'font-size': 11, 'font-family': FONT, 'text-anchor': 'middle' }, g, 'IRIS (pousser/tirer) · M.BLACK (bague)'); break; }
-    case 'lever': { const pos = st.lever ?? 0.5; E('rect', { x: it.x, y: it.y, width: it.w, height: it.h, rx: 8, fill: '#15181b', stroke: '#4a525b' }, g); E('rect', { x: it.x + it.w / 2 - 3, y: it.y + 14, width: 6, height: it.h - 28, fill: '#2d3339' }, g); for (const [v, l] of [[1, '100'], [0.66, '66'], [0.5, '50'], [0.33, '33'], [0, '0']]) { const y = it.y + 14 + (1 - v) * (it.h - 28); E('text', { x: it.x + it.w + 6, y: y + 4, fill: '#93a0ab', 'font-size': 10, 'font-family': FONT }, g, l + ' %'); } const hy = it.y + 14 + (1 - pos) * (it.h - 28); E('rect', { x: it.x - 8, y: hy - 9, width: it.w + 16, height: 18, rx: 4, fill: '#ffb020' }, g); E('text', { x: it.x + it.w / 2, y: it.y + it.h + 18, fill: '#aab4bd', 'font-size': 11, 'font-family': FONT, 'text-anchor': 'middle' }, g, 'LEVIER'); break; }
+    case 'joy': { const j = st.joy || { y: 0.5, ring: 0 }; E('circle', { cx: it.x, cy: it.y, r: it.r, fill: '#1a1d21', stroke: '#4a525b', 'stroke-width': 2 }, g); E('circle', { cx: it.x, cy: it.y, r: it.r - 8, fill: 'none', stroke: '#ffb020', 'stroke-width': 3, 'stroke-dasharray': `${(j.ring + 1) * 60} 400`, transform: `rotate(-90 ${it.x} ${it.y})` }, g); E('line', { x1: it.x, y1: it.y - it.r + 14, x2: it.x, y2: it.y + it.r - 14, stroke: '#30363c', 'stroke-width': 6, 'stroke-linecap': 'round' }, g); const hy = it.y + (j.y - 0.5) * (it.r - 22) * 2; E('circle', { cx: it.x, cy: hy, r: 16, fill: '#c9ced3', stroke: '#6f777f', 'stroke-width': 2 }, g); E('text', { x: it.x, y: it.y + it.r + 16, fill: '#aab4bd', 'font-size': 11, 'font-family': FONT, 'text-anchor': 'middle' }, g, it.l || 'IRIS (pousser/tirer) · M.BLACK (bague)'); break; }
+    case 'lever': { const pos = st.lever ?? 0.5; E('rect', { x: it.x, y: it.y, width: it.w, height: it.h, rx: 8, fill: '#15181b', stroke: '#4a525b' }, g); E('rect', { x: it.x + it.w / 2 - 3, y: it.y + 14, width: 6, height: it.h - 28, fill: '#2d3339' }, g); if (!it.fader) for (const [v, l] of [[1, '100'], [0.66, '66'], [0.5, '50'], [0.33, '33'], [0, '0']]) { const y = it.y + 14 + (1 - v) * (it.h - 28); E('text', { x: it.x + it.w + 6, y: y + 4, fill: '#93a0ab', 'font-size': 10, 'font-family': FONT }, g, l + ' %'); } const hy = it.y + 14 + (1 - pos) * (it.h - 28); E('rect', { x: it.x - 8, y: hy - 9, width: it.w + 16, height: 18, rx: 4, fill: '#ffb020' }, g); E('text', { x: it.x + it.w / 2, y: it.y + it.h + 18, fill: '#aab4bd', 'font-size': 11, 'font-family': FONT, 'text-anchor': 'middle' }, g, it.l || 'LEVIER'); break; }
     case 'jog': E('circle', { cx: it.x, cy: it.y, r: it.r, fill: '#2a3036', stroke: '#15181b', 'stroke-width': 3 }, g); E('circle', { cx: it.x, cy: it.y, r: it.r - 18, fill: '#353c43' }, g); E('circle', { cx: it.x + it.r * 0.55, cy: it.y - it.r * 0.35, r: 9, fill: '#1d2126' }, g); E('text', { x: it.x, y: it.y + 5, fill: '#93a0ab', 'font-size': 12, 'font-family': FONT, 'text-anchor': 'middle' }, g, 'JOG'); break;
     case 'disk': E('rect', { x: it.x, y: it.y, width: it.w, height: it.h, rx: 3, fill: '#1c2025', stroke: '#454d55' }, g); for (let i = 0; i < 8; i++) E('rect', { x: it.x + 10, y: it.y + 14 + i * 13, width: it.w - 20, height: 4, fill: '#2b3137' }, g); E('circle', { cx: it.x + it.w - 12, cy: it.y + it.h - 12, r: 3, fill: '#2fd25a' }, g); break;
     case 'psu': E('rect', { x: it.x, y: it.y, width: it.w, height: it.h, rx: 4, fill: '#1c2025', stroke: '#454d55' }, g); E('circle', { cx: it.x + it.w / 2, cy: it.y + 70, r: 44, fill: '#111', stroke: '#555' }, g); for (let i = 0; i < 5; i++) E('line', { x1: it.x + it.w / 2 - 40, y1: it.y + 50 + i * 10, x2: it.x + it.w / 2 + 40, y2: it.y + 50 + i * 10, stroke: '#333' }, g); drawPort(g, { k: 'iec', x: it.x + it.w / 2, y: it.y + it.h - 40, l: it.l }, conns[it.id]); break;
@@ -198,7 +209,8 @@ function genericDef(key, n) {
 function instances(key) {
   if (key === 'cam') return S.cams.map((c) => [c.id, `CAM ${c.id} · ${c.T.short}`]);
   if (key === 'ccu' || key === 'rcp') return S.cams.filter(isSystemCam).map((c) => [c.id, `${key.toUpperCase()} ${c.id} · CAM ${c.id}`]);
-  if (key === 'lsm') return [[1, 'LSM 1 · PGM1 (EVS A)'], [2, 'LSM 2 · PGM2 (EVS B)']];
+  if (key === 'lsm') return [...Array(EQUIP.lsmCount).keys()].map((i) => [i + 1, `LSM ${i + 1}${EQUIP.lsmCount === 1 ? ' · pilote PGM1 et PGM2' : i ? ' · PGM2' : ' · PGM1'}`]);
+  if (key === 'evs') return [...Array(EQUIP.evsServers).keys()].map((i) => [i + 1, `XT4K n° ${i + 1}`]);
   if (key === 'conv') return S.cams.filter((c) => !isSystemCam(c) && c.link !== 'hf').map((c) => [c.id, `Convertisseur CAM ${c.id}`]);
   return null;
 }
@@ -286,6 +298,7 @@ const CONTROL_HINT = {
   'rcp:white': 'Dans le simulateur : molettes WHITE R/G/B du poste Ingé vision.', 'rcp:black': 'Dans le simulateur : molettes BLACK/FLARE du poste Ingé vision.',
   'rcp:active': 'Dans le simulateur : si PANEL ACTIVE est éteint, le RCP refuse les réglages.', 'rcp:campw': 'Dans le simulateur : couper CAM PW éteint la caméra (PAS DE SIGNAL au multiview).',
   'ccu:campower': 'Dans le simulateur : c\'est la touche CAM PW du RCP qui agit sur cette alimentation.', 'lsm:lever': 'Dans le simulateur : levier du poste EVS.', 'lsm:jog': 'Dans le simulateur : molette jog du poste EVS (glisser ou molette de la souris).',
+  'mixpanel:xpt': 'Dans le simulateur : rangées de boutons du poste Truquiste.', 'mixpanel:trans': 'Dans le simulateur : module de transition du poste Truquiste (MIX, WIPE, DME, CLIP, CUT, AUTO, levier).', 'mixpanel:snap': 'Dans le simulateur : boutons SNAPSHOT du poste Truquiste.',
 };
 
 export function openDevice(key, n = 1, opts = {}) {
@@ -310,12 +323,12 @@ export function openDevice(key, n = 1, opts = {}) {
   modal.open(def.title + (inst ? ` · n° ${n}` : ''), body, { width: 1280 });
   renderSvg(); renderInfo();
   clearInterval(VIEW.timer);
-  VIEW.timer = setInterval(() => { if (!modal.isOpen || !VIEW.svgHost.isConnected) { clearInterval(VIEW.timer); return; } if (['ccu', 'rcp', 'lsm', 'cam'].includes(key)) { renderSvg(); } }, 700);
+  VIEW.timer = setInterval(() => { if (!modal.isOpen || !VIEW.svgHost.isConnected) { clearInterval(VIEW.timer); return; } if (['ccu', 'rcp', 'lsm', 'cam', 'mixpanel'].includes(key)) { renderSvg(); } }, 700);
 }
 
 export function openEquipmentIndex() {
   const groups = [
-    ['Chaîne caméra', ['cam', 'ccu', 'rcp', 'conv']], ['Ralentis', ['evs', 'lsm']], ['Commutation et traitement', ['router', 'mixer', 'mv']], ['Synchronisation', ['spg', 'da']], ['Liaisons', ['rx', 'pdc']],
+    ['Chaîne caméra', ['cam', 'ccu', 'rcp', 'conv']], ['Ralentis', ['evs', 'lsm', 'ipd']], ['Mélangeur', ['mixer', 'mixpanel', 'siu']], ['Commutation et traitement', ['router', 'mv']], ['Synchronisation', ['spg', 'da']], ['Liaisons', ['rx', 'pdc']],
   ];
   const body = el('div', { class: 'list' }, el('p', { class: 'note' }, 'Faces avant et arrière, connecteurs, signaux et raccordements réels de votre installation.'));
   for (const [g, keys] of groups) {

@@ -6,6 +6,7 @@ import { M, SNAP, LIVE, sampleRec, applySnapshot, captureLive, recRange } from '
 import { GFX, stingerLogo } from './gfx.js';
 import { rtSize, lineupStep } from './bcam.js';
 import { makeCanvas, tc, clockStr, clamp, roundRect } from './util.js';
+import { EQUIP, mixInputs, evsLayout } from './equip.js';
 
 const FONT = '"Saira Condensed", "Arial Narrow", sans-serif';
 const MONO = '"JetBrains Mono", ui-monospace, monospace';
@@ -86,8 +87,12 @@ DESTS.push({ id: 'AUX_TX1', group: 'Départs et AUX', label: 'Départ TX1 (fibre
 export function defaultRouting(full = true) {
   const m = ROUTER.map;
   if (full) {
-    for (let i = 1; i <= 16; i++) m['ME' + i] = 'CAM' + i;
-    m.ME17 = 'EVSA'; m.ME18 = 'EVSB'; m.ME19 = 'GFX'; m.ME20 = 'STUDIO'; m.ME21 = 'BARS'; m.ME22 = 'BLACK';
+    const nIn = mixInputs();
+    // les 6 sources « fixes » occupent les dernières entrées du mélangeur
+    const extras = ['EVSA', 'EVSB', 'GFX', 'STUDIO', 'BARS', 'BLACK'];
+    for (let i = 1; i <= 22; i++) delete m['ME' + i];
+    for (let i = 1; i <= nIn - extras.length; i++) m['ME' + i] = 'CAM' + i;
+    extras.forEach((s, k) => { m['ME' + (nIn - extras.length + 1 + k)] = s; });
     m.AUX_TX1 = 'PGM'; m.AUX_TX2 = 'PGM'; m.AUX_GIANT = 'CLEAN'; m.AUX_VISION = 'CAM1';
   }
   if (!ROUTER.customMV) {
@@ -96,16 +101,28 @@ export function defaultRouting(full = true) {
   }
   if (!ROUTER.customREC) {
     for (let i = 1; i <= 8; i++) { delete m['REC' + i]; delete ROUTER.phase['REC' + i]; }
-    // priorité : super ralentis, puis les autres
+    // priorité : super ralentis, puis les autres (dans la limite des canaux du ou des serveurs)
     const order = [...S.cams].sort((a, b) => (b.hfr - a.hfr) || (a.id - b.id));
-    let ch = 1;
-    for (const c of order) { if (ch + c.hfr - 1 > 8) continue; routeRec(ch, 'CAM' + c.id, true); ch += c.hfr; }
+    const free = (k, n) => { for (let j = k; j < k + n; j++) if (m['REC' + j]) return false; return true; };
+    for (const c of order) {
+      for (let k = 1; k <= 8; k++) {
+        if (!free(k, c.hfr) || routeRec(k, 'CAM' + c.id, true, true)) continue;
+        routeRec(k, 'CAM' + c.id, true); break;
+      }
+    }
   }
   syncRecStarts();
 }
 
-export function routeRec(ch, src, silent = false) {
+export function routeRec(ch, src, silent = false, dryRun = false) {
   const m = ROUTER.map;
+  const L = evsLayout();
+  const cam0 = src && src.startsWith('CAM') ? camById(+src.slice(3)) : null;
+  const n0 = cam0 ? cam0.hfr : 1;
+  if (ch > L.rec) return `Entrée REC ${ch} indisponible : ${L.label}.`;
+  if (ch + n0 - 1 > L.rec) return `Pas assez d'entrées : ${src} est une caméra ${n0}x qui demande ${n0} canaux d'enregistrement (${L.label}).`;
+  if (n0 > 1 && L.recServer(ch) !== L.recServer(ch + n0 - 1)) return `Les ${n0} phases d'une caméra super ralenti doivent être enregistrées sur le même serveur XT4K.`;
+  if (dryRun) return null;
   // libère les phases de l'ancienne source
   const old = m['REC' + ch];
   if (old) for (let i = 1; i <= 8; i++) if (m['REC' + i] === old) { delete m['REC' + i]; delete ROUTER.phase['REC' + i]; }
@@ -122,6 +139,7 @@ export function routeRec(ch, src, silent = false) {
 }
 
 export function route(dest, src) {
+  if (dest.startsWith('ME') && +dest.slice(2) > mixInputs()) return `Entrée ${dest.slice(2)} indisponible : en 4K, le ${EQUIP.mixer} n'a que ${mixInputs()} entrées dans cette configuration.`;
   if (dest.startsWith('REC')) { const err = routeRec(+dest.slice(3), src); if (!err) emit('router', { dest, src }); return err; }
   ROUTER.map[dest] = src;
   if (dest.startsWith('MV')) ROUTER.customMV = true;
@@ -136,16 +154,29 @@ export function route(dest, src) {
 export const EVS = {
   recording: true, recStopT: Infinity, recStart: {},
   ch: [0, 1].map((i) => ({ name: i ? 'B' : 'A', mode: 'live', cam: i ? 2 : 1, t: 0, speed: 0, lever: 0.5, playing: false, in: null, out: null, rt: null, lastTq: -1, ok: true, msg: '' })),
-  clips: [], playlist: [], fastJog: false,
+  clips: [], playlist: [], fastJog: false, page: 1, lsmCh: 0, logs: [], browse: false,
 };
+// nom d'un clip façon Multicam : page · banque · touche · angle (ex. 111A)
+export function clipName(idx) {
+  const cl = EVS.clips[idx]; const page = Math.floor(idx / 10) + 1, key = (idx % 10) + 1;
+  const rec = recordedCams(); const k = cl ? rec.indexOf(cl.cam) : -1;
+  return `${page}1${key % 10}${k >= 0 ? 'ABCDEFGH'[k] : ''}`;
+}
 function syncRecStarts() {
   const recorded = recordedCams();
   for (const id of recorded) if (EVS.recStart[id] == null) EVS.recStart[id] = S.simTime;
   for (const id of Object.keys(EVS.recStart)) if (!recorded.includes(+id)) delete EVS.recStart[id];
 }
+// source réellement reçue par l'entrée d'enregistrement k (tient compte du brassage)
+export function recSource(k) {
+  const P_ = S.patch;
+  if (!P_ || !P_.on) return ROUTER.map['REC' + k];
+  const o = Object.keys(P_.outputs).find((out) => P_.outputs[out] === 'EVSREC' + k);
+  return o && +o >= 41 && +o <= 48 ? ROUTER.map['REC' + (+o - 40)] : null;
+}
 export function recordedCams() {
   const set = new Set();
-  for (let i = 1; i <= 8; i++) { const s = ROUTER.map['REC' + i]; if (s && s.startsWith('CAM') && camById(+s.slice(3))) set.add(+s.slice(3)); }
+  for (let i = 1; i <= evsLayout().rec; i++) { const s = recSource(i); if (s && s.startsWith('CAM') && camById(+s.slice(3))) set.add(+s.slice(3)); }
   return [...set].sort((a, b) => a - b);
 }
 export function canReplay(camId, t) {
@@ -163,6 +194,7 @@ export function evsSetRecording(onoff) {
 }
 export function evsAction(chIdx, action, arg) {
   const c = EVS.ch[chIdx];
+  if (chIdx === 1 && evsLayout().plays < 2) { c.ok = false; c.msg = 'Pas de second canal de lecture dans cette configuration.'; emit('evs', { ch: chIdx, action: 'refused' }); return; }
   const now = S.simTime;
   const [t0, t1] = recRange();
   const goPause = () => { if (c.mode === 'live') { c.t = now - 0.04; } c.mode = 'pause'; c.playing = false; };
@@ -190,7 +222,19 @@ export function evsAction(chIdx, action, arg) {
       goPause(); c.t = Math.max(t0, ev.t - 3.0); c.in = c.t; c.out = Math.min(now, ev.t + 2.5);
       break;
     }
-    case 'save': { if (c.in != null) { const out = c.out ?? Math.min(now, c.in + 6); EVS.clips[arg] = { in: c.in, out, cam: c.cam, name: `Clip F${arg + 1}` }; } break; }
+    case 'save': { if (c.in != null) { const out = c.out ?? Math.min(now, c.in + 6); const old = EVS.clips[arg]; EVS.clips[arg] = { in: c.in, out, cam: c.cam, name: old ? old.name : '', kw: old ? old.kw : [], rating: old ? old.rating : 0, savedT: now }; } break; }
+    case 'take': {
+      // mode 2 PGM : échange le contenu des deux sorties
+      const o = EVS.ch[1 - chIdx]; const keys = ['mode', 'cam', 't', 'speed', 'lever', 'playing', 'in', 'out', 'pl'];
+      const tmp = {}; for (const k of keys) tmp[k] = c[k]; for (const k of keys) c[k] = o[k]; for (const k of keys) o[k] = tmp[k];
+      c.dirty = o.dirty = true; break;
+    }
+    case 'return': goPause(); c.out = null; c.pl = null; break;
+    case 'browse': {
+      const idxs = EVS.clips.map((cl, i) => (cl ? i : -1)).filter((i) => i >= 0); if (!idxs.length) break;
+      EVS.browseIdx = idxs[(Math.max(0, idxs.indexOf(EVS.browseIdx ?? idxs[0])) + (arg > 0 ? 1 : idxs.length - 1)) % idxs.length];
+      const cl = EVS.clips[EVS.browseIdx]; c.in = cl.in; c.out = cl.out; c.cam = cl.cam; c.t = cl.in; c.mode = 'pause'; c.playing = false; c.pl = null; break;
+    }
     case 'recall': { const cl = EVS.clips[arg]; if (cl) { c.in = cl.in; c.out = cl.out; c.cam = cl.cam; c.t = cl.in; c.mode = 'pause'; c.playing = false; c.pl = null; } break; }
     case 'plstadd': if (EVS.clips[arg]) EVS.playlist.push(arg); break;
     case 'plstclear': EVS.playlist = []; break;
@@ -232,7 +276,7 @@ export const MIX = {
   ftb: { on: false, level: 0, auto: 0 },
   lastTrans: null,
 };
-export const TRANS = { mix: 'MIX', wipe: 'VOLET', dip: 'DIP', dve: 'DVE PUSH', stinger: 'VOLET LOGO' };
+export const TRANS = { mix: 'MIX', wipe: 'WIPE', dip: 'DIP', dve: 'DME', stinger: 'CLIP' };
 export const WIPES = ['Horizontal', 'Vertical', 'Diagonal', 'Iris (cercle)', 'Boîte', 'Horloge'];
 const TYPE_N = { mix: 0, wipe: 1, dip: 2, dve: 3, stinger: 4 };
 
@@ -393,6 +437,7 @@ export function resolve(id, depth = 0) {
     case 'EVSA': case 'EVSB': {
       const ch = EVS.ch[id === 'EVSA' ? 0 : 1];
       if (ch.mode === 'live') { const r = resolve('CAM' + ch.cam, depth + 1); return { ...r, alarm: r.alarm }; }
+      if (id === 'EVSB' && evsLayout().plays < 2) return { tex: noSignalTex('EVS B · PAS DE CANAL', 'Un seul canal de lecture en UHD'), scale: SC, alarm: 'NO SIG' };
       if (!ch.ok) return { tex: noSignalTex('EVS ' + ch.name, ch.msg.slice(0, 40)), scale: SC, alarm: '' };
       return { tex: ch.rt.texture, scale: 1, alarm: '' };
     }
@@ -720,7 +765,7 @@ export function renderPipeline(renderer, dt) {
     const k = SNAP.cams + (cam.id - 1) * 6;
     const pose = [SNAPBUF[k], SNAPBUF[k + 1], SNAPBUF[k + 2], SNAPBUF[k + 3], SNAPBUF[k + 4], SNAPBUF[k + 5]];
     cam.render(renderer, scene, pose, ch.rt, tq);
-    ch.lastTq = tq; ch.lastCam = cam.id;
+    ch.lastTq = tq; ch.lastCam = cam.id; ch.dirty = false;
   }
   if (!restored) applySnapshot(LIVE);
   for (const m of W.screens) m.uniforms.uLin.value = 0;

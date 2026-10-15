@@ -175,7 +175,7 @@ export function buildTruck() {
   st('vision1', 'Ingé vision 1', 1.1, -0.75, { station: 'vision', arg: 0 });
   st('vision2', 'Ingé vision 2', 2.8, -0.75, { station: 'vision', arg: 1 });
   st('evsA', 'EVS A (ralentis)', 1.1, 0.95, { station: 'evs', arg: 0 });
-  st('evsB', 'EVS B (ralentis)', 2.8, 0.95, { station: 'evs', arg: 1 });
+  st('evsB', 'IPDirector (EVS)', 2.8, 0.95, { station: 'ipdirector' });
   st('ccu', 'Baie CCU', 4.55, -1.4, { r: 1.2 });
   st('grille', 'Grille', 5.75, -1.4, { r: 1.2 });
   st('mvproc', 'Multiview / Mélangeur (châssis)', 6.95, -1.4, { r: 1.2, station: 'grille' });

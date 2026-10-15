@@ -25,7 +25,7 @@ export const MISSIONS = [
   { id: 'm10b', title: 'Les barres au line-up', text: 'Au poste Ingé vision, envoyez les barres d\'une caméra (touche BARS du RCP), retrouvez-les sur le multiview, puis revenez à l\'image.', check: () => S.flags && S.flags.barsCycle },
   { id: 'm11', title: 'Habillage', text: 'Mettez le score à l\'antenne (DSK 1 au mélangeur), puis jouez un bandeau joueur depuis le poste Habillage avec le DSK 2 à l\'antenne.', check: () => MIX.dsk1.on && MIX.dsk2.on && GFX.template === 'lower' && GFX.anim > 0.5 },
   { id: 'm12', title: 'Le ralenti', text: 'Au poste EVS : après une action, DERNIÈRE ACTION (ou jog + MARK IN), puis passez l\'EVS A au PGM et lancez la lecture au levier à 60 % maximum.', check: () => meSource(MIX.pgm) === 'EVSA' && EVS.ch[0].playing && EVS.ch[0].speed <= 0.6 },
-  { id: 'm13', title: 'Le volet logo', text: 'Au mélangeur, entrez ou sortez d\'un ralenti avec la transition VOLET LOGO.', check: () => S.stats.stingers >= 1 },
+  { id: 'm13', title: 'Le volet logo', text: 'Au mélangeur, entrez ou sortez d\'un ralenti avec le volet logo (transition CLIP de la frame memory).', check: () => S.stats.stingers >= 1 },
   { id: 'm13b', title: 'Clips et playlist', text: 'Au poste EVS : sauvegardez deux clips (SHIFT puis F1, SHIFT puis F2), ajoutez-les à la playlist (PLST puis F1 et F2) et lancez PLST PLAY.', check: () => EVS.playlist.length >= 2 && EVS.ch.some((c) => c.pl) },
   { id: 'm14', title: 'La synchro', text: 'Dans la zone technique (au fond du car), ouvrez le poste Synchro (SPG).', check: () => S.visited.synchro },
   { id: 'm15', title: 'Retour antenne', text: 'Au poste Transmission, comparez le départ et le retour antenne : repérez le délai.', check: () => S.visited.transmission },
@@ -54,7 +54,7 @@ export function drawMissionCard() {
 
 const STATION_LIST = [
   ['realisateur', 'Car · production'], ['scripte', 'Car · production'], ['melangeur', 'Car · production'], ['habillage', 'Car · production'], ['producteur', 'Car · production'], ['chefdecar', 'Car · production'],
-  ['vision', 'Car · vision'], ['evs', 'Car · ralentis'], ['son', 'Car · régie son'], ['hf', 'Car · zone technique'], ['grille', 'Car · zone technique'], ['ccu', 'Car · zone technique'], ['synchro', 'Car · zone technique'], ['transmission', 'Car · zone technique'], ['intercom', 'Car · zone technique'],
+  ['vision', 'Car · vision'], ['evs', 'Car · ralentis'], ['ipdirector', 'Car · ralentis'], ['son', 'Car · régie son'], ['hf', 'Car · zone technique'], ['grille', 'Car · zone technique'], ['ccu', 'Car · zone technique'], ['synchro', 'Car · zone technique'], ['transmission', 'Car · zone technique'], ['intercom', 'Car · zone technique'],
   ['pieddecar', 'Compound'], ['energie', 'Compound'], ['cadreur', 'Stade'], ['antenne', 'Stade'], ['localtv', 'Stade'], ['commentateurs', 'Stade'], ['var', 'Stade'],
 ];
 
@@ -85,7 +85,7 @@ export function openGuide(tab = 'missions') {
       for (const [id, where] of STATION_LIST) { const I = STATION_INFO[id]; if (!I) continue; content.appendChild(el('div', { class: 'item' }, el('div', { class: 'grow' }, el('div', { class: 't' }, I.title), el('div', { class: 's' }, `${where} · ${I.role.split('. ')[0]}.`)), el('button', { class: 'btn small', onclick: () => openInfo(id) }, 'Fiche'))); }
     }
     if (k === 'materiel') {
-      content.append(el('p', { class: 'note' }, 'Faces avant et arrière des appareils, connecteurs, signaux et raccordements de votre installation. Inventaire des connecteurs d\'après les fiches techniques (chaîne caméra type Sony HDC-5500 / HDCU-5500 / RCP-3500, serveur EVS XT-VIA, télécommande LSM-VIA). Raccourci : touche K.'));
+      content.append(el('p', { class: 'note' }, 'Faces avant et arrière des appareils, connecteurs, signaux et raccordements de votre installation. Inventaire des connecteurs d\'après les fiches techniques (chaîne caméra type Sony HDC-5500 / HDCU-5500 / RCP-3500, mélangeur Sony XVS-6000 et pupitre ICP-X7000, serveur EVS XT4K, télécommande LSM, IPDirector). Raccourci : touche K.'));
       const row = el('div', { class: 'grid2' });
       for (const [kk, l] of DEVICE_LIST) row.appendChild(el('button', { class: 'choice', onclick: () => openDevice(kk, ['cam', 'ccu', 'rcp'].includes(kk) && S.cams[0] ? S.cams[0].id : 1) }, el('b', { style: { fontSize: '17px' } }, l), el('span', {}, DEVICES[kk] ? DEVICES[kk].title : '')));
       content.append(row);

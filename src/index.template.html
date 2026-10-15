@@ -300,7 +300,7 @@ canvas.scope { background: #05080a; border: 1px solid var(--line2); border-radiu
 .linkbtn:hover { color: #9fe3ff; }
 
 /* ---------- Télécommande LSM (façon LSM-VIA) ---------- */
-.lsm { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr) auto; gap: 12px; background: linear-gradient(180deg, #2a2f35, #1a1e22); border: 1px solid #3c454e; border-radius: 12px; padding: 12px; align-items: start; }
+.lsm { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1.15fr); gap: 12px; background: linear-gradient(180deg, #2a2f35, #1a1e22); border: 1px solid #3c454e; border-radius: 12px; padding: 12px; align-items: start; }
 .lsm-screen { background: #070b0e; border: 3px solid #0a0d10; border-radius: 6px; padding: 8px; display: flex; flex-direction: column; gap: 6px; min-width: 0; box-shadow: inset 0 0 20px rgba(70,198,242,.08); }
 .lsm-app { font-family: var(--f-mono); font-size: 11px; color: #8fd3ff; background: #0d1a24; padding: 3px 6px; border-radius: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .lsm-clips { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 4px; }
@@ -313,7 +313,7 @@ canvas.scope { background: #05080a; border: 1px solid var(--line2); border-radiu
 .lsm-pl { font-family: var(--f-mono); font-size: 11.5px; color: #cfe8ee; min-height: 18px; overflow-wrap: anywhere; }
 .lsm-pad { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
 .lsm-row { display: flex; gap: 5px; flex-wrap: wrap; }
-.lsm-key { position: relative; flex: 1 1 54px; min-width: 50px; height: 42px; padding: 6px 5px 0; font-family: var(--f-disp); font-weight: 600; font-size: 12px; letter-spacing: .03em; background: #1c2126; color: #c9d3dc; border: 1px solid #3d4750; border-bottom: 3px solid #0d1013; border-radius: 4px; line-height: 1.05; }
+.lsm-key { position: relative; flex: 1 1 44px; min-width: 42px; height: 42px; padding: 6px 5px 0; font-family: var(--f-disp); font-weight: 600; font-size: 12px; letter-spacing: .03em; background: #1c2126; color: #c9d3dc; border: 1px solid #3d4750; border-bottom: 3px solid #0d1013; border-radius: 4px; line-height: 1.05; }
 .lsm-key small { display: block; font-size: 10px; color: var(--dim); font-weight: 500; }
 .lsm-key::before { content: ""; position: absolute; left: 7px; right: 7px; top: 3px; height: 3px; border-radius: 2px; background: #39424b; }
 .lsm-key.amber::before { background: var(--amber); } .lsm-key.cyan::before { background: var(--cyan); } .lsm-key.green::before { background: var(--pvw); } .lsm-key.violet::before { background: var(--violet); } .lsm-key.red::before { background: var(--tally); }
@@ -327,6 +327,27 @@ canvas.scope { background: #05080a; border: 1px solid var(--line2); border-radiu
 .lsm-right { display: flex; flex-direction: column; align-items: center; gap: 10px; }
 .lsm-lever { height: 210px; width: 52px; }
 @media (max-width: 1250px) { .lsm { grid-template-columns: minmax(0, 1fr) auto; } .lsm-screen { grid-column: 1 / -1; } }
+.lsm-lcd { background: #0b1208; border: 2px solid #04080b; border-radius: 4px; padding: 6px 10px; font-family: var(--f-mono); font-size: 13px; color: #9dff8a; line-height: 1.5; white-space: pre; overflow: hidden; box-shadow: inset 0 0 14px rgba(47,210,90,.12); }
+.lsm-cfg { font-size: 12px; color: #b9c7d2; }
+.lsm-key small { display: block; font-size: 9.5px; color: #7d8a95; font-weight: 500; letter-spacing: .02em; }
+/* pupitre ICP (mélangeur XVS) */
+.icp-head { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.icp-head h3 { flex: 1 1 auto; }
+.xpt-row { display: flex; gap: 4px; align-items: stretch; flex-wrap: wrap; }
+.xpt-row .rl { width: 64px; align-self: center; }
+.xpt { display: flex; flex-direction: column; align-items: stretch; gap: 2px; min-width: 52px; width: 52px; padding: 0; background: #1d2228; border: 1px solid #3a4550; border-bottom: 3px solid #0d1013; border-radius: 4px; overflow: hidden; }
+.xpt .oled { display: block; background: #05080a; color: #8fd3ff; font-family: var(--f-mono); font-size: 10px; padding: 2px 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: center; }
+.xpt .xn { font-family: var(--f-disp); font-weight: 700; font-size: 15px; color: #cfd8df; line-height: 1.3; }
+.xpt small { font-size: 9px; color: var(--dim); padding-bottom: 2px; white-space: nowrap; overflow: hidden; }
+.xpt:hover { border-color: #6a7682; }
+.xpt.key.on { background: #6a4f0a; border-color: #ffd27a; } .xpt.key.on .xn { color: #ffe3a0; }
+.xpt.pgm.on { background: var(--tally); border-color: #ff8a80; box-shadow: 0 0 12px rgba(255,59,48,.45); } .xpt.pgm.on .xn, .xpt.pgm.on small { color: #fff; }
+.xpt.pst.on { background: var(--pvw); border-color: #8cf0a8; box-shadow: 0 0 12px rgba(47,210,90,.35); } .xpt.pst.on .xn, .xpt.pst.on small { color: #04220e; }
+.xpt.dead { opacity: .45; }
+/* IPDirector */
+.ipd-grid { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 12px; align-items: start; }
+.ipd-log { max-height: 220px; overflow: auto; }
+@media (max-width: 1000px) { .ipd-grid { grid-template-columns: minmax(0, 1fr); } }
 @media (max-width: 700px) { .lsm { grid-template-columns: minmax(0, 1fr); } .lsm-right { flex-direction: row; flex-wrap: wrap; justify-content: center; } }
 
 /* ---------- Pupitre intercom ---------- */

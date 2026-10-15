@@ -300,7 +300,7 @@ canvas.scope { background: #05080a; border: 1px solid var(--line2); border-radiu
 .linkbtn:hover { color: #9fe3ff; }
 
 /* ---------- Télécommande LSM (façon LSM-VIA) ---------- */
-.lsm { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr) auto; gap: 12px; background: linear-gradient(180deg, #2a2f35, #1a1e22); border: 1px solid #3c454e; border-radius: 12px; padding: 12px; align-items: start; }
+.lsm { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1.15fr); gap: 12px; background: linear-gradient(180deg, #2a2f35, #1a1e22); border: 1px solid #3c454e; border-radius: 12px; padding: 12px; align-items: start; }
 .lsm-screen { background: #070b0e; border: 3px solid #0a0d10; border-radius: 6px; padding: 8px; display: flex; flex-direction: column; gap: 6px; min-width: 0; box-shadow: inset 0 0 20px rgba(70,198,242,.08); }
 .lsm-app { font-family: var(--f-mono); font-size: 11px; color: #8fd3ff; background: #0d1a24; padding: 3px 6px; border-radius: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .lsm-clips { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 4px; }
@@ -313,7 +313,7 @@ canvas.scope { background: #05080a; border: 1px solid var(--line2); border-radiu
 .lsm-pl { font-family: var(--f-mono); font-size: 11.5px; color: #cfe8ee; min-height: 18px; overflow-wrap: anywhere; }
 .lsm-pad { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
 .lsm-row { display: flex; gap: 5px; flex-wrap: wrap; }
-.lsm-key { position: relative; flex: 1 1 54px; min-width: 50px; height: 42px; padding: 6px 5px 0; font-family: var(--f-disp); font-weight: 600; font-size: 12px; letter-spacing: .03em; background: #1c2126; color: #c9d3dc; border: 1px solid #3d4750; border-bottom: 3px solid #0d1013; border-radius: 4px; line-height: 1.05; }
+.lsm-key { position: relative; flex: 1 1 44px; min-width: 42px; height: 42px; padding: 6px 5px 0; font-family: var(--f-disp); font-weight: 600; font-size: 12px; letter-spacing: .03em; background: #1c2126; color: #c9d3dc; border: 1px solid #3d4750; border-bottom: 3px solid #0d1013; border-radius: 4px; line-height: 1.05; }
 .lsm-key small { display: block; font-size: 10px; color: var(--dim); font-weight: 500; }
 .lsm-key::before { content: ""; position: absolute; left: 7px; right: 7px; top: 3px; height: 3px; border-radius: 2px; background: #39424b; }
 .lsm-key.amber::before { background: var(--amber); } .lsm-key.cyan::before { background: var(--cyan); } .lsm-key.green::before { background: var(--pvw); } .lsm-key.violet::before { background: var(--violet); } .lsm-key.red::before { background: var(--tally); }
@@ -327,6 +327,27 @@ canvas.scope { background: #05080a; border: 1px solid var(--line2); border-radiu
 .lsm-right { display: flex; flex-direction: column; align-items: center; gap: 10px; }
 .lsm-lever { height: 210px; width: 52px; }
 @media (max-width: 1250px) { .lsm { grid-template-columns: minmax(0, 1fr) auto; } .lsm-screen { grid-column: 1 / -1; } }
+.lsm-lcd { background: #0b1208; border: 2px solid #04080b; border-radius: 4px; padding: 6px 10px; font-family: var(--f-mono); font-size: 13px; color: #9dff8a; line-height: 1.5; white-space: pre; overflow: hidden; box-shadow: inset 0 0 14px rgba(47,210,90,.12); }
+.lsm-cfg { font-size: 12px; color: #b9c7d2; }
+.lsm-key small { display: block; font-size: 9.5px; color: #7d8a95; font-weight: 500; letter-spacing: .02em; }
+/* pupitre ICP (mélangeur XVS) */
+.icp-head { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.icp-head h3 { flex: 1 1 auto; }
+.xpt-row { display: flex; gap: 4px; align-items: stretch; flex-wrap: wrap; }
+.xpt-row .rl { width: 64px; align-self: center; }
+.xpt { display: flex; flex-direction: column; align-items: stretch; gap: 2px; min-width: 52px; width: 52px; padding: 0; background: #1d2228; border: 1px solid #3a4550; border-bottom: 3px solid #0d1013; border-radius: 4px; overflow: hidden; }
+.xpt .oled { display: block; background: #05080a; color: #8fd3ff; font-family: var(--f-mono); font-size: 10px; padding: 2px 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: center; }
+.xpt .xn { font-family: var(--f-disp); font-weight: 700; font-size: 15px; color: #cfd8df; line-height: 1.3; }
+.xpt small { font-size: 9px; color: var(--dim); padding-bottom: 2px; white-space: nowrap; overflow: hidden; }
+.xpt:hover { border-color: #6a7682; }
+.xpt.key.on { background: #6a4f0a; border-color: #ffd27a; } .xpt.key.on .xn { color: #ffe3a0; }
+.xpt.pgm.on { background: var(--tally); border-color: #ff8a80; box-shadow: 0 0 12px rgba(255,59,48,.45); } .xpt.pgm.on .xn, .xpt.pgm.on small { color: #fff; }
+.xpt.pst.on { background: var(--pvw); border-color: #8cf0a8; box-shadow: 0 0 12px rgba(47,210,90,.35); } .xpt.pst.on .xn, .xpt.pst.on small { color: #04220e; }
+.xpt.dead { opacity: .45; }
+/* IPDirector */
+.ipd-grid { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 12px; align-items: start; }
+.ipd-log { max-height: 220px; overflow: auto; }
+@media (max-width: 1000px) { .ipd-grid { grid-template-columns: minmax(0, 1fr); } }
 @media (max-width: 700px) { .lsm { grid-template-columns: minmax(0, 1fr); } .lsm-right { flex-direction: row; flex-wrap: wrap; justify-content: center; } }
 
 /* ---------- Pupitre intercom ---------- */
@@ -441,7 +462,7 @@ import * as THREE10 from"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.
 // src/state.js
 var S = {
   quality: "moyenne",
-  format: "UHD",
+  format: "HD",
   lighting: "jour",
   flickerLamps: false,
   mode: "start",
@@ -456,6 +477,8 @@ var S = {
   player: null,
   inTruck: false,
   faults: {},
+  patch: { on: false, inputs: {}, outputs: {}, refs: {} },
+  ipMode: false,
   missionsDone: {},
   openedInfo: {},
   visited: {},
@@ -994,7 +1017,7 @@ var STATION_INFO = {
     title: "Truquiste (opérateur mélangeur)",
     where: "Régie production – à droite du réalisateur",
     role: "Exécute en temps réel les commutations demandées par le réalisateur : cut, enchaîné (mix), volet, transitions logo pour les ralentis, incrustations et habillage (DSK). Prépare les effets complexes.",
-    gear: ["Mélangeur de production (type Sony XVS, Grass Valley Kayenne/K-Frame, Ross Acuity) : pupitre + châssis de traitement dans la baie", "Bus Programme (PGM, rouge) et Preset (PST, vert), barre T, sélecteurs de transition", "Keyers (incrustations), DVE (image dans l'image), DSK (habillage en aval)", "Mémoires d'effets (E-MEM) et macros"],
+    gear: ["Dans votre car : mélangeur Sony XVS-6000 (processeur 6U en baie) commandé par un pupitre ICP-X7000 via l'unité d'interface MKS-X7700", "Bus A (programme, rouge) et B (preset, vert), levier de transition, MIX / WIPE / DME / CLIP", "4 keyers par M/E avec redimensionneur 2,5D, DME 3D en option, DSK (habillage aval)", "Frame memory (images et clips de transition), snapshots et Shotbox, multiviewers intégrés"],
     process: ["La source annoncée est sélectionnée sur le bus PST (tally vert sur la caméra)", "Au « Top », CUT ou AUTO (transition de durée réglée en images)", "Le PST et le PGM s'échangent après chaque transition (flip-flop)", "Les DSK (score, logo) restent au-dessus de tout, y compris des ralentis"],
     tips: ["Raccourcis de ce simulateur : chiffres = préparer la source, Maj + chiffre = direct au PGM, Espace = CUT, Entrée = AUTO.", "Une durée de mix de 12 à 25 images est courante ; un volet logo dure environ 1 s.", "La sortie « clean feed » est le PGM sans les DSK : on la livre aux diffuseurs étrangers."]
   },
@@ -1030,11 +1053,19 @@ var STATION_INFO = {
     process: ["Line-up : balance des noirs (iris fermé), balance des blancs sur une charte, chargement des fichiers de scène", "Matching : même niveau de noir, même balance des blancs, même gamma et même saturation pour toutes les caméras", "Direct : « riding » de l'iris en continu, ajustements fins des couleurs"],
     tips: ["Repères : pelouse en plein soleil vers 40-55 %, maillot blanc sous 100 %, noirs à 0-2 %.", "Ouvrir l'iris d'un diaphragme double la lumière ; +6 dB de gain aussi, mais avec du bruit.", "Au téléobjectif, l'ouverture maximale diminue (ramping) : l'image peut s'assombrir quand le cadreur zoome.", "Les caméras super ralenti reçoivent 3 ou 6 fois moins de lumière par image."]
   },
+  ipdirector: {
+    title: "IPDirector (gestion des médias EVS)",
+    where: "Régie ralentis",
+    role: "Gère la base de données des clips du serveur EVS : log des actions avec mots-clés pendant le direct, nommage et classement des clips, montage de playlists (résumés, meilleurs moments), contrôle des canaux, transferts vers le montage.",
+    gear: ["Station de travail IPDirector reliée aux serveurs XT4K (réseau 10 GbE)", "Moniteurs des canaux de lecture", "Intercom avec l'opérateur ralenti et le réalisateur"],
+    process: ["Pendant le jeu : logger chaque action (BUT, TIR, FAUTE…) au bon timecode", "Transformer les logs en clips, les nommer, ajouter joueurs et notes", "À la mi-temps et à la fin : monter les playlists du résumé et les envoyer à l'antenne ou au montage"],
+    tips: ["Un clip créé ici apparaît aussi sur la télécommande LSM (même base de données).", "Des mots-clés cohérents (toujours « TIR », jamais « frappe ») rendent la recherche instantanée."]
+  },
   evs: {
     title: "Opérateur ralenti (EVS / LSM)",
     where: "Régie ralentis",
     role: "Enregistre en permanence plusieurs caméras sur le serveur et sort les ralentis à la demande du réalisateur, avec le bon angle et la bonne vitesse. Prépare aussi les résumés et les moments forts.",
-    gear: ["Serveur de production (type EVS XT-VIA) : par exemple 8 entrées enregistrées en boucle et 2 sorties de lecture", "Télécommande LSM : levier de vitesse, molette jog, touches de caméras, MARK IN / OUT", "Moniteurs des sorties de lecture"],
+    gear: ["Dans votre car : serveur EVS XT4K (4 canaux UHD ou 8 à 12 canaux HD selon la configuration)", "Télécommande LSM (logiciel Multicam) : levier, jog, touches F, IN / OUT, PLST, TAKE", "Poste IPDirector : base de données des clips, log, playlists", "Moniteurs des sorties de lecture et écran du serveur (clip screen)"],
     process: ["Après une action : retour en arrière, MARK IN quelques secondes avant", "Choix de l'angle (toutes les caméras enregistrées sont synchronisées en timecode)", "Le réalisateur envoie la sortie EVS au mélangeur, l'opérateur lance la lecture au levier (25 à 50 % le plus souvent)", "Pour une caméra super ralenti (3x), 33 % reste parfaitement fluide"],
     tips: ["Une caméra 3x occupe 3 entrées d'enregistrement (une par phase).", "Ralentir une caméra 50 i/s à 25 % fait répéter chaque image 4 fois : le mouvement saccade.", "Raccourcis : Espace = lecture/pause, I = MARK IN, O = MARK OUT, L = live, flèches = jog image par image."]
   },
@@ -1261,7 +1292,18 @@ var GLOSSARY = [
   ["Fast jog", "Mode de la molette qui parcourt les enregistrements beaucoup plus vite qu'image par image."],
   ["Var Max", "Réglage de la vitesse maximale du levier (par exemple pour aller au-delà de 100 %)."],
   ["Phases (super ralenti)", "Une caméra 3x à 150 i/s sort trois flux à 50 i/s (phases A, B, C), enregistrés séparément puis recombinés par le serveur."],
-  ["Super Motion", "Option du serveur EVS pour les caméras rapides : de 2x à 16x en HD, de 2x à 4x en UHD sur une XT-VIA."],
+  ["Super Motion", "Enregistrement des caméras rapides (plusieurs phases) par le serveur EVS ; les phases d'une même caméra vont sur le même serveur. En UHD, un XT4K n'a que 4 canaux."],
+  ["XT4K", "Serveur EVS de génération UHD : 4 canaux UHD-4K sur un seul câble 12G-SDI, ou 8 canaux HD (12 avec ChannelMAX), stockage interne jusqu'à 9 To."],
+  ["ChannelMAX", "Configuration EVS qui augmente le nombre de canaux HD d'un serveur (12 et plus sur un XT4K)."],
+  ["Multicam (LSM)", "Logiciel des serveurs EVS piloté par la télécommande LSM : trains, clips en pages et banques, playlists."],
+  ["RETURN (LSM)", "Dans un clip, retourne sur la même image du train d'enregistrement pour aller au-delà des points IN/OUT."],
+  ["TAKE (LSM)", "Échange PGM et PRV (mode PGM + PRV) ou le contenu des deux PGM (mode 2 PGM)."],
+  ["BROWSE (LSM)", "Parcourt les clips de la base avec la molette jog."],
+  ["XVS-6000", "Mélangeur de production Sony (processeur 6U) : en 4K, 2 M/E et 16 entrées dans la configuration de base ; davantage en HD."],
+  ["ICP-X7000", "Pupitre modulaire des mélangeurs Sony XVS : rangées M/E, boutons XPT RVB, afficheurs OLED des noms de sources."],
+  ["Frame memory", "Mémoire d'images du mélangeur (480 Go sur la gamme XVS) : images fixes, clips, transitions « clip » (logo animé)."],
+  ["Snapshot", "Mémoire d'état du mélangeur (sources, clés, transitions) rappelée en une touche."],
+  ["Bus A / B (flip-flop)", "Sur les mélangeurs Sony, le bus A porte le programme et le B le preset : après chaque transition, ils s'échangent pour que A reste à l'antenne."],
   ["XNet", "Réseau qui relie les serveurs EVS entre eux pour partager trains et clips."],
   ["IPDirector", "Logiciel de gestion des serveurs EVS : log, clips, playlists, transferts."],
   ["Codes 64-940", "Niveaux de la vidéo numérique 10 bits : 64 = noir (0 %), 940 = blanc nominal (100 %), jusqu'à 1019 pour les super-blancs."],
@@ -1423,9 +1465,13 @@ var GUIDE = [
     id: "evsarch",
     title: "Le serveur ralenti en détail",
     html: `
-<p>Un serveur de production live (type EVS XT-VIA) enregistre en permanence plusieurs flux et, en même temps, relit n'importe quel instant de ces enregistrements, à n'importe quelle vitesse. Il est piloté par une télécommande dédiée (LSM-VIA) et, pour la gestion des clips, par un logiciel comme IPDirector.</p>
+<p>Un serveur de production live (dans votre car : <b>EVS XT4K</b>) enregistre en permanence plusieurs flux et, en même temps, relit n'importe quel instant de ces enregistrements, à n'importe quelle vitesse. Il est piloté par la <b>télécommande LSM</b> (logiciel Multicam) et, pour la gestion des clips, par <b>IPDirector</b>.</p>
 <h3>Les canaux : enregistrement et lecture</h3>
-<p>Le serveur dispose d'un nombre fixe de canaux (12 canaux HD ou 6 en UHD-4K sur une XT-VIA). On les répartit selon la production : par exemple <b>8 entrées REC + 2 sorties PLAY (PGM1, PGM2)</b>, ou 6 REC + 2 PLAY + 1 multiviewer intégré. Les entrées sont alimentées par la grille, les sorties retournent à la grille puis au mélangeur.</p>
+<p>Le serveur dispose d'un nombre fixe de canaux : sur un XT4K, <b>4 canaux en UHD-4K</b> ou <b>8 canaux en HD</b> (12 et plus avec la configuration ChannelMAX). On les répartit selon la production. Avec un seul XT4K :</p>
+<table><tr><th>Format</th><th>Répartition typique</th><th>Conséquence</th></tr>
+<tr><td>HD (1080p / 1080i)</td><td>8 REC + 2 PLAY (ChannelMAX 12 canaux) ou 6 REC + 2 PLAY (8 canaux)</td><td>Deux sorties de lecture (PGM1, PGM2) ; une caméra 3x prend 3 entrées</td></tr>
+<tr><td>UHD-4K</td><td>3 REC + 1 PLAY</td><td>Une seule sortie de lecture ; une caméra 3x occupe tout l'enregistrement</td></tr></table>
+<p>C'est pourquoi le format de production se décide avec le parc EVS : en UHD, on ajoute des serveurs ou on enregistre moins d'angles. Les entrées sont alimentées par la grille, les sorties retournent à la grille puis au mélangeur. Dans ce simulateur, le format se choisit sur l'écran d'accueil et la répartition suit automatiquement.</p>
 <h3>Les trains d'enregistrement</h3>
 <p>L'enregistrement est une boucle (des heures de capacité) : on parle de « trains ». Tant que l'enregistrement tourne, chaque image de chaque entrée est disponible. Tous les trains partagent le même <b>timecode</b> (LTC du car) : c'est ce qui permet de passer d'un angle à l'autre sur la même action (<b>multicam</b>). Si on arrête l'enregistrement, plus rien n'est disponible après l'arrêt : c'est la pire erreur au poste ralentis. Quand la boucle est pleine, les images les plus anciennes sont écrasées : tout ce qu'on veut garder doit être sauvegardé en clip.</p>
 <h3>Les clips</h3>
@@ -1439,9 +1485,19 @@ var GUIDE = [
 <li><b>Playlist :</b> plusieurs clips enchaînés (cut, mix, volet) pour un résumé ou les meilleurs moments.</li>
 </ul>
 <h3>Super ralenti : les phases</h3>
-<p>Une caméra « 3x » tourne à 150 images/s (en Europe). Elle sort ces images sur <b>trois liaisons</b> à 50 i/s, appelées phases A, B, C (la phase A contient les images 1, 4, 7…, la B les images 2, 5, 8…). Le serveur enregistre chaque phase sur une entrée et les recombine : lue à 33 %, l'action est parfaitement fluide (chaque image affichée est une image différente). Une caméra standard lue à 33 % répète chaque image trois fois : le mouvement saccade. Sur l'XT-VIA, l'option Super Motion accepte de 2x à 16x en HD et de 2x à 4x en UHD.</p>
+<p>Une caméra « 3x » tourne à 150 images/s (en Europe). Elle sort ces images sur <b>trois liaisons</b> à 50 i/s, appelées phases A, B, C (la phase A contient les images 1, 4, 7…, la B les images 2, 5, 8…). Le serveur enregistre chaque phase sur une entrée et les recombine : lue à 33 %, l'action est parfaitement fluide (chaque image affichée est une image différente). Une caméra standard lue à 33 % répète chaque image trois fois : le mouvement saccade. Les phases d'une même caméra sont enregistrées sur le même serveur.</p>
+<h3>La télécommande LSM (Multicam)</h3>
+<ul>
+<li><b>Touches à double fonction</b> : IN / GOTO IN, OUT / GOTO OUT, PLST / BROWSE… la fonction secondaire s'obtient avec SHIFT.</li>
+<li><b>Pages</b> : SHIFT + PAGE puis une touche F choisit la page 1 à 10.</li>
+<li><b>RETURN</b> : dans un clip trop court, on revient sur la même image dans le train pour récupérer ce qu'il y a avant ou après.</li>
+<li><b>TAKE</b> : en mode PGM + PRV, échange PGM et PRV ; en mode 2 PGM, échange le contenu des deux sorties.</li>
+<li><b>Levier</b> : 0 à 100 %, plage secondaire −100/+100 % ou −200/+200 % ; <b>jog</b> : environ 35 images par tour.</li>
+</ul>
+<h3>IPDirector</h3>
+<p>Le poste IPDirector travaille sur les mêmes clips que la LSM : base de données (recherche par mots-clés, joueurs, notes), log des actions pendant le direct, montage de playlists, contrôle des canaux, transferts vers le montage. Dans le car, il occupe en général un second opérateur ralentis ou un logueur.</p>
 <h3>Raccordements</h3>
-<p>Entrées et sorties SDI (1,5G, 3G ou 12G selon la configuration) ou IP (ST 2110 / ST 2022-6 sur 10GbE, avec PTP et NMOS), référence et timecode, réseau XNet-VIA (10 Gb/s) pour partager les clips, réseau de gestion redondant, audio embeddé, AES ou MADI. Ouvrez « Serveur ralenti » dans la visionneuse de matériel pour voir chaque port.</p>`
+<p>Entrées et sorties 12G-SDI (UHD sur un seul câble) ou 3G/HD-SDI, Quad 3G-SDI en option, IP intégrée ; référence et timecode ; réseau XNet pour partager les clips entre serveurs ; 2 × 10 GbE pour IPDirector et les transferts ; réseau de gestion redondant ; audio embeddé, AES, MADI, analogique ; liaison série RS-422 vers la télécommande LSM (d'après les manuels XT). Ouvrez « Serveur ralenti EVS XT4K » dans la visionneuse de matériel pour voir chaque port.</p>`
   },
   {
     id: "ipguide",
@@ -2808,7 +2864,7 @@ function buildTruck() {
   st("vision1", "Ingé vision 1", 1.1, -0.75, { station: "vision", arg: 0 });
   st("vision2", "Ingé vision 2", 2.8, -0.75, { station: "vision", arg: 1 });
   st("evsA", "EVS A (ralentis)", 1.1, 0.95, { station: "evs", arg: 0 });
-  st("evsB", "EVS B (ralentis)", 2.8, 0.95, { station: "evs", arg: 1 });
+  st("evsB", "IPDirector (EVS)", 2.8, 0.95, { station: "ipdirector" });
   st("ccu", "Baie CCU", 4.55, -1.4, { r: 1.2 });
   st("grille", "Grille", 5.75, -1.4, { r: 1.2 });
   st("mvproc", "Multiview / Mélangeur (châssis)", 6.95, -1.4, { r: 1.2, station: "grille" });
@@ -4851,6 +4907,52 @@ function stingerLogo() {
 
 // src/pipeline.js
 import * as THREE8 from"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.min.js";
+
+// src/equip.js
+var EQUIP = {
+  truck: "Car régie",
+  mixer: "XVS-6000",
+  mixPanel: "ICP-X7000",
+  evsModel: "XT4K",
+  evsServers: 1,
+  // nombre de serveurs XT4K
+  evsHdChannels: 12,
+  // 8 en standard, 12 avec ChannelMAX
+  lsmCount: 1,
+  // télécommandes LSM
+  ipdirector: true,
+  mix4kInputs: 16
+  // XVS-6000 en 4K, configuration de base (brochure Sony)
+};
+function mixInputs() {
+  return S.format === "UHD" ? EQUIP.mix4kInputs : 22;
+}
+function evsLayout() {
+  const uhd = S.format === "UHD";
+  const n = EQUIP.evsServers;
+  const per = uhd ? 4 : EQUIP.evsHdChannels;
+  let rec, plays;
+  if (uhd) {
+    rec = 3 * n;
+    plays = n >= 2 ? 2 : 1;
+  } else if (n >= 2) {
+    rec = 8;
+    plays = 2;
+  } else {
+    plays = 2;
+    rec = Math.min(8, per - 2 - (per >= 12 ? 2 : 0));
+  }
+  rec = Math.min(8, rec);
+  const perSrvRec = n >= 2 ? Math.ceil(rec / n) : rec;
+  const recServer = (k) => n >= 2 ? Math.min(n, Math.floor((k - 1) / perSrvRec) + 1) : 1;
+  const recPort = (k) => n >= 2 ? (k - 1) % perSrvRec + 1 : k;
+  const playServer = (i) => n >= 2 && plays >= 2 ? i + 1 : 1;
+  const playPort = (i) => n >= 2 ? perSrvRec + 1 : rec + 1 + i;
+  const label = uhd ? `${n} × XT4K en UHD : 4 canaux par serveur, soit ${n >= 2 ? "3 REC + 1 PLAY sur chacun (PGM1 sur le serveur 1, PGM2 sur le serveur 2)" : "3 REC + 1 PLAY : une seule sortie de lecture (PGM1)"}` : `${n} × XT4K en HD : ${n >= 2 ? "8 REC + 2 PLAY répartis sur les deux serveurs" : `${per} canaux${per >= 12 ? " (ChannelMAX)" : ""}, soit ${rec} REC + 2 PLAY${per >= 12 ? " + multiviewer" : ""}`}`;
+  return { uhd, servers: n, per, rec, plays, recServer, recPort, playServer, playPort, label };
+}
+
+// src/pipeline.js
 var FONT2 = '"Saira Condensed", "Arial Narrow", sans-serif';
 var MONO = '"JetBrains Mono", ui-monospace, monospace';
 var SC = 1 / 1.1;
@@ -4998,13 +5100,13 @@ DESTS.push({ id: "AUX_TX1", group: "Départs et AUX", label: "Départ TX1 (fibre
 function defaultRouting(full = true) {
   const m = ROUTER.map;
   if (full) {
-    for (let i = 1; i <= 16; i++) m["ME" + i] = "CAM" + i;
-    m.ME17 = "EVSA";
-    m.ME18 = "EVSB";
-    m.ME19 = "GFX";
-    m.ME20 = "STUDIO";
-    m.ME21 = "BARS";
-    m.ME22 = "BLACK";
+    const nIn = mixInputs();
+    const extras = ["EVSA", "EVSB", "GFX", "STUDIO", "BARS", "BLACK"];
+    for (let i = 1; i <= 22; i++) delete m["ME" + i];
+    for (let i = 1; i <= nIn - extras.length; i++) m["ME" + i] = "CAM" + i;
+    extras.forEach((s, k) => {
+      m["ME" + (nIn - extras.length + 1 + k)] = s;
+    });
     m.AUX_TX1 = "PGM";
     m.AUX_TX2 = "PGM";
     m.AUX_GIANT = "CLEAN";
@@ -5020,17 +5122,29 @@ function defaultRouting(full = true) {
       delete ROUTER.phase["REC" + i];
     }
     const order = [...S.cams].sort((a, b) => b.hfr - a.hfr || a.id - b.id);
-    let ch = 1;
+    const free = (k, n) => {
+      for (let j = k; j < k + n; j++) if (m["REC" + j]) return false;
+      return true;
+    };
     for (const c of order) {
-      if (ch + c.hfr - 1 > 8) continue;
-      routeRec(ch, "CAM" + c.id, true);
-      ch += c.hfr;
+      for (let k = 1; k <= 8; k++) {
+        if (!free(k, c.hfr) || routeRec(k, "CAM" + c.id, true, true)) continue;
+        routeRec(k, "CAM" + c.id, true);
+        break;
+      }
     }
   }
   syncRecStarts();
 }
-function routeRec(ch, src, silent = false) {
+function routeRec(ch, src, silent = false, dryRun = false) {
   const m = ROUTER.map;
+  const L = evsLayout();
+  const cam0 = src && src.startsWith("CAM") ? camById(+src.slice(3)) : null;
+  const n0 = cam0 ? cam0.hfr : 1;
+  if (ch > L.rec) return `Entrée REC ${ch} indisponible : ${L.label}.`;
+  if (ch + n0 - 1 > L.rec) return `Pas assez d'entrées : ${src} est une caméra ${n0}x qui demande ${n0} canaux d'enregistrement (${L.label}).`;
+  if (n0 > 1 && L.recServer(ch) !== L.recServer(ch + n0 - 1)) return `Les ${n0} phases d'une caméra super ralenti doivent être enregistrées sur le même serveur XT4K.`;
+  if (dryRun) return null;
   const old = m["REC" + ch];
   if (old) {
     for (let i = 1; i <= 8; i++) if (m["REC" + i] === old) {
@@ -5059,6 +5173,7 @@ function routeRec(ch, src, silent = false) {
   return null;
 }
 function route(dest, src) {
+  if (dest.startsWith("ME") && +dest.slice(2) > mixInputs()) return `Entrée ${dest.slice(2)} indisponible : en 4K, le ${EQUIP.mixer} n'a que ${mixInputs()} entrées dans cette configuration.`;
   if (dest.startsWith("REC")) {
     const err = routeRec(+dest.slice(3), src);
     if (!err) emit("router", { dest, src });
@@ -5077,17 +5192,34 @@ var EVS = {
   ch: [0, 1].map((i) => ({ name: i ? "B" : "A", mode: "live", cam: i ? 2 : 1, t: 0, speed: 0, lever: 0.5, playing: false, in: null, out: null, rt: null, lastTq: -1, ok: true, msg: "" })),
   clips: [],
   playlist: [],
-  fastJog: false
+  fastJog: false,
+  page: 1,
+  lsmCh: 0,
+  logs: [],
+  browse: false
 };
+function clipName(idx) {
+  const cl = EVS.clips[idx];
+  const page = Math.floor(idx / 10) + 1, key = idx % 10 + 1;
+  const rec = recordedCams();
+  const k = cl ? rec.indexOf(cl.cam) : -1;
+  return `${page}1${key % 10}${k >= 0 ? "ABCDEFGH"[k] : ""}`;
+}
 function syncRecStarts() {
   const recorded = recordedCams();
   for (const id of recorded) if (EVS.recStart[id] == null) EVS.recStart[id] = S.simTime;
   for (const id of Object.keys(EVS.recStart)) if (!recorded.includes(+id)) delete EVS.recStart[id];
 }
+function recSource(k) {
+  const P_ = S.patch;
+  if (!P_ || !P_.on) return ROUTER.map["REC" + k];
+  const o = Object.keys(P_.outputs).find((out) => P_.outputs[out] === "EVSREC" + k);
+  return o && +o >= 41 && +o <= 48 ? ROUTER.map["REC" + (+o - 40)] : null;
+}
 function recordedCams() {
   const set = /* @__PURE__ */ new Set();
-  for (let i = 1; i <= 8; i++) {
-    const s = ROUTER.map["REC" + i];
+  for (let i = 1; i <= evsLayout().rec; i++) {
+    const s = recSource(i);
     if (s && s.startsWith("CAM") && camById(+s.slice(3))) set.add(+s.slice(3));
   }
   return [...set].sort((a, b) => a - b);
@@ -5108,6 +5240,12 @@ function evsSetRecording(onoff) {
 }
 function evsAction(chIdx, action, arg) {
   const c = EVS.ch[chIdx];
+  if (chIdx === 1 && evsLayout().plays < 2) {
+    c.ok = false;
+    c.msg = "Pas de second canal de lecture dans cette configuration.";
+    emit("evs", { ch: chIdx, action: "refused" });
+    return;
+  }
   const now = S.simTime;
   const [t0, t1] = recRange();
   const goPause = () => {
@@ -5208,8 +5346,38 @@ function evsAction(chIdx, action, arg) {
     case "save": {
       if (c.in != null) {
         const out = c.out ?? Math.min(now, c.in + 6);
-        EVS.clips[arg] = { in: c.in, out, cam: c.cam, name: `Clip F${arg + 1}` };
+        const old = EVS.clips[arg];
+        EVS.clips[arg] = { in: c.in, out, cam: c.cam, name: old ? old.name : "", kw: old ? old.kw : [], rating: old ? old.rating : 0, savedT: now };
       }
+      break;
+    }
+    case "take": {
+      const o = EVS.ch[1 - chIdx];
+      const keys = ["mode", "cam", "t", "speed", "lever", "playing", "in", "out", "pl"];
+      const tmp2 = {};
+      for (const k of keys) tmp2[k] = c[k];
+      for (const k of keys) c[k] = o[k];
+      for (const k of keys) o[k] = tmp2[k];
+      c.dirty = o.dirty = true;
+      break;
+    }
+    case "return":
+      goPause();
+      c.out = null;
+      c.pl = null;
+      break;
+    case "browse": {
+      const idxs = EVS.clips.map((cl2, i) => cl2 ? i : -1).filter((i) => i >= 0);
+      if (!idxs.length) break;
+      EVS.browseIdx = idxs[(Math.max(0, idxs.indexOf(EVS.browseIdx ?? idxs[0])) + (arg > 0 ? 1 : idxs.length - 1)) % idxs.length];
+      const cl = EVS.clips[EVS.browseIdx];
+      c.in = cl.in;
+      c.out = cl.out;
+      c.cam = cl.cam;
+      c.t = cl.in;
+      c.mode = "pause";
+      c.playing = false;
+      c.pl = null;
       break;
     }
     case "recall": {
@@ -5289,7 +5457,7 @@ var MIX = {
   ftb: { on: false, level: 0, auto: 0 },
   lastTrans: null
 };
-var TRANS = { mix: "MIX", wipe: "VOLET", dip: "DIP", dve: "DVE PUSH", stinger: "VOLET LOGO" };
+var TRANS = { mix: "MIX", wipe: "WIPE", dip: "DIP", dve: "DME", stinger: "CLIP" };
 var WIPES = ["Horizontal", "Vertical", "Diagonal", "Iris (cercle)", "Boîte", "Horloge"];
 var TYPE_N = { mix: 0, wipe: 1, dip: 2, dve: 3, stinger: 4 };
 function meSource(n) {
@@ -5526,6 +5694,7 @@ function resolve(id, depth = 0) {
         const r = resolve("CAM" + ch.cam, depth + 1);
         return { ...r, alarm: r.alarm };
       }
+      if (id === "EVSB" && evsLayout().plays < 2) return { tex: noSignalTex("EVS B · PAS DE CANAL", "Un seul canal de lecture en UHD"), scale: SC, alarm: "NO SIG" };
       if (!ch.ok) return { tex: noSignalTex("EVS " + ch.name, ch.msg.slice(0, 40)), scale: SC, alarm: "" };
       return { tex: ch.rt.texture, scale: 1, alarm: "" };
     }
@@ -6031,6 +6200,7 @@ function renderPipeline(renderer2, dt) {
     cam2.render(renderer2, scene, pose, ch.rt, tq);
     ch.lastTq = tq;
     ch.lastCam = cam2.id;
+    ch.dirty = false;
   }
   if (!restored) applySnapshot(LIVE);
   for (const m2 of W.screens) m2.uniforms.uLin.value = 0;
@@ -7471,101 +7641,215 @@ function rcpDevice() {
 }
 function evsDevice() {
   const P2 = {};
-  for (let i = 1; i <= 12; i++) P2["sdi" + i] = M2(`SDI ${i}`, BNC, "video", "io", "1,5G / 3G / 12G-SDI, choisi dans la configuration logicielle", "Connecteur SDI configurable en entrée (enregistrement) ou en sortie (lecture, multiviewer). Dans ce car : SDI 1 à 8 = entrées REC, SDI 9 = PGM1 (EVS A), SDI 10 = PGM2 (EVS B), SDI 11 = multiviewer interne.");
+  for (let i = 1; i <= 12; i++) P2["sdi" + i] = M2(`SDI ${i}`, BNC, "video", "io", "12G-SDI (UHD-4K sur un seul câble) ou 3G/HD-SDI ; Quad 3G-SDI (2SI ou découpage en carrés) en option", "Connecteur des modules codec, affecté en entrée (enregistrement) ou en sortie (lecture, multiviewer) dans la configuration du serveur. L'affectation de votre car est donnée dans « Dans votre installation ».");
   Object.assign(P2, {
-    ip1: M2("IP 1", "SFP+ 10GbE", "ip", "io", "SMPTE ST 2110 / ST 2022-6, PTP, NMOS IS-04/IS-05", "Entrées/sorties vidéo sur IP (installation ST 2110)."),
-    ip2: M2("IP 2", "SFP+ 10GbE", "ip", "io", "ST 2022-7 (redondance)", "Second port IP (chemin redondant)."),
-    xnet1: M2("XNet-VIA 1", "SFP+ 10GbE", "ip", "io", "Réseau XNet-VIA 10 Gb/s", "Partage des médias entre serveurs : un opérateur peut relire les enregistrements d'un autre serveur."),
-    xnet2: M2("XNet-VIA 2", "SFP+ 10GbE", "ip", "io", "XNet-VIA", "Second lien réseau média."),
-    mgmt1: M2("LAN gestion 1", "RJ-45", "ip", "io", "1 GbE", "Réseau de gestion et de commande (LSM-VIA, IPDirector). Doublé pour la redondance."),
+    xnet: M2("XNet", "Réseau EVS", "ip", "io", "Réseau de production XNet (3 Gb/s d'après la documentation de lancement)", "Partage des trains et des clips entre serveurs : un opérateur peut relire l'enregistrement d'un autre serveur comme s'il était local."),
+    gbe1: M2("10GbE 1", "SFP+", "ip", "io", "10 Gb/s Ethernet", "Réseau de partage des médias : IPDirector, transferts de fichiers vers le montage, archivage."),
+    gbe2: M2("10GbE 2", "SFP+", "ip", "io", "10 Gb/s Ethernet", "Second port de partage des médias."),
+    ipio: M2("IP I/O", "SFP", "ip", "io", "Interface IP intégrée (ST 2022-6 / ST 2110 selon version)", "Entrées/sorties vidéo sur IP, pour les cars IP."),
+    mgmt1: M2("LAN gestion 1", "RJ-45", "ip", "io", "1 GbE", "Réseau de gestion du serveur, doublé pour la redondance."),
     mgmt2: M2("LAN gestion 2", "RJ-45", "ip", "io", "1 GbE", "Réseau de gestion redondant."),
-    refin: M2("REF IN", BNC, "ref", "in", REF_STD, "Référence de synchro (genlock) : black burst ou tri-level, choisi dans la configuration."),
-    refloop: M2("REF LOOP", BNC, "ref", "out", REF_STD, "Boucle de la référence."),
-    ltcin: M2("LTC IN", "XLR 3 broches", "ref", "in", "SMPTE ST 12-1 (LTC)", "Timecode heure du jour venant du SPG : toutes les caméras enregistrées partagent le même timecode, d'où le multicam synchronisé."),
-    ltcout: M2("LTC OUT", "XLR 3 broches", "ref", "out", "LTC", "Sortie timecode."),
-    gpi: M2("GPI", "D-sub 25", "data", "io", "Entrées opto-isolées et TTL (manuels XT3)", "Déclenchements par contacts (ex. tally, démarrage d'une lecture par le mélangeur)."),
-    rs1: M2("RS-422 1", "D-sub 9", "data", "io", "Protocoles série (Sony BVW, VDCP, Odetics…)", "Héritage : télécommandes série et automatismes tiers. Le LSM-VIA passe par IP."),
-    rs2: M2("RS-422 2", "D-sub 9", "data", "io", "Série", "Port série."),
-    rs3: M2("RS-422 3", "D-sub 9", "data", "io", "Série", "Port série."),
-    rs4: M2("RS-422 4", "D-sub 9", "data", "io", "Série", "Port série."),
-    aes: M2("AES", "D-sub 25", "audio", "io", "AES3", "Audio numérique AES (paires stéréo)."),
+    refin: M2("REF IN", BNC, "ref", "in", REF_STD, "Référence de synchro (genlock) venant du SPG."),
+    refloop: M2("REF LOOP", BNC, "ref", "out", REF_STD, "Boucle de la référence (terminée si non utilisée)."),
+    ltcin: M2("LTC IN", "XLR / bornier", "ref", "in", "SMPTE ST 12-1 (LTC)", "Timecode heure du jour venant du SPG : toutes les entrées enregistrées partagent le même timecode, d'où le multicam synchronisé."),
+    ltcout: M2("LTC OUT", "XLR / bornier", "ref", "out", "LTC", "Sortie timecode."),
+    gpi: M2("GPI", "D-sub", "data", "io", "Entrées / sorties par contact (manuels XT)", "Déclenchements par contacts : démarrer une lecture depuis le mélangeur, renvoyer un tally, etc."),
+    rs1: M2("RS-422 1", "D-sub 9", "data", "io", "Liaison série (19 200 bauds d'après les manuels XT)", "Port série de télécommande : sur les serveurs XT, la télécommande LSM s'y raccorde. Vérifier l'affectation des ports dans la configuration de votre serveur."),
+    rs2: M2("RS-422 2", "D-sub 9", "data", "io", "Série", "Second port de télécommande (deuxième LSM ou protocole Sony/VDCP pour un automate ou le mélangeur)."),
+    rs3: M2("RS-422 3", "D-sub 9", "data", "io", "Série", "Port série (protocoles tiers)."),
+    rs4: M2("RS-422 4", "D-sub 9", "data", "io", "Série", "Port série (protocoles tiers)."),
+    aes: M2("AES / analogique", "D-sub", "audio", "io", "AES3 et analogique", "Audio associé aux images : jusqu'à 192 pistes non compressées avec routeur audio interne (embeddé, AES, MADI, analogique)."),
     madiin: M2("MADI IN", BNC, "audio", "in", "AES10 (64 canaux)", "Audio multicanal à enregistrer avec les images."),
     madiout: M2("MADI OUT", BNC, "audio", "out", "AES10", "Audio multicanal des sorties de lecture."),
+    vga: M2("VGA", "D-sub 15 HD", "video", "out", "", "Écran du serveur : menus, configuration, et sur les systèmes Multicam l'écran des clips (clip screen)."),
+    kbd: M2("Clavier", "PS/2 / USB", "data", "in", "", "Clavier du serveur : nommage des clips, configuration."),
     usb: M2("USB", "USB", "data", "io", "", "Maintenance, export."),
-    disp: M2("Écran", "DisplayPort", "video", "out", "", "Console locale de configuration."),
     psu1: M2("Alimentation 1", "IEC", "power", "in", "100 à 240 V", "Alimentations redondantes : on les branche sur deux circuits différents."),
     psu2: M2("Alimentation 2", "IEC", "power", "in", "100 à 240 V", "Seconde alimentation (redondance).")
   });
   const C = {
-    disks: M2("Disques (RAID)", "Tiroirs", "data", "", "", "Stockage en RAID : la perte d'un disque n'interrompt pas l'enregistrement."),
+    disks: M2("Disques (RAID)", "Tiroirs", "data", "", "", "Stockage interne jusqu'à 9 To (≈ 130 h d'UHD-4K selon la compression), extensible ; en RAID : la perte d'un disque n'interrompt pas l'enregistrement."),
     leds: M2("Voyants d'état", "LED", "data", "", "", "Alimentation, disques, réseau, enregistrement.")
   };
-  const front = [{ t: "body", x: 10, y: 10, w: 980, h: 500, r: 8 }, { t: "text", x: 40, y: 60, s: "SERVEUR DE PRODUCTION (type EVS XT-VIA)", size: 20, w: 700 }];
+  const front = [{ t: "body", x: 10, y: 10, w: 980, h: 500, r: 8 }, { t: "text", x: 40, y: 60, s: "SERVEUR DE PRODUCTION (type EVS XT4K) · 6U", size: 20, w: 700 }];
   for (let r = 0; r < 2; r++) for (let c = 0; c < 6; c++) front.push({ t: "disk", id: "disks", x: 320 + c * 105, y: 120 + r * 170, w: 92, h: 150 });
   ["POWER", "DISK", "NET", "REC", "ALARM"].forEach((l, i) => front.push({ t: "led", id: "leds", x: 70, y: 140 + i * 50, c: i === 4 ? "red" : i === 3 ? "tally" : "green", l }));
   const rear = [{ t: "body", x: 10, y: 10, w: 980, h: 500, r: 8 }];
-  rear.push({ t: "group", x: 30, y: 36, w: 390, h: 200, l: "Carte codec A" }, { t: "group", x: 30, y: 270, w: 390, h: 200, l: "Carte codec B" });
+  rear.push({ t: "group", x: 30, y: 36, w: 390, h: 200, l: "Modules codec · SDI 1 à 6" }, { t: "group", x: 30, y: 270, w: 390, h: 200, l: "Modules codec · SDI 7 à 12" });
   for (let i = 0; i < 6; i++) {
     rear.push({ t: "port", id: "sdi" + (i + 1), k: "bnc", x: 75 + i * 62, y: 120, l: "SDI " + (i + 1) });
     rear.push({ t: "port", id: "sdi" + (i + 7), k: "bnc", x: 75 + i * 62, y: 355, l: "SDI " + (i + 7) });
   }
-  rear.push({ t: "group", x: 440, y: 36, w: 370, h: 100, l: "IP et réseau média" });
-  row(rear, ["ip1", "ip2", "xnet1", "xnet2"], 485, 92, 85, "sfp", ["IP 1", "IP 2", "XNET-VIA 1", "XNET-VIA 2"]);
+  rear.push({ t: "group", x: 440, y: 36, w: 370, h: 100, l: "Réseaux" });
+  rear.push({ t: "port", id: "xnet", k: "sfp", x: 485, y: 92, l: "XNET" });
+  row(rear, ["gbe1", "gbe2", "ipio"], 570, 92, 80, "sfp", ["10GbE 1", "10GbE 2", "IP I/O"]);
   rear.push({ t: "group", x: 440, y: 148, w: 370, h: 100, l: "Synchronisation et timecode" });
   rear.push({ t: "port", id: "refin", k: "bnc", x: 480, y: 200, l: "REF IN" }, { t: "port", id: "refloop", k: "bnc", x: 535, y: 200, l: "REF LOOP" }, { t: "port", id: "ltcin", k: "xlr", x: 610, y: 200, l: "LTC IN" }, { t: "port", id: "ltcout", k: "xlr", x: 680, y: 200, l: "LTC OUT" }, { t: "port", id: "gpi", k: "dsub25", x: 760, y: 200, l: "GPI" });
   rear.push({ t: "group", x: 440, y: 260, w: 370, h: 100, l: "Commande" });
   rear.push({ t: "port", id: "mgmt1", k: "rj45", x: 478, y: 312, l: "LAN 1" }, { t: "port", id: "mgmt2", k: "rj45", x: 530, y: 312, l: "LAN 2" });
   row(rear, ["rs1", "rs2", "rs3", "rs4"], 600, 312, 58, "dsub9", ["RS422 1", "RS422 2", "RS422 3", "RS422 4"]);
   rear.push({ t: "group", x: 440, y: 372, w: 370, h: 100, l: "Audio et console" });
-  rear.push({ t: "port", id: "aes", k: "dsub25", x: 490, y: 424, l: "AES" }, { t: "port", id: "madiin", k: "bnc", x: 570, y: 424, l: "MADI IN" }, { t: "port", id: "madiout", k: "bnc", x: 630, y: 424, l: "MADI OUT" }, { t: "port", id: "usb", k: "usb", x: 700, y: 424, l: "USB" }, { t: "port", id: "disp", k: "usb", x: 760, y: 424, l: "DP" });
+  rear.push({ t: "port", id: "aes", k: "dsub25", x: 490, y: 424, l: "AES" }, { t: "port", id: "madiin", k: "bnc", x: 562, y: 424, l: "MADI IN" }, { t: "port", id: "madiout", k: "bnc", x: 618, y: 424, l: "MADI OUT" }, { t: "port", id: "vga", k: "dsub9", x: 682, y: 424, l: "VGA" }, { t: "port", id: "kbd", k: "usb", x: 738, y: 424, l: "CLAVIER" }, { t: "port", id: "usb", k: "usb", x: 784, y: 424, l: "USB" });
   rear.push({ t: "psu", id: "psu1", x: 830, y: 36, w: 140, h: 200, l: "PSU 1" }, { t: "psu", id: "psu2", x: 830, y: 270, w: 140, h: 200, l: "PSU 2" });
   return {
     key: "evs",
-    title: "Serveur ralenti (type EVS XT-VIA)",
-    multi: false,
-    intro: "Serveur de production « live » : il enregistre en boucle plusieurs flux caméras (les « trains » d'enregistrement) et, en même temps, relit n'importe quel moment sur ses sorties de lecture (PGM1, PGM2), à n'importe quelle vitesse. Toutes les entrées partagent le timecode : l'opérateur peut passer d'un angle à l'autre sur la même action (multicam).",
+    title: "Serveur ralenti (type EVS XT4K)",
+    multi: true,
+    intro: "Serveur de production « live » : il enregistre en boucle plusieurs flux caméras (les « trains » d'enregistrement) et, en même temps, relit n'importe quel moment sur ses sorties de lecture, à n'importe quelle vitesse. Toutes les entrées partagent le timecode : l'opérateur passe d'un angle à l'autre sur la même action (multicam). Le XT4K a apporté l'UHD-4K sur un seul câble 12G-SDI.",
     views: { arriere: { label: "Face arrière", w: 1e3, h: 520, items: rear }, avant: { label: "Face avant", w: 1e3, h: 520, items: front } },
     ports: P2,
     controls: C,
-    specs: [["Canaux", "12 canaux FHD/HD (720p, 1080i, 1080p) ; 6 canaux UHD-4K (avec conversion du 1080p) ; 2 canaux UHD-8K (édition spéciale) ; 6 canaux fill/key"], ["Super Motion (option)", "HD/FHD de 2x à 16x, UHD-4K de 2x à 4x"], ["Vidéo", "1,5G / 3G / 12G-SDI, choisi dans la configuration logicielle"], ["IP", "10GbE SFP+ : ST 2022-6, ST 2110, PTP, NMOS IS-04/IS-05"], ["Réseau média", "XNet-VIA (10 Gb/s Ethernet)"], ["Gestion", "Réseaux 1G redondants"], ["Audio", "Embeddé, AES, MADI"], ["Pilotage", "LSM-VIA (IP), LSM RCU, IPDirector"], ["Configuration dans ce car", "8 entrées REC + 2 lectures (PGM1, PGM2) + 1 multiviewer"]],
-    lesson: ["Une caméra super ralenti 3x arrive sur 3 connecteurs SDI (une phase par connecteur) : elle consomme 3 canaux d'enregistrement.", "Les alimentations sont doublées : branchez-les sur deux circuits différents de l'onduleur.", "Le genlock et le LTC doivent venir du même SPG que le reste du car.", "Certaines connectiques (GPI, RS-422) sont décrites d'après la génération précédente (XT3) : vérifiez la configuration exacte de votre serveur."]
+    specs: [["Canaux", "4 canaux UHD-4K ou 8 canaux HD ; 12 canaux HD et plus avec la configuration ChannelMAX"], ["Vidéo", "12G-SDI (UHD sur un seul câble), Quad 3G-SDI 2SI / découpage en carrés en option ; IP intégrée"], ["Enregistrement", "XAVC-4K en UHD, 10 bits, HDR"], ["Stockage", "Interne jusqu'à 9 To (≈ 130 h d'UHD-4K annoncées), extensible en externe jusqu'à 40 To"], ["Audio", "Jusqu'à 192 pistes non compressées, routeur audio interne ; analogique, AES, embeddé, MADI"], ["Réseaux", "XNet (production), 2 × 10 GbE (partage des médias, IPDirector), LAN de gestion redondant"], ["Pilotage", "Télécommande LSM (Multicam), IPDirector, protocoles série / IP"], ["Format", "6U"], ["Dans ce car", "(calculé selon le format : voir la configuration EVS au poste ralentis)"]],
+    lesson: ["En UHD, un XT4K n'a que 4 canaux : par exemple 3 REC + 1 PLAY. Une caméra super ralenti 3x occupe à elle seule les 3 canaux d'enregistrement.", "En HD, le même serveur offre 8 canaux (12 avec ChannelMAX) : c'est souvent le format qui donne le plus d'angles enregistrés.", "Les alimentations sont doublées : branchez-les sur deux circuits différents de l'onduleur.", "Le genlock et le LTC doivent venir du même SPG que le reste du car.", "Les connecteurs série et GPI sont décrits d'après les manuels techniques XT (XT2, XT3, XT4K) : vérifiez l'affectation exacte des ports de votre serveur."]
   };
 }
 function lsmDevice() {
   const P2 = {
-    lan: M2("LAN", "RJ-45", "ip", "io", "Ethernet", "Pilotage du serveur en IP : plus de brassage RS-422 comme sur les anciennes télécommandes."),
-    dcin: M2("DC IN", "Connecteur d'alimentation", "power", "in", "", "Alimentation de la télécommande."),
-    usb: M2("USB", "USB", "data", "io", "", "Clé de configuration, maintenance.")
+    rs422: M2("RS-422 (vers le serveur)", "D-sub 9", "data", "io", "Liaison série vers un port RS-422 du serveur", "La télécommande pilote le serveur XT par liaison série (d'après les manuels Multicam et XT). Un câble par télécommande."),
+    dcin: M2("Alimentation", "Connecteur DC", "power", "in", "", "Alimentation de la télécommande.")
   };
   const C = {
-    screen: M2("Écran tactile", "Écran tactile rabattable", "data", "", "", "Écran tactile réglable en hauteur, dispositions configurables : barre d'application (page, banque, emplacement des clips, serveur d'enregistrement, canal PGM piloté), clips, playlists, trains."),
-    fkeys: M2("Touches F1 à F10", "Boutons multicolores avec OLED", "data", "", "", "Appel ou sauvegarde des clips de la banque en cours. Chaque touche a un petit écran OLED qui affiche sa fonction du moment."),
-    camkeys: M2("Touches caméras A à F", "Boutons", "video", "", "", "Choix de l'angle (entrée enregistrée) sur la sortie pilotée. On change d'angle en gardant le même timecode."),
-    transport: M2("Touches de transport", "Boutons", "data", "", "", "MARK IN / MARK OUT, GOTO IN / OUT, PLAY, LIVE (E/E), RETURN, PLST (playlist)."),
-    shortcuts: M2("Raccourcis programmables", "Boutons", "data", "", "", "Fonctions affectables : Fast jog, Trains, Back to Local, PGM Speed, Var Max, Second Lever Range, Loop…"),
-    lever: M2("Levier (T-bar)", "Levier", "data", "", "", "Vitesse de lecture de 0 à 100 % (ou jusqu'à la valeur « Var Max »). Un ralenti se joue en général entre 25 et 50 % ; 33 % pour une caméra 3x."),
-    jog: M2("Jog", "Molette", "data", "", "", "Déplacement image par image pour trouver exactement le point d'entrée. Le Fast Jog parcourt les médias de 2x à 20x plus vite.")
+    display: M2("Afficheur", "Écran de la télécommande", "data", "", "", "Affiche le menu courant, le timecode, la vitesse, la caméra et les fonctions des touches F (« soft keys »)."),
+    fkeys: M2("Touches F1 à F10", "Boutons", "data", "", "", "Clips de la page en cours (rappel, ou sauvegarde avec la fonction d'enregistrement de clip) ; avec SHIFT + PAGE, choix de la page 1 à 10. Selon le menu, elles prennent d'autres fonctions (soft keys)."),
+    camkeys: M2("Choix de l'angle", "Boutons", "video", "", "", "Sélection de la caméra (entrée enregistrée) sur le canal piloté : on change d'angle en gardant le même timecode."),
+    opblock: M2("Bloc opérationnel", "Boutons à double fonction", "data", "", "", "Chaque touche a une fonction principale et une secondaire (avec SHIFT) : IN / GOTO IN, OUT / GOTO OUT, PLST / BROWSE, LOOP, RETURN, PLAY, LIVE (E/E), FAST JOG, TAKE, MENU, CLEAR…"),
+    lever: M2("Levier", "Levier", "data", "", "", "Vitesse de lecture de 0 à 100 % ; avec la plage secondaire, de −100 à +100 % ou −200 à +200 %. Un ralenti se joue en général entre 25 et 50 % ; 33 % pour une caméra 3x."),
+    jog: M2("Jog", "Molette", "data", "", "", "Recherche image par image (un tour ≈ 35 images d'après le manuel Multicam). FAST JOG pour le recalage rapide (désactivé automatiquement après PLAY ou LIVE). En mode BROWSE, la molette fait défiler les clips.")
   };
-  const top = [{ t: "body", x: 10, y: 10, w: 960, h: 500, r: 16 }, { t: "screen", id: "screen", x: 40, y: 30, w: 620, h: 200 }];
-  for (let i = 0; i < 10; i++) top.push({ t: "btn", id: "fkeys", x: 40 + i * 62, y: 255, w: 56, h: 40, l: "F" + (i + 1), oled: true });
-  ["A", "B", "C", "D", "E", "F"].forEach((l, i) => top.push({ t: "btn", id: "camkeys", x: 40 + i * 62, y: 305, w: 56, h: 40, l: "CAM " + l, oled: true, c: "cyan" }));
-  ["PAGE", "BANK", "SHIFT", "MENU"].forEach((l, i) => top.push({ t: "btn", id: "transport", x: 412 + i * 62, y: 305, w: 56, h: 40, l, oled: true }));
-  ["MARK IN", "MARK OUT", "GOTO IN", "GOTO OUT", "PLST", "RETURN", "LIVE E/E", "PLAY", "PGM/PRV", "LOOP"].forEach((l, i) => top.push({ t: "btn", id: "transport", x: 40 + i * 62, y: 355, w: 56, h: 40, l, oled: true, c: l === "PLAY" ? "green" : l.startsWith("MARK") ? "amber" : null }));
-  ["FAST JOG", "TRAINS", "VAR MAX", "LEVER 2", "PGM SPD", "LOCAL"].forEach((l, i) => top.push({ t: "btn", id: "shortcuts", x: 40 + i * 62, y: 410, w: 56, h: 36, l, oled: true, c: "violet" }));
-  top.push({ t: "lever", id: "lever", x: 700, y: 40, w: 60, h: 300 });
+  const top = [{ t: "body", x: 10, y: 10, w: 960, h: 500, r: 16 }, { t: "lcd", id: "display", x: 40, y: 30, w: 620, h: 96 }];
+  for (let i = 0; i < 10; i++) top.push({ t: "btn", id: "fkeys", x: 40 + i * 62, y: 140, w: 56, h: 40, l: "F" + (i + 1) });
+  [["IN", "GOTO IN"], ["OUT", "GOTO OUT"], ["PLST", "BROWSE"], ["LOOP", ""], ["RETURN", ""], ["PLAY", ""], ["LIVE E/E", ""], ["FAST JOG", ""], ["TAKE", ""], ["PGM/PRV", ""]].forEach(([l], i) => top.push({ t: "btn", id: "opblock", x: 40 + i * 62, y: 210, w: 56, h: 40, l }));
+  ["A", "B", "C", "D", "E", "F"].forEach((l, i) => top.push({ t: "btn", id: "camkeys", x: 40 + i * 62, y: 270, w: 56, h: 40, l: "CAM " + l }));
+  ["SHIFT", "MENU", "CLEAR", "PAGE"].forEach((l, i) => top.push({ t: "btn", id: "opblock", x: 412 + i * 62, y: 270, w: 56, h: 40, l }));
+  top.push({ t: "lever", id: "lever", x: 720, y: 40, w: 60, h: 300 });
   top.push({ t: "jog", id: "jog", x: 860, y: 380, r: 88 });
-  const rear = [{ t: "body", x: 10, y: 10, w: 960, h: 140, r: 10 }, { t: "port", id: "lan", k: "rj45", x: 100, y: 80, l: "LAN" }, { t: "port", id: "dcin", k: "xlr", x: 200, y: 80, l: "DC IN" }, { t: "port", id: "usb", k: "usb", x: 300, y: 80, l: "USB" }];
+  top.push({ t: "text", x: 40, y: 350, s: "Disposition simplifiée : se référer au manuel Multicam de votre version.", size: 11, w: 500 });
+  const rear = [{ t: "body", x: 10, y: 10, w: 960, h: 140, r: 10 }, { t: "port", id: "rs422", k: "dsub9", x: 120, y: 80, l: "RS-422" }, { t: "port", id: "dcin", k: "xlr", x: 240, y: 80, l: "DC" }];
   return {
     key: "lsm",
-    title: "Télécommande de ralentis (type EVS LSM-VIA)",
+    title: "Télécommande de ralentis (type EVS LSM, logiciel Multicam)",
     multi: true,
-    intro: "La télécommande de l'opérateur ralenti : écran tactile rabattable, touches multicolores à OLED de contexte, raccourcis programmables, molette jog et levier de vitesse « qualité EVS ». Elle pilote le serveur en IP.",
+    intro: "La télécommande de l'opérateur ralenti : un afficheur, les touches F1 à F10 (clips et fonctions de menu), un bloc de touches à double fonction (SHIFT), le levier de vitesse et la molette jog. Utilisée par des milliers d'opérateurs dans le sport en direct, elle pilote le serveur XT par liaison série.",
     views: { dessus: { label: "Dessus (commandes)", w: 980, h: 520, items: top }, arriere: { label: "Arrière", w: 980, h: 160, items: rear } },
     ports: P2,
     controls: C,
-    specs: [["Liaison", "IP vers le serveur (XT-VIA, XS-VIA, XT-GO)"], ["Commandes", "Jog, levier, touches multicolores avec OLED, raccourcis programmables"], ["Écran", "Tactile, rabattable, dispositions configurables"], ["Fast jog", "2x à 20x (réglable)"]],
-    lesson: ["Méthode : sortie en LIVE pendant le jeu ; après l'action, retour en arrière au jog, MARK IN, choix de l'angle, puis lecture au levier quand le réalisateur envoie l'EVS.", "Le timecode partagé permet de passer de la caméra A à la caméra C sur la même image."]
+    specs: [["Liaison", "RS-422 vers le serveur (un port par télécommande)"], ["Logiciel", "Multicam LSM (sur le serveur)"], ["Clips", "10 pages ; nommage page · banque · touche · angle (ex. 111A)"], ["Levier", "0 à 100 % ; plage secondaire −100/+100 % ou −200/+200 %"], ["Jog", "≈ 35 images par tour ; FAST JOG pour le recalage rapide"]],
+    lesson: ["Méthode : sortie en LIVE pendant le jeu ; après l'action, jog arrière, IN, choix de l'angle, puis lecture au levier quand le réalisateur envoie l'EVS.", "RETURN : à l'intérieur d'un clip trop court, on retourne sur la même image dans le train d'enregistrement pour prendre ce qu'il y a avant ou après.", "TAKE : en mode PGM + PRV, échange PGM et PRV ; en mode 2 PGM, échange le contenu des deux sorties.", "Verrouiller la télécommande : CLEAR puis MENU dans les 2 secondes (d'après le manuel Multicam)."]
   };
+}
+function ipdDevice() {
+  return rackGeneric("ipd", "Poste IPDirector (EVS)", "Station de travail qui gère les médias des serveurs EVS : base de données des clips (recherche, métadonnées, mots-clés), log des actions (clip logger), montage de playlists, contrôle des canaux d'enregistrement et de lecture, transferts vers le montage.", {
+    w: 760,
+    h: 240,
+    label: "POSTE IPDIRECTOR · raccordements",
+    ports: [
+      { id: "lan", k: "rj45", x: 90, y: 130, l: "LAN", meta: M2("LAN", "RJ-45 / SFP+", "ip", "io", "Réseau de partage des médias EVS", "Accès aux serveurs (base de données des clips, contrôle des canaux).") },
+      { id: "video", k: "bnc", x: 200, y: 130, l: "SDI MON", meta: M2("Moniteur", BNC, "video", "in", "", "Moniteur de visualisation des canaux.") },
+      { id: "kb", k: "usb", x: 300, y: 130, l: "USB", meta: M2("Clavier / pupitre", "USB", "data", "in", "", "Clavier, souris, pupitre jog éventuel.") },
+      { id: "pwr", k: "iec", x: 400, y: 130, l: "SECTEUR", meta: M2("Alimentation", "IEC", "power", "in", "", "Secteur ondulé.") }
+    ],
+    specs: [["Fonctions", "Contrôle multicam des enregistrements et lectures, revue des contenus en cours d'enregistrement, base de données (clips, playlists), log, transferts"], ["Modules", "Database explorer, Clip logger, Playlist, Control panel (selon licences)"]],
+    lesson: ["IPDirector et la télécommande LSM travaillent sur les mêmes clips : un clip nommé dans IPDirector apparaît pour l'opérateur ralenti.", "Le logger note les actions avec des mots-clés pendant le direct : à la mi-temps, on retrouve tous les « TIR » d'un joueur en une recherche."]
+  });
+}
+function xvsDevice() {
+  const P2 = {};
+  const items = [{ t: "body", x: 10, y: 10, w: 980, h: 580, r: 6 }, { t: "text", x: 26, y: 34, s: "XVS-6000 · processeur 6U · face arrière (disposition schématique)", size: 13, w: 700 }];
+  const boards = [["in", "Carte d'entrées 12G/3G-SDI", 1, 24, "in"], ["out", "Carte de sorties", 1, 16, "out"]];
+  let y = 90;
+  for (const [pre, l, from, count, d] of boards) {
+    items.push({ t: "group", x: 30, y: y - 40, w: 760, h: count > 16 ? 160 : 100, l });
+    for (let i = 0; i < count; i++) {
+      const id = pre + (from + i);
+      const c = i % 12, r = Math.floor(i / 12);
+      items.push({ t: "port", id, k: "bnc", x: 70 + c * 60, y: y + r * 62, l: (d === "in" ? "IN " : "OUT ") + (from + i), small: true });
+      P2[id] = d === "in" ? M2(`INPUT ${from + i}`, BNC, "video", "in", SDI_STD, "Entrée du mélangeur (bus de sources). Convertisseur de format possible sur chaque entrée selon les options.") : M2(`OUTPUT ${from + i}`, BNC, "video", "out", SDI_STD, "Sortie assignable : PGM, clean, preview, AUX, multiviewer… selon la configuration (24 sorties assignables en HD, 6 en 4K dans la configuration de base).");
+    }
+    y += count > 16 ? 190 : 130;
+  }
+  items.push({ t: "group", x: 30, y: y - 40, w: 760, h: 100, l: "Option IP (ST 2110)" });
+  items.push({ t: "port", id: "ip1", k: "sfp", x: 90, y, l: "100G IP 1" }, { t: "port", id: "ip2", k: "sfp", x: 180, y, l: "100G IP 2" });
+  P2.ip1 = M2("Carte IP 100G", "QSFP28", "ip", "io", "SMPTE ST 2110, 4K et HD sur le même lien", "Entrées/sorties sur réseau IP managé (option). Conversion de format côté entrée.");
+  P2.ip2 = M2("Carte IP 100G (2)", "QSFP28", "ip", "io", "ST 2110 / ST 2022-7", "Second lien (réseau rouge / bleu).");
+  const side = [
+    { id: "refin", k: "bnc", x: 860, y: 90, l: "REF IN", meta: M2("REF IN", BNC + " avec boucle", "ref", "in", REF_STD, "Référence de synchro avec boucle : toutes les entrées doivent être en phase avec elle.") },
+    { id: "refloop", k: "bnc", x: 930, y: 90, l: "LOOP", meta: M2("REF LOOP", BNC, "ref", "out", REF_STD, "Boucle de la référence (terminer à 75 Ω si inutilisée).") },
+    { id: "mvslan", k: "rj45", x: 860, y: 170, l: "MVS LAN", meta: M2("NETWORK (MVS LAN)", "RJ-45 1000BASE-T", "ip", "io", "Gigabit Ethernet", "Réseau du mélangeur : liaison avec l'unité d'interface système (MKS-X7700) et le pupitre ICP.") },
+    { id: "utillan", k: "rj45", x: 930, y: 170, l: "UTIL LAN", meta: M2("NETWORK (UTIL LAN)", "RJ-45 1000BASE-T", "ip", "io", "Gigabit Ethernet", "Réseau utilitaire : applications web (Virtual Menu, Virtual Shot Box), maintenance.") },
+    { id: "stally", k: "dsub25", x: 895, y: 250, l: "TALLY", meta: M2("Tally série / parallèle", "D-sub", "comms", "out", "Tally série, parallèle (via MKS-X7701) ou IP", "Le mélangeur sait ce qui est à l'antenne : il pilote le tally des caméras, du multiview et des serveurs.") },
+    { id: "ac1", k: "iec", x: 860, y: 340, l: "AC 1", meta: M2("Alimentation 1", "IEC", "power", "in", "", "Alimentations redondantes.") },
+    { id: "ac2", k: "iec", x: 930, y: 340, l: "AC 2", meta: M2("Alimentation 2", "IEC", "power", "in", "", "Seconde alimentation (sur un autre circuit).") }
+  ];
+  for (const p of side) {
+    items.push({ t: "port", id: p.id, k: p.k, x: p.x, y: p.y, l: p.l });
+    P2[p.id] = p.meta;
+  }
+  return {
+    key: "mixer",
+    title: "Mélangeur — processeur (type Sony XVS-6000)",
+    multi: false,
+    intro: "Le pupitre du truquiste (ICP-X7000) n'est qu'une télécommande : le traitement est fait dans ce processeur, en baie. Il reçoit ses entrées de la grille et renvoie PGM, clean feed, preview et AUX. Il intègre aussi des multiviewers, une mémoire d'images (frame memory) et des convertisseurs de format.",
+    views: { arriere: { label: "Face arrière", w: 1e3, h: 600, items } },
+    ports: P2,
+    controls: {},
+    specs: [["Gamme", "Sony XVS (XVS-9000 / 8000 / 7000 / 6000)"], ["HD", "Jusqu'à 4 M/E selon les sources, 48 à 64 entrées, 24 sorties assignables, jusqu'à 16 keyers"], ["4K (configuration de base)", "2 M/E, 16 entrées, 6 sorties, 8 keyers (4 full + 4 sub)"], ["Keyers", "4 par M/E, redimensionneur 2,5D sur chaque keyer ; DME 3D en option (XKS-8470 : 2 canaux HD ; XKS-8475 : 1 canal 4K)"], ["Frame memory", "Stockage non volatil 480 Go : images fixes et clips, transitions « clip » (logo animé)"], ["Multiviewer", "2 canaux intégrés, découpages 4 / 10 / 13 / 16"], ["AUX", "Transitions cut et mix ; correction colorimétrique primaire sur toutes les entrées et AUX"], ["Interfaces", "12G-SDI ; IP ST 2110 par cartes 100G (option)"], ["Réseau", "MVS LAN et UTIL LAN (1000BASE-T)"], ["Référence", "REF IN BNC 75 Ω avec boucle"]],
+    lesson: ["Les chiffres d'entrées varient selon les sources (48 ou 64 en HD) et selon les cartes installées : vérifiez la configuration de votre processeur.", "En 4K, le nombre d'entrées baisse fortement : dans ce simulateur, le mélangeur passe de 22 à 16 entrées utilisées en UHD.", "Le pupitre et le processeur sont reliés par le réseau du mélangeur via l'unité d'interface système (MKS-X7700) : si le pupitre « gèle », le processeur continue de sortir l'image."]
+  };
+}
+function icpDevice() {
+  const C = {
+    xpt: M2("Rangées de boutons XPT", "Boutons RVB", "video", "", "", "Un bouton par source (20, 28 ou 36 par rangée selon le modèle). Rangée du haut : bus de clé (KEY) / AUX ; puis bus d'arrière-plan A (PGM) et B (preset). Couleur du bouton selon le bus."),
+    oled: M2("Afficheurs OLED", "OLED", "data", "", "", "Le nom de chaque source s'affiche au-dessus de son bouton : il suit la grille et l'affectation du mélangeur."),
+    trans: M2("Module de transition", "Levier + boutons", "data", "", "", "Type de transition (MIX, WIPE, DME, CLIP), éléments concernés (BKGD, KEY 1 à 4), durée, AUTO TRANS, CUT et levier de transition (fader)."),
+    keyers: M2("Keyers", "Boutons", "data", "", "", "4 keyers par M/E : source, type de découpe, redimensionneur 2,5D."),
+    dsk: M2("DSK / sortie", "Boutons", "data", "", "", "Incrustations aval (habillage) et fondu au noir sur le bus de sortie."),
+    menu: M2("Pavé LCD / menu", "Écran tactile", "data", "", "", "Menus de réglage et pavé de touches LCD : rappel des « snapshots », réglages des effets."),
+    joy: M2("Joystick (positionneur)", "Joystick", "data", "", "", "Position, taille et rotation des images incrustées (DME, resizer)."),
+    snap: M2("Snapshots / Shotbox", "Boutons", "data", "", "", "Mémoires d'état du mélangeur rappelées en une touche (ex. « image dans l'image prête »).")
+  };
+  const P2 = {
+    lan: M2("LAN (vers MKS-X7700)", "RJ-45", "ip", "io", "Gigabit Ethernet", "Le pupitre dialogue avec l'unité d'interface système, qui dialogue avec le processeur."),
+    ac: M2("Alimentation", "IEC", "power", "in", "", "Secteur ondulé.")
+  };
+  const top = [{ t: "body", x: 10, y: 10, w: 980, h: 520, r: 12 }, { t: "text", x: 30, y: 40, s: "PUPITRE ICP-X7000 · 1 rangée M/E (extrait, disposition schématique)", size: 13, w: 700 }];
+  for (let r = 0; r < 3; r++) {
+    top.push({ t: "text", x: 30, y: 98 + r * 74, s: ["KEY/AUX", "A · PGM", "B · PST"][r], size: 11, w: 600 });
+    for (let i = 0; i < 12; i++) {
+      top.push({ t: "btn", id: "oled", x: 100 + i * 52, y: 70 + r * 74, w: 46, h: 16, l: String(i + 1), labelKey: "oled:" + i, oled: true, c: "cyan" });
+      top.push({ t: "btn", id: "xpt", x: 100 + i * 52, y: 90 + r * 74, w: 46, h: 36, l: String(i + 1), litKey: `xpt:${r}:${i}`, litColor: ["#c9a227", "#ff3b30", "#2fd25a"][r] });
+    }
+  }
+  [["MIX", "trans"], ["WIPE", "trans"], ["DME", "trans"], ["CLIP", "trans"], ["BKGD", "trans"], ["KEY1", "keyers"], ["KEY2", "keyers"], ["CUT", "trans"], ["AUTO", "trans"]].forEach(([l, id], i) => top.push({ t: "btn", id, x: 100 + i * 62, y: 320, w: 56, h: 40, l }));
+  ["DSK1", "DSK2", "FTB"].forEach((l, i) => top.push({ t: "btn", id: "dsk", x: 100 + i * 62, y: 380, w: 56, h: 40, l }));
+  ["SNAP 1", "SNAP 2", "SNAP 3", "SNAP 4"].forEach((l, i) => top.push({ t: "btn", id: "snap", x: 320 + i * 62, y: 380, w: 56, h: 40, l }));
+  top.push({ t: "lever", id: "trans", x: 760, y: 70, w: 50, h: 260, fader: true, l: "FADER" });
+  top.push({ t: "lcd", id: "menu", x: 830, y: 70, w: 150, h: 116 });
+  top.push({ t: "joy", id: "joy", x: 900, y: 400, r: 55, l: "POSITIONNEUR" });
+  const rear = [{ t: "body", x: 10, y: 10, w: 980, h: 140, r: 10 }, { t: "port", id: "lan", k: "rj45", x: 120, y: 80, l: "LAN" }, { t: "port", id: "ac", k: "iec", x: 220, y: 80, l: "AC" }];
+  return {
+    key: "mixpanel",
+    title: "Pupitre du mélangeur (type Sony ICP-X7000)",
+    multi: false,
+    intro: "Surface de commande modulaire des mélangeurs Sony XVS : 1 à 4 rangées M/E, 20, 28 ou 36 boutons de croisement (XPT) par rangée, afficheurs OLED des noms de sources, boutons RVB, pavé LCD. Le pupitre est relié au processeur par l'unité d'interface système MKS-X7700.",
+    views: { dessus: { label: "Dessus (commandes)", w: 1e3, h: 540, items: top }, arriere: { label: "Arrière", w: 1e3, h: 160, items: rear } },
+    ports: P2,
+    controls: C,
+    specs: [["Rangées", "1 à 4 M/E"], ["Boutons XPT", "20, 28 ou 36 par rangée ; châssis standard, étroit ou petit"], ["Affichage", "OLED au-dessus des boutons, boutons RVB, pavé LCD"], ["Installation", "À plat, incliné, ou séparé en deux positions"], ["Liaison", "Unité d'interface système MKS-X7700 ou MKS-X2700, station de contrôle du mélangeur"], ["À distance", "Virtual Menu et Virtual Shot Box (applications web sur tablette ou PC)"]],
+    lesson: ["Les noms OLED viennent de la configuration : si un nom est faux, l'erreur est dans la table des sources (ou dans le brassage), pas dans le pupitre.", "Snapshot : on mémorise un état complet (sources, clés, transitions) pour le rappeler instantanément en direct."]
+  };
+}
+function siuDevice() {
+  return rackGeneric("siu", "Unité d'interface système (type Sony MKS-X7700)", "Relie le ou les pupitres au processeur du mélangeur et porte les cartes de tally / GPI (MKS-X7701 : 3 connecteurs D-sub 37, 18 sorties relais par carte).", {
+    w: 900,
+    h: 240,
+    label: "MKS-X7700 · face arrière (schématique)",
+    ports: [
+      { id: "lanp", k: "rj45", x: 80, y: 130, l: "PANEL", meta: M2("LAN pupitre", "RJ-45", "ip", "io", "Gigabit Ethernet", "Vers le pupitre ICP-X7000.") },
+      { id: "lanm", k: "rj45", x: 160, y: 130, l: "MVS LAN", meta: M2("LAN processeur", "RJ-45", "ip", "io", "Gigabit Ethernet", "Vers le processeur XVS (MVS LAN).") },
+      ...[1, 2, 3].map((i) => ({ id: "tally" + i, k: "dsub25", x: 270 + (i - 1) * 90, y: 130, l: "TALLY " + i, meta: M2("TALLY / GPI " + i, "D-sub 37", "comms", "out", "Contacts relais (carte MKS-X7701)", "Sorties de tally parallèle : rouge (PGM) et vert (preset) vers les CCU et les moniteurs.") })),
+      { id: "ac", k: "iec", x: 620, y: 130, l: "AC", meta: M2("Alimentation", "IEC", "power", "in", "", "Secteur ondulé.") }
+    ]
+  });
 }
 function rackGeneric(key, title, intro, opts) {
   const P2 = {};
@@ -7609,23 +7893,10 @@ DEV.router = rackGeneric("router", "Grille de commutation (exemple de matrice 12
   specs: [["Format", "12G-SDI (UHD) / 3G / HD, ou IP ST 2110 sur les cars récents"], ["Commutation", "Dans l'intervalle de suppression (« clean switch ») si verrouillée sur la référence"], ["Contrôle", "Panneaux X-Y, salvos, noms de sources (UMD), tally"]],
   lesson: ["Le nom d'une source suit le signal : la grille pousse les noms (UMD) vers le multiview.", "Une erreur de prise sur une sortie « départ » envoie la mauvaise image à la chaîne : toujours vérifier au retour antenne."]
 });
-DEV.mixer = rackGeneric("mixer", "Mélangeur — châssis de traitement", "Le pupitre du truquiste n'est qu'une télécommande : le traitement est fait dans ce châssis, en baie. Il reçoit ses entrées de la grille et renvoie PGM, clean feed, preview et AUX.", {
-  w: 1e3,
-  h: 460,
-  label: "MÉLANGEUR · châssis, face arrière",
-  groups: [
-    { l: "Entrées 1 à 24", prefix: "in", from: 1, count: 24, cols: 12, rows: 2, x: 66, y: 100, dx: 58, dy: 62, k: "bnc", conn: BNC, s: "video", d: "in", std: SDI_STD, name: (i) => `IN ${i}`, desc: () => "Entrée du mélangeur (bus de sources)." },
-    { l: "Sorties", prefix: "out", from: 1, count: 8, cols: 8, rows: 1, x: 66, y: 290, dx: 58, dy: 62, k: "bnc", conn: BNC, s: "video", d: "out", std: SDI_STD, name: (i) => ["PGM", "CLEAN", "PVW", "AUX 1", "AUX 2", "AUX 3", "AUX 4", "ME1 PVW"][i - 1], short: (i) => ["PGM", "CLN", "PVW", "AUX1", "AUX2", "AUX3", "AUX4", "ME PV"][i - 1], desc: (i) => ["Programme avec habillage (DSK).", "Programme sans DSK (clean feed) pour les diffuseurs étrangers.", "Preview : ce qui passera à la prochaine transition.", "Sortie auxiliaire.", "Sortie auxiliaire.", "Sortie auxiliaire.", "Sortie auxiliaire.", "Preview de l'étage M/E."][i - 1] }
-  ],
-  ports: [
-    { id: "dsk1f", k: "bnc", x: 600, y: 290, l: "DSK1 F", meta: M2("DSK 1 FILL", BNC, "video", "in", SDI_STD, "Remplissage du DSK 1 (score) venant du moteur graphique.") },
-    { id: "dsk1k", k: "bnc", x: 655, y: 290, l: "DSK1 K", meta: M2("DSK 1 KEY", BNC, "video", "in", SDI_STD, "Découpe du DSK 1.") },
-    { id: "ref", k: "bnc", x: 760, y: 290, l: "REF", meta: M2("REF IN", BNC, "ref", "in", REF_STD, "Référence (black burst ou tri-level). Toutes les entrées doivent être en phase avec elle.") },
-    { id: "tally", k: "rj45", x: 840, y: 290, l: "TALLY", meta: M2("TALLY / GPI", "RJ-45 / D-sub", "comms", "out", "GPI ou IP (TSL UMD)", "Le mélangeur sait ce qui est à l'antenne : il envoie le tally aux CCU, au multiview, aux serveurs.") },
-    { id: "panel", k: "rj45", x: 900, y: 290, l: "PANEL", meta: M2("LAN pupitre", "RJ-45", "ip", "io", "", "Liaison avec le pupitre du truquiste.") }
-  ],
-  specs: [["Architecture", "Pupitre (commande) + châssis (traitement) reliés en réseau"], ["Étages", "1 à 5 M/E selon la taille, keyers, DVE, DSK, mémoires d'effets"], ["Entrées", "Une entrée par source, verrouillée sur la référence"]]
-});
+DEV.mixer = xvsDevice();
+DEV.mixpanel = icpDevice();
+DEV.siu = siuDevice();
+DEV.ipd = ipdDevice();
 DEV.mv = rackGeneric("mv", "Processeur multiview", "Assemble jusqu'à des dizaines de sources sur les écrans de la régie, avec les étiquettes (UMD), le tally, les horloges, les vumètres et les alarmes (perte de signal, image figée, noir).", {
   w: 1e3,
   h: 420,
@@ -7703,7 +7974,7 @@ DEV.conv = rackGeneric("conv", "Convertisseur SDI / fibre", "Petit boîtier qui 
     { id: "pwr", k: "xlr", x: 480, y: 120, l: "DC", meta: M2("ALIMENTATION", "XLR 4", "power", "in", "12 V", "Alimentation locale.") }
   ]
 });
-var LINKMAP = { cam: "cam", ccu: "ccu", rcp: "rcp", evs: "evs", lsm: "lsm", router: "router", mixer: "mixer", mv: "mv", spg: "spg", da: "da", pdc: "pdc", rx: "rx", conv: "conv" };
+var LINKMAP = { cam: "cam", ccu: "ccu", rcp: "rcp", evs: "evs", lsm: "lsm", router: "router", mixer: "mixer", mixpanel: "mixpanel", siu: "siu", ipd: "ipd", mv: "mv", spg: "spg", da: "da", pdc: "pdc", rx: "rx", conv: "conv" };
 var DEVICES = DEV;
 function deviceDef(key) {
   return DEV[LINKMAP[key] || key];
@@ -7712,10 +7983,13 @@ var DEVICE_LIST = [
   ["cam", "Caméra système (tête)"],
   ["ccu", "CCU (voie caméra)"],
   ["rcp", "RCP (pupitre vision)"],
-  ["evs", "Serveur ralenti EVS"],
+  ["evs", "Serveur ralenti EVS XT4K"],
   ["lsm", "Télécommande LSM"],
+  ["ipd", "Poste IPDirector"],
   ["router", "Grille"],
-  ["mixer", "Mélangeur (châssis)"],
+  ["mixer", "Mélangeur XVS-6000 (processeur)"],
+  ["mixpanel", "Pupitre ICP-X7000"],
+  ["siu", "Interface MKS-X7700 (tally)"],
   ["mv", "Multiviewer"],
   ["spg", "Générateur de synchro"],
   ["da", "Distributeur de référence"],
@@ -7731,10 +8005,14 @@ var DEV_NAMES = {
   rcp: "RCP",
   pdc: "Pied de car",
   router: "Grille",
-  mixer: "Mélangeur (châssis)",
+  mixer: "Mélangeur XVS-6000",
+  mixpanel: "Pupitre ICP-X7000",
+  siu: "Interface MKS-X7700",
   mv: "Multiviewer",
-  evs: "Serveur EVS",
+  evs: "Serveur XT4K",
   lsm: "Télécommande LSM",
+  ipd: "Poste IPDirector",
+  xnet: "Switch XNet",
   spg: "Générateur de synchro",
   da: "Distributeur de référence",
   icom: "Matrice intercom",
@@ -7800,7 +8078,7 @@ function routerCrosspoint(outIdx) {
 var isSystemCam = (c) => c && !["pov", "ptz", "drone"].includes(c.type) && c.link !== "hf";
 var CACHE = { key: "", cables: [] };
 function cfgKey() {
-  return S.cams.map((c) => c.id + c.type + c.link + Math.round(c.route ? c.route.length : 0) + (c.fiberCut ? "x" : "") + (c.genlock ? "" : "g") + (c.powerOn === false ? "p" : "")).join() + "|" + S.format + "|" + JSON.stringify(ROUTER.map) + RF.antennas.map((a) => a.on ? 1 : 0).join("");
+  return S.cams.map((c) => c.id + c.type + c.link + Math.round(c.route ? c.route.length : 0) + (c.fiberCut ? "x" : "") + (c.genlock ? "" : "g") + (c.powerOn === false ? "p" : "")).join() + "|" + S.format + "|" + JSON.stringify(EQUIP) + (S.ipMode ? "ip" : "") + JSON.stringify(S.patch || {}) + JSON.stringify(ROUTER.map) + RF.antennas.map((a) => a.on ? 1 : 0).join("");
 }
 function buildCabling() {
   const key = cfgKey();
@@ -7814,7 +8092,7 @@ function buildCabling() {
   const sdiType = S.format === "UHD" ? "Coax 12G-SDI" : S.format === "HD" ? "Coax 3G-SDI" : "Coax HD-SDI";
   const sys = S.cams.filter(isSystemCam);
   sys.forEach((c, i) => {
-    const L = LINKS[c.link];
+    const L2 = LINKS[c.link];
     const len = c.route ? Math.round(c.route.length) : 0;
     if (c.link === "smpte" || c.link === "triax") {
       add(P2("cam", c.id, "ccu"), P2("pdc", 1, (c.link === "triax" ? "tri" : "smpte") + c.id), c.link === "triax" ? "Triax" : "Fibre hybride SMPTE 311M (3K.93C)", "fiber", len, `Tirage terrain depuis « ${c.slot ? c.slot.label : "position libre"} »`, c.status.ok);
@@ -7856,21 +8134,26 @@ function buildCabling() {
   }
   RF.antennas.filter((a) => a.on).forEach((a, i) => add(P2("localtv", 1, "ant" + i), P2("rx", 1, "ant" + (i + 1)), "RF sur fibre (fibre SM)", "rf", 180, a.label));
   add(P2("spg", 1, "ref1"), P2("rx", 1, "ref"), "Coax 75 Ω", "ref", 2);
-  for (let i = 1; i <= 22; i++) add(P2("router", 1, "out" + ROUT.me(i)), P2("mixer", 1, "in" + i), sdiType, "video", 3, `Bus ${i} : ${sourceLabel(ROUTER.map["ME" + i])}`);
+  for (let i = 1; i <= mixInputs(); i++) add(P2("router", 1, "out" + ROUT.me(i)), P2("mixer", 1, "in" + i), sdiType, "video", 3, `Bus ${i} : ${sourceLabel(ROUTER.map["ME" + i])}`);
   for (let i = 1; i <= 18; i++) add(P2("router", 1, "out" + ROUT.mv(i)), P2("mv", 1, "in" + i), sdiType, "video", 3, `Tuile ${i} : ${sourceLabel(ROUTER.map["MV" + i])}`);
-  for (let i = 1; i <= 8; i++) add(P2("router", 1, "out" + ROUT.rec(i)), P2("evs", 1, "sdi" + i), sdiType, "video", 3, `REC ${i} : ${ROUTER.map["REC" + i] ? sourceLabel(ROUTER.map["REC" + i]) + (ROUTER.phase["REC" + i] ? " phase " + "ABCDEF"[ROUTER.phase["REC" + i]] : "") : "libre"}`);
-  add(P2("evs", 1, "sdi9"), P2("router", 1, "in" + RIN.evsA), sdiType, "video", 3, "Sortie de lecture PGM1 (EVS A)");
-  add(P2("evs", 1, "sdi10"), P2("router", 1, "in" + RIN.evsB), sdiType, "video", 3, "Sortie de lecture PGM2 (EVS B)");
-  add(P2("evs", 1, "sdi11"), P2("mv", 1, "in19"), sdiType, "video", 3, "Multiviewer interne du serveur");
-  add(P2("lsm", 1, "lan"), P2("evs", 1, "mgmt1"), "Ethernet Cat6", "ip", 6, "LSM-VIA : pilotage du serveur en IP");
-  add(P2("lsm", 2, "lan"), P2("evs", 1, "mgmt2"), "Ethernet Cat6", "ip", 6, "Second opérateur (PGM2)");
+  const L = evsLayout();
+  for (let i = 1; i <= L.rec; i++) add(P2("router", 1, "out" + ROUT.rec(i)), P2("evs", L.recServer(i), "sdi" + L.recPort(i)), sdiType, "video", 3, `REC ${i} : ${ROUTER.map["REC" + i] ? sourceLabel(ROUTER.map["REC" + i]) + (ROUTER.phase["REC" + i] ? " phase " + "ABCDEF"[ROUTER.phase["REC" + i]] : "") : "libre"}`);
+  for (let i = 0; i < L.plays; i++) add(P2("evs", L.playServer(i), "sdi" + L.playPort(i)), P2("router", 1, "in" + (i ? RIN.evsB : RIN.evsA)), sdiType, "video", 3, `Sortie de lecture PGM${i + 1} (EVS ${i ? "B" : "A"})`);
+  if (!L.uhd && L.per >= 12 && L.servers === 1) add(P2("evs", 1, "sdi11"), P2("mv", 1, "in19"), sdiType, "video", 3, "Multiviewer interne du serveur");
+  for (let i = 1; i <= EQUIP.lsmCount; i++) add(P2("lsm", i, "rs422"), P2("evs", Math.min(i, L.servers), "rs" + i), "Câble RS-422 (D-sub 9)", "data", 6, EQUIP.lsmCount === 1 ? "Télécommande LSM : pilote PGM1 et PGM2" : `Télécommande LSM ${i}`);
+  if (EQUIP.ipdirector) for (let k = 1; k <= L.servers; k++) add(P2("ipd", 1, "lan"), P2("evs", k, "gbe1"), "Fibre / Ethernet 10 Gb/s", "ip", 6, "IPDirector : base de données des clips, playlists, contrôle des canaux");
+  if (L.servers > 1) for (let k = 1; k <= L.servers; k++) add(P2("evs", k, "xnet"), P2("xnet", 1, "p" + k), "Réseau XNet", "ip", 3, "Partage des trains et des clips entre serveurs");
+  for (let k = 1; k <= L.servers; k++) add(P2("evs", k, "vga"), P2("evsmon", k, "vga"), "Câble VGA", "video", 3, "Écran du serveur (clip screen Multicam)");
   add(P2("mixer", 1, "out1"), P2("router", 1, "in" + RIN.pgm), sdiType, "video", 3, "PGM (avec DSK)");
   add(P2("mixer", 1, "out2"), P2("router", 1, "in" + RIN.clean), sdiType, "video", 3, "Clean feed (sans DSK)");
   add(P2("mixer", 1, "out3"), P2("router", 1, "in" + RIN.pvw), sdiType, "video", 3, "Preview");
   add(P2("gfx", 1, "fill"), P2("router", 1, "in" + RIN.gfxFill), sdiType, "video", 3, "Remplissage (fill)");
   add(P2("gfx", 1, "key"), P2("router", 1, "in" + RIN.gfxKey), sdiType, "video", 3, "Découpe (key)");
-  add(P2("gfx", 1, "dsk1f"), P2("mixer", 1, "dsk1f"), sdiType, "video", 3, "DSK 1 fill (score)");
-  add(P2("gfx", 1, "dsk1k"), P2("mixer", 1, "dsk1k"), sdiType, "video", 3, "DSK 1 key");
+  add(P2("gfx", 1, "dsk1f"), P2("mixer", 1, "in23"), sdiType, "video", 3, "DSK 1 fill (score) : entrée directe du mélangeur");
+  add(P2("gfx", 1, "dsk1k"), P2("mixer", 1, "in24"), sdiType, "video", 3, "DSK 1 key");
+  add(P2("mixpanel", 1, "lan"), P2("siu", 1, "lanp"), "Ethernet Cat6", "ip", 6, "Pupitre ICP-X7000 → unité d'interface système");
+  add(P2("siu", 1, "lanm"), P2("mixer", 1, "mvslan"), "Ethernet Cat6", "ip", 3, "Unité d'interface → processeur (MVS LAN)");
+  add(P2("siu", 1, "tally1"), P2("icom", 1, "tally"), "Multipaire D-sub 37", "comms", 4, "Tally parallèle (relais) vers la distribution tally des CCU");
   add(P2("spg", 1, "sdi1"), P2("router", 1, "in" + RIN.bars), sdiType, "video", 3, "Mire de test du générateur");
   add(P2("router", 1, "out" + ROUT.tx1), P2("emb", 1, "sdiin"), sdiType, "video", 3, `Départ TX1 : ${sourceLabel(ROUTER.map.AUX_TX1)}`, ROUTER.map.AUX_TX1 === "PGM");
   add(P2("audio", 1, "madi"), P2("emb", 1, "madi"), "Coax MADI (AES10)", "audio", 6, "Son du programme (stéréo + 5.1 + international)");
@@ -7882,16 +8165,16 @@ function buildCabling() {
   add(P2("router", 1, "out" + ROUT.vision), P2("grade1", 1, "sdia"), sdiType, "video", 4, `Grade 1 : ${sourceLabel(ROUTER.map.AUX_VISION)}`);
   add(P2("mv", 1, "out1"), P2("mv", 1, "wall"), "HDMI / 12G-SDI", "video", 5, "Mur d'écrans production");
   add(P2("spg", 1, "tls1"), P2("da", 1, "in"), "Coax 75 Ω", "ref", 1, "Tri-level vers le distributeur des CCU");
-  add(P2("spg", 1, "bb1"), P2("mixer", 1, "ref"), "Coax 75 Ω", "ref", 3, "Black burst");
+  add(P2("spg", 1, "bb1"), P2("mixer", 1, "refin"), "Coax 75 Ω", "ref", 3, "Black burst (REF IN avec boucle)");
   add(P2("spg", 1, "tls2"), P2("router", 1, "ref"), "Coax 75 Ω", "ref", 2);
-  add(P2("spg", 1, "tls3"), P2("evs", 1, "refin"), "Coax 75 Ω", "ref", 3);
+  for (let k = 1; k <= L.servers; k++) add(P2("spg", 1, "tls3"), P2("evs", k, "refin"), "Coax 75 Ω", "ref", 3);
   add(P2("spg", 1, "bb2"), P2("mv", 1, "ref"), "Coax 75 Ω", "ref", 2);
-  add(P2("spg", 1, "ltc1"), P2("evs", 1, "ltcin"), "Câble LTC (audio symétrique)", "ref", 3, "Timecode heure du jour");
+  for (let k = 1; k <= L.servers; k++) add(P2("spg", 1, "ltc1"), P2("evs", k, "ltcin"), "Câble LTC (audio symétrique)", "ref", 3, "Timecode heure du jour");
   add(P2("spg", 1, "wclk"), P2("audio", 1, "wclk"), "Coax 75 Ω (word clock)", "ref", 8, "Horloge audio 48 kHz");
   add(P2("spg", 1, "ptp1"), P2("cns", 1, "ptp"), "Fibre / Ethernet", "ip", 2, "PTP (ST 2059-2) pour les équipements IP");
   add(P2("pdc", 1, "gps"), P2("spg", 1, "gps"), "Coax antenne GPS (SMA)", "rf", 12, "Antenne GPS sur le toit du car", !S.faults.gps);
   add(P2("msu", 1, "lan"), P2("cns", 1, "msu"), "Ethernet Cat6", "ip", 4, "MSU : configuration de toutes les caméras");
-  add(P2("mixer", 1, "tally"), P2("cns", 1, "tally"), "Ethernet Cat6", "ip", 3, "Tally vers les CCU (TSL UMD v5) et le multiviewer");
+  add(P2("mixer", 1, "utillan"), P2("cns", 1, "tally"), "Ethernet Cat6", "ip", 3, "Tally IP et noms de sources (TSL UMD) vers le multiviewer et les CCU");
   add(P2("icom", 1, "pdc"), P2("pdc", 1, "icom"), "Câble 4 fils", "comms", 4, "Ordres avec la chaîne et les commentateurs");
   add(P2("pdc", 1, "power"), P2("ups", 1, "in"), "Câble énergie P17 63 A tri", "power", 4, "Arrivée groupe électrogène / réseau stade");
   CACHE = { key, cables: C };
@@ -7902,7 +8185,7 @@ function deviceCables(dev, n) {
 }
 function endLabel(e) {
   const name = DEV_NAMES[e.dev] || e.dev;
-  const multi = ["cam", "ccu", "rcp", "lsm", "conv", "lens", "vf", "headset", "battery", "txhf"].includes(e.dev);
+  const multi = ["cam", "ccu", "rcp", "lsm", "conv", "lens", "vf", "headset", "battery", "txhf"].includes(e.dev) || e.dev === "evs" && EQUIP.evsServers > 1;
   return `${name}${multi ? " " + e.n : ""} · ${portName(e.dev, e.port)}`;
 }
 function portName(dev, port) {
@@ -7941,7 +8224,7 @@ function opticalLevel(c) {
   return c && c.route ? -4 - c.route.length / 1e3 * 0.4 - 1.5 - c.id % 3 * 0.7 : null;
 }
 function liveState(key, n) {
-  const st = { led: {}, btn: {}, lcd: {}, knob: {}, bar: {}, joy: null, lever: null, screen: null };
+  const st = { led: {}, btn: {}, lcd: {}, knob: {}, bar: {}, label: {}, joy: null, lever: null, screen: null };
   if (key === "ccu" || key === "cam" || key === "rcp") {
     const c = camById(n);
     if (!c) return st;
@@ -7986,9 +8269,22 @@ function liveState(key, n) {
     st.led.leds = "green";
   }
   if (key === "lsm") {
-    const ch = EVS.ch[(n - 1) % 2];
+    const ch = EVS.ch[EVS.lsmCh ?? 0];
     st.lever = ch.lever;
-    st.screen = { ch, n };
+    const T2 = (t) => tc(S.tcOffset + t);
+    st.lcd.display = [`PGM${(EVS.lsmCh ?? 0) + 1}  CAM ${ch.cam}  ${ch.mode === "live" ? "E/E" : ch.playing ? "▶ " + Math.round(ch.speed * 100) + "%" : "PAUSE"}`, `TC ${T2(ch.mode === "live" ? S.simTime : ch.t)}`, `IN ${ch.in != null ? T2(ch.in).slice(3) : "--"}  OUT ${ch.out != null ? T2(ch.out).slice(3) : "--"}`, `PAGE ${EVS.page || 1}  ${evsLayout().label.slice(0, 40)}`];
+  }
+  if (key === "mixpanel") {
+    for (let i = 0; i < 12; i++) {
+      const src = meSource(i + 1);
+      st.label["oled:" + i] = src ? sourceLabel(src).replace("CAM ", "C").slice(0, 6) : "—";
+      st.btn[`xpt:0:${i}`] = MIX.key1.src === i + 1;
+      st.btn[`xpt:1:${i}`] = MIX.pgm === i + 1;
+      st.btn[`xpt:2:${i}`] = MIX.pst === i + 1;
+    }
+    st.lever = MIX.pos;
+    st.lcd.menu = [`${EQUIP.mixer}`, `TRANS ${TRANS[MIX.trans]}`, `RATE ${MIX.rate}f`, `PGM ${sourceLabel(meSource(MIX.pgm))}`, `PST ${sourceLabel(meSource(MIX.pst))}`];
+    st.btn.dsk = MIX.dsk1.on || MIX.dsk2.on;
   }
   return st;
 }
@@ -8124,10 +8420,10 @@ function drawItem(svg, it, st, def, conns, onPick) {
       break;
     }
     case "btn": {
-      const lit = st.btn[it.id];
-      const col = it.oled ? "#0c0f12" : lit ? "#ffb020" : "#2f363e";
+      const lit = it.litKey ? st.btn[it.litKey] : st.btn[it.id];
+      const col = it.oled ? "#0c0f12" : lit ? it.litColor || "#ffb020" : "#2f363e";
       E2("rect", { x: it.x, y: it.y, width: it.w, height: it.h, rx: 4, fill: col, stroke: lit ? "#ffd27a" : "#55606b" }, g);
-      E2("text", { x: it.x + it.w / 2, y: it.y + it.h / 2 + 4, fill: it.oled ? { cyan: "#46c6f2", green: "#2fd25a", amber: "#ffb020", violet: "#c77dff" }[it.c] || "#e8edf1" : lit ? "#1a1205" : "#dfe5ea", "font-size": it.w < 60 ? 9.5 : 11, "font-family": FONT3, "font-weight": 600, "text-anchor": "middle" }, g, it.l);
+      E2("text", { x: it.x + it.w / 2, y: it.y + it.h / 2 + 4, fill: it.oled ? { cyan: "#46c6f2", green: "#2fd25a", amber: "#ffb020", violet: "#c77dff" }[it.c] || "#e8edf1" : lit ? "#1a1205" : "#dfe5ea", "font-size": it.w < 60 ? 9.5 : 11, "font-family": FONT3, "font-weight": 600, "text-anchor": "middle" }, g, it.labelKey && st.label[it.labelKey] || it.l);
       break;
     }
     case "keys": {
@@ -8174,20 +8470,20 @@ function drawItem(svg, it, st, def, conns, onPick) {
       E2("line", { x1: it.x, y1: it.y - it.r + 14, x2: it.x, y2: it.y + it.r - 14, stroke: "#30363c", "stroke-width": 6, "stroke-linecap": "round" }, g);
       const hy = it.y + (j.y - 0.5) * (it.r - 22) * 2;
       E2("circle", { cx: it.x, cy: hy, r: 16, fill: "#c9ced3", stroke: "#6f777f", "stroke-width": 2 }, g);
-      E2("text", { x: it.x, y: it.y + it.r + 16, fill: "#aab4bd", "font-size": 11, "font-family": FONT3, "text-anchor": "middle" }, g, "IRIS (pousser/tirer) · M.BLACK (bague)");
+      E2("text", { x: it.x, y: it.y + it.r + 16, fill: "#aab4bd", "font-size": 11, "font-family": FONT3, "text-anchor": "middle" }, g, it.l || "IRIS (pousser/tirer) · M.BLACK (bague)");
       break;
     }
     case "lever": {
       const pos = st.lever ?? 0.5;
       E2("rect", { x: it.x, y: it.y, width: it.w, height: it.h, rx: 8, fill: "#15181b", stroke: "#4a525b" }, g);
       E2("rect", { x: it.x + it.w / 2 - 3, y: it.y + 14, width: 6, height: it.h - 28, fill: "#2d3339" }, g);
-      for (const [v, l] of [[1, "100"], [0.66, "66"], [0.5, "50"], [0.33, "33"], [0, "0"]]) {
+      if (!it.fader) for (const [v, l] of [[1, "100"], [0.66, "66"], [0.5, "50"], [0.33, "33"], [0, "0"]]) {
         const y = it.y + 14 + (1 - v) * (it.h - 28);
         E2("text", { x: it.x + it.w + 6, y: y + 4, fill: "#93a0ab", "font-size": 10, "font-family": FONT3 }, g, l + " %");
       }
       const hy = it.y + 14 + (1 - pos) * (it.h - 28);
       E2("rect", { x: it.x - 8, y: hy - 9, width: it.w + 16, height: 18, rx: 4, fill: "#ffb020" }, g);
-      E2("text", { x: it.x + it.w / 2, y: it.y + it.h + 18, fill: "#aab4bd", "font-size": 11, "font-family": FONT3, "text-anchor": "middle" }, g, "LEVIER");
+      E2("text", { x: it.x + it.w / 2, y: it.y + it.h + 18, fill: "#aab4bd", "font-size": 11, "font-family": FONT3, "text-anchor": "middle" }, g, it.l || "LEVIER");
       break;
     }
     case "jog":
@@ -8301,7 +8597,8 @@ function genericDef(key, n) {
 function instances(key) {
   if (key === "cam") return S.cams.map((c) => [c.id, `CAM ${c.id} · ${c.T.short}`]);
   if (key === "ccu" || key === "rcp") return S.cams.filter(isSystemCam).map((c) => [c.id, `${key.toUpperCase()} ${c.id} · CAM ${c.id}`]);
-  if (key === "lsm") return [[1, "LSM 1 · PGM1 (EVS A)"], [2, "LSM 2 · PGM2 (EVS B)"]];
+  if (key === "lsm") return [...Array(EQUIP.lsmCount).keys()].map((i) => [i + 1, `LSM ${i + 1}${EQUIP.lsmCount === 1 ? " · pilote PGM1 et PGM2" : i ? " · PGM2" : " · PGM1"}`]);
+  if (key === "evs") return [...Array(EQUIP.evsServers).keys()].map((i) => [i + 1, `XT4K n° ${i + 1}`]);
   if (key === "conv") return S.cams.filter((c) => !isSystemCam(c) && c.link !== "hf").map((c) => [c.id, `Convertisseur CAM ${c.id}`]);
   return null;
 }
@@ -8430,7 +8727,10 @@ var CONTROL_HINT = {
   "rcp:campw": "Dans le simulateur : couper CAM PW éteint la caméra (PAS DE SIGNAL au multiview).",
   "ccu:campower": "Dans le simulateur : c'est la touche CAM PW du RCP qui agit sur cette alimentation.",
   "lsm:lever": "Dans le simulateur : levier du poste EVS.",
-  "lsm:jog": "Dans le simulateur : molette jog du poste EVS (glisser ou molette de la souris)."
+  "lsm:jog": "Dans le simulateur : molette jog du poste EVS (glisser ou molette de la souris).",
+  "mixpanel:xpt": "Dans le simulateur : rangées de boutons du poste Truquiste.",
+  "mixpanel:trans": "Dans le simulateur : module de transition du poste Truquiste (MIX, WIPE, DME, CLIP, CUT, AUTO, levier).",
+  "mixpanel:snap": "Dans le simulateur : boutons SNAPSHOT du poste Truquiste."
 };
 function openDevice(key, n = 1, opts = {}) {
   let def = deviceDef(key);
@@ -8485,7 +8785,7 @@ function openDevice(key, n = 1, opts = {}) {
       clearInterval(VIEW.timer);
       return;
     }
-    if (["ccu", "rcp", "lsm", "cam"].includes(key)) {
+    if (["ccu", "rcp", "lsm", "cam", "mixpanel"].includes(key)) {
       renderSvg();
     }
   }, 700);
@@ -8493,8 +8793,9 @@ function openDevice(key, n = 1, opts = {}) {
 function openEquipmentIndex() {
   const groups = [
     ["Chaîne caméra", ["cam", "ccu", "rcp", "conv"]],
-    ["Ralentis", ["evs", "lsm"]],
-    ["Commutation et traitement", ["router", "mixer", "mv"]],
+    ["Ralentis", ["evs", "lsm", "ipd"]],
+    ["Mélangeur", ["mixer", "mixpanel", "siu"]],
+    ["Commutation et traitement", ["router", "mv"]],
     ["Synchronisation", ["spg", "da"]],
     ["Liaisons", ["rx", "pdc"]]
   ];
@@ -8920,102 +9221,129 @@ function buildVision(body, arg = 0, ctx) {
 
 // src/ui/st_evs.js
 function buildEVS(body, arg = 0, ctx) {
-  let chI = arg || 0;
-  let shift = false, plstMode = false, loop = false;
+  const L0 = evsLayout();
+  let chI = L0.plays < 2 ? 0 : typeof arg === "number" ? arg : 0;
+  EVS.lsmCh = chI;
+  let shift = false, plstMode = false, loop = false, pagePending = false;
   ctx.dock.append(el(
     "div",
     { class: "dockrow" },
     el("div", { class: "monwrap grow" }, el("div", { class: "lab" }, "EVS A · sortie PGM1"), el("div", { class: "mon fill", "data-gl": "EVSA" })),
-    el("div", { class: "monwrap grow" }, el("div", { class: "lab" }, "EVS B · sortie PGM2"), el("div", { class: "mon fill", "data-gl": "EVSB" })),
+    el("div", { class: "monwrap grow" }, el("div", { class: "lab" }, L0.plays < 2 ? "EVS B · (pas de canal en UHD)" : "EVS B · sortie PGM2"), el("div", { class: "mon fill", "data-gl": "EVSB" })),
     el("div", { class: "monwrap grow" }, el("div", { class: "lab" }, "Programme (PGM)"), el("div", { class: "mon fill", "data-gl": "PGM" }))
   ), ctx.explainBox);
   const appbar = el("div", { class: "lsm-app" });
+  const cfg = el("div", { class: "lsm-cfg" });
   const clipGrid = el("div", { class: "lsm-clips" });
   const plist = el("div", { class: "lsm-pl" });
   const trains = el("canvas", { class: "lsm-trains", width: 760, height: 210 });
-  const tcBig = el("div", { class: "lcd amber big" });
-  const tcInfo = el("div", { class: "lcd" });
   const msg = el("div", { class: "note warn" });
-  const screen2 = el("div", { class: "lsm-screen" }, appbar, el("div", { class: "hwrow" }, tcBig), tcInfo, msg, clipGrid, el("div", { class: "lsm-sub" }, "TRAINS D'ENREGISTREMENT · cliquez pour vous placer"), trains, el("div", { class: "lsm-sub" }, "PLAYLIST"), plist);
-  const K = (l, fn, color = "", title = "") => {
-    const b = el("button", { class: "lsm-key " + color, title, onclick: fn }, l);
-    return b;
-  };
+  const screen2 = el("div", { class: "lsm-screen" }, el("div", { class: "lsm-sub" }, `ÉCRAN DU SERVEUR ${EQUIP.evsModel} · MULTICAM`), appbar, cfg, msg, clipGrid, el("div", { class: "lsm-sub" }, "TRAINS D'ENREGISTREMENT · cliquez pour vous placer"), trains, el("div", { class: "lsm-sub" }, "PLAYLIST"), plist);
+  const lcd = el("div", { class: "lsm-lcd" });
+  const K = (l, fn, color = "", title = "", sec = "") => el("button", { class: "lsm-key " + color, title, onclick: fn }, l, sec ? el("small", {}, sec) : null);
   const fkeys = [];
   const fRow = el("div", { class: "lsm-row" });
   for (let i = 0; i < 10; i++) {
-    const b = K("F" + (i + 1), () => fKey(i), "", "Clip F" + (i + 1));
+    const b = K("F" + (i + 1), () => fKey(i));
+    b.appendChild(el("small", {}, ""));
     fkeys.push(b);
     fRow.appendChild(b);
   }
   const camRow = el("div", { class: "lsm-row" });
-  const tr = {};
-  tr.markin = K("MARK IN", () => act2("markin"), "amber");
-  tr.markout = K("MARK OUT", () => act2("markout"), "amber");
-  tr.gotoin = K("GOTO IN", () => act2("gotoin"));
-  tr.gotoout = K("GOTO OUT", () => act2("gotoout"));
-  tr.plst = K("PLST", () => {
-    plstMode = !plstMode;
-    explain(plstMode ? "PLST : les touches F ajoutent maintenant les clips à la playlist (montage d'un résumé)." : "Mode playlist quitté.");
-  });
-  tr.ret = K("RETURN", () => {
-    act2("gotoin");
-    explain("RETURN : retour au point IN, prêt à relancer.");
-  });
-  tr.live = K("LIVE E/E", () => act2("live"), "cyan");
-  tr.play = K("PLAY", () => act2("play", 1), "green");
-  tr.pgm = K("PGM/PRV", () => {
-    chI = 1 - chI;
-    explain(`La télécommande pilote maintenant ${chI ? "PGM2 (EVS B)" : "PGM1 (EVS A)"}. Un opérateur pilote souvent deux sorties : il prépare l'une pendant que l'autre est à l'antenne.`);
-  });
-  tr.loop = K("LOOP", () => {
+  const sh = (fn) => {
+    shift = false;
+    fn();
+  };
+  const k = {};
+  k.in = K("IN", () => shift ? sh(() => act2("gotoin")) : act2("markin"), "amber", "IN · avec SHIFT : GOTO IN", "GOTO IN");
+  k.out = K("OUT", () => shift ? sh(() => act2("gotoout")) : act2("markout"), "amber", "OUT · avec SHIFT : GOTO OUT", "GOTO OUT");
+  k.plst = K("PLST", () => shift ? sh(browseToggle) : plstToggle(), "", "PLST · avec SHIFT : BROWSE", "BROWSE");
+  k.loop = K("LOOP", () => {
     loop = !loop;
-    explain(loop ? "LOOP : le clip IN-OUT tourne en boucle (pratique pour l'écran géant ou une analyse)." : "Boucle coupée.");
+    explain(loop ? "LOOP : le clip IN-OUT tourne en boucle (écran géant, analyse)." : "Boucle coupée.");
   });
-  tr.shift = K("SHIFT", () => {
-    shift = !shift;
-    explain(shift ? "SHIFT : la prochaine touche F sauvegarde le clip (IN/OUT et angle)." : "");
+  k.ret = K("RETURN", () => {
+    act2("return");
+    explain("RETURN : on quitte les limites du clip et on se retrouve sur la même image dans le train d'enregistrement. Utile quand le clip est trop court : on peut lire au-delà du point OUT.");
   });
-  tr.pause = K("PAUSE", () => act2("pause"));
-  tr.last = K("DERN. ACTION", () => act2("lastaction"), "amber", "Se cale 3 s avant la dernière action notée");
-  const sc = {};
-  sc.fast = K("FAST JOG", () => {
+  k.play = K("PLAY", () => {
+    if (plstMode) {
+      playPlaylist();
+      return;
+    }
+    act2("play", 1);
+  }, "green");
+  k.live = K("LIVE E/E", () => act2("live"), "cyan");
+  k.fast = K("FAST JOG", () => {
     EVS.fastJog = !EVS.fastJog;
-    explain(EVS.fastJog ? "FAST JOG : la molette avance 10 fois plus vite (parcours rapide des enregistrements)." : "Jog normal : image par image.");
+    explain(EVS.fastJog ? "FAST JOG : la molette parcourt les enregistrements beaucoup plus vite (recalage rapide). Désactivé automatiquement après PLAY ou LIVE." : "Jog normal : image par image.");
   }, "violet");
+  k.take = K("TAKE", () => {
+    if (evsLayout().plays < 2) {
+      explain("TAKE : pas de second canal de lecture dans cette configuration (UHD avec un seul XT4K).", "warn");
+      return;
+    }
+    evsAction(chI, "take");
+    explain("TAKE (mode 2 PGM) : le contenu de PGM1 et PGM2 est échangé. En mode PGM + PRV, TAKE envoie à l'antenne ce qui était préparé sur PRV.");
+  });
+  k.pgm = K("PGM/PRV", () => {
+    if (evsLayout().plays < 2) {
+      explain("Un seul canal de lecture : la télécommande pilote PGM1.", "warn");
+      return;
+    }
+    chI = 1 - chI;
+    EVS.lsmCh = chI;
+    explain(`La télécommande pilote maintenant ${chI ? "PGM2 (EVS B)" : "PGM1 (EVS A)"}. Avec une seule LSM, l'opérateur prépare une sortie pendant que l'autre est à l'antenne.`);
+  });
+  k.shift = K("SHIFT", () => {
+    shift = !shift;
+    explain(shift ? "SHIFT : la prochaine touche donne sa fonction secondaire (inscrite en petit dessous)." : "SHIFT relâché.");
+  });
+  k.menu = K("MENU", () => explain("MENU : bascule entre le menu opérationnel et le menu secondaire (réglages, modes PGM). SHIFT + MENU revient au menu principal."));
+  k.clear = K("CLEAR", () => {
+    if (plstMode) {
+      evsAction(chI, "plstclear");
+      explain("Playlist vidée.");
+      return;
+    }
+    const c = EVS.ch[chI];
+    c.in = null;
+    c.out = null;
+    explain("CLEAR : points IN et OUT effacés.");
+  });
+  k.page = K("PAGE", () => {
+    if (!shift) {
+      explain("PAGE : faites SHIFT puis PAGE, puis une touche F pour choisir la page (1 à 10).");
+      return;
+    }
+    shift = false;
+    pagePending = true;
+    explain("Choix de la page : appuyez sur une touche F (F1 = page 1 … F10 = page 10).");
+  }, "", "SHIFT + PAGE puis F : choix de la page");
+  k.last = K("DERN. ACTION", () => act2("lastaction"), "amber", "Raccourci du simulateur : se cale 3 s avant la dernière action notée");
+  const sc = {};
   sc.rec = K("REC", () => {
     evsSetRecording(!EVS.recording);
-    explain(EVS.recording ? "Enregistrement relancé : les trains reprennent." : "Enregistrement ARRÊTÉ : plus rien n'est enregistré, aucun ralenti possible sur la suite du match !");
+    explain(EVS.recording ? "Enregistrement relancé : les trains reprennent." : "Enregistrement ARRÊTÉ : plus rien n'est enregistré, aucun ralenti possible sur la suite du match !", EVS.recording ? "" : "warn");
   }, "red");
   sc.auto = K("OPÉ. AUTO", () => {
     EX.evsAuto = !EX.evsAuto;
     explain(EX.evsAuto ? "Opérateur automatique : après chaque action, l'EVS A se cale tout seul (utile quand vous êtes au mélangeur)." : "Opérateur automatique coupé : c'est vous qui préparez les ralentis.");
   }, "violet");
-  sc.plplay = K("PLST PLAY", () => {
-    if (!EVS.playlist.length) {
-      explain("Playlist vide : PLST puis touches F pour ajouter des clips.", "warn");
-      return;
-    }
-    evsAction(chI, "plstplay");
-    explain(`Lecture de la playlist (${EVS.playlist.length} clips) à ${Math.round(Math.max(0.25, EVS.ch[chI].lever) * 100)} % : les clips s'enchaînent en cut, c'est la base d'un résumé.`);
-  }, "green");
-  sc.plclr = K("PLST CLR", () => {
-    evsAction(chI, "plstclear");
-    explain("Playlist vidée.");
-  });
   const keypad = el(
     "div",
     { class: "lsm-pad" },
-    el("div", { class: "lsm-sub" }, "CLIPS (banque 1)"),
+    lcd,
+    el("div", { class: "lsm-sub" }, "TOUCHES F (clips de la page · soft keys)"),
     fRow,
     el("div", { class: "lsm-sub" }, "ANGLES (entrées enregistrées)"),
     camRow,
-    el("div", { class: "lsm-sub" }, "TRANSPORT"),
-    el("div", { class: "lsm-row" }, tr.markin, tr.markout, tr.gotoin, tr.gotoout, tr.last),
-    el("div", { class: "lsm-row" }, tr.live, tr.play, tr.pause, tr.ret, tr.loop),
-    el("div", { class: "lsm-row" }, tr.pgm, tr.plst, tr.shift),
-    el("div", { class: "lsm-sub" }, "RACCOURCIS"),
-    el("div", { class: "lsm-row" }, sc.fast, sc.rec, sc.auto, sc.plplay, sc.plclr)
+    el("div", { class: "lsm-sub" }, "BLOC OPÉRATIONNEL (petit texte = fonction avec SHIFT)"),
+    el("div", { class: "lsm-row" }, k.in, k.out, k.plst, k.loop, k.ret),
+    el("div", { class: "lsm-row" }, k.live, k.play, k.fast, k.take, k.pgm),
+    el("div", { class: "lsm-row" }, k.shift, k.menu, k.clear, k.page),
+    el("div", { class: "lsm-sub" }, "RACCOURCIS DU SIMULATEUR"),
+    el("div", { class: "lsm-row" }, k.last, sc.rec, sc.auto)
   );
   const lever = el("input", { type: "range", min: 0, max: 100, step: 1, value: 50, class: "tbar lsm-lever", id: "lsmlever", "aria-label": "Levier de vitesse" });
   let levSeq = 0;
@@ -9029,7 +9357,7 @@ function buildEVS(body, arg = 0, ctx) {
       levSeq = performance.now();
       const fps = cam2 ? 50 * cam2.hfr : 50;
       const per = v > 0 ? 1 / (v * fps / 50) : Infinity;
-      explain(v === 0 ? "Levier à 0 : image figée." : `Levier ${Math.round(v * 100)} %${!wasPlaying && c.playing ? " : la lecture démarre (sur un LSM, pousser le levier lance le ralenti)" : ""}. ${cam2 ? `CAM ${cam2.id} enregistrée à ${fps} i/s : ` : ""}${per <= 1.05 ? "chaque image de sortie est une image différente, le mouvement reste fluide." : `chaque image enregistrée est répétée ≈ ${fmt(per, 1)} fois en sortie, le mouvement saccade${cam2 && cam2.hfr === 1 ? " (une caméra super ralenti 3x serait fluide jusqu'à 33 %)" : ""}.`}`, "lsm:lever");
+      explain(v === 0 ? "Levier à 0 : image figée." : `Levier ${Math.round(v * 100)} %${!wasPlaying && c.playing ? " : la lecture démarre (pousser le levier lance le ralenti)" : ""}. ${cam2 ? `CAM ${cam2.id} enregistrée à ${fps} i/s : ` : ""}${per <= 1.05 ? "chaque image de sortie est une image différente, le mouvement reste fluide." : `chaque image enregistrée est répétée ≈ ${fmt(per, 1)} fois en sortie, le mouvement saccade${cam2 && cam2.hfr === 1 ? " (une caméra super ralenti 3x serait fluide jusqu'à 33 %)" : ""}.`}`, "lsm:lever");
     }
   });
   const levTxt = el("div", { class: "lcd" }, "50 %");
@@ -9050,10 +9378,11 @@ function buildEVS(body, arg = 0, ctx) {
     let d = a - lastA;
     if (d > Math.PI) d -= 2 * Math.PI;
     if (d < -Math.PI) d += 2 * Math.PI;
+    const frames = Math.round(d / (2 * Math.PI) * 35);
+    if (!frames) return;
     lastA = a;
     wa += d;
-    const frames = Math.round(d / 0.09);
-    if (frames) jog(frames);
+    jog(frames);
     wheel.firstChild.style.transform = `rotate(${wa}rad)`;
     wheel.firstChild.style.transformOrigin = "5px 65px";
   });
@@ -9070,53 +9399,81 @@ function buildEVS(body, arg = 0, ctx) {
   } })));
   const right = el("div", { class: "lsm-right" }, el("div", { class: "hwrow", style: { gap: "16px", alignItems: "center" } }, el("div", { class: "list", style: { alignItems: "center" } }, el("span", { class: "note" }, "LEVIER"), lever, levTxt), presets), wheel, el("span", { class: "note" }, "JOG"));
   body.append(
-    el("div", { class: "lsm" }, screen2, keypad, right),
-    el("div", { class: "hwrow" }, el("button", { class: "btn small", onclick: () => openDevice("lsm", chI + 1) }, "Voir la télécommande (matériel)"), el("button", { class: "btn small", onclick: () => openDevice("evs", 1) }, "Voir le serveur (faces avant/arrière)")),
-    el("p", { class: "note" }, "Méthode : laissez la sortie en LIVE pendant le jeu. Après l'action : DERN. ACTION (ou jog arrière + MARK IN), choisissez l'angle, puis poussez le levier quand le réalisateur envoie l'EVS. Clavier : Espace lecture/pause · I / O · L live · ← → image par image (Maj = 10) · ↑ ↓ levier · 1-8 angle.")
+    el("div", { class: "lsm" }, keypad, right, screen2),
+    el("div", { class: "hwrow" }, el("button", { class: "btn small", onclick: () => openDevice("lsm", 1) }, "Voir la télécommande LSM"), el("button", { class: "btn small", onclick: () => openDevice("evs", 1) }, `Voir le serveur ${EQUIP.evsModel}`), el("button", { class: "btn small", onclick: () => openDevice("ipd", 1) }, "Voir le poste IPDirector")),
+    el("p", { class: "note" }, "Méthode : laissez la sortie en LIVE pendant le jeu. Après l'action : DERN. ACTION (ou jog arrière + IN), choisissez l'angle, puis poussez le levier quand le réalisateur envoie l'EVS. Clips : SHIFT + F = sauvegarder · F = rappeler · SHIFT + PAGE puis F = changer de page. Clavier : Espace lecture/pause · I / O · L live · ← → image par image (Maj = 10) · ↑ ↓ levier · 1-8 angle."),
+    el("p", { class: "note" }, "Disposition simplifiée de la télécommande : les fonctions suivent les manuels Multicam (versions 10 à 12), mais l'emplacement exact des touches dépend de votre modèle et de votre version.")
   );
   function act2(a, v) {
     const c = EVS.ch[chI];
     evsAction(chI, a, v);
     const T2 = (t) => tc(S.tcOffset + t);
     const txt = {
-      markin: `MARK IN sur ${T2(c.in ?? S.simTime)} : début du clip. Tous les angles enregistrés partagent ce timecode.`,
-      markout: `MARK OUT sur ${T2(c.out ?? S.simTime)} : fin du clip (la lecture s'arrêtera ici).`,
+      markin: `IN sur ${T2(c.in ?? S.simTime)} : début du clip. Tous les angles enregistrés partagent ce timecode.`,
+      markout: `OUT sur ${T2(c.out ?? S.simTime)} : fin du clip (la lecture s'arrêtera ici).`,
       gotoin: c.in != null ? `GOTO IN : la sortie se cale sur ${T2(c.in)}, image figée, prête à partir.` : "Pas de point IN.",
       gotoout: c.out != null ? `GOTO OUT : calage sur le point de sortie ${T2(c.out)}.` : "Pas de point OUT.",
       live: "LIVE (E/E) : la sortie montre l'entrée en direct, sans retard. C'est l'état d'attente normal entre deux ralentis.",
       play: "PLAY : lecture à 100 %, vitesse réelle (souvent pour revoir une action complète ou un but sous un autre angle).",
-      pause: "PAUSE : image figée sur le timecode courant.",
       lastaction: S.lastAction ? `Calé 3 s avant la dernière action (${S.lastAction.label}) : IN et OUT posés automatiquement.` : "Aucune action notée pour l'instant."
     }[a];
     if (txt) explain(txt);
   }
   function jog(frames) {
+    if (EVS.browse) {
+      evsAction(chI, "browse", frames);
+      explain(EVS.browseIdx != null ? `BROWSE : clip ${clipName(EVS.browseIdx)} chargé (la molette fait défiler les clips de la base).` : "BROWSE : aucun clip dans la base.", "lsm:browse");
+      return;
+    }
     evsAction(chI, "jog", frames);
     const c = EVS.ch[chI];
     explain(`Jog ${frames > 0 ? "+" : ""}${frames * (EVS.fastJog ? 10 : 1)} image${Math.abs(frames) > 1 ? "s" : ""} : position ${tc(S.tcOffset + c.t)}, soit ${fmt(Math.max(0, S.simTime - c.t), 1)} s derrière le direct.`, "lsm:jog");
   }
+  function plstToggle() {
+    plstMode = !plstMode;
+    explain(plstMode ? "PLST : mode playlist. Les touches F ajoutent les clips à la playlist, PLAY la lance, CLEAR la vide." : "Mode playlist quitté.");
+  }
+  function browseToggle() {
+    EVS.browse = !EVS.browse;
+    explain(EVS.browse ? "BROWSE : la molette jog fait défiler les clips de la base." : "BROWSE désactivé : la molette repasse en recherche image par image.");
+  }
+  function playPlaylist() {
+    if (!EVS.playlist.length) {
+      explain("Playlist vide : PLST puis touches F pour ajouter des clips.", "warn");
+      return;
+    }
+    evsAction(chI, "plstplay");
+    explain(`Lecture de la playlist (${EVS.playlist.length} clips) à ${Math.round(Math.max(0.25, EVS.ch[chI].lever) * 100)} % : les clips s'enchaînent, c'est la base d'un résumé.`);
+  }
   function fKey(i) {
+    if (pagePending) {
+      pagePending = false;
+      EVS.page = i + 1;
+      explain(`Page ${EVS.page} : les touches F donnent maintenant les clips ${EVS.page}11 à ${EVS.page}10.`);
+      return;
+    }
+    const idx = (EVS.page - 1) * 10 + i;
     if (plstMode) {
-      if (EVS.clips[i]) {
-        evsAction(chI, "plstadd", i);
-        explain(`Clip F${i + 1} ajouté à la playlist (${EVS.playlist.length} clips).`);
+      if (EVS.clips[idx]) {
+        evsAction(chI, "plstadd", idx);
+        explain(`Clip ${clipName(idx)} ajouté à la playlist (${EVS.playlist.length} clips).`);
       } else explain("Ce clip est vide.", "warn");
       return;
     }
     if (shift) {
-      evsAction(chI, "save", i);
       shift = false;
-      const cl = EVS.clips[i];
-      explain(cl ? `Clip F${i + 1} sauvegardé : CAM ${cl.cam}, ${fmt(cl.out - cl.in, 1)} s. Il restera disponible même quand la boucle d'enregistrement aura écrasé le direct.` : "Pas de point IN : rien à sauvegarder.");
+      evsAction(chI, "save", idx);
+      const cl = EVS.clips[idx];
+      explain(cl ? `Clip ${clipName(idx)} sauvegardé (page ${EVS.page}, F${i + 1}, angle de la CAM ${cl.cam}, ${fmt(cl.out - cl.in, 1)} s), avec tous les angles enregistrés. Il est protégé de l'écrasement de la boucle et visible dans IPDirector.` : "Pas de point IN : rien à sauvegarder.");
       return;
     }
-    if (EVS.clips[i]) {
-      evsAction(chI, "recall", i);
-      explain(`Clip F${i + 1} rappelé sur ${chI ? "PGM2" : "PGM1"} : calé sur son IN, prêt à jouer.`);
+    if (EVS.clips[idx]) {
+      evsAction(chI, "recall", idx);
+      explain(`Clip ${clipName(idx)} rappelé sur ${chI ? "PGM2" : "PGM1"} : calé sur son IN, prêt à jouer.`);
     } else explain("Clip vide : SHIFT puis F pour sauvegarder le clip en cours.", "warn");
   }
   const tg = trains.getContext("2d");
-  let tWin = 90;
+  const tWin = 90;
   trains.addEventListener("click", (e) => {
     const r = trains.getBoundingClientRect();
     const x = (e.clientX - r.left) / r.width * 760;
@@ -9133,6 +9490,7 @@ function buildEVS(body, arg = 0, ctx) {
     const W2 = 760, H = 210;
     g.fillStyle = "#05080b";
     g.fillRect(0, 0, W2, H);
+    const L = evsLayout();
     const now = S.simTime;
     const t0 = now - tWin;
     const X2 = (t) => 120 + (t - t0) / tWin * 630;
@@ -9143,16 +9501,21 @@ function buildEVS(body, arg = 0, ctx) {
       g.fillRect(x, 14, 1, H - 20);
       g.fillText(tc(S.tcOffset + s).slice(3, 8), x - 16, 11);
     }
-    const rows = [];
-    for (let i = 1; i <= 8; i++) rows.push([i, ROUTER.map["REC" + i], ROUTER.phase["REC" + i]]);
-    rows.forEach(([i, src, ph], r) => {
-      const y = 22 + r * 22;
+    for (let i = 1; i <= 8; i++) {
+      const y = 22 + (i - 1) * 22;
+      if (i > L.rec) {
+        g.fillStyle = "#3a434c";
+        g.fillText(`REC ${i} —`, 6, y + 12);
+        continue;
+      }
+      const src = recSource(i);
+      const ph = ROUTER.phase["REC" + i];
       g.fillStyle = "#93a0ab";
-      g.fillText(`REC ${i} ${src ? sourceLabel(src).replace("CAM ", "C") + (src.startsWith("CAM") && camById(+src.slice(3))?.hfr > 1 ? " " + "ABCDEF"[ph] : "") : "—"}`, 6, y + 12);
-      if (!src || !src.startsWith("CAM")) return;
+      g.fillText(`${L.servers > 1 ? "S" + L.recServer(i) + " " : ""}REC ${i} ${src ? sourceLabel(src).replace("CAM ", "C") + (src.startsWith("CAM") && camById(+src.slice(3))?.hfr > 1 ? " " + "ABCDEF"[ph] : "") : "—"}`, 6, y + 12);
+      if (!src || !src.startsWith("CAM")) continue;
       const id = +src.slice(3);
       const st = EVS.recStart[id];
-      if (st == null) return;
+      if (st == null) continue;
       const a = Math.max(t0, st, recRange()[0]);
       const b = EVS.recording ? now : Math.min(now, EVS.recStopT);
       if (b > a) {
@@ -9163,7 +9526,7 @@ function buildEVS(body, arg = 0, ctx) {
         g.fillStyle = "#ff3b30";
         g.fillRect(X2(EVS.recStopT), y, 2, 18);
       }
-    });
+    }
     for (const e of S.events) {
       if (e.t < t0) continue;
       g.fillStyle = "#ffd23f";
@@ -9173,17 +9536,18 @@ function buildEVS(body, arg = 0, ctx) {
       g.fillText(e.label, 0, 0);
       g.restore();
     }
-    EVS.ch.forEach((c, k) => {
-      const col = k ? "#46c6f2" : "#ff8a1f";
+    EVS.ch.forEach((c, k2) => {
+      if (k2 >= L.plays) return;
+      const col = k2 ? "#46c6f2" : "#ff8a1f";
       if (c.in != null && c.in > t0) {
         g.fillStyle = col;
         g.fillRect(X2(c.in), 16, 2, H - 24);
-        g.fillText("IN", X2(c.in) + 3, 26 + k * 10);
+        g.fillText("IN", X2(c.in) + 3, 26 + k2 * 10);
       }
       if (c.out != null && c.out > t0) {
         g.fillStyle = col;
         g.fillRect(X2(c.out), 16, 2, H - 24);
-        g.fillText("OUT", X2(c.out) + 3, 26 + k * 10);
+        g.fillText("OUT", X2(c.out) + 3, 26 + k2 * 10);
       }
       const t = c.mode === "live" ? now : c.t;
       if (t >= t0) {
@@ -9198,8 +9562,10 @@ function buildEVS(body, arg = 0, ctx) {
     });
     g.fillStyle = "#ff8a1f";
     g.fillText("▼ PGM1", 6, 11);
-    g.fillStyle = "#46c6f2";
-    g.fillText("▼ PGM2", 60, 11);
+    if (L.plays > 1) {
+      g.fillStyle = "#46c6f2";
+      g.fillText("▼ PGM2", 60, 11);
+    }
   }
   let lastRec = "";
   return {
@@ -9207,6 +9573,11 @@ function buildEVS(body, arg = 0, ctx) {
       drawTrains();
     },
     update() {
+      const L = evsLayout();
+      if (chI >= L.plays) {
+        chI = 0;
+        EVS.lsmCh = 0;
+      }
       const c = EVS.ch[chI];
       if (c.pl == null && loop && c.mode === "pause" && c.out != null && Math.abs(c.t - c.out) < 0.05) {
         evsAction(chI, "gotoin");
@@ -9214,16 +9585,27 @@ function buildEVS(body, arg = 0, ctx) {
       }
       const live = c.mode === "live";
       const t = live ? S.simTime : c.t;
-      appbar.textContent = `PAGE 1 · BANK 1 · SERVEUR XT-VIA · CONTRÔLE ${chI ? "PGM2 (EVS B)" : "PGM1 (EVS A)"} · ${meSource(MIX.pgm) === (chI ? "EVSB" : "EVSA") ? "● À L'ANTENNE" : "hors antenne"}`;
-      tcBig.textContent = `${tc(S.tcOffset + t)}  ${live ? "E/E" : c.playing ? "▶ " + Math.round(c.speed * 100) + "%" : "❚❚"}${c.pl ? " · PLST " + (c.pl.i + 1) + "/" + EVS.playlist.length : ""}`;
-      tcInfo.textContent = `CAM ${c.cam} · IN ${c.in != null ? tc(S.tcOffset + c.in).slice(3) : "--"} · OUT ${c.out != null ? tc(S.tcOffset + c.out).slice(3) : "--"} · retard ${fmt(Math.max(0, S.simTime - t), 1)} s`;
+      const recCams = recordedCams();
+      const camLetter = (id) => {
+        const i = recCams.indexOf(id);
+        return i >= 0 ? "ABCDEFGH"[i] : "?";
+      };
+      appbar.textContent = `PAGE ${EVS.page} · ${EQUIP.evsServers} × ${EQUIP.evsModel} · CONTRÔLE ${chI ? "PGM2 (EVS B)" : "PGM1 (EVS A)"} · ${meSource(MIX.pgm) === (chI ? "EVSB" : "EVSA") ? "● À L'ANTENNE" : "hors antenne"}`;
+      cfg.textContent = `Configuration : ${L.label}.`;
+      lcd.innerHTML = "";
+      const lines = [
+        `PGM${chI + 1}  CAM ${camLetter(c.cam)} (${c.cam})  ${live ? "E/E" : c.playing ? "▶ " + Math.round(c.speed * 100) + "%" : "STILL"}${c.pl ? "  PLST " + (c.pl.i + 1) + "/" + EVS.playlist.length : ""}`,
+        `TC ${tc(S.tcOffset + t)}   −${fmt(Math.max(0, S.simTime - t), 1)} s`,
+        `IN ${c.in != null ? tc(S.tcOffset + c.in).slice(3) : "--:--:--"}  OUT ${c.out != null ? tc(S.tcOffset + c.out).slice(3) : "--:--:--"}`,
+        `${shift ? "SHIFT  " : ""}${plstMode ? "PLST  " : ""}${EVS.browse ? "BROWSE  " : ""}${pagePending ? "PAGE ?  " : ""}${EVS.fastJog ? "FAST JOG  " : ""}${EVS.recording ? "REC ●" : "REC ARRÊTÉ"}`
+      ];
+      for (const l of lines) lcd.appendChild(el("div", {}, l));
       msg.textContent = !live && !c.ok ? c.msg : "";
-      const rec = recordedCams();
-      const key = rec.join() + "|" + S.cams.map((x) => x.id).join();
+      const key = recCams.join() + "|" + S.cams.map((x) => x.id).join();
       if (key !== lastRec) {
         lastRec = key;
         camRow.innerHTML = "";
-        rec.forEach((id, i) => {
+        recCams.forEach((id, i) => {
           const cam2 = camById(id);
           const b = K(`CAM ${"ABCDEFGH"[i]}`, () => {
             evsAction(chI, "cam", id);
@@ -9234,31 +9616,35 @@ function buildEVS(body, arg = 0, ctx) {
           b.appendChild(el("small", {}, `${id}${cam2.hfr > 1 ? " · " + cam2.hfr + "x" : ""}`));
           camRow.appendChild(b);
         });
-        if (!rec.length) camRow.appendChild(el("span", { class: "note warn" }, "Aucune caméra enregistrée : affectez des entrées REC à la grille."));
+        if (!recCams.length) camRow.appendChild(el("span", { class: "note warn" }, "Aucune caméra enregistrée : affectez des entrées REC à la grille."));
       }
       [...camRow.children].forEach((b) => b.classList && b.classList.toggle("on", +b.dataset.id === c.cam));
       fkeys.forEach((b, i) => {
-        b.classList.toggle("on", !!EVS.clips[i]);
-        b.title = EVS.clips[i] ? `CAM ${EVS.clips[i].cam} · ${tc(S.tcOffset + EVS.clips[i].in)}` : "vide";
+        const idx = (EVS.page - 1) * 10 + i;
+        const cl = EVS.clips[idx];
+        b.classList.toggle("on", !!cl);
+        b.lastChild.textContent = pagePending ? "page " + (i + 1) : cl ? clipName(idx) : "";
+        b.title = cl ? `${clipName(idx)} · CAM ${cl.cam} · ${tc(S.tcOffset + cl.in)}` : "vide";
       });
-      tr.live.classList.toggle("on", live);
-      tr.play.classList.toggle("on", c.playing && c.speed === 1);
-      tr.pause.classList.toggle("on", c.mode === "pause");
-      tr.plst.classList.toggle("on", plstMode);
-      tr.shift.classList.toggle("on", shift);
-      tr.loop.classList.toggle("on", loop);
-      tr.pgm.textContent = chI ? "PGM2 ▸" : "PGM1 ▸";
-      sc.fast.classList.toggle("on", EVS.fastJog);
+      k.live.classList.toggle("on", live);
+      k.play.classList.toggle("on", c.playing && c.speed === 1);
+      k.plst.classList.toggle("on", plstMode || EVS.browse);
+      k.shift.classList.toggle("on", shift);
+      k.loop.classList.toggle("on", loop);
+      k.page.classList.toggle("on", pagePending);
+      k.fast.classList.toggle("on", EVS.fastJog);
+      k.pgm.firstChild.textContent = L.plays < 2 ? "PGM1" : chI ? "PGM2 ▸" : "PGM1 ▸";
       sc.rec.classList.toggle("on", EVS.recording);
       sc.auto.classList.toggle("on", !!EX.evsAuto);
       if (document.activeElement !== lever) lever.value = Math.round(c.lever * 100);
       levTxt.textContent = Math.round(c.lever * 100) + " %";
       clipGrid.innerHTML = "";
       for (let i = 0; i < 10; i++) {
-        const cl = EVS.clips[i];
-        clipGrid.appendChild(el("div", { class: "lsm-clip" + (cl ? " full" : "") }, el("b", {}, "F" + (i + 1)), el("span", {}, cl ? `CAM ${cl.cam} · ${fmt(cl.out - cl.in, 1)} s` : "vide")));
+        const idx = (EVS.page - 1) * 10 + i;
+        const cl = EVS.clips[idx];
+        clipGrid.appendChild(el("div", { class: "lsm-clip" + (cl ? " full" : "") }, el("b", {}, cl ? clipName(idx) : "F" + (i + 1)), el("span", {}, cl ? `${cl.name || "CAM " + cl.cam} · ${fmt(cl.out - cl.in, 1)} s` : "vide")));
       }
-      plist.textContent = EVS.playlist.length ? EVS.playlist.map((k, j) => `${j + 1}. F${k + 1}${EVS.clips[k] ? " (CAM " + EVS.clips[k].cam + ")" : ""}`).join("   ") : "vide";
+      plist.textContent = EVS.playlist.length ? EVS.playlist.map((kk, j) => `${j + 1}. ${clipName(kk)}${EVS.clips[kk] && EVS.clips[kk].name ? " " + EVS.clips[kk].name : ""}`).join("   ") : "vide";
     },
     key(e) {
       if (e.code === "Space") {
@@ -9303,17 +9689,539 @@ function buildEVS(body, arg = 0, ctx) {
   };
 }
 
+// src/ui/st_mixer.js
+function oledName(n) {
+  const id = meSource(n);
+  if (!id) return ["—", ""];
+  if (id.startsWith("CAM")) {
+    const c = camById(+id.slice(3));
+    return [`CAM ${id.slice(3)}`, c ? c.T.short : "libre"];
+  }
+  const s = allSources().find((x) => x.id === id);
+  return [s ? s.short : id, { EVSA: "EVS PGM1", EVSB: "EVS PGM2", GFX: "graph.", STUDIO: "duplex", BARS: "mire", BLACK: "noir" }[id] || ""];
+}
+var TRANS_TXT = {
+  mix: "MIX : fondu enchaîné, les deux images se superposent pendant la durée choisie.",
+  wipe: "WIPE : un motif (volet) découvre la nouvelle image.",
+  dip: "DIP : passage par une couleur (souvent le noir) au milieu de la transition.",
+  dve: "DME : transition numérique (l'image entrante pousse l'ancienne). Sur le XVS-6000, le redimensionneur 2,5D est sur chaque keyer ; la DME 3D complète est une option (carte XKS-8470 ou XKS-8475).",
+  stinger: "CLIP : transition « clip » de la frame memory (logo animé avec sa découpe) qui masque la coupe au milieu. C'est le « volet logo » des entrées et sorties de ralenti."
+};
+function buildMixer(body, arg, ctx) {
+  ctx.dock.append(el("div", { class: "monwrap grow" }, el("div", { class: "lab" }, "Multiview (PGM, PVW et toutes les sources)"), el("div", { class: "mon fill", "data-gl": "mv" })));
+  const nIn = mixInputs();
+  const buses = { key: [], pgm: [], pst: [] };
+  const rowsP = el("div", { class: "hwpanel icpanel" }, el(
+    "div",
+    { class: "icp-head" },
+    el("h3", {}, `M/E 1 · ${EQUIP.mixPanel} → ${EQUIP.mixer}`),
+    el("span", { class: "note" }, `${nIn} entrées utilisées${S.format === "UHD" ? " (configuration 4K)" : ""}`),
+    el("button", { class: "btn small", onclick: () => openDevice("mixpanel", 1) }, "Voir le pupitre"),
+    el("button", { class: "btn small", onclick: () => openDevice("mixer", 1) }, "Voir le processeur")
+  ));
+  const ROWS = [["key", "KEY/AUX", "Bus de clé : la source incrustée par KEY 1."], ["pgm", "A · PGM", "Bus A (arrière-plan programme) : ce qui est à l'antenne."], ["pst", "B · PST", "Bus B (preset) : ce qui passera à la prochaine transition."]];
+  for (const [bus, label, title] of ROWS) {
+    const row2 = el("div", { class: "xpt-row" }, el("span", { class: "rl", title }, label));
+    for (let n = 1; n <= nIn; n++) {
+      const name = el("span", { class: "oled" }), sub = el("small", {});
+      const b = el("button", { class: "xpt " + bus, "aria-label": `${label} entrée ${n}`, onclick: () => press(bus, n) }, name, el("span", { class: "xn" }, String(n)), sub);
+      b._name = name;
+      b._sub = sub;
+      buses[bus][n] = b;
+      row2.appendChild(b);
+    }
+    rowsP.appendChild(row2);
+  }
+  function press(bus, n) {
+    if (bus === "pgm") mixSetPgm(n);
+    else if (bus === "pst") mixSetPst(n);
+    else {
+      MIX.key1.src = n;
+      explain(`Bus de clé : ${sourceLabel(meSource(n))} sera incrustée par KEY 1 (redimensionneur 2,5D du keyer).`, "mix:keybus");
+    }
+  }
+  body.appendChild(rowsP);
+  const grid = el("div", { class: "panelgrid" });
+  const tbtns = {};
+  const transP = el("div", { class: "hwpanel" }, el("h3", {}, "Module de transition"));
+  const tr = el("div", { class: "hwrow" });
+  for (const k in TRANS) {
+    const b = hwBtn(TRANS[k], { onclick: () => {
+      MIX.trans = k;
+      explain(TRANS_TXT[k] + " Lancez avec AUTO TRANS ou le levier.", "mix:trans");
+    } });
+    tbtns[k] = b;
+    tr.appendChild(b);
+  }
+  transP.appendChild(tr);
+  const wbtns = [];
+  const wr = el("div", { class: "hwrow" }, el("span", { class: "rl" }, "Motif"));
+  WIPES.forEach((w, i) => {
+    const b = hwBtn(w.split(" ")[0], { onclick: () => {
+      MIX.wipe = i;
+      MIX.trans = "wipe";
+      explain(`Motif de volet : ${w}.`, "mix:wipe");
+    } });
+    wbtns.push(b);
+    wr.appendChild(b);
+  });
+  transP.appendChild(wr);
+  const rate = el("input", { type: "number", min: 0, max: 200, value: MIX.rate, id: "mixrate", style: { width: "80px" } });
+  rate.addEventListener("change", () => {
+    MIX.rate = clamp(+rate.value || 0, 0, 200);
+    explain(`Durée de transition : ${MIX.rate} images = ${fmt(MIX.rate / 50, 2)} s à 50 i/s. Un enchaîné classique dure 12 à 25 images.`, "mix:rate");
+  });
+  const nb = hwBtn("BKGD", { onclick: () => {
+    MIX.next.bkgd = !MIX.next.bkgd;
+    if (!MIX.next.bkgd && !MIX.next.key1) MIX.next.key1 = true;
+    explain("Next transition : choisit ce qui change à la prochaine transition (l'arrière-plan, la clé, ou les deux).", "mix:next");
+  } });
+  const nk = hwBtn("KEY 1", { onclick: () => {
+    MIX.next.key1 = !MIX.next.key1;
+    if (!MIX.next.bkgd && !MIX.next.key1) MIX.next.bkgd = true;
+    explain("Next transition : choisit ce qui change à la prochaine transition (l'arrière-plan, la clé, ou les deux).", "mix:next");
+  } });
+  transP.appendChild(el("div", { class: "hwrow" }, el("span", { class: "rl" }, "Durée"), rate, el("span", { class: "note" }, "images (50 i/s)"), el("span", { style: { flex: 1 } }), el("span", { class: "rl" }, "Next"), nb, nk));
+  const tbar = el("input", { type: "range", min: 0, max: 100, step: 0.5, value: 0, class: "tbar", id: "tbar", "aria-label": "Levier de transition" });
+  tbar.addEventListener("input", () => {
+    mixTbar(+tbar.value / 100);
+    explain(`Levier de transition : ${Math.round(MIX.pos * 100)} %. Le truquiste le pousse à la main pour suivre le rythme de l'action (un enchaîné lent sur un plan large, par exemple).`, "mix:tbar");
+  });
+  const cut = hwBtn("CUT", { cls: "big", onclick: () => mixCut() });
+  const auto = hwBtn("AUTO TRANS", { cls: "big", onclick: () => mixAuto() });
+  const prog = el("div", { class: "lcd amber" }, "0 %");
+  transP.appendChild(el("div", { class: "hwrow", style: { alignItems: "flex-end", gap: "14px" } }, el("div", { class: "hwrow" }, cut, auto), tbar, el("div", { class: "list" }, el("span", { class: "note" }, "Levier"), prog)));
+  grid.appendChild(transP);
+  const keyP = el("div", { class: "hwpanel" }, el("h3", {}, "KEY 1 · redimensionneur 2,5D (image dans l'image)"));
+  const kOn = hwBtn("KEY CUT", { onclick: () => keyToggle(false) });
+  const kAuto = hwBtn("KEY AUTO", { onclick: () => keyToggle(true) });
+  const corners = {};
+  const cr = el("div", { class: "hwrow" }, el("span", { class: "rl" }, "Coin"));
+  for (const [k, l] of [["tl", "↖"], ["tr", "↗"], ["bl", "↙"], ["br", "↘"]]) {
+    const b = hwBtn(l, { onclick: () => {
+      MIX.key1.corner = k;
+      explain("Position de l'image incrustée (sur le pupitre : joystick positionneur).", "mix:pos");
+    } });
+    corners[k] = b;
+    cr.appendChild(b);
+  }
+  const ks = knob("Taille", 15, 60, 1, Math.round(MIX.key1.size * 100), (v) => {
+    MIX.key1.size = v / 100;
+    explain(`Taille de l'image incrustée : ${v} %. Le keyer redimensionne la source du bus de clé en temps réel.`, "mix:size");
+  }, (v) => v + " %");
+  keyP.append(el("div", { class: "hwrow" }, kOn, kAuto, el("span", { class: "note" }, "Source : bus KEY/AUX")), cr, ks);
+  grid.appendChild(keyP);
+  const dskP = el("div", { class: "hwpanel" }, el("h3", {}, "DSK (habillage aval) et fondu au noir"));
+  const d1c = hwBtn("DSK 1 CUT", { sub: "score", onclick: () => dskToggle(1, false) }), d1a = hwBtn("DSK 1 AUTO", { sub: "score", onclick: () => dskToggle(1, true) });
+  const d2c = hwBtn("DSK 2 CUT", { sub: "graph.", onclick: () => dskToggle(2, false) }), d2a = hwBtn("DSK 2 AUTO", { sub: "graph.", onclick: () => dskToggle(2, true) });
+  const ftb = hwBtn("FTB", { sub: "noir", onclick: () => ftbToggle() });
+  dskP.append(
+    el("div", { class: "hwrow" }, d1c, d1a),
+    el("div", { class: "hwrow" }, d2c, d2a),
+    el("div", { class: "hwrow" }, ftb),
+    el("p", { class: "note" }, "Les DSK sont au-dessus de tout : le score reste à l'écran pendant les ralentis. Le clean feed est le programme sans DSK.")
+  );
+  grid.appendChild(dskP);
+  MIX.snaps = MIX.snaps || [];
+  let storeMode = false;
+  const snapP = el("div", { class: "hwpanel" }, el("h3", {}, "Snapshots (mémoires d'état)"));
+  const store = hwBtn("STORE", { onclick: () => {
+    storeMode = !storeMode;
+    explain(storeMode ? "STORE : la prochaine touche SNAP mémorise l'état du pupitre (preset, clé, transition, DSK)." : "Mémorisation annulée.", "mix:snap");
+  } });
+  const snapBtns = [];
+  const snapRow = el("div", { class: "hwrow" });
+  for (let i = 0; i < 8; i++) {
+    const b = hwBtn("SNAP " + (i + 1), { sub: "vide", onclick: () => {
+      if (storeMode) {
+        MIX.snaps[i] = { pst: MIX.pst, trans: MIX.trans, wipe: MIX.wipe, rate: MIX.rate, next: { ...MIX.next }, key1: { ...MIX.key1 }, dsk1: MIX.dsk1.on, dsk2: MIX.dsk2.on };
+        storeMode = false;
+        explain(`Snapshot ${i + 1} mémorisé.`, "mix:snap");
+        return;
+      }
+      const sn = MIX.snaps[i];
+      if (!sn) {
+        toast("Snapshot vide : STORE puis SNAP pour mémoriser.");
+        return;
+      }
+      Object.assign(MIX, { pst: sn.pst, trans: sn.trans, wipe: sn.wipe, rate: sn.rate });
+      Object.assign(MIX.next, sn.next);
+      Object.assign(MIX.key1, { ...sn.key1, on: MIX.key1.on });
+      if (sn.dsk1 !== MIX.dsk1.on) dskToggle(1, true);
+      if (sn.dsk2 !== MIX.dsk2.on) dskToggle(2, true);
+      explain(`Snapshot ${i + 1} rappelé : preset, clé et transition prêts en une touche. Le PGM n'est pas modifié (on ne rappelle pas une mémoire « à l'aveugle » à l'antenne).`, "mix:snap");
+    } });
+    snapBtns.push(b);
+    snapRow.appendChild(b);
+  }
+  snapP.append(el("div", { class: "hwrow" }, store), snapRow, el("p", { class: "note" }, "Sur le pupitre ICP, les snapshots et la Shotbox rappellent des configurations complètes préparées avant le direct."));
+  grid.appendChild(snapP);
+  body.appendChild(grid);
+  body.appendChild(el("p", { class: "note" }, "Raccourcis : 1 à 9 et 0 = préparer l'entrée 1 à 10 sur le bus B (PST) · Maj + chiffre = direct au bus A (PGM) · Espace = CUT · Entrée = AUTO TRANS · W = WIPE · X = MIX · L = CLIP."));
+  let lastLabels = "";
+  return {
+    update() {
+      const labelsKey = Object.values(ROUTER.map).join(",") + S.cams.map((c) => c.id + c.type).join(",");
+      if (labelsKey !== lastLabels) {
+        lastLabels = labelsKey;
+        for (const bus of ["key", "pgm", "pst"]) for (let n = 1; n <= nIn; n++) {
+          const [l, sub] = oledName(n);
+          const b = buses[bus][n];
+          b._name.textContent = l;
+          b._sub.textContent = sub;
+        }
+      }
+      for (let n = 1; n <= nIn; n++) {
+        const id = meSource(n);
+        const dead = !id || id.startsWith("CAM") && !camById(+id.slice(3));
+        buses.pgm[n].classList.toggle("on", MIX.pgm === n);
+        buses.pst[n].classList.toggle("on", MIX.pst === n);
+        buses.key[n].classList.toggle("on", MIX.key1.src === n);
+        for (const bus of ["key", "pgm", "pst"]) buses[bus][n].classList.toggle("dead", dead);
+      }
+      for (const k in tbtns) tbtns[k].classList.toggle("lit", MIX.trans === k);
+      wbtns.forEach((b, i) => b.classList.toggle("lit2", MIX.wipe === i));
+      nb.classList.toggle("lit", MIX.next.bkgd);
+      nk.classList.toggle("lit", MIX.next.key1);
+      kOn.classList.toggle("pgm", MIX.key1.on);
+      kAuto.classList.toggle("pgm", MIX.key1.on);
+      for (const k in corners) corners[k].classList.toggle("lit2", MIX.key1.corner === k);
+      d1c.classList.toggle("pgm", MIX.dsk1.on);
+      d1a.classList.toggle("pgm", MIX.dsk1.on);
+      d2c.classList.toggle("pgm", MIX.dsk2.on);
+      d2a.classList.toggle("pgm", MIX.dsk2.on);
+      ftb.classList.toggle("pgm", MIX.ftb.on);
+      auto.classList.toggle("pgm", MIX.auto);
+      store.classList.toggle("lit", storeMode);
+      snapBtns.forEach((b, i) => {
+        b.classList.toggle("lit2", !!MIX.snaps[i]);
+        b.querySelector("small").textContent = MIX.snaps[i] ? "mémorisé" : "vide";
+      });
+      prog.textContent = Math.round(MIX.pos * 100) + " %";
+      if (MIX.auto && document.activeElement !== tbar) tbar.value = (MIX.tbarDir > 0 ? MIX.pos : 1 - MIX.pos) * 100;
+      if (document.activeElement !== rate) rate.value = MIX.rate;
+    },
+    key(e) {
+      if (e.target && (e.target.tagName === "INPUT" && e.target.type !== "range")) return false;
+      const d = e.code.startsWith("Digit") ? +e.code.slice(5) : e.code.startsWith("Numpad") && /\d/.test(e.code.slice(6)) ? +e.code.slice(6) : null;
+      if (d != null) {
+        const n = d === 0 ? 10 : d;
+        if (n > nIn) return true;
+        if (e.shiftKey) mixSetPgm(n);
+        else mixSetPst(n);
+        return true;
+      }
+      if (e.code === "Space") {
+        mixCut();
+        return true;
+      }
+      if (e.code === "Enter" || e.code === "NumpadEnter") {
+        mixAuto();
+        return true;
+      }
+      if (e.code === "KeyW") {
+        MIX.trans = "wipe";
+        return true;
+      }
+      if (e.code === "KeyX") {
+        MIX.trans = "mix";
+        return true;
+      }
+      if (e.code === "KeyL") {
+        MIX.trans = "stinger";
+        return true;
+      }
+      return false;
+    }
+  };
+}
+
+// src/ui/st_ipd.js
+var KEYWORDS = ["BUT", "TIR", "ARRÊT", "FAUTE", "CORNER", "HORS-JEU", "CARTON", "CONTRE", "BELLE ACTION", "AMBIANCE"];
+function buildIPD(body, arg, ctx) {
+  ctx.dock.append(el(
+    "div",
+    { class: "dockrow" },
+    el("div", { class: "monwrap grow" }, el("div", { class: "lab" }, "EVS A · PGM1"), el("div", { class: "mon fill", "data-gl": "EVSA" })),
+    el("div", { class: "monwrap grow" }, el("div", { class: "lab" }, "EVS B · PGM2"), el("div", { class: "mon fill", "data-gl": "EVSB" })),
+    el("div", { class: "monwrap grow" }, el("div", { class: "lab" }, "Programme"), el("div", { class: "mon fill", "data-gl": "PGM" }))
+  ), ctx.explainBox);
+  let selIdx = null;
+  let filter = "";
+  let ch = evsLayout().plays > 1 ? 1 : 0;
+  let playFrom = 0;
+  const q = el("input", { type: "text", placeholder: "Rechercher (mot-clé, nom, joueur, ID…)", "aria-label": "Rechercher un clip", style: { flex: "1 1 200px" } });
+  q.addEventListener("input", () => {
+    filter = q.value.trim().toLowerCase();
+    drawDb();
+  });
+  const tbody = el("tbody");
+  const db = el(
+    "div",
+    { class: "hwpanel ipd" },
+    el("h3", {}, "Database explorer · clips"),
+    el("div", { class: "hwrow" }, q),
+    el("div", { class: "tblwrap" }, el("table", { class: "tbl compact" }, el("thead", {}, el("tr", {}, ...["ID", "Nom", "TC IN", "Durée", "Angle", "Mots-clés", "Note"].map((h) => el("th", {}, h)))), tbody))
+  );
+  const detail = el("div", { class: "list" });
+  const kwRow = el("div", { class: "hwrow" });
+  const logList = el("div", { class: "list ipd-log" });
+  const evList = el("div", { class: "list" });
+  for (const kw of KEYWORDS) kwRow.appendChild(el("button", { class: "btn small", onclick: () => logNow(kw) }, kw));
+  const logger = el(
+    "div",
+    { class: "hwpanel ipd" },
+    el("h3", {}, "Clip logger · log en direct"),
+    el("p", { class: "note" }, "Un clic sur un mot-clé note le timecode du direct. Un log se transforme ensuite en clip (IN 4 s avant, OUT 3 s après)."),
+    kwRow,
+    el("div", { class: "lsm-sub" }, "Actions repérées par le scripte (à logger)"),
+    evList,
+    el("div", { class: "lsm-sub" }, "Logs"),
+    logList
+  );
+  const plBody = el("div", { class: "list" });
+  const chSel = el("select", { "aria-label": "Canal de lecture" });
+  const fillCh = () => {
+    chSel.innerHTML = "";
+    for (let i = 0; i < evsLayout().plays; i++) {
+      const o = el("option", { value: i }, `PGM${i + 1} (EVS ${i ? "B" : "A"})`);
+      if (i === ch) o.selected = true;
+      chSel.appendChild(o);
+    }
+  };
+  fillCh();
+  chSel.onchange = () => {
+    ch = +chSel.value;
+  };
+  const pl = el(
+    "div",
+    { class: "hwpanel ipd" },
+    el("h3", {}, "Playlist"),
+    plBody,
+    el(
+      "div",
+      { class: "hwrow" },
+      el("span", { class: "note" }, "Lire sur"),
+      chSel,
+      el("button", { class: "btn small primary", onclick: playPl }, "Lire la playlist"),
+      el("button", { class: "btn small", onclick: () => {
+        EVS.playlist = [];
+        explain("Playlist vidée.");
+      } }, "Vider")
+    ),
+    el("p", { class: "note" }, "Dans IPDirector, chaque élément peut avoir sa transition (cut, mix, volet) et sa vitesse ; ici les clips s'enchaînent en cut à la vitesse du levier.")
+  );
+  const ctl = el("div", { class: "hwpanel ipd" }, el("h3", {}, "Control panel · canaux du serveur"), el("div", { class: "list ipd-ch" }));
+  body.append(
+    el("div", { class: "ipd-grid" }, el("div", { class: "list" }, db, el("div", { class: "hwpanel ipd" }, el("h3", {}, "Clip sélectionné"), detail)), el("div", { class: "list" }, logger, pl, ctl)),
+    el("div", { class: "hwrow" }, el("button", { class: "btn small", onclick: () => openDevice("ipd", 1) }, "Voir le poste IPDirector"), el("button", { class: "btn small", onclick: () => openDevice("evs", 1) }, `Voir le serveur ${EQUIP.evsModel}`)),
+    el("p", { class: "note" }, "IPDirector travaille sur les mêmes clips que la télécommande LSM : un clip sauvegardé au poste ralentis apparaît ici, un nom ou un mot-clé ajouté ici apparaît sur l'écran du serveur. Interface simplifiée inspirée des modules Database explorer, Clip logger, Playlist et Control panel.")
+  );
+  function logNow(kw) {
+    const t = S.simTime;
+    EVS.logs.unshift({ t, kw: [kw], cam: recordedCams()[0] || null });
+    if (EVS.logs.length > 60) EVS.logs.pop();
+    explain(`Log « ${kw} » à ${tc(S.tcOffset + t)}. Pendant le direct, le logueur note tout ; à la mi-temps on retrouve instantanément tous les « ${kw} ».`, "ipd:log");
+    drawLogs();
+  }
+  function logToClip(lg) {
+    const [t0] = recRange();
+    const free = EVS.clips.findIndex((c, i) => !c && i < 100);
+    const idx = free >= 0 ? free : EVS.clips.length;
+    EVS.clips[idx] = { in: Math.max(t0, lg.t - 4), out: Math.min(S.simTime, lg.t + 3), cam: lg.cam || recordedCams()[0], name: lg.kw.join(" "), kw: [...lg.kw], rating: 0, savedT: S.simTime };
+    lg.clip = idx;
+    selIdx = idx;
+    explain(`Clip ${clipName(idx)} créé depuis le log « ${lg.kw.join(" ")} » : il apparaît aussi sur la télécommande LSM (page ${Math.floor(idx / 10) + 1}, F${idx % 10 + 1}).`);
+    drawAll();
+  }
+  function playPl() {
+    if (!EVS.playlist.length) {
+      toast("Playlist vide");
+      return;
+    }
+    evsAction(ch, "plstplay");
+    explain(`Playlist lancée sur PGM${ch + 1} : ${EVS.playlist.length} clips. Le réalisateur peut la prendre au mélangeur (EVS ${ch ? "B" : "A"}).`);
+  }
+  function drawDb() {
+    tbody.innerHTML = "";
+    EVS.clips.forEach((cl, i) => {
+      if (!cl) return;
+      const kw = (cl.kw || []).join(", ");
+      const txt = `${clipName(i)} ${cl.name || ""} ${kw}`.toLowerCase();
+      if (filter && !txt.includes(filter)) return;
+      tbody.appendChild(el(
+        "tr",
+        { class: i === selIdx ? "sel" : "", style: { cursor: "pointer" }, onclick: () => {
+          selIdx = i;
+          drawAll();
+        } },
+        el("td", { class: "mono" }, clipName(i)),
+        el("td", {}, cl.name || "—"),
+        el("td", { class: "mono" }, tc(S.tcOffset + cl.in).slice(3)),
+        el("td", { class: "mono" }, fmt(cl.out - cl.in, 1) + " s"),
+        el("td", {}, "CAM " + cl.cam),
+        el("td", {}, kw || "—"),
+        el("td", {}, "★".repeat(cl.rating || 0) || "—")
+      ));
+    });
+    if (!tbody.children.length) tbody.appendChild(el("tr", {}, el("td", { colspan: 7, class: "note" }, EVS.clips.some(Boolean) ? "Aucun clip ne correspond à la recherche." : "Aucun clip : sauvegardez des clips à la LSM (SHIFT + F) ou créez-en depuis un log.")));
+  }
+  function drawDetail() {
+    detail.innerHTML = "";
+    const cl = selIdx != null ? EVS.clips[selIdx] : null;
+    if (!cl) {
+      detail.appendChild(el("p", { class: "note" }, "Sélectionnez un clip dans la base."));
+      return;
+    }
+    const name = el("input", { type: "text", value: cl.name || "", "aria-label": "Nom du clip", placeholder: "Nom du clip" });
+    name.addEventListener("change", () => {
+      cl.name = name.value.slice(0, 40);
+      explain(`Clip ${clipName(selIdx)} renommé « ${cl.name} » : le nom apparaît aussi sur l'écran du serveur côté LSM.`);
+      drawDb();
+    });
+    const pls = el("select", { "aria-label": "Joueur" }, el("option", { value: "" }, "Ajouter un joueur…"), ...[...Array(22).keys()].map((p) => el("option", { value: p }, `${playerNumber(p)} ${playerName(p)}`)));
+    pls.onchange = () => {
+      if (pls.value === "") return;
+      cl.kw = [...cl.kw || [], playerName(+pls.value)];
+      drawAll();
+    };
+    const kws = el("div", { class: "hwrow" }, ...KEYWORDS.slice(0, 7).map((k) => el("button", { class: "btn small" + ((cl.kw || []).includes(k) ? " primary" : ""), onclick: () => {
+      cl.kw = (cl.kw || []).includes(k) ? cl.kw.filter((x) => x !== k) : [...cl.kw || [], k];
+      drawAll();
+    } }, k)));
+    const stars = el("div", { class: "hwrow" }, el("span", { class: "note" }, "Note"), ...[1, 2, 3].map((n) => el("button", { class: "btn small" + ((cl.rating || 0) >= n ? " primary" : ""), onclick: () => {
+      cl.rating = cl.rating === n ? 0 : n;
+      drawAll();
+    } }, "★".repeat(n))));
+    detail.append(
+      el("div", { class: "kv" }, el("dt", {}, "ID"), el("dd", {}, clipName(selIdx)), el("dt", {}, "TC IN / OUT"), el("dd", {}, `${tc(S.tcOffset + cl.in)} / ${tc(S.tcOffset + cl.out)}`), el("dt", {}, "Angles"), el("dd", {}, recordedCams().map((id, k) => `${"ABCDEFGH"[k]}=CAM ${id}`).join(" · "))),
+      name,
+      kws,
+      el("div", { class: "hwrow" }, pls),
+      stars,
+      el(
+        "div",
+        { class: "hwrow" },
+        el("button", { class: "btn small", onclick: () => {
+          EVS.playlist.push(selIdx);
+          explain(`Clip ${clipName(selIdx)} ajouté à la playlist (${EVS.playlist.length}).`);
+          drawPl();
+        } }, "Ajouter à la playlist"),
+        el("button", { class: "btn small", onclick: () => {
+          evsAction(ch, "recall", selIdx);
+          explain(`Clip ${clipName(selIdx)} chargé sur PGM${ch + 1}, prêt à jouer.`);
+        } }, `Charger sur PGM${ch + 1}`)
+      )
+    );
+  }
+  function drawLogs() {
+    logList.innerHTML = "";
+    for (const lg of EVS.logs.slice(0, 12)) logList.appendChild(el(
+      "div",
+      { class: "item" },
+      el("span", { class: "lcd amber" }, tc(S.tcOffset + lg.t).slice(3, 11)),
+      el("div", { class: "grow" }, el("div", { class: "t" }, lg.kw.join(" "))),
+      lg.clip != null ? el("span", { class: "pill ok" }, clipName(lg.clip)) : el("button", { class: "btn small", onclick: () => logToClip(lg) }, "→ Clip")
+    ));
+    if (!EVS.logs.length) logList.appendChild(el("p", { class: "note" }, "Aucun log."));
+  }
+  let lastEv = -1;
+  function drawEvents() {
+    if (S.events.length === lastEv) return;
+    lastEv = S.events.length;
+    evList.innerHTML = "";
+    for (const e of S.events.slice(-4).reverse()) evList.appendChild(el(
+      "div",
+      { class: "item" },
+      el("span", { class: "lcd amber" }, tc(S.tcOffset + e.t).slice(3, 11)),
+      el("div", { class: "grow" }, el("div", { class: "t" }, e.label)),
+      el("button", { class: "btn small", onclick: () => {
+        EVS.logs.unshift({ t: e.t, kw: [{ goal: "BUT", shot: "TIR", save: "ARRÊT" }[e.type] || "ACTION"], cam: recordedCams()[0] || null });
+        drawLogs();
+        explain(`Action « ${e.label} » loggée à son timecode exact.`);
+      } }, "Logger")
+    ));
+    if (!S.events.length) evList.appendChild(el("p", { class: "note" }, "Pas encore d'action notée."));
+  }
+  function drawPl() {
+    plBody.innerHTML = "";
+    let tot = 0;
+    EVS.playlist.forEach((idx, j) => {
+      const cl = EVS.clips[idx];
+      if (!cl) return;
+      tot += cl.out - cl.in;
+      plBody.appendChild(el(
+        "div",
+        { class: "item" },
+        el("span", { class: "mono" }, `${j + 1}.`),
+        el("div", { class: "grow" }, el("div", { class: "t" }, `${clipName(idx)} ${cl.name || ""}`), el("div", { class: "s" }, `${fmt(cl.out - cl.in, 1)} s à 100 % · CAM ${cl.cam}`)),
+        el("button", { class: "btn small", "aria-label": "Monter", onclick: () => {
+          if (j > 0) {
+            [EVS.playlist[j - 1], EVS.playlist[j]] = [EVS.playlist[j], EVS.playlist[j - 1]];
+            drawPl();
+          }
+        } }, "↑"),
+        el("button", { class: "btn small", "aria-label": "Retirer", onclick: () => {
+          EVS.playlist.splice(j, 1);
+          drawPl();
+        } }, "×")
+      ));
+    });
+    if (!EVS.playlist.length) plBody.appendChild(el("p", { class: "note" }, "Playlist vide : ajoutez des clips depuis la base."));
+    else plBody.appendChild(el("p", { class: "note" }, `Durée totale à 100 % : ${fmt(tot, 1)} s (à 50 % : ${fmt(tot * 2, 1)} s).`));
+  }
+  function drawCtl() {
+    const box = ctl.querySelector(".ipd-ch");
+    box.innerHTML = "";
+    const L = evsLayout();
+    for (let i = 0; i < L.plays; i++) {
+      const c = EVS.ch[i];
+      box.appendChild(el(
+        "div",
+        { class: "item" },
+        el("div", { class: "grow" }, el("div", { class: "t" }, `PGM${i + 1} · EVS ${i ? "B" : "A"}${meSource(MIX.pgm) === (i ? "EVSB" : "EVSA") ? " · ● ANTENNE" : ""}`), el("div", { class: "s" }, `${c.mode === "live" ? "E/E" : c.playing ? "lecture " + Math.round(c.speed * 100) + " %" : "pause"} · CAM ${c.cam} · TC ${tc(S.tcOffset + (c.mode === "live" ? S.simTime : c.t)).slice(3)}`)),
+        el("button", { class: "btn small", onclick: () => evsAction(i, "gotoin") }, "GOTO IN"),
+        el("button", { class: "btn small", onclick: () => evsAction(i, "playvar") }, "PLAY"),
+        el("button", { class: "btn small", onclick: () => evsAction(i, "live") }, "LIVE")
+      ));
+    }
+    box.appendChild(el("p", { class: "note" }, `Enregistrement : ${recordedCams().map((id) => "CAM " + id).join(", ") || "aucune entrée"} · ${L.label}.`));
+  }
+  function drawAll() {
+    drawDb();
+    drawDetail();
+    drawLogs();
+    drawPl();
+  }
+  drawAll();
+  let lastKey = "";
+  return {
+    update() {
+      const key = EVS.clips.map((c) => c ? c.in + c.name + (c.kw || []).length + c.rating : "").join() + "|" + EVS.playlist.join();
+      if (key !== lastKey) {
+        lastKey = key;
+        drawDb();
+        drawPl();
+        if (selIdx != null && !document.activeElement.closest?.(".ipd")) drawDetail();
+      }
+      drawEvents();
+      drawCtl();
+    }
+  };
+}
+
 // src/ui/stations.js
 var ST = { cur: null, lastUpd: 0 };
 var STATIONS = {
-  melangeur: { title: "Mélangeur — truquiste", build: buildMixer, layout: "top", dev: "mixer" },
+  melangeur: { title: "Mélangeur — truquiste", build: buildMixer, layout: "top", dev: "mixpanel" },
   realisateur: { title: "Réalisateur", build: buildDirector, layout: "top", dev: "mv" },
   scripte: { title: "Scripte", build: buildScripte, layout: "top sm" },
   habillage: { title: "Habillage", build: buildGfx, layout: "top" },
   producteur: { title: "Production", build: buildProd, layout: "top" },
   chefdecar: { title: "Chef de car", build: buildChef, layout: "top sm" },
   vision: { title: "Ingénieur vision — RCP", build: buildVision, layout: "side", dev: "rcp" },
-  evs: { title: "Ralentis — EVS / LSM", build: buildEVS, layout: "top", dev: "evs" },
+  evs: { title: "Ralentis — EVS XT4K / LSM", build: buildEVS, layout: "top", dev: "lsm" },
+  ipdirector: { title: "IPDirector — base de clips EVS", build: buildIPD, layout: "top sm", dev: "ipd" },
   son: { title: "Régie son", build: buildAudio, layout: "top" },
   hf: { title: "Régie HF", build: buildHF, layout: "side", dev: "rx" },
   grille: { title: "Grille de commutation", build: buildRouter, layout: "top", dev: "router" },
@@ -9449,175 +10357,6 @@ function srcButtonLabel(n) {
   }
   return [s ? s.short : id, { EVSA: "ralenti", EVSB: "ralenti", GFX: "graph.", STUDIO: "duplex", BARS: "mire", BLACK: "noir" }[id] || ""];
 }
-function buildMixer(body, arg, ctx) {
-  ctx.dock.append(dmon("mv", "Multiview (PGM, PVW et toutes les sources)"));
-  const buses = { key: [], pgm: [], pst: [] };
-  const rows = el("div", { class: "hwpanel" }, el("h3", {}, "Bus de sources (M/E 1)"));
-  for (const bus of ["key", "pgm", "pst"]) {
-    const row2 = el("div", { class: "hwrow" }, el("span", { class: "rl" }, bus === "key" ? "KEY 1" : bus.toUpperCase()));
-    for (let n = 1; n <= 22; n++) {
-      const [l, sub] = srcButtonLabel(n);
-      const b = hwBtn(l, { sub, onclick: () => {
-        if (bus === "pgm") mixSetPgm(n);
-        else if (bus === "pst") mixSetPst(n);
-        else MIX.key1.src = n;
-      } });
-      buses[bus][n] = b;
-      row2.appendChild(b);
-    }
-    rows.appendChild(row2);
-  }
-  body.appendChild(rows);
-  const grid = el("div", { class: "panelgrid" });
-  const tbtns = {};
-  const transP = el("div", { class: "hwpanel" }, el("h3", {}, "Transition"));
-  const tr = el("div", { class: "hwrow" });
-  const TRANS_TXT = { mix: "MIX (fondu enchaîné) : les deux images se superposent pendant la durée choisie.", wipe: "VOLET : une forme (motif) découvre la nouvelle image.", dip: "DIP : passage par une couleur (souvent le noir ou le blanc) au milieu de la transition.", dve: "DVE PUSH : l'image entrante pousse l'ancienne hors du cadre (effet numérique).", stinger: "VOLET LOGO (stinger) : une animation plein écran avec key masque la coupe au milieu. Typique avant et après un ralenti." };
-  for (const k in TRANS) {
-    const b = hwBtn(TRANS[k], { onclick: () => {
-      MIX.trans = k;
-      explain(TRANS_TXT[k] + " Lancez avec AUTO ou la barre T.", "mix:trans");
-    } });
-    tbtns[k] = b;
-    tr.appendChild(b);
-  }
-  transP.appendChild(tr);
-  const wbtns = [];
-  const wr = el("div", { class: "hwrow" }, el("span", { class: "rl" }, "Motif"));
-  WIPES.forEach((w, i) => {
-    const b = hwBtn(w.split(" ")[0], { onclick: () => {
-      MIX.wipe = i;
-      MIX.trans = "wipe";
-    } });
-    wbtns.push(b);
-    wr.appendChild(b);
-  });
-  transP.appendChild(wr);
-  const rate = el("input", { type: "number", min: 0, max: 200, value: MIX.rate, id: "mixrate", style: { width: "80px" } });
-  rate.addEventListener("change", () => {
-    MIX.rate = clamp(+rate.value || 0, 0, 200);
-    explain(`Durée de transition : ${MIX.rate} images = ${fmt(MIX.rate / 50, 2)} s à 50 i/s. Un enchaîné classique dure 12 à 25 images.`, "mix:rate");
-  });
-  const nb = hwBtn("BKGD", { onclick: () => {
-    MIX.next.bkgd = !MIX.next.bkgd;
-    if (!MIX.next.bkgd && !MIX.next.key1) MIX.next.key1 = true;
-  } });
-  const nk = hwBtn("KEY 1", { onclick: () => {
-    MIX.next.key1 = !MIX.next.key1;
-    if (!MIX.next.bkgd && !MIX.next.key1) MIX.next.bkgd = true;
-  } });
-  transP.appendChild(el("div", { class: "hwrow" }, el("span", { class: "rl" }, "Durée"), rate, el("span", { class: "note" }, "images (50 i/s)"), el("span", { style: { flex: 1 } }), el("span", { class: "rl" }, "Next"), nb, nk));
-  const tbar = el("input", { type: "range", min: 0, max: 100, step: 0.5, value: 0, class: "tbar", id: "tbar", "aria-label": "Barre de transition" });
-  tbar.addEventListener("input", () => {
-    mixTbar(+tbar.value / 100);
-    explain(`Barre T : ${Math.round(MIX.pos * 100)} % de la transition. Le truquiste la pousse à la main pour suivre le rythme de l'action (un enchaîné lent sur un plan large, par exemple).`, "mix:tbar");
-  });
-  const cut = hwBtn("CUT", { cls: "big", onclick: () => mixCut() });
-  const auto = hwBtn("AUTO", { cls: "big", onclick: () => mixAuto() });
-  const prog = el("div", { class: "lcd amber" }, "0 %");
-  transP.appendChild(el("div", { class: "hwrow", style: { alignItems: "flex-end", gap: "14px" } }, el("div", { class: "hwrow" }, cut, auto), tbar, el("div", { class: "list" }, el("span", { class: "note" }, "Barre T"), prog)));
-  grid.appendChild(transP);
-  const keyP = el("div", { class: "hwpanel" }, el("h3", {}, "Incrustation KEY 1 (DVE / image dans l'image)"));
-  const kOn = hwBtn("KEY CUT", { onclick: () => keyToggle(false) });
-  const kAuto = hwBtn("KEY AUTO", { onclick: () => keyToggle(true) });
-  const corners = {};
-  const cr = el("div", { class: "hwrow" }, el("span", { class: "rl" }, "Coin"));
-  for (const [k, l] of [["tl", "↖"], ["tr", "↗"], ["bl", "↙"], ["br", "↘"]]) {
-    const b = hwBtn(l, { onclick: () => {
-      MIX.key1.corner = k;
-    } });
-    corners[k] = b;
-    cr.appendChild(b);
-  }
-  const ks = knob("Taille", 15, 60, 1, Math.round(MIX.key1.size * 100), (v) => {
-    MIX.key1.size = v / 100;
-    explain(`Taille de l'image incrustée : ${v} %. Le DVE redimensionne la source KEY 1 en temps réel.`, "mix:size");
-  }, (v) => v + " %");
-  keyP.append(el("div", { class: "hwrow" }, kOn, kAuto, el("span", { class: "note" }, "Source : bus KEY 1")), cr, ks);
-  grid.appendChild(keyP);
-  const dskP = el("div", { class: "hwpanel" }, el("h3", {}, "DSK (habillage aval) et fondu au noir"));
-  const d1c = hwBtn("DSK 1 CUT", { sub: "score", onclick: () => dskToggle(1, false) }), d1a = hwBtn("DSK 1 AUTO", { sub: "score", onclick: () => dskToggle(1, true) });
-  const d2c = hwBtn("DSK 2 CUT", { sub: "graph.", onclick: () => dskToggle(2, false) }), d2a = hwBtn("DSK 2 AUTO", { sub: "graph.", onclick: () => dskToggle(2, true) });
-  const ftb = hwBtn("FTB", { sub: "noir", onclick: () => ftbToggle() });
-  dskP.append(
-    el("div", { class: "hwrow" }, d1c, d1a),
-    el("div", { class: "hwrow" }, d2c, d2a),
-    el("div", { class: "hwrow" }, ftb),
-    el("p", { class: "note" }, "Les DSK sont au-dessus de tout : le score reste à l'écran pendant les ralentis. Le clean feed est le programme sans DSK.")
-  );
-  grid.appendChild(dskP);
-  body.appendChild(grid);
-  body.appendChild(el("p", { class: "note" }, "Raccourcis : 1 à 9 et 0 = préparer l'entrée 1 à 10 sur le PST · Maj + chiffre = direct au PGM · Espace = CUT · Entrée = AUTO · W = volet · X = mix · L = volet logo."));
-  let lastLabels = "";
-  return {
-    update() {
-      const labelsKey = Object.values(ROUTER.map).join(",") + S.cams.map((c) => c.id + c.type).join(",");
-      if (labelsKey !== lastLabels) {
-        lastLabels = labelsKey;
-        for (const bus of ["key", "pgm", "pst"]) for (let n = 1; n <= 22; n++) {
-          const [l, sub] = srcButtonLabel(n);
-          const b = buses[bus][n];
-          b.firstChild.textContent = l;
-          b.querySelector("small").textContent = sub;
-        }
-      }
-      for (let n = 1; n <= 22; n++) {
-        const id = meSource(n);
-        const dead = id && id.startsWith("CAM") && !camById(+id.slice(3));
-        buses.pgm[n].className = "hw" + (MIX.pgm === n ? " pgm" : "") + (dead ? " dead" : "");
-        buses.pst[n].className = "hw" + (MIX.pst === n ? " pst" : "") + (dead ? " dead" : "");
-        buses.key[n].className = "hw" + (MIX.key1.src === n ? " lit" : "") + (dead ? " dead" : "");
-      }
-      for (const k in tbtns) tbtns[k].classList.toggle("lit", MIX.trans === k);
-      wbtns.forEach((b, i) => b.classList.toggle("lit2", MIX.wipe === i));
-      nb.classList.toggle("lit", MIX.next.bkgd);
-      nk.classList.toggle("lit", MIX.next.key1);
-      kOn.classList.toggle("pgm", MIX.key1.on);
-      kAuto.classList.toggle("pgm", MIX.key1.on);
-      for (const k in corners) corners[k].classList.toggle("lit2", MIX.key1.corner === k);
-      d1c.classList.toggle("pgm", MIX.dsk1.on);
-      d1a.classList.toggle("pgm", MIX.dsk1.on);
-      d2c.classList.toggle("pgm", MIX.dsk2.on);
-      d2a.classList.toggle("pgm", MIX.dsk2.on);
-      ftb.classList.toggle("pgm", MIX.ftb.on);
-      auto.classList.toggle("pgm", MIX.auto);
-      prog.textContent = Math.round(MIX.pos * 100) + " %";
-      if (MIX.auto && document.activeElement !== tbar) tbar.value = (MIX.tbarDir > 0 ? MIX.pos : 1 - MIX.pos) * 100;
-      if (document.activeElement !== rate) rate.value = MIX.rate;
-    },
-    key(e) {
-      if (e.target && (e.target.tagName === "INPUT" && e.target.type !== "range")) return false;
-      const d = e.code.startsWith("Digit") ? +e.code.slice(5) : e.code.startsWith("Numpad") && /\d/.test(e.code.slice(6)) ? +e.code.slice(6) : null;
-      if (d != null) {
-        const n = d === 0 ? 10 : d;
-        if (e.shiftKey) mixSetPgm(n);
-        else mixSetPst(n);
-        return true;
-      }
-      if (e.code === "Space") {
-        mixCut();
-        return true;
-      }
-      if (e.code === "Enter" || e.code === "NumpadEnter") {
-        mixAuto();
-        return true;
-      }
-      if (e.code === "KeyW") {
-        MIX.trans = "wipe";
-        return true;
-      }
-      if (e.code === "KeyX") {
-        MIX.trans = "mix";
-        return true;
-      }
-      if (e.code === "KeyL") {
-        MIX.trans = "stinger";
-        return true;
-      }
-      return false;
-    }
-  };
-}
 function buildDirector(body, arg, ctx) {
   ctx.dock.append(dmon("mv", "Multiview — le mur d'écrans du réalisateur"));
   const p = el("div", { class: "hwpanel" }, el("h3", {}, "Ordres au truquiste"));
@@ -9625,7 +10364,7 @@ function buildDirector(body, arg, ctx) {
   const btnsP = {};
   const srcs = () => {
     const l = [];
-    for (let n = 1; n <= 22; n++) {
+    for (let n = 1; n <= mixInputs(); n++) {
       const id = meSource(n);
       if (!id) continue;
       if (id.startsWith("CAM") && !camById(+id.slice(3))) continue;
@@ -9982,7 +10721,7 @@ function cablingList() {
   } };
 }
 function materielTab() {
-  const box = el("div", { class: "list" }, el("p", { class: "note" }, "Faces avant et arrière des appareils, d'après les fiches techniques constructeurs (chaîne caméra type Sony HDC / HDCU / RCP, serveur EVS XT-VIA et télécommande LSM-VIA). Les connecteurs câblés dans votre installation sont entourés de la couleur du signal."));
+  const box = el("div", { class: "list" }, el("p", { class: "note" }, "Faces avant et arrière des appareils, d'après les fiches techniques constructeurs (chaîne caméra type Sony HDC / HDCU / RCP, mélangeur Sony XVS-6000 et pupitre ICP-X7000, serveur EVS XT4K, télécommande LSM et IPDirector). Les connecteurs câblés dans votre installation sont entourés de la couleur du signal."));
   const row2 = el("div", { class: "grid2" });
   for (const [k, l] of DEVICE_LIST) row2.appendChild(el("button", { class: "choice", onclick: () => openDevice(k, k === "cam" || k === "ccu" || k === "rcp" ? S.cams[0] ? S.cams[0].id : 1 : 1) }, el("b", { style: { fontSize: "17px" } }, l), el("span", {}, DEV_NAMES[k] || "")));
   box.append(row2);
@@ -11204,7 +11943,7 @@ var MISSIONS = [
   { id: "m10b", title: "Les barres au line-up", text: "Au poste Ingé vision, envoyez les barres d'une caméra (touche BARS du RCP), retrouvez-les sur le multiview, puis revenez à l'image.", check: () => S.flags && S.flags.barsCycle },
   { id: "m11", title: "Habillage", text: "Mettez le score à l'antenne (DSK 1 au mélangeur), puis jouez un bandeau joueur depuis le poste Habillage avec le DSK 2 à l'antenne.", check: () => MIX.dsk1.on && MIX.dsk2.on && GFX.template === "lower" && GFX.anim > 0.5 },
   { id: "m12", title: "Le ralenti", text: "Au poste EVS : après une action, DERNIÈRE ACTION (ou jog + MARK IN), puis passez l'EVS A au PGM et lancez la lecture au levier à 60 % maximum.", check: () => meSource(MIX.pgm) === "EVSA" && EVS.ch[0].playing && EVS.ch[0].speed <= 0.6 },
-  { id: "m13", title: "Le volet logo", text: "Au mélangeur, entrez ou sortez d'un ralenti avec la transition VOLET LOGO.", check: () => S.stats.stingers >= 1 },
+  { id: "m13", title: "Le volet logo", text: "Au mélangeur, entrez ou sortez d'un ralenti avec le volet logo (transition CLIP de la frame memory).", check: () => S.stats.stingers >= 1 },
   { id: "m13b", title: "Clips et playlist", text: "Au poste EVS : sauvegardez deux clips (SHIFT puis F1, SHIFT puis F2), ajoutez-les à la playlist (PLST puis F1 et F2) et lancez PLST PLAY.", check: () => EVS.playlist.length >= 2 && EVS.ch.some((c) => c.pl) },
   { id: "m14", title: "La synchro", text: "Dans la zone technique (au fond du car), ouvrez le poste Synchro (SPG).", check: () => S.visited.synchro },
   { id: "m15", title: "Retour antenne", text: "Au poste Transmission, comparez le départ et le retour antenne : repérez le délai.", check: () => S.visited.transmission },
@@ -11269,6 +12008,7 @@ var STATION_LIST = [
   ["chefdecar", "Car · production"],
   ["vision", "Car · vision"],
   ["evs", "Car · ralentis"],
+  ["ipdirector", "Car · ralentis"],
   ["son", "Car · régie son"],
   ["hf", "Car · zone technique"],
   ["grille", "Car · zone technique"],
@@ -11341,7 +12081,7 @@ function openGuide(tab = "missions") {
       }
     }
     if (k === "materiel") {
-      content.append(el("p", { class: "note" }, "Faces avant et arrière des appareils, connecteurs, signaux et raccordements de votre installation. Inventaire des connecteurs d'après les fiches techniques (chaîne caméra type Sony HDC-5500 / HDCU-5500 / RCP-3500, serveur EVS XT-VIA, télécommande LSM-VIA). Raccourci : touche K."));
+      content.append(el("p", { class: "note" }, "Faces avant et arrière des appareils, connecteurs, signaux et raccordements de votre installation. Inventaire des connecteurs d'après les fiches techniques (chaîne caméra type Sony HDC-5500 / HDCU-5500 / RCP-3500, mélangeur Sony XVS-6000 et pupitre ICP-X7000, serveur EVS XT4K, télécommande LSM, IPDirector). Raccourci : touche K."));
       const row2 = el("div", { class: "grid2" });
       for (const [kk, l] of DEVICE_LIST) row2.appendChild(el("button", { class: "choice", onclick: () => openDevice(kk, ["cam", "ccu", "rcp"].includes(kk) && S.cams[0] ? S.cams[0].id : 1) }, el("b", { style: { fontSize: "17px" } }, l), el("span", {}, DEVICES[kk] ? DEVICES[kk].title : "")));
       content.append(row2);
