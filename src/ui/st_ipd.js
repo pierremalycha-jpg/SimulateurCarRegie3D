@@ -76,7 +76,7 @@ export function buildIPD(body, arg, ctx) {
         el('td', { class: 'mono' }, clipName(i)), el('td', {}, cl.name || '—'), el('td', { class: 'mono' }, tc(S.tcOffset + cl.in).slice(3)), el('td', { class: 'mono' }, fmt(cl.out - cl.in, 1) + ' s'),
         el('td', {}, 'CAM ' + cl.cam), el('td', {}, kw || '—'), el('td', {}, '★'.repeat(cl.rating || 0) || '—')));
     });
-    if (!tbody.children.length) tbody.appendChild(el('tr', {}, el('td', { colspan: 7, class: 'note' }, EVS.clips.some(Boolean) ? 'Aucun clip ne correspond à la recherche.' : 'Aucun clip : sauvegardez des clips à la LSM (SHIFT + F) ou créez-en depuis un log.')));
+    if (!tbody.children.length) tbody.appendChild(el('tr', {}, el('td', { colspan: 7, class: 'note' }, EVS.clips.some(Boolean) ? 'Aucun clip ne correspond à la recherche.' : 'Aucun clip : créez des clips à la LSM (IN / OUT puis une touche F libre) ou créez-en depuis un log.')));
   }
   function drawDetail() {
     detail.innerHTML = '';

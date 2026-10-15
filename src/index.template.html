@@ -173,6 +173,12 @@ input[type=range] { accent-color: var(--amber); max-width: 100%; }
 .lcd { font-family: var(--f-mono); background: #0a1208; color: #9dff8a; border: 1px solid #23401c; border-radius: 4px; padding: 6px 10px; font-size: 15px; letter-spacing: .04em; white-space: nowrap; }
 .lcd.amber { background: #140e04; color: var(--amber); border-color: #4a3509; }
 .lcd.big { font-size: 26px; }
+.lcd.red { background: #1a0606; color: #ff8a80; border-color: #5a1a16; } .lcd.green { color: #8cf0a8; }
+.strips { flex-wrap: nowrap; overflow-x: auto; align-items: stretch; gap: 8px; padding-bottom: 6px; }
+.strip { width: 118px; flex: 0 0 118px; align-items: center; padding: 8px 6px; }
+.strip h3 { font-size: 11.5px; min-height: 2.6em; text-align: center; line-height: 1.25; }
+.hw.small { min-width: 0; padding: 4px 8px; font-size: 11.5px; }
+.hw.pvw.lit { background: #ff9f43; border-color: #ff6b3d; box-shadow: 0 0 10px rgba(255,107,61,.6); }
 canvas.scope { background: #05080a; border: 1px solid var(--line2); border-radius: 3px; width: 100%; max-width: 640px; aspect-ratio: 16/9; display: block; }
 .splitcol { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 12px; align-items: start; }
 @media (max-width: 900px) { .splitcol { grid-template-columns: minmax(0,1fr); } .statusbar { max-width: 100%; bottom: calc(10px + 25vw); } }

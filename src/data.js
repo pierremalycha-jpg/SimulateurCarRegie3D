@@ -321,8 +321,8 @@ export const STATION_INFO = {
     title: 'Ingénieur(e) du son', where: 'Régie son (cabine isolée)',
     role: 'Mixe le son du programme : ambiance des tribunes, micros bord terrain (frappes de balle, coups de sifflet), commentaires. Fournit le son international (sans commentaires), gère les retours des commentateurs (N-1) et la conformité de loudness.',
     gear: ['Console numérique (type Lawo mc², Calrec Artemis/Apollo)', 'Micros : canons bord terrain, couples d\'ambiance en tribune, micros commentateurs', 'Liaisons MADI / Dante / ST 2110-30, embedding de l\'audio dans le SDI', 'Mesure de loudness (EBU R128)'],
-    process: ['Installation des micros par l\'équipe son (chef OPS)', 'Line-up : 1 kHz à -18 dBFS sur toutes les liaisons', 'Direct : équilibre ambiance / effets / commentaires, cible -23 LUFS'],
-    tips: ['EBU R128 : -23 LUFS intégré, true peak maximum -1 dBTP.', 'Le son voyage avec l\'image : 16 canaux audio peuvent être embeddés dans un flux SDI.'],
+    process: ['Installation des micros par l\'équipe son (chef OPS)', 'Line-up : 1 kHz à -18 dBFS sur toutes les liaisons', 'Embedder du départ réglé selon le plan de son de la chaîne (PGM, international…)', 'Retours N-1 des commentateurs et du duplex vérifiés (pas de voix dans son propre retour)', 'Retard de ligne calé sur l\'image (caméra HF comprise)', 'Direct : équilibre ambiance / effets / commentaires, cible -23 LUFS'],
+    tips: ['EBU R128 : -23 LUFS intégré, true peak maximum -1 dBTP.', 'Le son voyage avec l\'image : 16 canaux audio peuvent être embeddés dans un flux SDI HD.', 'Synchro labiale (EBU R37) : son en avance de 40 ms au plus, en retard de 60 ms au plus.'],
   },
   hf: {
     title: 'Technicien(ne) HF', where: 'Zone technique / car HF',
@@ -449,6 +449,10 @@ export const GLOSSARY = [
   ['Jackfield / patch', 'Panneau de brassage manuel (BNC, fibres) pour les secours et les dépannages.'],
   ['Synchroniseur d\'images', 'Frame sync : remet en phase une source externe non verrouillée.'],
   ['Embedding', 'Insertion de l\'audio dans le flux SDI (et désembedding : extraction).'],
+  ['Plan de son', 'Affectation demandée par le diffuseur : quel son sur quelle paire du SDI (ex. 1-2 PGM stéréo, 3-4 international).'],
+  ['Son international', 'Mix d\'ambiance et d\'effets sans aucune voix, livré aux diffuseurs étrangers qui y ajoutent leurs commentaires.'],
+  ['Synchro labiale', 'Alignement du son sur l\'image (lip-sync). Tolérance EBU R37 : son en avance de 40 ms au plus, en retard de 60 ms au plus.'],
+  ['Retard de ligne', 'Retard ajouté au son pour compenser la latence de l\'image (codec HF, conversions, synchroniseurs).'],
   ['MADI', 'AES10 : 64 canaux audio numériques sur un coaxial ou une fibre.'],
   ['N-1', 'Mix-minus : retour audio contenant tout le programme sauf la voix de celui qui l\'écoute.'],
   ['HDR / HLG', 'Haute dynamique. HLG (Hybrid Log-Gamma, ITU-R BT.2100) est le plus utilisé en direct ; on dérive souvent le SDR (BT.709) depuis le HDR.'],
@@ -693,6 +697,7 @@ export const GUIDE = [
 <h3>La télécommande LSM (Multicam)</h3>
 <ul>
 <li><b>Touches à double fonction</b> : IN / GOTO IN, OUT / GOTO OUT, PLST / BROWSE… la fonction secondaire s'obtient avec SHIFT.</li>
+<li><b>Clips</b> : IN et/ou OUT, puis une touche F libre crée le clip ; une touche F occupée le rappelle.</li>
 <li><b>Pages</b> : SHIFT + PAGE puis une touche F choisit la page 1 à 10.</li>
 <li><b>RETURN</b> : dans un clip trop court, on revient sur la même image dans le train pour récupérer ce qu'il y a avant ou après.</li>
 <li><b>TAKE</b> : en mode PGM + PRV, échange PGM et PRV ; en mode 2 PGM, échange le contenu des deux sorties.</li>

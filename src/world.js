@@ -685,11 +685,11 @@ function buildCompound(scene) {
   // inscription du car
   const lab = makeCanvas(1024, 160); const lg = lab.getContext('2d');
   lg.fillStyle = 'rgba(0,0,0,0)'; lg.clearRect(0, 0, 1024, 160);
-  lg.font = '700 96px "Saira Condensed", "Arial Narrow", sans-serif'; lg.fillStyle = '#1c2733'; lg.fillText('CAR RÉGIE UHD · 12', 20, 110);
   const lt = new THREE.CanvasTexture(lab); lt.colorSpace = THREE.SRGBColorSpace;
   const signMat = new THREE.MeshLambertMaterial({ map: lt, transparent: true });
   const sign = new THREE.Mesh(new THREE.PlaneGeometry(9, 1.4), signMat); sign.position.set(T.cx - 3, T.floor + 2.1, T.z1 + 0.03); g.add(sign);
   W.truckSign = { canvas: lab, tex: lt };
+  paintTruckSign();
   setLayer(g, 2);
   scene.add(g);
   // obstacles
@@ -750,4 +750,16 @@ export function applyLighting(key) {
 export function updateWorld(t) {
   if (W.boardsMat) W.boardsMat.uniforms.uOff.value = Math.floor(t / 8) * (1 / 8) + (t % 8 < 0.4 ? (t % 8) / 0.4 * 0.0 : 0);
   if (W.crowdMat) W.crowdMat.uniforms.uTime.value = t;
+}
+
+// inscription sur le flanc du car : nom donné par le formateur (sinon « Car régie ») et format
+export function paintTruckSign(name) {
+  if (!W.truckSign) return;
+  const { canvas, tex } = W.truckSign; const g = canvas.getContext('2d');
+  g.clearRect(0, 0, 1024, 160);
+  const txt = ((name || 'Car régie') + ' · ' + (S.format === 'UHD' ? 'UHD' : 'HD')).toUpperCase().slice(0, 32);
+  let size = 96; g.font = `700 ${size}px "Saira Condensed", "Arial Narrow", sans-serif`;
+  while (g.measureText(txt).width > 990 && size > 40) { size -= 4; g.font = `700 ${size}px "Saira Condensed", "Arial Narrow", sans-serif`; }
+  g.fillStyle = '#1c2733'; g.fillText(txt, 20, 110);
+  tex.needsUpdate = true;
 }

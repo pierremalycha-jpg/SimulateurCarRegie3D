@@ -4,7 +4,7 @@ import { $, toast, intercom, modal } from './ui/common.js';
 import { MIX, meSource, ROUTER, EVS, resolve, feedOf } from './pipeline.js';
 import { patchScore } from './patch.js';
 import { FAULTS, injectFault, ACTIVE } from './faults.js';
-import { AU } from './audio.js';
+import { AU, soundPlanOk, SOUND_PLAN, embLabel } from './audio.js';
 import { addScenarioResult, offerDownload, CFG } from './shared.js';
 
 // ----------------------------------------------------------------------------------
@@ -33,9 +33,9 @@ const PHASES = [
   },
   {
     id: 'line', title: 'Test de ligne avec la chaîne', max: 15, minutes: 6,
-    brief: 'Poste Transmission ou Grille : envoyez la mire sur le départ TX1 et le 1 kHz (Régie son : démuter « Mire 1 kHz »). Quand la chaîne confirme, remettez le PGM sur le départ et coupez le 1 kHz.',
-    goals: () => [['Mire envoyée sur le départ TX1', !!SC.line.bars], ['1 kHz envoyé', !!SC.line.tone], ['Réception confirmée par la chaîne', !!SC.line.confirmed], ['PGM remis sur le départ, 1 kHz coupé', !!SC.line.back]],
-    score: () => (SC.line.bars ? 4 : 0) + (SC.line.tone ? 4 : 0) + (SC.line.back ? 7 : 0),
+    brief: 'Régie son : réglez l\'embedder du départ selon le plan de son de la chaîne, puis démutez « Mire 1 kHz ». Poste Transmission ou Grille : envoyez la mire sur le départ TX1. Quand la chaîne confirme, remettez le PGM sur le départ et coupez le 1 kHz.',
+    goals: () => [['Embedder conforme au plan de son', soundPlanOk()], ['Mire envoyée sur le départ TX1', !!SC.line.bars], ['1 kHz envoyé', !!SC.line.tone], ['Réception confirmée par la chaîne', !!SC.line.confirmed], ['PGM remis sur le départ, 1 kHz coupé', !!SC.line.back]],
+    score: () => (soundPlanOk() ? 3 : 0) + (SC.line.bars ? 3 : 0) + (SC.line.tone ? 3 : 0) + (SC.line.back ? 6 : 0),
     done: () => !!SC.line.back,
   },
   {
@@ -58,6 +58,8 @@ export function startScenario() {
   Object.assign(SC, { on: true, phase: -1, t0: S.time, log: [], line: {}, air: {}, faults: [], phases: [] });
   // caméras installées mais non réglées : on dérègle volontairement le line-up
   for (const c of S.cams) { c.lineup = null; c.paint.iris = Math.min(22, c.paint.iris * (1.4 + Math.random() * 1.2)); c.paint.wbR += Math.round((Math.random() - 0.5) * 50); c.paint.wbB += Math.round((Math.random() - 0.5) * 50); c.paint.autoIris = false; }
+  // embedder laissé dans la configuration du match précédent
+  AU.emb.splice(0, 4, 'pgm', 'none', 'none', 'none'); if (soundPlanOk()) AU.emb[0] = 'none';
   log('Début du scénario : arrivée au car, tout est installé mais rien n\'est brassé.');
   intercom('CHEF DE CAR', 'Bienvenue au car ! Tout est installé, à toi de brasser, de faire le line-up et le test de ligne avant l\'antenne.', 'ok');
   nextPhase();
@@ -122,7 +124,8 @@ export function updateScenario(dt) {
     if (AU.ch.tone && !AU.ch.tone.mute && AU.ch.tone.fader > -3) SC.line.tone = true;
     if (SC.line.bars && SC.line.tone && !SC.line.confirmed) {
       if (!confirmT) confirmT = S.time;
-      if (S.time - confirmT > 5) { SC.line.confirmed = true; intercom('CHAÎNE', 'Mire et 1 kHz bien reçus, niveaux conformes, ident OK. Vous pouvez repasser le programme.', 'ok'); log('La chaîne confirme la réception de la mire et du 1 kHz.'); }
+      if (S.time - confirmT > 5 && !soundPlanOk()) { if (!SC.line.planWarn) { SC.line.planWarn = true; intercom('CHAÎNE', `Mire reçue, mais le son n'est pas sur les bonnes paires. Notre plan de son : ${SOUND_PLAN.map((v, i) => `${2 * i + 1}-${2 * i + 2} ${embLabel(v)}`).join(', ')}.`, 'bad'); log('La chaîne signale un plan de son non conforme.'); } }
+      else if (S.time - confirmT > 5) { SC.line.confirmed = true; intercom('CHAÎNE', 'Mire et 1 kHz bien reçus, niveaux conformes, ident OK. Vous pouvez repasser le programme.', 'ok'); log('La chaîne confirme la réception de la mire et du 1 kHz.'); }
     }
     if (SC.line.confirmed && dep === 'PGM' && AU.ch.tone.mute) { if (!SC.line.back) log('PGM remis sur le départ, 1 kHz coupé.'); SC.line.back = true; }
   }

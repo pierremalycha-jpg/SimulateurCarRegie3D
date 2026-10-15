@@ -96,7 +96,7 @@ export function buildEVS(body, arg = 0, ctx) {
   const right = el('div', { class: 'lsm-right' }, el('div', { class: 'hwrow', style: { gap: '16px', alignItems: 'center' } }, el('div', { class: 'list', style: { alignItems: 'center' } }, el('span', { class: 'note' }, 'LEVIER'), lever, levTxt), presets), wheel, el('span', { class: 'note' }, 'JOG'));
   body.append(el('div', { class: 'lsm' }, keypad, right, screen),
     el('div', { class: 'hwrow' }, el('button', { class: 'btn small', onclick: () => openDevice('lsm', 1) }, 'Voir la télécommande LSM'), el('button', { class: 'btn small', onclick: () => openDevice('evs', 1) }, `Voir le serveur ${EQUIP.evsModel}`), el('button', { class: 'btn small', onclick: () => openDevice('ipd', 1) }, 'Voir le poste IPDirector')),
-    el('p', { class: 'note' }, 'Méthode : laissez la sortie en LIVE pendant le jeu. Après l\'action : DERN. ACTION (ou jog arrière + IN), choisissez l\'angle, puis poussez le levier quand le réalisateur envoie l\'EVS. Clips : SHIFT + F = sauvegarder · F = rappeler · SHIFT + PAGE puis F = changer de page. Clavier : Espace lecture/pause · I / O · L live · ← → image par image (Maj = 10) · ↑ ↓ levier · 1-8 angle.'),
+    el('p', { class: 'note' }, 'Méthode : laissez la sortie en LIVE pendant le jeu. Après l\'action : DERN. ACTION (ou jog arrière + IN), choisissez l\'angle, puis poussez le levier quand le réalisateur envoie l\'EVS. Clips : IN / OUT puis F libre = créer · F occupée = rappeler · SHIFT + F = écraser · SHIFT + PAGE puis F = changer de page. Clavier : Espace lecture/pause · I / O · L live · ← → image par image (Maj = 10) · ↑ ↓ levier · 1-8 angle.'),
     el('p', { class: 'note' }, 'Disposition simplifiée de la télécommande : les fonctions suivent les manuels Multicam (versions 10 à 12), mais l\'emplacement exact des touches dépend de votre modèle et de votre version.'));
 
   function act(a, v) {
@@ -130,8 +130,10 @@ export function buildEVS(body, arg = 0, ctx) {
     if (pagePending) { pagePending = false; EVS.page = i + 1; explain(`Page ${EVS.page} : les touches F donnent maintenant les clips ${EVS.page}11 à ${EVS.page}10.`); return; }
     const idx = (EVS.page - 1) * 10 + i;
     if (plstMode) { if (EVS.clips[idx]) { evsAction(chI, 'plstadd', idx); explain(`Clip ${clipName(idx)} ajouté à la playlist (${EVS.playlist.length} clips).`); } else explain('Ce clip est vide.', 'warn'); return; }
-    if (shift) { shift = false; evsAction(chI, 'save', idx); const cl = EVS.clips[idx]; explain(cl ? `Clip ${clipName(idx)} sauvegardé (page ${EVS.page}, F${i + 1}, angle de la CAM ${cl.cam}, ${fmt(cl.out - cl.in, 1)} s), avec tous les angles enregistrés. Il est protégé de l'écrasement de la boucle et visible dans IPDirector.` : 'Pas de point IN : rien à sauvegarder.'); return; }
-    if (EVS.clips[idx]) { evsAction(chI, 'recall', idx); explain(`Clip ${clipName(idx)} rappelé sur ${chI ? 'PGM2' : 'PGM1'} : calé sur son IN, prêt à jouer.`); } else explain('Clip vide : SHIFT puis F pour sauvegarder le clip en cours.', 'warn');
+    const cur = EVS.ch[chI];
+    // touche vide + point IN ou OUT marqué : le clip est créé sur cette touche (SHIFT + F : écrase un clip existant)
+    if (shift || (!EVS.clips[idx] && (cur.in != null || cur.out != null))) { shift = false; evsAction(chI, 'save', idx); const cl = EVS.clips[idx]; explain(cl ? `Clip ${clipName(idx)} sauvegardé (page ${EVS.page}, F${i + 1}, angle de la CAM ${cl.cam}, ${fmt(cl.out - cl.in, 1)} s), avec tous les angles enregistrés. Il est protégé de l'écrasement de la boucle et visible dans IPDirector.` : 'Pas de point IN : rien à sauvegarder.'); return; }
+    if (EVS.clips[idx]) { evsAction(chI, 'recall', idx); explain(`Clip ${clipName(idx)} rappelé sur ${chI ? 'PGM2' : 'PGM1'} : calé sur son IN, prêt à jouer.`); } else explain('Touche vide : marquez d\'abord un IN (et un OUT), puis appuyez sur une touche F libre pour créer le clip.', 'warn');
   }
 
   // timeline des trains

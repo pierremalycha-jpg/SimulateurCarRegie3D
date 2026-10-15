@@ -3,6 +3,7 @@ import { el, randPick, fmt } from './util.js';
 import { ROUTER, EVS, evsSetRecording, route } from './pipeline.js';
 import { toast, intercom } from './ui/common.js';
 import { IP_FAULTS, NET } from './ipnet.js';
+import { AUDIO_FAULTS, AU, setSend, setLineDelay, SOUND_PLAN } from './audio.js';
 
 // Simulateur de pannes (formation chef de car / maintenance)
 export const FAULTS = [
@@ -64,7 +65,7 @@ export const FAULTS = [
   },
 ];
 
-FAULTS.push(...IP_FAULTS);
+FAULTS.push(...AUDIO_FAULTS, ...IP_FAULTS);
 export const ACTIVE = [];
 S.faultsSolved = 0;
 export function injectFault(id, hidden = false) {
@@ -100,6 +101,9 @@ export function clearFaults() {
     if (a.f.id === 'drift' && c) c.autoWhite();
     if (a.f.id === 'tx') { S.txPath = 1; }
     if (a.f.id === 'router') { route('AUX_TX1', 'PGM'); route('AUX_TX2', 'PGM'); }
+    if (a.f.id === 'n1echo') setSend('comm2', 'n1', false);
+    if (a.f.id === 'avsync') setLineDelay(0);
+    if (a.f.id === 'emb') AU.emb.splice(0, 4, ...SOUND_PLAN);
     a.done = true;
   }
   S.faults.jam = null; S.faults.tx = false;

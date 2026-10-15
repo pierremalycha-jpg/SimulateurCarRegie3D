@@ -5,7 +5,7 @@ import { $, $$, toast, intercom, modal, openInfo, hwBtn, knob, selectEl, field, 
 import { MIX, TRANS, WIPES, mixSetPst, mixSetPgm, mixCut, mixAuto, mixTbar, dskToggle, ftbToggle, keyToggle, meSource, sourceLabel, allSources, ROUTER, DESTS, route, defaultRouting, EVS, evsAction, evsSetRecording, recordedCams, canReplay, SCOPE, drawScopes, resolve, P, tallyOf } from '../pipeline.js';
 import { recRange, M, playerName, playerNumber } from '../match.js';
 import { GFX, gfxTake, gfxOut } from '../gfx.js';
-import { AU, startAudio, applyFaders, resetLoudness } from '../audio.js';
+import { AU, startAudio, applyFaders, resetLoudness, setMonitor, setLineDelay, setFollow, setSend, avOffsetMs, avOk, AV_TOL, videoLatencyMs, EMB_OPTIONS, SOUND_PLAN, soundPlanOk, embLabel } from '../audio.js';
 import { RF, LATENCY, channelInfo } from '../rf.js';
 import { maxAperture } from '../data.js';
 import { buildSynoptique } from './synoptique.js';
@@ -401,37 +401,113 @@ export function statusItems() {
 // Son
 // ----------------------------------------------------------------------------------
 function buildAudio(body, arg, ctx) {
-  const strips = el('div', { class: 'hwrow', style: { alignItems: 'stretch', gap: '10px' } });
   const meters = {};
-  const mkStrip = (k, c, master = false) => {
-    const id = 'fad-' + k;
-    const f = el('input', { type: 'range', min: -60, max: 10, step: 0.5, value: master ? AU.master.fader : c.fader, class: 'vfader', id, 'aria-label': 'Fader ' + (c ? c.label : 'master') });
-    const val = el('div', { class: 'lcd' }, fmt(master ? AU.master.fader : c.fader, 1));
-    f.addEventListener('input', () => { if (master) AU.master.fader = +f.value; else c.fader = +f.value; val.textContent = fmt(+f.value, 1); applyFaders(); const v = +f.value; explain(`${master ? 'Master PGM' : c.label} à ${v > 0 ? '+' : ''}${fmt(v, 1)} dB (×${fmt(Math.pow(10, v / 20), 2)} en amplitude). ${master ? 'Le master agit sur tout le mix : surveillez la loudness intégrée (cible −23 LUFS).' : 'Le fader dose cette source dans le mix programme ; 0 dB = gain unitaire. Regardez son vumètre et la loudness.'}`, 'son:' + k); });
-    const m = el('canvas', { width: 22, height: 160, style: { width: '22px', height: '160px', background: '#06090b', border: '1px solid #2c3640' } });
-    meters[k] = m;
-    const mute = master ? null : hwBtn('MUTE', { onclick: () => { c.mute = !c.mute; applyFaders(); explain(`${c.label} ${c.mute ? 'coupé (MUTE)' : 'rétabli'}.`, 'son:mute'); } });
-    const s = el('div', { class: 'hwpanel', style: { width: '150px', alignItems: 'center' } }, el('h3', {}, master ? 'MASTER PGM' : c.label), el('div', { class: 'hwrow', style: { gap: '8px' } }, f, m), val, mute);
-    s.mute = mute; return s;
-  };
+  const BUS_TXT = { pgm: 'le programme (son à l\'antenne)', intl: 'l\'international (ambiance seule, sans commentaires, pour les diffuseurs étrangers)', n1: 'le N-1 des commentateurs (tout le programme sauf leur propre voix)' };
+  const mkMeter = (k, w = 22, h = 150) => { const m = el('canvas', { width: w, height: h, style: { width: w + 'px', height: h + 'px', background: '#06090b', border: '1px solid #2c3640' } }); meters[k] = m; return m; };
   const st = {};
+  const mkStrip = (k, c, master = false) => {
+    const f = el('input', { type: 'range', min: -60, max: 10, step: 0.5, value: master ? AU.master.fader : c.fader, class: 'vfader', 'aria-label': 'Fader ' + (c ? c.label : 'master') });
+    const val = el('div', { class: 'lcd' }, fmt(master ? AU.master.fader : c.fader, 1));
+    f.addEventListener('input', () => {
+      const v = +f.value; if (master) AU.master.fader = v; else c.fader = v; val.textContent = fmt(v, 1); applyFaders();
+      explain(`${master ? 'Master PGM' : c.label} à ${v > 0 ? '+' : ''}${fmt(v, 1)} dB (×${fmt(Math.pow(10, v / 20), 2)} en amplitude). ${master ? 'Le master agit sur tout le programme : surveillez la loudness intégrée (cible −23 LUFS).' : 'Le fader dose cette source dans le programme ; 0 dB = gain unitaire. Les départs INTL et N-1 sont pris après le fader : ils suivent le même dosage.'}`, 'son:' + k);
+    });
+    const s = el('div', { class: 'hwpanel strip' }, el('h3', {}, master ? 'MASTER PGM' : c.label), el('div', { class: 'hwrow', style: { gap: '6px', justifyContent: 'center' } }, f, mkMeter(k)), val);
+    if (!master) {
+      s.mute = hwBtn('MUTE', { onclick: () => { c.mute = !c.mute; applyFaders(); explain(`${c.label} ${c.mute ? 'coupé (MUTE) : il disparaît du programme et de tous les départs.' : 'rétabli.'}`, 'son:mute'); } });
+      s.intl = hwBtn('INTL', { cls: 'small', onclick: () => {
+        setSend(k, 'intl', !c.intl);
+        explain(c.intl ? (c.comm ? `${c.label} envoyé dans l'international : ERREUR, les diffuseurs étrangers entendraient un commentaire en français par-dessus le leur.` : `${c.label} envoyé dans l'international : correct, c'est une source d'ambiance.`) : `${c.label} retiré de l'international.${c.comm ? ' Correct : l\'international ne porte jamais de voix.' : ' Attention : l\'international doit garder toute l\'ambiance du stade.'}`, c.comm && c.intl ? 'warn' : 'son:intl');
+      } });
+      s.n1 = hwBtn('N-1', { cls: 'small', onclick: () => {
+        setSend(k, 'n1', !c.n1);
+        explain(c.n1 ? (c.comm ? `${c.label} envoyé dans le N-1 : ERREUR. Le commentateur s'entendrait dans son casque avec le retard de la liaison (écho gênant, risque de larsen). Le N-1 = « tout moins un » : tout sauf sa propre voix.` : `${c.label} envoyé dans le N-1 : les commentateurs l'entendent dans leur casque.`) : `${c.label} retiré du N-1.${c.comm ? ' Correct.' : ''}`, c.comm && c.n1 ? 'warn' : 'son:n1');
+      } });
+      s.append(s.mute, el('div', { class: 'hwrow', style: { gap: '4px', justifyContent: 'center' } }, s.intl, s.n1));
+    }
+    return s;
+  };
+  const strips = el('div', { class: 'hwrow strips' });
   for (const k in AU.ch) { st[k] = mkStrip(k, AU.ch[k]); strips.appendChild(st[k]); }
   strips.appendChild(mkStrip('master', null, true));
-  const lufs = el('div', { class: 'lcd amber big' });
-  const startBtn = el('button', { class: 'btn primary', onclick: () => { startAudio(); startBtn.hidden = true; } }, 'Activer le son');
-  startBtn.hidden = !!AU.ctx;
-  ctx.dock.append(el('div', { class: 'dockrow' }, dmon('PGM', 'Programme'), el('div', { class: 'hwpanel', style: { minWidth: '240px', flex: '1 1 240px' } }, el('h3', {}, 'Loudness (EBU R128)'), lufs, el('p', { class: 'note' }, 'M = momentané (400 ms) · S = court terme (3 s) · I = intégré. Cible : −23 LUFS intégré, true peak ≤ −1 dBTP.'), el('div', { class: 'hwrow' }, el('button', { class: 'btn small', onclick: resetLoudness }, 'Remettre l\'intégré à zéro'), startBtn))));
+
+  // écoute et bus
+  const monBtns = {};
+  const monRow = el('div', { class: 'hwrow' });
+  for (const k of ['pgm', 'intl', 'n1']) {
+    monBtns[k] = hwBtn(AU.bus[k].label, { cls: 'small', onclick: () => { startAudio(); setMonitor(k); explain(`Écoute sur ${BUS_TXT[k]}. ${k === 'n1' ? 'C\'est ce que les commentateurs ont dans leur casque : vérifiez qu\'on n\'y entend pas leurs voix.' : k === 'intl' ? 'Aucune voix ne doit s\'y trouver.' : ''} La synthèse vocale du commentateur ne s'entend que sur l'écoute PGM.`, 'son:mon'); } });
+    monRow.appendChild(monBtns[k]);
+  }
+  const busCv = el('canvas', { width: 300, height: 66, style: { width: '100%', maxWidth: '300px', height: '66px', background: '#06090b', border: '1px solid #2c3640' } });
+  const lufs = el('div', { class: 'lcd amber' });
+  const avLcd = el('div', { class: 'lcd' });
+  const startBtn = el('button', { class: 'btn primary small', onclick: () => { startAudio(); startBtn.hidden = true; } }, 'Activer le son');
+  ctx.dock.append(el('div', { class: 'dockrow' }, dmon('PGM', 'Programme (image à l\'antenne)'),
+    el('div', { class: 'hwpanel', style: { minWidth: '260px', flex: '1 1 260px' } }, el('h3', {}, 'Écoute et bus'), monRow, busCv,
+      el('h3', {}, 'Loudness PGM (EBU R128)'), lufs, el('h3', {}, 'Synchro son / image'), avLcd,
+      el('div', { class: 'hwrow' }, el('button', { class: 'btn small', onclick: () => { resetLoudness(); explain('Loudness intégrée remise à zéro : on la relance au début du programme pour mesurer toute l\'émission.', 'son:lufs'); } }, 'Intégré à zéro'), startBtn))));
+
+  // retard de ligne
+  const dl = el('input', { type: 'range', min: 0, max: 400, step: 20, value: AU.lineDelay, style: { width: '100%' }, 'aria-label': 'Retard de ligne' });
+  const dlv = el('div', { class: 'lcd' });
+  const sayDelay = () => { const off = avOffsetMs(); explain(`Retard de ligne : ${AU.lineDelay} ms (${AU.lineDelay / 20} image${AU.lineDelay > 20 ? 's' : ''} à 50 Hz). Décalage avec l'image à l'antenne : ${off > 0 ? `son ${off} ms en retard` : off < 0 ? `son ${-off} ms en avance` : 'aucun'}. ${avOk(off) ? 'Dans la tolérance.' : 'HORS TOLÉRANCE : les spectateurs voient les lèvres décalées.'}`, avOk(off) ? 'son:delay' : 'warn'); };
+  dl.addEventListener('input', () => { setLineDelay(+dl.value); sayDelay(); });
+  const step = (d) => { setLineDelay(AU.lineDelay + d); dl.value = AU.lineDelay; sayDelay(); };
+  const follow = hwBtn('ASSERVI AU TALLY', { sub: 'suit la source', onclick: () => { setFollow(!AU.follow); explain(AU.follow ? 'Retard asservi : le mélangeur indique (par tally ou GPI) quelle source est à l\'antenne, et la console ajoute automatiquement sa latence. Le son reste calé même quand on passe sur la caméra HF.' : 'Retard fixe : il ne change plus avec la source. Les caméras filaires n\'ont pas de latence ; la caméra HF a celle de son codec.', 'son:follow'); } });
+  const dkv = el('div', { class: 'kv' });
+
+  // embedder du départ
+  const embSel = AU.emb.map((v, i) => selectEl(EMB_OPTIONS, v, (nv) => { AU.emb[i] = nv; explain(`Paire ${2 * i + 1}-${2 * i + 2} du départ SDI : ${embLabel(nv)}. ${nv === SOUND_PLAN[i] ? 'Conforme au plan de son de la chaîne.' : `Le plan de son demande « ${embLabel(SOUND_PLAN[i])} » sur cette paire.`}`, nv === SOUND_PLAN[i] ? 'son:emb' : 'warn'); }));
+  const embTbl = el('table', { class: 'tbl' }, el('thead', {}, el('tr', {}, el('th', {}, 'Paire'), el('th', {}, 'Embeddé dans le départ'), el('th', {}, 'Plan de son demandé'), el('th', {}, ''))));
+  const embBody = el('tbody'); embTbl.appendChild(embBody);
+  const embState = [];
+  AU.emb.forEach((v, i) => { const plan = el('td'); const ok = el('td'); embState.push([plan, ok]); embBody.appendChild(el('tr', {}, el('td', {}, `${2 * i + 1}-${2 * i + 2}`), el('td', {}, embSel[i]), plan, ok)); });
+  const embStatus = el('p', { class: 'note' });
+
   body.append(strips,
-    el('div', { class: 'hwpanel prose' }, el('h3', {}, 'Dans un vrai car'), el('p', {}, 'La console reçoit des dizaines de sources (micros canons qui suivent le ballon, couples d\'ambiance, commentateurs, retours des duplex) par MADI, Dante ou ST 2110-30. Elle produit le son du programme (stéréo et 5.1), le son international sans commentaires, et les retours N-1 des commentateurs. Le mix est embeddé dans le SDI du PGM. Pour aligner les niveaux avec la chaîne, on envoie un 1 kHz à -18 dBFS avec la mire : activez « Mire 1 kHz » ci-dessus.')));
-  const draw = (cv, db) => { const g = cv.getContext('2d'); g.clearRect(0, 0, 22, 160); const h = clamp((db + 60) / 60, 0, 1) * 160; const gr = g.createLinearGradient(0, 160, 0, 0); gr.addColorStop(0, '#20c040'); gr.addColorStop(0.7, '#e0e020'); gr.addColorStop(0.9, '#ff3030'); g.fillStyle = gr; g.fillRect(3, 160 - h, 16, h); g.fillStyle = '#fff'; g.fillRect(0, 160 - (42 / 60) * 160, 22, 1); };
+    el('div', { class: 'panelgrid' },
+      el('div', { class: 'hwpanel' }, el('h3', {}, 'Retard de ligne (synchro labiale)'),
+        el('div', { class: 'hwrow' }, el('button', { class: 'btn small', onclick: () => step(-20) }, '− 1 image'), dlv, el('button', { class: 'btn small', onclick: () => step(20) }, '+ 1 image'), follow), dl, dkv,
+        el('p', { class: 'note' }, `Tolérance (EBU R37) : son en avance de ${AV_TOL.early} ms au plus, en retard de ${AV_TOL.late} ms au plus. L'image des caméras filaires arrive sans retard ; celle de la caméra HF arrive avec la latence du codec. Le micro de la caméra HF voyage avec son image : il est déjà calé sur elle.`)),
+      el('div', { class: 'hwpanel' }, el('h3', {}, 'Embedder du départ (SDI, paires 1 à 8)'), embTbl, embStatus,
+        el('p', { class: 'note' }, 'L\'embedder insère le son dans les espaces de suppression du signal SDI du départ (jusqu\'à 16 canaux en HD ; le simulateur montre les 4 premières paires). La chaîne envoie un plan de son : quel son sur quelle paire. Une paire inversée et les diffuseurs étrangers ont le commentaire français.'))),
+    el('div', { class: 'panelgrid' },
+      el('div', { class: 'hwpanel prose' }, el('h3', {}, 'Désembedding : d\'où vient chaque son'),
+        el('ul', {}, el('li', {}, 'Micro de la caméra HF : extrait (désembeddé) de la paire 1-2 du signal de la caméra, après le récepteur HF.'), el('li', {}, 'Son des ralentis : sorties audio des canaux de lecture du serveur EVS (le XT4K enregistre le son avec l\'image).'), el('li', {}, 'Commentateurs : unité de commentaire en cabine, reliée par MADI, Dante ou ST 2110-30.'), el('li', {}, 'Duplex : retour son du studio par la transmission ; on lui renvoie un N-1 sans sa propre voix.'))),
+      el('div', { class: 'hwpanel prose' }, el('h3', {}, 'Les bus de la console'),
+        el('p', {}, 'PGM : le mix complet (ambiance, canons, ralentis, commentaires). Il part dans le SDI du programme et sert à la loudness.'),
+        el('p', {}, 'International (INTL) : ambiance et effets sans aucune voix. Les diffuseurs étrangers y ajoutent leurs commentateurs.'),
+        el('p', {}, 'N-1 (« tout moins un ») : le programme sans la voix de celui qui le reçoit. Sans N-1, un commentateur s\'entend avec le retard de la liaison : écho, voire larsen.'),
+        el('p', {}, 'Test de ligne : 1 kHz à −18 dBFS (EBU R68) avec la mire, sur toutes les paires du plan de son.'))));
+
+  const draw = (cv, db) => { const g = cv.getContext('2d'); const W = cv.width, H = cv.height; g.clearRect(0, 0, W, H); const h = clamp((db + 60) / 60, 0, 1) * H; const gr = g.createLinearGradient(0, H, 0, 0); gr.addColorStop(0, '#20c040'); gr.addColorStop(0.7, '#e0e020'); gr.addColorStop(0.9, '#ff3030'); g.fillStyle = gr; g.fillRect(3, H - h, W - 6, h); g.fillStyle = '#fff'; g.fillRect(0, H - (42 / 60) * H, W, 1); };
+  const drawBus = () => {
+    const g = busCv.getContext('2d'); g.clearRect(0, 0, 300, 66); g.font = '11px system-ui'; g.textBaseline = 'middle';
+    ['pgm', 'intl', 'n1'].forEach((k, i) => {
+      const y = 4 + i * 21, w = clamp((AU.bus[k].peak + 60) / 60, 0, 1) * 220;
+      g.fillStyle = AU.monitor === k ? '#ffd27a' : '#9fb0bf'; g.fillText(k === 'n1' ? 'N-1' : k.toUpperCase(), 4, y + 8);
+      g.fillStyle = '#111a20'; g.fillRect(72, y, 220, 16);
+      const gr = g.createLinearGradient(72, 0, 292, 0); gr.addColorStop(0, '#20c040'); gr.addColorStop(0.7, '#e0e020'); gr.addColorStop(0.9, '#ff3030'); g.fillStyle = gr; g.fillRect(72, y, w, 16);
+      g.fillStyle = '#fff'; g.fillRect(72 + 220 * (42 / 60), y - 1, 1, 18);
+    });
+  };
   return {
-    frame() {
-      for (const k in AU.ch) draw(meters[k], AU.ch[k].peak);
-      draw(meters.master, Math.max(AU.master.peakL, AU.master.peakR));
-    },
+    frame() { for (const k in AU.ch) draw(meters[k], AU.ch[k].peak); draw(meters.master, Math.max(AU.master.peakL, AU.master.peakR)); drawBus(); },
     update() {
-      for (const k in AU.ch) if (st[k].mute) st[k].mute.classList.toggle('pgm', AU.ch[k].mute);
+      for (const k in AU.ch) { const c = AU.ch[k]; st[k].mute.classList.toggle('pgm', c.mute); st[k].intl.classList.toggle('lit', !!c.intl); st[k].n1.classList.toggle('lit', !!c.n1); st[k].intl.classList.toggle('pvw', c.comm && c.intl); st[k].n1.classList.toggle('pvw', c.comm && c.n1); }
+      for (const k in monBtns) monBtns[k].classList.toggle('lit', AU.monitor === k);
       const L = AU.lufs; lufs.textContent = AU.ctx ? `M ${fmt(L.m, 1)}  S ${fmt(L.s, 1)}  I ${fmt(L.i, 1)} LUFS` : 'Son désactivé';
+      const off = avOffsetMs(); const ok = avOk(off);
+      avLcd.textContent = off === 0 ? 'Son calé sur l\'image' : `Son ${off > 0 ? 'en retard' : 'en avance'} de ${Math.abs(off)} ms`;
+      avLcd.classList.toggle('red', !ok); avLcd.classList.toggle('green', ok);
+      dlv.textContent = `${AU.lineDelay} ms`; if (document.activeElement !== dl) dl.value = AU.lineDelay;
+      follow.classList.toggle('lit', AU.follow);
+      const src = AU.pgmSrc; const lat = videoLatencyMs(src);
+      dkv.innerHTML = '';
+      for (const [k, v, cls] of [['Source à l\'antenne', src ? sourceLabel(src) : '—'], ['Latence de son image', lat ? `${lat} ms (codec HF)` : '0 ms (liaison filaire)'], ['Retard appliqué au son', `${AU.effDelay} ms${AU.follow ? ' (asservi)' : ''}`], ['Décalage', off === 0 ? '0 ms' : `${off > 0 ? '+' : '−'}${Math.abs(off)} ms (son ${off > 0 ? 'en retard' : 'en avance'})`, ok ? 'ok' : 'err']]) dkv.append(el('dt', {}, k), el('dd', { class: cls || '' }, v));
+      AU.emb.forEach((v, i) => { if (embSel[i].value !== v) embSel[i].value = v; const [plan, okc] = embState[i]; plan.textContent = embLabel(SOUND_PLAN[i]); okc.textContent = v === SOUND_PLAN[i] ? 'OK' : 'à corriger'; okc.className = v === SOUND_PLAN[i] ? 'ok' : 'err'; });
+      embStatus.textContent = soundPlanOk() ? 'Embedder conforme au plan de son.' : 'Embedder NON conforme au plan de son : à corriger avant le test de ligne.';
+      embStatus.className = 'note ' + (soundPlanOk() ? '' : 'warn');
       startBtn.hidden = !!AU.ctx;
     },
   };
@@ -690,8 +766,10 @@ function buildTX(body, arg, ctx) {
       p1.classList.toggle('lit', S.txPath === 1); p2.classList.toggle('lit', S.txPath === 2); test.classList.toggle('lit', ROUTER.map.AUX_TX1 === 'BARS');
       const mon = $('[data-gl^="AUX_TX"]', ctx.dock); if (mon) mon.dataset.gl = S.txPath === 2 ? 'AUX_TX2' : 'AUX_TX1';
       st.innerHTML = '';
-      const rows = [['TX1', `Fibre opérateur · encodeur JPEG XS ${S.format === 'UHD' ? '600' : '200'} Mb/s · source ${sourceLabel(ROUTER.map.AUX_TX1)}${S.faults.tx ? ' · COUPÉE' : ''}`], ['TX2', `DSNG satellite · HEVC ${S.format === 'UHD' ? '60' : '25'} Mb/s · source ${sourceLabel(ROUTER.map.AUX_TX2)}`], ['Chemin actif', 'TX' + S.txPath], ['Délai du retour', fmt(P.delay.delay, 2).replace('.', ',') + ' s (encodage + satellite + décodage)']];
-      for (const [k, v] of rows) st.append(el('dt', {}, k), el('dd', { class: (k === 'TX1' && S.faults.tx) ? 'err' : '' }, v));
+      const rows = [['TX1', `Fibre opérateur · encodeur JPEG XS ${S.format === 'UHD' ? '600' : '200'} Mb/s · source ${sourceLabel(ROUTER.map.AUX_TX1)}${S.faults.tx ? ' · COUPÉE' : ''}`], ['TX2', `DSNG satellite · HEVC ${S.format === 'UHD' ? '60' : '25'} Mb/s · source ${sourceLabel(ROUTER.map.AUX_TX2)}`], ['Chemin actif', 'TX' + S.txPath], ['Délai du retour', fmt(P.delay.delay, 2).replace('.', ',') + ' s (encodage + satellite + décodage)'],
+        ['Plan de son (embedder)', soundPlanOk() ? `conforme : ${AU.emb.map((v, i) => `${2 * i + 1}-${2 * i + 2} ${embLabel(v)}`).join(' · ')}` : 'NON CONFORME — voir la régie son'],
+        ['Synchro son / image', avOk() ? 'dans la tolérance' : `HORS TOLÉRANCE (${avOffsetMs() > 0 ? '+' : ''}${avOffsetMs()} ms)`]];
+      for (const [k, v] of rows) st.append(el('dt', {}, k), el('dd', { class: (k === 'TX1' && S.faults.tx) || (k.startsWith('Plan') && !soundPlanOk()) || (k.startsWith('Synchro') && !avOk()) ? 'err' : '' }, v));
     },
   };
 }

@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { S, emit, on, camById } from './state.js';
 import { el, clamp, tc, mmss, fmt } from './util.js';
 import { LIGHTING, TEAMS, STATION_INFO, CONTROLS_HELP } from './data.js';
-import { buildWorld, applyLighting, updateWorld, W, TRUCK, blockedOutside, groundHeight, inTruckFootprint } from './world.js';
+import { buildWorld, applyLighting, updateWorld, paintTruckSign, W, TRUCK, blockedOutside, groundHeight, inTruckFootprint } from './world.js';
 import { buildTruck, truckBlocked, updateTruck, T } from './truck.js';
 import { initMatch, buildPlayers, stepMatch, initRecorder, record, M } from './match.js';
 import { loadPreset, lineUpCamera, updateRopes } from './bcam.js';
@@ -14,15 +14,15 @@ import { $, $$, toast, modal, openInfo, intercom } from './ui/common.js';
 import { openStation, closeStation, updateStation, stationKey, ST } from './ui/stations.js';
 import { initPlan, openPlan, closePlan, renderPlan, planPointer, planWheel, fitView, PLAN } from './ui/plan.js';
 import { openGuide, checkMissions, drawMissionCard } from './ui/guide.js';
-import { updateFaults } from './faults.js';
+import { updateFaults, injectFault, ACTIVE, FAULTS } from './faults.js';
 import { updateExercises, EX } from './exercises.js';
 import { openDevice, openEquipmentIndex } from './equipment/viewer.js';
-import { initShared, CFG, SH } from './shared.js';
+import { initShared, CFG, SH, setPerf } from './shared.js';
 import { openTrainer } from './ui/config.js';
 import { EQUIP, evsLayout, mixInputs } from './equip.js';
 import { patchEmpty } from './patch.js';
 import { updateScenario, SC } from './scenario.js';
-import { updateNet } from './ipnet.js';
+import { updateNet, NET } from './ipnet.js';
 import { FORMATS } from './data.js';
 
 // ----------------------------------------------------------------------------------
@@ -87,7 +87,7 @@ function buildStart() {
   fmt.value = S.format;
   const infra = el('select', { id: 'stinfra' }, el('option', { value: 'sdi' }, 'Car SDI (grille coaxiale)'), el('option', { value: 'ip' }, 'Car IP (ST 2110, PTP, NMOS)'));
   const fmtNote = el('p', { class: 'note' });
-  const updFmt = () => { S.format = fmt.value; fmtNote.textContent = `Avec ce format : ${evsLayout().label} ; mélangeur ${EQUIP.mixer} avec ${mixInputs()} entrées utilisées.`; };
+  const updFmt = () => { S.format = fmt.value; paintTruckSign(CFG.car.name); fmtNote.textContent = `Avec ce format : ${evsLayout().label} ; mélangeur ${EQUIP.mixer} avec ${mixInputs()} entrées utilisées.`; };
   fmt.onchange = updFmt; updFmt();
   const go = (preset) => start(preset, light.value, qual.value, snd.checked, fmt.value, infra.value === 'ip');
   const truckLine = el('div', { class: 'eyebrow', id: 'sttruck' });
@@ -119,7 +119,7 @@ function buildStart() {
 
 function start(preset, light, quality, sound, format = S.format, ip = false) {
   if (quality !== S.quality) setQuality(quality);
-  S.format = format; S.ipMode = !!ip;
+  S.format = format; S.ipMode = !!ip; paintTruckSign(CFG.car.name);
   applyLighting(light);
   if (preset === 'vierge') { loadPreset('none'); S.autoLineup = false; S.showMission = true; }
   else if (preset === 'brassage' || preset === 'scenario') { loadPreset('standard', preset !== 'scenario'); S.showMission = false; }
@@ -482,6 +482,64 @@ function setQuality(v) {
 }
 
 // ----------------------------------------------------------------------------------
+// Diagnostic de performance : mesure de la fluidité et carte graphique
+// ----------------------------------------------------------------------------------
+const QUAL_LABEL = { basse: 'Basse', moyenne: 'Moyenne', haute: 'Haute' };
+function gpuName() {
+  try {
+    const gl = renderer.getContext(); const ext = gl.getExtension('WEBGL_debug_renderer_info');
+    const r = ext ? gl.getParameter(ext.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER);
+    return String(r || 'inconnue').replace(/^ANGLE \((.*)\)$/, '$1').slice(0, 120);
+  } catch (e) { return 'inconnue'; }
+}
+let perfRunning = false;
+on('perfTest', () => {
+  if (perfRunning) return;
+  perfRunning = true;
+  modal.close();
+  const where = S.mode === 'station' ? 'dans un poste' : S.inTruck ? 'dans le car' : S.mode === 'fps' ? 'dans le stade' : 'sur l\'écran d\'accueil';
+  toast('Mesure des performances pendant 6 secondes… ne touchez à rien.', '', 6000);
+  const times = []; let prev = performance.now(); const t0 = prev;
+  const tick = (now) => {
+    times.push(now - prev); prev = now;
+    if (now - t0 < 6000) { requestAnimationFrame(tick); return; }
+    perfRunning = false;
+    const ft = times.slice(10).sort((a, b) => a - b); // on ignore la mise en route
+    const avg = ft.reduce((a, b) => a + b, 0) / Math.max(1, ft.length);
+    const r1 = (v) => (v < 10 ? Math.round(v * 10) / 10 : Math.round(v));
+    const fps = r1(1000 / avg); const low = r1(1000 / (ft[Math.min(ft.length - 1, Math.floor(ft.length * 0.99))] || avg));
+    const gpu = gpuName(); const soft = /swiftshader|llvmpipe|software|basic render/i.test(gpu);
+    const rec = soft || fps < 30 ? 'basse' : fps < 50 ? (S.quality === 'haute' ? 'moyenne' : S.quality) : (S.quality === 'basse' && fps >= 58 ? 'moyenne' : S.quality === 'moyenne' && fps >= 58 ? 'haute' : S.quality);
+    setPerf({ fps, low, gpu, quality: S.quality, rec, where, px: `${renderer.domElement.width}×${renderer.domElement.height}` });
+    const verdict = fps >= 50 ? ['ok', 'Fluide : le simulateur tourne bien sur cet ordinateur.'] : fps >= 30 ? ['warn', 'Correct, mais quelques saccades possibles dans les postes chargés (multiview, vision).'] : ['err', 'Trop lent pour un usage confortable.'];
+    const kv = el('div', { class: 'kv' });
+    for (const [k, v, cls] of [
+      ['Images par seconde', `${String(fps).replace('.', ',')} i/s en moyenne · ${String(low).replace('.', ',')} i/s dans les 1 % d'images les plus lentes`, verdict[0]],
+      ['Mesuré', where], ['Carte graphique', gpu + (soft ? ' (rendu logiciel : pas d\'accélération matérielle)' : '')],
+      ['Qualité actuelle', QUAL_LABEL[S.quality]], ['Résolution de rendu', `${renderer.domElement.width} × ${renderer.domElement.height} px (rapport ${fmt(renderer.getPixelRatio(), 2)})`],
+      ['Caméras simulées', `${S.cams.length} (chaque caméra est une image 3D rendue en plus)`],
+    ]) kv.append(el('dt', {}, k), el('dd', { class: cls || '' }, v));
+    const tips = el('ul', {});
+    if (soft) tips.append(el('li', {}, 'Le navigateur n\'utilise pas la carte graphique : activez l\'accélération matérielle dans ses réglages, ou essayez un autre navigateur (Chrome, Edge, Firefox récents).'));
+    if (fps < 50) tips.append(el('li', {}, 'Branchez l\'ordinateur portable sur secteur et fermez les autres onglets lourds (visio, vidéos).'), el('li', {}, 'Moins de caméras = moins d\'images à calculer : le dispositif « Léger » (écran d\'accueil) aide beaucoup.'), el('li', {}, 'Une fenêtre plus petite ou un écran moins défini réduit aussi la charge.'));
+    const apply = rec !== S.quality ? el('button', { class: 'btn primary', onclick: () => { setQuality(rec); modal.close(); toast(`Qualité graphique : ${QUAL_LABEL[rec]}`, 'good'); } }, `Passer en qualité ${QUAL_LABEL[rec]} (recommandé)`) : null;
+    modal.open('Diagnostic de performance', el('div', { class: 'list' }, el('p', { class: verdict[0] }, verdict[1]), kv,
+      el('p', {}, rec !== S.quality ? `Qualité recommandée : ${QUAL_LABEL[rec]}.` : fps < 30 ? 'Vous êtes déjà en qualité Basse : suivez les conseils ci-dessous.' : `La qualité ${QUAL_LABEL[S.quality]} est adaptée à cet ordinateur.`),
+      tips.children.length ? el('div', { class: 'prose' }, el('h3', {}, 'Pour gagner en fluidité'), tips) : null,
+      el('p', { class: 'note' }, 'Ce résultat est enregistré avec votre progression : le formateur le voit dans son tableau de bord, utile pour repérer un poste de formation trop juste.'),
+      el('div', { class: 'hwrow' }, apply, el('button', { class: 'btn', onclick: () => modal.close() }, 'Fermer'))), { width: 720 });
+  };
+  requestAnimationFrame(tick);
+});
+// alerte unique si la fluidité reste mauvaise
+let slowT = 0, slowWarned = false;
+function watchFps(dt) {
+  if (slowWarned || S.mode === 'start' || perfRunning || !fpsShow) return;
+  slowT = fpsShow < 22 && S.quality !== 'basse' ? slowT + dt : 0;
+  if (slowT > 12) { slowWarned = true; toast('L\'affichage saccade. Guide → Réglages → « Tester les performances » pour trouver la bonne qualité graphique.', 'bad', 9000); }
+}
+
+// ----------------------------------------------------------------------------------
 // Boucle principale
 // ----------------------------------------------------------------------------------
 let last = performance.now();
@@ -498,8 +556,8 @@ function frame(now) {
   record(S.cams);
   rfAcc += dt; if (rfAcc > 0.1) { updateRF(rfAcc); rfAcc = 0; }
   if (S.mode === 'fps') updatePlayer(dt);
-  updateGfx(dt); updateAudio(dt); updateTruck(S.time); updateExercises(dt); updateScenario(dt); updateNet(dt);
-  slowAcc += dt; if (slowAcc > 0.5) { slowAcc = 0; checkMissions(); updateFaults(); if (S.mode === 'fps') drawMissionCard(); }
+  updateGfx(dt); { const pgm = meSource(MIX.pgm); updateAudio(dt, { pgmSrc: pgm, replay: (pgm === 'EVSA' || pgm === 'EVSB') && EVS.ch[pgm === 'EVSA' ? 0 : 1].playing, studioOnAir: pgm === 'STUDIO' }); } updateTruck(S.time); updateExercises(dt); updateScenario(dt); updateNet(dt);
+  slowAcc += dt; if (slowAcc > 0.5) { watchFps(slowAcc); slowAcc = 0; checkMissions(); updateFaults(); if (S.mode === 'fps') drawMissionCard(); }
 
   renderer.shadowMap.needsUpdate = S.quality !== 'basse' || S.frame % 2 === 0;
   renderer.toneMappingExposure = 1;
@@ -532,8 +590,8 @@ S.mode = 'start';
 initShared();
 // la configuration du car peut arriver après le démarrage : on recalcule la répartition EVS
 on('config', (part) => { if (part === 'car' && S.mode !== 'start') { defaultRouting(false); emit('router', {}); } updBrand(); });
-function updBrand() { const w2 = $('#where2'); if (w2 && CFG.car.name && !S.inTruck) w2.textContent = CFG.car.name; }
-document.fonts && document.fonts.ready.then(() => { W.boards && W.boards.redraw(); P.mvDirty = true; });
+function updBrand() { paintTruckSign(CFG.car.name); const w2 = $('#where2'); if (w2 && CFG.car.name && !S.inTruck) w2.textContent = CFG.car.name; }
+document.fonts && document.fonts.ready.then(() => { W.boards && W.boards.redraw(); P.mvDirty = true; paintTruckSign(CFG.car.name); });
 requestAnimationFrame(frame);
 window.__S = S; // accès console pour le débogage
-window.__dbg = { S, M, MIX, EVS, ROUTER, P, W, T, PL, EX, teleport, openStation, closeStation, openPlan, closePlan, takeCamera, releaseCamera, start, openGuide, renderer, applyLighting, openDevice, openEquipmentIndex, openTrainer, CFG, SH };
+window.__dbg = { S, M, MIX, EVS, ROUTER, P, W, T, PL, EX, teleport, openStation, closeStation, openPlan, closePlan, takeCamera, releaseCamera, start, openGuide, renderer, applyLighting, openDevice, openEquipmentIndex, openTrainer, CFG, SH, AU, SC, NET, emit, injectFault, ACTIVE, FAULTS };

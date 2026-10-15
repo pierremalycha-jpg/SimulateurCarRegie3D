@@ -7,6 +7,7 @@ import { buildCabling, endLabel, SIG } from '../equipment/cabling.js';
 import { DEVICES, DEVICE_LIST } from '../equipment/devices.js';
 import { REVIEW_ITEMS, REVIEW_STATUS } from '../review.js';
 import { MISSIONS } from './guide.js';
+import { EMB_OPTIONS, SOUND_PLAN } from '../audio.js';
 
 // ----------------------------------------------------------------------------------
 // Espace formateur : configuration partagée du car, suivi des stagiaires, relecture
@@ -49,10 +50,14 @@ function tabCar(box, editable) {
     field('Télécommandes LSM', sel('lsmCount', [[1, '1 LSM (pilote PGM1 et PGM2)'], [2, '2 LSM']], EQUIP.lsmCount)),
     field('Entrées du XVS-6000 en 4K', sel('mix4kInputs', [[16, '16 (configuration de base)'], [22, '22 (cartes supplémentaires)']], EQUIP.mix4kInputs)));
   const L = evsLayout();
+  const plan = [...(c.soundPlan || SOUND_PLAN)];
+  const planRow = el('div', { class: 'grid2' }, ...plan.map((v, i) => field(`Paire ${2 * i + 1}-${2 * i + 2} du départ`, selectEl(EMB_OPTIONS, v, (nv) => { plan[i] = nv; }))));
   box.append(el('h3', { class: 'eq-h' }, 'Identité et matériel du car'), fields,
     el('div', { class: 'kv' }, el('dt', {}, 'Mélangeur'), el('dd', {}, `${EQUIP.mixer} + pupitre ${EQUIP.mixPanel}`), el('dt', {}, 'Ralentis'), el('dd', {}, `${EQUIP.evsServers} × EVS ${EQUIP.evsModel}, ${EQUIP.lsmCount} LSM, IPDirector`), el('dt', {}, 'Répartition EVS (format actuel)'), el('dd', {}, L.label)),
     el('p', { class: 'note' }, 'Les changements de matériel s\'appliquent au prochain démarrage du simulateur (bouton « Accueil » ou rechargement de la page).'),
-    el('button', { class: 'btn primary', disabled: !editable, onclick: async () => { c.name = name.value.trim(); c.company = company.value.trim(); saved(await saveConfig('car', c)); } }, 'Enregistrer'));
+    el('h3', { class: 'eq-h' }, 'Plan de son habituel (embedder du départ)'), planRow,
+    el('p', { class: 'note' }, 'C\'est le plan que la régie son doit reproduire sur l\'embedder, et que la chaîne vérifie pendant le test de ligne du scénario.'),
+    el('button', { class: 'btn primary', disabled: !editable, onclick: async () => { c.name = name.value.trim(); c.company = company.value.trim(); c.soundPlan = plan; saved(await saveConfig('car', c)); } }, 'Enregistrer'));
 }
 
 // ---------------- liste de câblage : import / export ----------------

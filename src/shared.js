@@ -1,5 +1,6 @@
 import { S, emit, on } from './state.js';
 import { EQUIP } from './equip.js';
+import { setSoundPlan } from './audio.js';
 
 // ----------------------------------------------------------------------------------
 // Données partagées de la page publiée (capacités db / user / assets / downloads),
@@ -55,6 +56,7 @@ function applyConfig() {
   const e = CFG.car.equip || {};
   for (const k of ['evsServers', 'evsHdChannels', 'lsmCount', 'mix4kInputs']) if (e[k] != null) EQUIP[k] = +e[k];
   if (CFG.car.name) EQUIP.truck = CFG.car.name;
+  setSoundPlan(CFG.car.soundPlan);
 }
 export function canConfigure() { return !SH.db || SH.canEdit || SH.isOwner; }
 export async function saveConfig(part, data) {

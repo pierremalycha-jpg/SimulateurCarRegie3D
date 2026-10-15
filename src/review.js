@@ -28,6 +28,7 @@ export const REVIEW_ITEMS = [
   ['evs6', 'Serveur EVS XT4K', 'Répartition retenue avec un seul XT4K : HD = 8 REC + 2 PLAY (ChannelMAX) ou 6 REC + 2 PLAY ; UHD = 3 REC + 1 PLAY.', SIMU],
   ['lsm1', 'Télécommande LSM', 'Levier 0-100 % ; plage secondaire −100/+100 % ou −200/+200 %. Jog ≈ 35 images par tour. FAST JOG désactivé après PLAY/LIVE.', EVS_MC],
   ['lsm2', 'Télécommande LSM', 'Touches à double fonction (SHIFT) : IN/GOTO IN, OUT/GOTO OUT, PLST/BROWSE ; SHIFT + PAGE puis F = page 1 à 10.', EVS_MC],
+  ['lsm5', 'Télécommande LSM', 'Création d\'un clip : IN et/ou OUT, puis une touche F libre ; une touche F occupée rappelle son clip (le simulateur utilise SHIFT + F pour écraser).', EVS_MC],
   ['lsm3', 'Télécommande LSM', 'RETURN (revenir dans le train depuis un clip), TAKE (échange PGM/PRV ou les deux PGM), verrouillage CLEAR puis MENU.', EVS_MC],
   ['lsm4', 'Télécommande LSM', 'Nommage des clips page · banque · touche · angle (ex. 111A) ; la disposition exacte des touches dépend du modèle.', EVS_MC],
   ['ipd1', 'IPDirector', 'Modules base de données, log, playlist, contrôle des canaux ; mêmes clips que la LSM.', EVS_IPD],
@@ -42,6 +43,9 @@ export const REVIEW_ITEMS = [
   ['lvl3', 'Niveaux et mesures', 'HLG : blanc de référence à 75 % du signal, 203 cd/m² (ITU-R BT.2408).', NORMES],
   ['lvl4', 'Niveaux et mesures', 'Fibre monomode ≈ 0,35-0,4 dB/km à 1310 nm ; ≈ 0,5 dB par connexion propre.', NORMES],
   ['lvl5', 'Niveaux et mesures', 'Line-up : niveau moyen visé 40-45 % selon la valeur de plan ; repères pelouse 40-55 %.', SIMU],
+  ['aud1', 'Son', 'Synchro son / image : son en avance de 40 ms au plus, en retard de 60 ms au plus (EBU R37).', NORMES],
+  ['aud2', 'Son', 'Plan de son par défaut : 1-2 PGM stéréo, 3-4 international, 5-8 silence (modifiable dans « Le car »).', SIMU],
+  ['aud3', 'Son', 'Retard « asservi au tally » : la console ajoute la latence de la source à l\'antenne (caméra HF) ; le micro de la caméra HF est déjà calé sur son image.', SIMU],
   ['ip1', 'IP', 'ST 2110-20 : ≈ 2,1 Gb/s en 1080p50 10 bits 4:2:2 ; ≈ 8,3 Gb/s en UHD p50. PTP ST 2059-2 ; NMOS IS-04/IS-05 ; ST 2022-7.', NORMES],
 ];
 export const REVIEW_STATUS = { '': 'À vérifier', ok: 'Validé', fix: 'À corriger' };

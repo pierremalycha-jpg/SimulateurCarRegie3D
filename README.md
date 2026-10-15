@@ -2,21 +2,62 @@
 
 Simulateur pédagogique d'une captation de football en car régie : stade 3D, plan de caméras, liaisons
 (SMPTE, triax, fibre, coax, IP, HF), car régie visitable en vue à la première personne et postes
-interactifs (réalisateur, scripte, mélangeur, habillage, vision/RCP, EVS, son, HF, grille, CCU,
-synchro, transmission, intercom, chef de car avec simulateur de pannes).
+interactifs (réalisateur, scripte, mélangeur, habillage, vision/RCP, EVS/LSM, IPDirector, son, HF, grille,
+CCU, synchro, transmission, intercom, baie de brassage, chef de car avec simulateur de pannes).
 
 Aux postes, les écrans utiles restent affichés en permanence (zone d'écrans fixe, moniteur flottant
-déplaçable) et un fil « Ce qui se passe » explique chaque action. Le poste vision reprend un RCP de type
-RCP-3500, le poste ralentis une télécommande de type LSM-VIA. Une visionneuse de matériel montre les faces
-avant/arrière (caméra système, CCU, RCP, serveur ralenti, LSM, grille, SPG…), chaque connecteur et la liste
-de câblage générée à partir de l'installation.
+déplaçable) et un fil « Ce qui se passe » explique chaque action. Une visionneuse de matériel montre les faces
+avant/arrière (caméra système, CCU, RCP, serveur ralenti, LSM, mélangeur, grille, SPG…), chaque connecteur et la
+liste de câblage générée à partir de l'installation.
 
-## Construire
+## Profil matériel
+
+Le simulateur est réglé sur ce parc (modifiable dans l'Espace formateur → « Le car ») :
+
+- mélangeur Sony XVS-6000 avec pupitre ICP-X7000 (16 entrées utilisées en UHD, 22 en HD) ;
+- un serveur EVS XT4K (UHD : 3 REC + 1 PLAY ; HD : 8 REC + 2 PLAY en ChannelMAX, 6 + 2 sinon) ;
+- une télécommande LSM (logiciel Multicam) et un poste IPDirector.
+
+## Ce que contient la v3
+
+- **Line-up** : niveaux par défaut recalés (moyennes 40-55 %, crêtes ≤ 103 %), white clip réglable.
+- **Espace formateur** (données partagées de la page publiée, repli sur le navigateur sinon) :
+  - nom du car et matériel ;
+  - plan de son habituel ;
+  - check-list et procédures maison ;
+  - import/export de la liste de câblage (CSV, Excel) ;
+  - photos du matériel avec points cliquables ;
+  - suivi des stagiaires ;
+  - fiche de relecture technique.
+- **Baie de brassage** : exercice « car vide » sur jackfield, avec effets visibles au multiview (entrée vide,
+  source croisée, référence absente).
+- **Scénario « jour de match »** : brassage → line-up → test de ligne (plan de son, mire, 1 kHz) → antenne
+  avec pannes surprises ; rapport noté et téléchargeable.
+- **Car IP** (ST 2110) :
+  - réseaux rouge et bleu (ST 2022-7) ;
+  - PTP avec élection du grand maître (BMCA) ;
+  - NMOS IS-04 / IS-05 ;
+  - capacité du lien du multiviewer ;
+  - pannes dédiées.
+- **HDR** : sortie HLG (blanc de référence à 75 %) et moniteur de référence SDR | HDR côte à côte.
+- **Son** :
+  - 8 tranches ;
+  - bus PGM / international / N-1 ;
+  - écoute par bus ;
+  - retard de ligne (synchro labiale, EBU R37) asservi ou non au tally ;
+  - embedder du départ conforme au plan de son ;
+  - pannes son.
+- **Diagnostic de performance** (fluidité, carte graphique, qualité recommandée) et bouton « Signaler une
+  erreur » partout.
+
+## Construire et tester
 
 ```
 npm install
 node tools/build.mjs          # produit dist/index.html (fichier unique, three.js chargé depuis jsDelivr)
-node tools/v2.mjs             # tests fonctionnels (postes, RCP, LSM, matériel, câblage) avec Playwright
+node tools/build.mjs --dev    # même chose sans minification
+node tools/v3.mjs OUT hd      # postes, son, pannes, formateur, perf (aussi : scenario, ip, ops)
+node tools/func.mjs           # tests fonctionnels historiques
 ```
 
 ## Organisation du code (`src/`)
@@ -24,14 +65,20 @@ node tools/v2.mjs             # tests fonctionnels (postes, RCP, LSM, matériel,
 | Fichier | Rôle |
 | --- | --- |
 | `data.js` | Catalogues (caméras, objectifs, liaisons, positions, antennes, modulations) et contenus pédagogiques |
+| `equip.js` | Profil matériel (XVS-6000, XT4K, LSM, IPDirector) et répartition des canaux EVS |
 | `world.js` | Stade, éclairage, public, compound et extérieur du car |
 | `truck.js` | Intérieur du car (postes, écrans, baies) |
 | `match.js` | Simulation du match, rendu des joueurs, enregistrement d'état (base des ralentis EVS) |
-| `bcam.js` | Caméras broadcast : optique, cadreurs automatiques, traitement CCU, câbles |
+| `bcam.js` | Caméras broadcast : optique, cadreurs automatiques, traitement CCU (knee, white clip, HLG), câbles |
 | `rf.js` | Bilan de liaison HF, diversité, brouillage |
-| `pipeline.js` | Grille, mélangeur, EVS, multiview, retour antenne, mesures (waveform, vecteurscope) |
+| `pipeline.js` | Grille, mélangeur, EVS, multiview, retour antenne, mesures (waveform, vecteurscope), HDR |
+| `patch.js` | Baie de brassage : liaisons attendues, résolution des signaux, score |
+| `ipnet.js` | Car IP : réseaux ST 2022-7, PTP, NMOS, débits |
+| `audio.js` | Console son : sources, bus PGM / INTL / N-1, retard de ligne, embedder, loudness EBU R128, pannes son |
+| `scenario.js` | Scénario « jour de match » chronométré et noté |
+| `shared.js` | Données partagées de la page publiée (configuration, progression) avec repli local |
+| `review.js` | Points techniques à faire relire par le formateur |
 | `gfx.js` | Habillage (score, bandeaux, statistiques) |
-| `audio.js` | Son du programme, loudness EBU R128 |
-| `ui/` | Postes (`stations.js`, `st_vision.js`, `st_evs.js`, `widgets.js`), plan des caméras, guide, missions, synoptique |
-| `equipment/` | Visionneuse de matériel : définitions des appareils (`devices.js`), liste de câblage (`cabling.js`), rendu SVG (`viewer.js`) |
+| `ui/` | Postes (`stations.js`, `st_vision.js`, `st_evs.js`, `st_mixer.js`, `st_ipd.js`, `st_patch.js`), espace formateur (`config.js`), rapports (`report.js`), plan, guide, missions |
+| `equipment/` | Visionneuse de matériel : appareils (`devices.js`), liste de câblage (`cabling.js`), rendu SVG et photos (`viewer.js`) |
 | `faults.js`, `exercises.js` | Simulateur de pannes, réalisateur virtuel et opérateur EVS automatique |
