@@ -125,7 +125,7 @@ if (PART === 'all' || PART === 'scenario') {
   const page = await newPage();
   const ev = (f, a) => page.evaluate(f, a); const shot = shotOf(page);
   await ev(() => window.__dbg.start('scenario', 'jour', 'basse', false));
-  await page.waitForTimeout(4000);
+  await page.waitForFunction(() => window.__dbg.SC.on, null, { timeout: 30000 }).catch(() => {});
   log('scenario', await ev(() => JSON.stringify({ on: window.__dbg.SC.on, phase: window.__dbg.SC.phase, emb: window.__dbg.AU.emb })));
   await shot('50-scenario');
   // brasser automatiquement pour passer à la phase suivante

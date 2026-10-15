@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { S, emit, on, camById, nextCamId } from '../state.js';
 import { el, fmt, clamp } from '../util.js';
 import { SLOTS, CAMERA_TYPES, LENSES, LINKS, ROLES, FORMATS, SENSORS } from '../data.js';
-import { W, labelSprite, standHeight, bowlOffset, TRUCK, BOWL } from '../world.js';
+import { W, labelSprite, standHeightAt, standAt, bowlOffset, TRUCK, BOWL } from '../world.js';
 import { setLayer } from '../geo.js';
 import { addCamera, removeCamera, loadPreset, lineUpCamera, computeRoute } from '../bcam.js';
 import { RF } from '../rf.js';
@@ -148,13 +148,13 @@ export function planPointer(type, e) {
     if (k) { select(k); return; }
     if (PLAN.free) {
       const [x, z] = worldOf(e.clientX, e.clientY);
-      const o = bowlOffset(x, z);
+      const sa = standAt(x, z); const o = sa ? sa.o : Math.min(0, bowlOffset(x, z));
       if (Math.abs(x) > 113 || Math.abs(z) > 93) { toast('Hors du stade.'); return; }
+      if (!sa && bowlOffset(x, z) > 0) { toast('Angle ouvert du stade : pas de tribune ici (pylône du toit).'); return; }
       let y = 1.6;
-      if (o > 0) y = standHeight(o) + 1.4;
-      if (o > 25 && o < 29) y = 13.5 + 1.6;
+      if (o > 0) y = standHeightAt(x, z) + 1.4;
       const id = 'free_' + (PLAN.freeSlots.length + 1);
-      const s = { id, label: `Position libre ${PLAN.freeSlots.length + 1}`, zone: o > 0 ? 'Tribune' : 'Bord terrain', pos: [Math.round(x * 10) / 10, Math.round(y * 10) / 10, Math.round(z * 10) / 10], types: ['plateau', 'portable', 'hfr3', 'hfr6', 'steadicam', 'ptz', 'pov'], role: o > 0 ? 'semi' : 'joueur', precab: false, desc: 'Position créée en placement libre.', free: true };
+      const s = { id, label: `Position libre ${PLAN.freeSlots.length + 1}`, zone: o > 0 ? sa.st.name : 'Bord terrain', pos: [Math.round(x * 10) / 10, Math.round(y * 10) / 10, Math.round(z * 10) / 10], types: ['plateau', 'portable', 'hfr3', 'hfr6', 'steadicam', 'ptz', 'pov'], role: o > 0 ? 'semi' : 'joueur', precab: false, desc: 'Position créée en placement libre.', free: true };
       PLAN.freeSlots.push(s); addMarker(s); select('slot:' + id);
     }
   }

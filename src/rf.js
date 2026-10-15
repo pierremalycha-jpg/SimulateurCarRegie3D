@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { S } from './state.js';
 import { ANTENNAS, CN_REQ, cofdmBitrate, buildChannels } from './data.js';
-import { BOWL, OUTER, standHeight, bowlOffset, inWalkZone, W } from './world.js';
+import { standAt, standHeightAt, inWalkZone, W } from './world.js';
 import { clamp, gauss, powDbToLin, linToPowDb, rand } from './util.js';
 
 export const RF = { channels: buildChannels(), antennas: ANTENNAS.map((a) => ({ ...a })), t: 0 };
@@ -12,14 +12,15 @@ export const LATENCY = { normale: { frames: 3, eff: 1, label: 'Normale (≈ 60 m
 
 // matière traversée par le rayon émetteur -> antenne
 function solidAt(x, y, z) {
-  const inOuter = Math.abs(x) < OUTER.hx && Math.abs(z) < OUTER.hz;
-  if (!inOuter) return false;
-  const o = bowlOffset(x, z);
-  if (o < 0) return false; // terrain
-  if (o > 8 && o < 54 && y > 40 && y < 44.2) return true; // toit
-  if (inWalkZone(x, z)) return y > 4.2 && y < standHeight(Math.max(0, o));
-  if (o >= 52) return y < 38.5;
-  return y < standHeight(o) - 0.2 && y > -1;
+  const s = standAt(x, z, 3);
+  if (!s) return false; // terrain ou angle ouvert
+  const st = s.st, o = s.o;
+  const yr = st.roof + (o + 3) / (st.back + 4.5) * -1.6;
+  if (y > yr && y < yr + 0.5) return true; // toit (polycarbonate + charpente)
+  if (o < 0) return false;
+  const h = standHeightAt(x, z);
+  if (inWalkZone(x, z)) return y > 4.2 && y < h;
+  return y < h - 0.2 && y > -1;
 }
 
 export function obstruction(a, b) {

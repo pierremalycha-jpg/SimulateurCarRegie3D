@@ -364,12 +364,12 @@ export function buildPlayers(scene) {
   R.arms = mk(arm, NH * 2);
   const c = new THREE.Color();
   M.humans.forEach((h, i) => {
-    let shirt, shorts, socks;
-    if (h.team >= 0) { const T = TEAMS[h.team]; shirt = h.role === 'gk' ? T.gk : T.shirt; shorts = T.shorts; socks = T.socks; }
-    else { shirt = 0xc8e03c; shorts = 0x111111; socks = 0x111111; }
+    let shirt, shorts, socks, sleeves;
+    if (h.team >= 0) { const T = TEAMS[h.team]; shirt = h.role === 'gk' ? T.gk : T.shirt; sleeves = h.role === 'gk' ? T.gk : (T.sleeves ?? T.shirt); shorts = T.shorts; socks = T.socks; }
+    else { shirt = 0x1e1f22; sleeves = 0x1e1f22; shorts = 0x111111; socks = 0x111111; }
     R.torso.setColorAt(i, c.setHex(shirt)); R.shorts.setColorAt(i, c.setHex(shorts)); R.head.setColorAt(i, c.setHex(h.skin));
     R.legs.setColorAt(i * 2, c.setHex(socks)); R.legs.setColorAt(i * 2 + 1, c.setHex(socks));
-    R.arms.setColorAt(i * 2, c.setHex(shirt)); R.arms.setColorAt(i * 2 + 1, c.setHex(shirt));
+    R.arms.setColorAt(i * 2, c.setHex(sleeves)); R.arms.setColorAt(i * 2 + 1, c.setHex(sleeves));
   });
   // ballon
   const bc = makeCanvas(128, 64); const g = bc.getContext('2d'); g.fillStyle = '#f4f4f4'; g.fillRect(0, 0, 128, 64);

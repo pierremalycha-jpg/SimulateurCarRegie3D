@@ -54,6 +54,23 @@ button { cursor: pointer; }
 .chip.red b { color: var(--tally); } .chip.green b { color: var(--pvw); }
 .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--dim); display: inline-block; }
 .dot.red { background: var(--tally); box-shadow: 0 0 8px var(--tally); } .dot.green { background: var(--pvw); } .dot.amber { background: var(--amber); }
+#truckmap { position: absolute; left: var(--gut-l); bottom: calc(52px + env(safe-area-inset-bottom, 0px)); width: min(330px, 46vw); background: rgba(11,14,17,0.82); border: 1px solid var(--line); border-radius: 6px; padding: 6px 8px 4px; backdrop-filter: blur(6px); cursor: pointer; }
+#truckmap .tmap-head { display: flex; justify-content: space-between; gap: 8px; font-size: 11px; color: var(--muted); margin-bottom: 3px; }
+#truckmap .tmap-head b { color: var(--fg); font-family: var(--f-disp); letter-spacing: .04em; text-transform: uppercase; }
+.tmap-svg { width: 100%; height: auto; display: block; }
+.tmap-zone { font: 600 9px var(--f-disp); fill: rgba(230,236,242,0.55); letter-spacing: .06em; }
+.tmap-big .tmap-zone { font-size: 15px; }
+.tmap-door { font: 600 12px var(--f-disp); fill: #30c060; }
+.tmap-st circle { fill: #8a949e; stroke: #0b0d10; stroke-width: 1.5; cursor: pointer; }
+.tmap-st:hover circle, .tmap-st:focus circle { fill: #ffb020; }
+.tmap-st text { font: 600 11px var(--f-disp); fill: #e6ecf2; pointer-events: none; }
+.tmap-me circle { fill: #30c0ff; stroke: #fff; stroke-width: 1.5; } .tmap-me path { fill: #30c0ff; }
+.tmap-big { background: #0b0e11; border: 1px solid var(--line); border-radius: 6px; padding: 10px; overflow-x: auto; }
+.tmap-big .tmap-svg { min-width: 760px; }
+.tmap-zones { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; }
+.tmap-zone-card { border-left: 4px solid; background: var(--panel); border-radius: 4px; padding: 8px 10px; }
+.tmap-zone-card h3 { margin: 0 0 4px; }
+@media (pointer: coarse), (max-width: 700px) { #truckmap { bottom: auto; top: calc(150px + env(safe-area-inset-top, 0px)); width: min(260px, 60vw); } }
 #minimon { position: absolute; right: var(--gut-r); bottom: calc(10px + env(safe-area-inset-bottom, 0px)); width: min(320px, 42vw); aspect-ratio: 16/9; border: 2px solid var(--tally); border-radius: 3px; }
 #minimon .lab { position: absolute; left: 6px; top: 5px; font-family: var(--f-disp); font-size: 12px; background: rgba(0,0,0,.7); padding: 1px 6px; border-radius: 2px; z-index: 1; }
 #intercom { position: fixed; z-index: 5; left: var(--gut-l); bottom: calc(52px + env(safe-area-inset-bottom, 0px)); width: min(440px, calc(100vw - 32px)); display: flex; flex-direction: column; gap: 4px; pointer-events: none; }

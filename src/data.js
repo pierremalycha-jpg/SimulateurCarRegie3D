@@ -159,20 +159,21 @@ export const FORMATS = {
   HDi: { label: 'HD 1080i50 SDR (BT.709)', sdi: 'HD-SDI', rate: '1,485 Gb/s', fps: 25 },
 };
 
-// Positions caméras (coordonnées en mètres, y = hauteur de l'optique). Tribune principale côté z négatif.
+// Positions caméras (coordonnées en mètres, y = hauteur de l'optique). Stade inspiré de Bollaert-Delelis :
+// tribune Lepagnot (principale, z négatif), Marek-Xercès en face, Trannin (x négatif) et Delacourt derrière les buts.
 export const SLOTS = [
-  { id: 'g_c1', label: 'Passerelle centrale – position 1', zone: 'Tribune principale', pos: [-1.5, 18.6, -67.9], types: ['plateau', 'hfr3', 'hfr6', 'portable'], role: 'large', precab: true, desc: 'Position du plan large (caméra 1) : dans l\'axe de la ligne médiane, en hauteur pour voir la profondeur du jeu.' },
-  { id: 'g_c2', label: 'Passerelle centrale – position 2', zone: 'Tribune principale', pos: [1.5, 18.6, -67.9], types: ['plateau', 'hfr3', 'hfr6', 'portable'], role: 'serre', precab: true, desc: 'Position du serré (caméra 2), à côté du plan large pour garder le même axe.' },
-  { id: 'g_c3', label: 'Passerelle centrale – position 3', zone: 'Tribune principale', pos: [4.5, 18.6, -67.9], types: ['plateau', 'hfr3', 'hfr6', 'portable'], role: 'joueur', precab: true, desc: 'Troisième position centrale : ISO joueur ou super ralenti.' },
-  { id: 'g_16l', label: 'Passerelle – 16 m gauche', zone: 'Tribune principale', pos: [-36, 18.6, -67.9], types: ['plateau', 'hfr3', 'hfr6', 'portable'], role: 'semi', precab: true, desc: 'Alignée sur la ligne de la surface de réparation gauche : action dans la surface et hors-jeu.' },
-  { id: 'g_16r', label: 'Passerelle – 16 m droite', zone: 'Tribune principale', pos: [36, 18.6, -67.9], types: ['plateau', 'hfr3', 'hfr6', 'portable'], role: 'semi', precab: true, desc: 'Alignée sur la ligne de la surface de réparation droite.' },
-  { id: 'high_c', label: 'Tribune haute centrale', zone: 'Tribune principale', pos: [0, 33.5, -88], types: ['plateau', 'portable'], role: 'tactique', precab: false, desc: 'Position très haute pour le plan tactique.' },
+  { id: 'g_c1', label: 'Passerelle centrale – position 1', zone: 'Tribune Lepagnot', pos: [-1.5, 18.6, -67.9], types: ['plateau', 'hfr3', 'hfr6', 'portable'], role: 'large', precab: true, desc: 'Position du plan large (caméra 1) : dans l\'axe de la ligne médiane, en hauteur pour voir la profondeur du jeu.' },
+  { id: 'g_c2', label: 'Passerelle centrale – position 2', zone: 'Tribune Lepagnot', pos: [1.5, 18.6, -67.9], types: ['plateau', 'hfr3', 'hfr6', 'portable'], role: 'serre', precab: true, desc: 'Position du serré (caméra 2), à côté du plan large pour garder le même axe.' },
+  { id: 'g_c3', label: 'Passerelle centrale – position 3', zone: 'Tribune Lepagnot', pos: [4.5, 18.6, -67.9], types: ['plateau', 'hfr3', 'hfr6', 'portable'], role: 'joueur', precab: true, desc: 'Troisième position centrale : ISO joueur ou super ralenti.' },
+  { id: 'g_16l', label: 'Passerelle – 16 m gauche', zone: 'Tribune Lepagnot', pos: [-36, 18.6, -67.9], types: ['plateau', 'hfr3', 'hfr6', 'portable'], role: 'semi', precab: true, desc: 'Alignée sur la ligne de la surface de réparation gauche : action dans la surface et hors-jeu.' },
+  { id: 'g_16r', label: 'Passerelle – 16 m droite', zone: 'Tribune Lepagnot', pos: [36, 18.6, -67.9], types: ['plateau', 'hfr3', 'hfr6', 'portable'], role: 'semi', precab: true, desc: 'Alignée sur la ligne de la surface de réparation droite.' },
+  { id: 'high_c', label: 'Haut de la tribune Lepagnot (centre)', zone: 'Tribune Lepagnot', pos: [0, 30.7, -84], types: ['plateau', 'portable'], role: 'tactique', precab: false, desc: 'Position très haute pour le plan tactique.' },
   { id: 'pitch_c', label: 'Bord terrain – entre les bancs', zone: 'Bord terrain', pos: [0, 1.6, -39.4], types: ['portable', 'steadicam', 'ptz'], role: 'joueur', precab: true, desc: 'Caméra basse au niveau des bancs : joueurs, entraîneurs, remplacements.' },
   { id: 'pitch_gl', label: 'Bord terrain – derrière le but gauche', zone: 'Bord terrain', pos: [-58.6, 1.6, -9], types: ['portable', 'hfr3', 'hfr6', 'plateau'], role: 'serre', precab: true, desc: 'Caméra basse derrière le but : actions dans la surface, buts, gardien.' },
   { id: 'pitch_gr', label: 'Bord terrain – derrière le but droit', zone: 'Bord terrain', pos: [58.6, 1.6, 9], types: ['portable', 'hfr3', 'hfr6', 'plateau'], role: 'serre', precab: true, desc: 'Caméra basse derrière le but droit.' },
-  { id: 'end_hl', label: 'Tribune haute derrière le but gauche', zone: 'Virage gauche', pos: [-93, 21.8, 0], types: ['plateau', 'hfr3', 'portable'], role: 'semi', precab: true, desc: 'Axe du but en hauteur : profondeur et lignes de passe.' },
-  { id: 'end_hr', label: 'Tribune haute derrière le but droit', zone: 'Virage droit', pos: [93, 21.8, 0], types: ['plateau', 'hfr3', 'portable'], role: 'semi', precab: true, desc: 'Axe du but droit en hauteur.' },
-  { id: 'opp_c', label: 'Tribune opposée – centre (contrechamp)', zone: 'Tribune opposée', pos: [0, 9.0, 53.5], types: ['plateau', 'hfr3', 'portable'], role: 'semi', precab: false, desc: 'Contrechamp (reverse) : souvent réservé aux ralentis pour ne pas désorienter le téléspectateur.' },
+  { id: 'end_hl', label: 'Tribune Trannin (haute) – axe du but', zone: 'Tribune Trannin', pos: [-89, 17.4, 0], types: ['plateau', 'hfr3', 'portable'], role: 'semi', precab: true, desc: 'Axe du but en hauteur : profondeur et lignes de passe.' },
+  { id: 'end_hr', label: 'Tribune Delacourt (haute) – axe du but', zone: 'Tribune Delacourt', pos: [89, 17.3, 0], types: ['plateau', 'hfr3', 'portable'], role: 'semi', precab: true, desc: 'Axe du but droit en hauteur.' },
+  { id: 'opp_c', label: 'Tribune Xercès – centre (contrechamp)', zone: 'Tribune Marek-Xercès', pos: [0, 15.35, 66.5], types: ['plateau', 'hfr3', 'portable'], role: 'semi', precab: false, desc: 'Contrechamp (reverse) : souvent réservé aux ralentis pour ne pas désorienter le téléspectateur.' },
   { id: 'opp_16l', label: 'Bord terrain opposé – 16 m gauche', zone: 'Bord terrain', pos: [-36, 1.6, 39.5], types: ['portable', 'hfr3', 'plateau'], role: 'serre', precab: false, desc: 'Contrechamp bas.' },
   { id: 'opp_16r', label: 'Bord terrain opposé – 16 m droit', zone: 'Bord terrain', pos: [36, 1.6, 39.5], types: ['portable', 'hfr3', 'plateau'], role: 'serre', precab: false, desc: 'Contrechamp bas.' },
   { id: 'steadi_l', label: 'Steadicam HF – touche gauche', zone: 'Bord terrain', pos: [-26, 1.6, -36.4], types: ['steadicam', 'portable'], role: 'suivi', precab: false, desc: 'Steadicam qui suit l\'action le long de la touche gauche.' },
@@ -182,17 +183,17 @@ export const SLOTS = [
   { id: 'rail_opp', label: 'Rail travelling – touche opposée', zone: 'Bord terrain', pos: [0, 0.9, 36.6], types: ['rail'], role: 'suivi', precab: false, desc: 'Chariot motorisé sur rail qui suit le jeu au ras de la pelouse.' },
   { id: 'spider', label: 'Caméra câblée volante', zone: 'Au-dessus du terrain', pos: [0, 16, -10], types: ['spider'], role: 'suivi', precab: false, desc: 'Caméra suspendue à 4 câbles : vues aériennes dynamiques.' },
   { id: 'crane_l', label: 'Grue – angle gauche', zone: 'Bord terrain', pos: [-60, 3.5, -38.4], types: ['grue'], role: 'grue', precab: false, desc: 'Grue télescopique dans l\'angle : plans d\'ambiance et de célébrations.' },
-  { id: 'beauty', label: 'Toit – plan beauté', zone: 'Toit', pos: [0, 42.5, 53], types: ['ptz', 'plateau'], role: 'beaute', precab: false, desc: 'Vue générale du stade, pour l\'ouverture et les retours de pub.' },
+  { id: 'beauty', label: 'Toit Marek-Xercès – plan beauté', zone: 'Toit', pos: [0, 34.6, 47], types: ['ptz', 'plateau'], role: 'beaute', precab: false, desc: 'Vue générale du stade, pour l\'ouverture et les retours de pub.' },
   { id: 'tunnel', label: 'Sortie du tunnel des joueurs', zone: 'Tunnel', pos: [3.4, 1.7, -42.5], types: ['portable', 'steadicam', 'ptz'], role: 'tunnel', precab: true, desc: 'Entrée des joueurs et sortie à la mi-temps.' },
-  { id: 'comm', label: 'Cabine commentateurs', zone: 'Tribune principale', pos: [11.5, 15.1, -65.6], types: ['ptz'], role: 'comm', precab: true, desc: 'Plan des commentateurs.' },
-  { id: 'drone', label: 'Drone – zone de vol tribune opposée', zone: 'Extérieur', pos: [-40, 58, 75], types: ['drone'], role: 'beaute', precab: false, desc: 'Vol autorisé uniquement hors du public, avec télépilote certifié.' },
+  { id: 'comm', label: 'Positions commentateurs', zone: 'Tribune Lepagnot', pos: [11.5, 12.9, -62.6], types: ['ptz'], role: 'comm', precab: true, desc: 'Plan des commentateurs.' },
+  { id: 'drone', label: 'Drone – zone de vol derrière Marek-Xercès', zone: 'Extérieur', pos: [-40, 58, 75], types: ['drone'], role: 'beaute', precab: false, desc: 'Vol autorisé uniquement hors du public, avec télépilote certifié.' },
 ];
 
 export const ANTENNAS = [
-  { id: 'ant_main', label: 'Antenne toit tribune principale', pos: [0, 40, -48], gain: 13, kind: 'secteur', on: true },
-  { id: 'ant_opp', label: 'Antenne toit tribune opposée', pos: [0, 40, 48], gain: 13, kind: 'secteur', on: false },
-  { id: 'ant_l', label: 'Antenne toit virage gauche', pos: [-68, 40, 0], gain: 13, kind: 'secteur', on: false },
-  { id: 'ant_r', label: 'Antenne toit virage droit', pos: [68, 40, 0], gain: 13, kind: 'secteur', on: false },
+  { id: 'ant_main', label: 'Antenne toit Lepagnot', pos: [0, 35.5, -44], gain: 13, kind: 'secteur', on: true },
+  { id: 'ant_opp', label: 'Antenne toit Marek-Xercès', pos: [0, 34.5, 44], gain: 13, kind: 'secteur', on: false },
+  { id: 'ant_l', label: 'Antenne toit Trannin', pos: [-64, 31, 0], gain: 13, kind: 'secteur', on: false },
+  { id: 'ant_r', label: 'Antenne toit Delacourt', pos: [64, 33, 0], gain: 13, kind: 'secteur', on: false },
   { id: 'ant_tun', label: 'Antenne tunnel / vestiaires', pos: [0, 3.6, -64], gain: 6, kind: 'omni', on: false },
   { id: 'ant_cpd', label: 'Mât antenne du compound', pos: [-4, 9, -100], gain: 9, kind: 'omni', on: false },
 ];
@@ -395,7 +396,7 @@ export const STATION_INFO = {
     tips: ['Le béton et les tribunes atténuent fortement le signal : une antenne dans le tunnel est indispensable pour suivre les joueurs depuis les vestiaires.'],
   },
   localtv: {
-    title: 'Local technique TV du stade', where: 'Sous la tribune principale',
+    title: 'Local technique TV du stade', where: 'Sous la tribune Lepagnot (principale)',
     role: 'Point d\'arrivée du pré-câblage du stade : les fibres et câbles des positions caméras et commentateurs aboutissent ici, sur des panneaux de brassage. On y raccorde les câbles venant du compound.',
     gear: ['Panneaux de brassage fibre, multipaires audio, prises SMPTE pré-installées'],
     process: ['Vérifier l\'état des fibres (mesure de perte) lors du repérage'],
@@ -553,6 +554,19 @@ export const GLOSSARY = [
 ];
 
 export const GUIDE = [
+  {
+    id: 'stade', title: 'Le stade (inspiré de Bollaert-Delelis)', html: `
+<p>Le stade du simulateur s'inspire du <b>stade Bollaert-Delelis</b> de Lens, rénové pour l'Euro 2016 (≈ 38 000 places, pelouse 105 × 68 m). C'est une reconstitution simplifiée pour la formation, <b>non officielle et sans lien avec le club</b> : proportions, matériaux et emplacements techniques sont approchés.</p>
+<ul>
+<li><b>Quatre tribunes séparées, angles ouverts.</b> Lepagnot (tribune principale, côté caméras), Marek-Xercès en face, Trannin et Delacourt derrière les buts. Dans chaque angle, un pylône en treillis d'environ 72 m porte l'anneau de poutres auquel sont suspendus les toits : aucun poteau ne gêne la vue.</li>
+<li><b>Lepagnot</b> : vestiaires, tunnel des joueurs, loges, tribune de presse et positions commentateurs. La <b>passerelle caméras</b> est posée sur le toit des loges, sous le front de la tribune haute, dans l'axe de la ligne médiane : c'est là que vont la caméra principale et les caméras « 16 m ».</li>
+<li><b>Marek-Xercès</b> : le <b>kop</b> debout est en bas (Marek), la tribune Xercès au-dessus. Le kop est face aux caméras principales : c'est l'image du public que l'on voit le plus. Un couple d'ambiance devant le kop donne l'essentiel du son des tribunes.</li>
+<li><b>Trannin</b> : longée par la voie ferrée (un TER passe de temps en temps), elle accueille le parcage des visiteurs dans un coin.</li>
+<li><b>Écrans géants</b> : deux écrans d'environ 40 m² dans les angles opposés (Trannin-Lepagnot et Marek-Delacourt). Ils reçoivent la sortie « écran géant » de la grille.</li>
+<li><b>Toits et HF</b> : les antennes de réception HF sont posées à la rive des toits ; les toits en polycarbonate et leur charpente métallique atténuent les liaisons qui les traversent.</li>
+<li><b>Autour</b> : les cités minières, la gare au sud-est, et à l'horizon, à l'ouest-nord-ouest, les terrils jumeaux de Loos-en-Gohelle et les chevalements de la fosse 11/19.</li>
+</ul>
+<p class="note">Le compound TV est placé derrière la tribune Lepagnot (côté presse et vestiaires), position la plus courte vers la passerelle et le local technique. À vérifier avec votre propre plan d'installation à Bollaert.</p>`},
   {
     id: 'deroule', title: 'Déroulé d\'une production', html: `
 <p>Une captation de match se prépare plusieurs jours à l'avance et s'installe en général la veille (J-1) ou le matin même.</p>
@@ -836,6 +850,8 @@ export const GUIDE = [
 <li>Rayonnement HF : respecter les distances de sécurité autour des antennes et émetteurs.</li>
 <li>Drones : télépilote certifié, scénario de vol déclaré, jamais au-dessus du public.</li></ul>`},
 ];
+// le chapitre sur le stade vient après le déroulé d'une production
+GUIDE.splice(1, 0, GUIDE.shift());
 
 export const CONTROLS_HELP = [
   ['Clic dans la vue', 'Capturer la souris (vue à la première personne)'],
@@ -854,8 +870,9 @@ export const CONTROLS_HELP = [
 ];
 
 export const TEAMS = [
-  { name: 'FC LUMIÈRE', short: 'LUM', shirt: 0x1f4fd6, shorts: 0xffffff, socks: 0x1f4fd6, gk: 0x22c55e, color: '#1f4fd6' },
-  { name: 'AS RIVIÈRE', short: 'RIV', shirt: 0xd8262f, shorts: 0x1a1a1a, socks: 0xd8262f, gk: 0xf2c014, color: '#d8262f' },
+  // équipe à domicile : le Racing, sang et or (maillot or, manches rouges) ; pas d'écusson officiel
+  { name: 'RC LENS', short: 'RCL', shirt: 0xf5c400, sleeves: 0xc8102e, shorts: 0xc8102e, socks: 0xf5c400, gk: 0x22c55e, color: '#c8102e' },
+  { name: 'AS RIVIÈRE', short: 'RIV', shirt: 0xf2f4f6, sleeves: 0x1d3a8a, shorts: 0x1d3a8a, socks: 0xf2f4f6, gk: 0xff8a1f, color: '#1d3a8a' },
 ];
 export const PLAYER_NAMES = [
   ['M. Laurent', 'L. Benali', 'T. Moreau', 'J. Diallo', 'A. Fontaine', 'K. Traoré', 'R. Lefèvre', 'S. Martin', 'Y. Kanté', 'N. Girard', 'E. Rousseau'],

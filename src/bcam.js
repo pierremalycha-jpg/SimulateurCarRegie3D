@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { S, emit, camById, nextCamId } from './state.js';
 import { CAMERA_TYPES, LENSES, LINKS, SENSORS, SLOTS, ROLES, maxAperture, ND_FILTERS, SHUTTERS, IRIS_STOPS } from './data.js';
 import { Builder, setLayer } from './geo.js';
-import { W, BOWL, TRUCK, PITCH, standHeight, bowlOffset, labelSprite } from './world.js';
+import { W, BOWL, TRUCK, PITCH, standHeightAt, bowlOffset, labelSprite } from './world.js';
 import { M } from './match.js';
 import { refPatched } from './patch.js';
 import { clamp, spring, springAngle, wrapAngle, DEG, rand, randRange, kelvinRGBNorm, gauss, lerp } from './util.js';
@@ -94,7 +94,7 @@ export function rtSize() {
 // ----------------------------------------------------------------------------------
 const RINGS = {
   pitch: { hx: 59.4, hz: 39.7, y: 0.05 },
-  conc: { hx: BOWL.hx + 27, hz: BOWL.hz + 27, y: 13.6 },
+  conc: { hx: BOWL.hx + 23.5, hz: BOWL.hz + 23.5, y: 11.2 }, // coursive entre tribunes basse et haute
 };
 function perimLen(r) { return 4 * r.hx + 4 * r.hz; }
 function projRing(r, x, z) {
@@ -151,7 +151,7 @@ export function computeRoute(pos, typeKey, linkKey) {
     main = ringPath(r, s1, s2);
     pts.push(...main, [2.5, 0.05, -41], [2.5, 0.05, -93]);
     pts.push(...compoundTail(2.5).slice(1));
-  } else if (off < 25.5) {
+  } else if (off < 23) {
     const front = [clamp(start[0], -BOWL.hx, BOWL.hx), 1.5, clamp(start[2], -BOWL.hz, BOWL.hz)];
     if (Math.abs(start[0]) - BOWL.hx > Math.abs(start[2]) - BOWL.hz) front[0] = Math.sign(start[0]) * BOWL.hx; else front[2] = Math.sign(start[2]) * BOWL.hz;
     pts.push(front);
@@ -162,8 +162,8 @@ export function computeRoute(pos, typeKey, linkKey) {
     const r = RINGS.conc; const s1 = projRing(r, start[0], start[2]);
     const p0 = ringPoint(r, s1);
     pts.push([p0[0], Math.max(r.y, Math.min(start[1], 40)), p0[2]]);
-    const s2 = projRing(r, 6, -68);
-    pts.push(...ringPath(r, s1, s2), [6, 0.05, -68], [6, 0.05, -93]);
+    const s2 = projRing(r, 6, -64.5);
+    pts.push(...ringPath(r, s1, s2), [6, 0.05, -64.5], [6, 0.05, -93]);
     pts.push(...compoundTail(6).slice(1));
   }
   if (linkKey === 'precab') {
@@ -183,11 +183,75 @@ export function computeRoute(pos, typeKey, linkKey) {
 // ----------------------------------------------------------------------------------
 // Modèles 3D de caméras
 // ----------------------------------------------------------------------------------
-function personParts(B, x, y, z, color = 0x2b3340, rotY = 0, crouch = 0) {
+function personParts(B, x, y, z, color = 0x2b3340, rotY = 0, crouch = 0, headset = true) {
   const c = Math.cos(rotY), s = Math.sin(rotY);
   const P = (dx, dz) => [x + dx * c + dz * s, z - dx * s + dz * c];
-  for (const sd of [-1, 1]) { const [px, pz] = P(sd * 0.1, 0); B.box(0.14, 0.85 - crouch, 0.15, px, y + (0.85 - crouch) / 2, pz, 0x1c2128, rotY); }
-  { const [px, pz] = P(0, 0); B.box(0.44, 0.6, 0.26, px, y + 1.15 - crouch, pz, color, rotY); B.sphere(0.12, px, y + 1.6 - crouch, pz, 0xd2a07c, 8); B.box(0.27, 0.06, 0.27, px, y + 1.7 - crouch, pz, 0x111111, rotY); }
+  for (const sd of [-1, 1]) { const [px, pz] = P(sd * 0.1, 0); B.box(0.14, 0.85 - crouch, 0.15, px, y + (0.85 - crouch) / 2, pz, 0x1c2128, rotY); const [fx, fz] = P(sd * 0.1, -0.05); B.box(0.12, 0.08, 0.26, fx, y + 0.04, fz, 0x111111, rotY); }
+  const [px, pz] = P(0, 0);
+  B.box(0.44, 0.62, 0.26, px, y + 1.16 - crouch, pz, color, rotY);
+  B.box(0.46, 0.06, 0.28, px, y + 1.44 - crouch, pz, 0x1a1d22, rotY); // col
+  B.sphere(0.115, px, y + 1.6 - crouch, pz, 0xd2a07c, 8);
+  B.box(0.25, 0.06, 0.25, px, y + 1.7 - crouch, pz, 0x15171a, rotY);
+  if (headset) { for (const sd of [-1, 1]) { const [hx, hz] = P(sd * 0.12, 0); B.box(0.04, 0.09, 0.08, hx, y + 1.6 - crouch, hz, 0x111111, rotY); } const [mx, mz] = P(0.09, -0.12); B.box(0.02, 0.02, 0.1, mx, y + 1.55 - crouch, mz, 0x111111, rotY); }
+}
+
+// caméra système de type HDC (corps + adaptateur grand objectif + objectif box) sur tête fluide et trépied
+function boxCamera(Bs, Bp, Bt, cam, y0, lensLen, lensCol, body) {
+  const legTop = y0 + 1.02;
+  // trépied lourd + araignée au sol
+  for (let k = 0; k < 3; k++) {
+    const a = k * 2.094 + 0.5, fx = Math.sin(a) * 0.62, fz = Math.cos(a) * 0.62;
+    Bs.rod([Math.sin(a) * 0.08, legTop, Math.cos(a) * 0.08], [fx, y0 + 0.05, fz], 0.028, 0x3b4046);
+    Bs.rod([Math.sin(a) * 0.1, legTop - 0.05, Math.cos(a) * 0.1], [fx * 0.92, y0 + 0.1, fz * 0.92], 0.02, 0x50565c);
+    Bs.rod([fx, y0 + 0.04, fz], [Math.sin(a + 2.094) * 0.62, y0 + 0.04, Math.cos(a + 2.094) * 0.62], 0.015, 0x2a2e33, 4);
+    Bs.box(0.07, 0.05, 0.07, fx, y0 + 0.025, fz, 0x111111);
+  }
+  Bs.cyl(0.11, 0.13, 0.12, 0, legTop + 0.05, 0, 0x2a2d31, 14); // bol
+  // tête fluide (suit le panoramique)
+  Bp.box(0.24, 0.16, 0.26, 0, legTop + 0.2, 0.02, 0x2b2f34); Bp.cyl(0.07, 0.07, 0.28, 0, legTop + 0.27, 0.02, 0x3a3f46, 12, 0, Math.PI / 2);
+  // plateau, corps et adaptateur grand objectif (le corps glisse à l'arrière)
+  Bt.box(0.34, 0.06, 0.5, 0, -0.2, 0.08, 0x23272c);
+  Bt.box(0.3, 0.33, 0.44, 0, -0.01, 0.1, body); // adaptateur
+  Bt.box(0.2, 0.26, 0.24, 0, -0.03, 0.42, 0x2f3439); // tête de caméra
+  Bt.box(0.22, 0.04, 0.2, 0, 0.18, 0.12, 0x1f2328); // poignée
+  for (let i = 0; i < 4; i++) Bt.box(0.012, 0.18, 0.012, 0.155, -0.02, 0.0 + i * 0.07, 0x111111); // ouïes
+  // objectif box (blanc ou noir selon la marque)
+  const lz = -0.12 - lensLen / 2;
+  Bt.box(0.32, 0.34, lensLen, 0, -0.01, lz, lensCol);
+  Bt.box(0.08, 0.2, lensLen * 0.5, 0.2, -0.03, lz + lensLen * 0.12, 0x2a2d31); // servo zoom / focus
+  Bt.box(0.36, 0.38, 0.06, 0, -0.01, -0.12 - lensLen - 0.02, 0x15171a); // pare-soleil
+  Bt.cyl(0.13, 0.13, 0.02, 0, -0.01, -0.12 - lensLen - 0.055, 0x0b1a2a, 18, Math.PI / 2); // lentille frontale
+  // viseur 7" sur le dessus, écran tourné vers le cadreur
+  Bt.box(0.04, 0.12, 0.04, 0, 0.22, 0.02, 0x23272c);
+  Bt.box(0.27, 0.19, 0.2, 0, 0.36, 0.0, 0x1b1e22); Bt.box(0.23, 0.14, 0.005, 0, 0.36, 0.105, 0x2e4a66);
+  Bt.box(0.29, 0.03, 0.09, 0, 0.465, 0.07, 0x15171a); // casquette
+  // bras de manivelle : zoom à droite, point à gauche
+  for (const sd of [-1, 1]) {
+    Bt.rod([sd * 0.14, -0.2, 0.25], [sd * 0.36, -0.3, 0.82], 0.018, 0x3a3f46);
+    Bt.cyl(0.025, 0.025, 0.12, sd * 0.37, -0.3, 0.84, 0x111111, 8, Math.PI / 2);
+  }
+  Bt.box(0.06, 0.05, 0.1, 0.38, -0.27, 0.84, 0x3d4a5a); // commande de zoom
+  Bt.cyl(0.05, 0.05, 0.03, -0.39, -0.3, 0.8, 0x2a2d31, 12, 0, Math.PI / 2); // roue de point
+  // câble fibre (SMPTE) qui part de l'arrière et tombe au sol
+  Bp.rod([0, legTop + 0.15, 0.4], [0.08, legTop - 0.35, 0.62], 0.016, 0x101010, 5); Bp.rod([0.08, legTop - 0.35, 0.62], [0.2, y0 + 0.02, 0.85], 0.016, 0x101010, 5);
+  // cadreur debout derrière, casque d'ordres
+  personParts(Bp, 0, y0, 1.0, 0x2d3a4f, 0);
+  for (const sd of [-1, 1]) Bp.rod([sd * 0.22, y0 + 1.36, 0.98], [sd * 0.36, y0 + 1.04 + 0.0, 0.88], 0.04, 0x2d3a4f, 5);
+}
+// caméra portable (corps type HDC-5500, objectif ENG, viseur, adaptateur fibre) à l'épaule
+function shoulderCamera(Bp, Bt, cam, y0, lensLen, lensCol, body) {
+  personParts(Bp, -0.17, y0, 0.15, 0x3a2f2a, 0);
+  Bp.rod([-0.03, y0 + 1.42, 0.12], [0.07, -0.05, -0.12], 0.04, 0x3a2f2a, 5); // bras droit vers la poignée de zoom
+  Bp.rod([-0.31, y0 + 1.42, 0.12], [-0.1, -0.12, -0.06], 0.04, 0x3a2f2a, 5);
+  Bt.box(0.14, 0.24, 0.36, 0, 0, 0.1, body); // corps
+  Bt.box(0.12, 0.05, 0.2, 0, -0.14, 0.12, 0x1a1d21); // épaulière
+  Bt.box(0.03, 0.04, 0.26, 0, 0.165, 0.08, 0x1a1d21); Bt.box(0.03, 0.05, 0.03, 0, 0.14, -0.04, 0x1a1d21); Bt.box(0.03, 0.05, 0.03, 0, 0.14, 0.2, 0x1a1d21); // poignée
+  Bt.box(0.13, 0.2, 0.08, 0, -0.01, 0.32, 0x2a2e33); Bt.cyl(0.025, 0.025, 0.04, 0.04, -0.06, 0.37, 0xd0d0d0, 8, Math.PI / 2); // adaptateur fibre + connecteur
+  Bt.cyl(0.045, 0.05, lensLen, 0, 0, -0.08 - lensLen / 2, lensCol, 14, Math.PI / 2); // objectif ENG
+  Bt.box(0.05, 0.08, lensLen * 0.45, 0.065, -0.02, -0.1 - lensLen * 0.3, 0x2a2d31); // poignée servo
+  Bt.box(0.12, 0.1, 0.05, 0, 0, -0.1 - lensLen, 0x111111); // pare-soleil
+  Bt.box(0.05, 0.06, 0.15, -0.1, 0.1, 0.0, 0x1a1d21); Bt.cyl(0.028, 0.03, 0.06, -0.1, 0.1, 0.1, 0x111111, 10, Math.PI / 2); // viseur + œilleton
+  Bt.cyl(0.006, 0.006, 0.2, -0.05, 0.2, 0.25, 0x111111, 4); // antenne / tally arrière
 }
 
 function buildModel(cam) {
@@ -202,61 +266,70 @@ function buildModel(cam) {
   let tally = null;
   switch (T.model) {
     case 'box': {
-      // trépied
-      for (let k = 0; k < 3; k++) { const a = k * 2.09; Bs.rod([0, y0 + 1.05, 0], [Math.sin(a) * 0.55, y0, Math.cos(a) * 0.55], 0.03, 0x444444); }
-      Bs.cyl(0.08, 0.1, 0.12, 0, -0.32, 0, 0x222222);
-      Bt.box(0.28, 0.32, 0.42, 0, 0, 0.05, body);
-      Bt.box(0.34, 0.36, lensLen, 0, 0.0, -0.21 - lensLen / 2, lensCol);
-      Bt.cyl(0.13, 0.13, 0.05, 0, 0, -0.21 - lensLen, 0x111111, 14, Math.PI / 2);
-      Bt.box(0.22, 0.18, 0.25, 0, 0.27, 0.12, 0x1d2024);
-      Bp.rod([0.12, -0.15, 0.2], [0.35, -0.25, 0.75], 0.02, 0x333333); Bp.rod([-0.12, -0.15, 0.2], [-0.35, -0.25, 0.75], 0.02, 0x333333);
-      personParts(Bp, 0, y0, 0.95, 0x2d3a4f, 0);
+      if (lensLen > 0.5) boxCamera(Bs, Bp, Bt, cam, y0, lensLen, lensCol, body);
+      else {
+        // objectif portable monté sur trépied (configuration « studio léger »)
+        for (let k = 0; k < 3; k++) { const a = k * 2.09; Bs.rod([0, y0 + 1.05, 0], [Math.sin(a) * 0.55, y0, Math.cos(a) * 0.55], 0.025, 0x444444); }
+        Bp.box(0.2, 0.14, 0.22, 0, -0.27, 0.02, 0x2b2f34);
+        shoulderCamera(new Builder(), Bt, cam, y0, lensLen, lensCol, body);
+        for (const sd of [-1, 1]) Bt.rod([sd * 0.08, -0.2, 0.2], [sd * 0.3, -0.3, 0.7], 0.016, 0x3a3f46);
+        personParts(Bp, 0, y0, 0.9, 0x2d3a4f, 0);
+      }
       break;
     }
-    case 'shoulder': {
-      personParts(Bp, 0.18, y0, 0.15, 0x3a2f2a, 0);
-      Bt.box(0.16, 0.24, 0.42, 0, 0, 0.1, body); Bt.box(0.12, 0.12, lensLen, 0, 0, -0.11 - lensLen / 2, lensCol); Bt.box(0.06, 0.08, 0.16, -0.12, 0.08, 0.05, 0x111111);
-      break;
-    }
+    case 'shoulder': shoulderCamera(Bp, Bt, cam, y0, lensLen, lensCol, body); break;
     case 'steadicam': {
       personParts(Bp, 0, y0, 0.55, 0x1e2a3a, 0);
-      Bp.box(0.5, 0.45, 0.3, 0, y0 + 1.2, 0.42, 0x111111); // gilet
-      Bp.rod([0.2, y0 + 1.1, 0.3], [0.1, -0.15, 0.1], 0.03, 0x666666);
-      Bt.box(0.14, 0.22, 0.36, 0, 0, 0.05, body); Bt.box(0.1, 0.1, lensLen, 0, 0, -0.13 - lensLen / 2, lensCol);
-      Bp.rod([0, -0.12, 0.05], [0, -1.0, 0.05], 0.02, 0x888888); Bp.box(0.2, 0.18, 0.2, 0, -1.05, 0.05, 0x222222);
-      Bp.box(0.1, 0.18, 0.06, 0, -0.95, 0.2, 0xd65cf2); // émetteur HF
+      Bp.box(0.5, 0.48, 0.32, 0, y0 + 1.15, 0.45, 0x111111); // gilet
+      Bp.box(0.08, 0.3, 0.12, 0.27, y0 + 1.15, 0.33, 0x2a2a2a); // attache du bras
+      Bp.rod([0.27, y0 + 1.1, 0.3], [0.22, y0 + 1.05, 0.12], 0.035, 0x7a8088); Bp.rod([0.22, y0 + 1.05, 0.12], [0.06, -0.2, 0.06], 0.035, 0x7a8088); // bras iso-élastique
+      Bp.box(0.06, 0.06, 0.06, 0.06, -0.2, 0.06, 0x333333); // cardan
+      Bt.box(0.14, 0.22, 0.34, 0, 0, 0.05, body); Bt.cyl(0.045, 0.05, lensLen, 0, 0, -0.12 - lensLen / 2, lensCol, 12, Math.PI / 2);
+      Bt.box(0.1, 0.1, 0.06, 0, 0, -0.14 - lensLen, 0x111111);
+      Bp.rod([0, -0.12, 0.05], [0, -1.0, 0.05], 0.022, 0x9aa0a6); // poteau
+      Bp.box(0.22, 0.16, 0.24, 0, -1.05, 0.1, 0x222222); Bp.box(0.08, 0.14, 0.06, 0, -0.98, 0.25, 0xd65cf2); // batteries + émetteur HF
+      Bp.box(0.18, 0.12, 0.02, 0, -0.9, -0.08, 0x2e4a66); // moniteur
+      Bp.cyl(0.004, 0.004, 0.18, 0.06, -0.82, 0.25, 0x111111, 4); // antenne HF
       break;
     }
     case 'pov': {
-      Bt.box(0.06, 0.06, 0.09, 0, 0, 0.02, 0x111111); Bt.cyl(0.02, 0.02, 0.02, 0, 0, -0.035, 0x333333, 8, Math.PI / 2);
+      Bt.box(0.06, 0.06, 0.09, 0, 0, 0.02, 0x111111); Bt.cyl(0.022, 0.022, 0.025, 0, 0, -0.035, 0x333333, 10, Math.PI / 2); Bt.cyl(0.016, 0.016, 0.005, 0, 0, -0.049, 0x0b1a2a, 10, Math.PI / 2);
+      Bp.box(0.08, 0.015, 0.06, 0, -0.04, 0.02, 0x555555); Bp.cyl(0.004, 0.004, 0.12, 0, -0.1, 0.05, 0x111111, 4); // collier sur le poteau du but + câble
       break;
     }
     case 'crane': {
-      Bs.box(1.2, 0.6, 1.2, 0, -3.2, 0, 0x333a42);
-      Bt.box(0.16, 0.2, 0.3, 0, 0, 0.05, body); Bt.box(0.1, 0.1, lensLen, 0, 0, -0.1 - lensLen / 2, lensCol);
-      Bt.box(0.36, 0.36, 0.06, 0, 0, 0.25, 0x555555);
+      Bs.box(1.4, 0.35, 1.4, 0, -3.35, 0.8, 0x333a42); for (const [dx, dz] of [[-0.6, 0.2], [0.6, 0.2], [-0.6, 1.4], [0.6, 1.4]]) Bs.cyl(0.08, 0.08, 0.12, dx, -3.5, dz, 0x111111, 8, Math.PI / 2);
+      Bs.cyl(0.12, 0.15, 1.4, 0, -2.6, 0.8, 0x4a525c, 10);
+      Bp.rod([0, -1.9, 0.8], [0, 0.15, 0.02], 0.09, 0x9aa0a6, 8); Bp.rod([0, -1.9, 0.8], [0, -2.3, 2.6], 0.09, 0x9aa0a6, 8); // bras télescopique
+      Bp.box(0.4, 0.5, 0.4, 0, -2.4, 2.75, 0x2b2f34); // contrepoids
+      Bp.box(0.36, 0.36, 0.06, 0, 0, 0.25, 0x555555); // tête télécommandée
+      Bt.box(0.16, 0.2, 0.3, 0, 0, 0.05, body); Bt.cyl(0.045, 0.05, lensLen + 0.12, 0, 0, -0.16 - lensLen / 2, lensCol, 10, Math.PI / 2);
+      personParts(Bs, 0.9, -3.5, 1.6, 0x2d3a4f, -0.4);
       break;
     }
     case 'rail': {
-      Bt.box(0.16, 0.2, 0.32, 0, 0, 0.05, body); Bt.box(0.1, 0.1, lensLen, 0, 0, -0.11 - lensLen / 2, lensCol);
-      Bp.box(0.6, 0.3, 0.5, 0, -0.55, 0, 0x2a2f36);
+      Bt.box(0.16, 0.2, 0.32, 0, 0, 0.05, body); Bt.cyl(0.045, 0.05, lensLen + 0.1, 0, 0, -0.15 - lensLen / 2, lensCol, 10, Math.PI / 2);
+      Bp.box(0.3, 0.12, 0.3, 0, -0.2, 0.02, 0x3a3f46); // tête
+      Bs.box(0.7, 0.28, 0.55, 0, -0.62, 0, 0x2a2f36); for (const dx of [-0.25, 0.25]) for (const dz of [-0.2, 0.2]) Bs.cyl(0.08, 0.08, 0.06, dx, -0.78, dz, 0x111111, 10, 0, Math.PI / 2);
       break;
     }
     case 'spider': {
-      Bt.box(0.3, 0.3, 0.3, 0, 0, 0, 0x202020); Bt.box(0.08, 0.08, 0.14, 0, -0.05, -0.2, lensCol);
-      Bp.box(0.7, 0.12, 0.7, 0, 0.3, 0, 0x2b2b2b);
+      Bt.box(0.3, 0.3, 0.3, 0, 0, 0, 0x202020); Bt.cyl(0.05, 0.06, 0.16, 0, -0.05, -0.22, lensCol, 10, Math.PI / 2);
+      Bp.box(0.8, 0.1, 0.8, 0, 0.3, 0, 0x2b2b2b); for (const [dx, dz] of [[1, 1], [1, -1], [-1, 1], [-1, -1]]) Bp.box(0.1, 0.16, 0.1, dx * 0.38, 0.4, dz * 0.38, 0xe0b030);
+      Bp.cyl(0.18, 0.18, 0.04, 0, 0.18, 0, 0x111111, 16);
       break;
     }
     case 'drone': {
       Bp.box(0.5, 0.12, 0.5, 0, 0.18, 0, 0xdddddd);
-      for (const [dx, dz] of [[1, 1], [1, -1], [-1, 1], [-1, -1]]) { Bp.rod([0, 0.18, 0], [dx * 0.45, 0.2, dz * 0.45], 0.02, 0x999999); Bp.cyl(0.18, 0.18, 0.01, dx * 0.45, 0.25, dz * 0.45, 0x444444, 12); }
-      Bt.box(0.12, 0.1, 0.12, 0, 0, 0, 0x111111);
+      for (const [dx, dz] of [[1, 1], [1, -1], [-1, 1], [-1, -1]]) { Bp.rod([0, 0.18, 0], [dx * 0.45, 0.2, dz * 0.45], 0.02, 0x999999); Bp.cyl(0.18, 0.18, 0.01, dx * 0.45, 0.25, dz * 0.45, 0x444444, 12); Bp.cyl(0.02, 0.02, 0.06, dx * 0.45, 0.22, dz * 0.45, 0x222222, 6); }
+      Bp.box(0.04, 0.2, 0.04, -0.15, 0.04, 0.2, 0x888888); Bp.box(0.04, 0.2, 0.04, 0.15, 0.04, 0.2, 0x888888); // trains
+      Bt.box(0.12, 0.1, 0.12, 0, 0, 0, 0x111111); Bt.cyl(0.03, 0.03, 0.03, 0, 0, -0.07, 0x0b1a2a, 10, Math.PI / 2);
       break;
     }
     case 'ptz': {
       Bs.box(0.18, 0.08, 0.18, 0, -0.22, 0, 0x2a2a2a);
-      Bp.box(0.16, 0.24, 0.16, 0, -0.08, 0, 0xe8e8e8);
-      Bt.box(0.12, 0.12, 0.2, 0, 0, -0.02, 0x222222); Bt.cyl(0.045, 0.045, 0.03, 0, 0, -0.13, 0x111111, 10, Math.PI / 2);
+      Bp.box(0.16, 0.24, 0.16, 0, -0.08, 0, 0xe8e8e8); Bp.box(0.04, 0.16, 0.18, 0.1, 0, 0, 0xe0e0e0); Bp.box(0.04, 0.16, 0.18, -0.1, 0, 0, 0xe0e0e0);
+      Bt.box(0.12, 0.12, 0.2, 0, 0, -0.02, 0x222222); Bt.cyl(0.045, 0.045, 0.03, 0, 0, -0.13, 0x111111, 10, Math.PI / 2); Bt.cyl(0.032, 0.032, 0.005, 0, 0, -0.146, 0x0b1a2a, 10, Math.PI / 2);
       break;
     }
   }
@@ -265,7 +338,8 @@ function buildModel(cam) {
   if (Bp.parts.length) { const m = Bp.mesh(mat); m.castShadow = true; pan.add(m); }
   if (Bt.parts.length) { const m = Bt.mesh(mat); m.castShadow = true; tilt.add(m); }
   tally = new THREE.Mesh(new THREE.SphereGeometry(T.model === 'pov' ? 0.015 : 0.035, 8, 6), new THREE.MeshBasicMaterial({ color: 0x220000, toneMapped: false }));
-  tally.position.set(0, T.model === 'box' ? 0.2 : 0.14, T.model === 'box' ? -0.15 : 0); tilt.add(tally);
+  // tally : au-dessus de l'objectif (vu par les joueurs) ; sur le viseur pour la caméra box
+  tally.position.set(0, T.model === 'box' ? 0.5 : 0.14, T.model === 'box' ? -0.05 : 0); tilt.add(tally);
   const lab = labelSprite(`CAM ${cam.id}`, { scale: T.model === 'pov' ? 2.2 : 3.2, border: '#' + LINKS[cam.link].color.toString(16).padStart(6, '0') });
   lab.position.set(0, T.model === 'box' ? 1.0 : 0.9, 0); setLayer(lab, 1); root.add(lab);
   return { root, pan, tilt, tally, label: lab };
@@ -503,12 +577,12 @@ export class BCam {
         if (this.aiT <= 0) {
           const side = M.state === 'celebration' && M.lastGoal ? (M.attackDir[M.lastGoal.team] > 0 ? 1 : -1) : (rand() < 0.5 ? -1 : 1);
           this.aiTarget = new THREE.Vector3(side * (BOWL.hx + 8 + rand() * 12), 0, (rand() - 0.5) * 40);
-          this.aiTarget.y = standHeight(bowlOffset(this.aiTarget.x, this.aiTarget.z)) + 0.8; this.aiT = 7 + rand() * 5;
+          this.aiTarget.y = standHeightAt(this.aiTarget.x, this.aiTarget.z) + 0.8; this.aiT = 7 + rand() * 5;
         }
         P = this.aiTarget; Wd = 12; omega = 2; break;
       }
       case 'tunnel': P = new THREE.Vector3(b.x * 0.4, 1.2, Math.max(-30, b.z)); Wd = 14; omega = 2; break;
-      case 'comm': P = new THREE.Vector3(11.55, TIERS_Y + 1.32, -(BOWL.hz + 26.5)); Wd = 1.9; omega = 2; break;
+      case 'comm': P = new THREE.Vector3(11.55, TIERS_Y + 1.32, -(BOWL.hz + 23.7)); Wd = 1.9; omega = 2; break;
       case 'grue': P = new THREE.Vector3(b.x * 0.8, 0.8, b.z * 0.6); Wd = 24; omega = 2; break;
       case 'suivi': P = new THREE.Vector3(b.x + b.vx * 0.3, Math.max(0.8, b.y * 0.5), b.z + b.vz * 0.2); Wd = T.moving === 'spider' ? 18 : T.moving === 'drone' ? 80 : 10; omega = 3; break;
       case 'beaute': P = new THREE.Vector3(0, 0, 0); Wd = 400; omega = 1; break;
@@ -570,7 +644,7 @@ export class BCam {
     if (state === 2) this.model.tally.material.color.multiplyScalar(4);
   }
 }
-const TIERS_Y = 13.5;
+const TIERS_Y = 11; // terrasse des positions commentateurs (tribune Lepagnot)
 
 // ----------------------------------------------------------------------------------
 // Gestion de l'ensemble des caméras

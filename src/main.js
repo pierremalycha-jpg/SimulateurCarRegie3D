@@ -2,8 +2,9 @@ import * as THREE from 'three';
 import { S, emit, on, camById } from './state.js';
 import { el, clamp, tc, mmss, fmt } from './util.js';
 import { LIGHTING, TEAMS, STATION_INFO, CONTROLS_HELP } from './data.js';
-import { buildWorld, applyLighting, updateWorld, paintTruckSign, W, TRUCK, blockedOutside, groundHeight, inTruckFootprint } from './world.js';
-import { buildTruck, truckBlocked, updateTruck, T } from './truck.js';
+import { buildWorld, applyLighting, updateWorld, paintTruckSign, standAt, W, TRUCK, blockedOutside, groundHeight, inTruckFootprint } from './world.js';
+import { buildTruck, truckBlocked, truckFloorAt, updateTruck, updateTruckView, T } from './truck.js';
+import { initTruckMap, updateTruckMap, openTruckPlan } from './ui/truckmap.js';
 import { initMatch, buildPlayers, stepMatch, initRecorder, record, M } from './match.js';
 import { loadPreset, lineUpCamera, updateRopes } from './bcam.js';
 import { updateRF } from './rf.js';
@@ -97,7 +98,7 @@ function buildStart() {
   s.append(el('div', { class: 'wrap' },
     el('div', { class: 'eyebrow' }, el('span', { class: 'rec' }), 'Simulateur de formation · OB · régie mobile'), truckLine,
     el('h1', {}, 'Car régie ', el('em', {}, '3D')),
-    el('p', { class: 'lede' }, 'Placez vos caméras dans un stade, choisissez les objectifs et les liaisons, suivez les câbles jusqu\'au car, puis prenez place à chaque poste : réalisation, mélangeur, vision, ralentis, son, HF, grille, transmission. Un match se joue en continu : tout ce que vous réglez se voit à l\'image, et chaque action est expliquée. Ouvrez le matériel (touche K) pour voir les faces avant et arrière des appareils, leurs connecteurs et le câblage de votre installation.'),
+    el('p', { class: 'lede' }, 'Placez vos caméras dans un stade inspiré de Bollaert-Delelis (Lens), choisissez les objectifs et les liaisons, suivez les câbles jusqu\'au car, puis prenez place à chaque poste : réalisation, mélangeur, vision, ralentis, son, HF, grille, transmission. Un match se joue en continu : tout ce que vous réglez se voit à l\'image, et chaque action est expliquée. Ouvrez le matériel (touche K) pour voir les faces avant et arrière des appareils, leurs connecteurs et le câblage de votre installation.'),
     el('div', { class: 'chain' }, ...chain.map((c, i) => el('div', {}, el('small', {}, String(i + 1).padStart(2, '0')), el('b', {}, c)))),
     el('div', { class: 'choices' },
       el('button', { class: 'choice main', onclick: () => go('standard') }, el('b', {}, 'Car prêt à l\'antenne'), el('span', {}, '12 caméras installées, câblées et réglées, dont 2 super ralentis, une Steadicam HF et une mini-caméra de but. Idéal pour découvrir les postes.')),
@@ -148,6 +149,7 @@ function buildToolbar() {
   tb.append(
     b('Plan caméras', 'P', () => openPlan()),
     b('Aller à', 'T', () => teleportMenu()),
+    b('Plan du car', 'Tab', () => openTruckPlan(), 'tb-truck'),
     b('Guide', 'G', () => openGuide('missions')),
     b('Matériel', 'K', () => openEquipmentIndex()),
     b('Vol libre', 'V', () => { PL.fly = !PL.fly; updToolbar(); }, 'tb-fly'),
@@ -174,20 +176,24 @@ function updateStatus(dt) {
   const w = $('#where'), w2 = $('#where2');
   const zone = whereAmI();
   w.textContent = zone[0]; w2.textContent = zone[1];
+  const tbt = $('#tb-truck'); if (tbt) tbt.hidden = !S.inTruck;
 }
 function whereAmI() {
   const p = PL.pos;
   if (S.inTruck) {
     const lx = p.x - TRUCK.cx;
     if (lx < -5.4) return ['Car régie · son', 'Cabine isolée, console de mixage'];
-    if (lx < 0.1) return ['Car régie · production', 'Réalisateur, scripte, truquiste, habillage, chef de car'];
+    if (lx < -0.15) return ['Car régie · production', 'Réalisateur, scripte, truquiste, habillage, chef de car'];
     if (lx < 3.9) return ['Car régie · vision et ralentis', 'Ingénieurs vision (RCP), opérateurs EVS'];
     return ['Car régie · zone technique', 'Baies CCU, grille, synchro, transmission, HF'];
   }
   if (p.z < -95) return ['Compound', 'Parc technique : car régie, groupe, satellite'];
   if (Math.abs(p.x) < 61 && Math.abs(p.z) < 41) return ['Pelouse et bord terrain', 'Caméras basses, Steadicam, mini-caméras'];
-  if (p.z < -41 && p.z > -95 && Math.abs(p.x) < 17) return ['Sous la tribune principale', 'Tunnel, vestiaires, local technique TV'];
-  return ['Stade', PL.fly ? 'Vol libre' : 'Tribunes'];
+  if (p.z < -41 && p.z > -95 && Math.abs(p.x) < 17) return ['Sous la tribune Lepagnot', 'Tunnel, vestiaires, local technique TV'];
+  const sa = standAt(p.x, p.z);
+  if (sa) return [sa.st.name, PL.fly ? 'Vol libre' : sa.st.id === 'marek' ? 'Marek en bas (kop debout), Xercès en haut' : sa.st.main ? 'Tribune principale : presse, loges, passerelle caméras' : 'Tribune derrière le but'];
+  if (Math.abs(p.x) < 125 && Math.abs(p.z) < 110) return ['Stade Bollaert-Delelis (inspiration)', 'Angle ouvert, pylône du toit'];
+  return ['Abords du stade', PL.fly ? 'Vol libre' : 'Cités minières, voie ferrée, terrils à l\'horizon'];
 }
 
 // ----------------------------------------------------------------------------------
@@ -202,21 +208,24 @@ const DESTS = [
   ['Bord terrain, ligne médiane', [0, 0, -37], Math.PI, false],
   ['Sortie du tunnel des joueurs', [0, 0, -46], Math.PI, false],
   ['Tunnel et vestiaires', [0, 0, -76], 0, false],
-  ['Passerelle caméras (tribune principale)', [0, 17.2, -68.4], Math.PI, true],
-  ['Derrière le but gauche', [-58.4, 0, -14], -Math.PI / 2 - 0.3, false],
-  ['Tribune opposée', [0, 8.5, 54], 0, true],
-  ['Toit (antennes HF)', [0, 45.5, -46], Math.PI, true],
+  ['Passerelle caméras (tribune Lepagnot)', [0, 17.2, -68.4], Math.PI, true],
+  ['Derrière le but, côté Trannin', [-58.4, 0, -14], -Math.PI / 2 - 0.3, false],
+  ['Kop Marek (tribune debout)', [0, 7.3, 54], 0, true],
+  ['Angle ouvert et pylône (Trannin-Lepagnot)', [-68, 0, -48], -2.3, false],
+  ['Toit (antennes HF)', [0, 36.2, -46], Math.PI, true],
   ['Vue aérienne du stade', [-60, 140, -190], Math.PI * 0.85, true],
 ];
 function teleport(i) {
   const [, p, yaw, fly, truck] = DESTS[i];
-  PL.pos.set(p[0], p[1], p[2]); PL.yaw = yaw; PL.pitch = i === 12 ? -0.55 : 0; PL.fly = !!fly; S.inTruck = !!truck;
+  PL.pos.set(p[0], p[1], p[2]); PL.yaw = yaw; PL.pitch = DESTS[i][0].startsWith('Vue aérienne') ? -0.55 : 0; PL.fly = !!fly; S.inTruck = !!truck;
   PL.y = p[1] + 1.7; updToolbar();
 }
 function teleportMenu() {
   const list = el('div', { class: 'list' });
   DESTS.forEach((d, i) => list.appendChild(el('button', { class: 'item', style: { textAlign: 'left' }, onclick: () => { teleport(i); modal.close(); } }, el('div', { class: 'grow' }, el('div', { class: 't' }, d[0])))));
-  modal.open('Aller à…', list, { width: 520 });
+  const posts = el('div', { class: 'hwrow' });
+  for (const st of T.stations) posts.append(el('button', { class: 'btn small', onclick: () => goToStation(st) }, st.label));
+  modal.open('Aller à…', el('div', { class: 'list' }, list, el('h3', {}, 'Postes du car (on s\'y rend et on l\'ouvre)'), posts, el('button', { class: 'btn', onclick: () => openTruckPlan() }, 'Plan du car (Tab)')), { width: 620 });
 }
 
 // ----------------------------------------------------------------------------------
@@ -228,8 +237,20 @@ function findTarget() {
   const eye = eyePos();
   const dir = new THREE.Vector3(); pcam.getWorldDirection(dir);
   const cands = [];
-  if (S.inTruck) for (const s of T.stations) cands.push({ ...s, kind: 'station' });
-  else {
+  if (S.inTruck) {
+    // dans le car : on prend le poste que l'on regarde (point visé : écran, pupitre ou baie)
+    let best = null, bs = 1e9;
+    for (const s of T.stations) {
+      const v = s.look.clone().sub(eye); const d = v.length();
+      const h = Math.hypot(s.pos.x - eye.x, s.pos.z - eye.z);
+      if (d > 3.4 || h > s.r + 1.4) continue;
+      const cos = v.normalize().dot(dir);
+      if (cos < 0.8 && !(h < 0.45 && cos > 0.3)) continue;
+      const sc = (1 - cos) * 6 + d * 0.25;
+      if (sc < bs) { bs = sc; best = s; }
+    }
+    return best ? { ...best, kind: 'station' } : null;
+  } else {
     for (const it of W.interactables) cands.push({ ...it, kind: it.action ? 'action' : 'info' });
     for (const c of S.cams) cands.push({ id: 'cam' + c.id, pos: c.cam.position.clone(), r: c.T.model === 'pov' ? 2 : 2.6, label: `Prendre la CAM ${c.id} (${c.T.short})`, kind: 'cam', cam: c, info: 'cadreur' });
   }
@@ -246,10 +267,19 @@ function findTarget() {
 }
 function act(t) {
   if (!t) return;
-  if (t.kind === 'station') { PL.pos.x = t.pos.x; PL.pos.z = t.pos.z; openStation(t.station, t.arg); return; }
+  if (t.kind === 'station') { goToStation(t); return; }
   if (t.kind === 'cam') { takeCamera(t.cam); return; }
   if (t.action === 'enterTruck') { teleport(1); toast('Vous êtes dans la régie production. Approchez-vous d\'un poste et appuyez sur E.'); return; }
   if (t.info) { openInfo(t.info); if (t.id.startsWith('ant:')) S.openedInfo.antenne = true; }
+}
+// se placer au poste (debout devant, tourné vers le pupitre) puis l'ouvrir
+function goToStation(s, open = true) {
+  if (S.mode === 'station') closeStation(true);
+  if (S.modalOpen) modal.close();
+  S.inTruck = true; PL.fly = false;
+  PL.pos.set(s.pos.x, truckFloorAt(s.pos.x, s.pos.z), s.pos.z); PL.y = PL.pos.y + 1.7;
+  PL.yaw = Math.atan2(-(s.look.x - s.pos.x), -(s.look.z - s.pos.z)); PL.pitch = -0.25;
+  if (open) openStation(s.station, s.arg);
 }
 function updatePrompt() {
   const p = $('#prompt');
@@ -262,6 +292,7 @@ function updatePrompt() {
   p.dataset.k = key; p.hidden = false; p.innerHTML = '';
   p.append(el('kbd', {}, 'E'), el('span', {}, target.kind === 'station' ? 'Prendre le poste : ' + target.label : target.label));
   if (target.kind === 'cam') p.append(el('small', {}, 'I : voir le matériel (connecteurs)'));
+  else if (target.kind === 'station') p.append(el('small', {}, ['clic ou E', infoId && STATION_INFO[infoId] ? 'I : fiche du poste' : '', target.device ? 'K : voir l\'appareil' : ''].filter(Boolean).join(' · ')));
   else if (infoId && STATION_INFO[infoId] && target.kind !== 'info') p.append(el('small', {}, 'I : fiche du poste'));
   p.onclick = () => act(target);
 }
@@ -360,12 +391,13 @@ function updatePlayer(dt) {
   if (!S.inTruck && inTruckFootprint(nx, nz) && nx > TRUCK.doorX0 && nx < TRUCK.doorX1 && nz > TRUCK.z1 - 0.6) { S.inTruck = true; p.x = nx; p.z = TRUCK.z1 - 0.35; }
   else if (S.inTruck && nz > TRUCK.z1 + 0.05) { S.inTruck = false; p.x = nx; p.z = nz; }
   else {
-    const R = 0.28;
-    const ok = (x, z) => !blocked(x + R, z) && !blocked(x - R, z) && !blocked(x, z + R) && !blocked(x, z - R);
-    if (ok(nx, p.z)) p.x = nx; if (ok(p.x, nz)) p.z = nz;
+    const R = S.inTruck ? 0.24 : 0.28, D = R * 0.71;
+    const ok = (x, z) => !blocked(x + R, z) && !blocked(x - R, z) && !blocked(x, z + R) && !blocked(x, z - R) && !blocked(x + D, z + D) && !blocked(x - D, z + D) && !blocked(x + D, z - D) && !blocked(x - D, z - D);
+    // glissement le long des obstacles : on essaie le mouvement complet, puis chaque axe séparément
+    if (ok(nx, nz)) { p.x = nx; p.z = nz; } else { if (ok(nx, p.z)) p.x = nx; else if (ok(p.x, nz)) p.z = nz; }
   }
-  // gravité / sol
-  const g = S.inTruck ? TRUCK.floor : groundHeight(p.x, p.z);
+  // gravité / sol (estrade dans le car)
+  const g = S.inTruck ? truckFloorAt(p.x, p.z) : groundHeight(p.x, p.z);
   if (p.y > g + 0.05) { PL.vy -= 18 * dt; p.y = Math.max(g, p.y + PL.vy * dt); } else { PL.vy = 0; p.y += (g - p.y) * Math.min(1, dt * 14); }
   PL.y = p.y + 1.7;
 }
@@ -401,7 +433,8 @@ window.addEventListener('keydown', (e) => {
   if (e.code === 'KeyT') teleportMenu();
   if (e.code === 'KeyG') openGuide('missions');
   if (e.code === 'KeyH') openGuide('commandes');
-  if (e.code === 'KeyK') openEquipmentIndex();
+  if (e.code === 'KeyK') { if (target && target.kind === 'station' && target.device) openDevice(target.device, 1); else openEquipmentIndex(); }
+  if (e.code === 'Tab' && S.inTruck) { e.preventDefault(); if (document.pointerLockElement) document.exitPointerLock(); openTruckPlan(); }
   if (e.code === 'KeyM') $('#minimon').hidden = !$('#minimon').hidden;
 });
 window.addEventListener('keyup', (e) => { KEYS[e.code] = false; if (e.code === 'KeyR') returnHeld = false; if (e.key === '+') KEYS.Equal = false; if (e.key === '-') KEYS.Minus = false; });
@@ -411,6 +444,7 @@ const IL = $('#input-layer');
 let dragLook = null;
 IL.addEventListener('pointerdown', (e) => {
   if (S.mode === 'plan') { planPointer('down', e); IL.setPointerCapture(e.pointerId); return; }
+  if (S.mode === 'fps' && document.pointerLockElement && e.button === 0 && target) { act(target); return; }
   if (S.mode === 'fps' || S.mode === 'camop') {
     if (e.pointerType === 'mouse' && !document.pointerLockElement) { try { const r = IL.requestPointerLock(); if (r && r.catch) r.catch(() => {}); } catch (err) { /* refus */ } }
     dragLook = { x: e.clientX, y: e.clientY, id: e.pointerId };
@@ -574,6 +608,8 @@ function frame(now) {
     renderer.render(S.inTruck ? T.scene : W.scene, pcam);
     if (S.mode === 'fps' && !$('#minimon').hidden) drawSlots(renderer, [$('#minimon')]);
     updatePrompt();
+    if (S.inTruck) { const dir = new THREE.Vector3(); pcam.getWorldDirection(dir); updateTruckView(eyePos(), dir, target && target.kind === 'station' ? target.id : null, S.time); }
+    updateTruckMap(PL);
   } else if (S.mode === 'plan') {
     renderPlan(renderer);
   } else {
@@ -587,6 +623,7 @@ function frame(now) {
 
 buildStart();
 S.mode = 'start';
+initTruckMap((st) => goToStation(st), () => PL);
 initShared();
 // la configuration du car peut arriver après le démarrage : on recalcule la répartition EVS
 on('config', (part) => { if (part === 'car' && S.mode !== 'start') { defaultRouting(false); emit('router', {}); } updBrand(); });
@@ -594,4 +631,4 @@ function updBrand() { paintTruckSign(CFG.car.name); const w2 = $('#where2'); if 
 document.fonts && document.fonts.ready.then(() => { W.boards && W.boards.redraw(); P.mvDirty = true; paintTruckSign(CFG.car.name); });
 requestAnimationFrame(frame);
 window.__S = S; // accès console pour le débogage
-window.__dbg = { S, M, MIX, EVS, ROUTER, P, W, T, PL, EX, teleport, openStation, closeStation, openPlan, closePlan, takeCamera, releaseCamera, start, openGuide, renderer, applyLighting, openDevice, openEquipmentIndex, openTrainer, CFG, SH, AU, SC, NET, emit, injectFault, ACTIVE, FAULTS };
+window.__dbg = { S, M, MIX, EVS, ROUTER, P, W, T, PL, EX, teleport, openStation, closeStation, openPlan, closePlan, takeCamera, releaseCamera, start, openGuide, renderer, applyLighting, openDevice, openEquipmentIndex, openTrainer, CFG, SH, AU, SC, NET, emit, injectFault, ACTIVE, FAULTS, truckBlocked, truckFloorAt, goToStation, TRUCK };
