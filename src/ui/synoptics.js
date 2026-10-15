@@ -381,7 +381,7 @@ function commsDiagram() {
 
 // ---------------- 5. réseaux ----------------
 function netDiagram() {
-  const W = 1500, H = 840, ip = S.ipMode;
+  const ip = S.ipMode, W = 1500, H = ip ? 940 : 840;
   const nRcp = S.cams.filter((c) => !isHF(c) && c.T.model !== 'pov').length;
   const D = diagram(W, H, 'Synoptique réseaux et télécommandes', ip ? 'Réseau de contrôle + réseau média ST 2110 doublé (rouge / bleu, ST 2022-7)' : 'Réseaux de contrôle (caméras, mélangeur, EVS, gestion) et liaisons série');
   D.zone(10, 70, 470, 520, 'Contrôle caméras (CNS)');

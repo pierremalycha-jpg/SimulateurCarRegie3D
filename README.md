@@ -66,6 +66,21 @@ Le simulateur est réglé sur ce parc (modifiable dans l'Espace formateur → «
   - voie ferrée et TER, cités minières, gare, terrils jumeaux et chevalements de la fosse 11/19 à l'horizon.
 - **Caméras 3D détaillées** : tête fluide, manivelles de zoom et de point, viseur 7", objectif box, portable ENG, Steadicam, grue, PTZ, drone.
 
+## Ce que contient la v5
+
+- **Synoptiques techniques du car** (barre d'outils « Synoptiques », touche Y, poste chef de car) :
+  - schémas : vidéo, synchronisation (et PTP en car IP), audio, intercom et tally, réseaux, énergie, élévation des baies, implantation ;
+  - générés à partir de l'état réel du car : défauts en rouge, source à l'antenne en rouge, préparée en vert ;
+  - un clic sur un bloc ouvre l'appareil ;
+  - mode impression fond blanc et export SVG.
+- **Stade plus réaliste (Bollaert-Delelis)** :
+  - sièges noirs, gris et blancs ; Xercès plus basse que les autres tribunes ;
+  - toits qui s'arrêtent avant les premiers rangs, nervures blanches en sous-face, haut-parleurs suspendus ;
+  - escaliers aux nez de marche jaunes, vomitoires, tribune présidentielle, garde-corps, liserés sang et or ;
+  - banderoles et drapeaux dans le Marek ;
+  - façades en bardage blanc, écrans d'angle plus petits ;
+  - parvis arboré, maisons de mineurs individuelles.
+
 ## Construire et tester
 
 ```
@@ -73,6 +88,8 @@ npm install
 node tools/build.mjs          # produit dist/index.html (fichier unique, three.js chargé depuis jsDelivr)
 node tools/build.mjs --dev    # même chose sans minification
 node tools/v3.mjs OUT hd      # postes, son, pannes, formateur, perf (aussi : scenario, ip, ops)
+node tools/syn.mjs OUT sdi    # captures des synoptiques (aussi : faults, ip)
+node tools/reach.mjs          # chaque poste du car est-il accessible à pied ?
 node tools/func.mjs           # tests fonctionnels historiques
 ```
 
@@ -96,6 +113,6 @@ node tools/func.mjs           # tests fonctionnels historiques
 | `review.js` | Points techniques à faire relire par le formateur |
 | `gfx.js` | Habillage (score, bandeaux, statistiques) |
 | `truck.js` (car) | Intérieur du car : plan, postes, baies et pupitres détaillés, collisions |
-| `ui/` | Plan du car (`truckmap.js`), postes (`stations.js`, `st_vision.js`, `st_evs.js`, `st_mixer.js`, `st_ipd.js`, `st_patch.js`), espace formateur (`config.js`), rapports (`report.js`), plan, guide, missions |
+| `ui/` | Synoptiques (`synoptics.js`), plan du car (`truckmap.js`), postes (`stations.js`, `st_vision.js`, `st_evs.js`, `st_mixer.js`, `st_ipd.js`, `st_patch.js`), espace formateur (`config.js`), rapports (`report.js`), plan, guide, missions |
 | `equipment/` | Visionneuse de matériel : appareils (`devices.js`), liste de câblage (`cabling.js`), rendu SVG et photos (`viewer.js`) |
 | `faults.js`, `exercises.js` | Simulateur de pannes, réalisateur virtuel et opérateur EVS automatique |

@@ -49,9 +49,9 @@ export const REVIEW_ITEMS = [
   ['aud3', 'Son', 'Retard « asservi au tally » : la console ajoute la latence de la source à l\'antenne (caméra HF) ; le micro de la caméra HF est déjà calé sur son image.', SIMU],
   ['std1', 'Stade', 'Orientation : Lepagnot au sud (tribune principale : vestiaires, presse, TV), Marek-Xercès au nord (kop Marek debout en bas), Trannin à l\'ouest (voie ferrée, visiteurs), Delacourt à l\'est.', STADE],
   ['std2', 'Stade', 'Quatre pylônes d\'angle en treillis (≈ 72 m) portent un anneau de poutres auquel les toits sont suspendus ; angles ouverts ; toit ≈ 33 m.', STADE],
-  ['std3', 'Stade', 'Deux écrans géants d\'environ 40 m² dans les angles Trannin-Lepagnot et Marek-Delacourt.', STADE],
+  ['std3', 'Stade', 'Deux écrans d\'angle de taille modeste (Marek-Delacourt, et Trannin-Lepagnot supposé) ; surface exacte non trouvée.', STADE],
   ['std4', 'Stade', 'Passerelle caméras sur le toit des loges de Lepagnot, compound TV derrière Lepagnot : emplacements supposés, à corriger avec votre plan d\'installation réel.', SIMU],
-  ['std5', 'Stade', 'Sièges blancs et gris mêlés (pas de sièges sang et or), terrils jumeaux de Loos-en-Gohelle à l\'ouest-nord-ouest.', STADE],
+  ['std5', 'Stade', 'Sièges noirs, gris et blancs (pas de sièges sang et or) ; Xercès plus basse que les trois autres tribunes hautes ; toits qui ne couvrent pas les premiers rangs ; 20 grappes de haut-parleurs.', STADE],
   ['ip1', 'IP', 'ST 2110-20 : ≈ 2,1 Gb/s en 1080p50 10 bits 4:2:2 ; ≈ 8,3 Gb/s en UHD p50. PTP ST 2059-2 ; NMOS IS-04/IS-05 ; ST 2022-7.', NORMES],
 ];
 export const REVIEW_STATUS = { '': 'À vérifier', ok: 'Validé', fix: 'À corriger' };

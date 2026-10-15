@@ -562,8 +562,9 @@ export const GUIDE = [
 <li><b>Lepagnot</b> : vestiaires, tunnel des joueurs, loges, tribune de presse et positions commentateurs. La <b>passerelle caméras</b> est posée sur le toit des loges, sous le front de la tribune haute, dans l'axe de la ligne médiane : c'est là que vont la caméra principale et les caméras « 16 m ».</li>
 <li><b>Marek-Xercès</b> : le <b>kop</b> debout est en bas (Marek), la tribune Xercès au-dessus. Le kop est face aux caméras principales : c'est l'image du public que l'on voit le plus. Un couple d'ambiance devant le kop donne l'essentiel du son des tribunes.</li>
 <li><b>Trannin</b> : longée par la voie ferrée (un TER passe de temps en temps), elle accueille le parcage des visiteurs dans un coin.</li>
-<li><b>Écrans géants</b> : deux écrans d'environ 40 m² dans les angles opposés (Trannin-Lepagnot et Marek-Delacourt). Ils reçoivent la sortie « écran géant » de la grille.</li>
-<li><b>Toits et HF</b> : les antennes de réception HF sont posées à la rive des toits ; les toits en polycarbonate et leur charpente métallique atténuent les liaisons qui les traversent.</li>
+<li><b>Écrans d'angle</b> : deux écrans de taille modeste dans les angles opposés (Marek-Delacourt, et sans doute Trannin-Lepagnot), pas visibles de toutes les places. Ils reçoivent la sortie « écran géant » de la grille.</li>
+<li><b>Ambiance visuelle</b> : sièges noirs, gris et blancs ; structure blanche avec des touches sang et or, escaliers aux nez de marche jaunes ; banderoles et drapeaux dans le Marek ; grappes de haut-parleurs suspendues sous les toits.</li>
+<li><b>Toits et HF</b> : les toits en polycarbonate translucide s'arrêtent avant les premiers rangs (qui sont mouillés par vent). Les antennes de réception HF sont posées à leur rive ; toits et charpente atténuent les liaisons qui les traversent.</li>
 <li><b>Autour</b> : les cités minières, la gare au sud-est, et à l'horizon, à l'ouest-nord-ouest, les terrils jumeaux de Loos-en-Gohelle et les chevalements de la fosse 11/19.</li>
 </ul>
 <p class="note">Le compound TV est placé derrière la tribune Lepagnot (côté presse et vestiaires), position la plus courte vers la passerelle et le local technique. À vérifier avec votre propre plan d'installation à Bollaert.</p>`},

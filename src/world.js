@@ -16,7 +16,7 @@ export const BOWL = { hx: 61, hz: 41 }; // bord intérieur des tribunes
 //   lo / up : tribune basse / haute [o début, o fin, hauteur début, hauteur fin] ; back : profondeur ; roof : hauteur du toit
 export const STANDS = [
   { id: 'lepagnot', name: 'Tribune Lepagnot', axis: 'z', sgn: -1, half: 58, lo: [0, 22, 1.5, 11], up: [29.4, 44, 18.2, 30], back: 52, roof: 34, main: true },
-  { id: 'marek', name: 'Tribune Marek-Xercès', axis: 'z', sgn: 1, half: 58, lo: [0, 22, 1.2, 11], up: [25, 43, 13.5, 28], back: 44.5, roof: 33 },
+  { id: 'marek', name: 'Tribune Marek-Xercès', axis: 'z', sgn: 1, half: 58, lo: [0, 22, 1.2, 11], up: [25, 40, 13.5, 24.5], back: 41.5, roof: 31.5 },
   { id: 'trannin', name: 'Tribune Trannin', axis: 'x', sgn: -1, half: 37, lo: [0, 22, 1.2, 11], up: [25, 36, 13.5, 22.5], back: 37.5, roof: 29.5 },
   { id: 'delacourt', name: 'Tribune Delacourt', axis: 'x', sgn: 1, half: 37, lo: [0, 22, 1.2, 11], up: [25, 41, 13.5, 26], back: 42.5, roof: 31.5 },
 ];
@@ -146,10 +146,11 @@ function pitchTexture(renderer) {
 }
 
 function seatTexture() {
-  // sièges blancs et gris mêlés (comme à Bollaert depuis 2015)
+  // sièges noirs, gris et blancs mêlés (comme à Bollaert depuis 2015)
   const c = makeCanvas(256, 256); const g = c.getContext('2d'); const r = mulberry32(5);
   g.fillStyle = '#6b6f75'; g.fillRect(0, 0, 256, 256);
-  const shades = ['#eef0f2', '#dfe3e7', '#c9ced4', '#b3b9c0', '#8f969e', '#eef0f2'];
+  // noir, gris et blanc (sièges installés en 2015)
+  const shades = ['#1d1f22', '#2a2d31', '#6e747b', '#8f969e', '#d9dde1', '#eef0f2'];
   for (let row = 0; row < 4; row++) {
     const y = row * 64;
     g.fillStyle = '#5a5e64'; g.fillRect(0, y + 44, 256, 20);
@@ -191,11 +192,13 @@ function glassTexture() {
   return t;
 }
 function meshTexture() {
-  // bardage en maille métallique blanche (façades)
+  // bardage blanc : panneaux de composite et de maille perforée, joints verticaux, bandeau horizontal
   const c = makeCanvas(128, 128); const g = c.getContext('2d');
-  g.clearRect(0, 0, 128, 128);
-  for (let x = 0; x < 128; x += 8) { g.fillStyle = 'rgba(240,242,244,0.95)'; g.fillRect(x, 0, 4, 128); }
-  for (let y = 0; y < 128; y += 32) { g.fillStyle = 'rgba(240,242,244,0.95)'; g.fillRect(0, y, 128, 3); }
+  g.fillStyle = '#e9ecef'; g.fillRect(0, 0, 128, 128);
+  for (let x = 0; x < 128; x += 64) { g.fillStyle = x ? '#dfe3e7' : '#eef1f3'; g.fillRect(x, 0, 64, 128); }
+  g.fillStyle = 'rgba(70,78,88,0.55)'; for (let x = 0; x < 128; x += 32) g.fillRect(x, 0, 2, 128);
+  g.fillStyle = 'rgba(70,78,88,0.45)'; g.fillRect(0, 0, 128, 3); g.fillRect(0, 64, 128, 2);
+  for (let y = 8; y < 60; y += 6) for (let x = 36; x < 60; x += 6) { g.fillStyle = 'rgba(90,98,108,0.35)'; g.fillRect(x, y, 2, 2); }
   const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = 8;
   return t;
 }
@@ -381,9 +384,9 @@ function buildStands(scene) {
       scene.add(new THREE.Mesh(bandGeo(st, -h, h, c1 - 0.03, 17.05, d1 - 0.05), new THREE.MeshLambertMaterial({ map: nameTex })));
     }
     // façade arrière : maille blanche et nom de la tribune
-    const mt = meshTexture(); mt.repeat.set(h, (d2 - 2) / 2);
-    const meshMat = new THREE.MeshLambertMaterial({ map: mt, transparent: true, alphaTest: 0.3, side: THREE.DoubleSide });
-    scene.add(new THREE.Mesh(backBandGeo(st, -h, h, st.back + 0.35, 5, d2 + 1.2, h, (d2 - 3.8) / 2), meshMat));
+    const mt = meshTexture();
+    const meshMat = new THREE.MeshLambertMaterial({ map: mt });
+    scene.add(new THREE.Mesh(backBandGeo(st, -h, h, st.back + 0.35, 4.5, d2 + 1.3, h / 1.5, (d2 - 3.2) / 3), meshMat));
     const sign = textBand(st.name.toUpperCase(), 2048, 256, '#e9ecef', '#1b2230', 170, 1);
     scene.add(new THREE.Mesh(backBandGeo(st, -20, 20, st.back + 0.5, d2 - 7, d2 - 2), new THREE.MeshLambertMaterial({ map: sign })));
   }
@@ -395,11 +398,102 @@ function buildStands(scene) {
   }
 }
 
+// ---------------- détails des tribunes : escaliers, vomitoires, loges, garde-corps, banderoles ----------------
+function stairTexture() {
+  // escaliers gris, nez de marche jaunes (accès aux rangées)
+  const c = makeCanvas(64, 256); const g = c.getContext('2d');
+  for (let i = 0; i < 4; i++) { g.fillStyle = '#8e9297'; g.fillRect(0, i * 64, 64, 64); g.fillStyle = '#6c7075'; g.fillRect(0, i * 64 + 40, 64, 24); g.fillStyle = '#f5c400'; g.fillRect(0, i * 64 + 36, 64, 6); }
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = 8; return t;
+}
+function vipTexture() {
+  // sièges rembourrés de la tribune présidentielle (Lepagnot, au-dessus du tunnel)
+  const c = makeCanvas(256, 256); const g = c.getContext('2d');
+  g.fillStyle = '#3a3d42'; g.fillRect(0, 0, 256, 256);
+  for (let row = 0; row < 4; row++) for (let s = 0; s < 8; s++) { g.fillStyle = '#7a121c'; g.fillRect(s * 32 + 2, row * 64 + 10, 28, 36); g.fillStyle = '#5c0d15'; g.fillRect(s * 32 + 2, row * 64 + 34, 28, 12); }
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = 8; return t;
+}
+function bannerTexture(text, bg, fg, stripes) {
+  const c = makeCanvas(1024, 192); const g = c.getContext('2d');
+  g.fillStyle = bg; g.fillRect(0, 0, 1024, 192);
+  if (stripes) for (let x = 0; x < 1024; x += 128) { g.fillStyle = stripes; g.fillRect(x, 0, 64, 192); }
+  g.fillStyle = fg; g.font = '800 120px "Saira Condensed", "Arial Narrow", sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
+  g.lineWidth = 10; g.strokeStyle = 'rgba(0,0,0,0.35)'; g.strokeText(text, 512, 102); g.fillText(text, 512, 102);
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4; return t;
+}
+// bande rectangulaire posée sur une pente avec des coordonnées de texture propres (largeur → u, longueur → v)
+function stripGeo(st, u0, u1, oa, ya, ob, yb, vRep, off = 0.06) {
+  const dx = ob - oa, dy = yb - ya, L = Math.hypot(dx, dy); const nn = [-dy / L, dx / L];
+  const p = (u, o, y) => SP(st, u, o + nn[0] * off, y + nn[1] * off);
+  return trisGeo(quadTris(p(u0, oa, ya), p(u1, oa, ya), p(u1, ob, yb), p(u0, ob, yb), SN(st, nn[0], nn[1]), [[0, 0], [1, 0], [1, L / vRep], [0, L / vRep]]), true);
+}
+function buildStandDetails(scene) {
+  const B = new Builder(); const stairs = [], vip = [], voids = [];
+  for (const st of STANDS) {
+    const [, a2, b1, b2] = st.lo, [c1, c2, d1, d2] = st.up, h = st.half;
+    const loY = (o) => b1 + o / a2 * (b2 - b1), upY = (o) => d1 + (o - c1) / (c2 - c1) * (d2 - d1);
+    // escaliers (mêmes emplacements que les allées laissées libres par le public)
+    for (let u = -h + 11; u < h - 1; u += 22) {
+      const oStart = st.main && Math.abs(u) < 6 ? (4.6 - b1) / (b2 - b1) * a2 : 0;
+      stairs.push(stripGeo(st, u - 0.6, u + 0.6, oStart, loY(oStart), a2, b2, 1.6));
+      stairs.push(stripGeo(st, u - 0.6, u + 0.6, c1, d1, c2, d2, 1.6));
+    }
+    // vomitoires de la tribune basse : ouverture sombre, joues blanches, linteau jaune
+    for (let u = -h + 22; u < h - 4; u += 22) {
+      if (st.main && Math.abs(u) < 16) continue;
+      const o0 = 8.5, o1 = 12.5, w = 1.3;
+      voids.push(stripGeo(st, u - w, u + w, o0, loY(o0), o1, loY(o1), 4, 0.09));
+      for (const s of [-1, 1]) {
+        const uu = u + s * (w + 0.1);
+        const q = [SP(st, uu, o0, loY(o0)), SP(st, uu, o1, loY(o1)), SP(st, uu, o1, loY(o1) + 1.1), SP(st, uu, o0, loY(o0) + 0.15)];
+        B.add(trisGeo([[q[0], q[1], q[2], UN(st, 1)], [q[0], q[2], q[3], UN(st, 1)], [q[0], q[2], q[1], UN(st, -1)], [q[0], q[3], q[2], UN(st, -1)]]), null, 0xe9ecef);
+      }
+      const a = SP(st, u - w - 0.1, o0, loY(o0) + 0.2), b2p = SP(st, u + w + 0.1, o0, loY(o0) + 0.2);
+      B.rod(a, b2p, 0.06, 0xf5c400, 5);
+    }
+    // garde-corps du balcon de la tribune haute et liseré sang et or du mur de front
+    B.rod(SP(st, -h, c1 + 0.1, d1 + 1.0), SP(st, h, c1 + 0.1, d1 + 1.0), 0.04, 0xf2f4f6, 5);
+    for (let u = -h; u <= h; u += 3) B.rod(SP(st, u, c1 + 0.1, d1), SP(st, u, c1 + 0.1, d1 + 1.0), 0.025, 0xf2f4f6, 4);
+    B.rod(SP(st, -h, -0.05, b1 - 0.06), SP(st, h, -0.05, b1 - 0.06), 0.07, 0xc8102e, 5);
+    B.rod(SP(st, -h, -0.06, b1 - 0.22), SP(st, h, -0.06, b1 - 0.22), 0.035, 0xf5c400, 5);
+    B.rod(SP(st, -h, 0.25, b1 + 0.95), SP(st, h, 0.25, b1 + 0.95), 0.035, 0xb9bec4, 5); // main courante du premier rang
+    if (st.main) vip.push(stripGeo(st, -14, 14, 8, loY(8), 15, loY(15), 3.2, 0.07));
+  }
+  const det = B.mesh(new THREE.MeshLambertMaterial({ vertexColors: true, side: THREE.DoubleSide })); det.castShadow = true; scene.add(det);
+  const sm = new THREE.Mesh(mergeNonIndexed(stairs), new THREE.MeshLambertMaterial({ map: stairTexture() })); sm.receiveShadow = true; scene.add(sm);
+  const vm = new THREE.Mesh(mergeNonIndexed(vip), new THREE.MeshLambertMaterial({ map: (() => { const t = vipTexture(); return t; })() })); vm.receiveShadow = true; scene.add(vm);
+  scene.add(new THREE.Mesh(mergeNonIndexed(voids), new THREE.MeshBasicMaterial({ color: 0x07080a })));
+  // banderoles du kop (Marek) et du balcon Xercès
+  const mk = STANDS.find((x) => x.id === 'marek');
+  const banners = [['SANG ET OR', '#c8102e', '#f5c400'], ['MAREK', '#f5c400', '#c8102e', '#e8b800'], ['LENS 62', '#c8102e', '#ffffff'], ['FIERTÉ MINIÈRE', '#111111', '#f5c400'], ['ALLEZ LES SANG ET OR', '#f5c400', '#c8102e'], ['XERCÈS', '#c8102e', '#f5c400', '#b00e28']];
+  banners.forEach(([t, bg, fg, stp], i) => {
+    const tex = bannerTexture(t, bg, fg, stp);
+    const lower = i < 3;
+    const u = lower ? -30 + i * 30 : -36 + (i - 3) * 36, w = lower ? 9 : 12, hh = lower ? 1.0 : 2.0;
+    const o = lower ? -0.12 : mk.up[0] - 0.1, y0 = lower ? 0.1 : mk.lo[3] + 0.3;
+    const g = bandGeo(mk, u - w / 2, u + w / 2, o, y0, y0 + hh);
+    scene.add(new THREE.Mesh(g, new THREE.MeshLambertMaterial({ map: tex })));
+  });
+  // drapeaux agités dans le kop
+  W.flags = [];
+  const r = mulberry32(19); const Pb = new Builder();
+  for (let i = 0; i < 16; i++) {
+    const u = -44 + r() * 88, o = 3 + r() * 16, y = mk.lo[2] + o / mk.lo[1] * (mk.lo[3] - mk.lo[2]);
+    const [x, , z] = SP(mk, u, o, y);
+    const col = i % 3 === 0 ? 0xc8102e : i % 3 === 1 ? 0xf5c400 : 0x111111;
+    Pb.cyl(0.02, 0.02, 3.2, x, y + 2.2, z, 0x9aa0a6, 5);
+    const fg = new THREE.PlaneGeometry(1.8, 1.2, 6, 1); fg.translate(0.9, 0, 0);
+    const flag = new THREE.Mesh(fg, new THREE.MeshLambertMaterial({ color: col, side: THREE.DoubleSide }));
+    flag.position.set(x, y + 3.0, z); flag.userData.ph = r() * 6.28; flag.userData.base = r() * 6.28; scene.add(flag); W.flags.push(flag);
+  }
+  scene.add(Pb.mesh(new THREE.MeshLambertMaterial({ vertexColors: true })));
+}
+
 // toits suspendus à un anneau de poutres porté par quatre pylônes d'angle
 function buildRoofs(scene) {
   const R = new Builder(), S2 = new Builder(), Fl = new Builder();
   for (const st of STANDS) {
-    const h = st.half + 1.5, of = -3, ob = st.back + 1.5, yf = st.roof, yb = st.roof - 1.6;
+    // la rive avant s'arrête au-dessus des premiers rangs : par vent, les premières rangées sont mouillées
+    const h = st.half + 1.5, of = 3.5, ob = st.back + 1.5, yf = st.roof, yb = st.roof - 1.6;
     const up = SN(st, 0, 1), dn = SN(st, 0, -1);
     R.add(trisGeo(quadTris(SP(st, -h, of, yf + 0.5), SP(st, h, of, yf + 0.5), SP(st, h, ob, yb + 0.5), SP(st, -h, ob, yb + 0.5), up)), null, 0xeef1f4);
     R.add(trisGeo(quadTris(SP(st, -h, of, yf), SP(st, h, of, yf), SP(st, h, ob, yb), SP(st, -h, ob, yb), dn)), null, 0xd9dde2);
@@ -407,6 +501,19 @@ function buildRoofs(scene) {
     R.add(trisGeo(quadTris(SP(st, -h, of, yf - 1.1), SP(st, h, of, yf - 1.1), SP(st, h, of, yf + 0.5), SP(st, -h, of, yf + 0.5), SN(st, -1, 0))), null, 0xf6f7f8);
     // projecteurs LED sous la rive
     for (let u = -h + 3; u <= h - 3; u += 3.2) { const p = SP(st, u, of + 0.7, yf - 0.4); Fl.box(st.axis === 'z' ? 1.4 : 0.8, 0.5, st.axis === 'z' ? 0.8 : 1.4, p[0], p[1], p[2], 0xffffff); }
+    // sous-face : pannes et nervures en acier blanc, visibles depuis le terrain
+    const yAt = (o) => yf + (o - of) / (ob - of) * (yb - yf);
+    for (let u = -st.half; u <= st.half; u += 8) S2.rod(SP(st, u, of + 0.3, yf - 0.25), SP(st, u, ob - 0.5, yb - 0.25), 0.12, 0xeceff2, 5);
+    for (const o of [of + 6, of + 14, of + 22, of + 30]) if (o < ob - 2) S2.rod(SP(st, -st.half, o, yAt(o) - 0.3), SP(st, st.half, o, yAt(o) - 0.3), 0.09, 0xeceff2, 5);
+    S2.rod(SP(st, -h, of + 0.2, yf - 1.3), SP(st, h, of + 0.2, yf - 1.3), 0.18, 0xeceff2, 6); // poutre de rive (porte l'éclairage)
+    // grappes de haut-parleurs suspendues (sonorisation du stade)
+    const nSpk = st.axis === 'z' ? 6 : 4;
+    for (let k = 0; k < nSpk; k++) {
+      const u = -st.half * 0.82 + k * (st.half * 1.64 / (nSpk - 1)), o = of + 3, y0 = yAt(o) - 1.0;
+      const top = SP(st, u, o, yAt(o) - 0.3), bot = SP(st, u, o, y0);
+      S2.rod(top, bot, 0.03, 0x2a2d31, 4);
+      for (let i = 0; i < 5; i++) { const p = SP(st, u, o + i * 0.06, y0 - 0.25 - i * 0.42); S2.box(st.axis === 'z' ? 0.7 : 0.55, 0.38, st.axis === 'z' ? 0.55 : 0.7, p[0], p[1], p[2], 0x24272b); }
+    }
     // suspentes entre l'anneau (o = 10) et le toit
     for (let u = -st.half + 4; u <= st.half - 4; u += 12) { const a = SP(st, u, 10, RING_Y - 1.2), b = SP(st, u, 10, yf + (10 - of) / (ob - of) * (yb - yf) + 0.5); S2.rod(a, b, 0.06, 0xf2f4f6, 5); }
   }
@@ -443,7 +550,8 @@ function buildRoofs(scene) {
   const roof = R.mesh(roofMat); roof.castShadow = true; scene.add(roof); W.roofMeshes.push(roof);
   const steel = S2.mesh(new THREE.MeshLambertMaterial({ vertexColors: true })); steel.castShadow = true; scene.add(steel); W.roofMeshes.push(steel);
   const cg = new THREE.BufferGeometry(); cg.setAttribute('position', new THREE.Float32BufferAttribute(cables.flat(), 3));
-  const cab = new THREE.LineSegments(cg, new THREE.LineBasicMaterial({ color: 0xd8dde2 })); scene.add(cab); W.roofMeshes.push(cab);
+  W.cableMat = new THREE.LineBasicMaterial({ color: 0xd8dde2 });
+  const cab = new THREE.LineSegments(cg, W.cableMat); scene.add(cab); W.roofMeshes.push(cab);
   W.floodMat = new THREE.MeshBasicMaterial({ color: 0x606468, toneMapped: true });
   const fl = new THREE.Mesh(Fl.build(), W.floodMat); scene.add(fl); W.roofMeshes.push(fl);
 }
@@ -495,6 +603,7 @@ export function buildWorld(renderer) {
 
   // --- tribunes, toits, pylônes ---
   buildStands(scene);
+  buildStandDetails(scene);
   buildRoofs(scene);
 
   // --- éléments intérieurs de la tribune principale (fusionnés) ---
@@ -604,20 +713,20 @@ export function buildWorld(renderer) {
     const backs = B4.mesh(new THREE.MeshLambertMaterial({ vertexColors: true })); backs.castShadow = true; scene.add(backs);
   }
 
-  // --- écrans géants (2 × 40 m², angles Trannin-Lepagnot et Marek-Delacourt) : sortie AUX « écran géant » ---
+  // --- écrans d'angle (Trannin-Lepagnot et Marek-Delacourt), de taille modeste : sortie AUX « écran géant » ---
   {
     const mat = screenMaterial(null, { gain: 1.1 });
     W.screens.push(mat);
     const Bs = new Builder();
     for (const [sx, sz] of [[-1, -1], [1, 1]]) {
       const x = sx * (BOWL.hx + 3.6), z = sz * (BOWL.hz + 3.6), ry = Math.atan2(-x, -z);
-      const scr = new THREE.Mesh(new THREE.PlaneGeometry(8.6, 4.8), mat);
+      const scr = new THREE.Mesh(new THREE.PlaneGeometry(6.6, 3.7), mat);
       scr.position.set(x, 13.5, z); scr.rotation.y = ry; scene.add(scr);
       if (!W.giantScreen) W.giantScreen = scr;
       const back = new THREE.Vector3(Math.sin(ry), 0, Math.cos(ry)).multiplyScalar(-0.35);
-      Bs.box(9.2, 5.4, 0.5, x + back.x, 13.5, z + back.z, 0x15181c, ry);
+      Bs.box(7.1, 4.2, 0.5, x + back.x, 13.5, z + back.z, 0x15181c, ry);
       const side = new THREE.Vector3(Math.cos(ry), 0, -Math.sin(ry));
-      for (const s of [-1, 1]) Bs.box(0.5, 11, 0.5, x + back.x * 2 + side.x * s * 3.2, 5.5, z + back.z * 2 + side.z * s * 3.2, 0x9aa0a6, ry);
+      for (const s of [-1, 1]) Bs.box(0.5, 11.5, 0.5, x + back.x * 2 + side.x * s * 2.4, 5.75, z + back.z * 2 + side.z * s * 2.4, 0x9aa0a6, ry);
       W.obstacles.push({ x0: x - 4.5, x1: x + 4.5, z0: z - 4.5, z1: z + 4.5 });
     }
     const sm = Bs.mesh(new THREE.MeshLambertMaterial({ vertexColors: true })); sm.castShadow = true; scene.add(sm);
@@ -732,6 +841,8 @@ function buildCrowd(scene) {
           if (r() > (kop ? 0.97 : 0.86) * density) continue;
           if (Math.abs(((u % 22) + 22) % 22 - 11) < 0.9 && !kop) continue; // escaliers
           if (st.main && Math.abs(u) < 5.5 && o < 8) continue; // tunnel
+          const m22 = ((u % 22) + 22) % 22;
+          if (tier === 'lo' && o > 8.2 && o < 12.8 && (m22 < 1.7 || m22 > 20.3) && !(st.main && Math.abs(u) < 16)) continue; // vomitoires
           const [x, , z] = SP(st, u, o, y);
           const away = st.id === 'trannin' && tier === 'lo' && u > 14;
           placements.push({ x, y, z, rot, side: away ? 1 : 0, kop, away });
@@ -844,8 +955,58 @@ function buildCompound(scene) {
 // ----------------------------------------------------------------------------------
 // Environnement : bassin minier autour du stade (échelle réduite pour l'horizon)
 // ----------------------------------------------------------------------------------
+function pavingTexture() {
+  const c = makeCanvas(256, 256); const g = c.getContext('2d'); const r = mulberry32(8);
+  g.fillStyle = '#a8a7a2'; g.fillRect(0, 0, 256, 256);
+  for (let y = 0; y < 256; y += 32) for (let x = 0; x < 256; x += 64) { const v = 150 + Math.floor(r() * 30); g.fillStyle = `rgb(${v},${v},${v - 4})`; g.fillRect(x + ((y / 32) % 2) * 32 + 1, y + 1, 62, 30); }
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = 8; t.repeat.set(60, 50); return t;
+}
+// toit à deux pans (faîtage le long de l'axe x si alongX, sinon de l'axe z)
+function gable(B, cx, cy, cz, L, Wd, Hr, alongX, color) {
+  const P = (a, c, y) => (alongX ? [cx + a, y, cz + c] : [cx + c, y, cz + a]);
+  const hw = Wd / 2 + 0.3, hl = L / 2 + 0.2, top = cy + Hr;
+  const n1 = alongX ? [0, hw, -Hr] : [-Hr, hw, 0], n2 = alongX ? [0, hw, Hr] : [Hr, hw, 0];
+  const nrm = (v) => { const l = Math.hypot(...v); return v.map((x) => x / l); };
+  const tris = [
+    ...quadTris(P(-hl, -hw, cy), P(hl, -hw, cy), P(hl, 0, top), P(-hl, 0, top), nrm(n1)),
+    ...quadTris(P(-hl, hw, cy), P(hl, hw, cy), P(hl, 0, top), P(-hl, 0, top), nrm(n2)),
+    [P(-hl + 0.2, -hw + 0.3, cy), P(-hl + 0.2, hw - 0.3, cy), P(-hl + 0.2, 0, top - 0.1), alongX ? [-1, 0, 0] : [0, 0, -1]],
+    [P(hl - 0.2, -hw + 0.3, cy), P(hl - 0.2, hw - 0.3, cy), P(hl - 0.2, 0, top - 0.1), alongX ? [1, 0, 0] : [0, 0, 1]],
+  ];
+  B.add(trisGeo(tris), null, color);
+}
 function buildSurroundings(scene) {
   const B = new Builder(); const r = mulberry32(62);
+  // --- parvis piéton autour des tribunes (dalles claires) ---
+  { const pv = new THREE.Mesh(new THREE.PlaneGeometry(250, 200), new THREE.MeshLambertMaterial({ map: pavingTexture() })); pv.rotation.x = -Math.PI / 2; pv.position.set(0, -0.012, 5); pv.receiveShadow = true; scene.add(pv); }
+  // --- arbres du parvis (instanciés) ---
+  {
+    const pts = [];
+    const add = (x, z) => { if (standAt(x, z, 2) || (x > -80 && x < 70 && z < -94) || x < -104) return; pts.push([x, z]); };
+    for (let x = -96; x <= 118; x += 11) add(x, 97);
+    for (let z = -88; z <= 95; z += 11) add(116, z);
+    for (let x = 70; x <= 118; x += 11) add(x, -100);
+    for (const [mx, mz] of MASTS) for (let k = 0; k < 6; k++) { const a = k * 1.05; add(mx * 1.18 + Math.cos(a) * 9, mz * 1.18 + Math.sin(a) * 9); }
+    const trunk = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.18, 0.25, 3, 6), new THREE.MeshLambertMaterial({ color: 0x4a3a2c }), pts.length);
+    const crown = new THREE.InstancedMesh(new THREE.IcosahedronGeometry(2.4, 0), new THREE.MeshLambertMaterial({ color: 0x3f6b35 }), pts.length);
+    const m = new THREE.Matrix4(), q = new THREE.Quaternion(), c = new THREE.Color();
+    pts.forEach(([x, z], i) => {
+      const s2 = 0.8 + r() * 0.5;
+      trunk.setMatrixAt(i, m.compose(new THREE.Vector3(x, 1.5 * s2, z), q, new THREE.Vector3(s2, s2, s2)));
+      crown.setMatrixAt(i, m.compose(new THREE.Vector3(x, 4.2 * s2, z), q.setFromEuler(new THREE.Euler(r(), r(), r())), new THREE.Vector3(s2, s2 * 1.15, s2)));
+      crown.setColorAt(i, c.setHex([0x3f6b35, 0x4a7a3c, 0x36602f][i % 3]));
+    });
+    trunk.castShadow = crown.castShadow = true; scene.add(trunk, crown);
+  }
+  // --- maisons de mineurs individuelles en brique (ouest et sud-ouest, vers l'ancienne fosse 9) ---
+  for (let i = 0; i < 90; i++) {
+    const a = Math.PI * (0.8 + r() * 0.75), d = 150 + r() * 260;
+    const cx = Math.cos(a) * d, cz = Math.sin(a) * d;
+    if ((Math.abs(cx) < 130 && Math.abs(cz) < 112) || (cx > -135 && cx < -95) || (cx > -80 && cx < 70 && cz > -180 && cz < -90) || (cx < -420 && cx > -540 && cz < -120 && cz > -300)) continue;
+    const w = 7 + r() * 2, dd = 8 + r() * 2, hh = 5 + r() * 1.2, rot = Math.round(r()) * Math.PI / 2;
+    B.box(w, hh, dd, cx, hh / 2, cz, [0x8b4a36, 0x7a3f2e, 0x95553d][i % 3], rot);
+    gable(B, cx, hh, cz, dd, w, 2.8, !!rot, [0x3b3f45, 0x8e3b2a][i % 2]);
+  }
   // --- cités minières (corons) : rangées de maisons en brique ---
   const bricks = [0x8b4a36, 0x7a3f2e, 0x95553d, 0x84462f], roofs = [0x3b3f45, 0x4a3a34, 0x8e3b2a];
   const row = (cx, cz, len, alongX) => {
@@ -853,7 +1014,7 @@ function buildSurroundings(scene) {
     const w = alongX ? len : d, dd = alongX ? d : len;
     B.box(w, h, dd, cx, h / 2, cz, col);
     // toit à deux pans (prisme triangulaire)
-    B.cyl(4.6, 4.6, len, cx, h + 1.15, cz, rc, 3, alongX ? 0 : Math.PI / 2, alongX ? Math.PI / 2 : 0, alongX ? 0 : 0);
+    gable(B, cx, h, cz, len, d, 2.6, alongX, rc);
     for (let k = 0; k < Math.floor(len / 8); k++) { const t = -len / 2 + 4 + k * 8; B.box(0.6, 1.4, 0.6, cx + (alongX ? t : 0), h + 2.2, cz + (alongX ? 0 : t), 0x6b3a2a); }
   };
   const busy = (x, z) => (Math.abs(x) < 125 && Math.abs(z) < 110) || (x > -80 && x < 70 && z > -180 && z < -90) || (x > -135 && x < -95) || (x < -380 && z > 120 && z < 700);
@@ -948,9 +1109,11 @@ export function applyLighting(key) {
     setDir(f2, 180, 52); f2.color.setRGB(...kelvinRGBNorm(5700)); f2.intensity = 0.045;
     hemi.color.setRGB(0.6, 0.65, 0.8); hemi.groundColor.setRGB(0.2, 0.22, 0.2); hemi.intensity = 0.012;
     sky.uZen.value.setRGB(0.01, 0.015, 0.035); sky.uHor.value.setRGB(0.05, 0.05, 0.07); sky.uI.value = 0.06;
-    W.boardsMat.uniforms.uI.value = 0.09; W.crowdMat.uniforms.uLight.value = 0.018; W.floodMat.color.setRGB(40, 40, 40);
+    W.boardsMat.uniforms.uI.value = 0.09; W.crowdMat.uniforms.uLight.value = 0.034; W.floodMat.color.setRGB(40, 40, 40);
     S.sceneCCT = 5700; S.eyeExposure = 24;
   }
+  // les haubans (non éclairés) suivent la lumière ambiante
+  if (W.cableMat) W.cableMat.color.setHex({ jour: 0xd8dde2, fin: 0x9a8f88, couvert: 0x8a8f94 }[key] ?? 0x0a0b0c);
   if (W.roofMat) W.roofMat.emissive.setHex({ jour: 0x5a5f66, fin: 0x34363a, couvert: 0x3c3f43 }[key] ?? 0x030304);
   if (W.netMat) W.netMat.color.setScalar(key === 'nuit' ? 0.06 : key === 'fin' ? 0.5 : key === 'couvert' ? 0.4 : 0.85);
   // teinte de la source en fonction de la température de couleur
@@ -960,6 +1123,7 @@ export function applyLighting(key) {
 
 export function updateWorld(t) {
   // un TER toutes les deux minutes environ
+  if (W.flags) for (const f of W.flags) { f.rotation.y = f.userData.base + Math.sin(t * 2.2 + f.userData.ph) * 0.7; f.rotation.z = Math.sin(t * 3.1 + f.userData.ph) * 0.12; }
   if (W.train) { const c = t % 120; W.train.visible = c < 70; W.train.position.z = -900 + c * 26; }
   if (W.boardsMat) W.boardsMat.uniforms.uOff.value = Math.floor(t / 8) * (1 / 8) + (t % 8 < 0.4 ? (t % 8) / 0.4 * 0.0 : 0);
   if (W.crowdMat) W.crowdMat.uniforms.uTime.value = t;
