@@ -352,6 +352,17 @@ canvas.scope { background: #05080a; border: 1px solid var(--line2); border-radiu
 .patch-list { max-height: 60vh; overflow: auto; }
 .patch-list .item { padding: 4px 8px; }
 @media (max-width: 1000px) { .patch-grid { grid-template-columns: minmax(0, 1fr); } }
+/* photos du matériel (espace formateur) */
+.photo-view, .photo-edit { position: relative; display: block; width: 100%; line-height: 0; border-radius: 6px; overflow: hidden; background: #000; }
+.photo-view img, .photo-edit img { width: 100%; height: auto; display: block; }
+.photo-edit { cursor: crosshair; }
+.hs { position: absolute; width: 26px; height: 26px; margin: -13px 0 0 -13px; border-radius: 50%; border: 2px solid #fff; background: var(--amber); color: #15100a; font: 700 12px/1 var(--f-mono); box-shadow: 0 0 0 3px rgba(0,0,0,.45), 0 0 12px rgba(255,176,32,.7); display: grid; place-items: center; padding: 0; }
+.hs.on { background: var(--cyan); }
+.photo-grid { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(240px, 1fr); gap: 12px; align-items: start; }
+.item.review[data-s="ok"] { border-color: #1f7a3c; } .item.review[data-s="fix"] { border-color: #8a2a24; }
+.item.review input { width: 100%; margin-top: 6px; }
+textarea { background: var(--bg); border: 1px solid var(--line2); border-radius: 4px; padding: 6px 8px; color: var(--fg); font: inherit; resize: vertical; }
+@media (max-width: 800px) { .photo-grid { grid-template-columns: minmax(0, 1fr); } }
 /* IPDirector */
 .ipd-grid { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 12px; align-items: start; }
 .ipd-log { max-height: 220px; overflow: auto; }
@@ -6087,7 +6098,7 @@ function drawScopes(g, w, h, buf, mode = "luma", title = "") {
   const yOf = (v) => 8 + wh * (1 - (v + 0.05) / 1.16);
   const img = g.createImageData(ww, wh);
   const d = img.data;
-  const SW = SCOPE.w, SH = SCOPE.h;
+  const SW = SCOPE.w, SH2 = SCOPE.h;
   const plot = (px, v, r, gg, b) => {
     const y = Math.round(yOf(v) - 8);
     if (y < 0 || y >= wh) return;
@@ -6097,7 +6108,7 @@ function drawScopes(g, w, h, buf, mode = "luma", title = "") {
     d[k + 2] = Math.min(255, d[k + 2] + b);
     d[k + 3] = 255;
   };
-  for (let y = 0; y < SH; y++) for (let x = 0; x < SW; x++) {
+  for (let y = 0; y < SH2; y++) for (let x = 0; x < SW; x++) {
     const k = (y * SW + x) * 4;
     const R2 = buf[k] / 255 * 1.1, G = buf[k + 1] / 255 * 1.1, B = buf[k + 2] / 255 * 1.1;
     if (mode === "parade") {
@@ -6181,7 +6192,7 @@ function drawScopes(g, w, h, buf, mode = "luma", title = "") {
   const vimg = g.getImageData(Math.floor(cx - rad), Math.floor(cy - rad), Math.ceil(rad * 2), Math.ceil(rad * 2));
   const vd = vimg.data;
   const vw = vimg.width;
-  for (let i = 0; i < SW * SH; i += 1) {
+  for (let i = 0; i < SW * SH2; i += 1) {
     const k = i * 4;
     const R2 = buf[k] / 255 * 1.1, G = buf[k + 1] / 255 * 1.1, B = buf[k + 2] / 255 * 1.1;
     const [cb, cr] = vec(R2, G, B);
@@ -8345,6 +8356,248 @@ function portName(dev, port) {
   return map[port] || port.toUpperCase();
 }
 
+// src/shared.js
+var SH = { db: null, user: null, assets: null, downloads: null, uid: null, isOwner: false, canEdit: false, canWrite: null, ready: false, readOnly: false };
+var CFG = { car: {}, cabling: null, photos: { list: [] }, review: { items: {} } };
+var PROG = { missions: {}, visited: {}, scenarios: [], reports: [], perf: null, patchBest: 0, updatedAt: 0 };
+var LS = {
+  get(k, d) {
+    try {
+      const v = localStorage.getItem("carregie." + k);
+      return v ? JSON.parse(v) : d;
+    } catch (e) {
+      return d;
+    }
+  },
+  set(k, v) {
+    try {
+      localStorage.setItem("carregie." + k, JSON.stringify(v));
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+};
+var withTimeout = (p, ms) => Promise.race([p, new Promise((r) => setTimeout(() => r(null), ms))]);
+async function initShared() {
+  for (const k of ["car", "cabling", "photos", "review"]) {
+    const v = LS.get("config." + k, null);
+    if (v) CFG[k] = v;
+  }
+  Object.assign(PROG, LS.get("progress", {}));
+  applyConfig();
+  restoreProgress();
+  const c = window.claude;
+  if (c && typeof c.use === "function") {
+    const get = (n) => withTimeout(c.use(n).catch(() => null), 12e3);
+    const [db, user, assets, downloads] = await Promise.all([get("db"), get("user"), get("assets"), get("downloads")]);
+    Object.assign(SH, { db, user, assets, downloads });
+    if (user) {
+      SH.uid = await user.id();
+      SH.isOwner = await user.isOwner();
+      SH.canEdit = await user.canEdit();
+      SH.canWrite = await user.can("data.write");
+    }
+    if (db) {
+      for (const k of ["car", "cabling", "photos", "review"]) {
+        db.doc("config/" + k).onSnapshot((snap) => {
+          if (snap.exists) {
+            CFG[k] = structuredClone(snap.data());
+            LS.set("config." + k, CFG[k]);
+            applyConfig();
+            emit("config", k);
+          }
+        }, () => {
+        });
+      }
+      if (SH.uid) {
+        try {
+          const snap = await db.doc("progress/" + SH.uid).get();
+          if (snap.exists) {
+            mergeProgress(snap.data());
+            restoreProgress();
+          }
+        } catch (e) {
+        }
+      }
+    }
+  }
+  SH.ready = true;
+  emit("shared");
+}
+function applyConfig() {
+  const e = CFG.car.equip || {};
+  for (const k of ["evsServers", "evsHdChannels", "lsmCount", "mix4kInputs"]) if (e[k] != null) EQUIP[k] = +e[k];
+  if (CFG.car.name) EQUIP.truck = CFG.car.name;
+}
+function canConfigure() {
+  return !SH.db || SH.canEdit || SH.isOwner;
+}
+async function saveConfig(part, data) {
+  CFG[part] = data;
+  LS.set("config." + part, data);
+  applyConfig();
+  emit("config", part);
+  if (!SH.db) return { ok: true, local: true };
+  try {
+    await SH.db.doc("config/" + part).set(JSON.parse(JSON.stringify(data)));
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, code: e && e.code, message: e && e.message };
+  }
+}
+function mergeProgress(d) {
+  if (!d) return;
+  PROG.missions = { ...d.missions || {}, ...PROG.missions };
+  PROG.visited = { ...d.visited || {}, ...PROG.visited };
+  const seen = new Set(PROG.scenarios.map((s) => s.at));
+  for (const s of d.scenarios || []) if (!seen.has(s.at)) PROG.scenarios.push(s);
+  const seenR = new Set(PROG.reports.map((r) => r.at));
+  for (const r of d.reports || []) if (!seenR.has(r.at)) PROG.reports.push(r);
+  PROG.perf = PROG.perf || d.perf || null;
+  PROG.patchBest = Math.max(PROG.patchBest || 0, d.patchBest || 0);
+}
+function restoreProgress() {
+  Object.assign(S.missionsDone, PROG.missions);
+  Object.assign(S.visited, PROG.visited);
+}
+var saveT = 0;
+var saving = false;
+var again = false;
+function saveProgressSoon() {
+  clearTimeout(saveT);
+  saveT = setTimeout(saveProgress, 2500);
+}
+async function saveProgress() {
+  if (saving) {
+    again = true;
+    return;
+  }
+  PROG.missions = { ...S.missionsDone };
+  PROG.visited = { ...S.visited };
+  PROG.updatedAt = Date.now();
+  PROG.scenarios = PROG.scenarios.slice(-20);
+  PROG.reports = PROG.reports.slice(-50);
+  LS.set("progress", PROG);
+  if (!SH.db || !SH.uid || SH.readOnly) return;
+  saving = true;
+  try {
+    await SH.db.doc("progress/" + SH.uid).set(JSON.parse(JSON.stringify(PROG)));
+  } catch (e) {
+    if (e && e.code === "invalid_argument") SH.readOnly = true;
+  }
+  saving = false;
+  if (again) {
+    again = false;
+    saveProgressSoon();
+  }
+}
+function addReport(where, text) {
+  PROG.reports.push({ at: Date.now(), where: String(where).slice(0, 120), text: String(text).slice(0, 1e3) });
+  saveProgressSoon();
+}
+on("mission", saveProgressSoon);
+on("station", saveProgressSoon);
+on("patchDone", () => {
+  PROG.patchBest = 100;
+  saveProgressSoon();
+});
+function watchAllProgress(cb) {
+  if (!SH.db) {
+    cb([{ id: "local", data: PROG, local: true }]);
+    return () => {
+    };
+  }
+  return SH.db.collection("progress").onSnapshot((q) => cb(q.docs.map((d) => ({ id: d.id, data: d.data() }))), () => cb(null));
+}
+async function profilesOf(ids) {
+  if (!SH.user || !ids.length) return {};
+  try {
+    return await SH.user.profiles(ids);
+  } catch (e) {
+    return {};
+  }
+}
+async function uploadPhoto(file) {
+  if (SH.assets) {
+    const r = await SH.assets.upload(file);
+    return { asset: r.id, url: r.url };
+  }
+  const url = await new Promise((res, rej) => {
+    const fr = new FileReader();
+    fr.onload = () => res(fr.result);
+    fr.onerror = rej;
+    fr.readAsDataURL(file);
+  });
+  const small = await shrink(url, 1400);
+  return { asset: null, url: small };
+}
+function shrink(src, max) {
+  return new Promise((res) => {
+    const img = new Image();
+    img.onload = () => {
+      const k = Math.min(1, max / Math.max(img.width, img.height));
+      const c = document.createElement("canvas");
+      c.width = Math.round(img.width * k);
+      c.height = Math.round(img.height * k);
+      c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+      res(c.toDataURL("image/jpeg", 0.82));
+    };
+    img.onerror = () => res(src);
+    img.src = src;
+  });
+}
+function photoUrl(p) {
+  return p.asset ? "/_blob/" + p.asset : p.url;
+}
+async function offerDownload(filename, data) {
+  if (SH.downloads) {
+    try {
+      await SH.downloads.save({ filename, data });
+      return "saved";
+    } catch (e) {
+      return e && e.code === "declined" ? "declined" : "error";
+    }
+  }
+  try {
+    const blob = data instanceof Blob ? data : new Blob([data], { type: filename.endsWith(".csv") ? "text/csv" : filename.endsWith(".html") ? "text/html" : "text/plain" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 4e3);
+    return "saved";
+  } catch (e) {
+    return "error";
+  }
+}
+
+// src/ui/report.js
+function openReport(where) {
+  const ta = el("textarea", { rows: 6, style: { width: "100%" }, placeholder: "Ce qui est faux ou peu clair, et ce qui serait juste dans votre car…", "aria-label": "Description" });
+  const body = el(
+    "div",
+    { class: "list" },
+    el("p", { class: "note" }, `Emplacement : ${where}`),
+    ta,
+    el("p", { class: "note" }, SH.db ? "Le formateur verra ce signalement dans l'Espace formateur (onglet Stagiaires)." : "Hors de claude.ai, le signalement reste dans ce navigateur."),
+    el("div", { class: "hwrow" }, el("button", { class: "btn primary", onclick: () => {
+      const t = ta.value.trim();
+      if (!t) {
+        toast("Décrivez le problème en quelques mots");
+        return;
+      }
+      addReport(where, t);
+      modal.close();
+      toast("Merci : signalement enregistré", "good");
+    } }, "Envoyer"), el("button", { class: "btn", onclick: () => modal.close() }, "Annuler"))
+  );
+  modal.open("Signaler une erreur", body, { width: 640 });
+  setTimeout(() => ta.focus(), 50);
+}
+
 // src/equipment/viewer.js
 var NS2 = "http://www.w3.org/2000/svg";
 function E2(tag, attrs = {}, parent, text) {
@@ -8750,8 +9003,32 @@ function connMap(key, n) {
   }
   return conns;
 }
+function devPhotos(def) {
+  return (CFG.photos && CFG.photos.list ? CFG.photos.list : []).filter((p) => p.device === def.key);
+}
+function renderPhoto(p) {
+  const host = VIEW.svgHost;
+  host.innerHTML = "";
+  const wrap = el("div", { class: "photo-view" }, el("img", { src: photoUrl(p), alt: p.title }));
+  p.hotspots.forEach((h, j) => wrap.appendChild(el("button", { class: "hs" + (VIEW.photoSel === j ? " on" : ""), style: { left: h.x * 100 + "%", top: h.y * 100 + "%" }, title: h.label, onclick: () => {
+    VIEW.photoSel = j;
+    VIEW.sel = h.port && (VIEW.def.ports[h.port] || VIEW.def.controls[h.port]) ? h.port : null;
+    if (VIEW.sel) (S.seenPort ||= {})[VIEW.def.key + ":" + VIEW.sel] = true;
+    renderPhoto(p);
+    renderInfo();
+  } }, String(j + 1))));
+  host.append(wrap, el("p", { class: "note" }, `Photo de votre matériel · ${p.hotspots.length} point(s) cliquable(s)`));
+}
 function renderSvg() {
   const def = VIEW.def;
+  if (VIEW.view.startsWith("photo")) {
+    const p = devPhotos(def)[+VIEW.view.slice(5)];
+    if (p) {
+      renderPhoto(p);
+      return;
+    }
+    VIEW.view = Object.keys(def.views)[0];
+  }
   const v = def.views[VIEW.view];
   const host = VIEW.svgHost;
   host.innerHTML = "";
@@ -8792,6 +9069,22 @@ function renderInfo() {
   box.innerHTML = "";
   const id = VIEW.sel;
   const meta = id ? def.ports[id] || def.controls[id] : null;
+  if (VIEW.view.startsWith("photo") && VIEW.photoSel != null) {
+    const p = devPhotos(def)[+VIEW.view.slice(5)];
+    const h = p && p.hotspots[VIEW.photoSel];
+    if (h) {
+      box.append(el("h3", { class: "eq-h" }, `${VIEW.photoSel + 1}. ${h.label || "Point"}`));
+      if (h.desc) box.append(el("p", { class: "prose" }, h.desc));
+    }
+    if (!meta) {
+      box.append(el("button", { class: "btn small", onclick: () => {
+        VIEW.photoSel = null;
+        renderInfo();
+        renderSvg();
+      } }, "Retour à la fiche de l'appareil"));
+      return;
+    }
+  }
   if (meta) {
     const isPort = !!def.ports[id];
     box.append(el("h3", { class: "eq-h" }, meta.n));
@@ -8883,6 +9176,14 @@ function openDevice(key, n = 1, opts = {}) {
     if (v) VIEW.view = v;
   }
   const tabs = el("div", { class: "tabs" });
+  VIEW.photoSel = null;
+  devPhotos(def).forEach((p, i) => tabs.appendChild(el("button", { class: "tab", "data-v": "photo" + i, onclick: () => {
+    VIEW.view = "photo" + i;
+    VIEW.photoSel = null;
+    [...tabs.children].forEach((b) => b.classList.toggle("on", b.dataset.v === VIEW.view));
+    renderSvg();
+    renderInfo();
+  } }, "Photo · " + (p.title || i + 1))));
   for (const v of Object.keys(def.views)) tabs.appendChild(el("button", { class: "tab" + (v === VIEW.view ? " on" : ""), onclick: () => {
     VIEW.view = v;
     [...tabs.children].forEach((b) => b.classList.toggle("on", b.dataset.v === v));
@@ -8899,7 +9200,7 @@ function openDevice(key, n = 1, opts = {}) {
     s.onchange = () => openDevice(key, +s.value, { view: VIEW.view });
     bar.prepend(s);
   }
-  bar.append(el("button", { class: "btn small", onclick: () => openEquipmentIndex() }, "Tout le matériel"));
+  bar.append(el("button", { class: "btn small", onclick: () => openEquipmentIndex() }, "Tout le matériel"), el("button", { class: "btn small", onclick: () => openReport("Matériel · " + def.title + (VIEW.sel ? " · " + VIEW.sel : "")) }, "Signaler une erreur"));
   const legend = el("div", { class: "hwrow note" }, ...Object.values(SIG).map((s) => el("span", { class: "pill", style: { borderColor: s.color } }, el("span", { class: "dot", style: { background: s.color } }), s.label)));
   VIEW.svgHost = el("div", { class: "eq-svg" });
   VIEW.info = el("div", { class: "eq-info" });
@@ -10518,7 +10819,7 @@ function buildPatch(body, arg, ctx) {
       const isSel = sel && sel.k === k && sel.side === side && sel.id === id;
       E3("circle", { cx: x, cy: y, r: 13, fill: "#0b0d10", stroke: isSel ? "#ffb020" : on2 ? F2.color : "#6b747d", "stroke-width": isSel ? 3 : 2 }, g);
       E3("circle", { cx: x, cy: y, r: 5, fill: on2 ? F2.color : "#2a2f35" }, g);
-      const ty = side === "t" ? y - 22 : y + 30;
+      const ty = side === "t" ? y - 32 : y + 30;
       const txt = E3("text", { x, y: ty, fill: "#cfd6dc", "font-size": 9.5, "font-family": "Saira Condensed, Arial Narrow, sans-serif", "text-anchor": "middle" }, g);
       const parts = label.split(" ");
       const last2 = parts.pop();
@@ -10571,6 +10872,783 @@ function buildPatch(body, arg, ctx) {
       }
     }
   };
+}
+
+// src/review.js
+var SONY_HDC = "Fiches techniques Sony HDC-5500 (pro.sony, AV-iQ, Gravity Media)";
+var SONY_CCU = "Fiches techniques Sony HDCU-5500 / HDCU-5000 et manuel HDCU";
+var SONY_RCP = "Fiche technique Sony RCP-3500 et manuels RCP-1500/3100";
+var EVS_XT4K = "Presse de lancement EVS XT4K (SVG Europe, Panorama Audiovisual, live-production.tv) et fiche revendeur (Expandore)";
+var EVS_XT = "Manuels techniques EVS XT2 / XT3 / XTnano / XT4K (ManualsLib)";
+var EVS_MC = "Manuels EVS Multicam LSM 10.x à 12.x (ManualsLib, manualzz)";
+var EVS_IPD = "Page produit EVS IPDirector et articles SVG (2013-2015)";
+var SONY_XVS = "Brochures Sony XVS (pro.sony, Gravity Media, AV Broadcast), fiches revendeurs";
+var SONY_ICP = "Pages produit Sony ICP-X7000";
+var NORMES = "Normes et recommandations (SMPTE, ITU-R, EBU)";
+var SIMU = "Choix de simulation (à valider avec vos habitudes)";
+var REVIEW_ITEMS = [
+  ["cam1", "Chaîne caméra", "Tête HDC-5500 : connecteurs arrière (fibre 3K.93C, SDI 1/2/3, SDI MONI, TEST OUT, PROMPTER/GENLOCK, INTERCOM 1/2 XLR-5, AUDIO CH1/2, DC IN XLR-4 10,5-17 V, REMOTE, RET CTRL, TRACKER, CRANE).", SONY_HDC],
+  ["cam2", "Chaîne caméra", "Portée ≈ 2 km en fibre hybride avec HDCU-5500 (4 km avec HDCU-5000) ; ≈ 10 km en monomode avec alimentation locale.", SONY_CCU],
+  ["cam3", "Chaîne caméra", "CCU HDCU-5500 : demi-largeur 3U, D-sub 50 INTERCOM/TALLY/IO (PROD/ENG, PGM, tally R/G/Y), RCP/CNU 8 broches, REF IN/OUT en boucle, sortie CHARACTER.", SONY_CCU],
+  ["cam4", "Chaîne caméra", "RCP-3500 : PoE 802.3af classe 2, CCU/CNU 8 broches, AUX 8 broches, EXT I/O D-sub 9, 102 × 310 × 67 mm, 1,7 kg, 10 W, 9 touches assignables.", SONY_RCP],
+  ["cam5", "Chaîne caméra", "Le traitement de l'image (« paint ») est fait en grande partie dans la tête ; la CCU gère les conversions de sortie (UHD/HD, HDR/SDR).", SONY_CCU],
+  ["evs1", "Serveur EVS XT4K", "4 canaux UHD-4K ou 8 canaux HD ; 12 et plus en configuration ChannelMAX.", EVS_XT4K],
+  ["evs2", "Serveur EVS XT4K", "UHD sur un seul câble 12G-SDI ; Quad 3G-SDI (2SI / découpage en carrés) en option ; XAVC-4K 10 bits HDR.", EVS_XT4K],
+  ["evs3", "Serveur EVS XT4K", "Stockage interne jusqu'à 9 To (≈ 130 h d'UHD annoncées ; un article parle de « plus de 30 h »), extensible jusqu'à 40 To.", EVS_XT4K],
+  ["evs4", "Serveur EVS XT4K", "192 pistes audio, routeur audio interne ; réseaux XNet 3 Gb/s, 2 × 10 GbE, gestion redondante ; 6U.", EVS_XT4K],
+  ["evs5", "Serveur EVS XT4K", "Télécommande LSM reliée au serveur en RS-422 (19 200 bauds d'après les manuels XT) ; ports GPI et LTC.", EVS_XT],
+  ["evs6", "Serveur EVS XT4K", "Répartition retenue avec un seul XT4K : HD = 8 REC + 2 PLAY (ChannelMAX) ou 6 REC + 2 PLAY ; UHD = 3 REC + 1 PLAY.", SIMU],
+  ["lsm1", "Télécommande LSM", "Levier 0-100 % ; plage secondaire −100/+100 % ou −200/+200 %. Jog ≈ 35 images par tour. FAST JOG désactivé après PLAY/LIVE.", EVS_MC],
+  ["lsm2", "Télécommande LSM", "Touches à double fonction (SHIFT) : IN/GOTO IN, OUT/GOTO OUT, PLST/BROWSE ; SHIFT + PAGE puis F = page 1 à 10.", EVS_MC],
+  ["lsm3", "Télécommande LSM", "RETURN (revenir dans le train depuis un clip), TAKE (échange PGM/PRV ou les deux PGM), verrouillage CLEAR puis MENU.", EVS_MC],
+  ["lsm4", "Télécommande LSM", "Nommage des clips page · banque · touche · angle (ex. 111A) ; la disposition exacte des touches dépend du modèle.", EVS_MC],
+  ["ipd1", "IPDirector", "Modules base de données, log, playlist, contrôle des canaux ; mêmes clips que la LSM.", EVS_IPD],
+  ["xvs1", "Mélangeur XVS-6000", "En 4K (configuration de base) : 2 M/E, 16 entrées, 6 sorties, 8 keyers (4 full + 4 sub). Le simulateur limite le mélangeur à 16 entrées en UHD.", SONY_XVS],
+  ["xvs2", "Mélangeur XVS-6000", "En HD : jusqu'à 4 M/E selon les sources, 48 ou 64 entrées (les sources divergent), 24 sorties assignables, jusqu'à 16 keyers.", SONY_XVS],
+  ["xvs3", "Mélangeur XVS-6000", "4 keyers par M/E avec redimensionneur 2,5D ; DME 3D en option (XKS-8470 : 2 canaux HD ; XKS-8475 : 1 canal 4K).", SONY_XVS],
+  ["xvs4", "Mélangeur XVS-6000", "Frame memory non volatile 480 Go (images, clips, transitions « clip ») ; 2 multiviewers intégrés (4/10/13/16 fenêtres).", SONY_XVS],
+  ["xvs5", "Mélangeur XVS-6000", "Processeur : REF IN BNC avec boucle, NETWORK (MVS LAN) et (UTIL LAN) en 1000BASE-T ; tally par carte MKS-X7701 (3 × D-sub 37, 18 relais).", SONY_XVS],
+  ["xvs6", "Mélangeur XVS-6000", "Pupitre ICP-X7000 : 1 à 4 rangées M/E, 20/28/36 boutons XPT, OLED, boutons RVB ; relié via MKS-X7700 ou MKS-X2700.", SONY_ICP],
+  ["lvl1", "Niveaux et mesures", "Vidéo 10 bits : noir 64, blanc 940, super-blanc max 1019 ; white clip par défaut du simulateur à 103 % (tolérance EBU R103).", NORMES],
+  ["lvl2", "Niveaux et mesures", "Audio : alignement −18 dBFS (EBU R68), −23 LUFS intégré et −1 dBTP (EBU R128).", NORMES],
+  ["lvl3", "Niveaux et mesures", "HLG : blanc de référence à 75 % du signal, 203 cd/m² (ITU-R BT.2408).", NORMES],
+  ["lvl4", "Niveaux et mesures", "Fibre monomode ≈ 0,35-0,4 dB/km à 1310 nm ; ≈ 0,5 dB par connexion propre.", NORMES],
+  ["lvl5", "Niveaux et mesures", "Line-up : niveau moyen visé 40-45 % selon la valeur de plan ; repères pelouse 40-55 %.", SIMU],
+  ["ip1", "IP", "ST 2110-20 : ≈ 2,1 Gb/s en 1080p50 10 bits 4:2:2 ; ≈ 8,3 Gb/s en UHD p50. PTP ST 2059-2 ; NMOS IS-04/IS-05 ; ST 2022-7.", NORMES]
+];
+var REVIEW_STATUS = { "": "À vérifier", ok: "Validé", fix: "À corriger" };
+
+// src/ui/guide.js
+var cam = (slot) => S.cams.find((c) => c.slotId === slot);
+var MISSIONS = [
+  { id: "m1", title: "Le compound", text: "Approchez-vous du pied de car (le panneau de raccordement à l'arrière droit du car régie) et appuyez sur E pour le découvrir.", check: () => S.openedInfo.pieddecar },
+  { id: "m2", title: "Le plan de caméras", text: "Ouvrez le plan (touche P). Installez une caméra tribune sur « Passerelle centrale – position 1 » avec la consigne « Plan large ».", check: () => {
+    const c = cam("g_c1");
+    return c && c.role === "large";
+  } },
+  { id: "m3", title: "Câbler la caméra 1", text: "Dans le plan, vérifiez la liaison de cette caméra : fibre SMPTE ou pré-câblage, longueur dans la limite. Le câble apparaît en couleur jusqu'au pied de car.", check: () => {
+    const c = cam("g_c1");
+    return c && c.status.ok && ["smpte", "precab", "smf"].includes(c.link);
+  } },
+  { id: "m3b", title: "Les connecteurs de la caméra", text: "Visez la caméra 1 dans le stade et appuyez sur I (ou, dans le plan, « Voir le matériel ») : cliquez sur un connecteur, par exemple la fibre CCU ou l'intercom du cadreur, pour savoir à quoi il sert et où il est câblé.", check: () => S.seenPort && Object.keys(S.seenPort).some((k) => k.startsWith("cam:")) },
+  { id: "m4", title: "Le serré", text: "Installez une deuxième caméra sur la position 2 avec un très long zoom (UA107 ou UJ122) et la consigne « Serré porteur du ballon ».", check: () => {
+    const c = cam("g_c2");
+    return c && c.role === "serre" && c.L.fmax >= 900;
+  } },
+  { id: "m5", title: "Une caméra HF", text: "Installez une Steadicam HF au bord du terrain et allumez au moins deux antennes de réception. Objectif : une marge HF supérieure à 3 dB.", check: () => S.cams.some((c) => c.rf && c.rf.margin > 3) && RF.antennas.filter((a) => a.on).length >= 2 },
+  { id: "m6", title: "Entrer dans le car", text: "Rejoignez le car régie (touche T pour vous téléporter devant) et entrez par les marches de la porte.", check: () => S.inTruck },
+  { id: "m7", title: "Le multiview", text: "Asseyez-vous au poste Truquiste · Mélangeur (E). Repérez le PGM (cadre rouge, à droite) et le PVW (cadre vert, à gauche).", check: () => S.visited.melangeur },
+  { id: "m8", title: "Premier enchaîné", text: "Au mélangeur : plan large au PGM, serré au PST, choisissez MIX puis AUTO (ou Entrée).", check: () => S.stats.mixes >= 1 },
+  { id: "m9", title: "Exposition", text: "Au poste Ingé vision, réglez l'iris de la CAM 1 pour un niveau moyen entre 35 et 55 % (lisez le waveform).", check: () => {
+    const c = camById(1);
+    return S.visited.vision && c && c.meter.mean > 0.35 && c.meter.mean < 0.55;
+  } },
+  { id: "m10", title: "Le matching", text: "Toujours en vision : égalisez la colorimétrie des CAM 1 et 2 (écarts rouge et bleu inférieurs à 2 %, voir sous les gains). AUTO WHITE ou réglage fin des gains R/B.", check: () => {
+    const a = camById(1), b = camById(2);
+    if (!a || !b || !S.visited.vision) return false;
+    const ea = a.colorError(), eb = b.colorError();
+    return Math.abs(ea.r) < 0.02 && Math.abs(ea.b) < 0.02 && Math.abs(eb.r) < 0.02 && Math.abs(eb.b) < 0.02;
+  } },
+  { id: "m10b", title: "Les barres au line-up", text: "Au poste Ingé vision, envoyez les barres d'une caméra (touche BARS du RCP), retrouvez-les sur le multiview, puis revenez à l'image.", check: () => S.flags && S.flags.barsCycle },
+  { id: "m11", title: "Habillage", text: "Mettez le score à l'antenne (DSK 1 au mélangeur), puis jouez un bandeau joueur depuis le poste Habillage avec le DSK 2 à l'antenne.", check: () => MIX.dsk1.on && MIX.dsk2.on && GFX.template === "lower" && GFX.anim > 0.5 },
+  { id: "m12", title: "Le ralenti", text: "Au poste EVS : après une action, DERNIÈRE ACTION (ou jog + MARK IN), puis passez l'EVS A au PGM et lancez la lecture au levier à 60 % maximum.", check: () => meSource(MIX.pgm) === "EVSA" && EVS.ch[0].playing && EVS.ch[0].speed <= 0.6 },
+  { id: "m13", title: "Le volet logo", text: "Au mélangeur, entrez ou sortez d'un ralenti avec le volet logo (transition CLIP de la frame memory).", check: () => S.stats.stingers >= 1 },
+  { id: "m13b", title: "Clips et playlist", text: "Au poste EVS : sauvegardez deux clips (SHIFT puis F1, SHIFT puis F2), ajoutez-les à la playlist (PLST puis F1 et F2) et lancez PLST PLAY.", check: () => EVS.playlist.length >= 2 && EVS.ch.some((c) => c.pl) },
+  { id: "m14", title: "La synchro", text: "Dans la zone technique (au fond du car), ouvrez le poste Synchro (SPG).", check: () => S.visited.synchro },
+  { id: "m15", title: "Retour antenne", text: "Au poste Transmission, comparez le départ et le retour antenne : repérez le délai.", check: () => S.visited.transmission },
+  { id: "m16", title: "Dépannage", text: "Au poste Chef de car, onglet « Simulateur de pannes » : lancez le mode examen et trouvez la panne.", check: () => S.faultsSolved >= 1 },
+  { id: "m17", title: "Suivre un câble", text: "Poste Chef de car, onglet « Liste de câblage » : ouvrez un appareil en cliquant sur une extrémité de câble, puis « Suivre » jusqu'à l'autre bout.", check: () => S.flags && S.flags.followed }
+];
+function currentMission() {
+  return MISSIONS.find((m) => !S.missionsDone[m.id]);
+}
+function checkMissions() {
+  for (const m of MISSIONS) {
+    if (S.missionsDone[m.id]) continue;
+    let ok = false;
+    try {
+      ok = !!m.check();
+    } catch (e) {
+      ok = false;
+    }
+    if (ok) {
+      S.missionsDone[m.id] = true;
+      if (S.showMission) toast(`Mission réussie : ${m.title}`, "good", 4e3);
+      emit("mission", m.id);
+    }
+  }
+}
+function drawMissionCard() {
+  const box = $("#mission");
+  if (!S.showMission) {
+    box.hidden = true;
+    return;
+  }
+  const m = currentMission();
+  if (!m) {
+    box.hidden = false;
+    box.innerHTML = "";
+    box.append(el("div", { class: "k" }, "Parcours terminé"), el("h4", {}, "Bravo, toutes les missions sont réussies"), el("p", {}, "Essayez l'exercice truquiste (poste Réalisateur) ou le mode examen des pannes."));
+    return;
+  }
+  const done = MISSIONS.filter((x) => S.missionsDone[x.id]).length;
+  if (box.dataset.m === m.id && !box.hidden) return;
+  box.dataset.m = m.id;
+  box.hidden = false;
+  box.innerHTML = "";
+  box.append(
+    el("div", { class: "k" }, `Mission ${done + 1} / ${MISSIONS.length}`),
+    el("h4", {}, m.title),
+    el("p", {}, m.text),
+    el("div", { class: "row" }, el("button", { class: "btn small", onclick: () => openGuide("missions") }, "Toutes les missions"), el("button", { class: "btn small", onclick: () => {
+      S.missionsDone[m.id] = true;
+    } }, "Passer"), el("button", { class: "btn small", onclick: () => {
+      S.showMission = false;
+      box.hidden = true;
+    } }, "Masquer"))
+  );
+}
+var STATION_LIST = [
+  ["realisateur", "Car · production"],
+  ["scripte", "Car · production"],
+  ["melangeur", "Car · production"],
+  ["habillage", "Car · production"],
+  ["producteur", "Car · production"],
+  ["chefdecar", "Car · production"],
+  ["vision", "Car · vision"],
+  ["evs", "Car · ralentis"],
+  ["ipdirector", "Car · ralentis"],
+  ["son", "Car · régie son"],
+  ["hf", "Car · zone technique"],
+  ["grille", "Car · zone technique"],
+  ["ccu", "Car · zone technique"],
+  ["synchro", "Car · zone technique"],
+  ["transmission", "Car · zone technique"],
+  ["intercom", "Car · zone technique"],
+  ["pieddecar", "Compound"],
+  ["energie", "Compound"],
+  ["cadreur", "Stade"],
+  ["antenne", "Stade"],
+  ["localtv", "Stade"],
+  ["commentateurs", "Stade"],
+  ["var", "Stade"]
+];
+function openGuide(tab = "missions") {
+  const tabs = el("div", { class: "tabs" });
+  const content = el("div", { class: "list" });
+  const T2 = [["missions", "Missions"], ["guide", "Comprendre"], ["procedures", "Procédures"], ["postes", "Les postes"], ["materiel", "Matériel"], ["glossaire", "Glossaire"], ["commandes", "Commandes"], ["reglages", "Réglages"]];
+  const show = (k) => {
+    content.innerHTML = "";
+    [...tabs.children].forEach((b) => b.classList.toggle("on", b.dataset.k === k));
+    if (k === "missions") {
+      content.append(el("p", { class: "note" }, "Un parcours d'intégration pas à pas, du câblage d'une caméra au dépannage. Les missions se valident automatiquement."));
+      for (const m of MISSIONS) content.appendChild(el("div", { class: "item" + (currentMission() === m ? " sel" : "") }, el("span", { class: "dot " + (S.missionsDone[m.id] ? "green" : currentMission() === m ? "amber" : "") }), el("div", { class: "grow" }, el("div", { class: "t" }, m.title), el("div", { class: "s" }, m.text))));
+      const cb = el("input", { type: "checkbox", id: "showm" });
+      cb.checked = S.showMission;
+      cb.onchange = () => {
+        S.showMission = cb.checked;
+        $("#mission").dataset.m = "";
+      };
+      content.append(
+        el("label", { class: "item", for: "showm" }, cb, el("span", {}, "Afficher la mission en cours à l'écran")),
+        el("button", { class: "btn small", onclick: () => {
+          S.missionsDone = {};
+          $("#mission").dataset.m = "";
+          show("missions");
+        } }, "Recommencer le parcours")
+      );
+    }
+    if (k === "guide") {
+      const nav = el("div", { class: "tabs" });
+      const art = el("div", { class: "prose" });
+      let curG = GUIDE[0];
+      const open = (g) => {
+        curG = g;
+        art.innerHTML = `<h3>${g.title}</h3>` + g.html;
+        [...nav.children].forEach((b) => b.classList.toggle("on", b.dataset.g === g.id));
+      };
+      for (const g of GUIDE) nav.appendChild(el("button", { class: "tab", "data-g": g.id, onclick: () => open(g) }, g.title));
+      content.append(nav, art, el("div", { class: "hwrow" }, el("button", { class: "btn small", onclick: () => openReport("Guide · " + curG.title) }, "Signaler une erreur dans ce chapitre")));
+      open(GUIDE[0]);
+      art.querySelectorAll("table").forEach((t) => {
+        const w = el("div", { class: "tblwrap" });
+        t.replaceWith(w);
+        w.appendChild(t);
+      });
+      nav.addEventListener("click", () => art.querySelectorAll("table").forEach((t) => {
+        if (!t.parentElement.classList.contains("tblwrap")) {
+          const w = el("div", { class: "tblwrap" });
+          t.replaceWith(w);
+          w.appendChild(t);
+        }
+      }));
+    }
+    if (k === "postes") {
+      content.append(el("p", { class: "note" }, "Chaque poste du car et chaque équipement du stade, avec son rôle, son matériel et ses pièges. Dans le simulateur, approchez-vous et appuyez sur E."));
+      for (const [id, where] of STATION_LIST) {
+        const I = STATION_INFO[id];
+        if (!I) continue;
+        content.appendChild(el("div", { class: "item" }, el("div", { class: "grow" }, el("div", { class: "t" }, I.title), el("div", { class: "s" }, `${where} · ${I.role.split(". ")[0]}.`)), el("button", { class: "btn small", onclick: () => openInfo(id) }, "Fiche")));
+      }
+    }
+    if (k === "procedures") {
+      const procs = CFG.car.procedures || [];
+      content.append(el("p", { class: "note" }, procs.length ? `Procédures de ${CFG.car.name || "votre car"}, définies par le formateur.` : "Aucune procédure maison pour l'instant : le formateur peut en ajouter dans l'Espace formateur (onglet Procédures)."));
+      for (const p of procs) content.append(el("div", { class: "hwpanel prose" }, el("h3", {}, p.title), el("ol", { class: "steps" }, (p.steps || []).map((s) => el("li", {}, s)))));
+      content.append(el("div", { class: "hwrow" }, el("button", { class: "btn small", onclick: () => openTrainer("proc") }, "Espace formateur")));
+    }
+    if (k === "materiel") {
+      content.append(el("p", { class: "note" }, "Faces avant et arrière des appareils, connecteurs, signaux et raccordements de votre installation. Inventaire des connecteurs d'après les fiches techniques (chaîne caméra type Sony HDC-5500 / HDCU-5500 / RCP-3500, mélangeur Sony XVS-6000 et pupitre ICP-X7000, serveur EVS XT4K, télécommande LSM, IPDirector). Raccourci : touche K."));
+      const row2 = el("div", { class: "grid2" });
+      for (const [kk, l] of DEVICE_LIST) row2.appendChild(el("button", { class: "choice", onclick: () => openDevice(kk, ["cam", "ccu", "rcp"].includes(kk) && S.cams[0] ? S.cams[0].id : 1) }, el("b", { style: { fontSize: "17px" } }, l), el("span", {}, DEVICES[kk] ? DEVICES[kk].title : "")));
+      content.append(row2);
+    }
+    if (k === "glossaire") {
+      const q = el("input", { type: "text", id: "glq", placeholder: "Rechercher un terme (SDI, genlock, DSK…)" });
+      const list = el("div", { class: "list" });
+      const render = () => {
+        list.innerHTML = "";
+        const s = q.value.trim().toLowerCase();
+        for (const [t, d] of GLOSSARY) {
+          if (s && !(t.toLowerCase().includes(s) || d.toLowerCase().includes(s))) continue;
+          list.appendChild(el("div", { class: "item" }, el("div", { class: "grow" }, el("div", { class: "t" }, t), el("div", { class: "s", style: { fontSize: "13px", color: "#c7d0d7" } }, d))));
+        }
+      };
+      q.addEventListener("input", render);
+      content.append(field("Recherche", q), list);
+      render();
+    }
+    if (k === "commandes") {
+      const g = el("div", { class: "keys" });
+      for (const [kk, d] of CONTROLS_HELP) g.appendChild(el("div", {}, el("kbd", {}, kk), d));
+      content.append(g, el("p", { class: "note" }, "Sur tablette : joystick à gauche pour avancer, glisser à droite pour regarder, bouton E pour interagir. Dans un poste, les raccourcis du poste sont indiqués en bas de l'écran."));
+    }
+    if (k === "reglages") {
+      content.append(
+        el(
+          "div",
+          { class: "grid2" },
+          field("Lumière", selectEl(Object.entries(LIGHTING).map(([k2, v]) => [k2, v.label]), S.lighting, (v) => emit("setLighting", v))),
+          field("Qualité graphique", selectEl([["basse", "Basse (portable)"], ["moyenne", "Moyenne"], ["haute", "Haute (bonne carte graphique)"]], S.quality, (v) => emit("setQuality", v))),
+          field("Éclairage de nuit", selectEl([["led", "LED « flicker-free »"], ["halide", "Iodures métalliques 50 Hz (scintillement en super ralenti)"]], S.flickerLamps ? "halide" : "led", (v) => {
+            S.flickerLamps = v === "halide";
+          })),
+          field("Voix du réalisateur virtuel", selectEl([["0", "Texte seulement"], ["1", "Synthèse vocale"]], S.directorVoice ? "1" : "0", (v) => {
+            S.directorVoice = v === "1";
+          })),
+          field("Line-up automatique à l'installation", selectEl([["1", "Oui (caméras déjà réglées)"], ["0", "Non (réglages par défaut, à faire en vision)"]], S.autoLineup ? "1" : "0", (v) => {
+            S.autoLineup = v === "1";
+          })),
+          field("Étiquettes et câbles dans le stade", selectEl([["1", "Afficher"], ["0", "Masquer"]], S.showLabels ? "1" : "0", (v) => emit("setLabels", v === "1")))
+        ),
+        el("p", { class: "note" }, LIGHTING[S.lighting].desc),
+        el("div", { class: "hwrow" }, el("button", { class: "btn", onclick: () => openTrainer("car") }, "Espace formateur"), el("button", { class: "btn", id: "perfbtn", onclick: () => emit("perfTest") }, "Tester les performances de cet ordinateur"), el("button", { class: "btn", onclick: () => openReport("Simulateur (général)") }, "Signaler une erreur"))
+      );
+    }
+  };
+  for (const [k, l] of T2) tabs.appendChild(el("button", { class: "tab", "data-k": k, onclick: () => show(k) }, l));
+  modal.open("Guide du car régie", el("div", { class: "list" }, tabs, content), { width: 980 });
+  show(tab);
+}
+on("openGuide", () => openGuide("guide"));
+
+// src/ui/config.js
+var DEFAULT_CHECKLIST = ["Terre raccordée, énergie vérifiée (phases, neutre)", "Toutes les caméras alimentées, niveaux optiques corrects", "Référence (genlock) verrouillée sur toutes les CCU", "Balance des noirs et des blancs, matching vision", "Noms de sources et tally vérifiés au multiview", "Test de chaque position intercom (cadreurs, EVS, son, commentateurs)", "Entrées d'enregistrement EVS affectées (super ralentis compris)", "Test des micros et du 1 kHz -18 dBFS", "Mire + 1 kHz envoyées à la chaîne, ident vérifié", "Retour antenne contrôlé, chemin de secours testé", "Fréquences HF vérifiées sur le spectre, marges correctes"];
+function checklistItems() {
+  return CFG.car.checklist && CFG.car.checklist.length ? CFG.car.checklist : DEFAULT_CHECKLIST;
+}
+var TABS = [["car", "Le car"], ["cables", "Liste de câblage"], ["proc", "Procédures"], ["photos", "Photos du matériel"], ["eleves", "Stagiaires"], ["review", "Relecture technique"]];
+function openTrainer(tab = "car") {
+  const tabs = el("div", { class: "tabs" });
+  const content = el("div", { class: "list" });
+  const editable = canConfigure();
+  const notice = el("p", { class: "note " + (editable ? "" : "warn") }, !SH.db ? "Mode local : les réglages sont enregistrés dans ce navigateur uniquement. Une fois la page ouverte dans claude.ai, ils sont partagés avec toutes les personnes qui ont accès à la page." : editable ? "Vous pouvez modifier ces réglages : ils s'appliquent à toutes les personnes qui ouvrent la page." : "Seuls le propriétaire et les éditeurs de la page peuvent modifier ces réglages. Vous les voyez en lecture seule.");
+  const show = (k) => {
+    content.innerHTML = "";
+    [...tabs.children].forEach((b) => b.classList.toggle("on", b.dataset.k === k));
+    ({ car: tabCar, cables: tabCables, proc: tabProc, photos: tabPhotos, eleves: tabEleves, review: tabReview })[k](content, editable);
+  };
+  for (const [k, l] of TABS) tabs.appendChild(el("button", { class: "tab", "data-k": k, onclick: () => show(k) }, l));
+  modal.open("Espace formateur", el("div", { class: "list" }, notice, tabs, content), { width: 1100 });
+  show(tab);
+}
+var saved = (r) => toast(r.ok ? r.local ? "Enregistré dans ce navigateur" : "Enregistré et partagé" : `Échec de l'enregistrement : ${r.message || r.code}`, r.ok ? "good" : "bad");
+function tabCar(box, editable) {
+  const c = { ...CFG.car, equip: { ...CFG.car.equip || {} } };
+  const name = el("input", { type: "text", value: c.name || "", placeholder: "ex. Car 12 · régie HD", maxlength: 40 });
+  const company = el("input", { type: "text", value: c.company || "", placeholder: "Société (affiché sur l'écran d'accueil)", maxlength: 40 });
+  const eq = c.equip;
+  const sel = (key, opts, def) => selectEl(opts, eq[key] ?? def, (v) => {
+    eq[key] = +v;
+  });
+  const fields2 = el(
+    "div",
+    { class: "grid2" },
+    field("Nom du car", name),
+    field("Société / service", company),
+    field("Serveurs EVS XT4K", sel("evsServers", [[1, "1 serveur"], [2, "2 serveurs"]], EQUIP.evsServers)),
+    field("Canaux HD par XT4K", sel("evsHdChannels", [[8, "8 canaux (standard)"], [12, "12 canaux (ChannelMAX)"]], EQUIP.evsHdChannels)),
+    field("Télécommandes LSM", sel("lsmCount", [[1, "1 LSM (pilote PGM1 et PGM2)"], [2, "2 LSM"]], EQUIP.lsmCount)),
+    field("Entrées du XVS-6000 en 4K", sel("mix4kInputs", [[16, "16 (configuration de base)"], [22, "22 (cartes supplémentaires)"]], EQUIP.mix4kInputs))
+  );
+  const L = evsLayout();
+  box.append(
+    el("h3", { class: "eq-h" }, "Identité et matériel du car"),
+    fields2,
+    el("div", { class: "kv" }, el("dt", {}, "Mélangeur"), el("dd", {}, `${EQUIP.mixer} + pupitre ${EQUIP.mixPanel}`), el("dt", {}, "Ralentis"), el("dd", {}, `${EQUIP.evsServers} × EVS ${EQUIP.evsModel}, ${EQUIP.lsmCount} LSM, IPDirector`), el("dt", {}, "Répartition EVS (format actuel)"), el("dd", {}, L.label)),
+    el("p", { class: "note" }, "Les changements de matériel s'appliquent au prochain démarrage du simulateur (bouton « Accueil » ou rechargement de la page)."),
+    el("button", { class: "btn primary", disabled: !editable, onclick: async () => {
+      c.name = name.value.trim();
+      c.company = company.value.trim();
+      saved(await saveConfig("car", c));
+    } }, "Enregistrer")
+  );
+}
+var COLS = [["n", /^(n°|no\b|num|numéro|id|repère|ref|câble n)/i], ["a", /(origine|source|^de\b|départ|from|côté a|extrémité a)/i], ["b", /(destination|vers|arrivée|^to\b|côté b|extrémité b)/i], ["type", /(type|câble|cable|support|modèle)/i], ["len", /(long|mètre|\bm\b)/i], ["sig", /(signal|nature)/i], ["note", /(remarque|note|comment|obs)/i]];
+function parseCSV(text) {
+  text = text.replace(/^﻿/, "");
+  const first = text.split(/\r?\n/)[0] || "";
+  const delim = (first.match(/;/g) || []).length >= (first.match(/,/g) || []).length ? ";" : first.includes("	") ? "	" : ",";
+  const rows = [];
+  let row2 = [], cur = "", q = false;
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    if (q) {
+      if (ch === '"') {
+        if (text[i + 1] === '"') {
+          cur += '"';
+          i++;
+        } else q = false;
+      } else cur += ch;
+      continue;
+    }
+    if (ch === '"') q = true;
+    else if (ch === delim) {
+      row2.push(cur);
+      cur = "";
+    } else if (ch === "\n" || ch === "\r") {
+      if (ch === "\r" && text[i + 1] === "\n") i++;
+      row2.push(cur);
+      rows.push(row2);
+      row2 = [];
+      cur = "";
+    } else cur += ch;
+  }
+  if (cur !== "" || row2.length) {
+    row2.push(cur);
+    rows.push(row2);
+  }
+  return rows.filter((r) => r.some((c) => c.trim() !== ""));
+}
+function mapRows(rows) {
+  if (!rows.length) return [];
+  const head = rows[0].map((h) => String(h).trim());
+  const idx = {};
+  let hits = 0;
+  for (const [k, re] of COLS) {
+    const i = head.findIndex((h, j) => re.test(h) && !Object.values(idx).includes(j));
+    if (i >= 0) {
+      idx[k] = i;
+      hits++;
+    }
+  }
+  const body = hits >= 2 ? rows.slice(1) : rows;
+  if (hits < 2) COLS.forEach(([k], i) => {
+    idx[k] = i;
+  });
+  const cell = (r, k) => idx[k] != null && r[idx[k]] != null ? String(r[idx[k]]).trim().slice(0, 120) : "";
+  return body.slice(0, 1500).map((r, i) => ({ n: cell(r, "n") || "L" + (i + 1), a: cell(r, "a"), b: cell(r, "b"), type: cell(r, "type"), len: cell(r, "len"), sig: cell(r, "sig"), note: cell(r, "note") })).filter((r) => r.a || r.b);
+}
+var xlsxLoading = null;
+function loadXLSX() {
+  if (window.XLSX) return Promise.resolve(window.XLSX);
+  if (xlsxLoading) return xlsxLoading;
+  xlsxLoading = new Promise((res, rej) => {
+    const s = document.createElement("script");
+    s.src = "https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js";
+    s.onload = () => res(window.XLSX);
+    s.onerror = () => {
+      xlsxLoading = null;
+      rej(new Error("Lecteur Excel indisponible"));
+    };
+    document.head.appendChild(s);
+  });
+  return xlsxLoading;
+}
+async function readCablingFile(file) {
+  if (/\.xlsx?$/i.test(file.name)) {
+    const X2 = await loadXLSX();
+    const wb = X2.read(await file.arrayBuffer(), { type: "array" });
+    const ws = wb.Sheets[wb.SheetNames[0]];
+    return mapRows(X2.utils.sheet_to_json(ws, { header: 1, raw: false, defval: "" }));
+  }
+  const buf = await file.arrayBuffer();
+  let text = new TextDecoder("utf-8").decode(buf);
+  if (text.includes("�")) text = new TextDecoder("windows-1252").decode(buf);
+  return mapRows(parseCSV(text));
+}
+function cablingCSV(rows) {
+  const esc = (v) => {
+    const s = String(v ?? "");
+    return /[;"\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+  };
+  const lines = [["N°", "Origine (A)", "Destination (B)", "Câble", "Longueur (m)", "Signal", "Remarque"].join(";")];
+  for (const r of rows) lines.push([r.n, r.a, r.b, r.type, r.len, r.sig, r.note].map(esc).join(";"));
+  return "\uFEFF" + lines.join("\r\n");
+}
+function generatedRows() {
+  return buildCabling().map((c) => ({ n: c.n, a: endLabel(c.a), b: endLabel(c.b), type: c.type, len: c.len || "", sig: SIG[c.sig] ? SIG[c.sig].label : c.sig, note: (c.note || "") + (c.ok ? "" : " · DÉFAUT") }));
+}
+function tabCables(box, editable) {
+  const cur = CFG.cabling;
+  const info = el("p", { class: "note" }, cur && cur.rows ? `Liste importée : « ${cur.name} », ${cur.rows.length} lignes, le ${new Date(cur.importedAt).toLocaleString("fr-FR")}.` : "Aucune liste importée : le simulateur utilise la liste générée à partir de l'installation.");
+  const input = el("input", { type: "file", accept: ".csv,.txt,.xlsx,.xls", "aria-label": "Fichier de liste de câblage" });
+  const preview = el("div", { class: "tblwrap" });
+  let pending = null;
+  input.addEventListener("change", async () => {
+    const f = input.files[0];
+    if (!f) return;
+    preview.innerHTML = "";
+    pending = null;
+    try {
+      const rows = await readCablingFile(f);
+      if (!rows.length) {
+        toast("Aucune ligne reconnue dans ce fichier", "bad");
+        return;
+      }
+      pending = { name: f.name, rows, importedAt: Date.now() };
+      const t = el("table", { class: "tbl compact cabtbl" }, el("thead", {}, el("tr", {}, ...["N°", "Origine", "Destination", "Câble", "Long.", "Signal", "Remarque"].map((h) => el("th", {}, h)))));
+      const tb = el("tbody");
+      t.appendChild(tb);
+      for (const r of rows.slice(0, 12)) tb.appendChild(el("tr", {}, ...["n", "a", "b", "type", "len", "sig", "note"].map((k) => el("td", {}, r[k]))));
+      preview.append(el("p", { class: "note" }, `${rows.length} lignes reconnues${rows.length >= 1500 ? " (limité à 1 500)" : ""}. Aperçu des 12 premières :`), t);
+      if (JSON.stringify(pending).length > 24e4) {
+        toast("Liste trop volumineuse pour être partagée : réduisez les colonnes Remarque.", "bad");
+        pending = null;
+      }
+    } catch (e) {
+      toast("Lecture impossible : " + e.message, "bad");
+    }
+  });
+  box.append(
+    el("h3", { class: "eq-h" }, "Importer la liste de câblage de votre car"),
+    info,
+    el("p", { class: "note" }, "Formats : CSV (séparateur ; ou ,) ou Excel (.xlsx, première feuille). Colonnes reconnues par leur titre : N°, Origine, Destination, Câble/Type, Longueur, Signal, Remarque. Sans titres reconnus, l'ordre ci-dessus est utilisé."),
+    el(
+      "div",
+      { class: "hwrow" },
+      input,
+      el("button", { class: "btn primary", disabled: !editable, onclick: async () => {
+        if (!pending) {
+          toast("Choisissez d'abord un fichier");
+          return;
+        }
+        const r = await saveConfig("cabling", pending);
+        saved(r);
+        if (r.ok) {
+          info.textContent = `Liste importée : « ${pending.name} », ${pending.rows.length} lignes.`;
+        }
+      } }, "Enregistrer la liste"),
+      el("button", { class: "btn", disabled: !editable || !cur, onclick: async () => {
+        saved(await saveConfig("cabling", null));
+        info.textContent = "Liste importée supprimée.";
+      } }, "Supprimer la liste importée")
+    ),
+    preview,
+    el("h3", { class: "eq-h" }, "Exporter"),
+    el(
+      "div",
+      { class: "hwrow" },
+      el("button", { class: "btn", onclick: () => offerDownload("liste-cablage-simulateur.csv", cablingCSV(generatedRows())) }, "Liste générée par le simulateur (CSV)"),
+      cur && cur.rows ? el("button", { class: "btn", onclick: () => offerDownload("liste-cablage-" + (CFG.car.name || "car").replace(/\W+/g, "-") + ".csv", cablingCSV(cur.rows)) }, "Liste importée (CSV)") : null
+    ),
+    el("p", { class: "note" }, "La liste importée s'affiche au poste Chef de car (onglet Liste de câblage). La liste générée suit l'installation simulée et sert de modèle pour l'exercice de brassage.")
+  );
+}
+function tabProc(box, editable) {
+  const c = { ...CFG.car };
+  const chk = el("textarea", { rows: 12, style: { width: "100%" }, "aria-label": "Check-list de line-up" }, checklistItems().join("\n"));
+  const procs = (c.procedures || []).map((p) => ({ ...p }));
+  const list = el("div", { class: "list" });
+  const draw = () => {
+    list.innerHTML = "";
+    procs.forEach((p, i) => {
+      const t = el("input", { type: "text", value: p.title, maxlength: 80, "aria-label": "Titre de la procédure" });
+      t.oninput = () => {
+        p.title = t.value;
+      };
+      const s = el("textarea", { rows: 6, style: { width: "100%" }, "aria-label": "Étapes, une par ligne" }, (p.steps || []).join("\n"));
+      s.oninput = () => {
+        p.steps = s.value.split("\n").map((x) => x.trim()).filter(Boolean);
+      };
+      list.append(el("div", { class: "hwpanel" }, el("div", { class: "hwrow" }, t, el("button", { class: "btn small danger", disabled: !editable, onclick: () => {
+        procs.splice(i, 1);
+        draw();
+      } }, "Supprimer")), s));
+    });
+  };
+  draw();
+  box.append(
+    el("h3", { class: "eq-h" }, "Check-list de line-up (une ligne par point)"),
+    el("p", { class: "note" }, "Remplace la check-list proposée au poste Chef de car."),
+    chk,
+    el("h3", { class: "eq-h" }, "Procédures maison"),
+    el("p", { class: "note" }, "Affichées dans le guide (onglet Procédures). Exemples : ouverture du car, procédure de mise en antenne, conduite à tenir en cas de perte de liaison."),
+    list,
+    el(
+      "div",
+      { class: "hwrow" },
+      el("button", { class: "btn", disabled: !editable, onclick: () => {
+        procs.push({ title: "Nouvelle procédure", steps: [] });
+        draw();
+      } }, "Ajouter une procédure"),
+      el("button", { class: "btn primary", disabled: !editable, onclick: async () => {
+        c.checklist = chk.value.split("\n").map((x) => x.trim()).filter(Boolean);
+        c.procedures = procs.filter((p) => p.title);
+        saved(await saveConfig("car", c));
+      } }, "Enregistrer")
+    )
+  );
+}
+function tabPhotos(box, editable) {
+  const list = (CFG.photos && CFG.photos.list ? CFG.photos.list : []).map((p) => ({ ...p, hotspots: [...p.hotspots || []] }));
+  const grid = el("div", { class: "grid2" });
+  const editor = el("div", { class: "list" });
+  const devSel = selectEl(DEVICE_LIST.map(([k, l]) => [k, l]), "ccu", () => {
+  });
+  const title = el("input", { type: "text", placeholder: "Titre (ex. CCU baie 1, face arrière)", maxlength: 60 });
+  const file = el("input", { type: "file", accept: "image/png,image/jpeg,image/webp", "aria-label": "Photo du matériel" });
+  const persist = async () => saved(await saveConfig("photos", { list }));
+  const draw = () => {
+    grid.innerHTML = "";
+    list.forEach((p, i) => grid.appendChild(el("button", { class: "choice", onclick: () => edit(i) }, el("img", { src: photoUrl(p), alt: p.title, style: { width: "100%", maxHeight: "140px", objectFit: "cover", borderRadius: "4px" } }), el("b", { style: { fontSize: "15px" } }, p.title || "Sans titre"), el("span", {}, `${(DEVICES[p.device] || {}).title || p.device} · ${p.hotspots.length} point(s)`))));
+    if (!list.length) grid.appendChild(el("p", { class: "note" }, "Aucune photo pour l'instant."));
+  };
+  function edit(i) {
+    const p = list[i];
+    editor.innerHTML = "";
+    const def = DEVICES[p.device];
+    const ports = def ? Object.entries({ ...def.ports, ...def.controls }) : [];
+    const wrap = el("div", { class: "photo-edit" });
+    const img = el("img", { src: photoUrl(p), alt: p.title });
+    wrap.appendChild(img);
+    const marks = () => {
+      wrap.querySelectorAll(".hs").forEach((m) => m.remove());
+      p.hotspots.forEach((h, j) => {
+        const m = el("button", { class: "hs", style: { left: h.x * 100 + "%", top: h.y * 100 + "%" }, title: h.label, onclick: (e) => {
+          e.stopPropagation();
+          form(j);
+        } }, String(j + 1));
+        wrap.appendChild(m);
+      });
+    };
+    const formBox = el("div", { class: "list" });
+    function form(j) {
+      const h = p.hotspots[j];
+      formBox.innerHTML = "";
+      const lab = el("input", { type: "text", value: h.label || "", placeholder: "Nom (ex. SDI 1)", maxlength: 40 });
+      const port = selectEl([["", "— connecteur de la fiche (facultatif) —"], ...ports.map(([id, m]) => [id, m.n])], h.port || "", (v) => {
+        h.port = v;
+        if (v && !lab.value) {
+          lab.value = (def.ports[v] || def.controls[v]).n;
+          h.label = lab.value;
+        }
+      });
+      const desc = el("textarea", { rows: 3, style: { width: "100%" }, placeholder: "Ce que l'on y branche dans votre car, remarques…" }, h.desc || "");
+      lab.oninput = () => {
+        h.label = lab.value;
+      };
+      desc.oninput = () => {
+        h.desc = desc.value.slice(0, 400);
+      };
+      formBox.append(
+        el("h3", { class: "eq-h" }, `Point ${j + 1}`),
+        field("Nom", lab),
+        field("Lien avec la fiche", port),
+        field("Description", desc),
+        el("div", { class: "hwrow" }, el("button", { class: "btn small danger", disabled: !editable, onclick: () => {
+          p.hotspots.splice(j, 1);
+          formBox.innerHTML = "";
+          marks();
+        } }, "Supprimer ce point"))
+      );
+    }
+    wrap.addEventListener("click", (e) => {
+      if (!editable) return;
+      const r = img.getBoundingClientRect();
+      const x = (e.clientX - r.left) / r.width, y = (e.clientY - r.top) / r.height;
+      if (x < 0 || y < 0 || x > 1 || y > 1) return;
+      p.hotspots.push({ x: +x.toFixed(4), y: +y.toFixed(4), label: "", port: "", desc: "" });
+      marks();
+      form(p.hotspots.length - 1);
+    });
+    marks();
+    editor.append(
+      el("h3", { class: "eq-h" }, `Points cliquables · ${p.title || ""}`),
+      el("p", { class: "note" }, editable ? "Cliquez sur la photo pour ajouter un point (un connecteur, un voyant, une commande), puis renseignez-le." : "Lecture seule."),
+      el("div", { class: "photo-grid" }, wrap, formBox),
+      el("div", { class: "hwrow" }, el("button", { class: "btn primary", disabled: !editable, onclick: persist }, "Enregistrer"), el("button", { class: "btn danger", disabled: !editable, onclick: async () => {
+        list.splice(i, 1);
+        editor.innerHTML = "";
+        draw();
+        await persist();
+      } }, "Supprimer la photo"))
+    );
+  }
+  draw();
+  box.append(
+    el("h3", { class: "eq-h" }, "Photos de votre matériel"),
+    el("p", { class: "note" }, "Ajoutez des photos de vos appareils (faces avant/arrière, baies) et placez-y des points cliquables : ils apparaissent dans la visionneuse de matériel, onglet « Photo ». " + (SH.assets ? "Les photos sont stockées avec la page et visibles par les personnes qui y ont accès." : "Hors de claude.ai, les photos restent dans ce navigateur.")),
+    el(
+      "div",
+      { class: "hwrow" },
+      field("Appareil", devSel),
+      field("Titre", title),
+      file,
+      el("button", { class: "btn primary", disabled: !editable, onclick: async () => {
+        const f = file.files[0];
+        if (!f) {
+          toast("Choisissez une image");
+          return;
+        }
+        if (f.size > 15 * 1024 * 1024) {
+          toast("Image trop lourde (15 Mo max)", "bad");
+          return;
+        }
+        try {
+          const r = await uploadPhoto(f);
+          list.push({ asset: r.asset, url: r.asset ? null : r.url, device: devSel.value, title: title.value.trim() || f.name, hotspots: [] });
+          await persist();
+          draw();
+          edit(list.length - 1);
+        } catch (e) {
+          toast("Envoi impossible : " + (e.message || e.code), "bad");
+        }
+      } }, "Ajouter la photo")
+    ),
+    grid,
+    editor
+  );
+}
+function tabEleves(box) {
+  const canSeeAll = !SH.db || SH.canEdit || SH.isOwner;
+  box.append(el("h3", { class: "eq-h" }, "Suivi des stagiaires"));
+  if (!canSeeAll) {
+    box.append(el("p", { class: "note" }, "Seul le formateur voit la progression de tous les stagiaires. Votre propre progression est enregistrée automatiquement."), myProgress());
+    return;
+  }
+  const host = el("div", { class: "list" });
+  box.append(el("p", { class: "note" }, SH.db ? "Chaque personne qui ouvre la page avec un accès « Contributeur » enregistre sa progression ici (missions, scénarios, brassage, signalements d'erreur, performances de son ordinateur). Avec un accès « Lecteur », la progression reste dans son navigateur." : "Mode local : seule la progression de ce navigateur est visible."), host);
+  let rows = [];
+  const draw = async (list) => {
+    host.innerHTML = "";
+    if (!list) {
+      host.append(el("p", { class: "note warn" }, "Lecture impossible pour le moment."));
+      return;
+    }
+    rows = list;
+    const ids = list.filter((r) => !r.local).map((r) => r.id);
+    const prof = await profilesOf(ids);
+    const total = MISSIONS.length;
+    const t = el("table", { class: "tbl compact" }, el("thead", {}, el("tr", {}, ...["Stagiaire", "Missions", "Scénario (meilleur)", "Brassage", "Ordinateur", "Signalements", "Dernière activité"].map((h) => el("th", {}, h)))));
+    const tb = el("tbody");
+    t.appendChild(tb);
+    for (const r of list) {
+      const d = r.data || {};
+      const best = (d.scenarios || []).reduce((m, s) => Math.max(m, s.score || 0), 0);
+      const nm = r.local ? "Ce navigateur" : prof[r.id] && prof[r.id].name || "Stagiaire";
+      const tr = el(
+        "tr",
+        { style: { cursor: "pointer" }, onclick: () => detail(nm, d) },
+        el("td", {}, nm),
+        el("td", {}, `${Object.keys(d.missions || {}).length} / ${total}`),
+        el("td", {}, (d.scenarios || []).length ? best + " %" : "—"),
+        el("td", {}, d.patchBest ? d.patchBest + " %" : "—"),
+        el("td", {}, d.perf ? `${d.perf.fps} i/s · ${String(d.perf.gpu || "").slice(0, 28)}` : "—"),
+        el("td", {}, String((d.reports || []).length)),
+        el("td", {}, d.updatedAt ? new Date(d.updatedAt).toLocaleString("fr-FR") : "—")
+      );
+      tb.appendChild(tr);
+    }
+    if (!list.length) tb.appendChild(el("tr", {}, el("td", { colspan: 7, class: "note" }, "Aucune progression enregistrée pour l'instant.")));
+    host.append(el("div", { class: "tblwrap" }, t), el("div", { class: "hwrow" }, el("button", { class: "btn small", onclick: () => exportCSV(prof) }, "Exporter le suivi (CSV)")), detBox);
+  };
+  const detBox = el("div", { class: "list" });
+  function detail(nm, d) {
+    detBox.innerHTML = "";
+    detBox.append(
+      el("h3", { class: "eq-h" }, nm),
+      el("p", { class: "note" }, "Missions réussies : " + (MISSIONS.filter((m) => (d.missions || {})[m.id]).map((m) => m.title).join(", ") || "aucune"))
+    );
+    for (const s of (d.scenarios || []).slice().reverse()) detBox.append(el("div", { class: "item" }, el("div", { class: "grow" }, el("div", { class: "t" }, `Scénario du ${new Date(s.at).toLocaleString("fr-FR")} · ${s.score} %`), el("div", { class: "s" }, (s.phases || []).map((p) => `${p.title} : ${p.pts}/${p.max}`).join(" · ")))));
+    for (const r of (d.reports || []).slice().reverse()) detBox.append(el("div", { class: "item" }, el("div", { class: "grow" }, el("div", { class: "t" }, `Signalement · ${r.where}`), el("div", { class: "s" }, `${new Date(r.at).toLocaleString("fr-FR")} · ${r.text}`))));
+  }
+  function exportCSV(prof) {
+    const lines = ["Stagiaire;Missions;Meilleur scénario (%);Brassage (%);Fps;Carte graphique;Signalements;Dernière activité"];
+    for (const r of rows) {
+      const d = r.data || {};
+      const best = (d.scenarios || []).reduce((m, s) => Math.max(m, s.score || 0), 0);
+      lines.push([r.local ? "Ce navigateur" : prof[r.id] && prof[r.id].name || r.id, Object.keys(d.missions || {}).length, best, d.patchBest || 0, d.perf ? d.perf.fps : "", d.perf ? d.perf.gpu : "", (d.reports || []).length, d.updatedAt ? new Date(d.updatedAt).toISOString() : ""].join(";"));
+    }
+    offerDownload("suivi-stagiaires.csv", "\uFEFF" + lines.join("\r\n"));
+  }
+  const unsub = watchAllProgress(draw);
+  const stop = () => {
+    unsub && unsub();
+  };
+  const obs = new MutationObserver(() => {
+    if (!host.isConnected) {
+      stop();
+      obs.disconnect();
+    }
+  });
+  obs.observe(document.body, { childList: true, subtree: true });
+}
+function myProgress() {
+  return el("div", { class: "kv" }, el("dt", {}, "Missions"), el("dd", {}, `${Object.keys(S.missionsDone).length} / ${MISSIONS.length}`), el("dt", {}, "Scénarios"), el("dd", {}, String(PROG.scenarios.length)), el("dt", {}, "Signalements envoyés"), el("dd", {}, String(PROG.reports.length)));
+}
+function tabReview(box, editable) {
+  const items = { ...CFG.review && CFG.review.items };
+  const groups = [...new Set(REVIEW_ITEMS.map((r) => r[1]))];
+  const done = () => REVIEW_ITEMS.filter(([id]) => items[id] && items[id].status === "ok").length;
+  const count = el("span", { class: "pill" });
+  const upd = () => {
+    count.textContent = `${done()} / ${REVIEW_ITEMS.length} validés`;
+  };
+  box.append(el("h3", { class: "eq-h" }, "Relecture technique"), el("p", { class: "note" }, "Les points techniques que j'ai repris de la documentation ou choisis pour la simulation, avec leur source. Validez-les ou notez la correction : je pourrai m'appuyer sur vos remarques pour corriger le simulateur."), el("div", { class: "hwrow" }, count));
+  for (const g of groups) {
+    box.append(el("h3", { class: "eq-h" }, g));
+    for (const [id, , text, src] of REVIEW_ITEMS.filter((r) => r[1] === g)) {
+      const it = items[id] = { status: "", note: "", ...items[id] || {} };
+      const st = selectEl(Object.entries(REVIEW_STATUS), it.status, (v) => {
+        it.status = v;
+        row2.dataset.s = v;
+        upd();
+      });
+      const note = el("input", { type: "text", value: it.note, placeholder: "Remarque / correction", maxlength: 300, "aria-label": "Remarque" });
+      note.oninput = () => {
+        it.note = note.value;
+      };
+      st.disabled = !editable;
+      note.disabled = !editable;
+      const row2 = el("div", { class: "item review", "data-s": it.status }, el("div", { class: "grow" }, el("div", { class: "t" }, text), el("div", { class: "s" }, "Source : " + src), note), st);
+      box.append(row2);
+    }
+  }
+  upd();
+  box.append(el(
+    "div",
+    { class: "hwrow" },
+    el("button", { class: "btn primary", disabled: !editable, onclick: async () => saved(await saveConfig("review", { items })) }, "Enregistrer la relecture"),
+    el("button", { class: "btn", onclick: () => {
+      const lines = ["Groupe;Point;Source;Statut;Remarque"];
+      for (const [id, g, t, s] of REVIEW_ITEMS) {
+        const it = items[id] || {};
+        lines.push([g, t, s, REVIEW_STATUS[it.status || ""], it.note || ""].map((v) => '"' + String(v).replace(/"/g, '""') + '"').join(";"));
+      }
+      offerDownload("relecture-technique.csv", "\uFEFF" + lines.join("\r\n"));
+    } }, "Exporter (CSV)")
+  ));
 }
 
 // src/ui/stations.js
@@ -11013,7 +12091,8 @@ function buildChef(body, arg, ctx) {
     }
     if (k === "materiel") content.append(materielTab());
     if (k === "lineup") {
-      const items = ["Terre raccordée, énergie vérifiée (phases, neutre)", "Toutes les caméras alimentées, niveaux optiques corrects", "Référence (genlock) verrouillée sur toutes les CCU", "Balance des noirs et des blancs, matching vision", "Noms de sources et tally vérifiés au multiview", "Test de chaque position intercom (cadreurs, EVS, son, commentateurs)", "Entrées d'enregistrement EVS affectées (super ralentis compris)", "Test des micros et du 1 kHz -18 dBFS", "Mire + 1 kHz envoyées à la chaîne, ident vérifié", "Retour antenne contrôlé, chemin de secours testé", "Fréquences HF vérifiées sur le spectre, marges correctes"];
+      const items = checklistItems();
+      if (CFG.car.checklist && CFG.car.checklist.length) content.appendChild(el("p", { class: "note" }, "Check-list maison définie par le formateur."));
       S.checklist = S.checklist || {};
       for (const [i, t] of items.entries()) {
         const id = "chk" + i;
@@ -11047,15 +12126,31 @@ function cablingList() {
   const count = el("span", { class: "note" });
   const tbody = el("tbody");
   const tb = el("table", { class: "tbl compact cabtbl" }, el("thead", {}, el("tr", {}, ...["N°", "Origine (A)", "Destination (B)", "Câble", "Long.", "Signal", "État"].map((h) => el("th", {}, h)))), tbody);
+  let mode = "gen";
+  const modeSel = selectEl([["gen", "Liste générée (installation simulée)"], ...CFG.cabling && CFG.cabling.rows ? [["imp", `Liste du car importée (${CFG.cabling.rows.length} lignes)`]] : []], "gen", (v) => {
+    mode = v;
+    draw();
+  });
+  const exp = el("button", { class: "btn small", onclick: () => offerDownload(mode === "imp" ? "liste-cablage-car.csv" : "liste-cablage-simulateur.csv", cablingCSV(mode === "imp" ? CFG.cabling.rows : generatedRows())) }, "Exporter (CSV)");
   const box = el(
     "div",
     { class: "list" },
-    el("p", { class: "note" }, "Liste de câblage générée à partir de votre installation : chaque ligne est un câble réel, avec ses deux extrémités (appareil · connecteur). Cliquez une extrémité pour ouvrir l'appareil sur ce connecteur. Sur le terrain, cette liste est imprimée et chaque câble porte son numéro aux deux bouts."),
-    el("div", { class: "hwrow" }, sigSel, q, count),
+    el("p", { class: "note" }, "Liste de câblage générée à partir de votre installation : chaque ligne est un câble réel, avec ses deux extrémités (appareil · connecteur). Cliquez une extrémité pour ouvrir l'appareil sur ce connecteur. Sur le terrain, cette liste est imprimée et chaque câble porte son numéro aux deux bouts. Le formateur peut importer la liste réelle du car dans l'Espace formateur."),
+    el("div", { class: "hwrow" }, modeSel, sigSel, q, count, exp),
     el("div", { class: "tblwrap" }, tb)
   );
   let lastKey = "";
+  function drawImported() {
+    const rows = CFG.cabling.rows.filter((r) => !filt.q || `${r.n} ${r.a} ${r.b} ${r.type} ${r.sig} ${r.note}`.toLowerCase().includes(filt.q));
+    tbody.innerHTML = "";
+    for (const r of rows.slice(0, 600)) tbody.appendChild(el("tr", {}, el("td", { class: "mono" }, r.n), el("td", {}, r.a), el("td", {}, r.b), el("td", {}, r.type + (r.note ? " · " + r.note : "")), el("td", { class: "mono" }, r.len ? r.len + (/^\d+([.,]\d+)?$/.test(r.len) ? " m" : "") : "—"), el("td", {}, r.sig || "—"), el("td", {}, "—")));
+    count.textContent = `${rows.length} ligne${rows.length > 1 ? "s" : ""} · liste « ${CFG.cabling.name} »`;
+  }
   function draw() {
+    if (mode === "imp" && CFG.cabling && CFG.cabling.rows) {
+      drawImported();
+      return;
+    }
     const all = buildCabling();
     const rows = all.filter((c) => (!filt.sig || c.sig === filt.sig) && (!filt.q || `${c.n} ${endLabel(c.a)} ${endLabel(c.b)} ${c.type} ${c.note || ""}`.toLowerCase().includes(filt.q)));
     tbody.innerHTML = "";
@@ -12273,231 +13368,6 @@ on("cams", () => {
   if (S.mode === "plan") renderPanel();
 });
 
-// src/ui/guide.js
-var cam = (slot) => S.cams.find((c) => c.slotId === slot);
-var MISSIONS = [
-  { id: "m1", title: "Le compound", text: "Approchez-vous du pied de car (le panneau de raccordement à l'arrière droit du car régie) et appuyez sur E pour le découvrir.", check: () => S.openedInfo.pieddecar },
-  { id: "m2", title: "Le plan de caméras", text: "Ouvrez le plan (touche P). Installez une caméra tribune sur « Passerelle centrale – position 1 » avec la consigne « Plan large ».", check: () => {
-    const c = cam("g_c1");
-    return c && c.role === "large";
-  } },
-  { id: "m3", title: "Câbler la caméra 1", text: "Dans le plan, vérifiez la liaison de cette caméra : fibre SMPTE ou pré-câblage, longueur dans la limite. Le câble apparaît en couleur jusqu'au pied de car.", check: () => {
-    const c = cam("g_c1");
-    return c && c.status.ok && ["smpte", "precab", "smf"].includes(c.link);
-  } },
-  { id: "m3b", title: "Les connecteurs de la caméra", text: "Visez la caméra 1 dans le stade et appuyez sur I (ou, dans le plan, « Voir le matériel ») : cliquez sur un connecteur, par exemple la fibre CCU ou l'intercom du cadreur, pour savoir à quoi il sert et où il est câblé.", check: () => S.seenPort && Object.keys(S.seenPort).some((k) => k.startsWith("cam:")) },
-  { id: "m4", title: "Le serré", text: "Installez une deuxième caméra sur la position 2 avec un très long zoom (UA107 ou UJ122) et la consigne « Serré porteur du ballon ».", check: () => {
-    const c = cam("g_c2");
-    return c && c.role === "serre" && c.L.fmax >= 900;
-  } },
-  { id: "m5", title: "Une caméra HF", text: "Installez une Steadicam HF au bord du terrain et allumez au moins deux antennes de réception. Objectif : une marge HF supérieure à 3 dB.", check: () => S.cams.some((c) => c.rf && c.rf.margin > 3) && RF.antennas.filter((a) => a.on).length >= 2 },
-  { id: "m6", title: "Entrer dans le car", text: "Rejoignez le car régie (touche T pour vous téléporter devant) et entrez par les marches de la porte.", check: () => S.inTruck },
-  { id: "m7", title: "Le multiview", text: "Asseyez-vous au poste Truquiste · Mélangeur (E). Repérez le PGM (cadre rouge, à droite) et le PVW (cadre vert, à gauche).", check: () => S.visited.melangeur },
-  { id: "m8", title: "Premier enchaîné", text: "Au mélangeur : plan large au PGM, serré au PST, choisissez MIX puis AUTO (ou Entrée).", check: () => S.stats.mixes >= 1 },
-  { id: "m9", title: "Exposition", text: "Au poste Ingé vision, réglez l'iris de la CAM 1 pour un niveau moyen entre 35 et 55 % (lisez le waveform).", check: () => {
-    const c = camById(1);
-    return S.visited.vision && c && c.meter.mean > 0.35 && c.meter.mean < 0.55;
-  } },
-  { id: "m10", title: "Le matching", text: "Toujours en vision : égalisez la colorimétrie des CAM 1 et 2 (écarts rouge et bleu inférieurs à 2 %, voir sous les gains). AUTO WHITE ou réglage fin des gains R/B.", check: () => {
-    const a = camById(1), b = camById(2);
-    if (!a || !b || !S.visited.vision) return false;
-    const ea = a.colorError(), eb = b.colorError();
-    return Math.abs(ea.r) < 0.02 && Math.abs(ea.b) < 0.02 && Math.abs(eb.r) < 0.02 && Math.abs(eb.b) < 0.02;
-  } },
-  { id: "m10b", title: "Les barres au line-up", text: "Au poste Ingé vision, envoyez les barres d'une caméra (touche BARS du RCP), retrouvez-les sur le multiview, puis revenez à l'image.", check: () => S.flags && S.flags.barsCycle },
-  { id: "m11", title: "Habillage", text: "Mettez le score à l'antenne (DSK 1 au mélangeur), puis jouez un bandeau joueur depuis le poste Habillage avec le DSK 2 à l'antenne.", check: () => MIX.dsk1.on && MIX.dsk2.on && GFX.template === "lower" && GFX.anim > 0.5 },
-  { id: "m12", title: "Le ralenti", text: "Au poste EVS : après une action, DERNIÈRE ACTION (ou jog + MARK IN), puis passez l'EVS A au PGM et lancez la lecture au levier à 60 % maximum.", check: () => meSource(MIX.pgm) === "EVSA" && EVS.ch[0].playing && EVS.ch[0].speed <= 0.6 },
-  { id: "m13", title: "Le volet logo", text: "Au mélangeur, entrez ou sortez d'un ralenti avec le volet logo (transition CLIP de la frame memory).", check: () => S.stats.stingers >= 1 },
-  { id: "m13b", title: "Clips et playlist", text: "Au poste EVS : sauvegardez deux clips (SHIFT puis F1, SHIFT puis F2), ajoutez-les à la playlist (PLST puis F1 et F2) et lancez PLST PLAY.", check: () => EVS.playlist.length >= 2 && EVS.ch.some((c) => c.pl) },
-  { id: "m14", title: "La synchro", text: "Dans la zone technique (au fond du car), ouvrez le poste Synchro (SPG).", check: () => S.visited.synchro },
-  { id: "m15", title: "Retour antenne", text: "Au poste Transmission, comparez le départ et le retour antenne : repérez le délai.", check: () => S.visited.transmission },
-  { id: "m16", title: "Dépannage", text: "Au poste Chef de car, onglet « Simulateur de pannes » : lancez le mode examen et trouvez la panne.", check: () => S.faultsSolved >= 1 },
-  { id: "m17", title: "Suivre un câble", text: "Poste Chef de car, onglet « Liste de câblage » : ouvrez un appareil en cliquant sur une extrémité de câble, puis « Suivre » jusqu'à l'autre bout.", check: () => S.flags && S.flags.followed }
-];
-function currentMission() {
-  return MISSIONS.find((m) => !S.missionsDone[m.id]);
-}
-function checkMissions() {
-  for (const m of MISSIONS) {
-    if (S.missionsDone[m.id]) continue;
-    let ok = false;
-    try {
-      ok = !!m.check();
-    } catch (e) {
-      ok = false;
-    }
-    if (ok) {
-      S.missionsDone[m.id] = true;
-      if (S.showMission) toast(`Mission réussie : ${m.title}`, "good", 4e3);
-      emit("mission", m.id);
-    }
-  }
-}
-function drawMissionCard() {
-  const box = $("#mission");
-  if (!S.showMission) {
-    box.hidden = true;
-    return;
-  }
-  const m = currentMission();
-  if (!m) {
-    box.hidden = false;
-    box.innerHTML = "";
-    box.append(el("div", { class: "k" }, "Parcours terminé"), el("h4", {}, "Bravo, toutes les missions sont réussies"), el("p", {}, "Essayez l'exercice truquiste (poste Réalisateur) ou le mode examen des pannes."));
-    return;
-  }
-  const done = MISSIONS.filter((x) => S.missionsDone[x.id]).length;
-  if (box.dataset.m === m.id && !box.hidden) return;
-  box.dataset.m = m.id;
-  box.hidden = false;
-  box.innerHTML = "";
-  box.append(
-    el("div", { class: "k" }, `Mission ${done + 1} / ${MISSIONS.length}`),
-    el("h4", {}, m.title),
-    el("p", {}, m.text),
-    el("div", { class: "row" }, el("button", { class: "btn small", onclick: () => openGuide("missions") }, "Toutes les missions"), el("button", { class: "btn small", onclick: () => {
-      S.missionsDone[m.id] = true;
-    } }, "Passer"), el("button", { class: "btn small", onclick: () => {
-      S.showMission = false;
-      box.hidden = true;
-    } }, "Masquer"))
-  );
-}
-var STATION_LIST = [
-  ["realisateur", "Car · production"],
-  ["scripte", "Car · production"],
-  ["melangeur", "Car · production"],
-  ["habillage", "Car · production"],
-  ["producteur", "Car · production"],
-  ["chefdecar", "Car · production"],
-  ["vision", "Car · vision"],
-  ["evs", "Car · ralentis"],
-  ["ipdirector", "Car · ralentis"],
-  ["son", "Car · régie son"],
-  ["hf", "Car · zone technique"],
-  ["grille", "Car · zone technique"],
-  ["ccu", "Car · zone technique"],
-  ["synchro", "Car · zone technique"],
-  ["transmission", "Car · zone technique"],
-  ["intercom", "Car · zone technique"],
-  ["pieddecar", "Compound"],
-  ["energie", "Compound"],
-  ["cadreur", "Stade"],
-  ["antenne", "Stade"],
-  ["localtv", "Stade"],
-  ["commentateurs", "Stade"],
-  ["var", "Stade"]
-];
-function openGuide(tab = "missions") {
-  const tabs = el("div", { class: "tabs" });
-  const content = el("div", { class: "list" });
-  const T2 = [["missions", "Missions"], ["guide", "Comprendre"], ["postes", "Les postes"], ["materiel", "Matériel"], ["glossaire", "Glossaire"], ["commandes", "Commandes"], ["reglages", "Réglages"]];
-  const show = (k) => {
-    content.innerHTML = "";
-    [...tabs.children].forEach((b) => b.classList.toggle("on", b.dataset.k === k));
-    if (k === "missions") {
-      content.append(el("p", { class: "note" }, "Un parcours d'intégration pas à pas, du câblage d'une caméra au dépannage. Les missions se valident automatiquement."));
-      for (const m of MISSIONS) content.appendChild(el("div", { class: "item" + (currentMission() === m ? " sel" : "") }, el("span", { class: "dot " + (S.missionsDone[m.id] ? "green" : currentMission() === m ? "amber" : "") }), el("div", { class: "grow" }, el("div", { class: "t" }, m.title), el("div", { class: "s" }, m.text))));
-      const cb = el("input", { type: "checkbox", id: "showm" });
-      cb.checked = S.showMission;
-      cb.onchange = () => {
-        S.showMission = cb.checked;
-        $("#mission").dataset.m = "";
-      };
-      content.append(
-        el("label", { class: "item", for: "showm" }, cb, el("span", {}, "Afficher la mission en cours à l'écran")),
-        el("button", { class: "btn small", onclick: () => {
-          S.missionsDone = {};
-          $("#mission").dataset.m = "";
-          show("missions");
-        } }, "Recommencer le parcours")
-      );
-    }
-    if (k === "guide") {
-      const nav = el("div", { class: "tabs" });
-      const art = el("div", { class: "prose" });
-      const open = (g) => {
-        art.innerHTML = `<h3>${g.title}</h3>` + g.html;
-        [...nav.children].forEach((b) => b.classList.toggle("on", b.dataset.g === g.id));
-      };
-      for (const g of GUIDE) nav.appendChild(el("button", { class: "tab", "data-g": g.id, onclick: () => open(g) }, g.title));
-      content.append(nav, art);
-      open(GUIDE[0]);
-      art.querySelectorAll("table").forEach((t) => {
-        const w = el("div", { class: "tblwrap" });
-        t.replaceWith(w);
-        w.appendChild(t);
-      });
-      nav.addEventListener("click", () => art.querySelectorAll("table").forEach((t) => {
-        if (!t.parentElement.classList.contains("tblwrap")) {
-          const w = el("div", { class: "tblwrap" });
-          t.replaceWith(w);
-          w.appendChild(t);
-        }
-      }));
-    }
-    if (k === "postes") {
-      content.append(el("p", { class: "note" }, "Chaque poste du car et chaque équipement du stade, avec son rôle, son matériel et ses pièges. Dans le simulateur, approchez-vous et appuyez sur E."));
-      for (const [id, where] of STATION_LIST) {
-        const I = STATION_INFO[id];
-        if (!I) continue;
-        content.appendChild(el("div", { class: "item" }, el("div", { class: "grow" }, el("div", { class: "t" }, I.title), el("div", { class: "s" }, `${where} · ${I.role.split(". ")[0]}.`)), el("button", { class: "btn small", onclick: () => openInfo(id) }, "Fiche")));
-      }
-    }
-    if (k === "materiel") {
-      content.append(el("p", { class: "note" }, "Faces avant et arrière des appareils, connecteurs, signaux et raccordements de votre installation. Inventaire des connecteurs d'après les fiches techniques (chaîne caméra type Sony HDC-5500 / HDCU-5500 / RCP-3500, mélangeur Sony XVS-6000 et pupitre ICP-X7000, serveur EVS XT4K, télécommande LSM, IPDirector). Raccourci : touche K."));
-      const row2 = el("div", { class: "grid2" });
-      for (const [kk, l] of DEVICE_LIST) row2.appendChild(el("button", { class: "choice", onclick: () => openDevice(kk, ["cam", "ccu", "rcp"].includes(kk) && S.cams[0] ? S.cams[0].id : 1) }, el("b", { style: { fontSize: "17px" } }, l), el("span", {}, DEVICES[kk] ? DEVICES[kk].title : "")));
-      content.append(row2);
-    }
-    if (k === "glossaire") {
-      const q = el("input", { type: "text", id: "glq", placeholder: "Rechercher un terme (SDI, genlock, DSK…)" });
-      const list = el("div", { class: "list" });
-      const render = () => {
-        list.innerHTML = "";
-        const s = q.value.trim().toLowerCase();
-        for (const [t, d] of GLOSSARY) {
-          if (s && !(t.toLowerCase().includes(s) || d.toLowerCase().includes(s))) continue;
-          list.appendChild(el("div", { class: "item" }, el("div", { class: "grow" }, el("div", { class: "t" }, t), el("div", { class: "s", style: { fontSize: "13px", color: "#c7d0d7" } }, d))));
-        }
-      };
-      q.addEventListener("input", render);
-      content.append(field("Recherche", q), list);
-      render();
-    }
-    if (k === "commandes") {
-      const g = el("div", { class: "keys" });
-      for (const [kk, d] of CONTROLS_HELP) g.appendChild(el("div", {}, el("kbd", {}, kk), d));
-      content.append(g, el("p", { class: "note" }, "Sur tablette : joystick à gauche pour avancer, glisser à droite pour regarder, bouton E pour interagir. Dans un poste, les raccourcis du poste sont indiqués en bas de l'écran."));
-    }
-    if (k === "reglages") {
-      content.append(
-        el(
-          "div",
-          { class: "grid2" },
-          field("Lumière", selectEl(Object.entries(LIGHTING).map(([k2, v]) => [k2, v.label]), S.lighting, (v) => emit("setLighting", v))),
-          field("Qualité graphique", selectEl([["basse", "Basse (portable)"], ["moyenne", "Moyenne"], ["haute", "Haute (bonne carte graphique)"]], S.quality, (v) => emit("setQuality", v))),
-          field("Éclairage de nuit", selectEl([["led", "LED « flicker-free »"], ["halide", "Iodures métalliques 50 Hz (scintillement en super ralenti)"]], S.flickerLamps ? "halide" : "led", (v) => {
-            S.flickerLamps = v === "halide";
-          })),
-          field("Voix du réalisateur virtuel", selectEl([["0", "Texte seulement"], ["1", "Synthèse vocale"]], S.directorVoice ? "1" : "0", (v) => {
-            S.directorVoice = v === "1";
-          })),
-          field("Line-up automatique à l'installation", selectEl([["1", "Oui (caméras déjà réglées)"], ["0", "Non (réglages par défaut, à faire en vision)"]], S.autoLineup ? "1" : "0", (v) => {
-            S.autoLineup = v === "1";
-          })),
-          field("Étiquettes et câbles dans le stade", selectEl([["1", "Afficher"], ["0", "Masquer"]], S.showLabels ? "1" : "0", (v) => emit("setLabels", v === "1")))
-        ),
-        el("p", { class: "note" }, LIGHTING[S.lighting].desc)
-      );
-    }
-  };
-  for (const [k, l] of T2) tabs.appendChild(el("button", { class: "tab", "data-k": k, onclick: () => show(k) }, l));
-  modal.open("Guide du car régie", el("div", { class: "list" }, tabs, content), { width: 980 });
-  show(tab);
-}
-on("openGuide", () => openGuide("guide"));
-
 // src/main.js
 Object.assign(S, { simTime: 0, tcOffset: 20 * 3600 + 44 * 60 + 30, txPath: 1, showMission: true, autoLineup: true, showLabels: true, directorVoice: false, eyeExposure: 1 });
 S.kickoffTOD = S.tcOffset + 4;
@@ -12566,12 +13436,32 @@ function buildStart() {
   qual.value = S.quality;
   const snd = el("input", { type: "checkbox", id: "stsnd" });
   snd.checked = true;
-  const go = (preset) => start(preset, light.value, qual.value, snd.checked);
+  const fmt2 = el("select", { id: "stfmt" }, ...Object.entries(FORMATS).map(([k, v]) => el("option", { value: k }, v.label)));
+  fmt2.value = S.format;
+  const infra = el("select", { id: "stinfra" }, el("option", { value: "sdi" }, "Car SDI (grille coaxiale)"), el("option", { value: "ip" }, "Car IP (ST 2110, PTP, NMOS)"));
+  const fmtNote = el("p", { class: "note" });
+  const updFmt = () => {
+    S.format = fmt2.value;
+    fmtNote.textContent = `Avec ce format : ${evsLayout().label} ; mélangeur ${EQUIP.mixer} avec ${mixInputs()} entrées utilisées.`;
+  };
+  fmt2.onchange = updFmt;
+  updFmt();
+  const go = (preset) => start(preset, light.value, qual.value, snd.checked, fmt2.value, infra.value === "ip");
+  const truckLine = el("div", { class: "eyebrow", id: "sttruck" });
+  const setTruck = () => {
+    truckLine.textContent = [CFG.car.company, CFG.car.name].filter(Boolean).join(" · ");
+    truckLine.hidden = !truckLine.textContent;
+    updFmt();
+  };
+  setTruck();
+  on("config", setTruck);
+  on("shared", setTruck);
   const chain = ["Objectif", "Caméra", "Liaison", "CCU", "Grille", "Mélangeur", "Antenne"];
   s.append(el(
     "div",
     { class: "wrap" },
     el("div", { class: "eyebrow" }, el("span", { class: "rec" }), "Simulateur de formation · OB · régie mobile"),
+    truckLine,
     el("h1", {}, "Car régie ", el("em", {}, "3D")),
     el("p", { class: "lede" }, "Placez vos caméras dans un stade, choisissez les objectifs et les liaisons, suivez les câbles jusqu'au car, puis prenez place à chaque poste : réalisation, mélangeur, vision, ralentis, son, HF, grille, transmission. Un match se joue en continu : tout ce que vous réglez se voit à l'image, et chaque action est expliquée. Ouvrez le matériel (touche K) pour voir les faces avant et arrière des appareils, leurs connecteurs et le câblage de votre installation."),
     el("div", { class: "chain" }, ...chain.map((c, i) => el("div", {}, el("small", {}, String(i + 1).padStart(2, "0")), el("b", {}, c)))),
@@ -12580,31 +13470,46 @@ function buildStart() {
       { class: "choices" },
       el("button", { class: "choice main", onclick: () => go("standard") }, el("b", {}, "Car prêt à l'antenne"), el("span", {}, "12 caméras installées, câblées et réglées, dont 2 super ralentis, une Steadicam HF et une mini-caméra de but. Idéal pour découvrir les postes.")),
       el("button", { class: "choice", onclick: () => go("vierge") }, el("b", {}, "Installation pas à pas"), el("span", {}, "Stade vide et missions guidées : vous montez le dispositif, câblez, réglez les caméras puis réalisez.")),
-      el("button", { class: "choice", onclick: () => go("grand") }, el("b", {}, "Grand match · 16 caméras"), el("span", {}, "Caméra volante, rail, grue, super ralenti 6x, deux Steadicam HF. Demande un ordinateur puissant."))
+      el("button", { class: "choice", onclick: () => go("grand") }, el("b", {}, "Grand match · 16 caméras"), el("span", {}, "Caméra volante, rail, grue, super ralenti 6x, deux Steadicam HF. Demande un ordinateur puissant.")),
+      el("button", { class: "choice", onclick: () => go("brassage") }, el("b", {}, "Exercice : le car vide"), el("span", {}, "Les caméras sont installées mais rien n'est brassé : vous reliez chaque source à la grille, les sorties aux destinations et la référence aux CCU, liste de câblage en main.")),
+      el("button", { class: "choice", onclick: () => go("scenario") }, el("b", {}, "Scénario : jour de match"), el("span", {}, "Brassage, line-up, test de ligne avec la chaîne, puis le direct avec des pannes. Chronométré et noté, avec un compte rendu à la fin."))
     ),
     el(
       "div",
       { class: "opts" },
       el("div", { class: "field" }, el("label", { for: "stlight" }, "Lumière"), light),
       el("div", { class: "field" }, el("label", { for: "stqual" }, "Qualité graphique"), qual),
+      el("div", { class: "field" }, el("label", { for: "stfmt" }, "Format de production"), fmt2),
+      el("div", { class: "field" }, el("label", { for: "stinfra" }, "Infrastructure"), infra),
+      el("button", { class: "btn", onclick: () => openTrainer("car") }, "Espace formateur"),
       el("label", { class: "item", for: "stsnd", style: { padding: "6px 10px" } }, snd, el("span", {}, "Son (ambiance, frappes, sifflet)"))
     ),
+    fmtNote,
     el("div", { class: "keys" }, ...CONTROLS_HELP.map(([k, d]) => el("div", {}, el("kbd", {}, k), d))),
     el("p", { class: "note" }, "Les caractéristiques techniques (objectifs, portées de câbles, seuils HF, niveaux vidéo et audio) sont des ordres de grandeur réalistes, donnés à titre pédagogique. Les noms d'équipements cités le sont comme exemples de matériel courant.")
   ));
 }
-function start(preset, light, quality, sound) {
+function start(preset, light, quality, sound, format = S.format, ip = false) {
   if (quality !== S.quality) setQuality(quality);
+  S.format = format;
+  S.ipMode = !!ip;
   applyLighting(light);
   if (preset === "vierge") {
     loadPreset("none");
     S.autoLineup = false;
     S.showMission = true;
+  } else if (preset === "brassage" || preset === "scenario") {
+    loadPreset("standard", preset !== "scenario");
+    S.showMission = false;
   } else {
     loadPreset(preset, true);
     S.showMission = false;
   }
   defaultRouting(true);
+  if (preset === "brassage" || preset === "scenario") {
+    S.patch.on = true;
+    patchEmpty();
+  }
   MIX.pgm = 1;
   MIX.pst = 2;
   if (preset !== "vierge") {
@@ -12621,7 +13526,11 @@ function start(preset, light, quality, sound) {
     applyFaders();
   }
   buildToolbar();
-  if (preset === "vierge") toast("Commencez par la mission en haut à gauche : découvrez le compound puis ouvrez le plan des caméras (P).", "", 6e3);
+  if (preset === "brassage") {
+    emit("openStationNow", { id: "brassage" });
+    toast("Car vide : brassez chaque liaison en suivant la liste de câblage. Le multiview montre le résultat.", "", 7e3);
+  } else if (preset === "scenario") emit("startScenario");
+  else if (preset === "vierge") toast("Commencez par la mission en haut à gauche : découvrez le compound puis ouvrez le plan des caméras (P).", "", 6e3);
   else toast("Vous êtes dans le compound, devant le car régie. Cliquez dans la vue pour regarder, avancez avec Z Q S D.", "", 6e3);
   if (matchMedia("(pointer: coarse)").matches) setupTouch();
 }
@@ -13262,12 +14171,24 @@ function frame(now) {
 }
 buildStart();
 S.mode = "start";
+initShared();
+on("config", (part) => {
+  if (part === "car" && S.mode !== "start") {
+    defaultRouting(false);
+    emit("router", {});
+  }
+  updBrand();
+});
+function updBrand() {
+  const w2 = $("#where2");
+  if (w2 && CFG.car.name && !S.inTruck) w2.textContent = CFG.car.name;
+}
 document.fonts && document.fonts.ready.then(() => {
   W.boards && W.boards.redraw();
   P.mvDirty = true;
 });
 requestAnimationFrame(frame);
 window.__S = S;
-window.__dbg = { S, M, MIX, EVS, ROUTER, P, W, T, PL, EX, teleport, openStation, closeStation, openPlan, closePlan, takeCamera, releaseCamera, start, openGuide, renderer, applyLighting, openDevice, openEquipmentIndex };
+window.__dbg = { S, M, MIX, EVS, ROUTER, P, W, T, PL, EX, teleport, openStation, closeStation, openPlan, closePlan, takeCamera, releaseCamera, start, openGuide, renderer, applyLighting, openDevice, openEquipmentIndex, openTrainer, CFG, SH };
 
 </script>

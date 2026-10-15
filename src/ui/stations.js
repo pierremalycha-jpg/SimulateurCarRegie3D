@@ -21,6 +21,8 @@ import { mixInputs, EQUIP } from '../equip.js';
 import { openDevice, openEquipmentIndex } from '../equipment/viewer.js';
 import { buildCabling, SIG, DEV_NAMES, endLabel } from '../equipment/cabling.js';
 import { DEVICE_LIST } from '../equipment/devices.js';
+import { CFG, offerDownload } from '../shared.js';
+import { checklistItems, cablingCSV, generatedRows } from './config.js';
 
 export const ST = { cur: null, lastUpd: 0 };
 
@@ -320,7 +322,8 @@ function buildChef(body, arg, ctx) {
     if (k === 'cables') { const cl = cablingList(); content.append(cl.el); updater = cl.update; }
     if (k === 'materiel') content.append(materielTab());
     if (k === 'lineup') {
-      const items = ['Terre raccordée, énergie vérifiée (phases, neutre)', 'Toutes les caméras alimentées, niveaux optiques corrects', 'Référence (genlock) verrouillée sur toutes les CCU', 'Balance des noirs et des blancs, matching vision', 'Noms de sources et tally vérifiés au multiview', 'Test de chaque position intercom (cadreurs, EVS, son, commentateurs)', 'Entrées d\'enregistrement EVS affectées (super ralentis compris)', 'Test des micros et du 1 kHz -18 dBFS', 'Mire + 1 kHz envoyées à la chaîne, ident vérifié', 'Retour antenne contrôlé, chemin de secours testé', 'Fréquences HF vérifiées sur le spectre, marges correctes'];
+      const items = checklistItems();
+      if (CFG.car.checklist && CFG.car.checklist.length) content.appendChild(el('p', { class: 'note' }, 'Check-list maison définie par le formateur.'));
       S.checklist = S.checklist || {};
       for (const [i, t] of items.entries()) { const id = 'chk' + i; const cb = el('input', { type: 'checkbox', id }); cb.checked = !!S.checklist[i]; cb.addEventListener('change', () => { S.checklist[i] = cb.checked; }); content.appendChild(el('label', { class: 'item', for: id }, cb, el('span', { class: 'grow' }, t))); }
     }
@@ -339,11 +342,21 @@ function cablingList() {
   const count = el('span', { class: 'note' });
   const tbody = el('tbody');
   const tb = el('table', { class: 'tbl compact cabtbl' }, el('thead', {}, el('tr', {}, ...['N°', 'Origine (A)', 'Destination (B)', 'Câble', 'Long.', 'Signal', 'État'].map((h) => el('th', {}, h)))), tbody);
+  let mode = 'gen';
+  const modeSel = selectEl([['gen', 'Liste générée (installation simulée)'], ...(CFG.cabling && CFG.cabling.rows ? [['imp', `Liste du car importée (${CFG.cabling.rows.length} lignes)`]] : [])], 'gen', (v) => { mode = v; draw(); });
+  const exp = el('button', { class: 'btn small', onclick: () => offerDownload(mode === 'imp' ? 'liste-cablage-car.csv' : 'liste-cablage-simulateur.csv', cablingCSV(mode === 'imp' ? CFG.cabling.rows : generatedRows())) }, 'Exporter (CSV)');
   const box = el('div', { class: 'list' },
-    el('p', { class: 'note' }, 'Liste de câblage générée à partir de votre installation : chaque ligne est un câble réel, avec ses deux extrémités (appareil · connecteur). Cliquez une extrémité pour ouvrir l\'appareil sur ce connecteur. Sur le terrain, cette liste est imprimée et chaque câble porte son numéro aux deux bouts.'),
-    el('div', { class: 'hwrow' }, sigSel, q, count), el('div', { class: 'tblwrap' }, tb));
+    el('p', { class: 'note' }, 'Liste de câblage générée à partir de votre installation : chaque ligne est un câble réel, avec ses deux extrémités (appareil · connecteur). Cliquez une extrémité pour ouvrir l\'appareil sur ce connecteur. Sur le terrain, cette liste est imprimée et chaque câble porte son numéro aux deux bouts. Le formateur peut importer la liste réelle du car dans l\'Espace formateur.'),
+    el('div', { class: 'hwrow' }, modeSel, sigSel, q, count, exp), el('div', { class: 'tblwrap' }, tb));
   let lastKey = '';
+  function drawImported() {
+    const rows = CFG.cabling.rows.filter((r) => !filt.q || `${r.n} ${r.a} ${r.b} ${r.type} ${r.sig} ${r.note}`.toLowerCase().includes(filt.q));
+    tbody.innerHTML = '';
+    for (const r of rows.slice(0, 600)) tbody.appendChild(el('tr', {}, el('td', { class: 'mono' }, r.n), el('td', {}, r.a), el('td', {}, r.b), el('td', {}, r.type + (r.note ? ' · ' + r.note : '')), el('td', { class: 'mono' }, r.len ? r.len + (/^\d+([.,]\d+)?$/.test(r.len) ? ' m' : '') : '—'), el('td', {}, r.sig || '—'), el('td', {}, '—')));
+    count.textContent = `${rows.length} ligne${rows.length > 1 ? 's' : ''} · liste « ${CFG.cabling.name} »`;
+  }
   function draw() {
+    if (mode === 'imp' && CFG.cabling && CFG.cabling.rows) { drawImported(); return; }
     const all = buildCabling();
     const rows = all.filter((c) => (!filt.sig || c.sig === filt.sig) && (!filt.q || `${c.n} ${endLabel(c.a)} ${endLabel(c.b)} ${c.type} ${c.note || ''}`.toLowerCase().includes(filt.q)));
     tbody.innerHTML = '';

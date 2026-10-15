@@ -352,6 +352,17 @@ canvas.scope { background: #05080a; border: 1px solid var(--line2); border-radiu
 .patch-list { max-height: 60vh; overflow: auto; }
 .patch-list .item { padding: 4px 8px; }
 @media (max-width: 1000px) { .patch-grid { grid-template-columns: minmax(0, 1fr); } }
+/* photos du matériel (espace formateur) */
+.photo-view, .photo-edit { position: relative; display: block; width: 100%; line-height: 0; border-radius: 6px; overflow: hidden; background: #000; }
+.photo-view img, .photo-edit img { width: 100%; height: auto; display: block; }
+.photo-edit { cursor: crosshair; }
+.hs { position: absolute; width: 26px; height: 26px; margin: -13px 0 0 -13px; border-radius: 50%; border: 2px solid #fff; background: var(--amber); color: #15100a; font: 700 12px/1 var(--f-mono); box-shadow: 0 0 0 3px rgba(0,0,0,.45), 0 0 12px rgba(255,176,32,.7); display: grid; place-items: center; padding: 0; }
+.hs.on { background: var(--cyan); }
+.photo-grid { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(240px, 1fr); gap: 12px; align-items: start; }
+.item.review[data-s="ok"] { border-color: #1f7a3c; } .item.review[data-s="fix"] { border-color: #8a2a24; }
+.item.review input { width: 100%; margin-top: 6px; }
+textarea { background: var(--bg); border: 1px solid var(--line2); border-radius: 4px; padding: 6px 8px; color: var(--fg); font: inherit; resize: vertical; }
+@media (max-width: 800px) { .photo-grid { grid-template-columns: minmax(0, 1fr); } }
 /* IPDirector */
 .ipd-grid { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 12px; align-items: start; }
 .ipd-log { max-height: 220px; overflow: auto; }

@@ -1,0 +1,47 @@
+// ----------------------------------------------------------------------------------
+// Points techniques à faire relire par le formateur (avec la source utilisée).
+// Statut et remarques stockés dans config/review (partagé).
+// ----------------------------------------------------------------------------------
+const SONY_HDC = 'Fiches techniques Sony HDC-5500 (pro.sony, AV-iQ, Gravity Media)';
+const SONY_CCU = 'Fiches techniques Sony HDCU-5500 / HDCU-5000 et manuel HDCU';
+const SONY_RCP = 'Fiche technique Sony RCP-3500 et manuels RCP-1500/3100';
+const EVS_XT4K = 'Presse de lancement EVS XT4K (SVG Europe, Panorama Audiovisual, live-production.tv) et fiche revendeur (Expandore)';
+const EVS_XT = 'Manuels techniques EVS XT2 / XT3 / XTnano / XT4K (ManualsLib)';
+const EVS_MC = 'Manuels EVS Multicam LSM 10.x à 12.x (ManualsLib, manualzz)';
+const EVS_IPD = 'Page produit EVS IPDirector et articles SVG (2013-2015)';
+const SONY_XVS = 'Brochures Sony XVS (pro.sony, Gravity Media, AV Broadcast), fiches revendeurs';
+const SONY_ICP = 'Pages produit Sony ICP-X7000';
+const NORMES = 'Normes et recommandations (SMPTE, ITU-R, EBU)';
+const SIMU = 'Choix de simulation (à valider avec vos habitudes)';
+
+export const REVIEW_ITEMS = [
+  ['cam1', 'Chaîne caméra', 'Tête HDC-5500 : connecteurs arrière (fibre 3K.93C, SDI 1/2/3, SDI MONI, TEST OUT, PROMPTER/GENLOCK, INTERCOM 1/2 XLR-5, AUDIO CH1/2, DC IN XLR-4 10,5-17 V, REMOTE, RET CTRL, TRACKER, CRANE).', SONY_HDC],
+  ['cam2', 'Chaîne caméra', 'Portée ≈ 2 km en fibre hybride avec HDCU-5500 (4 km avec HDCU-5000) ; ≈ 10 km en monomode avec alimentation locale.', SONY_CCU],
+  ['cam3', 'Chaîne caméra', 'CCU HDCU-5500 : demi-largeur 3U, D-sub 50 INTERCOM/TALLY/IO (PROD/ENG, PGM, tally R/G/Y), RCP/CNU 8 broches, REF IN/OUT en boucle, sortie CHARACTER.', SONY_CCU],
+  ['cam4', 'Chaîne caméra', 'RCP-3500 : PoE 802.3af classe 2, CCU/CNU 8 broches, AUX 8 broches, EXT I/O D-sub 9, 102 × 310 × 67 mm, 1,7 kg, 10 W, 9 touches assignables.', SONY_RCP],
+  ['cam5', 'Chaîne caméra', 'Le traitement de l\'image (« paint ») est fait en grande partie dans la tête ; la CCU gère les conversions de sortie (UHD/HD, HDR/SDR).', SONY_CCU],
+  ['evs1', 'Serveur EVS XT4K', '4 canaux UHD-4K ou 8 canaux HD ; 12 et plus en configuration ChannelMAX.', EVS_XT4K],
+  ['evs2', 'Serveur EVS XT4K', 'UHD sur un seul câble 12G-SDI ; Quad 3G-SDI (2SI / découpage en carrés) en option ; XAVC-4K 10 bits HDR.', EVS_XT4K],
+  ['evs3', 'Serveur EVS XT4K', 'Stockage interne jusqu\'à 9 To (≈ 130 h d\'UHD annoncées ; un article parle de « plus de 30 h »), extensible jusqu\'à 40 To.', EVS_XT4K],
+  ['evs4', 'Serveur EVS XT4K', '192 pistes audio, routeur audio interne ; réseaux XNet 3 Gb/s, 2 × 10 GbE, gestion redondante ; 6U.', EVS_XT4K],
+  ['evs5', 'Serveur EVS XT4K', 'Télécommande LSM reliée au serveur en RS-422 (19 200 bauds d\'après les manuels XT) ; ports GPI et LTC.', EVS_XT],
+  ['evs6', 'Serveur EVS XT4K', 'Répartition retenue avec un seul XT4K : HD = 8 REC + 2 PLAY (ChannelMAX) ou 6 REC + 2 PLAY ; UHD = 3 REC + 1 PLAY.', SIMU],
+  ['lsm1', 'Télécommande LSM', 'Levier 0-100 % ; plage secondaire −100/+100 % ou −200/+200 %. Jog ≈ 35 images par tour. FAST JOG désactivé après PLAY/LIVE.', EVS_MC],
+  ['lsm2', 'Télécommande LSM', 'Touches à double fonction (SHIFT) : IN/GOTO IN, OUT/GOTO OUT, PLST/BROWSE ; SHIFT + PAGE puis F = page 1 à 10.', EVS_MC],
+  ['lsm3', 'Télécommande LSM', 'RETURN (revenir dans le train depuis un clip), TAKE (échange PGM/PRV ou les deux PGM), verrouillage CLEAR puis MENU.', EVS_MC],
+  ['lsm4', 'Télécommande LSM', 'Nommage des clips page · banque · touche · angle (ex. 111A) ; la disposition exacte des touches dépend du modèle.', EVS_MC],
+  ['ipd1', 'IPDirector', 'Modules base de données, log, playlist, contrôle des canaux ; mêmes clips que la LSM.', EVS_IPD],
+  ['xvs1', 'Mélangeur XVS-6000', 'En 4K (configuration de base) : 2 M/E, 16 entrées, 6 sorties, 8 keyers (4 full + 4 sub). Le simulateur limite le mélangeur à 16 entrées en UHD.', SONY_XVS],
+  ['xvs2', 'Mélangeur XVS-6000', 'En HD : jusqu\'à 4 M/E selon les sources, 48 ou 64 entrées (les sources divergent), 24 sorties assignables, jusqu\'à 16 keyers.', SONY_XVS],
+  ['xvs3', 'Mélangeur XVS-6000', '4 keyers par M/E avec redimensionneur 2,5D ; DME 3D en option (XKS-8470 : 2 canaux HD ; XKS-8475 : 1 canal 4K).', SONY_XVS],
+  ['xvs4', 'Mélangeur XVS-6000', 'Frame memory non volatile 480 Go (images, clips, transitions « clip ») ; 2 multiviewers intégrés (4/10/13/16 fenêtres).', SONY_XVS],
+  ['xvs5', 'Mélangeur XVS-6000', 'Processeur : REF IN BNC avec boucle, NETWORK (MVS LAN) et (UTIL LAN) en 1000BASE-T ; tally par carte MKS-X7701 (3 × D-sub 37, 18 relais).', SONY_XVS],
+  ['xvs6', 'Mélangeur XVS-6000', 'Pupitre ICP-X7000 : 1 à 4 rangées M/E, 20/28/36 boutons XPT, OLED, boutons RVB ; relié via MKS-X7700 ou MKS-X2700.', SONY_ICP],
+  ['lvl1', 'Niveaux et mesures', 'Vidéo 10 bits : noir 64, blanc 940, super-blanc max 1019 ; white clip par défaut du simulateur à 103 % (tolérance EBU R103).', NORMES],
+  ['lvl2', 'Niveaux et mesures', 'Audio : alignement −18 dBFS (EBU R68), −23 LUFS intégré et −1 dBTP (EBU R128).', NORMES],
+  ['lvl3', 'Niveaux et mesures', 'HLG : blanc de référence à 75 % du signal, 203 cd/m² (ITU-R BT.2408).', NORMES],
+  ['lvl4', 'Niveaux et mesures', 'Fibre monomode ≈ 0,35-0,4 dB/km à 1310 nm ; ≈ 0,5 dB par connexion propre.', NORMES],
+  ['lvl5', 'Niveaux et mesures', 'Line-up : niveau moyen visé 40-45 % selon la valeur de plan ; repères pelouse 40-55 %.', SIMU],
+  ['ip1', 'IP', 'ST 2110-20 : ≈ 2,1 Gb/s en 1080p50 10 bits 4:2:2 ; ≈ 8,3 Gb/s en UHD p50. PTP ST 2059-2 ; NMOS IS-04/IS-05 ; ST 2022-7.', NORMES],
+];
+export const REVIEW_STATUS = { '': 'À vérifier', ok: 'Validé', fix: 'À corriger' };

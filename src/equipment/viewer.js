@@ -6,6 +6,8 @@ import { DEVICES, deviceDef, DEVICE_LIST } from './devices.js';
 import { buildCabling, deviceCables, endLabel, portName, DEV_NAMES, SIG, routerInLabel, routerOutLabel, routerCrosspoint, isSystemCam } from './cabling.js';
 import { EVS, ROUTER, recordedCams, tallyOf, MIX, meSource, sourceLabel, TRANS } from '../pipeline.js';
 import { EQUIP, evsLayout, mixInputs } from '../equip.js';
+import { CFG, photoUrl } from '../shared.js';
+import { openReport } from '../ui/report.js';
 
 const NS = 'http://www.w3.org/2000/svg';
 function E(tag, attrs = {}, parent, text) {
@@ -226,8 +228,17 @@ function connMap(key, n) {
   return conns;
 }
 
+function devPhotos(def) { return (CFG.photos && CFG.photos.list ? CFG.photos.list : []).filter((p) => p.device === def.key); }
+function renderPhoto(p) {
+  const host = VIEW.svgHost; host.innerHTML = '';
+  const wrap = el('div', { class: 'photo-view' }, el('img', { src: photoUrl(p), alt: p.title }));
+  p.hotspots.forEach((h, j) => wrap.appendChild(el('button', { class: 'hs' + (VIEW.photoSel === j ? ' on' : ''), style: { left: h.x * 100 + '%', top: h.y * 100 + '%' }, title: h.label, onclick: () => { VIEW.photoSel = j; VIEW.sel = h.port && (VIEW.def.ports[h.port] || VIEW.def.controls[h.port]) ? h.port : null; if (VIEW.sel) (S.seenPort ||= {})[VIEW.def.key + ':' + VIEW.sel] = true; renderPhoto(p); renderInfo(); } }, String(j + 1))));
+  host.append(wrap, el('p', { class: 'note' }, `Photo de votre matériel · ${p.hotspots.length} point(s) cliquable(s)`));
+}
 function renderSvg() {
-  const def = VIEW.def; const v = def.views[VIEW.view];
+  const def = VIEW.def;
+  if (VIEW.view.startsWith('photo')) { const p = devPhotos(def)[+VIEW.view.slice(5)]; if (p) { renderPhoto(p); return; } VIEW.view = Object.keys(def.views)[0]; }
+  const v = def.views[VIEW.view];
   const host = VIEW.svgHost; host.innerHTML = '';
   const svg = E('svg', { viewBox: `0 0 ${v.w} ${v.h}`, width: '100%', role: 'img', 'aria-label': def.title }, host);
   svg.style.maxHeight = '64vh'; svg.style.display = 'block';
@@ -249,6 +260,11 @@ function renderInfo() {
   const def = VIEW.def; const box = VIEW.info; box.innerHTML = '';
   const id = VIEW.sel;
   const meta = id ? (def.ports[id] || def.controls[id]) : null;
+  if (VIEW.view.startsWith('photo') && VIEW.photoSel != null) {
+    const p = devPhotos(def)[+VIEW.view.slice(5)]; const h = p && p.hotspots[VIEW.photoSel];
+    if (h) { box.append(el('h3', { class: 'eq-h' }, `${VIEW.photoSel + 1}. ${h.label || 'Point'}`)); if (h.desc) box.append(el('p', { class: 'prose' }, h.desc)); }
+    if (!meta) { box.append(el('button', { class: 'btn small', onclick: () => { VIEW.photoSel = null; renderInfo(); renderSvg(); } }, 'Retour à la fiche de l\'appareil')); return; }
+  }
   if (meta) {
     const isPort = !!def.ports[id];
     box.append(el('h3', { class: 'eq-h' }, meta.n));
@@ -311,10 +327,12 @@ export function openDevice(key, n = 1, opts = {}) {
   VIEW.view = opts.view && def.views[opts.view] ? opts.view : Object.keys(def.views)[0];
   if (VIEW.sel && !def.views[VIEW.view].items.some((it) => it.id === VIEW.sel)) { const v = Object.keys(def.views).find((k) => def.views[k].items.some((it) => it.id === VIEW.sel)); if (v) VIEW.view = v; }
   const tabs = el('div', { class: 'tabs' });
+  VIEW.photoSel = null;
+  devPhotos(def).forEach((p, i) => tabs.appendChild(el('button', { class: 'tab', 'data-v': 'photo' + i, onclick: () => { VIEW.view = 'photo' + i; VIEW.photoSel = null; [...tabs.children].forEach((b) => b.classList.toggle('on', b.dataset.v === VIEW.view)); renderSvg(); renderInfo(); } }, 'Photo · ' + (p.title || i + 1))));
   for (const v of Object.keys(def.views)) tabs.appendChild(el('button', { class: 'tab' + (v === VIEW.view ? ' on' : ''), onclick: () => { VIEW.view = v; [...tabs.children].forEach((b) => b.classList.toggle('on', b.dataset.v === v)); renderSvg(); } , 'data-v': v }, def.views[v].label));
   const bar = el('div', { class: 'hwrow' }, tabs);
   if (inst && inst.length > 1) { const s = el('select', { id: 'eqinst' }); for (const [v, l] of inst) { const o = el('option', { value: v }, l); if (v === n) o.selected = true; s.appendChild(o); } s.onchange = () => openDevice(key, +s.value, { view: VIEW.view }); bar.prepend(s); }
-  bar.append(el('button', { class: 'btn small', onclick: () => openEquipmentIndex() }, 'Tout le matériel'));
+  bar.append(el('button', { class: 'btn small', onclick: () => openEquipmentIndex() }, 'Tout le matériel'), el('button', { class: 'btn small', onclick: () => openReport('Matériel · ' + def.title + (VIEW.sel ? ' · ' + VIEW.sel : '')) }, 'Signaler une erreur'));
   const legend = el('div', { class: 'hwrow note' }, ...Object.values(SIG).map((s) => el('span', { class: 'pill', style: { borderColor: s.color } }, el('span', { class: 'dot', style: { background: s.color } }), s.label)));
   VIEW.svgHost = el('div', { class: 'eq-svg' });
   VIEW.info = el('div', { class: 'eq-info' });

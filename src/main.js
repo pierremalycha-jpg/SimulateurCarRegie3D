@@ -17,6 +17,11 @@ import { openGuide, checkMissions, drawMissionCard } from './ui/guide.js';
 import { updateFaults } from './faults.js';
 import { updateExercises, EX } from './exercises.js';
 import { openDevice, openEquipmentIndex } from './equipment/viewer.js';
+import { initShared, CFG, SH } from './shared.js';
+import { openTrainer } from './ui/config.js';
+import { EQUIP, evsLayout, mixInputs } from './equip.js';
+import { patchEmpty } from './patch.js';
+import { FORMATS } from './data.js';
 
 // ----------------------------------------------------------------------------------
 // Initialisation
@@ -76,38 +81,58 @@ function buildStart() {
   const qual = el('select', { id: 'stqual' }, el('option', { value: 'basse' }, 'Basse (ordinateur portable)'), el('option', { value: 'moyenne' }, 'Moyenne'), el('option', { value: 'haute' }, 'Haute (carte graphique dédiée)'));
   qual.value = S.quality;
   const snd = el('input', { type: 'checkbox', id: 'stsnd' }); snd.checked = true;
-  const go = (preset) => start(preset, light.value, qual.value, snd.checked);
+  const fmt = el('select', { id: 'stfmt' }, ...Object.entries(FORMATS).map(([k, v]) => el('option', { value: k }, v.label)));
+  fmt.value = S.format;
+  const infra = el('select', { id: 'stinfra' }, el('option', { value: 'sdi' }, 'Car SDI (grille coaxiale)'), el('option', { value: 'ip' }, 'Car IP (ST 2110, PTP, NMOS)'));
+  const fmtNote = el('p', { class: 'note' });
+  const updFmt = () => { S.format = fmt.value; fmtNote.textContent = `Avec ce format : ${evsLayout().label} ; mélangeur ${EQUIP.mixer} avec ${mixInputs()} entrées utilisées.`; };
+  fmt.onchange = updFmt; updFmt();
+  const go = (preset) => start(preset, light.value, qual.value, snd.checked, fmt.value, infra.value === 'ip');
+  const truckLine = el('div', { class: 'eyebrow', id: 'sttruck' });
+  const setTruck = () => { truckLine.textContent = [CFG.car.company, CFG.car.name].filter(Boolean).join(' · '); truckLine.hidden = !truckLine.textContent; updFmt(); };
+  setTruck(); on('config', setTruck); on('shared', setTruck);
   const chain = ['Objectif', 'Caméra', 'Liaison', 'CCU', 'Grille', 'Mélangeur', 'Antenne'];
   s.append(el('div', { class: 'wrap' },
-    el('div', { class: 'eyebrow' }, el('span', { class: 'rec' }), 'Simulateur de formation · OB · régie mobile'),
+    el('div', { class: 'eyebrow' }, el('span', { class: 'rec' }), 'Simulateur de formation · OB · régie mobile'), truckLine,
     el('h1', {}, 'Car régie ', el('em', {}, '3D')),
     el('p', { class: 'lede' }, 'Placez vos caméras dans un stade, choisissez les objectifs et les liaisons, suivez les câbles jusqu\'au car, puis prenez place à chaque poste : réalisation, mélangeur, vision, ralentis, son, HF, grille, transmission. Un match se joue en continu : tout ce que vous réglez se voit à l\'image, et chaque action est expliquée. Ouvrez le matériel (touche K) pour voir les faces avant et arrière des appareils, leurs connecteurs et le câblage de votre installation.'),
     el('div', { class: 'chain' }, ...chain.map((c, i) => el('div', {}, el('small', {}, String(i + 1).padStart(2, '0')), el('b', {}, c)))),
     el('div', { class: 'choices' },
       el('button', { class: 'choice main', onclick: () => go('standard') }, el('b', {}, 'Car prêt à l\'antenne'), el('span', {}, '12 caméras installées, câblées et réglées, dont 2 super ralentis, une Steadicam HF et une mini-caméra de but. Idéal pour découvrir les postes.')),
       el('button', { class: 'choice', onclick: () => go('vierge') }, el('b', {}, 'Installation pas à pas'), el('span', {}, 'Stade vide et missions guidées : vous montez le dispositif, câblez, réglez les caméras puis réalisez.')),
-      el('button', { class: 'choice', onclick: () => go('grand') }, el('b', {}, 'Grand match · 16 caméras'), el('span', {}, 'Caméra volante, rail, grue, super ralenti 6x, deux Steadicam HF. Demande un ordinateur puissant.'))),
+      el('button', { class: 'choice', onclick: () => go('grand') }, el('b', {}, 'Grand match · 16 caméras'), el('span', {}, 'Caméra volante, rail, grue, super ralenti 6x, deux Steadicam HF. Demande un ordinateur puissant.')),
+      el('button', { class: 'choice', onclick: () => go('brassage') }, el('b', {}, 'Exercice : le car vide'), el('span', {}, 'Les caméras sont installées mais rien n\'est brassé : vous reliez chaque source à la grille, les sorties aux destinations et la référence aux CCU, liste de câblage en main.')),
+      el('button', { class: 'choice', onclick: () => go('scenario') }, el('b', {}, 'Scénario : jour de match'), el('span', {}, 'Brassage, line-up, test de ligne avec la chaîne, puis le direct avec des pannes. Chronométré et noté, avec un compte rendu à la fin.'))),
     el('div', { class: 'opts' },
       el('div', { class: 'field' }, el('label', { for: 'stlight' }, 'Lumière'), light),
       el('div', { class: 'field' }, el('label', { for: 'stqual' }, 'Qualité graphique'), qual),
+      el('div', { class: 'field' }, el('label', { for: 'stfmt' }, 'Format de production'), fmt),
+      el('div', { class: 'field' }, el('label', { for: 'stinfra' }, 'Infrastructure'), infra),
+      el('button', { class: 'btn', onclick: () => openTrainer('car') }, 'Espace formateur'),
       el('label', { class: 'item', for: 'stsnd', style: { padding: '6px 10px' } }, snd, el('span', {}, 'Son (ambiance, frappes, sifflet)'))),
+    fmtNote,
     el('div', { class: 'keys' }, ...CONTROLS_HELP.map(([k, d]) => el('div', {}, el('kbd', {}, k), d))),
     el('p', { class: 'note' }, 'Les caractéristiques techniques (objectifs, portées de câbles, seuils HF, niveaux vidéo et audio) sont des ordres de grandeur réalistes, donnés à titre pédagogique. Les noms d\'équipements cités le sont comme exemples de matériel courant.')));
 }
 
-function start(preset, light, quality, sound) {
+function start(preset, light, quality, sound, format = S.format, ip = false) {
   if (quality !== S.quality) setQuality(quality);
+  S.format = format; S.ipMode = !!ip;
   applyLighting(light);
   if (preset === 'vierge') { loadPreset('none'); S.autoLineup = false; S.showMission = true; }
+  else if (preset === 'brassage' || preset === 'scenario') { loadPreset('standard', preset !== 'scenario'); S.showMission = false; }
   else { loadPreset(preset, true); S.showMission = false; }
   defaultRouting(true);
+  if (preset === 'brassage' || preset === 'scenario') { S.patch.on = true; patchEmpty(); }
   MIX.pgm = 1; MIX.pst = 2;
   if (preset !== 'vierge') { MIX.dsk1.on = true; MIX.dsk1.level = 1; }
   $('#start').hidden = true; $('#hud').hidden = false;
   S.mode = 'fps';
   if (sound) startAudio(); else { startAudio(); AU.muted = true; applyFaders(); }
   buildToolbar();
-  if (preset === 'vierge') toast('Commencez par la mission en haut à gauche : découvrez le compound puis ouvrez le plan des caméras (P).', '', 6000);
+  if (preset === 'brassage') { emit('openStationNow', { id: 'brassage' }); toast('Car vide : brassez chaque liaison en suivant la liste de câblage. Le multiview montre le résultat.', '', 7000); }
+  else if (preset === 'scenario') emit('startScenario');
+  else if (preset === 'vierge') toast('Commencez par la mission en haut à gauche : découvrez le compound puis ouvrez le plan des caméras (P).', '', 6000);
   else toast('Vous êtes dans le compound, devant le car régie. Cliquez dans la vue pour regarder, avancez avec Z Q S D.', '', 6000);
   if (matchMedia('(pointer: coarse)').matches) setupTouch();
 }
@@ -502,7 +527,11 @@ function frame(now) {
 
 buildStart();
 S.mode = 'start';
+initShared();
+// la configuration du car peut arriver après le démarrage : on recalcule la répartition EVS
+on('config', (part) => { if (part === 'car' && S.mode !== 'start') { defaultRouting(false); emit('router', {}); } updBrand(); });
+function updBrand() { const w2 = $('#where2'); if (w2 && CFG.car.name && !S.inTruck) w2.textContent = CFG.car.name; }
 document.fonts && document.fonts.ready.then(() => { W.boards && W.boards.redraw(); P.mvDirty = true; });
 requestAnimationFrame(frame);
 window.__S = S; // accès console pour le débogage
-window.__dbg = { S, M, MIX, EVS, ROUTER, P, W, T, PL, EX, teleport, openStation, closeStation, openPlan, closePlan, takeCamera, releaseCamera, start, openGuide, renderer, applyLighting, openDevice, openEquipmentIndex };
+window.__dbg = { S, M, MIX, EVS, ROUTER, P, W, T, PL, EX, teleport, openStation, closeStation, openPlan, closePlan, takeCamera, releaseCamera, start, openGuide, renderer, applyLighting, openDevice, openEquipmentIndex, openTrainer, CFG, SH };

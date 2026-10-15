@@ -1,4 +1,7 @@
 import { openDevice } from '../equipment/viewer.js';
+import { openTrainer } from './config.js';
+import { openReport } from './report.js';
+import { CFG } from '../shared.js';
 import { DEVICE_LIST, DEVICES } from '../equipment/devices.js';
 import { S, emit, on, camById } from '../state.js';
 import { el } from '../util.js';
@@ -61,7 +64,7 @@ const STATION_LIST = [
 export function openGuide(tab = 'missions') {
   const tabs = el('div', { class: 'tabs' });
   const content = el('div', { class: 'list' });
-  const T = [['missions', 'Missions'], ['guide', 'Comprendre'], ['postes', 'Les postes'], ['materiel', 'Matériel'], ['glossaire', 'Glossaire'], ['commandes', 'Commandes'], ['reglages', 'Réglages']];
+  const T = [['missions', 'Missions'], ['guide', 'Comprendre'], ['procedures', 'Procédures'], ['postes', 'Les postes'], ['materiel', 'Matériel'], ['glossaire', 'Glossaire'], ['commandes', 'Commandes'], ['reglages', 'Réglages']];
   const show = (k) => {
     content.innerHTML = '';
     [...tabs.children].forEach((b) => b.classList.toggle('on', b.dataset.k === k));
@@ -74,15 +77,22 @@ export function openGuide(tab = 'missions') {
     }
     if (k === 'guide') {
       const nav = el('div', { class: 'tabs' }); const art = el('div', { class: 'prose' });
-      const open = (g) => { art.innerHTML = `<h3>${g.title}</h3>` + g.html; [...nav.children].forEach((b) => b.classList.toggle('on', b.dataset.g === g.id)); };
+      let curG = GUIDE[0];
+      const open = (g) => { curG = g; art.innerHTML = `<h3>${g.title}</h3>` + g.html; [...nav.children].forEach((b) => b.classList.toggle('on', b.dataset.g === g.id)); };
       for (const g of GUIDE) nav.appendChild(el('button', { class: 'tab', 'data-g': g.id, onclick: () => open(g) }, g.title));
-      content.append(nav, art); open(GUIDE[0]);
+      content.append(nav, art, el('div', { class: 'hwrow' }, el('button', { class: 'btn small', onclick: () => openReport('Guide · ' + curG.title) }, 'Signaler une erreur dans ce chapitre'))); open(GUIDE[0]);
       art.querySelectorAll('table').forEach((t) => { const w = el('div', { class: 'tblwrap' }); t.replaceWith(w); w.appendChild(t); });
       nav.addEventListener('click', () => art.querySelectorAll('table').forEach((t) => { if (!t.parentElement.classList.contains('tblwrap')) { const w = el('div', { class: 'tblwrap' }); t.replaceWith(w); w.appendChild(t); } }));
     }
     if (k === 'postes') {
       content.append(el('p', { class: 'note' }, 'Chaque poste du car et chaque équipement du stade, avec son rôle, son matériel et ses pièges. Dans le simulateur, approchez-vous et appuyez sur E.'));
       for (const [id, where] of STATION_LIST) { const I = STATION_INFO[id]; if (!I) continue; content.appendChild(el('div', { class: 'item' }, el('div', { class: 'grow' }, el('div', { class: 't' }, I.title), el('div', { class: 's' }, `${where} · ${I.role.split('. ')[0]}.`)), el('button', { class: 'btn small', onclick: () => openInfo(id) }, 'Fiche'))); }
+    }
+    if (k === 'procedures') {
+      const procs = CFG.car.procedures || [];
+      content.append(el('p', { class: 'note' }, procs.length ? `Procédures de ${CFG.car.name || 'votre car'}, définies par le formateur.` : 'Aucune procédure maison pour l\'instant : le formateur peut en ajouter dans l\'Espace formateur (onglet Procédures).'));
+      for (const p of procs) content.append(el('div', { class: 'hwpanel prose' }, el('h3', {}, p.title), el('ol', { class: 'steps' }, (p.steps || []).map((s) => el('li', {}, s)))));
+      content.append(el('div', { class: 'hwrow' }, el('button', { class: 'btn small', onclick: () => openTrainer('proc') }, 'Espace formateur')));
     }
     if (k === 'materiel') {
       content.append(el('p', { class: 'note' }, 'Faces avant et arrière des appareils, connecteurs, signaux et raccordements de votre installation. Inventaire des connecteurs d\'après les fiches techniques (chaîne caméra type Sony HDC-5500 / HDCU-5500 / RCP-3500, mélangeur Sony XVS-6000 et pupitre ICP-X7000, serveur EVS XT4K, télécommande LSM, IPDirector). Raccourci : touche K.'));
@@ -108,7 +118,8 @@ export function openGuide(tab = 'missions') {
         field('Voix du réalisateur virtuel', selectEl([['0', 'Texte seulement'], ['1', 'Synthèse vocale']], S.directorVoice ? '1' : '0', (v) => { S.directorVoice = v === '1'; })),
         field('Line-up automatique à l\'installation', selectEl([['1', 'Oui (caméras déjà réglées)'], ['0', 'Non (réglages par défaut, à faire en vision)']], S.autoLineup ? '1' : '0', (v) => { S.autoLineup = v === '1'; })),
         field('Étiquettes et câbles dans le stade', selectEl([['1', 'Afficher'], ['0', 'Masquer']], S.showLabels ? '1' : '0', (v) => emit('setLabels', v === '1')))),
-        el('p', { class: 'note' }, LIGHTING[S.lighting].desc));
+        el('p', { class: 'note' }, LIGHTING[S.lighting].desc),
+        el('div', { class: 'hwrow' }, el('button', { class: 'btn', onclick: () => openTrainer('car') }, 'Espace formateur'), el('button', { class: 'btn', id: 'perfbtn', onclick: () => emit('perfTest') }, 'Tester les performances de cet ordinateur'), el('button', { class: 'btn', onclick: () => openReport('Simulateur (général)') }, 'Signaler une erreur')));
     }
   };
   for (const [k, l] of T) tabs.appendChild(el('button', { class: 'tab', 'data-k': k, onclick: () => show(k) }, l));
