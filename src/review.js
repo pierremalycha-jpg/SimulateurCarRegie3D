@@ -13,9 +13,19 @@ const SONY_XVS = 'Brochures Sony XVS (pro.sony, Gravity Media, AV Broadcast), fi
 const SONY_ICP = 'Pages produit Sony ICP-X7000';
 const NORMES = 'Normes et recommandations (SMPTE, ITU-R, EBU)';
 const SIMU = 'Choix de simulation (à valider avec vos habitudes)';
+const NET2110 = 'Normes SMPTE ST 2110-10/-20/-21/-30/-40, ST 2022-7, ST 2059-2, AMWA IS-04/IS-05, AES67, RFC 7104 (a=group:DUP), RFC 7938 ; guides des constructeurs de commutateurs';
 const STADE = 'Recherches web : site du RC Lens (tribunes, billetterie), stadiumdb.com, architectes (Atelier Ferret), presse (France 3, 90min)';
 
 export const REVIEW_ITEMS = [
+  ['net1', 'Réseau ST 2110', 'Architecture : deux fabrics indépendantes (rouge / bleu), 2 spines 32 × 100 GbE et 6 leaves 48 × 25 GbE + 8 × 100 GbE par réseau, 2 × 100 GbE de chaque leaf vers chaque spine. À comparer au car réel (souvent moins de leaves dans un car).', SIMU],
+  ['net2', 'Réseau ST 2110', 'Plan d\'adressage : VLAN 100 × réseau + leaf, 10.réseau.leaf.0/24, passerelle .1, loopbacks 10.0.x.y, /31 sur l\'underlay, groupes 239.réseau.leaf.n port 5004. Exemple pédagogique.', SIMU],
+  ['net3', 'Réseau ST 2110', 'PTP ST 2059-2 : domaine 127, logAnnounceInterval −2, logSyncInterval −3, logMinDelayReqInterval −3, timeout Announce 3 ; grands maîtres priority1 100 / 110, clockClass 6 (GPS) et 7 (holdover).', NET2110],
+  ['net4', 'Réseau ST 2110', 'Plan DSCP : PTP 46 (EF), audio 34 (AF41), vidéo 26 (AF31), données 18, contrôle 16. Les valeurs varient selon les intégrateurs.', NET2110],
+  ['net5', 'Réseau ST 2110', 'Débits retenus (en-têtes compris) : 1080p50 ≈ 2,16 Gb/s, 1080i50 ≈ 1,08 Gb/s, 2160p50 ≈ 8,6 Gb/s, paire audio ≈ 2,8 Mb/s (paquets de 1 ms).', NET2110],
+  ['net6', 'Réseau ST 2110', 'Raccordements : CCU (25 GbE, 100 GbE pour le super ralenti UHD) et XVS-6000 (2 × 100 GbE par réseau) en natif ST 2110, multiviewers en 100 GbE, XT4K, caméras HF, POV et PTZ derrière des passerelles SDI ↔ IP. À vérifier selon les options réellement installées.', SIMU],
+  ['net7', 'Réseau ST 2110', 'Querier IGMP : expiration des abonnements ramenée à 45 s (≈ 260 s par défaut, intervalle d\'appartenance IGMP) ; plage SSM par défaut 232.0.0.0/8.', NET2110],
+  ['net8', 'Réseau ST 2110', 'Ligne de commande : syntaxe inspirée d\'EOS / NX-OS, simplifiée ; sorties de show reconstruites, pas copiées d\'un constructeur.', SIMU],
+
   ['cam1', 'Chaîne caméra', 'Tête HDC-5500 : connecteurs arrière (fibre 3K.93C, SDI 1/2/3, SDI MONI, TEST OUT, PROMPTER/GENLOCK, INTERCOM 1/2 XLR-5, AUDIO CH1/2, DC IN XLR-4 10,5-17 V, REMOTE, RET CTRL, TRACKER, CRANE).', SONY_HDC],
   ['cam2', 'Chaîne caméra', 'Portée ≈ 2 km en fibre hybride avec HDCU-5500 (4 km avec HDCU-5000) ; ≈ 10 km en monomode avec alimentation locale.', SONY_CCU],
   ['cam3', 'Chaîne caméra', 'CCU HDCU-5500 : demi-largeur 3U, D-sub 50 INTERCOM/TALLY/IO (PROD/ENG, PGM, tally R/G/Y), RCP/CNU 8 broches, REF IN/OUT en boucle, sortie CHARACTER.', SONY_CCU],

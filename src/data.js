@@ -339,6 +339,13 @@ export const STATION_INFO = {
     process: ['Choisir la destination, puis la source, puis TAKE', 'Préparer des « salvos » (configurations complètes) avant le direct'],
     tips: ['Une erreur sur la grille peut envoyer du noir à la chaîne : vérifiez toujours le retour antenne.'],
   },
+  reseau: {
+    title: 'Réseau IP ST 2110 (spine-leaf rouge / bleu)', where: 'Baie technique — baie « Réseau IP · Multiview » et commutateurs de haut de baie',
+    role: 'Dans un car IP, la grille est remplacée par deux réseaux Ethernet indépendants, rouge et bleu, qui transportent chaque flux en double (SMPTE ST 2022-7). Chaque réseau est une fabric spine-leaf : des leaves de haut de baie reçoivent les appareils, deux spines les relient. L\'ingénieur réseau configure les commutateurs (VLAN, routage OSPF, multicast PIM-SSM / IGMPv3, PTP, QoS) et surveille la bande passante.',
+    gear: ['2 × 2 spines 32 × 100 GbE (QSFP28)', '2 × 6 leaves 48 × 25 GbE + 8 × 100 GbE, une par zone (caméras, production, ralentis, monitoring, audio, passerelles)', 'Grands maîtres PTP GPS (ST 2059-2) raccordés aux spines', 'Commutateur de contrôle / gestion (NMOS, RCP, supervision)', 'Contrôleur NMOS (IS-04 / IS-05) et, souvent, un contrôleur SDN'],
+    process: ['Avant l\'exploitation : vérifier les voisins OSPF et PIM, le grand maître élu, les ports en erreur', 'Contrôler que chaque réception est protégée (deux réseaux) et qu\'aucun lien n\'est saturé', 'Toute modification : la tester, puis « write memory »', 'En panne : couche 1 → VLAN → IP / OSPF → multicast → PTP → NMOS'],
+    tips: ['Une panne d\'un seul réseau ne se voit pas à l\'image : surveillez les alarmes.', 'Un lien saturé dégrade tous les flux qui le traversent.', 'Un appareil qui n\'est pas « slave only » peut se faire élire grand maître PTP.'],
+  },
   ccu: {
     title: 'Baie CCU (voies caméras)', where: 'Baie technique',
     role: 'Chaque caméra a sa CCU (Camera Control Unit) dans le car. La CCU alimente la caméra par le câble, reçoit l\'image, renvoie le retour vidéo, l\'intercom, le tally et la référence, et relaie les réglages du RCP.',
@@ -421,6 +428,28 @@ export const STATION_INFO = {
 export const GLOSSARY = [
   ['SDI', 'Serial Digital Interface : vidéo numérique non compressée sur câble coaxial 75 Ω (BNC). HD-SDI 1,485 Gb/s (SMPTE ST 292), 3G-SDI 2,97 Gb/s (ST 424) pour le 1080p50, 12G-SDI 11,88 Gb/s (ST 2082) pour l\'UHD sur un seul câble. Transporte aussi l\'audio embeddé (16 canaux), le timecode et des données.'],
   ['Quad-link / 2SI', 'UHD transporté sur 4 liens 3G-SDI : découpage en quadrants (Square Division) ou entrelacement de 2 échantillons (2SI).'],
+  ['Spine-leaf', 'Architecture de réseau à deux étages (réseau de Clos) : chaque leaf (commutateur d\'accès) est reliée à chaque spine (commutateur de cœur). Tout chemin fait leaf → spine → leaf.'],
+  ['Leaf / ToR', 'Commutateur d\'accès placé en haut de baie (Top of Rack), où se raccordent les appareils (25 GbE, 100 GbE).'],
+  ['Réseaux rouge et bleu', 'Les deux réseaux média indépendants (A et B) d\'une installation ST 2022-7 : chaque flux est émis sur les deux, sans aucun lien entre eux.'],
+  ['VLAN', 'Réseau local virtuel (IEEE 802.1Q) : découpe un commutateur en domaines de niveau 2 séparés. Ici, un VLAN média par leaf.'],
+  ['SVI', 'Switch Virtual Interface (interface VlanN) : adresse IP du commutateur dans un VLAN, passerelle des appareils et querier IGMP.'],
+  ['OSPF', 'Open Shortest Path First : protocole de routage à état de liens. Voisins en « FULL » quand tout va bien ; une MTU différente les bloque en EXSTART.'],
+  ['ECMP', 'Equal-Cost Multi-Path : répartition du trafic sur plusieurs chemins de même coût (les uplinks d\'une leaf), par hachage.'],
+  ['PIM-SSM', 'Protocol Independent Multicast en Source-Specific Multicast : le récepteur demande un flux (S,G) précis ; pas de point de rendez-vous. Plage SSM par défaut 232.0.0.0/8.'],
+  ['IGMPv3', 'Protocole par lequel un récepteur s\'abonne à un groupe multicast, en précisant la source (S,G). IGMPv2 ne connaît que (*,G).'],
+  ['Snooping IGMP', 'Le commutateur écoute les rapports IGMP pour n\'envoyer chaque flux multicast que sur les ports abonnés. Sans snooping : inondation.'],
+  ['Querier IGMP', 'Équipement qui interroge périodiquement les récepteurs pour entretenir les abonnements. Sans querier, les entrées expirent (≈ 260 s par défaut).'],
+  ['(S,G)', 'Couple source / groupe d\'un flux multicast, par exemple (10.1.1.20, 239.1.1.1).'],
+  ['RPF', 'Reverse Path Forwarding : le routeur n\'accepte un flux multicast que s\'il arrive par l\'interface menant à la source dans sa table de routage.'],
+  ['MTU', 'Taille maximale d\'une trame. Les paquets ST 2110 font ≈ 1 400-1 500 octets ; les liens de cœur sont souvent en 9 214 (jumbo).'],
+  ['RS-FEC', 'Correction d\'erreurs Reed-Solomon, attendue à 25 GbE et 100 GbE sur fibre courte. Une FEC différente aux deux bouts empêche le lien de monter.'],
+  ['BMCA', 'Best Master Clock Algorithm (PTP) : élection du grand maître par priority1, clockClass, précision, variance, priority2 puis identité.'],
+  ['Horloge frontière (BC)', 'Boundary clock : commutateur qui se cale sur son maître PTP et redistribue l\'heure sur ses autres ports.'],
+  ['SDP', 'Session Description Protocol : fichier texte décrivant un flux (adresses, format, horloge). Transmis par NMOS IS-05 au récepteur.'],
+  ['a=group:DUP', 'Ligne SDP (RFC 7104) qui regroupe les deux jambes d\'un flux ST 2022-7 (primary sur le réseau rouge, secondary sur le bleu).'],
+  ['Contrôleur SDN', 'Logiciel qui pilote le réseau en connaissant la topologie et la capacité des liens : il réserve la bande passante et refuse une connexion impossible.'],
+  ['running / startup-config', 'Configuration active d\'un commutateur / configuration rechargée au démarrage. « write memory » copie la première dans la seconde.'],
+  ['DSCP', 'Champ de priorité de l\'en-tête IP. Plan type : PTP 46 (EF), audio 34 (AF41), vidéo 26 (AF31).'],
   ['SMPTE ST 2110', 'Transport de la vidéo (-20), de l\'audio (-30) et des données (-40) non compressés sur IP en flux séparés, synchronisés par PTP.'],
   ['PTP', 'Precision Time Protocol (IEEE 1588 / SMPTE ST 2059) : la référence de synchronisation des installations IP, fournie par un grand maître.'],
   ['Genlock / référence', 'Verrouillage de tous les équipements sur le même signal de synchronisation venant du SPG. Sans genlock, commuter entre deux sources provoque un saut d\'image.'],
@@ -739,6 +768,47 @@ export const GUIDE = [
 <p>Deux réseaux complètement séparés (souvent appelés rouge et bleu) transportent chacun une copie de chaque flux. Le récepteur reconstitue le signal paquet par paquet à partir des deux copies : une coupure sur un réseau ne se voit pas à l'image (« commutation sans coupure »).</p>
 <h3>Ce qui ne change pas</h3>
 <p>Les métiers : truquiste, vision, EVS, son. Les pupitres sont les mêmes ; c'est l'infrastructure derrière qui change. Le tally et les noms de sources circulent aussi en IP (protocole TSL UMD v5).</p>`},
+  {
+    id: 'reseau', title: 'Réseau ST 2110 spine-leaf (rouge / bleu)', html: `
+<p>Le poste <b>Réseau IP</b> (zone technique, baie « Réseau IP · Multiview ») montre et laisse configurer la vraie infrastructure du car IP : deux réseaux identiques et indépendants, <b>rouge (A)</b> et <b>bleu (B)</b>, chacun en architecture <b>spine-leaf</b>, plus un réseau de contrôle. Tout ce qui est réglé là (VLAN, OSPF, PIM, IGMP, PTP, vitesses, FEC, MTU…) agit réellement sur ce que reçoivent le mélangeur, l'EVS, le multiview et les départs.</p>
+<h3>Pourquoi le spine-leaf ?</h3>
+<p>Un gros commutateur unique est simple mais c'est un point de panne unique et il ne grandit pas. En <b>spine-leaf</b> (réseau de Clos à deux étages), chaque <b>leaf</b> est reliée à chaque <b>spine</b> : n'importe quel appareil est à deux sauts de n'importe quel autre (leaf → spine → leaf). Pour plus de ports on ajoute des leaves ; pour plus de bande passante, des uplinks ou des spines. Les leaves sont placées <b>en haut de baie</b> (ToR, Top of Rack), au plus près des appareils.</p>
+<table class="tbl"><tr><th>Élément (par réseau)</th><th>Dans le simulateur</th></tr>
+<tr><td>Spines</td><td>2 × 32 ports 100 GbE (QSFP28)</td></tr>
+<tr><td>Leaves</td><td>6 × (48 ports 25 GbE SFP28 + 8 ports 100 GbE) : caméras, production, ralentis, monitoring, audio, passerelles / TX</td></tr>
+<tr><td>Uplinks</td><td>2 × 100 GbE de chaque leaf vers chaque spine (Ethernet49-50 → spine 1, 51-52 → spine 2) : 400 Gb/s par leaf</td></tr>
+<tr><td>Grands maîtres PTP</td><td>GM 1 sur les spines n°1 rouge et bleue, GM 2 sur les spines n°2 (port Ethernet31)</td></tr>
+<tr><td>Contrôle</td><td>commutateur SW-CTRL : VLAN 10 gestion hors bande, VLAN 20 contrôle (registre NMOS, RCP, panneaux)</td></tr></table>
+<p>Les deux réseaux ne sont <b>jamais reliés</b> entre eux : une erreur de configuration ou une tempête sur l'un ne peut pas atteindre l'autre. Chaque appareil a deux cartes (une par réseau) et émet chaque flux deux fois ; le récepteur fusionne les deux copies paquet par paquet (<b>SMPTE ST 2022-7</b>).</p>
+<h3>Plan d'adressage (exemple pédagogique)</h3>
+<ul><li>VLAN média = 100 × réseau + numéro de leaf : 101 à 106 en rouge, 201 à 206 en bleu. Un VLAN par leaf : le niveau 2 reste local, tout ce qui sort de la leaf est routé.</li>
+<li>Sous-réseau 10.&lt;réseau&gt;.&lt;leaf&gt;.0/24, passerelle (SVI) en .1, appareils à partir de .20, même fin d'adresse sur les deux réseaux.</li>
+<li>Loopbacks (router-id) en 10.0.x.y/32 ; liens leaf ↔ spine en /31 (10.255.x.y) ; grands maîtres en /30.</li>
+<li>Groupes multicast 239.&lt;réseau&gt;.&lt;leaf de la source&gt;.&lt;n&gt;, port UDP 5004 ; vidéo PT 96, audio 97, données 100.</li></ul>
+<h3>Underlay : routage OSPF et ECMP</h3>
+<p>Les liens leaf ↔ spine sont des ports <b>routés</b> (« no switchport ») avec une adresse /31. <b>OSPF</b> (zone 0) annonce les loopbacks et les sous-réseaux média, et répartit le trafic sur les quatre uplinks à coût égal (<b>ECMP</b>). Deux pièges classiques : une <b>MTU différente</b> aux deux bouts bloque le voisinage OSPF (état EXSTART / EXCHANGE) ; un sous-réseau non annoncé empêche le contrôle RPF du multicast. Beaucoup de grands réseaux utilisent BGP plutôt qu'OSPF dans l'underlay (RFC 7938) ; le principe reste le même.</p>
+<h3>Multicast : IGMPv3, PIM-SSM et snooping</h3>
+<ol><li>Le contrôleur NMOS (IS-05) donne au récepteur le <b>SDP</b> de l'émetteur.</li>
+<li>Le récepteur envoie un rapport <b>IGMPv3</b> « je veux le groupe G de la source S » (<b>S,G</b>) à sa leaf.</li>
+<li>La leaf envoie une jonction <b>PIM</b> vers la source (chemin choisi par la table de routage : contrôle RPF), via une spine, jusqu'à la leaf de la source.</li>
+<li>Le flux descend par ce chemin ; le <b>snooping IGMP</b> de chaque leaf ne le fait sortir que sur les ports abonnés.</li></ol>
+<p>En <b>SSM</b> (Source-Specific Multicast) il n'y a pas de point de rendez-vous : la plage SSM doit contenir les groupes utilisés. Par défaut c'est 232.0.0.0/8 ; avec des groupes en 239.x il faut « ip pim ssm range 239.0.0.0/8 » partout. Le <b>querier</b> (la SVI en IGMPv3, ou un querier de niveau 2) interroge régulièrement les récepteurs ; sans lui, les abonnements expirent au bout de l'intervalle d'appartenance (260 s par défaut, 45 s dans le simulateur) : la panne apparaît plusieurs minutes après la vraie cause. Sans snooping, tous les flux du VLAN sont <b>inondés</b> sur tous les ports.</p>
+<h3>Bande passante</h3>
+<p>Un 1080p50 4:2:2 10 bits fait ≈ 2,1 Gb/s (≈ 2,2 avec les en-têtes), un UHD p50 ≈ 8,3 Gb/s (≈ 8,6), une paire audio ≈ 3 Mb/s. Une leaf « non bloquante » (autant d'uplinks que de ports d'accès) peut quand même saturer un lien précis : le hachage ECMP peut placer plusieurs gros flux sur le même uplink, et un multiviewer de 18 tuiles UHD demande plus de 150 Gb/s. <b>PIM ne connaît pas la bande passante</b> : un lien saturé perd des paquets pour <i>tous</i> les flux qui le traversent. Un <b>contrôleur SDN</b> (fonctions de multicast « non bloquant » des constructeurs) réserve la bande passante et <b>refuse</b> une connexion plutôt que de dégrader les autres. Le poste permet de comparer les deux modes.</p>
+<h3>PTP dans la fabric</h3>
+<p>Profil <b>SMPTE ST 2059-2</b> : domaine 127, Announce toutes les 2^-2 s, Sync et Delay_Req toutes les 2^-3 s, expiration après 3 Announce manqués. Les commutateurs sont des <b>horloges frontières</b> (boundary clocks) : chacun se cale sur son maître (port esclave) et redistribue l'heure. L'élection du grand maître (<b>BMCA</b>) compare dans l'ordre : priority1, clockClass (6 = verrouillé GPS, 7 = holdover, 248 = horloge libre), précision, variance, priority2, identité. Protections : appareils en « slave only », « ptp role master » sur les ports d'accès, PTP marqué DSCP 46 et servi en priorité.</p>
+<h3>NMOS et SDP</h3>
+<p><b>IS-04</b> : chaque appareil s'enregistre (nœud, émetteurs, récepteurs) dans le registre, par le réseau de contrôle. <b>IS-05</b> : le contrôleur connecte un récepteur à un émetteur en lui transmettant le SDP. Le SDP ST 2110 décrit le format (sampling, width, height, exactframerate, colorimetry, TCS…), l'horloge PTP de référence (ts-refclk) et, pour ST 2022-7, les deux jambes regroupées par « a=group:DUP primary secondary » (RFC 7104). Si le registre tombe, les flux établis continuent : ce sont les commutateurs qui les portent.</p>
+<h3>Configuration : running et startup</h3>
+<p>Chaque modification (interface graphique ou ligne de commande) va dans la <b>running-config</b>. Elle n'est conservée après un redémarrage qu'après « <b>write memory</b> » (copie dans la startup-config). Le terminal accepte une syntaxe proche d'Arista EOS / Cisco NX-OS, simplifiée : show interfaces status, show vlan, show ip ospf neighbor, show ip route, show ip mroute, show ip igmp snooping groups, show ptp, show lldp neighbors, configure terminal, interface Ethernet5, switchport access vlan 101, speed 25g, mtu 9214, ptp role master, write memory…</p>
+<h3>Méthode de dépannage</h3>
+<ol><li>Délimiter : une réception ou toutes ? rouge, bleu ou les deux ? (une panne d'un seul réseau ne se voit pas à l'image).</li>
+<li>Couche 1 : port « connected » ? même vitesse aux deux bouts ? RS-FEC à 25G / 100G ?</li>
+<li>Couche 2 : bon VLAN ? snooping actif ? querier présent ? MTU ≥ 1 500 ?</li>
+<li>Couche 3 : adresse et passerelle cohérentes ? pas de conflit ? OSPF en FULL ?</li>
+<li>Multicast : plage SSM, IGMPv3, PIM sur les SVI et les uplinks, show ip mroute le long du chemin.</li>
+<li>Bande passante, puis PTP (show ptp parent), puis enregistrement NMOS. Après réparation : write memory.</li></ol>
+<p class="note">Simplifications : syntaxe et sorties des commandes inspirées des constructeurs sans en être la copie ; pas de BGP/EVPN, d'agrégats LACP ni de QoS fine ; minuteries raccourcies ; débits arrondis. Plan d'adressage et numérotation des ports : exemple pédagogique, à adapter aux conventions de votre car.</p>`},
   {
     id: 'hdrguide', title: 'HDR, SDR et colorimétrie', html: `
 <h3>Gamut et courbe</h3>

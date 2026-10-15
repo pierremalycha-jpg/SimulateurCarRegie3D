@@ -5,6 +5,7 @@ import { Builder, setLayer } from './geo.js';
 import { W, BOWL, TRUCK, PITCH, standHeightAt, bowlOffset, labelSprite } from './world.js';
 import { M } from './match.js';
 import { refPatched } from './patch.js';
+import { camPtpOk } from './net/fabric.js';
 import { clamp, spring, springAngle, wrapAngle, DEG, rand, randRange, kelvinRGBNorm, gauss, lerp } from './util.js';
 
 export const K_EXPO = { k: 256 * 0.18 / 0.105 }; // calibré : jour, f/8, ND 1/4, 0 dB -> gris moyen correct
@@ -466,7 +467,8 @@ export class BCam {
   }
   get signalOK() { return this.status.ok && (!this.rf || this.rf.state !== 'lost'); }
   // verrouillage sur la référence : état de la CCU et, en exercice de brassage, présence du cordon de référence
-  get genlock() { return this._gl !== false && (this.link === 'hf' || ['pov', 'ptz', 'drone'].includes(this.type) || refPatched(this.id)); }
+  // en SDI : référence tri-level / black burst ; en IP : verrouillage PTP de la CCU (net/fabric.js)
+  get genlock() { return this._gl !== false && (this.link === 'hf' || ['pov', 'ptz', 'drone'].includes(this.type) || refPatched(this.id)) && camPtpOk(this.id); }
   set genlock(v) { this._gl = !!v; }
 
   // --- exposition ---

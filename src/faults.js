@@ -2,7 +2,7 @@ import { S, emit, on, camById } from './state.js';
 import { el, randPick, fmt } from './util.js';
 import { ROUTER, EVS, evsSetRecording, route } from './pipeline.js';
 import { toast, intercom } from './ui/common.js';
-import { IP_FAULTS, NET } from './ipnet.js';
+import { IP_FAULTS, clearNetFaults } from './ipnet.js';
 import { AUDIO_FAULTS, AU, setSend, setLineDelay, SOUND_PLAN } from './audio.js';
 
 // Simulateur de pannes (formation chef de car / maintenance)
@@ -107,7 +107,7 @@ export function clearFaults() {
     a.done = true;
   }
   S.faults.jam = null; S.faults.tx = false;
-  Object.assign(NET, { red: true, blue: true, gm1: true, gm2: true, nmos: true, mvLink: 100, mvSat: false, gmActive: 1, lostPtpT: 0 });
+  clearNetFaults();
   emit('fault');
 }
 

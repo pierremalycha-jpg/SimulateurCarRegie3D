@@ -16,7 +16,7 @@ import { $, $$, toast, modal, openInfo, intercom } from './ui/common.js';
 import { openStation, closeStation, updateStation, stationKey, ST } from './ui/stations.js';
 import { initPlan, openPlan, closePlan, renderPlan, planPointer, planWheel, fitView, PLAN } from './ui/plan.js';
 import { openGuide, checkMissions, drawMissionCard } from './ui/guide.js';
-import { updateFaults, injectFault, ACTIVE, FAULTS } from './faults.js';
+import { updateFaults, injectFault, ACTIVE, FAULTS, clearFaults } from './faults.js';
 import { updateExercises, EX } from './exercises.js';
 import { openDevice, openEquipmentIndex } from './equipment/viewer.js';
 import { initShared, CFG, SH, setPerf } from './shared.js';
@@ -25,6 +25,7 @@ import { EQUIP, evsLayout, mixInputs } from './equip.js';
 import { patchEmpty } from './patch.js';
 import { updateScenario, SC } from './scenario.js';
 import { updateNet, NET } from './ipnet.js';
+import { FAB } from './net/fabric.js';
 import { FORMATS } from './data.js';
 
 // ----------------------------------------------------------------------------------
@@ -594,7 +595,7 @@ function frame(now) {
   record(S.cams);
   rfAcc += dt; if (rfAcc > 0.1) { updateRF(rfAcc); rfAcc = 0; }
   if (S.mode === 'fps') updatePlayer(dt);
-  updateGfx(dt); { const pgm = meSource(MIX.pgm); updateAudio(dt, { pgmSrc: pgm, replay: (pgm === 'EVSA' || pgm === 'EVSB') && EVS.ch[pgm === 'EVSA' ? 0 : 1].playing, studioOnAir: pgm === 'STUDIO' }); } updateTruck(S.time); updateExercises(dt); updateScenario(dt); updateNet(dt);
+  updateGfx(dt); { const pgm = meSource(MIX.pgm); updateAudio(dt, { pgmSrc: pgm, replay: (pgm === 'EVSA' || pgm === 'EVSB') && EVS.ch[pgm === 'EVSA' ? 0 : 1].playing, studioOnAir: pgm === 'STUDIO' }); } updateTruck(S.time); updateExercises(dt); updateScenario(dt); updateNet(dt, ROUTER.map, ROUTER.phase);
   slowAcc += dt; if (slowAcc > 0.5) { watchFps(slowAcc); slowAcc = 0; checkMissions(); updateFaults(); if (S.mode === 'fps') drawMissionCard(); }
 
   renderer.shadowMap.needsUpdate = S.quality !== 'basse' || S.frame % 2 === 0;
@@ -635,4 +636,4 @@ function updBrand() { paintTruckSign(CFG.car.name); const w2 = $('#where2'); if 
 document.fonts && document.fonts.ready.then(() => { W.boards && W.boards.redraw(); P.mvDirty = true; paintTruckSign(CFG.car.name); });
 requestAnimationFrame(frame);
 window.__S = S; // accès console pour le débogage
-window.__dbg = { S, M, MIX, EVS, ROUTER, P, W, T, PL, EX, teleport, openStation, closeStation, openPlan, closePlan, takeCamera, releaseCamera, start, openGuide, renderer, applyLighting, openDevice, openEquipmentIndex, openTrainer, CFG, SH, AU, SC, NET, emit, injectFault, ACTIVE, FAULTS, truckBlocked, truckFloorAt, goToStation, TRUCK };
+window.__dbg = { S, M, MIX, EVS, ROUTER, P, W, T, PL, EX, teleport, openStation, closeStation, openPlan, closePlan, takeCamera, releaseCamera, start, openGuide, renderer, applyLighting, openDevice, openEquipmentIndex, openTrainer, CFG, SH, AU, SC, NET, FAB, emit, injectFault, clearFaults, ACTIVE, FAULTS, truckBlocked, truckFloorAt, goToStation, TRUCK };

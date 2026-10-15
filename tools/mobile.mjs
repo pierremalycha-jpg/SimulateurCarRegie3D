@@ -18,12 +18,21 @@ await page.waitForTimeout(1500);
 await page.screenshot({ path: OUT + '/m1-start.png' });
 const sw = await page.evaluate(() => [document.documentElement.scrollWidth, document.querySelector('#start').scrollWidth]);
 console.log('scrollWidth', sw);
-await page.evaluate(() => window.__dbg.start('standard', 'jour', 'basse', false));
+await page.evaluate((ip) => window.__dbg.start('standard', 'jour', 'basse', false, 'HD', ip), process.argv[2] === 'ip');
 await page.waitForTimeout(3000);
 await page.screenshot({ path: OUT + '/m2-fps.png' });
 await page.evaluate(() => { window.__dbg.teleport(1); window.__dbg.openStation('melangeur'); });
 await page.waitForTimeout(3000);
 await page.screenshot({ path: OUT + '/m3-mixer.png' });
+if (process.argv[2] === 'ip') {
+  await page.evaluate(() => { window.__dbg.closeStation(); window.__dbg.openStation('reseau'); });
+  await page.waitForTimeout(2500);
+  await page.screenshot({ path: OUT + '/m5-reseau.png' });
+  console.log('reseau scrollWidth', await page.evaluate(() => [document.documentElement.scrollWidth, document.querySelector('#station').scrollWidth]));
+  await page.locator('#station .tabs .tab[data-k="switch"]').click(); await page.waitForTimeout(1200);
+  await page.screenshot({ path: OUT + '/m6-reseau-switch.png' });
+  console.log('switch scrollWidth', await page.evaluate(() => [document.documentElement.scrollWidth, document.querySelector('#station').scrollWidth]));
+}
 await page.evaluate(() => { window.__dbg.closeStation(); window.__dbg.openPlan(); });
 await page.waitForTimeout(3000);
 await page.screenshot({ path: OUT + '/m4-plan.png' });

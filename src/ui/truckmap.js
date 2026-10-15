@@ -16,7 +16,7 @@ const ZONE_HINT = {
   son: 'Cabine isolée : console, écoutes, loudness.',
   prod: '1re rangée : scripte, réalisateur, truquiste. 2e rangée (estrade) : habillage, production, chef de car.',
   vision: '1re rangée : ingénieurs vision (RCP). 2e rangée : ralentis (LSM) et IPDirector.',
-  tech: 'Baies : CCU, grille, mélangeur, multiviewers, EVS, transmission, synchro, intercom, brassage, audio, HF.',
+  tech: 'Baies : CCU, grille, mélangeur, réseau IP (spines, multiviewers), EVS, transmission, synchro, intercom, brassage, audio, HF. Les leaves IP sont en haut de chaque baie.',
 };
 
 function drawPlan(scale, labels) {

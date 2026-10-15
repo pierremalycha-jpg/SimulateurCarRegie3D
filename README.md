@@ -81,6 +81,27 @@ Le simulateur est réglé sur ce parc (modifiable dans l'Espace formateur → «
   - façades en bardage blanc, écrans d'angle plus petits ;
   - parvis arboré, maisons de mineurs individuelles.
 
+## Ce que contient la v6 : un vrai réseau ST 2110
+
+- **Deux fabrics spine-leaf indépendantes**, rouge (A) et bleue (B), pour ST 2022-7 : par réseau 2 spines 32 × 100 GbE,
+  6 leaves de haut de baie 48 × 25 GbE + 8 × 100 GbE (caméras, production, ralentis, monitoring, audio, passerelles),
+  2 × 100 GbE de chaque leaf vers chaque spine, deux grands maîtres PTP, un commutateur de contrôle (NMOS).
+- **Poste « Réseau IP »** (zone technique, baie « Réseau IP · Multiview ») :
+  - topologie vivante (charge des liens, OSPF, PIM, état des cartes rouge / bleu de chaque appareil) ;
+  - commutateurs configurables : face avant, ports (vitesse, FEC, MTU, VLAN, mode routé, PIM, OSPF, PTP), VLAN et SVI,
+    routage, multicast, PTP, QoS, running / startup-config avec différences, write memory, configuration usine ;
+  - **terminal** de type EOS / NX-OS (show interfaces status, show ip ospf neighbor, show ip mroute, show ip igmp snooping
+    groups, show ptp, configure terminal…, abréviations, « ? », Tab, « | include ») ;
+  - plan d'adressage modifiable (VLAN 100 × réseau + leaf, 10.réseau.leaf.0/24, /31 d'underlay, groupes 239.x), plan multicast ;
+  - flux NMOS : chemin réel de chaque réception sur chaque réseau, SDP avec « a=group:DUP », mode PIM-SSM ou contrôleur SDN ;
+  - PTP : élection BMCA, grands maîtres, horloges frontières, appareils « slave only » ;
+  - diagnostic : alarmes avec renvoi au port, méthode de dépannage.
+- **Effets réels à l'image** : flux perdu, pertes de paquets (lien saturé), refus SDN, caméra déverrouillée si PTP perdu.
+- **13 pannes réseau** : spines coupées, grand maître, registre NMOS, port du multiviewer à 25G, VLAN, snooping, querier,
+  plage SSM, MTU d'uplink, appareil élu grand maître, FEC, domaine PTP, conflit d'adresse.
+- Liste de câblage du car IP générée port par port, synoptiques réseau et PTP tirés de la vraie topologie, chapitre
+  « Réseau ST 2110 spine-leaf » et 22 termes de glossaire.
+
 ## Construire et tester
 
 ```
@@ -90,6 +111,8 @@ node tools/build.mjs --dev    # même chose sans minification
 node tools/v3.mjs OUT hd      # postes, son, pannes, formateur, perf (aussi : scenario, ip, ops)
 node tools/syn.mjs OUT sdi    # captures des synoptiques (aussi : faults, ip)
 node tools/reach.mjs          # chaque poste du car est-il accessible à pied ?
+node tools/netcli.mjs HD LEAF-R1 'sh ip route;;sh ptp'   # modèle réseau et CLI sans navigateur
+node tools/net.mjs OUT HD     # poste Réseau IP, terminal, pannes réseau et effets à l'image
 node tools/func.mjs           # tests fonctionnels historiques
 ```
 
@@ -106,13 +129,15 @@ node tools/func.mjs           # tests fonctionnels historiques
 | `rf.js` | Bilan de liaison HF, diversité, brouillage |
 | `pipeline.js` | Grille, mélangeur, EVS, multiview, retour antenne, mesures (waveform, vecteurscope), HDR |
 | `patch.js` | Baie de brassage : liaisons attendues, résolution des signaux, score |
-| `ipnet.js` | Car IP : réseaux ST 2022-7, PTP, NMOS, débits |
+| `ipnet.js` | Car IP : façade simple (état des réseaux, PTP, NMOS) et pannes réseau |
+| `net/fabric.js` | Réseau ST 2110 : topologie spine-leaf rouge / bleu, configurations des commutateurs, moteur d'évaluation (liens, OSPF, PIM-SSM / IGMPv3, bande passante, ST 2022-7, PTP BMCA, NMOS), SDP |
+| `net/cli.js` | Ligne de commande des commutateurs (syntaxe de type EOS / NX-OS) |
 | `audio.js` | Console son : sources, bus PGM / INTL / N-1, retard de ligne, embedder, loudness EBU R128, pannes son |
 | `scenario.js` | Scénario « jour de match » chronométré et noté |
 | `shared.js` | Données partagées de la page publiée (configuration, progression) avec repli local |
 | `review.js` | Points techniques à faire relire par le formateur |
 | `gfx.js` | Habillage (score, bandeaux, statistiques) |
 | `truck.js` (car) | Intérieur du car : plan, postes, baies et pupitres détaillés, collisions |
-| `ui/` | Synoptiques (`synoptics.js`), plan du car (`truckmap.js`), postes (`stations.js`, `st_vision.js`, `st_evs.js`, `st_mixer.js`, `st_ipd.js`, `st_patch.js`), espace formateur (`config.js`), rapports (`report.js`), plan, guide, missions |
+| `ui/` | Réseau IP (`st_network.js`), synoptiques (`synoptics.js`), plan du car (`truckmap.js`), postes (`stations.js`, `st_vision.js`, `st_evs.js`, `st_mixer.js`, `st_ipd.js`, `st_patch.js`), espace formateur (`config.js`), rapports (`report.js`), plan, guide, missions |
 | `equipment/` | Visionneuse de matériel : appareils (`devices.js`), liste de câblage (`cabling.js`), rendu SVG et photos (`viewer.js`) |
 | `faults.js`, `exercises.js` | Simulateur de pannes, réalisateur virtuel et opérateur EVS automatique |

@@ -196,17 +196,17 @@ function drawScripte(g, W, H) {
 // ---------------- baies : façades des appareils ----------------
 // unités : [hauteur en U, type, libellé]
 export const RACKS = {
-  ccu: { title: 'CCU 1-6', units: [[1, 'blank'], [3, 'hdcu2', 'HDCU-5500'], [3, 'hdcu2', 'HDCU-5500'], [3, 'hdcu2', 'HDCU-5500'], [1, 'vent'], [2, 'conv', 'CONV. FIBRE'], [1, 'blank'], [3, 'hdcu2', 'HDCU-5500'], [1, 'pdu', 'PDU'], [1, 'vent']], device: 'ccu' },
+  ccu: { title: 'CCU 1-6', units: [[1, 'sw1', 'LEAF R1 · CAMÉRAS'], [1, 'sw1', 'LEAF B1 · CAMÉRAS'], [3, 'hdcu2', 'HDCU-5500'], [3, 'hdcu2', 'HDCU-5500'], [3, 'hdcu2', 'HDCU-5500'], [1, 'vent'], [2, 'conv', 'CONV. FIBRE'], [1, 'blank'], [3, 'hdcu2', 'HDCU-5500'], [1, 'pdu', 'PDU'], [1, 'vent']], device: 'ccu' },
   ccu2: { title: 'CCU 7-12', units: [[1, 'blank'], [3, 'hdcu2', 'HDCU-5500'], [3, 'hdcu2', 'HDCU-5500'], [3, 'hdcu2', 'HDCU-5500'], [1, 'vent'], [2, 'msu', 'MSU'], [1, 'blank'], [2, 'conv', 'CONV. FIBRE'], [1, 'pdu', 'PDU']], device: 'ccu' },
   router: { title: 'Grille', units: [[1, 'blank'], [12, 'router', 'GRILLE VIDÉO 3G/12G 144×144'], [1, 'vent'], [2, 'panel', 'PANNEAU X-Y'], [1, 'pdu', 'PDU']], device: 'router' },
-  xvs: { title: 'Mélangeur', units: [[1, 'blank'], [6, 'xvs', 'XVS-6000'], [1, 'mks', 'MKS-X7700'], [1, 'vent'], [4, 'frame', 'CONVERSIONS / SYNCHROS'], [2, 'kvm', 'KVM'], [1, 'pdu', 'PDU']], device: 'mixer' },
-  mv: { title: 'Multiview', units: [[1, 'blank'], [2, 'mv', 'MULTIVIEWER 1'], [2, 'mv', 'MULTIVIEWER 2'], [1, 'vent'], [4, 'frame', 'CADRE MODULAIRE'], [4, 'frame', 'CADRE MODULAIRE'], [1, 'pdu', 'PDU']], device: 'mv' },
-  evs: { title: 'EVS', units: [[1, 'blank'], [6, 'xt4k', 'XT4K'], [1, 'vent'], [2, 'switch', 'SWITCH XNET / 10 GbE'], [2, 'ipd', 'SERVEUR IPDirector'], [1, 'kvm', 'KVM'], [1, 'pdu', 'PDU']], device: 'evs' },
-  tx: { title: 'Transmission', units: [[1, 'blank'], [1, 'enc', 'ENCODEUR JPEG XS'], [1, 'enc', 'ENCODEUR JPEG XS'], [1, 'enc', 'ENCODEUR HEVC'], [1, 'enc', 'MODULATEUR DVB-S2'], [1, 'vent'], [2, 'dec', 'DÉCODEUR RETOUR'], [2, 'frame', 'FIBRE OPÉRATEUR'], [1, 'pdu', 'PDU']], device: 'conv' },
+  xvs: { title: 'Mélangeur', units: [[1, 'sw1', 'LEAF R2 · PRODUCTION'], [1, 'sw1', 'LEAF B2 · PRODUCTION'], [6, 'xvs', 'XVS-6000'], [1, 'mks', 'MKS-X7700'], [1, 'vent'], [4, 'frame', 'CONVERSIONS / SYNCHROS'], [2, 'kvm', 'KVM'], [1, 'pdu', 'PDU']], device: 'mixer' },
+  mv: { title: 'Réseau IP · Multiview', units: [[1, 'sw1', 'SPINE ROUGE 1'], [1, 'sw1', 'SPINE ROUGE 2'], [1, 'blank'], [1, 'sw1', 'SPINE BLEUE 1'], [1, 'sw1', 'SPINE BLEUE 2'], [1, 'vent'], [1, 'sw1', 'LEAF R4 · MONITORING'], [1, 'sw1', 'LEAF B4 · MONITORING'], [1, 'sw1', 'SW CONTRÔLE · NMOS'], [1, 'blank'], [2, 'mv', 'MULTIVIEWER 1'], [2, 'mv', 'MULTIVIEWER 2'], [1, 'vent'], [4, 'frame', 'PASSERELLES SDI ↔ IP'], [1, 'pdu', 'PDU']], device: 'swred' },
+  evs: { title: 'EVS', units: [[1, 'sw1', 'LEAF R3 · RALENTIS'], [1, 'sw1', 'LEAF B3 · RALENTIS'], [6, 'xt4k', 'XT4K'], [1, 'vent'], [2, 'switch', 'SWITCH XNET / 10 GbE'], [2, 'ipd', 'SERVEUR IPDirector'], [1, 'kvm', 'KVM'], [1, 'pdu', 'PDU']], device: 'evs' },
+  tx: { title: 'Transmission', units: [[1, 'sw1', 'LEAF R6 · PASSERELLES'], [1, 'sw1', 'LEAF B6 · PASSERELLES'], [1, 'enc', 'ENCODEUR JPEG XS'], [1, 'enc', 'ENCODEUR JPEG XS'], [1, 'enc', 'ENCODEUR HEVC'], [1, 'enc', 'MODULATEUR DVB-S2'], [1, 'vent'], [2, 'dec', 'DÉCODEUR RETOUR'], [2, 'frame', 'FIBRE OPÉRATEUR'], [1, 'pdu', 'PDU']], device: 'conv' },
   spg: { title: 'Synchro', units: [[1, 'blank'], [1, 'spg', 'SPG · GPS'], [1, 'spg', 'SPG SECOURS'], [1, 'chg', 'COMMUTATEUR AUTO'], [1, 'vent'], [2, 'da', 'DISTRIB. RÉFÉRENCE'], [2, 'da', 'DISTRIB. RÉFÉRENCE'], [2, 'tcd', 'TIMECODE'], [1, 'pdu', 'PDU']], device: 'spg' },
   icom: { title: 'Intercom', units: [[1, 'blank'], [6, 'matrix', 'MATRICE INTERCOM'], [1, 'vent'], [2, 'beltpack', 'BASE BELTPACKS'], [2, 'bridge', 'INTERFACES 4 FILS'], [1, 'pdu', 'PDU']] },
   patch: { title: 'Patch', units: [[1, 'blank'], [2, 'jack', 'VIDÉO IN 1-24'], [2, 'jack', 'VIDÉO IN 25-48'], [2, 'jack', 'GRILLE IN'], [2, 'jack', 'GRILLE OUT'], [2, 'jack', 'DÉPARTS / EVS'], [2, 'jack', 'RÉFÉRENCES'], [1, 'blank'], [2, 'jack', 'AUDIO']], device: 'pdc' },
-  audio: { title: 'Audio', units: [[1, 'blank'], [4, 'frame', 'CONSOLE · CŒUR DSP'], [1, 'madi', 'MADI / DANTE'], [1, 'madi', 'EMBEDDERS'], [1, 'madi', 'DÉSEMBEDDERS'], [1, 'vent'], [2, 'frame', 'UNITÉ COMMENTAIRE'], [1, 'pdu', 'PDU']] },
+  audio: { title: 'Audio', units: [[1, 'sw1', 'LEAF R5 · AUDIO'], [1, 'sw1', 'LEAF B5 · AUDIO'], [4, 'frame', 'CONSOLE · CŒUR DSP'], [1, 'madi', 'MADI / DANTE'], [1, 'madi', 'EMBEDDERS'], [1, 'madi', 'DÉSEMBEDDERS'], [1, 'vent'], [2, 'frame', 'UNITÉ COMMENTAIRE'], [1, 'pdu', 'PDU']] },
   rx: { title: 'Réception HF', units: [[1, 'blank'], [1, 'rx', 'RÉCEPTEUR HF 1'], [1, 'rx', 'RÉCEPTEUR HF 2'], [1, 'rx', 'RÉCEPTEUR HF 3'], [1, 'rx', 'RÉCEPTEUR HF 4'], [1, 'vent'], [2, 'dec', 'DÉCODEURS'], [2, 'frame', 'CONTRÔLE ANTENNES'], [1, 'pdu', 'PDU']], device: 'rx' },
   ups: { title: 'Énergie', units: [[1, 'blank'], [3, 'ups', 'ONDULEUR'], [3, 'ups', 'ONDULEUR'], [1, 'vent'], [2, 'pdu', 'DISTRIBUTION 230 V'], [2, 'pdu', 'SURVEILLANCE ÉNERGIE']] },
 };
@@ -230,7 +230,15 @@ function drawRackFace(key, g, W, H) {
     rr(g, x, y, w, h, 3, face, '#0a0b0d');
     // vis de fixation
     g.fillStyle = '#5a6068'; for (const yy of u > 1 ? [y + 8, y + h - 8] : [y + h / 2]) { g.beginPath(); g.arc(x + 9, yy, 3, 0, 7); g.arc(x + w - 9, yy, 3, 0, 7); g.fill(); }
-    if (type === 'vent') { for (let i = 0; i < 40; i++) { g.fillStyle = '#0b0c0e'; g.fillRect(x + 30 + i * 10, y + 10, 5, h - 20); } }
+    if (type === 'sw1') {
+      // commutateur 1 U : étiquette, 48 cages SFP28 sur deux rangées, 8 QSFP28 ; liseré rouge ou bleu
+      const blue = /BLEU|B\d/.test(label), ctl = /CONTRÔLE/.test(label);
+      g.fillStyle = ctl ? '#8b949e' : blue ? '#2f7ff0' : '#e03a30'; g.fillRect(x + 4, y + 3, 5, h - 6);
+      rr(g, x + 16, y + 5, 150, h - 10, 2, '#0d1218'); txt(g, label, x + 91, y + h / 2, 12, ctl ? '#c9d1d9' : blue ? '#9ec8ff' : '#ffb0a8', 'center', 700);
+      for (let r = 0; r < 2; r++) for (let i = 0; i < 24; i++) { const px = x + 176 + i * 9.5 + Math.floor(i / 6) * 3, py = y + 7 + r * 15; g.fillStyle = '#05070a'; g.fillRect(px, py, 7.5, 11); g.fillStyle = (i * 7 + r * 3) % 5 ? '#30ff60' : '#16301c'; g.fillRect(px + 1, py + 1, 2.5, 2); }
+      for (let i = 0; i < 4; i++) for (let r = 0; r < 2; r++) { const px = x + w - 66 + i * 14, py = y + 7 + r * 15; g.fillStyle = '#05070a'; g.fillRect(px, py, 12, 11); g.fillStyle = '#30ff60'; g.fillRect(px + 1, py + 1, 3, 2); }
+      spots.push([x + 178, y + 9], [x + 245, y + 24], [x + w - 64, y + 9]);
+    } else if (type === 'vent') { for (let i = 0; i < 40; i++) { g.fillStyle = '#0b0c0e'; g.fillRect(x + 30 + i * 10, y + 10, 5, h - 20); } }
     else if (type === 'hdcu2') {
       // deux CCU demi-largeur côte à côte
       for (const k of [0, 1]) {
@@ -529,7 +537,7 @@ export function buildTruck() {
   st('ccu', 'Baie CCU', 4.55, -1.3, [4.55, 1.25, rackPos.ccu.faceZ - TRUCK.cz], { r: 1.3, zone: 'tech', device: 'ccu' });
   st('grille', 'Grille', 5.45, -1.3, rk('router'), { r: 1.2, zone: 'tech', device: 'router' });
   st('xvsrack', 'Mélangeur (processeur)', 6.05, -1.3, rk('xvs'), { r: 1.1, station: 'melangeur', zone: 'tech', device: 'mixer', short: 'Mélangeur (proc.)' });
-  st('mvrack', 'Multiviewers', 6.65, -1.3, rk('mv'), { r: 1.1, station: 'grille', zone: 'tech', device: 'mv' });
+  st('reseau', 'Réseau IP · spines et multiview', 6.65, -1.3, rk('mv'), { r: 1.1, zone: 'tech', device: 'swred', short: 'Réseau IP' });
   st('evsrack', 'Serveur EVS XT4K', 7.25, -1.3, rk('evs'), { r: 1.1, station: 'evs', arg: 0, zone: 'tech', device: 'evs' });
   st('transmission', 'Transmission', 7.85, -1.3, rk('tx'), { r: 1.1, zone: 'tech', device: 'conv' });
   st('synchro', 'Synchro (SPG)', 5.1, 1.3, rk('spg'), { r: 1.1, zone: 'tech', device: 'spg' });

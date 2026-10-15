@@ -18,7 +18,9 @@ import { buildMixer } from './st_mixer.js';
 import { buildIPD } from './st_ipd.js';
 import { buildPatch } from './st_patch.js';
 import { mixInputs, EQUIP } from '../equip.js';
-import { NET, netStatus, flowGbps, mcastOf, mvCapacity } from '../ipnet.js';
+import { netStatus, flowGbps, mcastOf } from '../ipnet.js';
+import { FAB, markDirty, camPtpOk } from '../net/fabric.js';
+import { buildNetwork } from './st_network.js';
 import { openDevice, openEquipmentIndex } from '../equipment/viewer.js';
 import { buildCabling, SIG, DEV_NAMES, endLabel } from '../equipment/cabling.js';
 import { DEVICE_LIST } from '../equipment/devices.js';
@@ -47,6 +49,7 @@ const STATIONS = {
   synchro: { title: 'Synchro et timecode', build: buildSync, layout: 'top sm', dev: 'spg' },
   transmission: { title: 'Transmission', build: buildTX, layout: 'top' },
   intercom: { title: 'Intercom', build: buildIntercom, layout: 'none' },
+  reseau: { title: 'Réseau IP (ST 2110 · spine-leaf)', build: buildNetwork, layout: 'top sm', dev: 'swred' },
 };
 export function hasStation(id) { return !!STATIONS[id]; }
 
@@ -106,6 +109,7 @@ const STATION_HELLO = {
   transmission: 'Comparez le départ vers la chaîne et le retour antenne (en retard de quelques secondes).',
   habillage: 'À gauche, la sortie fill/key du moteur graphique ; à droite, le programme : le graphique n\'y apparaît que si le DSK est à l\'antenne.',
   chefdecar: 'Le multiview reste visible pendant que vous lisez le synoptique ou injectez des pannes.',
+  reseau: 'Deux réseaux identiques et indépendants (rouge et bleu) en spine-leaf. Cliquez un commutateur pour le configurer (interface graphique ou terminal) : chaque réglage agit réellement sur ce que reçoivent le mélangeur, l\'EVS et le multiview ci-dessus.',
 };
 const later = (fn) => setTimeout(fn, 160);
 // moniteur du dock : label + écran 16/9 rendu par WebGL
@@ -494,7 +498,7 @@ function buildAudio(body, arg, ctx) {
   return {
     frame() { for (const k in AU.ch) draw(meters[k], AU.ch[k].peak); draw(meters.master, Math.max(AU.master.peakL, AU.master.peakR)); drawBus(); },
     update() {
-      for (const k in AU.ch) { const c = AU.ch[k]; st[k].mute.classList.toggle('pgm', c.mute); st[k].intl.classList.toggle('lit', !!c.intl); st[k].n1.classList.toggle('lit', !!c.n1); st[k].intl.classList.toggle('pvw', c.comm && c.intl); st[k].n1.classList.toggle('pvw', c.comm && c.n1); }
+      for (const k in AU.ch) { const c = AU.ch[k]; st[k].mute.classList.toggle('pgm', c.mute); st[k].intl.classList.toggle('lit', !!c.intl); st[k].n1.classList.toggle('lit', !!c.n1); st[k].intl.classList.toggle('pvw', c.comm && c.intl); st[k].n1.classList.toggle('pvw', c.comm && c.n1); st[k].classList.toggle('netlost', !!c.netLost); st[k].title = c.netLost ? 'Flux ST 2110-30 non reçu par la console (voir le poste Réseau IP)' : ''; }
       for (const k in monBtns) monBtns[k].classList.toggle('lit', AU.monitor === k);
       const L = AU.lufs; lufs.textContent = AU.ctx ? `M ${fmt(L.m, 1)}  S ${fmt(L.s, 1)}  I ${fmt(L.i, 1)} LUFS` : 'Son désactivé';
       const off = avOffsetMs(); const ok = avOk(off);
@@ -657,11 +661,10 @@ function buildRouter(body, arg, ctx) {
   buildTabs(); buildDests(); buildSrcs();
   const netBox = el('div', { class: 'list' });
   const netPanel = ip ? el('div', { class: 'hwpanel' }, el('h3', {}, 'Réseau ST 2110 · contrôleur NMOS'),
-    el('p', { class: 'note' }, `Dans ce car IP, la « grille » est un réseau : deux commutateurs indépendants (rouge et bleu) transportent chaque flux en double (ST 2022-7), synchronisés par PTP. Un flux vidéo ${S.format === 'UHD' ? 'UHD' : 'HD'} fait ≈ ${String(flowGbps()).replace('.', ',')} Gb/s par réseau.`), netBox,
+    el('p', { class: 'note' }, `Dans ce car IP, la « grille » est un contrôleur NMOS : il demande à chaque récepteur de s'abonner au flux de l'émetteur choisi, sur deux réseaux spine-leaf indépendants (rouge et bleu, ST 2022-7), synchronisés par PTP. Un flux vidéo ${S.format === 'UHD' ? 'UHD' : 'HD'} fait ≈ ${String(fmt(flowGbps(), 2)).replace('.', ',')} Gb/s par réseau. Le détail (commutateurs, VLAN, multicast, PTP) est au poste « Réseau IP ».`), netBox,
     el('div', { class: 'hwrow' },
-      el('button', { class: 'btn small', onclick: () => { NET.red = true; NET.blue = true; explain('Liens réseau rétablis (optique SFP ou jarretière remplacée) : les flux arrivent de nouveau par les deux réseaux, la redondance ST 2022-7 est restaurée.'); } }, 'Rétablir les liens rouge/bleu'),
-      el('button', { class: 'btn small', onclick: () => { NET.nmos = true; explain('Registre NMOS redémarré : les appareils se réenregistrent (IS-04) et le contrôleur peut de nouveau établir des connexions (IS-05).'); } }, 'Redémarrer le registre NMOS'),
-      el('button', { class: 'btn small', onclick: () => { NET.mvLink = 100; NET.mvSat = false; emit('router', {}); explain(`Multiviewer basculé sur son uplink 100 GbE : il peut recevoir ${mvCapacity()} flux. En IP, la bande passante se réserve comme une ressource.`); } }, 'Multiviewer sur l\'uplink 100G'))) : null;
+      el('button', { class: 'btn small primary', onclick: () => openStation('reseau') }, 'Ouvrir le poste Réseau IP'),
+      el('button', { class: 'btn small', onclick: () => { FAB.registryUp = true; markDirty(); explain('Registre NMOS redémarré : les appareils se réenregistrent (IS-04) et le contrôleur peut de nouveau établir des connexions (IS-05).'); } }, 'Redémarrer le registre NMOS'))) : null;
   body.append(netPanel, el('div', { class: 'hwpanel' }, el('h3', {}, ip ? '1 · Récepteur (destination)' : '1 · Destination'), tabs, dGrid),
     el('div', { class: 'hwpanel' }, el('h3', {}, ip ? '2 · Émetteur (source)' : '2 · Source'), sGrid),
     el('div', { class: 'hwpanel' }, el('h3', {}, ip ? '3 · Connecter (IS-05)' : '3 · Prendre'), el('div', { class: 'hwrow' }, cur, take,
@@ -719,7 +722,7 @@ function buildCCU(body, arg, ctx) {
         let txt = '', cls = 'ok';
         if (c.fiberCut) { txt = 'OPTIQUE : PAS DE SIGNAL (< -30 dBm)'; cls = 'err'; }
         else if (!c.status.ok) { txt = c.status.power ? 'ERREUR LIAISON' : 'ALIM. COUPÉE (câble trop long)'; cls = 'err'; }
-        else if (!c.genlock) { txt = 'RÉF. NON VERROUILLÉE'; cls = 'err'; }
+        else if (!c.genlock) { txt = S.ipMode && !camPtpOk(c.id) ? 'PTP NON VERROUILLÉ (poste Réseau IP)' : 'RÉF. NON VERROUILLÉE'; cls = 'err'; }
         else if (c.rf) { txt = `HF ${c.rf.state === 'ok' ? 'OK' : c.rf.state === 'err' ? 'ERREURS' : 'PERDUE'} · marge ${fmt(c.rf.margin, 1)} dB`; cls = c.rf.state === 'ok' ? 'ok' : c.rf.state === 'err' ? 'warn' : 'err'; }
         else txt = `ALIM. ${LINKS[c.link].power ? 'CCU' : 'LOCALE'} · ${optical != null ? 'OPT. ' + fmt(optical, 1) + ' dBm · ' : ''}RÉF. LOCK`;
         r.st.textContent = txt; r.st.className = 'pill ' + cls; r.dot.className = 'dot ' + (cls === 'ok' ? 'green' : cls === 'warn' ? 'amber' : 'red');
@@ -738,7 +741,7 @@ function buildSync(body, arg, ctx) {
     el('div', { class: 'hwrow' }, el('button', { class: 'btn small', onclick: () => { S.faults.gps = !S.faults.gps; explain(S.faults.gps ? 'GPS perdu : le SPG passe en holdover. Son oscillateur (OCXO) continue de générer la référence avec une dérive de l\'ordre de quelques ns par heure : l\'antenne n\'est pas affectée.' : 'GPS retrouvé : le SPG se ré-asservit lentement (sans saut de phase) pour ne pas perturber les équipements.', 'sync:gps'); } }, 'Simuler une perte GPS'),
       el('button', { class: 'btn small', onclick: () => { for (const c of S.cams) c.genlock = true; toast('Toutes les CCU re-verrouillées sur la référence', 'good'); emit('repair', 'genlock'); explain('Toutes les CCU re-verrouillées : elles reçoivent le tri-level (ou black burst) du SPG par les distributeurs et alignent leur sortie sur la même phase.'); } }, 'Re-verrouiller toutes les CCU'),
       el('button', { class: 'btn small', onclick: () => openDevice('spg', 1) }, 'Voir le SPG'), el('button', { class: 'btn small', onclick: () => openDevice('da', 1) }, 'Voir les DA de référence')),
-      S.ipMode ? el('div', { class: 'hwrow' }, el('button', { class: 'btn small', onclick: () => { NET.gm1 = !NET.gm1; NET.lostPtpT = 0; explain(NET.gm1 ? 'Grand maître PTP 1 remis en service : avec la meilleure classe d\'horloge (GPS verrouillé), il est réélu par l\'algorithme BMCA.' : 'Grand maître 1 coupé : après quelques secondes sans messages Announce, les horloges relais (commutateurs) élisent le grand maître 2. Les appareils restent synchronisés.', 'sync:ptp'); } }, 'Couper / rétablir le grand maître PTP 1'), el('button', { class: 'btn small', onclick: () => { NET.gm2 = !NET.gm2; } }, 'Couper / rétablir le grand maître PTP 2')) : null),
+      S.ipMode ? el('div', { class: 'hwrow' }, el('button', { class: 'btn small', onclick: () => { FAB.gm.gm1.up = !FAB.gm.gm1.up; markDirty(); explain(FAB.gm.gm1.up ? 'Grand maître PTP 1 remis en service : avec la meilleure priorité (priority1 100) et le GPS verrouillé, il est réélu par l\'algorithme BMCA.' : 'Grand maître 1 coupé : après 3 messages Announce manqués, les horloges frontières (commutateurs) élisent le grand maître 2. Les appareils restent synchronisés.', 'sync:ptp'); } }, 'Couper / rétablir le grand maître PTP 1'), el('button', { class: 'btn small', onclick: () => { FAB.gm.gm2.up = !FAB.gm.gm2.up; markDirty(); } }, 'Couper / rétablir le grand maître PTP 2'), el('button', { class: 'btn small', onclick: () => openStation('reseau', null) }, 'PTP détaillé (poste Réseau IP)')) : null),
     el('div', { class: 'hwpanel prose' }, el('h3', {}, 'Pourquoi synchroniser ?'), el('p', {}, STATION_INFO.synchro.role), el('p', {}, 'Le SPG est asservi au GPS. S\'il perd le GPS, il passe en « holdover » : son oscillateur interne garde la référence stable pendant des heures, l\'antenne continue. Si une CCU perd la référence, son image saute ou roule à la commutation : c\'est visible immédiatement au multiview.'))));
   return {
     update() {
@@ -746,7 +749,7 @@ function buildSync(body, arg, ctx) {
       st.innerHTML = '';
       const rows = [['Verrouillage', S.faults.gps ? 'HOLDOVER (GPS perdu)' : 'GPS LOCK · 11 satellites'], ['Sorties BB', 'Black burst 625 lignes 50 Hz × 4'], ['Sorties tri-level', S.format === 'HDi' ? '1080i50 × 4' : '1080p50 × 4'], ['Timecode', 'LTC 25 i/s, heure locale'], ['Horloge audio', 'Word clock 48 kHz'], ['PTP', 'Grand maître ST 2059-2, domaine 127'], ['Secours', 'SPG n°2 en veille, bascule automatique']];
       for (const [k, v] of rows) st.append(el('dt', {}, k), el('dd', {}, v));
-      if (S.ipMode) for (const it of netStatus().filter((x) => x.t === 'PTP')) st.append(el('dt', {}, 'PTP (car IP)'), el('dd', { class: it.level === 'ok' ? '' : it.level === 'warn' ? 'warn' : 'err' }, `${it.s} · domaine 127 · offsets < 100 ns`));
+      if (S.ipMode) for (const it of netStatus().filter((x) => x.t === 'PTP')) st.append(el('dt', {}, 'PTP (car IP)'), el('dd', { class: it.level === 'ok' ? '' : it.level === 'warn' ? 'warn' : 'err' }, `${it.s} · horloges frontières dans les commutateurs`));
       const bad = S.cams.filter((c) => !c.genlock).map((c) => 'CAM ' + c.id);
       if (bad.length) st.append(el('dt', {}, 'Alarmes'), el('dd', { class: 'err' }, 'Référence non verrouillée : ' + bad.join(', ')));
     },

@@ -8,7 +8,8 @@ import { rtSize, lineupStep } from './bcam.js';
 import { makeCanvas, tc, clockStr, clamp, roundRect } from './util.js';
 import { EQUIP, mixInputs, evsLayout } from './equip.js';
 import { routerInOf, physToLogical, destFeed } from './patch.js';
-import { NET, netOk, ptpLocked, mvCapacity } from './ipnet.js';
+import { NET, netOk, ptpLocked } from './ipnet.js';
+import { FAB, delivery } from './net/fabric.js';
 
 const FONT = '"Saira Condensed", "Arial Narrow", sans-serif';
 const MONO = '"JetBrains Mono", ui-monospace, monospace';
@@ -142,6 +143,11 @@ export function routeRec(ch, src, silent = false, dryRun = false) {
 
 export function route(dest, src) {
   if (S.ipMode && !NET.nmos) return 'Registre NMOS injoignable : le contrôleur ne peut plus établir de connexion (IS-05). Les flux déjà établis continuent.';
+  if (S.ipMode && FAB.res) {
+    const rx = FAB.rx[dest.startsWith('EVSREC') ? 'REC' + dest.slice(6) : dest]; const f = src && FAB.flows['v:' + src];
+    if (rx && !FAB.res.reg[rx.dev]) return `Récepteur « ${rx.label} » absent du registre NMOS (port de contrôle coupé ou mauvais VLAN) : le contrôleur ne le voit pas.`;
+    if (f && FAB.res.reg[f.dev] === false) return `Émetteur « ${f.label} » absent du registre NMOS : le contrôleur ne connaît pas son SDP.`;
+  }
   if (dest.startsWith('ME') && +dest.slice(2) > mixInputs()) return `Entrée ${dest.slice(2)} indisponible : en 4K, le ${EQUIP.mixer} n'a que ${mixInputs()} entrées dans cette configuration.`;
   if (dest.startsWith('REC')) { const err = routeRec(+dest.slice(3), src); if (!err) emit('router', { dest, src }); return err; }
   ROUTER.map[dest] = src;
@@ -176,7 +182,7 @@ export function recSource(k) { return destFeed('EVSREC' + k, ROUTER); }
 export function feedOf(dest) { return destFeed(dest, ROUTER); }
 export function recordedCams() {
   const set = new Set();
-  for (let i = 1; i <= evsLayout().rec; i++) { const s = recSource(i); if (s && s.startsWith('CAM') && camById(+s.slice(3))) set.add(+s.slice(3)); }
+  for (let i = 1; i <= evsLayout().rec; i++) { const s = recSource(i); if (s && s.startsWith('CAM') && camById(+s.slice(3)) && (!S.ipMode || delivery(s, 'REC' + i).ok)) set.add(+s.slice(3)); }
   return [...set].sort((a, b) => a - b);
 }
 export function canReplay(camId, t) {
@@ -420,9 +426,33 @@ function blit(renderer, mat, target) { fsQuad.material = mat; renderer.setRender
 // Résolution d'une source vers une texture
 // ----------------------------------------------------------------------------------
 export const P = { rts: {}, delay: { rts: [], times: [], idx: 0, n: 44, k: 0, delay: 1.35 }, mvDirty: true };
-export function resolve(id, depth = 0, direct = false) {
+// car IP : ce que reçoit réellement le récepteur « dest » (réseaux rouge + bleu, ST 2022-7)
+function ipWhy(r = '') {
+  return /SDN/.test(r) ? 'Refusé par le contrôleur SDN' : /querier|expirée/.test(r) ? 'Abonnement IGMP expiré' : /SSM/.test(r) ? 'Groupe hors plage SSM' : /IGMPv2/.test(r) ? 'IGMPv2 : jonction (S,G) refusée' : /VLAN/.test(r) ? 'Erreur de VLAN' : /conflit/i.test(r) ? 'Conflit d\'adresse IP' : /FEC|vitesse|shutdown|hors tension|non raccordé|pas de carte/.test(r) ? 'Lien réseau coupé' : /PIM|OSPF|spine|RPF|multicast/.test(r) ? 'Routage multicast' : /MTU/.test(r) ? 'MTU trop petite' : /passerelle|adresse/.test(r) ? 'Erreur d\'adressage IP' : 'Voir le poste Réseau IP';
+}
+const LOSS_TEX = [];
+function lossTex(k) {
+  if (LOSS_TEX[k]) return LOSS_TEX[k];
+  const c = makeCanvas(480, 270); const g = c.getContext('2d');
+  g.fillStyle = '#101214'; g.fillRect(0, 0, 480, 270);
+  let seed = 17 + k * 101; const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+  for (let y = 0; y < 270; y += 3) if (rnd() < 0.55) { g.fillStyle = `hsl(${rnd() * 360},${30 + rnd() * 40}%,${20 + rnd() * 45}%)`; const x = rnd() * 400; g.fillRect(x, y, 40 + rnd() * 300, 2 + Math.floor(rnd() * 3)); }
+  g.fillStyle = 'rgba(0,0,0,.6)'; g.fillRect(70, 112, 340, 46);
+  g.fillStyle = '#ffb020'; g.font = `700 28px ${FONT}`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('PERTES DE PAQUETS', 240, 135);
+  return (LOSS_TEX[k] = canvasTex(c));
+}
+export function resolve(id, depth = 0, direct = false, dest = null) {
   if (!id) return { tex: TEX.black, scale: SC, alarm: '' };
   if (S.ipMode && depth === 0 && !direct && !netOk()) return { tex: noSignalTex('PERTE RÉSEAU', 'Réseaux rouge et bleu coupés'), scale: SC, alarm: 'NO FLOW' };
+  if (S.ipMode && depth === 0 && dest) {
+    const d = delivery(id, dest);
+    if (!d.ok) return { tex: noSignalTex(d.reason && /SDN/.test(d.reason) ? 'FLUX REFUSÉ' : 'FLUX PERDU', ipWhy(d.reason)), scale: SC, alarm: 'NO FLOW', none: true };
+    if (d.loss > 0.001) {
+      const r = resolve(id, depth, direct);
+      if (Math.random() < Math.min(0.85, 0.15 + d.loss)) return { tex: lossTex(S.frame % 3), scale: SC, alarm: 'PERTES IP', cam: r.cam };
+      return { ...r, alarm: 'PERTES IP' };
+    }
+  }
   // exercice de brassage : ce qui arrive réellement sur l'entrée de grille de cette source
   if (S.patch.on && depth === 0 && !direct) {
     const n = routerInOf(id);
@@ -515,8 +545,8 @@ export function tallyOf(src) {
   return t;
 }
 
-// car IP : le multiviewer ne reçoit pas plus de flux que son lien ne peut en porter
-function mvRefused(role) { return S.ipMode && role.startsWith('MV') && +role.slice(2) > mvCapacity() - 2; }
+// récepteur du multiviewer correspondant à une tuile
+const mvDest = (role) => (role === 'PGM' ? 'MVPGM' : role === 'PVW' ? 'MVPVW' : role);
 function drawOverlay() {
   const g = MV.overlay.ctx; const W_ = MV.w;
   g.clearRect(0, 0, W_, MV.h);
@@ -526,7 +556,7 @@ function drawOverlay() {
     if (t.role === 'PGM') { src = meSource(MIX.pgm); label = 'PGM · ' + sourceLabel(src); }
     else if (t.role === 'PVW') { src = meSource(MIX.pst); label = 'PVW · ' + sourceLabel(src); }
     else { src = ROUTER.map[t.role]; label = sourceLabel(src); }
-    const r = mvRefused(t.role) ? { alarm: 'FLUX REFUSÉ' } : resolve(src, 0, t.role === 'PGM' || t.role === 'PVW');
+    const r = resolve(src, 0, t.role === 'PGM' || t.role === 'PVW', mvDest(t.role));
     const tal = t.role === 'PGM' ? 2 : t.role === 'PVW' ? 1 : tallyOf(src);
     const big = t.w > 500;
     // bordure
@@ -559,7 +589,7 @@ function drawOverlay() {
   g.fillStyle = 'rgba(0,0,0,0.85)'; roundRect(g, 960 - 170, 540 - 80, 340, 64, 6); g.fill();
   g.strokeStyle = '#3a4048'; g.lineWidth = 2; g.stroke();
   g.fillStyle = '#ffd23f'; g.font = `600 34px ${MONO}`; g.textAlign = 'center'; g.fillText(tc(tod), 960, 540 - 48);
-  g.fillStyle = '#9aa4ad'; g.font = `500 16px ${FONT}`; g.fillText(`TC · ${S.format === 'UHD' ? '2160p50 HDR' : S.format === 'HD' ? '1080p50' : '1080i50'} · ${S.ipMode ? 'ST 2110 · PTP ' + (ptpLocked() ? (NET.gm1 ? 'GM1' : 'GM2') : 'PERDU') + (NET.red && NET.blue ? '' : ' · 2022-7 DÉGRADÉ') : 'RÉF. GPS ' + (S.faults.gps ? 'HOLDOVER' : 'OK')}`, 960, 540 - 22);
+  g.fillStyle = '#9aa4ad'; g.font = `500 16px ${FONT}`; g.fillText(`TC · ${S.format === 'UHD' ? '2160p50 HDR' : S.format === 'HD' ? '1080p50' : '1080i50'} · ${S.ipMode ? 'ST 2110 · PTP ' + (ptpLocked() ? (NET.gmActive === 2 ? 'GM2' : 'GM1') : NET.rogue ? 'NON TRAÇABLE' : 'PERDU') + (NET.redState === 'ok' && NET.blueState === 'ok' ? '' : ' · 2022-7 DÉGRADÉ') : 'RÉF. GPS ' + (S.faults.gps ? 'HOLDOVER' : 'OK')}`, 960, 540 - 22);
   MV.overlay.tex.needsUpdate = true;
 }
 function drawDyn() {
@@ -746,7 +776,7 @@ export function renderPipeline(renderer, dt) {
   const scene = W.scene;
   for (const m of W.screens) m.uniforms.uLin.value = 1;
   // écran géant
-  const giant = resolve(feedOf('GIANT'));
+  const giant = resolve(feedOf('GIANT'), 0, false, 'AUX_GIANT');
   W.giantScreen.material.uniforms.map.value = giant.tex; W.giantScreen.material.uniforms.uGain.value = 1.1 * giant.scale;
   captureLive(S.cams);
   applySnapshot(LIVE);
@@ -792,7 +822,7 @@ export function renderPipeline(renderer, dt) {
   gfxFillMat.uniforms.tD.value = GFX.main.tex; blit(renderer, gfxFillMat, P.rts.gfx);
 
   // --- mélangeur ---
-  const a = resolve(meSource(MIX.pgm)), b = resolve(meSource(MIX.pst)), k = resolve(meSource(MIX.key1.src));
+  const a = resolve(meSource(MIX.pgm), 0, false, 'ME' + MIX.pgm), b = resolve(meSource(MIX.pst), 0, false, 'ME' + MIX.pst), k = resolve(meSource(MIX.key1.src), 0, false, 'ME' + MIX.key1.src);
   const u = mixMat.uniforms;
   const safe = (r) => (r.out ? { tex: TEX.black, scale: SC } : r); // pas de boucle de retour
   const A = safe(a), B = safe(b), Kk = safe(k);
@@ -813,7 +843,7 @@ export function renderPipeline(renderer, dt) {
   const D = P.delay; D.k++;
   if (D.k % 2 === 0) {
     const txSrc = feedOf(S.txPath === 2 ? 'TX2' : 'TX1');
-    const tx = txSrc ? resolve(txSrc) : { tex: noSignalTex('PAS DE DÉPART', 'Sortie de grille non brassée'), scale: SC };
+    const tx = txSrc ? resolve(txSrc, 0, false, S.txPath === 2 ? 'AUX_TX2' : 'AUX_TX1') : { tex: noSignalTex('PAS DE DÉPART', 'Sortie de grille non brassée'), scale: SC };
     copyMat.uniforms.map.value = tx.tex;
     copyMat.uniforms.uGain.value = tx.scale;
     blit(renderer, copyMat, D.rts[D.idx]); D.times[D.idx] = S.time; D.idx = (D.idx + 1) % D.n;
@@ -822,7 +852,7 @@ export function renderPipeline(renderer, dt) {
   // --- multiview ---
   for (const t of MV.tiles) {
     let src = t.role === 'PGM' ? 'PGM' : t.role === 'PVW' ? 'PVW' : ROUTER.map[t.role];
-    const r = mvRefused(t.role) ? { tex: noSignalTex('FLUX REFUSÉ', 'Lien du multiviewer saturé'), scale: SC } : resolve(src, 0, t.role === 'PGM' || t.role === 'PVW');
+    const r = resolve(src, 0, t.role === 'PGM' || t.role === 'PVW', mvDest(t.role));
     t.mesh.material.uniforms.map.value = r.tex; t.mesh.material.uniforms.uGain.value = 1.1 * r.scale;
   }
   const key = `${MIX.pgm}|${MIX.pst}|${MIX.key1.on}|${MIX.auto}|${MIX.pos > 0}|${MIX.ftb.on}|${S.cams.map((c) => c.id + (c.signalOK ? 'o' : 'x') + (c.paint.bars ? 'b' : '') + (c.rf ? c.rf.state : '') + c.lens).join(',')}|${EVS.ch.map((c) => c.mode + c.cam + c.playing + Math.round(c.speed * 100)).join(',')}`;
@@ -875,7 +905,7 @@ export function slotTexture(id) {
   if (id === 'HLGRAW') return { tex: P.rts.hdr.texture, gain: 1.1 };
   if (id === 'scope') return { tex: SCOPE.tex, gain: 1 };
   if (id === 'camop' && P.rts.camop) return { tex: P.rts.camop.texture, gain: 1.1 };
-  if (id.startsWith('AUX_')) { const d = { AUX_TX1: 'TX1', AUX_TX2: 'TX2', AUX_GIANT: 'GIANT', AUX_VISION: 'GRADE1' }[id]; const r = resolve(feedOf(d)); return { tex: r.tex, gain: 1.1 * r.scale }; }
+  if (id.startsWith('AUX_')) { const d = { AUX_TX1: 'TX1', AUX_TX2: 'TX2', AUX_GIANT: 'GIANT', AUX_VISION: 'GRADE1' }[id]; const r = resolve(feedOf(d), 0, false, id); return { tex: r.tex, gain: 1.1 * r.scale }; }
   const r = resolve(id, 0, true); return { tex: r.tex, gain: 1.1 * r.scale };
 }
 export function drawSlots(renderer, list) {

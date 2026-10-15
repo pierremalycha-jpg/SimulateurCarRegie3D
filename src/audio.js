@@ -2,6 +2,7 @@ import { S, on, camById } from './state.js';
 import { M } from './match.js';
 import { clamp, dbToLin, linToDb, linToPowDb } from './util.js';
 import { TEAMS } from './data.js';
+import { rxOk } from './net/fabric.js';
 
 // ----------------------------------------------------------------------------------
 // Console son du car : sources, bus PGM / international / N-1, écoute, retard de ligne
@@ -107,7 +108,7 @@ export function startAudio() {
 export function applyFaders() {
   if (!AU.ctx) return;
   const t = AU.ctx.currentTime;
-  for (const k in AU.ch) { const c = AU.ch[k]; if (!c.node) continue; c.node.gain.setTargetAtTime(c.mute ? 0 : dbToLin(c.fader), t, 0.03); }
+  for (const k in AU.ch) { const c = AU.ch[k]; if (!c.node) continue; c.node.gain.setTargetAtTime(c.mute || c.netLost ? 0 : dbToLin(c.fader), t, 0.03); }
   AU.masterGain.gain.setTargetAtTime(dbToLin(AU.master.fader), t, 0.03);
   AU.out.gain.setTargetAtTime(AU.muted ? 0 : 1, t, 0.03);
 }
@@ -176,8 +177,13 @@ on('match', (e) => {
 });
 
 const tmp = new Float32Array(2048);
+// car IP : sources de la console qui arrivent par le réseau ST 2110-30 (récepteur NMOS de la console)
+const NET_AUDIO = { amb: 'CONS:a:AMB', canon: 'CONS:a:CANONS', evs: 'CONS:a:EVS', comm1: 'CONS:a:COMM', comm2: 'CONS:a:COMM' };
 export function updateAudio(dt, ctxState = {}) {
   if (ctxState.pgmSrc !== undefined && ctxState.pgmSrc !== AU.pgmSrc) { AU.pgmSrc = ctxState.pgmSrc; applyDelay(); }
+  let chg = false;
+  for (const [k, rx] of Object.entries(NET_AUDIO)) { const lost = S.ipMode && !rxOk(rx); if (!!AU.ch[k].netLost !== lost) { AU.ch[k].netLost = lost; chg = true; } }
+  if (chg) applyFaders();
   if (!AU.ctx) return;
   const t = AU.ctx.currentTime;
   const target = clamp(0.12 + (M.excite[0] + M.excite[1]) * 0.45, 0.1, 1.1);

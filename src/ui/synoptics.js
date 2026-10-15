@@ -5,6 +5,7 @@ import { LINKS, FORMATS } from '../data.js';
 import { ROUTER, MIX, EVS, meSource, sourceLabel, tallyOf } from '../pipeline.js';
 import { EQUIP, evsLayout, mixInputs } from '../equip.js';
 import { NET, flowGbps } from '../ipnet.js';
+import { FAB, LEAVES, vlanOf } from '../net/fabric.js';
 import { AU, SOUND_PLAN, soundPlanOk, embLabel, avOk, avOffsetMs } from '../audio.js';
 import { RACKS, RACK_ROWS } from '../truck.js';
 import { CFG, offerDownload } from '../shared.js';
@@ -38,7 +39,7 @@ const STYLE = `
 .syn .bx.off{opacity:.45}
 .syn .bx.big rect.f{fill:#1b2633}
 .syn .bx.ext rect.f{fill:#121a22;stroke-dasharray:5 4}
-.syn .bx[data-dev]{cursor:pointer}
+.syn .bx[data-dev],.syn .bx[data-info]{cursor:pointer}
 .syn .bx[data-dev]:hover rect.f{stroke:#ffb020}
 .syn .badge{font-size:10px;font-weight:700}
 .syn .w{fill:none;stroke-width:1.8;stroke-linejoin:round}
@@ -272,15 +273,17 @@ function syncDiagram() {
   D.wlabel(700, 600, 'timecode LTC (EVS, IPDirector, habillage, horloges)');
   if (ip) {
     D.zone(1110, 70, 380, 560, 'PTP (car IP)');
-    D.box('gm1', 1130, 100, 160, 54, 'Grand maître 1', [NET.gm1 ? (NET.gmActive === 1 ? 'ACTIF (GPS)' : 'disponible') : 'PERDU'], { cls: NET.gm1 ? (NET.gmActive === 1 ? 'ok' : '') : 'err', dev: 'spg' });
-    D.box('gm2', 1310, 100, 160, 54, 'Grand maître 2', [NET.gm2 ? (NET.gmActive === 2 ? 'ACTIF (élu BMCA)' : 'en attente') : 'PERDU'], { cls: NET.gm2 ? (NET.gmActive === 2 ? 'ok' : '') : 'err', dev: 'spg', n: 2 });
-    D.box('swr', 1130, 220, 160, 54, 'Commutateur rouge', ['horloge frontière (BC)'], { cls: NET.red ? '' : 'err', dev: 'swred' });
-    D.box('swb', 1310, 220, 160, 54, 'Commutateur bleu', ['horloge frontière (BC)'], { cls: NET.blue ? '' : 'err', dev: 'swblue' });
+    const ga = (c) => (FAB.res && FAB.res.gmActive[c]) || null;
+    const gmTxt = (g) => { const r = ga('red'), b = ga('blue'); const on = [r && r.id === 'gm' + g ? 'rouge' : '', b && b.id === 'gm' + g ? 'bleu' : ''].filter(Boolean); return on.length ? `ÉLU (${on.join(' + ')})` : 'en attente'; };
+    D.box('gm1', 1130, 100, 160, 54, 'Grand maître 1', [NET.gm1 ? gmTxt(1) : 'PERDU'], { cls: NET.gm1 ? (gmTxt(1) !== 'en attente' ? 'ok' : '') : 'err', dev: 'spg' });
+    D.box('gm2', 1310, 100, 160, 54, 'Grand maître 2', [NET.gm2 ? gmTxt(2) : 'PERDU'], { cls: NET.gm2 ? (gmTxt(2) !== 'en attente' ? 'ok' : '') : 'err', dev: 'spg', n: 2 });
+    D.box('swr', 1130, 220, 160, 54, 'Fabric rouge', [ga('red') && ga('red').rogue ? 'GM NON TRAÇABLE !' : 'spines + leaves en BC'], { cls: NET.redState === 'down' || (ga('red') && ga('red').rogue) ? 'err' : NET.redState === 'degraded' ? 'warn' : '', dev: 'swred' });
+    D.box('swb', 1310, 220, 160, 54, 'Fabric bleue', [ga('blue') && ga('blue').rogue ? 'GM NON TRAÇABLE !' : 'spines + leaves en BC'], { cls: NET.blueState === 'down' || (ga('blue') && ga('blue').rogue) ? 'err' : NET.blueState === 'degraded' ? 'warn' : '', dev: 'swblue' });
     D.box('fol', 1130, 340, 340, 64, 'Appareils ST 2110 (suiveurs PTP)', ['CCU IP, passerelles, XVS, EVS, multiviewers', 'chaque appareil reçoit PTP par ses deux interfaces']);
     D.wire(D.p('gm1', 'b'), D.p('swr', 't'), 'ip', { mode: 'v' }); D.wire(D.p('gm2', 'b'), D.p('swb', 't'), 'ip', { mode: 'v' });
     D.wire(D.p('gm1', 'b', 0.8), D.p('swb', 't', 0.2), 'ip', { mode: 'v', dash: true }); D.wire(D.p('gm2', 'b', 0.2), D.p('swr', 't', 0.8), 'ip', { mode: 'v', dash: true });
     D.wire(D.p('swr', 'b'), D.p('fol', 't', 0.25), 'ip', { mode: 'v', bad: !NET.red }); D.wire(D.p('swb', 'b'), D.p('fol', 't', 0.75), 'ip', { mode: 'v', bad: !NET.blue });
-    D.note(1130, 440, ['BMCA : si le grand maître 1 disparaît,', 'le 2 est élu après quelques secondes.', 'Les deux SPG sont verrouillés sur GPS.']);
+    D.note(1130, 440, ['BMCA : si le grand maître 1 disparaît,', 'le 2 est élu après 3 Announce manqués', '(< 1 s en ST 2059-2). Domaine 127.', 'Détail : poste Réseau IP, onglet PTP.']);
   } else {
     D.note(1120, 110, ['À retenir', '• Tout ce qui commute ou mélange doit être', '  verrouillé sur la même référence.', '• Une CCU non verrouillée : saut d\'image', '  au moment du CUT.', '• Les sources non synchrones (HF, duplex)', '  passent par un synchroniseur de trame,', '  qui ajoute 1 à 2 images de retard.', '• GPS perdu : le SPG tient sa fréquence', '  (holdover) pendant plusieurs heures.'], 'note');
   }
@@ -381,7 +384,7 @@ function commsDiagram() {
 
 // ---------------- 5. réseaux ----------------
 function netDiagram() {
-  const ip = S.ipMode, W = 1500, H = ip ? 940 : 840;
+  const ip = S.ipMode, W = 1500, H = ip ? 1090 : 840;
   const nRcp = S.cams.filter((c) => !isHF(c) && c.T.model !== 'pov').length;
   const D = diagram(W, H, 'Synoptique réseaux et télécommandes', ip ? 'Réseau de contrôle + réseau média ST 2110 doublé (rouge / bleu, ST 2022-7)' : 'Réseaux de contrôle (caméras, mélangeur, EVS, gestion) et liaisons série');
   D.zone(10, 70, 470, 520, 'Contrôle caméras (CNS)');
@@ -410,15 +413,31 @@ function netDiagram() {
   D.box('mgmt', 1150, 100, 200, 54, 'Switch de gestion', ['VLAN technique · NTP'], { dev: 'cns', n: 2 });
   const mg = [['rt', 'Grille', 'panneaux X-Y, salvos', 'router'], ['mvc', 'Multiviewers', 'configuration, UMD', 'mv'], ['ic', 'Matrice intercom', 'configuration', 'icom'], ['sp', 'SPG', 'alarmes SNMP', 'spg'], ['enc', 'Encodeurs TX', 'supervision', 'tx1'], ['ups', 'Onduleurs', 'état batteries', 'ups']];
   mg.forEach(([id, t, s2, dev], i) => { const x = 1010 + (i % 2) * 240, y = 200 + Math.floor(i / 2) * 90; D.box(id, x, y, 220, 54, t, [s2], { dev }); D.wire(D.p('mgmt', 'b'), D.p(id, 't'), 'ip', { mode: 'v', m: 180 }); });
-  if (ip) {
-    D.zone(10, 610, 1480, 220, 'Réseau média ST 2110 (doublé)');
-    D.box('red', 200, 640, 260, 54, 'Commutateur rouge (spine)', [NET.red ? 'OK' : 'COUPÉ'], { cls: NET.red ? '' : 'err', dev: 'swred' });
-    D.box('blue', 1040, 640, 260, 54, 'Commutateur bleu (spine)', [NET.blue ? 'OK' : 'COUPÉ'], { cls: NET.blue ? '' : 'err', dev: 'swblue' });
-    D.box('nm', 620, 640, 260, 54, 'Registre / contrôleur NMOS', [NET.nmos ? 'IS-04 · IS-05 OK' : 'INJOIGNABLE'], { cls: NET.nmos ? 'ok' : 'err', dev: 'nmos' });
-    D.box('dev', 470, 750, 560, 54, 'Émetteurs / récepteurs ST 2110', [`CCU, passerelles, XVS, EVS, multiviewers · ${fmt(flowGbps(), 1)} Gb/s par flux vidéo`]);
-    D.wire(D.p('red', 'b'), D.p('dev', 'l', 0.5), 'ip', { mode: 'v', bad: !NET.red, d: `M330,694 V777 H470` });
-    D.wire(D.p('blue', 'b'), D.p('dev', 'r', 0.5), 'ip', { mode: 'v', bad: !NET.blue, d: `M1170,694 V777 H1030` });
-    D.wire(D.p('nm', 'b'), D.p('dev', 't'), 'ip', { mode: 'v', dash: true, bad: !NET.nmos, label: 'connexions IS-05' });
+  if (ip && FAB.res) {
+    D.zone(10, 610, 1480, 460, 'Réseau média ST 2110 : deux fabrics spine-leaf indépendantes (ST 2022-7)');
+    const lv = (sw) => (!sw.power ? 'err' : FAB.issues.some((x) => x.sw === sw.id && x.sev === 'err') ? 'err' : FAB.issues.some((x) => x.sw === sw.id && x.sev === 'warn') ? 'warn' : '');
+    for (const [c, ox, nm] of [['red', 20, 'ROUGE (A)'], ['blue', 760, 'BLEU (B)']]) {
+      const C = c === 'red' ? 'R' : 'B';
+      D.note(ox + 10, 650, [`Réseau ${nm}`], 'zl');
+      for (const s2 of [1, 2]) { const sw = FAB.switches[`SPINE-${C}${s2}`]; D.box(`sp${C}${s2}`, ox + 140 + (s2 - 1) * 260, 660, 180, 46, sw.running.hostname, [sw.power ? `spine 32 × 100G · ${sw.loopback}` : 'HORS TENSION'], { cls: lv(sw), dev: c === 'red' ? 'swred' : 'swblue' }); }
+      for (const L of LEAVES) {
+        const sw = FAB.switches[`LEAF-${C}${L.k}`]; const x = ox + (L.k - 1) * 120;
+        D.box(`lf${C}${L.k}`, x, 790, 108, 58, `leaf ${C.toLowerCase()}${L.k}`, [L.name.split(' ')[0].toLowerCase(), sw.power ? `VLAN ${vlanOf(c, L.k)}` : 'HORS TENSION'], { cls: lv(sw), dev: c === 'red' ? 'swred' : 'swblue' });
+        for (const s2 of [1, 2]) {
+          const ls = FAB.links.filter((l) => l.color === c && l.k === L.k && l.s === s2).map((l) => FAB.res.up[l.id]);
+          const bad = ls.some((u) => !u.up || u.ospf !== 'FULL' || !u.pim);
+          const sp = D.p(`sp${C}${s2}`, 'b', 0.12 + (L.k - 1) * 0.15);
+          D.wire(D.p(`lf${C}${L.k}`, 't', s2 === 1 ? 0.3 : 0.7), sp, 'ip', { mode: 'straight', bad, noArrow: true, dash: ls.every((u) => !u.up) });
+        }
+        D.wire(D.p(`lf${C}${L.k}`, 'b'), [x + 54, 900], 'ip', { mode: 'straight', noArrow: true, bad: !sw.power });
+      }
+    }
+    const rx = Object.values(FAB.res.rxState); const lost = rx.filter((x) => !x.ok || x.loss > 0).length, unp = rx.filter((x) => x.ok && !x.protected).length;
+    D.box('dev', 20, 900, 1460, 58, 'Appareils ST 2110 : une carte sur le réseau rouge, une sur le bleu', [`CCU, XVS-6000, passerelles (EVS, HF, TX), multiviewers, audio · ${fmt(flowGbps(), 1)} Gb/s par flux vidéo · ${rx.length} réceptions, ${unp} sans protection, ${lost} en défaut`], { cls: lost ? 'err' : unp ? 'warn' : 'ok', info: 'reseau' });
+    D.box('ctl', 20, 990, 340, 54, 'SW-CTRL (contrôle / gestion)', ['VLAN 10 gestion OOB · VLAN 20 contrôle'], { cls: lv(FAB.switches['SW-CTRL']), dev: 'cns' });
+    D.box('nm', 400, 990, 300, 54, 'Registre / contrôleur NMOS', [NET.nmos ? 'IS-04 · IS-05 OK' : 'INJOIGNABLE'], { cls: NET.nmos ? 'ok' : 'err', dev: 'nmos' });
+    D.wire(D.p('ctl', 'r'), D.p('nm', 'l'), 'ip', { both: true });
+    D.note(740, 1005, ['Chaque leaf : 2 × 100 GbE vers chaque spine (OSPF + PIM-SSM, ECMP). Les deux fabrics ne sont jamais reliées.', 'Détail, configuration des commutateurs et ligne de commande : poste « Réseau IP » (zone technique).'], 'note');
   } else D.legend(30, 640);
   D.cartouche('Synoptique réseaux');
   return D;
@@ -511,7 +530,7 @@ export function synopticsPanel(start = 'video') {
     let svg;
     if (t[2]) svg = t[2]().svg; else svg = planSVG();
     if (paper) svg.classList.add('paper');
-    svg.addEventListener('click', (e) => { const g = e.target.closest('[data-dev]'); if (g) openDevice(g.dataset.dev, +(g.dataset.n || 1)); });
+    svg.addEventListener('click', (e) => { const g = e.target.closest('[data-dev]'); if (g) { openDevice(g.dataset.dev, +(g.dataset.n || 1)); return; } const i = e.target.closest('[data-info]'); if (i) openInfo(i.dataset.info); });
     host.appendChild(svg);
   };
   for (const [k, l] of TABS) tabs.appendChild(el('button', { class: 'tab', 'data-k': k, onclick: () => { cur = k; draw(); } }, l));
@@ -525,7 +544,7 @@ export function synopticsPanel(start = 'video') {
   const box = el('div', { class: 'list' }, el('div', { class: 'hwrow', style: { justifyContent: 'space-between' } }, tabs, el('div', { class: 'hwrow' }, paperBtn, dl)), help, host);
   draw();
   // mise à jour quand l'état du car change
-  const stateKey = () => S.cams.map((c) => c.id + c.link + c.signalOK + c.genlock + c.fiberCut).join() + Object.values(ROUTER.map).join() + MIX.pgm + MIX.pst + JSON.stringify(S.faults) + EVS.recording + S.txPath + AU.emb.join() + [NET.red, NET.blue, NET.gm1, NET.gm2, NET.gmActive, NET.nmos, NET.mvSat].join() + AU.effDelay + Object.values(AU.ch).map((c) => +c.intl + '' + +c.n1).join();
+  const stateKey = () => S.cams.map((c) => c.id + c.link + c.signalOK + c.genlock + c.fiberCut).join() + Object.values(ROUTER.map).join() + MIX.pgm + MIX.pst + JSON.stringify(S.faults) + EVS.recording + S.txPath + AU.emb.join() + [NET.redState, NET.blueState, NET.gm1, NET.gm2, NET.gmActive, NET.nmos, NET.mvSat, FAB.ver, FAB.issues.length].join() + AU.effDelay + Object.values(AU.ch).map((c) => +c.intl + '' + +c.n1).join();
   key = stateKey();
   return { el: box, update() { if (cur === 'racks' || cur === 'plan') return; const k = stateKey(); if (k !== key) { key = k; draw(); } } };
 }

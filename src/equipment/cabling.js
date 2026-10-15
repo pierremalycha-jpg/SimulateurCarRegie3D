@@ -3,13 +3,14 @@ import { LINKS, FORMATS } from '../data.js';
 import { ROUTER, DESTS, sourceLabel, recordedCams, EVS } from '../pipeline.js';
 import { RF } from '../rf.js';
 import { EQUIP, evsLayout, mixInputs } from '../equip.js';
+import { FAB } from '../net/fabric.js';
 
 // ----------------------------------------------------------------------------------
 // Plan de câblage de l'installation, généré à partir de la configuration courante.
 // Chaque câble relie (appareil, numéro, port) à (appareil, numéro, port).
 // ----------------------------------------------------------------------------------
 export const DEV_NAMES = {
-  cam: 'Caméra', ccu: 'CCU', rcp: 'RCP', pdc: 'Pied de car', router: 'Grille', mixer: 'Mélangeur XVS-6000', mixpanel: 'Pupitre ICP-X7000', siu: 'Interface MKS-X7700', mv: 'Multiviewer', evs: 'Serveur XT4K', lsm: 'Télécommande LSM', ipd: 'Poste IPDirector', xnet: 'Switch XNet', swred: 'Commutateur IP rouge', swblue: 'Commutateur IP bleu', gw: 'Passerelle SDI/IP', nmos: 'Contrôleur NMOS', evsmon: 'Écran du serveur EVS',
+  cam: 'Caméra', ccu: 'CCU', rcp: 'RCP', pdc: 'Pied de car', router: 'Grille', mixer: 'Mélangeur XVS-6000', mixpanel: 'Pupitre ICP-X7000', siu: 'Interface MKS-X7700', mv: 'Multiviewer', evs: 'Serveur XT4K', lsm: 'Télécommande LSM', ipd: 'Poste IPDirector', xnet: 'Switch XNet', swred: 'Leaf IP rouge', swblue: 'Leaf IP bleue', spinered: 'Spine IP rouge', spineblue: 'Spine IP bleue', swctl: 'Switch de contrôle', gw: 'Passerelle SDI/IP', nmos: 'Contrôleur NMOS', evsmon: 'Écran du serveur EVS',
   spg: 'Générateur de synchro', da: 'Distributeur de référence', icom: 'Matrice intercom', cns: 'Switch réseau caméras (CNS)', msu: 'MSU (pupitre maître)', gfx: 'Moteur graphique',
   rx: 'Récepteur HF', conv: 'Convertisseur fibre', emb: 'Embedder audio', tx1: 'Encodeur TX1', tx2: 'Encodeur satellite TX2', audio: 'Console son', grade1: 'Moniteur Grade 1', giant: 'Écran géant', ups: 'Onduleur / distribution', localtv: 'Local technique TV', headset: 'Casque cadreur', lens: 'Optique', vf: 'Viseur', battery: 'Batterie', txhf: 'Émetteur HF',
 };
@@ -54,7 +55,7 @@ export function routerCrosspoint(outIdx) {
 export const isSystemCam = (c) => c && !['pov', 'ptz', 'drone'].includes(c.type) && c.link !== 'hf';
 
 let CACHE = { key: '', cables: [] };
-function cfgKey() { return S.cams.map((c) => c.id + c.type + c.link + Math.round(c.route ? c.route.length : 0) + (c.fiberCut ? 'x' : '') + (c.genlock ? '' : 'g') + (c.powerOn === false ? 'p' : '')).join() + '|' + S.format + '|' + JSON.stringify(EQUIP) + (S.ipMode ? 'ip' : '') + JSON.stringify(S.patch || {}) + JSON.stringify(ROUTER.map) + RF.antennas.map((a) => a.on ? 1 : 0).join(''); }
+function cfgKey() { return S.cams.map((c) => c.id + c.type + c.link + Math.round(c.route ? c.route.length : 0) + (c.fiberCut ? 'x' : '') + (c.genlock ? '' : 'g') + (c.powerOn === false ? 'p' : '')).join() + '|' + S.format + '|' + JSON.stringify(EQUIP) + (S.ipMode ? 'ip' + FAB.ver + (FAB.res ? 'r' : '') : '') + JSON.stringify(S.patch || {}) + JSON.stringify(ROUTER.map) + RF.antennas.map((a) => a.on ? 1 : 0).join(''); }
 
 export function buildCabling() {
   const key = cfgKey();
@@ -163,16 +164,19 @@ export function buildCabling() {
   if (S.ipMode) {
     const keep = C.filter((c) => c.a.dev !== 'router' && c.b.dev !== 'router');
     C.length = 0; C.push(...keep);
-    const ipLink = (dev, n, port, note) => { add(P(dev, n, port), P('swred', 1, `${dev}${n}`), 'Fibre SM 25/100 GbE', 'ip', 3, note + ' · réseau rouge'); add(P(dev, n, port), P('swblue', 1, `${dev}${n}`), 'Fibre SM 25/100 GbE', 'ip', 3, note + ' · réseau bleu (ST 2022-7)'); };
-    for (const c of sys) ipLink('ccu', c.id, 'opt', `Flux ST 2110 de la CAM ${c.id}`);
-    ipLink('mixer', 1, 'ip1', 'Entrées / sorties du mélangeur (carte 100G)');
-    for (let k = 1; k <= L.servers; k++) ipLink('evs', k, 'ipio', `Serveur XT4K n° ${k}`);
-    ipLink('gw', 1, 'ip', 'Sources SDI restantes (HF, mini-caméras, habillage, duplex) converties en ST 2110');
-    ipLink('mv', 1, 'lan', 'Multiviewer IP');
-    ipLink('tx1', 1, 'ip', 'Départ vers la chaîne');
-    add(P('spg', 1, 'ptp1'), P('swred', 1, 'ptp'), 'Fibre / Ethernet', 'ip', 2, 'Grand maître PTP 1 (ST 2059-2) · réseau rouge');
-    add(P('spg', 1, 'ptp1'), P('swblue', 1, 'ptp'), 'Fibre / Ethernet', 'ip', 2, 'Grand maître PTP 1 · réseau bleu');
-    add(P('nmos', 1, 'lan'), P('cns', 1, 'nmos'), 'Ethernet Cat6', 'ip', 2, 'Registre et contrôleur NMOS (IS-04 / IS-05) sur le réseau de contrôle');
+    // raccordements réels de la fabric (net/fabric.js) : chaque carte réseau sur son port de leaf, uplinks, contrôle
+    const MAP = { ccu: (d) => P('ccu', d.cam, 'opt'), xvs: () => P('mixer', 1, 'ip1'), gwevs: () => P('evs', 1, 'ipio'), gwcam: () => P('gw', 1, 'ip'), mv1: () => P('mv', 1, 'lan'), mv2: () => P('mv', 2, 'lan'), tx1: () => P('tx1', 1, 'ip'), tx2: () => P('tx2', 1, 'ip'), gfx: () => P('gfx', 1, 'ip'), grade1: () => P('grade1', 1, 'ip'), console: () => P('audio', 1, 'ip'), gm1: () => P('spg', 1, 'ptp1'), gm2: () => P('spg', 2, 'ptp1') };
+    const side = (sw, port) => { const S2 = FAB.switches[sw]; return P(S2.role === 'spine' ? (S2.color === 'red' ? 'spinered' : 'spineblue') : S2.role === 'ctl' ? 'swctl' : S2.color === 'red' ? 'swred' : 'swblue', S2.k || S2.s || 1, port); };
+    if (FAB.res) {
+      for (const d of Object.values(FAB.devices)) for (const c of ['red', 'blue']) {
+        const n = d.nics[c]; if (!n) continue; const st = FAB.res.nic[d.id + ':' + c] || {};
+        const a = (d.kind === 'ccu' ? MAP.ccu : MAP[d.id] || (() => P(d.id, 1, 'ip')))(d);
+        const sp = FAB.switches[n.sw].running.ports[n.port].speed;
+        add(a, side(n.sw, n.port), sp === '100g' ? 'Fibre MM OM4 · QSFP28 100GBASE-SR4' : sp === '25g' ? 'Fibre MM OM4 · SFP28 25GBASE-SR' : sp === '10g' ? 'Fibre MM · SFP+ 10GBASE-SR' : 'Cuivre Cat6A', 'ip', d.kind === 'gm' ? 2 : 4, `${d.name} · réseau ${c === 'red' ? 'rouge' : 'bleu'} · ${n.ip}`, !!st.up);
+      }
+      for (const l of FAB.links) add(side(l.a.sw, l.a.port), side(l.b.sw, l.b.port), 'Fibre MM OM4 · QSFP28 100GBASE-SR4', 'ip', 6, `Uplink ${FAB.switches[l.a.sw].running.hostname} ↔ ${FAB.switches[l.b.sw].running.hostname} · ${l.color === 'red' ? 'rouge' : 'bleu'}`, !!FAB.res.up[l.id].up);
+      for (const d of Object.values(FAB.devices)) if (d.ctl && d.ctl.port) add(d.kind === 'nmos' ? P('nmos', 1, 'lan') : (d.kind === 'ccu' ? MAP.ccu : MAP[d.id] || (() => P(d.id, 1, 'ip')))(d), side('SW-CTRL', d.ctl.port), 'Ethernet Cat6A', 'ip', 3, `Contrôle ${d.name} · ${d.ctlIp} (VLAN ${d.ctl.vlan})`, true);
+    }
     C.forEach((c, i) => { c.n = 'C' + String(i + 1).padStart(3, '0'); });
   }
   CACHE = { key, cables: C };
@@ -182,7 +186,7 @@ export function buildCabling() {
 export function deviceCables(dev, n) { return buildCabling().filter((c) => (c.a.dev === dev && c.a.n === n) || (c.b.dev === dev && c.b.n === n)); }
 export function endLabel(e) {
   const name = DEV_NAMES[e.dev] || e.dev;
-  const multi = ['cam', 'ccu', 'rcp', 'lsm', 'conv', 'lens', 'vf', 'headset', 'battery', 'txhf'].includes(e.dev) || (e.dev === 'evs' && EQUIP.evsServers > 1);
+  const multi = ['cam', 'ccu', 'rcp', 'lsm', 'conv', 'lens', 'vf', 'headset', 'battery', 'txhf', 'swred', 'swblue', 'spinered', 'spineblue'].includes(e.dev) || (e.dev === 'evs' && EQUIP.evsServers > 1);
   return `${name}${multi ? ' ' + e.n : ''} · ${portName(e.dev, e.port)}`;
 }
 export function portName(dev, port) {
@@ -193,6 +197,7 @@ export function portName(dev, port) {
     m = /^tri(\d+)$/.exec(port); if (m) return `TRIAX ${m[1]}`;
     m = /^bnc(\d+)$/.exec(port); if (m) return `BNC ${m[1]}`;
   }
+  if (/^Ethernet\d+$/.test(port)) return port;
   if (/^in(\d+)$/.test(port)) return 'IN ' + port.slice(2);
   if (/^out(\d+)$/.test(port)) return 'OUT ' + port.slice(3);
   if (/^sdi(\d+)$/.test(port)) return 'SDI ' + port.slice(3);

@@ -57,11 +57,11 @@ export function drawMissionCard() {
 
 const STATION_LIST = [
   ['realisateur', 'Car · production'], ['scripte', 'Car · production'], ['melangeur', 'Car · production'], ['habillage', 'Car · production'], ['producteur', 'Car · production'], ['chefdecar', 'Car · production'],
-  ['vision', 'Car · vision'], ['evs', 'Car · ralentis'], ['ipdirector', 'Car · ralentis'], ['son', 'Car · régie son'], ['hf', 'Car · zone technique'], ['grille', 'Car · zone technique'], ['ccu', 'Car · zone technique'], ['synchro', 'Car · zone technique'], ['transmission', 'Car · zone technique'], ['intercom', 'Car · zone technique'],
+  ['vision', 'Car · vision'], ['evs', 'Car · ralentis'], ['ipdirector', 'Car · ralentis'], ['son', 'Car · régie son'], ['hf', 'Car · zone technique'], ['grille', 'Car · zone technique'], ['reseau', 'Car · zone technique'], ['ccu', 'Car · zone technique'], ['synchro', 'Car · zone technique'], ['transmission', 'Car · zone technique'], ['intercom', 'Car · zone technique'],
   ['pieddecar', 'Compound'], ['energie', 'Compound'], ['cadreur', 'Stade'], ['antenne', 'Stade'], ['localtv', 'Stade'], ['commentateurs', 'Stade'], ['var', 'Stade'],
 ];
 
-export function openGuide(tab = 'missions') {
+export function openGuide(tab = 'missions', chapter = null) {
   const tabs = el('div', { class: 'tabs' });
   const content = el('div', { class: 'list' });
   const T = [['missions', 'Missions'], ['guide', 'Comprendre'], ['procedures', 'Procédures'], ['postes', 'Les postes'], ['materiel', 'Matériel'], ['glossaire', 'Glossaire'], ['commandes', 'Commandes'], ['reglages', 'Réglages']];
@@ -80,7 +80,7 @@ export function openGuide(tab = 'missions') {
       let curG = GUIDE[0];
       const open = (g) => { curG = g; art.innerHTML = `<h3>${g.title}</h3>` + g.html; [...nav.children].forEach((b) => b.classList.toggle('on', b.dataset.g === g.id)); };
       for (const g of GUIDE) nav.appendChild(el('button', { class: 'tab', 'data-g': g.id, onclick: () => open(g) }, g.title));
-      content.append(nav, art, el('div', { class: 'hwrow' }, el('button', { class: 'btn small', onclick: () => openReport('Guide · ' + curG.title) }, 'Signaler une erreur dans ce chapitre'))); open(GUIDE[0]);
+      content.append(nav, art, el('div', { class: 'hwrow' }, el('button', { class: 'btn small', onclick: () => openReport('Guide · ' + curG.title) }, 'Signaler une erreur dans ce chapitre'))); open(GUIDE.find((g) => g.id === chapter) || GUIDE[0]);
       art.querySelectorAll('table').forEach((t) => { const w = el('div', { class: 'tblwrap' }); t.replaceWith(w); w.appendChild(t); });
       nav.addEventListener('click', () => art.querySelectorAll('table').forEach((t) => { if (!t.parentElement.classList.contains('tblwrap')) { const w = el('div', { class: 'tblwrap' }); t.replaceWith(w); w.appendChild(t); } }));
     }
@@ -126,4 +126,4 @@ export function openGuide(tab = 'missions') {
   modal.open('Guide du car régie', el('div', { class: 'list' }, tabs, content), { width: 980 });
   show(tab);
 }
-on('openGuide', () => openGuide('guide'));
+on('openGuide', (ch) => openGuide('guide', typeof ch === 'string' ? ch : null));
