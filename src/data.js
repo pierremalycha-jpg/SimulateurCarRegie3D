@@ -586,7 +586,7 @@ export const GUIDE = [
 <p><b>Focale et angle.</b> Sur un capteur 2/3" (9,59 mm de large), l'angle horizontal vaut 2 × arctan(9,59 / 2f) : 58° à 8,6 mm, 13,7° à 40 mm, 1,4° à 400 mm, 0,55° à 1000 mm. À 80 m, un champ de 7 m de large demande une focale d'environ 110 mm.</p>
 <p><b>Iris.</b> La suite f/1.4 – 2 – 2.8 – 4 – 5.6 – 8 – 11 – 16 : chaque valeur divise la lumière par 2. Le zoom perd de la luminosité en longue focale (ramping) et le doubleur coûte 2 diaphragmes.</p>
 <p><b>Repères d'exposition</b> (en plein jour, 0 dB, 50 i/s) : environ f/8 avec un ND 1/4. De nuit sous l'éclairage du stade (environ 2000 lux) : environ f/2.8 sans filtre. Une caméra super ralenti 3x reçoit 3 fois moins de lumière par image (un diaphragme et demi).</p>
-<p><b>Lire le waveform.</b> 0 % = noir, 100 % = blanc nominal (700 mV). Pelouse ensoleillée vers 40-55 %, peaux vers 50-70 %, maillot blanc juste sous 100 %. Au-dessus de 100 %, le knee comprime puis l'image écrête à 109 %.</p>`},
+<p><b>Lire le waveform.</b> 0 % = noir, 100 % = blanc nominal (700 mV). Pelouse ensoleillée vers 40-55 %, peaux vers 50-70 %, maillot blanc juste sous 100 %. Au-dessus du knee point (95 % par défaut), les hautes lumières sont compressées, puis l'écrêteur (white clip) les limite : 103 % ici, pour respecter la tolérance EBU R103 qu'exigent beaucoup de diffuseurs. Le signal SDI peut techniquement monter jusqu'à 109 %.</p>`},
   {
     id: 'hfguide', title: 'Liaisons HF', html: `
 <p>Une liaison HF caméra se dimensionne par un <b>bilan de liaison</b> :</p>

@@ -130,7 +130,7 @@ export function chainBox() {
     const p = cam.paint;
     const vals = {
       optique: `F${fmt(cam.effAperture(), 1)} · ND ${['CLR', '1/4', '1/8', '1/16', '1/64'][p.nd]}`, capteur: `1/${Math.round(1 / cam.exposureTime())} s`, gain: `${p.gain > 0 ? '+' : ''}${p.gain} dB`,
-      blanc: `R${p.wbR} G${p.wbG} B${p.wbB}`, noir: `M ${p.mblack}`, gamma: p.gammaOn ? `${p.gamma}${p.blackGamma ? ' · BG ' + p.blackGamma : ''}` : 'OFF', knee: p.kneeOn ? p.knee + ' %' : 'OFF', detail: p.detailOn ? String(p.detail) : 'OFF', matrice: p.matrixOn ? p.sat + ' %' : 'OFF', sortie: cam.signalOK ? (S.format === 'UHD' ? '12G UHD' : '3G HD') : 'DÉFAUT',
+      blanc: `R${p.wbR} G${p.wbG} B${p.wbB}`, noir: `M ${p.mblack}`, gamma: p.gammaOn ? `${p.gamma}${p.blackGamma ? ' · BG ' + p.blackGamma : ''}` : 'OFF', knee: p.kneeOn ? `${p.knee} · WC ${p.wclip ?? 109}` : `OFF · WC ${p.wclip ?? 109}`, detail: p.detailOn ? String(p.detail) : 'OFF', matrice: p.matrixOn ? p.sat + ' %' : 'OFF', sortie: cam.signalOK ? (S.format === 'UHD' ? '12G UHD' : '3G HD') : 'DÉFAUT',
     };
     for (const k in cells) { cells[k].v.textContent = vals[k]; cells[k].c.classList.toggle('hot', hot === k); }
   };

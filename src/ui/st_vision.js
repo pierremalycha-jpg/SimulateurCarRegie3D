@@ -66,7 +66,7 @@ export function buildVision(body, arg = 0, ctx) {
     const encs = el('div', { class: 'rcp-encs' });
     const PAGES = {
       paint: { l: 'PAINT', params: [['detail', 'DETAIL', 0, 100, 'detail'], ['sat', 'SATURATION', 40, 160, 'matrice'], ['blackGamma', 'BLACK GAMMA', -99, 99, 'gamma']] },
-      gamma: { l: 'GAMMA / KNEE', params: [['gamma', 'MASTER GAMMA', -99, 99, 'gamma'], ['knee', 'KNEE POINT', 80, 109, 'knee'], ['mblack', 'MASTER BLACK', -99, 99, 'noir']] },
+      gamma: { l: 'GAMMA / KNEE', params: [['gamma', 'MASTER GAMMA', -99, 99, 'gamma'], ['knee', 'KNEE POINT', 80, 109, 'knee'], ['wclip', 'WHITE CLIP', 95, 109, 'knee'], ['mblack', 'MASTER BLACK', -99, 99, 'noir']] },
       expo: { l: 'GAIN / ND / SHUTTER', params: [] },
       scene: { l: 'SCÈNES', params: [] },
     };
@@ -77,6 +77,7 @@ export function buildVision(body, arg = 0, ctx) {
         blackGamma: `Black gamma ${v} : ${v > 0 ? 'relève' : v < 0 ? 'écrase' : 'laisse'} les basses lumières sans toucher au noir ni au blanc. Utile pour déboucher les ombres d'une tribune.`,
         gamma: `Master gamma ${v} : courbe de transfert. Vers le +, les tons moyens montent (image plus claire, moins contrastée) ; vers le −, ils descendent.`,
         knee: `Knee point ${v} % : au-dessus de ce niveau, les hautes lumières sont compressées pour garder du détail dans les maillots blancs et le ciel.`,
+        wclip: `White clip ${v} % : aucun signal ne dépasse ce niveau (écrêteur). Beaucoup de diffuseurs exigent des blancs ≤ 103 % (tolérance EBU R103) ; au-delà, l'image est refusée au contrôle qualité.`,
         mblack: `Master black ${v} : niveau du noir pour les trois couleurs (pedestal), soit environ ${fmt(v * 0.132, 1)} % au waveform.`,
       }[key];
       if (t) explain(t, 'rcp:' + key);
@@ -208,9 +209,9 @@ export function buildVision(body, arg = 0, ctx) {
       const bad = (v) => Math.abs(v) > 0.02 ? 'warn' : '';
       tbody.appendChild(el('tr', { class: c.id === sel ? 'sel' : '', onclick: () => select(c.id), style: { cursor: 'pointer' } },
         el('td', {}, el('span', { class: 'dot ' + (t === 2 ? 'red' : t === 1 ? 'green' : '') }), ' ' + c.id), el('td', {}, 'F' + fmt(c.effAperture(), 1)), el('td', {}, String(c.paint.gain)), el('td', {}, ND_FILTERS[c.paint.nd].label.split(' ')[0]),
-        el('td', { class: c.meter.mean < 0.3 || c.meter.mean > 0.6 ? 'warn' : '' }, Math.round(c.meter.mean * 100) + ' %'), el('td', { class: c.meter.peak > 1.05 ? 'warn' : '' }, Math.round(c.meter.peak * 100) + ' %'),
+        el('td', { class: c.meter.mean < 0.3 || c.meter.mean > 0.6 ? 'warn' : '' }, Math.round(c.meter.mean * 100) + ' %'), el('td', { class: c.meter.peak > 1.035 ? 'warn' : '' }, Math.round(c.meter.peak * 100) + ' %'),
         el('td', { class: bad(e.r) }, fmt(e.r * 100, 1) + ' %'), el('td', { class: bad(e.b) }, fmt(e.b * 100, 1) + ' %')));
     }
-    overview.append(el('div', { class: 'tblwrap' }, tb), el('p', { class: 'note' }, 'Repères : niveau moyen 30 à 60 % selon le plan, crêtes ≤ 100 %, écarts de couleur sous 2 %. Cliquez une ligne pour prendre la caméra au RCP.'));
+    overview.append(el('div', { class: 'tblwrap' }, tb), el('p', { class: 'note' }, 'Repères : niveau moyen 35 à 55 % selon le plan, crêtes ≤ 103 % (white clip), écarts de couleur sous 2 %. Cliquez une ligne pour prendre la caméra au RCP.'));
   }
 }

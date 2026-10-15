@@ -4,7 +4,7 @@ import { W } from './world.js';
 import { T as TR } from './truck.js';
 import { M, SNAP, LIVE, sampleRec, applySnapshot, captureLive, recRange } from './match.js';
 import { GFX, stingerLogo } from './gfx.js';
-import { rtSize } from './bcam.js';
+import { rtSize, lineupStep } from './bcam.js';
 import { makeCanvas, tc, clockStr, clamp, roundRect } from './util.js';
 
 const FONT = '"Saira Condensed", "Arial Narrow", sans-serif';
@@ -549,6 +549,8 @@ function updateMeters(renderer) {
     let s = 0, mx = 0;
     for (let y = 0; y < 4; y++) for (let x = 0; x < 8; x++) { const k = (y * 128 + (c.id - 1) * 8 + x) * 4; s += METER.buf[k]; mx = Math.max(mx, METER.buf[k + 1]); }
     c.meter.mean = s / 32 / 255 * 1.2; c.meter.peak = mx / 255 * 1.2; c.meter.t = S.time;
+    // line-up en cours : l'iris est affiné tant que la mesure n'est pas dans la cible
+    if (c.lineup && c.signalOK && c.lastRender > (c.lineup.t || 0)) { lineupStep(c); if (c.lineup) c.lineup.t = S.time; }
     // iris automatique
     if (c.paint.autoIris && c.signalOK) {
       const target = 0.42; const ratio = c.meter.mean / target;

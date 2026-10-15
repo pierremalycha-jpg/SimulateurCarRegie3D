@@ -15,17 +15,23 @@ export const paintMat = new THREE.ShaderMaterial({
   uniforms: {
     tRaw: { value: null }, uTexel: { value: new THREE.Vector2(1 / 512, 1 / 288) },
     uExpo: { value: 1 }, uWB: { value: new THREE.Vector3(1, 1, 1) }, uBlack: { value: new THREE.Vector3() },
-    uGamma: { value: 0.45 }, uKnee: { value: 0.95 }, uDetail: { value: 0.3 }, uSat: { value: 1 },
+    uGamma: { value: 0.45 }, uKnee: { value: 0.95 }, uClip: { value: 1.03 }, uDetail: { value: 0.3 }, uSat: { value: 1 }, uHLG: { value: 0 },
     uNoise: { value: 0.003 }, uSeed: { value: 0 }, uBlackGamma: { value: 0 }, uBlock: { value: 0 }, uBreak: { value: 0 }, uRoll: { value: 0 }, uIris: { value: 1 },
   },
   vertexShader: `varying vec2 vUv; void main(){ vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }`,
   fragmentShader: `
     uniform sampler2D tRaw; uniform vec2 uTexel; uniform float uExpo; uniform vec3 uWB; uniform vec3 uBlack;
-    uniform float uGamma, uKnee, uDetail, uSat, uNoise, uSeed, uBlock, uBreak, uRoll, uIris, uBlackGamma;
+    uniform float uGamma, uKnee, uClip, uDetail, uSat, uNoise, uSeed, uBlock, uBreak, uRoll, uIris, uBlackGamma, uHLG;
     varying vec2 vUv;
     float h(vec2 p){ return fract(sin(dot(p, vec2(12.9898,78.233)) + uSeed*1.37) * 43758.5453); }
     vec3 oetf(vec3 L){
       L = max(L, 0.0);
+      if (uHLG > 0.5) {
+        // HLG (ITU-R BT.2100) : le blanc de référence SDR (L = 1) tombe à 75 % du signal
+        vec3 E = L * 0.2650;
+        vec3 lg = 0.17883277 * log(max(12.0 * E - 0.28466892, 1e-6)) + 0.55991073;
+        return mix(sqrt(3.0 * E), lg, step(1.0 / 12.0, E));
+      }
       vec3 lo = 4.5 * L; vec3 hi = 1.099 * pow(L, vec3(uGamma)) - 0.099;
       return mix(lo, hi, step(0.018, L));
     }
@@ -46,9 +52,11 @@ export const paintMat = new THREE.ShaderMaterial({
       float yc = dot(c, vec3(0.2126,0.7152,0.0722));
       float yn = dot(n*0.25, vec3(0.2126,0.7152,0.0722));
       c += clamp((yc - yn) * uDetail * 2.0, -0.08, 0.08);
-      // knee
-      vec3 kn = vec3(uKnee);
-      c = mix(c, kn + (c - kn) * 0.3, step(kn, c));
+      // knee (pente douce) puis écrêteur de blancs (white clip) ; pas de knee en HLG
+      if (uHLG < 0.5) {
+        vec3 kn = vec3(uKnee);
+        c = mix(c, kn + (c - kn) * 0.22, step(kn, c));
+      }
       // black gamma : relève ou écrase les basses lumières
       c += uBlackGamma * (1.0 - smoothstep(0.0, 0.32, c)) * smoothstep(0.0, 0.04, c);
       // saturation
@@ -64,6 +72,8 @@ export const paintMat = new THREE.ShaderMaterial({
         c = mix(bad, vec3(0.15,0.42,0.18), step(0.6, h(bid*3.3)) * 0.6);
       }
       c *= uIris;
+      // écrêteur de blancs en bout de chaîne (HLG : 100 % du signal)
+      c = min(c, vec3(uHLG > 0.5 ? 1.0 : uClip));
       c = clamp(c, -0.07, 1.09);
       gl_FragColor = vec4(max(c, 0.0) / 1.1, 1.0);
     }`,
@@ -281,7 +291,7 @@ export class BCam {
     this.yaw = { v: 0, vel: 0 }; this.pitch = { v: -0.1, vel: 0 }; this.lf = { v: Math.log(30), vel: 0 };
     this.fixed = null; // cadre fixe
     this.aiT = 0; this.aiTarget = null;
-    this.paint = { iris: 5.6, autoIris: false, irisClose: false, gain: 0, nd: 0, shutter: 0, wbR: 0, wbG: 0, wbB: 0, blackR: 0, blackG: 0, blackB: 0, flareR: 0, flareG: 0, flareB: 0, mblack: 0, gamma: 0, gammaOn: true, blackGamma: 0, knee: 95, kneeOn: true, detail: 30, detailOn: true, sat: 100, matrixOn: true, wbCCT: 5600, bars: false, call: 0 };
+    this.paint = { iris: 5.6, autoIris: false, irisClose: false, gain: 0, nd: 0, shutter: 0, wbR: 0, wbG: 0, wbB: 0, blackR: 0, blackG: 0, blackB: 0, flareR: 0, flareG: 0, flareB: 0, mblack: 0, gamma: 0, gammaOn: true, blackGamma: 0, knee: 95, kneeOn: true, wclip: 103, detail: 30, detailOn: true, sat: 100, matrixOn: true, wbCCT: 5600, bars: false, call: 0 };
     this.powerOn = true; this.panelActive = true;
     this.hidden = { tR: 1 + gauss() * 0.035, tB: 1 + gauss() * 0.035, bR: gauss() * 0.008, bB: gauss() * 0.008 };
     this.meter = { mean: 0.4, peak: 0.8, t: 0 };
@@ -416,6 +426,8 @@ export class BCam {
     u.uBlack.value.set(mb + this.hidden.bR + (p.blackR + p.flareR * 0.5) * 0.0003, mb + (p.blackG + p.flareG * 0.5) * 0.0003, mb + this.hidden.bB + (p.blackB + p.flareB * 0.5) * 0.0003);
     u.uGamma.value = p.gammaOn ? 0.45 - p.gamma * 0.0012 : 1.0;
     u.uKnee.value = p.kneeOn ? p.knee / 100 : 1.2;
+    u.uClip.value = (p.wclip ?? 109) / 100;
+    u.uHLG.value = 0;
     u.uDetail.value = p.detailOn ? p.detail / 100 : 0;
     u.uSat.value = p.matrixOn ? p.sat / 100 : 1;
     u.uBlackGamma.value = p.blackGamma / 99 * 0.06;
@@ -443,6 +455,15 @@ export class BCam {
     renderer.setRenderTarget(target);
     renderer.render(fsScene, fsCam);
     if (pose) { c.position.copy(savePos); c.rotation.set(sx, sy, 0); c.fov = sf; c.updateProjectionMatrix(); }
+    if (target === this.outRT) this.lastRender = S.time;
+  }
+  // seconde sortie de la CCU à partir de la même image : HDR (HLG) en plus de la SDR
+  paintTo(renderer, target, hlg = true) {
+    this.setPaintUniforms();
+    paintMat.uniforms.uHLG.value = hlg ? 1 : 0;
+    paintMat.uniforms.tRaw.value = this.rawRT.texture;
+    renderer.setRenderTarget(target); renderer.render(fsScene, fsCam);
+    paintMat.uniforms.uHLG.value = 0;
   }
 
   // --- cadreur automatique ---
@@ -594,8 +615,22 @@ export function lineUpCamera(cam, quality = 1) {
   if (n < 2) { n = 2; }
   if (cam.T.sensor !== '2/3') { n = Math.max(2, n / 1.4); }
   p.iris = IRIS_STOPS.reduce((a, b) => (Math.abs(b - n) < Math.abs(a - n) ? b : a));
-  p.nd = nd;
+  p.nd = nd; p.knee = 95; p.kneeOn = true; p.wclip = 103;
   if (quality >= 1) { cam.autoWhite(); cam.autoBlack(); p.wbR += Math.round(gauss() * 6); p.wbB += Math.round(gauss() * 6); }
+  // comme l'ingénieur vision au line-up : l'iris est ensuite affiné sur la mesure (voir updateMeters)
+  cam.lineup = { n: 0, target: LINEUP_TARGET[cam.role] ?? 0.42 };
+}
+// niveau moyen visé au line-up selon la valeur de plan (repères du guide : pelouse 40-55 %)
+export const LINEUP_TARGET = { large: 0.40, tactique: 0.40, semi: 0.42, serre: 0.45, joueur: 0.45, suivi: 0.44, bancs: 0.42, but: 0.42, tribune: 0.38, grue: 0.42, comm: 0.40 };
+export function lineupStep(cam) {
+  // une itération : la moyenne après gamma varie à peu près comme (1/N²)^0.45, soit N^-0.9
+  const L = cam.lineup; if (!L) return;
+  const m = cam.meter.mean; if (!(m > 0.03)) return;
+  const err = m / L.target;
+  if (Math.abs(err - 1) < 0.04 || L.n >= 6) { cam.lineup = null; return; }
+  const n = clamp(cam.paint.iris * Math.pow(err, 1 / 0.9), 1.4, 22);
+  cam.paint.iris = Math.round(n * 10) / 10;
+  L.n++;
 }
 
 export const PRESETS = {
