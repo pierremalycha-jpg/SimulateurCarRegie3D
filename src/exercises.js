@@ -1,3 +1,4 @@
+import { setKeyMode } from './ui/commut.js';
 import { S, on, emit, camById } from './state.js';
 import { MIX, meSource, mixSetPst, evsAction, EVS, sourceLabel, recordedCams } from './pipeline.js';
 import { M } from './match.js';
@@ -16,7 +17,8 @@ function camNum(src) { return src.startsWith('CAM') ? src.slice(3) : sourceLabel
 
 export function startExercise(mode) {
   EX.mode = mode; EX.score = 0; EX.max = 0; EX.n = 0; EX.order = null; EX.next = S.time + 3; EX.seq = []; EX.log = [];
-  say('Exercice truquiste. Je vais annoncer les caméras : préparez au PST, puis envoyez au top. Bonne chance !');
+  if (mode === 'td') setKeyMode('preset');
+  say('Exercice truquiste. Je vais annoncer les caméras : préparez au PST (touche du chiffre), puis envoyez au top (Espace = CUT, Entrée du pavé = AUTO). Bonne chance !');
 }
 export function stopExercise() { if (EX.mode) { EX.mode = null; EX.order = null; intercom('RÉAL', 'Exercice arrêté.'); } }
 

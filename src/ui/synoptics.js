@@ -300,7 +300,7 @@ function audioDiagram() {
   D.zone(360, 70, 280, 600, 'Transport');
   D.zone(660, 70, 330, 600, 'Console');
   D.zone(1010, 70, 480, 600, 'Sorties');
-  const src = [['amb', 'Couples d\'ambiance', 'tribunes, kop Marek'], ['canon', 'Canons bord terrain', '×8, suivent le jeu'], ['comm', 'Micros commentateurs', 'positions Lepagnot'], ['hfmic', 'Micro caméra HF', 'transporté avec l\'image'], ['evs', 'Son des ralentis', 'sorties EVS (embeddé)'], ['duplex', 'Duplex studio', 'retour par la transmission'], ['tone', 'Mire 1 kHz −18 dBFS', 'test de ligne']];
+  const src = [['amb', 'Couples d\'ambiance', 'tribunes, kop Marek'], ['canon', 'Canons bord terrain', '×6, suivent le jeu (48 V)'], ['comm', 'Micros commentateurs', 'positions Lepagnot'], ['hfmic', 'Micro caméra HF', 'transporté avec l\'image'], ['evs', 'Son des ralentis', 'sorties EVS (embeddé)'], ['duplex', 'Duplex studio', 'retour par la transmission'], ['tone', 'Mire 1 kHz −18 dBFS', 'test de ligne']];
   src.forEach(([id, t, s2], i) => D.box('s_' + id, 30, 100 + i * 78, 290, 50, t, [s2], { cls: id === 'tone' && AU.ch.tone && !AU.ch.tone.mute ? 'warn' : '' }));
   D.box('stage', 380, 120, 240, 60, 'Stagebox terrain', ['préamplis · MADI sur fibre'], { dev: 'audio' });
   D.box('cu', 380, 260, 240, 50, 'Unité de commentaire', ['Dante / AES67 · retours casque'], { dev: 'audio' });
@@ -311,8 +311,8 @@ function audioDiagram() {
   D.wire(D.p('s_hfmic', 'r'), D.p('deemb', 'l', 0.25), 'rf', { dash: true, m: 345 });
   D.wire(D.p('s_evs', 'r'), D.p('deemb', 'l', 0.55), 'video', { m: 350 });
   D.wire(D.p('s_duplex', 'r'), D.p('deemb', 'l', 0.85), 'video', { m: 355 });
-  const n1Bad = Object.values(AU.ch).some((c) => c.comm && c.n1), intlBad = Object.values(AU.ch).some((c) => c.comm && c.intl);
-  D.box('core', 690, 100, 280, 150, 'Console son · cœur DSP', [`${Object.keys(AU.ch).length} tranches utilisées`, 'bus PGM (stéréo) · INTL · N-1', `écoute : ${{ pgm: 'PGM', intl: 'international', n1: 'N-1' }[AU.monitor] || AU.monitor}`, intlBad ? 'VOIX DANS L\'INTERNATIONAL' : 'international sans voix', n1Bad ? 'COMMENTATEUR DANS SON N-1' : 'N-1 sans la voix du commentateur'], { cls: 'big ' + (n1Bad || intlBad ? 'err' : ''), dev: 'audio' });
+  const n1Bad = Object.values(AU.ch).some((c) => c.comm && c.n1), intlBad = Object.values(AU.ch).some((c) => c.voice && c.intl);
+  D.box('core', 690, 100, 280, 150, 'Console son (inspi. Vista 1) · DSP', [`${Object.keys(AU.ch).length} tranches utilisées · 3 N-x · 4 VCA`, 'bus PGM (stéréo) · INTL · N-1 COM / STU / BT', `écoute : ${{ pgm: 'PGM', intl: 'international', n1: 'N-1 commentaire', nxs: 'N-1 studio', nxb: 'N-1 bord terrain' }[AU.monitor] || AU.monitor}`, intlBad ? 'VOIX DANS L\'INTERNATIONAL' : 'international sans voix', n1Bad ? 'COMMENTATEUR DANS SON N-1' : 'N-1 sans la voix du commentateur'], { cls: 'big ' + (n1Bad || intlBad ? 'err' : ''), dev: 'audio' });
   D.wire(D.p('stage', 'r'), D.p('core', 'l', 0.2), 'audio', { label: 'MADI 64 canaux', m: 650 });
   D.wire(D.p('cu', 'r'), D.p('core', 'l', 0.5), 'audio', { m: 655 });
   D.wire(D.p('deemb', 'r'), D.p('core', 'l', 0.8), 'audio', { m: 660 });

@@ -3,6 +3,7 @@ import { Builder, screenMaterial } from './geo.js';
 import { TRUCK, labelSprite } from './world.js';
 import { makeCanvas } from './util.js';
 import { EQUIP } from './equip.js';
+import { buildAudioDesk } from './audiodesk.js';
 
 // ----------------------------------------------------------------------------------
 // Intérieur du car régie (scène séparée : on ne voit pas l'extérieur).
@@ -150,22 +151,6 @@ function drawLSM(g, W, H) {
   rr(g, 840, 50, 46, 70, 20, '#2a2e33', '#3f454c');
   txt(g, 'IPDirector', 640, H - 12, 12, '#8b949e');
   rr(g, 910, 20, 100, H - 40, 4, '#e8e4d8'); for (let i = 0; i < 7; i++) { g.fillStyle = '#9a968c'; g.fillRect(920, 36 + i * 14, 70 - (i % 3) * 12, 2); }
-}
-function drawAudio(g, W, H) {
-  // surface de console : 24 tranches + section master
-  g.fillStyle = '#1c1f23'; g.fillRect(0, 0, W, H);
-  const n = 24, sw = (W - 140) / n;
-  for (let i = 0; i < n; i++) {
-    const x = 8 + i * sw;
-    rr(g, x + 2, 6, sw - 4, H - 12, 3, i % 8 < 4 ? '#262a2f' : '#2b3036');
-    rr(g, x + 5, 10, sw - 10, 18, 2, '#0d2338'); txt(g, ['AMB', 'AMB', 'CAN', 'CAN', 'HF', 'EVS', 'COM', 'CON'][i % 8] + (Math.floor(i / 8) + 1), x + sw / 2, 19, 10, '#9ed0ff', 'center', 500);
-    for (let k = 0; k < 4; k++) { g.beginPath(); g.arc(x + sw / 2, 42 + k * 20, 6, 0, Math.PI * 2); g.fillStyle = '#0d0f11'; g.fill(); g.strokeStyle = ['#d0d0d0', '#e0b030', '#40b050', '#4070d0'][k]; g.lineWidth = 2; g.stroke(); }
-    rr(g, x + 6, 124, sw - 12, 12, 2, i === 7 ? '#e04040' : '#3a4047');
-    rr(g, x + sw / 2 - 2, 146, 4, H - 170, 2, '#0b0d0f'); rr(g, x + sw / 2 - 9, 146 + (H - 190) * (0.25 + 0.4 * ((i * 37) % 10) / 10), 18, 14, 3, '#c8ccd0');
-  }
-  rr(g, W - 128, 6, 120, H - 12, 5, '#30353b'); txt(g, 'MASTER', W - 68, 22, 14, '#e0b030');
-  rr(g, W - 112, 40, 88, 50, 4, '#0a1a0c'); txt(g, '−23 LUFS', W - 68, 65, 15, '#8cf0a8', 'center', 500);
-  for (const k of [0, 1]) { rr(g, W - 98 + k * 40, 110, 4, H - 140, 2, '#0b0d0f'); rr(g, W - 105 + k * 40, 150, 18, 14, 3, '#e8e8e8'); }
 }
 function drawIntercom(g, W, H) {
   g.fillStyle = '#1f2226'; g.fillRect(0, 0, W, H);
@@ -498,7 +483,9 @@ export function buildTruck() {
   deskPanel('scripte', 0.9, 0.3, -4.3, -1.55, drawScripte);
   deskPanel('rcp', 3.0, 0.42, 2.07, -1.6, drawRCPRow);
   deskPanel('lsm', 2.6, 0.4, 2.25, 0.0, drawLSM, 0.79, 0.16);
-  deskPanel('audio', 2.6, 0.82, -7.7, -0.45, drawAudio, 0.81, 0.1, Math.PI / 2);
+  // console son en 3D (inspiration Studer Vista 1, 22 faders) posée sur le bureau, face à l'opérateur
+  buildAudioDesk(T.scene, new THREE.Vector3(X(-7.22), F + 0.82, Z(-0.45)), Math.PI / 2);
+  deskPanel('audioside', 0.9, 0.3, -7.6, 0.75, drawIntercom, 0.83, 0.12, Math.PI / 2);
   deskPanel('gfx', 0.9, 0.3, -4.3, 0.0, drawKeyboard('HABILLAGE'), 0.97);
   deskPanel('prod', 0.9, 0.3, -2.9, 0.0, drawKeyboard('TIMING'), 0.97);
   deskPanel('chef', 0.9, 0.3, -1.75, 0.0, drawIntercom, 0.97);

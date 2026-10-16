@@ -120,6 +120,31 @@ Le simulateur est réglé sur ce parc (modifiable dans l'Espace formateur → «
 - SDP commenté ligne par ligne, antisèche EOS / NX-OS / IOS-XE, alias NX-OS dans le CLI, adresses modifiées
   conservées, panne « horloge pirate » sur un appareil au hasard, chapitre « Mesurer et analyser un flux ST 2110 ».
 
+## Ce que contient la v8 : son façon Vista 1, commentaires, caméras Sony / Fujinon
+
+- **Console son inspirée de la Studer Vista 1** (simulation non officielle) : deux écrans « Vistonics » de 10 tranches
+  (molettes posées sur l'écran ; rouge = égaliseur, vert = dynamique, jaune = panoramique), FaderGlow, couches A
+  (sources) / B (masters et VCA), Control Bay (vumètres, corrélateur, loudness, écoutes PGM / INTL / N-1, DIM, MONO,
+  PFL, talkback, lampe rouge) et écran de la tranche sélectionnée. Chaque tranche a une vraie chaîne WebAudio :
+  patch d'entrée, gain avec saturation, 48 V, polarité, passe-haut, égaliseur 4 bandes, gate, compresseur, retard,
+  panoramique, fader, VCA, départs PGM / international / N-1 commentaire / N-1 studio / N-1 bord terrain, AFV.
+  Pages E/S et patch (face arrière, cartes D21m), bus et départs, snapshots (match, avant-match, mi-temps, test de
+  ligne), « Comprendre la Vista 1 ». 17 sources : 2 couples d'ambiance, 6 canons qui captent le jeu selon leur
+  distance au ballon (assistant de suivi du jeu débrayable), micro de la caméra HF, 2 EVS, commentateur, consultant,
+  bord terrain, duplex, jingles, mire. Quatre nouvelles pannes : 48 V, phase, saturation d'entrée, patch.
+- **Commentaires pendant le match** : commentateur, consultant, journaliste bord terrain et plateau, générés par les
+  événements du match et dits par la synthèse vocale du navigateur ; le volume suit réellement la console (patch, gain,
+  fader, VCA, mute, bus écouté, master, DIM, retard de ligne).
+- **Console 3D** dans la cabine son : baies Vistonics avec molettes, faders motorisés et FaderGlow, touches, Control
+  Bay, pont de vumètres ; tout suit l'état de la console.
+- **Caméras** : Sony HDC-5500 dans un adaptateur grand objectif avec viseur 7", objectifs box Fujinon (UA125, UA107,
+  UA80, UA70, UA27) et portables (UA24, UA46x13.5, UA13) avec leurs focales, rampes d'ouverture, distances minimales
+  et masses ; modèles 3D refaits (boîtier, pare-soleil, servo, demandes de zoom et de point, tête fluide).
+- **Commutation au clavier** : 1 à 9 (et 0) partout (déplacement, vol, postes), en mode DIRECT ou PRESET (B), Entrée =
+  CUT ; fonctionne en AZERTY avec ou sans Maj.
+- **Rendu et déplacements** : plus de scintillement des textures en vol (plan proche adaptatif, décalages de
+  profondeur), inertie et balancement de la marche, vol plus fluide, regard lissé, brume, nuages, sol texturé.
+
 ## Construire et tester
 
 ```
@@ -132,6 +157,7 @@ node tools/reach.mjs          # chaque poste du car est-il accessible à pied ?
 node tools/netcli.mjs HD LEAF-R1 'sh ip route;;sh ptp'   # modèle réseau et CLI sans navigateur
 node tools/net.mjs OUT HD     # poste Réseau IP, terminal, pannes réseau et effets à l'image
 node tools/course.mjs OUT HD  # parcours de formation, mesures, capture, quiz, examen
+node tools/v8.mjs OUT keys    # commutation clavier (aussi : audio, visual)
 node tools/func.mjs           # tests fonctionnels historiques
 ```
 
@@ -153,12 +179,14 @@ node tools/func.mjs           # tests fonctionnels historiques
 | `net/cli.js` | Ligne de commande des commutateurs (syntaxe de type EOS / NX-OS) |
 | `net/analyzer.js` | Instruments : analyseur de flux ST 2110-21 / 2022-7, suivi PTP, capture de paquets décodée |
 | `net/course.js` | Parcours de formation réseau : missions vérifiées, quiz, examen noté |
-| `audio.js` | Console son : sources, bus PGM / INTL / N-1, retard de ligne, embedder, loudness EBU R128, pannes son |
+| `audio.js` | Console son (inspiration Vista 1) : sources synthétisées, patch, chaîne DSP par tranche, bus et N-x, VCA, écoutes, snapshots, retard de ligne, embedder, loudness, corrélation, pannes son |
+| `commentary.js` | Commentaires du match (commentateur, consultant, bord terrain, plateau) par synthèse vocale, volume suivant la console |
+| `audiodesk.js` | Console son en 3D dans la cabine (faders motorisés, FaderGlow, écrans Vistonics animés) |
 | `scenario.js` | Scénario « jour de match » chronométré et noté |
 | `shared.js` | Données partagées de la page publiée (configuration, progression) avec repli local |
 | `review.js` | Points techniques à faire relire par le formateur |
 | `gfx.js` | Habillage (score, bandeaux, statistiques) |
 | `truck.js` (car) | Intérieur du car : plan, postes, baies et pupitres détaillés, collisions |
-| `ui/` | Réseau IP (`st_network.js`, `net_tools.js`, `net_course.js`), synoptiques (`synoptics.js`), plan du car (`truckmap.js`), postes (`stations.js`, `st_vision.js`, `st_evs.js`, `st_mixer.js`, `st_ipd.js`, `st_patch.js`), espace formateur (`config.js`), rapports (`report.js`), plan, guide, missions |
+| `ui/` | Réseau IP (`st_network.js`, `net_tools.js`, `net_course.js`), synoptiques (`synoptics.js`), plan du car (`truckmap.js`), postes (`stations.js`, `st_audio.js`, `commut.js`, `st_vision.js`, `st_evs.js`, `st_mixer.js`, `st_ipd.js`, `st_patch.js`), espace formateur (`config.js`), rapports (`report.js`), plan, guide, missions |
 | `equipment/` | Visionneuse de matériel : appareils (`devices.js`), liste de câblage (`cabling.js`), rendu SVG et photos (`viewer.js`) |
 | `faults.js`, `exercises.js` | Simulateur de pannes, réalisateur virtuel et opérateur EVS automatique |

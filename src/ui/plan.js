@@ -216,7 +216,7 @@ function camForm(slot, cam) {
         st.role === 'joueur' ? field('Joueur à suivre', selectEl([...Array(22).keys()].map((i) => [i, `${playerNumber(i)} · ${playerName(i)}`]), st.target, (v) => { st.target = +v; })) : null,
         field('Numéro (CCU)', selectEl(ids, st.id, (v) => { st.id = +v; }))),
       el('p', { class: 'note' }, el('b', {}, 'Caméra : '), T().body, '. ', el('b', {}, 'Support : '), T().support, '.'),
-      el('p', { class: 'note' }, el('b', {}, 'Objectif : '), lensInfo(st.lens, T().sensor, dist), '. ', LENSES[st.lens].desc),
+      el('p', { class: 'note' }, el('b', {}, 'Objectif : '), lensInfo(st.lens, T().sensor, dist), '. ', LENSES[st.lens].desc, LENSES[st.lens].mod ? ` Mise au point mini ${String(LENSES[st.lens].mod).replace('.', ',')} m${LENSES[st.lens].kg ? `, ${String(LENSES[st.lens].kg).replace('.', ',')} kg` : ''}${LENSES[st.lens].dim ? ` (${LENSES[st.lens].dim})` : ''}.` : ''),
       el('p', { class: 'note' }, el('b', {}, 'Cadrage : '), ROLES[st.role].desc),
       el('p', { class: 'note' }, el('b', {}, 'Liaison : '), Lk.desc),
       st.link === 'hf' ? el('p', { class: 'note warn' }, 'Liaison HF : pensez à allumer des antennes de réception (losanges violets sur le plan) et à régler la modulation en régie HF.')

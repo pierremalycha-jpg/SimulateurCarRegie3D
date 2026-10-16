@@ -390,7 +390,9 @@ function buildStands(scene) {
     const sign = textBand(st.name.toUpperCase(), 2048, 256, '#e9ecef', '#1b2230', 170, 1);
     scene.add(new THREE.Mesh(backBandGeo(st, -20, 20, st.back + 0.5, d2 - 7, d2 - 2), new THREE.MeshLambertMaterial({ map: sign })));
   }
-  const body = B.mesh(new THREE.MeshLambertMaterial({ vertexColors: true }));
+  // le corps des tribunes est légèrement repoussé en profondeur : les gradins, sièges et bandeaux posés
+  // à quelques centimètres devant lui ne « clignotent » plus (z-fighting) quand on les regarde de loin
+  const body = B.mesh(new THREE.MeshLambertMaterial({ vertexColors: true, polygonOffset: true, polygonOffsetFactor: 1, polygonOffsetUnits: 2 }));
   body.castShadow = true; body.receiveShadow = true; scene.add(body);
   for (const [list, mat] of [[seats, seatMat], [terrace, terraceMat]]) {
     if (!list.length) continue;
@@ -564,10 +566,21 @@ export function buildWorld(renderer) {
   // --- ciel ---
   const skyMat = new THREE.ShaderMaterial({
     side: THREE.BackSide, depthWrite: false,
-    uniforms: { uZen: { value: new THREE.Color(0.2, 0.42, 0.9) }, uHor: { value: new THREE.Color(0.7, 0.82, 1.0) }, uGround: { value: new THREE.Color(0.25, 0.25, 0.25) }, uI: { value: 2.0 } },
+    uniforms: { uZen: { value: new THREE.Color(0.2, 0.42, 0.9) }, uHor: { value: new THREE.Color(0.7, 0.82, 1.0) }, uGround: { value: new THREE.Color(0.25, 0.25, 0.25) }, uI: { value: 2.0 }, uCloud: { value: 0.45 }, uCloudCol: { value: new THREE.Color(0.78, 0.8, 0.84) }, uTime: { value: 0 } },
     vertexShader: `varying vec3 vP; void main(){ vP = normalize(position); gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }`,
-    fragmentShader: `uniform vec3 uZen, uHor, uGround; uniform float uI; varying vec3 vP;
+    // dégradé + nuages procéduraux (bruit fractal projeté sur un plafond), qui dérivent lentement
+    fragmentShader: `uniform vec3 uZen, uHor, uGround, uCloudCol; uniform float uI, uCloud, uTime; varying vec3 vP;
+      float h2(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+      float n2(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f); return mix(mix(h2(i), h2(i + vec2(1.0, 0.0)), f.x), mix(h2(i + vec2(0.0, 1.0)), h2(i + vec2(1.0, 1.0)), f.x), f.y); }
+      float fbm(vec2 p){ float a = 0.5, s = 0.0; for (int i = 0; i < 4; i++) { s += a * n2(p); p = p * 2.03 + 17.0; a *= 0.5; } return s; }
       void main(){ float h = vP.y; vec3 c = h > 0.0 ? mix(uHor, uZen, pow(clamp(h,0.0,1.0), 0.6)) : mix(uHor, uGround, clamp(-h*6.0,0.0,1.0));
+        if (h > 0.0 && uCloud > 0.01) {
+          vec2 uv = vP.xz / (h + 0.15) * 1.3 + vec2(uTime * 0.006, uTime * 0.002);
+          float f = fbm(uv);
+          float cl = smoothstep(1.0 - uCloud, 1.0 - uCloud + 0.32, f) * smoothstep(0.0, 0.2, h);
+          vec3 cc = uCloudCol * (0.82 + 0.3 * smoothstep(0.35, 0.9, f));
+          c = mix(c, cc, cl * 0.9);
+        }
         gl_FragColor = vec4(c * uI, 1.0); }`,
   });
   W.sky = new THREE.Mesh(new THREE.SphereGeometry(1400, 32, 16), skyMat);
@@ -589,13 +602,11 @@ export function buildWorld(renderer) {
   scene.add(f2); scene.add(f2.target); W.flood2 = f2;
 
   // --- sol extérieur ---
-  const ground = new THREE.Mesh(new THREE.PlaneGeometry(1400, 1400), new THREE.MeshLambertMaterial({ color: 0x3b3e40 }));
-  ground.rotation.x = -Math.PI / 2; ground.position.y = -0.02; ground.receiveShadow = true;
+  // sols superposés (sol, pelouse extérieure, parvis, pelouse du terrain) : décalés en hauteur ET en profondeur
+  // (polygonOffset), sinon ils se disputent le même pixel vus d'avion
+  const ground = new THREE.Mesh(new THREE.PlaneGeometry(1400, 1400), new THREE.MeshLambertMaterial({ map: groundTexture(), polygonOffset: true, polygonOffsetFactor: 6, polygonOffsetUnits: 12 }));
+  ground.rotation.x = -Math.PI / 2; ground.position.y = -0.06; ground.receiveShadow = true;
   scene.add(ground);
-  // pelouse autour (hors stade)
-  const grassOut = new THREE.Mesh(new THREE.RingGeometry(260, 700, 48, 1), new THREE.MeshLambertMaterial({ color: 0x334d2c }));
-  grassOut.rotation.x = -Math.PI / 2; grassOut.position.y = -0.01; scene.add(grassOut);
-
   // --- pelouse ---
   const pitch = new THREE.Mesh(new THREE.PlaneGeometry(122, 82), new THREE.MeshLambertMaterial({ map: pitchTexture(renderer) }));
   pitch.rotation.x = -Math.PI / 2; pitch.position.y = 0.0; pitch.receiveShadow = true;
@@ -955,6 +966,14 @@ function buildCompound(scene) {
 // ----------------------------------------------------------------------------------
 // Environnement : bassin minier autour du stade (échelle réduite pour l'horizon)
 // ----------------------------------------------------------------------------------
+// sol des abords (friches, pelouses, chemins) : variations douces pour casser l'aplat vu d'avion
+function groundTexture() {
+  const N = 512; const c = makeCanvas(N, N); const g = c.getContext('2d'); const r = mulberry32(31);
+  g.fillStyle = '#4c5a3f'; g.fillRect(0, 0, N, N);
+  for (let i = 0; i < 260; i++) { const x = r() * N, y = r() * N, rad = 10 + r() * 60; const tone = r(); const gr = g.createRadialGradient(x, y, 0, x, y, rad); const col = tone < 0.45 ? '86,104,64' : tone < 0.75 ? '70,82,55' : tone < 0.9 ? '104,100,78' : '92,92,88'; gr.addColorStop(0, `rgba(${col},0.55)`); gr.addColorStop(1, `rgba(${col},0)`); g.fillStyle = gr; for (const dx of [-N, 0, N]) for (const dy of [-N, 0, N]) { g.save(); g.translate(dx, dy); g.fillRect(x - rad, y - rad, rad * 2, rad * 2); g.restore(); } }
+  for (let i = 0; i < 6000; i++) { const v = 60 + Math.floor(r() * 50); g.fillStyle = `rgba(${v},${v + 18},${v - 10},0.35)`; g.fillRect(r() * N, r() * N, 1.5, 1.5); }
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = S.lite || S.quality === 'basse' ? 2 : 4; t.repeat.set(28, 28); return t;
+}
 function pavingTexture() {
   const c = makeCanvas(256, 256); const g = c.getContext('2d'); const r = mulberry32(8);
   g.fillStyle = '#a8a7a2'; g.fillRect(0, 0, 256, 256);
@@ -978,7 +997,7 @@ function gable(B, cx, cy, cz, L, Wd, Hr, alongX, color) {
 function buildSurroundings(scene) {
   const B = new Builder(); const r = mulberry32(62);
   // --- parvis piéton autour des tribunes (dalles claires) ---
-  { const pv = new THREE.Mesh(new THREE.PlaneGeometry(250, 200), new THREE.MeshLambertMaterial({ map: pavingTexture() })); pv.rotation.x = -Math.PI / 2; pv.position.set(0, -0.012, 5); pv.receiveShadow = true; scene.add(pv); }
+  { const pv = new THREE.Mesh(new THREE.PlaneGeometry(250, 200), new THREE.MeshLambertMaterial({ map: pavingTexture(), polygonOffset: true, polygonOffsetFactor: 3, polygonOffsetUnits: 6 })); pv.rotation.x = -Math.PI / 2; pv.position.set(0, -0.03, 5); pv.receiveShadow = true; scene.add(pv); }
   // --- arbres du parvis (instanciés) ---
   {
     const pts = [];
@@ -1077,6 +1096,8 @@ function buildSurroundings(scene) {
 // ----------------------------------------------------------------------------------
 // Éclairage
 // ----------------------------------------------------------------------------------
+// nuages : coûteux sur un petit processeur graphique (ils sont aussi rendus par chaque caméra) → coupés en qualité basse
+export function setCloudQuality(q) { if (W.sky) W.sky.material.uniforms.uCloud.value = q === 'basse' || S.lite ? 0 : (W.cloudBase ?? 0.42); }
 export function applyLighting(key) {
   S.lighting = key;
   const sun = W.sun, f2 = W.flood2, hemi = W.hemi, sky = W.sky.material.uniforms;
@@ -1086,32 +1107,37 @@ export function applyLighting(key) {
     light.target.position.set(0, 0, 0);
   };
   f2.intensity = 0; sun.castShadow = true;
+  // brume atmosphérique : quasi nulle dans le stade, elle donne de la profondeur à l'horizon (vue aérienne)
+  const fog = { jour: [0x8fb4e8, 0.0011, 2.1], fin: [0xe0a070, 0.0013, 1.5], couvert: [0xb9bfc6, 0.0017, 1.5], nuit: [0x0a0d14, 0.0009, 0.05] }[key] || [0x8fb4e8, 0.0011, 2.1];
+  if (!W.scene.fog) W.scene.fog = new THREE.FogExp2(fog[0], fog[1]);
+  W.scene.fog.color.setHex(fog[0]).multiplyScalar(fog[2]); W.scene.fog.density = fog[1];
   if (key === 'jour') {
     setDir(sun, -30, 35); sun.color.setRGB(...kelvinRGBNorm(5600)); sun.intensity = 3.2;
     hemi.color.setRGB(0.55, 0.66, 0.9); hemi.groundColor.setRGB(0.32, 0.34, 0.26); hemi.intensity = 1.0;
-    sky.uZen.value.setRGB(0.18, 0.4, 0.95); sky.uHor.value.setRGB(0.68, 0.8, 1.0); sky.uI.value = 1.6;
+    sky.uZen.value.setRGB(0.18, 0.4, 0.95); sky.uHor.value.setRGB(0.68, 0.8, 1.0); sky.uI.value = 1.6; W.cloudBase = 0.42; sky.uCloudCol.value.setRGB(0.8, 0.82, 0.86);
     W.boardsMat.uniforms.uI.value = 1.4; W.crowdMat.uniforms.uLight.value = 0.62; W.floodMat.color.setHex(0x55595d);
     S.sceneCCT = 5600; S.eyeExposure = 0.9;
   } else if (key === 'fin') {
     setDir(sun, -40, 12); sun.color.setRGB(...kelvinRGBNorm(3600)); sun.intensity = 2.4;
     hemi.color.setRGB(0.5, 0.48, 0.6); hemi.groundColor.setRGB(0.25, 0.2, 0.15); hemi.intensity = 0.55;
-    sky.uZen.value.setRGB(0.15, 0.25, 0.6); sky.uHor.value.setRGB(1.0, 0.62, 0.35); sky.uI.value = 1.0;
+    sky.uZen.value.setRGB(0.15, 0.25, 0.6); sky.uHor.value.setRGB(1.0, 0.62, 0.35); sky.uI.value = 1.0; W.cloudBase = 0.48; sky.uCloudCol.value.setRGB(1.05, 0.62, 0.45);
     W.boardsMat.uniforms.uI.value = 0.9; W.crowdMat.uniforms.uLight.value = 0.33; W.floodMat.color.setHex(0x8a8c90);
     S.sceneCCT = 3600; S.eyeExposure = 1.5;
   } else if (key === 'couvert') {
     setDir(sun, -20, 60); sun.color.setRGB(...kelvinRGBNorm(6500)); sun.intensity = 0.35; sun.castShadow = true;
     hemi.color.setRGB(0.78, 0.82, 0.9); hemi.groundColor.setRGB(0.35, 0.36, 0.33); hemi.intensity = 0.9;
-    sky.uZen.value.setRGB(0.6, 0.63, 0.68); sky.uHor.value.setRGB(0.78, 0.8, 0.83); sky.uI.value = 0.75;
+    sky.uZen.value.setRGB(0.6, 0.63, 0.68); sky.uHor.value.setRGB(0.78, 0.8, 0.83); sky.uI.value = 0.75; W.cloudBase = 0.92; sky.uCloudCol.value.setRGB(0.66, 0.68, 0.72);
     W.boardsMat.uniforms.uI.value = 0.7; W.crowdMat.uniforms.uLight.value = 0.3; W.floodMat.color.setHex(0x55595d);
     S.sceneCCT = 6500; S.eyeExposure = 2.6;
   } else { // nuit
     setDir(sun, 0, 58); sun.color.setRGB(...kelvinRGBNorm(5700)); sun.intensity = 0.06;
     setDir(f2, 180, 52); f2.color.setRGB(...kelvinRGBNorm(5700)); f2.intensity = 0.045;
     hemi.color.setRGB(0.6, 0.65, 0.8); hemi.groundColor.setRGB(0.2, 0.22, 0.2); hemi.intensity = 0.012;
-    sky.uZen.value.setRGB(0.01, 0.015, 0.035); sky.uHor.value.setRGB(0.05, 0.05, 0.07); sky.uI.value = 0.06;
+    sky.uZen.value.setRGB(0.01, 0.015, 0.035); sky.uHor.value.setRGB(0.05, 0.05, 0.07); sky.uI.value = 0.06; W.cloudBase = 0.35; sky.uCloudCol.value.setRGB(0.12, 0.12, 0.14);
     W.boardsMat.uniforms.uI.value = 0.09; W.crowdMat.uniforms.uLight.value = 0.034; W.floodMat.color.setRGB(40, 40, 40);
     S.sceneCCT = 5700; S.eyeExposure = 24;
   }
+  setCloudQuality(S.quality);
   // les haubans (non éclairés) suivent la lumière ambiante
   if (W.cableMat) W.cableMat.color.setHex({ jour: 0xd8dde2, fin: 0x9a8f88, couvert: 0x8a8f94 }[key] ?? 0x0a0b0c);
   if (W.roofMat) W.roofMat.emissive.setHex({ jour: 0x5a5f66, fin: 0x34363a, couvert: 0x3c3f43 }[key] ?? 0x030304);
@@ -1127,6 +1153,7 @@ export function updateWorld(t) {
   if (W.train) { const c = t % 120; W.train.visible = c < 70; W.train.position.z = -900 + c * 26; }
   if (W.boardsMat) W.boardsMat.uniforms.uOff.value = Math.floor(t / 8) * (1 / 8) + (t % 8 < 0.4 ? (t % 8) / 0.4 * 0.0 : 0);
   if (W.crowdMat) W.crowdMat.uniforms.uTime.value = t;
+  if (W.sky) W.sky.material.uniforms.uTime.value = t;
 }
 
 // inscription sur le flanc du car : nom donné par le formateur (sinon « Car régie ») et format

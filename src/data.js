@@ -9,17 +9,26 @@ export const SENSORS = {
 
 // Objectifs : fmin/fmax en mm, ouverture max, focale de début de "ramping" et ouverture max à fmax
 export const LENSES = {
-  UJ122: { name: 'Canon UJ122x8.2B', kind: 'box', fmin: 8.2, fmax: 1000, f0: 1.7, ramp: 390, fLong: 4.4, ext: true, desc: 'Zoom "box" UHD très longue focale (8,2–1000 mm). Utilisé pour les plans serrés depuis la tribune.' },
-  UA107: { name: 'Fujinon UA107x8.4BESM', kind: 'box', fmin: 8.4, fmax: 900, f0: 1.7, ramp: 350, fLong: 4.4, ext: true, desc: 'Zoom box 4K 8,4–900 mm, standard des caméras principales de stade.' },
-  UJ86: { name: 'Canon UJ86x9.3B', kind: 'box', fmin: 9.3, fmax: 800, f0: 1.7, ramp: 330, fLong: 4.1, ext: true, desc: 'Zoom box UHD 9,3–800 mm. Très courant en plan large et serré.' },
-  UJ27: { name: 'Canon UJ27x6.5B', kind: 'box', fmin: 6.5, fmax: 180, f0: 1.5, ramp: 140, fLong: 1.95, ext: true, desc: 'Zoom box grand-angle (6,5–180 mm) pour positions proches.' },
-  CJ45: { name: 'Canon CJ45ex9.7B', kind: 'portable', fmin: 9.7, fmax: 437, f0: 2.0, ramp: 200, fLong: 4.4, ext: true, desc: 'Zoom portable longue focale (9,7–437 mm) : caméra épaule avec grande portée.' },
-  UA46: { name: 'Fujinon UA46x9.5BERD', kind: 'portable', fmin: 9.5, fmax: 437, f0: 2.0, ramp: 210, fLong: 4.2, ext: true, desc: 'Zoom portable 4K longue focale.' },
-  CJ24: { name: 'Canon CJ24ex7.5B', kind: 'portable', fmin: 7.5, fmax: 180, f0: 1.8, ramp: 120, fLong: 2.7, ext: true, desc: 'Zoom portable polyvalent (7,5–180 mm).' },
-  UA24: { name: 'Fujinon UA24x7.8BERD', kind: 'portable', fmin: 7.8, fmax: 187, f0: 1.8, ramp: 125, fLong: 2.7, ext: true, desc: 'Zoom portable 4K polyvalent.' },
-  CJ20: { name: 'Canon CJ20ex7.8B', kind: 'portable', fmin: 7.8, fmax: 156, f0: 1.8, ramp: 105, fLong: 2.7, ext: true, desc: 'Zoom portable léger, idéal Steadicam et épaule.' },
-  CJ15: { name: 'Canon CJ15ex4.3B', kind: 'portable', fmin: 4.3, fmax: 65, f0: 1.8, ramp: 45, fLong: 2.6, ext: true, desc: 'Grand-angle (4,3–65 mm) : vestiaires, tunnel, grue, caméra volante.' },
-  UA14: { name: 'Fujinon UA14x4.5BERD', kind: 'portable', fmin: 4.5, fmax: 63, f0: 2.0, ramp: 45, fLong: 2.8, ext: true, desc: 'Grand-angle 4K (4,5–63 mm).' },
+  // --- Fujinon 4K « box » (studio / terrain, 2/3") : chiffres constructeur (focales, ouvertures, distance mini, masse) ---
+  UA125: { name: 'Fujinon UA125x8BESM', brand: 'Fujinon', kind: 'box', fmin: 8, fmax: 1000, f0: 1.7, ramp: 340, fLong: 5.0, ext: true, mod: 3.0, kg: 26.6, dim: '258 × 264 × 635 mm', len: 0.635, desc: 'Zoom box 4K 125x (8–1000 mm, 16–2000 mm avec le doubleur) : f/1,7 jusqu\'à 340 mm puis f/5 à 1000 mm. Pour les serrés extrêmes depuis la tribune.' },
+  UA107: { name: 'Fujinon UA107x8.4BESM', brand: 'Fujinon', kind: 'box', fmin: 8.4, fmax: 900, f0: 1.7, ramp: 340, fLong: 4.5, ext: true, mod: 3.05, kg: 23.9, dim: '258 × 264 × 610 mm', len: 0.61, desc: 'Zoom box 4K 107x (8,4–900 mm) : f/1,7 jusqu\'à 340 mm, f/4,5 à 900 mm. La référence des caméras principales de stade.' },
+  UA80: { name: 'Fujinon UA80x9BESM', brand: 'Fujinon', kind: 'box', fmin: 9, fmax: 720, f0: 1.7, ramp: 350, fLong: 3.5, ext: true, mod: 3.7, kg: 23.5, dim: '258 × 264 × 610 mm', len: 0.61, desc: 'Zoom box 4K 80x (9–720 mm), doubleurs 1,2x et 2x : f/1,7 jusqu\'à 350 mm, f/3,5 à 720 mm. Plus lumineux au long foyer : idéal en plan large / 16 m et en super ralenti.' },
+  UA70: { name: 'Fujinon UA70x8.7BESM', brand: 'Fujinon', kind: 'box', fmin: 8.7, fmax: 610, f0: 1.7, ramp: 340, fLong: 3.05, ext: true, mod: 3.05, kg: 23.8, dim: '≈ 258 × 264 × 610 mm', len: 0.61, desc: 'Zoom box 4K 70x (8,7–610 mm) : f/1,7 jusqu\'à 340 mm, f/3,05 à 610 mm. Positions plus proches du terrain.' },
+  UA27: { name: 'Fujinon UA27x6.5BESM', brand: 'Fujinon', kind: 'box', fmin: 6.5, fmax: 180, f0: 1.5, ramp: 123, fLong: 2.2, ext: true, mod: 0.6, kg: 22.8, dim: '≈ 258 × 264 × 560 mm', len: 0.56, desc: 'Zoom box 4K grand-angle (6,5–180 mm), très lumineux (f/1,5) : plans tactiques en hauteur, positions proches.' },
+  // --- Fujinon 4K portables (épaule, Steadicam, grue) ---
+  UA46: { name: 'Fujinon UA46x13.5BERD', brand: 'Fujinon', kind: 'portable', fmin: 13.5, fmax: 621, f0: 2.8, ramp: 316, fLong: 5.5, ext: true, mod: 2.8, kg: 5.8, dim: 'Φ 146,5 × 364 mm', len: 0.364, dia: 0.146, desc: 'Zoom portable 4K très long (13,5–621 mm) : f/2,8 jusqu\'à 316 mm, f/5,5 à 621 mm. Caméras bord terrain derrière les buts.' },
+  UA24: { name: 'Fujinon UA24x7.8BERD', brand: 'Fujinon', kind: 'portable', fmin: 7.8, fmax: 187, f0: 1.8, ramp: 118, fLong: 2.85, ext: true, mod: 0.8, kg: 1.98, dim: 'longueur 220,5 mm', len: 0.22, dia: 0.11, desc: 'Zoom portable 4K polyvalent (7,8–187 mm) : f/1,8 jusqu\'à 118 mm, f/2,85 à 187 mm, 1,98 kg. Épaule, Steadicam, rail.' },
+  UA13: { name: 'Fujinon UA13x4.5BERD', brand: 'Fujinon', kind: 'portable', fmin: 4.5, fmax: 59, f0: 1.8, ramp: 41, fLong: 2.6, ext: true, mod: 0.3, kg: 2.28, dim: '', len: 0.22, dia: 0.12, desc: 'Grand-angle portable 4K (4,5–59 mm) : f/1,8 jusqu\'à 41 mm, f/2,6 à 59 mm, mise au point à 30 cm. Vestiaires, tunnel, grue, caméra volante.' },
+  UA14: { name: 'Fujinon UA14x4.5BERD', brand: 'Fujinon', kind: 'portable', fmin: 4.5, fmax: 63, f0: 2.0, ramp: 45, fLong: 2.8, ext: true, len: 0.24, dia: 0.12, desc: 'Grand-angle portable 4K (4,5–63 mm) ; ouvertures données ici en ordre de grandeur.' },
+  // --- Canon (autre fabricant courant, gardé pour comparer) ---
+  UJ122: { name: 'Canon UJ122x8.2B', brand: 'Canon', kind: 'box', fmin: 8.2, fmax: 1000, f0: 1.7, ramp: 390, fLong: 4.4, ext: true, len: 0.64, desc: 'Zoom box UHD très longue focale (8,2–1000 mm). Ouvertures en ordre de grandeur.' },
+  UJ86: { name: 'Canon UJ86x9.3B', brand: 'Canon', kind: 'box', fmin: 9.3, fmax: 800, f0: 1.7, ramp: 330, fLong: 4.1, ext: true, len: 0.6, desc: 'Zoom box UHD 9,3–800 mm. Ouvertures en ordre de grandeur.' },
+  UJ27: { name: 'Canon UJ27x6.5B', brand: 'Canon', kind: 'box', fmin: 6.5, fmax: 180, f0: 1.5, ramp: 140, fLong: 1.95, ext: true, len: 0.55, desc: 'Zoom box grand-angle (6,5–180 mm) pour positions proches.' },
+  CJ45: { name: 'Canon CJ45ex9.7B', brand: 'Canon', kind: 'portable', fmin: 9.7, fmax: 437, f0: 2.0, ramp: 200, fLong: 4.4, ext: true, len: 0.33, dia: 0.13, desc: 'Zoom portable longue focale (9,7–437 mm).' },
+  CJ24: { name: 'Canon CJ24ex7.5B', brand: 'Canon', kind: 'portable', fmin: 7.5, fmax: 180, f0: 1.8, ramp: 120, fLong: 2.7, ext: true, len: 0.23, desc: 'Zoom portable polyvalent (7,5–180 mm).' },
+  CJ20: { name: 'Canon CJ20ex7.8B', brand: 'Canon', kind: 'portable', fmin: 7.8, fmax: 156, f0: 1.8, ramp: 105, fLong: 2.7, ext: true, len: 0.21, desc: 'Zoom portable léger, idéal Steadicam et épaule.' },
+  CJ15: { name: 'Canon CJ15ex4.3B', brand: 'Canon', kind: 'portable', fmin: 4.3, fmax: 65, f0: 1.8, ramp: 45, fLong: 2.6, ext: true, len: 0.22, desc: 'Grand-angle (4,3–65 mm).' },
+  // --- optiques intégrées ---
   FIX4: { name: 'Optique fixe 4 mm', kind: 'fixe', fmin: 4, fmax: 4, f0: 2.0, ramp: 99, fLong: 2.0, ext: false, desc: 'Optique fixe grand-angle de mini-caméra (POV).' },
   FIX9: { name: 'Optique fixe 9 mm', kind: 'fixe', fmin: 9, fmax: 9, f0: 2.8, ramp: 99, fLong: 2.8, ext: false, desc: 'Optique fixe de drone (capteur 1").' },
   PTZ20: { name: 'Zoom intégré 20x (8,8–176 mm)', kind: 'ptz', fmin: 8.8, fmax: 176, f0: 2.8, ramp: 60, fLong: 4.5, ext: false, desc: 'Zoom intégré de caméra tourelle 4K (capteur 1").' },
@@ -35,34 +44,34 @@ export function maxAperture(lens, f, ext) {
 export const CAMERA_TYPES = {
   plateau: {
     label: 'Caméra tribune grand objectif', short: 'Tribune', sensor: '2/3',
-    body: 'Caméra système 3 capteurs 2/3" (type Sony HDC-5500, Grass Valley LDX 100, Ikegami UHK-X700)',
-    support: 'Trépied lourd + tête fluide (type Vinten / Sachtler) + télécommandes zoom/point',
-    lenses: ['UA107', 'UJ86', 'UJ122', 'UJ27'], defLens: 'UJ86',
+    body: 'Caméra système Sony HDC-5500 (3 capteurs CMOS 2/3" 4K, fibre SMPTE) dans un adaptateur grand objectif (série Sony HDLA), viseur 7" à l\'arrière',
+    support: 'Trépied lourd + tête fluide (type Vinten Vector), deux bras de manivelle : demande de zoom à droite, de point à gauche',
+    lenses: ['UA107', 'UA80', 'UA125', 'UA70', 'UA27', 'UJ86', 'UJ122', 'UJ27'], defLens: 'UA80',
     links: ['smpte', 'precab', 'smf', 'triax', 'ip'], defLink: 'smpte',
     roles: ['large', 'serre', 'semi', 'joueur', 'tactique', 'fixe'], hfr: 1, operator: true, model: 'box',
   },
   hfr3: {
     label: 'Super ralenti 3x (150 i/s)', short: 'SSM 3x', sensor: '2/3',
-    body: 'Caméra système en mode HFR 3x (150 i/s en 50 Hz) : 3 phases SDI vers l\'EVS',
-    support: 'Trépied lourd + tête fluide', lenses: ['UJ86', 'UA107', 'UJ122', 'CJ45'], defLens: 'UJ86',
+    body: 'Caméra système Sony HDC-5500 en mode HFR 3x (150 i/s en 50 Hz) : 3 phases SDI vers l\'EVS',
+    support: 'Trépied lourd + tête fluide, adaptateur grand objectif', lenses: ['UA80', 'UA107', 'UA125', 'UA70', 'UA46', 'UJ86'], defLens: 'UA80',
     links: ['smpte', 'precab', 'smf', 'ip'], defLink: 'smpte', roles: ['serre', 'joueur', 'semi'], hfr: 3, operator: true, model: 'box',
   },
   hfr6: {
     label: 'Super ralenti 6x (300 i/s)', short: 'SSM 6x', sensor: '2/3',
     body: 'Caméra HFR 6x (300 i/s) : 6 phases, demande beaucoup de lumière',
-    support: 'Trépied lourd', lenses: ['UJ86', 'UA107', 'CJ45'], defLens: 'UA107',
+    support: 'Trépied lourd, adaptateur grand objectif', lenses: ['UA80', 'UA107', 'UA70', 'UA46', 'UJ86'], defLens: 'UA107',
     links: ['smpte', 'precab', 'smf', 'ip'], defLink: 'smpte', roles: ['serre', 'joueur'], hfr: 6, operator: true, model: 'box',
   },
   portable: {
     label: 'Caméra portable / épaule', short: 'Épaule', sensor: '2/3',
-    body: 'Caméra système portable 2/3" (même voie CCU que les caméras tribune)',
-    support: 'Épaule ou trépied léger', lenses: ['CJ24', 'CJ20', 'UA24', 'CJ45', 'UA46', 'CJ15', 'UA14'], defLens: 'CJ24',
+    body: 'Sony HDC-5500 ou HDC-3500 en configuration épaule (même voie CCU que les caméras tribune), objectif portable Fujinon',
+    support: 'Épaule ou trépied léger', lenses: ['UA24', 'UA46', 'UA13', 'UA14', 'CJ24', 'CJ20', 'CJ45', 'CJ15'], defLens: 'UA24',
     links: ['smpte', 'triax', 'smf', 'coax', 'ip', 'precab'], defLink: 'smpte', roles: ['joueur', 'serre', 'bancs', 'tribune', 'tunnel', 'semi'], hfr: 1, operator: true, model: 'shoulder',
   },
   steadicam: {
     label: 'Steadicam HF', short: 'Steadi HF', sensor: '2/3',
     body: 'Caméra compacte 2/3" sur harnais stabilisé + émetteur HF COFDM au dos',
-    support: 'Bras et harnais Steadicam, batteries V-Lock', lenses: ['CJ20', 'CJ15', 'UA14', 'CJ24'], defLens: 'CJ20',
+    support: 'Bras et harnais Steadicam, batteries V-Lock', lenses: ['UA24', 'UA13', 'UA14', 'CJ20', 'CJ15', 'CJ24'], defLens: 'UA24',
     links: ['hf'], defLink: 'hf', roles: ['suivi', 'joueur'], hfr: 1, operator: true, model: 'steadicam', moving: 'touchline',
   },
   pov: {
@@ -74,19 +83,19 @@ export const CAMERA_TYPES = {
   grue: {
     label: 'Grue télescopique', short: 'Grue', sensor: '2/3',
     body: 'Caméra compacte sur tête télécommandée en bout de grue (type Technocrane)',
-    support: 'Grue télescopique sur base, tête 3 axes, opérateur + machiniste', lenses: ['CJ15', 'UA14', 'CJ20'], defLens: 'CJ15',
+    support: 'Grue télescopique sur base, tête 3 axes, opérateur + machiniste', lenses: ['UA13', 'UA14', 'CJ15', 'CJ20'], defLens: 'UA13',
     links: ['smpte', 'smf'], defLink: 'smpte', roles: ['grue'], hfr: 1, operator: true, model: 'crane', moving: 'crane',
   },
   rail: {
     label: 'Caméra sur rail (travelling)', short: 'Rail', sensor: '2/3',
     body: 'Caméra compacte sur chariot motorisé télécommandé',
-    support: 'Rail le long de la ligne de touche, chariot motorisé', lenses: ['CJ20', 'CJ24', 'UA24'], defLens: 'CJ20',
+    support: 'Rail le long de la ligne de touche, chariot motorisé', lenses: ['UA24', 'CJ20', 'CJ24'], defLens: 'UA24',
     links: ['smf', 'smpte'], defLink: 'smf', roles: ['suivi'], hfr: 1, operator: true, model: 'rail', moving: 'rail',
   },
   spider: {
     label: 'Caméra câblée volante (type Spidercam)', short: 'Volante', sensor: '2/3',
     body: 'Caméra compacte gyrostabilisée suspendue à 4 câbles motorisés',
-    support: '4 treuils en haut des tribunes, pilote + cadreur', lenses: ['CJ15', 'UA14', 'CJ20'], defLens: 'CJ15',
+    support: '4 treuils en haut des tribunes, pilote + cadreur', lenses: ['UA13', 'UA14', 'CJ15', 'CJ20'], defLens: 'UA13',
     links: ['smf'], defLink: 'smf', roles: ['suivi'], hfr: 1, operator: true, model: 'spider', moving: 'spider',
   },
   drone: {
@@ -320,10 +329,10 @@ export const STATION_INFO = {
   },
   son: {
     title: 'Ingénieur(e) du son', where: 'Régie son (cabine isolée)',
-    role: 'Mixe le son du programme : ambiance des tribunes, micros bord terrain (frappes de balle, coups de sifflet), commentaires. Fournit le son international (sans commentaires), gère les retours des commentateurs (N-1) et la conformité de loudness.',
-    gear: ['Console numérique (type Lawo mc², Calrec Artemis/Apollo)', 'Micros : canons bord terrain, couples d\'ambiance en tribune, micros commentateurs', 'Liaisons MADI / Dante / ST 2110-30, embedding de l\'audio dans le SDI', 'Mesure de loudness (EBU R128)'],
-    process: ['Installation des micros par l\'équipe son (chef OPS)', 'Line-up : 1 kHz à -18 dBFS sur toutes les liaisons', 'Embedder du départ réglé selon le plan de son de la chaîne (PGM, international…)', 'Retours N-1 des commentateurs et du duplex vérifiés (pas de voix dans son propre retour)', 'Retard de ligne calé sur l\'image (caméra HF comprise)', 'Direct : équilibre ambiance / effets / commentaires, cible -23 LUFS'],
-    tips: ['EBU R128 : -23 LUFS intégré, true peak maximum -1 dBTP.', 'Le son voyage avec l\'image : 16 canaux audio peuvent être embeddés dans un flux SDI HD.', 'Synchro labiale (EBU R37) : son en avance de 40 ms au plus, en retard de 60 ms au plus.'],
+    role: 'Mixe le son du programme : ambiance des tribunes, micros canons bord terrain (frappes de balle, coups de sifflet), commentaires. Fournit le son international (sans voix), les retours N-1 (commentateurs, studio, bord terrain), et garantit la loudness et la synchro labiale.',
+    gear: ['Console numérique (ici inspirée de la Studer Vista 1 : écrans Vistonics, FaderGlow ; ailleurs Lawo mc², Calrec Artemis/Apollo…)', 'Micros : canons bord terrain (statiques, 48 V), couples d\'ambiance ORTF / XY en tribune, micros-casques des commentateurs', 'Liaisons MADI / Dante / ST 2110-30, désembedding SDI, embedding du départ', 'Mesures : loudness EBU R128, corrélateur de phase, vumètres'],
+    process: ['Installation des micros par l\'équipe son, feuille de patch préparée', 'Contrôle de chaque source en PFL (48 V, phase, gain d\'entrée)', 'Line-up : 1 kHz à -18 dBFS sur toutes les liaisons (snapshot TEST DE LIGNE)', 'Embedder du départ réglé selon le plan de son de la chaîne (PGM, international…)', 'Retours N-1 des commentateurs, du studio et du bord terrain vérifiés (pas de voix dans son propre retour)', 'Retard de ligne calé sur l\'image (caméra HF comprise)', 'Direct : ambiances toujours ouvertes, canons qui suivent le ballon, commentaires au-dessus, cible -23 LUFS'],
+    tips: ['EBU R128 : -23 LUFS intégré, true peak maximum -1 dBTP.', 'Le gain d\'entrée se règle AVANT le fader : une saturation à l\'entrée ne se rattrape jamais.', 'Corrélateur négatif = un micro en opposition de phase : l\'ambiance s\'annule en mono.', 'Synchro labiale (EBU R37) : son en avance de 40 ms au plus, en retard de 60 ms au plus.'],
   },
   hf: {
     title: 'Technicien(ne) HF', where: 'Zone technique / car HF',
@@ -492,6 +501,29 @@ export const GLOSSARY = [
   ['Son international', 'Mix d\'ambiance et d\'effets sans aucune voix, livré aux diffuseurs étrangers qui y ajoutent leurs commentaires.'],
   ['Synchro labiale', 'Alignement du son sur l\'image (lip-sync). Tolérance EBU R37 : son en avance de 40 ms au plus, en retard de 60 ms au plus.'],
   ['Retard de ligne', 'Retard ajouté au son pour compenser la latence de l\'image (codec HF, conversions, synchroniseurs).'],
+  ['Vistonics', 'Interface des consoles Studer Vista : molettes et touches montées sur l\'écran tactile, au-dessus de chaque tranche, avec un code couleur (rouge égaliseur, vert dynamique, jaune panoramique).'],
+  ['FaderGlow', 'Bande lumineuse le long de chaque fader (consoles Studer Vista), de la couleur de la tranche ou de la fonction active.'],
+  ['Couche (layer)', 'Jeu de tranches affiché sous les mêmes faders motorisés : on passe des sources aux masters d\'un geste.'],
+  ['VCA', 'Fader de commande d\'un groupe de tranches : il agit sur leurs gains sans créer de bus de mélange.'],
+  ['N-x / mix-minus', 'Mélange « tout sauf moi » renvoyé à un intervenant (commentateur, studio, bord terrain). N-1 quand on retire une seule source.'],
+  ['PFL / AFL', 'Écoute d\'une tranche seule, avant (PFL) ou après (AFL) le fader, sans modifier l\'antenne.'],
+  ['AFV (audio follow video)', 'Ouverture automatique d\'une tranche son quand l\'image associée passe à l\'antenne (tally du mélangeur).'],
+  ['Talkback', 'Micro d\'ordres de l\'ingénieur du son vers les casques et oreillettes (N-1), jamais vers l\'antenne.'],
+  ['Alimentation fantôme 48 V', 'Tension envoyée par la console dans le câble micro pour alimenter les micros statiques (canons, couples d\'ambiance).'],
+  ['Polarité (Ø)', 'Inversion du signal d\'une entrée. Un micro d\'un couple inversé rend la corrélation négative : le son s\'annule en mono.'],
+  ['Corrélateur de phase', 'Mesure de la ressemblance entre gauche et droite : +1 mono compatible, 0 très large, négatif = opposition de phase.'],
+  ['Gain d\'entrée / OVL', 'Amplification à l\'entrée de la tranche (préampli micro). OVL : saturation, irréversible, à corriger au gain et non au fader.'],
+  ['Gate / expandeur', 'Traitement qui atténue une source sous un seuil : coupe la foule qui repisse dans les micros des commentateurs quand ils se taisent.'],
+  ['Compresseur', 'Réduit l\'écart entre sons forts et faibles au-dessus d\'un seuil (ratio, attaque, retour, gain de compensation).'],
+  ['Couple ORTF / XY', 'Deux micros cardioïdes pour une prise stéréo : ORTF (17 cm, 110°) plus aéré, XY (capsules confondues) mono compatible.'],
+  ['Micro canon', 'Micro statique très directif posé au bord du terrain pour capter les frappes, contacts et sifflets.'],
+  ['Unité de commentaire', 'Boîtier de la cabine commentateurs : micros-casques, retours N-1, ordres, liaison numérique vers le car (MADI, Dante…).'],
+  ['D21m', 'Système d\'E/S modulaire de Studer : cartes MADI, AES, SDI, analogiques ou réseau dans la console ou des stageboxes.'],
+  ['Feuille de patch', 'Liste qui relie chaque source (micro, liaison) à son entrée et à sa tranche de console ; on la vérifie en PFL.'],
+  ['Objectif box', 'Gros zoom de studio / terrain dans un boîtier rectangulaire (≈ 25 kg), à servo, pour les caméras de tribune : 70x à 125x.'],
+  ['Adaptateur grand objectif', 'Châssis dans lequel se loge une caméra système portable pour porter un objectif box et un grand viseur (série Sony HDLA).'],
+  ['Demandes zoom / point', 'Commandes du cadreur fixées aux bras de la tête : bascule de zoom à droite, roue de point à gauche, reliées au servo de l\'objectif.'],
+  ['MOD (distance minimale)', 'Distance la plus courte à laquelle un objectif fait le point (≈ 3 m pour un grand box, 0,3 à 0,8 m pour un portable).'],
   ['MADI', 'AES10 : 64 canaux audio numériques sur un coaxial ou une fibre.'],
   ['N-1', 'Mix-minus : retour audio contenant tout le programme sauf la voix de celui qui l\'écoute.'],
   ['HDR / HLG', 'Haute dynamique. HLG (Hybrid Log-Gamma, ITU-R BT.2100) est le plus utilisé en direct ; on dérive souvent le SDR (BT.709) depuis le HDR.'],
@@ -670,6 +702,30 @@ export const GUIDE = [
 <p><b>Repères d'exposition</b> (en plein jour, 0 dB, 50 i/s) : environ f/8 avec un ND 1/4. De nuit sous l'éclairage du stade (environ 2000 lux) : environ f/2.8 sans filtre. Une caméra super ralenti 3x reçoit 3 fois moins de lumière par image (un diaphragme et demi).</p>
 <p><b>Lire le waveform.</b> 0 % = noir, 100 % = blanc nominal (700 mV). Pelouse ensoleillée vers 40-55 %, peaux vers 50-70 %, maillot blanc juste sous 100 %. Au-dessus du knee point (95 % par défaut), les hautes lumières sont compressées, puis l'écrêteur (white clip) les limite : 103 % ici, pour respecter la tolérance EBU R103 qu'exigent beaucoup de diffuseurs. Le signal SDI peut techniquement monter jusqu'à 109 %.</p>`},
   {
+    id: 'objectifs', title: 'Caméras Sony HDC et objectifs Fujinon', html: `
+<p>Sur un match, les caméras principales sont des <b>caméras système</b> (type Sony HDC-5500 : trois capteurs CMOS 2/3" 4K, liaison fibre SMPTE vers leur CCU) équipées d'<b>objectifs « box »</b> : de gros zooms à servo, dans un boîtier rectangulaire. La caméra se loge par l'arrière dans un <b>adaptateur grand objectif</b> (série Sony HDLA) qui porte l'objectif à l'avant et le grand viseur (7 pouces) à l'arrière, sans démonter l'objectif. Le cadreur pilote le zoom à la poignée droite (bascule au pouce) et le point à la roue de gauche : ce sont les <b>demandes</b>, reliées au servo de l'objectif.</p>
+<h3>Objectifs box Fujinon 4K (chiffres constructeur)</h3>
+<table class="tbl"><thead><tr><th>Modèle</th><th>Focales</th><th>Ouverture</th><th>Distance mini</th><th>Masse</th></tr></thead><tbody>
+<tr><td>UA125x8BESM</td><td>8–1000 mm (16–2000 avec ×2)</td><td>f/1,7 jusqu'à 340 mm, f/5,0 à 1000 mm</td><td>3,0 m</td><td>26,6 kg</td></tr>
+<tr><td>UA107x8.4BESM</td><td>8,4–900 mm</td><td>f/1,7 jusqu'à 340 mm, f/4,5 à 900 mm</td><td>3,05 m</td><td>≈ 24 kg</td></tr>
+<tr><td>UA80x9BESM</td><td>9–720 mm (doubleurs ×1,2 et ×2)</td><td>f/1,7 jusqu'à 350 mm, f/3,5 à 720 mm</td><td>3,7 m</td><td>23,5 kg</td></tr>
+<tr><td>UA70x8.7BESM</td><td>8,7–610 mm</td><td>f/1,7 jusqu'à 340 mm, f/3,05 à 610 mm</td><td>3,05 m</td><td>≈ 24 kg</td></tr>
+<tr><td>UA27x6.5BESM</td><td>6,5–180 mm</td><td>f/1,5 jusqu'à 123 mm, f/2,2 à 180 mm</td><td>0,6 m</td><td>22,8 kg</td></tr>
+</tbody></table>
+<p>Leur boîtier mesure environ 258 × 264 mm pour 610 à 635 mm de long.</p>
+<h3>Objectifs portables (épaule, Steadicam, grue)</h3>
+<ul><li><b>UA24x7.8BERD</b> : 7,8–187 mm, f/1,8 jusqu'à 118 mm puis f/2,85 ; 1,98 kg. Le polyvalent de l'épaule et de la Steadicam.</li>
+<li><b>UA46x13.5BERD</b> : 13,5–621 mm, f/2,8 jusqu'à 316 mm puis f/5,5 ; 5,8 kg. Long foyer derrière les buts.</li>
+<li><b>UA13x4.5BERD</b> : 4,5–59 mm, f/1,8 jusqu'à 41 mm puis f/2,6 ; mise au point à 30 cm. Vestiaires, tunnel, grue.</li></ul>
+<h3>Ce qu'il faut retenir</h3>
+<ul>
+<li><b>Rampe d'ouverture (ramping)</b> : au-delà d'une certaine focale, l'objectif perd de la lumière (f/1,7 → f/4,5 sur un 107x). Le soir, un serré à 900 mm demande donc 1,4 diaphragme de plus qu'à 340 mm : l'ingénieur vision le compense au RCP.</li>
+<li><b>Doubleur (extender ×2)</b> : focale doublée, mais 2 diaphragmes perdus (4 fois moins de lumière). Le simulateur l'applique avec la touche X au poste cadreur.</li>
+<li><b>Distance minimale de mise au point (MOD)</b> : 3 m environ pour les grands box, d'où leur place en tribune ; un portable fait le point beaucoup plus près.</li>
+<li><b>Masse</b> : 24 à 27 kg d'objectif + adaptateur + caméra : trépied ou pied lourd et tête fluide de grande capacité (type Vinten Vector), contrepoids réglé.</li>
+</ul>
+<p class="note">Les modèles cités sont des exemples de matériel courant en production sportive ; vérifiez les fiches constructeur pour un projet réel.</p>`},
+  {
     id: 'hfguide', title: 'Liaisons HF', html: `
 <p>Une liaison HF caméra se dimensionne par un <b>bilan de liaison</b> :</p>
 <p class="formula">Niveau reçu = Puissance émise + Gains d'antennes − Pertes en espace libre − Obstacles − Évanouissements</p>
@@ -683,6 +739,45 @@ export const GUIDE = [
 <li><b>Commentaires :</b> unité de commentaire en cabine, avec retour N-1.</li>
 <li><b>Son international :</b> ambiance + effets sans commentaire, livré à tous les diffuseurs.</li></ul>
 <p>Formats : stéréo et 5.1 (parfois immersif), jusqu'à 16 canaux embeddés dans le SDI. Loudness EBU R128 : -23 LUFS intégré, true peak ≤ -1 dBTP. Line-up : 1 kHz à -18 dBFS.</p>`},
+  {
+    id: 'vista', title: 'La console son : inspiration Studer Vista 1', html: `
+<p>La console du car s'inspire de la <b>Studer Vista 1</b>, la plus compacte des consoles Vista : une version 22 faders d'environ un mètre de large (idéale dans une cabine de car) et une version 32 faders. Son moteur de traitement (DSP) intégré est annoncé à 96 canaux (mono, stéréo ou 5.1). <i>Simulation pédagogique non officielle : interface et chiffres simplifiés.</i></p>
+<h3>Ce que l'on voit sur la surface</h3>
+<ul>
+<li><b>Écrans Vistonics.</b> Les molettes et les touches sont posées <i>sur</i> l'écran tactile, au-dessus de chaque tranche : la valeur réglée s'affiche juste sous le doigt, sans menu. Un écran porte 10 tranches. Code couleur : <b style="color:#ef4444">rouge = égaliseur</b>, <b style="color:#22c55e">vert = dynamique</b>, <b style="color:#facc15">jaune = panoramique</b>.</li>
+<li><b>FaderGlow.</b> Une bande lumineuse le long de chaque fader, de la couleur de la tranche : on repère d'un coup d'œil les ambiances, les canons, les commentaires. Dans le simulateur, elle s'allume quand la tranche est ouverte à l'antenne.</li>
+<li><b>Couches (layers).</b> Les mêmes faders affichent tour à tour les sources (couche A) puis les masters et les VCA (couche B). Les faders motorisés se replacent.</li>
+<li><b>Control Bay.</b> À droite : vumètres, écoutes, talkback, et l'écran de la tranche sélectionnée (touche SEL) avec toutes ses commandes.</li>
+</ul>
+<h3>Le trajet du son dans une tranche</h3>
+<p class="formula">Entrée (patch) → gain + 48 V → polarité Ø → passe-haut → égaliseur 4 bandes → gate / expandeur → compresseur → retard → panoramique → fader (+ VCA) → bus PGM, INTL, N-1</p>
+<ol>
+<li><b>Gain d'entrée</b> : on vise des crêtes entre −18 et −10 dBFS sur le vumètre d'entrée. L'OVL rouge signifie que le préampli sature : il faut baisser le GAIN, pas le fader.</li>
+<li><b>48 V</b> : les micros statiques (couples d'ambiance, canons) en ont besoin. Sans 48 V, ils ne délivrent rien.</li>
+<li><b>Polarité (Ø)</b> : un côté d'un couple inversé rend le corrélateur négatif ; en mono, l'ambiance disparaît.</li>
+<li><b>Passe-haut</b> : coupe le grondement inutile (canons 100-150 Hz, voix 80-120 Hz).</li>
+<li><b>Égaliseur</b> : on creuse plutôt qu'on n'ajoute. Bas-médium (250-500 Hz) pour éclaircir, haut-médium (2-4 kHz) pour la présence et l'impact du ballon.</li>
+<li><b>Dynamique</b> : le compresseur resserre la voix d'un commentateur ; le gate ou l'expandeur coupe la foule qui « repisse » dans son micro quand il se tait.</li>
+</ol>
+<h3>Bus, N-1 et départs</h3>
+<ul>
+<li><b>PGM</b> : le mix complet, embeddé sur la paire 1-2 du départ, mesuré en loudness.</li>
+<li><b>International</b> : ambiance et effets, <b>aucune voix</b>. Les diffuseurs étrangers y ajoutent leurs commentaires.</li>
+<li><b>N-x (mix-minus)</b> : « tout sauf moi ». Le commentateur reçoit le N-1 COMMENTAIRE (sans sa voix), le présentateur studio le N-1 STUDIO (sans lui), la journaliste bord terrain le N-1 BT. Une voix dans son propre retour = écho, voire larsen.</li>
+<li><b>VCA</b> : un fader de commande pour un groupe de tranches (ambiances, canons, commentaires…) ; il agit sur leurs gains sans créer de bus.</li>
+<li><b>PFL</b> : écouter une tranche seule, avant fader, sans toucher à l'antenne. <b>AFV</b> : la tranche s'ouvre quand son image passe (micro de la caméra HF, son des ralentis). <b>Talkback</b> : le micro d'ordres part dans les N-1, jamais à l'antenne.</li>
+<li><b>Snapshots</b> : des états complets de la console rappelés d'une touche (avant-match, match, mi-temps avec duplex, test de ligne).</li>
+</ul>
+<h3>E/S et patch</h3>
+<p>La console reçoit des entrées micro/ligne analogiques, de l'AES, et, par ses cartes d'extension D21m, du MADI (stagebox, unité de commentaire), du SDI désembeddé (micro de la caméra HF, EVS) ou de l'audio sur IP (ST 2110-30 / AES67 dans le car IP). Le <b>patch</b> relie chaque connecteur à une tranche : il se fait à l'écran, donc on peut se tromper d'entrée sans toucher un câble. On travaille avec une <b>feuille de patch</b> et on vérifie chaque source en PFL.</p>
+<h3>Mixer un match</h3>
+<ol>
+<li>Ambiances (couples ORTF en tribune principale, XY dans le kop) toujours ouvertes : elles portent l'émotion.</li>
+<li>Canons : on ouvre celui qui est près du ballon. Le simulateur propose un assistant « suivi du jeu » qui pilote les faders motorisés ; coupez-le pour mixer à la main.</li>
+<li>Commentaires au-dessus de l'ambiance, jamais dans l'international ; quand le commentateur « lance » le bord terrain, ouvrez sa tranche.</li>
+<li>Contrôles : loudness intégrée −23 LUFS, corrélateur positif, plan de son conforme, synchro labiale.</li>
+</ol>
+<p class="note">Limite du simulateur : les voix sont dites par la synthèse vocale du navigateur, qui ne passe pas par le moteur audio. Leur volume suit fidèlement la console (patch, gain, fader, VCA, mute, bus écouté, master, DIM, retard de ligne), mais l'égaliseur et la dynamique n'en changent pas le timbre.</p>`},
   {
     id: 'car', title: 'Le car régie', html: `
 <p>Un car régie est un semi-remorque de 16 à 18 m, souvent avec une ou deux extensions latérales qui doublent la largeur une fois déployées. Il est climatisé, isolé, et contient :</p>
@@ -973,6 +1068,7 @@ export const CONTROLS_HELP = [
   ['T', 'Se téléporter (car, terrain, passerelle…)'],
   ['G', 'Guide et missions'],
   ['M', 'Moniteur retour PGM (coin de l\'écran)'],
+  ['1 à 9 · 0', 'Commuter le mélangeur partout (mode DIRECT : à l\'antenne ; mode PRESET : au bus B, puis Entrée = CUT) · B : changer de mode'],
   ['K', 'Matériel du car : faces avant/arrière, connecteurs, raccordements'],
   ['I', 'Fiche du poste visé · sur une caméra : son matériel (connecteurs)'],
   ['Au poste', 'Bouton « Moniteur flottant » : un écran déplaçable au choix ; bouton « Matériel » : l\'appareil du poste'],

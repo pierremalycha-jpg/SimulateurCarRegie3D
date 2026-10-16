@@ -519,6 +519,30 @@ DEV.rx = rackGeneric('rx', 'Récepteur HF en diversité', 'Reçoit les émetteur
     { id: 'retout', k: 'bnc', x: 920, y: 130, l: 'RET', meta: M('SORTIE RETOUR', BNC, 'video', 'out', '', 'Récepteur du retour antenne.') },
   ],
 });
+DEV.audio = rackGeneric('audio', 'Console son · cœur et E/S (inspiration Studer Vista 1)', 'Face arrière simplifiée du cœur de la console : entrées micro/ligne avec préamplis et 48 V, sorties ligne, AES, et logements de cartes d\'extension D21m (MADI, SDI, réseau audio). Simulation pédagogique non officielle : nombres et emplacements donnés en ordre de grandeur, ils varient selon la version et les options.', {
+  w: 1100, h: 520, label: 'CONSOLE SON · face arrière du cœur (simplifiée)',
+  groups: [
+    { l: 'Entrées micro / ligne 1-32 (préamplis, 48 V)', prefix: 'mic', from: 1, count: 32, cols: 16, rows: 2, x: 66, y: 110, dx: 46, dy: 56, k: 'xlr', conn: 'XLR 3 broches femelle', s: 'audio', d: 'in', std: 'Micro ou ligne symétrique, alimentation fantôme 48 V commutable', name: (i) => `MIC/LINE IN ${i}`, desc: (i) => (i <= 2 ? 'Couple ORTF de la tribune principale (ambiance).' : i <= 4 ? 'Couple XY du kop (ambiance).' : i <= 10 ? `Canon ${i - 4} au bord du terrain (micro statique : 48 V obligatoire).` : i === 11 ? 'Récepteur HF du micro de la journaliste bord terrain (niveau ligne : pas de 48 V).' : 'Entrée libre (patch à l\'écran).') },
+    { l: 'Sorties ligne 1-16', prefix: 'out', from: 1, count: 16, cols: 16, rows: 1, x: 66, y: 280, dx: 46, dy: 56, k: 'xlr', conn: 'XLR 3 broches mâle', s: 'audio', d: 'out', std: 'Ligne symétrique, +4 dBu nominal', name: (i) => `LINE OUT ${i}`, desc: (i) => (i <= 2 ? 'PGM analogique (secours de la transmission).' : i <= 4 ? 'International analogique.' : i <= 6 ? 'N-1 STUDIO vers le codec 4 fils de la transmission.' : i === 7 ? 'N-1 BORD TERRAIN vers l\'émetteur IFB.' : 'Sortie libre.') },
+  ],
+  ports: [
+    { id: 'aesin', k: 'dsub25', x: 110, y: 400, l: 'AES IN 1-8', meta: M('AES/EBU IN 1-8', 'D-sub 25', 'audio', 'in', 'AES3, 8 paires', 'EVS PGM1 et PGM2, retour studio du décodeur, lecteur de jingles.') },
+    { id: 'aesout', k: 'dsub25', x: 210, y: 400, l: 'AES OUT 1-8', meta: M('AES/EBU OUT 1-8', 'D-sub 25', 'audio', 'out', 'AES3, 8 paires', 'Vers les embedders du départ (PGM, international).') },
+    { id: 'madi1', k: 'bnc', x: 330, y: 400, l: 'MADI 1', meta: M('CARTE D21m MADI · IN/OUT 1', BNC + ' ou fibre SC', 'audio', 'io', 'AES10, 64 canaux à 48 kHz', 'Unité de commentaire (micros des commentateurs et retours N-1), ou stagebox.') },
+    { id: 'madi2', k: 'bnc', x: 390, y: 400, l: 'MADI 2', meta: M('CARTE D21m MADI · IN/OUT 2', BNC + ' ou fibre SC', 'audio', 'io', 'AES10, 64 canaux', 'Liaison redondante ou seconde stagebox.') },
+    { id: 'sdi1', k: 'bnc', x: 470, y: 400, l: 'SDI IN 1', meta: M('CARTE D21m SDI · IN 1', BNC, 'video', 'in', 'HD/3G-SDI, désembedding de 16 canaux', 'Signal de la caméra HF après le récepteur : on en extrait le son du micro caméra.') },
+    { id: 'sdi2', k: 'bnc', x: 530, y: 400, l: 'SDI IN 2', meta: M('CARTE D21m SDI · IN 2', BNC, 'video', 'in', 'HD/3G-SDI', 'Deuxième entrée de désembedding.') },
+    { id: 'aoip1', k: 'rj45', x: 620, y: 400, l: 'AoIP A', meta: M('CARTE RÉSEAU AUDIO · A', 'RJ45 / SFP', 'ip', 'io', 'AES67 / ST 2110-30, PTP', 'Car IP : flux audio du réseau rouge (sources du stade, unité de commentaire).') },
+    { id: 'aoip2', k: 'rj45', x: 680, y: 400, l: 'AoIP B', meta: M('CARTE RÉSEAU AUDIO · B', 'RJ45 / SFP', 'ip', 'io', 'AES67 / ST 2110-30, PTP', 'Réseau bleu : redondance ST 2022-7.') },
+    { id: 'wclk', k: 'bnc', x: 770, y: 400, l: 'WCLK', meta: M('WORD CLOCK IN', BNC, 'ref', 'in', '48 kHz (ou référence vidéo)', 'Horloge audio du car, issue du générateur de synchro : toute la chaîne audio est verrouillée dessus.') },
+    { id: 'gpio', k: 'dsub25', x: 860, y: 400, l: 'GPIO', meta: M('GPIO', 'D-sub 25', 'data', 'io', 'Contacts secs', 'Lampes rouges des cabines (micro ouvert), tally du mélangeur pour l\'AFV, fader start des lecteurs.') },
+    { id: 'net', k: 'rj45', x: 950, y: 400, l: 'CTRL', meta: M('ETHERNET CONTRÔLE', 'RJ45', 'ip', 'io', '1 GbE', 'Liaison entre la surface de contrôle et le cœur DSP, télécommande, sauvegarde des snapshots.') },
+    { id: 'psu1', k: 'iec', x: 1030, y: 380, l: 'PSU 1', meta: M('ALIMENTATION 1', 'IEC C14', 'power', 'in', '230 V', 'Alimentation principale.') },
+    { id: 'psu2', k: 'iec', x: 1030, y: 450, l: 'PSU 2', meta: M('ALIMENTATION 2', 'IEC C14', 'power', 'in', '230 V', 'Alimentation redondante, sur un autre départ de l\'onduleur.') },
+  ],
+  specs: [['Surface (inspiration)', 'Version 22 faders (≈ 1 m de large) ou 32 faders ; deux écrans Vistonics de 10 tranches, Control Bay'], ['Traitement', 'DSP intégré annoncé à 96 canaux (mono, stéréo, 5.1)'], ['E/S', 'Micro/ligne, ligne, AES intégrées ; cartes D21m : MADI, AES, SDI, analogique, AoIP'], ['Broadcast', 'N-x (mix-minus), talkback, GPIO, snapshots, automation'], ['Dans ce car', '17 tranches utilisées (couche A), masters et VCA en couche B']],
+  lesson: ['Le patch relie chaque connecteur à une tranche : il se fait à l\'écran de la console.', 'Les micros statiques (ambiances, canons) ont besoin du 48 V ; une source ligne non.', 'La console est verrouillée sur la word clock du car : sans elle, clics et glissements.'],
+});
 DEV.conv = rackGeneric('conv', 'Convertisseur SDI / fibre', 'Petit boîtier qui transporte un signal SDI sur fibre monomode (plusieurs km), utilisé pour les mini-caméras, le pré-câblage, les sources lointaines.', {
   w: 600, h: 220, label: 'CONVERTISSEUR · faces', ports: [
     { id: 'sdi', k: 'bnc', x: 90, y: 120, l: 'SDI', meta: M('SDI', BNC, 'video', 'io', SDI_STD, 'Côté caméra.') },
@@ -528,10 +552,10 @@ DEV.conv = rackGeneric('conv', 'Convertisseur SDI / fibre', 'Petit boîtier qui 
   ],
 });
 
-const LINKMAP = { cam: 'cam', ccu: 'ccu', rcp: 'rcp', evs: 'evs', lsm: 'lsm', router: 'router', mixer: 'mixer', mixpanel: 'mixpanel', siu: 'siu', ipd: 'ipd', mv: 'mv', spg: 'spg', da: 'da', pdc: 'pdc', rx: 'rx', conv: 'conv' };
+const LINKMAP = { audio: 'audio', cam: 'cam', ccu: 'ccu', rcp: 'rcp', evs: 'evs', lsm: 'lsm', router: 'router', mixer: 'mixer', mixpanel: 'mixpanel', siu: 'siu', ipd: 'ipd', mv: 'mv', spg: 'spg', da: 'da', pdc: 'pdc', rx: 'rx', conv: 'conv' };
 export const DEVICES = DEV;
 export function deviceDef(key) { return DEV[LINKMAP[key] || key]; }
 export const DEVICE_LIST = [
   ['cam', 'Caméra système (tête)'], ['ccu', 'CCU (voie caméra)'], ['rcp', 'RCP (pupitre vision)'], ['evs', 'Serveur ralenti EVS XT4K'], ['lsm', 'Télécommande LSM'], ['ipd', 'Poste IPDirector'],
-  ['router', 'Grille'], ['mixer', 'Mélangeur XVS-6000 (processeur)'], ['mixpanel', 'Pupitre ICP-X7000'], ['siu', 'Interface MKS-X7700 (tally)'], ['mv', 'Multiviewer'], ['spg', 'Générateur de synchro'], ['da', 'Distributeur de référence'], ['rx', 'Récepteur HF'], ['conv', 'Convertisseur fibre'], ['pdc', 'Pied de car'],
+  ['router', 'Grille'], ['mixer', 'Mélangeur XVS-6000 (processeur)'], ['mixpanel', 'Pupitre ICP-X7000'], ['siu', 'Interface MKS-X7700 (tally)'], ['mv', 'Multiviewer'], ['spg', 'Générateur de synchro'], ['da', 'Distributeur de référence'], ['rx', 'Récepteur HF'], ['conv', 'Convertisseur fibre'], ['audio', 'Console son (cœur et E/S)'], ['pdc', 'Pied de car'],
 ];

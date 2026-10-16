@@ -13,6 +13,9 @@ const SONY_XVS = 'Brochures Sony XVS (pro.sony, Gravity Media, AV Broadcast), fi
 const SONY_ICP = 'Pages produit Sony ICP-X7000';
 const NORMES = 'Normes et recommandations (SMPTE, ITU-R, EBU)';
 const SIMU = 'Choix de simulation (à valider avec vos habitudes)';
+const STUDER = 'Presse de lancement de la Studer Vista 1 (ProSoundWeb, SVC, Radio World, Fast and Wide) et pages Evertz Vista 1 / Vista V';
+const FUJI = 'Pages Fujifilm « 4K Studio / Field » et « 4K Portable » (fujifilm.com), fiche Gravity Media UA107x8.4BESM';
+const SONY_HDLA = 'Pages Sony HDLA-1505 / HDLA-1507 / HDLA-3505 et viseurs HDVF-L770 / HDVF-EL780 (pro.sony)';
 const NET2110 = 'Normes SMPTE ST 2110-10/-20/-21/-30/-40, ST 2022-7, ST 2059-2, AMWA IS-04/IS-05, AES67, RFC 7104 (a=group:DUP), RFC 7938 ; guides des constructeurs de commutateurs';
 const STADE = 'Recherches web : site du RC Lens (tribunes, billetterie), stadiumdb.com, architectes (Atelier Ferret), presse (France 3, 90min)';
 
@@ -66,6 +69,14 @@ export const REVIEW_ITEMS = [
   ['std3', 'Stade', 'Deux écrans d\'angle de taille modeste (Marek-Delacourt, et Trannin-Lepagnot supposé) ; surface exacte non trouvée.', STADE],
   ['std4', 'Stade', 'Passerelle caméras sur le toit des loges de Lepagnot, compound TV derrière Lepagnot : emplacements supposés, à corriger avec votre plan d\'installation réel.', SIMU],
   ['std5', 'Stade', 'Sièges noirs, gris et blancs (pas de sièges sang et or) ; Xercès plus basse que les trois autres tribunes hautes ; toits qui ne couvrent pas les premiers rangs ; 20 grappes de haut-parleurs.', STADE],
+  ['vis1', 'Console son', 'Studer Vista 1 : versions 22 faders (≈ 1 m de large) et 32 faders ; DSP intégré annoncé à 96 canaux (mono, stéréo, 5.1). Le nombre exact d\'E/S intégrées varie selon les sources (micro/ligne, ligne, AES) : à vérifier sur la fiche constructeur.', STUDER],
+  ['vis2', 'Console son', 'Vistonics : molettes et touches montées sur l\'écran tactile, 10 tranches par écran ; couleurs : égaliseur rouge, dynamique vert, panoramique jaune. FaderGlow : bande lumineuse colorée le long des faders.', STUDER],
+  ['vis3', 'Console son', 'Plan de patch du simulateur (MIC 1-11, MADI 1-2, SDI 1/1, AES 1-4, générateur) et dosages par défaut : choix pédagogiques, à adapter à la feuille de patch réelle du car.', SIMU],
+  ['vis4', 'Console son', 'Voix des commentateurs par synthèse vocale du navigateur : volume calculé depuis la console (patch, gain, fader, VCA, bus écouté) ; l\'égaliseur et la dynamique ne modifient pas leur timbre.', SIMU],
+  ['fuj1', 'Objectifs', 'Fujinon UA107x8.4BESM : 8,4-900 mm, f/1,7 jusqu\'à 340 mm, f/4,5 à 900 mm, MOD 3,05 m, ≈ 23,9 kg, 258 × 264 × 610 mm.', FUJI],
+  ['fuj2', 'Objectifs', 'Fujinon UA80x9BESM : 9-720 mm, f/1,7 jusqu\'à 350 mm, f/3,5 à 720 mm, MOD 3,7 m, 23,5 kg ; UA125x8BESM : 8-1000 mm, f/1,7 → f/5,0, MOD 3,0 m, 26,6 kg ; UA70x8.7BESM : 8,7-610 mm, f/1,7 → f/3,05 ; UA27x6.5BESM : 6,5-180 mm, f/1,5 → f/2,2, MOD 0,6 m.', FUJI],
+  ['fuj3', 'Objectifs', 'Portables : UA24x7.8BERD 7,8-187 mm f/1,8 → f/2,85, 1,98 kg ; UA46x13.5BERD 13,5-621 mm f/2,8 → f/5,5, 5,8 kg ; UA13x4.5BERD 4,5-59 mm f/1,8 → f/2,6, MOD 0,3 m. UA14x4.5BERD : ouvertures non vérifiées.', FUJI],
+  ['hdla1', 'Caméras', 'Caméra tribune : Sony HDC-5500 dans un adaptateur grand objectif (série HDLA) avec viseur 7". La référence d\'adaptateur compatible HDC-5500 n\'a pas été confirmée (HDLA-1505/1507 : anciennes générations, HDLA-3505 : gamme HDC/HSC).', SONY_HDLA],
   ['ip1', 'IP', 'ST 2110-20 : ≈ 2,1 Gb/s en 1080p50 10 bits 4:2:2 ; ≈ 8,3 Gb/s en UHD p50. PTP ST 2059-2 ; NMOS IS-04/IS-05 ; ST 2022-7.', NORMES],
 ];
 export const REVIEW_STATUS = { '': 'À vérifier', ok: 'Validé', fix: 'À corriger' };

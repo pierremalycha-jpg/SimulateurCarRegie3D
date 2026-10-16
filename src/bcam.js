@@ -196,63 +196,99 @@ function personParts(B, x, y, z, color = 0x2b3340, rotY = 0, crouch = 0, headset
   if (headset) { for (const sd of [-1, 1]) { const [hx, hz] = P(sd * 0.12, 0); B.box(0.04, 0.09, 0.08, hx, y + 1.6 - crouch, hz, 0x111111, rotY); } const [mx, mz] = P(0.09, -0.12); B.box(0.02, 0.02, 0.1, mx, y + 1.55 - crouch, mz, 0x111111, rotY); }
 }
 
-// caméra système de type HDC (corps + adaptateur grand objectif + objectif box) sur tête fluide et trépied
+// caméra système type Sony HDC-5500 dans un adaptateur grand objectif (série HDLA), objectif box
+// (Fujinon UA : boîtier noir 258 × 264 mm, 610 à 635 mm de long), viseur 7" à l'arrière, sur tête
+// fluide type Vinten Vector avec deux bras : demande de zoom (poignée droite), de point (roue gauche)
 function boxCamera(Bs, Bp, Bt, cam, y0, lensLen, lensCol, body) {
   const legTop = y0 + 1.02;
-  // trépied lourd + araignée au sol
+  const white = lensCol > 0x808080;
+  // trépied lourd 2 étages + araignée au sol
   for (let k = 0; k < 3; k++) {
-    const a = k * 2.094 + 0.5, fx = Math.sin(a) * 0.62, fz = Math.cos(a) * 0.62;
-    Bs.rod([Math.sin(a) * 0.08, legTop, Math.cos(a) * 0.08], [fx, y0 + 0.05, fz], 0.028, 0x3b4046);
-    Bs.rod([Math.sin(a) * 0.1, legTop - 0.05, Math.cos(a) * 0.1], [fx * 0.92, y0 + 0.1, fz * 0.92], 0.02, 0x50565c);
-    Bs.rod([fx, y0 + 0.04, fz], [Math.sin(a + 2.094) * 0.62, y0 + 0.04, Math.cos(a + 2.094) * 0.62], 0.015, 0x2a2e33, 4);
-    Bs.box(0.07, 0.05, 0.07, fx, y0 + 0.025, fz, 0x111111);
+    const a = k * 2.094 + 0.5, fx = Math.sin(a) * 0.66, fz = Math.cos(a) * 0.66;
+    Bs.rod([Math.sin(a) * 0.09, legTop, Math.cos(a) * 0.09], [fx, y0 + 0.05, fz], 0.03, 0x3b4046, 6);
+    Bs.rod([Math.sin(a) * 0.12, legTop - 0.04, Math.cos(a) * 0.12], [fx * 0.94, y0 + 0.08, fz * 0.94], 0.02, 0x5c636a, 6);
+    Bs.box(0.05, 0.08, 0.05, Math.sin(a) * 0.36, (legTop + y0) / 2 + 0.02, Math.cos(a) * 0.36, 0x1a1d20); // serrages
+    Bs.rod([fx * 0.55, y0 + 0.06, fz * 0.55], [Math.sin(a + 2.094) * 0.36, y0 + 0.06, Math.cos(a + 2.094) * 0.36], 0.014, 0x2a2e33, 4); // araignée
+    Bs.box(0.08, 0.04, 0.08, fx, y0 + 0.02, fz, 0x111111);
   }
-  Bs.cyl(0.11, 0.13, 0.12, 0, legTop + 0.05, 0, 0x2a2d31, 14); // bol
-  // tête fluide (suit le panoramique)
-  Bp.box(0.24, 0.16, 0.26, 0, legTop + 0.2, 0.02, 0x2b2f34); Bp.cyl(0.07, 0.07, 0.28, 0, legTop + 0.27, 0.02, 0x3a3f46, 12, 0, Math.PI / 2);
-  // plateau, corps et adaptateur grand objectif (le corps glisse à l'arrière)
-  Bt.box(0.34, 0.06, 0.5, 0, -0.2, 0.08, 0x23272c);
-  Bt.box(0.3, 0.33, 0.44, 0, -0.01, 0.1, body); // adaptateur
-  Bt.box(0.2, 0.26, 0.24, 0, -0.03, 0.42, 0x2f3439); // tête de caméra
-  Bt.box(0.22, 0.04, 0.2, 0, 0.18, 0.12, 0x1f2328); // poignée
-  for (let i = 0; i < 4; i++) Bt.box(0.012, 0.18, 0.012, 0.155, -0.02, 0.0 + i * 0.07, 0x111111); // ouïes
-  // objectif box (blanc ou noir selon la marque)
-  const lz = -0.12 - lensLen / 2;
-  Bt.box(0.32, 0.34, lensLen, 0, -0.01, lz, lensCol);
-  Bt.box(0.08, 0.2, lensLen * 0.5, 0.2, -0.03, lz + lensLen * 0.12, 0x2a2d31); // servo zoom / focus
-  Bt.box(0.36, 0.38, 0.06, 0, -0.01, -0.12 - lensLen - 0.02, 0x15171a); // pare-soleil
-  Bt.cyl(0.13, 0.13, 0.02, 0, -0.01, -0.12 - lensLen - 0.055, 0x0b1a2a, 18, Math.PI / 2); // lentille frontale
-  // viseur 7" sur le dessus, écran tourné vers le cadreur
-  Bt.box(0.04, 0.12, 0.04, 0, 0.22, 0.02, 0x23272c);
-  Bt.box(0.27, 0.19, 0.2, 0, 0.36, 0.0, 0x1b1e22); Bt.box(0.23, 0.14, 0.005, 0, 0.36, 0.105, 0x2e4a66);
-  Bt.box(0.29, 0.03, 0.09, 0, 0.465, 0.07, 0x15171a); // casquette
-  // bras de manivelle : zoom à droite, point à gauche
+  Bs.cyl(0.12, 0.14, 0.12, 0, legTop + 0.05, 0, 0x2a2d31, 16); // bol 150 mm
+  // tête fluide (suit le panoramique) : corps, tambour d'inclinaison, molettes de contrepoids
+  Bp.box(0.26, 0.15, 0.3, 0, legTop + 0.18, 0.02, 0x41474e);
+  Bp.cyl(0.095, 0.095, 0.31, 0, legTop + 0.27, 0.02, 0x2f343a, 16, 0, Math.PI / 2);
+  for (const sd of [-1, 1]) { Bp.cyl(0.045, 0.045, 0.03, sd * 0.17, legTop + 0.27, 0.02, 0xc8102e, 14, 0, Math.PI / 2); Bp.cyl(0.03, 0.03, 0.02, sd * 0.19, legTop + 0.2, 0.12, 0x1a1d20, 10, 0, Math.PI / 2); }
+  // plateau coulissant
+  Bt.box(0.36, 0.05, 0.62, 0, -0.205, 0.02, 0x23272c);
+  Bt.box(0.4, 0.015, 0.5, 0, -0.178, 0.02, 0x8a9098);
+  // adaptateur grand objectif : châssis anthracite, le corps de la caméra s'y loge par l'arrière
+  Bt.box(0.3, 0.32, 0.36, 0, -0.01, 0.07, 0x30353b);
+  Bt.box(0.31, 0.05, 0.34, 0, 0.165, 0.07, 0x262a2f); // capot
+  Bt.box(0.2, 0.035, 0.22, 0, 0.2, 0.06, 0x1d2024); // poignée de transport
+  for (let i = 0; i < 5; i++) Bt.box(0.004, 0.16, 0.012, 0.152, -0.02, -0.04 + i * 0.05, 0x15171a); // ouïes
+  // corps de caméra (type HDC-5500) qui dépasse à l'arrière + embase fibre SMPTE
+  Bt.box(0.16, 0.26, 0.24, 0, -0.03, 0.36, 0x3a3f45);
+  Bt.box(0.17, 0.05, 0.25, 0, 0.11, 0.36, 0x2c3035);
+  Bt.cyl(0.032, 0.032, 0.05, 0.03, -0.07, 0.5, 0xb9c0c7, 12, Math.PI / 2); Bt.cyl(0.02, 0.02, 0.06, 0.03, -0.07, 0.52, 0x262a2f, 10, Math.PI / 2);
+  Bt.box(0.1, 0.06, 0.012, -0.03, 0.03, 0.481, 0x0e2a14); // petit écran d'état à l'arrière
+  // objectif box : boîtier principal, épaulement avant, pare-soleil, flasque de montage
+  const L = lensLen, z0 = -0.11, zc = z0 - L / 2;
+  const blk = white ? 0xe9e9e9 : 0x17181a, blk2 = white ? 0xd6d6d6 : 0x101113;
+  Bt.box(0.258, 0.24, L * 0.84, 0, -0.005, z0 - L * 0.42, blk);
+  Bt.box(0.22, 0.03, L * 0.8, 0, 0.125, z0 - L * 0.42, blk2); // arête supérieure adoucie
+  Bt.box(0.28, 0.28, L * 0.16, 0, 0.0, z0 - L * 0.92, blk); // épaulement avant (lentille frontale Ø 150 mm)
+  Bt.box(0.31, 0.31, 0.035, 0, 0.0, z0 - L - 0.012, blk2); // pare-soleil
+  Bt.cyl(0.118, 0.118, 0.012, 0, 0.0, z0 - L - 0.03, 0x0b1a2a, 24, Math.PI / 2); // lentille frontale
+  Bt.cyl(0.07, 0.07, 0.004, 0.02, 0.02, z0 - L - 0.036, 0x2a4a6a, 16, Math.PI / 2); // reflet
+  Bt.cyl(0.13, 0.13, 0.04, 0, -0.005, z0 + 0.01, 0x2a2e33, 20, Math.PI / 2); // flasque de montage
+  // côté droit : servo (drive unit) avec son afficheur ; côté gauche : marquage du modèle
+  Bt.box(0.012, 0.15, L * 0.38, 0.135, -0.03, z0 - L * 0.25, white ? 0xcfcfcf : 0x2c2f33);
+  Bt.box(0.004, 0.045, 0.08, 0.142, 0.02, z0 - L * 0.18, 0x183a22);
+  for (const [dy, w] of [[0.06, 0.24], [0.025, 0.12]]) Bt.box(0.003, 0.018, L * w, -0.131, dy, z0 - L * 0.45, white ? 0x2a2a2a : 0xd8dadc);
+  Bt.box(0.003, 0.012, L * 0.3, -0.131, -0.09, z0 - L * 0.5, white ? 0xc8102e : 0xc8102e); // liseré rouge
+  // support d'objectif sous le boîtier, jusqu'au plateau
+  Bt.box(0.14, 0.07, 0.16, 0, -0.16, z0 - L * 0.32, 0x23272c);
+  // viseur 7" sur l'adaptateur, écran tourné vers le cadreur, avec casquette
+  Bt.box(0.07, 0.09, 0.07, 0, 0.255, 0.1, 0x23272c);
+  Bt.box(0.25, 0.18, 0.13, 0, 0.385, 0.12, 0x1b1e22);
+  Bt.box(0.2, 0.125, 0.004, 0, 0.385, 0.187, 0x2e4a66);
+  Bt.box(0.27, 0.012, 0.1, 0, 0.482, 0.23, 0x111214); for (const sd of [-1, 1]) Bt.box(0.012, 0.17, 0.1, sd * 0.13, 0.4, 0.23, 0x111214); // casquette
+  Bt.box(0.12, 0.03, 0.03, 0, 0.47, 0.06, 0x2b0d0d); // bandeau tally (s'allume via la sphère tally)
+  // bras de manivelle (pan bars) : demande de zoom à droite (bascule au pouce), de point à gauche (roue)
   for (const sd of [-1, 1]) {
-    Bt.rod([sd * 0.14, -0.2, 0.25], [sd * 0.36, -0.3, 0.82], 0.018, 0x3a3f46);
-    Bt.cyl(0.025, 0.025, 0.12, sd * 0.37, -0.3, 0.84, 0x111111, 8, Math.PI / 2);
+    Bt.rod([sd * 0.15, -0.19, 0.22], [sd * 0.38, -0.33, 0.86], 0.016, 0x8a9098, 8);
+    Bt.cyl(0.022, 0.022, 0.13, sd * 0.395, -0.335, 0.9, 0x111111, 10, Math.PI / 2);
   }
-  Bt.box(0.06, 0.05, 0.1, 0.38, -0.27, 0.84, 0x3d4a5a); // commande de zoom
-  Bt.cyl(0.05, 0.05, 0.03, -0.39, -0.3, 0.8, 0x2a2d31, 12, 0, Math.PI / 2); // roue de point
+  Bt.box(0.055, 0.07, 0.11, 0.4, -0.3, 0.84, 0x23272c); Bt.box(0.02, 0.02, 0.03, 0.4, -0.255, 0.84, 0xb8bec4); // demande de zoom + bascule
+  Bt.cyl(0.055, 0.055, 0.035, -0.42, -0.31, 0.8, 0x2a2d31, 16, 0, Math.PI / 2); Bt.cyl(0.02, 0.02, 0.05, -0.42, -0.31, 0.8, 0xb8bec4, 8, 0, Math.PI / 2); // roue de point
+  Bt.rod([0.4, -0.3, 0.8], [0.14, -0.06, z0 - L * 0.2], 0.006, 0x0c0c0c, 4); Bt.rod([-0.42, -0.31, 0.78], [-0.13, -0.08, z0 - L * 0.2], 0.006, 0x0c0c0c, 4); // câbles des demandes
   // câble fibre (SMPTE) qui part de l'arrière et tombe au sol
-  Bp.rod([0, legTop + 0.15, 0.4], [0.08, legTop - 0.35, 0.62], 0.016, 0x101010, 5); Bp.rod([0.08, legTop - 0.35, 0.62], [0.2, y0 + 0.02, 0.85], 0.016, 0x101010, 5);
+  Bp.rod([0.03, legTop + 0.2, 0.52], [0.1, legTop - 0.35, 0.68], 0.016, 0x101010, 5); Bp.rod([0.1, legTop - 0.35, 0.68], [0.24, y0 + 0.02, 0.9], 0.016, 0x101010, 5);
   // cadreur debout derrière, casque d'ordres
-  personParts(Bp, 0, y0, 1.0, 0x2d3a4f, 0);
-  for (const sd of [-1, 1]) Bp.rod([sd * 0.22, y0 + 1.36, 0.98], [sd * 0.36, y0 + 1.04 + 0.0, 0.88], 0.04, 0x2d3a4f, 5);
+  personParts(Bp, 0, y0, 1.02, 0x2d3a4f, 0);
+  for (const sd of [-1, 1]) Bp.rod([sd * 0.22, y0 + 1.36, 1.0], [sd * 0.38, y0 + 1.06, 0.9], 0.04, 0x2d3a4f, 5);
 }
 // caméra portable (corps type HDC-5500, objectif ENG, viseur, adaptateur fibre) à l'épaule
 function shoulderCamera(Bp, Bt, cam, y0, lensLen, lensCol, body) {
   personParts(Bp, -0.17, y0, 0.15, 0x3a2f2a, 0);
   Bp.rod([-0.03, y0 + 1.42, 0.12], [0.07, -0.05, -0.12], 0.04, 0x3a2f2a, 5); // bras droit vers la poignée de zoom
   Bp.rod([-0.31, y0 + 1.42, 0.12], [-0.1, -0.12, -0.06], 0.04, 0x3a2f2a, 5);
-  Bt.box(0.14, 0.24, 0.36, 0, 0, 0.1, body); // corps
-  Bt.box(0.12, 0.05, 0.2, 0, -0.14, 0.12, 0x1a1d21); // épaulière
-  Bt.box(0.03, 0.04, 0.26, 0, 0.165, 0.08, 0x1a1d21); Bt.box(0.03, 0.05, 0.03, 0, 0.14, -0.04, 0x1a1d21); Bt.box(0.03, 0.05, 0.03, 0, 0.14, 0.2, 0x1a1d21); // poignée
-  Bt.box(0.13, 0.2, 0.08, 0, -0.01, 0.32, 0x2a2e33); Bt.cyl(0.025, 0.025, 0.04, 0.04, -0.06, 0.37, 0xd0d0d0, 8, Math.PI / 2); // adaptateur fibre + connecteur
-  Bt.cyl(0.045, 0.05, lensLen, 0, 0, -0.08 - lensLen / 2, lensCol, 14, Math.PI / 2); // objectif ENG
-  Bt.box(0.05, 0.08, lensLen * 0.45, 0.065, -0.02, -0.1 - lensLen * 0.3, 0x2a2d31); // poignée servo
-  Bt.box(0.12, 0.1, 0.05, 0, 0, -0.1 - lensLen, 0x111111); // pare-soleil
-  Bt.box(0.05, 0.06, 0.15, -0.1, 0.1, 0.0, 0x1a1d21); Bt.cyl(0.028, 0.03, 0.06, -0.1, 0.1, 0.1, 0x111111, 10, Math.PI / 2); // viseur + œilleton
-  Bt.cyl(0.006, 0.006, 0.2, -0.05, 0.2, 0.25, 0x111111, 4); // antenne / tally arrière
+  // corps de caméra système portable (type Sony HDC-5500 / HDC-3500)
+  Bt.box(0.15, 0.25, 0.38, 0, 0, 0.11, 0x3a3f45);
+  Bt.box(0.152, 0.06, 0.3, 0, 0.1, 0.12, 0x2c3035); // flanc supérieur
+  Bt.box(0.12, 0.05, 0.22, 0, -0.145, 0.13, 0x1a1d21); // épaulière
+  Bt.box(0.03, 0.04, 0.28, 0, 0.17, 0.08, 0x1a1d21); Bt.box(0.03, 0.05, 0.03, 0, 0.145, -0.05, 0x1a1d21); Bt.box(0.03, 0.05, 0.03, 0, 0.145, 0.21, 0x1a1d21); // poignée
+  Bt.box(0.14, 0.21, 0.07, 0, -0.01, 0.335, 0x2a2e33); Bt.cyl(0.026, 0.026, 0.04, 0.04, -0.06, 0.385, 0xc0c6cc, 10, Math.PI / 2); // embase fibre + connecteur SMPTE
+  Bt.box(0.004, 0.05, 0.08, 0.077, 0.02, 0.15, 0x0e2a14); // écran d'état latéral
+  // objectif portable Fujinon (noir) ou Canon (blanc) : fût, bague de zoom, poignée servo, pare-soleil
+  const r = (cam.L.dia || 0.11) / 2, z0 = -0.08;
+  Bt.cyl(r * 0.92, r, lensLen, 0, 0, z0 - lensLen / 2, lensCol, 18, Math.PI / 2);
+  Bt.cyl(r * 1.02, r * 1.02, lensLen * 0.12, 0, 0, z0 - lensLen * 0.55, lensCol > 0x808080 ? 0xcfcfcf : 0x24262a, 18, Math.PI / 2); // bague
+  Bt.cyl(r * 1.15, r * 1.05, 0.05, 0, 0, z0 - lensLen - 0.025, 0x0f1012, 18, Math.PI / 2); // pare-soleil
+  Bt.cyl(r * 0.8, r * 0.8, 0.004, 0, 0, z0 - lensLen - 0.052, 0x0b1a2a, 16, Math.PI / 2);
+  Bt.box(0.055, 0.1, Math.min(0.17, lensLen * 0.55), r + 0.03, -0.025, z0 - lensLen * 0.35, 0x26292d); // poignée servo
+  Bt.box(0.012, 0.018, 0.03, r + 0.035, 0.03, z0 - lensLen * 0.32, 0xb8bec4); // bascule de zoom
+  // viseur OLED à gauche + œilleton, tally arrière
+  Bt.box(0.05, 0.065, 0.16, -0.1, 0.105, 0.0, 0x1a1d21); Bt.cyl(0.03, 0.032, 0.07, -0.1, 0.105, 0.11, 0x111111, 12, Math.PI / 2);
+  Bt.cyl(0.006, 0.006, 0.2, -0.05, 0.2, 0.25, 0x111111, 4);
 }
 
 function buildModel(cam) {
@@ -261,7 +297,7 @@ function buildModel(cam) {
   const pan = new THREE.Group(); root.add(pan);
   const tilt = new THREE.Group(); pan.add(tilt);
   const Bs = new Builder(), Bp = new Builder(), Bt = new Builder();
-  const lensLen = cam.L.kind === 'box' ? 0.62 : cam.L.kind === 'portable' ? 0.28 : 0.08;
+  const lensLen = cam.L.len || (cam.L.kind === 'box' ? 0.62 : cam.L.kind === 'portable' ? 0.26 : 0.08);
   const body = 0x2a2e33, lensCol = cam.L.name.startsWith('Canon') ? 0xe9e9e9 : 0x1a1a1a;
   const y0 = -cam.mountH;
   let tally = null;
@@ -340,7 +376,7 @@ function buildModel(cam) {
   if (Bt.parts.length) { const m = Bt.mesh(mat); m.castShadow = true; tilt.add(m); }
   tally = new THREE.Mesh(new THREE.SphereGeometry(T.model === 'pov' ? 0.015 : 0.035, 8, 6), new THREE.MeshBasicMaterial({ color: 0x220000, toneMapped: false }));
   // tally : au-dessus de l'objectif (vu par les joueurs) ; sur le viseur pour la caméra box
-  tally.position.set(0, T.model === 'box' ? 0.5 : 0.14, T.model === 'box' ? -0.05 : 0); tilt.add(tally);
+  tally.position.set(0, T.model === 'box' ? 0.49 : 0.14, T.model === 'box' ? 0.06 : 0); tilt.add(tally);
   const lab = labelSprite(`CAM ${cam.id}`, { scale: T.model === 'pov' ? 2.2 : 3.2, border: '#' + LINKS[cam.link].color.toString(16).padStart(6, '0') });
   lab.position.set(0, T.model === 'box' ? 1.0 : 0.9, 0); setLayer(lab, 1); root.add(lab);
   return { root, pan, tilt, tally, label: lab };
@@ -715,36 +751,36 @@ export function lineupStep(cam) {
 
 export const PRESETS = {
   basique: [
-    { slotId: 'g_c1', type: 'plateau', lens: 'UJ86', role: 'large' },
+    { slotId: 'g_c1', type: 'plateau', lens: 'UA80', role: 'large' },
     { slotId: 'g_c2', type: 'plateau', lens: 'UA107', role: 'serre' },
-    { slotId: 'g_16l', type: 'plateau', lens: 'UJ86', role: 'semi' },
-    { slotId: 'g_16r', type: 'plateau', lens: 'UJ86', role: 'semi' },
-    { slotId: 'pitch_c', type: 'portable', lens: 'CJ24', role: 'joueur', link: 'smpte' },
+    { slotId: 'g_16l', type: 'plateau', lens: 'UA80', role: 'semi' },
+    { slotId: 'g_16r', type: 'plateau', lens: 'UA80', role: 'semi' },
+    { slotId: 'pitch_c', type: 'portable', lens: 'UA24', role: 'joueur', link: 'smpte' },
     { slotId: 'steadi_l', type: 'steadicam', role: 'suivi' },
   ],
   standard: [
-    { slotId: 'g_c1', type: 'plateau', lens: 'UJ86', role: 'large' },
+    { slotId: 'g_c1', type: 'plateau', lens: 'UA80', role: 'large' },
     { slotId: 'g_c2', type: 'plateau', lens: 'UA107', role: 'serre' },
-    { slotId: 'g_c3', type: 'hfr3', lens: 'UJ86', role: 'joueur' },
-    { slotId: 'g_16l', type: 'plateau', lens: 'UJ86', role: 'semi' },
-    { slotId: 'g_16r', type: 'plateau', lens: 'UJ86', role: 'semi' },
-    { slotId: 'pitch_gl', type: 'hfr3', lens: 'CJ45', role: 'serre' },
-    { slotId: 'pitch_gr', type: 'portable', lens: 'CJ45', role: 'serre' },
+    { slotId: 'g_c3', type: 'hfr3', lens: 'UA80', role: 'joueur' },
+    { slotId: 'g_16l', type: 'plateau', lens: 'UA80', role: 'semi' },
+    { slotId: 'g_16r', type: 'plateau', lens: 'UA80', role: 'semi' },
+    { slotId: 'pitch_gl', type: 'hfr3', lens: 'UA46', role: 'serre' },
+    { slotId: 'pitch_gr', type: 'portable', lens: 'UA46', role: 'serre' },
     { slotId: 'steadi_l', type: 'steadicam', role: 'suivi' },
-    { slotId: 'pitch_c', type: 'portable', lens: 'CJ24', role: 'bancs' },
-    { slotId: 'end_hl', type: 'plateau', lens: 'UJ86', role: 'semi', link: 'precab' },
-    { slotId: 'opp_c', type: 'plateau', lens: 'UJ86', role: 'semi', link: 'smpte' },
+    { slotId: 'pitch_c', type: 'portable', lens: 'UA24', role: 'bancs' },
+    { slotId: 'end_hl', type: 'plateau', lens: 'UA80', role: 'semi', link: 'precab' },
+    { slotId: 'opp_c', type: 'plateau', lens: 'UA80', role: 'semi', link: 'smpte' },
     { slotId: 'pov_l', type: 'pov', role: 'but', link: 'smf' },
   ],
   grand: [
-    { slotId: 'g_c1', type: 'plateau', lens: 'UJ86', role: 'large' },
-    { slotId: 'g_c2', type: 'plateau', lens: 'UJ122', role: 'serre' },
+    { slotId: 'g_c1', type: 'plateau', lens: 'UA80', role: 'large' },
+    { slotId: 'g_c2', type: 'plateau', lens: 'UA125', role: 'serre' },
     { slotId: 'g_c3', type: 'hfr6', lens: 'UA107', role: 'joueur' },
-    { slotId: 'g_16l', type: 'hfr3', lens: 'UJ86', role: 'semi' },
-    { slotId: 'g_16r', type: 'hfr3', lens: 'UJ86', role: 'semi' },
-    { slotId: 'high_c', type: 'plateau', lens: 'UJ27', role: 'tactique' },
-    { slotId: 'pitch_gl', type: 'portable', lens: 'CJ45', role: 'serre' },
-    { slotId: 'pitch_gr', type: 'portable', lens: 'CJ45', role: 'serre' },
+    { slotId: 'g_16l', type: 'hfr3', lens: 'UA80', role: 'semi' },
+    { slotId: 'g_16r', type: 'hfr3', lens: 'UA80', role: 'semi' },
+    { slotId: 'high_c', type: 'plateau', lens: 'UA27', role: 'tactique' },
+    { slotId: 'pitch_gl', type: 'portable', lens: 'UA46', role: 'serre' },
+    { slotId: 'pitch_gr', type: 'portable', lens: 'UA46', role: 'serre' },
     { slotId: 'steadi_l', type: 'steadicam', role: 'suivi' },
     { slotId: 'steadi_r', type: 'steadicam', role: 'suivi' },
     { slotId: 'spider', type: 'spider', role: 'suivi' },

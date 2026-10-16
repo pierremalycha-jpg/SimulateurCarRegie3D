@@ -41,20 +41,26 @@ if (PART === 'all' || PART === 'hd') {
   // ---- son ----
   await ev(() => { window.__dbg.closeStation(); window.__dbg.openStation('son'); });
   await page.waitForTimeout(1200);
-  const strip = page.locator('.strip').filter({ hasText: 'Consultant' });
-  await strip.locator('button', { hasText: 'INTL' }).click();
+  // console Vistonics : vue PAN · DÉPARTS, tranche COMM 2
+  await page.locator('.vx-bar button', { hasText: 'PAN' }).click();
+  const strip = page.locator('.vx-strip').filter({ hasText: 'COMM 2' });
+  await strip.locator('.vb', { hasText: 'INTL' }).click();
   log('comm2 intl after click (true = erreur signalée)', await ev(() => window.__dbg.AU.ch.comm2.intl), await ev(() => document.querySelector('.ex-item .ex-t')?.textContent.slice(0, 80)));
-  await strip.locator('button', { hasText: 'INTL' }).click();
+  await strip.locator('.vb', { hasText: 'INTL' }).click();
+  await page.locator('#station .st-dock button', { hasText: 'N-1 COM' }).click();
+  log('monitor', await ev(() => window.__dbg.AU.monitor));
+  await page.locator('#station .st-dock button', { hasText: 'PGM' }).first().click();
+  // page bus, N-1, départ : retard de ligne et embedder
+  await page.locator('.vx-tab', { hasText: 'Bus, N-1' }).click();
+  await page.waitForTimeout(400);
   await page.locator('button', { hasText: '+ 1 image' }).click(); await page.locator('button', { hasText: '+ 1 image' }).click();
   log('lineDelay', await ev(() => window.__dbg.AU.lineDelay), 'effDelay', await ev(() => window.__dbg.AU.effDelay));
-  await page.locator('.hwpanel select').first().selectOption('intl');
+  const embSel = page.locator('.hwpanel', { hasText: 'Embedder du départ' }).locator('select');
+  await embSel.first().selectOption('intl');
   log('emb', await ev(() => window.__dbg.AU.emb.join(',')));
-  await page.locator('.hw', { hasText: 'N-1' }).first().click({ position: { x: 5, y: 5 } }).catch(() => {});
-  await page.locator('#station .st-dock button', { hasText: 'N-1' }).click();
-  log('monitor', await ev(() => window.__dbg.AU.monitor));
   await page.waitForTimeout(800);
   await shot('10-son');
-  await page.locator('.hwpanel select').first().selectOption('pgm');
+  await embSel.first().selectOption('pgm');
   await page.locator('button', { hasText: '− 1 image' }).click(); await page.locator('button', { hasText: '− 1 image' }).click();
   // ---- pannes son ----
   for (const id of ['n1echo', 'avsync', 'emb']) {
@@ -64,10 +70,10 @@ if (PART === 'all' || PART === 'hd') {
   }
   await page.waitForTimeout(600);
   await shot('11-son-pannes');
-  // réparation par l'interface
-  await strip.locator('button', { hasText: 'N-1' }).click();
-  await page.locator('.hwpanel select').nth(0).selectOption('pgm');
-  await page.locator('.hwpanel select').nth(1).selectOption('intl');
+  // réparation par l'interface : matrice des départs (case rouge N-1 COMM du consultant), embedder, retard
+  await page.locator('.vx-matrix tr', { hasText: 'COMM 2' }).locator('.vx-cell.bad').click();
+  await embSel.nth(0).selectOption('pgm');
+  await embSel.nth(1).selectOption('intl');
   for (let i = 0; i < 12; i++) { if (await ev(() => window.__dbg.AU.lineDelay) <= 40) break; await page.locator('button', { hasText: '− 1 image' }).click(); }
   await page.waitForTimeout(1500);
   log('faults after fix', await ev(() => window.__dbg.ACTIVE.filter((a) => ['n1echo', 'avsync', 'emb'].includes(a.f.id)).map((a) => a.f.id + ':' + a.done).join(' ')));

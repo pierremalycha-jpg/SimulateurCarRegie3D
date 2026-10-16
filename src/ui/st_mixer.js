@@ -5,6 +5,7 @@ import { MIX, TRANS, WIPES, mixSetPst, mixSetPgm, mixCut, mixAuto, mixTbar, dskT
 import { EQUIP, mixInputs } from '../equip.js';
 import { explain } from './widgets.js';
 import { openDevice } from '../equipment/viewer.js';
+import { COMMUT, commutKey, setKeyMode, keyLegend, keyModeLabel } from './commut.js';
 
 // Nom court affiché sur l'OLED au-dessus d'un bouton de croisement
 function oledName(n) {
@@ -106,7 +107,9 @@ export function buildMixer(body, arg, ctx) {
   snapP.append(el('div', { class: 'hwrow' }, store), snapRow, el('p', { class: 'note' }, 'Sur le pupitre ICP, les snapshots et la Shotbox rappellent des configurations complètes préparées avant le direct.'));
   grid.appendChild(snapP);
   body.appendChild(grid);
-  body.appendChild(el('p', { class: 'note' }, 'Raccourcis : 1 à 9 et 0 = préparer l\'entrée 1 à 10 sur le bus B (PST) · Maj + chiffre = direct au bus A (PGM) · Espace = CUT · Entrée = AUTO TRANS · W = WIPE · X = MIX · L = CLIP.'));
+  const kmBtn = hwBtn('TOUCHES 1-9', { sub: keyModeLabel(), onclick: () => { setKeyMode(COMMUT.mode === 'direct' ? 'preset' : 'direct'); explain(COMMUT.mode === 'direct' ? 'Mode DIRECT : une touche 1 à 9 commute l\'entrée à l\'antenne (comme un appui sur la rangée A · PGM). Rapide, mais on n\'a pas vu l\'image avant : c\'est le geste du direct « au top ».' : 'Mode PRESET : la touche prépare l\'entrée sur le bus B (tally vert, tuile PVW) ; Espace ou Entrée fait le CUT, Entrée du pavé numérique l\'AUTO TRANS. C\'est la méthode recommandée : on vérifie le cadre avant de l\'envoyer.', 'mix:keys'); } });
+  const legend = el('p', { class: 'note' });
+  body.appendChild(el('div', { class: 'hwrow' }, kmBtn, legend));
   let lastLabels = '';
   return {
     update() {
@@ -132,15 +135,14 @@ export function buildMixer(body, arg, ctx) {
       store.classList.toggle('lit', storeMode);
       snapBtns.forEach((b, i) => { b.classList.toggle('lit2', !!MIX.snaps[i]); b.querySelector('small').textContent = MIX.snaps[i] ? 'mémorisé' : 'vide'; });
       prog.textContent = Math.round(MIX.pos * 100) + ' %';
+      kmBtn.querySelector('small').textContent = keyModeLabel(); kmBtn.classList.toggle('lit', COMMUT.mode === 'preset'); kmBtn.classList.toggle('pgm', COMMUT.mode === 'direct');
+      legend.textContent = 'Clavier : ' + keyLegend() + ' · W = WIPE · X = MIX · L = CLIP.';
       if (MIX.auto && document.activeElement !== tbar) tbar.value = (MIX.tbarDir > 0 ? MIX.pos : 1 - MIX.pos) * 100;
       if (document.activeElement !== rate) rate.value = MIX.rate;
     },
     key(e) {
       if (e.target && (e.target.tagName === 'INPUT' && e.target.type !== 'range')) return false;
-      const d = e.code.startsWith('Digit') ? +e.code.slice(5) : e.code.startsWith('Numpad') && /\d/.test(e.code.slice(6)) ? +e.code.slice(6) : null;
-      if (d != null) { const n = d === 0 ? 10 : d; if (n > nIn) return true; if (e.shiftKey) mixSetPgm(n); else mixSetPst(n); return true; }
-      if (e.code === 'Space') { mixCut(); return true; }
-      if (e.code === 'Enter' || e.code === 'NumpadEnter') { mixAuto(); return true; }
+      if (commutKey(e, 'station')) return true;
       if (e.code === 'KeyW') { MIX.trans = 'wipe'; return true; }
       if (e.code === 'KeyX') { MIX.trans = 'mix'; return true; }
       if (e.code === 'KeyL') { MIX.trans = 'stinger'; return true; }

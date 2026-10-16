@@ -104,6 +104,7 @@ export function clearFaults() {
     if (a.f.id === 'n1echo') setSend('comm2', 'n1', false);
     if (a.f.id === 'avsync') setLineDelay(0);
     if (a.f.id === 'emb') AU.emb.splice(0, 4, ...SOUND_PLAN);
+    if (a.f.repair) a.f.repair(a.st);
     a.done = true;
   }
   S.faults.jam = null; S.faults.tx = false;

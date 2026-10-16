@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { S, emit, on, camById } from './state.js';
 import { el, clamp, tc, mmss, fmt } from './util.js';
 import { LIGHTING, TEAMS, STATION_INFO, CONTROLS_HELP } from './data.js';
-import { buildWorld, applyLighting, updateWorld, paintTruckSign, standAt, W, TRUCK, blockedOutside, groundHeight, inTruckFootprint } from './world.js';
+import { buildWorld, applyLighting, setCloudQuality, updateWorld, paintTruckSign, standAt, W, TRUCK, blockedOutside, groundHeight, inTruckFootprint } from './world.js';
 import { buildTruck, truckBlocked, truckFloorAt, updateTruck, updateTruckView, T } from './truck.js';
 import { initTruckMap, updateTruckMap, openTruckPlan } from './ui/truckmap.js';
 import { openSynoptics } from './ui/synoptics.js';
@@ -11,7 +11,9 @@ import { loadPreset, lineUpCamera, updateRopes } from './bcam.js';
 import { updateRF } from './rf.js';
 import { initGfx, updateGfx } from './gfx.js';
 import { initPipeline, renderPipeline, drawSlots, MIX, meSource, sourceLabel, defaultRouting, EVS, P, ROUTER } from './pipeline.js';
-import { AU, startAudio, updateAudio, applyFaders } from './audio.js';
+import { AU, startAudio, updateAudio, applyFaders, applyAll, voiceGain, setMonitor, stripRms, corrNow, faderLin } from './audio.js';
+import { updateCommentary, CMT } from './commentary.js';
+import { updateAudioDesk } from './audiodesk.js';
 import { $, $$, toast, modal, openInfo, intercom } from './ui/common.js';
 import { openStation, closeStation, updateStation, stationKey, ST } from './ui/stations.js';
 import { initPlan, openPlan, closePlan, renderPlan, planPointer, planWheel, fitView, PLAN } from './ui/plan.js';
@@ -29,6 +31,7 @@ import { FAB } from './net/fabric.js';
 import { updateCourse, NC } from './net/course.js';
 import { AN } from './net/analyzer.js';
 import { FORMATS } from './data.js';
+import { commutKey, COMMUT } from './ui/commut.js';
 
 // ----------------------------------------------------------------------------------
 // Initialisation
@@ -72,10 +75,10 @@ applyLighting('jour');
 initPipeline();
 initPlan(W.scene);
 
-const pcam = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.05, 3000);
+const pcam = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 3000);
 pcam.rotation.order = 'YXZ';
 pcam.layers.enable(1); pcam.layers.enable(2);
-const PL = { pos: new THREE.Vector3(-13, 0, -107.5), yaw: 0.25, pitch: 0.02, y: 1.7, fly: false, vy: 0 };
+const PL = { pos: new THREE.Vector3(-13, 0, -107.5), yaw: 0.25, pitch: 0.02, y: 1.7, fly: false, vy: 0, vel: new THREE.Vector3(), bob: 0, bobY: 0, roll: 0, fov: 70, cyaw: 0.25, cpitch: 0.02 };
 const KEYS = {};
 const camopRT = { raw: null };
 
@@ -116,7 +119,7 @@ function buildStart() {
       el('div', { class: 'field' }, el('label', { for: 'stfmt' }, 'Format de production'), fmt),
       el('div', { class: 'field' }, el('label', { for: 'stinfra' }, 'Infrastructure'), infra),
       el('button', { class: 'btn', onclick: () => openTrainer('car') }, 'Espace formateur'),
-      el('label', { class: 'item', for: 'stsnd', style: { padding: '6px 10px' } }, snd, el('span', {}, 'Son (ambiance, frappes, sifflet)'))),
+      el('label', { class: 'item', for: 'stsnd', style: { padding: '6px 10px' } }, snd, el('span', {}, 'Son (ambiance, frappes, sifflet, commentaires)'))),
     fmtNote,
     el('div', { class: 'keys' }, ...CONTROLS_HELP.map(([k, d]) => el('div', {}, el('kbd', {}, k), d))),
     el('p', { class: 'note' }, 'Les caractéristiques techniques (objectifs, portées de câbles, seuils HF, niveaux vidéo et audio) sont des ordres de grandeur réalistes, donnés à titre pédagogique. Les noms d\'équipements cités le sont comme exemples de matériel courant.')));
@@ -223,7 +226,7 @@ const DESTS = [
 function teleport(i) {
   const [, p, yaw, fly, truck] = DESTS[i];
   PL.pos.set(p[0], p[1], p[2]); PL.yaw = yaw; PL.pitch = DESTS[i][0].startsWith('Vue aérienne') ? -0.55 : 0; PL.fly = !!fly; S.inTruck = !!truck;
-  PL.y = p[1] + 1.7; updToolbar();
+  PL.y = p[1] + 1.7; PL.vel.set(0, 0, 0); PL.cyaw = PL.yaw; PL.cpitch = PL.pitch; updToolbar();
 }
 function teleportMenu() {
   const list = el('div', { class: 'list' });
@@ -283,7 +286,7 @@ function goToStation(s, open = true) {
   if (S.modalOpen) modal.close();
   S.inTruck = true; PL.fly = false;
   PL.pos.set(s.pos.x, truckFloorAt(s.pos.x, s.pos.z), s.pos.z); PL.y = PL.pos.y + 1.7;
-  PL.yaw = Math.atan2(-(s.look.x - s.pos.x), -(s.look.z - s.pos.z)); PL.pitch = -0.25;
+  PL.yaw = Math.atan2(-(s.look.x - s.pos.x), -(s.look.z - s.pos.z)); PL.pitch = -0.25; PL.vel.set(0, 0, 0);
   if (open) openStation(s.station, s.arg);
 }
 function updatePrompt() {
@@ -310,6 +313,7 @@ function takeCamera(cam) {
   if (S.mode === 'station') closeStation();
   if (S.mode === 'plan') closePlan();
   S.mode = 'camop'; S.camop = cam; cam.manual = true;
+  cam.tgt = { yaw: cam.yaw.v, pitch: cam.pitch.v, lf: cam.lf.v }; // consignes : la tête fluide les rejoint avec un léger amorti
   if (cam.T.moving === 'touchline') cam.manualMove = true;
   const o = $('#camop'); o.hidden = false; o.innerHTML = '';
   o.append(el('div', { class: 'vf', 'data-gl': 'camop', id: 'vf' }), el('div', { class: 'safe' }), el('div', { class: 'safe2' }), el('div', { class: 'cross' }), el('div', { class: 'tally', id: 'vf-tally' }),
@@ -340,8 +344,13 @@ function updateCamop(dt) {
       c.model.root.position.copy(p);
     }
   }
-  if (KEYS.NumpadAdd || KEYS.Equal) c.lf.v = clamp(c.lf.v + dt * 1.2, Math.log(c.fMin), Math.log(c.fMax));
-  if (KEYS.NumpadSubtract || KEYS.Minus || KEYS.Digit6) c.lf.v = clamp(c.lf.v - dt * 1.2, Math.log(c.fMin), Math.log(c.fMax));
+  if (!c.tgt) c.tgt = { yaw: c.yaw.v, pitch: c.pitch.v, lf: c.lf.v };
+  if (KEYS.NumpadAdd || KEYS.Equal) c.tgt.lf = clamp(c.tgt.lf + dt * 1.2, Math.log(c.fMin), Math.log(c.fMax));
+  if (KEYS.NumpadSubtract || KEYS.Minus || KEYS.Digit6) c.tgt.lf = clamp(c.tgt.lf - dt * 1.2, Math.log(c.fMin), Math.log(c.fMax));
+  // tête fluide : le cadre rejoint la consigne de la souris avec un amorti (≈ 80 ms), le zoom avec la rampe du servo
+  const kh = 1 - Math.exp(-dt * 12), kz = 1 - Math.exp(-dt * 6);
+  c.yaw.v += (c.tgt.yaw - c.yaw.v) * kh; c.pitch.v += (c.tgt.pitch - c.pitch.v) * kh;
+  c.tgt.lf = clamp(c.tgt.lf, Math.log(c.fMin), Math.log(c.fMax)); c.lf.v += (c.tgt.lf - c.lf.v) * kz;
   c.yaw.vel = 0; c.pitch.vel = 0; c.lf.vel = 0;
   c.applyPose();
   // rendu haute définition pour le viseur (image de la caméra, sans artefacts de transmission)
@@ -380,31 +389,46 @@ function updatePlayer(dt) {
   let sp = PL.fly ? (run ? 45 : 15) : (run ? 8.5 : 4.2);
   if (S.inTruck) sp = run ? 3.2 : 2.2;
   if (mv.lengthSq() > 1) mv.normalize();
-  mv.multiplyScalar(sp * dt);
+  // inertie : la vitesse rejoint la consigne en douceur (accélération / freinage), plus « planant » en vol
+  const target = mv.multiplyScalar(sp);
+  const acc = PL.fly ? 2.6 : S.inTruck ? 11 : 8;
+  if (PL.fly) target.y = ((KEYS.Space ? 1 : 0) - (KEYS.KeyC || KEYS.ControlLeft ? 1 : 0)) * sp * 0.8;
+  else target.y = 0;
+  PL.vel.lerp(target, 1 - Math.exp(-acc * dt));
+  if (!PL.fly) PL.vel.y = 0;
+  const step = PL.vel.clone().multiplyScalar(dt);
   const p = PL.pos;
+  const hs = Math.hypot(PL.vel.x, PL.vel.z);
+  // roulis léger en vol quand on se décale sur le côté, FOV élargi à grande vitesse
+  const side = PL.vel.dot(r) / Math.max(1, sp);
+  PL.roll += ((PL.fly ? -side * 0.06 : 0) - PL.roll) * Math.min(1, dt * 4);
+  PL.fov += (70 + (PL.fly ? Math.min(8, hs / 6) : run && hs > 5 ? 4 : 0) - PL.fov) * Math.min(1, dt * 3);
   if (PL.fly) {
-    p.add(mv);
-    if (KEYS.Space) p.y += sp * dt; if (KEYS.KeyC || KEYS.ControlLeft) p.y -= sp * dt;
+    p.add(step);
     p.y = Math.max(groundHeight(p.x, p.z), p.y);
-    PL.y = p.y + 1.7;
+    PL.y = p.y + 1.7; PL.bobY *= 0.9;
     if (inTruckFootprint(p.x, p.z) && p.y < TRUCK.ceil) { p.y = TRUCK.ceil + 0.5; }
     return;
   }
   const blocked = (x, z) => S.inTruck ? truckBlocked(x, z) : blockedOutside(x, z);
-  const nx = p.x + mv.x, nz = p.z + mv.z;
+  const nx = p.x + step.x, nz = p.z + step.z;
   // entrée dans le car par la porte
   if (!S.inTruck && inTruckFootprint(nx, nz) && nx > TRUCK.doorX0 && nx < TRUCK.doorX1 && nz > TRUCK.z1 - 0.6) { S.inTruck = true; p.x = nx; p.z = TRUCK.z1 - 0.35; }
   else if (S.inTruck && nz > TRUCK.z1 + 0.05) { S.inTruck = false; p.x = nx; p.z = nz; }
   else {
     const R = S.inTruck ? 0.24 : 0.28, D = R * 0.71;
     const ok = (x, z) => !blocked(x + R, z) && !blocked(x - R, z) && !blocked(x, z + R) && !blocked(x, z - R) && !blocked(x + D, z + D) && !blocked(x - D, z + D) && !blocked(x + D, z - D) && !blocked(x - D, z - D);
-    // glissement le long des obstacles : on essaie le mouvement complet, puis chaque axe séparément
-    if (ok(nx, nz)) { p.x = nx; p.z = nz; } else { if (ok(nx, p.z)) p.x = nx; else if (ok(p.x, nz)) p.z = nz; }
+    // glissement le long des obstacles : on essaie le mouvement complet, puis chaque axe séparément (la vitesse bloquée s'annule)
+    if (ok(nx, nz)) { p.x = nx; p.z = nz; } else if (ok(nx, p.z)) { p.x = nx; PL.vel.z = 0; } else if (ok(p.x, nz)) { p.z = nz; PL.vel.x = 0; } else { PL.vel.x = 0; PL.vel.z = 0; }
   }
   // gravité / sol (estrade dans le car)
   const g = S.inTruck ? truckFloorAt(p.x, p.z) : groundHeight(p.x, p.z);
   if (p.y > g + 0.05) { PL.vy -= 18 * dt; p.y = Math.max(g, p.y + PL.vy * dt); } else { PL.vy = 0; p.y += (g - p.y) * Math.min(1, dt * 14); }
-  PL.y = p.y + 1.7;
+  // balancement de la marche (discret, plus faible dans le car)
+  if (hs > 0.25) PL.bob += dt * (5.2 + hs * 0.9);
+  const amp = (S.inTruck ? 0.012 : 0.028) * Math.min(1, hs / 4);
+  PL.bobY += (Math.abs(Math.sin(PL.bob)) * amp - amp * 0.5 - PL.bobY) * Math.min(1, dt * 12);
+  PL.y = p.y + 1.7 + PL.bobY;
 }
 
 // ----------------------------------------------------------------------------------
@@ -424,7 +448,7 @@ window.addEventListener('keydown', (e) => {
   if (S.mode === 'plan') { if (e.code === 'Escape' || e.code === 'KeyP') closePlan(); return; }
   if (S.mode === 'camop') {
     if (e.code === 'KeyE' || e.code === 'Escape') { releaseCamera(); return; }
-    if (e.code === 'KeyX' && S.camop.L.ext) { const c = S.camop; const f = c.focal; c.ext = !c.ext; c.lf.v = Math.log(clamp(c.ext ? f * 2 : f / 2, c.fMin, c.fMax)); toast(c.ext ? 'Doubleur x2 engagé : focale doublée, -2 diaphragmes' : 'Doubleur retiré'); }
+    if (e.code === 'KeyX' && S.camop.L.ext) { const c = S.camop; const f = c.focal; c.ext = !c.ext; c.lf.v = Math.log(clamp(c.ext ? f * 2 : f / 2, c.fMin, c.fMax)); if (c.tgt) c.tgt.lf = c.lf.v; toast(c.ext ? 'Doubleur x2 engagé : focale doublée, -2 diaphragmes' : 'Doubleur retiré'); }
     if (e.code === 'KeyR') returnHeld = true;
     if (e.key === '+') KEYS.Equal = true; if (e.key === '-') KEYS.Minus = true;
     e.preventDefault();
@@ -442,7 +466,11 @@ window.addEventListener('keydown', (e) => {
   if (e.code === 'Tab' && S.inTruck) { e.preventDefault(); if (document.pointerLockElement) document.exitPointerLock(); openTruckPlan(); }
   if (e.code === 'KeyY') openSynoptics();
   if (e.code === 'KeyM') $('#minimon').hidden = !$('#minimon').hidden;
+  if (commutKey(e, 'fps')) e.preventDefault();
 });
+// un clic de souris sur un bouton d'un poste ne doit pas lui laisser le focus : sinon Espace ou Entrée
+// (CUT, AUTO) « recliquerait » ce bouton en plus du raccourci
+document.addEventListener('click', (e) => { const b = e.target && e.target.closest && e.target.closest('button'); if (b && e.detail > 0 && S.mode === 'station') b.blur(); });
 window.addEventListener('keyup', (e) => { KEYS[e.code] = false; if (e.code === 'KeyR') returnHeld = false; if (e.key === '+') KEYS.Equal = false; if (e.key === '-') KEYS.Minus = false; });
 window.addEventListener('blur', () => { for (const k in KEYS) KEYS[k] = false; });
 
@@ -464,14 +492,15 @@ IL.addEventListener('pointermove', (e) => {
 IL.addEventListener('pointerup', (e) => { if (S.mode === 'plan') planPointer('up', e); dragLook = null; });
 IL.addEventListener('wheel', (e) => {
   if (S.mode === 'plan') { e.preventDefault(); planWheel(e); }
-  if (S.mode === 'camop' && S.camop) { e.preventDefault(); const c = S.camop; c.lf.v = clamp(c.lf.v - e.deltaY * 0.0012, Math.log(c.fMin), Math.log(c.fMax)); }
+  if (S.mode === 'camop' && S.camop) { e.preventDefault(); const c = S.camop; if (c.tgt) c.tgt.lf = clamp(c.tgt.lf - e.deltaY * 0.0012, Math.log(c.fMin), Math.log(c.fMax)); }
 }, { passive: false });
 document.addEventListener('mousemove', (e) => { if (document.pointerLockElement) look(e.movementX, e.movementY, 1); });
-document.addEventListener('wheel', (e) => { if (document.pointerLockElement && S.mode === 'camop' && S.camop) { const c = S.camop; c.lf.v = clamp(c.lf.v - e.deltaY * 0.0012, Math.log(c.fMin), Math.log(c.fMax)); } }, { passive: true });
+document.addEventListener('wheel', (e) => { if (document.pointerLockElement && S.mode === 'camop' && S.camop && S.camop.tgt) { const c = S.camop; c.tgt.lf = clamp(c.tgt.lf - e.deltaY * 0.0012, Math.log(c.fMin), Math.log(c.fMax)); } }, { passive: true });
 function look(dx, dy, mult) {
   if (S.mode === 'camop' && S.camop) {
     const c = S.camop; const s = 0.0016 * mult * (c.cam.fov / 40);
-    c.yaw.v -= dx * s; c.pitch.v = clamp(c.pitch.v - dy * s, -1.3, 1.0);
+    if (!c.tgt) c.tgt = { yaw: c.yaw.v, pitch: c.pitch.v, lf: c.lf.v };
+    c.tgt.yaw -= dx * s; c.tgt.pitch = clamp(c.tgt.pitch - dy * s, -1.3, 1.0);
     return;
   }
   if (S.mode !== 'fps') return;
@@ -513,7 +542,7 @@ on('setLabels', (v) => { S.showLabels = v; if (v) pcam.layers.enable(1); else pc
 on('setQuality', (v) => setQuality(v));
 on('match', (e) => { if (e.type === 'goal') toast(`BUT ! ${TEAMS[e.team].name} · ${e.score[0]}-${e.score[1]}`, 'good', 3500); });
 function setQuality(v) {
-  S.quality = v;
+  S.quality = v; setCloudQuality(v);
   try { localStorage.setItem('carregie.quality', v); } catch (e) { /* stockage indisponible */ }
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, v === 'basse' ? 1 : 1.5));
   renderer.setSize(window.innerWidth, window.innerHeight, false);
@@ -585,6 +614,16 @@ function watchFps(dt) {
 // ----------------------------------------------------------------------------------
 let last = performance.now();
 let rfAcc = 0, slowAcc = 0;
+// plan proche adaptatif : la précision du tampon de profondeur dépend du rapport far / near. Avec un plan
+// proche à 5 cm, deux surfaces distantes de quelques centimètres « clignotent » dès 100 m (z-fighting) ;
+// on le recule quand on vole haut (rien n'est alors à portée de main) et on le rapproche dans le car.
+function updateNear() {
+  let n = 0.1;
+  if (S.mode === 'start') n = 2;
+  else if (S.inTruck) n = 0.04;
+  else if (PL.fly) n = clamp(0.1 + Math.max(0, PL.pos.y - 6) * 0.03, 0.1, 4);
+  if (Math.abs(pcam.near - n) > 0.004) { pcam.near = n; pcam.updateProjectionMatrix(); }
+}
 function frame(now) {
   requestAnimationFrame(frame);
   let dt = (now - last) / 1000; last = now;
@@ -597,7 +636,7 @@ function frame(now) {
   record(S.cams);
   rfAcc += dt; if (rfAcc > 0.1) { updateRF(rfAcc); rfAcc = 0; }
   if (S.mode === 'fps') updatePlayer(dt);
-  updateGfx(dt); { const pgm = meSource(MIX.pgm); updateAudio(dt, { pgmSrc: pgm, replay: (pgm === 'EVSA' || pgm === 'EVSB') && EVS.ch[pgm === 'EVSA' ? 0 : 1].playing, studioOnAir: pgm === 'STUDIO' }); } updateTruck(S.time); updateExercises(dt); updateScenario(dt); updateNet(dt, ROUTER.map, ROUTER.phase); updateCourse(dt);
+  updateGfx(dt); { const pgm = meSource(MIX.pgm); updateAudio(dt, { pgmSrc: pgm, replayA: EVS.ch[0].playing, replayB: EVS.ch[1] && EVS.ch[1].playing, studioOnAir: pgm === 'STUDIO' }); updateCommentary(dt, { pgmSrc: pgm, replay: (pgm === 'EVSA' || pgm === 'EVSB') && EVS.ch[pgm === 'EVSA' ? 0 : 1].playing, studioOnAir: pgm === 'STUDIO' }); } updateTruck(S.time); updateExercises(dt); updateScenario(dt); updateNet(dt, ROUTER.map, ROUTER.phase); updateCourse(dt);
   slowAcc += dt; if (slowAcc > 0.5) { watchFps(slowAcc); slowAcc = 0; checkMissions(); updateFaults(); if (S.mode === 'fps') drawMissionCard(); }
 
   renderer.shadowMap.needsUpdate = S.quality !== 'basse' || S.frame % 2 === 0;
@@ -607,14 +646,23 @@ function frame(now) {
 
   if (S.mode === 'camop') { updateCamop(dt); renderer.setRenderTarget(null); }
   if (S.mode === 'fps' || S.mode === 'start') {
+    updateNear();
     pcam.position.set(PL.pos.x, PL.y, PL.pos.z);
     if (S.mode === 'start') { const a = S.time * 0.04; pcam.position.set(Math.cos(a) * 150, 70, Math.sin(a) * 125); pcam.lookAt(0, 0, 0); }
-    else pcam.rotation.set(PL.pitch, PL.yaw, 0);
+    else {
+      // regard lissé (quelques centièmes de seconde) : plus doux à l'œil, sans retard perceptible ; saut direct après une téléportation
+      let dy = PL.yaw - PL.cyaw; dy = Math.atan2(Math.sin(dy), Math.cos(dy));
+      if (Math.abs(dy) > 0.8 || Math.abs(PL.pitch - PL.cpitch) > 0.8) { PL.cyaw = PL.yaw; PL.cpitch = PL.pitch; }
+      const k = 1 - Math.exp(-dt * 28); PL.cyaw += dy * k; PL.cpitch += (PL.pitch - PL.cpitch) * k;
+      pcam.rotation.set(PL.cpitch, PL.cyaw, S.mode === 'fps' ? PL.roll : 0);
+      if (Math.abs(pcam.fov - PL.fov) > 0.05) { pcam.fov = PL.fov; pcam.updateProjectionMatrix(); }
+    }
     renderer.setClearColor(0x000000, 1);
     renderer.toneMappingExposure = S.inTruck ? 1.0 : S.eyeExposure;
     renderer.render(S.inTruck ? T.scene : W.scene, pcam);
     if (S.mode === 'fps' && !$('#minimon').hidden) drawSlots(renderer, [$('#minimon')]);
     updatePrompt();
+    if (S.inTruck && PL.pos.x - TRUCK.cx < -3) updateAudioDesk(AU, dt, faderLin);
     if (S.inTruck) { const dir = new THREE.Vector3(); pcam.getWorldDirection(dir); updateTruckView(eyePos(), dir, target && target.kind === 'station' ? target.id : null, S.time); }
     updateTruckMap(PL);
   } else if (S.mode === 'plan') {
@@ -638,4 +686,4 @@ function updBrand() { paintTruckSign(CFG.car.name); const w2 = $('#where2'); if 
 document.fonts && document.fonts.ready.then(() => { W.boards && W.boards.redraw(); P.mvDirty = true; paintTruckSign(CFG.car.name); });
 requestAnimationFrame(frame);
 window.__S = S; // accès console pour le débogage
-window.__dbg = { S, M, MIX, EVS, ROUTER, P, W, T, PL, EX, teleport, openStation, closeStation, openPlan, closePlan, takeCamera, releaseCamera, start, openGuide, renderer, applyLighting, openDevice, openEquipmentIndex, openTrainer, CFG, SH, AU, SC, NET, FAB, NC, AN, emit, injectFault, clearFaults, ACTIVE, FAULTS, truckBlocked, truckFloorAt, goToStation, TRUCK };
+window.__dbg = { S, M, MIX, EVS, ROUTER, P, W, T, PL, pcam, COMMUT, CMT, applyAudio: applyAll, voiceGain, setMonitor, stripRms, corrNow, EX, teleport, openStation, closeStation, openPlan, closePlan, takeCamera, releaseCamera, start, openGuide, renderer, applyLighting, openDevice, openEquipmentIndex, openTrainer, CFG, SH, AU, SC, NET, FAB, NC, AN, emit, injectFault, clearFaults, ACTIVE, FAULTS, truckBlocked, truckFloorAt, goToStation, TRUCK };
