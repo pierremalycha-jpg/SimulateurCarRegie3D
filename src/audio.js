@@ -309,6 +309,18 @@ export function setPatch(k, port, silent) {
 // entrées physiques d'une tranche (pour savoir ce qui y est branché)
 export function portsOf(src) { const m = /^MIC (\d+)-(\d+)$/.exec(src); return m ? ['MIC ' + m[1], 'MIC ' + m[2]] : [src]; }
 export function portInfo(src) { return portsOf(src).map((p) => PLUG[p] ? PLUG[p].what : 'rien de branché').join(' / '); }
+// feuille de patch du car réel (espace formateur) : [{ n, port, short, label }]
+export function applyAudioPatch(list) {
+  if (!Array.isArray(list)) return;
+  for (const r of list) {
+    const c = AU.order.map((k) => AU.ch[k]).find((x) => x.n === +r.n || x.short === r.short);
+    if (!c) continue;
+    if (r.short) c.short = String(r.short).slice(0, 8); if (r.label) c.label = String(r.label).slice(0, 60);
+    const ok = (c.st ? ST_PORTS : MONO_PORTS).includes(r.port);
+    if (ok) { c.home = r.port; if (c.src !== r.port) setPatch(c.id, r.port, true); }
+  }
+  if (AU.ctx) applyAll();
+}
 // une tranche alimente-t-elle bien ses micros statiques ?
 function phantomOk(c) { return portsOf(c.src).every((p) => !(PLUG[p] && PLUG[p].cond) || c.ph48); }
 

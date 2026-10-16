@@ -77,6 +77,20 @@ export const REVIEW_ITEMS = [
   ['fuj2', 'Objectifs', 'Fujinon UA80x9BESM : 9-720 mm, f/1,7 jusqu\'à 350 mm, f/3,5 à 720 mm, MOD 3,7 m, 23,5 kg ; UA125x8BESM : 8-1000 mm, f/1,7 → f/5,0, MOD 3,0 m, 26,6 kg ; UA70x8.7BESM : 8,7-610 mm, f/1,7 → f/3,05 ; UA27x6.5BESM : 6,5-180 mm, f/1,5 → f/2,2, MOD 0,6 m.', FUJI],
   ['fuj3', 'Objectifs', 'Portables : UA24x7.8BERD 7,8-187 mm f/1,8 → f/2,85, 1,98 kg ; UA46x13.5BERD 13,5-621 mm f/2,8 → f/5,5, 5,8 kg ; UA13x4.5BERD 4,5-59 mm f/1,8 → f/2,6, MOD 0,3 m. UA14x4.5BERD : ouvertures non vérifiées.', FUJI],
   ['hdla1', 'Caméras', 'Caméra tribune : Sony HDC-5500 dans un adaptateur grand objectif (série HDLA) avec viseur 7". La référence d\'adaptateur compatible HDC-5500 n\'a pas été confirmée (HDLA-1505/1507 : anciennes générations, HDLA-3505 : gamme HDC/HSC).', SONY_HDLA],
+  ['hf1', 'HF et liaisons', 'C/N requis par modulation COFDM (DVB-T, canal gaussien), avant la marge d\'implémentation : QPSK 3/4 ≈ 5,9 dB, 16-QAM 3/4 ≈ 12,5 dB, 64-QAM 3/4 ≈ 18 dB. Corrigeables dans « Valeurs chiffrées ».', NORMES],
+  ['hf2', 'HF et liaisons', 'Latence de bout en bout d\'une liaison HF caméra : 1 à 3 images selon le mode (ultra-basse à normale), à recaler sur vos émetteurs / récepteurs.', SIMU],
+  ['lnk1', 'HF et liaisons', 'Portées des liaisons caméra : fibre hybride SMPTE ≈ 2 km (limite d\'alimentation), triax 600 m en UHD et 1 200 m en HD, coax 12G-SDI ≈ 70 m, 3G-SDI ≈ 120 m, fibre monomode > 10 km.', SIMU],
   ['ip1', 'IP', 'ST 2110-20 : ≈ 2,1 Gb/s en 1080p50 10 bits 4:2:2 ; ≈ 8,3 Gb/s en UHD p50. PTP ST 2059-2 ; NMOS IS-04/IS-05 ; ST 2022-7.', NORMES],
 ];
 export const REVIEW_STATUS = { '': 'À vérifier', ok: 'Validé', fix: 'À corriger' };
+// avis d'un relecteur sur un point
+export const OPINIONS = { ok: ['Exact', 'ok'], fix: ['À corriger', 'err'], doubt: ['Je ne sais pas', 'warn'], na: ['Non applicable', ''] };
+// où vérifier un point dans le simulateur : chapitre du guide et poste
+const WHERE_GROUP = {
+  'Caméras': { guide: 'objectifs', station: 'vision' }, 'Chaîne caméra': { guide: 'camsys', station: 'ccu' }, 'Objectifs': { guide: 'objectifs', station: 'vision' },
+  'Console son': { guide: 'vista', station: 'son' }, 'Son': { guide: 'songuide', station: 'son' },
+  'IP': { guide: 'ipguide', station: 'reseau' }, 'Réseau ST 2110': { guide: 'reseau', station: 'reseau' }, 'Mesures ST 2110': { guide: 'mesure2110', station: 'reseau' }, 'Formation réseau': { guide: 'reseau', station: 'reseau' },
+  'Serveur EVS XT4K': { guide: 'evsarch', station: 'evs' }, 'Télécommande LSM': { guide: 'evsarch', station: 'evs' }, 'IPDirector': { guide: 'evsarch', station: 'ipdirector' }, 'Mélangeur XVS-6000': { guide: 'chaine', station: 'melangeur' },
+  'HF et liaisons': { guide: 'hfguide', station: 'hf' }, 'Niveaux et mesures': { guide: 'mesures', station: 'vision' }, 'Stade': { guide: 'stade' },
+};
+export const whereOf = (group) => WHERE_GROUP[group] || {};

@@ -31,10 +31,11 @@ export const modal = {
     m.appendChild(sheet); m.hidden = false;
     m.onclick = (e) => { if (e.target === m) modal.close(); };
     S.modalOpen = true;
+    modal._onClose = opts.onClose || null;
     if (document.pointerLockElement) document.exitPointerLock();
     return sheet;
   },
-  close() { const m = $('#modal'); m.hidden = true; m.innerHTML = ''; S.modalOpen = false; emit('modalclose'); },
+  close() { const m = $('#modal'); m.hidden = true; m.innerHTML = ''; S.modalOpen = false; const f = modal._onClose; modal._onClose = null; if (f) { try { f(); } catch (e) { console.error(e); } } emit('modalclose'); },
   get isOpen() { return !$('#modal').hidden; },
 };
 

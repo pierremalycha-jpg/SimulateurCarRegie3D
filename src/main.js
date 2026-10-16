@@ -6,8 +6,12 @@ import { buildWorld, applyLighting, setCloudQuality, updateWorld, paintTruckSign
 import { buildTruck, truckBlocked, truckFloorAt, updateTruck, updateTruckView, T } from './truck.js';
 import { initTruckMap, updateTruckMap, openTruckPlan } from './ui/truckmap.js';
 import { openSynoptics } from './ui/synoptics.js';
+import { initRender, renderEye, upgradeScene, RENDER } from './render.js';
 import { initMatch, buildPlayers, stepMatch, initRecorder, record, M } from './match.js';
-import { loadPreset, lineUpCamera, updateRopes } from './bcam.js';
+import { loadPreset, lineUpCamera, updateRopes, PRESETS } from './bcam.js';
+import { openReview } from './ui/review_ui.js';
+import { SES, updateSession, followMatch, isFollower } from './multi/session.js';
+import { openSessionPanel, setSessionStarter, updateSessionHud, trackMix } from './ui/session_ui.js';
 import { updateRF } from './rf.js';
 import { initGfx, updateGfx } from './gfx.js';
 import { initPipeline, renderPipeline, drawSlots, MIX, meSource, sourceLabel, defaultRouting, EVS, P, ROUTER } from './pipeline.js';
@@ -71,6 +75,7 @@ buildWorld(renderer);
 initMatch(); buildPlayers(W.scene); initRecorder();
 buildTruck();
 initGfx();
+initRender(renderer, W, T);
 applyLighting('jour');
 initPipeline();
 initPlan(W.scene);
@@ -98,6 +103,15 @@ function buildStart() {
   const updFmt = () => { S.format = fmt.value; paintTruckSign(CFG.car.name); fmtNote.textContent = `Avec ce format : ${evsLayout().label} ; mélangeur ${EQUIP.mixer} avec ${mixInputs()} entrées utilisées.`; };
   fmt.onchange = updFmt; updFmt();
   const go = (preset) => start(preset, light.value, qual.value, snd.checked, fmt.value, infra.value === 'ip');
+  // session à plusieurs : on démarre le car prêt à l'antenne, avec les réglages de l'hôte s'il y en a déjà un
+  setSessionStarter({
+    cfg: () => ({ fmt: fmt.value, ip: infra.value === 'ip', light: light.value }),
+    start: async () => {
+      for (let i = 0; i < 25 && !(SES.hostPeer && !SES.hostPeer.sameTab && SES.hostPeer.presence.cfg); i++) await new Promise((r) => setTimeout(r, 120));
+      const h = SES.hostPeer && !SES.hostPeer.sameTab && SES.hostPeer.presence.cfg;
+      start('standard', h ? h.light : light.value, qual.value, snd.checked, h ? h.fmt : fmt.value, h ? !!h.ip : infra.value === 'ip');
+    },
+  });
   const truckLine = el('div', { class: 'eyebrow', id: 'sttruck' });
   const setTruck = () => { truckLine.textContent = [CFG.car.company, CFG.car.name].filter(Boolean).join(' · '); truckLine.hidden = !truckLine.textContent; updFmt(); };
   setTruck(); on('config', setTruck); on('shared', setTruck);
@@ -119,6 +133,8 @@ function buildStart() {
       el('div', { class: 'field' }, el('label', { for: 'stfmt' }, 'Format de production'), fmt),
       el('div', { class: 'field' }, el('label', { for: 'stinfra' }, 'Infrastructure'), infra),
       el('button', { class: 'btn', onclick: () => openTrainer('car') }, 'Espace formateur'),
+      el('button', { class: 'btn', title: 'Pour les experts métier : valider ou corriger chaque point technique du simulateur', onclick: () => openReview('me') }, 'Relecture technique (experts)'),
+      el('button', { class: 'btn primary', title: 'Plusieurs stagiaires dans le même car, en direct, avec un formateur', onclick: () => openSessionPanel() }, 'Session à plusieurs'),
       el('label', { class: 'item', for: 'stsnd', style: { padding: '6px 10px' } }, snd, el('span', {}, 'Son (ambiance, frappes, sifflet, commentaires)'))),
     fmtNote,
     el('div', { class: 'keys' }, ...CONTROLS_HELP.map(([k, d]) => el('div', {}, el('kbd', {}, k), d))),
@@ -131,6 +147,7 @@ function start(preset, light, quality, sound, format = S.format, ip = false) {
   applyLighting(light);
   if (preset === 'vierge') { loadPreset('none'); S.autoLineup = false; S.showMission = true; }
   else if (preset === 'brassage' || preset === 'scenario') { loadPreset('standard', preset !== 'scenario'); S.showMission = false; }
+  else if (preset === 'standard' && Array.isArray(CFG.car.camPreset) && CFG.car.camPreset.length) { PRESETS.car = CFG.car.camPreset; loadPreset('car', true); S.showMission = false; }
   else { loadPreset(preset, true); S.showMission = false; }
   defaultRouting(true);
   if (preset === 'brassage' || preset === 'scenario') { S.patch.on = true; patchEmpty(); }
@@ -160,6 +177,7 @@ function buildToolbar() {
     b('Synoptiques', 'Y', () => openSynoptics()),
     b('Guide', 'G', () => openGuide('missions')),
     b('Matériel', 'K', () => openEquipmentIndex()),
+    b('Session', null, () => openSessionPanel(), 'tb-ses'),
     b('Vol libre', 'V', () => { PL.fly = !PL.fly; updToolbar(); }, 'tb-fly'),
     b('Retour PGM', 'M', () => { $('#minimon').hidden = !$('#minimon').hidden; }),
     b(AU.muted ? 'Son coupé' : 'Son', null, (e) => { startAudio(); AU.muted = !AU.muted; applyFaders(); e.currentTarget.firstChild.textContent = AU.muted ? 'Son coupé' : 'Son'; }));
@@ -436,8 +454,8 @@ function updatePlayer(dt) {
 // ----------------------------------------------------------------------------------
 const isTyping = (e) => e.target && ['INPUT', 'SELECT', 'TEXTAREA'].includes(e.target.tagName) && e.target.type !== 'range' && e.target.type !== 'checkbox';
 window.addEventListener('keydown', (e) => {
-  if (S.mode === 'start') return;
   if (modal.isOpen) { if (e.code === 'Escape') modal.close(); return; }
+  if (S.mode === 'start') return;
   if (isTyping(e) && e.code !== 'Escape') return;
   KEYS[e.code] = true;
   if (S.mode === 'station') {
@@ -629,16 +647,18 @@ function frame(now) {
   let dt = (now - last) / 1000; last = now;
   dt = clamp(dt, 0.001, 0.05);
   S.time += dt; S.frame++;
-  stepMatch(dt);
+  if (isFollower()) followMatch(dt); else stepMatch(dt);
   updateWorld(S.simTime);
   W.crowdMat.uniforms.uExcite.value.set(Math.min(1.2, M.excite[0]), Math.min(1.2, M.excite[1]));
   for (const c of S.cams) { c.update(dt); updateRopes(c); }
   record(S.cams);
   rfAcc += dt; if (rfAcc > 0.1) { updateRF(rfAcc); rfAcc = 0; }
   if (S.mode === 'fps') updatePlayer(dt);
-  updateGfx(dt); { const pgm = meSource(MIX.pgm); updateAudio(dt, { pgmSrc: pgm, replayA: EVS.ch[0].playing, replayB: EVS.ch[1] && EVS.ch[1].playing, studioOnAir: pgm === 'STUDIO' }); updateCommentary(dt, { pgmSrc: pgm, replay: (pgm === 'EVSA' || pgm === 'EVSB') && EVS.ch[pgm === 'EVSA' ? 0 : 1].playing, studioOnAir: pgm === 'STUDIO' }); } updateTruck(S.time); updateExercises(dt); updateScenario(dt); updateNet(dt, ROUTER.map, ROUTER.phase); updateCourse(dt);
+  updateGfx(dt); { const pgm = meSource(MIX.pgm); updateAudio(dt, { pgmSrc: pgm, replayA: EVS.ch[0].playing, replayB: EVS.ch[1] && EVS.ch[1].playing, studioOnAir: pgm === 'STUDIO' }); updateCommentary(dt, { pgmSrc: pgm, replay: (pgm === 'EVSA' || pgm === 'EVSB') && EVS.ch[pgm === 'EVSA' ? 0 : 1].playing, studioOnAir: pgm === 'STUDIO' }); } updateTruck(S.time); updateExercises(dt); updateScenario(dt); updateNet(dt, ROUTER.map, ROUTER.phase); updateCourse(dt); updateSession(dt); trackMix(); if (S.frame % 10 === 0) updateSessionHud();
   slowAcc += dt; if (slowAcc > 0.5) { watchFps(slowAcc); slowAcc = 0; checkMissions(); updateFaults(); if (S.mode === 'fps') drawMissionCard(); }
 
+  // matériaux ajoutés en cours de route (caméras posées, appareils) : conversion physique
+  if (S.frame % 90 === 0) upgradeScene(W.scene); else if (S.frame % 90 === 45) upgradeScene(T.scene, true);
   renderer.shadowMap.needsUpdate = S.quality !== 'basse' || S.frame % 2 === 0;
   renderer.toneMappingExposure = 1;
   if (S.mode !== 'start') renderPipeline(renderer, dt);
@@ -658,8 +678,7 @@ function frame(now) {
       if (Math.abs(pcam.fov - PL.fov) > 0.05) { pcam.fov = PL.fov; pcam.updateProjectionMatrix(); }
     }
     renderer.setClearColor(0x000000, 1);
-    renderer.toneMappingExposure = S.inTruck ? 1.0 : S.eyeExposure;
-    renderer.render(S.inTruck ? T.scene : W.scene, pcam);
+    renderEye(renderer, S.inTruck ? T.scene : W.scene, pcam, S.inTruck ? (RENDER.pbr ? 1.2 : 1.0) : S.eyeExposure, S.inTruck);
     if (S.mode === 'fps' && !$('#minimon').hidden) drawSlots(renderer, [$('#minimon')]);
     updatePrompt();
     if (S.inTruck && PL.pos.x - TRUCK.cx < -3) updateAudioDesk(AU, dt, faderLin);
@@ -686,4 +705,4 @@ function updBrand() { paintTruckSign(CFG.car.name); const w2 = $('#where2'); if 
 document.fonts && document.fonts.ready.then(() => { W.boards && W.boards.redraw(); P.mvDirty = true; paintTruckSign(CFG.car.name); });
 requestAnimationFrame(frame);
 window.__S = S; // accès console pour le débogage
-window.__dbg = { S, M, MIX, EVS, ROUTER, P, W, T, PL, pcam, COMMUT, CMT, applyAudio: applyAll, voiceGain, setMonitor, stripRms, corrNow, EX, teleport, openStation, closeStation, openPlan, closePlan, takeCamera, releaseCamera, start, openGuide, renderer, applyLighting, openDevice, openEquipmentIndex, openTrainer, CFG, SH, AU, SC, NET, FAB, NC, AN, emit, injectFault, clearFaults, ACTIVE, FAULTS, truckBlocked, truckFloorAt, goToStation, TRUCK };
+window.__dbg = { RENDER, openReview, openSessionPanel, SES, S, M, MIX, EVS, ROUTER, P, W, T, PL, pcam, COMMUT, CMT, applyAudio: applyAll, voiceGain, setMonitor, stripRms, corrNow, EX, teleport, openStation, closeStation, openPlan, closePlan, takeCamera, releaseCamera, start, openGuide, renderer, applyLighting, openDevice, openEquipmentIndex, openTrainer, CFG, SH, AU, SC, NET, FAB, NC, AN, emit, injectFault, clearFaults, ACTIVE, FAULTS, truckBlocked, truckFloorAt, goToStation, TRUCK };

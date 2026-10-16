@@ -1,6 +1,7 @@
 import { S, emit, on } from './state.js';
 import { EQUIP } from './equip.js';
-import { setSoundPlan } from './audio.js';
+import { setSoundPlan, applyAudioPatch } from './audio.js';
+import { applyOverrides } from './params.js';
 
 // ----------------------------------------------------------------------------------
 // Données partagées de la page publiée (capacités db / user / assets / downloads),
@@ -8,11 +9,15 @@ import { setSoundPlan } from './audio.js';
 //   config/car      : nom du car, matériel, check-list et procédures maison (écrit par le formateur)
 //   config/cabling  : liste de câblage importée
 //   config/photos   : photos du matériel et leurs points cliquables
-//   config/review   : relecture technique (statut et remarque par point)
+//   config/review   : arbitrage du formateur (statut par point) et corrections chiffrées appliquées
+//   review/<id>     : relecture d'un expert (avis par point, valeurs proposées, autres remarques)
+//   sessions/<id>   : comptes rendus des sessions à plusieurs (formateur)
 //   progress/<id>   : progression d'un stagiaire (missions, scénarios, signalements, perf)
 // ----------------------------------------------------------------------------------
 export const SH = { db: null, user: null, assets: null, downloads: null, uid: null, isOwner: false, canEdit: false, canWrite: null, ready: false, readOnly: false };
-export const CFG = { car: {}, cabling: null, photos: { list: [] }, review: { items: {} } };
+export const CFG = { car: {}, cabling: null, photos: { list: [] }, review: { items: {}, overrides: {} } };
+// ma relecture (expert) : enregistrée dans review/<mon id>
+export const MYREV = { domains: [], items: {}, params: {}, extra: [], updatedAt: 0 };
 export const PROG = { missions: {}, visited: {}, scenarios: [], reports: [], perf: null, patchBest: 0, updatedAt: 0 };
 
 const LS = {
@@ -25,6 +30,7 @@ export async function initShared() {
   // valeurs locales d'abord (fonctionne hors de claude.ai)
   for (const k of ['car', 'cabling', 'photos', 'review']) { const v = LS.get('config.' + k, null); if (v) CFG[k] = v; }
   Object.assign(PROG, LS.get('progress', {}));
+  Object.assign(MYREV, LS.get('review.me', {}));
   applyConfig();
   restoreProgress();
   const c = window.claude;
@@ -44,6 +50,10 @@ export async function initShared() {
           const snap = await db.doc('progress/' + SH.uid).get();
           if (snap.exists) { mergeProgress(snap.data()); restoreProgress(); }
         } catch (e) { /* lecture refusée : progression locale seulement */ }
+        try {
+          const r = await db.doc('review/' + SH.uid).get();
+          if (r.exists) { Object.assign(MYREV, structuredClone(r.data())); LS.set('review.me', MYREV); emit('myreview'); }
+        } catch (e) { /* relecture partagée indisponible */ }
       }
     }
   }
@@ -57,6 +67,8 @@ function applyConfig() {
   for (const k of ['evsServers', 'evsHdChannels', 'lsmCount', 'mix4kInputs']) if (e[k] != null) EQUIP[k] = +e[k];
   if (CFG.car.name) EQUIP.truck = CFG.car.name;
   setSoundPlan(CFG.car.soundPlan);
+  applyAudioPatch(CFG.car.audioPatch);
+  applyOverrides((CFG.review && CFG.review.overrides) || {});
 }
 export function canConfigure() { return !SH.db || SH.canEdit || SH.isOwner; }
 export async function saveConfig(part, data) {
@@ -64,6 +76,33 @@ export async function saveConfig(part, data) {
   if (!SH.db) return { ok: true, local: true };
   try { await SH.db.doc('config/' + part).set(JSON.parse(JSON.stringify(data))); return { ok: true }; }
   catch (e) { return { ok: false, code: e && e.code, message: e && e.message }; }
+}
+
+// ---------------- relecture métier ----------------
+let revT = 0;
+export function saveMyReviewSoon() { clearTimeout(revT); revT = setTimeout(saveMyReview, 1200); }
+export async function saveMyReview() {
+  MYREV.updatedAt = Date.now();
+  LS.set('review.me', MYREV);
+  if (!SH.db || !SH.uid) return { ok: true, local: true };
+  try { await SH.db.doc('review/' + SH.uid).set(JSON.parse(JSON.stringify(MYREV))); return { ok: true }; }
+  catch (e) { return { ok: false, code: e && e.code, message: e && e.message }; }
+}
+// toutes les relectures (formateur / autres experts) : [{ id, data, mine }]
+export function watchReviews(cb) {
+  if (!SH.db) { cb([{ id: 'local', data: MYREV, mine: true }]); return () => {}; }
+  return SH.db.collection('review').onSnapshot((q) => cb(q.docs.map((d) => ({ id: d.id, data: d.data(), mine: d.id === SH.uid }))), () => cb([{ id: SH.uid || 'local', data: MYREV, mine: true }]));
+}
+// comptes rendus de session (formateur)
+export async function saveSessionReport(id, data) {
+  const all = LS.get('sessions', []); all.push({ id, ...data }); LS.set('sessions', all.slice(-30));
+  if (!SH.db) return { ok: true, local: true };
+  try { await SH.db.doc('sessions/' + id).set(JSON.parse(JSON.stringify(data))); return { ok: true }; }
+  catch (e) { return { ok: false, code: e && e.code, message: e && e.message }; }
+}
+export function watchSessionReports(cb) {
+  if (!SH.db) { cb(LS.get('sessions', []).map((d) => ({ id: d.id, data: d }))); return () => {}; }
+  return SH.db.collection('sessions').onSnapshot((q) => cb(q.docs.map((d) => ({ id: d.id, data: d.data() }))), () => cb(null));
 }
 
 // ---------------- progression du stagiaire ----------------

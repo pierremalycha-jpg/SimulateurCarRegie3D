@@ -25,7 +25,7 @@ async function newPage(query = 'lite', vw = 1440, vh = 900) {
   await page.waitForTimeout(2500);
   return page;
 }
-const shotOf = (page) => async (n) => { await page.screenshot({ path: `${OUT}/${n}.png` }); log('shot', n); };
+const shotOf = (page) => async (n) => { await page.screenshot({ path: `${OUT}/${n}.png`, timeout: 180000 }); log('shot', n); };
 
 if (PART === 'all' || PART === 'keys') {
   const page = await newPage();
@@ -227,6 +227,44 @@ if (PART === 'all' || PART === 'mobile') {
   }
   await page.locator('.vx-tab', { hasText: 'Console' }).click(); await page.waitForTimeout(500);
   await shot('m1-son-mobile');
+  await page.close();
+}
+
+if (PART === 'all' || PART === 'review') {
+  const page = await newPage('lite');
+  const ev = (f, a) => page.evaluate(f, a); const shot = shotOf(page);
+  await page.locator('button', { hasText: 'Relecture technique (experts)' }).click();
+  await page.waitForTimeout(600);
+  await page.locator('.rv-dom button', { hasText: 'Vision' }).click();
+  const n = await page.locator('.rv-card').count();
+  check('relecture : points du domaine vision', n >= 5, String(n));
+  await page.locator('.rv-card').first().locator('.rv-op', { hasText: 'À corriger' }).click();
+  await page.locator('.rv-card').first().locator('textarea').fill('Valeur à vérifier sur notre car');
+  await shot('r1-ma-relecture');
+  await page.locator('#modal .tab', { hasText: 'Valeurs chiffrées' }).click();
+  await page.waitForTimeout(400);
+  const inp = page.locator('input[aria-label="Fujinon UA107x8.4BESM · Focale maxi"]');
+  await inp.fill('880');
+  await page.waitForTimeout(1500);
+  await shot('r2-valeurs');
+  await page.locator('#modal .tab', { hasText: 'Autres remarques' }).click();
+  await page.locator('#modal textarea').fill('Chez nous le line-up se fait à 100 % de mire.');
+  await page.locator('#modal button', { hasText: 'Ajouter la remarque' }).click();
+  await page.locator('#modal .tab', { hasText: 'Synthèse' }).click();
+  await page.waitForTimeout(800);
+  await shot('r3-synthese');
+  await page.locator('#modal .hw', { hasText: 'Valeurs proposées' }).click();
+  await page.waitForTimeout(400);
+  await page.locator('#modal button', { hasText: 'Appliquer' }).first().click();
+  await page.waitForTimeout(800);
+  const f = await ev(() => window.__dbg.CFG.review.overrides && window.__dbg.CFG.review.overrides['lens.UA107.fmax']);
+  check('valeur appliquée (override enregistré)', f === 880, String(f));
+  await shot('r4-applique');
+  await page.locator('#modal .x').click();
+  await ev(() => window.__dbg.start('standard', 'jour', 'basse', false));
+  await page.waitForTimeout(2500);
+  const fm = await ev(() => window.__dbg.S.cams.find((c) => c.lens === 'UA107')?.L.fmax);
+  check('le simulateur utilise la valeur corrigée', fm === 880, String(fm));
   await page.close();
 }
 

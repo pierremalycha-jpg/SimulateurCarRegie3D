@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { pbr } from './render.js';
 import { Builder, screenMaterial } from './geo.js';
 import { TRUCK, labelSprite } from './world.js';
 import { makeCanvas } from './util.js';
@@ -366,6 +367,8 @@ export function buildTruck() {
   // seuils de porte (repères au sol)
   for (const px of [PS, PT]) B.box(0.14, 0.008, IN.z1 - 1.1, X(px), F + 0.006, Z((1.1 + IN.z1) / 2), 0xe0b030);
 
+  // éléments lumineux (LED, bandeaux) : matériau émissif, ils « bavent » dans la vue post-traitée
+  const glow = new Builder();
   // ---------------- production ----------------
   const deskRow = (x0, x1, z0, z1, y0 = 0, top = 0.77) => {
     const cxl = (x0 + x1) / 2, czl = (z0 + z1) / 2, w = x1 - x0, d = z1 - z0;
@@ -374,8 +377,8 @@ export function buildTruck() {
     B.box(w, top - 0.04, 0.05, X(cxl), F + y0 + (top - 0.04) / 2, Z(z0 + 0.03), 0x1d2025);
     B.box(w + 0.04, 0.04, d + 0.06, X(cxl), F + y0 + top, Z(czl), deskTop);
     B.box(w, 0.02, 0.03, X(cxl), F + y0 + top + 0.01, Z(z1 + 0.02), 0x8a9098); // nez de bureau
-    // éclairage d'appoint sous le plateau
-    B.box(w - 0.2, 0.01, 0.02, X(cxl), F + y0 + top - 0.05, Z(z1 - 0.06), 0xffc060);
+    // éclairage d'appoint sous le plateau (bandeau LED chaud, lumineux)
+    glow.box(w - 0.2, 0.012, 0.025, X(cxl), F + y0 + top - 0.05, Z(z1 - 0.06), 0xffa040);
   };
   deskRow(-5.2, -0.4, -2.05, -1.2); block(-5.2, -0.4, -2.05, -1.2, 'desk', 'Réal · truquiste');
   B.box(EST.x1 - EST.x0, EST.h, EST.z1 - EST.z0, X((EST.x0 + EST.x1) / 2), F + EST.h / 2, Z((EST.z0 + EST.z1) / 2), 0x23272d);
@@ -386,6 +389,8 @@ export function buildTruck() {
   for (const lx of [-4.3, -2.9, -1.75]) chairAt(B, lx, 0.95, EST.h);
   // mur d'écrans production (cadre + console de moniteurs)
   B.box(5.3, 1.6, 0.1, X(-2.8), F + 1.6, Z(IN.z0 + 0.12), 0x0b0c0e);
+  // rétroéclairage du mur d'écrans (bias light D65 tamisé, limite la fatigue visuelle)
+  glow.box(5.2, 0.015, 0.02, X(-2.8), F + 2.41, Z(IN.z0 + 0.16), 0x9fb8ff); glow.box(5.2, 0.015, 0.02, X(-2.8), F + 0.79, Z(IN.z0 + 0.16), 0x9fb8ff);
   B.box(5.3, 0.06, 0.25, X(-2.8), F + 0.8 + 0.03, Z(IN.z0 + 0.25), 0x1b1e22);
   // ---------------- vision et ralentis ----------------
   deskRow(0.4, 3.75, -2.05, -1.2); block(0.4, 3.75, -2.05, -1.2, 'desk', 'Vision (RCP)');
@@ -393,6 +398,7 @@ export function buildTruck() {
   for (const lx of [1.1, 2.8]) chairAt(B, lx, -0.75, 0);
   for (const lx of [1.5, 3.0]) chairAt(B, lx, 0.95, 0);
   B.box(3.4, 1.6, 0.1, X(2.07), F + 1.6, Z(IN.z0 + 0.12), 0x0b0c0e);
+  glow.box(3.3, 0.015, 0.02, X(2.07), F + 2.41, Z(IN.z0 + 0.16), 0x9fb8ff); glow.box(3.3, 0.015, 0.02, X(2.07), F + 0.79, Z(IN.z0 + 0.16), 0x9fb8ff);
   // ---------------- son ----------------
   B.box(0.9, 0.78, 2.9, X(-7.75), F + 0.39, Z(-0.45), desk);
   B.box(1.0, 0.04, 3.0, X(-7.7), F + 0.8, Z(-0.45), deskTop);
@@ -421,7 +427,8 @@ export function buildTruck() {
   // bandeaux lumineux au plafond (diffus)
   const strips = new Builder();
   for (const lx of [-7, -4, -1.5, 1.2, 3, 5.5, 7.5]) strips.box(1.2, 0.02, 0.18, X(lx), TRUCK.ceil - 0.03, Z(0.4), 0xffffff);
-  scene.add(new THREE.Mesh(strips.build(), new THREE.MeshBasicMaterial({ color: 0x7c8594 })));
+  scene.add(new THREE.Mesh(strips.build(), new THREE.MeshBasicMaterial({ color: new THREE.Color(0xc8d2e0).multiplyScalar(2.6) })));
+  scene.add(new THREE.Mesh(glow.build(), new THREE.MeshBasicMaterial({ vertexColors: true, color: new THREE.Color(2.4, 2.4, 2.4) })));
   // dans l'encadrement de porte : la lumière du compound
   {
     const { c, g, tex } = canvasTex(128, 256);
@@ -437,7 +444,7 @@ export function buildTruck() {
 
   // pieds des écrans EVS posés sur le bureau
   for (const lx of [1.5, 3.0]) B.box(0.06, 0.22, 0.06, X(lx), F + 0.9, Z(-0.16), 0x111111);
-  const mesh = B.mesh(new THREE.MeshLambertMaterial({ vertexColors: true }));
+  const mesh = B.mesh(pbr(new THREE.MeshLambertMaterial({ vertexColors: true }), 0.62, 0.08));
   scene.add(mesh);
 
   // LED des baies (clignotement)
@@ -456,7 +463,7 @@ export function buildTruck() {
   }
 
   // lumières : ambiance plus claire, appoints au-dessus des rangées
-  scene.add(new THREE.HemisphereLight(0xd2dbea, 0x3c3c3c, 1.55));
+  scene.add(new THREE.HemisphereLight(0xdfe4ec, 0x3a3836, 1.55));
   for (const [lx, lz, i] of [[-7, 0, 3], [-3.6, -1.0, 4], [-2, 1.6, 3.5], [1.2, -1.0, 4], [2.6, 1.6, 3.5], [5.2, 0, 4], [7.6, 0, 3.5]]) {
     const p = new THREE.PointLight(0xe6ecf5, i, 6, 1.2);
     p.position.set(X(lx), TRUCK.ceil - 0.3, Z(lz)); scene.add(p);

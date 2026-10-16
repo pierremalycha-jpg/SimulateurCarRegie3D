@@ -435,6 +435,8 @@ export const STATION_INFO = {
 };
 
 export const GLOSSARY = [
+  ['Bias light', 'Rétroéclairage tamisé, de température D65 (6 500 K), placé derrière un mur d\'écrans ou un moniteur de référence : il réduit la fatigue visuelle et l\'écart de luminance entre l\'écran et son entourage, sans fausser la perception des couleurs.'],
+  ['Ordres de réalisation', 'Annonces codifiées du réalisateur à l\'intercom : « Prépare la 3 » (le truquiste met la caméra 3 en preset), « Top » ou « Envoie » (cut), « Enchaîne » (fondu), « Ralenti » (l\'EVS envoie). Le truquiste et l\'opérateur ralenti n\'agissent qu\'à l\'ordre, l\'antenne reste au réalisateur.'],
   ['SDI', 'Serial Digital Interface : vidéo numérique non compressée sur câble coaxial 75 Ω (BNC). HD-SDI 1,485 Gb/s (SMPTE ST 292), 3G-SDI 2,97 Gb/s (ST 424) pour le 1080p50, 12G-SDI 11,88 Gb/s (ST 2082) pour l\'UHD sur un seul câble. Transporte aussi l\'audio embeddé (16 canaux), le timecode et des données.'],
   ['Quad-link / 2SI', 'UHD transporté sur 4 liens 3G-SDI : découpage en quadrants (Square Division) ou entrelacement de 2 échantillons (2SI).'],
   ['ST 2110-21', 'Norme de régularité d\'émission des paquets vidéo : émetteurs de type N (étroit, paquets réguliers) ou W (large, rafales), avec deux limites mesurables : CMAX et VRX_FULL.'],
@@ -1054,6 +1056,26 @@ export const GUIDE = [
 <li>Câbles : passages protégés (passe-câbles), pas de câble dans les zones de circulation du public ou dans les issues de secours.</li>
 <li>Rayonnement HF : respecter les distances de sécurité autour des antennes et émetteurs.</li>
 <li>Drones : télépilote certifié, scénario de vol déclaré, jamais au-dessus du public.</li></ul>`},
+  {
+    id: 'sessions', title: 'Travailler à plusieurs (session en temps réel)', html: `
+<p>Une captation est un travail d'équipe : le réalisateur annonce, le truquiste exécute, l'opérateur ralenti prépare, la vision et le son ajustent, la technique surveille. Le mode <b>« Session à plusieurs »</b> met plusieurs stagiaires dans le <b>même car</b>, chacun depuis son navigateur, devant le <b>même match</b>.</p>
+<ul>
+<li><b>Rejoindre</b> : écran d'accueil → « Session à plusieurs », ou bouton « Session » dans la barre d'outils. Tout le monde saisit le <b>même code</b> (par exemple le nom du groupe) et choisit un rôle : formateur, réalisateur, truquiste, ralentis (EVS), son, vision, technique, habillage, cadreur, observateur.</li>
+<li><b>Qui pilote quoi</b> : chaque poste appartient à un rôle (mélangeur → truquiste, EVS → ralentis, console → son, RCP → vision, grille, transmission, HF et baie CCU → technique, habillage → habillage). Les autres voient ce poste <b>en lecture seule</b> (bandeau « tenu par… ») mais suivent tout ce qui s'y passe. Un poste sans titulaire reste au formateur (ou à l'hôte).</li>
+<li><b>Le match</b> tourne chez l'hôte (le formateur, sinon le premier arrivé) ; les autres le reçoivent avec 0,3 s de retard, comme un retour. Les commentaires viennent aussi de l'hôte.</li>
+<li><b>Ordres</b> : au poste réalisateur, « Prépare la 3 », « Top », « Enchaîne », « Ralenti »… s'affichent en grand chez le truquiste et l'opérateur ralenti, avec un bip, et passent dans le fil d'intercom. L'onglet « Ordres et messages » sert de canal écrit.</li>
+<li><b>Cadreur</b> : le stagiaire prend une caméra ; son cadre est envoyé au car et c'est lui que voient le multiview et l'antenne.</li>
+<li><b>Formateur</b> : injecte des pannes (cachées ou annoncées) chez le stagiaire concerné, fait des annonces à tous, et produit un <b>compte rendu</b> : ordres donnés, temps de réaction du truquiste, pannes résolues ou non, journal. Il peut l'enregistrer (Espace formateur → Stagiaires) ou le télécharger.</li>
+</ul>
+<p class="note">Limites : les clips et playlists EVS ne sont pas partagés (chacun voit la lecture en cours, pas la bibliothèque), et les pannes du réseau IP restent locales. Une connexion lente retarde un peu l'image du match mais pas les commandes.</p>`},
+  {
+    id: 'relecture', title: 'Relecture technique par les métiers', html: `
+<p>Les chiffres du simulateur (focales et rampes d'ouverture, portées des liaisons, rapports C/N, latences, tolérance de synchro labiale, niveaux de line-up…) viennent de documentations publiques et d'usages courants. Ils doivent être <b>validés par des professionnels</b> avant de servir de référence.</p>
+<ul>
+<li><b>Relecteurs</b> : écran d'accueil → « Relecture technique (experts) ». Choisissez votre domaine (vision, son, réseau, ralentis, HF, niveaux, stade), donnez un avis par point (exact, à corriger, je ne sais pas, non applicable), commentez, et proposez des valeurs chiffrées. « Voir le guide » et « Ouvrir le poste » montrent le point dans le simulateur.</li>
+<li><b>Formateur</b> : Espace formateur → Relecture. La synthèse croise les relecteurs, met en avant les points contestés, et permet d'<b>appliquer</b> une valeur proposée : elle remplace celle du simulateur pour tous les stagiaires (« Rétablir l'origine » pour revenir). Rapport HTML et export CSV.</li>
+<li><b>Dispositif réel</b> : l'onglet « Dispositif réel » de l'Espace formateur enregistre l'implantation des caméras de votre car (positions, types, objectifs, liaisons) et la feuille de patch audio : les stagiaires démarrent alors sur <b>votre</b> installation.</li>
+</ul>`},
 ];
 // le chapitre sur le stade vient après le déroulé d'une production
 GUIDE.splice(1, 0, GUIDE.shift());

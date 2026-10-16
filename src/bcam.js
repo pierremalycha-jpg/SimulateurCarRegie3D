@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { S, emit, camById, nextCamId } from './state.js';
 import { CAMERA_TYPES, LENSES, LINKS, SENSORS, SLOTS, ROLES, maxAperture, ND_FILTERS, SHUTTERS, IRIS_STOPS } from './data.js';
 import { Builder, setLayer } from './geo.js';
-import { W, BOWL, TRUCK, PITCH, standHeightAt, bowlOffset, labelSprite } from './world.js';
+import { W, BOWL, TRUCK, PITCH, standHeightAt, bowlOffset, labelSprite, overlayMat } from './world.js';
 import { M } from './match.js';
 import { refPatched } from './patch.js';
 import { camPtpOk } from './net/fabric.js';
@@ -473,12 +473,12 @@ export class BCam {
     this.route = computeRoute(this.base.toArray(), this.type, this.link);
     if (this.route.pts.length > 1) {
       const g = new THREE.BufferGeometry().setFromPoints(this.route.pts.map((p) => new THREE.Vector3(p[0], p[1] + 0.12 + this.id * 0.03, p[2] + this.id * 0.06)));
-      this.cable = new THREE.Line(g, new THREE.LineBasicMaterial({ color: Lk.color, depthTest: true }));
+      this.cable = new THREE.Line(g, overlayMat(new THREE.LineBasicMaterial({ color: Lk.color, depthTest: true })));
       setLayer(this.cable, 1); W.scene.add(this.cable);
     }
     if (this.route.infra) {
       const g = new THREE.BufferGeometry().setFromPoints(this.route.infra.map((p) => new THREE.Vector3(p[0], p[1] + 0.12 + this.id * 0.03, p[2] + this.id * 0.06)));
-      this.infraLine = new THREE.Line(g, new THREE.LineDashedMaterial({ color: 0xffd23f, dashSize: 1.5, gapSize: 1.2 }));
+      this.infraLine = new THREE.Line(g, overlayMat(new THREE.LineDashedMaterial({ color: 0xffd23f, dashSize: 1.5, gapSize: 1.2 })));
       this.infraLine.computeLineDistances(); setLayer(this.infraLine, 1); W.scene.add(this.infraLine);
     }
     this.checkLink();
@@ -584,6 +584,8 @@ export class BCam {
 
   // --- cadreur automatique ---
   update(dt) {
+    // session à plusieurs : le cadre vient de l'hôte (ou du stagiaire qui tient la caméra)
+    if (this.remotePose) { this.applyPose(); if (this.T.moving) this.model.root.position.copy(this.cam.position); return; }
     const b = M.ball; const T = this.T;
     let P = null, Wd = 20, omega = 3, maxV = 1.2;
     const lead = 0.5;
@@ -795,7 +797,9 @@ export const PRESETS = {
 export function loadPreset(name, lineup = true) {
   clearCameras();
   for (const o of PRESETS[name] || []) {
-    const c = addCamera(o);
+    if (o.slotId && !SLOTS.find((x) => x.id === o.slotId) && !o.pos) continue;
+    if (!CAMERA_TYPES[o.type]) continue;
+    const c = addCamera({ ...o, lens: o.lens && LENSES[o.lens] && CAMERA_TYPES[o.type].lenses.includes(o.lens) ? o.lens : undefined });
     if (c && lineup) lineUpCamera(c);
   }
 }

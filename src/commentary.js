@@ -56,7 +56,7 @@ function sayNow(q) {
   const dur = duration(q.text, rate);
   const vol = voiceGain(q.spk);
   CMT.cur = { ...q, start: S.time, until: S.time + dur, vol };
-  CMT.log.push({ t: S.time, clock: M.clock, spk: q.spk, text: q.text, heard: vol > 0.02 && !AU.muted }); if (CMT.log.length > 40) CMT.log.shift();
+  CMT.log.push({ t: S.time, clock: M.clock, spk: q.spk, text: q.text, heard: vol > 0.02 && !AU.muted, prio: q.prio, rate: q.rate, pitch: q.pitch, remote: !!q.remote }); if (CMT.log.length > 40) CMT.log.shift();
   emit('commentary', CMT.log[CMT.log.length - 1]);
   if (!(window.speechSynthesis && window.SpeechSynthesisUtterance) || vol <= 0.02) return;
   const go = () => {
@@ -70,8 +70,10 @@ function sayNow(q) {
   if (AU.effDelay > 0) setTimeout(go, AU.effDelay); else go();
 }
 
+// session à plusieurs : les lignes viennent de l'hôte
+on('remoteCommentary', (d) => { if (!CMT.on || !d || !SPK[d.spk]) return; CMT.queue.push({ spk: d.spk, text: String(d.text || '').slice(0, 300), prio: d.prio || 1, t: S.time, maxAge: 6, delay: 0, rate: d.rate, pitch: d.pitch, remote: true }); });
 on('match', (e) => {
-  if (!CMT.on || S.mode === 'start') return;
+  if (!CMT.on || S.mode === 'start' || S.sessionFollower) return;
   const now = S.time;
   if (e.type === 'kickoff') { add('comm1', M.clock < 5 ? pick(['Coup d\'envoi ! C\'est parti ici à Lens.', 'Et c\'est parti ! Coup d\'envoi de cette rencontre.']) : pick(['Le jeu reprend.', 'On repart, engagement.']), 3, 4); return; }
   if (e.type === 'pass') {
@@ -128,9 +130,9 @@ function idleLine() {
 export function updateCommentary(dt, ctx = {}) {
   const now = S.time;
   // contexte : ralenti ou plateau à l'antenne
-  if (ctx.replay && !CMT.replay && CMT.on) add('comm2', pick(['Revoyons l\'action au ralenti.', 'Regardez bien le déplacement, là, au ralenti.', 'Au ralenti, on voit que tout part de la récupération.']), 3, 4);
+  if (ctx.replay && !CMT.replay && CMT.on && !S.sessionFollower) add('comm2', pick(['Revoyons l\'action au ralenti.', 'Regardez bien le déplacement, là, au ralenti.', 'Au ralenti, on voit que tout part de la récupération.']), 3, 4);
   CMT.replay = !!ctx.replay;
-  if (ctx.studioOnAir && !CMT.studio && CMT.on) { add('duplex', `Merci ${SPK.comm1.name}, merci ${SPK.comm2.name}. Ici le plateau : on se retrouve à la mi-temps pour l'analyse.`, 3, 5); add('comm1', 'À tout de suite, on reste avec vous.', 2, 10, { delay: 1 }); }
+  if (ctx.studioOnAir && !CMT.studio && CMT.on && !S.sessionFollower) { add('duplex', `Merci ${SPK.comm1.name}, merci ${SPK.comm2.name}. Ici le plateau : on se retrouve à la mi-temps pour l'analyse.`, 3, 5); add('comm1', 'À tout de suite, on reste avec vous.', 2, 10, { delay: 1 }); }
   CMT.studio = !!ctx.studioOnAir;
   // fin de la phrase en cours
   if (CMT.cur && now >= CMT.cur.until) { setVoiceLevel(CMT.cur.spk, -90); CMT.cur = null; CMT.idleT = 0; }
@@ -142,6 +144,7 @@ export function updateCommentary(dt, ctx = {}) {
     return;
   }
   if (!CMT.on || S.mode === 'start') return;
+  if (S.sessionFollower) { const q = CMT.queue.shift(); if (q) sayNow(q); return; }
   // relance du bord terrain : le commentateur « lance » la journaliste, le son doit ouvrir sa tranche
   CMT.btT -= dt;
   if (CMT.btT <= 0 && M.state === 'play') {

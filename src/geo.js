@@ -1,8 +1,9 @@
 import * as THREE from 'three';
+import { VIEW_INV, VIEW_INV_GLSL } from './render.js';
 
 // Fusion de géométries (non indexées) avec couleurs par sommet, pour réduire les appels de rendu
 export class Builder {
-  constructor() { this.parts = []; }
+  constructor(opts = {}) { this.parts = []; this.keepUV = !!opts.uv; }
   add(geo, matrix, color) {
     let g = geo.index ? geo.toNonIndexed() : geo.clone();
     if (matrix) g.applyMatrix4(matrix);
@@ -12,7 +13,7 @@ export class Builder {
     for (let i = 0; i < n; i++) { col[i * 3] = c.r; col[i * 3 + 1] = c.g; col[i * 3 + 2] = c.b; }
     g.setAttribute('color', new THREE.BufferAttribute(col, 3));
     if (!g.attributes.normal) g.computeVertexNormals();
-    if (g.attributes.uv) g.deleteAttribute('uv');
+    if (g.attributes.uv && !this.keepUV) g.deleteAttribute('uv');
     this.parts.push(g);
     return this;
   }
@@ -45,12 +46,12 @@ export class Builder {
 }
 
 export function mergeNonIndexed(geos) {
-  const names = Object.keys(geos[0].attributes);
+  const names = [...new Set(geos.flatMap((g) => Object.keys(g.attributes)))];
   let total = 0;
   for (const g of geos) total += g.attributes.position.count;
   const out = new THREE.BufferGeometry();
   for (const name of names) {
-    const itemSize = geos[0].attributes[name].itemSize;
+    const itemSize = geos.find((g) => g.attributes[name]).attributes[name].itemSize;
     const arr = new Float32Array(total * itemSize);
     let off = 0;
     for (const g of geos) {
@@ -87,11 +88,13 @@ export function setLayer(obj, layer) {
 // Matériau "écran" : affiche une texture telle quelle (valeurs déjà en espace vidéo), sans éclairage ni tonemapping
 export function screenMaterial(tex, opts = {}) {
   return new THREE.ShaderMaterial({
-    uniforms: { map: { value: tex || null }, uGain: { value: opts.gain ?? 1.1 }, uOn: { value: 1 }, uLin: { value: opts.linear ? 1 : 0 } },
+    uniforms: { map: { value: tex || null }, uGain: { value: opts.gain ?? 1.1 }, uOn: { value: 1 }, uLin: { value: opts.linear ? 1 : 0 }, uInvI: VIEW_INV.invI, uInvO: VIEW_INV.invO, uExpEye: VIEW_INV.exp },
     vertexShader: `varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }`,
-    fragmentShader: `uniform sampler2D map; uniform float uGain; uniform float uOn; uniform float uLin; varying vec2 vUv;
+    fragmentShader: `uniform sampler2D map; uniform float uGain; uniform float uOn; uniform float uLin; uniform mat3 uInvI, uInvO; uniform float uExpEye; varying vec2 vUv;
+      ${VIEW_INV_GLSL}
       void main(){ vec3 c = texture2D(map, vUv).rgb * uGain; c = clamp(c, 0.0, 1.0);
-        if (uLin > 0.5) c = pow(c, vec3(2.2)) * 1.6; // vu par une caméra : valeur linéaire approx.
+        if (uLin > 1.5) c = viewInverse(c, uInvI, uInvO, uExpEye) * 1.15; // vue post-traitée : l'écran garde son image (légèrement lumineux)
+        else if (uLin > 0.5) c = pow(c, vec3(2.2)) * 1.6; // vu par une caméra : valeur linéaire approx.
         gl_FragColor = vec4(c * uOn + vec3(0.01,0.012,0.014)*(1.0-uOn), 1.0); }`,
     toneMapped: false,
   });

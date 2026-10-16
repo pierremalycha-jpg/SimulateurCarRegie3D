@@ -22,6 +22,9 @@ import { netStatus, flowGbps, mcastOf } from '../ipnet.js';
 import { FAB, markDirty, camPtpOk } from '../net/fabric.js';
 import { buildNetwork } from './st_network.js';
 import { buildAudio } from './st_audio.js';
+import { SES } from '../multi/session.js';
+import { applyStationLock, stationLocked, humanTruquiste, directorOrder } from './session_ui.js';
+import { holderOf } from '../multi/session.js';
 import { COMMUT, commutKey, setKeyMode, keyLegend, keyModeLabel } from './commut.js';
 import { openDevice, openEquipmentIndex } from '../equipment/viewer.js';
 import { buildCabling, SIG, DEV_NAMES, endLabel } from '../equipment/cabling.js';
@@ -87,6 +90,7 @@ export function openStation(id, arg) {
   $('#hud').hidden = true;
   if (inst.update) inst.update(0);
   if (STATION_HELLO[id]) explain(STATION_HELLO[id], 'muted');
+  applyStationLock(id);
 }
 export function closeStation(silent) {
   if (!ST.cur) return;
@@ -150,8 +154,10 @@ export function updateStation(dt) {
   ST.lastUpd = now;
   if (ST.cur.inst.update) ST.cur.inst.update(dt);
 }
+on('session', () => { if (ST.cur) applyStationLock(ST.cur.id); });
 export function stationKey(e) {
   if (!ST.cur) return false;
+  if (stationLocked(ST.cur.id)) return e.code !== 'Escape';
   if (ST.cur.inst.key && ST.cur.inst.key(e)) return true;
   // dans les autres postes, les chiffres commutent aussi le mélangeur (sauf l'EVS : ils y choisissent l'angle)
   if (ST.cur.id === 'evs') return false;
@@ -203,6 +209,13 @@ function buildDirector(body, arg, ctx) {
   let lastN = '';
   function order(kind, n) {
     const delay = 250 + Math.random() * 350;
+    // session à plusieurs : l'ordre part à tous ; les postes tenus par des stagiaires l'exécutent eux-mêmes
+    if (SES.active) {
+      directorOrder(kind, n);
+      const human = (sl) => { const p = holderOf(sl); return p && !p.sameTab && p.presence && p.presence.role !== 'formateur'; };
+      const who = { prep: 'mix', cut: 'mix', mix: 'mix', stinger: 'mix', dsk1: 'mix', replay: 'evs', lower: 'gfx' }[kind];
+      if (who && human(who)) { explain('Ordre transmis au stagiaire qui tient le poste : regardez le multiview pour voir quand il l\'exécute.', 'real:' + kind); return; }
+    }
     explain({ prep: 'Annonce « Prépare… » : le truquiste met la source en preset. Le cadreur concerné voit son tally vert (s\'il est câblé) et sait qu\'il va passer.', cut: '« Top ! » : le truquiste fait le CUT au moment exact annoncé. Le temps de réaction compte : on anticipe sur l\'action.', mix: '« Enchaîne » : transition douce, souvent sur un changement de valeur de plan ou de rythme.', stinger: 'Volet logo : marque l\'entrée ou la sortie d\'un ralenti.', replay: 'Ralenti : l\'opérateur EVS se cale sur l\'action, choisit l\'angle, le truquiste prépare l\'entrée EVS et l\'envoie en volet.', dsk1: 'Score : le DSK 1 incruste le chrono et le score.', lower: 'Bandeau : l\'habilleur joue le nom du joueur (DSK 2).' }[kind] || '', 'real:' + kind);
     if (kind === 'prep') { intercom('RÉAL', `Prépare la ${sourceLabel(meSource(n)).replace('CAM ', '')}…`); setTimeout(() => mixSetPst(n), delay); }
     if (kind === 'cut') { intercom('RÉAL', 'Top !'); setTimeout(() => mixCut(), delay); }

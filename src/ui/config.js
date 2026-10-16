@@ -8,7 +8,9 @@ import { DEVICES, DEVICE_LIST } from '../equipment/devices.js';
 import { REVIEW_ITEMS, REVIEW_STATUS } from '../review.js';
 import { MISSIONS } from './guide.js';
 import { NET_MISSIONS } from '../net/course.js';
-import { EMB_OPTIONS, SOUND_PLAN } from '../audio.js';
+import { EMB_OPTIONS, SOUND_PLAN, AU, MONO_PORTS, ST_PORTS } from '../audio.js';
+import { openReview } from './review_ui.js';
+import { CAMERA_TYPES, LENSES, SLOTS, LINKS, ROLES } from '../data.js';
 
 // ----------------------------------------------------------------------------------
 // Espace formateur : configuration partagée du car, suivi des stagiaires, relecture
@@ -16,7 +18,7 @@ import { EMB_OPTIONS, SOUND_PLAN } from '../audio.js';
 export const DEFAULT_CHECKLIST = ['Terre raccordée, énergie vérifiée (phases, neutre)', 'Toutes les caméras alimentées, niveaux optiques corrects', 'Référence (genlock) verrouillée sur toutes les CCU', 'Balance des noirs et des blancs, matching vision', 'Noms de sources et tally vérifiés au multiview', 'Test de chaque position intercom (cadreurs, EVS, son, commentateurs)', 'Entrées d\'enregistrement EVS affectées (super ralentis compris)', 'Test des micros et du 1 kHz -18 dBFS', 'Mire + 1 kHz envoyées à la chaîne, ident vérifié', 'Retour antenne contrôlé, chemin de secours testé', 'Fréquences HF vérifiées sur le spectre, marges correctes'];
 export function checklistItems() { return CFG.car.checklist && CFG.car.checklist.length ? CFG.car.checklist : DEFAULT_CHECKLIST; }
 
-const TABS = [['car', 'Le car'], ['cables', 'Liste de câblage'], ['proc', 'Procédures'], ['photos', 'Photos du matériel'], ['eleves', 'Stagiaires'], ['review', 'Relecture technique']];
+const TABS = [['car', 'Le car'], ['reel', 'Dispositif réel'], ['cables', 'Liste de câblage'], ['proc', 'Procédures'], ['photos', 'Photos du matériel'], ['eleves', 'Stagiaires'], ['review', 'Relecture technique']];
 
 export function openTrainer(tab = 'car') {
   const tabs = el('div', { class: 'tabs' });
@@ -28,7 +30,7 @@ export function openTrainer(tab = 'car') {
   const show = (k) => {
     content.innerHTML = '';
     [...tabs.children].forEach((b) => b.classList.toggle('on', b.dataset.k === k));
-    ({ car: tabCar, cables: tabCables, proc: tabProc, photos: tabPhotos, eleves: tabEleves, review: tabReview })[k](content, editable);
+    ({ car: tabCar, reel: tabReel, cables: tabCables, proc: tabProc, photos: tabPhotos, eleves: tabEleves, review: tabReview })[k](content, editable);
   };
   for (const [k, l] of TABS) tabs.appendChild(el('button', { class: 'tab', 'data-k': k, onclick: () => show(k) }, l));
   modal.open('Espace formateur', el('div', { class: 'list' }, notice, tabs, content), { width: 1100 });
@@ -279,25 +281,52 @@ function myProgress() {
 }
 
 // ---------------- relecture technique ----------------
-function tabReview(box, editable) {
-  const items = { ...(CFG.review && CFG.review.items) };
-  const groups = [...new Set(REVIEW_ITEMS.map((r) => r[1]))];
-  const done = () => REVIEW_ITEMS.filter(([id]) => items[id] && items[id].status === 'ok').length;
-  const count = el('span', { class: 'pill' });
-  const upd = () => { count.textContent = `${done()} / ${REVIEW_ITEMS.length} validés`; };
-  box.append(el('h3', { class: 'eq-h' }, 'Relecture technique'), el('p', { class: 'note' }, 'Les points techniques que j\'ai repris de la documentation ou choisis pour la simulation, avec leur source. Validez-les ou notez la correction : je pourrai m\'appuyer sur vos remarques pour corriger le simulateur.'), el('div', { class: 'hwrow' }, count));
-  for (const g of groups) {
-    box.append(el('h3', { class: 'eq-h' }, g));
-    for (const [id, , text, src] of REVIEW_ITEMS.filter((r) => r[1] === g)) {
-      const it = items[id] = { status: '', note: '', ...(items[id] || {}) };
-      const st = selectEl(Object.entries(REVIEW_STATUS), it.status, (v) => { it.status = v; row.dataset.s = v; upd(); });
-      const note = el('input', { type: 'text', value: it.note, placeholder: 'Remarque / correction', maxlength: 300, 'aria-label': 'Remarque' }); note.oninput = () => { it.note = note.value; };
-      st.disabled = !editable; note.disabled = !editable;
-      const row = el('div', { class: 'item review', 'data-s': it.status }, el('div', { class: 'grow' }, el('div', { class: 't' }, text), el('div', { class: 's' }, 'Source : ' + src), note), st);
-      box.append(row);
-    }
-  }
-  upd();
-  box.append(el('div', { class: 'hwrow' }, el('button', { class: 'btn primary', disabled: !editable, onclick: async () => saved(await saveConfig('review', { items })) }, 'Enregistrer la relecture'),
-    el('button', { class: 'btn', onclick: () => { const lines = ['Groupe;Point;Source;Statut;Remarque']; for (const [id, g, t, s] of REVIEW_ITEMS) { const it = items[id] || {}; lines.push([g, t, s, REVIEW_STATUS[it.status || ''], it.note || ''].map((v) => '"' + String(v).replace(/"/g, '""') + '"').join(';')); } offerDownload('relecture-technique.csv', '﻿' + lines.join('\r\n')); } }, 'Exporter (CSV)')));
+function tabReview(box) {
+  const ov = Object.keys((CFG.review && CFG.review.overrides) || {}).length;
+  const dec = Object.values((CFG.review && CFG.review.items) || {}).filter((x) => x && x.status).length;
+  box.append(el('h3', { class: 'eq-h' }, 'Relecture par les métiers'),
+    el('p', {}, 'Faites relire le simulateur par vos experts (ingénieurs vision, son, réseau, opérateurs ralentis, HF). Chacun donne son avis point par point, propose les bonnes valeurs chiffrées et signale ce qui manque. Vous arbitrez ensuite, et les corrections chiffrées s\'appliquent tout de suite au simulateur.'),
+    el('ol', {}, el('li', {}, 'Partagez la page avec vos experts au niveau « Contributeur » au moins (menu Partager de claude.ai).'), el('li', {}, 'Ils ouvrent « Relecture technique (experts) » sur l\'écran d\'accueil, choisissent leurs domaines et relisent.'), el('li', {}, 'Vous consolidez dans « Synthèse et arbitrage », appliquez les valeurs retenues, puis exportez le rapport.'), el('li', {}, 'Complétez l\'onglet « Dispositif réel » avec la liste de câblage, le plan de son, la feuille de patch et le dispositif caméras d\'un de vos cars.')),
+    el('div', { class: 'kv' }, el('dt', {}, 'Points arbitrés'), el('dd', {}, String(dec)), el('dt', {}, 'Valeurs corrigées appliquées'), el('dd', {}, String(ov))),
+    el('div', { class: 'hwrow' }, el('button', { class: 'btn primary', onclick: () => openReview('synth') }, 'Synthèse et arbitrage'), el('button', { class: 'btn', onclick: () => openReview('me') }, 'Ma relecture')));
+}
+
+// ---------------- dispositif du car réel : caméras et patch son ----------------
+function tabReel(box, editable) {
+  const camRows = el('tbody');
+  const drawCams = () => {
+    camRows.innerHTML = '';
+    const list = CFG.car.camPreset || [];
+    if (!list.length) camRows.append(el('tr', {}, el('td', { colspan: 6, class: 'note' }, 'Aucun dispositif enregistré : « Car prêt à l\'antenne » utilise le dispositif standard du simulateur.')));
+    list.forEach((o, i) => { const sl = SLOTS.find((x) => x.id === o.slotId); camRows.append(el('tr', {}, el('td', {}, 'CAM ' + (i + 1)), el('td', {}, sl ? sl.label : o.slotId || '—'), el('td', {}, (CAMERA_TYPES[o.type] || {}).label || o.type), el('td', {}, o.lens && LENSES[o.lens] ? LENSES[o.lens].name : 'par défaut'), el('td', {}, o.link && LINKS[o.link] ? LINKS[o.link].short : 'par défaut'), el('td', {}, o.role && ROLES[o.role] ? ROLES[o.role].label : '—'))); });
+  };
+  const fromSim = () => {
+    if (!S.cams.length) { toast('Démarrez le simulateur et installez vos caméras (plan caméras, touche P) avant d\'enregistrer le dispositif.', 'bad'); return; }
+    CFG.car.camPreset = S.cams.filter((c) => c.slotId).map((c) => ({ slotId: c.slotId, type: c.type, lens: c.lens, link: c.link, role: c.role }));
+    drawCams(); toast(`${CFG.car.camPreset.length} caméras relevées : pensez à enregistrer.`);
+  };
+  const fileIn = el('input', { type: 'file', accept: '.json,application/json', style: { display: 'none' } });
+  fileIn.onchange = async () => { const f = fileIn.files[0]; if (!f) return; try { const j = JSON.parse(await f.text()); const list = Array.isArray(j) ? j : j.cameras; if (!Array.isArray(list)) throw new Error('format'); CFG.car.camPreset = list.filter((o) => o && CAMERA_TYPES[o.type]).slice(0, 16).map((o) => ({ slotId: String(o.slotId || ''), type: o.type, lens: o.lens, link: o.link, role: o.role })); drawCams(); toast('Dispositif importé : pensez à enregistrer.'); } catch (e) { toast('Fichier non reconnu (JSON attendu : liste de caméras avec slotId, type, lens, link, role).', 'bad'); } fileIn.value = ''; };
+  // feuille de patch son
+  const patchTa = el('textarea', { rows: 8, style: { width: '100%', fontFamily: 'var(--f-mono)' }, placeholder: 'N° tranche;Entrée;Nom court;Libellé\n1;MIC 1-2;AMB LEP;Couple ORTF tribune principale\n3;MIC 5;CANON 1;Canon derrière le but gauche' });
+  const toLines = (list) => (list || AU.order.map((k) => AU.ch[k]).map((c) => ({ n: c.n, port: c.home, short: c.short, label: c.label }))).map((r) => [r.n, r.port, r.short, r.label].join(';')).join('\n');
+  patchTa.value = toLines(CFG.car.audioPatch);
+  const parsePatch = () => patchTa.value.split(/\r?\n/).map((l) => l.split(/[;\t]/).map((x) => x.trim())).filter((c) => c.length >= 2 && /^\d+$/.test(c[0])).map(([n, port, short, label]) => ({ n: +n, port: port.toUpperCase(), short: short || '', label: label || '' }));
+  const patchCheck = el('p', { class: 'note' });
+  const check = () => { const rows = parsePatch(); const bad = rows.filter((r) => { const c = AU.order.map((k) => AU.ch[k]).find((x) => x.n === r.n); return !c || !(c.st ? ST_PORTS : MONO_PORTS).includes(r.port); }); patchCheck.textContent = `${rows.length} lignes reconnues${bad.length ? ` · ${bad.length} non applicables (tranche inconnue ou entrée invalide : ${bad.map((r) => r.n + ' ' + r.port).join(', ')})` : ' · toutes applicables'}. Entrées possibles : MIC 1 à 32 (paires MIC 1-2… pour les tranches stéréo), MADI 1 à 8, SDI 1/1 à 1/4, AES 1 à 8 (stéréo), GEN.`; };
+  patchTa.addEventListener('input', check); check();
+  drawCams();
+  box.append(el('h3', { class: 'eq-h' }, 'Dispositif caméras de référence'),
+    el('p', { class: 'note' }, 'Installez vos caméras dans le simulateur comme sur votre car (positions, types, objectifs, liaisons), puis relevez-les ici : « Car prêt à l\'antenne » démarrera avec ce dispositif pour tout le monde.'),
+    el('table', { class: 'tbl' }, el('thead', {}, el('tr', {}, ...['Caméra', 'Position', 'Type', 'Objectif', 'Liaison', 'Consigne'].map((h) => el('th', {}, h)))), camRows),
+    el('div', { class: 'hwrow' }, el('button', { class: 'btn', disabled: !editable, onclick: fromSim }, 'Relever le dispositif actuel'), el('button', { class: 'btn', disabled: !editable, onclick: () => fileIn.click() }, 'Importer (JSON)'), fileIn,
+      el('button', { class: 'btn', onclick: () => offerDownload('dispositif-cameras.json', JSON.stringify({ cameras: CFG.car.camPreset || [] }, null, 2)) }, 'Exporter (JSON)'),
+      el('button', { class: 'btn', disabled: !editable, onclick: () => { CFG.car.camPreset = []; drawCams(); } }, 'Revenir au dispositif standard')),
+    el('h3', { class: 'eq-h' }, 'Feuille de patch de la console son'),
+    el('p', { class: 'note' }, 'Collez la feuille de patch de votre car (une ligne par tranche : numéro ; entrée ; nom court ; libellé). Les noms et les entrées remplacent ceux du simulateur au prochain démarrage, et servent de référence pour la panne « patch erroné ».'),
+    patchTa, patchCheck,
+    el('div', { class: 'hwrow' }, el('button', { class: 'btn', disabled: !editable, onclick: () => { CFG.car.audioPatch = null; patchTa.value = toLines(null); check(); } }, 'Revenir au patch du simulateur')),
+    el('h3', { class: 'eq-h' }, 'Autres données du car'),
+    el('p', { class: 'note' }, 'La liste de câblage s\'importe dans l\'onglet « Liste de câblage » (CSV) ; le plan de son et le matériel dans l\'onglet « Le car ».'),
+    el('div', { class: 'hwrow' }, el('button', { class: 'btn primary', disabled: !editable, onclick: async () => { const rows = parsePatch(); const car = { ...CFG.car, audioPatch: rows.length ? rows : null }; saved(await saveConfig('car', car)); } }, 'Enregistrer le dispositif réel')));
 }

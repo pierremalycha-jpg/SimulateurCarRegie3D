@@ -3,6 +3,7 @@ import { clamp, mulberry32, wrapAngle, lerpAngle, makeCanvas } from './util.js';
 import { S, emit } from './state.js';
 import { TEAMS, PLAYER_NAMES } from './data.js';
 import { PITCH } from './world.js';
+import { buildPeople, poseHuman, flushPeople, ballTexture, PEOPLE } from './people.js';
 
 // ----------------------------------------------------------------------------------
 // Simulation simplifiée d'un match de football (crédible vue des caméras)
@@ -353,47 +354,9 @@ function moveHuman(p, dt) {
 // ----------------------------------------------------------------------------------
 const R = {};
 export function buildPlayers(scene) {
-  const lam = (c) => new THREE.MeshLambertMaterial({ color: 0xffffff });
-  const mk = (geo, n) => { const m = new THREE.InstancedMesh(geo, lam(), n); m.castShadow = true; m.frustumCulled = false; scene.add(m); return m; };
-  R.torso = mk(new THREE.BoxGeometry(0.44, 0.58, 0.25), NH);
-  R.shorts = mk(new THREE.BoxGeometry(0.42, 0.26, 0.27), NH);
-  R.head = mk(new THREE.SphereGeometry(0.12, 10, 8), NH);
-  const leg = new THREE.BoxGeometry(0.14, 0.86, 0.15); leg.translate(0, -0.43, 0);
-  R.legs = mk(leg, NH * 2);
-  const arm = new THREE.BoxGeometry(0.1, 0.6, 0.1); arm.translate(0, -0.3, 0);
-  R.arms = mk(arm, NH * 2);
-  const c = new THREE.Color();
-  M.humans.forEach((h, i) => {
-    let shirt, shorts, socks, sleeves;
-    if (h.team >= 0) { const T = TEAMS[h.team]; shirt = h.role === 'gk' ? T.gk : T.shirt; sleeves = h.role === 'gk' ? T.gk : (T.sleeves ?? T.shirt); shorts = T.shorts; socks = T.socks; }
-    else { shirt = 0x1e1f22; sleeves = 0x1e1f22; shorts = 0x111111; socks = 0x111111; }
-    R.torso.setColorAt(i, c.setHex(shirt)); R.shorts.setColorAt(i, c.setHex(shorts)); R.head.setColorAt(i, c.setHex(h.skin));
-    R.legs.setColorAt(i * 2, c.setHex(socks)); R.legs.setColorAt(i * 2 + 1, c.setHex(socks));
-    R.arms.setColorAt(i * 2, c.setHex(sleeves)); R.arms.setColorAt(i * 2 + 1, c.setHex(sleeves));
-  });
-  // ballon
-  const bc = makeCanvas(128, 64); const g = bc.getContext('2d'); g.fillStyle = '#f4f4f4'; g.fillRect(0, 0, 128, 64);
-  g.fillStyle = '#222'; for (let k = 0; k < 10; k++) { g.beginPath(); g.arc((k * 29) % 128, 10 + (k % 3) * 22, 7, 0, 7); g.fill(); }
-  const bt = new THREE.CanvasTexture(bc); bt.colorSpace = THREE.SRGBColorSpace;
-  R.ball = new THREE.Mesh(new THREE.SphereGeometry(0.11, 14, 10), new THREE.MeshLambertMaterial({ map: bt }));
+  buildPeople(scene, M.humans);
+  R.ball = new THREE.Mesh(new THREE.SphereGeometry(0.11, 24, 16), new THREE.MeshStandardMaterial({ map: ballTexture(), roughness: 0.42, metalness: 0 }));
   R.ball.castShadow = true; scene.add(R.ball);
-}
-
-const _m = new THREE.Matrix4(), _b = new THREE.Matrix4(), _t = new THREE.Matrix4(), _r = new THREE.Matrix4();
-function placeHuman(i, x, z, heading, phase, cel, speed) {
-  const sf = Math.min(1, speed / 6);
-  const bob = Math.abs(Math.sin(phase)) * 0.05 * sf;
-  _b.makeRotationY(heading).setPosition(x, bob, z);
-  R.torso.setMatrixAt(i, _m.copy(_b).multiply(_t.makeTranslation(0, 1.17, 0)));
-  R.shorts.setMatrixAt(i, _m.copy(_b).multiply(_t.makeTranslation(0, 0.87, 0)));
-  R.head.setMatrixAt(i, _m.copy(_b).multiply(_t.makeTranslation(0, 1.6, 0)));
-  const sw = Math.sin(phase) * Math.min(0.75, 0.15 + speed * 0.1);
-  for (let s = 0; s < 2; s++) {
-    const sg = s ? 1 : -1;
-    R.legs.setMatrixAt(i * 2 + s, _m.copy(_b).multiply(_t.makeTranslation(sg * 0.11, 0.88, 0)).multiply(_r.makeRotationX(sw * sg)));
-    if (cel) R.arms.setMatrixAt(i * 2 + s, _m.copy(_b).multiply(_t.makeTranslation(sg * 0.27, 1.42, 0)).multiply(_r.makeRotationZ(sg * 2.7 + Math.sin(phase * 2) * 0.2)));
-    else R.arms.setMatrixAt(i * 2 + s, _m.copy(_b).multiply(_t.makeTranslation(sg * 0.27, 1.42, 0)).multiply(_r.makeRotationX(-sw * sg * 0.8)).multiply(_r.makeRotationZ(sg * 0.08)));
-  }
 }
 
 // --- instantanés (pour l'EVS et la latence HF) ---
@@ -413,14 +376,15 @@ export function writeSnapshot(arr, off, cams) {
 }
 
 export function applySnapshot(arr, off = 0) {
+  PEOPLE.ball.set(arr[off + 1], arr[off + 2], arr[off + 3]); PEOPLE.time = arr[off];
   for (let i = 0; i < NH; i++) {
     const k = off + SNAP.hum + i * 5;
     const f = Math.round(arr[k + 4]);
-    placeHuman(i, arr[k], arr[k + 1], arr[k + 2], arr[k + 3], f % 10 === 1, Math.floor(f / 10) / 10);
+    poseHuman(i, arr[k], arr[k + 1], arr[k + 2], arr[k + 3], f % 10 === 1, Math.floor(f / 10) / 10);
   }
   R.ball.position.set(arr[off + 1], arr[off + 2], arr[off + 3]);
-  R.ball.rotation.x = arr[off + 1] * 3; R.ball.rotation.z = arr[off + 3] * 3;
-  for (const k of ['torso', 'shorts', 'head', 'legs', 'arms']) R[k].instanceMatrix.needsUpdate = true;
+  R.ball.rotation.x = arr[off + 3] / 0.11; R.ball.rotation.z = -arr[off + 1] / 0.11;
+  flushPeople();
 }
 
 // Tampon circulaire d'enregistrement (50 Hz, 150 s)
