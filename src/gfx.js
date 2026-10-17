@@ -22,7 +22,7 @@ export function initGfx() {
   }
 }
 
-const FONT = '"Saira Condensed", "Arial Narrow", sans-serif';
+const FONT = '"Barlow Condensed", "Arial Narrow", sans-serif';
 
 function drawBug() {
   const g = GFX.bug.ctx; const T = TEAMS;

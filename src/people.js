@@ -237,10 +237,10 @@ function numberAtlas() {
   for (let i = 0; i < 22; i++) {
     const col = i % 4, row = Math.floor(i / 4); const x = col * 256 + 128, y = row * 256;
     const name = PLAYER_NAMES[i < 11 ? 0 : 1][i % 11].replace(/^[A-Z]\.\s*/, '').toUpperCase();
-    let fs = 44; g.font = `700 ${fs}px "Saira Condensed", "Arial Narrow", sans-serif`;
-    while (g.measureText(name).width > 220 && fs > 24) { fs -= 2; g.font = `700 ${fs}px "Saira Condensed", "Arial Narrow", sans-serif`; }
+    let fs = 44; g.font = `700 ${fs}px "Barlow Condensed", "Arial Narrow", sans-serif`;
+    while (g.measureText(name).width > 220 && fs > 24) { fs -= 2; g.font = `700 ${fs}px "Barlow Condensed", "Arial Narrow", sans-serif`; }
     g.fillText(name, x, y + 52);
-    g.font = '700 178px "Saira Condensed", "Arial Narrow", sans-serif';
+    g.font = '700 178px "Barlow Condensed", "Arial Narrow", sans-serif';
     g.fillText(String([1, 2, 4, 5, 3, 6, 8, 10, 7, 9, 11][i % 11]), x, y + 238);
   }
   const t = new THREE.CanvasTexture(c); t.anisotropy = 4;

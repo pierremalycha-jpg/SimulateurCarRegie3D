@@ -84,6 +84,10 @@ if (PART === 'all' || PART === 'audio') {
   const ev = (f, a) => page.evaluate(f, a); const shot = shotOf(page);
   await ev(() => window.__dbg.start('standard', 'jour', 'basse', true));
   await page.waitForTimeout(5000);
+  // rendu logiciel : les premières images (compilation des shaders) peuvent prendre plusieurs secondes ; les vumètres suivent la boucle d'affichage
+  const t0 = Date.now();
+  await page.waitForFunction(() => window.__dbg.AU.ch.amb1.peak > -40 && window.__dbg.AU.master.peakL > -40, null, { timeout: 60000, polling: 500 }).catch(() => {});
+  log('vumètres actifs après', Math.round((Date.now() - t0) / 1000) + ' s supplémentaires', 'images', await ev(() => window.__dbg.S.frame));
   const lv = () => ev(() => { const A = window.__dbg.AU; const o = {}; for (const k of A.order) o[k] = Math.round(A.ch[k].peak); o.L = Math.round(A.master.peakL); o.R = Math.round(A.master.peakR); o.lufsS = Math.round(A.lufs.s); o.corr = +A.corr.toFixed(2); return o; });
   log('niveaux', JSON.stringify(await lv()));
   const l0 = await lv();

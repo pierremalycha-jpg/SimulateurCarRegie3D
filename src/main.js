@@ -15,7 +15,7 @@ import { openSessionPanel, setSessionStarter, updateSessionHud, trackMix } from 
 import { updateRF } from './rf.js';
 import { initGfx, updateGfx } from './gfx.js';
 import { initPipeline, renderPipeline, drawSlots, MIX, meSource, sourceLabel, defaultRouting, EVS, P, ROUTER } from './pipeline.js';
-import { AU, startAudio, updateAudio, applyFaders, applyAll, voiceGain, setMonitor, stripRms, corrNow, faderLin } from './audio.js';
+import { AU, startAudio, updateAudio, applyFaders, applyAll, voiceGain, setMonitor, stripRms, corrNow, faderLin, avOk } from './audio.js';
 import { updateCommentary, CMT } from './commentary.js';
 import { updateAudioDesk } from './audiodesk.js';
 import { $, $$, toast, modal, openInfo, intercom } from './ui/common.js';
@@ -36,6 +36,7 @@ import { updateCourse, NC } from './net/course.js';
 import { AN } from './net/analyzer.js';
 import { FORMATS } from './data.js';
 import { commutKey, COMMUT } from './ui/commut.js';
+import { AT, beginAtelier, atelierInput, atelierWheel, updateAtelier, endAtelier, atelierBlocks, ATELIER_DECK, atelierDebug } from './atelier.js';
 
 // ----------------------------------------------------------------------------------
 // Initialisation
@@ -53,7 +54,7 @@ function fatal(msg) {
 // charge les polices avant de dessiner les textures (étiquettes, panneaux), sans bloquer plus de 2,5 s
 try {
   await Promise.race([
-    Promise.all(['600 40px "Saira Condensed"', '700 40px "Saira Condensed"', '600 16px "JetBrains Mono"', '500 16px "Barlow"'].map((f) => document.fonts.load(f))),
+    Promise.all(['600 40px "Barlow Condensed"', '700 40px "Barlow Condensed"', '600 16px "JetBrains Mono"', '500 16px "Barlow"'].map((f) => document.fonts.load(f))),
     new Promise((r) => setTimeout(r, 2500)),
   ]);
 } catch (e) { /* polices indisponibles : polices de secours */ }
@@ -112,33 +113,55 @@ function buildStart() {
       start('standard', h ? h.light : light.value, qual.value, snd.checked, h ? h.fmt : fmt.value, h ? !!h.ip : infra.value === 'ip');
     },
   });
-  const truckLine = el('div', { class: 'eyebrow', id: 'sttruck' });
+  const truckLine = el('div', { class: 'cs-truck', id: 'sttruck' });
   const setTruck = () => { truckLine.textContent = [CFG.car.company, CFG.car.name].filter(Boolean).join(' · '); truckLine.hidden = !truckLine.textContent; updFmt(); };
   setTruck(); on('config', setTruck); on('shared', setTruck);
-  const chain = ['Objectif', 'Caméra', 'Liaison', 'CCU', 'Grille', 'Mélangeur', 'Antenne'];
-  s.append(el('div', { class: 'wrap' },
-    el('div', { class: 'eyebrow' }, el('span', { class: 'rec' }), 'Simulateur de formation · OB · régie mobile'), truckLine,
-    el('h1', {}, 'Car régie ', el('em', {}, '3D')),
-    el('p', { class: 'lede' }, 'Placez vos caméras dans un stade inspiré de Bollaert-Delelis (Lens), choisissez les objectifs et les liaisons, suivez les câbles jusqu\'au car, puis prenez place à chaque poste : réalisation, mélangeur, vision, ralentis, son, HF, grille, transmission. Un match se joue en continu : tout ce que vous réglez se voit à l\'image, et chaque action est expliquée. Ouvrez le matériel (touche K) pour voir les faces avant et arrière des appareils, leurs connecteurs et le câblage de votre installation.'),
-    el('div', { class: 'chain' }, ...chain.map((c, i) => el('div', {}, el('small', {}, String(i + 1).padStart(2, '0')), el('b', {}, c)))),
-    el('div', { class: 'choices' },
-      el('button', { class: 'choice main', onclick: () => go('standard') }, el('b', {}, 'Car prêt à l\'antenne'), el('span', {}, '12 caméras installées, câblées et réglées, dont 2 super ralentis, une Steadicam HF et une mini-caméra de but. Idéal pour découvrir les postes.')),
-      el('button', { class: 'choice', onclick: () => go('vierge') }, el('b', {}, 'Installation pas à pas'), el('span', {}, 'Stade vide et missions guidées : vous montez le dispositif, câblez, réglez les caméras puis réalisez.')),
-      el('button', { class: 'choice', onclick: () => go('grand') }, el('b', {}, 'Grand match · 16 caméras'), el('span', {}, 'Caméra volante, rail, grue, super ralenti 6x, deux Steadicam HF. Demande un ordinateur puissant.')),
-      el('button', { class: 'choice', onclick: () => go('brassage') }, el('b', {}, 'Exercice : le car vide'), el('span', {}, 'Les caméras sont installées mais rien n\'est brassé : vous reliez chaque source à la grille, les sorties aux destinations et la référence aux CCU, liste de câblage en main.')),
-      el('button', { class: 'choice', onclick: () => go('scenario') }, el('b', {}, 'Scénario : jour de match'), el('span', {}, 'Brassage, line-up, test de ligne avec la chaîne, puis le direct avec des pannes. Chronométré et noté, avec un compte rendu à la fin.'))),
-    el('div', { class: 'opts' },
-      el('div', { class: 'field' }, el('label', { for: 'stlight' }, 'Lumière'), light),
-      el('div', { class: 'field' }, el('label', { for: 'stqual' }, 'Qualité graphique'), qual),
-      el('div', { class: 'field' }, el('label', { for: 'stfmt' }, 'Format de production'), fmt),
-      el('div', { class: 'field' }, el('label', { for: 'stinfra' }, 'Infrastructure'), infra),
-      el('button', { class: 'btn', onclick: () => openTrainer('car') }, 'Espace formateur'),
-      el('button', { class: 'btn', title: 'Pour les experts métier : valider ou corriger chaque point technique du simulateur', onclick: () => openReview('me') }, 'Relecture technique (experts)'),
-      el('button', { class: 'btn primary', title: 'Plusieurs stagiaires dans le même car, en direct, avec un formateur', onclick: () => openSessionPanel() }, 'Session à plusieurs'),
-      el('label', { class: 'item', for: 'stsnd', style: { padding: '6px 10px' } }, snd, el('span', {}, 'Son (ambiance, frappes, sifflet, commentaires)'))),
-    fmtNote,
-    el('div', { class: 'keys' }, ...CONTROLS_HELP.map(([k, d]) => el('div', {}, el('kbd', {}, k), d))),
-    el('p', { class: 'note' }, 'Les caractéristiques techniques (objectifs, portées de câbles, seuils HF, niveaux vidéo et audio) sont des ordres de grandeur réalistes, donnés à titre pédagogique. Les noms d\'équipements cités le sont comme exemples de matériel courant.')));
+  // la journée d'un car régie : chaque mode du simulateur se place à son heure
+  const slot = (time, phase, title, desc, label, preset, primary) => el('li', { class: 'cs-slot' + (primary ? ' main' : '') },
+    el('time', {}, time),
+    el('div', { class: 'cs-what' }, el('small', {}, phase), el('b', {}, title), el('span', {}, desc)),
+    el('button', { class: 'btn' + (primary ? ' primary' : ''), onclick: () => go(preset) }, label));
+  const field = (id, label, ctl) => el('div', { class: 'field' }, el('label', { for: id }, label), ctl);
+  s.append(el('div', { class: 'callsheet' },
+    el('header', { class: 'cs-head' },
+      el('div', { class: 'cs-title' },
+        el('span', { class: 'tape' }, 'Feuille de service'),
+        el('h1', {}, 'Car régie 3D'),
+        el('p', { class: 'lede' }, 'Simulateur de formation aux métiers du car régie. Un match se joue en continu dans un stade inspiré de Bollaert-Delelis : tout ce que vous réglez se voit à l\'image, chaque action est expliquée.')),
+      el('dl', { class: 'cs-match' },
+        el('dt', {}, 'Rencontre'), el('dd', {}, 'RC Lens – AS Rivière'),
+        el('dt', {}, 'Lieu'), el('dd', {}, 'Stade Bollaert-Delelis (reconstitution)'),
+        el('dt', {}, 'Antenne'), el('dd', {}, '20:45 · coup d\'envoi 21:00'),
+        el('dt', {}, 'Chaîne du signal'), el('dd', { class: 'cs-chain' }, 'objectif → caméra → liaison → CCU → grille → mélangeur → antenne'),
+        truckLine)),
+    el('div', { class: 'cs-grid' },
+      el('section', { class: 'cs-day', 'aria-labelledby': 'cs-day-h' },
+        el('h2', { id: 'cs-day-h' }, 'Choisissez votre vacation'),
+        el('ol', { class: 'cs-slots' },
+          slot('08:00', 'Get-in', 'Installation pas à pas', 'Stade vide et missions guidées : placer les caméras, les câbler, les régler, puis réaliser.', 'Installer', 'vierge'),
+          slot('09:30', 'Préparation caméras', 'Atelier de montage', 'Monter une caméra pièce par pièce : pied, tête fluide, adaptateur, objectif, viseur, commandes de zoom et de point, fibre.', 'Monter une caméra', 'atelier'),
+          slot('11:00', 'Câblage', 'Le car vide', 'Rien n\'est brassé : reliez chaque source à la grille, les sorties aux destinations et la référence aux CCU, liste de câblage en main.', 'Brasser le car', 'brassage'),
+          slot('17:30', 'Line-up · test de ligne', 'Jour de match', 'Brassage, line-up, test de ligne avec la chaîne, puis le direct avec des pannes. Chronométré, noté, avec un compte rendu.', 'Lancer le scénario', 'scenario'),
+          slot('20:45', 'Antenne', 'Car prêt à l\'antenne', '12 caméras installées et réglées, 2 super ralentis, une Steadicam HF et une mini-caméra de but. Pour découvrir les postes.', 'Prendre l\'antenne', 'standard', true),
+          slot('20:45', 'Antenne · grand dispositif', 'Grand match, 16 caméras', 'Caméra volante, rail, grue, super ralenti, deux Steadicam HF. Demande un ordinateur puissant.', 'Grand dispositif', 'grand'))),
+      el('aside', { class: 'cs-side' },
+        el('section', { class: 'cs-box' },
+          el('h2', {}, 'Conditions de captation'),
+          el('div', { class: 'cs-fields' },
+            field('stlight', 'Lumière', light), field('stfmt', 'Format de production', fmt),
+            field('stinfra', 'Infrastructure', infra), field('stqual', 'Qualité graphique', qual)),
+          el('label', { class: 'cs-check', for: 'stsnd' }, snd, el('span', {}, 'Son : ambiance, frappes, sifflet, commentaires')),
+          fmtNote),
+        el('section', { class: 'cs-box' },
+          el('h2', {}, 'Équipe et formation'),
+          el('button', { class: 'btn primary', title: 'Plusieurs stagiaires dans le même car, en direct, avec un formateur', onclick: () => openSessionPanel() }, 'Session à plusieurs'),
+          el('div', { class: 'cs-row' },
+            el('button', { class: 'btn', onclick: () => openTrainer('car') }, 'Espace formateur'),
+            el('button', { class: 'btn', title: 'Pour les experts métier : valider ou corriger chaque point technique du simulateur', onclick: () => openReview('me') }, 'Relecture technique (experts)'))),
+        el('details', { class: 'cs-box cs-keys' },
+          el('summary', {}, 'Commandes clavier'),
+          el('div', { class: 'keys' }, ...CONTROLS_HELP.map(([k, d]) => el('div', {}, el('kbd', {}, k), el('span', {}, d))))))),
+    el('p', { class: 'note cs-foot' }, 'Simulation non officielle, sans lien avec le club ni avec les constructeurs cités. Les caractéristiques techniques (objectifs, portées de câbles, seuils HF, niveaux vidéo et audio) sont des ordres de grandeur réalistes, donnés à titre pédagogique ; les noms d\'équipements sont des exemples de matériel courant.')));
 }
 
 function start(preset, light, quality, sound, format = S.format, ip = false) {
@@ -147,11 +170,13 @@ function start(preset, light, quality, sound, format = S.format, ip = false) {
   applyLighting(light);
   if (preset === 'vierge') { loadPreset('none'); S.autoLineup = false; S.showMission = true; }
   else if (preset === 'brassage' || preset === 'scenario') { loadPreset('standard', preset !== 'scenario'); S.showMission = false; }
+  else if (preset === 'atelier') { loadPreset('standard', true); S.showMission = false; }
   else if (preset === 'standard' && Array.isArray(CFG.car.camPreset) && CFG.car.camPreset.length) { PRESETS.car = CFG.car.camPreset; loadPreset('car', true); S.showMission = false; }
   else { loadPreset(preset, true); S.showMission = false; }
   defaultRouting(true);
   if (preset === 'brassage' || preset === 'scenario') { S.patch.on = true; patchEmpty(); }
   MIX.pgm = 1; MIX.pst = 2;
+  if (preset === 'atelier') { MIX.pgm = 2; MIX.pst = 3; } // la 1 est démontée : l'antenne reste sur la 2
   if (preset !== 'vierge') { MIX.dsk1.on = true; MIX.dsk1.level = 1; }
   $('#start').hidden = true; $('#hud').hidden = false;
   S.mode = 'fps';
@@ -159,9 +184,27 @@ function start(preset, light, quality, sound, format = S.format, ip = false) {
   buildToolbar();
   if (preset === 'brassage') { emit('openStationNow', { id: 'brassage' }); toast('Car vide : brassez chaque liaison en suivant la liste de câblage. Le multiview montre le résultat.', '', 7000); }
   else if (preset === 'scenario') emit('startScenario');
+  else if (preset === 'atelier') emit('startAtelier');
   else if (preset === 'vierge') toast('Commencez par la mission en haut à gauche : découvrez le compound puis ouvrez le plan des caméras (P).', '', 6000);
   else toast('Vous êtes dans le compound, devant le car régie. Cliquez dans la vue pour regarder, avancez avec Z Q S D.', '', 6000);
   if (matchMedia('(pointer: coarse)').matches) setupTouch();
+  showOnboarding();
+}
+
+// première prise en main : les six gestes de base, affichés une fois (mémorisé dans ce navigateur)
+function showOnboarding() {
+  let seen = false; try { seen = localStorage.getItem('carregie.onboard') === '1'; } catch (e) { /* stockage indisponible */ }
+  if (seen || $('#onboard')) return;
+  const touch = matchMedia('(pointer: coarse)').matches;
+  const rows = touch
+    ? [['Pouce gauche', 'se déplacer'], ['Glisser', 'regarder'], ['Bouton action', 'utiliser ce que vous visez'], ['Aller à', 'se téléporter devant un poste']]
+    : [['Z Q S D', 'se déplacer (flèches aussi)'], ['Souris', 'regarder : cliquez d\'abord dans la vue'], ['E', 'utiliser ce que vous visez'], ['T', 'aller directement à un endroit'], ['1 – 9', 'commuter une caméra à l\'antenne'], ['G', 'guide, missions et glossaire']];
+  const close = () => { box.remove(); try { localStorage.setItem('carregie.onboard', '1'); } catch (e) { /* stockage indisponible */ } };
+  const box = el('div', { id: 'onboard', role: 'dialog', 'aria-label': 'Prise en main' },
+    el('span', { class: 'tape' }, 'Prise en main'),
+    el('ul', {}, ...rows.map(([k, d]) => el('li', {}, el('kbd', {}, k), el('span', {}, d)))),
+    el('button', { class: 'btn small primary', onclick: close }, 'Compris'));
+  $('#hud').appendChild(box);
 }
 
 // ----------------------------------------------------------------------------------
@@ -169,18 +212,23 @@ function start(preset, light, quality, sound, format = S.format, ip = false) {
 // ----------------------------------------------------------------------------------
 function buildToolbar() {
   const tb = $('#toolbar'); tb.innerHTML = '';
-  const b = (label, key, fn, id) => el('button', { class: 'tbtn', id, onclick: fn }, label, key ? el('kbd', {}, key) : null);
+  // groupes : se déplacer · la régie · l'aide · l'équipe et l'écoute
+  const b = (label, key, fn, id, title) => el('button', { class: 'tbtn', id, title: title || label + (key ? ' (' + key + ')' : ''), onclick: fn }, el('span', { class: 'tl' }, label), key ? el('kbd', {}, key) : null);
+  const sep = () => el('span', { class: 'tsep', 'aria-hidden': 'true' });
   tb.append(
-    b('Plan caméras', 'P', () => openPlan()),
     b('Aller à', 'T', () => teleportMenu()),
     b('Plan du car', 'Tab', () => openTruckPlan(), 'tb-truck'),
-    b('Synoptiques', 'Y', () => openSynoptics()),
-    b('Guide', 'G', () => openGuide('missions')),
-    b('Matériel', 'K', () => openEquipmentIndex()),
-    b('Session', null, () => openSessionPanel(), 'tb-ses'),
     b('Vol libre', 'V', () => { PL.fly = !PL.fly; updToolbar(); }, 'tb-fly'),
+    sep(),
+    b('Plan caméras', 'P', () => openPlan()),
+    b('Synoptiques', 'Y', () => openSynoptics()),
+    b('Matériel', 'K', () => openEquipmentIndex()),
+    sep(),
+    b('Guide', 'G', () => openGuide('missions')),
+    sep(),
     b('Retour PGM', 'M', () => { $('#minimon').hidden = !$('#minimon').hidden; }),
-    b(AU.muted ? 'Son coupé' : 'Son', null, (e) => { startAudio(); AU.muted = !AU.muted; applyFaders(); e.currentTarget.firstChild.textContent = AU.muted ? 'Son coupé' : 'Son'; }));
+    b(AU.muted ? 'Son coupé' : 'Son', null, (e) => { startAudio(); AU.muted = !AU.muted; applyFaders(); e.currentTarget.querySelector('.tl').textContent = AU.muted ? 'Son coupé' : 'Son'; }),
+    b('Session', null, () => openSessionPanel(), 'tb-ses', 'Session à plusieurs'));
 }
 function updToolbar() { const f = $('#tb-fly'); if (f) f.classList.toggle('on', PL.fly); }
 
@@ -192,12 +240,12 @@ function updateStatus(dt) {
   const sb = $('#statusbar'); sb.innerHTML = '';
   const alarms = S.cams.filter((c) => !c.signalOK || !c.genlock).length + (EVS.recording ? 0 : 1) + ((S.faults.tx && S.txPath === 1) ? 1 : 0);
   sb.append(
-    el('span', { class: 'chip' }, 'TC', el('b', {}, tc(S.tcOffset + S.simTime))),
+    el('span', { class: 'chip tc' }, 'TC', el('b', {}, tc(S.tcOffset + S.simTime))),
     el('span', { class: 'chip' }, `${TEAMS[0].short} ${M.score[0]}-${M.score[1]} ${TEAMS[1].short}`, el('b', {}, mmss(M.clock))),
     el('span', { class: 'chip red' }, el('span', { class: 'dot red' }), 'PGM', el('b', {}, sourceLabel(meSource(MIX.pgm)))),
     el('span', { class: 'chip green' }, el('span', { class: 'dot green' }), 'PVW', el('b', {}, sourceLabel(meSource(MIX.pst)))),
-    el('span', { class: 'chip' + (alarms ? ' red' : '') }, 'Alarmes', el('b', {}, String(alarms))),
-    el('span', { class: 'chip' }, el('b', {}, fpsShow + ' i/s')));
+    el('span', { class: 'chip' + (alarms ? ' alarm' : '') }, 'Alarmes', el('b', {}, String(alarms))),
+    el('span', { class: 'chip fps', title: 'Images par seconde du rendu' }, el('b', {}, fpsShow + ' i/s')));
   $('#minimon .lab').textContent = 'PGM · ' + sourceLabel(meSource(MIX.pgm));
   const w = $('#where'), w2 = $('#where2');
   const zone = whereAmI();
@@ -213,6 +261,7 @@ function whereAmI() {
     if (lx < 3.9) return ['Car régie · vision et ralentis', 'Ingénieurs vision (RCP), opérateurs EVS'];
     return ['Car régie · zone technique', 'Baies CCU, grille, synchro, transmission, HF'];
   }
+  if (p.y > 15 && !PL.fly && p.z < -66 && p.z > -71.5 && Math.abs(p.x) < 41) return ['Passerelle caméras', AT.active ? 'Atelier de montage · CAM 1' : 'Tribune Lepagnot, au-dessus des loges'];
   if (p.z < -95) return ['Compound', 'Parc technique : car régie, groupe, satellite'];
   if (Math.abs(p.x) < 61 && Math.abs(p.z) < 41) return ['Pelouse et bord terrain', 'Caméras basses, Steadicam, mini-caméras'];
   if (p.z < -41 && p.z > -95 && Math.abs(p.x) < 17) return ['Sous la tribune Lepagnot', 'Tunnel, vestiaires, local technique TV'];
@@ -244,7 +293,10 @@ const DESTS = [
 function teleport(i) {
   const [, p, yaw, fly, truck] = DESTS[i];
   PL.pos.set(p[0], p[1], p[2]); PL.yaw = yaw; PL.pitch = DESTS[i][0].startsWith('Vue aérienne') ? -0.55 : 0; PL.fly = !!fly; S.inTruck = !!truck;
-  PL.y = p[1] + 1.7; PL.vel.set(0, 0, 0); PL.cyaw = PL.yaw; PL.cpitch = PL.pitch; updToolbar();
+  PL.y = p[1] + 1.7; PL.vel.set(0, 0, 0); PL.cyaw = PL.yaw; PL.cpitch = PL.pitch;
+  // retour à l'atelier : à pied sur la passerelle
+  if (AT.active && fly) { PL.fly = false; if (onDeck()) { PL.pos.y = ATELIER_DECK.y; PL.y = PL.pos.y + 1.7; } else PL.fly = true; }
+  updToolbar();
 }
 function teleportMenu() {
   const list = el('div', { class: 'list' });
@@ -309,7 +361,8 @@ function goToStation(s, open = true) {
 }
 function updatePrompt() {
   const p = $('#prompt');
-  if (S.mode !== 'fps' || S.modalOpen) { p.hidden = true; return; }
+  if (S.mode !== 'fps' || S.modalOpen) { p.hidden = true; if (AT.active) AT._tk = '#'; return; }
+  if (AT.active && onDeck()) { target = null; return; } // l'atelier gère sa propre visée
   target = findTarget();
   if (!target) { p.hidden = true; return; }
   const infoId = target.kind === 'station' ? (STATION_INFO[target.station] ? target.station : target.id) : target.info;
@@ -397,6 +450,8 @@ function updateCamop(dt) {
 // Déplacements du joueur
 // ----------------------------------------------------------------------------------
 const joy = { x: 0, y: 0 };
+// atelier de montage : on marche sur la passerelle (sol à 17,2 m), entre les flight cases et le garde-corps
+const onDeck = () => !PL.fly && PL.pos.y > 15 && PL.pos.x > ATELIER_DECK.x0 && PL.pos.x < ATELIER_DECK.x1 && PL.pos.z > ATELIER_DECK.z0 && PL.pos.z < ATELIER_DECK.z1;
 function updatePlayer(dt) {
   const f = new THREE.Vector3(-Math.sin(PL.yaw), 0, -Math.cos(PL.yaw)), r = new THREE.Vector3(Math.cos(PL.yaw), 0, -Math.sin(PL.yaw));
   const mv = new THREE.Vector3();
@@ -428,7 +483,8 @@ function updatePlayer(dt) {
     if (inTruckFootprint(p.x, p.z) && p.y < TRUCK.ceil) { p.y = TRUCK.ceil + 0.5; }
     return;
   }
-  const blocked = (x, z) => S.inTruck ? truckBlocked(x, z) : blockedOutside(x, z);
+  const deck = AT.active && onDeck();
+  const blocked = (x, z) => S.inTruck ? truckBlocked(x, z) : deck ? atelierBlocks(x, z) : blockedOutside(x, z);
   const nx = p.x + step.x, nz = p.z + step.z;
   // entrée dans le car par la porte
   if (!S.inTruck && inTruckFootprint(nx, nz) && nx > TRUCK.doorX0 && nx < TRUCK.doorX1 && nz > TRUCK.z1 - 0.6) { S.inTruck = true; p.x = nx; p.z = TRUCK.z1 - 0.35; }
@@ -440,7 +496,7 @@ function updatePlayer(dt) {
     if (ok(nx, nz)) { p.x = nx; p.z = nz; } else if (ok(nx, p.z)) { p.x = nx; PL.vel.z = 0; } else if (ok(p.x, nz)) { p.z = nz; PL.vel.x = 0; } else { PL.vel.x = 0; PL.vel.z = 0; }
   }
   // gravité / sol (estrade dans le car)
-  const g = S.inTruck ? truckFloorAt(p.x, p.z) : groundHeight(p.x, p.z);
+  const g = S.inTruck ? truckFloorAt(p.x, p.z) : deck ? ATELIER_DECK.y : groundHeight(p.x, p.z);
   if (p.y > g + 0.05) { PL.vy -= 18 * dt; p.y = Math.max(g, p.y + PL.vy * dt); } else { PL.vy = 0; p.y += (g - p.y) * Math.min(1, dt * 14); }
   // balancement de la marche (discret, plus faible dans le car)
   if (hs > 0.25) PL.bob += dt * (5.2 + hs * 0.9);
@@ -473,6 +529,7 @@ window.addEventListener('keydown', (e) => {
     return;
   }
   if (e.code === 'Space' || e.code.startsWith('Arrow')) e.preventDefault();
+  if (AT.active && onDeck() && (e.code === 'KeyE' || e.code === 'KeyQ')) { if (!e.repeat) atelierInput('down', e.code); return; }
   if (e.code === 'KeyE') act(target);
   if (e.code === 'KeyI' && target) { if (target.kind === 'cam') { openDevice('cam', target.cam.id); return; } const id = target.kind === 'station' ? target.station : target.info; if (id) openInfo(id); }
   if (e.code === 'KeyV') { PL.fly = !PL.fly; updToolbar(); toast(PL.fly ? 'Vol libre : Espace pour monter, C pour descendre' : 'Vol libre désactivé'); }
@@ -489,13 +546,14 @@ window.addEventListener('keydown', (e) => {
 // un clic de souris sur un bouton d'un poste ne doit pas lui laisser le focus : sinon Espace ou Entrée
 // (CUT, AUTO) « recliquerait » ce bouton en plus du raccourci
 document.addEventListener('click', (e) => { const b = e.target && e.target.closest && e.target.closest('button'); if (b && e.detail > 0 && S.mode === 'station') b.blur(); });
-window.addEventListener('keyup', (e) => { KEYS[e.code] = false; if (e.code === 'KeyR') returnHeld = false; if (e.key === '+') KEYS.Equal = false; if (e.key === '-') KEYS.Minus = false; });
-window.addEventListener('blur', () => { for (const k in KEYS) KEYS[k] = false; });
+window.addEventListener('keyup', (e) => { KEYS[e.code] = false; if (e.code === 'KeyE' && AT.active) atelierInput('up', 'KeyE'); if (e.code === 'KeyR') returnHeld = false; if (e.key === '+') KEYS.Equal = false; if (e.key === '-') KEYS.Minus = false; });
+window.addEventListener('blur', () => { for (const k in KEYS) KEYS[k] = false; if (AT.active) atelierInput('up', 'KeyE'); });
 
 const IL = $('#input-layer');
 let dragLook = null;
 IL.addEventListener('pointerdown', (e) => {
   if (S.mode === 'plan') { planPointer('down', e); IL.setPointerCapture(e.pointerId); return; }
+  if (S.mode === 'fps' && document.pointerLockElement && e.button === 0 && AT.active && onDeck()) { atelierInput('down', 'Mouse0'); return; }
   if (S.mode === 'fps' && document.pointerLockElement && e.button === 0 && target) { act(target); return; }
   if (S.mode === 'fps' || S.mode === 'camop') {
     if (e.pointerType === 'mouse' && !document.pointerLockElement) { try { const r = IL.requestPointerLock(); if (r && r.catch) r.catch(() => {}); } catch (err) { /* refus */ } }
@@ -507,13 +565,14 @@ IL.addEventListener('pointermove', (e) => {
   if (S.mode === 'plan') { planPointer('move', e); return; }
   if (dragLook && !document.pointerLockElement && dragLook.id === e.pointerId) { look(e.clientX - dragLook.x, e.clientY - dragLook.y, 2.2); dragLook.x = e.clientX; dragLook.y = e.clientY; }
 });
-IL.addEventListener('pointerup', (e) => { if (S.mode === 'plan') planPointer('up', e); dragLook = null; });
+IL.addEventListener('pointerup', (e) => { if (S.mode === 'plan') planPointer('up', e); if (AT.active && e.button === 0) atelierInput('up', 'Mouse0'); dragLook = null; });
 IL.addEventListener('wheel', (e) => {
   if (S.mode === 'plan') { e.preventDefault(); planWheel(e); }
   if (S.mode === 'camop' && S.camop) { e.preventDefault(); const c = S.camop; if (c.tgt) c.tgt.lf = clamp(c.tgt.lf - e.deltaY * 0.0012, Math.log(c.fMin), Math.log(c.fMax)); }
+  if (S.mode === 'fps' && !document.pointerLockElement && AT.active && atelierWheel(e.deltaY)) e.preventDefault();
 }, { passive: false });
 document.addEventListener('mousemove', (e) => { if (document.pointerLockElement) look(e.movementX, e.movementY, 1); });
-document.addEventListener('wheel', (e) => { if (document.pointerLockElement && S.mode === 'camop' && S.camop && S.camop.tgt) { const c = S.camop; c.tgt.lf = clamp(c.tgt.lf - e.deltaY * 0.0012, Math.log(c.fMin), Math.log(c.fMax)); } }, { passive: true });
+document.addEventListener('wheel', (e) => { if (document.pointerLockElement && S.mode === 'fps' && AT.active) atelierWheel(e.deltaY); if (document.pointerLockElement && S.mode === 'camop' && S.camop && S.camop.tgt) { const c = S.camop; c.tgt.lf = clamp(c.tgt.lf - e.deltaY * 0.0012, Math.log(c.fMin), Math.log(c.fMax)); } }, { passive: true });
 function look(dx, dy, mult) {
   if (S.mode === 'camop' && S.camop) {
     const c = S.camop; const s = 0.0016 * mult * (c.cam.fov / 40);
@@ -536,7 +595,13 @@ function setupTouch() {
   const end = () => { jid = null; joy.x = joy.y = 0; knobEl.style.transform = ''; };
   j.addEventListener('pointerup', end); j.addEventListener('pointercancel', end);
   const b = (l, fn) => el('button', { class: 'tbtn', style: { padding: '14px 18px', fontSize: '16px' }, onclick: fn }, l);
-  t.append(j, el('div', { class: 'tact' }, b('E', () => act(target)), b('Monter', () => { PL.pos.y += 3; PL.fly = true; }), b('Info', () => target && (target.kind === 'cam' ? openDevice('cam', target.cam.id) : openInfo(target.kind === 'station' ? target.station : target.info)))));
+  // atelier : E se maintient (lever, nettoyer), « Reposer » remplace la touche Q
+  const eb = b('E', () => { if (!(AT.active && onDeck())) act(target); });
+  eb.addEventListener('pointerdown', () => { if (AT.active && onDeck()) atelierInput('down', 'KeyE'); });
+  for (const ev of ['pointerup', 'pointercancel', 'pointerleave']) eb.addEventListener(ev, () => { if (AT.active) atelierInput('up', 'KeyE'); });
+  const qb = b('Reposer', () => atelierInput('down', 'KeyQ')); qb.hidden = !AT.active;
+  on('atelier', (e) => { qb.hidden = e.type === 'end'; });
+  t.append(j, el('div', { class: 'tact' }, eb, qb, b('Monter', () => { PL.pos.y += 3; PL.fly = true; }), b('Info', () => target && (target.kind === 'cam' ? openDevice('cam', target.cam.id) : openInfo(target.kind === 'station' ? target.station : target.info)))));
 }
 
 window.addEventListener('resize', () => {
@@ -548,6 +613,10 @@ window.addEventListener('resize', () => {
 // Événements de l'application
 // ----------------------------------------------------------------------------------
 on('takeCamera', (c) => takeCamera(c));
+on('startAtelier', () => beginAtelier({
+  place: (x, y, z, yaw, pitch = -0.15) => { PL.fly = false; S.inTruck = false; PL.pos.set(x, y, z); PL.y = y + 1.7; PL.yaw = PL.cyaw = yaw; PL.pitch = PL.cpitch = pitch; PL.vel.set(0, 0, 0); PL.vy = 0; updToolbar(); },
+  intercom,
+}));
 on('openSynoptics', (t) => openSynoptics(t || 'video'));
 on('openStationNow', ({ id, cam }) => {
   const st = T.stations.find((s) => s.station === id);
@@ -645,6 +714,7 @@ function updateNear() {
 function frame(now) {
   requestAnimationFrame(frame);
   let dt = (now - last) / 1000; last = now;
+  const realDt = Math.max(0.001, dt); // le compteur d'images par seconde mesure le temps réel, pas le pas de simulation borné
   dt = clamp(dt, 0.001, 0.05);
   S.time += dt; S.frame++;
   if (isFollower()) followMatch(dt); else stepMatch(dt);
@@ -677,6 +747,9 @@ function frame(now) {
       pcam.rotation.set(PL.cpitch, PL.cyaw, S.mode === 'fps' ? PL.roll : 0);
       if (Math.abs(pcam.fov - PL.fov) > 0.05) { pcam.fov = PL.fov; pcam.updateProjectionMatrix(); }
     }
+    if (AT.active && S.mode === 'fps') { pcam.updateMatrixWorld(); updateAtelier(dt, pcam); }
+    // étiquettes des caméras masquées pendant le montage : à 2 m, elles boucheraient la vue
+    { const lab = S.showLabels && !(AT.active && onDeck()); if (lab !== pcam.layers.isEnabled(1)) { if (lab) pcam.layers.enable(1); else pcam.layers.disable(1); } }
     renderer.setClearColor(0x000000, 1);
     renderEye(renderer, S.inTruck ? T.scene : W.scene, pcam, S.inTruck ? (RENDER.pbr ? 1.2 : 1.0) : S.eyeExposure, S.inTruck);
     if (S.mode === 'fps' && !$('#minimon').hidden) drawSlots(renderer, [$('#minimon')]);
@@ -692,7 +765,8 @@ function frame(now) {
     else if (S.mode === 'camop') drawSlots(renderer, [$('#vf')]);
   }
   if (S.mode === 'station') updateStation(dt);
-  if (S.mode !== 'start') updateStatus(dt);
+  if (S.mode !== 'start') updateStatus(realDt);
+  if (AT.active && S.frame % 10 === 0) { const ap = $('#atelier'); if (ap) ap.hidden = S.mode !== 'fps'; }
 }
 
 buildStart();
@@ -705,4 +779,4 @@ function updBrand() { paintTruckSign(CFG.car.name); const w2 = $('#where2'); if 
 document.fonts && document.fonts.ready.then(() => { W.boards && W.boards.redraw(); P.mvDirty = true; paintTruckSign(CFG.car.name); });
 requestAnimationFrame(frame);
 window.__S = S; // accès console pour le débogage
-window.__dbg = { RENDER, openReview, openSessionPanel, SES, S, M, MIX, EVS, ROUTER, P, W, T, PL, pcam, COMMUT, CMT, applyAudio: applyAll, voiceGain, setMonitor, stripRms, corrNow, EX, teleport, openStation, closeStation, openPlan, closePlan, takeCamera, releaseCamera, start, openGuide, renderer, applyLighting, openDevice, openEquipmentIndex, openTrainer, CFG, SH, AU, SC, NET, FAB, NC, AN, emit, injectFault, clearFaults, ACTIVE, FAULTS, truckBlocked, truckFloorAt, goToStation, TRUCK };
+window.__dbg = { RENDER, openReview, openSessionPanel, SES, S, M, MIX, EVS, ROUTER, P, W, T, PL, pcam, COMMUT, CMT, applyAudio: applyAll, voiceGain, setMonitor, stripRms, corrNow, EX, teleport, openStation, closeStation, openPlan, closePlan, takeCamera, releaseCamera, start, openGuide, renderer, applyLighting, openDevice, openEquipmentIndex, openTrainer, CFG, SH, AU, SC, NET, FAB, NC, AN, emit, injectFault, clearFaults, ACTIVE, FAULTS, truckBlocked, truckFloorAt, goToStation, TRUCK, AT, atelierDebug, beginAtelier, endAtelier, avOk };

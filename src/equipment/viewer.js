@@ -17,7 +17,7 @@ function E(tag, attrs = {}, parent, text) {
   if (parent) parent.appendChild(e);
   return e;
 }
-const FONT = 'Saira Condensed, Arial Narrow, sans-serif';
+const FONT = 'Barlow Condensed, Arial Narrow, sans-serif';
 
 // ----------------------------------------------------------------------------------
 // État en direct des appareils (voyants, afficheurs, positions)

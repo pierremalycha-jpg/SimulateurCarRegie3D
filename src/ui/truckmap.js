@@ -118,7 +118,7 @@ export function planSVG() {
   const p = drawPlan(48, true);
   if (getPL) place(p, getPL());
   const st = document.createElementNS(NS, 'style');
-  st.textContent = '.tmap-zone{font:600 15px "Saira Condensed",sans-serif;fill:rgba(230,236,242,.6);letter-spacing:.06em}.tmap-door{font:600 12px "Saira Condensed",sans-serif;fill:#30c060}.tmap-st circle{fill:#8a949e;stroke:#0b0d10;stroke-width:1.5;cursor:pointer}.tmap-st:hover circle{fill:#ffb020}.tmap-st text{font:600 11px "Saira Condensed",sans-serif;fill:#e6ecf2}.tmap-me circle{fill:#30c0ff;stroke:#fff;stroke-width:1.5}.tmap-me path{fill:#30c0ff}';
+  st.textContent = '.tmap-zone{font:600 15px "Barlow Condensed",sans-serif;fill:rgba(230,236,242,.6);letter-spacing:.06em}.tmap-door{font:600 12px "Barlow Condensed",sans-serif;fill:#30c060}.tmap-st circle{fill:#8a949e;stroke:#0b0d10;stroke-width:1.5;cursor:pointer}.tmap-st:hover circle{fill:#ffb020}.tmap-st text{font:600 11px "Barlow Condensed",sans-serif;fill:#e6ecf2}.tmap-me circle{fill:#30c0ff;stroke:#fff;stroke-width:1.5}.tmap-me path{fill:#30c0ff}';
   p.svg.prepend(st);
   p.svg.style.minWidth = '900px';
   return p.svg;

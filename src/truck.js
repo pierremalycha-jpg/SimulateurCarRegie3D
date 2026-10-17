@@ -63,7 +63,7 @@ function screen(name, w, h, lx, y, lz, rotY = 0, label) {
     // étiquette sous l'écran (UMD) : texture nette, dans le plan de l'écran
     const c = makeCanvas(512, 64); const g = c.getContext('2d');
     g.fillStyle = '#050607'; g.fillRect(0, 0, 512, 64);
-    g.fillStyle = '#e8f0e0'; g.font = '600 36px "Saira Condensed", "Arial Narrow", sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(label, 256, 34);
+    g.fillStyle = '#e8f0e0'; g.font = '600 36px "Barlow Condensed", "Arial Narrow", sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(label, 256, 34);
     const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4;
     const umd = new THREE.Mesh(new THREE.PlaneGeometry(Math.min(w, 0.9), Math.min(w, 0.9) / 8), new THREE.MeshBasicMaterial({ map: t, toneMapped: false }));
     umd.position.copy(m.position); umd.rotation.y = rotY; umd.translateY(-h / 2 - 0.07); umd.translateZ(0.002);
@@ -87,7 +87,7 @@ function deskPanel(name, w, d, lx, lz, draw, y = 0.79, tilt = 0.18, rotY = 0) {
 
 // ---------------- dessins des pupitres ----------------
 const rr = (g, x, y, w, h, r, fill, stroke) => { g.beginPath(); g.roundRect ? g.roundRect(x, y, w, h, r) : g.rect(x, y, w, h); if (fill) { g.fillStyle = fill; g.fill(); } if (stroke) { g.strokeStyle = stroke; g.lineWidth = 2; g.stroke(); } };
-const txt = (g, s, x, y, size = 14, color = '#c9d1d9', align = 'center', weight = 600) => { g.font = `${weight} ${size}px "Saira Condensed", "Arial Narrow", sans-serif`; g.fillStyle = color; g.textAlign = align; g.textBaseline = 'middle'; g.fillText(s, x, y); };
+const txt = (g, s, x, y, size = 14, color = '#c9d1d9', align = 'center', weight = 600) => { g.font = `${weight} ${size}px "Barlow Condensed", "Arial Narrow", sans-serif`; g.fillStyle = color; g.textAlign = align; g.textBaseline = 'middle'; g.fillText(s, x, y); };
 
 function drawICP(g, W, H) {
   // pupitre ICP-X7000 : rangées de croisements (OLED + touches RVB), zone de transition, menu
@@ -313,7 +313,7 @@ function stationLabel(text) {
   const c = makeCanvas(1024, 160); const g = c.getContext('2d');
   const draw = (hot) => {
     g.clearRect(0, 0, 1024, 160);
-    g.font = '700 74px "Saira Condensed", "Arial Narrow", sans-serif';
+    g.font = '700 74px "Barlow Condensed", "Arial Narrow", sans-serif';
     const w = Math.min(1000, g.measureText(text).width + 80);
     rr(g, (1024 - w) / 2, 18, w, 124, 22, hot ? 'rgba(255,176,32,0.95)' : 'rgba(10,14,18,0.86)', hot ? '#ffd27a' : 'rgba(255,176,32,0.8)');
     txt(g, text, 512, 82, 74, hot ? '#15100a' : '#f2f5f7', 'center', 700);

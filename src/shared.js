@@ -116,6 +116,7 @@ function mergeProgress(d) {
   for (const r of d.reports || []) if (!seenR.has(r.at)) PROG.reports.push(r);
   PROG.perf = PROG.perf || d.perf || null;
   PROG.patchBest = Math.max(PROG.patchBest || 0, d.patchBest || 0);
+  { const seenA = new Set((PROG.rigs || []).map((x) => x.at)); PROG.rigs = PROG.rigs || []; for (const x of d.rigs || []) if (!seenA.has(x.at)) PROG.rigs.push(x); }
   if (d.net) {
     const n = PROG.net = PROG.net || { missions: {}, quiz: [], exams: [] };
     n.missions = { ...(d.net.missions || {}), ...n.missions };
@@ -131,7 +132,7 @@ export function saveProgressSoon() { clearTimeout(saveT); saveT = setTimeout(sav
 async function saveProgress() {
   if (saving) { again = true; return; }
   PROG.missions = { ...S.missionsDone }; PROG.visited = { ...S.visited }; PROG.updatedAt = Date.now();
-  PROG.scenarios = PROG.scenarios.slice(-20); PROG.reports = PROG.reports.slice(-50);
+  PROG.scenarios = PROG.scenarios.slice(-20); PROG.reports = PROG.reports.slice(-50); if (PROG.rigs) PROG.rigs = PROG.rigs.slice(-20);
   LS.set('progress', PROG);
   if (!SH.db || !SH.uid || SH.readOnly) return;
   saving = true;
@@ -149,6 +150,12 @@ export function setPerf(p) { PROG.perf = { ...p, at: Date.now() }; saveProgressS
 on('mission', saveProgressSoon);
 on('station', saveProgressSoon);
 on('patchDone', () => { PROG.patchBest = 100; saveProgressSoon(); });
+// atelier de montage : temps, erreurs et points repris
+on('atelier', (e) => {
+  if (e.type !== 'done' || !e.report) return;
+  const r = e.report; (PROG.rigs = PROG.rigs || []).push({ at: Date.now(), sec: Math.round(r.sec), errs: r.errs, grade: r.grade, errors: r.errors.map((x) => String(x.label).slice(0, 80)) });
+  saveProgressSoon();
+});
 
 // ---------------- tableau de bord formateur ----------------
 export function watchAllProgress(cb) {

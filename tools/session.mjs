@@ -56,7 +56,7 @@ async function newPage(id, vw = 1280, vh = 800) {
   await page.route('https://fonts.gstatic.com/**', (r) => r.abort());
   await page.route('http://local.test/**', (r) => r.fulfill({ body: html, contentType: 'text/html' }));
   await setup(page, id);
-  await page.goto('http://local.test/?lite');
+  await page.goto('http://local.test/?lite', { timeout: 180000 });
   await page.waitForTimeout(2500);
   pages.push(page);
   return page;

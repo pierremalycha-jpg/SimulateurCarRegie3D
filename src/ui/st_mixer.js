@@ -1,7 +1,7 @@
 import { S, camById } from '../state.js';
 import { el, clamp, fmt } from '../util.js';
 import { hwBtn, knob, toast } from './common.js';
-import { MIX, TRANS, WIPES, mixSetPst, mixSetPgm, mixCut, mixAuto, mixTbar, dskToggle, ftbToggle, keyToggle, meSource, sourceLabel, allSources, ROUTER } from '../pipeline.js';
+import { MIX, TRANS, WIPES, mixSetPst, mixSetPgm, mixCut, mixAuto, mixTbar, dskToggle, ftbToggle, keyToggle, meSource, sourceLabel, allSources, ROUTER, frameRate } from '../pipeline.js';
 import { EQUIP, mixInputs } from '../equip.js';
 import { explain } from './widgets.js';
 import { openDevice } from '../equipment/viewer.js';
@@ -58,7 +58,7 @@ export function buildMixer(body, arg, ctx) {
   WIPES.forEach((w, i) => { const b = hwBtn(w.split(' ')[0], { onclick: () => { MIX.wipe = i; MIX.trans = 'wipe'; explain(`Motif de volet : ${w}.`, 'mix:wipe'); } }); wbtns.push(b); wr.appendChild(b); });
   transP.appendChild(wr);
   const rate = el('input', { type: 'number', min: 0, max: 200, value: MIX.rate, id: 'mixrate', style: { width: '80px' } });
-  rate.addEventListener('change', () => { MIX.rate = clamp(+rate.value || 0, 0, 200); explain(`Durée de transition : ${MIX.rate} images = ${fmt(MIX.rate / 50, 2)} s à 50 i/s. Un enchaîné classique dure 12 à 25 images.`, 'mix:rate'); });
+  rate.addEventListener('change', () => { MIX.rate = clamp(+rate.value || 0, 0, 200); explain(`Durée de transition : ${MIX.rate} images = ${fmt(MIX.rate / frameRate(), 2)} s à ${frameRate()} images par seconde (${S.format === 'HDi' ? '1080i50 : 25 images, 50 trames' : 'format progressif 50p'}). Un enchaîné classique dure 12 à 25 images.`, 'mix:rate'); });
   const nb = hwBtn('BKGD', { onclick: () => { MIX.next.bkgd = !MIX.next.bkgd; if (!MIX.next.bkgd && !MIX.next.key1) MIX.next.key1 = true; explain('Next transition : choisit ce qui change à la prochaine transition (l\'arrière-plan, la clé, ou les deux).', 'mix:next'); } });
   const nk = hwBtn('KEY 1', { onclick: () => { MIX.next.key1 = !MIX.next.key1; if (!MIX.next.bkgd && !MIX.next.key1) MIX.next.bkgd = true; explain('Next transition : choisit ce qui change à la prochaine transition (l\'arrière-plan, la clé, ou les deux).', 'mix:next'); } });
   transP.appendChild(el('div', { class: 'hwrow' }, el('span', { class: 'rl' }, 'Durée'), rate, el('span', { class: 'note' }, 'images (50 i/s)'), el('span', { style: { flex: 1 } }), el('span', { class: 'rl' }, 'Next'), nb, nk));

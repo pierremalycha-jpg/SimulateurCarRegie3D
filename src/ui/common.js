@@ -26,7 +26,7 @@ export const modal = {
     const m = $('#modal'); m.innerHTML = '';
     const close = el('button', { class: 'x', 'aria-label': 'Fermer', onclick: () => modal.close() }, '×');
     const sheet = el('div', { class: 'sheet', style: opts.width ? { width: `min(${opts.width}px, 100%)` } : {} },
-      el('header', {}, el('h2', {}, title), ...(opts.headerExtra || []), close),
+      el('header', {}, el('h2', { class: 'tape' }, title), ...(opts.headerExtra || []), close),
       el('div', { class: 'body' }, body));
     m.appendChild(sheet); m.hidden = false;
     m.onclick = (e) => { if (e.target === m) modal.close(); };

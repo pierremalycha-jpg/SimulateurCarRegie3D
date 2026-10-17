@@ -24,7 +24,7 @@ const COL = {
 };
 const SIG_LABEL = { video: 'Vidéo SDI', fiber: 'Fibre caméra (SMPTE / monomode)', ref: 'Référence (BB / tri-level) · timecode', audio: 'Audio (MADI, Dante, AES)', comms: 'Intercom (4 fils, AES67)', data: 'Commande (RS-422, série)', ip: 'Réseau IP (Ethernet, ST 2110)', power: 'Énergie 230/400 V', rf: 'Radiofréquence (HF)', tally: 'Tally (GPI, TSL)' };
 const STYLE = `
-.syn{font-family:'Saira Condensed','Arial Narrow',sans-serif}
+.syn{font-family:'Barlow Condensed','Arial Narrow',sans-serif}
 .syn .bg{fill:#0e1318}
 .syn .zone{fill:rgba(255,255,255,0.025);stroke:#3a4652;stroke-dasharray:6 5}
 .syn .zl{fill:#8a98a5;font-size:13px;font-weight:700;letter-spacing:.08em}

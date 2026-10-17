@@ -8,10 +8,11 @@ import { rtSize, lineupStep } from './bcam.js';
 import { makeCanvas, tc, clockStr, clamp, roundRect } from './util.js';
 import { EQUIP, mixInputs, evsLayout } from './equip.js';
 import { routerInOf, physToLogical, destFeed } from './patch.js';
+import { FORMATS } from './data.js';
 import { NET, netOk, ptpLocked } from './ipnet.js';
 import { FAB, delivery } from './net/fabric.js';
 
-const FONT = '"Saira Condensed", "Arial Narrow", sans-serif';
+const FONT = '"Barlow Condensed", "Arial Narrow", sans-serif';
 const MONO = '"JetBrains Mono", ui-monospace, monospace';
 const SC = 1 / 1.1; // échelle des textures "canvas" vers le domaine stocké (100 % = 1/1.1)
 
@@ -329,14 +330,16 @@ export function keyToggle(auto) {
   if (auto) { MIX.next.key1 = true; MIX.next.bkgd = false; mixAuto(); MIX._restoreNext = true; }
   else { MIX.key1.on = !MIX.key1.on; emit('mixer', { type: 'key' }); }
 }
+// cadence image du format en cours : les durées de transition se comptent en images
+export const frameRate = () => (FORMATS[S.format] && FORMATS[S.format].fps) || 50;
 function updateMixer(dt) {
   if (MIX.auto) {
     const dur = MIX.trans === 'stinger' ? Math.max(MIX.rate, 30) : MIX.rate;
-    MIX.pos += dt * 50 / Math.max(1, dur);
+    MIX.pos += dt * frameRate() / Math.max(1, dur); // durée en images du format (25 en 1080i50, 50 en 1080p50 et UHD)
     if (MIX.pos >= 1) { completeTransition(); if (MIX._restoreNext) { MIX.next.key1 = false; MIX.next.bkgd = true; MIX._restoreNext = false; } }
   }
   for (const d of [MIX.dsk1, MIX.dsk2, MIX.ftb]) {
-    if (d.auto) { d.level = clamp(d.level + d.auto * dt * 50 / (d.rate || 12), 0, 1); if (d.level <= 0 || d.level >= 1) d.auto = 0; }
+    if (d.auto) { d.level = clamp(d.level + d.auto * dt * frameRate() / (d.rate || 12), 0, 1); if (d.level <= 0 || d.level >= 1) d.auto = 0; }
     else if (d !== MIX.ftb) d.level = d.on ? 1 : 0;
   }
   // ralenti à l'antenne -> tag "RALENTI"

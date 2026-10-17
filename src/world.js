@@ -223,7 +223,7 @@ function terraceTexture() {
 function textBand(text, w, h, bg, fg, size, reps = 3) {
   const c = makeCanvas(w, h); const g = c.getContext('2d');
   g.fillStyle = bg; g.fillRect(0, 0, w, h);
-  g.fillStyle = fg; g.font = `700 ${size}px "Saira Condensed", "Arial Narrow", sans-serif`; g.textAlign = 'center'; g.textBaseline = 'middle';
+  g.fillStyle = fg; g.font = `700 ${size}px "Barlow Condensed", "Arial Narrow", sans-serif`; g.textAlign = 'center'; g.textBaseline = 'middle';
   for (let i = 0; i < reps; i++) g.fillText(text, w * (i + 0.5) / reps, h / 2 + 2);
   const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8;
   return t;
@@ -334,11 +334,11 @@ function boardsTexture() {
   const wSeg = 2048 / 8;
   ads.forEach((a, i) => {
     g.fillStyle = a[0]; g.fillRect(i * wSeg, 0, wSeg, 64);
-    g.fillStyle = a[1]; g.font = 'bold 34px "Saira Condensed", "Arial Narrow", sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
+    g.fillStyle = a[1]; g.font = 'bold 34px "Barlow Condensed", "Arial Narrow", sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
     g.fillText(a[2], i * wSeg + wSeg / 2, 33);
   });
   const t = new THREE.CanvasTexture(c); t.wrapS = THREE.RepeatWrapping; t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8;
-  return { tex: t, canvas: c, redraw: () => { ads.forEach((a, i) => { g.fillStyle = a[0]; g.fillRect(i * wSeg, 0, wSeg, 64); g.fillStyle = a[1]; g.font = 'bold 34px "Saira Condensed", "Arial Narrow", sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(a[2], i * wSeg + wSeg / 2, 33); }); t.needsUpdate = true; } };
+  return { tex: t, canvas: c, redraw: () => { ads.forEach((a, i) => { g.fillStyle = a[0]; g.fillRect(i * wSeg, 0, wSeg, 64); g.fillStyle = a[1]; g.font = 'bold 34px "Barlow Condensed", "Arial Narrow", sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(a[2], i * wSeg + wSeg / 2, 33); }); t.needsUpdate = true; } };
 }
 
 // tracés pédagogiques non éclairés (câbles caméra) : leur luminosité suit l'exposition de l'œil,
@@ -349,7 +349,7 @@ function updateOverlays() { W.overlayK = Math.min(1, 1.3 / (S.eyeExposure || 1))
 export function labelSprite(text, opts = {}) {
   const fs = opts.size || 44;
   const c = makeCanvas(512, 96); const g = c.getContext('2d');
-  g.font = `600 ${fs}px "Saira Condensed", "Arial Narrow", sans-serif`;
+  g.font = `600 ${fs}px "Barlow Condensed", "Arial Narrow", sans-serif`;
   const w = Math.min(500, g.measureText(text).width + 36);
   g.fillStyle = opts.bg || 'rgba(10,14,18,0.82)';
   g.beginPath(); g.roundRect ? g.roundRect((512 - w) / 2, 14, w, 68, 12) : g.rect((512 - w) / 2, 14, w, 68); g.fill();
@@ -521,7 +521,7 @@ function bannerTexture(text, bg, fg, stripes) {
   const c = makeCanvas(1024, 192); const g = c.getContext('2d');
   g.fillStyle = bg; g.fillRect(0, 0, 1024, 192);
   if (stripes) for (let x = 0; x < 1024; x += 128) { g.fillStyle = stripes; g.fillRect(x, 0, 64, 192); }
-  g.fillStyle = fg; g.font = '800 120px "Saira Condensed", "Arial Narrow", sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
+  g.fillStyle = fg; g.font = '800 120px "Barlow Condensed", "Arial Narrow", sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
   g.lineWidth = 10; g.strokeStyle = 'rgba(0,0,0,0.35)'; g.strokeText(text, 512, 102); g.fillText(text, 512, 102);
   const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4; return t;
 }
@@ -585,7 +585,7 @@ function buildStandDetails(scene) {
     const c = makeCanvas(256, 160), g = c.getContext('2d');
     const cols = k === 0 ? ['#c8102e', '#f5c400', '#c8102e'] : k === 1 ? ['#f5c400', '#c8102e', '#f5c400'] : ['#111111', '#f5c400', '#111111'];
     cols.forEach((cc, j) => { g.fillStyle = cc; g.fillRect(0, j * 160 / 3, 256, 160 / 3 + 1); });
-    g.fillStyle = k === 2 ? '#f5c400' : '#ffffff'; g.font = '700 54px "Saira Condensed", "Arial Narrow", sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; if (k !== 1) g.fillText('LENS', 128, 82);
+    g.fillStyle = k === 2 ? '#f5c400' : '#ffffff'; g.font = '700 54px "Barlow Condensed", "Arial Narrow", sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; if (k !== 1) g.fillText('LENS', 128, 82);
     const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
   });
   const flagMat = (k) => {
@@ -903,7 +903,7 @@ export function buildWorld(renderer) {
   {
     const sign = (text, w, h, x, y, z, rotY, bg = '#13294b', fg = '#ffffff', fs = 64) => {
       const c = makeCanvas(1024, Math.round(1024 * h / w)); const g = c.getContext('2d');
-      g.fillStyle = bg; g.fillRect(0, 0, c.width, c.height); g.fillStyle = fg; g.font = `700 ${fs}px "Saira Condensed", "Arial Narrow", sans-serif`; g.textAlign = 'center'; g.textBaseline = 'middle';
+      g.fillStyle = bg; g.fillRect(0, 0, c.width, c.height); g.fillStyle = fg; g.font = `700 ${fs}px "Barlow Condensed", "Arial Narrow", sans-serif`; g.textAlign = 'center'; g.textBaseline = 'middle';
       text.split('\n').forEach((l, i, a) => g.fillText(l, 512, c.height / 2 + (i - (a.length - 1) / 2) * fs * 1.1));
       const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8;
       const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshLambertMaterial({ map: t }));
@@ -1291,8 +1291,8 @@ export function paintTruckSign(name) {
   const { canvas, tex } = W.truckSign; const g = canvas.getContext('2d');
   g.clearRect(0, 0, 1024, 160);
   const txt = ((name || 'Car régie') + ' · ' + (S.format === 'UHD' ? 'UHD' : 'HD')).toUpperCase().slice(0, 32);
-  let size = 96; g.font = `700 ${size}px "Saira Condensed", "Arial Narrow", sans-serif`;
-  while (g.measureText(txt).width > 990 && size > 40) { size -= 4; g.font = `700 ${size}px "Saira Condensed", "Arial Narrow", sans-serif`; }
+  let size = 96; g.font = `700 ${size}px "Barlow Condensed", "Arial Narrow", sans-serif`;
+  while (g.measureText(txt).width > 990 && size > 40) { size -= 4; g.font = `700 ${size}px "Barlow Condensed", "Arial Narrow", sans-serif`; }
   g.fillStyle = '#1c2733'; g.fillText(txt, 20, 110);
   tex.needsUpdate = true;
 }

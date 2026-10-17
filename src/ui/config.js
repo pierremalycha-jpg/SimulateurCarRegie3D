@@ -233,18 +233,18 @@ function tabEleves(box) {
     const ids = list.filter((r) => !r.local).map((r) => r.id);
     const prof = await profilesOf(ids);
     const total = MISSIONS.length;
-    const t = el('table', { class: 'tbl compact' }, el('thead', {}, el('tr', {}, ...['Stagiaire', 'Missions', 'Scénario (meilleur)', 'Brassage', 'Parcours réseau', 'Quiz 2110', 'Examen réseau', 'Ordinateur', 'Signalements', 'Dernière activité'].map((h) => el('th', {}, h)))));
+    const t = el('table', { class: 'tbl compact' }, el('thead', {}, el('tr', {}, ...['Stagiaire', 'Missions', 'Scénario (meilleur)', 'Brassage', 'Montage caméra', 'Parcours réseau', 'Quiz 2110', 'Examen réseau', 'Ordinateur', 'Signalements', 'Dernière activité'].map((h) => el('th', {}, h)))));
     const tb = el('tbody'); t.appendChild(tb);
     for (const r of list) {
       const d = r.data || {}; const best = (d.scenarios || []).reduce((m, s) => Math.max(m, s.score || 0), 0);
       const nm = r.local ? 'Ce navigateur' : (prof[r.id] && prof[r.id].name) || 'Stagiaire';
       const tr = el('tr', { style: { cursor: 'pointer' }, onclick: () => detail(nm, d) },
-        el('td', {}, nm), el('td', {}, `${Object.keys(d.missions || {}).length} / ${total}`), el('td', {}, (d.scenarios || []).length ? best + ' %' : '—'), el('td', {}, d.patchBest ? d.patchBest + ' %' : '—'),
+        el('td', {}, nm), el('td', {}, `${Object.keys(d.missions || {}).length} / ${total}`), el('td', {}, (d.scenarios || []).length ? best + ' %' : '—'), el('td', {}, d.patchBest ? d.patchBest + ' %' : '—'), el('td', {}, rigCell(d)),
         el('td', {}, netCell(d).course), el('td', {}, netCell(d).quiz), el('td', {}, netCell(d).exam),
         el('td', {}, d.perf ? `${d.perf.fps} i/s · ${String(d.perf.gpu || '').slice(0, 28)}` : '—'), el('td', {}, String((d.reports || []).length)), el('td', {}, d.updatedAt ? new Date(d.updatedAt).toLocaleString('fr-FR') : '—'));
       tb.appendChild(tr);
     }
-    if (!list.length) tb.appendChild(el('tr', {}, el('td', { colspan: 10, class: 'note' }, 'Aucune progression enregistrée pour l\'instant.')));
+    if (!list.length) tb.appendChild(el('tr', {}, el('td', { colspan: 11, class: 'note' }, 'Aucune progression enregistrée pour l\'instant.')));
     host.append(el('div', { class: 'tblwrap' }, t), el('div', { class: 'hwrow' }, el('button', { class: 'btn small', onclick: () => exportCSV(prof) }, 'Exporter le suivi (CSV)')), detBox);
   };
   const detBox = el('div', { class: 'list' });
@@ -257,18 +257,25 @@ function tabEleves(box) {
     detBox.append(el('p', { class: 'note' }, 'Parcours réseau ST 2110 : ' + (nm2.map((m) => `${m.title} (${N.missions[m.id].pts}/10${N.missions[m.id].aided ? ', aidé' : ''})`).join(', ') || 'aucune mission')));
     for (const x of (N.quiz || []).slice().reverse().slice(0, 5)) detBox.append(el('div', { class: 'item' }, el('div', { class: 'grow' }, el('div', { class: 't' }, `Quiz ST 2110 du ${new Date(x.at).toLocaleString('fr-FR')} · ${x.score} %`))));
     for (const x of (N.exams || []).slice().reverse()) detBox.append(el('div', { class: 'item' }, el('div', { class: 'grow' }, el('div', { class: 't' }, `Examen réseau du ${new Date(x.at).toLocaleString('fr-FR')} · ${x.score} %`), el('div', { class: 's' }, (x.faults || []).map((f) => `${f.label} : ${f.ok ? 'résolue en ' + f.dur + ' s' : 'non résolue'}${f.aided ? ' (aidé)' : ''}`).join(' · ') + (x.saved ? '' : ' · configuration non enregistrée')))));
+    for (const x of (d.rigs || []).slice().reverse()) detBox.append(el('div', { class: 'item' }, el('div', { class: 'grow' }, el('div', { class: 't' }, `Montage CAM 1 du ${new Date(x.at).toLocaleString('fr-FR')} · ${x.grade} · ${Math.floor(x.sec / 60)} min ${String(x.sec % 60).padStart(2, '0')} s`), el('div', { class: 's' }, x.errors && x.errors.length ? 'Repris : ' + x.errors.join(' · ') : 'Sans erreur'))));
     for (const s of (d.scenarios || []).slice().reverse()) detBox.append(el('div', { class: 'item' }, el('div', { class: 'grow' }, el('div', { class: 't' }, `Scénario du ${new Date(s.at).toLocaleString('fr-FR')} · ${s.score} %`), el('div', { class: 's' }, (s.phases || []).map((p) => `${p.title} : ${p.pts}/${p.max}`).join(' · ')))));
     for (const r of (d.reports || []).slice().reverse()) detBox.append(el('div', { class: 'item' }, el('div', { class: 'grow' }, el('div', { class: 't' }, `Signalement · ${r.where}`), el('div', { class: 's' }, `${new Date(r.at).toLocaleString('fr-FR')} · ${r.text}`))));
   }
   function exportCSV(prof) {
-    const lines = ['Stagiaire;Missions;Meilleur scénario (%);Brassage (%);Parcours réseau;Quiz 2110 (%);Examen réseau (%);Fps;Carte graphique;Signalements;Dernière activité'];
-    for (const r of rows) { const d = r.data || {}; const best = (d.scenarios || []).reduce((m, s) => Math.max(m, s.score || 0), 0); const nc = netCell(d); lines.push([r.local ? 'Ce navigateur' : (prof[r.id] && prof[r.id].name) || r.id, Object.keys(d.missions || {}).length, best, d.patchBest || 0, nc.course, nc.quiz.replace(' %', ''), nc.exam.replace(' %', ''), d.perf ? d.perf.fps : '', d.perf ? d.perf.gpu : '', (d.reports || []).length, d.updatedAt ? new Date(d.updatedAt).toISOString() : ''].join(';')); }
+    const lines = ['Stagiaire;Missions;Meilleur scénario (%);Brassage (%);Montage caméra;Parcours réseau;Quiz 2110 (%);Examen réseau (%);Fps;Carte graphique;Signalements;Dernière activité'];
+    for (const r of rows) { const d = r.data || {}; const best = (d.scenarios || []).reduce((m, s) => Math.max(m, s.score || 0), 0); const nc = netCell(d); lines.push([r.local ? 'Ce navigateur' : (prof[r.id] && prof[r.id].name) || r.id, Object.keys(d.missions || {}).length, best, d.patchBest || 0, rigCell(d), nc.course, nc.quiz.replace(' %', ''), nc.exam.replace(' %', ''), d.perf ? d.perf.fps : '', d.perf ? d.perf.gpu : '', (d.reports || []).length, d.updatedAt ? new Date(d.updatedAt).toISOString() : ''].join(';')); }
     offerDownload('suivi-stagiaires.csv', '﻿' + lines.join('\r\n'));
   }
   const unsub = watchAllProgress(draw);
   const stop = () => { unsub && unsub(); };
   const obs = new MutationObserver(() => { if (!host.isConnected) { stop(); obs.disconnect(); } });
   obs.observe(document.body, { childList: true, subtree: true });
+}
+// montage caméra : meilleur passage (le moins d'erreurs, puis le plus rapide)
+function rigCell(d) {
+  const a = d.rigs || []; if (!a.length) return '—';
+  const b = a.slice().sort((x, y) => x.errs - y.errs || x.sec - y.sec)[0];
+  return `${b.errs} erreur${b.errs > 1 ? 's' : ''} · ${Math.floor(b.sec / 60)} min${a.length > 1 ? ` (${a.length} essais)` : ''}`;
 }
 function netCell(d) {
   const N = d.net || {}; const done = NET_MISSIONS.filter((m) => (N.missions || {})[m.id]);

@@ -198,7 +198,7 @@ function personParts(B, x, y, z, color = 0x2b3340, rotY = 0, crouch = 0, headset
 
 // caméra système type Sony HDC-5500 dans un adaptateur grand objectif (série HDLA), objectif box
 // (Fujinon UA : boîtier noir 258 × 264 mm, 610 à 635 mm de long), viseur 7" à l'arrière, sur tête
-// fluide type Vinten Vector avec deux bras : demande de zoom (poignée droite), de point (roue gauche)
+// fluide type Vinten Vector avec deux manches : commande de zoom et commande de point (côtés au choix de l'opérateur)
 function boxCamera(Bs, Bp, Bt, cam, y0, lensLen, lensCol, body) {
   const legTop = y0 + 1.02;
   const white = lensCol > 0x808080;
@@ -409,7 +409,7 @@ export class BCam {
     this.meter = { mean: 0.4, peak: 0.8, t: 0 };
     this.tallyState = 0;
     this.status = { ok: true, reason: '', power: true };
-    this.rf = this.link === 'hf' ? { txmW: 100, ch: 2150 + (o.id % 3) * 40, bw: 10, mod: '16QAM', fec: '2/3', gi: '1/16', lat: 'basse', snr: 30, margin: 10, levels: {}, state: 'ok', lostT: 0, err: 0 } : null;
+    this.rf = this.link === 'hf' ? { txmW: 100, ch: 2230 + (o.id % 3) * 60, bw: 10, mod: '16QAM', fec: '2/3', gi: '1/16', lat: 'basse', snr: 30, margin: 10, levels: {}, state: 'ok', lostT: 0, err: 0 } : null;
     this.freezeT = 0;
     this.lastRender = -1;
     this.genlock = true;
@@ -565,7 +565,7 @@ export class BCam {
     this.model.root.visible = false;
     renderer.setRenderTarget(this.rawRT);
     renderer.render(scene, c);
-    this.model.root.visible = true;
+    this.model.root.visible = !this.hideModel;
     this.setPaintUniforms(ctime);
     paintMat.uniforms.tRaw.value = this.rawRT.texture;
     renderer.setRenderTarget(target);

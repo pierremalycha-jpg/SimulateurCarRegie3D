@@ -126,7 +126,7 @@ export function streamMetrics(rx) {
     const br = g.pps * (g.pkt) * 8 / 1e9 * (1 - loss) * (1 + gauss() * 0.0008);
     const lat = pm.lat * (1 + gauss() * 0.02);
     // décalage entre l'horodatage RTP et l'arrivée (TROffset + traversée) ; dérive si l'émetteur n'est pas verrouillé
-    const trOff = f.kind === 'video' ? 1e6 * (g.hdi ? 22 : 43) / (g.rate * (g.hdi ? 562.5 : g.h === 2160 ? 2250 : 1125)) : f.kind === 'audio' ? 1000 : 400;
+    const trOff = f.kind === 'video' ? 1e6 * (g.hdi ? 22 : 43) / (g.rate * (g.hdi ? 562.5 : 1125)) : f.kind === 'audio' ? 1000 : 400;
     const rtpOff = trOff + lat + (sdPtp && !['locked', 'noisy'].includes(sdPtp.state) ? (AN.drift[sd.id] || 0) / 1000 : 0);
     out.per[c] = { ok: true, loss, br, pps: g.pps * (1 - loss), jitter, cinst, vrxPeak, lat, hops: pm.hops, uMax: pm.uMax, rtpOff, path: p };
     out.sample[c] = { br, jitter, cinst, vrx: vrxPeak, lat, loss };

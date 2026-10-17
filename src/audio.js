@@ -123,7 +123,7 @@ export const DEFAULT_SOUND_PLAN = [...SOUND_PLAN];
 export function setSoundPlan(plan) { const p = Array.isArray(plan) && plan.length === 4 ? plan : DEFAULT_SOUND_PLAN; SOUND_PLAN.splice(0, 4, ...p); }
 export function soundPlanOk() { return AU.emb.every((v, i) => v === SOUND_PLAN[i]); }
 export const embLabel = (v) => (EMB_OPTIONS.find((o) => o[0] === v) || [v, v])[1];
-// tolérance son/image (EBU R37) : son en avance de 40 ms au plus, en retard de 60 ms au plus
+// tolérance son/image de bout en bout (EBU R37, sortie vers l'émission) : son en avance de 40 ms au plus, en retard de 60 ms au plus (R37 demande 5 ms d'avance / 15 ms de retard au plus à chaque étape)
 export const AV_TOL = { early: 40, late: 60 };
 export function avOk(off = avOffsetMs(AU.pgmSrc)) { return off >= -AV_TOL.early && off <= AV_TOL.late; }
 export const MONITORS = [['pgm', 'PGM'], ['intl', 'INTL'], ['n1', 'N-1 COM'], ['nxs', 'N-1 STU'], ['nxb', 'N-1 BT']];
@@ -613,7 +613,7 @@ export const AUDIO_FAULTS = [
   {
     id: 'avsync', label: 'Décalage son/image (retard de ligne déréglé)', where: 'Régie son',
     can: () => avOk(), inject() { setLineDelay(AU.lineDelay + 160 + Math.round(Math.random() * 3) * 20); return {}; }, check: () => avOk(),
-    hint: 'La chaîne signale que le son arrive après les lèvres. Régie son : ramener le retard de ligne dans la tolérance (son en retard de 60 ms au plus).',
+    hint: 'La chaîne signale que le son arrive après les lèvres. Régie son : ramener le retard de ligne dans la tolérance (son en retard de 60 ms au plus de bout en bout ; dans le car, on vise 0 ms).',
   },
   {
     id: 'emb', label: 'Embedder déréglé (paires inversées)', where: 'Régie son',

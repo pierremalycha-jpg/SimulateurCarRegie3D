@@ -146,7 +146,7 @@ const IF = [
   C('no shutdown', 'activer l\'interface', (s) => ifSet(s, { shutdown: false }, true)),
   C('speed <w>', 'vitesse (10g, 25g, 40g, 100g)', (s, a) => { let v = a.w.toLowerCase().replace('forced', '').replace('full', ''); if (!SPEED_GBPS[v]) return '% Vitesse inconnue (1g, 10g, 25g, 40g, 100g)'; return ifSet(s, { speed: v }, false, v); }),
   C('speed forced <w>', 'vitesse forcée', (s, a) => { const v = a.w.toLowerCase().replace('full', ''); if (!SPEED_GBPS[v]) return '% Vitesse inconnue'; return ifSet(s, { speed: v }, false, v); }),
-  C('error-correction encoding reed-solomon|fire-code', 'FEC (RS obligatoire à 25G / 100G)', (s, a) => ifSet(s, { fec: a.lit === 'reed-solomon' ? 'rs' : 'fc' })),
+  C('error-correction encoding reed-solomon|fire-code', 'FEC (RS attendue à 25G / 100G sur optique SR)', (s, a) => ifSet(s, { fec: a.lit === 'reed-solomon' ? 'rs' : 'fc' })),
   C('no error-correction encoding', 'désactiver la FEC', (s) => ifSet(s, { fec: 'none' })),
   C('default error-correction encoding', 'FEC automatique', (s) => ifSet(s, { fec: 'auto' })),
   C('mtu <n>', 'taille maximale de trame (68-9214)', (s, a) => { if (a.n < 68 || a.n > 9214) return '% MTU 68-9214'; return ifSet(s, { mtu: a.n }); }),

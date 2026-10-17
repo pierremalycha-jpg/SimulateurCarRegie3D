@@ -150,12 +150,12 @@ function drawScreens(AU, strips = []) {
     // vumètre d'entrée horizontal (bas de l'écran)
     if (ch) { const lv = clamp((ch.peak + 60) / 60, 0, 1); g.fillStyle = '#10161b'; g.fillRect(x - 20, H - 26, 40, 8); g.fillStyle = ch.ovl > 0 ? '#ff3b30' : lv > 0.8 ? '#facc15' : '#22c55e'; g.fillRect(x - 20, H - 26, 40 * lv, 8); }
   }
-  g.fillStyle = 'rgba(255,255,255,.35)'; g.font = '600 11px "Saira Condensed", sans-serif'; g.textAlign = 'left'; g.fillText('VISTONICS 1', 8, H - 6); g.fillText('VISTONICS 2', px(SX(10)) - 24, H - 6);
+  g.fillStyle = 'rgba(255,255,255,.35)'; g.font = '600 11px "Barlow Condensed", sans-serif'; g.textAlign = 'left'; g.fillText('VISTONICS 1', 8, H - 6); g.fillText('VISTONICS 2', px(SX(10)) - 24, H - 6);
   t.needsUpdate = true;
   // --- écran de la Control Bay : tranche sélectionnée, loudness, écoute ---
   { const { c: c2, g: h, t: t2 } = DESK.cb; const w = c2.width, hh = c2.height;
     h.fillStyle = '#0a1220'; h.fillRect(0, 0, w, hh);
-    h.fillStyle = '#e8edf1'; h.font = '600 26px "Saira Condensed", sans-serif'; h.textAlign = 'left';
+    h.fillStyle = '#e8edf1'; h.font = '600 26px "Barlow Condensed", sans-serif'; h.textAlign = 'left';
     const sel = AU && AU.ch[AU.sel];
     h.fillText('CONTROL BAY · ' + (sel ? sel.short : '—'), 14, 34);
     if (AU) {

@@ -68,13 +68,14 @@ export function openStation(id, arg) {
   const info = STATION_INFO[id] || {};
   const devBtn = el('button', { class: 'btn small', title: 'Faces avant et arrière, connecteurs et raccordements', onclick: () => (def.dev ? openDevice(def.dev, S.selCam || 1) : openEquipmentIndex()) }, 'Matériel');
   const fmBtn = el('button', { class: 'btn small', title: 'Un écran déplaçable, au choix, par-dessus le poste', onclick: () => toggleFloatMon(document.getElementById('floatmon') ? null : 'PGM') }, 'Moniteur flottant');
+  const role = info.role ? info.role.split('. ')[0] + '.' : '';
   const head = el('div', { class: 'st-head' },
-    el('h2', {}, S.ipMode && def.ipTitle ? def.ipTitle : def.title),
-    el('div', { class: 'role' }, info.role ? info.role.split('. ')[0] + '.' : ''),
-    devBtn, fmBtn,
-    el('button', { class: 'btn small', onclick: () => openInfo(id) }, 'Le poste'),
-    el('button', { class: 'btn small', onclick: () => emit('openGuide') }, 'Guide'),
-    el('button', { class: 'btn small primary', onclick: () => closeStation() }, 'Quitter le poste · Échap'));
+    el('h2', { class: 'tape' }, S.ipMode && def.ipTitle ? def.ipTitle : def.title),
+    el('div', { class: 'role', title: info.role || '' }, role),
+    el('div', { class: 'st-tools' }, devBtn, fmBtn,
+      el('button', { class: 'btn small', onclick: () => openInfo(id) }, 'Le poste'),
+      el('button', { class: 'btn small', onclick: () => emit('openGuide') }, 'Guide')),
+    el('button', { class: 'btn small st-quit', onclick: () => closeStation() }, el('kbd', {}, 'Échap'), 'Quitter le poste'));
   const dock = el('div', { class: 'st-dock' });
   const body = el('div', { class: 'st-body' });
   const main = el('div', { class: 'st-main ' + def.layout }, dock, body);
@@ -533,10 +534,10 @@ export function drawSpectrum(g, w, h) {
     const y = Y(10 * Math.log10(p)); if (px === 40) g.moveTo(px, y); else g.lineTo(px, y);
   }
   g.stroke();
-  g.font = '600 12px "Saira Condensed", sans-serif'; g.textAlign = 'center';
+  g.font = '600 12px "Barlow Condensed", sans-serif'; g.textAlign = 'center';
   for (const [fc, bw, lv, kind, id] of carriers) if (kind === 'cam') { g.fillStyle = '#c77dff'; g.fillText('CAM ' + id, X(fc), Y(lv) - 8); }
   g.fillStyle = '#ff8080'; g.fillText('Wi-Fi 2,4 GHz', X(2440), 24);
-  g.fillStyle = '#46c6f2'; g.fillText('canaux attribués', X(2190), h - 34);
+  g.fillStyle = '#46c6f2'; g.fillText('canaux attribués', X(2290), h - 34);
 }
 export function drawRFMap(g, w, h) {
   g.fillStyle = '#0a0e12'; g.fillRect(0, 0, w, h);
@@ -551,7 +552,7 @@ export function drawRFMap(g, w, h) {
     const p = c.cam.position; const col = c.rf.state === 'ok' ? '#2fd25a' : c.rf.state === 'err' ? '#ffb020' : '#ff3b30';
     for (const a of RF.antennas) if (a.on && c.rf.levels[a.id]) { g.strokeStyle = c.rf.levels[a.id].walls ? 'rgba(255,80,80,0.5)' : 'rgba(47,210,90,0.35)'; g.beginPath(); g.moveTo(X(p.x), Z(p.z)); g.lineTo(X(a.pos[0]), Z(a.pos[2])); g.stroke(); }
     g.fillStyle = col; g.beginPath(); g.arc(X(p.x), Z(p.z), 6, 0, 7); g.fill();
-    g.fillStyle = '#fff'; g.font = '600 12px "Saira Condensed", sans-serif'; g.fillText('CAM ' + c.id, X(p.x) + 8, Z(p.z) - 6);
+    g.fillStyle = '#fff'; g.font = '600 12px "Barlow Condensed", sans-serif'; g.fillText('CAM ' + c.id, X(p.x) + 8, Z(p.z) - 6);
   }
   g.fillStyle = '#93a0ab'; g.font = '11px sans-serif'; g.fillText('Car', X(-26), Z(-126));
 }
@@ -654,7 +655,7 @@ function buildSync(body, arg, ctx) {
   const tcB = el('div', { class: 'lcd amber big' });
   const st = el('div', { class: 'kv' });
   body.append(el('div', { class: 'panelgrid' }, el('div', { class: 'hwpanel' }, el('h3', {}, 'Générateur de synchro principal'), tcB, st,
-    el('div', { class: 'hwrow' }, el('button', { class: 'btn small', onclick: () => { S.faults.gps = !S.faults.gps; explain(S.faults.gps ? 'GPS perdu : le SPG passe en holdover. Son oscillateur (OCXO) continue de générer la référence avec une dérive de l\'ordre de quelques ns par heure : l\'antenne n\'est pas affectée.' : 'GPS retrouvé : le SPG se ré-asservit lentement (sans saut de phase) pour ne pas perturber les équipements.', 'sync:gps'); } }, 'Simuler une perte GPS'),
+    el('div', { class: 'hwrow' }, el('button', { class: 'btn small', onclick: () => { S.faults.gps = !S.faults.gps; explain(S.faults.gps ? 'GPS perdu : le SPG passe en holdover. Son oscillateur (OCXO) continue de générer la référence avec une dérive de phase de l\'ordre de quelques dizaines à quelques centaines de ns par heure (environ une microseconde par jour pour un bon OCXO) : l\'antenne n\'est pas affectée.' : 'GPS retrouvé : le SPG se ré-asservit lentement (sans saut de phase) pour ne pas perturber les équipements.', 'sync:gps'); } }, 'Simuler une perte GPS'),
       el('button', { class: 'btn small', onclick: () => { for (const c of S.cams) c.genlock = true; toast('Toutes les CCU re-verrouillées sur la référence', 'good'); emit('repair', 'genlock'); explain('Toutes les CCU re-verrouillées : elles reçoivent le tri-level (ou black burst) du SPG par les distributeurs et alignent leur sortie sur la même phase.'); } }, 'Re-verrouiller toutes les CCU'),
       el('button', { class: 'btn small', onclick: () => openDevice('spg', 1) }, 'Voir le SPG'), el('button', { class: 'btn small', onclick: () => openDevice('da', 1) }, 'Voir les DA de référence')),
       S.ipMode ? el('div', { class: 'hwrow' }, el('button', { class: 'btn small', onclick: () => { FAB.gm.gm1.up = !FAB.gm.gm1.up; markDirty(); explain(FAB.gm.gm1.up ? 'Grand maître PTP 1 remis en service : avec la meilleure priorité (priority1 100) et le GPS verrouillé, il est réélu par l\'algorithme BMCA.' : 'Grand maître 1 coupé : après 3 messages Announce manqués, les horloges frontières (commutateurs) élisent le grand maître 2. Les appareils restent synchronisés.', 'sync:ptp'); } }, 'Couper / rétablir le grand maître PTP 1'), el('button', { class: 'btn small', onclick: () => { FAB.gm.gm2.up = !FAB.gm.gm2.up; markDirty(); } }, 'Couper / rétablir le grand maître PTP 2'), el('button', { class: 'btn small', onclick: () => openStation('reseau', null) }, 'PTP détaillé (poste Réseau IP)')) : null),
@@ -675,7 +676,7 @@ function buildSync(body, arg, ctx) {
 function buildTX(body, arg, ctx) {
   const st = el('div', { class: 'kv' });
   const p1 = hwBtn('TX1', { sub: 'fibre', onclick: () => { S.txPath = 1; explain('Chemin TX1 (fibre opérateur, encodeur JPEG XS) : faible latence et haute qualité. C\'est le chemin principal.', 'tx:path'); } });
-  const p2 = hwBtn('TX2', { sub: 'satellite', onclick: () => { S.txPath = 2; emit('repair', 'tx'); explain('Chemin TX2 (satellite, HEVC) : secours indépendant de la fibre. Latence plus forte (≈ 0,5 s de trajet + codage), et le retour antenne arrive encore plus tard.', 'tx:path'); } });
+  const p2 = hwBtn('TX2', { sub: 'satellite', onclick: () => { S.txPath = 2; emit('repair', 'tx'); explain('Chemin TX2 (satellite, HEVC) : secours indépendant de la fibre. Latence plus forte (≈ 0,25 s de trajet par bond géostationnaire + codage), et le retour antenne arrive encore plus tard.', 'tx:path'); } });
   const test = hwBtn('ENVOYER LA MIRE', { sub: 'test de ligne', onclick: () => { const cur = ROUTER.map.AUX_TX1; if (cur === 'BARS') { route('AUX_TX1', 'PGM'); route('AUX_TX2', 'PGM'); } else { route('AUX_TX1', 'BARS'); route('AUX_TX2', 'BARS'); } } });
   ctx.dock.append(el('div', { class: 'dockrow' }, dmon(S.txPath === 2 ? 'AUX_TX2' : 'AUX_TX1', 'Départ vers la chaîne'), dmon('RETANT', 'Retour antenne (après diffusion)')));
   body.append(el('div', { class: 'panelgrid' }, el('div', { class: 'hwpanel' }, el('h3', {}, 'Chemin de transmission'), el('div', { class: 'hwrow' }, p1, p2, test), st),

@@ -248,7 +248,7 @@ function install(slot, cam, st) {
 export function renderPanel() {
   const P = $('#plan'); P.innerHTML = '';
   const head = el('div', { class: 'ph' },
-    el('h2', {}, 'Plan des caméras', el('button', { class: 'x', 'aria-label': 'Fermer', onclick: closePlan }, '×')),
+    el('h2', {}, el('span', { class: 'tape' }, 'Plan des caméras'), el('button', { class: 'x', 'aria-label': 'Fermer', onclick: closePlan }, '×')),
     el('div', { class: 'hwrow' },
       ...[['basique', 'Plan 6 cam.'], ['standard', 'Plan 12 cam.'], ['grand', 'Grand match 16']].map(([k, l]) => el('button', { class: 'btn small', onclick: () => { loadPreset(k, true); PLAN.sel = null; renderPanel(); refreshMarkers(); toast('Plan de caméras chargé : ' + l); } }, l)),
       el('button', { class: 'btn small danger', onclick: () => { loadPreset('none'); renderPanel(); refreshMarkers(); } }, 'Tout démonter')),

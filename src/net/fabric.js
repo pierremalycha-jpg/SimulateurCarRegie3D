@@ -642,9 +642,9 @@ export function sdpOf(fid) {
     if (f.kind === 'audio') {
       L.push(`m=audio ${f.udp} RTP/AVP ${f.pt}`, `c=IN IP4 ${g}/64`, `a=source-filter: incl IN IP4 ${g} ${n.ip}`, `a=rtpmap:${f.pt} L24/48000/${f.ch || 2}`, `a=fmtp:${f.pt} channel-order=SMPTE2110.(${(f.ch || 2) === 2 ? 'ST' : (f.ch || 2) === 8 ? 'SGRP,SGRP' : 'U0' + (f.ch || 2)})`, `a=ptime:1`, `a=maxptime:1`);
     } else if (f.kind === 'anc') {
-      L.push(`m=video ${f.udp} RTP/AVP ${f.pt}`, `c=IN IP4 ${g}/64`, `a=source-filter: incl IN IP4 ${g} ${n.ip}`, `a=rtpmap:${f.pt} smpte291/90000`, `a=fmtp:${f.pt} DID_SDID={0x60,0x60}; VPID_Code=${uhd ? 206 : 133}`);
+      L.push(`m=video ${f.udp} RTP/AVP ${f.pt}`, `c=IN IP4 ${g}/64`, `a=source-filter: incl IN IP4 ${g} ${n.ip}`, `a=rtpmap:${f.pt} smpte291/90000`, `a=fmtp:${f.pt} DID_SDID={0x60,0x60}; VPID_Code=${uhd ? 206 : hdi ? 133 : 137}`);
     } else if (f.kind === 'jxs') {
-      L.push(`m=video ${f.udp} RTP/AVP ${f.pt}`, `c=IN IP4 ${g}/64`, `a=source-filter: incl IN IP4 ${g} ${n.ip}`, `a=rtpmap:${f.pt} jxsv/90000`, `a=fmtp:${f.pt} packetmode=0; profile=High444.12; level=${uhd ? '4k-2' : '1080p-2'}; sublevel=Sublev3bpp; sampling=YCbCr-4:2:2; width=${uhd ? 3840 : 1920}; height=${uhd ? 2160 : 1080}; exactframerate=50; depth=10; colorimetry=${uhd ? 'BT2100' : 'BT709'}; TCS=${uhd ? 'HLG' : 'SDR'}; SSN=ST2110-22:2019; TP=2110TPN`, `b=AS:${Math.round(f.gbps * 1e6)}`);
+      L.push(`m=video ${f.udp} RTP/AVP ${f.pt}`, `c=IN IP4 ${g}/64`, `a=source-filter: incl IN IP4 ${g} ${n.ip}`, `a=rtpmap:${f.pt} jxsv/90000`, `a=fmtp:${f.pt} packetmode=0; profile=High444.12; level=${uhd ? '4k-2' : '2k-1'}; sublevel=Sublev3bpp; sampling=YCbCr-4:2:2; width=${uhd ? 3840 : 1920}; height=${uhd ? 2160 : 1080}; exactframerate=50; depth=10; colorimetry=${uhd ? 'BT2100' : 'BT709'}; TCS=${uhd ? 'HLG' : 'SDR'}; SSN=ST2110-22:2019; TP=2110TPN`, `b=AS:${Math.round(f.gbps * 1e6)}`);
     } else {
       L.push(`m=video ${f.udp} RTP/AVP ${f.pt}`, `c=IN IP4 ${g}/64`, `a=source-filter: incl IN IP4 ${g} ${n.ip}`, `a=rtpmap:${f.pt} raw/90000`,
         `a=fmtp:${f.pt} sampling=YCbCr-4:2:2; width=${uhd ? 3840 : 1920}; height=${uhd ? 2160 : 1080}; exactframerate=${hdi ? 25 : 50}; depth=10; TCS=${uhd ? 'HLG' : 'SDR'}; colorimetry=${uhd ? 'BT2100' : 'BT709'}; PM=2110GPM; SSN=ST2110-20:2017; TP=2110TPN;${hdi ? ' interlace;' : ''}`);

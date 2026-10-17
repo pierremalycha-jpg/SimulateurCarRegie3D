@@ -19,15 +19,15 @@ export const LENSES = {
   UA46: { name: 'Fujinon UA46x13.5BERD', brand: 'Fujinon', kind: 'portable', fmin: 13.5, fmax: 621, f0: 2.8, ramp: 316, fLong: 5.5, ext: true, mod: 2.8, kg: 5.8, dim: 'Φ 146,5 × 364 mm', len: 0.364, dia: 0.146, desc: 'Zoom portable 4K très long (13,5–621 mm) : f/2,8 jusqu\'à 316 mm, f/5,5 à 621 mm. Caméras bord terrain derrière les buts.' },
   UA24: { name: 'Fujinon UA24x7.8BERD', brand: 'Fujinon', kind: 'portable', fmin: 7.8, fmax: 187, f0: 1.8, ramp: 118, fLong: 2.85, ext: true, mod: 0.8, kg: 1.98, dim: 'longueur 220,5 mm', len: 0.22, dia: 0.11, desc: 'Zoom portable 4K polyvalent (7,8–187 mm) : f/1,8 jusqu\'à 118 mm, f/2,85 à 187 mm, 1,98 kg. Épaule, Steadicam, rail.' },
   UA13: { name: 'Fujinon UA13x4.5BERD', brand: 'Fujinon', kind: 'portable', fmin: 4.5, fmax: 59, f0: 1.8, ramp: 41, fLong: 2.6, ext: true, mod: 0.3, kg: 2.28, dim: '', len: 0.22, dia: 0.12, desc: 'Grand-angle portable 4K (4,5–59 mm) : f/1,8 jusqu\'à 41 mm, f/2,6 à 59 mm, mise au point à 30 cm. Vestiaires, tunnel, grue, caméra volante.' },
-  UA14: { name: 'Fujinon UA14x4.5BERD', brand: 'Fujinon', kind: 'portable', fmin: 4.5, fmax: 63, f0: 2.0, ramp: 45, fLong: 2.8, ext: true, len: 0.24, dia: 0.12, desc: 'Grand-angle portable 4K (4,5–63 mm) ; ouvertures données ici en ordre de grandeur.' },
+  UA14: { name: 'Fujinon UA14x4.5BERD', brand: 'Fujinon', kind: 'portable', fmin: 4.5, fmax: 63, f0: 1.8, ramp: 41, fLong: 2.8, ext: true, mod: 0.3, len: 0.24, dia: 0.12, desc: 'Grand-angle portable 4K (4,5–63 mm) : f/1,8 jusqu\'à 41 mm, f/2,8 à 63 mm, mise au point à 30 cm.' },
   // --- Canon (autre fabricant courant, gardé pour comparer) ---
-  UJ122: { name: 'Canon UJ122x8.2B', brand: 'Canon', kind: 'box', fmin: 8.2, fmax: 1000, f0: 1.7, ramp: 390, fLong: 4.4, ext: true, len: 0.64, desc: 'Zoom box UHD très longue focale (8,2–1000 mm). Ouvertures en ordre de grandeur.' },
-  UJ86: { name: 'Canon UJ86x9.3B', brand: 'Canon', kind: 'box', fmin: 9.3, fmax: 800, f0: 1.7, ramp: 330, fLong: 4.1, ext: true, len: 0.6, desc: 'Zoom box UHD 9,3–800 mm. Ouvertures en ordre de grandeur.' },
-  UJ27: { name: 'Canon UJ27x6.5B', brand: 'Canon', kind: 'box', fmin: 6.5, fmax: 180, f0: 1.5, ramp: 140, fLong: 1.95, ext: true, len: 0.55, desc: 'Zoom box grand-angle (6,5–180 mm) pour positions proches.' },
-  CJ45: { name: 'Canon CJ45ex9.7B', brand: 'Canon', kind: 'portable', fmin: 9.7, fmax: 437, f0: 2.0, ramp: 200, fLong: 4.4, ext: true, len: 0.33, dia: 0.13, desc: 'Zoom portable longue focale (9,7–437 mm).' },
+  UJ122: { name: 'Canon UJ122x8.2B', brand: 'Canon', kind: 'box', fmin: 8.2, fmax: 1000, f0: 1.7, ramp: 340, fLong: 5.0, ext: true, len: 0.64, desc: 'Zoom box UHD très longue focale (8,2–1000 mm) : f/1,7 jusqu\'à 340 mm, f/5,0 à 1000 mm (chiffres constructeur), distance mini 3 m.' },
+  UJ86: { name: 'Canon UJ86x9.3B', brand: 'Canon', kind: 'box', fmin: 9.3, fmax: 800, f0: 1.7, ramp: 340, fLong: 4.0, ext: true, len: 0.6, desc: 'Zoom box UHD 9,3–800 mm : f/1,7 jusqu\'à 340 mm, f/4,0 à 800 mm (chiffres constructeur), distance mini 3 m.' },
+  UJ27: { name: 'Canon UJ27x6.5B', brand: 'Canon', kind: 'box', fmin: 6.5, fmax: 180, f0: 1.5, ramp: 123, fLong: 2.2, ext: true, len: 0.55, desc: 'Zoom box grand-angle (6,5–180 mm) pour positions proches : f/1,5 jusqu\'à 123 mm, f/2,2 à 180 mm.' },
+  CJ45: { name: 'Canon CJ45ex9.7B', brand: 'Canon', kind: 'portable', fmin: 9.7, fmax: 437, f0: 2.0, ramp: 224, fLong: 3.9, ext: true, len: 0.33, dia: 0.13, desc: 'Zoom portable longue focale (9,7–437 mm) : f/2,0 jusqu\'à 224 mm, f/3,9 à 437 mm.' },
   CJ24: { name: 'Canon CJ24ex7.5B', brand: 'Canon', kind: 'portable', fmin: 7.5, fmax: 180, f0: 1.8, ramp: 120, fLong: 2.7, ext: true, len: 0.23, desc: 'Zoom portable polyvalent (7,5–180 mm).' },
-  CJ20: { name: 'Canon CJ20ex7.8B', brand: 'Canon', kind: 'portable', fmin: 7.8, fmax: 156, f0: 1.8, ramp: 105, fLong: 2.7, ext: true, len: 0.21, desc: 'Zoom portable léger, idéal Steadicam et épaule.' },
-  CJ15: { name: 'Canon CJ15ex4.3B', brand: 'Canon', kind: 'portable', fmin: 4.3, fmax: 65, f0: 1.8, ramp: 45, fLong: 2.6, ext: true, len: 0.22, desc: 'Grand-angle (4,3–65 mm).' },
+  CJ20: { name: 'Canon CJ20ex7.8B', brand: 'Canon', kind: 'portable', fmin: 7.8, fmax: 156, f0: 1.8, ramp: 108, fLong: 2.6, ext: true, len: 0.21, desc: 'Zoom portable léger, idéal Steadicam et épaule.' },
+  CJ15: { name: 'Canon CJ15ex4.3B', brand: 'Canon', kind: 'portable', fmin: 4.3, fmax: 65, f0: 1.8, ramp: 40, fLong: 2.9, ext: true, len: 0.22, desc: 'Grand-angle (4,3–65 mm).' },
   // --- optiques intégrées ---
   FIX4: { name: 'Optique fixe 4 mm', kind: 'fixe', fmin: 4, fmax: 4, f0: 2.0, ramp: 99, fLong: 2.0, ext: false, desc: 'Optique fixe grand-angle de mini-caméra (POV).' },
   FIX9: { name: 'Optique fixe 9 mm', kind: 'fixe', fmin: 9, fmax: 9, f0: 2.8, ramp: 99, fLong: 2.8, ext: false, desc: 'Optique fixe de drone (capteur 1").' },
@@ -44,15 +44,15 @@ export function maxAperture(lens, f, ext) {
 export const CAMERA_TYPES = {
   plateau: {
     label: 'Caméra tribune grand objectif', short: 'Tribune', sensor: '2/3',
-    body: 'Caméra système Sony HDC-5500 (3 capteurs CMOS 2/3" 4K, fibre SMPTE) dans un adaptateur grand objectif (série Sony HDLA), viseur 7" à l\'arrière',
-    support: 'Trépied lourd + tête fluide (type Vinten Vector), deux bras de manivelle : demande de zoom à droite, de point à gauche',
+    body: 'Caméra système Sony HDC-5500 (3 capteurs CMOS 2/3" 4K, fibre SMPTE) dans un adaptateur grand objectif (type Sony HDLA-3505), viseur 7" à l\'arrière',
+    support: 'Trépied lourd + tête fluide (type Vinten Vector), deux manches : commande de zoom et commande de point (en Europe, souvent zoom à gauche et point à droite ; c\'est une préférence d\'opérateur)',
     lenses: ['UA107', 'UA80', 'UA125', 'UA70', 'UA27', 'UJ86', 'UJ122', 'UJ27'], defLens: 'UA80',
     links: ['smpte', 'precab', 'smf', 'triax', 'ip'], defLink: 'smpte',
     roles: ['large', 'serre', 'semi', 'joueur', 'tactique', 'fixe'], hfr: 1, operator: true, model: 'box',
   },
   hfr3: {
     label: 'Super ralenti 3x (150 i/s)', short: 'SSM 3x', sensor: '2/3',
-    body: 'Caméra système Sony HDC-5500 en mode HFR 3x (150 i/s en 50 Hz) : 3 phases SDI vers l\'EVS',
+    body: 'Caméra système Sony HDC-5500 en mode HFR 3x (150 i/s en 50 Hz, en HD avec la licence HFR : la HDC-5500 monte à 8x en HD mais à 2x seulement en 4K) : 3 phases SDI vers l\'EVS',
     support: 'Trépied lourd + tête fluide, adaptateur grand objectif', lenses: ['UA80', 'UA107', 'UA125', 'UA70', 'UA46', 'UJ86'], defLens: 'UA80',
     links: ['smpte', 'precab', 'smf', 'ip'], defLink: 'smpte', roles: ['serre', 'joueur', 'semi'], hfr: 3, operator: true, model: 'box',
   },
@@ -76,7 +76,7 @@ export const CAMERA_TYPES = {
   },
   pov: {
     label: 'Mini-caméra POV', short: 'POV', sensor: '1/2.8',
-    body: 'Mini-caméra (type Marshall, Dreamchip, Sony HDC-P31) pilotée à distance',
+    body: 'Mini-caméra (type Marshall, Dreamchip) pilotée à distance',
     support: 'Fixation dans le filet / poteau, boîtier de conversion fibre', lenses: ['FIX4'], defLens: 'FIX4',
     links: ['smf', 'coax'], defLink: 'smf', roles: ['but', 'fixe'], hfr: 1, operator: false, model: 'pov',
   },
@@ -106,7 +106,7 @@ export const CAMERA_TYPES = {
   },
   ptz: {
     label: 'Caméra tourelle (PTZ)', short: 'PTZ', sensor: '1',
-    body: 'Caméra tourelle 4K télécommandée depuis le car (type Panasonic AW-UE160, Sony FR7)',
+    body: 'Caméra tourelle 4K télécommandée depuis le car (type Panasonic AW-UE160, Sony BRC-AM7)',
     support: 'Fixation murale ou sur pied, pilotée par un opérateur au car', lenses: ['PTZ20'], defLens: 'PTZ20',
     links: ['ip', 'smf', 'coax'], defLink: 'ip', roles: ['comm', 'tribune', 'beaute', 'fixe', 'tunnel'], hfr: 1, operator: false, model: 'ptz',
   },
@@ -227,10 +227,11 @@ export function buildChannels() {
   const ch = [];
   for (let f = 2030; f <= 2490; f += 10) {
     let status = 'libre', user = '';
-    if ([2150, 2190, 2230, 2330, 2350].includes(f)) { status = 'attrib'; user = 'Attribué à notre production (coordination)'; }
-    if ([2170, 2270, 2280].includes(f)) { status = 'occ'; user = 'Autre diffuseur (liaison HF)'; }
+    if ([2230, 2290, 2310, 2330, 2350].includes(f)) { status = 'attrib'; user = 'Attribué à notre production (coordination)'; }
+    if ([2250, 2270, 2280].includes(f)) { status = 'occ'; user = 'Autre diffuseur (liaison HF)'; }
+    if (f >= 2110 && f <= 2200) { status = 'occ'; user = 'Réseaux mobiles 2,1 GHz (2110-2170 MHz) et satellite mobile (2170-2200 MHz) : hors bandes vidéo PMSE'; }
     if ([2090, 2100].includes(f)) { status = 'occ'; user = 'Organisateur (vidéo sécurité)'; }
-    if (f >= 2400) { status = 'wifi'; user = 'Bande ISM 2,4 GHz (Wi-Fi des spectateurs)'; }
+    if (f >= 2400 && f < 2484) { status = 'wifi'; user = 'Bande ISM 2,4 GHz (Wi-Fi des spectateurs)'; }
     ch.push({ f, status, user });
   }
   return ch;
@@ -332,13 +333,13 @@ export const STATION_INFO = {
     role: 'Mixe le son du programme : ambiance des tribunes, micros canons bord terrain (frappes de balle, coups de sifflet), commentaires. Fournit le son international (sans voix), les retours N-1 (commentateurs, studio, bord terrain), et garantit la loudness et la synchro labiale.',
     gear: ['Console numérique (ici inspirée de la Studer Vista 1 : écrans Vistonics, FaderGlow ; ailleurs Lawo mc², Calrec Artemis/Apollo…)', 'Micros : canons bord terrain (statiques, 48 V), couples d\'ambiance ORTF / XY en tribune, micros-casques des commentateurs', 'Liaisons MADI / Dante / ST 2110-30, désembedding SDI, embedding du départ', 'Mesures : loudness EBU R128, corrélateur de phase, vumètres'],
     process: ['Installation des micros par l\'équipe son, feuille de patch préparée', 'Contrôle de chaque source en PFL (48 V, phase, gain d\'entrée)', 'Line-up : 1 kHz à -18 dBFS sur toutes les liaisons (snapshot TEST DE LIGNE)', 'Embedder du départ réglé selon le plan de son de la chaîne (PGM, international…)', 'Retours N-1 des commentateurs, du studio et du bord terrain vérifiés (pas de voix dans son propre retour)', 'Retard de ligne calé sur l\'image (caméra HF comprise)', 'Direct : ambiances toujours ouvertes, canons qui suivent le ballon, commentaires au-dessus, cible -23 LUFS'],
-    tips: ['EBU R128 : -23 LUFS intégré, true peak maximum -1 dBTP.', 'Le gain d\'entrée se règle AVANT le fader : une saturation à l\'entrée ne se rattrape jamais.', 'Corrélateur négatif = un micro en opposition de phase : l\'ambiance s\'annule en mono.', 'Synchro labiale (EBU R37) : son en avance de 40 ms au plus, en retard de 60 ms au plus.'],
+    tips: ['EBU R128 : -23 LUFS intégré, true peak maximum -1 dBTP.', 'Le gain d\'entrée se règle AVANT le fader : une saturation à l\'entrée ne se rattrape jamais.', 'Corrélateur négatif = un micro en opposition de phase : l\'ambiance s\'annule en mono.', 'Synchro labiale (EBU R37) : de bout en bout (sortie vers l\'émission), son en avance de 40 ms au plus, en retard de 60 ms au plus ; à chaque étape de la chaîne (le car en est une), de 5 ms d\'avance à 15 ms de retard : on vise 0 ms.'],
   },
   hf: {
     title: 'Technicien(ne) HF', where: 'Zone technique / car HF',
     role: 'Installe et exploite les liaisons sans fil : émetteurs des caméras HF, antennes réceptrices, récepteurs. Choisit les fréquences attribuées, la modulation et la puissance, surveille la marge de réception.',
     gear: ['Émetteurs COFDM au dos des caméras (type Vislink, Domo/Cobham)', 'Antennes réceptrices (panneaux secteur, omnidirectionnelles) en toit de tribune, reliées par fibre (RF sur fibre)', 'Récepteurs en diversité (4 à 8 antennes combinées)', 'Analyseur de spectre'],
-    process: ['Demande de fréquences auprès de la coordination (en France, l\'ANFR ou le coordinateur de l\'événement)', 'Pose des antennes pour couvrir toutes les zones (terrain, tunnel, vestiaires)', 'Réglage modulation / débit / latence, test de couverture en marchant', 'Surveillance en direct : niveaux, MER, marge'],
+    process: ['Demande de fréquences auprès de la coordination (en France, autorisation individuelle temporaire délivrée par l\'Arcep, 2 mois au plus, dossier déposé auprès de l\'ANFR ; sur un grand événement, le coordinateur de fréquences de l\'organisateur)', 'Pose des antennes pour couvrir toutes les zones (terrain, tunnel, vestiaires)', 'Réglage modulation / débit / latence, test de couverture en marchant', 'Surveillance en direct : niveaux, MER, marge'],
     tips: ['64-QAM = beaucoup de débit (belle image) mais demande environ 18 dB de rapport signal/bruit ; QPSK passe partout mais compresse davantage.', 'Ne jamais utiliser la bande Wi-Fi 2,4 GHz : elle est saturée par les téléphones du public.', 'Plusieurs antennes en diversité évitent les coupures dues aux évanouissements (fading).'],
   },
   grille: {
@@ -437,7 +438,7 @@ export const STATION_INFO = {
 export const GLOSSARY = [
   ['Bias light', 'Rétroéclairage tamisé, de température D65 (6 500 K), placé derrière un mur d\'écrans ou un moniteur de référence : il réduit la fatigue visuelle et l\'écart de luminance entre l\'écran et son entourage, sans fausser la perception des couleurs.'],
   ['Ordres de réalisation', 'Annonces codifiées du réalisateur à l\'intercom : « Prépare la 3 » (le truquiste met la caméra 3 en preset), « Top » ou « Envoie » (cut), « Enchaîne » (fondu), « Ralenti » (l\'EVS envoie). Le truquiste et l\'opérateur ralenti n\'agissent qu\'à l\'ordre, l\'antenne reste au réalisateur.'],
-  ['SDI', 'Serial Digital Interface : vidéo numérique non compressée sur câble coaxial 75 Ω (BNC). HD-SDI 1,485 Gb/s (SMPTE ST 292), 3G-SDI 2,97 Gb/s (ST 424) pour le 1080p50, 12G-SDI 11,88 Gb/s (ST 2082) pour l\'UHD sur un seul câble. Transporte aussi l\'audio embeddé (16 canaux), le timecode et des données.'],
+  ['SDI', 'Serial Digital Interface : vidéo numérique non compressée sur câble coaxial 75 Ω (BNC). HD-SDI 1,485 Gb/s (SMPTE ST 292), 3G-SDI 2,97 Gb/s (ST 424) pour le 1080p50, 12G-SDI 11,88 Gb/s (ST 2082) pour l\'UHD sur un seul câble. Transporte aussi l\'audio embeddé (16 canaux en HD-SDI selon ST 299-1, jusqu\'à 32 en 3G/12G-SDI selon ST 299-2), le timecode et des données.'],
   ['Quad-link / 2SI', 'UHD transporté sur 4 liens 3G-SDI : découpage en quadrants (Square Division) ou entrelacement de 2 échantillons (2SI).'],
   ['ST 2110-21', 'Norme de régularité d\'émission des paquets vidéo : émetteurs de type N (étroit, paquets réguliers) ou W (large, rafales), avec deux limites mesurables : CMAX et VRX_FULL.'],
   ['CMAX / CINST', 'CINST : nombre de paquets arrivés en avance sur le rythme régulier (rafale instantanée). Il doit rester sous CMAX, calculé pour le format et le type d\'émetteur.'],
@@ -501,7 +502,7 @@ export const GLOSSARY = [
   ['Embedding', 'Insertion de l\'audio dans le flux SDI (et désembedding : extraction).'],
   ['Plan de son', 'Affectation demandée par le diffuseur : quel son sur quelle paire du SDI (ex. 1-2 PGM stéréo, 3-4 international).'],
   ['Son international', 'Mix d\'ambiance et d\'effets sans aucune voix, livré aux diffuseurs étrangers qui y ajoutent leurs commentaires.'],
-  ['Synchro labiale', 'Alignement du son sur l\'image (lip-sync). Tolérance EBU R37 : son en avance de 40 ms au plus, en retard de 60 ms au plus.'],
+  ['Synchro labiale', 'Alignement du son sur l\'image (lip-sync). Tolérance EBU R37 de bout en bout (sortie vers l\'émission) : son en avance de 40 ms au plus, en retard de 60 ms au plus ; à chaque étape de la chaîne : de 5 ms d\'avance à 15 ms de retard.'],
   ['Retard de ligne', 'Retard ajouté au son pour compenser la latence de l\'image (codec HF, conversions, synchroniseurs).'],
   ['Vistonics', 'Interface des consoles Studer Vista : molettes et touches montées sur l\'écran tactile, au-dessus de chaque tranche, avec un code couleur (rouge égaliseur, vert dynamique, jaune panoramique).'],
   ['FaderGlow', 'Bande lumineuse le long de chaque fader (consoles Studer Vista), de la couleur de la tranche ou de la fonction active.'],
@@ -512,7 +513,7 @@ export const GLOSSARY = [
   ['AFV (audio follow video)', 'Ouverture automatique d\'une tranche son quand l\'image associée passe à l\'antenne (tally du mélangeur).'],
   ['Talkback', 'Micro d\'ordres de l\'ingénieur du son vers les casques et oreillettes (N-1), jamais vers l\'antenne.'],
   ['Alimentation fantôme 48 V', 'Tension envoyée par la console dans le câble micro pour alimenter les micros statiques (canons, couples d\'ambiance).'],
-  ['Polarité (Ø)', 'Inversion du signal d\'une entrée. Un micro d\'un couple inversé rend la corrélation négative : le son s\'annule en mono.'],
+  ['Polarité (Ø)', 'Inversion du signal d\'une entrée. Un micro d\'un couple inversé rend la corrélation négative : en mono, ce qui est commun aux deux micros s\'annule (son creux, graves qui disparaissent), d\'autant plus que le couple est coïncident (XY).'],
   ['Corrélateur de phase', 'Mesure de la ressemblance entre gauche et droite : +1 mono compatible, 0 très large, négatif = opposition de phase.'],
   ['Gain d\'entrée / OVL', 'Amplification à l\'entrée de la tranche (préampli micro). OVL : saturation, irréversible, à corriger au gain et non au fader.'],
   ['Gate / expandeur', 'Traitement qui atténue une source sous un seuil : coupe la foule qui repisse dans les micros des commentateurs quand ils se taisent.'],
@@ -525,8 +526,14 @@ export const GLOSSARY = [
   ['Objectif box', 'Gros zoom de studio / terrain dans un boîtier rectangulaire (≈ 25 kg), à servo, pour les caméras de tribune : 70x à 125x.'],
   ['Adaptateur grand objectif', 'Châssis dans lequel se loge une caméra système portable pour porter un objectif box et un grand viseur (série Sony HDLA).'],
   ['Demandes zoom / point', 'Commandes du cadreur fixées aux bras de la tête : bascule de zoom à droite, roue de point à gauche, reliées au servo de l\'objectif.'],
-  ['MOD (distance minimale)', 'Distance la plus courte à laquelle un objectif fait le point (≈ 3 m pour un grand box, 0,3 à 0,8 m pour un portable).'],
-  ['MADI', 'AES10 : 64 canaux audio numériques sur un coaxial ou une fibre.'],
+  ['Pied lourd et araignée', 'Trépied à deux sections pour caméra de stade (type Vinten HDT-2 : ≈ 15 kg, plus de 100 kg de charge). L\'araignée (spreader), au sol ou à mi-hauteur, relie les jambes : verrouillée, elle empêche le pied de s\'ouvrir sous la charge.'],
+  ['Tête fluide (tête lourde)', 'Tête panoramique et inclinaison à frottement amorti et contrepoids réglable (type Vinten Vector 750i, ≈ 18 kg, embase plate 4 vis). Verrou central, freins, frictions et équilibrage se règlent séparément ; on la verrouille avant d\'ajouter ou de retirer une charge.'],
+  ['Embase (4 vis, Mitchell, bol)', 'Interface entre pied et tête. Les têtes lourdes ont une embase plate à 4 vis ; un adaptateur la monte sur un support Mitchell. Le bol (100 ou 150 mm) sert aux têtes plus légères.'],
+  ['Équilibrage', 'Réglage de la position avant / arrière de la charge sur la plaque et du contrepoids de la tête, une fois tout monté (objectif, viseur, pare-soleil) : la caméra doit rester seule dans la position où on la lâche. On refait l\'équilibrage à chaque ajout ou retrait.'],
+  ['Câble d\'objectif', 'Relie l\'objectif box au connecteur 36 broches de l\'adaptateur grand objectif (12 broches pour un objectif portable B4) : zoom, point, iris, doubleur et retours de position passent par lui.'],
+  ['Nettoyage des connecteurs fibre', 'Chaque extrémité d\'une fibre SMPTE (caméra, câble, prise murale) s\'inspecte et se nettoie avant chaque branchement, avec un nettoyeur « one-click » et une visionneuse (recommandations SMPTE EG 2039). Une poussière sur une férule suffit à faire chuter le niveau optique.'],
+  ['MOD (distance minimale)', 'Distance la plus courte à laquelle un objectif fait le point (≈ 3 m pour un grand box, 0,3 à 0,8 m pour un portable courant, mais ≈ 2,8 m pour un long portable comme l\'UA46x13.5).'],
+  ['MADI', 'AES10 : jusqu\'à 64 canaux audio numériques à 48 kHz (56 en mode varispeed, 32 à 96 kHz) sur un coaxial 75 Ω ou une fibre.'],
   ['N-1', 'Mix-minus : retour audio contenant tout le programme sauf la voix de celui qui l\'écoute.'],
   ['HDR / HLG', 'Haute dynamique. HLG (Hybrid Log-Gamma, ITU-R BT.2100) est le plus utilisé en direct ; on dérive souvent le SDR (BT.709) depuis le HDR.'],
   ['BT.709 / BT.2020', 'Espaces colorimétriques de la HD et de l\'UHD.'],
@@ -661,7 +668,7 @@ export const GUIDE = [
 <ol class="steps">
 <li><b>Objectif → capteurs.</b> La lumière traverse le zoom (focale, iris, filtres ND) et un prisme qui la sépare sur 3 capteurs (rouge, vert, bleu).</li>
 <li><b>Caméra → CCU.</b> Par la fibre SMPTE (ou triax, fibre, HF), la caméra envoie l'image à sa CCU dans le car et reçoit en retour l'alimentation, l'intercom, le retour programme, le tally et la référence.</li>
-<li><b>RCP.</b> L'ingénieur vision règle l'image depuis son RCP : la CCU applique les réglages (gain, noir, couleurs) ou les renvoie à la caméra (iris, filtres).</li>
+<li><b>RCP.</b> L'ingénieur vision règle l'image depuis son RCP : la CCU relaie les réglages vers la tête de caméra, où se fait l'essentiel du traitement (gain, noir, couleurs, iris, filtres) ; la CCU assure surtout les conversions de sortie (UHD/HD, HDR/SDR).</li>
 <li><b>CCU → grille.</b> La sortie SDI (ou IP) de la CCU entre dans la grille.</li>
 <li><b>Grille → mélangeur, EVS, multiview.</b> La grille distribue chaque caméra au mélangeur, aux entrées d'enregistrement des EVS et aux tuiles du multiview.</li>
 <li><b>Mélangeur → PGM.</b> Le truquiste construit le programme : commutations, ralentis, habillage (DSK).</li>
@@ -675,7 +682,7 @@ export const GUIDE = [
 <tr><td>1080i50 (HD entrelacé)</td><td>HD-SDI (ST 292)</td><td>1,485 Gb/s</td><td>≈ 120 à 150 m</td></tr>
 <tr><td>1080p50 (HD progressif)</td><td>3G-SDI (ST 424)</td><td>2,97 Gb/s</td><td>≈ 100 à 120 m</td></tr>
 <tr><td>2160p50 (UHD)</td><td>12G-SDI (ST 2082) ou 4 x 3G (quad-link)</td><td>11,88 Gb/s</td><td>≈ 70 m</td></tr>
-<tr><td>Toutes</td><td>IP ST 2110 sur fibre 25/100 GbE</td><td>≈ 2,5 Gb/s (1080p50) à 10 Gb/s (UHD) par flux</td><td>fibre : plusieurs km</td></tr>
+<tr><td>Toutes</td><td>IP ST 2110 sur fibre 25/100 GbE</td><td>≈ 2,2 Gb/s (1080p50) à 8,6 Gb/s (UHD p50) par flux</td><td>fibre : plusieurs km</td></tr>
 </tbody></table>
 <p>En Europe, tout est à 50 Hz : 50 images par seconde (25 en entrelacé, 2 trames par image). Le timecode compte 25 images par seconde.</p>
 <p><b>HDR.</b> Les productions UHD sont souvent en HDR HLG (BT.2100, couleurs BT.2020), avec une version SDR (BT.709) dérivée en parallèle. Les caméras sont réglées en HDR et contrôlées aussi en SDR.</p>`},
@@ -701,8 +708,8 @@ export const GUIDE = [
     id: 'optique', title: 'Optique et exposition', html: `
 <p><b>Focale et angle.</b> Sur un capteur 2/3" (9,59 mm de large), l'angle horizontal vaut 2 × arctan(9,59 / 2f) : 58° à 8,6 mm, 13,7° à 40 mm, 1,4° à 400 mm, 0,55° à 1000 mm. À 80 m, un champ de 7 m de large demande une focale d'environ 110 mm.</p>
 <p><b>Iris.</b> La suite f/1.4 – 2 – 2.8 – 4 – 5.6 – 8 – 11 – 16 : chaque valeur divise la lumière par 2. Le zoom perd de la luminosité en longue focale (ramping) et le doubleur coûte 2 diaphragmes.</p>
-<p><b>Repères d'exposition</b> (en plein jour, 0 dB, 50 i/s) : environ f/8 avec un ND 1/4. De nuit sous l'éclairage du stade (environ 2000 lux) : environ f/2.8 sans filtre. Une caméra super ralenti 3x reçoit 3 fois moins de lumière par image (un diaphragme et demi).</p>
-<p><b>Lire le waveform.</b> 0 % = noir, 100 % = blanc nominal (700 mV). Pelouse ensoleillée vers 40-55 %, peaux vers 50-70 %, maillot blanc juste sous 100 %. Au-dessus du knee point (95 % par défaut), les hautes lumières sont compressées, puis l'écrêteur (white clip) les limite : 103 % ici, pour respecter la tolérance EBU R103 qu'exigent beaucoup de diffuseurs. Le signal SDI peut techniquement monter jusqu'à 109 %.</p>`},
+<p><b>Repères d'exposition</b> (en plein jour, 0 dB, 50 i/s) : environ f/8 avec un ND 1/4. De nuit sous l'éclairage du stade (environ 2000 lux) : environ f/2.8 sans filtre. Ce sont les repères du simulateur : une caméra réelle de type HDC-5500 (sensibilité F11 sous 2000 lx pour un blanc à 89,9 %) est plus sensible de 2 à 3 diaphragmes, d'où plutôt un ND 1/16 ou 1/64 en plein soleil et un iris vers f/4 à f/8 de nuit selon l'objectif. Une caméra super ralenti 3x reçoit 3 fois moins de lumière par image (un diaphragme et demi).</p>
+<p><b>Lire le waveform.</b> 0 % = noir, 100 % = blanc nominal (700 mV). Pelouse ensoleillée vers 40-55 %, peaux vers 50-70 %, maillot blanc juste sous 100 %. Au-dessus du knee point (95 % par défaut), les hautes lumières sont compressées, puis l'écrêteur (white clip) les limite : 103 % ici, une limite qu'exigent encore beaucoup de diffuseurs (c'était la tolérance en luminance de l'EBU R103-2000 ; depuis 2016, R103 admet une plage préférée jusqu'à 105 %, code 984 en 10 bits). Le signal SDI peut techniquement monter jusqu'à 109 %.</p>`},
   {
     id: 'objectifs', title: 'Caméras Sony HDC et objectifs Fujinon', html: `
 <p>Sur un match, les caméras principales sont des <b>caméras système</b> (type Sony HDC-5500 : trois capteurs CMOS 2/3" 4K, liaison fibre SMPTE vers leur CCU) équipées d'<b>objectifs « box »</b> : de gros zooms à servo, dans un boîtier rectangulaire. La caméra se loge par l'arrière dans un <b>adaptateur grand objectif</b> (série Sony HDLA) qui porte l'objectif à l'avant et le grand viseur (7 pouces) à l'arrière, sans démonter l'objectif. Le cadreur pilote le zoom à la poignée droite (bascule au pouce) et le point à la roue de gauche : ce sont les <b>demandes</b>, reliées au servo de l'objectif.</p>
@@ -721,9 +728,9 @@ export const GUIDE = [
 <li><b>UA13x4.5BERD</b> : 4,5–59 mm, f/1,8 jusqu'à 41 mm puis f/2,6 ; mise au point à 30 cm. Vestiaires, tunnel, grue.</li></ul>
 <h3>Ce qu'il faut retenir</h3>
 <ul>
-<li><b>Rampe d'ouverture (ramping)</b> : au-delà d'une certaine focale, l'objectif perd de la lumière (f/1,7 → f/4,5 sur un 107x). Le soir, un serré à 900 mm demande donc 1,4 diaphragme de plus qu'à 340 mm : l'ingénieur vision le compense au RCP.</li>
+<li><b>Rampe d'ouverture (ramping)</b> : au-delà d'une certaine focale, l'objectif perd de la lumière (f/1,7 → f/4,5 sur un 107x). Le soir, un serré à 900 mm demande donc environ 2,8 diaphragmes de plus qu'à 340 mm (2 × log2(4,5 / 1,7)) : l'ingénieur vision le compense au RCP.</li>
 <li><b>Doubleur (extender ×2)</b> : focale doublée, mais 2 diaphragmes perdus (4 fois moins de lumière). Le simulateur l'applique avec la touche X au poste cadreur.</li>
-<li><b>Distance minimale de mise au point (MOD)</b> : 3 m environ pour les grands box, d'où leur place en tribune ; un portable fait le point beaucoup plus près.</li>
+<li><b>Distance minimale de mise au point (MOD)</b> : 3 m environ pour les grands box, d'où leur place en tribune ; un portable courant fait le point beaucoup plus près (0,3 à 0,8 m), sauf les longs portables (2,8 m pour l'UA46).</li>
 <li><b>Masse</b> : 24 à 27 kg d'objectif + adaptateur + caméra : trépied ou pied lourd et tête fluide de grande capacité (type Vinten Vector), contrepoids réglé.</li>
 </ul>
 <p class="note">Les modèles cités sont des exemples de matériel courant en production sportive ; vérifiez les fiches constructeur pour un projet réel.</p>`},
@@ -740,7 +747,7 @@ export const GUIDE = [
 <li><b>Effets :</b> micros canons bord terrain qui suivent le ballon (frappes, contacts), parfois micros paraboliques.</li>
 <li><b>Commentaires :</b> unité de commentaire en cabine, avec retour N-1.</li>
 <li><b>Son international :</b> ambiance + effets sans commentaire, livré à tous les diffuseurs.</li></ul>
-<p>Formats : stéréo et 5.1 (parfois immersif), jusqu'à 16 canaux embeddés dans le SDI. Loudness EBU R128 : -23 LUFS intégré, true peak ≤ -1 dBTP. Line-up : 1 kHz à -18 dBFS.</p>`},
+<p>Formats : stéréo et 5.1 (parfois immersif), 16 canaux embeddés en HD-SDI, jusqu'à 32 en 3G/12G-SDI (SMPTE ST 299-2). Loudness EBU R128 : -23 LUFS intégré, true peak ≤ -1 dBTP. Line-up : 1 kHz à -18 dBFS.</p>`},
   {
     id: 'vista', title: 'La console son : inspiration Studer Vista 1', html: `
 <p>La console du car s'inspire de la <b>Studer Vista 1</b>, la plus compacte des consoles Vista : une version 22 faders d'environ un mètre de large (idéale dans une cabine de car) et une version 32 faders. Son moteur de traitement (DSP) intégré est annoncé à 96 canaux (mono, stéréo ou 5.1). <i>Simulation pédagogique non officielle : interface et chiffres simplifiés.</i></p>
@@ -749,14 +756,15 @@ export const GUIDE = [
 <li><b>Écrans Vistonics.</b> Les molettes et les touches sont posées <i>sur</i> l'écran tactile, au-dessus de chaque tranche : la valeur réglée s'affiche juste sous le doigt, sans menu. Un écran porte 10 tranches. Code couleur : <b style="color:#ef4444">rouge = égaliseur</b>, <b style="color:#22c55e">vert = dynamique</b>, <b style="color:#facc15">jaune = panoramique</b>.</li>
 <li><b>FaderGlow.</b> Une bande lumineuse le long de chaque fader, de la couleur de la tranche : on repère d'un coup d'œil les ambiances, les canons, les commentaires. Dans le simulateur, elle s'allume quand la tranche est ouverte à l'antenne.</li>
 <li><b>Couches (layers).</b> Les mêmes faders affichent tour à tour les sources (couche A) puis les masters et les VCA (couche B). Les faders motorisés se replacent.</li>
-<li><b>Control Bay.</b> À droite : vumètres, écoutes, talkback, et l'écran de la tranche sélectionnée (touche SEL) avec toutes ses commandes.</li>
+<li><b>Control Bay.</b> À droite. Sur la vraie Vista 1, elle porte 12 faders (10 tranches et 2 « grand masters ») avec son propre écran Vistonics, plus les écoutes et le talkback : la version 22 faders n'a donc qu'une baie de faders (10 tranches) à gauche. Dans le simulateur : vumètres, écoutes, talkback, et l'écran de la tranche sélectionnée (touche SEL) avec toutes ses commandes.</li>
 </ul>
 <h3>Le trajet du son dans une tranche</h3>
 <p class="formula">Entrée (patch) → gain + 48 V → polarité Ø → passe-haut → égaliseur 4 bandes → gate / expandeur → compresseur → retard → panoramique → fader (+ VCA) → bus PGM, INTL, N-1</p>
+<p class="note">Ordre retenu par le simulateur. Sur la vraie Vista, l'ordre des blocs de traitement (égaliseur, dynamique, insert, retard…) se règle tranche par tranche, dans la page Channel Patch.</p>
 <ol>
 <li><b>Gain d'entrée</b> : on vise des crêtes entre −18 et −10 dBFS sur le vumètre d'entrée. L'OVL rouge signifie que le préampli sature : il faut baisser le GAIN, pas le fader.</li>
 <li><b>48 V</b> : les micros statiques (couples d'ambiance, canons) en ont besoin. Sans 48 V, ils ne délivrent rien.</li>
-<li><b>Polarité (Ø)</b> : un côté d'un couple inversé rend le corrélateur négatif ; en mono, l'ambiance disparaît.</li>
+<li><b>Polarité (Ø)</b> : un côté d'un couple inversé rend le corrélateur négatif ; en mono, la partie commune aux deux micros s'annule : l'ambiance devient creuse et perd ses graves (annulation presque totale avec un couple XY).</li>
 <li><b>Passe-haut</b> : coupe le grondement inutile (canons 100-150 Hz, voix 80-120 Hz).</li>
 <li><b>Égaliseur</b> : on creuse plutôt qu'on n'ajoute. Bas-médium (250-500 Hz) pour éclaircir, haut-médium (2-4 kHz) pour la présence et l'impact du ballon.</li>
 <li><b>Dynamique</b> : le compresseur resserre la voix d'un commentateur ; le gate ou l'expandeur coupe la foule qui « repisse » dans son micro quand il se tait.</li>
@@ -782,7 +790,7 @@ export const GUIDE = [
 <p class="note">Limite du simulateur : les voix sont dites par la synthèse vocale du navigateur, qui ne passe pas par le moteur audio. Leur volume suit fidèlement la console (patch, gain, fader, VCA, mute, bus écouté, master, DIM, retard de ligne), mais l'égaliseur et la dynamique n'en changent pas le timbre.</p>`},
   {
     id: 'car', title: 'Le car régie', html: `
-<p>Un car régie est un semi-remorque de 16 à 18 m, souvent avec une ou deux extensions latérales qui doublent la largeur une fois déployées. Il est climatisé, isolé, et contient :</p>
+<p>Un car régie est en général un semi-remorque d'environ 13,5 à 14,5 m (16,50 m au maximum avec le tracteur en Europe pour un ensemble articulé), souvent avec une ou deux extensions latérales qui doublent la largeur une fois déployées. Il est climatisé, isolé, et contient :</p>
 <ul><li><b>Régie production :</b> mur d'écrans (multiview), réalisateur, scripte, truquiste au mélangeur, habillage, production.</li>
 <li><b>Régie vision :</b> ingénieurs vision avec RCP, oscilloscopes et moniteur de référence, dans une lumière contrôlée.</li>
 <li><b>Régie ralentis :</b> opérateurs EVS/LSM.</li>
@@ -794,7 +802,7 @@ export const GUIDE = [
 <p>Une caméra « système » (type Sony HDC-5500) n'est que la moitié d'un ensemble : <b>tête de caméra</b> sur le terrain, <b>CCU</b> dans le car, <b>RCP</b> sur le pupitre de l'ingénieur vision. Les trois sont reliés en réseau.</p>
 <h3>1. La tête de caméra</h3>
 <ul>
-<li><b>Bloc optique :</b> un prisme sépare la lumière en rouge, vert et bleu vers trois capteurs CMOS 2/3" (4K natif, obturation globale sur la HDC-5500). Monture <b>B4</b> : on y monte les zooms broadcast (portable 14x à 27x, ou « box » 86x à 122x sur pied).</li>
+<li><b>Bloc optique :</b> un prisme sépare la lumière en rouge, vert et bleu vers trois capteurs CMOS 2/3" (4K natif, obturation globale sur la HDC-5500). Monture <b>B4</b> : on y monte les zooms broadcast (portables d'environ 13x à 46x, ou « box » de 27x à 125x sur pied).</li>
 <li><b>Viseur</b> (connecteur VF) : le cadreur y voit son image, le retour programme (RET), le tally et les marques de cadrage.</li>
 <li><b>Connecteurs arrière :</b> fibre CCU (LEMO 3K.93C), SDI 1/2/3 et SDI MONI pour un usage local, TEST OUT, PROMPTER/GENLOCK, INTERCOM 1 et 2 (XLR 5 broches), AUDIO CH1/CH2 (XLR 3), EARPHONE, DC IN (XLR 4, 10,5 à 17 V), DC OUT, REMOTE, RET CTRL, TRACKER et CRANE (données de position pour la réalité augmentée et les grues). Ouvrez la tête dans la visionneuse (touche K) pour voir chaque connecteur.</li>
 </ul>
@@ -821,6 +829,34 @@ export const GUIDE = [
 <li>Mémoriser un <b>fichier de scène</b> (soleil, ombre, nuit) pour pouvoir y revenir.</li>
 <li>Test intercom avec le cadreur (PROD et ENG) et vérification du retour programme dans son viseur.</li>
 </ol>`},
+  {
+    id: 'montage', title: 'Monter une caméra de stade', html: `
+<p>Le jour du match, l'équipe caméra monte chaque position avant le line-up. Une caméra principale de passerelle pèse plus de 80 kg une fois complète : l'ordre de montage n'est pas une formalité, il évite la bascule, les chutes de matériel et les liaisons qui décrochent à l'antenne. L'<b>atelier de montage</b> (feuille de service, 09:30) fait refaire ces gestes sur la CAM 1.</p>
+<h3>1. Le support</h3>
+<ul>
+<li><b>Pied lourd</b> (type Vinten HDT-2, ≈ 15 kg) posé sur le repère de la position, jambes sorties à la bonne hauteur d'optique et serrées, <b>araignée verrouillée</b>.</li>
+<li><b>Tête lourde</b> (type Vinten Vector 750i, ≈ 18 kg, embase plate 4 vis ; un adaptateur Mitchell vers 4 vis si le support n'a qu'une embase Mitchell). On la <b>met à niveau</b> à la bulle avant de la charger, puis on <b>verrouille</b> panoramique et inclinaison.</li>
+<li>Les <b>manches</b> se montent sur les rosaces, dentures bien emboîtées.</li>
+</ul>
+<h3>2. La caméra</h3>
+<ul>
+<li><b>Adaptateur grand objectif</b> (type Sony HDLA-3505, 15,5 kg) sur la plaque de la tête, levier fermé, test de traction.</li>
+<li><b>Tête de caméra</b> (type HDC-5500) glissée par l'arrière et verrouillée : alimentation, vidéo et commandes passent par l'accouplement, sans câble.</li>
+<li><b>Objectif box</b> (≈ 24 kg) : <b>à deux</b>, tête verrouillée, présenté sur la monture de l'adaptateur puis bloqué ; <b>câble d'objectif</b> sur le connecteur 36 broches.</li>
+<li><b>Viseur 7"</b> sur le dessus de l'adaptateur (image, retour, tally).</li>
+</ul>
+<h3>3. Les commandes et l'équilibrage</h3>
+<ul>
+<li><b>Commande de zoom</b> (bascule au pouce, type Fujinon ERD-50A) et <b>commande de point</b> (molette, type EPD-51A) sur les manches, branchées au module servo. En Europe, le zoom est souvent à gauche, mais c'est une préférence d'opérateur.</li>
+<li><b>Équilibrage</b> une fois tout monté : contrepoids réglé pour la charge avant de libérer le verrou, plaque avant / arrière jusqu'à ce que la caméra tienne seule ; les frictions se règlent ensuite, au goût du cadreur. On rééquilibre à chaque ajout (pare-soleil, housse de pluie).</li>
+</ul>
+<h3>4. La liaison et la mise en service</h3>
+<ul>
+<li><b>Fibre hybride SMPTE</b> : chaque extrémité (caméra, câble, prise murale) s'<b>inspecte et se nettoie</b> avant chaque branchement. Une poussière suffit à faire chuter le niveau optique à la CCU.</li>
+<li>Le câble est <b>attaché au pied</b> : un câble accroché ne doit ni tirer sur le connecteur ni renverser la caméra.</li>
+<li><b>Casque d'ordres</b> sur la prise INTERCOM de la caméra, puis appel à la vision : « CAM 1 câblée ». La CCU alimente la tête par la fibre, la vision vérifie l'image, on teste le <b>CALL</b> (la lampe d'appel s'allume au RCP) et le <b>tally</b> du viseur. Bouchon d'objectif retiré, la caméra passe au line-up.</li>
+</ul>
+<p class="note">Les modèles cités sont des exemples de matériel courant ; masses et connecteurs d'après les fiches constructeurs. Travail sur passerelle : voir le chapitre Sécurité (protection collective d'abord).</p>`},
   {
     id: 'evsarch', title: 'Le serveur ralenti en détail', html: `
 <p>Un serveur de production live (dans votre car : <b>EVS XT4K</b>) enregistre en permanence plusieurs flux et, en même temps, relit n'importe quel instant de ces enregistrements, à n'importe quelle vitesse. Il est piloté par la <b>télécommande LSM</b> (logiciel Multicam) et, pour la gestion des clips, par <b>IPDirector</b>.</p>
@@ -900,7 +936,7 @@ export const GUIDE = [
 <li>Le flux descend par ce chemin ; le <b>snooping IGMP</b> de chaque leaf ne le fait sortir que sur les ports abonnés.</li></ol>
 <p>En <b>SSM</b> (Source-Specific Multicast) il n'y a pas de point de rendez-vous : la plage SSM doit contenir les groupes utilisés. Par défaut c'est 232.0.0.0/8 ; avec des groupes en 239.x il faut « ip pim ssm range 239.0.0.0/8 » partout. Le <b>querier</b> (la SVI en IGMPv3, ou un querier de niveau 2) interroge régulièrement les récepteurs ; sans lui, les abonnements expirent au bout de l'intervalle d'appartenance (260 s par défaut, 45 s dans le simulateur) : la panne apparaît plusieurs minutes après la vraie cause. Sans snooping, tous les flux du VLAN sont <b>inondés</b> sur tous les ports.</p>
 <h3>Bande passante</h3>
-<p>Un 1080p50 4:2:2 10 bits fait ≈ 2,1 Gb/s (≈ 2,2 avec les en-têtes), un UHD p50 ≈ 8,3 Gb/s (≈ 8,6), une paire audio ≈ 3 Mb/s. Une leaf « non bloquante » (autant d'uplinks que de ports d'accès) peut quand même saturer un lien précis : le hachage ECMP peut placer plusieurs gros flux sur le même uplink, et un multiviewer de 18 tuiles UHD demande plus de 150 Gb/s. <b>PIM ne connaît pas la bande passante</b> : un lien saturé perd des paquets pour <i>tous</i> les flux qui le traversent. Un <b>contrôleur SDN</b> (fonctions de multicast « non bloquant » des constructeurs) réserve la bande passante et <b>refuse</b> une connexion plutôt que de dégrader les autres. Le poste permet de comparer les deux modes.</p>
+<p>Un 1080p50 4:2:2 10 bits fait ≈ 2,1 Gb/s (≈ 2,2 avec les en-têtes), un UHD p50 ≈ 8,3 Gb/s (≈ 8,6), une paire audio ≈ 3 Mb/s. Une leaf « non bloquante » (autant de capacité d'uplink que de capacité d'accès) peut quand même saturer un lien précis : le hachage ECMP peut placer plusieurs gros flux sur le même uplink, et un multiviewer de 18 tuiles UHD demande plus de 150 Gb/s. <b>PIM ne connaît pas la bande passante</b> : un lien saturé perd des paquets pour <i>tous</i> les flux qui le traversent. Un <b>contrôleur SDN</b> (fonctions de multicast « non bloquant » des constructeurs) réserve la bande passante et <b>refuse</b> une connexion plutôt que de dégrader les autres. Le poste permet de comparer les deux modes.</p>
 <h3>PTP dans la fabric</h3>
 <p>Profil <b>SMPTE ST 2059-2</b> : domaine 127, Announce toutes les 2^-2 s, Sync et Delay_Req toutes les 2^-3 s, expiration après 3 Announce manqués. Les commutateurs sont des <b>horloges frontières</b> (boundary clocks) : chacun se cale sur son maître (port esclave) et redistribue l'heure. L'élection du grand maître (<b>BMCA</b>) compare dans l'ordre : priority1, clockClass (6 = verrouillé GPS, 7 = holdover, 248 = horloge libre), précision, variance, priority2, identité. Protections : appareils en « slave only », « ptp role master » sur les ports d'accès, PTP marqué DSCP 46 et servi en priorité.</p>
 <h3>NMOS et SDP</h3>
@@ -927,7 +963,7 @@ export const GUIDE = [
 <tr><td>En-tête RFC 4175</td><td>Numéro de séquence étendu, longueur, numéro de ligne et décalage en pixels : le récepteur sait où placer chaque morceau d'image.</td></tr></table>
 <p>Ordre de grandeur en 1080p50 : 1 200 octets de vidéo par paquet (480 pixels), 4 paquets par ligne, 4 320 paquets par image, <b>216 000 paquets par seconde</b>. En UHD : 864 000 paquets par seconde.</p>
 <h3>Régularité : ST 2110-21</h3>
-<p>Un émetteur ne doit pas envoyer ses paquets en rafales, sinon les files d'attente des commutateurs et les tampons des récepteurs débordent. ST 2110-21 définit deux modèles :</p>
+<p>Un émetteur ne doit pas envoyer ses paquets en rafales, sinon les files d'attente des commutateurs et les tampons des récepteurs débordent. ST 2110-21 définit trois types d'émetteurs — N (étroit), NL (étroit linéaire) et W (large) — et deux modèles de mesure : la compatibilité réseau (CINST / CMAX) et le récepteur virtuel (VRX / VRX_FULL). Les deux types principaux :</p>
 <ul><li><b>Type N (étroit)</b> : paquets réguliers, petit tampon côté récepteur — typique des appareils matériels (caméras, mélangeurs).</li>
 <li><b>Type W (large)</b> : rafales tolérées, tampon plus grand — typique des logiciels sur serveur.</li></ul>
 <p>On mesure <b>CINST</b> (rafale instantanée, comparée à <b>CMAX</b>) et le remplissage du <b>récepteur virtuel</b> (comparé à <b>VRX_FULL</b>). Dans le simulateur, CMAX et VRX_FULL sont calculés pour le format choisi ; la gigue et CINST montent quand les liens traversés sont chargés.</p>
@@ -951,7 +987,7 @@ export const GUIDE = [
 <p>Deux choses définissent une image : l'étendue des couleurs (<b>gamut</b>) et la courbe de transfert (<b>gamma</b> ou OETF). La HD classique utilise le gamut <b>BT.709</b> et le gamma BT.709 (SDR). L'UHD utilise le gamut plus large <b>BT.2020</b>, et souvent une courbe <b>HDR</b>.</p>
 <h3>HLG et PQ</h3>
 <ul>
-<li><b>HLG</b> (Hybrid Log-Gamma, BBC/NHK) : courbe relative, compatible avec les écrans SDR. C'est le choix habituel du sport en direct.</li>
+<li><b>HLG</b> (Hybrid Log-Gamma, BBC/NHK) : courbe relative, compatible avec les écrans SDR qui acceptent la colorimétrie BT.2020 (pour le parc HD en BT.709, on livre une version SDR convertie). C'est le choix habituel du sport en direct.</li>
 <li><b>PQ</b> (ST 2084) : courbe absolue en cd/m², utilisée en cinéma et streaming.</li>
 <li><b>S-Log3</b> : courbe « caméra » qui garde un maximum de dynamique, avant conversion.</li>
 </ul>
@@ -1005,7 +1041,7 @@ export const GUIDE = [
 <h3>Le SPG</h3>
 <p>Asservi au GPS, il génère la référence vidéo, le timecode (LTC), le word clock audio (48 kHz) et le PTP. Il est doublé : un SPG de secours prend le relais automatiquement (changeover). En perte de GPS, il passe en <b>holdover</b> : son oscillateur (OCXO) reste stable des heures.</p>
 <h3>Retards et synchro labiale</h3>
-<p>Chaque traitement ajoute du retard : synchroniseur (1 image), multiviewer (1 à 2 images), liaison HF (de quelques dizaines de ms à plus d'une seconde selon l'encodage), transmission satellite. La vidéo et le son doivent rester alignés (lip-sync) : on retarde l'audio pour qu'il arrive en même temps que l'image. Repère : au-delà d'environ 40 ms de décalage, un téléspectateur attentif le remarque.</p>`},
+<p>Chaque traitement ajoute du retard : synchroniseur (1 image), multiviewer (1 à 2 images), liaison HF (de quelques dizaines de ms à plus d'une seconde selon l'encodage), transmission satellite. La vidéo et le son doivent rester alignés (lip-sync) : on retarde l'audio pour qu'il arrive en même temps que l'image. Repère (ITU-R BT.1359) : un décalage devient perceptible à partir d'environ 45 ms quand le son est en avance, et d'environ 125 ms quand il est en retard ; la tolérance de bout en bout de l'EBU R37 est plus serrée (son en avance de 40 ms au plus, en retard de 60 ms au plus).</p>`},
   {
     id: 'icomguide', title: 'Ordres et intercom', html: `
 <p>Le système d'ordres relie toutes les personnes de la production. Sans lui, pas de réalisation possible : le réalisateur annonce chaque plan, la vision appelle un cadreur, l'EVS annonce qu'il est prêt.</p>
@@ -1020,7 +1056,7 @@ export const GUIDE = [
 <ul>
 <li><b>Conférence (partyline)</b> : un groupe où tout le monde s'entend (« Ordres », « Caméras », « EVS »).</li>
 <li><b>Point à point</b> : une liaison privée.</li>
-<li><b>IFB</b> : un programme (le son antenne) que l'on interrompt pour parler (commentateurs, présentateurs).</li>
+<li><b>IFB</b> : un retour programme, le plus souvent un N-1 (tout sauf la voix de celui qui l'écoute), que l'on interrompt ou atténue pour lui parler (commentateurs, présentateurs, journaliste bord terrain).</li>
 <li><b>4 fils</b> : une paire pour parler, une pour écouter, sans mélange : pour relier deux systèmes.</li>
 </ul>
 <h3>Jusqu'au cadreur</h3>
@@ -1051,8 +1087,8 @@ export const GUIDE = [
 <p>On suit le signal d'un bout à l'autre, maillon par maillon, en partant de ce qui marche : la liste dit exactement par où il passe. Dans le simulateur, chaque extrémité est cliquable et ouvre l'appareil sur le bon connecteur ; le bouton « Suivre » passe à l'autre bout du câble.</p>`},
   {
     id: 'securite', title: 'Sécurité', html: `
-<ul><li>Terre raccordée avant toute mise sous tension ; jamais d'intervention sous tension sans habilitation électrique.</li>
-<li>Travail en hauteur (passerelles, toits) : harnais, garde-corps, outils attachés.</li>
+<ul><li>Terre raccordée avant toute mise sous tension ; aucune opération sur l'installation électrique ou à son voisinage (raccordement, consignation, dépannage) sans habilitation électrique adaptée (NF C 18-510), et jamais de travail sous tension sans habilitation spécifique.</li>
+<li>Travail en hauteur (passerelles, toits) : protection collective d'abord (garde-corps, filets, nacelle) ; à défaut seulement, harnais antichute relié à un point d'ancrage, jamais seul ; outils attachés.</li>
 <li>Câbles : passages protégés (passe-câbles), pas de câble dans les zones de circulation du public ou dans les issues de secours.</li>
 <li>Rayonnement HF : respecter les distances de sécurité autour des antennes et émetteurs.</li>
 <li>Drones : télépilote certifié, scénario de vol déclaré, jamais au-dessus du public.</li></ul>`},
@@ -1094,6 +1130,7 @@ export const CONTROLS_HELP = [
   ['K', 'Matériel du car : faces avant/arrière, connecteurs, raccordements'],
   ['I', 'Fiche du poste visé · sur une caméra : son matériel (connecteurs)'],
   ['Au poste', 'Bouton « Moniteur flottant » : un écran déplaçable au choix ; bouton « Matériel » : l\'appareil du poste'],
+  ['Atelier de montage', 'E (ou clic) : prendre, monter, agir — maintenir pour les gestes longs · Q : reposer la pièce · molette : bulle et équilibrage'],
   ['Échap', 'Libérer la souris / fermer un poste'],
 ];
 

@@ -147,7 +147,7 @@ export const IP_FAULTS = [
     can: () => S.ipMode && Object.values(FAB.devices).filter((d) => d.kind === 'ccu').length >= 2,
     inject() { const [a, b] = Object.values(FAB.devices).filter((d) => d.kind === 'ccu'); const o = { red: b.nics.red.ip, blue: b.nics.blue.ip }; b.nics.red.ip = a.nics.red.ip; b.nics.blue.ip = a.nics.blue.ip; markDirty(); return { a: a.id, b: b.id, o }; },
     check: (st) => { const a = FAB.devices[st.a], b = FAB.devices[st.b]; return !a || !b || (a.nics.red.ip !== b.nics.red.ip && a.nics.blue.ip !== b.nics.blue.ip); },
-    hint: 'Deux caméras disparaissent : une CCU remplacée a été configurée avec l\'adresse IP d\'une autre, sur les deux réseaux (l\'ARP et le contrôle RPF basculent d\'un port à l\'autre). Réseau IP → plan d\'adressage (ou show ip arp sur la leaf caméras) : rendre à la CCU son adresse.',
+    hint: 'Deux caméras disparaissent : une CCU remplacée a été configurée avec l\'adresse IP d\'une autre, sur les deux réseaux (l\'ARP bascule d\'un port à l\'autre). Réseau IP → plan d\'adressage (ou show ip arp sur la leaf caméras) : rendre à la CCU son adresse.',
   },
 ];
 export function clearNetFaults() { if (FAB.res || S.ipMode) resetFabric(); }

@@ -19,7 +19,7 @@ export function buildSynoptique() {
   const box = (x, y, w, h, label, sub, opts = {}) => {
     const g = E('g', { style: 'cursor:pointer' });
     g.appendChild(E('rect', { x, y, width: w, height: h, rx: 4, fill: opts.fill || '#182027', stroke: opts.stroke || '#3a4652', 'stroke-width': opts.sw || 1.2 }));
-    g.appendChild(E('text', { x: x + 8, y: y + (sub ? 15 : h / 2 + 4), fill: opts.color || '#e8edf1', 'font-size': 12.5, 'font-family': 'Saira Condensed, sans-serif', 'font-weight': 600, 'letter-spacing': '0.04em' }, label));
+    g.appendChild(E('text', { x: x + 8, y: y + (sub ? 15 : h / 2 + 4), fill: opts.color || '#e8edf1', 'font-size': 12.5, 'font-family': 'Barlow Condensed, sans-serif', 'font-weight': 600, 'letter-spacing': '0.04em' }, label));
     if (sub) g.appendChild(E('text', { x: x + 8, y: y + 28, fill: '#93a0ab', 'font-size': 11, 'font-family': 'Barlow, sans-serif' }, sub));
     if (opts.info) g.addEventListener('click', () => openInfo(opts.info));
     svg.appendChild(g); return g;
@@ -27,11 +27,11 @@ export function buildSynoptique() {
   const line = (x1, y1, x2, y2, color = '#5a6672', o = {}) => svg.appendChild(E('path', { d: o.d || `M${x1},${y1} L${x2},${y2}`, stroke: color, 'stroke-width': o.w || 1.6, fill: 'none', 'stroke-dasharray': o.dash || '', 'marker-end': o.arrow === false ? '' : 'url(#arr)' }));
   const defs = E('defs'); const mk = E('marker', { id: 'arr', viewBox: '0 0 8 8', refX: 7, refY: 4, markerWidth: 6, markerHeight: 6, orient: 'auto-start-reverse' }); mk.appendChild(E('path', { d: 'M0,0 L8,4 L0,8 z', fill: '#7d8994' })); defs.appendChild(mk); svg.appendChild(defs);
 
-  txt(10, 22, 'CAMÉRAS', { font: 'Saira Condensed, sans-serif', size: 13, fill: '#93a0ab', w: 600 });
-  txt(250, 22, 'LIAISONS · CCU', { font: 'Saira Condensed, sans-serif', size: 13, fill: '#93a0ab', w: 600 });
-  txt(430, 22, S.ipMode ? 'RÉSEAU IP' : 'GRILLE', { font: 'Saira Condensed, sans-serif', size: 13, fill: '#93a0ab', w: 600 });
-  txt(600, 22, 'TRAITEMENT', { font: 'Saira Condensed, sans-serif', size: 13, fill: '#93a0ab', w: 600 });
-  txt(860, 22, 'SORTIES · TRANSMISSION', { font: 'Saira Condensed, sans-serif', size: 13, fill: '#93a0ab', w: 600 });
+  txt(10, 22, 'CAMÉRAS', { font: 'Barlow Condensed, sans-serif', size: 13, fill: '#93a0ab', w: 600 });
+  txt(250, 22, 'LIAISONS · CCU', { font: 'Barlow Condensed, sans-serif', size: 13, fill: '#93a0ab', w: 600 });
+  txt(430, 22, S.ipMode ? 'RÉSEAU IP' : 'GRILLE', { font: 'Barlow Condensed, sans-serif', size: 13, fill: '#93a0ab', w: 600 });
+  txt(600, 22, 'TRAITEMENT', { font: 'Barlow Condensed, sans-serif', size: 13, fill: '#93a0ab', w: 600 });
+  txt(860, 22, 'SORTIES · TRANSMISSION', { font: 'Barlow Condensed, sans-serif', size: 13, fill: '#93a0ab', w: 600 });
   txt(Wd - 10, H - 8, `Format : ${FORMATS[S.format].label} · ${FORMATS[S.format].sdi}`, { anchor: 'end', fill: '#ffb020', size: 12 });
 
   const rX = 430, rY = top - 6, rH = n * rowH;

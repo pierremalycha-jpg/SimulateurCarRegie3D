@@ -75,7 +75,7 @@ function subStream(box, R) {
     el('div', { class: 'hwpanel' }, el('h3', {}, 'Fusion ST 2022-7 (récepteur)'), dup),
     el('div', { class: 'hwpanel' }, el('h3', {}, 'Historique (60 s)'), c1, c2, c3),
     el('div', { class: 'hwpanel prose' }, el('h3', {}, 'Lire ces mesures'), el('ul', { class: 'steps' },
-      el('li', {}, el('b', {}, 'CINST / CMAX : '), 'nombre de paquets arrivés « en avance » dans le modèle de réseau de ST 2110-21. Un émetteur étroit (type N) doit rester sous CMAX ; au-delà, un récepteur étroit risque de déborder.'),
+      el('li', {}, el('b', {}, 'CINST / CMAX : '), 'nombre de paquets arrivés « en avance » dans le modèle de réseau de ST 2110-21. Un émetteur étroit (type N) doit rester sous CMAX ; au-delà, ses rafales risquent de saturer les files d\'attente des commutateurs (le tampon du récepteur, lui, est couvert par VRX / VRX_FULL).'),
       el('li', {}, el('b', {}, 'VRX / VRX_FULL : '), 'remplissage du tampon du récepteur virtuel. Dépassement = paquets jetés chez le récepteur, même si le réseau ne perd rien.'),
       el('li', {}, el('b', {}, 'Gigue : '), 'irrégularité des arrivées. Elle augmente avec la charge des liens traversés (files d\'attente).'),
       el('li', {}, el('b', {}, 'Écart rouge / bleu : '), 'différence de temps de traversée des deux réseaux. Le récepteur 2022-7 doit l\'absorber dans son tampon ; ici quelques microsecondes, très en deçà de ce qu\'il tolère.'),

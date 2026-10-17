@@ -91,7 +91,7 @@ export function buildVision(body, arg = 0, ctx) {
         blackGamma: `Black gamma ${v} : ${v > 0 ? 'relève' : v < 0 ? 'écrase' : 'laisse'} les basses lumières sans toucher au noir ni au blanc. Utile pour déboucher les ombres d'une tribune.`,
         gamma: `Master gamma ${v} : courbe de transfert. Vers le +, les tons moyens montent (image plus claire, moins contrastée) ; vers le −, ils descendent.`,
         knee: `Knee point ${v} % : au-dessus de ce niveau, les hautes lumières sont compressées pour garder du détail dans les maillots blancs et le ciel.`,
-        wclip: `White clip ${v} % : aucun signal ne dépasse ce niveau (écrêteur). Beaucoup de diffuseurs exigent des blancs ≤ 103 % (tolérance EBU R103) ; au-delà, l'image est refusée au contrôle qualité.`,
+        wclip: `White clip ${v} % : aucun signal ne dépasse ce niveau (écrêteur). Beaucoup de diffuseurs exigent des blancs ≤ 103 % (ancienne tolérance en luminance de l'EBU R103-2000 ; la version actuelle de R103 admet jusqu'à 105 %) ; au-delà, l'image peut être refusée au contrôle qualité.`,
         mblack: `Master black ${v} : niveau du noir pour les trois couleurs (pedestal), soit environ ${fmt(v * 0.132, 1)} % au waveform.`,
       }[key];
       if (t) explain(t, 'rcp:' + key);
@@ -126,9 +126,9 @@ export function buildVision(body, arg = 0, ctx) {
     const keys = el('div', { class: 'rcp-keys' });
     const keyBtns = ASSIGN.map(([l, prop, stage, name], i) => {
       const b = el('button', { class: 'rcp-key', onclick: touch(stage, (cc) => {
-        if (prop) { cc.paint[prop] = !cc.paint[prop]; explain(`${name} ${cc.paint[prop] ? 'activé' : 'désactivé'}. ${prop === 'gammaOn' && !cc.paint[prop] ? 'Sans gamma, l\'image est linéaire : très contrastée et sombre, c\'est pour cela qu\'on applique toujours une courbe (BT.709 ou HLG).' : prop === 'kneeOn' && !cc.paint[prop] ? 'Sans knee, les hautes lumières écrêtent à 109 % : regardez le haut du waveform.' : prop === 'detailOn' && !cc.paint[prop] ? 'Sans détail, l\'image paraît plus douce.' : ''}`); }
-        else if (l === 'ND ▲') { if (cc.paint.nd < 4) { cc.paint.nd++; explain(`ND ${ND_FILTERS[cc.paint.nd].label} (−1 diaph environ).`); } }
-        else if (l === 'ND ▼') { if (cc.paint.nd > 0) { cc.paint.nd--; explain(`ND ${ND_FILTERS[cc.paint.nd].label} (+1 diaph environ).`); } }
+        if (prop) { cc.paint[prop] = !cc.paint[prop]; explain(`${name} ${cc.paint[prop] ? 'activé' : 'désactivé'}. ${prop === 'gammaOn' && !cc.paint[prop] ? 'Sans gamma, l\'image est linéaire : très contrastée et sombre, c\'est pour cela qu\'on applique toujours une courbe (BT.709 ou HLG).' : prop === 'kneeOn' && !cc.paint[prop] ? 'Sans knee, les hautes lumières ne sont plus compressées : elles écrêtent net au niveau du white clip (103 % par défaut ici) et perdent leur détail ; regardez le haut du waveform.' : prop === 'detailOn' && !cc.paint[prop] ? 'Sans détail, l\'image paraît plus douce.' : ''}`); }
+        else if (l === 'ND ▲') { if (cc.paint.nd < 4) { cc.paint.nd++; explain(`ND ${ND_FILTERS[cc.paint.nd].label} (−1 ou −2 diaph selon le cran).`); } }
+        else if (l === 'ND ▼') { if (cc.paint.nd > 0) { cc.paint.nd--; explain(`ND ${ND_FILTERS[cc.paint.nd].label} (+1 ou +2 diaph selon le cran).`); } }
         else if (l === 'BLK GAM') { cc.paint.blackGamma = cc.paint.blackGamma ? 0 : 30; explain(`Black gamma ${cc.paint.blackGamma ? '+30 : ombres débouchées' : 'remis à 0'}.`); }
         else if (l === 'SKIN DTL') explain('Skin detail : réduit le détail sur les tons chair pour adoucir les visages (non simulé ici).');
         else if (l === 'ZEBRA') explain('Zébra : hachures dans le viseur sur les zones au-dessus d\'un niveau (ex. 95 %) pour aider le cadreur (non simulé ici).');

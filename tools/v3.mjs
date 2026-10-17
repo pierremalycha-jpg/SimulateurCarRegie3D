@@ -74,8 +74,10 @@ if (PART === 'all' || PART === 'hd') {
   await page.locator('.vx-matrix tr', { hasText: 'COMM 2' }).locator('.vx-cell.bad').click();
   await embSel.nth(0).selectOption('pgm');
   await embSel.nth(1).selectOption('intl');
-  for (let i = 0; i < 12; i++) { if (await ev(() => window.__dbg.AU.lineDelay) <= 40) break; await page.locator('button', { hasText: '− 1 image' }).click(); }
-  await page.waitForTimeout(1500);
+  // la tolérance se juge sur la source à l'antenne : une caméra filaire (sans latence de codec), pour un résultat stable
+  await ev(() => { window.__dbg.MIX.pgm = 2; });
+  for (let i = 0; i < 14; i++) { if (await ev(() => window.__dbg.avOk())) break; await page.locator('button', { hasText: '− 1 image' }).click(); await page.waitForTimeout(150); }
+  await page.waitForFunction(() => window.__dbg.ACTIVE.filter((a) => ['n1echo', 'avsync', 'emb'].includes(a.f.id)).every((a) => a.done), null, { timeout: 60000, polling: 500 }).catch(() => {});
   log('faults after fix', await ev(() => window.__dbg.ACTIVE.filter((a) => ['n1echo', 'avsync', 'emb'].includes(a.f.id)).map((a) => a.f.id + ':' + a.done).join(' ')));
   // ---- transmission ----
   await ev(() => { window.__dbg.closeStation(); window.__dbg.openStation('transmission'); });
@@ -116,7 +118,8 @@ if (PART === 'all' || PART === 'hd') {
   await ev(() => window.__dbg.closeStation());
   // ---- perf ----
   await ev(() => window.__dbg.emit('perfTest'));
-  await page.waitForTimeout(7500);
+  await page.waitForTimeout(6500);
+  await page.waitForFunction(() => /Diagnostic/.test(document.querySelector('#modal h2')?.textContent || ''), null, { timeout: 60000, polling: 500 }).catch(() => {});
   log('perf modal', await ev(() => document.querySelector('#modal h2')?.textContent), await ev(() => JSON.stringify(window.__dbg.SH && null)));
   await shot('40-perf');
   await ev(() => document.querySelector('#modal .x')?.click());

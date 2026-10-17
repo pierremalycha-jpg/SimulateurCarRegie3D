@@ -111,7 +111,7 @@ export function buildPatch(body, arg, ctx) {
       E('circle', { cx: x, cy: y, r: 13, fill: '#0b0d10', stroke: isSel ? '#ffb020' : on ? F.color : '#6b747d', 'stroke-width': isSel ? 3 : 2 }, g);
       E('circle', { cx: x, cy: y, r: 5, fill: on ? F.color : '#2a2f35' }, g);
       const ty = side === 't' ? y - 32 : y + 30;
-      const txt = E('text', { x, y: ty, fill: '#cfd6dc', 'font-size': 9.5, 'font-family': 'Saira Condensed, Arial Narrow, sans-serif', 'text-anchor': 'middle' }, g);
+      const txt = E('text', { x, y: ty, fill: '#cfd6dc', 'font-size': 9.5, 'font-family': 'Barlow Condensed, Arial Narrow, sans-serif', 'text-anchor': 'middle' }, g);
       const parts = label.split(' '); const last = parts.pop();
       E('tspan', { x, dy: 0 }, txt, parts.join(' ')); E('tspan', { x, dy: 11 }, txt, last);
       g.addEventListener('click', () => click(k, side, id));

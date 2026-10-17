@@ -176,6 +176,54 @@ Le simulateur est réglé sur ce parc (modifiable dans l'Espace formateur → «
   - Niveaux de qualité : « basse » garde les matériaux physiques sans post-traitement, le mode allégé (mobile) garde
     l'ancien rendu ; les arbres lointains ne sont calculés que pour la vue « œil » (pas par les caméras du stade).
 
+## Ce que contient la v10 : interfaces repensées, relecture technique, atelier de montage caméra
+
+- **Interfaces repensées, dans le langage visuel d'un car** :
+  - titres en étiquettes de titreuse, raccourcis dessinés comme des touches de clavier ;
+  - barre d'état façon afficheur UMD (cases noires, lampes de tally rouge et verte pour PGM / PVW) ;
+  - bleu « rétroéclairage LCD » réservé à la sélection et au focus, touche blanche allumée pour l'action principale ;
+  - polices Barlow (lisibles, condensées comme les légendes de pupitres) et JetBrains Mono pour les valeurs.
+- **Accueil en feuille de service** : chaque mode est placé à l'heure où il se pratique un jour de match
+  (get-in 08:00, préparation caméras 09:30, câblage 11:00, line-up 17:30, antenne 20:45). Les conditions de captation
+  et l'espace formateur sont dans une colonne à part.
+- **Prise en main** :
+  - barre d'outils groupée par usage (se déplacer, la régie, l'aide, l'équipe) ;
+  - aide aux six gestes de base à la première partie ;
+  - en-têtes de postes avec le rôle et la touche Échap ;
+  - écrans adaptés au téléphone.
+- **Relecture technique complète** : 68 corrections sourcées (fiches constructeurs, normes EBU, SMPTE, ITU, Arcep,
+  Code du travail), notamment :
+  - **objectifs** : ouvertures et rampes recalées sur les fiches Canon et Fujinon, calcul des diaphragmes perdus,
+    distance minimale de mise au point des longs portables ;
+  - **caméras** : super ralenti de la HDC-5500 (8x en HD, 2x en 4K), crans de la roue ND, sensibilité, HLG sur écran
+    BT.709 ;
+  - **vidéo** : tolérance EBU R103 actuelle (105 %), 32 canaux audio embeddés en 3G / 12G-SDI (ST 299-2), latence
+    d'un bond satellite (≈ 0,25 s), stockage interne de l'XT4K, longueur maximale d'un semi-remorque (16,50 m) ;
+  - **son** : limites EBU R37 par étape et de bout en bout, seuils asymétriques de BT.1359, MADI 64 canaux,
+    ORTF en mono, IFB en mix-minus, implantation de la Vista 1 et rôle du FaderGlow ;
+  - **réseau ST 2110** : débits en 50 Hz, TRO pour l'UHD, trois flux UHD qui ne tiennent pas dans un port 25 GbE,
+    VPID, niveaux JPEG XS, RS-FEC, RPF ;
+  - **HF** : plan de fréquences sorti de la bande mobile 2,1 GHz ; les liaisons vidéo mobiles sont autorisées par
+    l'Arcep (et non l'ANFR) ;
+  - **sécurité** : travail en hauteur (protections collectives d'abord) et habilitation électrique.
+  - Au passage, la durée des transitions suit la cadence du format (1080i50 compris).
+- **Atelier de montage caméra (vue à la première personne)** : la CAM 1 (plan large) se monte sur la passerelle,
+  pièce par pièce, à partir des flight cases :
+  - **pièces** : pied lourd et araignée, tête fluide (embase 4 vis), manches, plaque, adaptateur grand objectif,
+    tête de caméra, objectif box (levé à deux), viseur 7,4", commandes de zoom et de point (côté au choix), câble
+    d'objectif 36 broches, fibre hybride SMPTE, casque d'ordres ;
+  - **gestes** : viser et prendre (E), reposer (Q). La pièce tenue apparaît en fantôme à sa place, vert si c'est le
+    moment et rouge sinon, avec la raison. Certains gestes se maintiennent (déployer les jambes, lever l'objectif,
+    nettoyer une fibre) ; la bulle de niveau et l'équilibrage se règlent à la molette ;
+  - **ordre de métier** : chaque refus explique la règle (tête verrouillée avant toute charge, mise à niveau avant
+    de charger, objectif à deux, équilibrage une fois tout monté, fibre nettoyée et câble attaché) ;
+  - **mise en service avec la vision par l'intercom** : alimentation par la CCU, image, test CALL et tally. Une fibre
+    branchée sans nettoyage fait tomber le niveau optique et l'image (il faut débrancher, nettoyer, rebrancher) ; un
+    bouchon oublié donne du noir ;
+  - **bilan** : rapport (temps, erreurs, ce qui a été repris, points à retenir). La caméra montée reprend sa place
+    dans le dispositif. Le résultat est enregistré dans la progression et apparaît dans le tableau de bord du
+    formateur.
+
 ## Construire et tester
 
 ```
@@ -190,6 +238,8 @@ node tools/net.mjs OUT HD     # poste Réseau IP, terminal, pannes réseau et ef
 node tools/course.mjs OUT HD  # parcours de formation, mesures, capture, quiz, examen
 node tools/v8.mjs OUT keys    # commutation clavier (aussi : audio, visual, mobile, review)
 node tools/session.mjs OUT    # session à deux navigateurs (salle simulée) : rôles, synchro, ordres, pannes
+node tools/atelier.mjs OUT     # atelier de montage : visée, gestes maintenus, refus, fibre sale, rapport
+node tools/ui.mjs OUT         # captures des interfaces (accueil, HUD, postes, fenêtres, mobile)
 node tools/gfx.mjs OUT haute jour   # captures de référence du rendu (accueil, terrain, kop, vol, compound, car, caméras)
 node tools/lum.mjs jour       # exposition des caméras : rendu physique comparé au rendu Lambert
 node tools/func.mjs           # tests fonctionnels historiques
@@ -226,6 +276,7 @@ node tools/func.mjs           # tests fonctionnels historiques
 | `shared.js` | Données partagées de la page publiée (configuration, progression) avec repli local |
 | `review.js` | Points techniques à faire relire par le formateur |
 | `gfx.js` | Habillage (score, bandeaux, statistiques) |
+| `atelier.js` | Atelier de montage de la CAM 1 : pièces, ordre des opérations et prérequis, visée, fantômes, gestes maintenus, réglages à la molette, mise en service, rapport |
 | `truck.js` (car) | Intérieur du car : plan, postes, baies et pupitres détaillés, collisions |
 | `ui/` | Session (`session_ui.js`), relecture (`review_ui.js`), réseau IP (`st_network.js`, `net_tools.js`, `net_course.js`), synoptiques (`synoptics.js`), plan du car (`truckmap.js`), postes (`stations.js`, `st_audio.js`, `commut.js`, `st_vision.js`, `st_evs.js`, `st_mixer.js`, `st_ipd.js`, `st_patch.js`), espace formateur (`config.js`), rapports (`report.js`), plan, guide, missions |
 | `equipment/` | Visionneuse de matériel : appareils (`devices.js`), liste de câblage (`cabling.js`), rendu SVG et photos (`viewer.js`) |

@@ -33,7 +33,7 @@ function liveryTexture(L, H, opts = {}) {
   // salissures en bas de caisse
   for (let i = 0; i < 60; i++) { g.fillStyle = `rgba(80,70,55,${0.03 + r() * 0.05})`; g.fillRect(r() * W, yb - 30 + r() * 20, 10 + r() * 60, 6 + r() * 20); }
   // étiquettes
-  g.fillStyle = '#ffd23f'; g.font = '700 14px "Saira Condensed", "Arial Narrow", sans-serif';
+  g.fillStyle = '#ffd23f'; g.font = '700 14px "Barlow Condensed", "Arial Narrow", sans-serif';
   for (const [fx, t] of opts.labels || []) { g.fillStyle = '#ffd23f'; g.fillRect(fx * W - 4, Hp * 0.66, g.measureText(t).width + 8, 18); g.fillStyle = '#15100a'; g.fillText(t, fx * W, Hp * 0.66 + 14); }
   return tex(c);
 }
