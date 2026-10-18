@@ -1,6 +1,7 @@
+// @ts-check
 import * as THREE from 'three';
 import { makeCanvas, mulberry32 } from './util.js';
-import { TEAMS, PLAYER_NAMES } from './data.js';
+import { TEAMS, PLAYER_NAMES } from './data/match.js';
 
 // ----------------------------------------------------------------------------------
 // Joueurs et arbitres : corps articulé (bassin, buste, tête, cuisses, jambes, chaussures,
@@ -252,6 +253,7 @@ function numberAtlas() {
 
 // ------------------------------- construction -------------------------------
 export const PEOPLE = { parts: {}, n: 0, ball: new THREE.Vector3(), time: 0, atlas: null };
+/** @type {Array<[string, string, number, number]>} : nom, géométrie, nombre par personne, rugosité */
 const PARTS = [
   // nom, géométrie, nombre par personne, rugosité
   ['torso', 'torso', 1, 0.82], ['pelvis', 'pelvis', 1, 0.85], ['head', 'head', 1, 0.6],
@@ -407,7 +409,7 @@ export function ballTexture() {
       const p2 = (x + 0.5) / W * Math.PI * 2;
       const v = [Math.sin(th) * Math.cos(p2), Math.cos(th), Math.sin(th) * Math.sin(p2)];
       let b1 = -2, b2 = -2, k1 = 0;
-      for (const [cv, k] of centers) { const d = v[0] * cv[0] + v[1] * cv[1] + v[2] * cv[2]; if (d > b1) { b2 = b1; b1 = d; k1 = k; } else if (d > b2) b2 = d; }
+      for (const [cv, k] of /** @type {Array<[number[], number]>} */ (centers)) { const d = v[0] * cv[0] + v[1] * cv[1] + v[2] * cv[2]; if (d > b1) { b2 = b1; b1 = d; k1 = k; } else if (d > b2) b2 = d; }
       let col = k1 ? 22 : 244;
       if (b1 - b2 < 0.012) col = k1 ? 60 : 150; // couture
       const i = (y * W + x) * 4; img.data[i] = col; img.data[i + 1] = col; img.data[i + 2] = k1 ? col : col - 6; img.data[i + 3] = 255;

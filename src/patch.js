@@ -1,3 +1,4 @@
+// @ts-check
 import { S, camById } from './state.js';
 import { evsLayout } from './equip.js';
 

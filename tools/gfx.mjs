@@ -1,27 +1,15 @@
 // Captures de référence pour le rendu : mêmes points de vue avant / après les changements graphiques
 // node tools/gfx.mjs <dossier> [qualité] [lumière]
-import { createRequire } from 'module';
-const require = createRequire('/opt/node22/lib/node_modules/');
-const { chromium } = require('playwright');
+import { launch, openPage, outDir } from '../tests/e2e/harness.mjs';
 import fs from 'fs';
-const OUT = process.argv[2] || '/tmp/claude-0/-home-user/c77888a1-6f04-5876-a000-ab7e7f493575/scratchpad/gfx';
+const OUT = outDir('gfx');
 const Q = process.argv[3] || 'haute';
 const L = process.argv[4] || 'jour';
 const ONLY = process.argv[5] || '';
 fs.mkdirSync(OUT, { recursive: true });
-const html = '<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"></head><body>' + fs.readFileSync('dist/index.html', 'utf8') + '</body></html>';
-const three = fs.readFileSync('node_modules/three/build/three.module.min.js');
-const browser = await chromium.launch({ args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist', '--enable-webgl', '--autoplay-policy=no-user-gesture-required'] });
+const browser = await launch();
 const errors = [];
-const page = await browser.newPage({ viewport: { width: 1280, height: 720 } });
-page.on('console', (m) => { if (m.type() === 'error' || /\[gfx\]/.test(m.text())) errors.push(m.text()); });
-page.on('pageerror', (e) => errors.push('PAGEERROR: ' + e.message + '\n' + e.stack));
-await page.route('https://cdn.jsdelivr.net/**', (r) => r.fulfill({ body: three, contentType: 'application/javascript', headers: { 'access-control-allow-origin': '*' } }));
-await page.route('https://fonts.googleapis.com/**', (r) => r.fulfill({ body: '', contentType: 'text/css' }));
-await page.route('https://fonts.gstatic.com/**', (r) => r.abort());
-await page.route('http://local.test/**', (r) => r.fulfill({ body: html, contentType: 'text/html' }));
-await page.goto('http://local.test/?' + (process.env.Q || ''));
-await page.waitForTimeout(2500);
+const page = await openPage(browser, { viewport: { width: 1280, height: 720 }, query: (process.env.Q || ''), errors });
 const ev = (f, a) => page.evaluate(f, a);
 const want = (n) => !ONLY || ONLY.split(',').includes(n);
 const shot = async (n, wait = 2500) => { await page.waitForTimeout(wait); await page.screenshot({ path: `${OUT}/${n}.png`, timeout: 180000 }); console.log('shot', n); };

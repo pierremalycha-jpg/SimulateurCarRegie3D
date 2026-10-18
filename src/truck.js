@@ -1,7 +1,8 @@
+// @ts-check
 import * as THREE from 'three';
 import { pbr } from './render.js';
 import { Builder, screenMaterial } from './geo.js';
-import { TRUCK, labelSprite } from './world.js';
+import { TRUCK } from './world.js';
 import { makeCanvas } from './util.js';
 import { EQUIP } from './equip.js';
 import { buildAudioDesk } from './audiodesk.js';
@@ -198,7 +199,6 @@ export const RACKS = {
 };
 // rangées de baies de la zone technique : contre le mur d'écrans (côté gauche en entrant) et côté porte
 export const RACK_ROWS = { mur: ['ccu', 'ccu2', 'router', 'xvs', 'mv', 'evs', 'tx'], porte: ['spg', 'icom', 'patch', 'audio', 'rx', 'ups'] };
-const RU = 0.0445; // 1 U = 44,45 mm
 const LED_SPOTS = [];
 
 function drawRackFace(key, g, W, H) {
@@ -294,7 +294,7 @@ function buildRack(B, key, lx, side) {
 
 // ---------------- signalétique ----------------
 function hangingSign(text, lx, lz, w = 1.6, rotY = 0, color = '#e0b030') {
-  const { c, g, tex } = canvasTex(1024, 192);
+  const { g, tex } = canvasTex(1024, 192);
   g.fillStyle = '#0b0d10'; g.fillRect(0, 0, 1024, 192); g.fillStyle = color; g.fillRect(0, 0, 1024, 10); g.fillRect(0, 182, 1024, 10);
   txt(g, text, 512, 100, 92, '#f2f5f7', 'center', 700);
   tex.needsUpdate = true;
@@ -431,7 +431,7 @@ export function buildTruck() {
   scene.add(new THREE.Mesh(glow.build(), new THREE.MeshBasicMaterial({ vertexColors: true, color: new THREE.Color(2.4, 2.4, 2.4) })));
   // dans l'encadrement de porte : la lumière du compound
   {
-    const { c, g, tex } = canvasTex(128, 256);
+    const { g, tex } = canvasTex(128, 256);
     const gr = g.createLinearGradient(0, 0, 0, 256); gr.addColorStop(0, '#bcd4ee'); gr.addColorStop(0.55, '#e8eef4'); gr.addColorStop(0.6, '#5a5e62'); gr.addColorStop(1, '#3b3e40');
     g.fillStyle = gr; g.fillRect(0, 0, 128, 256); tex.needsUpdate = true;
     const out = new THREE.Mesh(new THREE.PlaneGeometry(DOOR.x1 - DOOR.x0 + 0.4, 2.6), new THREE.MeshBasicMaterial({ map: tex, toneMapped: false }));

@@ -1,6 +1,8 @@
+// @ts-check
 import { S, emit, camById } from '../state.js';
 import { el, clamp, fmt } from '../util.js';
-import { IRIS_STOPS, GAINS, ND_FILTERS, SHUTTERS, maxAperture } from '../data.js';
+import { maxAperture } from '../data/cameras.js';
+import { GAINS, ND_FILTERS, SHUTTERS } from '../data/exposure.js';
 import { toast, intercom, hwBtn } from './common.js';
 import { ROUTER, SCOPE, drawScopes, tallyOf } from '../pipeline.js';
 import { explain, rotary, joystick, chainBox } from './widgets.js';
@@ -13,6 +15,7 @@ const stopsTxt = (s) => `${s > 0 ? '+' : ''}${fmt(s, 1)} diaphragme${Math.abs(s)
 const SCENES = {};
 
 // Poste ingénieur vision : RCP (type RCP-3500) + moniteur de référence + oscilloscope
+/** @param {HTMLElement} body @param {any} [arg] caméra demandée ({ cam }) ou rang du pupitre @param {any} [ctx] */
 export function buildVision(body, arg = 0, ctx) {
   let sel = S.cams.length ? (arg === 1 ? (S.cams.find((c) => c.id > 6) || S.cams[0]).id : S.cams[0].id) : null;
   if (arg && typeof arg === 'object' && camById(arg.cam)) sel = arg.cam;
@@ -23,10 +26,9 @@ export function buildVision(body, arg = 0, ctx) {
   // sortie SDR (BT.709) et sortie HDR (HLG) de la même CCU
   const monSDR = el('div', { class: 'mon fill', 'data-gl': 'AUX_VISION', title: 'Sortie SDR BT.709' });
   const monHDR = el('div', { class: 'mon fill', 'data-gl': 'HDR', title: 'Sortie HDR HLG (simulation d\'un moniteur HDR sur votre écran)', hidden: true });
-  let hdrMode = 'sdr';
   const hdrBtns = { sdr: el('button', { class: 'minibtn' }, 'SDR'), hlg: el('button', { class: 'minibtn' }, 'HDR HLG'), both: el('button', { class: 'minibtn' }, 'SDR | HDR') };
   const setHdr = (m) => {
-    hdrMode = m; S.hdrView = m !== 'sdr'; if (!S.hdrView) SCOPE.hdr = false;
+    S.hdrView = m !== 'sdr'; if (!S.hdrView) SCOPE.hdr = false;
     monSDR.hidden = m === 'hlg'; monHDR.hidden = m === 'sdr'; monSDR.parentElement && monSDR.parentElement.classList.toggle('both', m === 'both');
     for (const k in hdrBtns) hdrBtns[k].classList.toggle('on', k === m);
     explain({ sdr: 'Moniteur en SDR (BT.709) : c\'est la sortie que règlent la plupart des ingénieurs vision, le blanc nominal est à 100 %.', hlg: 'Sortie HDR (HLG) de la CCU, vue sur un moniteur HDR simulé : les hautes lumières (ciel, maillots au soleil, projecteurs) gardent du détail au lieu d\'être écrêtées. Le blanc de référence est à 75 % du signal (ITU-R BT.2408).', both: 'Les deux sorties de la même CCU côte à côte. En production « single stream » (type SR Live), on règle l\'image sur la sortie SDR et la HDR suit : même iris, mêmes noirs, mêmes couleurs ; seule la courbe change.' }[m], 'rcp:hdr');

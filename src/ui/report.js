@@ -1,3 +1,4 @@
+// @ts-check
 import { el } from '../util.js';
 import { modal, toast } from './common.js';
 import { addReport, SH } from '../shared.js';

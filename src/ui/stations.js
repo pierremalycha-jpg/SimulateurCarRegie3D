@@ -1,15 +1,18 @@
+// @ts-check
 import { S, emit, on, camById } from '../state.js';
-import { el, clamp, tc, fmt, mmss, linToDb } from '../util.js';
-import { STATION_INFO, IRIS_STOPS, GAINS, ND_FILTERS, SHUTTERS, LINKS, LENSES, CAMERA_TYPES, ROLES, MODS, FECS, GUARDS, TX_POWERS, TEAMS, POSITIONS } from '../data.js';
-import { $, $$, toast, intercom, modal, openInfo, hwBtn, knob, selectEl, field, monitor } from './common.js';
-import { MIX, TRANS, WIPES, mixSetPst, mixSetPgm, mixCut, mixAuto, mixTbar, dskToggle, ftbToggle, keyToggle, meSource, sourceLabel, allSources, ROUTER, DESTS, route, defaultRouting, EVS, evsAction, evsSetRecording, recordedCams, canReplay, SCOPE, drawScopes, resolve, P, tallyOf } from '../pipeline.js';
+import { el, clamp, tc, fmt, mmss } from '../util.js';
+import { STATION_INFO } from '../content/stations.js';
+import { LINKS } from '../data/cameras.js';
+import { TEAMS } from '../data/match.js';
+import { MODS, FECS, GUARDS, TX_POWERS } from '../data/rf.js';
+import { $, $$, toast, intercom, openInfo, hwBtn, selectEl, field } from './common.js';
+import { MIX, TRANS, mixSetPst, mixCut, mixAuto, dskToggle, meSource, sourceLabel, allSources, ROUTER, DESTS, route, defaultRouting, EVS, evsAction, recordedCams, SCOPE, P } from '../pipeline.js';
 import { recRange, M, playerName, playerNumber } from '../match.js';
 import { GFX, gfxTake, gfxOut } from '../gfx.js';
-import { AU, startAudio, applyFaders, resetLoudness, setMonitor, setLineDelay, setFollow, setSend, avOffsetMs, avOk, AV_TOL, videoLatencyMs, EMB_OPTIONS, SOUND_PLAN, soundPlanOk, embLabel } from '../audio.js';
+import { AU, avOffsetMs, avOk, soundPlanOk, embLabel } from '../audio.js';
 import { RF, LATENCY, channelInfo } from '../rf.js';
-import { maxAperture } from '../data.js';
 import { synopticsPanel } from './synoptics.js';
-import { FAULTS, injectFault, activeFaults, faultPanel } from '../faults.js';
+import { faultPanel } from '../faults.js';
 import { EX, startExercise, stopExercise } from '../exercises.js';
 import { explainBox, explain, toggleFloatMon } from './widgets.js';
 import { buildVision } from './st_vision.js';
@@ -17,13 +20,13 @@ import { buildEVS } from './st_evs.js';
 import { buildMixer } from './st_mixer.js';
 import { buildIPD } from './st_ipd.js';
 import { buildPatch } from './st_patch.js';
-import { mixInputs, EQUIP } from '../equip.js';
+import { mixInputs } from '../equip.js';
 import { netStatus, flowGbps, mcastOf } from '../ipnet.js';
 import { FAB, markDirty, camPtpOk } from '../net/fabric.js';
 import { buildNetwork } from './st_network.js';
 import { buildAudio } from './st_audio.js';
 import { SES } from '../multi/session.js';
-import { applyStationLock, stationLocked, humanTruquiste, directorOrder } from './session_ui.js';
+import { applyStationLock, stationLocked, directorOrder } from './session_ui.js';
 import { holderOf } from '../multi/session.js';
 import { COMMUT, commutKey, setKeyMode, keyLegend, keyModeLabel } from './commut.js';
 import { openDevice, openEquipmentIndex } from '../equipment/viewer.js';
@@ -347,9 +350,9 @@ function buildChef(body, arg, ctx) {
   const tabs = el('div', { class: 'tabs' });
   const content = el('div', { class: 'list' });
   const T = [['syn', 'Synoptiques'], ['cables', 'Liste de câblage'], ['materiel', 'Matériel'], ['etat', 'État de l\'installation'], ['pannes', 'Simulateur de pannes'], ['lineup', 'Check-list line-up']];
-  let cur = 'syn'; let updater = null;
+  let updater = null;
   const show = (k) => {
-    cur = k; content.innerHTML = ''; updater = null;
+    content.innerHTML = ''; updater = null;
     $$('.tab', tabs).forEach((b) => b.classList.toggle('on', b.dataset.k === k));
     if (k === 'syn') { const p = synopticsPanel('video'); content.append(p.el); updater = p.update; }
     if (k === 'etat') { const box = el('div', { class: 'list' }); content.append(box); updater = () => { box.innerHTML = ''; for (const it of statusItems()) box.appendChild(el('div', { class: 'item' }, el('span', { class: 'dot ' + (it.level === 'err' ? 'red' : it.level === 'warn' ? 'amber' : 'green') }), el('div', { class: 'grow' }, el('div', { class: 't' }, it.t), el('div', { class: 's' }, it.s)))); }; }
@@ -492,7 +495,7 @@ function buildHF(body, arg, ctx) {
       b.classList.toggle('lit', a.on);
       const lv = el('div', { class: 's' });
       ants.appendChild(el('div', { class: 'item' }, b, el('div', { class: 'grow' }, el('div', { class: 't' }, a.label), el('div', { class: 's' }, `${a.kind === 'omni' ? 'Omnidirectionnelle' : 'Panneau secteur'} · ${a.gain} dBi`), lv)));
-      a._lv = lv;
+      /** @type {any} */ (a)._lv = lv; // niveau affiché, mis à jour par la boucle du poste
     }
   };
   buildAnts();
@@ -505,7 +508,7 @@ function buildHF(body, arg, ctx) {
       for (const a of RF.antennas) {
         const parts = [];
         for (const c of S.cams) if (c.rf && c.rf.levels[a.id]) { const l = c.rf.levels[a.id]; parts.push(`CAM ${c.id} : ${fmt(l.lvl, 0)} dBm, C/N ${fmt(l.sinr, 0)} dB${l.walls ? ' (masqué)' : ''}`); }
-        if (a._lv) a._lv.textContent = a.on ? (parts.join(' · ') || '—') : 'éteinte';
+        const lvEl = /** @type {any} */ (a)._lv; if (lvEl) lvEl.textContent = a.on ? (parts.join(' · ') || '—') : 'éteinte';
       }
       drawSpectrum(sg, 900, 300);
       drawRFMap(mg, 360, 300);
@@ -535,7 +538,7 @@ export function drawSpectrum(g, w, h) {
   }
   g.stroke();
   g.font = '600 12px "Barlow Condensed", sans-serif'; g.textAlign = 'center';
-  for (const [fc, bw, lv, kind, id] of carriers) if (kind === 'cam') { g.fillStyle = '#c77dff'; g.fillText('CAM ' + id, X(fc), Y(lv) - 8); }
+  for (const [fc, , lv, kind, id] of carriers) if (kind === 'cam') { g.fillStyle = '#c77dff'; g.fillText('CAM ' + id, X(fc), Y(lv) - 8); }
   g.fillStyle = '#ff8080'; g.fillText('Wi-Fi 2,4 GHz', X(2440), 24);
   g.fillStyle = '#46c6f2'; g.fillText('canaux attribués', X(2290), h - 34);
 }
@@ -636,7 +639,7 @@ function buildCCU(body, arg, ctx) {
         const c = camById(i); const r = rows[i]; if (!r) continue;
         if (!c) { r.st.textContent = '—'; r.st.className = 'pill'; continue; }
         const optical = c.link === 'hf' || c.link === 'coax' ? null : -4 - (c.route.length / 1000) * 0.4 - 1.5 - (c.id % 3) * 0.7;
-        let txt = '', cls = 'ok';
+        let txt, cls = 'ok';
         if (c.fiberCut) { txt = 'OPTIQUE : PAS DE SIGNAL (< -30 dBm)'; cls = 'err'; }
         else if (!c.status.ok) { txt = c.status.power ? 'ERREUR LIAISON' : 'ALIM. COUPÉE (câble trop long)'; cls = 'err'; }
         else if (!c.genlock) { txt = S.ipMode && !camPtpOk(c.id) ? 'PTP NON VERROUILLÉ (poste Réseau IP)' : 'RÉF. NON VERROUILLÉE'; cls = 'err'; }

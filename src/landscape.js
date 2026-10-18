@@ -1,3 +1,4 @@
+// @ts-check
 import * as THREE from 'three';
 import { makeCanvas, mulberry32 } from './util.js';
 import { S } from './state.js';

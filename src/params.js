@@ -1,4 +1,6 @@
-import { LENSES, LINKS, CN_REQ } from './data.js';
+// @ts-check
+import { LENSES, LINKS } from './data/cameras.js';
+import { CN_REQ } from './data/rf.js';
 import { LATENCY } from './rf.js';
 import { AV_TOL } from './audio.js';
 import { LINEUP_TARGET } from './bcam.js';

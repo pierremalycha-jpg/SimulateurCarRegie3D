@@ -1,3 +1,4 @@
+// @ts-check
 import { S, on, emit } from '../state.js';
 import { toast } from '../ui/common.js';
 import { FAB, writeMemory, resetFabric, loadFactory, markDirty, PTP_REF } from './fabric.js';
@@ -24,14 +25,14 @@ on('fault', () => { if (NC.exam && NC.exam.cur && NC.exam.cur.entry && NC.exam.c
 
 // ---------------- aides à la vérification ----------------
 const since = () => NC.log.filter((e) => e.t >= NC.t0);
-const cmd = (pat, swPred = () => true) => since().some((e) => e.type === 'cli' && e.ok && e.pat && e.pat.startsWith(pat) && swPred(FAB.switches[e.sw]));
-const ev = (type, pred = () => true) => since().some((e) => e.type === type && pred(e));
+const cmd = (pat, swPred = (_sw) => true) => since().some((e) => e.type === 'cli' && e.ok && e.pat && e.pat.startsWith(pat) && swPred(FAB.switches[e.sw]));
+const ev = (type, pred = (_e) => true) => since().some((e) => e.type === type && pred(e));
 const allSaved = () => Object.values(FAB.switches).every((s) => !s.power || JSON.stringify(s.running) === JSON.stringify(s.startup));
 const swRole = (r) => (sw) => sw && sw.role === r;
 const swIs = (id) => (sw) => sw && sw.id === id;
 const firstCcu = () => Object.values(FAB.devices).find((d) => d.kind === 'ccu');
 const norm = (v) => String(v || '').trim().toLowerCase().replace(/\s+/g, '').replace(/^(e|et|eth|ethernet)(\d+)$/, 'ethernet$2').replace(/-/g, ':');
-const num = (v) => parseFloat(String(v).replace(',', '.').replace(/[^\d.\-]/g, ''));
+const num = (v) => parseFloat(String(v).replace(',', '.').replace(/[^\d.-]/g, ''));
 const eqNum = (tol = 0) => (exp) => (v) => Math.abs(num(v) - exp) <= Math.max(tol * Math.abs(exp), 0.0001);
 const eqStr = (exp) => (v) => norm(v) === norm(exp);
 const injectSaved = (id) => { const e = injectFault(id, true); for (const sw of Object.values(FAB.switches)) if (sw.power) writeMemory(sw.id); return e; };
@@ -238,7 +239,7 @@ export function answer(mid, qid, v) {
 }
 export function qText(q) { return typeof q.t === 'function' ? q.t() : q.t; }
 export function objectivesOf(m) {
-  return m.obj.map((o, i) => { const k = m.id + ':o' + i; let ok = false; try { ok = !!o.ok(); } catch (e) { ok = false; } if (ok && !o.live) NC.sticky[k] = true; return { t: o.t, ok: o.live ? ok : ok || !!NC.sticky[k], live: o.live }; });
+  return m.obj.map((o, i) => { const k = m.id + ':o' + i; let ok; try { ok = !!o.ok(); } catch (e) { ok = false; } if (ok && !o.live) NC.sticky[k] = true; return { t: o.t, ok: o.live ? ok : ok || !!NC.sticky[k], live: o.live }; });
 }
 export function hint(mid) { const m = NET_MISSIONS.find((x) => x.id === mid); const n = NC.hints[mid] = Math.min((NC.hints[mid] || 0) + 1, m.hints.length); return m.hints.slice(0, n); }
 export function missionScore(mid) { return Math.max(2, 10 - 2 * (NC.hints[mid] || 0) - (NC.aided[mid] ? 5 : 0)); }
@@ -266,6 +267,7 @@ export function courseTotals() { const M = P().missions; const done = NET_MISSIO
 export function resetCourse() { P().missions = {}; saveProgressSoon(); emit('netcourse', { type: 'reset' }); }
 
 // ---------------- quiz ----------------
+/** @type {Array<[string, string[], number, string]>} : question, propositions, bonne réponse, explication */
 export const QUIZ = [
   ['En ST 2110, comment voyagent la vidéo, le son et les données ?', ['Dans des flux séparés, chacun avec ses propres groupes multicast', 'Dans un seul flux, comme un signal SDI encapsulé', 'Dans des trames Ethernet sans couche IP', 'En TCP, pour garantir la livraison'], 0, 'Chaque essence est un flux RTP/UDP séparé (-20 vidéo, -30 audio, -40 données). Encapsuler un SDI complet, c\'est ST 2022-6.'],
   ['Que transporte ST 2110-20 ?', ['La vidéo non compressée (image active)', 'La vidéo compressée JPEG XS', 'L\'audio PCM', 'Le timecode et les sous-titres'], 0, '-22 : vidéo compressée (JPEG XS), -30 : audio, -40 : données annexes.'],

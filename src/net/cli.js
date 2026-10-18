@@ -1,4 +1,5 @@
-import { FAB, COLORS, CLABEL, CNUM, LEAVES, vlanOf, ipToInt, inSubnet, SPEED_GBPS, markDirty, writeMemory, clone, portPeer, portState, clockId, PTP_REF, linkName, spanLoad } from './fabric.js';
+// @ts-check
+import { FAB, COLORS, CLABEL, CNUM, LEAVES, vlanOf, ipToInt, inSubnet, SPEED_GBPS, markDirty, writeMemory, clone, portState, clockId, PTP_REF, linkName, spanLoad } from './fabric.js';
 
 // ----------------------------------------------------------------------------------
 // Ligne de commande des commutateurs, inspirée d'EOS / NX-OS (syntaxe simplifiée).
@@ -26,7 +27,7 @@ export const ifShort = (n) => n.replace('Ethernet', 'Et').replace('Vlan', 'Vl').
 
 // ---------------- analyse des noms d'interfaces ----------------
 function parseIf(sw, tok) {
-  const m = /^(e|et|eth|ethe|ether|ethern|etherne|ethernet|v|vl|vla|vlan|lo|loo|loop|loopb|loopba|loopbac|loopback)([\d,\-]+)$/i.exec(tok);
+  const m = /^(e|et|eth|ethe|ether|ethern|etherne|ethernet|v|vl|vla|vlan|lo|loo|loop|loopb|loopba|loopbac|loopback)([\d,-]+)$/i.exec(tok);
   if (!m) return null;
   const t = m[1].toLowerCase();
   if (t[0] === 'e') {
@@ -47,7 +48,7 @@ function parseIf(sw, tok) {
 function joinIfTokens(toks) {
   const out = [];
   for (let i = 0; i < toks.length; i++) {
-    if (/^(e|et|eth|ethe|ether|ethern|etherne|ethernet|vl|vla|vlan|lo|loo|loop|loopb|loopba|loopbac|loopback)$/i.test(toks[i]) && /^[\d,\-]+$/.test(toks[i + 1] || '') && i > 0 && /^(int|inte|inter|interf|interfa|interfac|interface|interfaces|in)$/i.test(toks[i - 1] + '')) { out.push(toks[i] + toks[i + 1]); i++; } else out.push(toks[i]);
+    if (/^(e|et|eth|ethe|ether|ethern|etherne|ethernet|vl|vla|vlan|lo|loo|loop|loopb|loopba|loopbac|loopback)$/i.test(toks[i]) && /^[\d,-]+$/.test(toks[i + 1] || '') && i > 0 && /^(int|inte|inter|interf|interfa|interfac|interface|interfaces|in)$/i.test(toks[i - 1] + '')) { out.push(toks[i] + toks[i + 1]); i++; } else out.push(toks[i]);
   }
   return out;
 }
@@ -191,7 +192,7 @@ const OSPFM = [
   C('passive-interface default', 'interfaces passives par défaut', () => '! Accepté (sans effet dans le simulateur)'),
   C('max-lsa <n>', 'limite de LSA', () => '! Accepté (sans effet dans le simulateur)'),
 ];
-const ch = () => { markDirty(); return ''; };
+const ch = (_s) => { markDirty(); return ''; }; // configuration modifiée (le commutateur est passé pour la lisibilité des appels)
 function monSet(s, n, o, I) {
   if (I.type !== 'eth') return '% Une session miroir porte sur un port Ethernet';
   const c = cfgOf(s); c.monitor = c.monitor || {};
@@ -507,7 +508,7 @@ function routesOf(sw) {
   for (const [id, d] of Object.entries(dist)) {
     if (id === sw.id) continue; const o = FAB.switches[id];
     const via = first[id].map((e) => `${(FAB.switches[e.nh.sw].running.ports[e.nh.port].ip || '').split('/')[0]}, ${ifShort(e.my)}`);
-    for (const [vid, v] of Object.entries(o.running.svis)) if (v.ip && v.ospf && !v.shutdown) R.push({ t: 'O', net: netOf(v.ip), via, cost: 10 * d + 1 });
+    for (const v of Object.values(o.running.svis)) if (v.ip && v.ospf && !v.shutdown) R.push({ t: 'O', net: netOf(v.ip), via, cost: 10 * d + 1 });
     if (o.running.loopback) R.push({ t: 'O', net: o.running.loopback + '/32', via, cost: 10 * d });
     for (const h of o.hw) { const p = o.running.ports[h.name]; if (p.mode === 'routed' && p.ip && p.ospf && h.name === 'Ethernet31' && o.role === 'spine') R.push({ t: 'O', net: netOf(p.ip), via, cost: 10 * d + 1 }); }
   }

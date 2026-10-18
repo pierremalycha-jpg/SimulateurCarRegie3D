@@ -1,8 +1,9 @@
+// @ts-check
 import { S, camById } from '../state.js';
 import { MIX, EVS, ROUTER, evsSetRecording } from '../pipeline.js';
 import { GFX, gfxTake, gfxOut } from '../gfx.js';
 import { AU, applyAll, applyStrip, setPatch, setLineDelay, setFollow } from '../audio.js';
-import { CAMERA_TYPES } from '../data.js';
+import { CAMERA_TYPES } from '../data/cameras.js';
 import { addCamera, removeCamera, lineUpCamera } from '../bcam.js';
 
 // ----------------------------------------------------------------------------------

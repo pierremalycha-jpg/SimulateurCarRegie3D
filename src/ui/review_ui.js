@@ -1,10 +1,11 @@
+// @ts-check
 import { S, emit, on } from '../state.js';
 import { el } from '../util.js';
 import { modal, toast, selectEl } from './common.js';
 import { SH, CFG, MYREV, saveConfig, canConfigure, saveMyReviewSoon, saveMyReview, watchReviews, profilesOf, offerDownload } from '../shared.js';
 import { REVIEW_ITEMS, REVIEW_STATUS, OPINIONS, whereOf } from '../review.js';
 import { DOMAINS, GROUP_DOMAIN, initParams, paramById, fmtParam } from '../params.js';
-import { GUIDE } from '../data.js';
+import { GUIDE } from '../content/guide.js';
 
 // ----------------------------------------------------------------------------------
 // Relecture métier. Chaque expert (vision, son, réseau, ralentis, HF…) donne son avis

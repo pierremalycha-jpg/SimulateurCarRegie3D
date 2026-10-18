@@ -3,3 +3,5 @@ node_modules/
 # produits par node tools/build.mjs (réseau local)
 dist/index-lan.html
 dist/car-regie-serveur-lan.mjs
+# tests de bout en bout : captures et journaux
+test-results/

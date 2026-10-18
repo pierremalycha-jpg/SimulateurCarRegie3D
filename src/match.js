@@ -1,7 +1,8 @@
+// @ts-check
 import * as THREE from 'three';
-import { clamp, mulberry32, wrapAngle, lerpAngle, makeCanvas } from './util.js';
+import { clamp, mulberry32, wrapAngle, lerpAngle } from './util.js';
 import { S, emit } from './state.js';
-import { TEAMS, PLAYER_NAMES } from './data.js';
+import { PLAYER_NAMES } from './data/match.js';
 import { PITCH } from './world.js';
 import { buildPeople, poseHuman, flushPeople, ballTexture, PEOPLE } from './people.js';
 
@@ -60,7 +61,7 @@ function setupKickoff(team, instant = false) {
     let [x, z] = h.team >= 0 ? BASE[h.i % 11] : [0, 0];
     if (h.team >= 0) {
       const dir = M.attackDir[h.team];
-      x = Math.min(x, -1.2) * dir; z = z;
+      x = Math.min(x, -1.2) * dir;
       if (h.team === team && (h.i % 11) >= 9) { x = (h.i % 11 === 9 ? -0.6 : -1.5) * dir; z = h.i % 11 === 9 ? 0.3 : 6; }
     }
     if (h.role === 'ref') { x = -6; z = -10; }

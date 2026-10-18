@@ -1,11 +1,12 @@
+// @ts-check
 import { el } from '../util.js';
 import { S, emit } from '../state.js';
-import { STATION_INFO } from '../data.js';
+import { STATION_INFO } from '../content/stations.js';
 
 export const $ = (s, r = document) => r.querySelector(s);
 export const $$ = (s, r = document) => [...r.querySelectorAll(s)];
 
-let toastT = 0;
+/** @type {ReturnType<typeof setTimeout> | undefined} */ let toastT;
 export function toast(msg, kind = '', ms = 3200) {
   const t = $('#toast'); if (!t) return;
   t.textContent = msg; t.className = kind; t.hidden = false;

@@ -1,12 +1,15 @@
+// @ts-check
 import * as THREE from 'three';
 import { S, emit, camById, nextCamId } from './state.js';
-import { CAMERA_TYPES, LENSES, LINKS, SENSORS, SLOTS, ROLES, maxAperture, ND_FILTERS, SHUTTERS, IRIS_STOPS } from './data.js';
+import { CAMERA_TYPES, LENSES, LINKS, SENSORS, maxAperture } from './data/cameras.js';
+import { ND_FILTERS, SHUTTERS, IRIS_STOPS } from './data/exposure.js';
+import { SLOTS } from './data/stadium.js';
 import { Builder, setLayer } from './geo.js';
-import { W, BOWL, TRUCK, PITCH, standHeightAt, bowlOffset, labelSprite, overlayMat } from './world.js';
+import { W, BOWL, TRUCK, standHeightAt, bowlOffset, labelSprite, overlayMat } from './world.js';
 import { M } from './match.js';
 import { refPatched } from './patch.js';
 import { camPtpOk } from './net/fabric.js';
-import { clamp, spring, springAngle, wrapAngle, DEG, rand, randRange, kelvinRGBNorm, gauss, lerp } from './util.js';
+import { clamp, spring, springAngle, wrapAngle, DEG, rand, kelvinRGBNorm, gauss } from './util.js';
 
 export const K_EXPO = { k: 256 * 0.18 / 0.105 }; // calibré : jour, f/8, ND 1/4, 0 dB -> gris moyen correct
 
@@ -230,7 +233,7 @@ function boxCamera(Bs, Bp, Bt, cam, y0, lensLen, lensCol, body) {
   Bt.cyl(0.032, 0.032, 0.05, 0.03, -0.07, 0.5, 0xb9c0c7, 12, Math.PI / 2); Bt.cyl(0.02, 0.02, 0.06, 0.03, -0.07, 0.52, 0x262a2f, 10, Math.PI / 2);
   Bt.box(0.1, 0.06, 0.012, -0.03, 0.03, 0.481, 0x0e2a14); // petit écran d'état à l'arrière
   // objectif box : boîtier principal, épaulement avant, pare-soleil, flasque de montage
-  const L = lensLen, z0 = -0.11, zc = z0 - L / 2;
+  const L = lensLen, z0 = -0.11;
   const blk = white ? 0xe9e9e9 : 0x17181a, blk2 = white ? 0xd6d6d6 : 0x101113;
   Bt.box(0.258, 0.24, L * 0.84, 0, -0.005, z0 - L * 0.42, blk);
   Bt.box(0.22, 0.03, L * 0.8, 0, 0.125, z0 - L * 0.42, blk2); // arête supérieure adoucie
@@ -300,7 +303,7 @@ function buildModel(cam) {
   const lensLen = cam.L.len || (cam.L.kind === 'box' ? 0.62 : cam.L.kind === 'portable' ? 0.26 : 0.08);
   const body = 0x2a2e33, lensCol = cam.L.name.startsWith('Canon') ? 0xe9e9e9 : 0x1a1a1a;
   const y0 = -cam.mountH;
-  let tally = null;
+  let tally;
   switch (T.model) {
     case 'box': {
       if (lensLen > 0.5) boxCamera(Bs, Bp, Bt, cam, y0, lensLen, lensCol, body);
@@ -393,6 +396,12 @@ export class BCam {
     this.base = new THREE.Vector3(...o.pos);
     this.role = o.role || CAMERA_TYPES[o.type].roles[0];
     this.targetPlayer = o.targetPlayer ?? 9;
+    // état posé par d'autres modules (session, atelier, machineries) : déclaré ici pour être lisible
+    this.hideModel = false;   // atelier : le modèle 3D est remplacé par la caméra montée à la main
+    this.remotePose = false;  // session : le cadre vient de l'hôte
+    this.manualMove = false;  // Steadicam pilotée au clavier par un stagiaire
+    /** @type {any} */ this.boom = null;   // bras de grue
+    /** @type {any} */ this.ropes = null;  // câbles de la caméra volante
     this.ext = false;
     this.manual = false;
     this.mountH = this.T.model === 'box' ? 1.45 : this.T.model === 'shoulder' ? 1.55 : this.T.model === 'steadicam' ? 1.25 : 0;
@@ -454,7 +463,6 @@ export class BCam {
     W.scene.remove(this.model.root);
     if (this.cable) { W.scene.remove(this.cable); this.cable.geometry.dispose(); }
     if (this.infraLine) { W.scene.remove(this.infraLine); this.infraLine.geometry.dispose(); }
-    if (this.wedge) { W.scene.remove(this.wedge); this.wedge.geometry.dispose(); }
     this.rawRT.dispose(); this.outRT.dispose();
   }
 
@@ -587,7 +595,7 @@ export class BCam {
     // session à plusieurs : le cadre vient de l'hôte (ou du stagiaire qui tient la caméra)
     if (this.remotePose) { this.applyPose(); if (this.T.moving) this.model.root.position.copy(this.cam.position); return; }
     const b = M.ball; const T = this.T;
-    let P = null, Wd = 20, omega = 3, maxV = 1.2;
+    let P, Wd = 20, omega = 3, maxV = 1.2;
     const lead = 0.5;
     const owner = M.owner >= 0 ? M.humans[M.owner] : null;
     const cel = M.state === 'celebration' && M.scorer >= 0 ? M.humans[M.scorer] : null;

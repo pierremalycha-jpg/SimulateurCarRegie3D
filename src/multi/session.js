@@ -1,3 +1,4 @@
+// @ts-check
 import { S, emit, on, camById } from '../state.js';
 import { M } from '../match.js';
 import { lerpAngle, clamp } from '../util.js';
@@ -155,7 +156,7 @@ function onPeers(ch) {
 function electHost() {
   const cands = SES.peers.filter((p) => p.presence && p.presence.since);
   // celui qui a créé la partie (hôte) fait tourner le match ; sinon le formateur ; sinon le plus ancien arrivé
-  cands.sort((a, b) => ((!!b.presence.host) - (!!a.presence.host)) || ((b.presence.role === 'formateur') - (a.presence.role === 'formateur')) || (a.presence.since - b.presence.since) || (a.peer < b.peer ? -1 : 1));
+  cands.sort((a, b) => (Number(!!b.presence.host) - Number(!!a.presence.host)) || (Number(b.presence.role === 'formateur') - Number(a.presence.role === 'formateur')) || (Number(a.presence.since) - Number(b.presence.since)) || (a.peer < b.peer ? -1 : 1));
   const h = cands[0] || null;
   const wasHost = isHost();
   SES.hostPeer = h;

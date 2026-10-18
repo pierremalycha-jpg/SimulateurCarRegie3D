@@ -1,4 +1,5 @@
-import { S, emit, on } from '../state.js';
+// @ts-check
+import { S, on } from '../state.js';
 import { el } from '../util.js';
 import { $, modal, toast, intercom, selectEl } from './common.js';
 import { SES, ROLES_S, getRoom, joinSession, leaveSession, setRole, isHost, holderOf, canControl, nameOf, pseudoOf, roleLabel, sendOrder, chat, announce, forceChangedSlices, randomCode, transportKind, getPseudo, setPseudo, assignRole } from '../multi/session.js';
@@ -6,7 +7,7 @@ import { lanParties, lanSaveReport } from '../multi/lan.js';
 import { downloadLanKit } from '../multi/lankit.js';
 import { ROLE_COLORS } from '../multi/avatars.js';
 import { ROLE_BRIEF, objectives, trackRoleStats, resetRoleStats, orderStats } from '../multi/roles.js';
-import { STATION_INFO } from '../data.js';
+import { STATION_INFO } from '../content/stations.js';
 import { STATION_SLICE, allKeys, SLICES } from '../multi/slices.js';
 import { FAULTS, injectFault, ACTIVE } from '../faults.js';
 import { MIX, meSource, sourceLabel } from '../pipeline.js';
@@ -263,7 +264,7 @@ function buildReport() {
   const rows = [];
   for (const o of R.orders) {
     if (!['prep', 'cut', 'mix', 'stinger'].includes(o.kind)) continue;
-    let done = null;
+    let done;
     if (o.kind === 'prep') done = mixLog.find((m) => m.at > o.at && m.pst === o.n);
     else done = mixLog.find((m) => m.at > o.at && m.pgmChanged);
     rows.push({ o, dt: done ? (done.at - o.at) / 1000 : null });
@@ -390,9 +391,9 @@ const lockRoot = document.getElementById('station');
 if (lockRoot) for (const t of ['pointerdown', 'mousedown', 'click', 'input', 'change', 'wheel', 'keydown']) {
   lockRoot.addEventListener(t, (e) => {
     if (!lockRoot.classList.contains('ses-lock')) return;
-    const x = e.target; if (!x || !x.closest) return;
+    const x = /** @type {HTMLElement} */ (e.target); if (!x || !x.closest) return;
     if (!x.closest('.st-body') || x.closest('.tabs, .vx-tabs, .tab, .vx-tab, .net-tabs, [data-ro-ok]')) return;
-    if (t === 'keydown' && e.code === 'Escape') return;
+    if (t === 'keydown' && /** @type {KeyboardEvent} */ (e).code === 'Escape') return;
     e.preventDefault(); e.stopPropagation();
     if (t === 'pointerdown' && performance.now() - lockToastT > 2500) { lockToastT = performance.now(); toast('Poste en lecture seule pendant la session.'); }
   }, { capture: true, passive: false });

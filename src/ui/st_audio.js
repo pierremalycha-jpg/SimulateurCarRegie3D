@@ -1,3 +1,4 @@
+// @ts-check
 import { S, on } from '../state.js';
 import { el, clamp, fmt } from '../util.js';
 import { hwBtn, selectEl, intercom } from './common.js';
@@ -209,6 +210,7 @@ export function buildAudio(body, arg, ctx) {
       bandRow.hidden = ui.view !== 'eq' || ui.layer !== 'A';
       [...bandRow.children].forEach((b, i) => b.classList.toggle('lit2', ui.band === i));
       bays.innerHTML = ''; ui.strips = []; ui.knobs = ui.knobs.filter((k) => k._detail);
+      /** @type {any[]} tranches (couche A) ou bus et VCA (couche B), complétés par des emplacements vides */
       const items = ui.layer === 'A' ? AU.order.map((k) => ({ t: 'ch', c: AU.ch[k] })) : [{ t: 'pgm' }, ...['intl', 'n1', 'nxs', 'nxb'].map((k) => ({ t: 'bus', k })), ...Object.keys(AU.vca).map((k) => ({ t: 'vca', k }))];
       while (items.length < 20) items.push({ t: 'empty', n: items.length + 1 });
       for (let b = 0; b < 2; b++) {
@@ -224,7 +226,7 @@ export function buildAudio(body, arg, ctx) {
       scrib.style.setProperty('--g', col);
       const hint = el('small', { class: 'vx-hint' });
       const ico = el('div', { class: 'vx-ico' });
-      const icos = [['48V', () => c.ph48, SEC.in], ['Ø', () => c.phase, SEC.in], ['EQ', () => c.eq.on, SEC.eq], ['DYN', () => c.dyn.on || c.gate.on, SEC.dyn], ['AFV', () => c.afv, SEC.pan]].map(([l, g, cc]) => { const i = el('i', {}, l); i.style.setProperty('--c', cc); i.sync = () => i.classList.toggle('on', !!g()); ico.appendChild(i); return i; });
+      const icos = /** @type {Array<[string, () => any, string]>} */ ([['48V', () => c.ph48, SEC.in], ['Ø', () => c.phase, SEC.in], ['EQ', () => c.eq.on, SEC.eq], ['DYN', () => c.dyn.on || c.gate.on, SEC.dyn], ['AFV', () => c.afv, SEC.pan]]).map(([l, g, cc]) => { const i = el('i', {}, l); i.style.setProperty('--c', cc); i.sync = () => i.classList.toggle('on', !!g()); ico.appendChild(i); return i; });
       const scr = el('div', { class: 'vx-screen' });
       scr.style.setProperty('--sec', SEC[ui.view]);
       const syncs = [];
@@ -553,7 +555,8 @@ export function buildAudio(body, arg, ctx) {
     g.font = '600 12px system-ui'; g.textBaseline = 'middle';
     const bars = [['G', AU.master.peakL, '#22c55e'], ['D', AU.master.peakR, '#22c55e'], ['INT', AU.bus.intl.peak], ['N1C', AU.bus.n1.peak], ['N1S', AU.bus.nxs.peak], ['N1B', AU.bus.nxb.peak]];
     const bx = 6, bw = 22, bh = H - 24;
-    bars.forEach(([l, db], i) => {
+    bars.forEach(([l, dbv], i) => {
+      const db = Number(dbv);
       const x = bx + i * (bw + 7) + (i >= 2 ? 8 : 0);
       g.fillStyle = '#10161b'; g.fillRect(x, 6, bw, bh);
       const lv = clamp((db + 60) / 60, 0, 1) * bh;

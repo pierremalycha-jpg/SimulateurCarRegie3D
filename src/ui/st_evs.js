@@ -1,3 +1,4 @@
+// @ts-check
 import { S, camById } from '../state.js';
 import { el, clamp, tc, fmt } from '../util.js';
 import { hwBtn } from './common.js';

@@ -1,5 +1,6 @@
-import { S, emit, on, camById } from './state.js';
-import { el, randPick, fmt } from './util.js';
+// @ts-check
+import { S, emit, camById } from './state.js';
+import { el, randPick } from './util.js';
 import { ROUTER, EVS, evsSetRecording, route } from './pipeline.js';
 import { toast, intercom } from './ui/common.js';
 import { IP_FAULTS, clearNetFaults } from './ipnet.js';

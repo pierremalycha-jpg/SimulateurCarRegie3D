@@ -1,5 +1,6 @@
+// @ts-check
 import { S } from '../state.js';
-import { FAB, COLORS, CLABEL, CNUM, vlanOf, PTP_REF, DSCP_REF, clockId, portState, portPeer, spanLoad, SPEED_GBPS } from './fabric.js';
+import { FAB, COLORS, CLABEL, CNUM, vlanOf, DSCP_REF, clockId, portState, spanLoad } from './fabric.js';
 
 // ----------------------------------------------------------------------------------
 // Instruments de mesure du réseau ST 2110 (valeurs simulées, cohérentes avec le modèle) :
@@ -11,7 +12,7 @@ import { FAB, COLORS, CLABEL, CNUM, vlanOf, PTP_REF, DSCP_REF, clockId, portStat
 // ----------------------------------------------------------------------------------
 export const AN = { t: 0, acc: 0, rx: 'ME1', hist: [], ptp: {}, gmPrev: {}, steps: {}, drift: {}, cnt: {}, links: {} };
 const HN = 240; // 60 s à 4 échantillons par seconde
-const gauss = () => { let u = 0, v = 0; while (!u) u = Math.random(); v = Math.random(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v); };
+const gauss = () => { let u = 0; while (!u) u = Math.random(); const v = Math.random(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v); };
 
 // ---------------- géométrie d'un flux vidéo ST 2110-20 ----------------
 export function videoGeom() {
@@ -50,7 +51,6 @@ function pathMetrics(p, f) {
   }
   return { lat, uMax, hops: p.keys.length - 1 };
 }
-function rxLevel(rx) { const s = FAB.res && FAB.res.rxState[rx]; return s; }
 
 // ---------------- échantillonnage (4 Hz) ----------------
 export function updateAnalyzer(dt) {
@@ -174,7 +174,7 @@ export function flowsOnPort(swId, port) {
 export function capture(swId, port, dir = 'both') {
   const R = FAB.res; const sw = FAB.switches[swId];
   const F = flowsOnPort(swId, port); const peer = F.peer;
-  const pk = []; const t0 = 0;
+  const t0 = 0;
   const c = sw.color === 'ctl' ? 'red' : sw.color;
   const ptpTime = Math.floor(Date.now() / 1000) + 37; // TAI ≈ UTC + 37 s
   const swm = swMac(sw, port);
@@ -216,7 +216,7 @@ export function capture(swId, port, dir = 'both') {
   if (ptpOn && peer && peer.kind !== 'probe') {
     const seqP = 3000 + Math.floor(Math.random() * 500);
     const master = peer.kind === 'link' ? (P.synced[sw.id] != null && P.synced[peer.other.sw] != null && P.synced[peer.other.sw] > P.synced[sw.id]) : true;
-    const mSrc = master ? myIp || otherIp : otherIp, mDst = '224.0.1.129';
+    const mDst = '224.0.1.129';
     const ptpL = (type, extra) => [['Ethernet II', [['Destination', '01:00:5e:00:01:81 (224.0.1.129)'], ['Source', master ? swm : peerMac]]], ['IPv4', [['Source', master ? (sw.role === 'leaf' ? `10.${CNUM[c]}.${sw.k}.1` : myIp) : myIp], ['Destination', mDst], ['DSCP', `${DSCP_REF.ptp} (EF)`], ['TTL', '1']]], ['UDP', [['Port destination', type === 'Announce' || type === 'Follow_Up' || type === 'Delay_Resp' ? '320 (messages généraux)' : '319 (messages d\'événement)']]], ['PTP v2 (IEEE 1588)', [['Type de message', type], ['Domaine', String(sw.running.ptp.domain)], ['Identité de l\'horloge émettrice', clockId(master ? sw.id : peer.kind === 'link' ? peer.other.sw : (peer.dev ? peer.dev.id : 'x'))], ...extra]]];
     const ann = gm ? [['Grand maître', `${gm.name} · ${clockId(gm.id)}`], ['priority1 / priority2', `${gm.p1} / ${gm.p2}`], ['clockClass', `${gm.cls}${gm.cls === 6 ? ' (verrouillé GPS)' : gm.cls === 248 ? ' (horloge libre)' : ''}`], ['stepsRemoved', String(P.synced[sw.id] ?? '—')], ['logMessageInterval', String(sw.running.ptp.announce)]] : [['Grand maître', 'aucun']];
     lists.push({ t: 1250, dir: master ? 'out' : 'in', proto: 'PTPv2', src: '', dst: mDst, len: 106, info: `Announce · domaine ${sw.running.ptp.domain} · GM ${gm ? gm.name : '—'}`, layers: ptpL('Announce', ann), cat: 'ptp' });
@@ -238,14 +238,12 @@ export function capture(swId, port, dir = 'both') {
     if (up.ospf === 'FULL' || /EXSTART|MTU/.test(up.ospf || '')) lists.push({ t: 3000, dir: 'out', proto: 'OSPF', src: myIp, dst: '224.0.0.5', len: 82, info: `Hello · zone 0.0.0.0 · router-id ${sw.running.ospf.routerId}${/MTU/.test(up.ospf || '') ? ' · voisin bloqué : DBD refusés (MTU différente)' : ''}`, layers: [['IPv4', [['Source', myIp], ['Destination', '224.0.0.5 (tous les routeurs OSPF)'], ['TTL', '1'], ['DSCP', '48 (CS6)']]], ['OSPFv2', [['Type', '1 (Hello)'], ['Router ID', sw.running.ospf.routerId], ['Zone', '0.0.0.0'], ['Hello / Dead', '10 s / 40 s'], ['MTU de l\'interface', String(sw.running.ports[port].mtu)]]]], cat: 'ctl', warn: /MTU/.test(up.ospf || '') });
     if (up.pim) {
       lists.push({ t: 3100, dir: 'out', proto: 'PIMv2', src: myIp, dst: '224.0.0.13', len: 68, info: 'Hello · holdtime 105 s', layers: [['IPv4', [['Source', myIp], ['Destination', '224.0.0.13 (tous les routeurs PIM)'], ['TTL', '1']]], ['PIMv2', [['Type', '0 (Hello)'], ['Holdtime', '105 s'], ['DR priority', '1']]]], cat: 'ctl' });
-      const joins = F[peer.side === 'a' ? 'out' : 'in'].length ? [] : [];
       const jflows = (peer.side === 'a' ? F.in : F.out).slice(0, 4);
       if (jflows.length) lists.push({ t: 3200, dir: peer.side === 'a' ? 'out' : 'in', proto: 'PIMv2', src: peer.side === 'a' ? myIp : otherIp, dst: '224.0.0.13', len: 54 + jflows.length * 20, info: `Join/Prune · ${jflows.length} jonction(s) (S,G)`, layers: [['PIMv2', [['Type', '3 (Join/Prune)'], ['Voisin amont', peer.side === 'a' ? otherIp : myIp], ...jflows.map((x) => ['Join', `(${FAB.devices[x.f.dev].nics[x.color].ip}, ${x.f.groups[x.color]}) · SPT`])]]], cat: 'ctl' });
-      void joins;
     }
   }
   lists.sort((a, b) => a.t - b.t);
-  lists.forEach((p, i) => { p.no = i + 1; });
+  lists.forEach((p, i) => { /** @type {any} */ (p).no = i + 1; }); // numéro de trame, comme dans un analyseur
   // débordement du port miroir
   const mon = Object.values(sw.running.monitor || {}).find((m) => m.src === port);
   const span = mon && mon.dest ? spanLoad(sw.id, mon) : null;

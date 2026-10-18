@@ -1,3 +1,4 @@
+// @ts-check
 import { S, on, emit, camById } from './state.js';
 import { M } from './match.js';
 import { clamp, dbToLin, linToDb, linToPowDb } from './util.js';
@@ -421,7 +422,7 @@ export function voiceGain(v) {
     const c = AU.ch[k];
     if (!portsOf(c.src).some((p) => PLUG[p] && PLUG[p].voice === v)) continue;
     const pre = dbToLin(c.gain - c.defGain) * (phantomOk(c) ? 1 : 0) * (c.netLost ? 0 : 1);
-    let g = 0;
+    let g;
     if (mon === 'pfl') g = c.pfl ? pre : 0;
     else {
       const post = pre * faderLin(c);

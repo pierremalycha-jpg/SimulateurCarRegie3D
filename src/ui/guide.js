@@ -1,3 +1,4 @@
+// @ts-check
 import { openDevice } from '../equipment/viewer.js';
 import { openTrainer } from './config.js';
 import { openReport } from './report.js';
@@ -5,12 +6,15 @@ import { CFG } from '../shared.js';
 import { DEVICE_LIST, DEVICES } from '../equipment/devices.js';
 import { S, emit, on, camById } from '../state.js';
 import { el } from '../util.js';
-import { GUIDE, GLOSSARY, CONTROLS_HELP, STATION_INFO, LIGHTING } from '../data.js';
+import { CONTROLS_HELP } from '../content/controls.js';
+import { GLOSSARY } from '../content/glossary.js';
+import { GUIDE } from '../content/guide.js';
+import { STATION_INFO, STATION_LIST } from '../content/stations.js';
+import { LIGHTING } from '../data/exposure.js';
 import { $, modal, openInfo, toast, selectEl, field } from './common.js';
 import { MIX, meSource, EVS } from '../pipeline.js';
 import { GFX } from '../gfx.js';
 import { RF } from '../rf.js';
-import { AU } from '../audio.js';
 
 const cam = (slot) => S.cams.find((c) => c.slotId === slot);
 export const MISSIONS = [
@@ -39,7 +43,7 @@ export function currentMission() { return MISSIONS.find((m) => !S.missionsDone[m
 export function checkMissions() {
   for (const m of MISSIONS) {
     if (S.missionsDone[m.id]) continue;
-    let ok = false; try { ok = !!m.check(); } catch (e) { ok = false; }
+    let ok; try { ok = !!m.check(); } catch (e) { ok = false; }
     if (ok) { S.missionsDone[m.id] = true; if (S.showMission) toast(`Mission réussie : ${m.title}`, 'good', 4000); emit('mission', m.id); }
   }
 }
@@ -55,11 +59,6 @@ export function drawMissionCard() {
     el('div', { class: 'row' }, el('button', { class: 'btn small', onclick: () => openGuide('missions') }, 'Toutes les missions'), el('button', { class: 'btn small', onclick: () => { S.missionsDone[m.id] = true; } }, 'Passer'), el('button', { class: 'btn small', onclick: () => { S.showMission = false; box.hidden = true; } }, 'Masquer')));
 }
 
-const STATION_LIST = [
-  ['realisateur', 'Car · production'], ['scripte', 'Car · production'], ['melangeur', 'Car · production'], ['habillage', 'Car · production'], ['producteur', 'Car · production'], ['chefdecar', 'Car · production'],
-  ['vision', 'Car · vision'], ['evs', 'Car · ralentis'], ['ipdirector', 'Car · ralentis'], ['son', 'Car · régie son'], ['hf', 'Car · zone technique'], ['grille', 'Car · zone technique'], ['reseau', 'Car · zone technique'], ['ccu', 'Car · zone technique'], ['synchro', 'Car · zone technique'], ['transmission', 'Car · zone technique'], ['intercom', 'Car · zone technique'],
-  ['pieddecar', 'Compound'], ['energie', 'Compound'], ['cadreur', 'Stade'], ['antenne', 'Stade'], ['localtv', 'Stade'], ['commentateurs', 'Stade'], ['var', 'Stade'],
-];
 
 export function openGuide(tab = 'missions', chapter = null) {
   const tabs = el('div', { class: 'tabs' });

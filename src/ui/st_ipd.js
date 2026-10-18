@@ -1,4 +1,5 @@
-import { S, camById } from '../state.js';
+// @ts-check
+import { S } from '../state.js';
 import { el, tc, fmt } from '../util.js';
 import { toast } from './common.js';
 import { EVS, evsAction, recordedCams, clipName, MIX, meSource } from '../pipeline.js';
@@ -15,7 +16,7 @@ export function buildIPD(body, arg, ctx) {
     el('div', { class: 'monwrap grow' }, el('div', { class: 'lab' }, 'EVS A · PGM1'), el('div', { class: 'mon fill', 'data-gl': 'EVSA' })),
     el('div', { class: 'monwrap grow' }, el('div', { class: 'lab' }, 'EVS B · PGM2'), el('div', { class: 'mon fill', 'data-gl': 'EVSB' })),
     el('div', { class: 'monwrap grow' }, el('div', { class: 'lab' }, 'Programme'), el('div', { class: 'mon fill', 'data-gl': 'PGM' }))), ctx.explainBox);
-  let selIdx = null; let filter = ''; let ch = evsLayout().plays > 1 ? 1 : 0; let playFrom = 0;
+  let selIdx = null; let filter = ''; let ch = evsLayout().plays > 1 ? 1 : 0;
   // ---------- base de données ----------
   const q = el('input', { type: 'text', placeholder: 'Rechercher (mot-clé, nom, joueur, ID…)', 'aria-label': 'Rechercher un clip', style: { flex: '1 1 200px' } });
   q.addEventListener('input', () => { filter = q.value.trim().toLowerCase(); drawDb(); });

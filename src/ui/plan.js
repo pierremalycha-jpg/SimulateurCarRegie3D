@@ -1,8 +1,10 @@
+// @ts-check
 import * as THREE from 'three';
 import { S, emit, on, camById, nextCamId } from '../state.js';
 import { el, fmt, clamp } from '../util.js';
-import { SLOTS, CAMERA_TYPES, LENSES, LINKS, ROLES, FORMATS, SENSORS } from '../data.js';
-import { W, labelSprite, standHeightAt, standAt, bowlOffset, TRUCK, BOWL } from '../world.js';
+import { CAMERA_TYPES, LENSES, LINKS, ROLES, FORMATS, SENSORS } from '../data/cameras.js';
+import { SLOTS } from '../data/stadium.js';
+import { W, labelSprite, standHeightAt, standAt, bowlOffset } from '../world.js';
 import { setLayer } from '../geo.js';
 import { addCamera, removeCamera, loadPreset, lineUpCamera, computeRoute } from '../bcam.js';
 import { RF } from '../rf.js';
@@ -194,7 +196,7 @@ function camForm(slot, cam) {
   const T = () => CAMERA_TYPES[st.type];
   if (!st.lens || !T().lenses.includes(st.lens)) st.lens = T().defLens;
   const validLinks = () => T().links.filter((l) => l !== 'precab' || (slot && slot.precab));
-  if (!st.link || !validLinks().includes(st.link)) st.link = slot && slot.precab && validLinks().includes('precab') && false ? 'precab' : (validLinks().includes(T().defLink) ? T().defLink : validLinks()[0]);
+  if (!st.link || !validLinks().includes(st.link)) st.link = validLinks().includes(T().defLink) ? T().defLink : validLinks()[0];
   if (!st.role || !T().roles.includes(st.role)) st.role = T().roles[0];
   const box = el('div', { class: 'list' });
   const draw = () => {
@@ -257,7 +259,7 @@ export function renderPanel() {
   P.append(head, body);
   // sélection
   if (PLAN.sel) {
-    let slot = null, cam = null;
+    let slot, cam = null;
     if (PLAN.sel.startsWith('cam:')) { cam = camById(+PLAN.sel.slice(4)); slot = cam ? slotById(cam.slotId) : null; }
     else slot = slotById(PLAN.sel.slice(5));
     if (slot || cam) {

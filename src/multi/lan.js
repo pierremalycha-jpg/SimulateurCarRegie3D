@@ -1,3 +1,4 @@
+// @ts-check
 // ----------------------------------------------------------------------------------
 // Client du serveur réseau local (lan/serveur.mjs). Il expose la même interface que la salle
 // temps réel de claude.ai (join → salle nommée : presence, onPeers, emit, on, onConnection,
@@ -41,7 +42,8 @@ export function lanRoom() {
 function joinNamed(name) {
   const by = tabId();
   const H = { peers: [], msg: {}, conn: [] };
-  let ws = null, me = null, connected = false, left = false, retry = 0, pingT = 0;
+  let ws = null, me = null, connected = false, left = false, retry = 0;
+  /** @type {ReturnType<typeof setInterval> | undefined} */ let pingT;
   let myPres = {};
   const peers = new Map(); // id -> objet figé (comme la salle claude.ai)
   const freeze = (p) => Object.freeze({ peer: p.peer, by: p.by || null, presence: Object.freeze({ ...(p.presence || {}) }), updatedAt: p.updatedAt || Date.now(), isMe: p.peer === me, sameTab: p.peer === me, kind: 'viewer', guest: false });
@@ -92,7 +94,7 @@ function joinNamed(name) {
         for (const h of hs) { try { h(msg); } catch (e) { console.error(e); } }
         return;
       }
-      if (m.t === 'error' && firstReject) { const e = new Error(m.message || m.code); e.code = m.code; firstReject(e); firstReject = null; firstResolve = null; left = true; try { ws.close(); } catch (er) { /* rien */ } }
+      if (m.t === 'error' && firstReject) { firstReject(Object.assign(new Error(m.message || m.code), { code: m.code })); firstReject = null; firstResolve = null; left = true; try { ws.close(); } catch (er) { /* rien */ } }
     };
     ws.onclose = () => { clearInterval(pingT); setConn(false); schedule(); };
     ws.onerror = () => { /* onclose suit */ };
@@ -100,7 +102,7 @@ function joinNamed(name) {
   function schedule() {
     if (left) return;
     retry++;
-    if (firstReject && retry > 3) { const e = new Error('Serveur réseau local injoignable'); e.code = 'unreachable'; firstReject(e); firstReject = null; firstResolve = null; }
+    if (firstReject && retry > 3) { firstReject(Object.assign(new Error('Serveur réseau local injoignable'), { code: 'unreachable' })); firstReject = null; firstResolve = null; }
     setTimeout(open, Math.min(5000, 400 * 2 ** Math.min(retry, 4)));
   }
   const sendRaw = (o) => { if (ws && ws.readyState === 1) ws.send(JSON.stringify(o)); };

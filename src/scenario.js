@@ -1,9 +1,10 @@
-import { S, on, emit, camById } from './state.js';
-import { el, tc, mmss, randPick } from './util.js';
+// @ts-check
+import { S, on } from './state.js';
+import { el, mmss, randPick } from './util.js';
 import { $, toast, intercom, modal } from './ui/common.js';
-import { MIX, meSource, ROUTER, EVS, resolve, feedOf } from './pipeline.js';
+import { MIX, meSource, EVS, resolve, feedOf } from './pipeline.js';
 import { patchScore } from './patch.js';
-import { FAULTS, injectFault, ACTIVE } from './faults.js';
+import { FAULTS, injectFault } from './faults.js';
 import { AU, soundPlanOk, SOUND_PLAN, embLabel } from './audio.js';
 import { addScenarioResult, offerDownload, CFG } from './shared.js';
 

@@ -1,8 +1,8 @@
+// @ts-check
 import { S, emit } from '../state.js';
-import { el, fmt, mmss } from '../util.js';
-import { toast, modal } from './common.js';
+import { el, mmss } from '../util.js';
+import { modal } from './common.js';
 import { explain } from './widgets.js';
-import { FAB } from '../net/fabric.js';
 import { NC, NET_MISSIONS, startMission, stopMission, answer, qText, objectivesOf, hint, missionScore, courseTotals, resetCourse, newQuiz, saveQuiz, startExam, endExam, closeExam, examReportHTML, EXAM_TIME } from '../net/course.js';
 import { PROG } from '../shared.js';
 import { offerDownload } from '../shared.js';

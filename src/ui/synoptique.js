@@ -1,5 +1,6 @@
+// @ts-check
 import { S } from '../state.js';
-import { LINKS, FORMATS } from '../data.js';
+import { LINKS, FORMATS } from '../data/cameras.js';
 import { ROUTER, EVS, recordedCams, sourceLabel } from '../pipeline.js';
 import { openInfo } from './common.js';
 

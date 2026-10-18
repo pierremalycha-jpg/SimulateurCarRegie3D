@@ -1,3 +1,4 @@
+// @ts-check
 import { offerDownload } from '../shared.js';
 import LISEZMOI from '../../lan/LISEZMOI.txt';
 import BAT from '../../lan/Lancer le serveur (Windows).bat';
@@ -11,7 +12,7 @@ import SH from '../../lan/lancer-serveur.sh';
 // ----------------------------------------------------------------------------------
 const TABLE = new Uint32Array(256).map((_, n) => { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1; return c >>> 0; });
 function crc32(b) { let c = 0xffffffff; for (let i = 0; i < b.length; i++) c = TABLE[(c ^ b[i]) & 0xff] ^ (c >>> 8); return (c ^ 0xffffffff) >>> 0; }
-function zipStore(entries) {
+export function zipStore(entries) {
   const enc = new TextEncoder(); const parts = [], central = []; let off = 0;
   const d = new Date();
   const time = (d.getHours() << 11) | (d.getMinutes() << 5) | (d.getSeconds() >> 1), date = ((d.getFullYear() - 1980) << 9) | ((d.getMonth() + 1) << 5) | d.getDate();

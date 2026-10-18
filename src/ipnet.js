@@ -1,3 +1,4 @@
+// @ts-check
 import { S } from './state.js';
 import { FAB, updateFabric, videoGbps, SPEED_GBPS, setSwitchPower, markDirty, resetFabric, PTP_REF } from './net/fabric.js';
 import { updateAnalyzer } from './net/analyzer.js';

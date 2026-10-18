@@ -1,16 +1,17 @@
-import { S, emit } from '../state.js';
-import { el, fmt } from '../util.js';
+// @ts-check
+import { S } from '../state.js';
+import { el } from '../util.js';
 import { modal, toast, selectEl, field } from './common.js';
 import { SH, CFG, PROG, saveConfig, canConfigure, watchAllProgress, profilesOf, uploadPhoto, photoUrl, offerDownload } from '../shared.js';
 import { EQUIP, evsLayout } from '../equip.js';
 import { buildCabling, endLabel, SIG } from '../equipment/cabling.js';
 import { DEVICES, DEVICE_LIST } from '../equipment/devices.js';
-import { REVIEW_ITEMS, REVIEW_STATUS } from '../review.js';
 import { MISSIONS } from './guide.js';
 import { NET_MISSIONS } from '../net/course.js';
 import { EMB_OPTIONS, SOUND_PLAN, AU, MONO_PORTS, ST_PORTS } from '../audio.js';
 import { openReview } from './review_ui.js';
-import { CAMERA_TYPES, LENSES, SLOTS, LINKS, ROLES } from '../data.js';
+import { CAMERA_TYPES, LENSES, LINKS, ROLES } from '../data/cameras.js';
+import { SLOTS } from '../data/stadium.js';
 
 // ----------------------------------------------------------------------------------
 // Espace formateur : configuration partagée du car, suivi des stagiaires, relecture
@@ -64,9 +65,10 @@ function tabCar(box, editable) {
 }
 
 // ---------------- liste de câblage : import / export ----------------
+/** @type {Array<[string, RegExp]>} */
 const COLS = [['n', /^(n°|no\b|num|numéro|id|repère|ref|câble n)/i], ['a', /(origine|source|^de\b|départ|from|côté a|extrémité a)/i], ['b', /(destination|vers|arrivée|^to\b|côté b|extrémité b)/i], ['type', /(type|câble|cable|support|modèle)/i], ['len', /(long|mètre|\bm\b)/i], ['sig', /(signal|nature)/i], ['note', /(remarque|note|comment|obs)/i]];
 function parseCSV(text) {
-  text = text.replace(/^﻿/, '');
+  text = text.replace(/^\uFEFF/, ''); // marque d'ordre des octets (BOM) des CSV exportés par Excel
   const first = text.split(/\r?\n/)[0] || '';
   const delim = (first.match(/;/g) || []).length >= (first.match(/,/g) || []).length ? ';' : (first.includes('\t') ? '\t' : ',');
   const rows = []; let row = [], cur = '', q = false;

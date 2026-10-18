@@ -1,7 +1,7 @@
+// @ts-check
 import { S, emit } from '../state.js';
 import { el } from '../util.js';
 import { $, modal } from './common.js';
-import { STATION_INFO } from '../data.js';
 import { T } from '../truck.js';
 import { TRUCK } from '../world.js';
 import { avatarPositions } from '../multi/avatars.js';

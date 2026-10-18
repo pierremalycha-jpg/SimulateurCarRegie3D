@@ -58,7 +58,7 @@ Le simulateur est réglé sur ce parc (modifiable dans l'Espace formateur → «
   - poste visé allumé en orange, clic ou E pour s'y installer ;
   - mini-plan et grand plan du car (Tab) ;
   - pupitres et baies détaillés (CCU HDCU-5500, grille, XVS-6000, XT4K, patch, synchro, intercom, HF…).
-  - `tools/reach.mjs` vérifie que chaque poste est accessible à pied.
+  - `tests/e2e/acces-postes.mjs` vérifie que chaque poste est accessible à pied.
 - **Stade inspiré de Bollaert-Delelis (Lens)**, reconstitution non officielle :
   - tribunes Lepagnot, Marek-Xercès (kop Marek debout), Trannin et Delacourt, angles ouverts ;
   - pylônes d'angle, anneau de poutres, toits suspendus, deux écrans géants d'angle ;
@@ -259,34 +259,106 @@ Le simulateur est réglé sur ce parc (modifiable dans l'Espace formateur → «
     graphiques pour l'habillage, temps à l'antenne pour le cadreur ;
   - le compte rendu du formateur reprend les participants et leurs rôles.
 
+## Ce que contient la v12 : un code plus stable, plus structuré, mesuré
+
+Aucune fonction nouvelle pour le stagiaire : la v12 rend le simulateur plus sûr à faire évoluer.
+
+- **Vérifications automatiques** :
+  - ESLint (`eslint.config.js`) sur tout le code ;
+  - vérification de types TypeScript sur le JavaScript existant (JSDoc, `// @ts-check` dans chaque fichier de
+    `src/`), deux configurations : navigateur (`tsconfig.json`) et Node (`tsconfig.node.json`) ;
+  - 65 tests unitaires `node:test` (≈ 2 s, sans navigateur) dans `tests/unit/` :
+    - cohérence des catalogues et contenus (objectifs, types de caméras, positions, dispositifs prédéfinis,
+      HF, fiches de poste, glossaire, guide, atelier) ;
+    - réseau ST 2110 : topologie, ST 2022-7, PTP, chaque panne réseau injectée puis réparée, ligne de commande ;
+    - session à plusieurs : chaque tranche d'état se réapplique à l'identique, un suivant reconstruit le
+      dispositif de l'hôte, objectifs de rôle ;
+    - réseau local : vrai serveur et client du jeu (présence, messages, reconnexion d'un onglet, parties, comptes
+      rendus, partie complète) ;
+    - archives ZIP relues par un lecteur indépendant ;
+  - intégration continue GitHub Actions (`.github/workflows/ci.yml`) : lint, types, tests unitaires et
+    construction à chaque envoi ; tests de bout en bout à la demande.
+- **Tests de bout en bout rangés** dans `tests/e2e/` avec un harnais commun (`harness.mjs`) : page servie comme
+  sur claude.ai, attentes sur condition plutôt que délais fixes, code de sortie fiable ; `tools/e2e.mjs` les
+  enchaîne et donne un bilan.
+- **Défauts trouvés par les tests et corrigés** :
+  - « charger la configuration de référence » d'un commutateur oubliait les descriptions du second port des
+    agrégats et ne réadaptait pas la vitesse des ports aux cartes réseau (un appareil 10G repassait en 25G) ;
+  - la baie de brassage n'apparaissait pas dans l'onglet « Les postes » du guide.
+- **Code réorganisé** :
+  - `main.js` (824 lignes) découpé en modules `src/app/` ; il ne garde que l'initialisation, les événements
+    et la boucle principale ;
+  - `data.js` (1 160 lignes) séparé en catalogues techniques (`src/data/`) et contenus pédagogiques
+    (`src/content/`).
+- **Optimisations mesurées** (profileur intégré : ajouter `?perf` à l'adresse) : voir « Performances » plus bas.
+
+## Performances
+
+Le profileur intégré (ajouter `?perf` à l'adresse) affiche le temps de chaque sous-système de la boucle
+principale ; `tools/perf-profile.mjs` le relève dans trois situations (dans le stade en marchant, dans le car en
+marchant, au poste mélangeur). Mesures de la v12, Chromium en rendu logiciel (SwiftShader, `?lite`), deux passages
+alternés par version, 45 s par situation :
+
+| Situation | Images en 45 s (v11 → v12) | Temps processeur par image (v11 → v12) |
+| --- | --- | --- |
+| Stade | 52 → 58 (+11 %) | 657 → 187 ms (−72 %) |
+| Car | 66 → 65,5 (=) | 578 → 76 ms (−87 %) |
+| Poste mélangeur | 78,5 → 75 (−4 %, dans le bruit de mesure) | 422 → 11 ms (−97 %) |
+
+Ce que le profileur a montré : la logique (match, caméras, joueur, visée, barre d'état) coûte moins de 2 ms par
+image ; presque tout le temps passait dans la lecture synchrone des pixels des mesures d'exposition et du waveform,
+qui oblige le processeur à attendre que la carte graphique ait fini de rendre toutes les caméras. Depuis la v12 :
+
+- ces lectures sont asynchrones (`src/readback.js` : tampon PBO et barrière WebGL 2, résultat lu à une image
+  suivante) : le processeur ne bloque plus, ce qui laisse travailler en parallèle processeur et carte graphique ;
+- le multiview n'est redessiné à chaque image que lorsqu'on peut le voir (car, poste, plan), deux fois par seconde
+  sinon, et hors du car une seule caméra « de fond » est rendue par image (pour les mesures) ;
+- la barre d'état et le viseur du cadreur ne reconstruisent plus leur DOM, la marche et la visée n'allouent plus
+  d'objets à chaque image.
+
+En rendu logiciel, la carte graphique simulée reste le goulet d'étranglement : le gain en images n'apparaît que dans
+le stade, où moins de rendus sont demandés. Sur une vraie carte graphique, la suppression des attentes rend
+l'affichage plus régulier (moins d'à-coups 4 à 8 fois par seconde).
+
 ## Construire et tester
 
 ```
 npm install
-node tools/build.mjs          # produit dist/index.html (fichier unique, three.js chargé depuis jsDelivr)
-node tools/build.mjs --dev    # même chose sans minification
-node tools/v3.mjs OUT hd      # postes, son, pannes, formateur, perf (aussi : scenario, ip, ops)
-node tools/syn.mjs OUT sdi    # captures des synoptiques (aussi : faults, ip)
-node tools/reach.mjs          # chaque poste du car est-il accessible à pied ?
+npm run build        # dist/index.html (page publiée), dist/index-lan.html, serveur autonome et archive réseau local
+npm run build:dev    # même chose sans minification
+npm run lint         # ESLint
+npm run typecheck    # TypeScript (navigateur + Node)
+npm test             # tests unitaires (node:test, ≈ 2 s)
+npm run check        # les quatre à la suite (ce que fait l'intégration continue)
+npm run test:e2e     # tests de bout en bout (Playwright, rendu logiciel : 19 suites, ≈ 50 min)
+npm run serve:lan    # serveur réseau local (après la construction) : http://localhost:8080
+```
+
+Tests de bout en bout : `node tools/e2e.mjs --list` liste les suites, `node tools/e2e.mjs reseau session` n'en
+lance que certaines (début du nom). Chaque suite garde son journal et ses captures dans `test-results/`. Une
+suite se lance aussi seule : `node tests/e2e/<suite>.mjs [dossier] [options]` (options en tête de fichier).
+Playwright n'est pas une dépendance du projet : le harnais prend celui du projet s'il est installé, sinon
+l'installation globale de npm (`npm install --no-save playwright` puis `npx playwright install chromium`).
+
+Outils :
+
+```
+node tools/perf-profile.mjs [page.html] [secondes]   # temps par sous-système (stade, car, poste)
 node tools/netcli.mjs HD LEAF-R1 'sh ip route;;sh ptp'   # modèle réseau et CLI sans navigateur
-node tools/net.mjs OUT HD     # poste Réseau IP, terminal, pannes réseau et effets à l'image
-node tools/course.mjs OUT HD  # parcours de formation, mesures, capture, quiz, examen
-node tools/v8.mjs OUT keys    # commutation clavier (aussi : audio, visual, mobile, review)
-node tools/session.mjs OUT    # session à deux navigateurs (salle simulée) : rôles, synchro, ordres, pannes
-node tools/lan.mjs OUT        # réseau local : vrai serveur + trois navigateurs (héberger, rejoindre, avatars, rôles, ordres, compte rendu)
-node lan/serveur.mjs          # lancer le serveur réseau local (après node tools/build.mjs) : http://localhost:8080
-node tools/atelier.mjs OUT     # atelier de montage : visée, gestes maintenus, refus, fibre sale, rapport
-node tools/ui.mjs OUT         # captures des interfaces (accueil, HUD, postes, fenêtres, mobile)
-node tools/gfx.mjs OUT haute jour   # captures de référence du rendu (accueil, terrain, kop, vol, compound, car, caméras)
-node tools/lum.mjs jour       # exposition des caméras : rendu physique comparé au rendu Lambert
-node tools/func.mjs           # tests fonctionnels historiques
+node tools/gfx.mjs [dossier] haute jour   # captures de référence du rendu
+node tools/shots.mjs dossier 1280 800 '["vision","hf"]'   # captures de postes
 ```
 
 ## Organisation du code (`src/`)
 
 | Fichier | Rôle |
 | --- | --- |
-| `data.js` | Catalogues (caméras, objectifs, liaisons, positions, antennes, modulations) et contenus pédagogiques |
+| `main.js` | Point d'entrée : initialisation du monde et du car, événements de l'application, boucle principale |
+| `app/` | Application : vue et qualité graphique (`view.js`), joueur et déplacements (`player.js`), visée et interactions (`interact.js`), cadreur (`camop.js`), téléportation et postes (`teleport.js`), barre d'outils et d'état (`hud.js`), clavier / souris / tactile (`input.js`), écran d'accueil et lancement (`start.js`), diagnostic de performance (`perf.js`), profileur `?perf` (`profiler.js`) |
+| `data/` | Catalogues techniques : caméras, objectifs, liaisons, formats (`cameras.js`) ; positions et antennes du stade (`stadium.js`) ; HF COFDM (`rf.js`) ; exposition et lumières (`exposure.js`) ; équipes (`match.js`) |
+| `content/` | Contenus pédagogiques : fiches de poste (`stations.js`), glossaire (`glossary.js`), chapitres du guide (`guide.js`), commandes (`controls.js`) |
+| `state.js` | État partagé de la simulation (`S`) et bus d'événements (`on` / `emit`) |
+| `truck.js` | Intérieur du car : plan, postes, écrans, baies et pupitres détaillés, collisions |
 | `equip.js` | Profil matériel (XVS-6000, XT4K, LSM, IPDirector) et répartition des canaux EVS |
 | `world.js` | Stade, éclairage, public, compound et extérieur du car |
 | `render.js` | Rendu physique : conversion des matériaux, environnement (ciel capturé, studio du car), post-traitement de la vue « œil » |
@@ -296,7 +368,6 @@ node tools/func.mjs           # tests fonctionnels historiques
 | `params.js` | Registre des valeurs chiffrées relisibles (objectifs, liaisons, C/N, latences, line-up) et corrections appliquées |
 | `multi/` | Jeu à plusieurs : session, rôles, hôte du match, pseudos (`session.js`), tranches d'état partagées (`slices.js`), client du serveur réseau local (`lan.js`), avatars des joueurs (`avatars.js`), fiches de rôle et objectifs (`roles.js`) |
 | `lan/` | Serveur réseau local sans dépendance (HTTP + WebSocket, parties, comptes rendus), lanceurs Windows / macOS / Linux, mode d'emploi |
-| `truck.js` | Intérieur du car (postes, écrans, baies) |
 | `match.js` | Simulation du match, rendu des joueurs, enregistrement d'état (base des ralentis EVS) |
 | `bcam.js` | Caméras broadcast : optique, cadreurs automatiques, traitement CCU (knee, white clip, HLG), câbles |
 | `rf.js` | Bilan de liaison HF, diversité, brouillage |
@@ -315,7 +386,15 @@ node tools/func.mjs           # tests fonctionnels historiques
 | `review.js` | Points techniques à faire relire par le formateur |
 | `gfx.js` | Habillage (score, bandeaux, statistiques) |
 | `atelier.js` | Atelier de montage de la CAM 1 : pièces, ordre des opérations et prérequis, visée, fantômes, gestes maintenus, réglages à la molette, mise en service, rapport |
-| `truck.js` (car) | Intérieur du car : plan, postes, baies et pupitres détaillés, collisions |
 | `ui/` | Session (`session_ui.js`), relecture (`review_ui.js`), réseau IP (`st_network.js`, `net_tools.js`, `net_course.js`), synoptiques (`synoptics.js`), plan du car (`truckmap.js`), postes (`stations.js`, `st_audio.js`, `commut.js`, `st_vision.js`, `st_evs.js`, `st_mixer.js`, `st_ipd.js`, `st_patch.js`), espace formateur (`config.js`), rapports (`report.js`), plan, guide, missions |
 | `equipment/` | Visionneuse de matériel : appareils (`devices.js`), liste de câblage (`cabling.js`), rendu SVG et photos (`viewer.js`) |
 | `faults.js`, `exercises.js` | Simulateur de pannes, réalisateur virtuel et opérateur EVS automatique |
+
+Hors de `src/` :
+
+| Dossier | Rôle |
+| --- | --- |
+| `lan/` | Serveur réseau local (voir plus haut) |
+| `tests/unit/` | Tests unitaires `node:test` ; `tests/helpers/` (DOM minimal, scène vide, réseau de test), `tests/register.mjs` (chargement des fichiers texte comme esbuild) |
+| `tests/e2e/` | Tests de bout en bout Playwright et leur harnais |
+| `tools/` | Construction (`build.mjs`, `zip.mjs`), lanceur des tests de bout en bout (`e2e.mjs`), mesures et captures |

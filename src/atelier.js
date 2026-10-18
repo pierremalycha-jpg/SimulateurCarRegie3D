@@ -1,3 +1,4 @@
+// @ts-check
 import * as THREE from 'three';
 import { S, emit } from './state.js';
 import { W } from './world.js';
@@ -5,7 +6,7 @@ import { el, makeCanvas } from './util.js';
 import { screenMaterial } from './geo.js';
 import { addCamera, removeCamera, lineUpCamera } from './bcam.js';
 import { camById } from './state.js';
-import { $, toast, intercom, modal } from './ui/common.js';
+import { $, toast, modal } from './ui/common.js';
 
 // ----------------------------------------------------------------------------------
 // Atelier de montage : la caméra principale (CAM 1) se monte à la main, sur la passerelle,
@@ -261,7 +262,7 @@ const rc = new THREE.Raycaster(); rc.far = 4.2; rc.layers.set(2);
 // calques : 2 = vue « œil » seulement, 3 = ombres. Les caméras du stade (calque 0) ne voient pas l'atelier :
 // la CAM 1 allumée filme depuis l'axe de l'objectif monté, qui lui boucherait l'image.
 function eyeOnly(root) { root.traverse((o) => { if (!o.isLight) o.layers.mask = (1 << 2) | (1 << 3); }); }
-const V = new THREE.Vector3(), V2 = new THREE.Vector3(), Q = new THREE.Quaternion(), E3 = new THREE.Euler();
+const V = new THREE.Vector3(), Q = new THREE.Quaternion(), E3 = new THREE.Euler();
 let ctx = null;
 
 function resetState() {
@@ -271,8 +272,6 @@ function resetState() {
     cap: true, powered: false, alarm: false, tilting: 0, mountSide: {}, objs: {}, hot: [], pick: [], seq: [], finished: false, report: null, cam: null,
   });
 }
-// coordonnées : repère du pied → monde (le pied regarde le terrain, +z monde)
-const toWorld = (p) => AT.rig.localToWorld(V.set(p[0], p[1], p[2]).clone());
 
 export function beginAtelier(c) {
   ctx = c;
@@ -294,6 +293,7 @@ export function beginAtelier(c) {
   // prise murale sur le garde-corps (pré-câblage vers le car)
   const wb = buildWallBox(); wb.position.set(1.5, 0.62, -0.55); rig.add(wb); AT.wall = wb;
   // flight cases au fond de la passerelle, pièces posées dessus
+  /** @type {Array<[string, number, number, number, number, string[]]>} : étiquette, largeur, profondeur, hauteur, x, pièces */
   const cases = [
     ['PIED', 1.25, 0.36, 0.3, -6.4, ['tripod']], ['TÊTE · MANCHES', 0.7, 0.5, 0.42, -5.2, ['head', 'barL', 'barR', 'plate']],
     ['ADAPTATEUR', 0.6, 0.55, 0.42, -4.3, ['adaptor']], ['CAMÉRA', 0.5, 0.45, 0.4, -3.55, ['camera']],

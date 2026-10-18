@@ -1,6 +1,7 @@
+// @ts-check
 import { setKeyMode } from './ui/commut.js';
-import { S, on, emit, camById } from './state.js';
-import { MIX, meSource, mixSetPst, evsAction, EVS, sourceLabel, recordedCams } from './pipeline.js';
+import { S, on, camById } from './state.js';
+import { MIX, meSource, evsAction, EVS, sourceLabel, recordedCams } from './pipeline.js';
 import { M } from './match.js';
 import { intercom, modal } from './ui/common.js';
 import { el, rand } from './util.js';
@@ -104,7 +105,6 @@ on('match', (e) => {
     if (S.events.length > 200) S.events.shift();
     if (EX.evsAuto && S.station !== 'evs') {
       setTimeout(() => {
-        const chA = EVS.ch[0];
         if (meSource(MIX.pgm) === 'EVSA') return; // ne pas toucher un ralenti à l'antenne
         evsAction(0, 'lastaction');
         const rec = recordedCams().map((id) => camById(id)).filter(Boolean);

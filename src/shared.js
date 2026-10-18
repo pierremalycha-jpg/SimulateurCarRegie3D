@@ -1,3 +1,4 @@
+// @ts-check
 import { S, emit, on } from './state.js';
 import { EQUIP } from './equip.js';
 import { setSoundPlan, applyAudioPatch } from './audio.js';
@@ -15,6 +16,14 @@ import { applyOverrides } from './params.js';
 //   progress/<id>   : progression d'un stagiaire (missions, scénarios, signalements, perf)
 // ----------------------------------------------------------------------------------
 export const SH = { db: null, user: null, assets: null, downloads: null, uid: null, isOwner: false, canEdit: false, canWrite: null, ready: false, readOnly: false };
+/**
+ * @typedef {object} CarConfig réglages du car (tous facultatifs : le simulateur a ses valeurs par défaut)
+ * @property {string} [name] @property {string} [company] @property {string[]} [soundPlan] plan de son : 4 paires embedder
+ * @property {Object<string, any>} [equip] @property {string[]} [checklist]
+ * @property {Array<{ title: string, steps?: string[] }>} [procedures]
+ * @property {any[]} [camPreset] @property {any} [audioPatch]
+ */
+/** @type {{ car: CarConfig, cabling: any, photos: { list: any[] }, review: { items: Object<string, any>, overrides: Object<string, any> } }} */
 export const CFG = { car: {}, cabling: null, photos: { list: [] }, review: { items: {}, overrides: {} } };
 // ma relecture (expert) : enregistrée dans review/<mon id>
 export const MYREV = { domains: [], items: {}, params: {}, extra: [], updatedAt: 0 };
@@ -79,7 +88,7 @@ export async function saveConfig(part, data) {
 }
 
 // ---------------- relecture métier ----------------
-let revT = 0;
+/** @type {ReturnType<typeof setTimeout> | undefined} */ let revT;
 export function saveMyReviewSoon() { clearTimeout(revT); revT = setTimeout(saveMyReview, 1200); }
 export async function saveMyReview() {
   MYREV.updatedAt = Date.now();
@@ -127,7 +136,8 @@ function restoreProgress() {
   Object.assign(S.missionsDone, PROG.missions);
   Object.assign(S.visited, PROG.visited);
 }
-let saveT = 0, saving = false, again = false;
+/** @type {ReturnType<typeof setTimeout> | undefined} */ let saveT;
+let saving = false, again = false;
 export function saveProgressSoon() { clearTimeout(saveT); saveT = setTimeout(saveProgress, 2500); }
 async function saveProgress() {
   if (saving) { again = true; return; }

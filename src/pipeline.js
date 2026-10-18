@@ -1,14 +1,17 @@
+// @ts-check
+import { pt, pe } from './app/profiler.js';
+import { makeReader } from './readback.js';
 import * as THREE from 'three';
 import { S, emit, on, camById } from './state.js';
 import { W } from './world.js';
 import { T as TR } from './truck.js';
-import { M, SNAP, LIVE, sampleRec, applySnapshot, captureLive, recRange } from './match.js';
+import { SNAP, LIVE, sampleRec, applySnapshot, captureLive, recRange } from './match.js';
 import { GFX, stingerLogo } from './gfx.js';
 import { rtSize, lineupStep } from './bcam.js';
-import { makeCanvas, tc, clockStr, clamp, roundRect } from './util.js';
+import { makeCanvas, tc, clamp, roundRect } from './util.js';
 import { EQUIP, mixInputs, evsLayout } from './equip.js';
 import { routerInOf, physToLogical, destFeed } from './patch.js';
-import { FORMATS } from './data.js';
+import { FORMATS } from './data/cameras.js';
 import { NET, netOk, ptpLocked } from './ipnet.js';
 import { FAB, delivery } from './net/fabric.js';
 
@@ -73,7 +76,7 @@ export const EXTRA_SOURCES = [
 export function allSources() {
   const l = [];
   for (let i = 1; i <= S.maxCams; i++) { const c = camById(i); l.push({ id: 'CAM' + i, label: `CAM ${i}`, short: String(i), cam: c, exists: !!c }); }
-  return l.concat(EXTRA_SOURCES.map((s) => ({ ...s, exists: true })));
+  return l.concat(EXTRA_SOURCES.map((s) => ({ ...s, cam: null, exists: true })));
 }
 export function sourceLabel(id) {
   if (!id) return '—';
@@ -163,7 +166,7 @@ export function route(dest, src) {
 // ----------------------------------------------------------------------------------
 export const EVS = {
   recording: true, recStopT: Infinity, recStart: {},
-  ch: [0, 1].map((i) => ({ name: i ? 'B' : 'A', mode: 'live', cam: i ? 2 : 1, t: 0, speed: 0, lever: 0.5, playing: false, in: null, out: null, rt: null, lastTq: -1, ok: true, msg: '' })),
+  ch: [0, 1].map((i) => ({ name: i ? 'B' : 'A', mode: 'live', cam: i ? 2 : 1, t: 0, speed: 0, lever: 0.5, playing: false, in: null, out: null, rt: null, lastTq: -1, ok: true, msg: '', pl: null, dirty: false, lastCam: null })),
   clips: [], playlist: [], fastJog: false, page: 1, lsmCh: 0, logs: [], browse: false,
 };
 // nom d'un clip façon Multicam : page · banque · touche · angle (ex. 111A)
@@ -190,7 +193,7 @@ export function canReplay(camId, t) {
   if (EVS.recStart[camId] == null) return 'Cette caméra n\'est pas enregistrée par l\'EVS (voir la grille, entrées REC).';
   if (t < EVS.recStart[camId]) return 'Pas d\'enregistrement à ce timecode pour cette caméra.';
   if (!EVS.recording && t > EVS.recStopT) return 'Enregistrement arrêté : rien après ' + tc(EVS.recStopT + S.tcOffset) + '.';
-  const [t0, t1] = recRange();
+  const [t0] = recRange();
   if (t < t0) return 'Hors de la mémoire du serveur (boucle).';
   return null;
 }
@@ -203,7 +206,7 @@ export function evsAction(chIdx, action, arg) {
   const c = EVS.ch[chIdx];
   if (chIdx === 1 && evsLayout().plays < 2) { c.ok = false; c.msg = 'Pas de second canal de lecture dans cette configuration.'; emit('evs', { ch: chIdx, action: 'refused' }); return; }
   const now = S.simTime;
-  const [t0, t1] = recRange();
+  const [t0] = recRange();
   const goPause = () => { if (c.mode === 'live') { c.t = now - 0.04; } c.mode = 'pause'; c.playing = false; };
   switch (action) {
     case 'live': c.mode = 'live'; c.playing = false; break;
@@ -510,7 +513,7 @@ function retTexture() {
 // ----------------------------------------------------------------------------------
 // Multiview
 // ----------------------------------------------------------------------------------
-const MV = { scene: new THREE.Scene(), cam: null, tiles: [], overlay: null, dyn: null, w: 1920, h: 1080, lastDraw: 0, lastKey: '' };
+const MV = { scene: new THREE.Scene(), cam: null, tiles: [], overlay: null, dyn: null, w: 1920, h: 1080, lastDraw: 0, lastKey: '', lastRender: 0 };
 function tileMat() {
   return new THREE.ShaderMaterial({
     uniforms: { map: { value: null }, uGain: { value: 1.1 } },
@@ -622,11 +625,13 @@ const meterMat = new THREE.ShaderMaterial({
       gl_FragColor = vec4(s / 25.0 / 1.2, mx / 1.2, 0.0, 1.0); }`,
   depthTest: false, depthWrite: false,
 });
-export const SCOPE = { src: 'CAM1', w: 192, h: 108, buf: null, rt: null, last: 0, canvas: null, tex: null, mode: 'luma', active: false, data: null };
-const METER = { rt: null, buf: null, last: 0 };
+export const SCOPE = { src: 'CAM1', w: 192, h: 108, buf: null, rt: null, last: 0, canvas: null, tex: null, mode: 'luma', active: false, data: null, reader: null, req: null };
+const METER = { rt: null, buf: null, last: 0, reader: null, req: null };
 
 function updateMeters(renderer) {
-  if (S.time - METER.last < 0.25) return;
+  // résultat de la mesure précédente, lu sans attendre la carte graphique
+  if (METER.req && METER.reader.poll(METER.buf)) { applyMeters(METER.req); METER.req = null; }
+  if (S.time - METER.last < 0.25 || METER.req) return;
   METER.last = S.time;
   const rt = METER.rt;
   for (const c of S.cams) {
@@ -636,13 +641,20 @@ function updateMeters(renderer) {
     blit(renderer, meterMat, rt);
   }
   rt.viewport.set(0, 0, 128, 4); rt.scissorTest = false;
-  renderer.readRenderTargetPixels(rt, 0, 0, 128, 4, METER.buf);
+  // caméras mesurées et heure de l'image mesurée de chacune (pour le line-up)
+  const req = { t: S.time, rendered: new Map(S.cams.map((c) => [c.id, c.lastRender])) };
+  METER.reader ||= makeReader(renderer, 128, 4);
+  if (METER.reader.request(rt)) METER.req = req;
+}
+function applyMeters(req) {
   for (const c of S.cams) {
+    const rendered = req.rendered.get(c.id);
+    if (rendered === undefined) continue; // caméra posée depuis la mesure
     let s = 0, mx = 0;
     for (let y = 0; y < 4; y++) for (let x = 0; x < 8; x++) { const k = (y * 128 + (c.id - 1) * 8 + x) * 4; s += METER.buf[k]; mx = Math.max(mx, METER.buf[k + 1]); }
-    c.meter.mean = s / 32 / 255 * 1.2; c.meter.peak = mx / 255 * 1.2; c.meter.t = S.time;
-    // line-up en cours : l'iris est affiné tant que la mesure n'est pas dans la cible
-    if (c.lineup && c.signalOK && c.lastRender > (c.lineup.t || 0)) { lineupStep(c); if (c.lineup) c.lineup.t = S.time; }
+    c.meter.mean = s / 32 / 255 * 1.2; c.meter.peak = mx / 255 * 1.2; c.meter.t = req.t;
+    // line-up en cours : l'iris est affiné tant que la mesure n'est pas dans la cible (sur une image prise après le dernier réglage)
+    if (c.lineup && c.signalOK && rendered > (c.lineup.t || 0)) { lineupStep(c); if (c.lineup) c.lineup.t = S.time; }
     // iris automatique
     if (c.paint.autoIris && c.signalOK) {
       const target = 0.42; const ratio = c.meter.mean / target;
@@ -655,17 +667,22 @@ function updateMeters(renderer) {
 }
 
 function updateScope(renderer) {
+  // image demandée à la mesure précédente : waveform et vecteurscope dessinés quand elle arrive
+  if (SCOPE.req && SCOPE.reader.poll(SCOPE.buf)) {
+    SCOPE.data = SCOPE.buf;
+    drawScopes(SCOPE.canvas.getContext('2d'), 512, 288, SCOPE.buf, SCOPE.mode, SCOPE.req.title);
+    SCOPE.tex.needsUpdate = true;
+    SCOPE.req = null;
+    emit('scope');
+  }
   const interval = SCOPE.active ? 0.12 : 0.5;
-  if (S.time - SCOPE.last < interval) return;
+  if (S.time - SCOPE.last < interval || SCOPE.req) return;
   SCOPE.last = S.time;
   const r = SCOPE.hdr && S.hdrView ? { tex: P.rts.hdr.texture, scale: 1 } : resolve(SCOPE.src);
   copyMat.uniforms.map.value = r.tex; copyMat.uniforms.uGain.value = r.scale; // reste dans le domaine stocké (/1.1)
   blit(renderer, copyMat, SCOPE.rt);
-  renderer.readRenderTargetPixels(SCOPE.rt, 0, 0, SCOPE.w, SCOPE.h, SCOPE.buf);
-  SCOPE.data = SCOPE.buf;
-  drawScopes(SCOPE.canvas.getContext('2d'), 512, 288, SCOPE.buf, SCOPE.mode, sourceLabel(SCOPE.src) + (SCOPE.hdr && S.hdrView ? ' · HLG' : ''));
-  SCOPE.tex.needsUpdate = true;
-  emit('scope');
+  SCOPE.reader ||= makeReader(renderer, SCOPE.w, SCOPE.h);
+  if (SCOPE.reader.request(SCOPE.rt)) SCOPE.req = { title: sourceLabel(SCOPE.src) + (SCOPE.hdr && S.hdrView ? ' · HLG' : '') };
 }
 
 // Dessin du waveform + vecteurscope dans un contexte 2D
@@ -755,7 +772,9 @@ export function initPipeline() {
 }
 
 let camCursor = 0;
-function scheduleCams() {
+// le multiview (et ses vignettes) n'est visible que dans le car, à un poste ou sur le plan des caméras
+export const mvWatched = () => S.inTruck || S.mode === 'station' || S.mode === 'plan';
+function scheduleCams(mvSeen) {
   // caméras prioritaires : PGM, PST, clé, poste ouvert, opérateur
   const pri = new Set();
   const srcs = [meSource(MIX.pgm), meSource(MIX.pst), MIX.key1.on ? meSource(MIX.key1.src) : null, ROUTER.map.AUX_VISION, SCOPE.src, ROUTER.map.AUX_GIANT];
@@ -763,7 +782,9 @@ function scheduleCams() {
   for (const ch of EVS.ch) if (ch.mode === 'live') { const s = ch.cam; if (meSource(MIX.pgm) === (ch.name === 'A' ? 'EVSA' : 'EVSB') || meSource(MIX.pst) === (ch.name === 'A' ? 'EVSA' : 'EVSB')) pri.add(s); }
   if (S.camop) pri.add(S.camop.id);
   if (S.selCam) pri.add(S.selCam);
-  const budget = S.lite ? 2 : S.quality === 'haute' ? 12 : S.quality === 'basse' ? 3 : 6;
+  // les autres tournent, quelques-unes par image, pour les vignettes du multiview et les mesures
+  // d'exposition ; quand personne ne regarde le multiview, une seule suffit aux mesures
+  const budget = !mvSeen ? 1 : S.lite ? 2 : S.quality === 'haute' ? 12 : S.quality === 'basse' ? 3 : 6;
   const list = [];
   for (const c of S.cams) if (pri.has(c.id)) list.push(c);
   const others = S.cams.filter((c) => !pri.has(c.id));
@@ -783,8 +804,10 @@ export function renderPipeline(renderer, dt) {
   W.giantScreen.material.uniforms.map.value = giant.tex; W.giantScreen.material.uniforms.uGain.value = 1.1 * giant.scale;
   captureLive(S.cams);
   applySnapshot(LIVE);
+  let tp = pt(); // profileur (?perf)
+  const mvSeen = mvWatched();
   // --- caméras ---
-  const list = scheduleCams();
+  const list = scheduleCams(mvSeen);
   const delayed = [];
   for (const c of list) {
     if (!c.status.ok) continue;
@@ -798,6 +821,7 @@ export function renderPipeline(renderer, dt) {
     if (sampleRec(t, SNAPBUF)) { applySnapshot(SNAPBUF); restored = false; }
     c.render(renderer, scene);
   }
+  tp = pe('· caméras', tp);
   // --- EVS ---
   for (const ch of EVS.ch) {
     if (ch.mode === 'live') { ch.ok = true; continue; }
@@ -818,6 +842,7 @@ export function renderPipeline(renderer, dt) {
   }
   if (!restored) applySnapshot(LIVE);
   for (const m of W.screens) m.uniforms.uLin.value = 0;
+  tp = pe('· ralentis', tp);
 
   // --- sortie HDR (HLG) de la CCU de la caméra au moniteur de référence ---
   if (S.hdrView) { const src = feedOf('GRADE1'); const cam = src && src.startsWith('CAM') ? camById(+src.slice(3)) : null; if (cam && cam.signalOK) cam.paintTo(renderer, P.rts.hdr, true); }
@@ -852,20 +877,27 @@ export function renderPipeline(renderer, dt) {
     blit(renderer, copyMat, D.rts[D.idx]); D.times[D.idx] = S.time; D.idx = (D.idx + 1) % D.n;
   }
 
+  tp = pe('· mélangeur', tp);
   // --- multiview ---
   for (const t of MV.tiles) {
     let src = t.role === 'PGM' ? 'PGM' : t.role === 'PVW' ? 'PVW' : ROUTER.map[t.role];
     const r = resolve(src, 0, t.role === 'PGM' || t.role === 'PVW', mvDest(t.role));
     t.mesh.material.uniforms.map.value = r.tex; t.mesh.material.uniforms.uGain.value = 1.1 * r.scale;
   }
-  const key = `${MIX.pgm}|${MIX.pst}|${MIX.key1.on}|${MIX.auto}|${MIX.pos > 0}|${MIX.ftb.on}|${S.cams.map((c) => c.id + (c.signalOK ? 'o' : 'x') + (c.paint.bars ? 'b' : '') + (c.rf ? c.rf.state : '') + c.lens).join(',')}|${EVS.ch.map((c) => c.mode + c.cam + c.playing + Math.round(c.speed * 100)).join(',')}`;
-  if (P.mvDirty || key !== MV.lastKey || S.time - MV.lastDraw > 0.25) { drawOverlay(); MV.lastKey = key; MV.lastDraw = S.time; P.mvDirty = false; }
-  if (S.frame % 3 === 0) drawDyn();
-  renderer.setRenderTarget(P.rts.mv); renderer.render(MV.scene, MV.cam);
+  // hors de vue, le multiview n'est redessiné que deux fois par seconde (il reste prêt quand on entre dans le car)
+  if (mvSeen || S.time - MV.lastRender > 0.5) {
+    MV.lastRender = S.time;
+    const key = `${MIX.pgm}|${MIX.pst}|${MIX.key1.on}|${MIX.auto}|${MIX.pos > 0}|${MIX.ftb.on}|${S.cams.map((c) => c.id + (c.signalOK ? 'o' : 'x') + (c.paint.bars ? 'b' : '') + (c.rf ? c.rf.state : '') + c.lens).join(',')}|${EVS.ch.map((c) => c.mode + c.cam + c.playing + Math.round(c.speed * 100)).join(',')}`;
+    if (P.mvDirty || key !== MV.lastKey || S.time - MV.lastDraw > 0.25) { drawOverlay(); MV.lastKey = key; MV.lastDraw = S.time; P.mvDirty = false; }
+    if (!mvSeen || S.frame % 3 === 0) drawDyn();
+    renderer.setRenderTarget(P.rts.mv); renderer.render(MV.scene, MV.cam);
+  }
+  tp = pe('· multiview', tp);
 
   // --- mesures ---
   updateMeters(renderer);
   updateScope(renderer);
+  pe('· mesures', tp);
 
   // --- tally des caméras ---
   for (const c of S.cams) c.setTally(tallyOf('CAM' + c.id));

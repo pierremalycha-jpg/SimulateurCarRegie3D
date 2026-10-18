@@ -1,3 +1,4 @@
+// @ts-check
 import * as THREE from 'three';
 import { VIEW_INV, VIEW_INV_GLSL } from './render.js';
 

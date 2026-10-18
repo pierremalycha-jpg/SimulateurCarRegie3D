@@ -1,7 +1,8 @@
+// @ts-check
 import { S } from '../state.js';
 import { el, fmt } from '../util.js';
-import { $, modal, toast, openInfo } from './common.js';
-import { LINKS, FORMATS } from '../data.js';
+import { modal, toast, openInfo } from './common.js';
+import { LINKS, FORMATS } from '../data/cameras.js';
 import { ROUTER, MIX, EVS, meSource, sourceLabel, tallyOf } from '../pipeline.js';
 import { EQUIP, evsLayout, mixInputs } from '../equip.js';
 import { NET, flowGbps } from '../ipnet.js';
@@ -187,7 +188,7 @@ function videoDiagram() {
   cams.forEach((c, i) => { const y = top + i * rowH + 14; D.wire([490, y], [530, y], ip ? 'ip' : 'video', { mode: 'straight' }); });
   // traitement
   const X = 700, BW = 360;
-  const mixB = D.box('mixer', X, 100, BW, 76, `Mélangeur ${EQUIP.mixer}`, [`Pupitre ${EQUIP.mixPanel} · ${mixInputs()} entrées utilisées`, `PGM : ${sourceLabel(pgm)} · PST : ${sourceLabel(pst)}${MIX.dsk1.on ? ' · DSK habillage' : ''}`, 'Sorties : PGM, CLEAN, PVW, multiviewers intégrés'], { cls: 'big', dev: 'mixer' });
+  D.box('mixer', X, 100, BW, 76, `Mélangeur ${EQUIP.mixer}`, [`Pupitre ${EQUIP.mixPanel} · ${mixInputs()} entrées utilisées`, `PGM : ${sourceLabel(pgm)} · PST : ${sourceLabel(pst)}${MIX.dsk1.on ? ' · DSK habillage' : ''}`, 'Sorties : PGM, CLEAN, PVW, multiviewers intégrés'], { cls: 'big', dev: 'mixer' });
   const evs = evsLayout();
   D.box('evs', X, 200, BW, 76, `Serveur EVS ${EQUIP.evsModel}${EQUIP.evsServers > 1 ? ' ×' + EQUIP.evsServers : ''}`, [`${evs.rec} entrées REC · ${evs.plays} sorties PLAY (PGM1${evs.plays > 1 ? ', PGM2' : ''})`, `LSM ×${EQUIP.lsmCount} (RS-422) · IPDirector (XNet)`, EVS.recording ? 'Enregistrement en cours' : 'ENREGISTREMENT ARRÊTÉ'], { cls: EVS.recording ? '' : 'err', dev: 'evs' });
   D.box('gfx', X, 300, 170, 50, 'Habillage', ['fill + key → DSK'], { dev: 'gfx' });
@@ -363,7 +364,7 @@ function commsDiagram() {
   D.box('hyb', 700, 380, 300, 54, 'Hybride / codec de coordination', ['ligne de conférence'], { cls: 'ext' });
   D.box('mcr', 1030, 380, 440, 54, 'Chaîne (régie finale)', ['mise à l\'antenne, ordres de début / fin'], { cls: 'ext' });
   for (const [a, b] of [['ccu', 'cams'], ['belt', 'bp'], ['cu', 'cm'], ['hyb', 'mcr']]) D.wire(D.p(a, 'r'), D.p(b, 'l'), a === 'belt' ? 'rf' : a === 'ccu' ? 'fiber' : 'comms', { both: true, dash: a === 'belt' || a === 'hyb' });
-  for (const [k, t] of [['ccu', 0.15], ['belt', 0.4], ['cu', 0.62], ['hyb', 0.85]]) D.wire(D.p('mx', 'r', t), D.p(k, 'l'), 'comms', { m: 660, both: true });
+  for (const [k, t] of /** @type {Array<[string, number]>} */ ([['ccu', 0.15], ['belt', 0.4], ['cu', 0.62], ['hyb', 0.85]])) D.wire(D.p('mx', 'r', t), D.p(k, 'l'), 'comms', { m: 660, both: true });
   // tally
   const pgm = meSource(MIX.pgm), pst = meSource(MIX.pst);
   D.zone(10, 650, 1480, 190, 'Tally');
@@ -416,7 +417,7 @@ function netDiagram() {
   if (ip && FAB.res) {
     D.zone(10, 610, 1480, 460, 'Réseau média ST 2110 : deux fabrics spine-leaf indépendantes (ST 2022-7)');
     const lv = (sw) => (!sw.power ? 'err' : FAB.issues.some((x) => x.sw === sw.id && x.sev === 'err') ? 'err' : FAB.issues.some((x) => x.sw === sw.id && x.sev === 'warn') ? 'warn' : '');
-    for (const [c, ox, nm] of [['red', 20, 'ROUGE (A)'], ['blue', 760, 'BLEU (B)']]) {
+    for (const [c, ox, nm] of /** @type {Array<[string, number, string]>} */ ([['red', 20, 'ROUGE (A)'], ['blue', 760, 'BLEU (B)']])) {
       const C = c === 'red' ? 'R' : 'B';
       D.note(ox + 10, 650, [`Réseau ${nm}`], 'zl');
       for (const s2 of [1, 2]) { const sw = FAB.switches[`SPINE-${C}${s2}`]; D.box(`sp${C}${s2}`, ox + 140 + (s2 - 1) * 260, 660, 180, 46, sw.running.hostname, [sw.power ? `spine 32 × 100G · ${sw.loopback}` : 'HORS TENSION'], { cls: lv(sw), dev: c === 'red' ? 'swred' : 'swblue' }); }
@@ -479,6 +480,7 @@ function powerDiagram() {
 
 // ---------------- 7. élévation des baies ----------------
 function racksDiagram() {
+  /** @type {Array<[string, string[]]>} */
   const rows = [['Rangée côté mur d\'écrans', RACK_ROWS.mur], ['Rangée côté porte', RACK_ROWS.porte]];
   const U = 11, rw = 175, gap = 22, top = 90, rh = 42 * U;
   const W = 40 + 7 * (rw + gap) + 20, H = top + 2 * (rh + 90) + 40;
@@ -505,6 +507,7 @@ function racksDiagram() {
   return D;
 }
 
+/** @type {Array<[string, string, Function, string]>} : clé, titre, dessin, aide */
 const TABS = [
   ['video', 'Vidéo', videoDiagram, 'Le chemin des images : caméras → CCU → grille → mélangeur, EVS, multiviewers → départs vers la chaîne. Suivez une caméra à l\'antenne (cadre rouge) depuis le stade jusqu\'au TX actif.'],
   ['sync', 'Synchronisation', syncDiagram, 'Tout ce qui commute doit être calé sur la même référence. Le SPG (verrouillé GPS) alimente les distributeurs, qui alimentent chaque appareil.'],
@@ -549,12 +552,10 @@ export function synopticsPanel(start = 'video') {
   return { el: box, update() { if (cur === 'racks' || cur === 'plan') return; const k = stateKey(); if (k !== key) { key = k; draw(); } } };
 }
 
-let live = null;
 export function openSynoptics(tab = 'video') {
   if (document.pointerLockElement) document.exitPointerLock();
   const p = synopticsPanel(tab);
   modal.open('Synoptiques du car', p.el, { width: 1400 });
-  live = p;
-  const tick = () => { if (!p.el.isConnected) { live = null; return; } p.update(); setTimeout(tick, 700); };
+  const tick = () => { if (!p.el.isConnected) return; p.update(); setTimeout(tick, 700); };
   setTimeout(tick, 700);
 }

@@ -1,3 +1,4 @@
+// @ts-check
 import { S, camById } from '../state.js';
 import { MIX, EVS, meSource } from '../pipeline.js';
 import { AU } from '../audio.js';

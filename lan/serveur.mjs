@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// @ts-check
 // ----------------------------------------------------------------------------------
 // Car régie 3D — serveur réseau local (aucune dépendance : Node.js 18 ou plus récent)
 //
@@ -205,7 +206,7 @@ server.on('upgrade', (req, socket) => {
   if (new URL(req.url, 'http://local').pathname !== '/ws' || !key || String(req.headers.upgrade).toLowerCase() !== 'websocket') { socket.destroy(); return; }
   const accept = crypto.createHash('sha1').update(key + '258EAFA5-E914-47DA-95CA-C5AB0DC85B11').digest('base64');
   socket.write(`HTTP/1.1 101 Switching Protocols\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Accept: ${accept}\r\n\r\n`);
-  socket.setNoDelay(true);
+  /** @type {import('node:net').Socket} */ (socket).setNoDelay(true);
   CONNS.add(new Conn(socket));
 });
 
@@ -217,7 +218,7 @@ function lanAddresses() {
 const serverName = () => os.hostname();
 const hhmm = () => new Date().toLocaleTimeString('fr-FR');
 
-server.on('error', (e) => {
+server.on('error', (/** @type {NodeJS.ErrnoException} */ e) => {
   if (e.code === 'EADDRINUSE') console.error(`Le port ${PORT} est déjà utilisé. Essayez : node lan/serveur.mjs --port ${PORT + 1}`);
   else console.error(e);
   process.exit(1);

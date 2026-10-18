@@ -1,3 +1,4 @@
+// @ts-check
 // État global partagé de l'application
 export const S = {
   quality: 'moyenne',

@@ -1,3 +1,4 @@
+// @ts-check
 // ----------------------------------------------------------------------------------
 // Points techniques à faire relire par le formateur (avec la source utilisée).
 // Statut et remarques stockés dans config/review (partagé).

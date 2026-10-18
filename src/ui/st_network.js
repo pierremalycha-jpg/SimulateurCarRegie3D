@@ -1,8 +1,9 @@
+// @ts-check
 import { S, emit } from '../state.js';
 import { el, fmt } from '../util.js';
 import { toast, modal, selectEl } from './common.js';
 import { explain } from './widgets.js';
-import { FAB, COLORS, CLABEL, LEAVES, vlanOf, subnetOf, sviIp, p2p, gmNet, SPEED_GBPS, PTP_REF, DSCP_REF, QUERIER_TIMEOUT, markDirty, evaluate, setSwitchPower, writeMemory, loadReference, loadFactory, portState, sdpOf, clockId, linkName, ipToInt, inSubnet, videoGbps, resetFabric, buildFabric, topoKey } from '../net/fabric.js';
+import { FAB, COLORS, CLABEL, LEAVES, vlanOf, subnetOf, sviIp, p2p, gmNet, PTP_REF, DSCP_REF, QUERIER_TIMEOUT, markDirty, evaluate, setSwitchPower, writeMemory, loadReference, loadFactory, portState, sdpOf, clockId, ipToInt, inSubnet, videoGbps, resetFabric, buildFabric, topoKey } from '../net/fabric.js';
 import { cliSession, runCli, cliPrompt, cliComplete, runningConfig, ptpPorts, ifShort } from '../net/cli.js';
 import { FAULTS, injectFault } from '../faults.js';
 import { tabMeasure, setMeasureSub } from './net_tools.js';
@@ -59,7 +60,7 @@ export function buildNetwork(body, arg, ctx) {
     content.innerHTML = ''; R.live = null;
     ({ learn: tabCourse, topo: tabTopo, switch: tabSwitch, addr: tabAddr, flows: tabFlows, meas: tabMeasure, ptp: tabPtp, diag: tabDiag })[V.tab](content, R);
   }
-  R.go = (tab, o = {}) => { const { msub, keepCourse, ...rest } = o; for (const k in rest) if (rest[k] !== undefined) V[k] = rest[k]; if (msub) setMeasureSub(msub); show(tab); };
+  R.go = (tab, o = {}) => { const { msub, keepCourse: _keep, ...rest } = o; for (const k in rest) if (rest[k] !== undefined) V[k] = rest[k]; if (msub) setMeasureSub(msub); show(tab); };
   show(V.tab);
   return { update() { render(false); if (R.live) R.live(); } };
 }
@@ -243,7 +244,7 @@ function tabSwitch(box, R) {
   if (!FAB.switches[V.sw]) V.sw = 'LEAF-R1';
   const list = el('div', { class: 'net-swlist' });
   for (const [t, ids] of [['Rouge', Object.keys(FAB.switches).filter((k) => FAB.switches[k].color === 'red')], ['Bleu', Object.keys(FAB.switches).filter((k) => FAB.switches[k].color === 'blue')], ['Contrôle', ['SW-CTRL']]]) {
-    list.append(el('div', { class: 'net-swgrp ' + t.toLowerCase() }, t));
+    list.append(el('div', { class: 'net-swgrp ' + String(t).toLowerCase() }, t));
     for (const id of ids) {
       const sw = FAB.switches[id]; const dirty = JSON.stringify(sw.running) !== JSON.stringify(sw.startup);
       list.append(el('button', { class: 'net-swbtn' + (id === V.sw ? ' on' : ''), onclick: () => { V.sw = id; V.port = sw.hw[0].name; R.refresh(); } }, el('span', { class: dotCls(swLevel(sw)) }), sw.running.hostname, dirty ? el('i', { title: 'Configuration non enregistrée' }, '●') : null));

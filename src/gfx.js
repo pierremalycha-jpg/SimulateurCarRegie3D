@@ -1,7 +1,8 @@
+// @ts-check
 import * as THREE from 'three';
 import { makeCanvas, roundRect, mmss, clamp } from './util.js';
 import { M, playerName, playerNumber, teamOf } from './match.js';
-import { TEAMS, POSITIONS } from './data.js';
+import { TEAMS, POSITIONS } from './data/match.js';
 import { S, emit } from './state.js';
 
 // Moteur d'habillage simplifié : deux sorties fill+key (canvas avec alpha) -> DSK 1 et DSK 2 du mélangeur

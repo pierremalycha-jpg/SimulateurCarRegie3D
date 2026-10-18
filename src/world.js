@@ -1,11 +1,13 @@
+// @ts-check
 import * as THREE from 'three';
 import { RENDER, refreshEnvironment, pbr } from './render.js';
 import { buildGround, buildTrees, forestPoints, terrilGeometry } from './landscape.js';
 import { buildOBTruck, buildDSNG, buildGenerator, buildBungalows, tarmacTexture } from './vehicles.js';
-import { Builder, quadGeo, mergeNonIndexed, setLayer, screenMaterial } from './geo.js';
-import { makeCanvas, rand, mulberry32, clamp, kelvinRGBNorm } from './util.js';
+import { Builder, mergeNonIndexed, setLayer, screenMaterial } from './geo.js';
+import { makeCanvas, mulberry32, kelvinRGBNorm } from './util.js';
 import { S } from './state.js';
-import { ANTENNAS, TEAMS } from './data.js';
+import { TEAMS } from './data/match.js';
+import { ANTENNAS } from './data/stadium.js';
 
 // --- Dimensions du stade (m) : inspiré du stade Bollaert-Delelis (Lens) ---
 // Quatre tribunes séparées, angles ouverts, terrain 105 × 68 m orienté est-ouest.
@@ -535,7 +537,7 @@ function buildStandDetails(scene) {
   const B = new Builder(); const stairs = [], vip = [], voids = [];
   for (const st of STANDS) {
     const [, a2, b1, b2] = st.lo, [c1, c2, d1, d2] = st.up, h = st.half;
-    const loY = (o) => b1 + o / a2 * (b2 - b1), upY = (o) => d1 + (o - c1) / (c2 - c1) * (d2 - d1);
+    const loY = (o) => b1 + o / a2 * (b2 - b1);
     // escaliers (mêmes emplacements que les allées laissées libres par le public)
     for (let u = -h + 11; u < h - 1; u += 22) {
       const oStart = st.main && Math.abs(u) < 6 ? (4.6 - b1) / (b2 - b1) * a2 : 0;
@@ -606,7 +608,6 @@ function buildStandDetails(scene) {
   for (let i = 0; i < 16; i++) {
     const u = -44 + r() * 88, o = 3 + r() * 16, y = mk.lo[2] + o / mk.lo[1] * (mk.lo[3] - mk.lo[2]);
     const [x, , z] = SP(mk, u, o, y);
-    const col = i % 3 === 0 ? 0xc8102e : i % 3 === 1 ? 0xf5c400 : 0x111111;
     Pb.cyl(0.02, 0.02, 3.2, x, y + 2.2, z, 0x9aa0a6, 5);
     const fg = new THREE.PlaneGeometry(1.8, 1.2, 12, 4); fg.translate(0.9, 0, 0);
     const flag = new THREE.Mesh(fg, flagMat(i % 3));
@@ -749,7 +750,7 @@ export function buildWorld(renderer) {
 
   // --- éléments intérieurs de la tribune principale (fusionnés) ---
   const B = new Builder();
-  const concrete = 0x8d9196, darkC = 0x55595e;
+  const darkC = 0x55595e;
   // tunnel : murs et plafond
   const ty = 4.6;
   B.box(0.4, ty, 6.5, -5, ty / 2, -44.25, darkC); B.box(0.4, ty, 6.5, 5, ty / 2, -44.25, darkC);
@@ -991,6 +992,7 @@ varying vec2 vCUv; varying vec3 vShirt; varying vec3 vAcc; varying float vSeed; 
   // public par tribune : supporters sang et or ; parcage visiteurs dans un coin de la tribune Trannin
   for (const st of STANDS) {
     const rot = st.axis === 'z' ? (st.sgn < 0 ? 0 : Math.PI) : (st.sgn < 0 ? -Math.PI / 2 : Math.PI / 2);
+    /** @type {Array<[number, number, string]>} */
     const tiers = [[st.lo[0], st.lo[1], 'lo'], [st.up[0], st.up[1], 'up']];
     for (const [o1, o2, tier] of tiers) {
       const kop = st.id === 'marek' && tier === 'lo';

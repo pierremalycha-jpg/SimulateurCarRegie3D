@@ -1,6 +1,6 @@
-import { S, camById } from '../state.js';
-import { LINKS, FORMATS } from '../data.js';
-import { ROUTER, DESTS, sourceLabel, recordedCams, EVS } from '../pipeline.js';
+// @ts-check
+import { S } from '../state.js';
+import { ROUTER, sourceLabel } from '../pipeline.js';
 import { RF } from '../rf.js';
 import { EQUIP, evsLayout, mixInputs } from '../equip.js';
 import { FAB } from '../net/fabric.js';
@@ -42,7 +42,7 @@ const srcToRouterIn = (id) => {
 };
 export function routerCrosspoint(outIdx) {
   // quelle entrée est commutée sur cette sortie ?
-  let dest = null;
+  let dest;
   if (outIdx <= 22) dest = 'ME' + outIdx;
   else if (outIdx <= 40) dest = 'MV' + (outIdx - 22);
   else if (outIdx <= 48) dest = 'REC' + (outIdx - 40);
@@ -67,7 +67,6 @@ export function buildCabling() {
   // --- caméras ---
   const sys = S.cams.filter(isSystemCam);
   sys.forEach((c, i) => {
-    const L = LINKS[c.link];
     const len = c.route ? Math.round(c.route.length) : 0;
     if (c.link === 'smpte' || c.link === 'triax') {
       add(P('cam', c.id, 'ccu'), P('pdc', 1, (c.link === 'triax' ? 'tri' : 'smpte') + c.id), c.link === 'triax' ? 'Triax' : 'Fibre hybride SMPTE 311M (3K.93C)', 'fiber', len, `Tirage terrain depuis « ${c.slot ? c.slot.label : 'position libre'} »`, c.status.ok);

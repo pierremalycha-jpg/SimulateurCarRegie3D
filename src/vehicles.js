@@ -1,3 +1,4 @@
+// @ts-check
 import * as THREE from 'three';
 import { makeCanvas, mulberry32 } from './util.js';
 import { Builder } from './geo.js';
@@ -43,21 +44,22 @@ function decal(group, t, w, h, x, y, z, rotY, rough = 0.32, metal = 0.15) {
   m.position.set(x, y, z); m.rotation.y = rotY; m.castShadow = false; m.receiveShadow = true; group.add(m); return m;
 }
 
-// roue : pneu (tore aplati) + jante alu + moyeu
+// roue : pneu (tore aplati) + jante alu + moyeu ; géométries et matériaux partagés par toutes les roues
+const WHEEL = { geo: null, mat: null };
 function wheel(group, x, y, z, rad = 0.5, w = 0.32, twin = false) {
-  if (!wheel.geo) {
+  if (!WHEEL.geo) {
     const tyre = new THREE.TorusGeometry(0.39, 0.13, 10, 28); tyre.scale(1, 1, 1.25);
     const rim = new THREE.CylinderGeometry(0.29, 0.29, 0.26, 24); rim.rotateX(Math.PI / 2);
     const hub = new THREE.CylinderGeometry(0.1, 0.12, 0.3, 10); hub.rotateX(Math.PI / 2);
-    wheel.geo = { tyre, rim, hub };
-    wheel.mat = { tyre: new THREE.MeshStandardMaterial({ color: 0x16171a, roughness: 0.88 }), rim: new THREE.MeshStandardMaterial({ color: 0xc8ccd0, roughness: 0.28, metalness: 0.85 }), hub: new THREE.MeshStandardMaterial({ color: 0x55595e, roughness: 0.4, metalness: 0.7 }) };
+    WHEEL.geo = { tyre, rim, hub };
+    WHEEL.mat = { tyre: new THREE.MeshStandardMaterial({ color: 0x16171a, roughness: 0.88 }), rim: new THREE.MeshStandardMaterial({ color: 0xc8ccd0, roughness: 0.28, metalness: 0.85 }), hub: new THREE.MeshStandardMaterial({ color: 0x55595e, roughness: 0.4, metalness: 0.7 }) };
   }
   for (const dz of twin ? [-0.17, 0.17] : [0]) {
     const s = rad / 0.5;
-    const t = new THREE.Mesh(wheel.geo.tyre, wheel.mat.tyre); t.position.set(x, y, z + dz); t.scale.setScalar(s); t.castShadow = true; group.add(t);
-    const r = new THREE.Mesh(wheel.geo.rim, wheel.mat.rim); r.position.set(x, y, z + dz); r.scale.set(s, s, 1); group.add(r);
+    const t = new THREE.Mesh(WHEEL.geo.tyre, WHEEL.mat.tyre); t.position.set(x, y, z + dz); t.scale.setScalar(s); t.castShadow = true; group.add(t);
+    const r = new THREE.Mesh(WHEEL.geo.rim, WHEEL.mat.rim); r.position.set(x, y, z + dz); r.scale.set(s, s, 1); group.add(r);
   }
-  const h = new THREE.Mesh(wheel.geo.hub, wheel.mat.hub); h.position.set(x, y, z + (z > 0 ? 0.08 : -0.08) * (twin ? 2.5 : 1)); group.add(h);
+  const h = new THREE.Mesh(WHEEL.geo.hub, WHEEL.mat.hub); h.position.set(x, y, z + (z > 0 ? 0.08 : -0.08) * (twin ? 2.5 : 1)); group.add(h);
 }
 
 export function tarmacTexture() {
@@ -74,7 +76,7 @@ export function tarmacTexture() {
 export function buildOBTruck(T) {
   const grp = new THREE.Group();
   const B = new Builder(); // pièces en peinture / acier (couleurs par sommet)
-  const body = 0xeef1f4, dark = 0x1c2733;
+  const body = 0xeef1f4;
   const yF = T.floor;
   // caisse principale (largeur route 2,55 m), toit légèrement plus clair
   B.box(T.len, 3.0, 2.55, T.cx, yF + 1.55, T.cz, body);

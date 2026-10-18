@@ -1,3 +1,4 @@
+// @ts-check
 // ----------------------------------------------------------------------------------
 // Base de données du matériel : faces avant/arrière (disposition schématique),
 // connecteurs et commandes avec leur rôle, signal et norme.
@@ -11,6 +12,8 @@ const SDI_STD = '12G-SDI (SMPTE ST 2082-1), 3G-SDI (ST 424), HD-SDI (ST 292-1) s
 const REF_STD = 'Tri-level HD (SMPTE ST 274/296) ou black burst SD (ST 318, 625 lignes / 50 Hz)';
 const M = (n, c, s, d, std, desc) => ({ n, c, s, d, std, desc });
 const BNC = 'BNC 75 Ω';
+/** élément d'une vue dessinée (corps, texte, port, bouton, voyant…) : t donne le type, le reste dépend du type
+ * @typedef {{ t: string, [k: string]: any }} Item */
 
 function row(items, ids, x0, y, dx, kind, labels, extra = {}) {
   ids.forEach((id, i) => items.push({ t: 'port', id, k: kind, x: x0 + i * dx, y, l: labels ? labels[i] : id.toUpperCase(), ...extra }));
@@ -55,7 +58,7 @@ function camDevice() {
     fronttally: M('Tally avant', 'Voyant rouge', 'comms', '', '', 'Visible des joueurs et du public : la caméra est à l\'antenne.'),
     lensbody: M('Objectif', 'Zoom broadcast B4', 'data', '', '', 'Le zoom (focale variable), le point et l\'iris sont motorisés (servos). Le doubleur x2 se trouve dans l\'objectif.'),
   };
-  const back = [];
+  const back = /** @type {Item[]} */ ([]);
   back.push({ t: 'body', x: 20, y: 20, w: 720, h: 400, r: 14 });
   back.push({ t: 'text', x: 40, y: 50, s: 'PANNEAU ARRIÈRE · tête de caméra système (type Sony HDC-5500)', size: 15, w: 600 });
   back.push({ t: 'group', x: 40, y: 70, w: 410, h: 95, l: 'Vidéo' });
@@ -120,7 +123,7 @@ function ccuDevice() {
     menu: M('MENU', 'Molette + touches', 'data', '', '', 'Navigation dans les menus de la CCU (format, sorties, configuration).'),
     call: M('CALL', 'Bouton', 'comms', '', '', 'Appel de la caméra : fait clignoter le tally du cadreur.'),
   };
-  const front = [
+  const front = /** @type {Item[]} */ ([
     { t: 'body', x: 10, y: 10, w: 520, h: 280, r: 6 },
     { t: 'text', x: 24, y: 34, s: 'CCU · demi-largeur 3U (type Sony HDCU-5500)', size: 13, w: 600 },
     { t: 'sw', id: 'power', x: 55, y: 85, l: 'POWER' },
@@ -135,8 +138,8 @@ function ccuDevice() {
     { t: 'led', id: 'led_fan', x: 355, y: 200, c: 'green', l: 'PS FAN' },
     { t: 'knob', id: 'menu', x: 440, y: 90, r: 28, l: 'MENU' },
     { t: 'btn', id: 'call', x: 400, y: 170, w: 90, h: 34, l: 'CALL' },
-  ];
-  const rear = [
+  ]);
+  const rear = /** @type {Item[]} */ ([
     { t: 'body', x: 10, y: 10, w: 520, h: 296, r: 6 },
     { t: 'port', id: 'camera', k: 'lemo', x: 75, y: 150, l: 'CAMERA' },
     { t: 'group', x: 140, y: 34, w: 290, h: 78, l: 'Référence et retours' },
@@ -156,7 +159,7 @@ function ccuDevice() {
     { t: 'port', id: 'lan', k: 'rj45', x: 445, y: 248, l: 'LAN' },
     { t: 'port', id: 'opt', k: 'sfp', x: 478, y: 60, l: 'OPTION' },
     { t: 'port', id: 'ac', k: 'iec', x: 490, y: 160, l: 'AC IN' },
-  ];
+  ]);
   return {
     key: 'ccu', title: 'CCU — voie caméra (type Sony HDCU-5500)', multi: true,
     intro: 'La CCU (Camera Control Unit) est la moitié « car » de la caméra. Elle alimente la tête par la fibre hybride, reçoit l\'image, la traite (sous le contrôle du RCP), la synchronise sur la référence du car, et renvoie à la caméra le retour programme, l\'intercom et le tally. Format demi-largeur 3U : deux CCU côte à côte dans 3U de baie.',
@@ -194,7 +197,7 @@ function rcpDevice() {
     joystick: M('Joystick IRIS / M.BLACK', 'Joystick', 'data', '', '', 'Commande principale : on pousse ou tire pour l\'iris (exposition), on tourne la bague pour le master black (niveau de noir de toutes les couleurs). L\'ingénieur vision garde la main dessus pendant tout le direct.'),
     tallyled: M('TALLY / CALL', 'Voyants', 'comms', '', '', 'Tally rouge quand la caméra est à l\'antenne, appel en cours.'),
   };
-  const top = [
+  const top = /** @type {Item[]} */ ([
     { t: 'body', x: 10, y: 10, w: 320, h: 980, r: 12 },
     { t: 'led', id: 'tallyled', x: 40, y: 32, c: 'tally', l: 'TALLY' },
     { t: 'led', id: 'callled', x: 300, y: 32, c: 'amber', l: 'CALL' },
@@ -211,15 +214,15 @@ function rcpDevice() {
     { t: 'btn', id: 'active', x: 32, y: 746, w: 132, h: 30, l: 'PANEL ACTIVE' }, { t: 'btn', id: 'preview', x: 176, y: 746, w: 132, h: 30, l: 'PREVIEW' },
     { t: 'btn', id: 'autoiris', x: 32, y: 786, w: 132, h: 28, l: 'AUTO IRIS' }, { t: 'btn', id: 'close', x: 176, y: 786, w: 132, h: 28, l: 'CLOSE' },
     { t: 'joy', id: 'joystick', x: 170, y: 900, r: 62 },
-  ];
-  const rear = [
+  ]);
+  const rear = /** @type {Item[]} */ ([
     { t: 'body', x: 10, y: 10, w: 320, h: 180, r: 8 },
     { t: 'text', x: 24, y: 34, s: 'Face arrière RCP', size: 13, w: 600 },
     { t: 'port', id: 'ccu', k: 'multi', x: 60, y: 110, l: 'CCU/CNU' },
     { t: 'port', id: 'lan', k: 'rj45', x: 135, y: 110, l: 'LAN (PoE)' },
     { t: 'port', id: 'aux', k: 'multi', x: 210, y: 110, l: 'AUX' },
     { t: 'port', id: 'extio', k: 'dsub9', x: 285, y: 110, l: 'EXT I/O' },
-  ];
+  ]);
   return {
     key: 'rcp', title: 'RCP — pupitre de réglage caméra (type Sony RCP-3500)', multi: true,
     intro: 'Le RCP (Remote Control Panel) est le pupitre d\'une caméra pour l\'ingénieur vision. Successeur du RCP-1500 (même encombrement) : touches d\'accès direct, écran tactile, bloc joystick iris / master black, 9 touches assignables. Il se branche sur la CCU (câble CCA-5) ou sur le réseau caméras (PoE).',
@@ -263,10 +266,10 @@ function evsDevice() {
     disks: M('Disques (RAID)', 'Tiroirs', 'data', '', '', 'Stockage interne jusqu\'à 9 To (≈ 30 h d\'UHD-4K à 600 Mb/s ; ≈ 130 h annoncées avec l\'extension externe à 40 To) ; en RAID : la perte d\'un disque n\'interrompt pas l\'enregistrement.'),
     leds: M('Voyants d\'état', 'LED', 'data', '', '', 'Alimentation, disques, réseau, enregistrement.'),
   };
-  const front = [{ t: 'body', x: 10, y: 10, w: 980, h: 500, r: 8 }, { t: 'text', x: 40, y: 60, s: 'SERVEUR DE PRODUCTION (type EVS XT4K) · 6U', size: 20, w: 700 }];
+  const front = /** @type {Item[]} */ ([{ t: 'body', x: 10, y: 10, w: 980, h: 500, r: 8 }, { t: 'text', x: 40, y: 60, s: 'SERVEUR DE PRODUCTION (type EVS XT4K) · 6U', size: 20, w: 700 }]);
   for (let r = 0; r < 2; r++) for (let c = 0; c < 6; c++) front.push({ t: 'disk', id: 'disks', x: 320 + c * 105, y: 120 + r * 170, w: 92, h: 150 });
   ['POWER', 'DISK', 'NET', 'REC', 'ALARM'].forEach((l, i) => front.push({ t: 'led', id: 'leds', x: 70, y: 140 + i * 50, c: i === 4 ? 'red' : i === 3 ? 'tally' : 'green', l }));
-  const rear = [{ t: 'body', x: 10, y: 10, w: 980, h: 500, r: 8 }];
+  const rear = /** @type {Item[]} */ ([{ t: 'body', x: 10, y: 10, w: 980, h: 500, r: 8 }]);
   rear.push({ t: 'group', x: 30, y: 36, w: 390, h: 200, l: 'Modules codec · SDI 1 à 6' }, { t: 'group', x: 30, y: 270, w: 390, h: 200, l: 'Modules codec · SDI 7 à 12' });
   for (let i = 0; i < 6; i++) { rear.push({ t: 'port', id: 'sdi' + (i + 1), k: 'bnc', x: 75 + i * 62, y: 120, l: 'SDI ' + (i + 1) }); rear.push({ t: 'port', id: 'sdi' + (i + 7), k: 'bnc', x: 75 + i * 62, y: 355, l: 'SDI ' + (i + 7) }); }
   rear.push({ t: 'group', x: 440, y: 36, w: 370, h: 100, l: 'Réseaux' });
@@ -304,7 +307,7 @@ function lsmDevice() {
     lever: M('Levier', 'Levier', 'data', '', '', 'Vitesse de lecture de 0 à 100 % ; avec la plage secondaire, de −100 à +100 % ou −200 à +200 %. Un ralenti se joue en général entre 25 et 50 % ; 33 % pour une caméra 3x.'),
     jog: M('Jog', 'Molette', 'data', '', '', 'Recherche image par image (un tour ≈ 35 images d\'après le manuel Multicam). FAST JOG pour le recalage rapide (désactivé automatiquement après PLAY ou LIVE). En mode BROWSE, la molette fait défiler les clips.'),
   };
-  const top = [{ t: 'body', x: 10, y: 10, w: 960, h: 500, r: 16 }, { t: 'lcd', id: 'display', x: 40, y: 30, w: 620, h: 96 }];
+  const top = /** @type {Item[]} */ ([{ t: 'body', x: 10, y: 10, w: 960, h: 500, r: 16 }, { t: 'lcd', id: 'display', x: 40, y: 30, w: 620, h: 96 }]);
   for (let i = 0; i < 10; i++) top.push({ t: 'btn', id: 'fkeys', x: 40 + i * 62, y: 140, w: 56, h: 40, l: 'F' + (i + 1) });
   [['IN', 'GOTO IN'], ['OUT', 'GOTO OUT'], ['PLST', 'BROWSE'], ['LOOP', ''], ['RETURN', ''], ['PLAY', ''], ['LIVE E/E', ''], ['FAST JOG', ''], ['TAKE', ''], ['PGM/PRV', '']].forEach(([l], i) => top.push({ t: 'btn', id: 'opblock', x: 40 + i * 62, y: 210, w: 56, h: 40, l }));
   ['A', 'B', 'C', 'D', 'E', 'F'].forEach((l, i) => top.push({ t: 'btn', id: 'camkeys', x: 40 + i * 62, y: 270, w: 56, h: 40, l: 'CAM ' + l }));
@@ -312,7 +315,7 @@ function lsmDevice() {
   top.push({ t: 'lever', id: 'lever', x: 720, y: 40, w: 60, h: 300 });
   top.push({ t: 'jog', id: 'jog', x: 860, y: 380, r: 88 });
   top.push({ t: 'text', x: 40, y: 350, s: 'Disposition simplifiée : se référer au manuel Multicam de votre version.', size: 11, w: 500 });
-  const rear = [{ t: 'body', x: 10, y: 10, w: 960, h: 140, r: 10 }, { t: 'port', id: 'rs422', k: 'dsub9', x: 120, y: 80, l: 'RS-422' }, { t: 'port', id: 'dcin', k: 'xlr', x: 240, y: 80, l: 'DC' }];
+  const rear = /** @type {Item[]} */ ([{ t: 'body', x: 10, y: 10, w: 960, h: 140, r: 10 }, { t: 'port', id: 'rs422', k: 'dsub9', x: 120, y: 80, l: 'RS-422' }, { t: 'port', id: 'dcin', k: 'xlr', x: 240, y: 80, l: 'DC' }]);
   return {
     key: 'lsm', title: 'Télécommande de ralentis (type EVS LSM, logiciel Multicam)', multi: true,
     intro: 'La télécommande de l\'opérateur ralenti : un afficheur, les touches F1 à F10 (clips et fonctions de menu), un bloc de touches à double fonction (SHIFT), le levier de vitesse et la molette jog. Utilisée par des milliers d\'opérateurs dans le sport en direct, elle pilote le serveur XT par liaison série.',
@@ -340,7 +343,8 @@ function ipdDevice() {
 
 // ---------------------------------------------------------------- mélangeur Sony XVS-6000
 function xvsDevice() {
-  const P = {}; const items = [{ t: 'body', x: 10, y: 10, w: 980, h: 580, r: 6 }, { t: 'text', x: 26, y: 34, s: 'XVS-6000 · processeur 6U · face arrière (disposition schématique)', size: 13, w: 700 }];
+  const P = {}; const items = /** @type {Item[]} */ ([{ t: 'body', x: 10, y: 10, w: 980, h: 580, r: 6 }, { t: 'text', x: 26, y: 34, s: 'XVS-6000 · processeur 6U · face arrière (disposition schématique)', size: 13, w: 700 }]);
+  /** @type {Array<[string, string, number, number, string]>} */
   const boards = [['in', 'Carte d\'entrées 12G/3G-SDI', 1, 24, 'in'], ['out', 'Carte de sorties', 1, 16, 'out']];
   let y = 90;
   for (const [pre, l, from, count, d] of boards) {
@@ -391,7 +395,7 @@ function icpDevice() {
     lan: M('LAN (vers MKS-X7700)', 'RJ-45', 'ip', 'io', 'Gigabit Ethernet', 'Le pupitre dialogue avec l\'unité d\'interface système, qui dialogue avec le processeur.'),
     ac: M('Alimentation', 'IEC', 'power', 'in', '', 'Secteur ondulé.'),
   };
-  const top = [{ t: 'body', x: 10, y: 10, w: 980, h: 520, r: 12 }, { t: 'text', x: 30, y: 40, s: 'PUPITRE ICP-X7000 · 1 rangée M/E (extrait, disposition schématique)', size: 13, w: 700 }];
+  const top = /** @type {Item[]} */ ([{ t: 'body', x: 10, y: 10, w: 980, h: 520, r: 12 }, { t: 'text', x: 30, y: 40, s: 'PUPITRE ICP-X7000 · 1 rangée M/E (extrait, disposition schématique)', size: 13, w: 700 }]);
   for (let r = 0; r < 3; r++) {
     top.push({ t: 'text', x: 30, y: 98 + r * 74, s: ['KEY/AUX', 'A · PGM', 'B · PST'][r], size: 11, w: 600 });
     for (let i = 0; i < 12; i++) {
@@ -405,7 +409,7 @@ function icpDevice() {
   top.push({ t: 'lever', id: 'trans', x: 760, y: 70, w: 50, h: 260, fader: true, l: 'FADER' });
   top.push({ t: 'lcd', id: 'menu', x: 830, y: 70, w: 150, h: 116 });
   top.push({ t: 'joy', id: 'joy', x: 900, y: 400, r: 55, l: 'POSITIONNEUR' });
-  const rear = [{ t: 'body', x: 10, y: 10, w: 980, h: 140, r: 10 }, { t: 'port', id: 'lan', k: 'rj45', x: 120, y: 80, l: 'LAN' }, { t: 'port', id: 'ac', k: 'iec', x: 220, y: 80, l: 'AC' }];
+  const rear = /** @type {Item[]} */ ([{ t: 'body', x: 10, y: 10, w: 980, h: 140, r: 10 }, { t: 'port', id: 'lan', k: 'rj45', x: 120, y: 80, l: 'LAN' }, { t: 'port', id: 'ac', k: 'iec', x: 220, y: 80, l: 'AC' }]);
   return {
     key: 'mixpanel', title: 'Pupitre du mélangeur (type Sony ICP-X7000)', multi: false,
     intro: 'Surface de commande modulaire des mélangeurs Sony XVS : 1 à 4 rangées M/E, 20, 28 ou 36 boutons de croisement (XPT) par rangée, afficheurs OLED des noms de sources, boutons RVB, pavé LCD. Le pupitre est relié au processeur par l\'unité d\'interface système MKS-X7700.',
@@ -429,7 +433,7 @@ function siuDevice() {
 
 // ---------------------------------------------------------------- appareils de baie (génériques)
 function rackGeneric(key, title, intro, opts) {
-  const P = {}; const items = [{ t: 'body', x: 10, y: 10, w: opts.w - 20, h: opts.h - 20, r: 6 }];
+  const P = {}; const items = /** @type {Item[]} */ ([{ t: 'body', x: 10, y: 10, w: opts.w - 20, h: opts.h - 20, r: 6 }]);
   if (opts.label) items.push({ t: 'text', x: 26, y: 34, s: opts.label, size: 13, w: 600 });
   for (const g of opts.groups || []) {
     items.push({ t: 'group', x: g.x - 26, y: g.y - 40, w: g.cols * g.dx + 22, h: (g.rows || 1) * g.dy + 30, l: g.l });

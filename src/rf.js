@@ -1,6 +1,8 @@
+// @ts-check
 import * as THREE from 'three';
 import { S } from './state.js';
-import { ANTENNAS, CN_REQ, cofdmBitrate, buildChannels } from './data.js';
+import { CN_REQ, cofdmBitrate, buildChannels } from './data/rf.js';
+import { ANTENNAS } from './data/stadium.js';
 import { standAt, standHeightAt, inWalkZone, W } from './world.js';
 import { clamp, gauss, powDbToLin, linToPowDb, rand } from './util.js';
 

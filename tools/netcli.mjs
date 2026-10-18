@@ -1,7 +1,7 @@
 // Test du modèle réseau ST 2110 et du CLI en Node (sans navigateur)
 import { S } from '../src/state.js';
-import { FAB, buildFabric, evaluate, updateFabric, delivery, camPtpOk } from '../src/net/fabric.js';
-import { cliSession, runCli, cliPrompt, cliComplete } from '../src/net/cli.js';
+import { FAB, buildFabric, updateFabric, delivery, camPtpOk } from '../src/net/fabric.js';
+import { cliSession, runCli, cliPrompt } from '../src/net/cli.js';
 S.ipMode = true; S.format = process.argv[2] || 'HD';
 const mk = (id, link, model, hfr = 1) => ({ id, link, T: { model, hfr, short: model } });
 S.cams = [mk(1, 'smpte', 'hdc'), mk(2, 'smpte', 'hdc'), mk(3, 'smpte', 'box', 3), mk(4, 'smpte', 'hdc'), mk(5, 'hf', 'steadi'), mk(6, 'smpte', 'ptz')];

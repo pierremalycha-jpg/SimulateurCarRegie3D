@@ -1,3 +1,4 @@
+// @ts-check
 import { S, emit } from '../state.js';
 import { EQUIP, evsLayout, mixInputs } from '../equip.js';
 
@@ -84,7 +85,7 @@ export function referenceConfig(sw) {
     cfg.qos = { trust: 'dscp', ptpPriority: false };
     return cfg;
   }
-  const c = sw.color, CN = CNUM[c];
+  const c = sw.color;
   cfg.ipRouting = true; cfg.mcastRouting = true; cfg.ssmRange = SSM_REF; cfg.igmpSnooping = true;
   cfg.ospf = { enabled: true, routerId: sw.loopback }; cfg.loopback = sw.loopback;
   cfg.ptp = { mode: 'boundary', domain: PTP_REF.domain, profile: PTP_REF.profile, announce: PTP_REF.announce, sync: PTP_REF.sync, delayReq: PTP_REF.delayReq, priority1: 128, priority2: 128 };
@@ -134,6 +135,20 @@ function addDev(d) {
   d.ptp = d.ptp || { domain: PTP_REF.domain, slaveOnly: true, priority1: 255, clockClass: 255 };
   d.ctl = d.ctl || { sw: 'SW-CTRL', port: null, vlan: 20 };
   FAB.devices[d.id] = d;
+}
+// réglages d'une configuration qui dépendent des appareils raccordés (création du réseau et
+// « charger la référence ») : description des ports, vitesse compatible avec la carte réseau
+function applyDevicePorts(sw, cf) {
+  for (const d of Object.values(FAB.devices)) {
+    if (sw.role === 'ctl') { if (d.ctl.port) cf.ports[d.ctl.port].desc = d.kind === 'nmos' ? 'Registre NMOS' : d.name + ' (contrôle)'; continue; }
+    for (const c of COLORS) {
+      const n = d.nics[c]; if (!n || n.sw !== sw.id) continue;
+      const p = cf.ports[n.port];
+      if (!p.desc) p.desc = d.name;
+      if (!n.speeds.includes(p.speed)) p.speed = n.speeds.find((x) => sw.hw.find((h) => h.name === n.port).speeds.includes(x)) || p.speed;
+      if (n.port2 && !cf.ports[n.port2].desc) cf.ports[n.port2].desc = d.name + ' (lien 2)';
+    }
+  }
 }
 // flux émis : id, appareil, essence, source logique (identifiant de la grille), groupe par réseau
 function addFlow(dev, id, kind, src, label, gbps, extra = {}) {
@@ -236,12 +251,8 @@ export function buildFabric() {
     for (const c of COLORS) if (d.nics[c] && o.nics && o.nics[c]) { d.nics[c].ip = o.nics[c].ip; d.nics[c].gw = o.nics[c].gw; }
     if (o.ptp) Object.assign(d.ptp, o.ptp);
   }
-  if (!old['SW-CTRL']) { const C = FAB.switches['SW-CTRL']; for (const d of Object.values(FAB.devices)) for (const cf of [C.startup, C.running]) if (d.ctl.port) cf.ports[d.ctl.port].desc = d.kind === 'nmos' ? 'Registre NMOS' : d.name + ' (contrôle)'; }
-  // ports de description sur les leaves
-  for (const d of Object.values(FAB.devices)) for (const c of COLORS) {
-    const n = d.nics[c]; if (!n) continue; const sw = FAB.switches[n.sw]; if (old[sw.id]) continue;
-    for (const cf of [sw.startup, sw.running]) { const p = cf.ports[n.port]; if (!p.desc) p.desc = d.name; if (!n.speeds.includes(p.speed)) p.speed = n.speeds.find((x) => sw.hw.find((h) => h.name === n.port).speeds.includes(x)) || p.speed; if (n.port2 && !cf.ports[n.port2].desc) cf.ports[n.port2].desc = d.name + ' (lien 2)'; }
-  }
+  // ports des commutateurs nouvellement créés : descriptions et vitesses selon les appareils raccordés
+  for (const sw of Object.values(FAB.switches)) if (!old[sw.id]) for (const cf of [sw.startup, sw.running]) applyDevicePorts(sw, cf);
   FAB.key = topoKey(); FAB.ver++; FAB.build = (FAB.build || 0) + 1;
   evaluate();
 }
@@ -397,7 +408,7 @@ export function evaluate() {
   for (const s of subs) {
     const per = {};
     for (const c of COLORS) {
-      const p = pathOf(c, s.flow, s.rx);
+      const p = /** @type {any} */ (pathOf(c, s.flow, s.rx));
       if (p.ok && FAB.mode === 'sdn') {
         // contrôleur SDN : admission selon la bande passante restante
         const full = p.keys.find((k) => { const m = loads[k]; const cur = m ? [...m.values()].reduce((a, b) => a + b, 0) : 0; return !(m && m.has(s.flow.id)) && cur + s.flow.gbps > (capOf[k] || 0) * 0.95; });
@@ -505,7 +516,7 @@ export function evaluate() {
         const noisy = !sw.running.qos.ptpPriority && Object.entries(R.linkLoad).some(([k, v]) => k.startsWith(d.id + ':' + c) && v.load > 0.8 * v.cap);
         s = { state: noisy ? 'noisy' : 'locked', hops, offset: Math.round(hops * 12 + (noisy ? 900 : 0)), why: noisy ? 'PTP non prioritaire sur un lien chargé : gigue de plusieurs centaines de ns' : '' };
       }
-      s.color = c;
+      /** @type {any} */ (s).color = c;
       const rank = { locked: 0, noisy: 1, free: 2, unlocked: 3 };
       if (!best || rank[s.state] < rank[best.state]) best = s;
     }
@@ -575,7 +586,7 @@ export function setSwitchPower(id, on) {
   markDirty();
 }
 export function writeMemory(id) { const sw = FAB.switches[id]; sw.startup = clone(sw.running); markDirty(); }
-export function loadReference(id) { const sw = FAB.switches[id]; sw.running = referenceConfig(sw); for (const d of Object.values(FAB.devices)) for (const c of COLORS) { const n = d.nics[c]; if (n && n.sw === id && !sw.running.ports[n.port].desc) sw.running.ports[n.port].desc = d.name; } markDirty(); }
+export function loadReference(id) { const sw = FAB.switches[id]; sw.running = referenceConfig(sw); applyDevicePorts(sw, sw.running); markDirty(); }
 export function loadFactory(id) { const sw = FAB.switches[id]; sw.running = factoryConfig(sw); markDirty(); }
 
 // ---------------- vues utiles à l'interface et au CLI ----------------

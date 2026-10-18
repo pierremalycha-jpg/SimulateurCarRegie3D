@@ -1,3 +1,4 @@
+// @ts-check
 import { S, emit } from '../state.js';
 import { el } from '../util.js';
 import { MIX, mixSetPst, mixSetPgm, mixCut, mixAuto, meSource, sourceLabel } from '../pipeline.js';

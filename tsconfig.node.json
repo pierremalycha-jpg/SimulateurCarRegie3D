@@ -1,0 +1,6 @@
+{
+  // Code Node.js : serveur réseau local et tests unitaires
+  "extends": "./tsconfig.json",
+  "compilerOptions": { "lib": ["es2022", "dom", "dom.iterable"], "types": ["node"], "module": "nodenext", "moduleResolution": "nodenext" },
+  "include": ["lan/**/*.mjs", "tests/**/*.mjs", "src/types.d.ts"]
+}

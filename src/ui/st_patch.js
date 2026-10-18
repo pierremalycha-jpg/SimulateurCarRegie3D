@@ -1,8 +1,9 @@
-import { S, emit, camById } from '../state.js';
+// @ts-check
+import { S, emit } from '../state.js';
 import { el } from '../util.js';
 import { toast } from './common.js';
 import { fields, expected, patchScore, patchNormal, patchEmpty, physLabel, physToLogical, DEST_LABEL } from '../patch.js';
-import { ROUTER, sourceLabel } from '../pipeline.js';
+import { sourceLabel } from '../pipeline.js';
 import { routerInLabel, routerOutLabel } from '../equipment/cabling.js';
 import { explain } from './widgets.js';
 

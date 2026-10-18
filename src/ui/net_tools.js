@@ -1,4 +1,5 @@
-import { S, emit } from '../state.js';
+// @ts-check
+import { emit } from '../state.js';
 import { el, fmt } from '../util.js';
 import { toast, selectEl } from './common.js';
 import { explain } from './widgets.js';
@@ -203,7 +204,7 @@ function subLoad(box, R) {
   for (const L of topLinks(14)) {
     const c = el('canvas', { class: 'net-spark', width: 160, height: 28 });
     sp.push([c, L]);
-    const parts = L.k.split(':'); const dir = parts.pop(); const id = parts.join(':');
+    const parts = L.k.split(':'); parts.pop(); const id = parts.join(':'); // dernier segment : sens du lien
     const link = FAB.links.find((x) => x.id === id);
     const go = () => { if (link) R.go('switch', { sw: link.a.sw, port: link.a.port, sub: 'ports' }); else { const d = FAB.devices[parts[0]]; if (d) { const n = d.nics[parts[1]]; R.go('switch', { sw: n.sw, port: n.port, sub: 'ports' }); } } };
     tb.append(el('tr', { onclick: go }, el('td', {}, linkName(L.k)), el('td', { class: 'mono ' + (L.u > 1 ? 'err' : L.u > 0.8 ? 'warn' : '') }, fmt(L.u * 100, 0) + ' %'), el('td', { class: 'mono' }, `${fmt(L.load, 1)} / ${L.cap} Gb/s`), el('td', { class: 'mono' }, L.n), el('td', {}, c)));

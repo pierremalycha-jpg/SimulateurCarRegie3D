@@ -1,4 +1,5 @@
-import { S, camById } from '../state.js';
+// @ts-check
+import { S } from '../state.js';
 import { el, clamp, tc, fmt } from '../util.js';
 import { $ } from './common.js';
 import { allSources, sourceLabel } from '../pipeline.js';

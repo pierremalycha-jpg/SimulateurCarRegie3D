@@ -1,3 +1,4 @@
+// @ts-check
 import * as THREE from 'three';
 import { personGeometries } from '../people.js';
 import { camById } from '../state.js';

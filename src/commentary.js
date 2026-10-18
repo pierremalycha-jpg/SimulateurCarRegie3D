@@ -1,6 +1,7 @@
+// @ts-check
 import { S, on, emit } from './state.js';
 import { M, playerName, teamOf } from './match.js';
-import { TEAMS } from './data.js';
+import { TEAMS } from './data/match.js';
 import { clamp } from './util.js';
 import { AU, voiceGain, setVoiceLevel } from './audio.js';
 
