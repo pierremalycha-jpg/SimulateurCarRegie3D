@@ -1,2 +1,5 @@
 node_modules/
 *.zip
+# produits par node tools/build.mjs (réseau local)
+dist/index-lan.html
+dist/car-regie-serveur-lan.mjs

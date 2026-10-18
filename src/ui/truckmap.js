@@ -4,6 +4,7 @@ import { $, modal } from './common.js';
 import { STATION_INFO } from '../data.js';
 import { T } from '../truck.js';
 import { TRUCK } from '../world.js';
+import { avatarPositions } from '../multi/avatars.js';
 
 // ----------------------------------------------------------------------------------
 // Plan du car : mini-plan dans l'interface (position, orientation, postes cliquables)
@@ -65,10 +66,12 @@ function drawPlan(scale, labels) {
     g.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.stopPropagation(); if (goTo) goTo(s); } });
     svg.append(g);
   }
+  // équipiers d'une session (couleur de leur rôle, initiale)
+  const peers = sv('g', { class: 'tmap-peers' }); svg.append(peers);
   // joueur
   const me = sv('g', { class: 'tmap-me' }, sv('circle', { r: labels ? 8 : 5.5 }), sv('path', { d: labels ? 'M0 -15 L7 -3 L-7 -3 Z' : 'M0 -11 L5 -2 L-5 -2 Z' }));
   svg.append(me);
-  return { svg, me, px, pz };
+  return { svg, me, px, pz, peers, labels, peersKey: '' };
 }
 
 export function initTruckMap(onGo, pl) {
@@ -93,6 +96,21 @@ function place(plan, PL) {
   // direction du regard : (−sin yaw, −cos yaw) dans le plan (x, z) ; en SVG l'axe y descend comme z
   const ang = Math.atan2(-Math.cos(PL.yaw), -Math.sin(PL.yaw)) * 180 / Math.PI + 90;
   plan.me.setAttribute('transform', `translate(${plan.px(lx)} ${plan.pz(lz)}) rotate(${ang})`);
+  placePeers(plan);
+}
+function placePeers(plan) {
+  const now = performance.now(); if (plan.peersT && now - plan.peersT < 250) return; plan.peersT = now;
+  const list = avatarPositions().filter((a) => a.truck);
+  const key = list.map((a) => `${a.peer}:${a.x.toFixed(1)}:${a.z.toFixed(1)}:${a.color}:${a.name}`).join('|');
+  if (key === plan.peersKey) return; plan.peersKey = key;
+  plan.peers.textContent = '';
+  for (const a of list) {
+    const x = plan.px(a.x - TRUCK.cx), y = plan.pz(a.z - TRUCK.cz), r = plan.labels ? 8 : 5;
+    const g = sv('g', { transform: `translate(${x} ${y})` }, sv('circle', { r, fill: a.color, stroke: '#0b0d10', 'stroke-width': 1.5 }), sv('title', {}, a.name));
+    g.append(sv('text', { y: plan.labels ? 4 : 3, 'text-anchor': 'middle', style: `font:700 ${plan.labels ? 10 : 7}px "Barlow Condensed",sans-serif;fill:#0b0d10` }, a.name.slice(0, 1).toUpperCase()));
+    if (plan.labels) g.append(sv('text', { y: -12, 'text-anchor': 'middle', style: 'font:600 11px "Barlow Condensed",sans-serif;fill:#e6ecf2' }, a.name));
+    plan.peers.append(g);
+  }
 }
 
 let bigPlan = null;

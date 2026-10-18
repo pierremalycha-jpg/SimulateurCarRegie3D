@@ -1,7 +1,12 @@
 import { S, emit, on } from '../state.js';
 import { el } from '../util.js';
 import { $, modal, toast, intercom, selectEl } from './common.js';
-import { SES, ROLES_S, getRoom, joinSession, leaveSession, setRole, isHost, holderOf, canControl, nameOf, roleLabel, sendOrder, chat, announce, forceChangedSlices, randomCode } from '../multi/session.js';
+import { SES, ROLES_S, getRoom, joinSession, leaveSession, setRole, isHost, holderOf, canControl, nameOf, pseudoOf, roleLabel, sendOrder, chat, announce, forceChangedSlices, randomCode, transportKind, getPseudo, setPseudo, assignRole } from '../multi/session.js';
+import { lanParties, lanSaveReport } from '../multi/lan.js';
+import { downloadLanKit } from '../multi/lankit.js';
+import { ROLE_COLORS } from '../multi/avatars.js';
+import { ROLE_BRIEF, objectives, trackRoleStats, resetRoleStats, orderStats } from '../multi/roles.js';
+import { STATION_INFO } from '../data.js';
 import { STATION_SLICE, allKeys, SLICES } from '../multi/slices.js';
 import { FAULTS, injectFault, ACTIVE } from '../faults.js';
 import { MIX, meSource, sourceLabel } from '../pipeline.js';
@@ -19,39 +24,120 @@ export function setSessionStarter(fn) { startCb = fn; }
 
 export async function openSessionPanel() {
   const body = el('div', { class: 'list' });
-  modal.open('Session à plusieurs', body, { width: 980 });
+  modal.open('Jouer à plusieurs', body, { width: 980 });
   body.append(el('p', { class: 'note' }, 'Connexion…'));
   const room = await getRoom();
   if (!modal.isOpen) return;
   body.innerHTML = '';
   if (!room) {
-    body.append(el('p', {}, 'La session à plusieurs fonctionne dans la page publiée sur claude.ai, quand vous êtes connecté.'),
-      el('ul', {}, el('li', {}, 'Le formateur partage la page avec les stagiaires (niveau « Contributeur » au moins, depuis le menu Partager).'), el('li', {}, 'Chacun ouvre le même lien, clique « Session à plusieurs » et tape le même code.'), el('li', {}, 'Ici, la connexion temps réel n\'est pas disponible (page ouverte hors de claude.ai, ou accès en lecture seule).')));
+    body.append(el('p', {}, 'Pour jouer à plusieurs, deux possibilités :'),
+      el('ul', {},
+        el('li', {}, el('b', {}, 'Réseau local : '), 'la personne qui héberge lance le serveur fourni avec le simulateur (node lan/serveur.mjs, ou le fichier autonome car-regie-serveur-lan.mjs). Les autres ouvrent dans leur navigateur l\'adresse qu\'il affiche (http://192.168.x.x:8080). Personne d\'autre n\'a rien à installer.'),
+        el('li', {}, el('b', {}, 'En ligne : '), 'dans la page publiée sur claude.ai, partagée aux stagiaires (niveau « Contributeur » au moins) : chacun ouvre le même lien et rejoint la même partie.')),
+      el('p', { class: 'note' }, 'Ici, aucune connexion temps réel n\'est disponible (page ouverte hors du serveur réseau local et hors de claude.ai, ou accès en lecture seule).'),
+      lanKitRow());
     return;
   }
   if (!SES.active) drawJoin(body); else drawActive(body);
 }
 
+// archive du serveur réseau local (assemblée par lankit.js)
+async function lanKit() {
+  const r = await downloadLanKit();
+  if (r === 'unavailable') toast('Archive indisponible ici : le serveur réseau local est fourni avec les sources du simulateur (dossier lan, ou dist/car-regie-serveur-lan.mjs).', 'bad', 7000);
+  else if (r === 'error') toast('Le téléchargement n\'a pas abouti.', 'bad');
+}
+const lanKitRow = () => el('div', { class: 'ses-kit' },
+  el('div', {}, el('b', {}, 'Jouer sur un réseau local, sans Internet'), el('p', { class: 'note' }, 'La personne qui héberge télécharge le serveur (Windows, macOS, Linux : Node.js nécessaire), le lance, et donne aux autres l\'adresse qu\'il affiche.')),
+  el('button', { class: 'btn small', onclick: () => lanKit() }, 'Télécharger le serveur réseau local (.zip)'));
 function drawJoin(body) {
-  let role = SES.role !== 'observateur' ? SES.role : (canConfigure() ? 'formateur' : 'truquiste');
-  const code = el('input', { type: 'text', value: SES.code || randomCode(), maxlength: 12, style: { width: '140px', fontFamily: 'var(--f-mono)', fontSize: '20px', textTransform: 'lowercase' }, 'aria-label': 'Code de session' });
-  const camSel = selectEl([...Array(16).keys()].map((i) => [i + 1, 'CAM ' + (i + 1)]), SES.cam || 1, () => {});
+  const lan = transportKind() === 'lan';
+  let role = SES.role !== 'observateur' ? SES.role : (canConfigure() && !lan ? 'formateur' : 'truquiste');
+  let mode = 'join', party = null, parties = [], chose = false, polled = false, lastK = '';
+  const pseudo = el('input', { type: 'text', value: getPseudo(), maxlength: 24, placeholder: 'Ex. Alice', class: 'ses-pseudo', id: 'ses-pseudo', autocomplete: 'nickname' });
+  const code = el('input', { type: 'text', value: SES.code || randomCode(), maxlength: 12, class: 'ses-code', 'aria-label': 'Code de la partie' });
+  for (const i of [pseudo, code]) i.addEventListener('keydown', (e) => e.stopPropagation());
+  const camSel = selectEl([...Array(16).keys()].map((i) => [i + 1, 'CAM ' + (i + 1)]), SES.cam || 1, () => draw());
   const cards = el('div', { class: 'ses-roles' });
-  const draw = () => { cards.innerHTML = ''; for (const [k, r] of Object.entries(ROLES_S)) cards.append(el('button', { class: 'ses-role' + (k === role ? ' on' : ''), onclick: () => { role = k; draw(); camRow.hidden = role !== 'cadreur'; } }, el('b', {}, r.label), el('small', {}, r.desc))); };
-  const camRow = el('div', { class: 'hwrow' }, el('span', { class: 'rl' }, 'Caméra'), camSel); camRow.hidden = role !== 'cadreur';
-  draw();
-  const go = async () => {
-    const r = await joinSession(code.value, role, { cam: role === 'cadreur' ? +camSel.value : null, cfg: startCb ? startCb.cfg() : null });
-    if (!r.ok) { toast(r.why === 'not_permitted' ? 'Accès refusé : demandez au formateur de vous partager la page au niveau Contributeur.' : 'Impossible de rejoindre la session (' + r.why + ').', 'bad', 7000); return; }
+  const camRow = el('div', { class: 'hwrow' }, el('span', { class: 'rl' }, 'Caméra'), camSel);
+  const taken = () => (mode === 'join' && party ? party.players : []);
+  function draw() {
+    cards.innerHTML = '';
+    for (const [k, r] of Object.entries(ROLES_S)) {
+      const who = taken().filter((p) => p.role === k && (k !== 'cadreur' || +p.cam === +camSel.value)).map((p) => p.name);
+      cards.append(el('button', { class: 'ses-role' + (k === role ? ' on' : '') + (who.length ? ' taken' : ''), style: { '--rc': ROLE_COLORS[k] }, onclick: () => { role = k; draw(); } },
+        el('b', {}, r.label), el('small', {}, r.desc), who.length ? el('em', {}, (k === 'cadreur' ? 'CAM ' + camSel.value + ' tenue par ' : 'Déjà pris par ') + who.join(', ') + (r.slices.length ? ' : vous seriez en lecture seule' : '')) : null));
+    }
+    camRow.hidden = role !== 'cadreur';
+  }
+  // parties du réseau local
+  const list = el('div', { class: 'ses-parties' });
+  function drawParties() {
+    list.innerHTML = '';
+    if (!parties.length) { list.append(el('p', { class: 'note' }, 'Aucune partie pour l\'instant. Demandez à l\'hôte de créer la sienne (onglet « Héberger »), la liste se met à jour toute seule.')); return; }
+    for (const p of parties) {
+      const sel = party && party.code === p.code;
+      list.append(el('button', { class: 'ses-party' + (sel ? ' on' : ''), onclick: () => { party = p; drawParties(); draw(); } },
+        el('b', {}, 'Partie de ' + p.host), el('span', { class: 'note' }, `${p.count} joueur${p.count > 1 ? 's' : ''} · ${p.players.map((x) => `${x.name}${x.role ? ' (' + (ROLES_S[x.role] ? ROLES_S[x.role].label : x.role) + ')' : ''}`).join(', ')}`)));
+    }
+  }
+  let timer = 0;
+  async function poll() {
+    if (!body.isConnected) { clearInterval(timer); return; }
+    const r = await lanParties(); if (!r) return;
+    // on ne redessine que si la liste a changé (sinon un clic en cours tomberait sur un bouton remplacé)
+    const k = JSON.stringify(r.parties || []);
+    if (k === lastK && polled) return; lastK = k;
+    parties = r.parties || [];
+    if (party) party = parties.find((p) => p.code === party.code) || null;
+    if (!party && parties.length === 1) party = parties[0];
+    // première visite d'un réseau sans partie : on propose d'héberger
+    if (!polled && !parties.length && !chose) { polled = true; show('host'); return; }
+    polled = true;
+    srvName.textContent = r.server ? 'serveur : ' + r.server : '';
+    drawParties(); draw();
+  }
+  const srvName = el('span', { class: 'note' });
+  const tabs = el('div', { class: 'tabs' });
+  const pane = el('div', { class: 'list' });
+  function show(m) {
+    mode = m; [...tabs.children].forEach((b) => b.classList.toggle('on', b.dataset.k === m));
+    pane.innerHTML = '';
+    if (m === 'host') pane.append(el('p', {}, lan ? 'Vous créez la partie : votre ordinateur fait tourner le match pour tout le monde. Les autres la verront dans « Rejoindre une partie ».' : 'Vous créez la partie et vous faites tourner le match. Donnez le code aux autres participants.'),
+      lan ? null : el('div', { class: 'hwrow' }, el('span', { class: 'rl' }, 'Code'), code, el('button', { class: 'btn small', onclick: () => { code.value = randomCode(); } }, 'Nouveau code')));
+    else if (lan) pane.append(el('div', { class: 'hwrow' }, el('b', {}, 'Parties sur ce réseau'), srvName), list);
+    else pane.append(el('div', { class: 'hwrow' }, el('span', { class: 'rl' }, 'Code de la partie'), code, el('span', { class: 'note' }, 'Même code = même car.')));
+    goBtn.textContent = m === 'host' ? 'Créer la partie' : 'Rejoindre';
+    draw();
+  }
+  for (const [k, l] of [['host', 'Héberger une partie'], ['join', 'Rejoindre une partie']]) tabs.append(el('button', { class: 'tab', 'data-k': k, onclick: () => { chose = true; show(k); } }, l));
+  const goBtn = el('button', { class: 'btn primary' }, 'Rejoindre');
+  goBtn.onclick = async () => {
+    const n = setPseudo(pseudo.value);
+    if (!n) { pseudo.focus(); toast('Choisissez un pseudo : c\'est le nom que les autres verront au-dessus de votre personnage.', 'bad', 5000); return; }
+    let c;
+    if (mode === 'host') c = lan ? randomCode() : code.value;
+    else if (lan) { if (!party) { toast('Choisissez une partie dans la liste.', 'bad'); return; } c = party.code.replace(/^car-/, ''); }
+    else c = code.value;
+    goBtn.disabled = true;
+    const r = await joinSession(c, role, { cam: role === 'cadreur' ? +camSel.value : null, cfg: startCb ? startCb.cfg() : null, host: mode === 'host' });
+    goBtn.disabled = false;
+    if (!r.ok) { toast(r.why === 'not_permitted' ? 'Accès refusé : demandez au formateur de vous partager la page au niveau Contributeur.' : r.why === 'unreachable' ? 'Serveur réseau local injoignable : vérifiez qu\'il tourne toujours sur l\'ordinateur de l\'hôte.' : r.why === 'full' ? 'Partie complète.' : 'Impossible de rejoindre la partie (' + r.why + ').', 'bad', 7000); return; }
+    clearInterval(timer); resetRoleStats();
     modal.close();
     if (S.mode === 'start' && startCb) await startCb.start();
-    toast(`Session ${r.code} : vous êtes ${ROLES_S[role].label}. Donnez ce code aux autres participants.`, 'good', 7000);
+    toast(mode === 'host' ? (lan ? `Partie créée. Les autres la rejoignent depuis l'adresse du serveur, onglet « Rejoindre ».` : `Partie ${r.code} créée : donnez ce code aux autres participants.`) : `Vous êtes ${ROLES_S[role].label}${role === 'cadreur' ? ' (CAM ' + camSel.value + ')' : ''}.`, 'good', 7000);
   };
-  body.append(el('p', {}, 'Plusieurs stagiaires dans le même car, en direct : un réalise, un autre est au mélangeur, un autre au son ou à l\'EVS… Le formateur injecte des pannes et récupère un compte rendu. Tout le monde voit le même match.'),
-    el('div', { class: 'hwrow' }, el('span', { class: 'rl' }, 'Code de la session'), code, el('button', { class: 'btn small', onclick: () => { code.value = randomCode(); } }, 'Nouveau code'), el('span', { class: 'note' }, 'Même code = même car. Le formateur crée le code et le donne aux stagiaires.')),
-    el('h3', {}, 'Votre rôle'), cards, camRow,
-    el('p', { class: 'note' }, 'Le premier formateur arrivé (sinon le premier participant) fait tourner le match pour tous. Un poste tenu par quelqu\'un d\'autre s\'ouvre en lecture seule : vous voyez ses réglages en direct.'),
-    el('div', { class: 'hwrow' }, el('button', { class: 'btn primary', onclick: go }, 'Rejoindre la session')));
+  body.append(
+    el('div', { class: 'ses-banner' + (lan ? ' lan' : '') }, el('b', {}, lan ? 'Réseau local' : 'En ligne'), el('span', {}, lan ? 'Tout le monde est sur le même réseau et a ouvert l\'adresse du serveur de l\'hôte.' : 'Tout le monde a ouvert la page publiée sur claude.ai.')),
+    el('div', { class: 'hwrow' }, el('label', { class: 'rl', for: 'ses-pseudo' }, 'Votre pseudo'), pseudo, el('span', { class: 'note' }, 'Affiché au-dessus de votre personnage.')),
+    tabs, pane,
+    el('h3', {}, 'Votre rôle dans la prestation'), cards, camRow,
+    el('p', { class: 'note' }, 'Chaque poste du car n\'est piloté que par celui qui tient le rôle ; les autres le voient en direct, en lecture seule. L\'hôte (ou le formateur) peut réattribuer les rôles une fois la partie lancée.'),
+    el('div', { class: 'hwrow' }, goBtn),
+    lan ? null : lanKitRow());
+  show(lan ? 'join' : 'host');
+  if (lan) { poll(); timer = setInterval(poll, 2000); }
 }
 
 function drawActive(body) {
@@ -61,13 +147,21 @@ function drawActive(body) {
   let cur = 'peers';
   const show = (k) => { cur = k; content.innerHTML = ''; [...tabs.children].forEach((b) => b.classList.toggle('on', b.dataset.k === k)); ({ peers: tabPeers, orders: tabOrders, trainer: tabTrainer })[k](content); };
   for (const [k, l] of T) tabs.append(el('button', { class: 'tab', 'data-k': k, onclick: () => show(k) }, l));
-  body.append(el('div', { class: 'hwrow' }, el('span', { class: 'pill ' + (SES.connected ? 'ok' : 'warn') }, SES.connected ? 'connecté' : 'connexion…'), el('b', { style: { fontFamily: 'var(--f-mono)', fontSize: '18px' } }, 'Session ' + SES.code), el('span', { class: 'note' }, `Vous : ${ROLES_S[SES.role].label}${isHost() ? ' · vous faites tourner le match (hôte)' : ''}`),
-    el('button', { class: 'btn small', onclick: async () => { await finishIfTrainer(); await leaveSession(); modal.close(); toast('Vous avez quitté la session.'); } }, 'Quitter la session')), tabs, content);
+  const title = SES.transport === 'lan' ? `Partie de ${SES.hostPeer ? pseudoOf(SES.hostPeer) : '…'} · réseau local` : 'Partie ' + SES.code;
+  body.append(el('div', { class: 'hwrow' }, el('span', { class: 'pill ' + (SES.connected ? 'ok' : 'warn') }, SES.connected ? 'connecté' : 'reconnexion…'), el('b', { style: { fontFamily: 'var(--f-disp)', fontSize: '19px' } }, title), el('span', { class: 'note' }, `Vous : ${pseudoOf(SES.me)} · ${ROLES_S[SES.role].label}${isHost() ? ' · vous faites tourner le match (hôte)' : ''}`),
+    el('button', { class: 'btn small', onclick: async () => { await finishIfTrainer(); await leaveSession(); modal.close(); toast('Vous avez quitté la partie.'); } }, 'Quitter la partie')), tabs, content);
   show(cur);
+  let peersKey = '';
   panelRefresh = (e) => {
     if (!content.isConnected) { panelRefresh = null; return; }
     if (cur === 'orders' && e.type === 'order') { const f = content.querySelector('.ses-feed'); if (f) { f.prepend(orderRow(e.o)); return; } }
     if (cur === 'trainer' && e.type !== 'fault') return;
+    // la présence change ~12 fois par seconde (match, positions) : on ne redessine que si la liste a vraiment changé
+    if (cur === 'peers' && (e.type === 'peers' || e.type === 'names')) {
+      const k = SES.peers.map((p) => [p.peer, nameOf(p), roleLabel(p), whereOf(p), SES.hostPeer && SES.hostPeer.peer === p.peer].join('/')).join('|') + SES.role;
+      if (k === peersKey) return; peersKey = k;
+      const a = document.activeElement; if (a && content.contains(a) && /SELECT|INPUT/.test(a.tagName)) return;
+    }
     if (['peers', 'names', 'order', 'log', 'role', 'host', 'fault'].includes(e.type)) show(cur);
   };
 }
@@ -76,18 +170,55 @@ on('session', (e) => { if (panelRefresh) panelRefresh(e); });
 on('fault', () => { if (panelRefresh) panelRefresh({ type: 'fault' }); });
 const orderRow = (o) => el('div', { class: 'ses-ord' + (o.mine ? ' mine' : '') }, el('b', {}, ROLES_S[o.from] ? ROLES_S[o.from].label : o.from), ' ', orderText(o), el('small', { class: 'note' }, ' · ' + new Date(o.at).toLocaleTimeString('fr-FR')));
 
+function whereOf(p) {
+  const av = p.presence && p.presence.av; if (!av) return '—';
+  if (av.c) return 'cadre la CAM ' + av.c;
+  if (av.s) return 'au poste ' + (STATION_INFO[av.s] ? STATION_INFO[av.s].title : av.s);
+  return av.t ? 'dans le car' : av.f ? 'en vol libre' : 'dans le stade';
+}
+const canAssign = () => isHost() || SES.role === 'formateur';
+const PENDING = new Map();
 function tabPeers(box) {
+  box.append(roleBrief());
   const tb = el('tbody');
   for (const p of SES.peers) {
-    const r = p.presence && p.presence.role;
+    const r = (p.presence && p.presence.role) || 'observateur';
     const owned = Object.keys(SLICES).filter((id) => SES.owners[id] === p.peer);
-    tb.append(el('tr', { class: p.sameTab ? 'ses-me' : '' }, el('td', {}, nameOf(p), p.guest ? el('small', { class: 'note' }, ' (invité)') : null), el('td', {}, roleLabel(p)), el('td', {}, SES.hostPeer && SES.hostPeer.peer === p.peer ? 'hôte (match)' : ''), el('td', { class: 'note' }, owned.map((id) => SLICE_LABEL[id] || id).join(', ') || '—')));
+    let assign = null;
+    if (canAssign()) {
+      // attribution en cours : on garde le choix affiché le temps que la présence du joueur suive
+      const pend = PENDING.get(p.peer); const fresh = pend && Date.now() - pend.at < 10000 && (pend.role !== r || (r === 'cadreur' && +pend.cam !== +((p.presence && p.presence.cam) || 0)));
+      const r0 = fresh ? pend.role : r, c0 = fresh && pend.cam ? pend.cam : (p.presence && p.presence.cam) || 1;
+      const camS = selectEl([...Array(16).keys()].map((i) => [i + 1, 'CAM ' + (i + 1)]), c0, (v) => { if (roleS.value === 'cadreur') { PENDING.set(p.peer, { role: 'cadreur', cam: +v, at: Date.now() }); assignRole(p.peer, 'cadreur', +v); } });
+      const roleS = selectEl(Object.entries(ROLES_S).map(([k, x]) => [k, x.label]), r0, (v) => { camS.hidden = v !== 'cadreur'; PENDING.set(p.peer, { role: v, cam: v === 'cadreur' ? +camS.value : null, at: Date.now() }); assignRole(p.peer, v, v === 'cadreur' ? +camS.value : null); });
+      camS.hidden = r0 !== 'cadreur';
+      assign = el('td', {}, el('div', { class: 'hwrow' }, roleS, camS));
+    }
+    tb.append(el('tr', { class: p.sameTab ? 'ses-me' : '' },
+      el('td', {}, el('span', { class: 'ses-dot', style: { background: ROLE_COLORS[r] || '#9aa3ab' } }), nameOf(p), p.guest ? el('small', { class: 'note' }, ' (invité)') : null),
+      el('td', {}, roleLabel(p)), el('td', {}, SES.hostPeer && SES.hostPeer.peer === p.peer ? 'hôte (match)' : ''),
+      el('td', { class: 'note' }, whereOf(p)),
+      el('td', { class: 'note' }, owned.map((id) => SLICE_LABEL[id] || id).join(', ') || '—'), assign));
   }
+  const heads = ['Joueur', 'Rôle', '', 'Où', 'Pilote'].concat(canAssign() ? ['Attribuer un rôle'] : []);
+  const pseudoIn = el('input', { type: 'text', value: getPseudo(), maxlength: 24, style: { width: '160px' } });
+  pseudoIn.addEventListener('keydown', (e) => { e.stopPropagation(); if (e.key === 'Enter') { setPseudo(pseudoIn.value); toast('Pseudo mis à jour.'); } });
   const roleSel = selectEl(Object.entries(ROLES_S).map(([k, r]) => [k, r.label]), SES.role, (v) => { setRole(v, v === 'cadreur' ? (SES.cam || 1) : null); });
-  box.append(el('table', { class: 'tbl' }, el('thead', {}, el('tr', {}, ...['Participant', 'Rôle', '', 'Pilote'].map((h) => el('th', {}, h)))), tb),
-    el('div', { class: 'hwrow' }, el('span', { class: 'rl' }, 'Changer de rôle'), roleSel),
+  box.append(el('table', { class: 'tbl' }, el('thead', {}, el('tr', {}, ...heads.map((h) => el('th', {}, h)))), tb),
+    el('div', { class: 'hwrow' }, el('span', { class: 'rl' }, 'Mon pseudo'), pseudoIn, el('button', { class: 'btn small', onclick: () => { setPseudo(pseudoIn.value); toast('Pseudo mis à jour.'); } }, 'Changer'), el('span', { class: 'rl' }, 'Mon rôle'), roleSel),
     el('h3', {}, 'Journal'), el('div', { class: 'ses-log' }, ...SES.log.slice(-14).reverse().map((l) => el('div', { class: 'note ' + (l.kind || '') }, `${new Date(l.at).toLocaleTimeString('fr-FR')} · ${l.text}`))));
 }
+// fiche du rôle : missions, objectifs en direct, accès au poste
+function roleBrief() {
+  const r = SES.role, B = ROLE_BRIEF[r] || { steps: [] };
+  const go = goToRolePost ? el('button', { class: 'btn small primary', onclick: () => { modal.close(); goToRolePost(r, SES.cam); } }, r === 'cadreur' ? `Aller à la CAM ${SES.cam || 1}` : 'Aller à mon poste') : null;
+  return el('div', { class: 'ses-brief', style: { '--rc': ROLE_COLORS[r] } },
+    el('div', { class: 'hwrow' }, el('b', {}, 'Votre rôle : ' + ROLES_S[r].label + (r === 'cadreur' && SES.cam ? ' · CAM ' + SES.cam : '')), (B.station || r === 'cadreur') ? go : null),
+    el('ol', {}, ...B.steps.map((t) => el('li', {}, t))),
+    el('div', { class: 'ses-obj' }, ...objectives(r).map((o) => el('span', { class: o.ok === true ? 'is-ok' : o.ok === false ? 'is-bad' : '' }, o.label + ' : ', el('b', {}, o.value)))));
+}
+let goToRolePost = null;
+export function setRolePostHandler(fn) { goToRolePost = fn; }
 const SLICE_LABEL = { mix: 'mélangeur', evs: 'EVS', gfx: 'habillage', router: 'grille', tech: 'transmission / HF', audio: 'console son', cams: 'RCP (vision)', links: 'baie CCU', rig: 'dispositif caméras' };
 
 function tabOrders(box) {
@@ -113,7 +244,7 @@ function tabTrainer(box) {
     el('div', { class: 'hwrow' }, sel, el('label', { for: 'ses-hid', class: 'hwrow' }, hidden, 'cachée'), el('button', { class: 'btn primary', onclick: () => trainerInject(sel.value, hidden.checked) }, 'Injecter')),
     el('table', { class: 'tbl' }, el('thead', {}, el('tr', {}, el('th', {}, 'Panne'), el('th', {}, 'Où'), el('th', {}, 'État'))), act),
     el('div', { class: 'hwrow' }, note, el('button', { class: 'btn small', onclick: () => { if (note.value.trim()) { announce(note.value.trim()); note.value = ''; } } }, 'Annoncer')),
-    el('div', { class: 'hwrow' }, el('button', { class: 'btn', onclick: () => downloadReport() }, 'Compte rendu (HTML)'), el('button', { class: 'btn primary', onclick: async () => { const r = await finishIfTrainer(true); toast(r && r.ok ? 'Compte rendu enregistré (Espace formateur → Stagiaires).' : 'Compte rendu non enregistré : ' + ((r && (r.message || r.code)) || 'indisponible'), r && r.ok ? 'good' : 'bad'); } }, 'Enregistrer le compte rendu')));
+    el('div', { class: 'hwrow' }, el('button', { class: 'btn', onclick: () => downloadReport() }, 'Compte rendu (HTML)'), el('button', { class: 'btn primary', onclick: async () => { const r = await finishIfTrainer(true); toast(r && r.ok ? (r.file ? `Compte rendu enregistré sur l'ordinateur de l'hôte : ${r.file}.html` : 'Compte rendu enregistré (Espace formateur → Stagiaires).') : 'Compte rendu non enregistré : ' + ((r && (r.message || r.code)) || 'indisponible'), r && r.ok ? 'good' : 'bad'); } }, 'Enregistrer le compte rendu')));
 }
 function trainerInject(id, hidden) {
   const before = allKeys();
@@ -138,8 +269,9 @@ function buildReport() {
     rows.push({ o, dt: done ? (done.at - o.at) / 1000 : null });
   }
   const faults = ACTIVE.filter((a) => a.session).map((a) => ({ label: a.f.label, where: a.f.where, done: a.done, dt: a.dt }));
-  const people = SES.peers.map((p) => ({ name: nameOf(p), role: roleLabel(p) }));
-  return { code: SES.code, startedAt: R.startedAt, endedAt: Date.now(), people, orders: rows.map((r) => ({ kind: r.o.kind, text: orderText(r.o), at: r.o.at, reaction: r.dt })), faults, log: SES.log.slice(-60) };
+  const people = SES.peers.map((p) => ({ name: pseudoOf(p), role: roleLabel(p) }));
+  const os = orderStats();
+  return { code: SES.code, transport: SES.transport, startedAt: R.startedAt, endedAt: Date.now(), people, mixer: os, orders: rows.map((r) => ({ kind: r.o.kind, text: orderText(r.o), at: r.o.at, reaction: r.dt })), faults, log: SES.log.slice(-60) };
 }
 function reportHtml(r) {
   const h = (s) => String(s ?? '').replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
@@ -156,6 +288,8 @@ function downloadReport() { offerDownload(`session-${SES.code}.html`, reportHtml
 async function finishIfTrainer(force) {
   if (!SES.active || SES.role !== 'formateur' || (!force && !(SES.report && (SES.report.orders.length || SES.report.faults.length)))) return null;
   const r = buildReport();
+  // réseau local : le compte rendu est écrit sur l'ordinateur de l'hôte (dossier « rapports » du serveur)
+  if (SES.transport === 'lan') { const x = await lanSaveReport(`${SES.code}-${r.startedAt}`, r, reportHtml(r)); return x && x.ok ? { ok: true, file: x.file } : { ok: false, message: (x && x.message) || 'serveur injoignable' }; }
   return saveSessionReport(`${SES.code}-${r.startedAt}`, r);
 }
 
@@ -178,11 +312,38 @@ export function updateSessionHud() {
   if (!chip) { chip = el('button', { id: 'ses-chip', onclick: () => openSessionPanel() }); document.body.appendChild(chip); }
   chip.hidden = S.mode === 'start';
   const host = SES.hostPeer ? nameOf(SES.hostPeer) : '—';
-  const txt = `● Session ${SES.code} · ${ROLES_S[SES.role].label} · ${SES.peers.length} en ligne · hôte : ${host}`;
+  const txt = `● ${SES.transport === 'lan' ? 'Réseau local' : 'Session ' + SES.code} · ${ROLES_S[SES.role].label}${SES.role === 'cadreur' && SES.cam ? ' CAM ' + SES.cam : ''} · ${SES.peers.length} en ligne · hôte : ${host}`;
   if (chip.textContent !== txt) chip.textContent = txt;
   chip.classList.toggle('off', !SES.connected);
   chip.classList.toggle('st', S.mode === 'station');
+  const now = performance.now(); trackRoleStats(Math.min(1, (now - (hudT || now)) / 1000)); hudT = now;
+  drawRoleCard();
 }
+let hudT = 0, cardKey = '';
+// fiche de rôle dans l'interface : missions repliables, objectifs mesurés en direct
+function drawRoleCard() {
+  let card = $('#role-card');
+  const show = SES.active && S.mode === 'fps';
+  if (!card) {
+    if (!show) return;
+    card = el('aside', { id: 'role-card', 'aria-label': 'Votre rôle' });
+    card.addEventListener('click', (e) => { if (e.target.closest('button')) return; card.classList.toggle('min'); cardKey = ''; drawRoleCard(); });
+    $('#hud').appendChild(card);
+  }
+  card.hidden = !show; if (!show) return;
+  const r = SES.role, B = ROLE_BRIEF[r] || { steps: [] }, obj = objectives(r);
+  const key = r + SES.cam + card.classList.contains('min') + JSON.stringify(obj);
+  if (key === cardKey) return; cardKey = key;
+  card.style.setProperty('--rc', ROLE_COLORS[r]);
+  card.innerHTML = '';
+  const head = el('div', { class: 'rc-head' }, el('span', { class: 'tape' }, ROLES_S[r].label + (r === 'cadreur' && SES.cam ? ' · CAM ' + SES.cam : '')), el('span', { class: 'rc-tog', 'aria-hidden': 'true' }, card.classList.contains('min') ? '▸' : '▾'));
+  card.append(head);
+  if (card.classList.contains('min')) return;
+  card.append(el('ol', {}, ...B.steps.map((t) => el('li', {}, t))));
+  if (obj.length) card.append(el('ul', { class: 'rc-obj' }, ...obj.map((o) => el('li', { class: o.ok === true ? 'is-ok' : o.ok === false ? 'is-bad' : '' }, el('span', {}, o.label), el('b', {}, o.value)))));
+  if (goToRolePost && (B.station || r === 'cadreur')) card.append(el('button', { class: 'btn small', onclick: () => goToRolePost(r, SES.cam) }, r === 'cadreur' ? `Aller à la CAM ${SES.cam || 1}` : 'Aller à mon poste'));
+}
+on('session', (e) => { if (e.type === 'role' || e.type === 'assigned' || e.type === 'leave') { cardKey = ''; drawRoleCard(); } if (e.type === 'assigned') toast(`${e.by} vous confie le rôle ${ROLES_S[e.role].label}.`, 'good', 6000); });
 on('session', (e) => {
   if (e.type !== 'order' || e.mine) return;
   const o = e.o;

@@ -1093,17 +1093,29 @@ export const GUIDE = [
 <li>Rayonnement HF : respecter les distances de sécurité autour des antennes et émetteurs.</li>
 <li>Drones : télépilote certifié, scénario de vol déclaré, jamais au-dessus du public.</li></ul>`},
   {
-    id: 'sessions', title: 'Travailler à plusieurs (session en temps réel)', html: `
-<p>Une captation est un travail d'équipe : le réalisateur annonce, le truquiste exécute, l'opérateur ralenti prépare, la vision et le son ajustent, la technique surveille. Le mode <b>« Session à plusieurs »</b> met plusieurs stagiaires dans le <b>même car</b>, chacun depuis son navigateur, devant le <b>même match</b>.</p>
+    id: 'sessions', title: 'Jouer à plusieurs (réseau local ou en ligne)', html: `
+<p>Une captation est un travail d'équipe : le réalisateur annonce, le truquiste exécute, l'opérateur ralenti prépare, la vision et le son ajustent, la technique surveille. Le mode <b>« Jouer à plusieurs »</b> met plusieurs joueurs dans le <b>même car</b>, chacun sur son ordinateur, devant le <b>même match</b>. Chacun a un <b>pseudo</b> et un <b>rôle</b> ; on voit les autres se déplacer dans le stade et dans le car.</p>
+<h3>Deux façons de se connecter</h3>
 <ul>
-<li><b>Rejoindre</b> : écran d'accueil → « Session à plusieurs », ou bouton « Session » dans la barre d'outils. Tout le monde saisit le <b>même code</b> (par exemple le nom du groupe) et choisit un rôle : formateur, réalisateur, truquiste, ralentis (EVS), son, vision, technique, habillage, cadreur, observateur.</li>
-<li><b>Qui pilote quoi</b> : chaque poste appartient à un rôle (mélangeur → truquiste, EVS → ralentis, console → son, RCP → vision, grille, transmission, HF et baie CCU → technique, habillage → habillage). Les autres voient ce poste <b>en lecture seule</b> (bandeau « tenu par… ») mais suivent tout ce qui s'y passe. Un poste sans titulaire reste au formateur (ou à l'hôte).</li>
-<li><b>Le match</b> tourne chez l'hôte (le formateur, sinon le premier arrivé) ; les autres le reçoivent avec 0,3 s de retard, comme un retour. Les commentaires viennent aussi de l'hôte.</li>
-<li><b>Ordres</b> : au poste réalisateur, « Prépare la 3 », « Top », « Enchaîne », « Ralenti »… s'affichent en grand chez le truquiste et l'opérateur ralenti, avec un bip, et passent dans le fil d'intercom. L'onglet « Ordres et messages » sert de canal écrit.</li>
-<li><b>Cadreur</b> : le stagiaire prend une caméra ; son cadre est envoyé au car et c'est lui que voient le multiview et l'antenne.</li>
-<li><b>Formateur</b> : injecte des pannes (cachées ou annoncées) chez le stagiaire concerné, fait des annonces à tous, et produit un <b>compte rendu</b> : ordres donnés, temps de réaction du truquiste, pannes résolues ou non, journal. Il peut l'enregistrer (Espace formateur → Stagiaires) ou le télécharger.</li>
+<li><b>Réseau local (sans Internet)</b> : la personne qui héberge lance le petit serveur fourni (archive « réseau local » : Windows, macOS ou Linux, Node.js nécessaire). Il affiche une adresse du type <code>http://192.168.1.20:8080</code> : les autres l'ouvrent dans leur navigateur, rien à installer. Tout le monde doit être sur le même réseau (même box, même Wi-Fi ou même switch).</li>
+<li><b>En ligne</b> : dans la page publiée sur claude.ai, partagée aux stagiaires (niveau « Contributeur » au moins). L'hôte crée la partie et donne son code.</li>
 </ul>
-<p class="note">Limites : les clips et playlists EVS ne sont pas partagés (chacun voit la lecture en cours, pas la bibliothèque), et les pannes du réseau IP restent locales. Une connexion lente retarde un peu l'image du match mais pas les commandes.</p>`},
+<h3>Héberger, rejoindre</h3>
+<ul>
+<li>Accueil → « Jouer à plusieurs » (ou bouton « Équipe » de la barre d'outils). Choisissez votre <b>pseudo</b> : il s'affiche au-dessus de votre personnage.</li>
+<li><b>Héberger une partie</b> : votre ordinateur fait tourner le match pour tous. <b>Rejoindre une partie</b> : sur le réseau local, les parties en cours s'affichent toutes seules, avec qui tient quel rôle.</li>
+<li><b>Rôles</b> : formateur, réalisateur, truquiste, ralentis (EVS), son, vision, technique, habillage, cadreur (une caméra chacun), observateur. Un rôle déjà pris est signalé. L'hôte ou le formateur peut <b>réattribuer les rôles</b> (« Équipe » → Participants).</li>
+</ul>
+<h3>Pendant la prestation</h3>
+<ul>
+<li><b>Les autres joueurs</b> : un technicien en tenue de la couleur de son rôle, casque d'ordres, pseudo et rôle au-dessus de la tête. Assis à son pupitre quand il tient un poste ; quand il cadre, son étiquette passe au-dessus de sa caméra. Le plan du car les montre aussi, et « Aller à… » propose de <b>rejoindre un équipier</b>.</li>
+<li><b>Fiche de rôle</b> (en haut à gauche) : ce qu'on attend de vous, un bouton « Aller à mon poste » (un cadreur y prend directement sa caméra) et des <b>objectifs suivis en direct</b> : ordres exécutés et temps de réaction du truquiste, enregistrement et ralentis passés pour l'EVS, loudness et commentaires hors de l'international pour le son, caméras bien exposées pour la vision, alarmes pour la technique…</li>
+<li><b>Qui pilote quoi</b> : chaque poste appartient à un rôle (mélangeur → truquiste, EVS → ralentis, console → son, RCP → vision, grille, transmission, HF et baie CCU → technique, habillage → habillage). Les autres le voient <b>en lecture seule</b> (bandeau « tenu par… ») mais suivent tout ce qui s'y passe. Un poste sans titulaire reste à l'hôte.</li>
+<li><b>Le match</b> tourne chez l'hôte ; les autres le reçoivent avec 0,3 s de retard, comme un retour. Les commentaires viennent aussi de l'hôte.</li>
+<li><b>Ordres</b> : au poste réalisateur, « Prépare la 3 », « Top », « Enchaîne », « Ralenti »… s'affichent en grand chez le truquiste et l'opérateur ralenti, avec un bip, et passent dans le fil d'intercom. L'onglet « Ordres et messages » sert de canal écrit.</li>
+<li><b>Formateur</b> : injecte des pannes (cachées ou annoncées) chez le joueur concerné, fait des annonces à tous, et produit un <b>compte rendu</b> : participants et rôles, ordres donnés, temps de réaction du truquiste, pannes résolues ou non, journal. Sur le réseau local, il est écrit sur l'ordinateur de l'hôte (dossier « rapports » du serveur).</li>
+</ul>
+<p class="note">Limites : les clips et playlists EVS ne sont pas partagés (chacun voit la lecture en cours, pas la bibliothèque), et les pannes du réseau IP restent locales. Si l'hôte part, le joueur suivant reprend le match là où il en était. Sur le réseau local, une connexion qui décroche se rétablit seule.</p>`},
   {
     id: 'relecture', title: 'Relecture technique par les métiers', html: `
 <p>Les chiffres du simulateur (focales et rampes d'ouverture, portées des liaisons, rapports C/N, latences, tolérance de synchro labiale, niveaux de line-up…) viennent de documentations publiques et d'usages courants. Ils doivent être <b>validés par des professionnels</b> avant de servir de référence.</p>

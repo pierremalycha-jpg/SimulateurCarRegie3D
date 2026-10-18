@@ -544,6 +544,7 @@ export function buildTruck() {
 
 function chairAt(B, lx, lz, y0 = 0, rot = 0) {
   const x = X(lx), z = Z(lz);
+  (T.chairs = T.chairs || []).push({ x, z, y: F + y0 + 0.52, rot }); // assises (avatars des joueurs en réseau)
   B.box(0.5, 0.08, 0.5, x, F + y0 + 0.48, z, 0x1b1d21, rot);
   const bx = Math.sin(rot) * 0.22, bz = Math.cos(rot) * 0.22;
   B.box(0.48, 0.55, 0.06, x + bx, F + y0 + 0.8, z + bz, 0x1b1d21, rot);

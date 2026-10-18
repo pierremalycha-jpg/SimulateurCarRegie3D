@@ -66,7 +66,8 @@ await until(() => { const t = window.__dbg.AT.target; return t && t.kind === 'mo
 await shot('a02-fantome-pied', 600);
 await page.keyboard.press('KeyE');
 check(await ev(() => window.__dbg.AT.done.has('tripod') && !window.__dbg.AT.held), 'pied posé sur le repère');
-// 3. jambes : geste maintenu
+// 3. jambes : geste maintenu (raccourci : le rendu logiciel tourne parfois à moins d'une image par seconde)
+await ev(() => window.__dbg.atelierDebug.fast(0.3));
 await ev(() => window.__aimRig(0.32, 0.45, 0.18));
 await until(() => { const t = window.__dbg.AT.target; return t && t.kind === 'act' && t.op === 'legs'; });
 await page.keyboard.down('KeyE');

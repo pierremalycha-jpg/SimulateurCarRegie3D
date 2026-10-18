@@ -60,6 +60,9 @@ function ovoid(rx, ry, rz, rings, seg, opts = {}) {
 }
 
 // ------------------------------- géométries -------------------------------
+// partagées avec les avatars des joueurs en réseau (multi/avatars.js)
+let GEOS = null;
+export function personGeometries() { return GEOS || (GEOS = buildGeos()); }
 function buildGeos() {
   const G = {};
   // buste : de la taille (y = 0) à la base du cou (y = 0,5) ; épaules, pectoraux, dos
@@ -256,7 +259,7 @@ const PARTS = [
   ['upperArm', 'upperArm', 2, 0.8], ['forearm', 'forearm', 2, 0.7], ['hand', 'hand', 2, 0.65],
 ];
 export function buildPeople(scene, humans) {
-  const G = buildGeos();
+  const G = personGeometries();
   const n = humans.length; PEOPLE.n = n;
   PEOPLE.atlas = numberAtlas();
   if (document.fonts) document.fonts.ready.then(() => { const t = numberAtlas(); PEOPLE.atlas.image = t.image; PEOPLE.atlas.needsUpdate = true; });

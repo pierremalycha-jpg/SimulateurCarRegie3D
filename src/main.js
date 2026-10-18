@@ -10,8 +10,11 @@ import { initRender, renderEye, upgradeScene, RENDER } from './render.js';
 import { initMatch, buildPlayers, stepMatch, initRecorder, record, M } from './match.js';
 import { loadPreset, lineUpCamera, updateRopes, PRESETS } from './bcam.js';
 import { openReview } from './ui/review_ui.js';
-import { SES, updateSession, followMatch, isFollower } from './multi/session.js';
-import { openSessionPanel, setSessionStarter, updateSessionHud, trackMix } from './ui/session_ui.js';
+import { SES, updateSession, followMatch, isFollower, setAvatarSource, nameOf } from './multi/session.js';
+import { initAvatars, updateAvatars, avatarPositions, AVATARS } from './multi/avatars.js';
+import { openSessionPanel, setSessionStarter, updateSessionHud, trackMix, setRolePostHandler } from './ui/session_ui.js';
+import { ROLE_BRIEF } from './multi/roles.js';
+import { lanAvailable } from './multi/lan.js';
 import { updateRF } from './rf.js';
 import { initGfx, updateGfx } from './gfx.js';
 import { initPipeline, renderPipeline, drawSlots, MIX, meSource, sourceLabel, defaultRouting, EVS, P, ROUTER } from './pipeline.js';
@@ -80,6 +83,7 @@ initRender(renderer, W, T);
 applyLighting('jour');
 initPipeline();
 initPlan(W.scene);
+initAvatars(W.scene, T.scene, { stations: T.stations, chairs: T.chairs || [] });
 
 const pcam = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 3000);
 pcam.rotation.order = 'YXZ';
@@ -87,6 +91,8 @@ pcam.layers.enable(1); pcam.layers.enable(2);
 const PL = { pos: new THREE.Vector3(-13, 0, -107.5), yaw: 0.25, pitch: 0.02, y: 1.7, fly: false, vy: 0, vel: new THREE.Vector3(), bob: 0, bobY: 0, roll: 0, fov: 70, cyaw: 0.25, cpitch: 0.02 };
 const KEYS = {};
 const camopRT = { raw: null };
+// session à plusieurs : ce que les autres voient de moi (avatar, poste, caméra tenue)
+setAvatarSource(() => ({ x: PL.pos.x, y: PL.pos.y, z: PL.pos.z, yaw: PL.yaw, truck: S.inTruck, fly: PL.fly, station: S.mode === 'station' && ST.cur ? ST.cur.id : null, cam: S.mode === 'camop' && S.camop ? S.camop.id : null }));
 
 // ----------------------------------------------------------------------------------
 // Écran d'accueil
@@ -152,9 +158,10 @@ function buildStart() {
             field('stinfra', 'Infrastructure', infra), field('stqual', 'Qualité graphique', qual)),
           el('label', { class: 'cs-check', for: 'stsnd' }, snd, el('span', {}, 'Son : ambiance, frappes, sifflet, commentaires')),
           fmtNote),
-        el('section', { class: 'cs-box' },
+        el('section', { class: 'cs-box' + (lanAvailable() ? ' cs-lan' : '') },
           el('h2', {}, 'Équipe et formation'),
-          el('button', { class: 'btn primary', title: 'Plusieurs stagiaires dans le même car, en direct, avec un formateur', onclick: () => openSessionPanel() }, 'Session à plusieurs'),
+          lanAvailable() ? el('p', { class: 'note' }, el('b', {}, 'Réseau local. '), 'Hébergez une partie ou rejoignez celle d\'un collègue : chacun choisit un pseudo et un rôle dans la prestation.') : null,
+          el('button', { class: 'btn primary', title: 'Plusieurs joueurs dans le même car, en direct : chacun son pseudo et son rôle', onclick: () => openSessionPanel() }, 'Jouer à plusieurs'),
           el('div', { class: 'cs-row' },
             el('button', { class: 'btn', onclick: () => openTrainer('car') }, 'Espace formateur'),
             el('button', { class: 'btn', title: 'Pour les experts métier : valider ou corriger chaque point technique du simulateur', onclick: () => openReview('me') }, 'Relecture technique (experts)'))),
@@ -228,7 +235,7 @@ function buildToolbar() {
     sep(),
     b('Retour PGM', 'M', () => { $('#minimon').hidden = !$('#minimon').hidden; }),
     b(AU.muted ? 'Son coupé' : 'Son', null, (e) => { startAudio(); AU.muted = !AU.muted; applyFaders(); e.currentTarget.querySelector('.tl').textContent = AU.muted ? 'Son coupé' : 'Son'; }),
-    b('Session', null, () => openSessionPanel(), 'tb-ses', 'Session à plusieurs'));
+    b('Équipe', null, () => openSessionPanel(), 'tb-ses', 'Jouer à plusieurs : joueurs, rôles, ordres'));
 }
 function updToolbar() { const f = $('#tb-fly'); if (f) f.classList.toggle('on', PL.fly); }
 
@@ -298,12 +305,40 @@ function teleport(i) {
   if (AT.active && fly) { PL.fly = false; if (onDeck()) { PL.pos.y = ATELIER_DECK.y; PL.y = PL.pos.y + 1.7; } else PL.fly = true; }
   updToolbar();
 }
+function goToMate(a) {
+  // juste derrière lui, tourné dans la même direction (en hauteur hors du car : vol libre, comme les téléportations)
+  const yaw = a.yaw || 0;
+  S.inTruck = !!a.truck;
+  const c = a.cam ? S.cams.find((x) => x.id === a.cam) : null;
+  if (c) { const r = c.model.root.position; PL.pos.set(r.x + Math.sin(c.yaw.v) * 2.2, Math.max(0, r.y - 1.4), r.z + Math.cos(c.yaw.v) * 2.2); PL.yaw = c.yaw.v; }
+  else if (a.truck) { let x = a.x + Math.sin(yaw) * 0.7, z = a.z + Math.cos(yaw) * 0.7; if (truckBlocked(x, z)) { x = a.x; z = a.z + 0.5; } PL.pos.set(x, truckFloorAt(x, z), z); PL.yaw = yaw; }
+  else { PL.pos.set(a.x + Math.sin(yaw) * 1.2, a.y, a.z + Math.cos(yaw) * 1.2); PL.yaw = yaw; }
+  PL.fly = !S.inTruck && PL.pos.y > 0.5;
+  if (AT.active && PL.fly) { PL.fly = false; if (onDeck()) PL.pos.y = ATELIER_DECK.y; else PL.fly = true; }
+  PL.y = PL.pos.y + 1.7; PL.vel.set(0, 0, 0); PL.pitch = 0; PL.cyaw = PL.yaw; PL.cpitch = 0; updToolbar();
+}
+// fiche de rôle : « Aller à mon poste » (ou prendre sa caméra pour un cadreur)
+setRolePostHandler((role, camId) => {
+  if (role === 'cadreur') {
+    const c = S.cams.find((x) => x.id === camId); if (!c) { toast(`La CAM ${camId} n'existe pas dans ce dispositif.`, 'bad'); return; }
+    if (S.mode === 'station') closeStation(true);
+    const r = c.model.root.position; S.inTruck = false;
+    PL.pos.set(r.x + Math.sin(c.yaw.v) * 1.6, Math.max(0, r.y - 1.4), r.z + Math.cos(c.yaw.v) * 1.6); PL.fly = PL.pos.y > 0.5; PL.yaw = c.yaw.v;
+    PL.y = PL.pos.y + 1.7; PL.vel.set(0, 0, 0); PL.cyaw = PL.yaw; PL.pitch = PL.cpitch = 0; updToolbar();
+    takeCamera(c); return;
+  }
+  const B = ROLE_BRIEF[role]; const st = B && T.stations.find((x) => x.id === B.station);
+  if (st) goToStation(st);
+});
 function teleportMenu() {
   const list = el('div', { class: 'list' });
   DESTS.forEach((d, i) => list.appendChild(el('button', { class: 'item', style: { textAlign: 'left' }, onclick: () => { teleport(i); modal.close(); } }, el('div', { class: 'grow' }, el('div', { class: 't' }, d[0])))));
   const posts = el('div', { class: 'hwrow' });
   for (const st of T.stations) posts.append(el('button', { class: 'btn small', onclick: () => goToStation(st) }, st.label));
-  modal.open('Aller à…', el('div', { class: 'list' }, list, el('h3', {}, 'Postes du car (on s\'y rend et on l\'ouvre)'), posts, el('button', { class: 'btn', onclick: () => openTruckPlan() }, 'Plan du car (Tab)')), { width: 620 });
+  // session : rejoindre un équipier (on se place à côté de lui)
+  const mates = avatarPositions();
+  const team = mates.length ? el('div', { class: 'list' }, el('h3', {}, 'Rejoindre un équipier'), el('div', { class: 'hwrow' }, ...mates.map((a) => el('button', { class: 'btn small', style: { borderLeft: `4px solid ${a.color}` }, onclick: () => { goToMate(a); modal.close(); } }, a.name, el('small', { class: 'note' }, ' · ' + (a.cam ? 'CAM ' + a.cam : a.station ? (STATION_INFO[a.station] ? STATION_INFO[a.station].title : a.station) : a.truck ? 'dans le car' : 'dehors')))))) : null;
+  modal.open('Aller à…', el('div', { class: 'list' }, team, list, el('h3', {}, 'Postes du car (on s\'y rend et on l\'ouvre)'), posts, el('button', { class: 'btn', onclick: () => openTruckPlan() }, 'Plan du car (Tab)')), { width: 620 });
 }
 
 // ----------------------------------------------------------------------------------
@@ -748,6 +783,7 @@ function frame(now) {
       if (Math.abs(pcam.fov - PL.fov) > 0.05) { pcam.fov = PL.fov; pcam.updateProjectionMatrix(); }
     }
     if (AT.active && S.mode === 'fps') { pcam.updateMatrixWorld(); updateAtelier(dt, pcam); }
+    if (SES.active || S.frame % 30 === 0) updateAvatars(dt, pcam.position);
     // étiquettes des caméras masquées pendant le montage : à 2 m, elles boucheraient la vue
     { const lab = S.showLabels && !(AT.active && onDeck()); if (lab !== pcam.layers.isEnabled(1)) { if (lab) pcam.layers.enable(1); else pcam.layers.disable(1); } }
     renderer.setClearColor(0x000000, 1);
@@ -779,4 +815,4 @@ function updBrand() { paintTruckSign(CFG.car.name); const w2 = $('#where2'); if 
 document.fonts && document.fonts.ready.then(() => { W.boards && W.boards.redraw(); P.mvDirty = true; paintTruckSign(CFG.car.name); });
 requestAnimationFrame(frame);
 window.__S = S; // accès console pour le débogage
-window.__dbg = { RENDER, openReview, openSessionPanel, SES, S, M, MIX, EVS, ROUTER, P, W, T, PL, pcam, COMMUT, CMT, applyAudio: applyAll, voiceGain, setMonitor, stripRms, corrNow, EX, teleport, openStation, closeStation, openPlan, closePlan, takeCamera, releaseCamera, start, openGuide, renderer, applyLighting, openDevice, openEquipmentIndex, openTrainer, CFG, SH, AU, SC, NET, FAB, NC, AN, emit, injectFault, clearFaults, ACTIVE, FAULTS, truckBlocked, truckFloorAt, goToStation, TRUCK, AT, atelierDebug, beginAtelier, endAtelier, avOk };
+window.__dbg = { RENDER, openReview, openSessionPanel, SES, S, M, MIX, EVS, ROUTER, P, W, T, PL, pcam, COMMUT, CMT, applyAudio: applyAll, voiceGain, setMonitor, stripRms, corrNow, EX, teleport, openStation, closeStation, openPlan, closePlan, takeCamera, releaseCamera, start, openGuide, renderer, applyLighting, openDevice, openEquipmentIndex, openTrainer, CFG, SH, AU, SC, NET, FAB, NC, AN, emit, injectFault, clearFaults, ACTIVE, FAULTS, truckBlocked, truckFloorAt, goToStation, TRUCK, AT, atelierDebug, beginAtelier, endAtelier, avOk, AVATARS, avatarPositions };

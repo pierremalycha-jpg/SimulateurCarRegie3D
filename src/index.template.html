@@ -826,9 +826,41 @@ tr.rv-prop td { background: rgba(255,176,32,.08); }
 #order-osd b { font: 700 clamp(26px, 5vw, 46px) var(--f-disp); color: #fff; letter-spacing: .02em; }
 #order-osd.go { border-color: var(--tally); } #order-osd.go small { color: #ff8a80; }
 .ses-roles { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 6px; }
-.ses-role { text-align: left; background: #161c22; border: 1px solid #2f3944; border-radius: 6px; padding: 8px 10px; color: #dfe5ea; }
+.ses-role { text-align: left; background: #161c22; border: 1px solid #2f3944; border-left: 4px solid var(--rc, #2f3944); border-radius: 6px; padding: 8px 10px; color: #dfe5ea; }
 .ses-role b { display: block; font: 700 14px var(--f-disp); letter-spacing: .04em; } .ses-role small { color: var(--dim); font-size: 12px; line-height: 1.3; }
-.ses-role.on { border-color: var(--amber); background: #2a2210; }
+.ses-role em { display: block; margin-top: 4px; font-style: normal; font-size: 11.5px; color: var(--amber); }
+.ses-role.on { border-color: var(--rc, var(--amber)); background: color-mix(in srgb, var(--rc, #f0a61c) 16%, #161c22); box-shadow: inset 0 0 0 1px var(--rc, var(--amber)); }
+.ses-pseudo { width: 220px; font: 600 18px var(--f-body); }
+.ses-code { width: 140px; font: 600 20px var(--f-mono); text-transform: lowercase; }
+.ses-banner { display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; padding: 8px 12px; border-radius: 6px; background: #121a22; border: 1px solid #23415a; }
+.ses-banner b { font: 700 12px var(--f-leg); letter-spacing: .1em; text-transform: uppercase; color: var(--accent); }
+.ses-banner.lan { background: #12201a; border-color: #2a5a3c; } .ses-banner.lan b { color: var(--pvw); }
+.ses-banner span { color: #c3cbd2; font-size: 13px; }
+.ses-parties { display: flex; flex-direction: column; gap: 6px; }
+.ses-party { text-align: left; display: flex; flex-direction: column; gap: 2px; background: #161c22; border: 1px solid #2f3944; border-radius: 6px; padding: 9px 12px; color: var(--fg); }
+.ses-party b { font: 700 15px var(--f-disp); letter-spacing: .03em; }
+.ses-party.on { border-color: var(--accent); background: var(--accent-d); }
+.ses-kit { display: flex; gap: 12px; align-items: center; justify-content: space-between; flex-wrap: wrap; padding: 9px 12px; border: 1px dashed #3a4650; border-radius: 6px; }
+.ses-kit p { margin: 2px 0 0; }
+.ses-dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 7px; vertical-align: -1px; box-shadow: 0 0 0 1px rgba(0,0,0,.6); }
+.ses-brief { border: 1px solid #2f3944; border-left: 4px solid var(--rc, #9aa3ab); border-radius: 6px; padding: 9px 12px; background: #13181d; display: flex; flex-direction: column; gap: 6px; }
+.ses-brief ol { margin: 0; padding-left: 20px; color: #c9d1d8; font-size: 13px; line-height: 1.45; }
+.ses-obj { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 12.5px; color: var(--muted); }
+.ses-obj .is-ok b { color: var(--pvw); } .ses-obj .is-bad b { color: #ff8a80; }
+/* fiche de rôle (session) : en haut à gauche, repliable */
+#role-card { position: absolute; left: var(--gut-l); top: calc(84px + env(safe-area-inset-top, 0px)); width: min(320px, calc(100vw - 32px)); background: rgba(12,14,16,0.9); border: 1px solid var(--line); border-left: 4px solid var(--rc, #9aa3ab); border-radius: 6px; padding: 9px 12px 10px; box-shadow: 0 6px 20px rgba(0,0,0,.4); cursor: pointer; display: flex; flex-direction: column; gap: 7px; }
+#role-card[hidden] { display: none; }
+#role-card .rc-head { display: flex; justify-content: space-between; align-items: center; }
+#role-card .rc-head .tape { background: var(--rc, var(--tape)); font-size: 12px; }
+#role-card .rc-tog { color: var(--muted); font-size: 12px; }
+#role-card ol { margin: 0; padding-left: 18px; font-size: 12.5px; line-height: 1.42; color: #c7d0d7; }
+#role-card .rc-obj { list-style: none; margin: 0; padding: 7px 0 0; border-top: 1px solid var(--line); display: flex; flex-direction: column; gap: 3px; font-size: 12.5px; color: var(--muted); }
+#role-card .rc-obj li { display: flex; justify-content: space-between; gap: 10px; }
+#role-card .rc-obj b { font-family: var(--f-mono); font-weight: 600; font-size: 12px; color: var(--fg); }
+#role-card .rc-obj .is-ok b { color: var(--pvw); } #role-card .rc-obj .is-bad b { color: #ff8a80; }
+#role-card .btn { align-self: flex-start; }
+#role-card.min { width: auto; }
+@media (max-width: 700px) { #role-card { top: calc(132px + env(safe-area-inset-top, 0px)); } }
 .ses-me td { background: rgba(255,176,32,.08); }
 .ses-feed, .ses-log { display: flex; flex-direction: column; gap: 4px; max-height: 360px; overflow-y: auto; }
 .ses-ord { padding: 4px 8px; border-left: 3px solid var(--amber); background: #12171c; border-radius: 3px; } .ses-ord.mine { border-color: var(--cyan); }

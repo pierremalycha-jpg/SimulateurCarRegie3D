@@ -224,6 +224,41 @@ Le simulateur est réglé sur ce parc (modifiable dans l'Espace formateur → «
     dans le dispositif. Le résultat est enregistré dans la progression et apparaît dans le tableau de bord du
     formateur.
 
+## Ce que contient la v11 : jouer à plusieurs sur un réseau local
+
+- **Héberger / rejoindre** : la personne qui héberge lance un petit serveur sur son ordinateur ; les autres ouvrent
+  l'adresse qu'il affiche (`http://192.168.x.x:8080`) dans leur navigateur, sans rien installer. Sur le réseau
+  local, les parties en cours s'affichent toutes seules, avec qui tient quel rôle. Le mode en ligne (page publiée
+  sur claude.ai) fonctionne toujours, avec les mêmes écrans.
+- **Le serveur réseau local** (`lan/serveur.mjs`, Node.js 18 ou plus, aucune dépendance) :
+  - sert la page du simulateur avec three.js intégré, donc sans connexion Internet ;
+  - relaie en WebSocket la présence de chaque joueur (pseudo, rôle, position, états des postes) et les messages
+    (ordres, faits de jeu, commentaires) ;
+  - garde la présence de chacun pour les arrivants ;
+  - écrit les comptes rendus de session dans un dossier `rapports`.
+  
+  Il existe aussi en un seul fichier autonome (`dist/car-regie-serveur-lan.mjs`). Ce fichier est livré dans
+  l'archive `dist/car-regie-reseau-local.zip`, avec des lanceurs Windows / macOS / Linux et un mode d'emploi.
+  L'archive se télécharge depuis la page publiée (« Jouer à plusieurs »). Une connexion qui décroche se rétablit
+  seule.
+- **Pseudos et avatars** :
+  - chaque joueur choisit un pseudo ;
+  - les autres le voient comme un technicien articulé, avec une tenue de la couleur de son rôle, un casque
+    d'ordres, et son pseudo et son rôle au-dessus de la tête. Ces étiquettes grossissent avec la distance et ne
+    sont pas filmées par les caméras du stade ;
+  - il marche dans le stade, le compound et le car, et s'assoit à son pupitre quand il tient un poste. Quand il
+    cadre, son étiquette passe au-dessus de sa caméra ;
+  - le plan du car montre les équipiers, et « Aller à… » permet de rejoindre l'un d'eux.
+- **Rôles dans la prestation** :
+  - un rôle déjà pris est signalé au moment de rejoindre ;
+  - l'hôte ou le formateur réattribue les rôles depuis l'onglet Participants (caméra comprise pour un cadreur) ;
+  - chaque joueur a une fiche de rôle avec sa mission, un bouton « Aller à mon poste » (un cadreur y prend
+    directement sa caméra) et des objectifs mesurés en direct : ordres exécutés et temps de réaction du truquiste,
+    enregistrement et ralentis passés pour l'EVS, loudness, commentaires hors de l'international et corrélation
+    pour le son, caméras bien exposées pour la vision, liaisons et transmission pour la technique, score et
+    graphiques pour l'habillage, temps à l'antenne pour le cadreur ;
+  - le compte rendu du formateur reprend les participants et leurs rôles.
+
 ## Construire et tester
 
 ```
@@ -238,6 +273,8 @@ node tools/net.mjs OUT HD     # poste Réseau IP, terminal, pannes réseau et ef
 node tools/course.mjs OUT HD  # parcours de formation, mesures, capture, quiz, examen
 node tools/v8.mjs OUT keys    # commutation clavier (aussi : audio, visual, mobile, review)
 node tools/session.mjs OUT    # session à deux navigateurs (salle simulée) : rôles, synchro, ordres, pannes
+node tools/lan.mjs OUT        # réseau local : vrai serveur + trois navigateurs (héberger, rejoindre, avatars, rôles, ordres, compte rendu)
+node lan/serveur.mjs          # lancer le serveur réseau local (après node tools/build.mjs) : http://localhost:8080
 node tools/atelier.mjs OUT     # atelier de montage : visée, gestes maintenus, refus, fibre sale, rapport
 node tools/ui.mjs OUT         # captures des interfaces (accueil, HUD, postes, fenêtres, mobile)
 node tools/gfx.mjs OUT haute jour   # captures de référence du rendu (accueil, terrain, kop, vol, compound, car, caméras)
@@ -257,7 +294,8 @@ node tools/func.mjs           # tests fonctionnels historiques
 | `landscape.js` | Sol jusqu'à l'horizon (carte des parcelles), arbres instanciés, terrils |
 | `vehicles.js` | Semi-remorque régie, tracteur, camion satellite, groupe électrogène, bungalows, enrobé |
 | `params.js` | Registre des valeurs chiffrées relisibles (objectifs, liaisons, C/N, latences, line-up) et corrections appliquées |
-| `multi/` | Sessions à plusieurs : salle temps réel, rôles, hôte du match (`session.js`), tranches d'état partagées (`slices.js`) |
+| `multi/` | Jeu à plusieurs : session, rôles, hôte du match, pseudos (`session.js`), tranches d'état partagées (`slices.js`), client du serveur réseau local (`lan.js`), avatars des joueurs (`avatars.js`), fiches de rôle et objectifs (`roles.js`) |
+| `lan/` | Serveur réseau local sans dépendance (HTTP + WebSocket, parties, comptes rendus), lanceurs Windows / macOS / Linux, mode d'emploi |
 | `truck.js` | Intérieur du car (postes, écrans, baies) |
 | `match.js` | Simulation du match, rendu des joueurs, enregistrement d'état (base des ralentis EVS) |
 | `bcam.js` | Caméras broadcast : optique, cadreurs automatiques, traitement CCU (knee, white clip, HLG), câbles |

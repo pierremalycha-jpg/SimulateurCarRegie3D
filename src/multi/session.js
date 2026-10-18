@@ -3,9 +3,13 @@ import { M } from '../match.js';
 import { lerpAngle, clamp } from '../util.js';
 import { SH } from '../shared.js';
 import { SLICES, sliceKey } from './slices.js';
+import { lanAvailable, lanRoom, browserId } from './lan.js';
 
 // ----------------------------------------------------------------------------------
-// Session à plusieurs, en temps réel, dans la page publiée (capacité « room »).
+// Session à plusieurs, en temps réel : dans la page publiée (capacité « room » de claude.ai)
+// ou sur un réseau local (lan/serveur.mjs, même interface : voir lan.js).
+// · Chaque joueur a un pseudo et un rôle ; sa position (pour son avatar) est publiée dans sa
+//   présence, avec le poste qu'il occupe ou la caméra qu'il cadre.
 // · Un HÔTE fait tourner le match : il publie dans sa présence un instantané (≈ 12/s) des
 //   joueurs, du ballon, de l'horloge et du cadre de chaque caméra. Les autres pages le
 //   suivent avec 0,3 s de retard, en interpolant : tout le monde voit le même match.
@@ -31,10 +35,10 @@ export const ROLES_S = {
 const DELAY = 0.3;            // retard de lecture des suiveurs (s)
 const SNAP_HZ = 12;
 export const SES = {
-  room: null, named: null, code: '', active: false, connected: false, role: 'observateur', since: 0,
+  room: null, named: null, code: '', active: false, connected: false, role: 'observateur', since: 0, transport: '', hosting: false,
   me: null, host: null, hostPeer: null, peers: [], owners: {}, names: {}, cfg: null,
   buf: [], rt: null, evq: [], sentKeys: {}, presSent: {}, lastPres: {}, log: [], chat: [], orders: [], unsub: [],
-  follower: false, report: null,
+  follower: false, report: null, known: new Map(),
 };
 const r2 = (v) => Math.round(v * 100) / 100;
 const r3 = (v) => Math.round(v * 1000) / 1000;
@@ -43,8 +47,21 @@ const TAU = Math.PI * 2;
 // ---------------- connexion ----------------
 let roomP = null;
 export function getRoom() {
-  if (!roomP) roomP = (async () => { try { const c = window.claude; if (!c || typeof c.use !== 'function') return null; return await Promise.race([c.use('room'), new Promise((r) => setTimeout(() => r(null), 11000))]); } catch (e) { return null; } })();
+  if (!roomP) roomP = (async () => {
+    // page servie par le serveur réseau local : on joue sur le réseau de la salle
+    if (lanAvailable()) return lanRoom();
+    try { const c = window.claude; if (!c || typeof c.use !== 'function') return null; return await Promise.race([c.use('room'), new Promise((r) => setTimeout(() => r(null), 11000))]); } catch (e) { return null; }
+  })();
   return roomP;
+}
+export const transportKind = () => (lanAvailable() ? 'lan' : 'room');
+// pseudo du joueur (mémorisé dans ce navigateur)
+export function getPseudo() { try { return localStorage.getItem('carregie.pseudo') || ''; } catch (e) { return ''; } }
+export function setPseudo(v) {
+  const n = String(v || '').replace(/\s+/g, ' ').trim().slice(0, 24);
+  try { localStorage.setItem('carregie.pseudo', n); } catch (e) { /* stockage indisponible */ }
+  if (SES.active && n) { pres({ name: n }); emit('session', { type: 'names' }); }
+  return n;
 }
 export const randomCode = () => Math.random().toString(36).slice(2, 6).toLowerCase();
 
@@ -54,9 +71,10 @@ export async function joinSession(code, role, opts = {}) {
   code = String(code || '').toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 12) || randomCode();
   let named;
   try { named = await room.join('car-' + code); } catch (e) { return { ok: false, why: e && e.code || 'join' }; }
-  Object.assign(SES, { room, named, code, active: true, role: ROLES_S[role] ? role : 'observateur', since: Date.now(), cam: opts.cam || null, buf: [], rt: null, evq: [], sentKeys: {}, presSent: {}, lastPres: {}, log: [], chat: [], orders: [], follower: false, cfg: opts.cfg || null });
+  SES.known = new Map();
+  Object.assign(SES, { room, named, code, active: true, role: ROLES_S[role] ? role : 'observateur', since: Date.now(), cam: opts.cam || null, buf: [], rt: null, evq: [], sentKeys: {}, presSent: {}, lastPres: {}, log: [], chat: [], orders: [], follower: false, cfg: opts.cfg || null, transport: room.kind === 'lan' ? 'lan' : 'room', hosting: !!opts.host });
   SES.report = { code, startedAt: Date.now(), orders: [], faults: [], chat: [], roles: {} };
-  const ps = named.presence({ uid: SH.uid || null, role: SES.role, since: SES.since, cam: SES.cam, cfg: opts.cfg || null });
+  const ps = named.presence({ uid: SH.uid || null, bid: browserId(), name: getPseudo() || 'Stagiaire', host: !!opts.host || null, role: SES.role, since: SES.since, cam: SES.cam, cfg: opts.cfg || null });
   if (ps && ps.catch) ps.catch(() => {});
   SES.unsub.push(named.onPeers((ch) => onPeers(ch), () => {}));
   SES.unsub.push(named.onConnection((c) => { SES.connected = c; emit('session', { type: 'conn' }); }, () => {}));
@@ -73,7 +91,7 @@ export async function leaveSession() {
   try { await SES.named.leave(); } catch (e) { /* rien */ }
   for (const c of S.cams) c.remotePose = false;
   S.sessionFollower = false;
-  Object.assign(SES, { active: false, named: null, follower: false, host: null, hostPeer: null, peers: [], owners: {} });
+  Object.assign(SES, { active: false, named: null, follower: false, host: null, hostPeer: null, peers: [], owners: {}, hosting: false });
   emit('session', { type: 'leave' });
 }
 export function setRole(role, cam) {
@@ -121,17 +139,23 @@ function onPeers(ch) {
     else if (!pr.k && lk) { SES.lastPres['k' + p.peer] = null; const c = camById(lk.id); if (c && S.camop !== c) c.manual = c.role === 'manuel'; }
   }
   if (ch.joined.some((p) => !p.sameTab)) { SES.sentKeys = {}; SES.presSent = {}; }
-  if (ch.joined.length || ch.left.length) {
-    for (const p of ch.joined) if (!p.sameTab) log(`Arrivée : ${nameOf(p)} (${roleLabel(p)}).`);
-    for (const p of ch.left) log(`Départ : ${nameOf(p)}.`);
-    resolveNames();
+  // arrivées et départs : annoncés quand le pseudo est connu (sur le réseau local, la présence suit
+  // l'arrivée de peu) ; un joueur qui se reconnecte n'est ni « parti » ni « arrivé »
+  const keyOf = (p) => (p.presence && p.presence.bid) || p.peer;
+  const here = new Set(SES.peers.filter((p) => !p.sameTab).map(keyOf));
+  for (const p of ch.left) { const k = keyOf(p); if (!here.has(k) && SES.known.has(k)) { log(`Départ : ${SES.known.get(k)}.`); SES.known.delete(k); } }
+  for (const p of SES.peers) {
+    if (p.sameTab || !p.presence || !p.presence.since) continue;
+    const k = keyOf(p);
+    if (!SES.known.has(k)) { SES.known.set(k, pseudoOf(p)); log(`Arrivée : ${pseudoOf(p)} (${roleLabel(p)}).`); }
   }
+  if (ch.joined.length || ch.left.length) resolveNames();
   emit('session', { type: 'peers' });
 }
 function electHost() {
   const cands = SES.peers.filter((p) => p.presence && p.presence.since);
-  // le formateur anime en priorité ; sinon le plus ancien arrivé
-  cands.sort((a, b) => ((b.presence.role === 'formateur') - (a.presence.role === 'formateur')) || (a.presence.since - b.presence.since) || (a.peer < b.peer ? -1 : 1));
+  // celui qui a créé la partie (hôte) fait tourner le match ; sinon le formateur ; sinon le plus ancien arrivé
+  cands.sort((a, b) => ((!!b.presence.host) - (!!a.presence.host)) || ((b.presence.role === 'formateur') - (a.presence.role === 'formateur')) || (a.presence.since - b.presence.since) || (a.peer < b.peer ? -1 : 1));
   const h = cands[0] || null;
   const wasHost = isHost();
   SES.hostPeer = h;
@@ -153,7 +177,14 @@ export function canControl(sliceId) {
   return !o || o === SES.me.peer;
 }
 export function holderOf(sliceId) { const o = SES.owners[sliceId]; return SES.peers.find((p) => p.peer === o) || null; }
-export function nameOf(p) { if (!p) return '—'; if (p.sameTab) return 'vous'; const id = p.by || (p.presence && p.presence.uid); return (id && SES.names[id] && SES.names[id].name) || 'participant'; }
+export function nameOf(p) {
+  if (!p) return '—';
+  const pr = p.presence || {};
+  const id = p.by || pr.uid;
+  const n = (pr.name && String(pr.name).slice(0, 24)) || (id && SES.names[id] && SES.names[id].name) || 'participant';
+  return p.sameTab ? n + ' (vous)' : n;
+}
+export const pseudoOf = (p) => (p && p.presence && p.presence.name && String(p.presence.name).slice(0, 24)) || 'participant';
 export function roleLabel(p) { const r = p && p.presence && p.presence.role; return r && ROLES_S[r] ? ROLES_S[r].label + (r === 'cadreur' && p.presence.cam ? ' CAM ' + p.presence.cam : '') : '—'; }
 let namesP = 0;
 async function resolveNames() {
@@ -181,7 +212,19 @@ function onMsg(topic, m) {
   if (topic === 'evt') { if (isFollower()) SES.evq.push(d); return; }
   if (topic === 'cmt') { if (isFollower()) emit('remoteCommentary', d); return; }
   if (topic === 'ord') { onOrder(d, m); return; }
-  if (topic === 'ses') { if (d.type === 'note') log('Formateur : ' + String(d.text || '').slice(0, 300), 'warn'); emit('session', { type: 'ses', d }); }
+  if (topic === 'ses') {
+    if (d.type === 'note') log('Formateur : ' + String(d.text || '').slice(0, 300), 'warn');
+    // l'hôte (ou le formateur) attribue un rôle à un joueur
+    if (d.type === 'assign' && SES.me && d.to === SES.me.peer && ROLES_S[d.role]) {
+      const from = SES.peers.find((p) => p.peer === m.peer);
+      if (from && ((SES.hostPeer && from.peer === SES.hostPeer.peer) || (from.presence && from.presence.role === 'formateur'))) {
+        setRole(d.role, d.role === 'cadreur' ? (d.cam || 1) : null);
+        log(`${pseudoOf(from)} vous confie le rôle ${ROLES_S[d.role].label}${d.role === 'cadreur' ? ' (CAM ' + (d.cam || 1) + ')' : ''}.`, 'warn');
+        emit('session', { type: 'assigned', role: d.role, by: pseudoOf(from) });
+      }
+    }
+    emit('session', { type: 'ses', d });
+  }
 }
 // ordres du réalisateur et messages
 export function sendOrder(kind, data = {}) {
@@ -214,6 +257,13 @@ export function updateSession(dt) {
       const k = sliceKey(id);
       if (SES.presSent[id] !== k) { SES.presSent[id] = k; patch[s.field] = s.get(); }
     }
+    // où je suis (pour mon avatar chez les autres) : envoyé seulement quand ça change
+    if (avatarSrc) {
+      const a = avatarSrc();
+      const av = { p: [r2(a.x), r2(a.y), r2(a.z)], a: r2(a.yaw), t: a.truck ? 1 : 0, f: a.fly ? 1 : 0, s: a.station || null, c: a.cam || null };
+      const k = JSON.stringify(av);
+      if (SES.presSent.av !== k) { SES.presSent.av = k; patch.av = av; }
+    }
     // caméra que je cadre moi-même
     if (S.mode === 'camop' && S.camop) patch.k = { id: S.camop.id, y: r3(S.camop.yaw.v), p: r3(S.camop.pitch.v), f: r3(S.camop.lf.v) };
     else if (SES.presSent.k) patch.k = null;
@@ -243,6 +293,9 @@ export function updateSession(dt) {
   }
 }
 const mine = (id) => SES.me && SES.owners[id] === SES.me.peer;
+let avatarSrc = null;
+// main.js fournit la position du joueur (x, y, z, yaw, truck, fly, station, cam)
+export function setAvatarSource(fn) { avatarSrc = fn; }
 
 // ---------------- match : hôte → suiveurs ----------------
 function hostSnapshot() {
@@ -329,6 +382,13 @@ export function forceChangedSlices(before) {
       if (before[k] !== now) send('force', { s: id, p, v: s.multi ? s.getPart(p) : s.get() });
     }
   }
+}
+export function assignRole(peerId, role, cam) {
+  if (!ROLES_S[role]) return;
+  if (SES.me && peerId === SES.me.peer) { setRole(role, role === 'cadreur' ? (cam || 1) : null); return; }
+  send('ses', { type: 'assign', to: peerId, role, cam: cam || null });
+  const p = SES.peers.find((x) => x.peer === peerId);
+  log(`Vous confiez le rôle ${ROLES_S[role].label} à ${pseudoOf(p)}.`);
 }
 export function announce(text) { send('ses', { type: 'note', text: String(text).slice(0, 300) }); log('Vous (formateur) : ' + text); }
 export function chat(text) { sendOrder('msg', { text: String(text).slice(0, 300) }); }

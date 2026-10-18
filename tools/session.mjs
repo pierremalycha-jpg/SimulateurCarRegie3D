@@ -65,23 +65,27 @@ const A = await newPage('host');   // formateur, hôte
 const B = await newPage('mix');    // truquiste
 const evA = (f, a) => A.evaluate(f, a), evB = (f, a) => B.evaluate(f, a);
 // A crée la session comme formateur
-await A.locator('button', { hasText: 'Session à plusieurs' }).click();
+await A.locator('button', { hasText: 'Jouer à plusieurs' }).click();
 await A.waitForTimeout(500);
+await A.locator('#ses-pseudo').fill('Alice');
 await A.locator('.ses-role', { hasText: 'Formateur' }).click();
-await A.locator('input[aria-label="Code de session"]').fill('test1');
-await A.locator('button', { hasText: 'Rejoindre la session' }).click();
+await A.locator('input[aria-label="Code de la partie"]').fill('test1');
+await A.locator('#modal button', { hasText: 'Créer la partie' }).click();
 await A.waitForTimeout(6000);
 check('A : session active, hôte', await evA(() => window.__dbg.SES.active && window.__dbg.S.mode === 'fps'));
 // B rejoint comme truquiste
-await B.locator('button', { hasText: 'Session à plusieurs' }).click();
+await B.locator('button', { hasText: 'Jouer à plusieurs' }).click();
 await B.waitForTimeout(500);
+await B.locator('#ses-pseudo').fill('Bruno');
+await B.locator('#modal .tab', { hasText: 'Rejoindre une partie' }).click();
 await B.locator('.ses-role', { has: B.locator('b', { hasText: /^Truquiste$/ }) }).click();
-await B.locator('input[aria-label="Code de session"]').fill('test1');
-await B.locator('button', { hasText: 'Rejoindre la session' }).click();
+await B.locator('input[aria-label="Code de la partie"]').fill('test1');
+await B.locator('#modal button.primary', { hasText: /^Rejoindre$/ }).click();
 await B.waitForTimeout(9000);
 const st = await evB(() => ({ act: window.__dbg.SES.active, fol: window.__dbg.SES.follower, peers: window.__dbg.SES.peers.length, buf: window.__dbg.SES.buf.length, mode: window.__dbg.S.mode }));
 log('B', JSON.stringify(st));
 check('B suit le match de A', st.fol && st.buf > 0 && st.peers === 2);
+check('pseudos échangés', (await evA(() => window.__dbg.SES.peers.map((p) => p.presence && p.presence.name).sort().join(','))) === 'Alice,Bruno');
 // même match : position du ballon proche (B a 0,3 s de retard)
 const bA = await evA(() => [window.__dbg.M.ball.x, window.__dbg.M.ball.z, window.__dbg.S.simTime]);
 const bB = await evB(() => [window.__dbg.M.ball.x, window.__dbg.M.ball.z, window.__dbg.S.simTime]);
