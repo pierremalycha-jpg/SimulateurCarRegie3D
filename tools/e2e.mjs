@@ -38,6 +38,7 @@ const SUITES = [
   ['chef', 'chef', [], 20],
   ['fichier', 'fichier', [], 15],
   ['reseau-ops', 'reseau-ops', [], 25],
+  ['reseau-termes', 'termes', [], 20],
 ];
 
 const args = process.argv.slice(2);

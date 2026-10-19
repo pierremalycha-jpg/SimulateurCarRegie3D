@@ -12,6 +12,7 @@ import { TUTOR, registerLessons, setIO, startLesson, stopLesson, next, prev, che
 import { NET_LESSONS } from '../tutor/lessons/reseau.js';
 import { stationLesson, stationIds } from '../tutor/lessons/postes.js';
 import { STATION_INFO } from '../content/stations.js';
+import { rich } from './rich.js';
 
 // ----------------------------------------------------------------------------------
 // Le chef de car à l'écran : un panneau qui ne bloque pas le poste (on lit et on agit en
@@ -55,32 +56,6 @@ registerLessons(NET_LESSONS);
 registerLessons(stationIds().map((id) => stationLesson(id, hasStation(id))).filter(Boolean));
 
 // ---------------- texte du chef : `code`, **gras**, listes « - », paragraphes ----------------
-function rich(text) {
-  const box = el('div', { class: 'chef-say' });
-  for (const para of String(text).split(/\n\n+/)) {
-    const lines = para.split('\n');
-    let ul = null, ol = null; let p = null;
-    for (const line of lines) {
-      const li = /^- (.*)$/.exec(line), oi = /^\d+\. (.*)$/.exec(line);
-      if (li) { if (!ul) { ul = el('ul'); box.append(ul); } ul.append(inline(li[1])); continue; }
-      if (oi) { if (!ol) { ol = el('ol'); box.append(ol); } ol.append(inline(oi[1])); continue; }
-      ul = ol = null;
-      if (!p) { p = el('p'); box.append(p); } else p.append(el('br'));
-      p.append(...inline(line).childNodes);
-    }
-  }
-  return box;
-}
-function inline(s) {
-  const li = el('li');
-  for (const part of String(s).split(/(`[^`]+`|\*\*[^*]+\*\*)/)) {
-    if (!part) continue;
-    if (part.startsWith('`')) li.append(el('code', {}, part.slice(1, -1)));
-    else if (part.startsWith('**')) li.append(el('b', {}, part.slice(2, -2)));
-    else li.append(document.createTextNode(part));
-  }
-  return li;
-}
 const plain = (s) => String(s).replace(/`|\*\*/g, '').replace(/^- /gm, '').replace(/\n+/g, ' ');
 
 // ---------------- voix ----------------

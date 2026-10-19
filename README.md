@@ -335,6 +335,72 @@ Au passage, le terminal des commutateurs accepte les commandes d'exploitation (`
 depuis les modes de configuration, comme sous Arista EOS. L'invite d'une plage de ports s'écrit aussi comme sous
 EOS (`config-if-Et1-7,9-11`).
 
+## Ce que contient la v16 : un « ? » à côté de chaque terme technique
+
+Dans le poste Réseau IP, les deux onglets (Technique et Exploitation), chaque terme technique a maintenant un petit
+bouton **« ? »** :
+
+- en-têtes de tableau ;
+- intitulés des mesures et des réglages ;
+- titres des cartes ;
+- bandeau d'état.
+
+Exemple : la ligne « Gigue (écart-type IAT) » de l'analyseur de flux. Un clic ouvre une **fiche** à côté du bouton.
+La fenêtre n'est pas modale : le poste continue de vivre derrière. Au téléphone, la fiche s'ouvre en bas de l'écran.
+
+| Partie de la fiche | Contenu |
+| --- | --- |
+| Essentiel | L'idée en une phrase, en gras |
+| Schéma | Un dessin explicatif quand il aide (21 schémas) : arrivées régulières et réelles pour la gigue, échange Sync / Delay_Req pour PTP, ordre du BMCA, arbre des horloges frontières, ST 2022-7, abonnement IGMPv3 puis PIM, snooping, VLAN et SVI, masque de sous-réseau, encapsulation d'un paquet, en-tête RTP, émetteurs N / NL / W, seaux CINST et VRX, NMOS, ECMP, files QoS, adresse MAC multicast, états OSPF, port miroir |
+| Explication | Au niveau BTS, avec les ordres de grandeur |
+| Dans le car | Où le voir et le régler dans le simulateur |
+| Voir aussi | Renvois vers d'autres fiches, avec un bouton retour |
+| Référence | La norme ou la RFC (SMPTE ST 2110, ST 2059-2, ST 2022-7, IEEE 1588, AMWA IS-04 / IS-05, RFC 3376…) |
+
+Les **88 fiches** sont rangées en sept familles :
+
+- ST 2110 ;
+- transport et multicast ;
+- réseau ;
+- PTP ;
+- NMOS ;
+- mesures ;
+- exploitation.
+
+Le bouton **Lexique**, à côté des deux onglets, les regroupe toutes, avec une recherche. Les chapitres du guide sur
+ST 2110 et le réseau ont aussi leurs « ? » et leur bouton Lexique. Échap ferme la fiche sans quitter le poste.
+
+**Exactitude.** Seules les valeurs vérifiées sont citées :
+
+- **PTP, profil ST 2059-2 :** domaine 127 par défaut, un Announce toutes les 250 ms, un Sync toutes les 125 ms,
+  timeout de 3 Announce.
+- **BMCA :** l'ordre de comparaison est celui d'IEEE 1588, vérifié dans l'implémentation linuxptp.
+- **IGMPv3 (RFC 3376) :** requête toutes les 125 s, abonnement oublié après 260 s.
+- **NMOS IS-04 :** un battement toutes les 5 s, effacement du nœud après 12 s.
+- **AES67 (marquage DSCP) :** EF 46 pour PTP, AF41 34 pour les médias.
+- **ST 2110-10 :** datagramme UDP de 1 460 octets au plus.
+- **ST 2110-21 :** les formules de CMAX et VRX_FULL sont celles de l'analyseur EBU LIST. En 1080p50, avec 4 320
+  paquets par image, CMAX vaut 5 et non 4. Un test vérifie que les fiches citent les valeurs que calcule
+  l'analyseur du simulateur.
+- **ST 2022-7 :** les classes de décalage ne sont pas chiffrées, faute de source sûre.
+
+Tests :
+
+- `tests/unit/netterms.test.mjs` vérifie :
+  - que chaque fiche est complète et que ses renvois existent ;
+  - que les schémas sont des SVG bien formés ;
+  - que les intitulés de l'interface sont reconnus ;
+  - les valeurs ST 2110-21.
+- `tests/e2e/termes.mjs` vérifie :
+  - le « ? » de la gigue et sa fiche avec schéma ;
+  - « Voir aussi » et le retour ;
+  - Échap, puis le focus rendu au bouton ;
+  - les boutons dans chaque onglet ;
+  - les mesures en direct, dont les boutons restent en place ;
+  - le lexique et sa recherche ;
+  - la fenêtre SDP et le guide ;
+  - l'affichage au téléphone.
+
 ## Ce que contient la v15 : le poste Réseau IP en deux onglets
 
 Le poste Réseau IP était devenu touffu : huit onglets, des sous-onglets, deux lignes d'indicateurs. Il a maintenant
@@ -494,7 +560,7 @@ node tools/shots.mjs dossier 1280 800 '["vision","hf"]'   # captures de postes
 | `ui/tutor_ui.js` | Panneau du chef de car : parcours proposés selon le poste, étapes, mise en évidence, commandes vers le terminal, voix |
 | `app/` | Application : vue et qualité graphique (`view.js`), joueur et déplacements (`player.js`), visée et interactions (`interact.js`), cadreur (`camop.js`), téléportation et postes (`teleport.js`), barre d'outils et d'état (`hud.js`), clavier / souris / tactile (`input.js`), écran d'accueil et lancement (`start.js`), diagnostic de performance (`perf.js`), profileur `?perf` (`profiler.js`) |
 | `data/` | Catalogues techniques : caméras, objectifs, liaisons, formats (`cameras.js`) ; positions et antennes du stade (`stadium.js`) ; HF COFDM (`rf.js`) ; exposition et lumières (`exposure.js`) ; équipes (`match.js`) |
-| `content/` | Contenus pédagogiques : fiches de poste (`stations.js`), glossaire (`glossary.js`), chapitres du guide (`guide.js`), commandes (`controls.js`) |
+| `content/` | Contenus pédagogiques : fiches de poste (`stations.js`), glossaire (`glossary.js`), fiches des termes réseau et ST 2110 (`netterms.js`), chapitres du guide (`guide.js`), commandes (`controls.js`) |
 | `state.js` | État partagé de la simulation (`S`) et bus d'événements (`on` / `emit`) |
 | `truck.js` | Intérieur du car : plan, postes, écrans, baies et pupitres détaillés, collisions |
 | `equip.js` | Profil matériel (XVS-6000, XT4K, LSM, IPDirector) et répartition des canaux EVS |
@@ -524,7 +590,7 @@ node tools/shots.mjs dossier 1280 800 '["vision","hf"]'   # captures de postes
 | `review.js` | Points techniques à faire relire par le formateur |
 | `gfx.js` | Habillage (score, bandeaux, statistiques) |
 | `atelier.js` | Atelier de montage de la CAM 1 : pièces, ordre des opérations et prérequis, visée, fantômes, gestes maintenus, réglages à la molette, mise en service, rapport |
-| `ui/` | Session (`session_ui.js`), relecture (`review_ui.js`), réseau IP (`st_network.js` : onglet Technique, `net_ops.js` : onglet Exploitation, `net_tools.js`, `net_course.js`), synoptiques (`synoptics.js`), plan du car (`truckmap.js`), postes (`stations.js`, `st_audio.js`, `commut.js`, `st_vision.js`, `st_evs.js`, `st_mixer.js`, `st_ipd.js`, `st_patch.js`), espace formateur (`config.js`), rapports (`report.js`), plan, guide, missions |
+| `ui/` | Session (`session_ui.js`), relecture (`review_ui.js`), réseau IP (`st_network.js` : onglet Technique, `net_ops.js` : onglet Exploitation, `net_tools.js`, `net_course.js`, `term.js` et `term_figs.js` : boutons « ? », fiches et schémas), synoptiques (`synoptics.js`), plan du car (`truckmap.js`), postes (`stations.js`, `st_audio.js`, `commut.js`, `st_vision.js`, `st_evs.js`, `st_mixer.js`, `st_ipd.js`, `st_patch.js`), espace formateur (`config.js`), rapports (`report.js`), plan, guide, missions |
 | `equipment/` | Visionneuse de matériel : appareils (`devices.js`), liste de câblage (`cabling.js`), rendu SVG et photos (`viewer.js`) |
 | `faults.js`, `exercises.js` | Simulateur de pannes, réalisateur virtuel et opérateur EVS automatique |
 

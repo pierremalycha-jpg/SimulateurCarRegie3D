@@ -620,7 +620,10 @@ textarea { background: var(--bg); border: 1px solid var(--line2); border-radius:
 
 /* ---------- Poste Réseau IP (ST 2110 spine-leaf) ---------- */
 /* poste Réseau IP : deux onglets (Technique / Exploitation), bandeau d'état sur une ligne */
-.net-modes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; max-width: 760px; }
+.net-modes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)) auto; gap: 8px; max-width: 880px; }
+.net-lex { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; padding: 6px 14px; border-radius: 7px; border: 1px solid #2b6a8e; background: #10202c; color: #cfe8f6; font-size: 12.5px; }
+.net-lex b { display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 50%; background: var(--accent); color: var(--accent-ink); font-size: 14px; }
+.net-lex:hover { border-color: var(--accent); background: #143246; }
 .net-mode { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; text-align: left; padding: 9px 14px; border-radius: 7px; border: 1px solid var(--line2); background: linear-gradient(#1d2227, #171b1f); color: var(--muted); }
 .net-mode b { font-family: var(--f-disp); font-size: 18px; letter-spacing: .05em; text-transform: uppercase; color: var(--fg); font-weight: 600; }
 .net-mode span { font-size: 12.5px; }
@@ -766,6 +769,8 @@ textarea { background: var(--bg); border: 1px solid var(--line2); border-radius:
 .net-topo g:hover > rect { stroke: #ffd27a; }
 .net-legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 12px; color: var(--muted); }
 .net-legend i { display: inline-block; width: 22px; height: 4px; margin-right: 6px; vertical-align: middle; border-radius: 2px; }
+.net-terms { display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; font-size: 12.5px; }
+.net-term { white-space: nowrap; }
 .net-swgrid { display: grid; grid-template-columns: 210px minmax(0, 1fr); gap: 12px; align-items: start; }
 .net-swlist { display: flex; flex-direction: column; gap: 3px; position: sticky; top: 0; }
 .net-swgrp { font: 600 12px var(--f-disp); letter-spacing: .12em; text-transform: uppercase; color: var(--muted); margin: 8px 0 2px; }
@@ -1051,6 +1056,46 @@ tr.rv-prop td { background: rgba(255,176,32,.08); }
   .chef-head { cursor: default; }
 }
 @media (prefers-reduced-motion: reduce) { #chef-spot, .chef-dot { animation: none; } .chef-prog i { transition: none; } }
+
+/* ---------- bouton « ? » des termes techniques et fenêtre explicative (ui/term.js) ---------- */
+.q { position: relative; display: inline-flex; align-items: center; justify-content: center; flex: 0 0 auto; width: 17px; height: 17px; margin-left: 6px; padding: 0; vertical-align: 1px; border-radius: 50%; border: 1px solid #3f6f8c; background: #12293a; color: var(--accent); font: 700 11px/1 var(--f-body); letter-spacing: 0; text-transform: none; }
+.q::after { content: ''; position: absolute; inset: -6px; }
+.q:hover, .q:focus-visible { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+#modal header .q { width: 22px; height: 22px; font-size: 13px; margin: 0 8px 0 0; }
+#termpop { position: fixed; z-index: 45; left: 16px; top: 16px; width: min(500px, calc(100vw - 32px)); max-height: calc(100vh - 32px); display: flex; flex-direction: column; background: #15191d; border: 1px solid var(--line2); border-top: 3px solid var(--accent); border-radius: 8px; box-shadow: 0 18px 50px rgba(0,0,0,.6); color: var(--fg); font-family: var(--f-body); }
+#termpop.lex { width: min(760px, calc(100vw - 32px)); }
+#termpop.tp-sheet { left: 0; right: 0; top: auto; bottom: 0; width: 100%; max-height: 84vh; border-radius: 12px 12px 0 0; padding-bottom: env(safe-area-inset-bottom, 0px); }
+#termpop:focus { outline: none; }
+.tp-head { display: flex; align-items: flex-start; gap: 10px; padding: 10px 12px 8px 16px; border-bottom: 1px solid var(--line); }
+.tp-head .grow { flex: 1; min-width: 0; }
+.tp-head h3 { margin: 3px 0 0; font-family: var(--f-disp); font-size: 22px; font-weight: 600; letter-spacing: .03em; line-height: 1.1; }
+.tp-cat { display: inline-block; padding: 1px 7px; border-radius: 3px; background: var(--accent-d); color: var(--accent); font: 600 11px var(--f-leg); letter-spacing: .08em; text-transform: uppercase; }
+.tp-x, .tp-back { flex: 0 0 auto; width: 34px; height: 34px; border-radius: 6px; border: 1px solid var(--line2); background: #1d2227; color: var(--fg); font-size: 18px; line-height: 1; }
+.tp-x:hover, .tp-back:hover { border-color: var(--accent); }
+.tp-scroll { display: flex; flex-direction: column; gap: 10px; padding: 12px 16px 14px; overflow: auto; overscroll-behavior: contain; }
+.tp-aka { margin-top: -4px; color: var(--muted); font-size: 12.5px; font-style: italic; }
+.tp-short { margin: 0; color: #f3f5f7; font-size: 15px; font-weight: 600; line-height: 1.4; }
+.tp-fig { margin: 0; padding: 8px; background: #0f1215; border: 1px solid var(--line); border-radius: 6px; }
+.tp-fig svg { display: block; width: 100%; height: auto; }
+.tp-body { color: #d5dade; font-size: 13.5px; line-height: 1.5; }
+.tp-body p { margin: 0 0 8px; } .tp-body p:last-child { margin-bottom: 0; }
+.tp-body ul, .tp-body ol { margin: 0 0 8px; padding-left: 20px; } .tp-body li { margin: 2px 0; }
+.tp-body code { padding: 0 4px; background: #0b0e11; border: 1px solid var(--line); border-radius: 3px; color: var(--cyan); font-family: var(--f-mono); font-size: 12.5px; white-space: nowrap; }
+.tp-car { display: flex; flex-direction: column; gap: 2px; padding: 8px 10px; background: #1d1b12; border-left: 3px solid var(--tape-y); border-radius: 0 5px 5px 0; font-size: 13px; line-height: 1.45; }
+.tp-car b { color: var(--tape-y); font: 600 11.5px var(--f-leg); letter-spacing: .08em; text-transform: uppercase; }
+.tp-see { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.tp-see > b { margin-right: 4px; color: var(--muted); font-size: 12px; font-weight: 600; }
+.tp-chip { padding: 4px 10px; border-radius: 999px; border: 1px solid #2b6a8e; background: #102434; color: #cfe8f6; font-size: 12.5px; }
+.tp-chip:hover { background: var(--accent); color: var(--accent-ink); }
+.tp-ref { color: var(--muted); font-size: 12px; }
+.tp-foot { display: flex; justify-content: flex-end; padding: 8px 16px; border-top: 1px solid var(--line); }
+.tp-search { width: 100%; padding: 8px 10px; border-radius: 6px; border: 1px solid var(--line2); background: #0f1215; }
+.tp-lex h4 { margin: 10px 0 6px; color: var(--accent); font: 600 12px var(--f-leg); letter-spacing: .08em; text-transform: uppercase; }
+.tp-lexgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 6px; }
+.tp-lexi { display: flex; flex-direction: column; gap: 2px; padding: 7px 9px; border-radius: 6px; border: 1px solid var(--line); background: #1a1e22; text-align: left; }
+.tp-lexi b { font-size: 13px; }
+.tp-lexi span { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; color: var(--muted); font-size: 11.5px; line-height: 1.35; }
+.tp-lexi:hover { border-color: var(--accent); }
 </style>
 
 <div id="input-layer"></div>

@@ -2,6 +2,7 @@
 import { openDevice } from '../equipment/viewer.js';
 import { openTrainer } from './config.js';
 import { openReport } from './report.js';
+import { qify, openLexique } from './term.js';
 import { CFG } from '../shared.js';
 import { DEVICE_LIST, DEVICES } from '../equipment/devices.js';
 import { S, emit, on, camById } from '../state.js';
@@ -60,6 +61,7 @@ export function drawMissionCard() {
 }
 
 
+const NET_CHAPTERS = ['ipguide', 'reseau', 'mesure2110'];
 export function openGuide(tab = 'missions', chapter = null) {
   const tabs = el('div', { class: 'tabs' });
   const content = el('div', { class: 'list' });
@@ -77,9 +79,14 @@ export function openGuide(tab = 'missions', chapter = null) {
     if (k === 'guide') {
       const nav = el('div', { class: 'tabs' }); const art = el('div', { class: 'prose' });
       let curG = GUIDE[0];
-      const open = (g) => { curG = g; art.innerHTML = `<h3>${g.title}</h3>` + g.html; [...nav.children].forEach((b) => b.classList.toggle('on', b.dataset.g === g.id)); };
+      // chapitres ST 2110 et réseau : boutons « ? » des termes (tableaux) et accès au lexique
+      const lex = el('button', { class: 'btn small', onclick: () => openLexique(lex) }, 'Lexique réseau et ST 2110');
+      const open = (g) => {
+        curG = g; art.innerHTML = `<h3>${g.title}</h3>` + g.html; [...nav.children].forEach((b) => b.classList.toggle('on', b.dataset.g === g.id));
+        lex.hidden = !NET_CHAPTERS.includes(g.id); if (!lex.hidden) qify(art, 'h4, th, td:first-child');
+      };
       for (const g of GUIDE) nav.appendChild(el('button', { class: 'tab', 'data-g': g.id, onclick: () => open(g) }, g.title));
-      content.append(nav, art, el('div', { class: 'hwrow' }, el('button', { class: 'btn small', onclick: () => openReport('Guide · ' + curG.title) }, 'Signaler une erreur dans ce chapitre'))); open(GUIDE.find((g) => g.id === chapter) || GUIDE[0]);
+      content.append(nav, art, el('div', { class: 'hwrow' }, lex, el('button', { class: 'btn small', onclick: () => openReport('Guide · ' + curG.title) }, 'Signaler une erreur dans ce chapitre'))); open(GUIDE.find((g) => g.id === chapter) || GUIDE[0]);
       art.querySelectorAll('table').forEach((t) => { const w = el('div', { class: 'tblwrap' }); t.replaceWith(w); w.appendChild(t); });
       nav.addEventListener('click', () => art.querySelectorAll('table').forEach((t) => { if (!t.parentElement.classList.contains('tblwrap')) { const w = el('div', { class: 'tblwrap' }); t.replaceWith(w); w.appendChild(t); } }));
     }

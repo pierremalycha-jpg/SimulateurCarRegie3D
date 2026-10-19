@@ -12,6 +12,8 @@ import { NC, NET_MISSIONS, objectivesOf } from '../net/course.js';
 import { selectRx, sdpExplain } from '../net/analyzer.js';
 import { offerDownload } from '../shared.js';
 import { OPS, tabOps, opsDock, opsKey } from './net_ops.js';
+import { q, qify, openLexique } from './term.js';
+import { TERMS } from '../content/netterms.js';
 
 // ----------------------------------------------------------------------------------
 // Poste « Réseau IP », en deux onglets :
@@ -19,6 +21,7 @@ import { OPS, tabOps, opsDock, opsKey } from './net_ops.js';
 //     configurables (interface graphique + ligne de commande), le plan d'adressage, les flux
 //     NMOS / SDP, PTP, les mesures, le diagnostic et la formation ;
 //   · Exploitation (net_ops.js) : l'interface épurée d'un contrôleur et des appareils.
+// Les termes techniques des intitulés ont leur bouton « ? » (term.js) ; « Lexique » les regroupe.
 // ----------------------------------------------------------------------------------
 const NSV = 'http://www.w3.org/2000/svg';
 const sv = (tag, attrs = {}, ...kids) => { const e = document.createElementNS(NSV, tag); for (const k in attrs) if (attrs[k] != null) e.setAttribute(k, attrs[k]); for (const c of kids) if (c != null) e.append(c); return e; };
@@ -53,6 +56,8 @@ export function buildNetwork(body, arg, ctx) {
   body.append(modes, summary, mbox, tabs, content);
   const setMode = (m) => { V.mode = m; log('mode', { mode: m }); render(true); };
   for (const [k, l, sub] of MODES) modes.append(el('button', { class: 'net-mode', role: 'tab', 'data-mode': k, onclick: () => setMode(k) }, el('b', {}, l), el('span', {}, sub)));
+  const lexBtn = el('button', { class: 'net-lex', title: 'Toutes les explications des termes techniques (boutons « ? »)', onclick: () => openLexique(lexBtn) }, el('b', {}, '?'), el('span', {}, 'Lexique'));
+  modes.append(lexBtn);
   const show = (k) => { V.mode = 'tech'; V.tab = k; log('tab', { tab: k }); render(true); };
   for (const [k, l] of TABS) tabs.append(el('button', { class: 'tab', 'data-k': k, onclick: () => show(k) }, l));
   let lastKey = '';
@@ -61,17 +66,17 @@ export function buildNetwork(body, arg, ctx) {
     const key = stateKey() + (V.mode === 'ops' ? '§' + opsKey() : '');
     if (!force && key === lastKey) return;
     lastKey = key;
-    for (const b of modes.children) { const on = b.dataset.mode === V.mode; b.classList.toggle('on', on); b.setAttribute('aria-selected', String(on)); }
+    for (const b of modes.querySelectorAll('.net-mode')) { const on = /** @type {HTMLElement} */ (b).dataset.mode === V.mode; b.classList.toggle('on', on); b.setAttribute('aria-selected', String(on)); }
     for (const b of tabs.children) b.classList.toggle('on', b.dataset.k === V.tab);
     tabs.hidden = V.mode !== 'tech';
     setDock(); OD.update();
-    drawSummary(summary);
+    drawSummary(summary); qify(summary);
     mbox.innerHTML = '';
     if (V.mode === 'ops') {
       const a = document.activeElement;
       if (!force && a && content.contains(a) && ['INPUT', 'SELECT', 'TEXTAREA'].includes(a.tagName)) { lastKey = ''; return; }
       content.innerHTML = ''; R.live = null;
-      tabOps(content, R);
+      tabOps(content, R); qify(content);
       return;
     }
     if (V.tab !== 'learn' && (NC.active || NC.exam)) { if (NC.active) missionCard(mbox, R, true); else mbox.append(el('div', { class: 'hwpanel net-mission compact' }, el('div', { class: 'hwrow' }, el('h3', {}, NC.exam.over ? 'Examen terminé' : 'Examen réseau en cours'), el('button', { class: 'btn small', onclick: () => show('learn') }, 'Voir')))); }
@@ -81,6 +86,7 @@ export function buildNetwork(body, arg, ctx) {
     if (typing && !force) { lastKey = ''; return; }
     content.innerHTML = ''; R.live = null;
     ({ learn: tabCourse, topo: tabTopo, switch: tabSwitch, addr: tabAddr, flows: tabFlows, meas: tabMeasure, ptp: tabPtp, diag: tabDiag })[V.tab](content, R);
+    qify(content); qify(mbox);
   }
   R.go = (tab, o = {}) => { const { msub, keepCourse: _keep, ...rest } = o; for (const k in rest) if (rest[k] !== undefined) V[k] = rest[k]; if (msub) setMeasureSub(msub); show(tab); };
   R.ops = (o = {}) => { for (const k of ['view', 'dev', 'rx', 'src']) if (o[k] !== undefined) OPS[k] = o[k]; if (o.rx !== undefined) { OPS.mode = null; OPS.man = null; } if (o.dev !== undefined) OPS.draft = null; setMode('ops'); };
@@ -224,9 +230,11 @@ function tabTopo(box, R) {
     });
   });
   const legend = el('div', { class: 'net-legend' }, ...[['#2fd25a', 'lien utilisé'], ['#ffb020', '> 80 % ou OSPF bloqué'], ['#ff3b30', 'saturé (pertes)'], ['#c77dff', 'sans PIM'], ['#7a2a24', 'coupé'], ['#4a5560', 'sans trafic']].map(([c, t]) => el('span', {}, el('i', { style: { background: c } }), t)), el('span', {}, 'Pastilles d\'un appareil : carte rouge à gauche, carte bleue à droite. Cliquez un élément pour voir son état ; cliquez de nouveau un commutateur sélectionné pour le configurer.'));
-  box.append(el('div', { class: 'synwrap net-svgwrap' }, svg), legend, selPanel(R));
+  const terms = el('div', { class: 'net-terms' }, el('span', { class: 'note' }, 'Sur ce schéma :'), ...TOPO_TERMS.map((id) => el('span', { class: 'net-term', 'data-qterm': id }, TERMS[id].t)));
+  box.append(el('div', { class: 'synwrap net-svgwrap' }, svg), legend, terms, selPanel(R));
   box.append(el('p', { class: 'note' }, `Chaque réseau est une fabric « spine-leaf » : les leaves (commutateurs de haut de baie) reçoivent les appareils en 25 GbE (100 GbE pour les gros flux), et chacune est reliée aux deux spines par 2 × 100 GbE. Tout appareil émet chaque flux deux fois, une fois par réseau (ST 2022-7) : les deux réseaux sont totalement indépendants (pas de lien entre eux). Un flux vidéo ${S.format === 'UHD' ? 'UHD 2160p50' : S.format === 'HD' ? 'HD 1080p50' : 'HD 1080i50'} fait ≈ ${fmt(videoGbps(), 2)} Gb/s.`));
 }
+const TOPO_TERMS = ['spine-leaf', 'spine', 'leaf', 'uplink', 'reseaux-ab', 'st2022-7', 'grand-maitre', 'bc', 'reseau-ctl', 'interface-media', 'ecmp'];
 function shortName(d, w) { const n = d.name.replace('Passerelle ', 'Pass. ').replace('Multiviewer', 'MV').replace('Encodeur ', '').replace(' (cœur DSP)', '').replace('Grade 1 + scopes', 'Grade 1').replace('Décodeurs retour / duplex', 'Décodeurs').replace('Générateur de test', 'Générateur').replace('Unité de commentaire', 'Commentaire').replace('Stagebox terrain', 'Stagebox').replace(' caméras HF / POV / PTZ', ' HF/POV/PTZ').replace(' écrans d\'angle', ' écrans'); const max = Math.floor(w / 6.6); return n.length > max ? n.slice(0, max - 1) + '…' : n; }
 function selPanel(R) {
   const s = V.sel; const p = el('div', { class: 'hwpanel' });
@@ -282,7 +290,7 @@ function applyCli(id, lines, why) {
   explain(`${host(id)} : ${why} Équivalent CLI : configure terminal ⏎ ${lines.join(' ⏎ ')} ⏎ end (non enregistré tant que « write memory » n'est pas fait).`);
   return true;
 }
-function refreshSwitchFrame(R) { const f = R.content.querySelector('.net-swframe'); if (f) { const n = switchFrame(R); f.replaceWith(n); } }
+function refreshSwitchFrame(R) { const f = R.content.querySelector('.net-swframe'); if (f) { const n = switchFrame(R); f.replaceWith(n); qify(n); } }
 function tabSwitch(box, R) {
   if (!FAB.switches[V.sw]) V.sw = 'LEAF-R1';
   const list = el('div', { class: 'net-swlist' });
@@ -578,7 +586,7 @@ function openSdp(fid) {
   log('sdp', { fid });
   const ann = el('div', { class: 'net-sdp' });
   for (const line of txt.split('\n')) { const ex = sdpExplain(line); ann.append(el('div', { class: 'net-sdpl' + (/^m=/.test(line) ? ' m' : '') }, el('code', {}, line), el('span', { class: 'note' }, ex))); }
-  modal.open('SDP · ' + f.label, el('div', { class: 'list' }, el('p', { class: 'note' }, 'Le fichier SDP décrit le flux : adresses multicast des deux jambes (rouge = primary, bleu = secondary, regroupées par « a=group:DUP » pour ST 2022-7), format de l\'image ou du son, horloge PTP de référence. Le contrôleur NMOS le transmet au récepteur lors de la connexion IS-05. Chaque ligne est commentée à droite.'), ann, el('div', { class: 'hwrow' }, el('button', { class: 'btn small', onclick: () => offerDownload(fid.replace(/[^a-z0-9]+/gi, '_') + '.sdp', txt) }, 'Télécharger le .sdp'))), { width: 820 });
+  modal.open('SDP · ' + f.label, el('div', { class: 'list' }, el('p', { class: 'note' }, 'Le fichier SDP décrit le flux : adresses multicast des deux jambes (rouge = primary, bleu = secondary, regroupées par « a=group:DUP » pour ST 2022-7), format de l\'image ou du son, horloge PTP de référence. Le contrôleur NMOS le transmet au récepteur lors de la connexion IS-05. Chaque ligne est commentée à droite.'), ann, el('div', { class: 'hwrow' }, el('button', { class: 'btn small', onclick: () => offerDownload(fid.replace(/[^a-z0-9]+/gi, '_') + '.sdp', txt) }, 'Télécharger le .sdp'))), { width: 820, headerExtra: [q('sdp')] });
 }
 
 // ---------------- flux NMOS ----------------

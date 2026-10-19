@@ -5,6 +5,7 @@ import { toast, selectEl } from './common.js';
 import { explain } from './widgets.js';
 import { FAB, COLORS, CLABEL, PROBE_PORT, markDirty, linkName, portState } from '../net/fabric.js';
 import { ifShort } from '../net/cli.js';
+import { liveKv, qify } from './term.js';
 import { AN, streamMetrics, selectRx, resetCounters, topLinks, capture, videoGeom, flowGeom, mcastMac } from '../net/analyzer.js';
 
 // ----------------------------------------------------------------------------------
@@ -69,7 +70,7 @@ function subStream(box, R) {
   const ROWS = [['state', 'État'], ['br', 'Débit (couche IP)'], ['pps', 'Paquets / s'], ['loss', 'Pertes'], ['jit', 'Gigue (écart-type IAT)'], ['cinst', 'CINST max / CMAX'], ['vrx', 'VRX max / VRX_FULL'], ['lat', 'Latence réseau'], ['rtp', 'Décalage RTP → arrivée'], ['hops', 'Chemin']];
   for (const [k, l] of ROWS) { const tr = el('tr', {}, el('th', {}, l)); cells[k] = {}; for (const c of COLORS) { const td = el('td', { class: 'mono' }); cells[k][c] = td; tr.append(td); } tb.append(tr); }
   const tbl = el('table', { class: 'tbl compact net-tbl net-an' }, el('thead', {}, el('tr', {}, el('th', {}, 'Mesure'), el('th', { class: 'red' }, 'Réseau rouge (primary)'), el('th', { class: 'blue' }, 'Réseau bleu (secondary)'))), tb);
-  const dup = el('dl', { class: 'kv' });
+  const dup = el('dl', { class: 'kv' }); const setDup = liveKv(dup);
   const c1 = chart(140), c2 = chart(140), c3 = chart(120);
   box.append(el('div', { class: 'hwpanel' }, el('div', { class: 'hwrow' }, el('h3', {}, 'Réception analysée'), sel, el('button', { class: 'btn small', onclick: () => { resetCounters(AN.rx); toast('Compteurs remis à zéro'); } }, 'Remettre les compteurs à zéro')), head),
     el('div', { class: 'hwpanel' }, el('h3', {}, 'Mesures par réseau'), el('div', { class: 'tblwrap' }, tbl)),
@@ -97,7 +98,7 @@ function subStream(box, R) {
       add(kv2, 'Conformité', m.compliant ? 'CONFORME' : 'NON CONFORME (rafales ou tampon dépassés)', m.compliant ? 'ok' : 'err');
     } else { add(kv2, 'Format', f.kind === 'audio' ? `L24 · 48 kHz · ${g.ch} canaux · paquets de 1 ms` : 'données ANC'); add(kv2, 'Paquets / s', fmtN(g.pps)); }
     if (m.senderPtp) add(kv2, 'PTP de l\'émetteur', m.senderPtp.state === 'locked' ? 'verrouillé' : m.senderPtp.state === 'noisy' ? 'verrouillé, bruité' : 'NON verrouillé : horodatages faux', m.senderPtp.state === 'locked' ? '' : 'warn');
-    head.append(kv1, kv2);
+    head.append(kv1, kv2); qify(head);
   };
   let lastFlow = '';
   R.live = () => {
@@ -116,12 +117,11 @@ function subStream(box, R) {
       C.lat[c].textContent = `${fmt(p.lat, 1)} µs`; C.rtp[c].textContent = `${fmt(p.rtpOff, 0)} µs`; C.rtp[c].className = 'mono ' + (p.rtpOff > 5000 ? 'warn' : '');
       C.hops[c].textContent = `${p.hops + 1} commutateur(s) · charge max ${fmt(p.uMax * 100, 0)} %${p.path.spine ? ' · ' + host(p.path.spine) : ''}`;
     }
-    dup.innerHTML = '';
-    const cnt = m.cnt || {}; const add = (k, v, cls) => dup.append(el('dt', {}, k), el('dd', { class: cls || '' }, v));
-    add('Écart rouge / bleu', m.skew != null ? `${fmt(m.skew, 2)} µs` : 'une seule jambe reçue', m.skew == null ? 'warn' : '');
-    add('Paquets reçus', `rouge ${fmtN(cnt.red || 0)} · bleu ${fmtN(cnt.blue || 0)}`);
-    add('Paquets réparés par l\'autre réseau', fmtN(cnt.repaired || 0), (cnt.repaired || 0) > 0 ? 'warn' : '');
-    add('Paquets perdus définitivement', fmtN(cnt.lost || 0), (cnt.lost || 0) > 0 ? 'err' : 'ok');
+    const cnt = m.cnt || {};
+    setDup([['Écart rouge / bleu', m.skew != null ? `${fmt(m.skew, 2)} µs` : 'une seule jambe reçue', m.skew == null ? 'warn' : ''],
+      ['Paquets reçus', `rouge ${fmtN(cnt.red || 0)} · bleu ${fmtN(cnt.blue || 0)}`],
+      ['Paquets réparés par l\'autre réseau', fmtN(cnt.repaired || 0), (cnt.repaired || 0) > 0 ? 'warn' : ''],
+      ['Paquets perdus définitivement', fmtN(cnt.lost || 0), (cnt.lost || 0) > 0 ? 'err' : 'ok']]);
     const H = AN.hist;
     c1.draw(COLORS.map((c) => ({ label: CLABEL[c], color: COL[c], data: H.map((x) => (x[c] ? x[c].br : null)) })), { title: 'Débit (Gb/s)', min: 0, fmt: (v) => fmt(v, 2) });
     if (m.flow.kind === 'video') c2.draw([...COLORS.map((c) => ({ label: 'CINST ' + CLABEL[c], color: COL[c], data: H.map((x) => (x[c] ? x[c].cinst : null)) }))], { title: 'CINST (paquets)', min: 0, refs: [{ v: g.cmax, label: 'CMAX ' + g.cmax }], fmt: (v) => fmt(v, 0) });
@@ -136,7 +136,7 @@ function subPtp(box, R) {
   if (!MS.ptpDev || (!FAB.devices[MS.ptpDev] && !FAB.switches[MS.ptpDev])) MS.ptpDev = (devs.find((d) => d.kind === 'ccu') || devs[0]).id;
   const opts = [...devs.map((d) => [d.id, d.name]), ...Object.values(FAB.switches).filter((s) => s.role !== 'ctl').map((s) => [s.id, s.running.hostname + ' (horloge frontière)'])];
   const sel = selectEl(opts, MS.ptpDev, (v) => { MS.ptpDev = v; R.refresh(); });
-  const kv = el('dl', { class: 'kv' });
+  const kv = el('dl', { class: 'kv' }); const setKv = liveKv(kv);
   const c1 = chart(180), c2 = chart(120);
   const gmBtn = el('button', { class: 'btn small', onclick: () => { FAB.gm.gm1.up = !FAB.gm.gm1.up; markDirty(); explain(FAB.gm.gm1.up ? 'Grand maître 1 rétabli : avec priority1 100, il est réélu. Observez le petit transitoire de l\'offset.' : 'Grand maître 1 coupé : après 3 Announce manqués, le BMCA élit le grand maître 2. Observez l\'offset : un saut de quelques centaines de ns, rattrapé par l\'asservissement en quelques secondes.'); R.refresh(); } }, FAB.gm.gm1.up ? 'Couper le grand maître 1' : 'Rétablir le grand maître 1');
   box.append(el('div', { class: 'hwpanel' }, el('div', { class: 'hwrow' }, el('h3', {}, 'Horloge suivie'), sel, gmBtn), kv, c1, c2),
@@ -144,13 +144,14 @@ function subPtp(box, R) {
   R.live = () => {
     const id = MS.ptpDev; const H = AN.ptp[id] || [];
     const d = FAB.devices[id]; const st = d ? FAB.res.devPtp[id] : null; const sw = FAB.switches[id];
-    kv.innerHTML = ''; const add = (k, v, cls) => kv.append(el('dt', {}, k), el('dd', { class: cls || '' }, v));
+    const rows = []; const add = (k, v, cls) => rows.push([k, v, cls]);
     const last = H[H.length - 1];
     if (d && st) { add('État', { locked: 'verrouillé', noisy: 'verrouillé, bruité', free: 'non traçable (horloge libre)', unlocked: 'NON verrouillé' }[st.state] + (st.why ? ' — ' + st.why : ''), st.state === 'locked' ? 'ok' : st.state === 'noisy' ? 'warn' : 'err'); add('Réseau utilisé', st.color ? CLABEL[st.color] : '—'); add('Sauts jusqu\'au grand maître', st.hops != null ? String(st.hops) : '—'); }
     if (sw) { const P = FAB.res.ptp[sw.color]; const h = P && P.synced[sw.id]; add('État', h != null ? `synchronisé · ${h} saut(s) du grand maître` : 'NON synchronisé', h != null ? 'ok' : 'err'); }
     const c = d && st ? st.color || 'red' : sw ? sw.color : 'red'; const gm = FAB.res.gmActive[c];
     add('Grand maître', gm ? `${gm.name}${gm.rogue ? ' — NON GPS !' : ''}` : 'aucun', gm && !gm.rogue ? '' : 'err');
     add('Offset actuel', last && last.off != null ? `${fmt(last.off, 0)} ns` : '—');
+    setKv(rows);
     c1.draw([{ label: 'offset', color: '#46c6f2', data: H.map((x) => x.off) }], { title: 'Offset par rapport au maître (ns)', sym: true, symMin: 120, refs: [{ v: 100, label: '+100 ns', color: '#3a4652' }, { v: -100, label: '−100 ns', color: '#3a4652' }], fmt: (v) => fmt(v, 0) });
     c2.draw([{ label: 'écart au temps GPS', color: '#ffb020', data: H.map((x) => x.drift / 1000) }], { title: 'Dérive cumulée par rapport au GPS (µs)', fmt: (v) => fmt(v, 1) });
   };
