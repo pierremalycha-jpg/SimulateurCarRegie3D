@@ -33,7 +33,7 @@ import { PROG, saveProgressSoon } from '../shared.js';
  * @property {{ q: string, choices: string[], answer: number, why: string }} [quiz]
  * @property {(c: Ctx) => boolean} [skip] étape sautée quand c'est vrai (ex. : on est déjà au poste)
  */
-/** @typedef {{ station?: string, tab?: string, sub?: string, sw?: string, port?: string, rx?: string, msub?: string, sel?: { kind: string, id: string } }} Go */
+/** @typedef {{ station?: string, cam?: number, tab?: string, sub?: string, sw?: string, port?: string, rx?: string, msub?: string, sel?: { kind: string, id: string }, device?: string, n?: number }} Go */
 /** @typedef {{ sel: string, text?: string, label?: string }} Target */
 /**
  * @typedef {object} Lesson
@@ -44,7 +44,8 @@ import { PROG, saveProgressSoon } from '../shared.js';
  * @property {string} summary
  * @property {string} duration
  * @property {string} level
- * @property {{ ip?: boolean }} [needs]
+ * @property {{ ip?: boolean, hf?: boolean, cams?: number }} [needs]
+ * @property {(c: Ctx) => void} [after] toujours appelé à la fin du parcours (terminé ou quitté)
  * @property {string} [outro]
  * @property {string} [cleanupLabel] ce que fait cleanup, proposé quand on quitte avant la fin
  * @property {(c: Ctx) => void} [cleanup]
@@ -63,6 +64,8 @@ import { PROG, saveProgressSoon } from '../shared.js';
  * @property {(g: Go) => void} go se rendre au poste / à l'onglet
  * @property {() => any} view état de l'interface
  * @property {(type: string, o?: object) => void} log simule une action d'interface (événement « netlog »)
+ * @property {(name: string, ...args: any[]) => any} [ui] gestes d'interface hors des postes : prendre une caméra,
+ *   ouvrir un appareil dans la visionneuse, cliquer un bouton, l'atelier de montage…
  */
 
 export const LESSONS = /** @type {Lesson[]} */ ([]);
@@ -86,12 +89,13 @@ export const TUTOR = {
 };
 
 // ---------------- entrées / sorties par défaut (sans interface) ----------------
-const headView = { station: null, mode: 'tech', tab: null, sub: null, sw: null, port: null, rx: null, opsView: null, opsDev: null, opsRx: null, opsSrc: null, opsMode: null };
+const headView = { station: null, cam: null, mode: 'tech', tab: null, sub: null, sw: null, port: null, rx: null, opsView: null, opsDev: null, opsRx: null, opsSrc: null, opsMode: null, device: null, devView: null };
 export function headlessIO(runCli) {
   return {
     cli(sw, lines) { for (const l of lines) runCli(sw, l); },
     go(g) {
-      if (g.station) headView.station = g.station;
+      if (g.station) { if (headView.station !== g.station) headView.tab = null; headView.station = g.station; headView.cam = g.cam || null; }
+      if (g.device) headView.device = g.device;
       // poste Réseau IP : onglet Exploitation (vue, appareil, récepteur, source) ou onglet Technique
       if (g.tab === 'ops') { headView.mode = 'ops'; for (const [k, h] of [['view', 'opsView'], ['dev', 'opsDev'], ['rx', 'opsRx'], ['src', 'opsSrc']]) if (g[k]) headView[h] = g[k]; emit('netlog', { type: 'mode', mode: 'ops' }); return; }
       if (g.tab) headView.mode = 'tech';
@@ -100,14 +104,26 @@ export function headlessIO(runCli) {
     },
     view: () => headView,
     log(type, o = {}) { emit('netlog', { type, ...o }); },
+    // sans interface : seuls les effets sur l'état comptent (caméra prise, appareil ouvert)
+    ui(name, ...a) {
+      if (name === 'take') { headView.station = null; S.mode = 'camop'; S.camop = S.cams.find((c) => c.id === a[0]) || null; }
+      if (name === 'release') { S.mode = 'fps'; S.camop = null; }
+      if (name === 'device') { headView.device = a[0]; headView.devView = (a[2] && a[2].view) || 'arriere'; }
+      if (name === 'closeModal') headView.device = null;
+    },
   };
 }
 export function setIO(io) { TUTOR.io = io; }
 
 // journal des actions : le chef vérifie ce qui a été fait depuis le début de l'étape
 const now = () => (typeof performance !== 'undefined' ? performance.now() : Date.now()) / 1000;
-on('netlog', (e) => { TUTOR.log.push({ ...e, t: now() }); if (TUTOR.log.length > 300) TUTOR.log.shift(); });
-on('station', (id) => { TUTOR.log.push({ type: 'station', id, t: now() }); });
+const push = (e) => { TUTOR.log.push({ ...e, t: now() }); if (TUTOR.log.length > 300) TUTOR.log.shift(); };
+on('netlog', push);
+on('station', (id) => push({ type: 'station', id }));
+// les autres postes : mélangeur, habillage, ralentis, pannes, fiches, matériel… (ev = le type d'origine)
+for (const name of ['mixer', 'gfx', 'evs', 'fault', 'keymode', 'info', 'mission', 'device', 'audio', 'router', 'intercom', 'repair', 'patchDone']) {
+  on(name, (p) => push(p && typeof p === 'object' ? { ...p, ev: p.type, type: name } : { type: name, v: p }));
+}
 
 /** @returns {Ctx} */
 export function ctx() {
@@ -140,6 +156,7 @@ export function stopLesson(finished = false, cleanup = false) {
     Object.assign(p, { done: true, at: Date.now(), aided: TUTOR.stats.aided, hints: TUTOR.stats.hints, wrong: TUTOR.stats.wrong, steps: l.steps.length });
     saveProgressSoon();
   }
+  if (l.after) { try { l.after(ctx()); } catch (e) { console.error(e); } }
   TUTOR.lesson = null;
   emit('tutor', { type: finished ? 'finish' : 'stop', id: l.id });
 }
@@ -215,4 +232,12 @@ export function lessonsFor(station) {
   const here = LESSONS.filter((l) => station && l.stations.includes(station));
   return { here, others: LESSONS.filter((l) => !here.includes(l)) };
 }
-export const lessonAvailable = (l) => !(l.needs && l.needs.ip && !S.ipMode);
+// un parcours peut demander le car IP, une caméra HF, deux canaux EVS…
+export function lessonBlocked(l) {
+  const n = l.needs || {};
+  if (n.ip && !S.ipMode) return 'Demande le car IP';
+  if (n.hf && !S.cams.some((c) => c.rf)) return 'Demande une caméra HF (plan caméras)';
+  if (n.cams && S.cams.length < n.cams) return `Demande au moins ${n.cams} caméras`;
+  return '';
+}
+export const lessonAvailable = (l) => !lessonBlocked(l);

@@ -48,7 +48,7 @@ import { installInput } from './app/input.js';
 import { buildStart, start } from './app/start.js';
 import { installPerfTest, watchFps } from './app/perf.js';
 import { toggleChef } from './ui/tutor_ui.js';
-import { TUTOR, startLesson as startChefLesson, doForMe as chefDoForMe, next as chefNext } from './tutor/engine.js';
+import { TUTOR, startLesson as startChefLesson, doForMe as chefDoForMe, next as chefNext, stopLesson as stopChefLesson } from './tutor/engine.js';
 
 // ----------------------------------------------------------------------------------
 // Point d'entrée : initialisation du monde et du car, événements de l'application, boucle
@@ -188,4 +188,4 @@ function updBrand() { paintTruckSign(CFG.car.name); const w2 = $('#where2'); if 
 document.fonts && document.fonts.ready.then(() => { W.boards && W.boards.redraw(); P.mvDirty = true; paintTruckSign(CFG.car.name); });
 requestAnimationFrame(frame);
 window.__S = S; // accès console pour le débogage
-window.__dbg = { RENDER, openReview, openSessionPanel, SES, S, M, MIX, EVS, ROUTER, P, W, T, PL, pcam, COMMUT, CMT, applyAudio: applyAll, voiceGain, setMonitor, stripRms, corrNow, EX, teleport, openStation, closeStation, openPlan, closePlan, takeCamera, releaseCamera, start, openGuide, renderer, applyLighting, openDevice, openEquipmentIndex, openTrainer, CFG, SH, AU, SC, NET, FAB, NC, AN, emit, injectFault, clearFaults, ACTIVE, FAULTS, truckBlocked, truckFloorAt, goToStation, TRUCK, AT, atelierDebug, beginAtelier, endAtelier, avOk, AVATARS, avatarPositions, profSnapshot, profReset, TUTOR, toggleChef, startChefLesson, chefDoForMe, chefNext, PROG };
+window.__dbg = { RENDER, openReview, openSessionPanel, SES, S, M, MIX, EVS, ROUTER, P, W, T, PL, pcam, COMMUT, CMT, applyAudio: applyAll, voiceGain, setMonitor, stripRms, corrNow, EX, teleport, openStation, closeStation, openPlan, closePlan, takeCamera, releaseCamera, start, openGuide, renderer, applyLighting, openDevice, openEquipmentIndex, openTrainer, CFG, SH, AU, SC, NET, FAB, NC, AN, emit, injectFault, clearFaults, ACTIVE, FAULTS, truckBlocked, truckFloorAt, goToStation, TRUCK, AT, atelierDebug, beginAtelier, endAtelier, avOk, AVATARS, avatarPositions, profSnapshot, profReset, TUTOR, toggleChef, startChefLesson, chefDoForMe, chefNext, stopChefLesson, PROG };

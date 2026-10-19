@@ -642,6 +642,7 @@ function buildCCU(body, arg, ctx) {
         const optical = c.link === 'hf' || c.link === 'coax' ? null : -4 - (c.route.length / 1000) * 0.4 - 1.5 - (c.id % 3) * 0.7;
         let txt, cls = 'ok';
         if (c.fiberCut) { txt = 'OPTIQUE : PAS DE SIGNAL (< -30 dBm)'; cls = 'err'; }
+        else if (c.powerOn === false) { txt = 'CAMÉRA ÉTEINTE (CAM PW au RCP)'; cls = 'err'; }
         else if (!c.status.ok) { txt = c.status.power ? 'ERREUR LIAISON' : 'ALIM. COUPÉE (câble trop long)'; cls = 'err'; }
         else if (!c.genlock) { txt = S.ipMode && !camPtpOk(c.id) ? 'PTP NON VERROUILLÉ (poste Réseau IP)' : 'RÉF. NON VERROUILLÉE'; cls = 'err'; }
         else if (c.rf) { txt = `HF ${c.rf.state === 'ok' ? 'OK' : c.rf.state === 'err' ? 'ERREURS' : 'PERDUE'} · marge ${fmt(c.rf.margin, 1)} dB`; cls = c.rf.state === 'ok' ? 'ok' : c.rf.state === 'err' ? 'warn' : 'err'; }

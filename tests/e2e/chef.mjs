@@ -29,6 +29,9 @@ await page.locator('#ask [data-ask="ok"]').click();
 T.check('car passé en IP', await until(page, () => window.__dbg.S.ipMode && !!window.__dbg.FAB.res, null, 10000));
 
 // ---- parcours « leaf neuve » ----
+// les parcours sont rangés par famille, repliée : on ouvre « Réseau ST 2110 »
+await page.locator('#chef details.chef-more summary', { hasText: 'Réseau ST 2110' }).click();
+T.check('famille Réseau ST 2110 dépliée', await until(page, () => !!document.querySelector('#chef details.chef-more[open][data-dom="Réseau ST 2110"]'), null, 5000));
 await page.locator('#chef .chef-card', { hasText: 'Mettre en service une leaf neuve' }).locator('button').click();
 T.check('parcours commencé', await until(page, () => window.__dbg.TUTOR.lesson && window.__dbg.TUTOR.lesson.id === 'reseau-leaf', null, 5000));
 await shot('02-intro');

@@ -337,7 +337,7 @@ export function keyToggle(auto) {
 }
 // cadence image du format en cours : les durées de transition se comptent en images
 export const frameRate = () => (FORMATS[S.format] && FORMATS[S.format].fps) || 50;
-function updateMixer(dt) {
+export function updateMixer(dt) {
   if (MIX.auto) {
     const dur = MIX.trans === 'stinger' ? Math.max(MIX.rate, 30) : MIX.rate;
     MIX.pos += dt * frameRate() / Math.max(1, dur); // durée en images du format (25 en 1080i50, 50 en 1080p50 et UHD)

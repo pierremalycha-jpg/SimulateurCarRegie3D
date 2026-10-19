@@ -335,6 +335,62 @@ Au passage, le terminal des commutateurs accepte les commandes d'exploitation (`
 depuis les modes de configuration, comme sous Arista EOS. L'invite d'une plage de ports s'écrit aussi comme sous
 EOS (`config-if-Et1-7,9-11`).
 
+## Ce que contient la v17 : le chef de car sur tous les postes
+
+Le chef de car accompagnait surtout le réseau ST 2110. Il a maintenant un **parcours pratique pour chaque poste du car**,
+des **parcours de compétences** et des **parcours sur le matériel** : **30 nouveaux parcours**, en plus des 5 parcours
+réseau et de la présentation de chaque poste.
+
+Chaque parcours suit la même méthode :
+
+1. le chef explique ;
+2. il crée parfois une situation (un défaut, une panne, un brouillage) ;
+3. le stagiaire agit ;
+4. le chef vérifie sur l'**état réel du simulateur** : l'image rendue (waveform), le mélangeur, le serveur ralenti, la
+   console, la grille, la visionneuse ou l'atelier.
+
+Chaque geste propose « Emmène-moi / Montre-moi » (le bon poste, l'élément à utiliser mis en évidence), des indices et
+« Fais-le pour moi », et chaque parcours se termine par une question.
+
+| Famille | Parcours |
+| --- | --- |
+| Prise en main | Se repérer : le car, le plan caméras, les synoptiques |
+| Réalisation et mélangeur | Commuter (preset, CUT, enchaîné, barre T, volet logo) · Score et bandeau (DSK, habillage) · Donner les ordres au truquiste · La scripte (timecode, notes vers l'EVS) · La production |
+| Image et caméras | Exposer au RCP (PANEL ACTIVE, iris, waveform) · Barres, balance des blancs et matching · Baie CCU : fibre coupée et référence perdue · Prendre une caméra et cadrer · Monter une caméra de stade (atelier) |
+| Ralentis | Un ralenti à l'antenne (DERN. ACTION, angle HFR, volet logo) · Clips et playlist au LSM · IPDirector : nommer, indexer, noter |
+| Son | Gain, 48 V et phase · N-1 des commentateurs, synchro labiale et plan de son |
+| Liaisons, synchro et diffusion | HF : antennes et changement de fréquence · Synchro : GPS, holdover, référence · Grille · Baie de brassage (car vide) · Transmission : mire et secours · Intercom |
+| Exploitation et dépannage | Line-up avant l'antenne · Dépanner une panne cachée · Suivre un câble |
+| Matériel | Caméra et CCU · Générateur de synchro et distributeur · Serveur EVS · Grille et mélangeur · Pied de car |
+
+**Accueil du chef :**
+
+- au poste où l'on se trouve, ses parcours sont proposés en premier ;
+- tous les autres sont rangés par famille, repliés, avec la progression de chaque famille ;
+- quand l'élément à utiliser est sous son panneau, le chef se déplace de l'autre côté de l'écran ;
+- son panneau passe aussi au-dessus des fenêtres (visionneuse, synoptiques).
+
+**Moteur :**
+
+- le chef suit maintenant les événements de tous les postes : mélangeur, habillage, ralentis, son, grille, intercom,
+  pannes et matériel ;
+- il sait choisir un onglet de n'importe quel poste et ouvrir le poste vision sur une caméra donnée ;
+- il peut ouvrir un appareil sur une face donnée de la visionneuse et faire les gestes hors des postes : prendre une
+  caméra, ouvrir le plan, monter la caméra à l'atelier.
+
+**Corrigé au passage :** la baie CCU affiche « CAMÉRA ÉTEINTE (CAM PW au RCP) » quand la caméra est simplement éteinte,
+au lieu d'un faux « câble trop long ».
+
+Tests :
+
+- `tests/unit/chef-postes.test.mjs` vérifie que chaque parcours est complet : étapes, textes, gestes faisables,
+  questions valides.
+- Le même fichier vérifie que chaque poste du car a son parcours.
+- Il rejoue 25 parcours de bout en bout sans navigateur.
+- `tests/e2e/chef-postes.mjs` rejoue les 30 parcours dans le navigateur, par le panneau du chef. Pour chaque action,
+  « Emmène-moi / Montre-moi » doit mettre en évidence un élément réel de la page, et « Fais-le pour moi » doit faire
+  valider l'étape.
+
 ## v16.1 : le chef de car remarche dans l'application publiée
 
 Le lecteur d'artefacts de claude.ai n'affiche pas les boîtes de dialogue du navigateur : `confirm()` y renvoie
@@ -575,8 +631,8 @@ node tools/shots.mjs dossier 1280 800 '["vision","hf"]'   # captures de postes
 | Fichier | Rôle |
 | --- | --- |
 | `main.js` | Point d'entrée : initialisation du monde et du car, événements de l'application, boucle principale |
-| `tutor/` | Chef de car : moteur des parcours (`engine.js`), lecture du réseau pour expliquer et vérifier (`net_helpers.js`), parcours réseau ST 2110 (`lessons/reseau.js`, `lessons/reseau_leaf.js`, `lessons/reseau_ops.js`), présentation de chaque poste (`lessons/postes.js`) |
-| `ui/tutor_ui.js` | Panneau du chef de car : parcours proposés selon le poste, étapes, mise en évidence, commandes vers le terminal, voix |
+| `tutor/` | Chef de car : moteur des parcours (`engine.js`), lecture du réseau pour expliquer et vérifier (`net_helpers.js`), parcours réseau ST 2110 (`lessons/reseau.js`, `lessons/reseau_leaf.js`, `lessons/reseau_ops.js`), parcours des postes, compétences et matériel (`lessons/realisation.js`, `image.js`, `ralentis.js`, `son.js`, `liaisons.js`, `exploitation.js`, `materiel.js`, outils communs `kit.js`), présentation de chaque poste (`lessons/postes.js`) |
+| `ui/tutor_ui.js` | Panneau du chef de car : parcours proposés selon le poste et rangés par famille, étapes, mise en évidence, gestes « Fais-le pour moi » hors des postes (caméra, visionneuse, atelier), commandes vers le terminal, voix |
 | `app/` | Application : vue et qualité graphique (`view.js`), joueur et déplacements (`player.js`), visée et interactions (`interact.js`), cadreur (`camop.js`), téléportation et postes (`teleport.js`), barre d'outils et d'état (`hud.js`), clavier / souris / tactile (`input.js`), écran d'accueil et lancement (`start.js`), diagnostic de performance (`perf.js`), profileur `?perf` (`profiler.js`) |
 | `data/` | Catalogues techniques : caméras, objectifs, liaisons, formats (`cameras.js`) ; positions et antennes du stade (`stadium.js`) ; HF COFDM (`rf.js`) ; exposition et lumières (`exposure.js`) ; équipes (`match.js`) |
 | `content/` | Contenus pédagogiques : fiches de poste (`stations.js`), glossaire (`glossary.js`), fiches des termes réseau et ST 2110 (`netterms.js`), chapitres du guide (`guide.js`), commandes (`controls.js`) |

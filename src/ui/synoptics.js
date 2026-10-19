@@ -556,6 +556,7 @@ export function openSynoptics(tab = 'video') {
   if (document.pointerLockElement) document.exitPointerLock();
   const p = synopticsPanel(tab);
   modal.open('Synoptiques du car', p.el, { width: 1400 });
+  (S.flags ||= {}).synoptics = true;
   const tick = () => { if (!p.el.isConnected) return; p.update(); setTimeout(tick, 700); };
   setTimeout(tick, 700);
 }

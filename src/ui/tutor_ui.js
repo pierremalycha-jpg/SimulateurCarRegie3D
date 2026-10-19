@@ -1,15 +1,19 @@
 // @ts-check
-import { S, on, emit } from '../state.js';
+import { S, on, emit, camById } from '../state.js';
 import { el } from '../util.js';
 import { resetFabric } from '../net/fabric.js';
-import { toast, ask } from './common.js';
+import { toast, ask, modal } from './common.js';
 import { hasStation, closeStation } from './stations.js';
-import { closePlan } from './plan.js';
+import { openPlan, closePlan } from './plan.js';
+import { openDevice, viewerState } from '../equipment/viewer.js';
+import { teleport } from '../app/teleport.js';
+import { AT, atelierDebug } from '../atelier.js';
 import { netGo, netView, netType } from './st_network.js';
 import { releaseCamera } from '../app/camop.js';
 import { whereAmI } from '../app/hud.js';
-import { TUTOR, registerLessons, setIO, startLesson, stopLesson, next, prev, check, hint, doForMe, answer, step, isAction, ctx, val, lessonsFor, lessonAvailable, progressOf } from '../tutor/engine.js';
+import { TUTOR, registerLessons, setIO, startLesson, stopLesson, next, prev, check, hint, doForMe, answer, step, isAction, ctx, val, lessonsFor, lessonBlocked, progressOf } from '../tutor/engine.js';
 import { NET_LESSONS } from '../tutor/lessons/reseau.js';
+import { ALL_STATION_LESSONS } from '../tutor/lessons/index.js';
 import { stationLesson, stationIds } from '../tutor/lessons/postes.js';
 import { STATION_INFO } from '../content/stations.js';
 import { rich } from './rich.js';
@@ -21,41 +25,97 @@ import { rich } from './rich.js';
 // utiliser, emmène au bon poste et au bon onglet, tape les commandes si on le lui demande.
 // ----------------------------------------------------------------------------------
 const CHEF = { name: 'Olivier', role: 'chef de car' };
-const UI = { root: /** @type {HTMLElement | null} */ (null), min: false, said: '', lastKey: '', voice: false, notes: /** @type {string[]} */ ([]), feedback: '', spotUntil: 0 };
+const UI = { root: /** @type {HTMLElement | null} */ (null), openDom: '', placed: false, min: false, said: '', lastKey: '', voice: false, notes: /** @type {string[]} */ ([]), feedback: '', spotUntil: 0 };
 try { UI.voice = localStorage.getItem('carregie.chefVoice') === '1'; } catch (e) { /* stockage indisponible */ }
 
 // ---------------- entrées / sorties pour le moteur ----------------
+// onglets des autres postes (barre .tabs du poste, boutons data-k) : lus et choisis dans la page
+const stationTabs = () => /** @type {HTMLElement | null} */ (document.querySelector('#station .st-body .tabs:has(> .tab[data-k])'));
+const stationTab = () => { const b = /** @type {HTMLElement | null} */ (stationTabs()?.querySelector(':scope > .tab.on')); return b ? b.dataset.k : null; };
+function clickTab(k) { const b = /** @type {HTMLElement | null} */ (stationTabs()?.querySelector(`:scope > .tab[data-k="${k}"]`)); if (b && !b.classList.contains('on')) b.click(); }
 const view = () => {
   const station = S.mode === 'station' ? S.station : null;
-  const v = station === 'reseau' ? netView() : { tab: null, sub: null, sw: null, port: null, rx: null };
-  return { station, ...v };
+  const v = station === 'reseau' ? netView() : { tab: station ? stationTab() : null, sub: null, sw: null, port: null, rx: null };
+  const d = viewerState();
+  // atelier de montage : gestes faits et phases (pour suivre le montage étape par étape)
+  const atelier = AT.active || AT.finished ? { active: AT.active, finished: AT.finished, done: AT.done, ops: atelierDebug.OPS } : null;
+  return { station, modal: modal.isOpen, cam: station ? S.selCam : null, device: d ? d.key : null, devView: d ? d.view : null, devSel: d ? d.sel : null, atelier, ...v };
 };
 function goTo(g) {
   if (!g) return;
-  if (g.station && view().station !== g.station) {
+  // poste à ouvrir (ou à rouvrir sur une autre caméra : poste vision, baie CCU)
+  if (g.station && (view().station !== g.station || (g.cam && S.selCam !== g.cam))) {
     if (!hasStation(g.station)) return;
     if (S.mode === 'camop') releaseCamera();
     if (S.mode === 'plan') closePlan();
     if (S.mode === 'station') closeStation(true);
-    emit('openStationNow', { id: g.station });
+    emit('openStationNow', g.cam ? { id: g.station, cam: g.cam } : { id: g.station });
   }
+  if (g.station && g.station !== 'reseau' && g.tab) { clickTab(g.tab); setTimeout(() => clickTab(g.tab), 120); }
+  // visionneuse de matériel : l'appareil (et sa face) à montrer
+  if (g.device) { const d = viewerState(); if (!d || d.key !== g.device || (g.n && d.n !== g.n)) openDevice(g.device, g.n || 1, g.view ? { view: g.view } : {}); }
   if (g.station === 'reseau' && (g.tab || g.sw || g.sub || g.rx || g.sel)) {
     const o = {}; for (const k of ['sw', 'sub', 'port', 'rx', 'msub', 'sel', 'view', 'dev', 'src']) if (g[k] !== undefined) o[k] = g[k];
     netGo(g.tab, o);
   }
 }
+// ---------------- gestes hors des postes (« Fais-le pour moi ») ----------------
+// clique le premier élément visible qui correspond (texte optionnel) ; les éléments SVG reçoivent un vrai clic souris
+function clickEl(sel, text) {
+  for (const n of /** @type {NodeListOf<HTMLElement>} */ (document.querySelectorAll(sel))) {
+    if (text && !(n.textContent || '').includes(text)) continue;
+    if (n instanceof HTMLElement && typeof n.click === 'function') n.click(); else n.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    return true;
+  }
+  return false;
+}
+// liste déroulante : choisit la valeur et prévient l'interface comme un vrai choix
+function setSelect(sel, value) {
+  const s = /** @type {HTMLSelectElement | null} */ (document.querySelector(sel)); if (!s) return false;
+  s.value = String(value); s.dispatchEvent(new Event('change', { bubbles: true })); return true;
+}
+// atelier de montage : enchaîne les gestes d'une phase dans l'ordre (pièces posées, gestes faits, réglages à zéro)
+function atelierPhase(phase) {
+  const A = atelierDebug; A.fast(0.05);
+  for (const op of A.OPS) {
+    if (op.phase !== phase || AT.done.has(op.id)) continue;
+    if (op.id === 'tally') { const t = setInterval(() => { if (!AT.active || AT.done.has('tally')) { clearInterval(t); return; } if (AT.done.has('power') && AT.powered) A.act('tally'); }, 400); continue; }
+    if (op.kind === 'place') { A.grab(op.part); A.install(op.part, op.id === 'zoom' ? 'L' : op.id === 'focus' ? 'R' : undefined); }
+    else if (op.kind === 'adjust') { if (op.id === 'level') A.setLevel(0); else A.setBalance(0); A.act(op.id); }
+    else { if (op.tool === 'pen') { A.grab('pen'); AT.clean[op.id === 'cleanCam' ? 'cam' : 'wall'] = true; AT.dirty[op.id === 'cleanCam' ? 'cam' : 'wall'] = false; } A.finishAct(op.id); }
+  }
+}
+const UIACT = {
+  take: (id) => { const c = camById(id); if (!c) return; if (S.mode === 'station') closeStation(true); if (S.mode === 'plan') closePlan(); emit('takeCamera', c); },
+  release: () => { if (S.mode === 'camop') releaseCamera(); },
+  plan: (open) => { if (open) { if (S.mode === 'station') closeStation(true); if (S.mode !== 'plan') openPlan(); } else if (S.mode === 'plan') closePlan(); },
+  device: (key, n = 1, o = {}) => openDevice(key, n, o),
+  synoptics: (tab) => emit('openSynoptics', tab),
+  closeModal: () => { if (modal.isOpen) modal.close(); },
+  click: clickEl,
+  select: setSelect,
+  teleport: (i) => { if (S.mode === 'station') closeStation(true); if (S.mode === 'plan') closePlan(); teleport(i); },
+  atelier: (phase) => { if (phase === 'start') { if (!AT.active) { if (S.mode === 'station') closeStation(true); emit('startAtelier'); } } else atelierPhase(phase); },
+};
 setIO({
   cli: (sw, lines) => netType(sw, lines),
   go: goTo,
   view,
   log: (type, o = {}) => emit('netlog', { type, ...o }),
+  ui: (name, ...a) => (UIACT[name] ? UIACT[name](...a) : undefined),
 });
 
-// parcours connus : réseau ST 2110, puis la présentation de chaque poste
+// parcours connus : un parcours pratique par poste, les compétences et le matériel, le réseau
+// ST 2110, puis la présentation de chaque poste
+registerLessons(ALL_STATION_LESSONS);
 registerLessons(NET_LESSONS);
 registerLessons(stationIds().map((id) => stationLesson(id, hasStation(id))).filter(Boolean));
 
 // ---------------- texte du chef : `code`, **gras**, listes « - », paragraphes ----------------
+// familles de parcours, dans l'ordre d'une journée de car : on découvre, on règle, on exploite, on dépanne
+const PRESENT = 'Les postes du car';
+const DOMAINS = ['Prise en main', 'Réalisation et mélangeur', 'Image et caméras', 'Ralentis', 'Son', 'Liaisons, synchro et diffusion', 'Exploitation et dépannage', 'Réseau ST 2110', 'Matériel', PRESENT];
+const domRank = (d) => { const i = DOMAINS.indexOf(d); return i < 0 ? DOMAINS.length - 1 : i; };
 const plain = (s) => String(s).replace(/`|\*\*/g, '').replace(/^- /gm, '').replace(/\n+/g, ' ');
 
 // ---------------- voix ----------------
@@ -88,14 +148,14 @@ function build() {
   UI.root = el('aside', { id: 'chef', class: 'chef', role: 'dialog', 'aria-label': 'Chef de car', hidden: true });
   document.body.append(UI.root, el('div', { id: 'chef-spot', hidden: true }, el('span', { class: 'chef-spot-lab' })));
   // le panneau se déplace en le prenant par son en-tête (position mémorisée)
-  try { const p = JSON.parse(localStorage.getItem('carregie.chefPos') || 'null'); if (p && window.innerWidth > 720) Object.assign(UI.root.style, { left: p.x + 'px', top: p.y + 'px', right: 'auto', bottom: 'auto' }); } catch (e) { /* position par défaut */ }
+  try { const p = JSON.parse(localStorage.getItem('carregie.chefPos') || 'null'); if (p && window.innerWidth > 720) { Object.assign(UI.root.style, { left: p.x + 'px', top: p.y + 'px', right: 'auto', bottom: 'auto' }); UI.placed = true; } } catch (e) { /* position par défaut */ }
 }
 function drag(head) {
   head.addEventListener('pointerdown', (e) => {
     if (window.innerWidth <= 720 || /** @type {HTMLElement} */ (e.target).closest('button')) return;
     const r = UI.root.getBoundingClientRect(); const dx = e.clientX - r.left, dy = e.clientY - r.top;
     const mv = (ev) => { const x = Math.max(4, Math.min(window.innerWidth - 120, ev.clientX - dx)), y = Math.max(4, Math.min(window.innerHeight - 60, ev.clientY - dy)); Object.assign(UI.root.style, { left: x + 'px', top: y + 'px', right: 'auto', bottom: 'auto' }); };
-    const up = () => { window.removeEventListener('pointermove', mv); window.removeEventListener('pointerup', up); const r2 = UI.root.getBoundingClientRect(); try { localStorage.setItem('carregie.chefPos', JSON.stringify({ x: Math.round(r2.left), y: Math.round(r2.top) })); } catch (er) { /* rien */ } };
+    const up = () => { window.removeEventListener('pointermove', mv); window.removeEventListener('pointerup', up); UI.placed = true; const r2 = UI.root.getBoundingClientRect(); try { localStorage.setItem('carregie.chefPos', JSON.stringify({ x: Math.round(r2.left), y: Math.round(r2.top) })); } catch (er) { /* rien */ } };
     window.addEventListener('pointermove', mv); window.addEventListener('pointerup', up);
   });
 }
@@ -164,7 +224,7 @@ export function render(force = false) {
   const v = /** @type {any} */ (view());
   // poste Réseau IP : onglet Exploitation (vue, appareil) ou sous-onglet de l'onglet Technique
   const atTab = !g || !g.tab ? true : g.tab === 'ops' ? v.mode === 'ops' && (!g.view || v.opsView === g.view) && (!g.dev || v.opsDev === g.dev) : v.tab === g.tab && v.mode !== 'ops';
-  const there = !g || (v.station === (g.station || v.station) && atTab);
+  const there = !g || (v.station === (g.station || v.station) && atTab && (!g.device || v.device === g.device));
   const acts = el('div', { class: 'chef-acts' });
   if (isAction(s) && !TUTOR.done) {
     if (g || s.show) acts.append(el('button', { class: 'btn small', onclick: () => { if (!there) goTo(g); UI.spotUntil = performance.now() + 6000; spot(targets(s), true); } }, there ? 'Montre-moi' : 'Emmène-moi'));
@@ -201,11 +261,11 @@ function renderFinish(l) {
 }
 
 function card(l) {
-  const p = progressOf(l.id); const ok = lessonAvailable(l);
+  const p = progressOf(l.id); const why = lessonBlocked(l); const ok = !why;
   const resume = TUTOR.lesson && TUTOR.lesson.id === l.id;
   return el('div', { class: 'chef-card' + (p.done ? ' done' : '') },
     el('div', { class: 'grow' }, el('b', {}, l.title, p.done ? el('span', { class: 'chef-check', title: 'déjà fait' }, ' ✓') : null), el('small', {}, `${l.duration} · ${l.level}`), el('span', { class: 's' }, l.summary)),
-    el('button', { class: 'btn small' + (ok ? ' primary' : ''), disabled: !ok, title: ok ? '' : 'Demande le car IP', onclick: async () => {
+    el('button', { class: 'btn small' + (ok ? ' primary' : ''), disabled: !ok, title: why, onclick: async () => {
       if (resume) { onStep(); return; }
       if (TUTOR.lesson && !(await ask(`Abandonner « ${TUTOR.lesson.title} » pour commencer « ${l.title} » ?`, { title: 'Changer de parcours', ok: 'Commencer « ' + l.title + ' »', cancel: 'Garder le parcours en cours' }))) return;
       if (TUTOR.lesson) stopLesson(false, false);
@@ -223,12 +283,19 @@ function renderHome() {
   const ipNeeded = [...here, ...others].some((l) => l.needs && l.needs.ip) && !S.ipMode;
   if (ipNeeded) body.append(el('div', { class: 'chef-note' }, rich('Les parcours **réseau ST 2110** se font dans le **car IP**. Ce car est câblé en SDI : je peux le passer en IP tout de suite (réseau rouge et bleu, PTP, NMOS).'),
     el('button', { class: 'btn small primary', onclick: () => switchToIp() }, 'Passer le car en IP')));
-  if (here.length) body.append(el('h4', {}, `Ici, au poste ${STATION_INFO[st] ? STATION_INFO[st].title : st}`), ...here.map(card));
+  // ici : les parcours pratiques du poste d'abord, sa présentation ensuite
+  if (here.length) body.append(el('h4', {}, `Ici, au poste ${STATION_INFO[st] ? STATION_INFO[st].title : st}`), ...[...here].sort((a, b) => Number(a.domain === PRESENT) - Number(b.domain === PRESENT)).map(card));
+  // les autres, par famille (repliées, avec ce qui est déjà fait) ; la famille ouverte reste ouverte
   const groups = {};
   for (const l of others) (groups[l.domain] = groups[l.domain] || []).push(l);
-  for (const [dom, list] of Object.entries(groups)) {
-    if (dom === 'Les postes du car') body.append(el('details', { class: 'chef-more' }, el('summary', {}, `${dom} (${list.length})`), ...list.map(card)));
-    else body.append(el('h4', {}, dom), ...list.map(card));
+  const order = Object.keys(groups).sort((a, b) => domRank(a) - domRank(b));
+  body.append(el('h4', {}, here.length ? 'Tous les parcours' : 'Les parcours'));
+  for (const dom of order) {
+    const list = groups[dom]; const done = list.filter((l) => progressOf(l.id).done).length;
+    const det = el('details', { class: 'chef-more', 'data-dom': dom }, el('summary', {}, el('span', {}, dom), el('small', {}, `${done} / ${list.length}`)), ...list.map(card));
+    det.open = UI.openDom === dom;
+    det.addEventListener('toggle', () => { if (det.open) UI.openDom = dom; else if (UI.openDom === dom) UI.openDom = ''; });
+    body.append(det);
   }
   UI.root.append(body);
 }
@@ -286,6 +353,17 @@ function spot(list, scroll = false) {
   Object.assign(sp.style, { left: r.left - 5 + 'px', top: r.top - 5 + 'px', width: r.width + 10 + 'px', height: r.height + 10 + 'px' });
   const lab = sp.firstChild; lab.textContent = f.t.label || '';
   sp.classList.toggle('flash', performance.now() < UI.spotUntil);
+  dodge(r);
+}
+// l'élément à utiliser est sous le panneau : le panneau passe de l'autre côté de l'écran
+// (sauf si le stagiaire l'a placé lui-même)
+function dodge(r) {
+  if (!UI.root || UI.root.hidden || UI.placed || window.innerWidth <= 720) return;
+  const p = UI.root.getBoundingClientRect();
+  if (!(r.left < p.right && r.right > p.left && r.top < p.bottom && r.bottom > p.top)) return;
+  const onRight = p.left > window.innerWidth / 2;
+  if (onRight && r.left > p.width + 32) Object.assign(UI.root.style, { left: 'var(--gut-l)', right: 'auto' });
+  else if (!onRight && r.right < window.innerWidth - p.width - 32) Object.assign(UI.root.style, { left: 'auto', right: 'var(--gut-r)' });
 }
 
 // ---------------- boucle : vérifier l'étape, suivre l'élément à montrer ----------------

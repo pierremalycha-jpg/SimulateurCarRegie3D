@@ -190,6 +190,8 @@ function drawCamProfile(g, def, st, onPick, conns) {
 // Visionneuse
 // ----------------------------------------------------------------------------------
 const VIEW = { key: null, n: 1, view: null, sel: null, svgHost: null, info: null, timer: 0, ctxCam: null };
+// ce que montre la visionneuse (pour le chef de car) : appareil, face, élément choisi ; null si fermée
+export function viewerState() { return modal.isOpen && VIEW.svgHost && VIEW.svgHost.isConnected ? { key: VIEW.key, n: VIEW.n, view: VIEW.view, sel: VIEW.sel } : null; }
 
 function genericDef(key, n) {
   const cables = deviceCables(key, n);
@@ -248,7 +250,7 @@ function renderSvg() {
   const f = E('filter', { id: 'glow', x: '-50%', y: '-50%', width: '200%', height: '200%' }, defs); E('feGaussianBlur', { stdDeviation: 3, result: 'b' }, f); const mg = E('feMerge', {}, f); E('feMergeNode', { in: 'b' }, mg); E('feMergeNode', { in: 'SourceGraphic' }, mg);
   const st = liveState(def.key, VIEW.n);
   const conns = connMap(def.generic ? def.key : (def.key), VIEW.n);
-  for (const it of v.items) drawItem(svg, it, st, def, conns, (id) => { VIEW.sel = id; (S.seenPort ||= {})[def.key + ':' + id] = true; renderInfo(); highlight(); });
+  for (const it of v.items) drawItem(svg, it, st, def, conns, (id) => { VIEW.sel = id; (S.seenPort ||= {})[def.key + ':' + id] = true; emit('device', { type: 'sel', key: def.key, id }); renderInfo(); highlight(); });
   highlight();
 }
 function highlight() {
@@ -326,11 +328,11 @@ export function openDevice(key, n = 1, opts = {}) {
   VIEW.key = key; VIEW.n = n; VIEW.def = def; VIEW.sel = opts.focus && (def.ports[opts.focus] || def.controls[opts.focus]) ? opts.focus : null;
   VIEW.ctxCam = key === 'cam' ? camById(n) : null;
   VIEW.view = opts.view && def.views[opts.view] ? opts.view : Object.keys(def.views)[0];
-  if (VIEW.sel && !def.views[VIEW.view].items.some((it) => it.id === VIEW.sel)) { const v = Object.keys(def.views).find((k) => def.views[k].items.some((it) => it.id === VIEW.sel)); if (v) VIEW.view = v; }
+  if (VIEW.sel && !def.views[VIEW.view].items.some((it) => it.id === VIEW.sel)) { const v = Object.keys(def.views).find((k) => def.views[k].items.some((it) => it.id === VIEW.sel)); if (v) VIEW.view = v; emit('device', { type: 'view', key: VIEW.key, view: v }); }
   const tabs = el('div', { class: 'tabs' });
   VIEW.photoSel = null;
   devPhotos(def).forEach((p, i) => tabs.appendChild(el('button', { class: 'tab', 'data-v': 'photo' + i, onclick: () => { VIEW.view = 'photo' + i; VIEW.photoSel = null; [...tabs.children].forEach((b) => b.classList.toggle('on', b.dataset.v === VIEW.view)); renderSvg(); renderInfo(); } }, 'Photo · ' + (p.title || i + 1))));
-  for (const v of Object.keys(def.views)) tabs.appendChild(el('button', { class: 'tab' + (v === VIEW.view ? ' on' : ''), onclick: () => { VIEW.view = v; [...tabs.children].forEach((b) => b.classList.toggle('on', b.dataset.v === v)); renderSvg(); } , 'data-v': v }, def.views[v].label));
+  for (const v of Object.keys(def.views)) tabs.appendChild(el('button', { class: 'tab' + (v === VIEW.view ? ' on' : ''), onclick: () => { VIEW.view = v; emit('device', { type: 'view', key: VIEW.key, view: v }); [...tabs.children].forEach((b) => b.classList.toggle('on', b.dataset.v === v)); renderSvg(); } , 'data-v': v }, def.views[v].label));
   const bar = el('div', { class: 'hwrow' }, tabs);
   if (inst && inst.length > 1) { const s = el('select', { id: 'eqinst' }); for (const [v, l] of inst) { const o = el('option', { value: v }, l); if (v === n) o.selected = true; s.appendChild(o); } s.onchange = () => openDevice(key, +s.value, { view: VIEW.view }); bar.prepend(s); }
   bar.append(el('button', { class: 'btn small', onclick: () => openEquipmentIndex() }, 'Tout le matériel'), el('button', { class: 'btn small', onclick: () => openReport('Matériel · ' + def.title + (VIEW.sel ? ' · ' + VIEW.sel : '')) }, 'Signaler une erreur'));
@@ -341,6 +343,7 @@ export function openDevice(key, n = 1, opts = {}) {
     el('p', { class: 'note' }, 'Inventaire des connecteurs établi d\'après les fiches techniques des constructeurs ; la disposition sur la face est schématique.'));
   modal.open(def.title + (inst ? ` · n° ${n}` : ''), body, { width: 1280 });
   renderSvg(); renderInfo();
+  emit('device', { type: 'open', key, n });
   clearInterval(VIEW.timer);
   VIEW.timer = setInterval(() => { if (!modal.isOpen || !VIEW.svgHost.isConnected) { clearInterval(VIEW.timer); return; } if (['ccu', 'rcp', 'lsm', 'cam', 'mixpanel'].includes(key)) { renderSvg(); } }, 700);
 }

@@ -86,15 +86,17 @@ export function installInput() {
   window.addEventListener('blur', () => { for (const k in KEYS) KEYS[k] = false; if (AT.active) atelierInput('up', 'KeyE'); });
 
   const IL = $('#input-layer');
+  // capture du pointeur : refusée par le navigateur si le pointeur vient d'être verrouillé ou n'est plus actif
+  const capture = (id) => { try { IL.setPointerCapture(id); } catch (e) { /* sans capture, le glissé s'arrête au bord de la fenêtre */ } };
   let dragLook = null;
   IL.addEventListener('pointerdown', (e) => {
-    if (S.mode === 'plan') { planPointer('down', e); IL.setPointerCapture(e.pointerId); return; }
+    if (S.mode === 'plan') { planPointer('down', e); capture(e.pointerId); return; }
     if (S.mode === 'fps' && document.pointerLockElement && e.button === 0 && AT.active && onDeck()) { atelierInput('down', 'Mouse0'); return; }
     if (S.mode === 'fps' && document.pointerLockElement && e.button === 0 && AIM.target) { act(AIM.target); return; }
     if (S.mode === 'fps' || S.mode === 'camop') {
       if (e.pointerType === 'mouse' && !document.pointerLockElement) { try { const r = IL.requestPointerLock(); if (r && r.catch) r.catch(() => {}); } catch (err) { /* refus */ } }
       dragLook = { x: e.clientX, y: e.clientY, id: e.pointerId };
-      IL.setPointerCapture(e.pointerId);
+      capture(e.pointerId);
     }
   });
   IL.addEventListener('pointermove', (e) => {
