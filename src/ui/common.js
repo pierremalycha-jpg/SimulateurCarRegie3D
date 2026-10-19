@@ -13,6 +13,39 @@ export function toast(msg, kind = '', ms = 3200) {
   clearTimeout(toastT); toastT = setTimeout(() => { t.hidden = true; }, ms);
 }
 
+// ---------------- confirmation dans la page ----------------
+// Le lecteur d'artefacts (claude.ai) n'affiche pas les boîtes du navigateur : confirm() y renvoie
+// false sans rien montrer, et l'action ne se fait jamais. Toute confirmation passe donc par cette
+// fenêtre, qui rend une promesse : true (bouton principal), 'alt' (choix secondaire) ou false.
+const ASK = { box: /** @type {HTMLElement|null} */ (null), done: /** @type {((v: boolean|string) => void)|null} */ (null) };
+/**
+ * @param {string} text question (paragraphes séparés par une ligne vide)
+ * @param {{ ok?: string, cancel?: string, alt?: string, danger?: boolean, title?: string }} [o]
+ * @returns {Promise<boolean|string>}
+ */
+export function ask(text, o = {}) {
+  closeAsk(false);
+  const prev = /** @type {HTMLElement|null} */ (document.activeElement);
+  return new Promise((resolve) => {
+    const finish = (v) => { if (!ASK.box) return; ASK.box.remove(); ASK.box = null; ASK.done = null; if (prev && prev.isConnected) prev.focus({ preventScroll: true }); resolve(v); };
+    const ok = el('button', { type: 'button', class: 'btn ' + (o.danger ? 'danger' : 'primary'), 'data-ask': 'ok', onclick: () => finish(true) }, o.ok || 'Confirmer');
+    const box = el('div', { id: 'ask', class: 'overlay', role: 'presentation', onclick: (e) => { if (e.target === box) finish(false); } },
+      el('div', { class: 'ask', role: 'alertdialog', 'aria-modal': 'true', 'aria-labelledby': 'ask-t', 'aria-describedby': 'ask-d' },
+        el('h3', { id: 'ask-t' }, o.title || 'Confirmer'),
+        el('div', { id: 'ask-d' }, ...String(text).split(/\n\n+/).map((p) => el('p', {}, p))),
+        el('div', { class: 'ask-row' },
+          el('button', { type: 'button', class: 'btn', 'data-ask': 'cancel', onclick: () => finish(false) }, o.cancel || 'Annuler'),
+          o.alt ? el('button', { type: 'button', class: 'btn', 'data-ask': 'alt', onclick: () => finish('alt') }, o.alt) : null,
+          ok)));
+    document.body.append(box);
+    ASK.box = box; ASK.done = finish;
+    if (document.pointerLockElement) document.exitPointerLock();
+    ok.focus();
+  });
+}
+export const askOpen = () => !!ASK.box;
+export function closeAsk(v = false) { if (ASK.done) ASK.done(v); }
+
 export function intercom(who, msg, kind = '') {
   const box = $('#intercom'); if (!box) return;
   const d = el('div', { class: 'icm ' + kind }, el('b', {}, who), msg);

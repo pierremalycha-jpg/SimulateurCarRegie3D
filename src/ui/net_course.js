@@ -1,7 +1,7 @@
 // @ts-check
 import { S, emit } from '../state.js';
 import { el, mmss } from '../util.js';
-import { modal } from './common.js';
+import { modal, ask } from './common.js';
 import { explain } from './widgets.js';
 import { NC, NET_MISSIONS, startMission, stopMission, answer, qText, objectivesOf, hint, missionScore, courseTotals, resetCourse, newQuiz, saveQuiz, startExam, endExam, closeExam, examReportHTML, EXAM_TIME } from '../net/course.js';
 import { PROG } from '../shared.js';
@@ -22,10 +22,10 @@ export function tabCourse(box, R) {
     el('p', { class: 'note' }, 'Quatorze missions, de la lecture de la topologie au dépannage et à la reconstruction d\'une leaf. Les objectifs se cochent tout seuls quand vous agissez dans le poste (ou dans d\'autres postes du car). Chaque mission vaut 10 points : −2 par indice, −5 si vous chargez la configuration de référence. Résultats enregistrés dans votre suivi (visible du formateur).'),
     el('div', { class: 'hwrow' },
       el('button', { class: 'btn small primary', onclick: () => openQuiz(R) }, 'Quiz ST 2110 (10 questions)'),
-      el('button', { class: 'btn small', onclick: () => { if (!confirm('Lancer l\'examen réseau ? Trois pannes cachées vont être injectées l\'une après l\'autre (15 min maximum). Le réseau est d\'abord remis en configuration de référence.')) return; startExam(); R.refresh(); } }, 'Examen réseau (3 pannes, 15 min)'),
+      el('button', { class: 'btn small', onclick: async () => { if (!(await ask('Lancer l\'examen réseau ? Trois pannes cachées vont être injectées l\'une après l\'autre (15 min maximum). Le réseau est d\'abord remis en configuration de référence.', { ok: 'Lancer l\'examen' }))) return; startExam(); R.refresh(); } }, 'Examen réseau (3 pannes, 15 min)'),
       el('button', { class: 'btn small', onclick: () => emit('openGuide', 'reseau') }, 'Guide : réseau spine-leaf'),
       el('button', { class: 'btn small', onclick: () => emit('openGuide', 'mesure2110') }, 'Guide : mesurer un flux 2110'),
-      el('button', { class: 'btn small', onclick: () => { if (confirm('Effacer votre progression sur le parcours réseau ?')) { resetCourse(); R.refresh(); } } }, 'Recommencer le parcours'))));
+      el('button', { class: 'btn small', onclick: async () => { if (await ask('Effacer votre progression sur le parcours réseau ?', { ok: 'Effacer', danger: true })) { resetCourse(); R.refresh(); } } }, 'Recommencer le parcours'))));
   if (NC.done) { const m = NET_MISSIONS.find((x) => x.id === NC.done.id); box.append(el('div', { class: 'hwpanel net-done' }, el('h3', {}, `Mission réussie : ${m.title} · ${NC.done.pts}/10`), el('p', {}, m.learn), el('div', { class: 'hwrow' }, nextBtn(m, R), el('button', { class: 'btn small', onclick: () => { NC.done = null; R.refresh(); } }, 'Fermer')))); }
   if (NC.active) missionCard(box, R);
   const grid = el('div', { class: 'net-missions' });
@@ -37,8 +37,8 @@ export function tabCourse(box, R) {
   });
   box.append(el('h3', { class: 'eq-h' }, 'Missions'), grid);
 }
-function start(m, R) {
-  if (m.setup && !confirm(`« ${m.title} » remet le réseau en configuration de référence puis y introduit une panne. Continuer ?`)) return;
+async function start(m, R) {
+  if (m.setup && !(await ask(`« ${m.title} » remet le réseau en configuration de référence puis y introduit une panne. Continuer ?`, { ok: 'Commencer la mission' }))) return;
   NC.done = null; startMission(m.id);
   explain(`Mission « ${m.title} » : ${m.intro}`);
   R.go(m.tab || 'topo', { sw: m.sw, sub: m.sub, msub: m.msub, keepCourse: true });
@@ -124,7 +124,7 @@ function examPanel(box, R) {
   E.ids.forEach((id, k) => { const f = E.faults[k]; list.append(el('li', { class: f && f.entry && f.entry.done ? 'ok' : '' }, el('span', { class: 'chk' }, f && f.entry && f.entry.done ? '✓' : f ? '!' : '○'), f ? (f.entry && f.entry.done ? `Panne ${k + 1} résolue en ${mmss(Math.round((f.doneAt || S.time) - f.t0))}` : `Panne ${k + 1} en cours depuis ${mmss(Math.round(S.time - f.t0))} — à trouver`) : `Panne ${k + 1} : à venir`)); });
   box.append(el('div', { class: 'hwpanel net-mission' }, el('div', { class: 'hwrow' }, el('h3', {}, 'Examen réseau en cours'), timer),
     el('p', {}, 'Trois pannes cachées arrivent l\'une après l\'autre. Elles ont été enregistrées dans la configuration de démarrage : redémarrer un commutateur ne les efface pas. Pour chacune : constater, localiser, corriger, puis enregistrer (write memory). Pas d\'indice ; charger la configuration de référence divise les points de la panne par deux.'),
-    list, el('div', { class: 'hwrow' }, el('button', { class: 'btn small danger', onclick: () => { if (confirm('Terminer l\'examen maintenant ?')) { endExam(); R.refresh(); } } }, 'Terminer l\'examen'))));
+    list, el('div', { class: 'hwrow' }, el('button', { class: 'btn small danger', onclick: async () => { if (await ask('Terminer l\'examen maintenant ?', { ok: 'Terminer', danger: true })) { endExam(); R.refresh(); } } }, 'Terminer l\'examen'))));
   R.live = () => { timer.textContent = mmss(Math.max(0, EXAM_TIME - (S.time - E.t0))); };
 }
 export { NC };

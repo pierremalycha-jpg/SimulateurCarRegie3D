@@ -6,11 +6,13 @@ import { launch, openPage, outDir, until, reporter } from './harness.mjs';
 const OUT = outDir('chef');
 const T = reporter();
 const browser = await launch();
-const page = await openPage(browser, { viewport: { width: 1440, height: 900 }, errors: T.errors, before: (p) => p.on('dialog', (d) => d.accept()) });
+const page = await openPage(browser, { viewport: { width: 1440, height: 900 }, errors: T.errors });
 const ev = (f, a) => page.evaluate(f, a);
 const shot = async (n) => { await page.screenshot({ path: `${OUT}/${n}.png`, timeout: 180000 }); T.log('shot', n); };
 const stepTitle = () => ev(() => document.querySelector('#chef .chef-step')?.textContent || '');
 const clickChef = async (text) => { await page.locator('#chef button', { hasText: text }).first().click(); await page.waitForTimeout(250); };
+// quitter un parcours : s'il propose de remettre en état, la confirmation est dans la page
+const quitLesson = async () => { await clickChef('Quitter le parcours'); if (await until(page, () => !!document.querySelector('#ask'), null, 1500)) await page.locator('#ask [data-ask="ok"]').click(); await page.waitForTimeout(250); };
 const waitDone = (ms = 30000) => until(page, () => window.__dbg.TUTOR.done, null, ms);
 
 // ---- démarrage en SDI : le chef propose de passer en IP ----
@@ -22,6 +24,8 @@ T.check('accueil : parcours réseau listés', await ev(() => /Mettre en service 
 T.check('car SDI : proposition de passer en IP', await ev(() => [...document.querySelectorAll('#chef button')].some((b) => /Passer le car en IP/.test(b.textContent))));
 await shot('01-accueil-sdi');
 await clickChef('Passer le car en IP');
+T.check('passage en IP : confirmation dans la page (pas de boîte du navigateur)', await until(page, () => !!document.querySelector('#ask [data-ask="ok"]'), null, 5000));
+await page.locator('#ask [data-ask="ok"]').click();
 T.check('car passé en IP', await until(page, () => window.__dbg.S.ipMode && !!window.__dbg.FAB.res, null, 10000));
 
 // ---- parcours « leaf neuve » ----
@@ -91,7 +95,7 @@ await clickChef('Suivant');
 await page.locator('#station [data-tut="sw:spine"]').first().click();
 T.check('clic sur une spine du schéma reconnu', await waitDone());
 await shot('08b-visite-spine');
-await clickChef('Quitter le parcours');
+await quitLesson();
 // ---- PTP : la case du grand maître 1 ----
 await ev(() => { window.__dbg.startChefLesson('reseau-ptp'); });
 for (let k = 0; k < 4; k++) await ev(() => window.__dbg.chefNext());
@@ -105,7 +109,7 @@ await shot('08c-ptp-bascule');
 await clickChef('Suivant');
 await page.locator('#station [data-tut="gm1-up"] input').click();
 T.check('grand maître 1 remis en service et réélu', await waitDone());
-await clickChef('Quitter le parcours');
+await quitLesson();
 
 // ---- présentation d'un poste : le mélangeur ----
 await clickChef('Fermer');
@@ -115,7 +119,7 @@ T.check('bouton du poste : le chef propose ce poste', await until(page, () => /I
 await page.locator('#chef .chef-card', { hasText: 'Présente-moi' }).first().locator('button').click();
 T.check('présentation : rôle du poste', await until(page, () => window.__dbg.TUTOR.lesson && window.__dbg.TUTOR.lesson.id === 'poste-melangeur', null, 5000));
 await shot('09-presentation-poste');
-await clickChef('Quitter le parcours');
+await quitLesson();
 
 // ---- mobile ----
 await page.close();

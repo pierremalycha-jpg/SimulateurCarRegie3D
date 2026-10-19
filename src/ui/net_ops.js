@@ -1,7 +1,7 @@
 // @ts-check
 import { emit } from '../state.js';
 import { el, fmt } from '../util.js';
-import { toast } from './common.js';
+import { toast, ask } from './common.js';
 import { explain } from './widgets.js';
 import { FAB, COLORS, CLABEL, LEAVES, PTP_REF, NMOS_REG, CTL_GW, sviIp, subnetOf, ipToInt, isMcast, clockId, nodeId, evaluate, setDeviceNet, setFlowAddr, setRxManual, rxTransport, factoryDevice } from '../net/fabric.js';
 import { route, DESTS } from '../pipeline.js';
@@ -288,7 +288,7 @@ function devPage(d, R) {
     el('button', { class: 'btn primary', 'data-act': 'apply-dev', onclick: () => applyDev(R, d) }, 'Appliquer'),
     el('button', { class: 'btn', onclick: () => { OPS.draft = null; R.refresh(); } }, 'Annuler'), pending,
     el('span', { class: 'ops-spacer' }),
-    el('button', { class: 'btn danger', 'data-act': 'factory', onclick: () => { if (!confirm(`Remettre « ${d.name} » en configuration d'usine ? Il disparaît du réseau du car jusqu'à ce qu'on le reconfigure.`)) return; factoryDevice(d.id); OPS.draft = null; evaluate(); log('opsfactory', { dev: d.id }); explain(`${d.name} remis en sortie d'usine : adresses ${'192.168.x.100'}, pas de registre NMOS, PTP en domaine 0. Il n'est plus joignable : à reconfigurer d'après le plan d'adressage.`, 'warn'); R.refresh(); } }, 'Sortie d\'usine'));
+    el('button', { class: 'btn danger', 'data-act': 'factory', onclick: async () => { if (!(await ask(`Remettre « ${d.name} » en configuration d'usine ? Il disparaît du réseau du car jusqu'à ce qu'on le reconfigure.`, { ok: 'Sortie d\'usine', danger: true }))) return; factoryDevice(d.id); OPS.draft = null; evaluate(); log('opsfactory', { dev: d.id }); explain(`${d.name} remis en sortie d'usine : adresses ${'192.168.x.100'}, pas de registre NMOS, PTP en domaine 0. Il n'est plus joignable : à reconfigurer d'après le plan d'adressage.`, 'warn'); R.refresh(); } }, 'Sortie d\'usine'));
   media.classList.add('span'); if (txc) txc.classList.add('span');
   return el('div', { class: 'ops-devpage' }, header, actions, el('div', { class: 'ops-grid' }, media, ctl, ptp, txc, rxc));
 }

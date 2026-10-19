@@ -2,7 +2,7 @@
 import { S, on, emit } from '../state.js';
 import { el, clamp } from '../util.js';
 import { AT, atelierInput, atelierWheel } from '../atelier.js';
-import { $, toast, modal, openInfo } from '../ui/common.js';
+import { $, toast, modal, openInfo, askOpen, closeAsk } from '../ui/common.js';
 import { closeStation, stationKey } from '../ui/stations.js';
 import { termOpen, closeTerm } from '../ui/term.js';
 import { openPlan, closePlan, planPointer, planWheel } from '../ui/plan.js';
@@ -22,6 +22,8 @@ import { teleportMenu } from './teleport.js';
 const isTyping = (e) => e.target && ['INPUT', 'SELECT', 'TEXTAREA'].includes(e.target.tagName) && e.target.type !== 'range' && e.target.type !== 'checkbox';
 
 function onKeyDown(e) {
+  // confirmation dans la page : Échap = annuler, Entrée = bouton qui a le focus ; rien d'autre
+  if (askOpen()) { if (e.code === 'Escape') { closeAsk(false); e.preventDefault(); } return; }
   // fenêtre explicative « ? » : Échap la ferme (sans fermer le poste) ; les autres touches ne pilotent rien
   if (termOpen()) { if (e.code === 'Escape') { closeTerm(); e.preventDefault(); } return; }
   if (modal.isOpen) { if (e.code === 'Escape') modal.close(); return; }

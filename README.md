@@ -335,6 +335,25 @@ Au passage, le terminal des commutateurs accepte les commandes d'exploitation (`
 depuis les modes de configuration, comme sous Arista EOS. L'invite d'une plage de ports s'écrit aussi comme sous
 EOS (`config-if-Et1-7,9-11`).
 
+## v16.1 : le chef de car remarche dans l'application publiée
+
+Le lecteur d'artefacts de claude.ai n'affiche pas les boîtes de dialogue du navigateur : `confirm()` y renvoie
+« non » sans rien montrer. Plusieurs boutons ne faisaient donc rien en ligne, alors que tout fonctionnait en local et
+dans les tests (qui acceptaient ces boîtes automatiquement) :
+
+- **chef de car :**
+  - « Passer le car en IP » : les parcours réseau restaient grisés dans un car SDI ;
+  - « Commencer » un parcours quand un autre était en cours ;
+  - « Quitter le parcours » sans proposer la remise en état ;
+- **poste Réseau IP :**
+  - « Sortie d'usine » d'un appareil ;
+  - « Config usine » d'un commutateur ;
+  - examen réseau, remise à zéro du parcours, missions de dépannage.
+
+Toutes ces confirmations passent maintenant par une fenêtre dans la page. Échap annule, Entrée valide. Les tests de
+bout en bout se comportent comme le lecteur de claude.ai : une boîte du navigateur ouverte par la page est comptée
+comme une erreur.
+
 ## Ce que contient la v16 : un « ? » à côté de chaque terme technique
 
 Dans le poste Réseau IP, les deux onglets (Technique et Exploitation), chaque terme technique a maintenant un petit

@@ -53,6 +53,9 @@ export async function openPage(browser, o = {}) {
   const tag = id ? id + ': ' : '';
   page.on('console', (m) => { if (m.type() === 'error' && !NOISE.test(m.text())) errors.push(tag + m.text()); });
   page.on('pageerror', (e) => errors.push(tag + 'PAGEERROR: ' + e.message + '\n' + e.stack));
+  // comme le lecteur d'artefacts de claude.ai : les boîtes du navigateur (alert, confirm, prompt)
+  // n'y apparaissent pas et confirm() renvoie false ; une page qui en ouvre une est en faute
+  page.on('dialog', (d) => { errors.push(tag + `boîte native ${d.type()} (bloquée sur claude.ai) : ${d.message().slice(0, 120)}`); d.dismiss().catch(() => {}); });
   await page.route('https://fonts.googleapis.com/**', (r) => r.fulfill({ body: '', contentType: 'text/css' }));
   await page.route('https://fonts.gstatic.com/**', (r) => r.abort());
   if (!o.url) {

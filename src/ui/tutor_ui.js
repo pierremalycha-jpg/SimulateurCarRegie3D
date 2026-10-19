@@ -2,7 +2,7 @@
 import { S, on, emit } from '../state.js';
 import { el } from '../util.js';
 import { resetFabric } from '../net/fabric.js';
-import { toast } from './common.js';
+import { toast, ask } from './common.js';
 import { hasStation, closeStation } from './stations.js';
 import { closePlan } from './plan.js';
 import { netGo, netView, netType } from './st_network.js';
@@ -178,9 +178,14 @@ export function render(force = false) {
     el('button', { class: 'chef-quit', onclick: () => quit() }, 'Quitter le parcours')));
 }
 function onStep() { UI.notes = []; UI.feedback = ''; UI.spotUntil = 0; render(true); }
-function quit() {
+async function quit() {
   const l = TUTOR.lesson; if (!l) return;
-  const clean = l.cleanup ? confirm(`Quitter « ${l.title} ».\n\n${l.cleanupLabel || 'Remettre en état'} ? (OK = oui, Annuler = laisser en l'état)`) : false;
+  let clean = false;
+  if (l.cleanup) {
+    const r = await ask(`Quitter « ${l.title} ».\n\n${l.cleanupLabel || 'Remettre en état'} ?`, { title: 'Quitter le parcours', ok: l.cleanupLabel || 'Remettre en état', alt: 'Laisser en l\'état', cancel: 'Continuer le parcours' });
+    if (!r || TUTOR.lesson !== l) return;
+    clean = r === true;
+  }
   stopLesson(false, clean); hush(); onStep();
 }
 let lastDone = null;
@@ -200,9 +205,9 @@ function card(l) {
   const resume = TUTOR.lesson && TUTOR.lesson.id === l.id;
   return el('div', { class: 'chef-card' + (p.done ? ' done' : '') },
     el('div', { class: 'grow' }, el('b', {}, l.title, p.done ? el('span', { class: 'chef-check', title: 'déjà fait' }, ' ✓') : null), el('small', {}, `${l.duration} · ${l.level}`), el('span', { class: 's' }, l.summary)),
-    el('button', { class: 'btn small' + (ok ? ' primary' : ''), disabled: !ok, title: ok ? '' : 'Demande le car IP', onclick: () => {
+    el('button', { class: 'btn small' + (ok ? ' primary' : ''), disabled: !ok, title: ok ? '' : 'Demande le car IP', onclick: async () => {
       if (resume) { onStep(); return; }
-      if (TUTOR.lesson && !confirm(`Abandonner « ${TUTOR.lesson.title} » pour commencer « ${l.title} » ?`)) return;
+      if (TUTOR.lesson && !(await ask(`Abandonner « ${TUTOR.lesson.title} » pour commencer « ${l.title} » ?`, { title: 'Changer de parcours', ok: 'Commencer « ' + l.title + ' »', cancel: 'Garder le parcours en cours' }))) return;
       if (TUTOR.lesson) stopLesson(false, false);
       startLesson(l.id); onStep();
     } }, resume ? 'Reprendre' : p.done ? 'Refaire' : 'Commencer'));
@@ -227,8 +232,8 @@ function renderHome() {
   }
   UI.root.append(body);
 }
-function switchToIp() {
-  if (!confirm('Passer le car en IP (ST 2110) ? Les signaux passent alors par les deux réseaux rouge et bleu au lieu de la grille SDI.')) return;
+async function switchToIp() {
+  if (!(await ask('Passer le car en IP (ST 2110) ? Les signaux passent alors par les deux réseaux rouge et bleu au lieu de la grille SDI.', { title: 'Car IP', ok: 'Passer en IP' }))) return;
   S.ipMode = true; resetFabric(); emit('router', {});
   toast('Car passé en IP : réseau ST 2110 rouge et bleu en service.', 'good');
   render(true);

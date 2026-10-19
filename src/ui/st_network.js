@@ -1,7 +1,7 @@
 // @ts-check
 import { S, emit } from '../state.js';
 import { el, fmt } from '../util.js';
-import { toast, modal, selectEl } from './common.js';
+import { toast, modal, selectEl, ask } from './common.js';
 import { explain } from './widgets.js';
 import { FAB, COLORS, CLABEL, LEAVES, vlanOf, subnetOf, sviIp, p2p, gmNet, PTP_REF, DSCP_REF, QUERIER_TIMEOUT, markDirty, evaluate, setSwitchPower, writeMemory, loadReference, loadFactory, portState, sdpOf, clockId, ipToInt, inSubnet, videoGbps, resetFabric, buildFabric, topoKey } from '../net/fabric.js';
 import { cliSession, runCli, cliPrompt, cliComplete, runningConfig, ptpPorts, ifShort } from '../net/cli.js';
@@ -317,7 +317,7 @@ function switchFrame(R) {
       el('button', { class: 'btn small', onclick: () => { setSwitchPower(sw.id, !sw.power); explain(sw.power ? `${sw.running.hostname} rallumé : il redémarre sur sa configuration de démarrage (startup-config). Ce qui n'avait pas été enregistré par « write memory » est perdu.` : `${sw.running.hostname} hors tension. ${sw.role === 'ctl' ? 'Le contrôle NMOS est perdu.' : `Les flux qui passaient par lui ne passent plus que par le réseau ${sw.color === 'red' ? 'bleu' : 'rouge'} : à l'image rien ne change (ST 2022-7), mais il n'y a plus de secours.`}`, sw.power ? 'warn' : ''); R.refresh(); } }, sw.power ? 'Couper l\'alimentation' : 'Rallumer'),
       el('button', { class: 'btn small' + (dirty ? ' primary' : ''), onclick: () => { writeMemory(sw.id); termLog(sw.id).lines.push({ t: 'gui', s: '! interface graphique :\nwrite memory' }); explain(`write memory : la configuration active (running-config) de ${sw.running.hostname} est copiée dans la configuration de démarrage (startup-config). Elle survivra à un redémarrage.`); R.refresh(); } }, 'Enregistrer (write memory)'),
       el('button', { class: 'btn small', onclick: () => { loadReference(sw.id); log('refload', { sw: sw.id }); explain(`Configuration de référence chargée dans la running-config de ${sw.running.hostname} (pensez à « write memory »).`); R.refresh(); } }, 'Charger la config de référence'),
-      el('button', { class: 'btn small danger', onclick: () => { if (!confirm(`Remettre ${sw.running.hostname} en configuration usine ? (running-config seulement)`)) return; loadFactory(sw.id); explain(`${sw.running.hostname} en configuration usine : plus de routage, de VLAN média, de PTP… Tout ce qui passait par lui est perdu. Exercice : reconstruire la configuration (ou recharger la référence).`, 'warn'); R.refresh(); } }, 'Config usine'),
+      el('button', { class: 'btn small danger', onclick: async () => { if (!(await ask(`Remettre ${sw.running.hostname} en configuration usine ? (running-config seulement)`, { ok: 'Config usine', danger: true }))) return; loadFactory(sw.id); explain(`${sw.running.hostname} en configuration usine : plus de routage, de VLAN média, de PTP… Tout ce qui passait par lui est perdu. Exercice : reconstruire la configuration (ou recharger la référence).`, 'warn'); R.refresh(); } }, 'Config usine'),
       el('button', { class: 'btn small', onclick: () => offerDownload(`${sw.running.hostname}-running-config.txt`, runningConfig(sw)) }, 'Télécharger la config')));
   return el('div', { class: 'net-swframe' }, head, frontPanel(sw, R));
 }

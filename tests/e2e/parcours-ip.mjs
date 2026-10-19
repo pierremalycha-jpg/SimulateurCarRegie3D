@@ -1,6 +1,6 @@
 // Tests du parcours de formation réseau et des outils de mesure (poste Réseau IP)
 // node tests/e2e/parcours-ip.mjs [dossier] [HD | UHD] [full]
-import { launch, openPage, outDir } from './harness.mjs';
+import { launch, openPage, outDir, until } from './harness.mjs';
 import fs from 'fs';
 const OUT = outDir('parcours-ip');
 const FMT = process.argv[3] || 'HD';
@@ -8,11 +8,13 @@ const FULL = process.argv[4] === 'full';
 fs.mkdirSync(OUT, { recursive: true });
 const browser = await launch();
 const errors = []; const log = (...a) => console.log(...a);
-const page = await openPage(browser, { viewport: { width: 1440, height: 900 }, errors, before: async (page) => { page.on('dialog', (d) => d.accept()); } });
+const page = await openPage(browser, { viewport: { width: 1440, height: 900 }, errors });
 const ev = (f, a) => page.evaluate(f, a);
 const shot = async (n) => { await page.screenshot({ path: `${OUT}/${n}.png` }); log('shot', n); };
 const tab = async (k) => { await page.locator(`#station .tabs .tab[data-k="${k}"]`).first().click(); await page.waitForTimeout(500); };
 const term = async (cmds) => { const t = page.locator('#station .net-cmd'); for (const c of cmds) { await t.fill(c); await t.press('Enter'); await page.waitForTimeout(150); } };
+// confirmations dans la page (le lecteur de claude.ai n'affiche pas les boîtes du navigateur)
+const okAsk = async () => { if (await until(page, () => !!document.querySelector('#ask'), null, 5000)) { await page.locator('#ask [data-ask="ok"]').click(); await page.waitForTimeout(300); } else errors.push('confirmation attendue absente'); };
 const objs = () => ev(() => [...document.querySelectorAll('#station .net-mission .net-obj li')].map((l) => (l.classList.contains('ok') ? '✓' : '○') + l.textContent.slice(1, 50)));
 await ev((f) => window.__dbg.start('standard', 'jour', 'basse', false, f, true), FMT);
 await page.waitForTimeout(4000);
@@ -54,7 +56,7 @@ await tab('addr'); await page.locator('#station .net-tbl button', { hasText: /^S
 await ev(() => document.querySelector('#modal .x') && document.querySelector('#modal .x').click());
 // ---- dépannage n9 ----
 await tab('learn');
-await page.locator('#station .net-mcard').nth(8).locator('button').click(); await page.waitForTimeout(1500);
+await page.locator('#station .net-mcard').nth(8).locator('button').click(); await okAsk(); await page.waitForTimeout(1500);
 const dev = await ev(() => { const e = window.__dbg.NC.entry; return e && e.st.dev; });
 log('panne n9 sur', dev, JSON.stringify(await objs()));
 const nic = await ev((d) => window.__dbg.FAB.devices[d].nics, dev);
@@ -72,10 +74,10 @@ for (let i = 0; i < 10; i++) { await page.locator('#modal .net-opt').first().cli
 await shot('20-quiz'); log('quiz', await ev(() => document.querySelector('#modal .lcd')?.textContent));
 await ev(() => document.querySelector('#modal .x') && document.querySelector('#modal .x').click());
 // ---- examen ----
-await tab('learn'); await page.locator('#station button', { hasText: 'Examen réseau' }).click(); await page.waitForFunction(() => window.__dbg.NC.exam && window.__dbg.NC.exam.faults.length > 0, null, { timeout: 40000 }).catch(() => {}); await page.waitForTimeout(800);
+await tab('learn'); await page.locator('#station button', { hasText: 'Examen réseau' }).click(); await okAsk(); await page.waitForFunction(() => window.__dbg.NC.exam && window.__dbg.NC.exam.faults.length > 0, null, { timeout: 40000 }).catch(() => {}); await page.waitForTimeout(800);
 log('examen', await ev(() => JSON.stringify({ ids: window.__dbg.NC.exam.ids, faults: window.__dbg.NC.exam.faults.length })));
 await shot('21-examen');
-await page.locator('#station button', { hasText: 'Terminer l\'examen' }).click(); await page.waitForTimeout(800);
+await page.locator('#station button', { hasText: 'Terminer l\'examen' }).click(); await okAsk(); await page.waitForTimeout(800);
 await shot('22-examen-fin'); log('score examen', await ev(() => window.__dbg.NC.exam && window.__dbg.NC.exam.score));
 await page.waitForTimeout(3000);
 log('progression', await ev(() => { const p = JSON.parse(localStorage.getItem('carregie.progress') || 'null') || {}; const n = p.net || {}; return JSON.stringify({ missions: Object.keys(n.missions || {}), quiz: (n.quiz || []).length, exams: (n.exams || []).length }); }));
