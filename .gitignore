@@ -3,5 +3,9 @@ node_modules/
 # produits par node tools/build.mjs (réseau local)
 dist/index-lan.html
 dist/car-regie-serveur-lan.mjs
+# versions à partager : fichier HTML autonome et exécutable Windows (npm run exe)
+dist/Car-regie-3D.html
+dist/*.exe
+.cache/
 # tests de bout en bout : captures et journaux
 test-results/

@@ -141,3 +141,17 @@ test('partie complète au-delà de 40 joueurs', async () => {
   await assert.rejects(lanRoom().join('car-pleine'), (e) => e.code === 'full');
   for (const c of many) await c.r.leave();
 });
+
+test('sans port imposé : premier port libre à partir de 8080, et un second lancement renvoie au premier', async () => {
+  const run = () => { const p = spawn(process.execPath, ['serveur.mjs'], { cwd: dir, stdio: ['ignore', 'pipe', 'pipe'] }); const o = { p, out: '' }; p.stdout.on('data', (d) => { o.out += d; }); return o; };
+  const a = run();
+  try {
+    await until(() => /localhost:(\d+)/.test(a.out), 'démarrage sans port\n' + a.out, 8000);
+    const port = +a.out.match(/localhost:(\d+)/)[1];
+    assert.ok(port >= 8080 && port < 8090, String(port));
+    const b = run();
+    const code = await new Promise((r) => b.p.on('exit', r));
+    assert.equal(code, 0);
+    assert.match(b.out, new RegExp(`tourne déjà sur cet ordinateur : http://localhost:${port}`));
+  } finally { a.p.kill(); }
+});

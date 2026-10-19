@@ -335,6 +335,40 @@ Au passage, le terminal des commutateurs accepte les commandes d'exploitation (`
 depuis les modes de configuration, comme sous Arista EOS. L'invite d'une plage de ports s'écrit aussi comme sous
 EOS (`config-if-Et1-7,9-11`).
 
+## Ce que contient la v14 : une version à partager
+
+Pour donner le simulateur à un collègue sans passer par claude.ai, `npm run exe` produit un **kit de partage**,
+`dist/Car-regie-3D-partage.zip`, avec un mode d'emploi (`partage/LISEZMOI.txt`) et les licences :
+
+| Fichier | Pour qui | Ce qu'il fait |
+| --- | --- | --- |
+| `Car-regie-3D.html` (1,8 Mo) | tout ordinateur (Windows, macOS, Linux) | Double-clic : le simulateur s'ouvre dans le navigateur, sans Internet ni installation (three.js est inclus). Tout fonctionne en solo, chef de car compris ; la progression reste dans le navigateur. Assez léger pour un courriel |
+| `Car-regie-3D.exe` (84 Mo) | Windows 10 / 11 | Double-clic : le serveur réseau local démarre et le navigateur s'ouvre sur le simulateur. Les autres ordinateurs du réseau rejoignent la partie à l'adresse affichée, sans rien installer. Un second double-clic rouvre la page ; si le port 8080 est pris, le suivant est utilisé ; sur une erreur, la fenêtre reste ouverte pour la lire |
+
+L'exécutable est une *single executable application* Node.js (`tools/exe.mjs`) :
+
+1. le serveur réseau local, page incluse, est regroupé en un seul script (esbuild) ;
+2. ce script devient un blob SEA ;
+3. le `node.exe` officiel de la même version (empreinte SHA-256 vérifiée) perd sa signature, reçoit le blob
+   (postject), puis le nom, la version et l'icône du simulateur (resedit, icône `lan/car-regie-3d.ico` dessinée par
+   `tools/icon.mjs`) ;
+4. l'outil contrôle le résultat : blob intact, fusible activé, sections disjointes.
+
+`node tools/exe.mjs --verifier` lance en plus le même blob dans le Node de la machine (Linux) et l'interroge.
+L'exécutable a aussi été essayé sous Wine 9 : page servie, deux joueurs connectés en WebSocket, ordres relayés,
+compte rendu enregistré, second lancement, port occupé.
+
+L'exécutable n'est pas signé numériquement. À la première ouverture, Windows SmartScreen demande
+« Informations complémentaires » puis « Exécuter quand même ». Les messageries bloquent souvent les `.exe`, même
+zippés : on passe par un partage de fichiers (OneDrive, Teams, WeTransfer…) ou une clé USB. Le fichier HTML seul
+passe par courriel.
+
+Autres changements : le serveur réseau local accepte `--ouvrir` (ouvre la page dans le navigateur) et prend le port
+suivant quand 8080 est occupé, sauf si un port est imposé (`--port`). Ouverte en fichier, la page explique, dans
+« Jouer à plusieurs », quoi lancer pour jouer à plusieurs. Un test de bout en bout (`tests/e2e/fichier.mjs`) ouvre
+la version HTML en `file://`, sans réseau : démarrage, rendu, chef de car, progression retrouvée après réouverture,
+aucune requête réseau.
+
 ## Performances
 
 Le profileur intégré (ajouter `?perf` à l'adresse) affiche le temps de chaque sous-système de la boucle
@@ -367,13 +401,14 @@ l'affichage plus régulier (moins d'à-coups 4 à 8 fois par seconde).
 
 ```
 npm install
-npm run build        # dist/index.html (page publiée), dist/index-lan.html, serveur autonome et archive réseau local
+npm run build        # dist/index.html (page publiée), Car-regie-3D.html (à partager), serveur autonome et archive réseau local
+npm run exe          # en plus : Car-regie-3D.exe (Windows, sans installation) et le kit Car-regie-3D-partage.zip
 npm run build:dev    # même chose sans minification
 npm run lint         # ESLint
 npm run typecheck    # TypeScript (navigateur + Node)
 npm test             # tests unitaires (node:test, ≈ 2 s)
 npm run check        # les quatre à la suite (ce que fait l'intégration continue)
-npm run test:e2e     # tests de bout en bout (Playwright, rendu logiciel : 20 suites, ≈ 55 min)
+npm run test:e2e     # tests de bout en bout (Playwright, rendu logiciel : 21 suites, ≈ 55 min)
 npm run serve:lan    # serveur réseau local (après la construction) : http://localhost:8080
 ```
 
@@ -439,7 +474,8 @@ Hors de `src/` :
 
 | Dossier | Rôle |
 | --- | --- |
-| `lan/` | Serveur réseau local (voir plus haut) |
+| `lan/` | Serveur réseau local (voir plus haut), icône de l'exécutable Windows |
+| `partage/` | Mode d'emploi du kit de partage (HTML autonome et exécutable Windows) |
 | `tests/unit/` | Tests unitaires `node:test` ; `tests/helpers/` (DOM minimal, scène vide, réseau de test), `tests/register.mjs` (chargement des fichiers texte comme esbuild) |
 | `tests/e2e/` | Tests de bout en bout Playwright et leur harnais |
-| `tools/` | Construction (`build.mjs`, `zip.mjs`), lanceur des tests de bout en bout (`e2e.mjs`), mesures et captures |
+| `tools/` | Construction (`build.mjs`, `zip.mjs`), exécutable Windows et kit de partage (`exe.mjs`, `icon.mjs`), lanceur des tests de bout en bout (`e2e.mjs`), mesures et captures |

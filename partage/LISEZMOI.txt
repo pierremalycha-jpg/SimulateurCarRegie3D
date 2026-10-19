@@ -1,0 +1,54 @@
+CAR RÉGIE 3D — VERSION À PARTAGER
+=================================
+
+Simulateur 3D de car régie pour la formation des techniciens de captation : visite du car,
+postes (réalisation, mélangeur, vision, ralentis, son, grille, réseau IP ST 2110…), match en
+direct, missions, pannes, et un chef de car qui explique chaque poste pas à pas.
+Simulation non officielle, sans lien avec le club.
+
+
+DEUX FAÇONS DE L'OUVRIR
+-----------------------
+D'abord, décompressez l'archive (clic droit > « Extraire tout… ») : les fichiers ne
+fonctionnent pas bien ouverts directement depuis le .zip.
+
+1. Car-regie-3D.html : sur n'importe quel ordinateur (Windows, macOS, Linux)
+   - Double-cliquez sur le fichier : le simulateur s'ouvre dans le navigateur
+     (Chrome, Edge ou Firefox récents conseillés).
+   - Rien à installer, pas besoin d'Internet.
+   - Tout fonctionne en solo. La progression est enregistrée dans ce navigateur.
+
+2. Car-regie-3D.exe : sous Windows 10 ou 11, pour jouer aussi à plusieurs sur le réseau local
+   - Double-cliquez : une fenêtre noire s'ouvre (c'est le serveur), puis le navigateur
+     affiche le simulateur. Un second double-clic rouvre simplement la page.
+   - À la première ouverture, Windows peut afficher « Windows a protégé votre ordinateur »
+     (le programme n'est pas signé numériquement) : cliquez « Informations complémentaires »,
+     puis « Exécuter quand même ».
+   - Si le pare-feu demande l'autorisation pour « Car régie 3D », acceptez pour les réseaux
+     privés : c'est ce qui permet aux autres de se connecter.
+   - La fenêtre affiche l'adresse à donner aux autres joueurs (http://192.168.x.x:8080).
+     Ils l'ouvrent dans leur navigateur, sans rien installer, sur le même réseau
+     (même box, même Wi-Fi ou même switch).
+   - Dans le simulateur : bouton « Jouer à plusieurs », héberger ou rejoindre une partie,
+     choisir son pseudo et son rôle.
+   - Laissez la fenêtre noire ouverte pendant la partie : la fermer arrête le serveur.
+   - Les comptes rendus de session sont enregistrés dans le dossier « rapports »,
+     à côté de l'exécutable.
+
+
+POUR BIEN DÉMARRER
+------------------
+   - Écran d'accueil (la « feuille de service ») : choisissez le car (SDI ou IP), le format
+     et la qualité d'image. Si l'image saccade, prenez « Basse ». Sur un portable, branchez
+     le secteur.
+   - Clic dans la vue pour diriger le regard à la souris ; Z Q S D pour se déplacer ;
+     E pour ouvrir un poste ; Échap pour le refermer.
+   - J : le chef de car. Il présente le poste où vous êtes et propose des parcours guidés
+     (réseau ST 2110 : visite, mise en service d'une leaf, PTP, dépannage).
+   - G : guide et missions ; T : se téléporter ; P : plan des caméras ; K : matériel du car.
+
+
+CRÉDITS ET LICENCES
+-------------------
+   Ce simulateur utilise three.js (licence MIT). L'exécutable Windows contient Node.js
+   (licence MIT). Textes complets dans LICENCES.txt.

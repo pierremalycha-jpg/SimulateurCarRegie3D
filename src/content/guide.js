@@ -466,7 +466,7 @@ export const GUIDE = [
 <p>Une captation est un travail d'équipe : le réalisateur annonce, le truquiste exécute, l'opérateur ralenti prépare, la vision et le son ajustent, la technique surveille. Le mode <b>« Jouer à plusieurs »</b> met plusieurs joueurs dans le <b>même car</b>, chacun sur son ordinateur, devant le <b>même match</b>. Chacun a un <b>pseudo</b> et un <b>rôle</b> ; on voit les autres se déplacer dans le stade et dans le car.</p>
 <h3>Deux façons de se connecter</h3>
 <ul>
-<li><b>Réseau local (sans Internet)</b> : la personne qui héberge lance le petit serveur fourni (archive « réseau local » : Windows, macOS ou Linux, Node.js nécessaire). Il affiche une adresse du type <code>http://192.168.1.20:8080</code> : les autres l'ouvrent dans leur navigateur, rien à installer. Tout le monde doit être sur le même réseau (même box, même Wi-Fi ou même switch).</li>
+<li><b>Réseau local (sans Internet)</b> : la personne qui héberge lance le petit serveur fourni : sous Windows, double-clic sur <code>Car-regie-3D.exe</code> (rien à installer, le navigateur s'ouvre tout seul) ; ailleurs, l'archive « réseau local » (Windows, macOS ou Linux, Node.js nécessaire). Il affiche une adresse du type <code>http://192.168.1.20:8080</code> : les autres l'ouvrent dans leur navigateur, rien à installer. Tout le monde doit être sur le même réseau (même box, même Wi-Fi ou même switch).</li>
 <li><b>En ligne</b> : dans la page publiée sur claude.ai, partagée aux stagiaires (niveau « Contributeur » au moins). L'hôte crée la partie et donne son code.</li>
 </ul>
 <h3>Héberger, rejoindre</h3>

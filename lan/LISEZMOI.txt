@@ -5,12 +5,14 @@ Une personne héberge la partie : son ordinateur fait tourner le serveur et le m
 Les autres n'installent rien : ils ouvrent une adresse dans leur navigateur.
 
 1. SUR L'ORDINATEUR QUI HÉBERGE
+   (Sous Windows, sans rien installer : Car-regie-3D.exe, du kit de partage, fait la même chose.)
    - Installez Node.js (version LTS) depuis https://nodejs.org (une seule fois).
    - Lancez le serveur :
        Windows : double-cliquez « Lancer le serveur (Windows).bat »
        macOS   : double-cliquez « lancer-serveur.command » (la 1re fois : clic droit > Ouvrir)
        Linux   : ./lancer-serveur.sh
-       ou, dans un terminal : node car-regie-serveur-lan.mjs   (option : --port 9000)
+       ou, dans un terminal : node car-regie-serveur-lan.mjs   (options : --port 9000, --ouvrir)
+   - Si le port 8080 est déjà pris, le serveur prend le suivant (8081…) : lisez l'adresse affichée.
    - La fenêtre affiche deux adresses :
        « Sur cet ordinateur : http://localhost:8080 »   → ouvrez-la vous-même
        « Pour les autres : http://192.168.x.x:8080 »    → donnez-la aux autres joueurs

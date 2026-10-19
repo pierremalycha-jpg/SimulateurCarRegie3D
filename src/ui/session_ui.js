@@ -33,15 +33,19 @@ export async function openSessionPanel() {
   if (!room) {
     body.append(el('p', {}, 'Pour jouer à plusieurs, deux possibilités :'),
       el('ul', {},
-        el('li', {}, el('b', {}, 'Réseau local : '), 'la personne qui héberge lance le serveur fourni avec le simulateur (node lan/serveur.mjs, ou le fichier autonome car-regie-serveur-lan.mjs). Les autres ouvrent dans leur navigateur l\'adresse qu\'il affiche (http://192.168.x.x:8080). Personne d\'autre n\'a rien à installer.'),
+        el('li', {}, el('b', {}, 'Réseau local : '), 'la personne qui héberge lance le serveur fourni avec le simulateur (Car-regie-3D.exe sous Windows, sans rien installer ; ou, avec Node.js, le fichier car-regie-serveur-lan.mjs). Les autres ouvrent dans leur navigateur l\'adresse qu\'il affiche (http://192.168.x.x:8080). Personne d\'autre n\'a rien à installer.'),
         el('li', {}, el('b', {}, 'En ligne : '), 'dans la page publiée sur claude.ai, partagée aux stagiaires (niveau « Contributeur » au moins) : chacun ouvre le même lien et rejoint la même partie.')),
-      el('p', { class: 'note' }, 'Ici, aucune connexion temps réel n\'est disponible (page ouverte hors du serveur réseau local et hors de claude.ai, ou accès en lecture seule).'),
-      lanKitRow());
+      // fichier ouvert d'un double-clic : le serveur ne peut pas être téléchargé depuis la page
+      fileMode()
+        ? el('p', { class: 'note' }, 'Cette copie est un fichier ouvert directement dans le navigateur : tout fonctionne en solo, sans Internet, et la progression reste dans ce navigateur. Pour jouer à plusieurs, l\'hôte lance Car-regie-3D.exe ou le serveur réseau local (car-regie-reseau-local.zip), fournis avec ce fichier.')
+        : el('p', { class: 'note' }, 'Ici, aucune connexion temps réel n\'est disponible (page ouverte hors du serveur réseau local et hors de claude.ai, ou accès en lecture seule).'),
+      ...(fileMode() ? [] : [lanKitRow()]));
     return;
   }
   if (!SES.active) drawJoin(body); else drawActive(body);
 }
 
+const fileMode = () => location.protocol === 'file:';
 // archive du serveur réseau local (assemblée par lankit.js)
 async function lanKit() {
   const r = await downloadLanKit();
