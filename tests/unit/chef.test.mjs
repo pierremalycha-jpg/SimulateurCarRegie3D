@@ -34,7 +34,7 @@ test('mettre en service une leaf neuve : chaque étape se valide avec les comman
   for (const t of texts) assert.ok(t && t.length > 10 && !/undefined|NaN|\[object/.test(t), 'texte : ' + t);
 });
 
-for (const id of ['reseau-visite', 'reseau-ptp', 'reseau-depannage']) {
+for (const id of ['reseau-visite', 'reseau-passerelle', 'reseau-ptp', 'reseau-depannage']) {
   test(`parcours ${id} : rejoué de bout en bout`, () => {
     freshCar();
     const texts = [];
@@ -102,4 +102,16 @@ test('étape « aller au poste » sautée quand on y est déjà', () => {
   goStep(0, -1);
   assert.equal(TUTOR.lesson.steps[TUTOR.i].id, 'open', 'en revenant en arrière jusqu\'au début, l\'étape reste accessible');
   io.go({ station: 'reseau' });
+});
+
+test('passerelle : quitter en cours de route la remet dans sa configuration du car', async () => {
+  const { startLesson, goStep, stopLesson } = await import('../../src/tutor/engine.js');
+  freshCar();
+  const ip = FAB.devices.gwstade.nics.red.ip;
+  startLesson('reseau-passerelle'); goStep(3); settle();
+  assert.ok(!FAB.res.reg.gwstade, 'sortie d\'usine : plus enregistrée');
+  stopLesson(false, true); settle();
+  assert.equal(FAB.devices.gwstade.nics.red.ip, ip);
+  assert.ok(FAB.res.reg.gwstade && FAB.res.devPtp.gwstade.state === 'locked');
+  assert.ok(FAB.res.rxState.AUX_GIANT.ok && !FAB.rxManual.AUX_GIANT);
 });

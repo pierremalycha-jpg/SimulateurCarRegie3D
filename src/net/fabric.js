@@ -25,9 +25,14 @@ export const SSM_REF = '239.0.0.0/8';
 export const PTP_REF = { domain: 127, profile: 'smpte2059-2', announce: -2, sync: -3, delayReq: -3, timeout: 3 };
 export const DSCP_REF = { ptp: 46, audio: 34, video: 26, anc: 18, ctl: 16 };
 export const QUERIER_TIMEOUT = 45; // s (≈ 260 s dans la réalité, raccourci pour l'exercice)
+// réseau de contrôle (VLAN 20) : sous-réseau, sa passerelle (SVI du switch de contrôle) et le registre NMOS
+export const CTL_NET = '10.20.0.0/22', CTL_GW = '10.20.0.1', NMOS_REG = '10.20.0.10';
 
 export const FAB = {
   switches: {}, links: [], devices: {}, flows: {}, rx: {}, mode: 'pim',
+  // réglages faits dans l'interface des appareils (onglet Exploitation), conservés quand le réseau est reconstruit :
+  // adresses des émetteurs (flowCfg) et paramètres de transport saisis à la main sur un récepteur (rxManual)
+  flowCfg: {}, rxManual: {},
   registryUp: true, gm: { gm1: { up: true, gps: true, priority1: 100, priority2: 128 }, gm2: { up: true, gps: true, priority1: 110, priority2: 128 } },
   timers: {}, res: null, key: '', ver: 0, issues: [],
 };
@@ -122,6 +127,7 @@ function mkSwitch(id, o) {
 let devIdx = 0;
 function addDev(d) {
   d.ctlIp = d.ctlIp || `10.20.${Math.floor(devIdx / 200)}.${20 + (devIdx % 200)}`; devIdx++;
+  d.ctlMask = 22; d.ctlGw = CTL_GW; d.nmosReg = NMOS_REG;
   d.nics = d.nics || {};
   for (const c of COLORS) {
     if (!d.ports || !d.ports[c]) continue;
@@ -155,6 +161,7 @@ function addFlow(dev, id, kind, src, label, gbps, extra = {}) {
   const d = FAB.devices[dev];
   const n = Object.values(FAB.flows).filter((f) => FAB.devices[f.dev].leaf === d.leaf).length + 1;
   FAB.flows[id] = { id, dev, kind, src, label, gbps, n, groups: { red: `239.1.${d.leaf}.${n}`, blue: `239.2.${d.leaf}.${n}` }, udp: 5004, pt: kind === 'audio' ? 97 : kind === 'anc' ? 100 : kind === 'jxs' ? 98 : 96, ...extra };
+  const o = FAB.flowCfg[id]; if (o) { Object.assign(FAB.flows[id].groups, o.groups); if (o.udp) FAB.flows[id].udp = o.udp; }
   (d.senders = d.senders || []).push(id);
 }
 function addRx(dev, id, label, fixed = null) { const d = FAB.devices[dev]; FAB.rx[id] = { id, dev, label, fixed }; (d.receivers = d.receivers || []).push(id); }
@@ -248,7 +255,8 @@ export function buildFabric() {
   for (const d of Object.values(FAB.devices)) { if (d.kind === 'nmos') continue; if (d.kind === 'gm') { d.ctl.port = 'Ethernet' + (12 + d.gm); continue; } d.ctl.port = 'Ethernet' + cp++; }
   for (const d of Object.values(FAB.devices)) {
     const o = oldDevs[d.id]; if (!o) continue;
-    for (const c of COLORS) if (d.nics[c] && o.nics && o.nics[c]) { d.nics[c].ip = o.nics[c].ip; d.nics[c].gw = o.nics[c].gw; }
+    for (const c of COLORS) if (d.nics[c] && o.nics && o.nics[c]) for (const k of ['ip', 'gw', 'mask']) d.nics[c][k] = o.nics[c][k];
+    for (const k of ['ctlIp', 'ctlMask', 'ctlGw', 'nmosReg']) if (o[k] !== undefined) d[k] = o[k];
     if (o.ptp) Object.assign(d.ptp, o.ptp);
   }
   // ports des commutateurs nouvellement créés : descriptions et vitesses selon les appareils raccordés
@@ -294,6 +302,21 @@ function uplinkState(l) {
 function sameP2P(a, b) { const [ia, la] = a.split('/'), [ib, lb] = b.split('/'); if (la !== lb) return false; return inSubnet(ib, `${ia}/${la}`) && ia !== ib; }
 function inSsm(sw, group) { return inSubnet(group, FAB.switches[sw].running.ssmRange || '232.0.0.0/8'); }
 
+// adresse multicast utilisable par un flux (224.0.0.0/4, hors plage locale 224.0.0.0/24)
+export const isMcast = (g) => inSubnet(g, '224.0.0.0/4') && !inSubnet(g, '224.0.0.0/24');
+// jambe d'un récepteur réglé à la main : quel émetteur envoie ce groupe depuis cette source ?
+function manualFlow(c, leg) {
+  if (!leg || !leg.on) return { flow: null, reason: 'jambe désactivée' };
+  if (!leg.group) return { flow: null, reason: 'aucun groupe multicast saisi' };
+  if (!isMcast(leg.group)) return { flow: null, reason: `${leg.group} n'est pas une adresse multicast (224.0.0.0 à 239.255.255.255)` };
+  const same = Object.values(FAB.flows).filter((f) => f.groups[c] === leg.group);
+  if (!same.length) return { flow: null, reason: `aucun émetteur n'envoie le groupe ${leg.group} sur le réseau ${CLABEL[c]} : l'abonnement est fait, rien n'arrive` };
+  if (!leg.src) return { flow: null, reason: 'adresse source absente : en SSM (IGMPv3) on s\'abonne au couple (source, groupe)' };
+  const f = same.find((x) => FAB.devices[x.dev].nics[c] && FAB.devices[x.dev].nics[c].ip === leg.src);
+  if (!f) return { flow: null, reason: `le groupe ${leg.group} vient de ${same.map((x) => FAB.devices[x.dev].nics[c] ? FAB.devices[x.dev].nics[c].ip : '?').join(', ')}, pas de ${leg.src} : le filtre de source SSM ne laisse rien passer` };
+  return { flow: f, port: leg.port };
+}
+
 export function evaluate() {
   const R = { nic: {}, up: {}, leafOk: {}, rxState: {}, loads: {}, linkLoad: {}, ptp: {}, devPtp: {}, reg: {}, gmActive: {}, issues: [], flood: {}, querierLost: {}, refused: {} };
   const issues = R.issues;
@@ -310,9 +333,16 @@ export function evaluate() {
       if (p.mode !== 'access') { reach = false; why = `${n.port} n'est pas en mode accès`; }
       else if (p.vlan !== v) { reach = false; why = `${n.port} dans le VLAN ${p.vlan} au lieu du ${v}`; }
       else if (!sw.running.vlans[v]) { reach = false; why = `VLAN ${v} absent de ${sw.running.hostname}`; }
-      else if (!sw.running.svis[v] || sw.running.svis[v].shutdown || !inSubnet(n.ip, sw.running.svis[v].ip)) { reach = false; why = `pas de passerelle (SVI Vlan${v}) pour ${n.ip}`; }
-      else if (!inSubnet(n.ip, `${sviIp(c, d.leaf)}/24`) || n.gw !== sviIp(c, d.leaf)) { reach = false; why = `adresse ${n.ip} / passerelle ${n.gw} incohérentes`; }
+      else if (!n.ip) { reach = false; why = 'aucune adresse IP sur la carte'; }
+      else if (!sw.running.svis[v] || sw.running.svis[v].shutdown) { reach = false; why = `pas d'interface routée (SVI Vlan${v}) sur ${sw.running.hostname} : aucun routeur pour ce sous-réseau`; }
+      else if (!inSubnet(n.ip, sw.running.svis[v].ip) || !inSubnet(n.ip, `${sviIp(c, d.leaf)}/24`)) { reach = false; why = `adresse ${n.ip} hors du sous-réseau ${subnetOf(c, d.leaf)} du VLAN ${v} : la leaf rejette ses flux (contrôle RPF) et ses abonnements`; }
+      else if (n.ip === sviIp(c, d.leaf)) { reach = false; why = `adresse ${n.ip} = celle de la passerelle (SVI) : conflit avec la leaf`; }
       else if (p.mtu < 1500) { reach = false; why = `MTU ${p.mtu} < 1500 : les paquets RTP de ~1 450 octets sont jetés`; }
+      // masque et passerelle ne servent qu'à l'unicast : le multicast (émission, IGMP) et PTP restent sur le lien local
+      if (reach && (n.mask !== 24 || n.gw !== sviIp(c, d.leaf))) {
+        const bad = [n.mask !== 24 ? `masque /${n.mask} au lieu de /24` : '', n.gw !== sviIp(c, d.leaf) ? `passerelle ${n.gw || 'absente'} au lieu de ${sviIp(c, d.leaf)}` : ''].filter(Boolean).join(', ');
+        iss('warn', `${d.name} (${CLABEL[c]}) : ${bad}`, 'Sans effet sur les flux ST 2110 (le multicast, les abonnements IGMP et PTP ne passent pas par la passerelle), mais tout échange unicast vers un autre sous-réseau échoue : supervision, ping, mise à jour.', { sw: n.sw, port: n.port, dev: d.id, color: c });
+      }
     } else if (st.up && !st.span && d.kind === 'gm') {
       const p = st.port; if (p.mode !== 'routed' || !p.ip || !inSubnet(n.ip, p.ip)) { reach = false; why = 'port du grand maître non routé ou mauvais sous-réseau'; }
     }
@@ -320,6 +350,8 @@ export function evaluate() {
     if (!reach && d.kind !== 'gm' && FAB.switches[n.sw].power) iss(d.kind === 'ccu' || d.kind === 'mixer' ? 'warn' : 'warn', `${d.name} injoignable sur le réseau ${CLABEL[c]}`, why, { sw: n.sw, port: n.port, dev: d.id, color: c });
   }
   for (const d of Object.values(FAB.devices)) if (d.kind !== 'gm' && d.nics.red && d.nics.blue && !R.nic[d.id + ':red'].reach && !R.nic[d.id + ':blue'].reach && FAB.switches[d.nics.red.sw].power && FAB.switches[d.nics.blue.sw].power) iss('err', `${d.name} injoignable sur les deux réseaux`, `rouge : ${R.nic[d.id + ':red'].why} · bleu : ${R.nic[d.id + ':blue'].why}`, { sw: d.nics.red.sw, port: d.nics.red.port, dev: d.id });
+  // un même groupe multicast pour deux émetteurs : sans danger en SSM (abonnement à la source), risqué ailleurs
+  for (const c of COLORS) { const seen = {}; for (const f of Object.values(FAB.flows)) { const g = f.groups[c]; if (!g) continue; if (seen[g] && seen[g].dev !== f.dev) iss('warn', `Groupe ${g} utilisé par deux émetteurs (${CLABEL[c]})`, `${seen[g].label} et ${f.label}. En SSM, chaque récepteur s'abonne au couple (source, groupe) : il ne reçoit que la bonne source. Avec IGMPv2 ou un snooping qui ignore la source, les deux flux se mélangeraient.`, { color: c }); else seen[g] = f; } }
   // conflits d'adresses
   for (const c of COLORS) { const seen = {}; for (const d of Object.values(FAB.devices)) { const n = d.nics[c]; if (!n) continue; if (seen[n.ip]) { iss('err', `Conflit d'adresse ${n.ip} (${CLABEL[c]})`, `${seen[n.ip].name} et ${d.name} ont la même adresse : l'ARP bascule de l'un à l'autre, les deux perdent des paquets.`, { dev: d.id, color: c }); R.nic[d.id + ':' + c].conflict = true; R.nic[seen[n.ip].id + ':' + c].conflict = true; } else seen[n.ip] = d; } }
   // 2. underlay
@@ -337,13 +369,16 @@ export function evaluate() {
   const map = FAB.routeMap || {};
   const subs = [];
   for (const rx of Object.values(FAB.rx)) {
+    // paramètres saisis à la main dans l'interface du récepteur : ils remplacent la connexion NMOS
+    const man = FAB.rxManual[rx.id];
+    if (man) { subs.push({ rx, man, flows: { red: manualFlow('red', man.red), blue: manualFlow('blue', man.blue) } }); continue; }
     let src = rx.fixed;
     if (!src) src = map[rx.id];
     if (!src) continue;
     let fid = src.startsWith('a:') || src.startsWith('v:') ? src : 'v:' + src;
     if (rx.id.startsWith('REC')) { const ph = (FAB.recPhase || {})[rx.id]; if (ph) fid = `v:${src}#${ph + 1}`; }
     if (!FAB.flows[fid]) continue;
-    subs.push({ rx, flow: FAB.flows[fid] });
+    subs.push({ rx, flow: FAB.flows[fid], flows: { red: { flow: FAB.flows[fid] }, blue: { flow: FAB.flows[fid] } } });
   }
   const order = (s) => (s.rx.id.startsWith('ME') ? 0 : s.rx.id.startsWith('AUX_TX') ? 1 : s.rx.id.startsWith('MVP') ? 2 : s.rx.id.startsWith('REC') ? 3 : s.rx.id.startsWith('MV') ? 4 : 5);
   subs.sort((a, b) => order(a) - order(b));
@@ -375,6 +410,7 @@ export function evaluate() {
     if (ns.conflict) return { ok: false, reason: `conflit d'adresse sur ${sd.name}` };
     if (!nr || !nr.reach) return { ok: false, reason: `récepteur ${rd.name} : ${nr ? nr.why : 'non raccordé'}` };
     const g = f.groups[c]; const ls = FAB.switches[sd.nics[c].sw], lr = FAB.switches[rd.nics[c].sw];
+    if (!g || !isMcast(g)) return { ok: false, reason: `émetteur ${sd.name} : adresse de destination ${g || 'absente'} non multicast` };
     // côté récepteur : querier IGMPv3 et snooping
     const v = vlanOf(c, rd.leaf); const svi = lr.running.svis[v]; const vl = lr.running.vlans[v];
     if (svi && svi.igmp === 2) return { ok: false, reason: `${lr.running.hostname} Vlan${v} en IGMPv2 : les jonctions (S,G) IGMPv3 sont refusées` };
@@ -408,16 +444,29 @@ export function evaluate() {
   for (const s of subs) {
     const per = {};
     for (const c of COLORS) {
-      const p = /** @type {any} */ (pathOf(c, s.flow, s.rx));
+      const m = s.flows[c];
+      if (!m.flow) { per[c] = { ok: false, reason: m.reason }; continue; }
+      const p = /** @type {any} */ (pathOf(c, m.flow, s.rx));
+      if (p.ok && m.port != null && m.port !== m.flow.udp) {
+        // les paquets arrivent (la jonction est faite) mais le récepteur écoute un autre port : il les ignore
+        for (const k of p.keys) addLoad(k, m.flow);
+        per[c] = { ...p, ok: false, reason: `port UDP ${m.port} au lieu de ${m.flow.udp} : les paquets arrivent mais le récepteur les ignore` };
+        continue;
+      }
       if (p.ok && FAB.mode === 'sdn') {
         // contrôleur SDN : admission selon la bande passante restante
-        const full = p.keys.find((k) => { const m = loads[k]; const cur = m ? [...m.values()].reduce((a, b) => a + b, 0) : 0; return !(m && m.has(s.flow.id)) && cur + s.flow.gbps > (capOf[k] || 0) * 0.95; });
+        const f = m.flow; const full = p.keys.find((k) => { const L = loads[k]; const cur = L ? [...L.values()].reduce((a, b) => a + b, 0) : 0; return !(L && L.has(f.id)) && cur + f.gbps > (capOf[k] || 0) * 0.95; });
         if (full) { per[c] = { ok: false, reason: `refusé par le contrôleur SDN : bande passante insuffisante sur ${linkName(full)}`, refused: true }; continue; }
       }
-      if (p.ok) for (const k of p.keys) addLoad(k, s.flow);
-      per[c] = p;
+      if (p.ok) for (const k of p.keys) addLoad(k, m.flow);
+      per[c] = { ...p, flow: m.flow.id };
     }
-    st[s.rx.id] = { flow: s.flow.id, per, rx: s.rx.id };
+    if (s.man) {
+      // ST 2022-7 : les deux jambes doivent porter le même flux pour être fusionnées
+      if (per.red.ok && per.blue.ok && per.red.flow !== per.blue.flow) per.blue = { ...per.blue, ok: false, reason: `jambe bleue sur un autre flux (${FAB.flows[per.blue.flow].label}) que la rouge : pas de fusion ST 2022-7 possible` };
+      const lead = per.red.ok ? per.red : per.blue.ok ? per.blue : s.flows.red.flow ? { flow: s.flows.red.flow.id } : s.flows.blue.flow ? { flow: s.flows.blue.flow.id } : {};
+      st[s.rx.id] = { flow: lead.flow || null, per, rx: s.rx.id, manual: true };
+    } else st[s.rx.id] = { flow: s.flow.id, per, rx: s.rx.id };
   }
   // inondation si le snooping IGMP est désactivé : tout ce qui circule dans le VLAN sort sur tous ses ports
   for (const sw of Object.values(FAB.switches)) if (sw.role === 'leaf' && sw.power) {
@@ -514,7 +563,7 @@ export function evaluate() {
       else {
         const hops = P.synced[sw.id] + 1;
         const noisy = !sw.running.qos.ptpPriority && Object.entries(R.linkLoad).some(([k, v]) => k.startsWith(d.id + ':' + c) && v.load > 0.8 * v.cap);
-        s = { state: noisy ? 'noisy' : 'locked', hops, offset: Math.round(hops * 12 + (noisy ? 900 : 0)), why: noisy ? 'PTP non prioritaire sur un lien chargé : gigue de plusieurs centaines de ns' : '' };
+        s = { state: noisy ? 'noisy' : 'locked', hops, offset: Math.round(hops * 12 + (noisy ? 900 : 0)), delay: 320 + hops * 170, why: noisy ? 'PTP non prioritaire sur un lien chargé : gigue de plusieurs centaines de ns' : '' };
       }
       /** @type {any} */ (s).color = c;
       const rank = { locked: 0, noisy: 1, free: 2, unlocked: 3 };
@@ -527,12 +576,26 @@ export function evaluate() {
   const ctl = FAB.switches['SW-CTRL'];
   const regOk = FAB.registryUp && ctl.power && !ctl.running.ports.Ethernet17.shutdown && ctl.running.ports.Ethernet17.vlan === 20;
   if (!regOk) iss('err', 'Registre NMOS injoignable', !FAB.registryUp ? 'Le service du registre est arrêté.' : 'Le port du registre sur le switch de contrôle est coupé ou dans le mauvais VLAN.', { sw: 'SW-CTRL', port: 'Ethernet17' });
+  R.regWhy = {};
+  const ctlSeen = {};
+  for (const d of Object.values(FAB.devices)) if (d.ctlIp) ctlSeen[d.ctlIp] = (ctlSeen[d.ctlIp] || 0) + 1;
   for (const d of Object.values(FAB.devices)) {
     if (d.kind === 'gm' || d.kind === 'nmos') continue;
     const p = ctl.running.ports[d.ctl.port];
-    const ok = regOk && ctl.power && p && !p.shutdown && p.vlan === 20 && inSubnet(d.ctlIp, '10.20.0.0/22');
-    R.reg[d.id] = ok;
-    if (regOk && !ok) iss('warn', `${d.name} non enregistré dans NMOS (IS-04)`, `Port de contrôle ${d.ctl.port} ${p && p.shutdown ? 'coupé' : p && p.vlan !== 20 ? 'dans le VLAN ' + p.vlan : ''} : ses émetteurs et récepteurs n'apparaissent pas au contrôleur.`, { sw: 'SW-CTRL', port: d.ctl.port, dev: d.id });
+    const own = `${d.ctlIp}/${d.ctlMask}`;
+    let why = '';
+    if (!ctl.power) why = 'switch de contrôle hors tension';
+    else if (!p || p.shutdown) why = `port de contrôle ${d.ctl.port} coupé`;
+    else if (p.vlan !== 20) why = `port de contrôle ${d.ctl.port} dans le VLAN ${p.vlan} au lieu du 20`;
+    else if (!d.ctlIp) why = 'aucune adresse IP de contrôle';
+    else if (!inSubnet(d.ctlIp, CTL_NET)) why = `adresse de contrôle ${d.ctlIp} hors du réseau de contrôle ${CTL_NET}`;
+    else if (d.ctlIp === NMOS_REG || d.ctlIp === CTL_GW || ctlSeen[d.ctlIp] > 1) why = `conflit d'adresse de contrôle (${d.ctlIp} déjà utilisée)`;
+    else if (!d.nmosReg) why = 'adresse du registre NMOS non renseignée (pas de découverte DNS-SD sur ce réseau)';
+    else if (d.nmosReg !== NMOS_REG) why = `aucun registre NMOS à l'adresse ${d.nmosReg} (le registre est en ${NMOS_REG})`;
+    else if (!inSubnet(NMOS_REG, own) && !(d.ctlGw === CTL_GW && inSubnet(CTL_GW, own))) why = `registre hors du sous-réseau ${own} et passerelle ${d.ctlGw || 'absente'} injoignable`;
+    else if (!regOk) why = 'registre NMOS injoignable';
+    R.reg[d.id] = !why; R.regWhy[d.id] = why;
+    if (regOk && why) iss('warn', `${d.name} non enregistré dans NMOS (IS-04)`, `${why[0].toUpperCase() + why.slice(1)} : ses émetteurs et récepteurs n'apparaissent pas au contrôleur.`, { sw: 'SW-CTRL', port: d.ctl.port, dev: d.id });
   }
   R.regOk = regOk;
   // configurations non enregistrées
@@ -568,8 +631,10 @@ export function updateFabric(dt, routeMap, recPhase) {
 export function delivery(src, dest) {
   if (!S.ipMode || !FAB.res) return { ok: true, loss: 0 };
   const s = FAB.res.rxState[dest];
+  // récepteur réglé à la main : il reçoit ce que ses adresses désignent, quelle que soit la grille
+  if (s && s.manual) return s.ok ? { ...s, src: FAB.flows[s.flow].src } : s;
   const fid = 'v:' + src;
-  if (s && (s.flow === fid || s.flow.startsWith(fid + '#'))) return s;
+  if (s && s.flow && (s.flow === fid || s.flow.startsWith(fid + '#'))) return s;
   return { ok: true, loss: 0 };
 }
 // une réception (identifiant de récepteur) arrive-t-elle sans perte ?
@@ -665,9 +730,54 @@ export function sdpOf(fid) {
   return L.join('\n');
 }
 
+// ---------------- interface web des appareils (onglet Exploitation) ----------------
+// identifiant NMOS (UUID) stable d'une ressource
+export function nodeId(id) {
+  let h = 2166136261; const out = [];
+  for (let k = 0; k < 4; k++) { for (const ch of id + k) h = Math.imul(h ^ ch.charCodeAt(0), 16777619) >>> 0; out.push(h.toString(16).padStart(8, '0')); }
+  const x = out.join('');
+  return `${x.slice(0, 8)}-${x.slice(8, 12)}-4${x.slice(13, 16)}-a${x.slice(17, 20)}-${x.slice(20, 32)}`;
+}
+// réglages réseau d'un appareil : { nics: { red: { ip, mask, gw }, blue }, ctlIp, ctlMask, ctlGw, nmosReg, ptp: { domain, slaveOnly } }
+export function setDeviceNet(id, cfg) {
+  const d = FAB.devices[id]; if (!d) return;
+  for (const c of COLORS) if (cfg.nics && cfg.nics[c] && d.nics[c]) Object.assign(d.nics[c], cfg.nics[c]);
+  for (const k of ['ctlIp', 'ctlMask', 'ctlGw', 'nmosReg']) if (cfg[k] !== undefined) d[k] = cfg[k];
+  if (cfg.ptp) Object.assign(d.ptp, cfg.ptp);
+  markDirty();
+}
+// adresses d'un émetteur (destination multicast par réseau, port UDP)
+export function setFlowAddr(fid, groups, udp) {
+  const f = FAB.flows[fid]; if (!f) return;
+  Object.assign(f.groups, groups); if (udp) f.udp = udp;
+  FAB.flowCfg[fid] = { groups: { ...f.groups }, udp: f.udp };
+  markDirty();
+}
+// paramètres de transport d'un récepteur saisis à la main ({ red: { on, src, group, port }, blue }) ; null = retour à la connexion NMOS
+export function setRxManual(rxId, cfg) { if (cfg) FAB.rxManual[rxId] = clone(cfg); else delete FAB.rxManual[rxId]; markDirty(); }
+// paramètres de transport en vigueur sur un récepteur (saisis, ou ceux du SDP de l'émetteur connecté)
+export function rxTransport(rxId) {
+  if (FAB.rxManual[rxId]) return { manual: true, ...clone(FAB.rxManual[rxId]) };
+  const s = FAB.res && FAB.res.rxState[rxId]; const f = s && FAB.flows[s.flow];
+  if (!f) return { manual: false, red: null, blue: null };
+  const sd = FAB.devices[f.dev]; const leg = (c) => ({ on: true, src: sd.nics[c] ? sd.nics[c].ip : '', group: f.groups[c], port: f.udp });
+  return { manual: false, flow: f.id, red: leg('red'), blue: leg('blue') };
+}
+// sortie d'usine : réglages par défaut du constructeur, l'appareil ne fonctionne plus sur le réseau du car
+export const FACTORY = { red: '192.168.10.100', blue: '192.168.20.100', ctl: '192.168.1.100' };
+export function factoryDevice(id) {
+  const d = FAB.devices[id]; if (!d) return;
+  for (const c of COLORS) if (d.nics[c]) Object.assign(d.nics[c], { ip: FACTORY[c], mask: 24, gw: '' });
+  Object.assign(d, { ctlIp: FACTORY.ctl, ctlMask: 24, ctlGw: '', nmosReg: '' });
+  Object.assign(d.ptp, { domain: 0, slaveOnly: true });
+  for (const fid of d.senders || []) { const f = FAB.flows[fid]; f.groups = { red: '', blue: '' }; FAB.flowCfg[fid] = { groups: { red: '', blue: '' }, udp: f.udp }; }
+  for (const r of d.receivers || []) FAB.rxManual[r] = { red: { on: true, src: '', group: '', port: 5004 }, blue: { on: true, src: '', group: '', port: 5004 } };
+  markDirty();
+}
+
 // remise à zéro complète (« tout réparer ») : configurations de référence, grands maîtres, registre
 export function resetFabric() {
-  FAB.switches = {}; FAB.devices = {}; FAB.mode = 'pim'; FAB.registryUp = true; FAB.timers = {};
+  FAB.switches = {}; FAB.devices = {}; FAB.mode = 'pim'; FAB.registryUp = true; FAB.timers = {}; FAB.flowCfg = {}; FAB.rxManual = {};
   FAB.gm = { gm1: { up: true, gps: true, priority1: 100, priority2: 128 }, gm2: { up: true, gps: true, priority1: 110, priority2: 128 } };
   if (S.ipMode) buildFabric(); else FAB.key = '';
   markDirty();

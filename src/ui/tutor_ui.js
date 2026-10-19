@@ -39,7 +39,7 @@ function goTo(g) {
     emit('openStationNow', { id: g.station });
   }
   if (g.station === 'reseau' && (g.tab || g.sw || g.sub || g.rx || g.sel)) {
-    const o = {}; for (const k of ['sw', 'sub', 'port', 'rx', 'msub', 'sel']) if (g[k] !== undefined) o[k] = g[k];
+    const o = {}; for (const k of ['sw', 'sub', 'port', 'rx', 'msub', 'sel', 'view', 'dev', 'src']) if (g[k] !== undefined) o[k] = g[k];
     netGo(g.tab, o);
   }
 }
@@ -186,7 +186,10 @@ export function render(force = false) {
   UI.root.append(body);
   // actions
   const g = s.go ? val(s.go, c) : null;
-  const there = !g || (view().station === (g.station || view().station) && (!g.tab || view().tab === g.tab));
+  const v = /** @type {any} */ (view());
+  // poste Réseau IP : onglet Exploitation (vue, appareil) ou sous-onglet de l'onglet Technique
+  const atTab = !g || !g.tab ? true : g.tab === 'ops' ? v.mode === 'ops' && (!g.view || v.opsView === g.view) && (!g.dev || v.opsDev === g.dev) : v.tab === g.tab && v.mode !== 'ops';
+  const there = !g || (v.station === (g.station || v.station) && atTab);
   const acts = el('div', { class: 'chef-acts' });
   if (isAction(s) && !TUTOR.done) {
     if (g || s.show) acts.append(el('button', { class: 'btn small', onclick: () => { if (!there) goTo(g); UI.spotUntil = performance.now() + 6000; spot(targets(s), true); } }, there ? 'Montre-moi' : 'Emmène-moi'));
@@ -283,6 +286,12 @@ function findTarget(list) {
       if (t.text && !(n.textContent || '').includes(t.text)) continue;
       return { n, r, t };
     }
+  }
+  // poste Réseau IP : la cible est dans l'autre onglet (Technique / Exploitation) → montrer cet onglet
+  const other = /** @type {HTMLElement | null} */ (document.querySelector('#station .net-mode:not(.on)'));
+  if (other && (list || []).length) {
+    const wantOps = list.some((t) => /\.ops|data-(ops|act|dev|dst|src|f|leg|mode)=/.test(t.sel));
+    if (wantOps === (other.dataset.mode === 'ops')) return { n: other, r: other.getBoundingClientRect(), t: { sel: '', label: 'onglet ' + (other.querySelector('b') || other).textContent } };
   }
   return null;
 }

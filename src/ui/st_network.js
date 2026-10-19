@@ -11,23 +11,28 @@ import { tabCourse, missionCard } from './net_course.js';
 import { NC, NET_MISSIONS, objectivesOf } from '../net/course.js';
 import { selectRx, sdpExplain } from '../net/analyzer.js';
 import { offerDownload } from '../shared.js';
+import { OPS, tabOps, opsDock, opsKey } from './net_ops.js';
 
 // ----------------------------------------------------------------------------------
-// Poste « Réseau IP » : les deux fabrics ST 2110 (rouge / bleu) en spine-leaf, leurs
-// commutateurs configurables (interface graphique + ligne de commande), le plan
-// d'adressage, les flux NMOS / SDP, PTP et le diagnostic.
+// Poste « Réseau IP », en deux onglets :
+//   · Technique : les deux fabrics ST 2110 (rouge / bleu) en spine-leaf, leurs commutateurs
+//     configurables (interface graphique + ligne de commande), le plan d'adressage, les flux
+//     NMOS / SDP, PTP, les mesures, le diagnostic et la formation ;
+//   · Exploitation (net_ops.js) : l'interface épurée d'un contrôleur et des appareils.
 // ----------------------------------------------------------------------------------
 const NSV = 'http://www.w3.org/2000/svg';
 const sv = (tag, attrs = {}, ...kids) => { const e = document.createElementNS(NSV, tag); for (const k in attrs) if (attrs[k] != null) e.setAttribute(k, attrs[k]); for (const c of kids) if (c != null) e.append(c); return e; };
-const V = { tab: 'topo', sw: 'LEAF-R1', port: 'Ethernet1', sub: 'ports', term: {}, gui: {}, sel: null, rx: 'ME1', onlyConn: true };
+const V = { mode: 'tech', tab: 'topo', sw: 'LEAF-R1', port: 'Ethernet1', sub: 'ports', term: {}, gui: {}, sel: null, rx: 'ME1', onlyConn: true };
 const host = (id) => (FAB.switches[id] ? FAB.switches[id].running.hostname : id);
 const fmtG = (x) => (x >= 1 ? fmt(x, 1) + ' Gb/s' : x > 0 ? fmt(x * 1000, 0) + ' Mb/s' : '0');
 const dotCls = (lv) => 'dot ' + (lv === 'err' ? 'red' : lv === 'warn' ? 'amber' : lv === 'off' ? '' : 'green');
-const TABS = [['learn', 'Formation'], ['topo', 'Topologie'], ['switch', 'Commutateurs'], ['addr', 'Plan d\'adressage'], ['flows', 'Flux NMOS · SDP'], ['meas', 'Mesures'], ['ptp', 'PTP'], ['diag', 'Diagnostic']];
+const TABS = [['topo', 'Topologie'], ['switch', 'Commutateurs'], ['addr', 'Plan d\'adressage'], ['flows', 'Flux NMOS · SDP'], ['ptp', 'PTP'], ['meas', 'Mesures'], ['diag', 'Diagnostic'], ['learn', 'Formation']];
+const MODES = [['tech', 'Technique', 'Schémas, commutateurs, configuration'], ['ops', 'Exploitation', 'Connexions, appareils, PTP, NMOS']];
 const log = (type, o = {}) => emit('netlog', { type, ...o });
 
 export function buildNetwork(body, arg, ctx) {
-  ctx.dock.append(el('div', { class: 'monwrap grow' }, el('div', { class: 'lab' }, 'Multiview (les flux reçus par le multiviewer)'), el('div', { class: 'mon fill', 'data-gl': 'mv' })));
+  const mvMon = el('div', { class: 'monwrap grow' }, el('div', { class: 'lab' }, 'Multiview (les flux reçus par le multiviewer)'), el('div', { class: 'mon fill', 'data-gl': 'mv' }));
+  ctx.dock.append(mvMon);
   if (!S.ipMode) {
     body.append(el('div', { class: 'hwpanel prose' }, el('h3', {}, 'Car en SDI'),
       el('p', {}, 'Ce car est câblé en SDI (coaxial, grille de commutation). Le réseau média ST 2110 n\'existe que dans le car IP : revenez à l\'écran d\'accueil et choisissez « Infrastructure : car IP (ST 2110) ».'),
@@ -36,22 +41,39 @@ export function buildNetwork(body, arg, ctx) {
     return {};
   }
   if (!FAB.res || FAB.key !== topoKey()) buildFabric();
-  if (arg && FAB.switches[arg]) { V.sw = arg; V.tab = 'switch'; }
+  if (arg && FAB.switches[arg]) { V.sw = arg; V.tab = 'switch'; V.mode = 'tech'; }
+  // bandeau d'écrans : le multiview en Technique, la source et la destination en Exploitation
+  const OD = opsDock();
+  const setDock = () => { const want = V.mode === 'ops' ? OD.nodes : [mvMon]; if (ctx.dock.firstChild !== want[0]) ctx.dock.replaceChildren(...want, ctx.explainBox); };
+  const modes = el('div', { class: 'net-modes', role: 'tablist', 'aria-label': 'Vue du poste' });
   const summary = el('div', { class: 'net-sum' });
   const mbox = el('div', { class: 'list' });
-  const tabs = el('div', { class: 'tabs' });
+  const tabs = el('div', { class: 'tabs net-tabs' });
   const content = el('div', { class: 'list net' });
-  body.append(summary, mbox, tabs, content);
-  const show = (k) => { V.tab = k; for (const b of tabs.children) b.classList.toggle('on', b.dataset.k === k); log('tab', { tab: k }); render(true); };
+  body.append(modes, summary, mbox, tabs, content);
+  const setMode = (m) => { V.mode = m; log('mode', { mode: m }); render(true); };
+  for (const [k, l, sub] of MODES) modes.append(el('button', { class: 'net-mode', role: 'tab', 'data-mode': k, onclick: () => setMode(k) }, el('b', {}, l), el('span', {}, sub)));
+  const show = (k) => { V.mode = 'tech'; V.tab = k; log('tab', { tab: k }); render(true); };
   for (const [k, l] of TABS) tabs.append(el('button', { class: 'tab', 'data-k': k, onclick: () => show(k) }, l));
   let lastKey = '';
-  const R = { content, show, refresh: () => render(true), applyCli, live: null };
+  const R = { content, show, refresh: () => render(true), applyCli, live: null, openSdp };
   function render(force) {
-    const key = stateKey();
+    const key = stateKey() + (V.mode === 'ops' ? '§' + opsKey() : '');
     if (!force && key === lastKey) return;
     lastKey = key;
+    for (const b of modes.children) { const on = b.dataset.mode === V.mode; b.classList.toggle('on', on); b.setAttribute('aria-selected', String(on)); }
+    for (const b of tabs.children) b.classList.toggle('on', b.dataset.k === V.tab);
+    tabs.hidden = V.mode !== 'tech';
+    setDock(); OD.update();
     drawSummary(summary);
     mbox.innerHTML = '';
+    if (V.mode === 'ops') {
+      const a = document.activeElement;
+      if (!force && a && content.contains(a) && ['INPUT', 'SELECT', 'TEXTAREA'].includes(a.tagName)) { lastKey = ''; return; }
+      content.innerHTML = ''; R.live = null;
+      tabOps(content, R);
+      return;
+    }
     if (V.tab !== 'learn' && (NC.active || NC.exam)) { if (NC.active) missionCard(mbox, R, true); else mbox.append(el('div', { class: 'hwpanel net-mission compact' }, el('div', { class: 'hwrow' }, el('h3', {}, NC.exam.over ? 'Examen terminé' : 'Examen réseau en cours'), el('button', { class: 'btn small', onclick: () => show('learn') }, 'Voir')))); }
     const a = document.activeElement;
     const typing = a && content.contains(a) && ['INPUT', 'SELECT', 'TEXTAREA'].includes(a.tagName);
@@ -61,14 +83,15 @@ export function buildNetwork(body, arg, ctx) {
     ({ learn: tabCourse, topo: tabTopo, switch: tabSwitch, addr: tabAddr, flows: tabFlows, meas: tabMeasure, ptp: tabPtp, diag: tabDiag })[V.tab](content, R);
   }
   R.go = (tab, o = {}) => { const { msub, keepCourse: _keep, ...rest } = o; for (const k in rest) if (rest[k] !== undefined) V[k] = rest[k]; if (msub) setMeasureSub(msub); show(tab); };
-  show(V.tab);
+  R.ops = (o = {}) => { for (const k of ['view', 'dev', 'rx', 'src']) if (o[k] !== undefined) OPS[k] = o[k]; if (o.rx !== undefined) { OPS.mode = null; OPS.man = null; } if (o.dev !== undefined) OPS.draft = null; setMode('ops'); };
+  render(true);
   CUR = R;
-  return { update() { render(false); if (R.live) R.live(); }, close() { if (CUR === R) CUR = null; } };
+  return { update() { render(false); if (R.live) R.live(); OD.update(); }, close() { if (CUR === R) CUR = null; } };
 }
 // ---------------- pour le chef de car : où en est l'écran, y aller, taper des commandes ----------------
 let CUR = null;
-export const netView = () => ({ tab: V.tab, sub: V.sub, sw: V.sw, port: V.port, rx: V.rx });
-export function netGo(tab, o = {}) { if (CUR) CUR.go(tab || V.tab, o); }
+export const netView = () => ({ mode: V.mode, tab: V.tab, sub: V.sub, sw: V.sw, port: V.port, rx: V.rx, opsView: OPS.view, opsDev: OPS.dev, opsRx: OPS.rx, opsSrc: OPS.src, opsMode: OPS.mode });
+export function netGo(tab, o = {}) { if (!CUR) return; if (tab === 'ops') CUR.ops(o); else CUR.go(tab || V.tab, o); }
 // tape des commandes dans le terminal du commutateur, comme le stagiaire (elles restent dans l'historique)
 export function netType(id, lines) {
   if (!FAB.switches[id]) return;
@@ -87,24 +110,27 @@ function courseKey() {
   if (NC.exam) k += '|exam' + (NC.exam.over ? 'o' : 'r') + NC.exam.faults.length + NC.exam.faults.filter((f) => f.entry && f.entry.done).length;
   return k;
 }
-function stateKey() { return [FAB.ver, FAB.lastMap, FAB.mode, FAB.registryUp, JSON.stringify(FAB.gm), FAB.issues.map((i) => i.title + i.detail).join('|'), V.tab, V.sw, V.port, V.sub, V.sel && V.sel.id, V.rx, V.onlyConn, courseKey()].join('§'); }
+function stateKey() { return [V.mode, FAB.ver, FAB.lastMap, FAB.mode, FAB.registryUp, JSON.stringify(FAB.gm), FAB.issues.map((i) => i.title + i.detail).join('|'), V.tab, V.sw, V.port, V.sub, V.sel && V.sel.id, V.rx, V.onlyConn, courseKey()].join('§'); }
 
-// ---------------- bandeau de synthèse ----------------
+// ---------------- bandeau d'état (une ligne, commun aux deux onglets) ----------------
 function drawSummary(box) {
   box.innerHTML = '';
   const R = FAB.res; if (!R) return;
   const errs = FAB.issues.filter((i) => i.sev === 'err').length, warns = FAB.issues.filter((i) => i.sev === 'warn').length;
   const rx = Object.values(R.rxState);
   const lost = rx.filter((s) => !s.ok || s.loss > 0).length, unp = rx.filter((s) => s.ok && !s.protected).length;
+  const item = (lv, label, value, cls = '') => el('span', { class: 'net-st ' + cls }, el('i', { class: 'ops-dot ' + lv }), el('b', {}, label), value);
   for (const c of COLORS) {
     const sws = Object.values(FAB.switches).filter((s) => s.color === c);
-    const on = sws.filter((s) => s.power).length;
-    const gm = R.gmActive[c];
-    box.append(el('div', { class: 'chip net-chip ' + c }, el('b', {}, 'Réseau ' + CLABEL[c]), `${on}/${sws.length} commutateurs · PTP ${gm ? gm.name + (gm.rogue ? ' (!)' : '') : 'aucun GM'}`));
+    const on = sws.filter((s) => s.power).length; const gm = R.gmActive[c];
+    const bad = FAB.issues.some((i) => i.color === c && i.sev === 'err');
+    box.append(item(on < sws.length || !gm || gm.rogue || bad ? 'err' : FAB.issues.some((i) => i.color === c && i.sev === 'warn') ? 'warn' : 'ok', CLABEL[c][0].toUpperCase() + CLABEL[c].slice(1), `${on}/${sws.length} · PTP ${gm ? gm.name.replace('Grand maître ', 'GM') + (gm.rogue ? ' (!)' : '') : 'aucun'}`, c));
   }
-  box.append(el('div', { class: 'chip' }, el('span', { class: dotCls(lost ? 'err' : unp ? 'warn' : 'ok') }), `${rx.length} réceptions · ${unp} sans 2022-7 · ${lost} en défaut`),
-    el('div', { class: 'chip' }, `Commutation ${FAB.mode === 'sdn' ? 'SDN (contrôleur)' : 'PIM-SSM / IGMPv3'}`),
-    el('div', { class: 'chip' }, el('span', { class: dotCls(errs ? 'err' : warns ? 'warn' : 'ok') }), `${errs} alarme(s) · ${warns} avertissement(s)`));
+  const devs = Object.values(FAB.devices).filter((d) => d.kind !== 'gm' && d.kind !== 'nmos'); const reg = devs.filter((d) => R.reg[d.id]).length;
+  box.append(item(!R.regOk ? 'err' : reg < devs.length ? 'warn' : 'ok', 'NMOS', R.regOk ? `${reg}/${devs.length} nœuds` : 'registre injoignable'),
+    item(lost ? 'err' : unp ? 'warn' : 'ok', 'Réceptions', `${rx.length}${lost ? ` · ${lost} en défaut` : ''}${unp ? ` · ${unp} sans 2022-7` : ''}`),
+    item('off', FAB.mode === 'sdn' ? 'SDN' : 'PIM-SSM', FAB.mode === 'sdn' ? 'contrôleur' : 'IGMPv3', 'mode'),
+    item(errs ? 'err' : warns ? 'warn' : 'ok', 'Alarmes', `${errs}${warns ? ` · ${warns} avert.` : ''}`));
 }
 
 // ---------------- topologie ----------------
@@ -576,6 +602,7 @@ function tabFlows(box, R) {
   if (V.rx && FAB.rx[V.rx]) {
     const rx = FAB.rx[V.rx]; det.append(el('h3', {}, 'Réception · ' + rx.label));
     if (!s) det.append(el('p', { class: 'note' }, 'Ce récepteur n\'est abonné à aucun flux.'));
+    else if (!FAB.flows[s.flow]) det.append(el('p', { class: 'note err' }, `Paramètres saisis à la main (onglet Exploitation) : rien ne correspond. ${s.reason}`));
     else {
       const f = FAB.flows[s.flow]; const sd = FAB.devices[f.dev], rd = FAB.devices[rx.dev];
       const kv = el('dl', { class: 'kv' }); kv.append(el('dt', {}, 'Émetteur'), el('dd', {}, `${f.label} · ${sd.name} · ${fmtG(f.gbps)}`));

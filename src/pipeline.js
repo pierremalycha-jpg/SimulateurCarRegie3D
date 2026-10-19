@@ -13,7 +13,7 @@ import { EQUIP, mixInputs, evsLayout } from './equip.js';
 import { routerInOf, physToLogical, destFeed } from './patch.js';
 import { FORMATS } from './data/cameras.js';
 import { NET, netOk, ptpLocked } from './ipnet.js';
-import { FAB, delivery } from './net/fabric.js';
+import { FAB, delivery, setRxManual } from './net/fabric.js';
 
 const FONT = '"Barlow Condensed", "Arial Narrow", sans-serif';
 const MONO = '"JetBrains Mono", ui-monospace, monospace';
@@ -149,8 +149,10 @@ export function route(dest, src) {
   if (S.ipMode && !NET.nmos) return 'Registre NMOS injoignable : le contrôleur ne peut plus établir de connexion (IS-05). Les flux déjà établis continuent.';
   if (S.ipMode && FAB.res) {
     const rx = FAB.rx[dest.startsWith('EVSREC') ? 'REC' + dest.slice(6) : dest]; const f = src && FAB.flows['v:' + src];
-    if (rx && !FAB.res.reg[rx.dev]) return `Récepteur « ${rx.label} » absent du registre NMOS (port de contrôle coupé ou mauvais VLAN) : le contrôleur ne le voit pas.`;
+    if (rx && !FAB.res.reg[rx.dev]) return `Récepteur « ${rx.label} » absent du registre NMOS (${(FAB.res.regWhy && FAB.res.regWhy[rx.dev]) || 'port de contrôle coupé ou mauvais VLAN'}) : le contrôleur ne le voit pas.`;
     if (f && FAB.res.reg[f.dev] === false) return `Émetteur « ${f.label} » absent du registre NMOS : le contrôleur ne connaît pas son SDP.`;
+    // la connexion IS-05 remplace les paramètres de transport saisis à la main sur le récepteur
+    if (rx && FAB.rxManual[rx.id]) setRxManual(rx.id, null);
   }
   if (dest.startsWith('ME') && +dest.slice(2) > mixInputs()) return `Entrée ${dest.slice(2)} indisponible : en 4K, le ${EQUIP.mixer} n'a que ${mixInputs()} entrées dans cette configuration.`;
   if (dest.startsWith('REC')) { const err = routeRec(+dest.slice(3), src); if (!err) emit('router', { dest, src }); return err; }
@@ -434,7 +436,7 @@ function blit(renderer, mat, target) { fsQuad.material = mat; renderer.setRender
 export const P = { rts: {}, delay: { rts: [], times: [], idx: 0, n: 44, k: 0, delay: 1.35 }, mvDirty: true };
 // car IP : ce que reçoit réellement le récepteur « dest » (réseaux rouge + bleu, ST 2022-7)
 function ipWhy(r = '') {
-  return /SDN/.test(r) ? 'Refusé par le contrôleur SDN' : /querier|expirée/.test(r) ? 'Abonnement IGMP expiré' : /SSM/.test(r) ? 'Groupe hors plage SSM' : /IGMPv2/.test(r) ? 'IGMPv2 : jonction (S,G) refusée' : /VLAN/.test(r) ? 'Erreur de VLAN' : /conflit/i.test(r) ? 'Conflit d\'adresse IP' : /FEC|vitesse|shutdown|hors tension|non raccordé|pas de carte/.test(r) ? 'Lien réseau coupé' : /PIM|OSPF|spine|RPF|multicast/.test(r) ? 'Routage multicast' : /MTU/.test(r) ? 'MTU trop petite' : /passerelle|adresse/.test(r) ? 'Erreur d\'adressage IP' : 'Voir le poste Réseau IP';
+  return /filtre de source/.test(r) ? 'Mauvaise adresse source (SSM)' : /aucun émetteur n'envoie/.test(r) ? 'Aucun émetteur sur ce groupe' : /port UDP/.test(r) ? 'Mauvais port UDP' : /non multicast|pas une adresse multicast/.test(r) ? 'Adresse non multicast' : /aucun groupe|adresse source absente|désactivée|aucune adresse IP/.test(r) ? 'Paramètres incomplets' : /SDN/.test(r) ? 'Refusé par le contrôleur SDN' : /querier|expirée/.test(r) ? 'Abonnement IGMP expiré' : /SSM/.test(r) ? 'Groupe hors plage SSM' : /IGMPv2/.test(r) ? 'IGMPv2 : jonction (S,G) refusée' : /VLAN/.test(r) ? 'Erreur de VLAN' : /conflit/i.test(r) ? 'Conflit d\'adresse IP' : /FEC|vitesse|shutdown|hors tension|non raccordé|pas de carte/.test(r) ? 'Lien réseau coupé' : /PIM|OSPF|spine|RPF|multicast/.test(r) ? 'Routage multicast' : /MTU/.test(r) ? 'MTU trop petite' : /passerelle|adresse/.test(r) ? 'Erreur d\'adressage IP' : 'Voir le poste Réseau IP';
 }
 const LOSS_TEX = [];
 function lossTex(k) {
@@ -453,6 +455,8 @@ export function resolve(id, depth = 0, direct = false, dest = null) {
   if (S.ipMode && depth === 0 && dest) {
     const d = delivery(id, dest);
     if (!d.ok) return { tex: noSignalTex(d.reason && /SDN/.test(d.reason) ? 'FLUX REFUSÉ' : 'FLUX PERDU', ipWhy(d.reason)), scale: SC, alarm: 'NO FLOW', none: true };
+    // récepteur réglé à la main sur un autre émetteur : il montre ce qu'il reçoit vraiment
+    if (d.src && d.src !== id) id = d.src;
     if (d.loss > 0.001) {
       const r = resolve(id, depth, direct);
       if (Math.random() < Math.min(0.85, 0.15 + d.loss)) return { tex: lossTex(S.frame % 3), scale: SC, alarm: 'PERTES IP', cam: r.cam };
@@ -940,8 +944,21 @@ export function slotTexture(id) {
   if (id === 'HLGRAW') return { tex: P.rts.hdr.texture, gain: 1.1 };
   if (id === 'scope') return { tex: SCOPE.tex, gain: 1 };
   if (id === 'camop' && P.rts.camop) return { tex: P.rts.camop.texture, gain: 1.1 };
+  // moniteurs de l'onglet Exploitation : sortie d'un émetteur, image reçue par un récepteur
+  if (id.startsWith('TX:')) { const f = FAB.flows[id.slice(3)]; const r = f && f.src ? resolve(f.src, 0, true) : { tex: noSignalTex('PAS D\'IMAGE', f ? 'Flux audio ou de données' : 'Aucune source choisie'), scale: SC }; return { tex: r.tex, gain: 1.1 * r.scale }; }
+  if (id.startsWith('RX:')) { const r = rxPicture(id.slice(3)); return { tex: r.tex, gain: 1.1 * r.scale }; }
   if (id.startsWith('AUX_')) { const d = { AUX_TX1: 'TX1', AUX_TX2: 'TX2', AUX_GIANT: 'GIANT', AUX_VISION: 'GRADE1' }[id]; const r = resolve(feedOf(d), 0, false, id); return { tex: r.tex, gain: 1.1 * r.scale }; }
   const r = resolve(id, 0, true); return { tex: r.tex, gain: 1.1 * r.scale };
+}
+// ce qu'affiche la sortie d'un récepteur ST 2110 (vidéo) : l'image reçue, des pertes, ou rien
+function rxPicture(rxId) {
+  const s = FAB.res && FAB.res.rxState[rxId];
+  if (!s) return { tex: noSignalTex('NON CONNECTÉ', 'Aucun abonnement'), scale: SC };
+  if (!s.ok) return { tex: noSignalTex('PAS DE FLUX', ipWhy(s.reason)), scale: SC };
+  const f = FAB.flows[s.flow];
+  if (!f.src) return { tex: noSignalTex('FLUX AUDIO', f.label), scale: SC };
+  if (s.loss > 0.001 && Math.random() < Math.min(0.85, 0.15 + s.loss)) return { tex: lossTex(S.frame % 3), scale: SC };
+  return resolve(f.src, 0, true);
 }
 export function drawSlots(renderer, list) {
   const els = list || document.querySelectorAll('[data-gl]');

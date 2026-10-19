@@ -120,7 +120,7 @@ const STATION_HELLO = {
   transmission: 'Comparez le départ vers la chaîne et le retour antenne (en retard de quelques secondes).',
   habillage: 'À gauche, la sortie fill/key du moteur graphique ; à droite, le programme : le graphique n\'y apparaît que si le DSK est à l\'antenne.',
   chefdecar: 'Le multiview reste visible pendant que vous lisez le synoptique ou injectez des pannes.',
-  reseau: 'Deux réseaux identiques et indépendants (rouge et bleu) en spine-leaf. Cliquez un commutateur pour le configurer (interface graphique ou terminal) : chaque réglage agit réellement sur ce que reçoivent le mélangeur, l\'EVS et le multiview ci-dessus.',
+  reseau: 'Deux onglets. Technique : les deux réseaux rouge et bleu en spine-leaf, leurs commutateurs (interface graphique ou terminal), l\'adressage, les flux, PTP et le diagnostic. Exploitation : l\'interface épurée d\'un contrôleur et des appareils, pour régler les adresses, connecter une source à une destination et surveiller PTP et NMOS. Chaque réglage agit réellement sur ce que reçoivent le mélangeur, l\'EVS et le multiview.',
 };
 const later = (fn) => setTimeout(fn, 160);
 // moniteur du dock : label + écran 16/9 rendu par WebGL

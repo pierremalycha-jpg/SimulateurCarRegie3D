@@ -552,7 +552,7 @@ function sgOn(sw) {
   const M = new Map(); if (!FAB.res) return M;
   for (const [rid, s] of Object.entries(FAB.res.rxState)) for (const c of COLORS) {
     const p = s.per[c]; if (!p || !p.ok || sw.color !== c) continue;
-    const f = FAB.flows[s.flow]; const sd = FAB.devices[f.dev], rd = FAB.devices[FAB.rx[rid].dev];
+    const f = FAB.flows[p.flow || s.flow]; const sd = FAB.devices[f.dev], rd = FAB.devices[FAB.rx[rid].dev];
     const key = `${p.src}|${p.group}`;
     const add = (iif, oif, port) => { if (!M.has(key)) M.set(key, { src: p.src, group: p.group, iif, oifs: new Map(), flow: f }); const o = M.get(key).oifs; if (!o.has(oif)) o.set(oif, new Set()); if (port) o.get(oif).add(port); };
     const lu = p.lu && FAB.links.find((l) => l.id === p.lu), ld = p.ld && FAB.links.find((l) => l.id === p.ld);

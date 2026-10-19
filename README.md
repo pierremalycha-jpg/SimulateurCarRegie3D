@@ -335,6 +335,64 @@ Au passage, le terminal des commutateurs accepte les commandes d'exploitation (`
 depuis les modes de configuration, comme sous Arista EOS. L'invite d'une plage de ports s'écrit aussi comme sous
 EOS (`config-if-Et1-7,9-11`).
 
+## Ce que contient la v15 : le poste Réseau IP en deux onglets
+
+Le poste Réseau IP était devenu touffu : huit onglets, des sous-onglets, deux lignes d'indicateurs. Il a maintenant
+**deux grands onglets** et un bandeau d'état sur une seule ligne (réseaux rouge et bleu, grand maître PTP, nœuds
+NMOS, réceptions, alarmes).
+
+**Technique** reprend tout l'existant, rangé dans une seule barre : topologie, commutateurs (interface graphique et
+terminal), plan d'adressage, flux NMOS · SDP, PTP, mesures, diagnostic, formation.
+
+**Exploitation** est une interface épurée, dans l'esprit des interfaces web des passerelles et des contrôleurs de
+diffusion. Elle a quatre vues :
+
+| Vue | Ce qu'on y fait |
+| --- | --- |
+| Connexions | Choisir une source (émetteur) et une destination (récepteur), puis connecter par NMOS (IS-05) ou saisir à la main, pour chaque réseau, l'adresse de la source, le groupe multicast et le port UDP. Le bandeau montre deux moniteurs : la **source** et ce que la **destination reçoit vraiment** (une autre caméra si l'on s'est trompé de groupe, « pas de flux » avec la cause sinon). |
+| Appareils | Pour chaque appareil, quatre voyants (média A, média B, PTP, NMOS) et sa page de réglages : adresse, masque et passerelle des cartes média rouge et bleue, adresse de contrôle et registre NMOS, domaine PTP et mode esclave, adresses multicast et port de ses émetteurs. « Appliquer », « Annuler », « Sortie d'usine ». |
+| PTP | Grand maître élu sur chaque réseau (identité, classe, priorités), état de chaque appareil (verrouillé, instable, non traçable, pas de maître), décalage et délai moyen, courbe du décalage. |
+| NMOS | Registre (IS-04, IS-05), nœuds enregistrés avec leur adresse de contrôle et leur battement, connexions actives (IS-05 ou manuelles). |
+
+Tout agit sur le même modèle que l'onglet Technique. Ce que vérifie le moteur :
+
+- **Récepteur réglé à la main :**
+  - le couple (source, groupe) doit exister : sinon le filtre SSM ne laisse rien passer ;
+  - le port UDP doit être le bon : sinon les paquets arrivent mais sont ignorés ;
+  - les jambes rouge et bleue doivent porter le même flux pour être fusionnées (ST 2022-7) ;
+  - une connexion NMOS remplace la saisie manuelle.
+- **Enregistrement NMOS :** il dépend de l'adresse de contrôle, du masque, de la passerelle et de l'adresse du
+  registre saisis dans l'appareil. La cause d'un échec est donnée.
+- **Exactitude :** une **passerelle** ou un **masque** faux sur une carte média n'est plus bloquant, mais un simple
+  avertissement. En effet, le multicast ST 2110, les rapports IGMP et PTP restent sur le lien local. Une adresse hors
+  du sous-réseau, elle, coupe les flux (contrôle RPF de la leaf).
+
+Nouveau parcours du chef de car, **« Mettre en service une passerelle (interface web) »** :
+
+1. la passerelle des écrans d'angle sort d'usine ;
+2. on règle depuis son interface les adresses A et B, le contrôle et le registre NMOS, puis le domaine PTP 127 ;
+3. on l'abonne à la main au clean feed et on vérifie au moniteur ;
+4. on coupe la jambe bleue pour voir la protection ST 2022-7 à l'œuvre ;
+5. on rend la main au contrôleur NMOS.
+
+Le chef sait désigner l'onglet Technique ou Exploitation quand la cible est dans l'autre.
+
+Tests :
+
+- `tests/unit/exploitation.test.mjs` couvre :
+  - les saisies manuelles justes et fausses ;
+  - les adresses des cartes ;
+  - NMOS ;
+  - le réadressage d'un émetteur ;
+  - la sortie d'usine.
+- Le nouveau parcours est rejoué de bout en bout en test unitaire.
+- `tests/e2e/reseau-ops.mjs` passe par l'interface :
+  - connexion NMOS ;
+  - saisies manuelles ;
+  - sortie d'usine et remise en service ;
+  - vues PTP et NMOS ;
+  - parcours du chef.
+
 ## Ce que contient la v14 : une version à partager
 
 Pour donner le simulateur à un collègue sans passer par claude.ai, `npm run exe` produit un **kit de partage**,
@@ -408,7 +466,7 @@ npm run lint         # ESLint
 npm run typecheck    # TypeScript (navigateur + Node)
 npm test             # tests unitaires (node:test, ≈ 2 s)
 npm run check        # les quatre à la suite (ce que fait l'intégration continue)
-npm run test:e2e     # tests de bout en bout (Playwright, rendu logiciel : 21 suites, ≈ 55 min)
+npm run test:e2e     # tests de bout en bout (Playwright, rendu logiciel : 22 suites, ≈ 60 min)
 npm run serve:lan    # serveur réseau local (après la construction) : http://localhost:8080
 ```
 
@@ -432,7 +490,7 @@ node tools/shots.mjs dossier 1280 800 '["vision","hf"]'   # captures de postes
 | Fichier | Rôle |
 | --- | --- |
 | `main.js` | Point d'entrée : initialisation du monde et du car, événements de l'application, boucle principale |
-| `tutor/` | Chef de car : moteur des parcours (`engine.js`), lecture du réseau pour expliquer et vérifier (`net_helpers.js`), parcours réseau ST 2110 (`lessons/reseau.js`, `lessons/reseau_leaf.js`), présentation de chaque poste (`lessons/postes.js`) |
+| `tutor/` | Chef de car : moteur des parcours (`engine.js`), lecture du réseau pour expliquer et vérifier (`net_helpers.js`), parcours réseau ST 2110 (`lessons/reseau.js`, `lessons/reseau_leaf.js`, `lessons/reseau_ops.js`), présentation de chaque poste (`lessons/postes.js`) |
 | `ui/tutor_ui.js` | Panneau du chef de car : parcours proposés selon le poste, étapes, mise en évidence, commandes vers le terminal, voix |
 | `app/` | Application : vue et qualité graphique (`view.js`), joueur et déplacements (`player.js`), visée et interactions (`interact.js`), cadreur (`camop.js`), téléportation et postes (`teleport.js`), barre d'outils et d'état (`hud.js`), clavier / souris / tactile (`input.js`), écran d'accueil et lancement (`start.js`), diagnostic de performance (`perf.js`), profileur `?perf` (`profiler.js`) |
 | `data/` | Catalogues techniques : caméras, objectifs, liaisons, formats (`cameras.js`) ; positions et antennes du stade (`stadium.js`) ; HF COFDM (`rf.js`) ; exposition et lumières (`exposure.js`) ; équipes (`match.js`) |
@@ -466,7 +524,7 @@ node tools/shots.mjs dossier 1280 800 '["vision","hf"]'   # captures de postes
 | `review.js` | Points techniques à faire relire par le formateur |
 | `gfx.js` | Habillage (score, bandeaux, statistiques) |
 | `atelier.js` | Atelier de montage de la CAM 1 : pièces, ordre des opérations et prérequis, visée, fantômes, gestes maintenus, réglages à la molette, mise en service, rapport |
-| `ui/` | Session (`session_ui.js`), relecture (`review_ui.js`), réseau IP (`st_network.js`, `net_tools.js`, `net_course.js`), synoptiques (`synoptics.js`), plan du car (`truckmap.js`), postes (`stations.js`, `st_audio.js`, `commut.js`, `st_vision.js`, `st_evs.js`, `st_mixer.js`, `st_ipd.js`, `st_patch.js`), espace formateur (`config.js`), rapports (`report.js`), plan, guide, missions |
+| `ui/` | Session (`session_ui.js`), relecture (`review_ui.js`), réseau IP (`st_network.js` : onglet Technique, `net_ops.js` : onglet Exploitation, `net_tools.js`, `net_course.js`), synoptiques (`synoptics.js`), plan du car (`truckmap.js`), postes (`stations.js`, `st_audio.js`, `commut.js`, `st_vision.js`, `st_evs.js`, `st_mixer.js`, `st_ipd.js`, `st_patch.js`), espace formateur (`config.js`), rapports (`report.js`), plan, guide, missions |
 | `equipment/` | Visionneuse de matériel : appareils (`devices.js`), liste de câblage (`cabling.js`), rendu SVG et photos (`viewer.js`) |
 | `faults.js`, `exercises.js` | Simulateur de pannes, réalisateur virtuel et opérateur EVS automatique |
 

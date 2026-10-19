@@ -60,7 +60,7 @@ export function setMeasureSub(k) { if (k) MS.sub = k; }
 
 // ---------------- analyseur de flux ----------------
 function subStream(box, R) {
-  const rxs = Object.values(FAB.rx).filter((r) => FAB.res && FAB.res.rxState[r.id]);
+  const rxs = Object.values(FAB.rx).filter((r) => FAB.res && FAB.res.rxState[r.id] && FAB.flows[FAB.res.rxState[r.id].flow]);
   if (!rxs.find((r) => r.id === AN.rx) && rxs.length) selectRx(rxs[0].id);
   const sel = selectEl(rxs.map((r) => [r.id, `${r.label} ← ${FAB.flows[FAB.res.rxState[r.id].flow].label}`]), AN.rx, (v) => { selectRx(v); log('analyzer', { rx: v }); R.refresh(); });
   log('analyzer', { rx: AN.rx });

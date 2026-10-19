@@ -37,6 +37,7 @@ const SUITES = [
   ['interfaces', 'interfaces', [], 25],
   ['chef', 'chef', [], 20],
   ['fichier', 'fichier', [], 15],
+  ['reseau-ops', 'reseau-ops', [], 25],
 ];
 
 const args = process.argv.slice(2);

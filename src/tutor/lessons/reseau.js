@@ -4,6 +4,7 @@ import { FAB, markDirty, camPtpOk, videoGbps, writeMemory } from '../../net/fabr
 import { injectFault } from '../../faults.js';
 import { CFG, leafPlan, saved, rxSummary } from '../net_helpers.js';
 import { LESSON_LEAF } from './reseau_leaf.js';
+import { LESSON_GW } from './reseau_ops.js';
 
 // ----------------------------------------------------------------------------------
 // Parcours du chef de car pour le réseau ST 2110 : visite commentée, PTP, dépannage
@@ -297,6 +298,6 @@ LESSON_PTP.cleanup = () => { if (!FAB.gm.gm1.up) { FAB.gm.gm1.up = true; markDir
 LESSON_FIX.cleanupLabel = 'Réparer la panne de la CCU et enregistrer';
 LESSON_FIX.cleanup = (c) => { for (const color of ['red', 'blue']) { const n = nicOf(c, color); if (!n) continue; Object.assign(CFG(n.sw).ports[n.port], { mode: 'access', vlan: leafPlan(n.sw).vlan }); writeMemory(n.sw); } markDirty(); };
 
-export const NET_LESSONS = [LESSON_TOUR, LESSON_LEAF, LESSON_PTP, LESSON_FIX];
+export const NET_LESSONS = [LESSON_TOUR, LESSON_LEAF, LESSON_GW, LESSON_PTP, LESSON_FIX];
 // « fais-le pour moi » par défaut : taper les commandes de l'étape
 for (const l of NET_LESSONS) for (const s of l.steps) if (s.cli && s.sw && !s.auto) s.auto = (c) => c.io.cli(s.sw, typeof s.cli === 'function' ? s.cli(c) : s.cli);

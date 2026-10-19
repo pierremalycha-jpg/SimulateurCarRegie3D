@@ -86,11 +86,18 @@ export const TUTOR = {
 };
 
 // ---------------- entrées / sorties par défaut (sans interface) ----------------
-const headView = { station: null, tab: null, sub: null, sw: null, port: null, rx: null };
+const headView = { station: null, mode: 'tech', tab: null, sub: null, sw: null, port: null, rx: null, opsView: null, opsDev: null, opsRx: null, opsSrc: null, opsMode: null };
 export function headlessIO(runCli) {
   return {
     cli(sw, lines) { for (const l of lines) runCli(sw, l); },
-    go(g) { if (g.station) headView.station = g.station; for (const k of ['tab', 'sub', 'sw', 'port', 'rx']) if (g[k]) headView[k] = g[k]; if (g.tab) emit('netlog', { type: 'tab', tab: g.tab }); },
+    go(g) {
+      if (g.station) headView.station = g.station;
+      // poste Réseau IP : onglet Exploitation (vue, appareil, récepteur, source) ou onglet Technique
+      if (g.tab === 'ops') { headView.mode = 'ops'; for (const [k, h] of [['view', 'opsView'], ['dev', 'opsDev'], ['rx', 'opsRx'], ['src', 'opsSrc']]) if (g[k]) headView[h] = g[k]; emit('netlog', { type: 'mode', mode: 'ops' }); return; }
+      if (g.tab) headView.mode = 'tech';
+      for (const k of ['tab', 'sub', 'sw', 'port', 'rx']) if (g[k]) headView[k] = g[k];
+      if (g.tab) emit('netlog', { type: 'tab', tab: g.tab });
+    },
     view: () => headView,
     log(type, o = {}) { emit('netlog', { type, ...o }); },
   };

@@ -91,7 +91,7 @@ export function updateAnalyzer(dt) {
   }
   // compteurs de toutes les réceptions (ST 2022-7)
   for (const [rid, s] of Object.entries(R.rxState)) {
-    const f = FAB.flows[s.flow]; const g = flowGeom(f); const C = (AN.cnt[rid] = AN.cnt[rid] || { red: 0, blue: 0, lostRed: 0, lostBlue: 0, repaired: 0, lost: 0, flow: s.flow });
+    const f = FAB.flows[s.flow]; if (!f) continue; const g = flowGeom(f); const C = (AN.cnt[rid] = AN.cnt[rid] || { red: 0, blue: 0, lostRed: 0, lostBlue: 0, repaired: 0, lost: 0, flow: s.flow });
     if (C.flow !== s.flow) Object.assign(C, { red: 0, blue: 0, lostRed: 0, lostBlue: 0, repaired: 0, lost: 0, flow: s.flow });
     const lr = s.per.red.ok ? s.per.red.loss || 0 : 1, lb = s.per.blue.ok ? s.per.blue.loss || 0 : 1;
     const n = g.pps * step;
@@ -111,7 +111,7 @@ export function resetCounters(rx) { delete AN.cnt[rx]; }
 // ---------------- mesures d'une réception ----------------
 export function streamMetrics(rx) {
   const R = FAB.res; if (!R) return null;
-  const s = R.rxState[rx]; if (!s) return null;
+  const s = R.rxState[rx]; if (!s || !FAB.flows[s.flow]) return null;
   const f = FAB.flows[s.flow]; const g = flowGeom(f);
   const sd = FAB.devices[f.dev]; const sdPtp = R.devPtp[sd.id];
   const out = { flow: f, geom: g, per: {}, sample: {} };
@@ -163,7 +163,7 @@ export function flowsOnPort(swId, port) {
     const p = s.per[c]; if (!p.ok) continue;
     for (const k of p.keys) {
       const parts = k.split(':'); const dir = parts.pop(); const id = parts.join(':');
-      if (peer.kind === 'dev' && id === `${peer.dev.id}:${c}` && peer.color === c) add(dir === 'up' ? 'in' : 'out', s.flow, c, rid);
+      if (peer.kind === 'dev' && id === `${peer.dev.id}:${c}` && peer.color === c) add(dir === 'up' ? 'in' : 'out', p.flow || s.flow, c, rid);
       if (peer.kind === 'link' && id === peer.link.id) add(peer.side === 'a' ? (dir === 'up' ? 'out' : 'in') : (dir === 'up' ? 'in' : 'out'), s.flow, c, rid);
     }
   }
