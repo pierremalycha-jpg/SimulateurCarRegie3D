@@ -50,7 +50,7 @@ function add(spk, text, prio = 1, maxAge = 3, opts = {}) {
   CMT.queue.push({ spk, text, prio, t: now, maxAge, delay: opts.delay || 0, rate: opts.rate, pitch: opts.pitch });
 }
 const ttsBusy = () => { try { return CMT.tts && window.speechSynthesis && (window.speechSynthesis.speaking || window.speechSynthesis.pending); } catch (e) { return false; } };
-function interrupt() { if (window.speechSynthesis && CMT.tts) { try { window.speechSynthesis.cancel(); } catch (e) { /* rien */ } } if (CMT.cur) { setVoiceLevel(CMT.cur.spk, -90); CMT.cur = null; } }
+function interrupt() { if (window.speechSynthesis && CMT.tts && !S.chefSpeaking) { try { window.speechSynthesis.cancel(); } catch (e) { /* rien */ } } if (CMT.cur) { setVoiceLevel(CMT.cur.spk, -90); CMT.cur = null; } }
 function duration(text, rate) { return 0.45 + text.split(/\s+/).length * 0.34 / (rate || 1); }
 function sayNow(q) {
   const sp = SPK[q.spk]; const rate = q.rate || sp.rate;
@@ -59,7 +59,8 @@ function sayNow(q) {
   CMT.cur = { ...q, start: S.time, until: S.time + dur, vol };
   CMT.log.push({ t: S.time, clock: M.clock, spk: q.spk, text: q.text, heard: vol > 0.02 && !AU.muted, prio: q.prio, rate: q.rate, pitch: q.pitch, remote: !!q.remote }); if (CMT.log.length > 40) CMT.log.shift();
   emit('commentary', CMT.log[CMT.log.length - 1]);
-  if (!(window.speechSynthesis && window.SpeechSynthesisUtterance) || vol <= 0.02) return;
+  // pendant que le chef de car parle, les commentaires restent en texte (une seule synthèse vocale à la fois)
+  if (!(window.speechSynthesis && window.SpeechSynthesisUtterance) || vol <= 0.02 || S.chefSpeaking) return;
   const go = () => {
     try {
       const u = new SpeechSynthesisUtterance(q.text); u.lang = 'fr-FR'; u.rate = rate; u.pitch = q.pitch || sp.pitch; u.volume = clamp(vol, 0, 1);

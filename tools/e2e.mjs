@@ -35,6 +35,7 @@ const SUITES = [
   ['parcours-ip', 'parcours-ip', ['HD'], 25],
   ['mobile', 'mobile', [], 15],
   ['interfaces', 'interfaces', [], 25],
+  ['chef', 'chef', [], 20],
 ];
 
 const args = process.argv.slice(2);

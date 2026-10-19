@@ -62,7 +62,24 @@ export function buildNetwork(body, arg, ctx) {
   }
   R.go = (tab, o = {}) => { const { msub, keepCourse: _keep, ...rest } = o; for (const k in rest) if (rest[k] !== undefined) V[k] = rest[k]; if (msub) setMeasureSub(msub); show(tab); };
   show(V.tab);
-  return { update() { render(false); if (R.live) R.live(); } };
+  CUR = R;
+  return { update() { render(false); if (R.live) R.live(); }, close() { if (CUR === R) CUR = null; } };
+}
+// ---------------- pour le chef de car : où en est l'écran, y aller, taper des commandes ----------------
+let CUR = null;
+export const netView = () => ({ tab: V.tab, sub: V.sub, sw: V.sw, port: V.port, rx: V.rx });
+export function netGo(tab, o = {}) { if (CUR) CUR.go(tab || V.tab, o); }
+// tape des commandes dans le terminal du commutateur, comme le stagiaire (elles restent dans l'historique)
+export function netType(id, lines) {
+  if (!FAB.switches[id]) return;
+  const T = termLog(id);
+  for (const c of lines) {
+    T.lines.push({ t: 'cmd', s: cliPrompt(T.s) + ' ' + c });
+    T.s.lastCmd = null;
+    const r = runCli(T.s, c); if (r) T.lines.push({ t: r.startsWith('%') ? 'err' : 'out', s: r });
+    log('cli', { sw: id, pat: T.s.lastCmd, raw: c, ok: !!T.s.lastCmd && !(r || '').startsWith('%') });
+  }
+  if (CUR) CUR.refresh();
 }
 function courseKey() {
   let k = (NC.active || '') + '|' + Object.keys(NC.answers).length + '|' + (NC.done ? NC.done.id : '') + '|' + (NC.hints[NC.active] || 0);
@@ -122,7 +139,7 @@ function tabTopo(box, R) {
   const svg = sv('svg', { viewBox: `0 0 1400 ${H}`, class: 'net-topo', role: 'img', 'aria-label': 'Topologie spine-leaf des réseaux rouge et bleu' });
   svg.append(sv('rect', { x: 0, y: 0, width: 1400, height: H, fill: '#0b0e11' }));
   svg.append(sv('text', { x: 14, y: 18, class: 'nt-h red' }, 'RÉSEAU ROUGE (A)'), sv('text', { x: 14, y: H - 10, class: 'nt-h blue' }, 'RÉSEAU BLEU (B)'));
-  const click = (g, sel) => { g.style.cursor = 'pointer'; g.addEventListener('click', () => { if (sel.kind === 'sw' && V.sel && V.sel.id === sel.id) { R.go('switch', { sw: sel.id }); return; } V.sel = sel; log('sel', { kind: sel.kind, id: sel.id, role: sel.kind === 'sw' ? FAB.switches[sel.id].role : null }); R.refresh(); }); };
+  const click = (g, sel) => { g.setAttribute('data-tut', sel.kind === 'sw' ? 'sw:' + FAB.switches[sel.id].role : sel.kind); g.style.cursor = 'pointer'; g.addEventListener('click', () => { if (sel.kind === 'sw' && V.sel && V.sel.id === sel.id) { R.go('switch', { sw: sel.id }); return; } V.sel = sel; log('sel', { kind: sel.kind, id: sel.id, role: sel.kind === 'sw' ? FAB.switches[sel.id].role : null }); R.refresh(); }); };
   // uplinks
   for (const l of FAB.links) {
     const red = l.color === 'red'; const st = linkStyle(l);
@@ -247,12 +264,12 @@ function tabSwitch(box, R) {
     list.append(el('div', { class: 'net-swgrp ' + String(t).toLowerCase() }, t));
     for (const id of ids) {
       const sw = FAB.switches[id]; const dirty = JSON.stringify(sw.running) !== JSON.stringify(sw.startup);
-      list.append(el('button', { class: 'net-swbtn' + (id === V.sw ? ' on' : ''), onclick: () => { V.sw = id; V.port = sw.hw[0].name; R.refresh(); } }, el('span', { class: dotCls(swLevel(sw)) }), sw.running.hostname, dirty ? el('i', { title: 'Configuration non enregistrée' }, '●') : null));
+      list.append(el('button', { class: 'net-swbtn' + (id === V.sw ? ' on' : ''), 'data-sw': id, onclick: () => { V.sw = id; V.port = sw.hw[0].name; log('swsel', { sw: id }); R.refresh(); } }, el('span', { class: dotCls(swLevel(sw)) }), sw.running.hostname, dirty ? el('i', { title: 'Configuration non enregistrée' }, '●') : null));
     }
   }
   const main = el('div', { class: 'net-swmain' }, switchFrame(R));
   const subs = [['ports', 'Interfaces'], ['vlan', 'VLAN · SVI'], ['route', 'Routage'], ['mcast', 'Multicast'], ['ptpc', 'PTP'], ['qos', 'QoS'], ['cfg', 'Configuration'], ['term', 'Terminal (CLI)']];
-  const st = el('div', { class: 'tabs' }, ...subs.map(([k, l]) => el('button', { class: 'tab' + (V.sub === k ? ' on' : ''), onclick: () => { V.sub = k; R.refresh(); } }, l)));
+  const st = el('div', { class: 'tabs' }, ...subs.map(([k, l]) => el('button', { class: 'tab' + (V.sub === k ? ' on' : ''), 'data-sub': k, onclick: () => { V.sub = k; log('sub', { sub: k }); R.refresh(); } }, l)));
   const sub = el('div', { class: 'list' });
   main.append(st, sub);
   ({ ports: subPorts, vlan: subVlan, route: subRoute, mcast: subMcast, ptpc: subPtp, qos: subQos, cfg: subCfg, term: subTerm })[V.sub](sub, R);
@@ -552,7 +569,7 @@ function tabFlows(box, R) {
     const s = res.rxState[rx.id]; const f = s && FAB.flows[s.flow];
     const cell = (c) => { if (!s) return el('td', {}, '—'); const p = s.per[c]; return el('td', { class: p.ok ? (p.loss > 0 ? 'err' : 'ok') : 'err', title: p.reason || '' }, p.ok ? (p.loss > 0 ? `pertes ${fmt(p.loss * 100, 0)} %` : 'OK') : p.refused ? 'refusé' : 'NON'); };
     const state = !s ? ['', 'non connecté'] : !s.ok ? ['err', 'RIEN REÇU'] : s.loss > 0 ? ['err', `pertes ${fmt(s.loss * 100, 0)} %`] : !s.protected ? ['warn', 'sans protection'] : ['ok', 'protégé 2022-7'];
-    tb.append(el('tr', { class: V.rx === rx.id ? 'sel' : '', onclick: () => { V.rx = rx.id; log('rx', { rx: rx.id }); R.refresh(); } }, el('td', {}, rx.label), el('td', {}, f ? f.label : '—'), el('td', { class: 'mono' }, f ? f.groups.red : ''), cell('red'), cell('blue'), el('td', { class: state[0] }, state[1]), el('td', { class: res.reg[rx.dev] ? '' : 'err' }, res.reg[rx.dev] ? 'IS-04' : 'absent')));
+    tb.append(el('tr', { class: V.rx === rx.id ? 'sel' : '', 'data-rx': rx.id, onclick: () => { V.rx = rx.id; log('rx', { rx: rx.id }); R.refresh(); } }, el('td', {}, rx.label), el('td', {}, f ? f.label : '—'), el('td', { class: 'mono' }, f ? f.groups.red : ''), cell('red'), cell('blue'), el('td', { class: state[0] }, state[1]), el('td', { class: res.reg[rx.dev] ? '' : 'err' }, res.reg[rx.dev] ? 'IS-04' : 'absent')));
   }
   const det = el('div', { class: 'hwpanel' });
   const s = V.rx && res.rxState[V.rx];
@@ -571,7 +588,7 @@ function tabFlows(box, R) {
         kv.append(el('dt', {}, `Chemin ${CLABEL[c]} (${p.group || f.groups[c]})`), el('dd', { class: p.ok && !(p.loss > 0) ? '' : 'err' }, path));
       }
       kv.append(el('dt', {}, 'Bilan'), el('dd', { class: !s.ok || s.loss > 0 ? 'err' : !s.protected ? 'warn' : '' }, s.reason || 'reçu sur les deux réseaux : le récepteur fusionne les deux flux paquet par paquet (ST 2022-7), une perte sur l\'un est comblée par l\'autre.'));
-      det.append(kv, el('div', { class: 'hwrow' }, el('button', { class: 'btn small primary', onclick: () => { selectRx(V.rx); log('analyzer', { rx: V.rx }); R.go('meas', { msub: 'stream' }); } }, 'Analyser ce flux'), el('button', { class: 'btn small', onclick: () => openSdp(f.id) }, 'Voir le SDP de l\'émetteur'), ...COLORS.map((c) => el('button', { class: 'btn small', onclick: () => R.go('switch', { sw: rd.nics[c].sw, port: rd.nics[c].port, sub: 'mcast' }) }, `Multicast sur ${host(rd.nics[c].sw)}`))));
+      det.append(kv, el('div', { class: 'hwrow' }, el('button', { class: 'btn small primary', 'data-tut': 'analyze', onclick: () => { selectRx(V.rx); log('analyzer', { rx: V.rx }); R.go('meas', { msub: 'stream' }); } }, 'Analyser ce flux'), el('button', { class: 'btn small', 'data-tut': 'sdp', onclick: () => openSdp(f.id) }, 'Voir le SDP de l\'émetteur'), ...COLORS.map((c) => el('button', { class: 'btn small', onclick: () => R.go('switch', { sw: rd.nics[c].sw, port: rd.nics[c].port, sub: 'mcast' }) }, `Multicast sur ${host(rd.nics[c].sw)}`))));
     }
   } else det.append(el('h3', {}, 'Détail'), el('p', { class: 'note' }, 'Cliquez une réception pour voir le chemin suivi sur chaque réseau.'));
   const tot = COLORS.map((c) => { let l = 0, cap = 0; for (const x of FAB.links) if (x.color === c && res.up[x.id].up) { l += ((res.linkLoad[x.id + ':up'] || {}).load || 0); cap += res.up[x.id].speed; } return `${CLABEL[c]} : ${fmtG(l)} montants sur ${cap} Gb/s d'uplinks`; });
@@ -580,6 +597,7 @@ function tabFlows(box, R) {
 }
 
 // ---------------- PTP ----------------
+const tutMark = (node, id) => { node.setAttribute('data-tut', id); return node; };
 function tabPtp(box, R) {
   const res = FAB.res;
   const gms = el('div', { class: 'panelgrid' });
@@ -587,7 +605,7 @@ function tabPtp(box, R) {
     const gm = FAB.gm['gm' + g];
     const set = (o, why) => { Object.assign(gm, o); markDirty(); explain(why); R.refresh(); };
     gms.append(el('div', { class: 'hwpanel' }, el('h3', {}, `Grand maître ${g} · ${clockId('gm' + g)}`),
-      chk('En service', gm.up, (v) => set({ up: v }, v ? `Grand maître ${g} en service : il annonce sa qualité ; le BMCA le réélit s'il est le meilleur.` : `Grand maître ${g} coupé : après 3 Announce manqués (≈ 0,75 s en ST 2059-2), les horloges frontières élisent le meilleur grand maître restant.`)),
+      tutMark(chk('En service', gm.up, (v) => set({ up: v }, v ? `Grand maître ${g} en service : il annonce sa qualité ; le BMCA le réélit s'il est le meilleur.` : `Grand maître ${g} coupé : après 3 Announce manqués (≈ 0,75 s en ST 2059-2), les horloges frontières élisent le meilleur grand maître restant.`)), 'gm' + g + '-up'),
       chk('GPS verrouillé', gm.gps, (v) => set({ gps: v }, v ? 'GPS retrouvé : clockClass 6.' : 'GPS perdu : le grand maître passe en holdover (clockClass 7). Il reste utilisable, mais un grand maître encore verrouillé GPS (classe 6) sera préféré à priority1 égal.')),
       fld('priority1', numIn(gm.priority1, 0, 255, (v) => set({ priority1: v }, `priority1 = ${v}. C'est le premier critère du BMCA : le plus petit gagne, avant même la qualité d'horloge.`))),
       fld('priority2', numIn(gm.priority2, 0, 255, (v) => set({ priority2: v }, `priority2 = ${v} (départage à qualité égale).`)))));

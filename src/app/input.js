@@ -1,5 +1,5 @@
 // @ts-check
-import { S, on } from '../state.js';
+import { S, on, emit } from '../state.js';
 import { el, clamp } from '../util.js';
 import { AT, atelierInput, atelierWheel } from '../atelier.js';
 import { $, toast, modal, openInfo } from '../ui/common.js';
@@ -24,6 +24,8 @@ function onKeyDown(e) {
   if (modal.isOpen) { if (e.code === 'Escape') modal.close(); return; }
   if (S.mode === 'start') return;
   if (isTyping(e) && e.code !== 'Escape') return;
+  // J : le chef de car, depuis n'importe où
+  if (e.code === 'KeyJ' && !e.repeat && !e.ctrlKey && !e.metaKey) { emit('chef'); e.preventDefault(); return; }
   KEYS[e.code] = true;
   if (S.mode === 'station') {
     if (e.code === 'Escape') { closeStation(); e.preventDefault(); return; }

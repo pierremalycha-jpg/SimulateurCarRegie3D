@@ -48,6 +48,8 @@ const NOISE = /fonts\.g|ERR_FAILED|net::/; // polices bloquées, serveur réseau
 export async function openPage(browser, o = {}) {
   const { viewport = { width: 1280, height: 800 }, query = 'lite', id = '', errors = [], mobile = false } = o;
   const page = await browser.newPage({ viewport, ...(mobile ? { hasTouch: true, isMobile: true, deviceScaleFactor: 1 } : {}) });
+  // rendu logiciel lent et machine partagée : les actions et captures attendent jusqu'à 3 min
+  page.setDefaultTimeout(180000);
   const tag = id ? id + ': ' : '';
   page.on('console', (m) => { if (m.type() === 'error' && !NOISE.test(m.text())) errors.push(tag + m.text()); });
   page.on('pageerror', (e) => errors.push(tag + 'PAGEERROR: ' + e.message + '\n' + e.stack));

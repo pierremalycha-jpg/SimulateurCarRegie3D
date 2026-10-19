@@ -1,5 +1,5 @@
 // @ts-check
-import { S } from '../state.js';
+import { S, emit } from '../state.js';
 import { el, tc, mmss } from '../util.js';
 import { TEAMS } from '../data/match.js';
 import { TRUCK, standAt } from '../world.js';
@@ -21,6 +21,7 @@ import { teleportMenu } from './teleport.js';
 // Affichage tête haute : barre d'outils, barre d'état (timecode, score, PGM / PVW, alarmes,
 // images par seconde) et lieu où l'on se trouve.
 // ----------------------------------------------------------------------------------
+const chefBtn = (btn) => { btn.classList.add('chef-btn'); return btn; };
 export function buildToolbar() {
   const tb = $('#toolbar'); tb.innerHTML = '';
   // groupes : se déplacer · la régie · l'aide · l'équipe et l'écoute
@@ -36,6 +37,7 @@ export function buildToolbar() {
     b('Matériel', 'K', () => openEquipmentIndex()),
     sep(),
     b('Guide', 'G', () => openGuide('missions')),
+    chefBtn(b('Chef de car', 'J', () => emit('chef'), 'tb-chef', 'Le chef de car vous explique le poste et vous guide pas à pas (J)')),
     sep(),
     b('Retour PGM', 'M', () => { $('#minimon').hidden = !$('#minimon').hidden; }),
     b(AU.muted ? 'Son coupé' : 'Son', null, (e) => { startAudio(); AU.muted = !AU.muted; applyFaders(); e.currentTarget.querySelector('.tl').textContent = AU.muted ? 'Son coupé' : 'Son'; }),
@@ -80,7 +82,7 @@ export function updateStatus(dt) {
   setText($('#where'), zone[0]); setText($('#where2'), zone[1]);
   const tbt = $('#tb-truck'); if (tbt && tbt.hidden === S.inTruck) tbt.hidden = !S.inTruck;
 }
-function whereAmI() {
+export function whereAmI() {
   const p = PL.pos;
   if (S.inTruck) {
     const lx = p.x - TRUCK.cx;

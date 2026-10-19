@@ -292,6 +292,49 @@ Aucune fonction nouvelle pour le stagiaire : la v12 rend le simulateur plus sûr
     (`src/content/`).
 - **Optimisations mesurées** (profileur intégré : ajouter `?perf` à l'adresse) : voir « Performances » plus bas.
 
+## Ce que contient la v13 : le chef de car
+
+Un tuteur, **Olivier, chef de car**, accompagne le stagiaire poste par poste. On l'appelle à tout moment :
+bouton « Chef de car » de la barre d'outils, bouton « Chef de car » en tête de chaque poste, ou touche **J**.
+
+- **Il sait où l'on est** et propose d'abord ce qui concerne le poste ouvert.
+- **Il explique, puis demande un geste**, et vérifie sur l'état réel du simulateur que c'est fait. Ensuite il
+  commente le résultat : ce qui a changé et pourquoi.
+- À chaque étape, quatre aides :
+  - « Montre-moi » met en évidence l'élément à utiliser (onglet, bouton, port, case, ligne d'un tableau) ;
+  - « Emmène-moi » ouvre le bon poste et le bon onglet ;
+  - les indices sont progressifs ;
+  - « Fais-le pour moi » fait le geste devant le stagiaire : les commandes s'affichent dans le terminal.
+- **Les commandes à taper sont cliquables** : elles vont dans le terminal du commutateur, il ne reste qu'à
+  valider. Le panneau ne bloque pas le poste : on lit et on agit en même temps. Il peut être déplacé ou réduit,
+  et se place en bas de l'écran sur mobile.
+- **Voix** (facultative) : le chef lit ses explications ; pendant ce temps, les commentaires du match restent
+  en texte.
+- Les parcours terminés, les aides et les indices utilisés sont **enregistrés** dans la progression du
+  stagiaire.
+- Si l'on quitte un parcours en cours de route, le chef propose de remettre le réseau en état.
+
+Parcours guidés, en commençant par le **réseau ST 2110** (dans un car SDI, le chef propose de passer le car en
+IP) :
+
+| Parcours | Ce qu'on y fait |
+| --- | --- |
+| Le réseau du car en 15 minutes | Visite commentée : pourquoi l'IP, rouge et bleu (ST 2022-7), spines et leaves, bande passante, plan d'adressage, un flux de bout en bout, lecture d'un SDP, PTP, analyseur, diagnostic |
+| Mettre en service une leaf neuve | La leaf caméras rouge est remplacée par un commutateur en configuration usine. On la configure couche par couche : vérification LLDP, nom, VLAN, ports d'accès, SVI, routage, uplinks /31 en 100G RS-FEC, loopback et OSPF (voisins FULL), SSM, PIM et IGMPv3, retour de la protection 2022-7, PTP en horloge frontière, QoS DSCP, diagnostic et `write memory` |
+| PTP : qui donne l'heure ? | BMCA, `show ptp parent`, coupure du grand maître 1 en plein direct (le 2 est élu, les caméras restent verrouillées), retour, horloge pirate, piège priority1 / classe d'horloge |
+| Dépannage : une caméra a disparu | Panne réelle injectée. On applique la méthode : délimiter (une source, les deux réseaux), diagnostic, couche 1 puis couche 2, réparer sur le rouge puis sur le bleu, enregistrer |
+
+Pour **chaque poste**, « Présente-moi ce poste » reprend sa fiche (rôle, matériel, déroulé, conseils).
+
+Les parcours sont des données (`src/tutor/lessons/`) interprétées par un moteur sans affichage
+(`src/tutor/engine.js`). Un test unitaire **rejoue chaque parcours de bout en bout** sur le modèle réseau, avec
+les seules commandes données par le chef : une commande fausse ou une étape impossible à valider fait échouer le
+test.
+
+Au passage, le terminal des commutateurs accepte les commandes d'exploitation (`show`, `write`, `configure`…)
+depuis les modes de configuration, comme sous Arista EOS. L'invite d'une plage de ports s'écrit aussi comme sous
+EOS (`config-if-Et1-7,9-11`).
+
 ## Performances
 
 Le profileur intégré (ajouter `?perf` à l'adresse) affiche le temps de chaque sous-système de la boucle
@@ -330,7 +373,7 @@ npm run lint         # ESLint
 npm run typecheck    # TypeScript (navigateur + Node)
 npm test             # tests unitaires (node:test, ≈ 2 s)
 npm run check        # les quatre à la suite (ce que fait l'intégration continue)
-npm run test:e2e     # tests de bout en bout (Playwright, rendu logiciel : 19 suites, ≈ 50 min)
+npm run test:e2e     # tests de bout en bout (Playwright, rendu logiciel : 20 suites, ≈ 55 min)
 npm run serve:lan    # serveur réseau local (après la construction) : http://localhost:8080
 ```
 
@@ -354,6 +397,8 @@ node tools/shots.mjs dossier 1280 800 '["vision","hf"]'   # captures de postes
 | Fichier | Rôle |
 | --- | --- |
 | `main.js` | Point d'entrée : initialisation du monde et du car, événements de l'application, boucle principale |
+| `tutor/` | Chef de car : moteur des parcours (`engine.js`), lecture du réseau pour expliquer et vérifier (`net_helpers.js`), parcours réseau ST 2110 (`lessons/reseau.js`, `lessons/reseau_leaf.js`), présentation de chaque poste (`lessons/postes.js`) |
+| `ui/tutor_ui.js` | Panneau du chef de car : parcours proposés selon le poste, étapes, mise en évidence, commandes vers le terminal, voix |
 | `app/` | Application : vue et qualité graphique (`view.js`), joueur et déplacements (`player.js`), visée et interactions (`interact.js`), cadreur (`camop.js`), téléportation et postes (`teleport.js`), barre d'outils et d'état (`hud.js`), clavier / souris / tactile (`input.js`), écran d'accueil et lancement (`start.js`), diagnostic de performance (`perf.js`), profileur `?perf` (`profiler.js`) |
 | `data/` | Catalogues techniques : caméras, objectifs, liaisons, formats (`cameras.js`) ; positions et antennes du stade (`stadium.js`) ; HF COFDM (`rf.js`) ; exposition et lumières (`exposure.js`) ; équipes (`match.js`) |
 | `content/` | Contenus pédagogiques : fiches de poste (`stations.js`), glossaire (`glossary.js`), chapitres du guide (`guide.js`), commandes (`controls.js`) |

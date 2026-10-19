@@ -22,7 +22,13 @@ export function cliPrompt(s) {
   if (s.mode === 'ospf') return h + '(config-router-ospf)#';
   return h + '#';
 }
-const shortIf = (names) => (names.length > 1 ? names.map((n) => n.replace('Ethernet', 'Et')).join(',').slice(0, 24) : names[0].replace('Ethernet', 'Et').replace('Vlan', 'Vl').replace('Loopback', 'Lo'));
+// nom court pour l'invite : une plage de ports s'écrit comme sous EOS (Et1-7,9-11)
+function shortIf(names) {
+  if (names.length === 1) return names[0].replace('Ethernet', 'Et').replace('Vlan', 'Vl').replace('Loopback', 'Lo');
+  const n = names.map((x) => +x.replace(/\D/g, '')).sort((a, b) => a - b); const parts = [];
+  for (let i = 0; i < n.length; i++) { let j = i; while (j + 1 < n.length && n[j + 1] === n[j] + 1) j++; parts.push(i === j ? String(n[i]) : `${n[i]}-${n[j]}`); i = j; }
+  return 'Et' + parts.join(',');
+}
 export const ifShort = (n) => n.replace('Ethernet', 'Et').replace('Vlan', 'Vl').replace('Loopback', 'Lo');
 
 // ---------------- analyse des noms d'interfaces ----------------
@@ -265,12 +271,15 @@ function findCmd(list, toks, sw) {
   if (cands.length) return { err: '% Commande incomplète' };
   return { err: '% Entrée invalide' };
 }
+// comme sous EOS, les commandes d'exploitation (show, write, configure, ping…) restent
+// utilisables depuis les modes de configuration
+const EXEC_IN_CONFIG = EXEC.filter((c) => c.p[0] !== 'exit');
 function listFor(s) {
   if (s.mode === 'exec') return EXEC;
-  if (s.mode === 'config') return [...CONFIG, ...SHOW];
-  if (s.mode === 'if') return [...IF, ...CONFIG, ...SHOW];
-  if (s.mode === 'vlan') return [...VLANM, ...CONFIG, ...SHOW];
-  if (s.mode === 'ospf') return [...OSPFM, ...CONFIG, ...SHOW];
+  if (s.mode === 'config') return [...CONFIG, ...EXEC_IN_CONFIG];
+  if (s.mode === 'if') return [...IF, ...CONFIG, ...EXEC_IN_CONFIG];
+  if (s.mode === 'vlan') return [...VLANM, ...CONFIG, ...EXEC_IN_CONFIG];
+  if (s.mode === 'ospf') return [...OSPFM, ...CONFIG, ...EXEC_IN_CONFIG];
   return EXEC;
 }
 const tokenize = (line) => joinIfTokens(line.trim().split(/\s+/).filter(Boolean));
@@ -474,16 +483,22 @@ function l3Neighbors(sw) {
   }
   return out;
 }
-function showOspf(sw) {
-  if (!sw.running.ospf.enabled) return '% OSPF n\'est pas configuré';
-  const rows = [];
+// voisins OSPF vus par un commutateur : [{ port, state (FULL, EXSTART, INIT, DOWN), other, ip, j }]
+export function ospfNeighbors(sw) {
+  const out = [];
+  if (!sw.running.ospf.enabled) return out;
   for (const n of l3Neighbors(sw)) {
     if (!n.st.up) continue;
     const pa = sw.running.ports[n.port];
     if (!pa.ospf || !n.other.running.ospf.enabled || !n.other.running.ports[n.otherPort].ospf || !sw.running.ipRouting || !n.other.running.ipRouting) continue;
     const state = n.st.ospf === 'FULL' ? 'FULL' : /MTU/.test(n.st.ospf) ? 'EXSTART' : /même/.test(n.st.ospf) ? 'INIT' : 'DOWN';
-    rows.push([n.other.running.ospf.routerId || n.other.loopback, '1', 'default', '0', state, '00:00:3' + (n.l.j + 2), n.ip, ifShort(n.port)]);
+    out.push({ port: n.port, state, other: n.other, ip: n.ip, j: n.l.j });
   }
+  return out;
+}
+function showOspf(sw) {
+  if (!sw.running.ospf.enabled) return '% OSPF n\'est pas configuré';
+  const rows = ospfNeighbors(sw).map((n) => [n.other.running.ospf.routerId || n.other.loopback, '1', 'default', '0', n.state, '00:00:3' + (n.j + 2), n.ip, ifShort(n.port)]);
   for (const id of ['gm1', 'gm2']) { const d = FAB.devices[id]; for (const c of COLORS) if (d.nics[c].sw === sw.id) { /* les grands maîtres ne font pas d'OSPF : sous-réseau connecté */ } }
   return table(['Neighbor ID', 'Inst', 'VRF', 'Pri', 'State', 'Dead Time', 'Address', 'Interface'], rows, [12, 4, 7, 3, 8, 9, 15, 9]);
 }

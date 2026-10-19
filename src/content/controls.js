@@ -10,6 +10,7 @@ export const CONTROLS_HELP = [
   ['P', 'Plan des caméras (vue de dessus)'],
   ['T', 'Se téléporter (car, terrain, passerelle…)'],
   ['G', 'Guide et missions'],
+  ['J', 'Chef de car : explications du poste et parcours guidés pas à pas'],
   ['M', 'Moniteur retour PGM (coin de l\'écran)'],
   ['1 à 9 · 0', 'Commuter le mélangeur partout (mode DIRECT : à l\'antenne ; mode PRESET : au bus B, puis Entrée = CUT) · B : changer de mode'],
   ['K', 'Matériel du car : faces avant/arrière, connecteurs, raccordements'],
