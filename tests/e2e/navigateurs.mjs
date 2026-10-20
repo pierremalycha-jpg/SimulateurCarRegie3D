@@ -69,6 +69,7 @@ T.check('diagnostic : version, navigateur, chef, aucune erreur', d0.includes(`Ve
 await ev(() => { const x = document.querySelector('#modal .x'); if (x) x.click(); });
 
 // erreurs : un écouteur d'événement, une image de la boucle de rendu, une erreur non rattrapée
+const errsBefore = T.errors.length;
 await ev(() => { window.__dbg.on('essai-diag', () => { throw new Error('essai : écouteur'); }); window.__dbg.emit('essai-diag'); });
 T.check('erreur d\'un écouteur : bandeau à l\'écran', await until(page, () => { const b = document.getElementById('diagbar'); return !!b && !b.hidden && /écouteur/.test(b.textContent); }, null, 5000));
 await ev(() => { const c = window.__dbg.S.cams[0]; c.__up = c.update; c.update = () => { throw new Error('essai : image'); }; });
@@ -91,8 +92,8 @@ await ev(() => document.getElementById('essai-clic').remove());
 await page.locator('#diagbar button', { hasText: 'Copier le diagnostic' }).click();
 T.check('« Copier le diagnostic » répond', await until(page, () => /Copié|Sélectionné/.test(document.querySelector('#diagbar .btn.primary')?.textContent || ''), null, 5000));
 await shot('03-bandeau');
-// ces erreurs sont voulues : on les retire du bilan
-for (let i = T.errors.length - 1; i >= 0; i--) if (/essai : /.test(T.errors[i])) T.errors.splice(i, 1);
+// ces erreurs sont voulues : on les retire du bilan (Firefox écrit seulement « Error » dans la console)
+for (let i = T.errors.length - 1; i >= errsBefore; i--) if (/essai : |^(Uncaught )?Error$/.test(T.errors[i].trim())) T.errors.splice(i, 1);
 
 // programme qui ne démarre pas (erreur de syntaxe) : écran de secours avec le diagnostic
 const errs2 = [];
