@@ -35,6 +35,14 @@ const chefText = () => ev(() => document.querySelector('#chef')?.textContent || 
 T.check('programme démarré, pas d\'écran de secours', await ev(() => !!window.__carReady && document.getElementById('err').hidden));
 T.check('version affichée sur la feuille de service', (await ev(() => document.getElementById('stversion')?.textContent || '')).includes(VERSION));
 
+// le mur des lieux : le car en service, les autres en préparation ; un écran ouvre « Ce qui se prépare »
+T.check('mur des lieux : 5 écrans, le car en service', await ev(() => document.querySelectorAll('.lx-wall .lx').length === 5 && document.querySelector('.lx.on')?.dataset.lieu === 'car'));
+await page.locator('.lx[data-lieu="plateau"]').click();
+T.check('écran « Plateau TV » : fiche « Ce qui se prépare »', await until(page, () => /Ce qui se prépare : Plateau TV/.test(document.querySelector('#modal h2')?.textContent || '') && !!document.querySelector('#modal .lx-wait button'), null, 8000));
+await ev(() => document.querySelector('#modal .x')?.click());
+await page.locator('.lx[data-lieu="car"]').click();
+T.check('écran « Car régie » : la touche Antenne prend le focus', await until(page, () => document.activeElement?.id === 'st-antenne', null, 5000));
+
 // chef de car : touche J et bouton de la feuille de service
 await page.keyboard.press('KeyJ');
 T.check('touche J sur la feuille de service', await chefOpen() && /Prendre l'antenne avec moi/.test(await chefText()));

@@ -392,6 +392,16 @@ Tests :
   « Emmène-moi / Montre-moi » doit mettre en évidence un élément réel de la page, et « Fais-le pour moi » doit faire
   valider l'étape.
 
+## v18.2 : le mur des lieux
+
+La feuille de service s'ouvre sur **les lieux** du simulateur, présentés comme un multiview : un écran par
+lieu, avec son étiquette et sa lampe de tally. Le car régie est à l'antenne ; un clic sur son écran amène à la
+touche « Prendre l'antenne ». Les quatre lieux en préparation (plateau TV, entrepôt, conférence, concert, voir
+`ROADMAP.md`) sont sur mire : leurs silhouettes se devinent sous la mire et se précisent au survol, avec trois
+indices du métier et la période prévue. Un clic ouvre la fiche « Ce qui se prépare » : ce qu'on y fera, le
+matériel annoncé, le guide sur place, et ce qui s'entraîne déjà dans le car en attendant (« Brasser le car »
+pour le patch SDI du plateau, par exemple). Les lieux sont décrits dans `src/content/lieux.js`.
+
 ## v18.1 : revue pédagogique, vocabulaire du car, accessibilité, icônes
 
 Relecture complète pour des étudiants de BTS MAV option TIEE. Les corrections évidentes sont faites ; les choix qui
@@ -786,6 +796,7 @@ node tools/shots.mjs dossier 1280 800 '["vision","hf"]'   # captures de postes
 | `diag.js` | Journal des erreurs (partagé avec `boot.js`) : erreurs non rattrapées, écouteurs d'événement, boucle de rendu, `console.error` ; version de l'application |
 | `ui/diag_ui.js` | Bandeau « Un problème est survenu » et fenêtre « Diagnostic technique » (texte à copier) |
 | `ui/pupitre.js` | Le pupitre (Tab ou T) : plan du car, touches des postes par zone, endroits du stade, équipiers, outils |
+| `content/lieux.js` | Les lieux du simulateur : en service ou en préparation, avec leur fiche « Ce qui se prépare » |
 | `ui/icons.js` | Icônes Phosphor intégrées au build (`icon(nom)`), toujours à côté d'un libellé |
 | `tutor/` | Chef de car : moteur des parcours (`engine.js`), lecture du réseau pour expliquer et vérifier (`net_helpers.js`), parcours réseau ST 2110 (`lessons/reseau.js`, `lessons/reseau_leaf.js`, `lessons/reseau_ops.js`), parcours des postes, compétences et matériel (`lessons/realisation.js`, `image.js`, `ralentis.js`, `son.js`, `liaisons.js`, `exploitation.js`, `materiel.js`, outils communs `kit.js`), présentation de chaque poste (`lessons/postes.js`) |
 | `ui/tutor_ui.js` | Panneau du chef de car : parcours proposés selon le poste et rangés par famille, étapes, mise en évidence, gestes « Fais-le pour moi » hors des postes (caméra, visionneuse, atelier), commandes vers le terminal, voix |

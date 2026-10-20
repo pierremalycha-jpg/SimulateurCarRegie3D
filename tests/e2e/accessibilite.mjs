@@ -35,6 +35,11 @@ async function scan(name, include) {
 
 // feuille de service, puis le chef de car ouvert dessus (touche J)
 await scan('accueil');
+// fiche « Ce qui se prépare » d'un lieu en préparation
+await page.locator('.lx[data-lieu="concert"]').click();
+await until(page, () => !!document.querySelector('#modal .lx-teaser'), null, 8000);
+await scan('lieu-concert', '#modal');
+await ev(() => document.querySelector('#modal .x')?.click());
 await page.keyboard.press('KeyJ');
 await until(page, () => { const c = document.querySelector('#chef'); return !!c && !c.hidden; }, null, 15000);
 await scan('accueil-chef');

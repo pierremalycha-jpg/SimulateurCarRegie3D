@@ -18,11 +18,12 @@ import { openReview } from '../ui/review_ui.js';
 import { openTrainer } from '../ui/config.js';
 import { openDiag } from '../ui/diag_ui.js';
 import { APP_VERSION } from '../diag.js';
-import { $, toast } from '../ui/common.js';
+import { $, toast, modal } from '../ui/common.js';
 import { setQuality } from './view.js';
 import { buildToolbar } from './hud.js';
 import { setupTouch } from './input.js';
 import { icon } from '../ui/icons.js';
+import { LIEUX } from '../content/lieux.js';
 
 // ----------------------------------------------------------------------------------
 // Écran d'accueil (« feuille de service ») et lancement d'une partie.
@@ -72,6 +73,38 @@ export function buildStart() {
     el('div', { class: 'scribble glass' }, el('time', {}, time), el('b', {}, title)),
     el('p', {}, desc),
     el('button', { class: 'btn', onclick: () => go(preset) }, label));
+  // le mur des lieux, comme un multiview : le car en service, les autres en préparation (mire,
+  // silhouettes floues, trois indices) ; un écran en préparation ouvre « Ce qui se prépare »
+  const teaser = (L) => {
+    const body = el('div', { class: 'lx-teaser' },
+      el('p', { class: 'lede' }, L.pitch || ''),
+      el('h3', {}, 'Ce que vous y ferez'),
+      el('ul', {}, ...(L.vous || []).map((t) => el('li', {}, t))),
+      el('h3', {}, 'Le matériel annoncé'),
+      el('ul', { class: 'lx-gear' }, ...(L.materiel || []).map((t) => el('li', {}, t))),
+      el('p', { class: 'note' }, `Votre guide sur place : ${L.tuteur}. Prévu : ${L.prevu} (${L.version}) ; le calendrier peut encore bouger.`),
+      L.attente ? el('div', { class: 'lx-wait' }, el('p', {}, el('b', {}, 'En attendant, au car : '), L.attente.why),
+        el('button', { class: 'btn primary', onclick: () => { modal.close(); go(L.attente.preset); } }, L.attente.label)) : null);
+    modal.open(`Ce qui se prépare : ${L.nom}`, body, { width: 640 });
+  };
+  const toAir = () => {
+    const a = /** @type {HTMLElement | null} */ ($('#st-antenne')); if (!a) return;
+    a.scrollIntoView({ block: 'nearest', behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+    a.focus({ preventScroll: true });
+  };
+  const live = (L) => L.etat === 'service';
+  const wall = el('section', { class: 'dk-lieux', 'aria-labelledby': 'dk-lieux-h' },
+    el('div', { class: 'lx-head' },
+      el('h2', { id: 'dk-lieux-h' }, 'Les lieux'),
+      el('p', { class: 'note' }, 'Un lieu en service, quatre en préparation : choisissez un écran pour découvrir ce qui se prépare.')),
+    el('ul', { class: 'lx-wall' }, ...LIEUX.map((L) => el('li', {},
+      el('button', { type: 'button', class: 'lx' + (live(L) ? ' on' : ''), 'data-lieu': L.id, 'aria-current': live(L) ? 'true' : null, onclick: () => (live(L) ? toAir() : teaser(L)) },
+        el('span', { class: 'lx-scr ' + (live(L) ? 'live' : 'bars'), 'aria-hidden': 'true' },
+          el('span', { class: 'lx-sil' }, ...L.icons.map((n) => icon(n))),
+          el('span', { class: 'lx-sig' }, live(L) ? 'En service' : 'Signal attendu')),
+        el('span', { class: 'lx-umd' }, el('i', { class: 'lx-tally' }), el('b', {}, L.nom), el('small', {}, live(L) ? 'en service' : L.prevu)),
+        el('span', { class: 'lx-cadre' }, live(L) ? L.cadre : `Indices : ${(L.indices || []).join(', ')}`),
+        live(L) ? null : el('span', { class: 'sr' }, ' : voir ce qui se prépare'))))));
   const lan = lanAvailable();
   s.append(el('div', { class: 'callsheet deck' },
     el('header', { class: 'dk-head' },
@@ -83,6 +116,7 @@ export function buildStart() {
         el('span', { class: 'dim' }, 'Bollaert-Delelis, reconstitution'),
         el('span', {}, el('em', {}, 'Antenne '), '20:45   ', el('em', {}, 'Coup d\'envoi '), '21:00'),
         truckLine)),
+    wall,
     el('section', { class: 'onair', 'aria-label': 'Prendre l\'antenne' },
       el('button', { id: 'st-antenne', class: 'onair-key', onclick: () => go('standard') },
         el('span', { class: 'onair-lamp', 'aria-hidden': 'true' }, 'Antenne'),
