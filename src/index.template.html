@@ -299,12 +299,12 @@ select:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px
 .deck h1 { font-family: var(--f-disp); font-weight: 700; font-size: clamp(38px, 5vw, 60px); line-height: .95; margin: 0 0 8px; letter-spacing: -.01em; }
 .deck .lede { font-size: 15px; line-height: 1.5; color: var(--muted); margin: 0; }
 /* le mur des lieux : un multiview, un écran par lieu ; le car à l'antenne, les autres sur mire */
-.dk-lieux { grid-area: lieux; display: grid; gap: 8px; min-width: 0; }
+.dk-lieux { grid-area: lieux; display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; min-width: 0; }
 .lx-head { display: flex; align-items: baseline; gap: 4px 16px; flex-wrap: wrap; }
 .lx-head .note { margin: 0; }
 .lx-wall { list-style: none; margin: 0; padding: 6px; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; background: var(--glass); border: 1px solid #070a0c; border-radius: 4px; box-shadow: inset 0 1px 4px rgba(0,0,0,.7); }
 .lx-wall > li { display: flex; min-width: 0; }
-.lx { display: flex; flex-direction: column; width: 100%; padding: 0; text-align: left; font: inherit; color: var(--fg); background: #0b0e10; border: 1px solid #1d2428; border-radius: 2px; overflow: hidden; cursor: pointer; }
+.lx { position: relative; display: flex; flex-direction: column; width: 100%; padding: 0; text-align: left; font: inherit; color: var(--fg); background: #0b0e10; border: 1px solid #1d2428; border-radius: 2px; overflow: hidden; cursor: pointer; }
 .lx:hover { border-color: var(--line2); }
 .lx:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .lx-scr { position: relative; aspect-ratio: 16 / 9; display: grid; place-items: center; overflow: hidden; }
