@@ -62,7 +62,7 @@ export function buildVision(body, arg = 0, ctx) {
     el('div', { class: 'hwrow', style: { alignItems: 'flex-start', gap: '14px' } }, panelHost, overview));
 
   let W = {};
-  const touch = (stage, fn) => (...a) => { const c = cam(); if (!c) return; if (c.panelActive === false) { toast('PANEL ACTIVE est éteint : le RCP ne commande pas la caméra.', 'bad'); explain('Réglage refusé : PANEL ACTIVE est éteint. On l\'éteint pour verrouiller une caméra réglée ; rallumez-le pour reprendre la main.', 'warn:locked'); return; } fn(c, ...a); chain.update(c, stage); };
+  const touch = (stage, fn) => (...a) => { const c = cam(); if (!c) return; if (c.panelActive === false) { toast('PANEL ACTIVE éteint : rallumez-le pour régler la caméra.', 'bad'); explain('Réglage refusé : PANEL ACTIVE est éteint. On l\'éteint pour verrouiller une caméra réglée ; rallumez-le pour reprendre la main.', 'warn:locked'); return; } fn(c, ...a); chain.update(c, stage); };
   let irisSeq = null;
   function select(id) {
     sel = id; S.selCam = id; SCOPE.src = 'CAM' + id; SCOPE.active = true;
@@ -119,7 +119,7 @@ export function buildVision(body, arg = 0, ctx) {
       } else if (page === 'scene') {
         for (let i = 1; i <= 5; i++) lcd.append(el('div', { class: 'rcp-lcd-row' }, el('span', {}, `SCÈNE ${i}${SCENES[c.id + ':' + i] ? ' ●' : ''}`),
           el('button', { class: 'rcp-touch', onclick: () => { SCENES[c.id + ':' + i] = { ...p }; explain(`Fichier de scène ${i} mémorisé pour la CAM ${c.id} : tous les réglages de rendu (noirs, gamma, knee, détail, couleurs). On en prépare un par situation (soleil, ombre, nuit).`); drawLcd(); } }, 'STORE'),
-          el('button', { class: 'rcp-touch', onclick: touch('sortie', (cc) => { const s = SCENES[cc.id + ':' + i]; if (!s) { toast('Fichier de scène vide.'); return; } Object.assign(cc.paint, s); explain(`Fichier de scène ${i} rappelé : la caméra reprend instantanément tous ces réglages.`); buildPanel(); }) }, 'RECALL')));
+          el('button', { class: 'rcp-touch', onclick: touch('sortie', (cc) => { const s = SCENES[cc.id + ':' + i]; if (!s) { toast('Fichier de scène vide : mémorisez-le d\'abord avec STORE.'); return; } Object.assign(cc.paint, s); explain(`Fichier de scène ${i} rappelé : la caméra reprend instantanément tous ces réglages.`); buildPanel(); }) }, 'RECALL')));
       }
     };
     drawLcd();

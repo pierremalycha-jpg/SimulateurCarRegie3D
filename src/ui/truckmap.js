@@ -18,7 +18,7 @@ function drawPlan(scale, labels) {
   const L = T.layout; const I = L.size;
   const W = (I.x1 - I.x0) * scale, H = (I.z1 - I.z0) * scale;
   const px = (lx) => (lx - I.x0) * scale, pz = (lz) => (lz - I.z0) * scale;
-  const svg = sv('svg', { viewBox: labels ? `-6 -120 ${W + 12} ${H + 250}` : `-6 -6 ${W + 12} ${H + 12}`, class: 'tmap-svg', role: 'img', 'aria-label': 'Plan du car régie' });
+  const svg = sv('svg', { viewBox: labels ? `-6 -120 ${W + 12} ${H + 250}` : `-6 -6 ${W + 12} ${H + 12}`, class: 'tmap-svg', role: 'group', 'aria-label': 'Plan du car régie' });
   svg.append(sv('rect', { x: 0, y: 0, width: W, height: H, rx: 4, fill: '#14181d', stroke: '#5a6470', 'stroke-width': 2 }));
   for (const z of L.zones) {
     svg.append(sv('rect', { x: px(z.x0), y: 0, width: (z.x1 - z.x0) * scale, height: H, fill: z.color, opacity: 0.55 }));
@@ -57,7 +57,7 @@ function drawPlan(scale, labels) {
       }
     }
     g.addEventListener('click', (e) => { e.stopPropagation(); if (goTo) goTo(s); });
-    g.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.stopPropagation(); if (goTo) goTo(s); } });
+    g.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); if (goTo) goTo(s); } });
     svg.append(g);
   }
   // équipiers d'une session (couleur de leur rôle, initiale)

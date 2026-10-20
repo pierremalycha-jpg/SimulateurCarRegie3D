@@ -98,7 +98,7 @@ export async function copyText(text, btn, area = null) {
   const label = btn.textContent;
   const done = (ok) => { btn.textContent = ok ? 'Copié ✓' : 'Sélectionné : Cmd/Ctrl + C'; setTimeout(() => { btn.textContent = label; }, 2500); };
   try { await navigator.clipboard.writeText(text); done(true); return; } catch (e) { /* refusé : copie à l'ancienne */ }
-  const ta = area || el('textarea', { style: { position: 'fixed', left: '-9999px' } }, text);
+  const ta = area || el('textarea', { style: { position: 'fixed', left: '-9999px' }, 'aria-hidden': 'true', tabindex: -1 }, text);
   if (!area) document.body.append(ta);
   ta.focus(); ta.select();
   let ok = false; try { ok = document.execCommand('copy'); } catch (e) { /* rien */ }
@@ -109,14 +109,14 @@ export async function copyText(text, btn, area = null) {
 // ---------------- fenêtre « Diagnostic technique » ----------------
 export function openDiag() {
   const text = diagText();
-  const area = /** @type {HTMLTextAreaElement} */ (el('textarea', { class: 'diag-text', readonly: true, rows: 16, spellcheck: 'false' }, text));
+  const area = /** @type {HTMLTextAreaElement} */ (el('textarea', { class: 'diag-text', readonly: true, rows: 16, spellcheck: 'false', 'aria-label': 'Texte du diagnostic' }, text));
   const copyBtn = /** @type {HTMLButtonElement} */ (el('button', { class: 'btn primary', onclick: () => copyText(area.value, copyBtn, area) }, 'Copier le diagnostic'));
   const n = ERRS.filter(visible).length;
   modal.open('Diagnostic technique', el('div', { class: 'diag' },
     el('p', {}, n ? `${n} problème${n > 1 ? 's' : ''} noté${n > 1 ? 's' : ''} depuis l'ouverture de la page.` : 'Aucune erreur depuis l\'ouverture de la page.',
       ' Si quelque chose ne marche pas, copiez ce diagnostic et envoyez-le à votre formateur ou à la personne qui maintient le simulateur : il dit quel navigateur vous utilisez, ce qui lui manque et ce qui a échoué.'),
     area,
-    el('div', { class: 'hwrow' }, copyBtn, el('button', { class: 'btn', onclick: () => { area.value = diagText(); } }, 'Actualiser'))), { width: 760 });
+    el('div', { class: 'hwrow' }, copyBtn, el('button', { class: 'btn', onclick: () => { area.value = diagText(); } }, 'Actualiser le diagnostic'))), { width: 760 });
   hideBar();
 }
 
@@ -134,8 +134,8 @@ function showBar(/** @type {import('../diag.js').DiagError} */ e) {
     el('b', {}, 'Un problème est survenu'),
     el('span', { class: 'm', title: e.msg }, `${e.where ? e.where + ' : ' : ''}${e.msg}${n > 1 ? ` (+${n - 1} autre${n > 2 ? 's' : ''})` : ''}`),
     copyBtn,
-    el('button', { class: 'btn small', onclick: () => openDiag() }, 'Détails'),
-    el('button', { class: 'chef-ico', title: 'Masquer', 'aria-label': 'Masquer', onclick: () => hideBar() }, '×'));
+    el('button', { class: 'btn small', onclick: () => openDiag() }, 'Voir le diagnostic'),
+    el('button', { class: 'chef-ico', title: 'Masquer l\'alerte', 'aria-label': 'Masquer l\'alerte', onclick: () => hideBar() }, '×'));
   bar.hidden = false;
 }
 

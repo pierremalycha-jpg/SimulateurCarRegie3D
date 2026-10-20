@@ -1,0 +1,90 @@
+// Accessibilité : le moteur axe-core (Deque) passe sur les écrans principaux — feuille de service,
+// chef de car, barre d'outils, pupitre, postes, guide, diagnostic — selon WCAG 2.2 A et AA.
+// Le canvas 3D est exclu (il n'a pas de texte). Le bilan liste chaque règle en défaut avec ses
+// éléments ; le test échoue sur les défauts graves (impact « critical » ou « serious »).
+// node tests/e2e/accessibilite.mjs [dossier]   (AXE_JSON=1 : écrit aussi le détail en JSON)
+import fs from 'node:fs';
+import path from 'node:path';
+import { createRequire } from 'node:module';
+import { launch, openPage, outDir, until, reporter } from './harness.mjs';
+const OUT = outDir('accessibilite');
+const T = reporter();
+const AXE = fs.readFileSync(createRequire(import.meta.url).resolve('axe-core/axe.min.js'), 'utf8');
+const TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'];
+
+const browser = await launch();
+const page = await openPage(browser, { errors: T.errors, fresh: true });
+const ev = (f, a) => page.evaluate(f, a);
+const all = {};
+async function scan(name, include) {
+  if (!(await ev(() => !!window.axe))) await page.addScriptTag({ content: AXE });
+  const r = await ev(async ({ tags, include }) => {
+    const ctx = { include: include ? [[include]] : [['body']], exclude: [['canvas'], ['#minimon canvas']] };
+    const res = await window.axe.run(ctx, { runOnly: { type: 'tag', values: tags }, resultTypes: ['violations'] });
+    return res.violations.map((v) => ({ id: v.id, impact: v.impact, help: v.help, n: v.nodes.length, nodes: v.nodes.slice(0, 6).map((n) => ({ t: n.target.join(' '), s: (n.failureSummary || '').split('\n').slice(1, 3).join(' ').slice(0, 220), h: n.html.slice(0, 140) })) }));
+  }, { tags: TAGS, include });
+  all[name] = r;
+  const grave = r.filter((v) => v.impact === 'critical' || v.impact === 'serious');
+  T.check(`${name} : aucun défaut grave`, !grave.length, grave.map((v) => `${v.id} ×${v.n}`).join(', '));
+  for (const v of r) {
+    T.log(`   ${v.impact.padEnd(8)} ${v.id} ×${v.n} — ${v.help}`);
+    for (const n of v.nodes.slice(0, 3)) T.log(`        ${n.t}  ${n.s}`);
+  }
+  await page.screenshot({ path: `${OUT}/${name}.png` });
+}
+
+// feuille de service, puis le chef de car ouvert dessus (touche J)
+await scan('accueil');
+await page.keyboard.press('KeyJ');
+await until(page, () => { const c = document.querySelector('#chef'); return !!c && !c.hidden; }, null, 15000);
+await scan('accueil-chef');
+await ev(() => window.__dbg.toggleChef(false));
+// en jeu : barre d'outils, bande UMD
+await ev(() => { const b = document.getElementById('st-tour'); if (b && b.getAttribute('aria-pressed') === 'true') b.click(); });
+await page.locator('#st-antenne').click();
+await until(page, () => window.__dbg.S.mode === 'fps', null, 90000);
+await ev(() => window.__dbg.toggleChef(false));
+await scan('jeu');
+// pupitre
+await page.keyboard.press('Tab');
+await until(page, () => !!document.querySelector('#modal .pupitre'), null, 8000);
+await scan('pupitre', '#modal');
+await ev(() => document.querySelector('#modal .x')?.click());
+// postes
+for (const st of ['melangeur', 'realisateur', 'vision', 'evs', 'son', 'reseau', 'grille']) {
+  await ev((s) => window.__dbg.openStation(s), st);
+  await until(page, (s) => window.__dbg.S.mode === 'station' && window.__dbg.S.station === s, st, 30000);
+  await page.waitForTimeout(800);
+  await scan('poste-' + st);
+  await ev(() => window.__dbg.closeStation());
+}
+// chef de car en jeu (accueil des familles)
+await ev(() => window.__dbg.toggleChef(true));
+await page.waitForTimeout(500);
+await scan('chef', '#chef');
+await ev(() => window.__dbg.toggleChef(false));
+// guide : missions, glossaire
+await page.keyboard.press('KeyG');
+await until(page, () => !!document.querySelector('#modal'), null, 8000);
+await page.waitForTimeout(500);
+await scan('guide', '#modal');
+await ev(() => document.querySelector('#modal .x')?.click());
+// fenêtres des outils : plan caméras, synoptiques, matériel, équipe, diagnostic
+for (const [name, key] of [['plan-cameras', 'KeyP'], ['synoptiques', 'KeyY'], ['materiel', 'KeyK']]) {
+  await page.keyboard.press(key);
+  await until(page, () => !!document.querySelector('#modal:not([hidden]), #plan:not([hidden]), #syn:not([hidden])'), null, 8000);
+  await page.waitForTimeout(800);
+  await scan(name);
+  await page.keyboard.press('Escape');
+  await ev(() => { document.querySelector('#modal .x')?.click(); window.__dbg.closePlan(); });
+  await page.waitForTimeout(300);
+}
+await ev(() => window.__dbg.openSessionPanel());
+await page.waitForTimeout(500);
+await scan('equipe', '#modal');
+await ev(() => document.querySelector('#modal .x')?.click());
+await ev(() => window.__dbg.diag.openDiag());
+await scan('diagnostic', '#modal');
+
+if (process.env.AXE_JSON) fs.writeFileSync(path.join(OUT, 'axe.json'), JSON.stringify(all, null, 1));
+await T.finish();

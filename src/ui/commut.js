@@ -40,7 +40,7 @@ export function keyLegend() {
 export function commutKey(e, where = 'station') {
   const d = digitOf(e);
   // session à plusieurs : seul le titulaire du mélangeur commute
-  if (!canControl('mix') && (d != null || ['Enter', 'NumpadEnter'].includes(e.code) || (where === 'station' && e.code === 'Space'))) { osd('Mélangeur tenu par un autre participant', 'warn'); return true; }
+  if (!canControl('mix') && (d != null || ['Enter', 'NumpadEnter'].includes(e.code) || (where === 'station' && e.code === 'Space'))) { osd('Mélangeur tenu par un autre participant : prenez le rôle Truquiste pour commuter', 'warn'); return true; }
   if (d != null) {
     const n = d === 0 ? 10 : d;
     if (n > mixInputs() || !meSource(n)) { osd(`Entrée ${n} non utilisée sur le mélangeur`, 'warn'); return true; }

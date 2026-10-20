@@ -22,10 +22,10 @@ export function tabCourse(box, R) {
     el('p', { class: 'note' }, 'Quatorze missions, de la lecture de la topologie au dépannage et à la reconstruction d\'une leaf. Les objectifs se cochent tout seuls quand vous agissez dans le poste (ou dans d\'autres postes du car). Chaque mission vaut 10 points : −2 par indice, −5 si vous chargez la configuration de référence. Résultats enregistrés dans votre suivi (visible du formateur).'),
     el('div', { class: 'hwrow' },
       el('button', { class: 'btn small primary', onclick: () => openQuiz(R) }, 'Quiz ST 2110 (10 questions)'),
-      el('button', { class: 'btn small', onclick: async () => { if (!(await ask('Lancer l\'examen réseau ? Trois pannes cachées vont être injectées l\'une après l\'autre (15 min maximum). Le réseau est d\'abord remis en configuration de référence.', { ok: 'Lancer l\'examen' }))) return; startExam(); R.refresh(); } }, 'Examen réseau (3 pannes, 15 min)'),
+      el('button', { class: 'btn small', onclick: async () => { if (!(await ask('Lancer l\'examen réseau ? Trois pannes cachées vont être injectées l\'une après l\'autre (15 min maximum). Le réseau est d\'abord remis en configuration de référence.', { title: 'Examen réseau', ok: 'Lancer l\'examen' }))) return; startExam(); R.refresh(); } }, 'Examen réseau (3 pannes, 15 min)'),
       el('button', { class: 'btn small', onclick: () => emit('openGuide', 'reseau') }, 'Guide : réseau spine-leaf'),
       el('button', { class: 'btn small', onclick: () => emit('openGuide', 'mesure2110') }, 'Guide : mesurer un flux 2110'),
-      el('button', { class: 'btn small', onclick: async () => { if (await ask('Effacer votre progression sur le parcours réseau ?', { ok: 'Effacer', danger: true })) { resetCourse(); R.refresh(); } } }, 'Recommencer le parcours'))));
+      el('button', { class: 'btn small', onclick: async () => { if (await ask('Effacer votre progression sur le parcours réseau ?', { title: 'Recommencer le parcours réseau', ok: 'Effacer ma progression', danger: true })) { resetCourse(); R.refresh(); } } }, 'Recommencer le parcours'))));
   if (NC.done) { const m = NET_MISSIONS.find((x) => x.id === NC.done.id); box.append(el('div', { class: 'hwpanel net-done' }, el('h3', {}, `Mission réussie : ${m.title} · ${NC.done.pts}/10`), el('p', {}, m.learn), el('div', { class: 'hwrow' }, nextBtn(m, R), el('button', { class: 'btn small', onclick: () => { NC.done = null; R.refresh(); } }, 'Fermer')))); }
   if (NC.active) missionCard(box, R);
   const grid = el('div', { class: 'net-missions' });
@@ -52,7 +52,7 @@ export function missionCard(box, R, compact = false) {
   const m = NET_MISSIONS.find((x) => x.id === NC.active); if (!m) return;
   const objs = objectivesOf(m);
   const card = el('div', { class: 'hwpanel net-mission' + (compact ? ' compact' : '') });
-  card.append(el('div', { class: 'hwrow' }, el('h3', {}, `Mission en cours : ${m.title}`), el('span', { class: 'pill' }, `${objs.filter((o) => o.ok).length + (m.q || []).filter((q) => NC.answers[m.id + ':' + q.id]).length} / ${objs.length + (m.q || []).length}`), compact ? el('button', { class: 'btn small', onclick: () => R.go('learn') }, 'Détail') : null));
+  card.append(el('div', { class: 'hwrow' }, el('h3', {}, `Mission en cours : ${m.title}`), el('span', { class: 'pill' }, `${objs.filter((o) => o.ok).length + (m.q || []).filter((q) => NC.answers[m.id + ':' + q.id]).length} / ${objs.length + (m.q || []).length}`), compact ? el('button', { class: 'btn small', onclick: () => R.go('learn') }, 'Voir le détail') : null));
   if (!compact) card.append(el('p', {}, m.intro));
   const ul = el('ul', { class: 'net-obj' });
   for (const o of objs) ul.append(el('li', { class: o.ok ? 'ok' : '' }, el('span', { class: 'chk' }, o.ok ? '✓' : '○'), o.t));
@@ -60,7 +60,7 @@ export function missionCard(box, R, compact = false) {
   if (!compact) {
     for (const q of m.q || []) {
       const done = NC.answers[m.id + ':' + q.id];
-      const inp = el('input', { type: 'text', placeholder: 'votre réponse', 'aria-label': qText(q) });
+      const inp = el('input', { type: 'text', placeholder: 'Votre réponse', 'aria-label': qText(q) });
       const res = el('span', { class: 'note' });
       const check = () => { const ok = answer(m.id, q.id, inp.value); res.textContent = ok ? 'Exact.' : 'Ce n\'est pas ça : vérifiez dans le poste.'; res.className = 'note ' + (ok ? 'ok' : 'err'); if (ok) R.refresh(); };
       inp.addEventListener('keydown', (e) => { if (e.key === 'Enter') check(); e.stopPropagation(); });
@@ -124,7 +124,7 @@ function examPanel(box, R) {
   E.ids.forEach((id, k) => { const f = E.faults[k]; list.append(el('li', { class: f && f.entry && f.entry.done ? 'ok' : '' }, el('span', { class: 'chk' }, f && f.entry && f.entry.done ? '✓' : f ? '!' : '○'), f ? (f.entry && f.entry.done ? `Panne ${k + 1} résolue en ${mmss(Math.round((f.doneAt || S.time) - f.t0))}` : `Panne ${k + 1} en cours depuis ${mmss(Math.round(S.time - f.t0))} — à trouver`) : `Panne ${k + 1} : à venir`)); });
   box.append(el('div', { class: 'hwpanel net-mission' }, el('div', { class: 'hwrow' }, el('h3', {}, 'Examen réseau en cours'), timer),
     el('p', {}, 'Trois pannes cachées arrivent l\'une après l\'autre. Elles ont été enregistrées dans la configuration de démarrage : redémarrer un commutateur ne les efface pas. Pour chacune : constater, localiser, corriger, puis enregistrer (write memory). Pas d\'indice ; charger la configuration de référence divise les points de la panne par deux.'),
-    list, el('div', { class: 'hwrow' }, el('button', { class: 'btn small danger', onclick: async () => { if (await ask('Terminer l\'examen maintenant ?', { ok: 'Terminer', danger: true })) { endExam(); R.refresh(); } } }, 'Terminer l\'examen'))));
+    list, el('div', { class: 'hwrow' }, el('button', { class: 'btn small danger', onclick: async () => { if (await ask('Terminer l\'examen maintenant ?', { title: 'Examen réseau', ok: 'Terminer l\'examen', danger: true })) { endExam(); R.refresh(); } } }, 'Terminer l\'examen'))));
   R.live = () => { timer.textContent = mmss(Math.max(0, EXAM_TIME - (S.time - E.t0))); };
 }
 export { NC };

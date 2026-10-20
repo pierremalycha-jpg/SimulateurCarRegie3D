@@ -282,13 +282,13 @@ function devPage(d, R) {
   const rxc = rxs.length ? card('Récepteurs', el('div', { class: 'ops-list flat' }, ...rxs.map((r) => {
     const s = rxState(r.id); const f = s && FAB.flows[s.flow]; const routable = DESTS.some((x) => x.id === r.id);
     return el('div', { class: 'ops-rxrow' }, el('i', { class: 'ops-dot ' + rxLevel(r.id) }), el('span', { class: 'ops-name' }, r.label), el('span', { class: 'ops-sub' }, `${FAB.rxManual[r.id] ? 'saisie manuelle' : r.fixed ? 'connexion fixe' : 'NMOS'} · ${f ? f.label : rxSummary(r.id)}`),
-      routable ? el('button', { class: 'btn small', onclick: () => { OPS.rx = r.id; OPS.mode = null; OPS.view = 'route'; log('ops', { view: 'route' }); R.refresh(); } }, 'Connexion…') : null);
+      routable ? el('button', { class: 'btn small', onclick: () => { OPS.rx = r.id; OPS.mode = null; OPS.view = 'route'; log('ops', { view: 'route' }); R.refresh(); } }, 'Connecter…') : null);
   }))) : null;
   const actions = el('div', { class: 'ops-actions ops-devbar' },
     el('button', { class: 'btn primary', 'data-act': 'apply-dev', onclick: () => applyDev(R, d) }, 'Appliquer'),
     el('button', { class: 'btn', onclick: () => { OPS.draft = null; R.refresh(); } }, 'Annuler'), pending,
     el('span', { class: 'ops-spacer' }),
-    el('button', { class: 'btn danger', 'data-act': 'factory', onclick: async () => { if (!(await ask(`Remettre « ${d.name} » en configuration d'usine ? Il disparaît du réseau du car jusqu'à ce qu'on le reconfigure.`, { ok: 'Sortie d\'usine', danger: true }))) return; factoryDevice(d.id); OPS.draft = null; evaluate(); log('opsfactory', { dev: d.id }); explain(`${d.name} remis en sortie d'usine : adresses ${'192.168.x.100'}, pas de registre NMOS, PTP en domaine 0. Il n'est plus joignable : à reconfigurer d'après le plan d'adressage.`, 'warn'); R.refresh(); } }, 'Sortie d\'usine'));
+    el('button', { class: 'btn danger', 'data-act': 'factory', onclick: async () => { if (!(await ask(`Remettre « ${d.name} » en configuration d'usine ? Il disparaît du réseau du car jusqu'à ce qu'on le reconfigure.`, { title: 'Sortie d\'usine', ok: 'Remettre en sortie d\'usine', danger: true }))) return; factoryDevice(d.id); OPS.draft = null; evaluate(); log('opsfactory', { dev: d.id }); explain(`${d.name} remis en sortie d'usine : adresses ${'192.168.x.100'}, pas de registre NMOS, PTP en domaine 0. Il n'est plus joignable : à reconfigurer d'après le plan d'adressage.`, 'warn'); R.refresh(); } }, 'Remettre en sortie d\'usine'));
   media.classList.add('span'); if (txc) txc.classList.add('span');
   return el('div', { class: 'ops-devpage' }, header, actions, el('div', { class: 'ops-grid' }, media, ctl, ptp, txc, rxc));
 }

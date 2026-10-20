@@ -61,7 +61,7 @@
       box.innerHTML = ''; box.appendChild(sheet);
     }
     var d = document.createElement('div'); d.className = 'boot-diag';
-    d.innerHTML = '<p class="note">Pour obtenir de l\'aide, copiez ce diagnostic et envoyez-le à votre formateur.</p><textarea readonly rows="8"></textarea><button class="btn primary" type="button">Copier le diagnostic</button>';
+    d.innerHTML = '<p class="note">Pour obtenir de l\'aide, copiez ce diagnostic et envoyez-le à votre formateur.</p><textarea readonly rows="8" aria-label="Texte du diagnostic"></textarea><button class="btn primary" type="button">Copier le diagnostic</button>';
     var area = /** @type {HTMLTextAreaElement} */ (d.querySelector('textarea')); area.value = text;
     var btn = /** @type {HTMLButtonElement} */ (d.querySelector('button')); btn.onclick = function () { copy(text, btn); };
     (explained ? /** @type {HTMLElement} */ (box.querySelector('.sheet .body') || box) : /** @type {HTMLElement} */ (sheet.querySelector('.body'))).appendChild(d);

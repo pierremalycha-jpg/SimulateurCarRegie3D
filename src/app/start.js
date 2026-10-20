@@ -22,6 +22,7 @@ import { $, toast } from '../ui/common.js';
 import { setQuality } from './view.js';
 import { buildToolbar } from './hud.js';
 import { setupTouch } from './input.js';
+import { icon } from '../ui/icons.js';
 
 // ----------------------------------------------------------------------------------
 // Écran d'accueil (« feuille de service ») et lancement d'une partie.
@@ -89,16 +90,17 @@ export function buildStart() {
         el('span', {}, 'Le car est prêt : 12 caméras installées et réglées, 2 super ralentis, une Steadicam HF, une mini-caméra de but. Le meilleur point de départ pour découvrir les postes.')),
       el('div', { class: 'onair-chef' },
         tour,
-        el('button', { type: 'button', id: 'st-chef', class: 'btn chef-btn', title: 'Les parcours guidés du chef de car (touche J)', onclick: () => emit('chef') }, 'Chef de car', el('kbd', {}, 'J')),
+        el('button', { type: 'button', id: 'st-chef', class: 'btn chef-btn', title: 'Les parcours guidés du chef de car (touche J)', onclick: () => emit('chef') }, icon('chef'), 'Chef de car', el('kbd', {}, 'J')),
         el('p', { class: 'note' }, 'Olivier, le chef de car, vous fait faire le tour du car puis vous guide pas à pas à chaque poste.'))),
     el('section', { class: 'dk-capt plate', 'aria-labelledby': 'dk-capt-h' },
       el('h2', { id: 'dk-capt-h' }, 'Conditions de captation'),
       el('label', {}, 'Lumière'), light,
       el('label', {}, 'Format'), fmt,
       el('label', {}, 'Car'), infra,
+      fmtNote,
+      el('h3', {}, 'Sur cet ordinateur'),
       el('label', {}, 'Qualité'), qual,
-      el('label', {}, 'Son'), snd,
-      fmtNote),
+      el('label', {}, 'Son'), snd),
     el('section', { class: 'dk-team plate' + (lan ? ' cs-lan' : ''), 'aria-labelledby': 'dk-team-h' },
         el('h2', { id: 'dk-team-h' }, 'Équipe et formation'),
         lan ? el('p', { class: 'note' }, el('b', {}, 'Réseau local. '), 'Hébergez une partie ou rejoignez celle d\'un collègue : chacun choisit un pseudo et un rôle dans la prestation.') : null,
@@ -112,14 +114,14 @@ export function buildStart() {
         strip('09:30', 'Atelier de montage', 'Monter une caméra pièce par pièce, du pied jusqu\'à la fibre.', 'Monter une caméra', 'atelier'),
         strip('11:00', 'Le car vide', 'Rien n\'est brassé : reliez chaque liaison avec la liste de câblage.', 'Brasser le car', 'brassage'),
         strip('17:30', 'Jour de match', 'Line-up, test de ligne, puis le direct avec des pannes. Chronométré et noté.', 'Lancer le jour de match', 'scenario'),
-        strip('20:45', 'Grand dispositif', '16 caméras : volante, rail, grue, deux Steadicam. Ordinateur puissant conseillé.', 'Grand dispositif', 'grand'))),
+        strip('20:45', 'Grand dispositif', '16 caméras : volante, rail, grue, deux Steadicam. Ordinateur puissant conseillé.', 'Lancer le grand dispositif', 'grand'))),
     el('footer', { class: 'dk-foot' },
       el('div', { class: 'dk-side' },
         el('details', { class: 'cs-keys' },
           el('summary', {}, 'Commandes clavier'),
           el('div', { class: 'keys' }, ...CONTROLS_HELP.map(([k, d]) => el('div', {}, el('kbd', {}, k), el('span', {}, d))))),
         // la version, pour savoir quel fichier on a ouvert ; le diagnostic, pour signaler un problème
-        el('p', { class: 'note cs-ver' }, el('span', { id: 'stversion' }, `Version ${APP_VERSION}`), el('button', { class: 'linkbtn', onclick: () => openDiag() }, 'Diagnostic technique'))),
+        el('p', { class: 'note cs-ver' }, el('span', { id: 'stversion' }, `Version ${APP_VERSION}`), el('button', { class: 'linkbtn', onclick: () => openDiag() }, icon('diagnostic'), 'Diagnostic technique'))),
       el('p', { class: 'note cs-foot' }, 'Simulation non officielle, sans lien avec le club ni avec les constructeurs cités. Les caractéristiques techniques (objectifs, portées de câbles, seuils HF, niveaux vidéo et audio) sont des ordres de grandeur réalistes, donnés à titre pédagogique ; les noms d\'équipements sont des exemples de matériel courant.'))));
 }
 

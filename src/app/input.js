@@ -126,10 +126,11 @@ export function setupTouch() {
   const b = (l, fn) => el('button', { class: 'tbtn', style: { padding: '14px 18px', fontSize: '16px' }, onclick: fn }, l);
   // atelier : E se maintient (lever, nettoyer), « Reposer » remplace la touche Q
   const eb = b('E', () => { if (!(AT.active && onDeck())) act(AIM.target); });
+  eb.setAttribute('aria-label', 'E : utiliser'); eb.title = 'Utiliser ce que vous visez (poste, caméra, pièce)';
   eb.addEventListener('pointerdown', () => { if (AT.active && onDeck()) atelierInput('down', 'KeyE'); });
   for (const ev of ['pointerup', 'pointercancel', 'pointerleave']) eb.addEventListener(ev, () => { if (AT.active) atelierInput('up', 'KeyE'); });
   const qb = b('Reposer', () => atelierInput('down', 'KeyQ')); qb.hidden = !AT.active;
   on('atelier', (e) => { qb.hidden = e.type === 'end'; });
   const info = () => { const target = AIM.target; if (target) { if (target.kind === 'cam') openDevice('cam', target.cam.id); else openInfo(target.kind === 'station' ? target.station : target.info); } };
-  t.append(j, el('div', { class: 'tact' }, eb, qb, b('Monter', () => { PL.pos.y += 3; PL.fly = true; }), b('Info', info)));
+  t.append(j, el('div', { class: 'tact' }, eb, qb, b('Monter', () => { PL.pos.y += 3; PL.fly = true; }), Object.assign(b('Info', info), { title: 'Voir la fiche ou le matériel de ce que vous visez (touche I)' })));
 }

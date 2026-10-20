@@ -36,8 +36,12 @@ export function buildMixer(body, arg, ctx) {
   for (const [bus, label, title] of ROWS) {
     const row = el('div', { class: 'xpt-row' }, el('span', { class: 'rl', title }, label));
     for (let n = 1; n <= nIn; n++) {
-      const name = el('span', { class: 'oled' }), sub = el('small', {});
-      const b = el('button', { class: 'xpt ' + bus, 'aria-label': `${label} entrée ${n}`, onclick: () => press(bus, n) }, name, el('span', { class: 'xn' }, String(n)), sub);
+      // nom accessible = texte visible (source, numéro, modèle) puis le bus (WCAG 2.5.3, label-content-name-mismatch) :
+      // aria-labelledby l'emporte sur aria-label, que l'on garde car les parcours du chef de car ciblent ces
+      // touches par [aria-label="B · PST entrée 3"] ; les espaces entre les éléments ne s'affichent pas (flex)
+      const k = `mx-${bus}-${n}`;
+      const name = el('span', { class: 'oled', id: k + '-s' }), num = el('span', { class: 'xn', id: k + '-n' }, String(n)), sub = el('small', { id: k + '-d' });
+      const b = el('button', { class: 'xpt ' + bus, 'aria-label': `${label} entrée ${n}`, 'aria-labelledby': `${k}-s ${k}-n ${k}-d ${k}-b`, onclick: () => press(bus, n) }, name, ' ', num, ' ', sub, el('span', { id: k + '-b', hidden: true }, `${label}, entrée ${n}`));
       b._name = name; b._sub = sub; buses[bus][n] = b; row.appendChild(b);
     }
     rowsP.appendChild(row);
@@ -58,11 +62,11 @@ export function buildMixer(body, arg, ctx) {
   const wr = el('div', { class: 'hwrow' }, el('span', { class: 'rl' }, 'Motif'));
   WIPES.forEach((w, i) => { const b = hwBtn(w.split(' ')[0], { onclick: () => { MIX.wipe = i; MIX.trans = 'wipe'; explain(`Motif de volet : ${w}.`, 'mix:wipe'); } }); wbtns.push(b); wr.appendChild(b); });
   transP.appendChild(wr);
-  const rate = el('input', { type: 'number', min: 0, max: 200, value: MIX.rate, id: 'mixrate', style: { width: '80px' } });
+  const rate = el('input', { type: 'number', min: 0, max: 200, value: MIX.rate, id: 'mixrate', 'aria-label': 'Durée de transition, en images', style: { width: '80px' } });
   rate.addEventListener('change', () => { MIX.rate = clamp(+rate.value || 0, 0, 200); explain(`Durée de transition : ${MIX.rate} images = ${fmt(MIX.rate / frameRate(), 2)} s à ${frameRate()} images par seconde (${S.format === 'HDi' ? '1080i50 : 25 images, 50 trames' : 'format progressif 50p'}). Un enchaîné classique dure 12 à 25 images.`, 'mix:rate'); });
   const nb = hwBtn('BKGD', { onclick: () => { MIX.next.bkgd = !MIX.next.bkgd; if (!MIX.next.bkgd && !MIX.next.key1) MIX.next.key1 = true; explain('Next transition : choisit ce qui change à la prochaine transition (l\'arrière-plan, la clé, ou les deux).', 'mix:next'); } });
   const nk = hwBtn('KEY 1', { onclick: () => { MIX.next.key1 = !MIX.next.key1; if (!MIX.next.bkgd && !MIX.next.key1) MIX.next.bkgd = true; explain('Next transition : choisit ce qui change à la prochaine transition (l\'arrière-plan, la clé, ou les deux).', 'mix:next'); } });
-  transP.appendChild(el('div', { class: 'hwrow' }, el('span', { class: 'rl' }, 'Durée'), rate, el('span', { class: 'note' }, 'images (50 i/s)'), el('span', { style: { flex: 1 } }), el('span', { class: 'rl' }, 'Next'), nb, nk));
+  transP.appendChild(el('div', { class: 'hwrow' }, el('span', { class: 'rl' }, 'Durée'), rate, el('span', { class: 'note' }, `images (${frameRate()} i/s)`), el('span', { style: { flex: 1 } }), el('span', { class: 'rl' }, 'Next'), nb, nk));
   const tbar = el('input', { type: 'range', min: 0, max: 100, step: 0.5, value: 0, class: 'tbar', id: 'tbar', 'aria-label': 'Levier de transition' });
   tbar.addEventListener('input', () => { mixTbar(+tbar.value / 100); explain(`Levier de transition : ${Math.round(MIX.pos * 100)} %. Le truquiste le pousse à la main pour suivre le rythme de l'action (un enchaîné lent sur un plan large, par exemple).`, 'mix:tbar'); });
   const cut = hwBtn('CUT', { cls: 'big', onclick: () => mixCut() });
@@ -76,7 +80,7 @@ export function buildMixer(body, arg, ctx) {
   const kAuto = hwBtn('KEY AUTO', { onclick: () => keyToggle(true) });
   const corners = {};
   const cr = el('div', { class: 'hwrow' }, el('span', { class: 'rl' }, 'Coin'));
-  for (const [k, l] of [['tl', '↖'], ['tr', '↗'], ['bl', '↙'], ['br', '↘']]) { const b = hwBtn(l, { onclick: () => { MIX.key1.corner = k; explain('Position de l\'image incrustée (sur le pupitre : joystick positionneur).', 'mix:pos'); } }); corners[k] = b; cr.appendChild(b); }
+  for (const [k, l, t] of [['tl', '↖', 'Coin haut gauche'], ['tr', '↗', 'Coin haut droit'], ['bl', '↙', 'Coin bas gauche'], ['br', '↘', 'Coin bas droit']]) { const b = hwBtn(l, { title: t, onclick: () => { MIX.key1.corner = k; explain('Position de l\'image incrustée (sur le pupitre : joystick positionneur).', 'mix:pos'); } }); b.setAttribute('aria-label', t); corners[k] = b; cr.appendChild(b); }
   const ks = knob('Taille', 15, 60, 1, Math.round(MIX.key1.size * 100), (v) => { MIX.key1.size = v / 100; explain(`Taille de l'image incrustée : ${v} %. Le keyer redimensionne la source du bus de clé en temps réel.`, 'mix:size'); }, (v) => v + ' %');
   keyP.append(el('div', { class: 'hwrow' }, kOn, kAuto, el('span', { class: 'note' }, 'Source : bus KEY/AUX')), cr, ks);
   grid.appendChild(keyP);

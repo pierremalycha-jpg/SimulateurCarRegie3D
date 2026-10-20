@@ -23,9 +23,9 @@ const MIXER = {
   steps: [
     {
       id: 'intro', title: 'Le pupitre du truquiste',
-      say: 'Le truquiste exécute les ordres du réalisateur sur le **mélangeur**. Deux rangées de boutons comptent pour commencer :\n- **A · PGM** (programme) : la source à l\'antenne, tally **rouge** sur la caméra ;\n- **B · PST** (preset, ou preview) : la source suivante, préparée à l\'avance, tally **vert**.\n\nLe geste de base : on prépare sur PST, puis une **transition** échange PGM et PST.',
+      say: 'Le truquiste exécute les ordres du réalisateur sur le **mélangeur**. Deux rangées de boutons comptent pour commencer :\n- **A · PGM** (programme) : la source à l\'antenne, **tally** (le voyant de la caméra) **rouge** ;\n- **B · PST** (preset ; on dit aussi PVW, preview) : la source suivante, préparée à l\'avance, tally **vert**.\n\nLe geste de base : on prépare sur PST, puis une **transition** échange PGM et PST.',
     },
-    goStation('melangeur', 'On va au pupitre, dans la régie de production.', 'Au-dessus du pupitre, le multiview : chaque vignette porte le tally de sa source.'),
+    goStation('melangeur', 'On va au pupitre, dans la régie de production.', 'Au-dessus du pupitre, le **multiview** (l\'écran mosaïque de toutes les sources) : chaque vignette porte le tally de sa source.'),
     {
       id: 'pst', title: 'Préparer une caméra',
       enter: (c) => { c.mem.src = 'CAM' + freeCam(meSource(MIX.pgm)); },
@@ -34,7 +34,7 @@ const MIXER = {
       go: { station: 'melangeur' }, show: (c) => xpt('pst', c.mem.src),
       done: (c) => meSource(MIX.pst) === c.mem.src,
       ok: 'Elle est en preset : son tally est vert, le cadreur sait qu\'il est le prochain.',
-      hints: ['La rangée du bas, marquée B · PST.', 'Le numéro du bouton est celui de l\'entrée du mélangeur : en standard, entrée 3 = CAM 3.'],
+      hints: ['Le pupitre a trois rangées de boutons ; une seule prépare la source suivante sans toucher à l\'antenne.', 'La rangée du bas, marquée B · PST.', 'Le numéro du bouton est celui de l\'entrée du mélangeur : en standard, entrée 3 = CAM 3.'],
       auto: (c) => mixSetPst(meIndex(c.mem.src)),
     },
     {
@@ -44,7 +44,7 @@ const MIXER = {
       go: { station: 'melangeur' }, show: [{ sel: '#station .hw.big', text: 'CUT', label: 'CUT' }],
       done: (c) => meSource(MIX.pgm) === c.mem.src,
       ok: 'La caméra est à l\'antenne (tally rouge) et l\'ancienne source est passée en preset.',
-      hints: ['La grande touche CUT, à gauche du levier.', 'Au clavier : Entrée (ou Espace au poste).'],
+      hints: ['Les transitions se lancent dans le module de transition, sous les rangées de boutons.', 'La grande touche CUT, à gauche du levier. Au clavier : Entrée (ou Espace au poste).'],
       auto: () => mixCut(),
     },
     {
@@ -56,17 +56,18 @@ const MIXER = {
       show: (c) => [...(meSource(MIX.pst) !== c.mem.src2 ? xpt('pst', c.mem.src2) : []), ...(MIX.trans !== 'mix' ? [hw('MIX')] : []), { sel: '#station .hw.big', text: 'AUTO TRANS', label: 'AUTO TRANS' }],
       done: (c) => S.stats.mixes > c.mem.mixes && MIX.lastTrans && MIX.lastTrans.type === 'mix',
       ok: 'Pendant le fondu, les deux caméras étaient à l\'antenne : les deux tallys étaient rouges.',
-      hints: ['D\'abord la caméra sur PST, puis MIX dans le module de transition, enfin AUTO TRANS.'],
+      hints: ['Trois gestes, dans l\'ordre : préparer la source, choisir le type de transition, lancer.', 'La caméra sur la rangée B · PST, puis la touche MIX du module de transition (ou X au clavier).', 'Enfin la grande touche AUTO TRANS.'],
       auto: (c) => { mixSetPst(meIndex(c.mem.src2)); MIX.trans = 'mix'; mixAuto(); },
     },
     {
       id: 'tbar', title: 'La barre T',
       enter: (c) => { c.mem.dir = MIX.tbarDir; },
-      say: 'La **barre T** fait la même transition à la main : on choisit sa vitesse, on peut s\'arrêter à mi-course pour une surimpression. Arrivée en bout de course, la transition est terminée et la barre change de sens.',
+      say: 'La **barre T** (le levier de transition, à droite de CUT et AUTO TRANS) fait la même transition à la main : on choisit sa vitesse, on peut s\'arrêter à mi-course pour une surimpression. Arrivée en bout de course, la transition est terminée et la barre change de sens.',
       do: 'Pousse la barre T jusqu\'au bout.',
       go: { station: 'melangeur' }, show: [{ sel: '#station #tbar', label: 'barre T' }],
       done: (c) => MIX.tbarDir !== c.mem.dir,
       ok: 'Transition terminée à la main. Pour le direct, AUTO TRANS est plus régulier ; la barre sert aux effets doux.',
+      hints: ['Le levier est à droite des grandes touches CUT et AUTO TRANS.', 'Fais-le glisser jusqu\'à l\'autre butée : la transition n\'est finie qu\'en bout de course.'],
       auto: () => mixTbar(MIX.tbarDir > 0 ? 1 : 0),
     },
     {
@@ -76,13 +77,14 @@ const MIXER = {
       do: 'Choisis CLIP et lance AUTO TRANS.',
       go: { station: 'melangeur' }, show: (c) => [...(MIX.trans !== 'stinger' ? [hw('CLIP')] : []), { sel: '#station .hw.big', text: 'AUTO TRANS', label: 'AUTO TRANS' }],
       done: (c) => S.stats.stingers > c.mem.st,
-      ok: 'Le logo est passé : c\'est la signature du ralenti en football.',
+      ok: 'Le logo est passé : c\'est la signature du ralenti en football, le téléspectateur sait qu\'il quitte le direct.',
+      hints: ['Même logique que le fondu : choisir le type de transition, puis lancer.', 'La touche CLIP du module de transition (ou L au clavier), puis AUTO TRANS.'],
       auto: () => { MIX.trans = 'stinger'; mixAuto(); },
     },
     {
       id: 'quiz', title: 'Question',
       say: 'Une question de tally, essentielle pour les cadreurs.',
-      quiz: { q: 'Pendant un enchaîné (MIX) de la CAM 1 vers la CAM 2, quel tally est rouge ?', choices: ['Seulement la CAM 1', 'Les deux caméras', 'Seulement la CAM 2'], answer: 1, why: 'Pendant le fondu, les deux images sont à l\'antenne : les deux cadreurs ont le tally rouge et ne doivent pas bouger leur cadre.' },
+      quiz: { q: 'Pendant un enchaîné (MIX) de la CAM 1 vers la CAM 2, quel tally est rouge ?', choices: ['Seulement la CAM 1', 'Les deux caméras', 'Seulement la CAM 2'], answer: 1, why: 'Pendant le fondu, les deux images sont à l\'antenne : les deux cadreurs ont le tally rouge et ne doivent pas bouger leur cadre. L\'erreur fréquente est de croire que le tally ne suit qu\'une source : il suit tout ce qui est visible à l\'antenne.' },
     },
   ],
 };
@@ -98,7 +100,7 @@ const KEYS = {
   steps: [
     {
       id: 'intro', title: 'Les incrustations',
-      say: 'Les graphiques (score, bandeaux, statistiques) sont fabriqués par l\'**habillage** et posés sur l\'image par le mélangeur, grâce à des **incrustateurs**.\n\nLes **DSK** (downstream keyers) sont tout au bout du mélangeur, après les transitions : ce qu\'ils incrustent reste à l\'écran quelle que soit la source. Ici, le DSK 1 porte le score, le DSK 2 les bandeaux.',
+      say: 'Les graphiques (score, bandeaux, statistiques) sont fabriqués par l\'**habillage** et posés sur l\'image par le mélangeur, grâce à des **incrustateurs**.\n\nLes **DSK** (downstream keyers, les incrustateurs aval) sont tout au bout du mélangeur, après les transitions : ce qu\'ils incrustent reste à l\'écran quelle que soit la source. Ici, le DSK 1 porte le score, le DSK 2 les bandeaux.',
     },
     goStation('melangeur', 'On commence au mélangeur.', 'Repère les touches DSK 1 et DSK 2, à droite du module de transition.'),
     {
@@ -108,10 +110,11 @@ const KEYS = {
       do: 'Appuie sur DSK 1 AUTO.',
       go: { station: 'melangeur' }, show: [hw('DSK 1 AUTO')],
       done: () => MIX.dsk1.on,
-      ok: 'Le score est à l\'antenne. Il restera là même pendant les ralentis.',
+      ok: 'Le score est à l\'antenne. Il restera là même pendant les ralentis, puisque le DSK est après les transitions.',
+      hints: ['Les touches DSK sont à côté du module de transition : pour chaque DSK, une touche CUT (sec) et une touche AUTO (en fondu).', 'La touche DSK 1 AUTO, sous-titrée « score ».'],
       auto: () => { if (!MIX.dsk1.on) dskToggle(1, true); },
     },
-    goStation('habillage', 'Le bandeau se prépare au poste Habillage, juste à côté.', 'À gauche, l\'aperçu du graphique (fill) et de sa découpe (key) ; à droite, le programme.'),
+    goStation('habillage', 'Le bandeau se prépare au poste Habillage, au deuxième rang de la régie de production.', 'À gauche, l\'aperçu du graphique (fill) et de sa découpe (key) ; à droite, le programme.'),
     {
       id: 'cue', title: 'Préparer le bandeau',
       enter: () => { if (GFX.template) gfxOut(); GFX.cued = 'titre'; },
@@ -119,7 +122,8 @@ const KEYS = {
       do: 'Choisis le modèle « Bandeau joueur ».',
       go: { station: 'habillage' }, show: [hw('Bandeau joueur')],
       done: () => GFX.cued === 'lower',
-      ok: 'Le bandeau est prêt (cue). Le menu sous les modèles choisit le joueur.',
+      ok: 'Le bandeau est prêt (en « cue », c\'est-à-dire chargé et pas encore lancé). Le menu sous les modèles choisit le joueur.',
+      hints: ['On choisit d\'abord quoi passer : les modèles de graphiques sont listés au poste.', 'La touche « Bandeau joueur », parmi les modèles.'],
       auto: () => { GFX.cued = 'lower'; },
     },
     {
@@ -129,6 +133,7 @@ const KEYS = {
       go: { station: 'habillage' }, show: [{ sel: '#station .hw.big', text: 'TAKE IN', label: 'TAKE IN' }],
       done: () => GFX.template === 'lower' && (GFX.anim > 0.5 || GFX.animDir > 0),
       ok: 'Le bandeau s\'anime. Regarde l\'avertissement : tant que le DSK 2 est fermé, il n\'est pas à l\'antenne.',
+      hints: ['Le graphique est chargé : il reste à l\'animer dans le générateur.', 'La grande touche TAKE IN.'],
       auto: () => gfxTake('lower'),
     },
     {
@@ -137,7 +142,8 @@ const KEYS = {
       do: 'Ouvre le DSK 2.',
       go: { station: 'habillage' }, show: [hw('DSK 2')],
       done: () => MIX.dsk2.on && GFX.template === 'lower',
-      ok: 'Le bandeau est à l\'antenne, par-dessus l\'image et sous le score.',
+      ok: 'Le bandeau est à l\'antenne, par-dessus l\'image ; le score, sur le DSK 1, reste affiché à côté.',
+      hints: ['Le générateur sort bien le bandeau : c\'est l\'incrustateur qui le pose sur l\'antenne qui est fermé.', 'La touche DSK 2, sous-titrée « graph. », au poste Habillage.'],
       auto: () => { if (!MIX.dsk2.on) dskToggle(2, true); if (GFX.template !== 'lower') gfxTake('lower'); },
     },
     {
@@ -146,13 +152,14 @@ const KEYS = {
       do: 'Appuie sur TAKE OUT.',
       go: { station: 'habillage' }, show: [{ sel: '#station .hw.big', text: 'TAKE OUT', label: 'TAKE OUT' }],
       done: () => !GFX.template || GFX.animDir < 0,
-      ok: 'Bandeau sorti. Le score, lui, est toujours là.',
+      ok: 'Bandeau sorti. Le score, lui, est toujours là : il est sur un autre DSK.',
+      hints: ['La sortie se fait en animation, comme l\'entrée.', 'La grande touche TAKE OUT.'],
       auto: () => gfxOut(),
     },
     {
       id: 'quiz', title: 'Question',
       say: 'Pour finir, une question de logique.',
-      quiz: { q: 'Pourquoi le score est-il sur un DSK et pas sur la clé du M/E ?', choices: ['Parce que le DSK est en aval des transitions : le score ne bouge pas quand on coupe ou qu\'on enchaîne', 'Parce que le DSK a une meilleure qualité d\'image', 'Parce qu\'une clé de M/E ne peut pas afficher de texte'], answer: 0, why: 'La clé du M/E fait partie de la transition : elle partirait avec l\'image. Le DSK, tout au bout de la chaîne, reste à l\'écran quoi qu\'on fasse en amont.' },
+      quiz: { q: 'Pourquoi le score est-il sur un DSK et pas sur la clé du M/E (l\'étage de mélange, en amont des DSK) ?', choices: ['Parce que le DSK est en aval des transitions : le score ne bouge pas quand on coupe ou qu\'on enchaîne', 'Parce que le DSK a une meilleure qualité d\'image', 'Parce qu\'une clé de M/E ne peut pas afficher de texte'], answer: 0, why: 'La clé du M/E fait partie de la transition : elle partirait avec l\'image. Le DSK, tout au bout de la chaîne, reste à l\'écran quoi qu\'on fasse en amont. Ce n\'est donc ni une question de qualité ni de texte : les deux incrustent aussi bien, seule leur place dans la chaîne change.' },
     },
   ],
 };
@@ -168,7 +175,7 @@ const DIRECTOR = {
   steps: [
     {
       id: 'intro', title: 'Le réalisateur',
-      say: 'Le **réalisateur** choisit les plans, en regardant le multiview. Il ne touche pas au mélangeur : il parle au **truquiste** dans l\'intercom, avec des mots courts et toujours les mêmes :\n- « **Prépare la 4** » : le truquiste met la CAM 4 en preset ;\n- « **Top !** » : il coupe ;\n- « **Enchaîne** » : il fait un fondu ;\n- « **Ralenti !** » : l\'EVS et le truquiste lancent le ralenti.\n\nIci, le truquiste est simulé : chaque bouton est un ordre.',
+      say: 'Le **réalisateur** choisit les plans, en regardant le **multiview** (l\'écran mosaïque de toutes les sources). Il ne touche pas au mélangeur : il parle au **truquiste** dans l\'intercom, avec des mots courts et toujours les mêmes :\n- « **Prépare la 4** » : le truquiste met la CAM 4 en preset (prête à passer) ;\n- « **Top !** » : il coupe ;\n- « **Enchaîne** » : il fait un fondu ;\n- « **Ralenti !** » : l\'opérateur EVS (le serveur de ralentis) et le truquiste lancent le ralenti.\n\nIci, le truquiste est simulé : chaque bouton est un ordre.',
     },
     goStation('realisateur', 'On s\'installe au pupitre de réalisation, face au multiview.', 'La première ligne de boutons, ce sont les sources : un clic = « Prépare… ».'),
     {
@@ -178,7 +185,8 @@ const DIRECTOR = {
       do: (c) => `Donne l'ordre « Prépare la ${c.mem.src.slice(3)} ».`,
       go: { station: 'realisateur' }, show: (c) => [{ sel: '#station .hwpanel .hw', text: camName(c.mem.src), label: `Prépare la ${c.mem.src.slice(3)}` }],
       done: (c) => meSource(MIX.pst) === c.mem.src,
-      ok: 'Le truquiste a mis la caméra en preset. Le multiview la montre avec un cadre vert.',
+      ok: 'Le truquiste a mis la caméra en preset. Le multiview la montre avec un cadre vert : tu vois ce qui va passer avant de le demander.',
+      hints: ['Chaque ordre est un bouton : cherche la rangée qui sert à préparer.', 'Rangée « Prépare » : la touche de la caméra demandée.'],
       auto: (c) => mixSetPst(meIndex(c.mem.src)),
     },
     {
@@ -187,7 +195,8 @@ const DIRECTOR = {
       do: 'Donne le top.',
       go: { station: 'realisateur' }, show: [{ sel: '#station .hw.big', text: 'TOP', label: 'TOP !' }],
       done: (c) => meSource(MIX.pgm) === c.mem.src,
-      ok: 'Coupé. Le multiview encadre la caméra en rouge.',
+      ok: 'Coupé. Le multiview encadre la caméra en rouge : elle est à l\'antenne.',
+      hints: ['L\'ordre de couper est le plus court de tous.', 'La grande touche TOP !'],
       auto: () => mixCut(),
     },
     {
@@ -198,7 +207,8 @@ const DIRECTOR = {
       go: { station: 'realisateur' },
       show: (c) => [...(meSource(MIX.pst) !== c.mem.src2 ? [{ sel: '#station .hwpanel .hw', text: camName(c.mem.src2), label: 'Prépare' }] : []), { sel: '#station .hw.big', text: 'ENCHAÎNE', label: 'ENCHAÎNE' }],
       done: (c) => S.stats.mixes > c.mem.mixes,
-      ok: 'Fondu réalisé par le truquiste.',
+      ok: 'Fondu réalisé par le truquiste : un ordre, un geste, sans que tu touches au mélangeur.',
+      hints: ['Deux ordres, dans l\'ordre : d\'abord préparer, ensuite le fondu.', 'Rangée « Prépare » : la caméra demandée, puis la grande touche ENCHAÎNE.'],
       auto: (c) => { mixSetPst(meIndex(c.mem.src2)); MIX.trans = 'mix'; mixAuto(); },
     },
     {
@@ -208,13 +218,14 @@ const DIRECTOR = {
       do: 'Demande le score (bouton SCORE).',
       go: { station: 'realisateur' }, show: [hw('SCORE')],
       done: () => MIX.dsk1.on,
-      ok: 'Le score est à l\'antenne sur le DSK 1.',
+      ok: 'Le score est à l\'antenne sur le DSK 1 : il y restera quelle que soit la caméra que tu demandes.',
+      hints: ['L\'habillage se commande aussi depuis ce pupitre, par ses propres boutons d\'ordres.', 'La touche SCORE, sous-titrée « DSK 1 ».'],
       auto: () => { if (!MIX.dsk1.on) dskToggle(1, true); },
     },
     {
       id: 'quiz', title: 'Question',
       say: 'Une question de méthode.',
-      quiz: { q: 'Pourquoi annoncer « Prépare la 4 » avant « Top » ?', choices: ['Pour que le truquiste la mette en preset et que le cadreur, tally vert, soigne son cadre', 'Parce que le mélangeur ne peut pas couper sans preset', 'Pour laisser le temps à l\'EVS d\'enregistrer'], answer: 0, why: 'Le « prépare » fait gagner la seconde qui compte : la coupe part pile au top, et le cadreur sait qu\'il sera à l\'antenne.' },
+      quiz: { q: 'Pourquoi annoncer « Prépare la 4 » avant « Top » ?', choices: ['Pour que le truquiste la mette en preset et que le cadreur, tally vert, soigne son cadre', 'Parce que le mélangeur ne peut pas couper sans preset', 'Pour laisser le temps à l\'EVS d\'enregistrer'], answer: 0, why: 'Le « prépare » fait gagner la seconde qui compte : la coupe part pile au top, et le cadreur sait qu\'il sera à l\'antenne. Techniquement, le mélangeur pourrait couper sans cette annonce (il y a toujours une source en preset) : c\'est pour les personnes qu\'on l\'annonce, pas pour la machine.' },
     },
   ],
 };
@@ -225,12 +236,12 @@ const SCRIPT = {
   id: 'scripte-notes', domain: D, stations: ['scripte', 'evs'],
   title: 'La scripte : timecode, conducteur et notes',
   summary: 'Le timecode maître, le temps de jeu, le conducteur, et une action notée envoyée à l\'opérateur ralenti.',
-  duration: '6 min', level: 'débutant',
+  duration: '4 min', level: 'débutant',
   outro: 'La scripte est la mémoire de la réalisation : avec le timecode, chaque action se retrouve en quelques secondes, au ralenti comme au montage du résumé.',
   steps: [
     {
       id: 'intro', title: 'La scripte',
-      say: 'La **scripte** tient le temps : l\'heure d\'antenne, le **conducteur** (ce qui doit passer et quand), le temps de jeu. Elle note aussi chaque action importante avec son **timecode**, pour que l\'opérateur ralenti et le monteur la retrouvent.',
+      say: 'La **scripte** tient le temps : l\'heure d\'antenne, le **conducteur** (ce qui doit passer et quand), le temps de jeu. Elle note aussi chaque action importante avec son **timecode** (l\'heure inscrite dans chaque image), pour que l\'opérateur ralenti et le monteur la retrouvent.',
     },
     goStation('scripte', 'Son poste est en régie de production, à côté du réalisateur.', 'En haut, le timecode maître ; à côté, le temps de jeu et le score.'),
     {
@@ -245,7 +256,8 @@ const SCRIPT = {
       do: 'Envoie la dernière action vers l\'EVS A.',
       go: { station: 'scripte' }, show: [{ sel: '#station .item .btn.small', text: 'EVS A', label: '→ EVS A' }],
       done: (c) => c.seen('evs', (e) => e.action === 'back') && EVS.ch[0].in != null,
-      ok: 'L\'EVS A est en pause trois secondes avant l\'action, IN posé : l\'opérateur n\'a plus qu\'à choisir l\'angle et lancer.',
+      ok: 'L\'EVS A est en pause trois secondes avant l\'action, point d\'entrée (IN) posé : l\'opérateur n\'a plus qu\'à choisir l\'angle et lancer.',
+      hints: ['Les actions du match sont dans le panneau « Notes de scripte », la plus récente en haut.', 'Sur la première ligne, le bouton « → EVS A ».'],
       auto: (c) => { const e = c.mem.ev; evsAction(0, 'back', 0); const ch = EVS.ch[0]; ch.t = Math.max(0, e.t - 3); ch.in = ch.t; ch.out = e.t + 2.5; },
     },
   ],
@@ -267,13 +279,13 @@ const PROD = {
     goStation('producteur', 'Son poste est en régie de production.', 'À l\'écran, le programme et le retour antenne ; dans le tableau, le match et le compte des transitions.'),
     {
       id: 'retour', title: 'Programme et retour antenne',
-      say: 'Deux écrans : le **programme** sortant du car et le **retour antenne**, ce que la chaîne diffuse réellement. Le retour arrive avec quelques secondes de retard (codage, transmission, régie finale).',
-      quiz: { q: 'Le retour antenne montre la mire alors que le programme est normal. Où est le problème ?', choices: ['Entre le départ du car et la chaîne : départ TX, transmission ou régie finale', 'Au mélangeur', 'À la caméra à l\'antenne'], answer: 0, why: 'Le programme est bon en sortie du mélangeur : la panne est en aval. On vérifie la grille (départ TX), puis la transmission, et on appelle la chaîne.' },
+      say: 'Deux écrans : le **programme** sortant du car et le **retour antenne**, ce que la chaîne diffuse réellement. Le retour arrive avec quelques secondes de retard (codage, transmission, régie finale de la chaîne).',
+      quiz: { q: 'Le retour antenne montre la mire alors que le programme est normal. Où est le problème ?', choices: ['Entre le départ du car et la chaîne : départ TX (la sortie du car vers la transmission), transmission ou régie finale', 'Au mélangeur', 'À la caméra à l\'antenne'], answer: 0, why: 'Le programme est bon en sortie du mélangeur : la panne est en aval. Le mélangeur et la caméra sont en amont d\'un point qu\'on sait bon : inutile d\'y chercher. On vérifie la grille (départ TX), puis la transmission, et on appelle la chaîne.' },
     },
     {
       id: 'quiz', title: 'Question',
-      say: () => `Depuis le début de la vacation : ${S.stats.cuts} coupe(s), ${S.stats.mixes} enchaîné(s), ${S.stats.stingers} volet(s) logo. Ces chiffres servent à analyser une réalisation.`,
-      quiz: { q: 'Qui est responsable du respect du conducteur et des horaires vis-à-vis de la chaîne ?', choices: ['La production', 'Le truquiste', 'L\'ingénieur vision'], answer: 0, why: 'La production tient le conducteur et parle à la chaîne ; le réalisateur fait les images, les techniciens assurent la qualité.' },
+      say: () => `Depuis le début de la séance : ${S.stats.cuts} coupe(s), ${S.stats.mixes} enchaîné(s), ${S.stats.stingers} volet(s) logo. Ces chiffres servent à analyser une réalisation.`,
+      quiz: { q: 'Qui est responsable du respect du conducteur et des horaires vis-à-vis de la chaîne ?', choices: ['La production', 'Le truquiste', 'L\'ingénieur vision'], answer: 0, why: 'La production tient le conducteur et parle à la chaîne. Le truquiste exécute les ordres du réalisateur et l\'ingénieur vision règle les caméras : ils suivent le conducteur, mais n\'en répondent pas devant la chaîne.' },
     },
   ],
 };

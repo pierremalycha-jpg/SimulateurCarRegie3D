@@ -34,11 +34,11 @@ const MODES = [['tech', 'Technique', 'Schémas, commutateurs, configuration'], [
 const log = (type, o = {}) => emit('netlog', { type, ...o });
 
 export function buildNetwork(body, arg, ctx) {
-  const mvMon = el('div', { class: 'monwrap grow' }, el('div', { class: 'lab' }, 'Multiview (les flux reçus par le multiviewer)'), el('div', { class: 'mon fill', 'data-gl': 'mv' }));
+  const mvMon = el('div', { class: 'monwrap grow' }, el('div', { class: 'lab' }, 'Multiview (les flux reçus par son processeur)'), el('div', { class: 'mon fill', 'data-gl': 'mv' }));
   ctx.dock.append(mvMon);
   if (!S.ipMode) {
     body.append(el('div', { class: 'hwpanel prose' }, el('h3', {}, 'Car en SDI'),
-      el('p', {}, 'Ce car est câblé en SDI (coaxial, grille de commutation). Le réseau média ST 2110 n\'existe que dans le car IP : revenez à l\'écran d\'accueil et choisissez « Infrastructure : car IP (ST 2110) ».'),
+      el('p', {}, 'Ce car est câblé en SDI (coaxial, grille de commutation). Le réseau média ST 2110 n\'existe que dans le car IP : pour passer en IP, demandez-le au chef de car (touche J, « Passer le car en IP ») ou rechargez la page et choisissez « Car : IP (ST 2110) » sur l\'écran d\'accueil.'),
       el('p', {}, 'Vous pouvez quand même consulter le chapitre « Réseau ST 2110 spine-leaf » du guide.'),
       el('button', { class: 'btn', onclick: () => emit('openGuide', 'reseau') }, 'Ouvrir le chapitre du guide')));
     return {};
@@ -79,7 +79,7 @@ export function buildNetwork(body, arg, ctx) {
       tabOps(content, R); qify(content);
       return;
     }
-    if (V.tab !== 'learn' && (NC.active || NC.exam)) { if (NC.active) missionCard(mbox, R, true); else mbox.append(el('div', { class: 'hwpanel net-mission compact' }, el('div', { class: 'hwrow' }, el('h3', {}, NC.exam.over ? 'Examen terminé' : 'Examen réseau en cours'), el('button', { class: 'btn small', onclick: () => show('learn') }, 'Voir')))); }
+    if (V.tab !== 'learn' && (NC.active || NC.exam)) { if (NC.active) missionCard(mbox, R, true); else mbox.append(el('div', { class: 'hwpanel net-mission compact' }, el('div', { class: 'hwrow' }, el('h3', {}, NC.exam.over ? 'Examen terminé' : 'Examen réseau en cours'), el('button', { class: 'btn small', onclick: () => show('learn') }, 'Voir le détail')))); }
     const a = document.activeElement;
     const typing = a && content.contains(a) && ['INPUT', 'SELECT', 'TEXTAREA'].includes(a.tagName);
     if (V.tab === 'switch' && V.sub === 'term' && !force) { refreshSwitchFrame(R); return; }
@@ -317,7 +317,7 @@ function switchFrame(R) {
       el('button', { class: 'btn small', onclick: () => { setSwitchPower(sw.id, !sw.power); explain(sw.power ? `${sw.running.hostname} rallumé : il redémarre sur sa configuration de démarrage (startup-config). Ce qui n'avait pas été enregistré par « write memory » est perdu.` : `${sw.running.hostname} hors tension. ${sw.role === 'ctl' ? 'Le contrôle NMOS est perdu.' : `Les flux qui passaient par lui ne passent plus que par le réseau ${sw.color === 'red' ? 'bleu' : 'rouge'} : à l'image rien ne change (ST 2022-7), mais il n'y a plus de secours.`}`, sw.power ? 'warn' : ''); R.refresh(); } }, sw.power ? 'Couper l\'alimentation' : 'Rallumer'),
       el('button', { class: 'btn small' + (dirty ? ' primary' : ''), onclick: () => { writeMemory(sw.id); termLog(sw.id).lines.push({ t: 'gui', s: '! interface graphique :\nwrite memory' }); explain(`write memory : la configuration active (running-config) de ${sw.running.hostname} est copiée dans la configuration de démarrage (startup-config). Elle survivra à un redémarrage.`); R.refresh(); } }, 'Enregistrer (write memory)'),
       el('button', { class: 'btn small', onclick: () => { loadReference(sw.id); log('refload', { sw: sw.id }); explain(`Configuration de référence chargée dans la running-config de ${sw.running.hostname} (pensez à « write memory »).`); R.refresh(); } }, 'Charger la config de référence'),
-      el('button', { class: 'btn small danger', onclick: async () => { if (!(await ask(`Remettre ${sw.running.hostname} en configuration usine ? (running-config seulement)`, { ok: 'Config usine', danger: true }))) return; loadFactory(sw.id); explain(`${sw.running.hostname} en configuration usine : plus de routage, de VLAN média, de PTP… Tout ce qui passait par lui est perdu. Exercice : reconstruire la configuration (ou recharger la référence).`, 'warn'); R.refresh(); } }, 'Config usine'),
+      el('button', { class: 'btn small danger', onclick: async () => { if (!(await ask(`Remettre ${sw.running.hostname} en sortie d'usine ? (running-config seulement)`, { title: 'Sortie d\'usine', ok: 'Remettre en sortie d\'usine', danger: true }))) return; loadFactory(sw.id); explain(`${sw.running.hostname} en sortie d'usine : plus de routage, de VLAN média, de PTP… Tout ce qui passait par lui est perdu. Exercice : reconstruire la configuration (ou recharger la référence).`, 'warn'); R.refresh(); } }, 'Remettre en sortie d\'usine'),
       el('button', { class: 'btn small', onclick: () => offerDownload(`${sw.running.hostname}-running-config.txt`, runningConfig(sw)) }, 'Télécharger la config')));
   return el('div', { class: 'net-swframe' }, head, frontPanel(sw, R));
 }

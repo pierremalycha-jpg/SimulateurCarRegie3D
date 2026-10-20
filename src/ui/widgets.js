@@ -9,7 +9,7 @@ import { allSources, sourceLabel } from '../pipeline.js';
 // ----------------------------------------------------------------------------------
 export const EXPL = { box: null, list: null, last: '', lastT: 0 };
 export function explainBox() {
-  const list = el('div', { class: 'ex-list' });
+  const list = el('div', { class: 'ex-list', tabindex: 0, role: 'region', 'aria-label': 'Ce qui se passe : explications en direct' });
   const box = el('div', { class: 'explain' }, el('div', { class: 'ex-h' }, el('span', { class: 'dot amber' }), 'Ce qui se passe'), list);
   EXPL.box = box; EXPL.list = list;
   list.appendChild(el('div', { class: 'ex-item muted' }, 'Chaque action que vous faites ici est expliquée en direct : ce qu\'elle change dans le signal et ce que vous devez voir à l\'image.'));
@@ -94,8 +94,8 @@ export function toggleFloatMon(src) {
     sel.addEventListener('change', () => { video.dataset.gl = sel.value; });
     const size = (w) => { f.style.width = w + 'px'; };
     const head = el('div', { class: 'fm-head' }, el('span', { class: 'fm-grip' }, '⠿ Moniteur'), sel,
-      el('button', { class: 'btn small', onclick: () => size(300) }, 'S'), el('button', { class: 'btn small', onclick: () => size(480) }, 'M'), el('button', { class: 'btn small', onclick: () => size(720) }, 'L'),
-      el('button', { class: 'x', 'aria-label': 'Fermer le moniteur', onclick: () => f.remove() }, '×'));
+      el('button', { class: 'btn small', 'aria-label': 'S : petit moniteur', title: 'Petit moniteur', onclick: () => size(300) }, 'S'), el('button', { class: 'btn small', 'aria-label': 'M : moniteur moyen', title: 'Moniteur moyen', onclick: () => size(480) }, 'M'), el('button', { class: 'btn small', 'aria-label': 'L : grand moniteur', title: 'Grand moniteur', onclick: () => size(720) }, 'L'),
+      el('button', { class: 'x', 'aria-label': 'Fermer le moniteur', title: 'Fermer le moniteur', onclick: () => f.remove() }, '×'));
     f = el('div', { id: 'floatmon', class: 'floatmon' }, head, video);
     document.body.appendChild(f);
     let d = null;

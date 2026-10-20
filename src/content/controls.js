@@ -9,7 +9,7 @@ export const CONTROLS_HELP = [
   ['V', 'Vol libre (Espace = monter, C = descendre)'],
   ['P', 'Plan des caméras (vue de dessus)'],
   ['Tab ou T', 'Le pupitre : aller à un poste ou un endroit (car, terrain, passerelle…), et tous les outils'],
-  ['G', 'Guide et missions'],
+  ['G', 'Guide : missions, chapitres, fiches des postes, glossaire'],
   ['J', 'Chef de car : explications du poste et parcours guidés pas à pas'],
   ['M', 'Moniteur retour PGM (coin de l\'écran)'],
   ['1 à 9 · 0', 'Commuter le mélangeur partout (mode DIRECT : à l\'antenne ; mode PRESET : au bus B, puis Entrée = CUT) · B : changer de mode'],

@@ -78,7 +78,7 @@ export function openStation(id, arg) {
     el('div', { class: 'role', title: info.role || '' }, role),
     el('div', { class: 'st-tools' }, devBtn, fmBtn,
       el('button', { class: 'btn small chef-btn', title: 'Le chef de car vous explique ce poste et vous guide pas à pas (J)', onclick: () => emit('chef') }, 'Chef de car'),
-      el('button', { class: 'btn small', onclick: () => openInfo(id) }, 'Le poste'),
+      el('button', { class: 'btn small', title: 'Rôle, matériel, déroulé et pièges du poste', onclick: () => openInfo(id) }, 'Fiche du poste'),
       el('button', { class: 'btn small', onclick: () => emit('openGuide') }, 'Guide')),
     el('button', { class: 'btn small st-quit', onclick: () => closeStation() }, el('kbd', {}, 'Échap'), 'Quitter le poste'));
   const dock = el('div', { class: 'st-dock' });
@@ -289,7 +289,7 @@ function buildScripte(body, arg, ctx) {
         lastN = S.events.length; log.innerHTML = '';
         for (const e of S.events.slice(-14).reverse()) {
           log.appendChild(el('div', { class: 'item' }, el('span', { class: 'lcd amber' }, tc(S.tcOffset + e.t)), el('div', { class: 'grow' }, el('div', { class: 't' }, e.label), el('div', { class: 's' }, mmss(e.clock) + ' de jeu')),
-            el('button', { class: 'btn small', onclick: () => { evsAction(0, 'back', 0); EVS.ch[0].t = Math.max(recRange()[0], e.t - 3); EVS.ch[0].in = EVS.ch[0].t; EVS.ch[0].out = e.t + 2.5; toast('EVS A calé 3 s avant : ' + e.label); } }, '→ EVS A')));
+            el('button', { class: 'btn small', title: 'Caler l\'EVS A 3 s avant cette action', onclick: () => { evsAction(0, 'back', 0); EVS.ch[0].t = Math.max(recRange()[0], e.t - 3); EVS.ch[0].in = EVS.ch[0].t; EVS.ch[0].out = e.t + 2.5; toast('EVS A calé 3 s avant : ' + e.label); } }, '→ EVS A')));
         }
       }
     },
@@ -376,14 +376,14 @@ function buildChef(body, arg, ctx) {
 // liste de câblage générée à partir de l'installation (comme le document papier du chef de car)
 function cablingList() {
   const filt = { sig: '', q: '' };
-  const sigSel = selectEl([['', 'Tous les signaux'], ...Object.entries(SIG).map(([k, v]) => [k, v.label])], '', (v) => { filt.sig = v; draw(); });
+  const sigSel = selectEl([['', 'Tous les signaux'], ...Object.entries(SIG).map(([k, v]) => [k, v.label])], '', (v) => { filt.sig = v; draw(); }, null, 'Filtrer par signal');
   const q = el('input', { type: 'text', placeholder: 'Filtrer (ex. CAM 3, EVS, REF…)', 'aria-label': 'Filtrer la liste de câblage', style: { flex: '1 1 220px' } });
   q.addEventListener('input', () => { filt.q = q.value.trim().toLowerCase(); draw(); });
   const count = el('span', { class: 'note' });
   const tbody = el('tbody');
   const tb = el('table', { class: 'tbl compact cabtbl' }, el('thead', {}, el('tr', {}, ...['N°', 'Origine (A)', 'Destination (B)', 'Câble', 'Long.', 'Signal', 'État'].map((h) => el('th', {}, h)))), tbody);
   let mode = 'gen';
-  const modeSel = selectEl([['gen', 'Liste générée (installation simulée)'], ...(CFG.cabling && CFG.cabling.rows ? [['imp', `Liste du car importée (${CFG.cabling.rows.length} lignes)`]] : [])], 'gen', (v) => { mode = v; draw(); });
+  const modeSel = selectEl([['gen', 'Liste générée (installation simulée)'], ...(CFG.cabling && CFG.cabling.rows ? [['imp', `Liste du car importée (${CFG.cabling.rows.length} lignes)`]] : [])], 'gen', (v) => { mode = v; draw(); }, null, 'Liste affichée');
   const exp = el('button', { class: 'btn small', onclick: () => offerDownload(mode === 'imp' ? 'liste-cablage-car.csv' : 'liste-cablage-simulateur.csv', cablingCSV(mode === 'imp' ? CFG.cabling.rows : generatedRows())) }, 'Exporter (CSV)');
   const box = el('div', { class: 'list' },
     el('p', { class: 'note' }, 'Liste de câblage générée à partir de votre installation : chaque ligne est un câble réel, avec ses deux extrémités (appareil · connecteur). Cliquez une extrémité pour ouvrir l\'appareil sur ce connecteur. Sur le terrain, cette liste est imprimée et chaque câble porte son numéro aux deux bouts. Le formateur peut importer la liste réelle du car dans l\'Espace formateur.'),
@@ -493,7 +493,7 @@ function buildHF(body, arg, ctx) {
   const buildAnts = () => {
     ants.innerHTML = '';
     for (const a of RF.antennas) {
-      const b = hwBtn(a.on ? 'ON' : 'OFF', { onclick: () => { a.on = !a.on; b.firstChild.textContent = a.on ? 'ON' : 'OFF'; b.classList.toggle('lit', a.on); later(() => explain(`Antenne « ${a.label} » ${a.on ? 'en service' : 'coupée'}. Le récepteur combine les antennes (diversité MRC) : ${a.on ? 'le C/N combiné remonte' : 'le C/N combiné baisse'} ; regardez la marge de chaque caméra.`, 'hf:ant')); } });
+      const b = hwBtn(a.on ? 'ON' : 'OFF', { title: `Allumer ou couper l'antenne « ${a.label} »`, onclick: () => { a.on = !a.on; b.firstChild.textContent = a.on ? 'ON' : 'OFF'; b.classList.toggle('lit', a.on); later(() => explain(`Antenne « ${a.label} » ${a.on ? 'en service' : 'coupée'}. Le récepteur combine les antennes (diversité MRC) : ${a.on ? 'le C/N combiné remonte' : 'le C/N combiné baisse'} ; regardez la marge de chaque caméra.`, 'hf:ant')); } });
       b.classList.toggle('lit', a.on);
       const lv = el('div', { class: 's' });
       ants.appendChild(el('div', { class: 'item' }, b, el('div', { class: 'grow' }, el('div', { class: 't' }, a.label), el('div', { class: 's' }, `${a.kind === 'omni' ? 'Omnidirectionnelle' : 'Panneau secteur'} · ${a.gain} dBi`), lv)));
@@ -627,7 +627,7 @@ function buildCCU(body, arg, ctx) {
       const bars = c ? hwBtn('BARS', { onclick: () => { c.paint.bars = !c.paint.bars; explain(c.paint.bars ? `CCU ${i} : barres de couleur. Elles sont générées dans la CCU/caméra et passent par toute la chaîne : si on les voit sur la bonne tuile du multiview, la liaison et l'affectation de la grille sont bonnes.` : `CCU ${i} : retour de l'image caméra.`, 'ccu:bars'); } }) : null;
       const fix1 = c ? el('button', { class: 'btn small', onclick: () => { c.fiberCut = false; c.checkLink(); toast(`CAM ${i} : basculée sur la fibre de secours`, 'good'); emit('repair', 'fibre'); explain(`CAM ${i} : basculée sur la fibre de secours. Dans un car, on tire toujours des fibres de réserve dans les multipaires ; au pied de car on change de brin. Ensuite : nettoyer les connecteurs (lingette et stylo de nettoyage) et mesurer le niveau optique.`); } }, 'Fibre de secours') : null;
       const fix2 = c ? el('button', { class: 'btn small', onclick: () => { c.genlock = true; toast(`CCU ${i} : référence re-verrouillée`, 'good'); emit('repair', 'genlock'); explain(`CCU ${i} : référence re-verrouillée (voyant REF IN allumé, UNLOCK éteint). La caméra est de nouveau en phase avec les autres sources : plus de saut à la commutation.`); } }, 'Re-verrouiller la réf.') : null;
-      const see = c ? el('button', { class: 'btn small', onclick: () => openDevice('ccu', i) }, 'Faces CCU') : null;
+      const see = c ? el('button', { class: 'btn small', onclick: () => openDevice('ccu', i) }, 'Voir la CCU') : null;
       const row = el('div', { class: 'item' + (c ? '' : ' dim') }, el('span', { class: 'dot' }), info, st, bars, fix1, fix2, see);
       rows[i] = { row, st, bars, fix1, fix2, dot: row.firstChild };
       list.appendChild(row);
@@ -664,7 +664,7 @@ function buildSync(body, arg, ctx) {
     el('div', { class: 'hwrow' }, el('button', { class: 'btn small', onclick: () => { S.faults.gps = !S.faults.gps; explain(S.faults.gps ? 'GPS perdu : le SPG passe en holdover. Son oscillateur (OCXO) continue de générer la référence avec une dérive de phase de l\'ordre de quelques dizaines à quelques centaines de ns par heure (environ une microseconde par jour pour un bon OCXO) : l\'antenne n\'est pas affectée.' : 'GPS retrouvé : le SPG se ré-asservit lentement (sans saut de phase) pour ne pas perturber les équipements.', 'sync:gps'); } }, 'Simuler une perte GPS'),
       el('button', { class: 'btn small', onclick: () => { for (const c of S.cams) c.genlock = true; toast('Toutes les CCU re-verrouillées sur la référence', 'good'); emit('repair', 'genlock'); explain('Toutes les CCU re-verrouillées : elles reçoivent le tri-level (ou black burst) du SPG par les distributeurs et alignent leur sortie sur la même phase.'); } }, 'Re-verrouiller toutes les CCU'),
       el('button', { class: 'btn small', onclick: () => openDevice('spg', 1) }, 'Voir le SPG'), el('button', { class: 'btn small', onclick: () => openDevice('da', 1) }, 'Voir les DA de référence')),
-      S.ipMode ? el('div', { class: 'hwrow' }, el('button', { class: 'btn small', onclick: () => { FAB.gm.gm1.up = !FAB.gm.gm1.up; markDirty(); explain(FAB.gm.gm1.up ? 'Grand maître PTP 1 remis en service : avec la meilleure priorité (priority1 100) et le GPS verrouillé, il est réélu par l\'algorithme BMCA.' : 'Grand maître 1 coupé : après 3 messages Announce manqués, les horloges frontières (commutateurs) élisent le grand maître 2. Les appareils restent synchronisés.', 'sync:ptp'); } }, 'Couper / rétablir le grand maître PTP 1'), el('button', { class: 'btn small', onclick: () => { FAB.gm.gm2.up = !FAB.gm.gm2.up; markDirty(); } }, 'Couper / rétablir le grand maître PTP 2'), el('button', { class: 'btn small', onclick: () => openStation('reseau', null) }, 'PTP détaillé (poste Réseau IP)')) : null),
+      S.ipMode ? el('div', { class: 'hwrow' }, el('button', { class: 'btn small', onclick: () => { FAB.gm.gm1.up = !FAB.gm.gm1.up; markDirty(); explain(FAB.gm.gm1.up ? 'Grand maître PTP 1 remis en service : avec la meilleure priorité (priority1 100) et le GPS verrouillé, il est réélu par l\'algorithme BMCA.' : 'Grand maître 1 coupé : après 3 messages Announce manqués, les horloges frontières (commutateurs) élisent le grand maître 2. Les appareils restent synchronisés.', 'sync:ptp'); } }, 'Couper / rétablir le grand maître PTP 1'), el('button', { class: 'btn small', onclick: () => { FAB.gm.gm2.up = !FAB.gm.gm2.up; markDirty(); } }, 'Couper / rétablir le grand maître PTP 2'), el('button', { class: 'btn small', onclick: () => openStation('reseau', null) }, 'Voir le PTP en détail (poste Réseau IP)')) : null),
     el('div', { class: 'hwpanel prose' }, el('h3', {}, 'Pourquoi synchroniser ?'), el('p', {}, STATION_INFO.synchro.role), el('p', {}, 'Le SPG est asservi au GPS. S\'il perd le GPS, il passe en « holdover » : son oscillateur interne garde la référence stable pendant des heures, l\'antenne continue. Si une CCU perd la référence, son image saute ou roule à la commutation : c\'est visible immédiatement au multiview.'))));
   return {
     update() {
@@ -718,7 +718,7 @@ function buildIntercom(body, arg, ctx) {
     ['EVS', 'conf', 'Les opérateurs ralentis : le réalisateur demande les angles, l\'opérateur annonce « EVS A prêt ».'],
     ['SON', 'p2p', 'Ligne directe avec l\'ingénieur du son.'],
     ['TRUQUISTE', 'p2p', 'Le truquiste est souvent à côté du réalisateur, mais garde une touche pour les pupitres déportés.'],
-    ['COMMENT.', 'ifb', 'IFB des commentateurs : ils entendent le programme (et leur propre voix) ; quand la production leur parle, le programme baisse.'],
+    ['COMMENT.', 'ifb', 'IFB des commentateurs : ils entendent leur N-1 (le programme sans leur propre voix) ; quand la production leur parle, ce retour baisse.'],
     ['CHAÎNE', 'w4', 'Coordination avec la régie finale de la chaîne : top départ, compte à rebours, pubs, incidents.'],
     ['TÉLÉPHONE', 'hyb', 'Pour joindre un intervenant extérieur (le stade, la sécurité, un duplex).'],
     ['VOYANT', 'gpo', 'Allume le voyant « réalisateur au micro » dans le compound (exemple de sortie relais).'],
@@ -727,8 +727,8 @@ function buildIntercom(body, arg, ctx) {
   const grid = el('div', { class: 'icp' });
   for (const [l, t, d] of keys) {
     const st = state[l] = { talk: false, listen: t === 'conf' || t === 'ifb' };
-    const talk = el('button', { class: 'icp-talk', onclick: () => { st.talk = !st.talk; upd(); if (st.talk) intercom('ORDRES', `Canal ouvert vers : ${l}`); explain(`TALK ${l} ${st.talk ? 'ouvert' : 'fermé'} · ${TYPES[t][1]} ${d}`, 'icom:' + l); } }, 'TALK');
-    const lis = el('button', { class: 'icp-lis', onclick: () => { st.listen = !st.listen; upd(); explain(`LISTEN ${l} ${st.listen ? 'activé : vous entendez ce canal' : 'coupé : vous n\'entendez plus ce canal'}. Chaque touche a un volume d'écoute réglable ; on coupe les canaux inutiles pour rester concentré.`, 'icom:l' + l); } }, 'LISTEN');
+    const talk = el('button', { class: 'icp-talk', 'aria-label': 'TALK ' + l, title: 'Parler vers ' + l, onclick: () => { st.talk = !st.talk; upd(); if (st.talk) intercom('ORDRES', `Canal ouvert vers : ${l}`); explain(`TALK ${l} ${st.talk ? 'ouvert' : 'fermé'} · ${TYPES[t][1]} ${d}`, 'icom:' + l); } }, 'TALK');
+    const lis = el('button', { class: 'icp-lis', 'aria-label': 'LISTEN ' + l, title: 'Écouter ' + l, onclick: () => { st.listen = !st.listen; upd(); explain(`LISTEN ${l} ${st.listen ? 'activé : vous entendez ce canal' : 'coupé : vous n\'entendez plus ce canal'}. Chaque touche a un volume d'écoute réglable ; on coupe les canaux inutiles pour rester concentré.`, 'icom:l' + l); } }, 'LISTEN');
     const k = el('div', { class: 'icp-key' }, el('div', { class: 'icp-lcd' }, el('b', {}, l), el('small', {}, TYPES[t][0])), el('div', { class: 'icp-btns' }, talk, lis));
     const upd = () => { talk.classList.toggle('on', st.talk); lis.classList.toggle('on', st.listen); k.classList.toggle('talking', st.talk); };
     upd(); grid.appendChild(k);

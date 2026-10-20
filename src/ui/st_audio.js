@@ -176,7 +176,7 @@ export function buildAudio(body, arg, ctx) {
   const startBtn = el('button', { class: 'btn primary small', onclick: () => { startAudio(); startBtn.hidden = true; } }, 'Activer le son');
   const cbay = el('div', { class: 'hwpanel vx-cbay' }, el('h3', {}, 'Control Bay · vumètres, écoute, ordres'),
     el('div', { class: 'vx-cbgrid' }, el('div', { class: 'list' }, bridge, lufsL),
-      el('div', { class: 'list' }, monRow, tbRow, el('div', { class: 'hwrow' }, el('button', { class: 'btn small', onclick: () => { resetLoudness(); explain('Loudness intégrée remise à zéro : on la relance au début du programme pour mesurer toute l\'émission (cible −23 LUFS, EBU R128).', 'son:lufs'); } }, 'Intégré à 0'), auto, startBtn))));
+      el('div', { class: 'list' }, monRow, tbRow, el('div', { class: 'hwrow' }, el('button', { class: 'btn small', onclick: () => { resetLoudness(); explain('Loudness intégrée remise à zéro : on la relance au début du programme pour mesurer toute l\'émission (cible −23 LUFS, EBU R128).', 'son:lufs'); } }, 'Remettre l\'intégré à 0'), auto, startBtn))));
   ctx.dock.append(el('div', { class: 'dockrow' }, dmon('PGM', 'Programme (image à l\'antenne)'), cbay));
 
   // ---------- onglets ----------
@@ -271,7 +271,7 @@ export function buildAudio(body, arg, ctx) {
       const meter = el('canvas', { width: 14, height: 150, class: 'vx-meter' });
       const fd = vfader(() => c.fader, (v) => { c.fader = v; if (c.group === 'canon' && AU.autoCanon) { AU.autoCanon = false; explain('Vous avez pris la main sur un canon : l\'assistant de suivi du jeu est coupé.', 'son:auto'); } applyStrip(c); explain(tFader(c), 'son:f' + c.id); }, col, c.short);
       const lcd = el('div', { class: 'vx-lcd' });
-      const mute = el('button', { class: 'vx-mute', onclick: () => { c.mute = !c.mute; applyStrip(c); explain(`${c.short} ${c.mute ? 'coupé (MUTE) : il disparaît du programme et de tous les départs.' : 'rétabli.'}`, 'son:mute'); } }, 'MUTE');
+      const mute = el('button', { class: 'vx-mute', 'aria-label': 'MUTE ' + c.short, title: 'Couper ' + c.short, onclick: () => { c.mute = !c.mute; applyStrip(c); explain(`${c.short} ${c.mute ? 'coupé (MUTE) : il disparaît du programme et de tous les départs.' : 'rétabli.'}`, 'son:mute'); } }, 'MUTE');
       const s = el('div', { class: 'vx-strip' }, scrib, hint, ico, scr, el('div', { class: 'vx-b2' }, sel, pfl), el('div', { class: 'vx-fsec' }, meter, fd), lcd, mute);
       s.style.setProperty('--g', col);
       s.sync = () => {
@@ -319,7 +319,7 @@ export function buildAudio(body, arg, ctx) {
       const set = isP ? o.set : (v) => { o.fader = v; };
       const fd = vfader(get, (v) => { set(v); applyAll(); explain(isP ? `Master PGM à ${fdb(v)} dB : il agit sur tout le programme. Surveillez la loudness intégrée (cible −23 LUFS).` : isV ? `${o.label} à ${fdb(v)} dB : toutes ses tranches bougent ensemble (le VCA agit sur leurs gains, il ne mélange pas le son). Leurs faders ne bougent pas : l'écran montre « V » à côté de leur valeur.` : `Master ${o.label} à ${fdb(v)} dB : niveau envoyé vers ${o.dest}.`, 'son:m' + (it.k || 'pgm')); }, col, o.short);
       const lcd = el('div', { class: 'vx-lcd' });
-      const mute = isP ? el('div', { class: 'vx-mute ghost' }, '—') : el('button', { class: 'vx-mute', onclick: () => { o.mute = !o.mute; applyAll(); explain(`${o.label} ${o.mute ? 'coupé : ' + (isV ? 'toutes ses tranches sont muettes (mute de groupe).' : 'plus rien n\'est envoyé vers ' + o.dest + '.') : 'rétabli.'}`, o.mute ? 'warn' : 'son:mmute'); } }, 'MUTE');
+      const mute = isP ? el('div', { class: 'vx-mute ghost' }, '—') : el('button', { class: 'vx-mute', 'aria-label': 'MUTE ' + o.label, title: 'Couper ' + o.label, onclick: () => { o.mute = !o.mute; applyAll(); explain(`${o.label} ${o.mute ? 'coupé : ' + (isV ? 'toutes ses tranches sont muettes (mute de groupe).' : 'plus rien n\'est envoyé vers ' + o.dest + '.') : 'rétabli.'}`, o.mute ? 'warn' : 'son:mmute'); } }, 'MUTE');
       const s = el('div', { class: 'vx-strip m' }, scrib, el('small', { class: 'vx-hint' }), scr, el('div', { class: 'vx-fsec' }, meter, fd), lcd, mute);
       s.style.setProperty('--g', col);
       s.sync = () => { for (const b of syncs) b.sync(); fd.sync(isP ? true : !o.mute); lcd.textContent = fdb(get()); if (!isP) mute.classList.toggle('on', !!o.mute); };
@@ -338,7 +338,7 @@ export function buildAudio(body, arg, ctx) {
       const head = el('div', { class: 'vx-dh' }, el('b', {}, `${c.n} · ${c.label}`), el('span', {}, `${c.src} — ${portInfo(c.src)}`));
       head.style.setProperty('--g', GROUPS[c.group].color);
       const patch = selectEl((c.st ? ST_PORTS : MONO_PORTS).map((p) => [p, p + (PLUG[p] ? ' · ' + PLUG[p].what : portsOf(p).some((x) => PLUG[x]) ? ' · ' + portInfo(p) : '')]), c.src, (v) => { setPatch(c.id, v); drawDetail(); explain(`Patch d'entrée : ${c.short} reçoit maintenant ${v} (${portInfo(v)}).${v === c.home ? ' C\'est l\'entrée prévue par la feuille de patch.' : ' ATTENTION : ce n\'est pas l\'entrée prévue (' + c.home + ').'}`, v === c.home ? 'son:patch' : 'warn'); });
-      const inp = el('div', { class: 'vx-dsec' }, el('h4', { style: { color: SEC.in } }, 'ENTRÉE'), el('div', { class: 'field' }, el('label', {}, 'Patch'), patch),
+      const inp = el('div', { class: 'vx-dsec' }, el('h4', { style: { color: SEC.in } }, 'ENTRÉE'), el('div', { class: 'field' }, el('label', { for: patch.id }, 'Patch'), patch),
         el('div', { class: 'vx-kr' }, K({ label: 'GAIN', color: SEC.in, min: c.kind === 'mic' ? 0 : c.defGain - 30, max: c.kind === 'mic' ? 70 : c.defGain + 30, step: 1, get: () => c.gain, set: (v) => { c.gain = v; }, fmt: (v) => (c.kind === 'mic' ? '+' + v : sgn(v - c.defGain, 0)), def: c.defGain, after: ap(() => tGain(c)) }),
           K({ label: 'RETARD', color: SEC.in, min: 0, max: 200, step: 1, get: () => c.delay, set: (v) => { c.delay = v; }, fmt: (v) => v + ' ms', def: 0, after: ap(() => tDelay(c)) })),
         el('div', { class: 'vx-b2' }, ...[vbtn('48V', '#ef4444', () => c.ph48, () => { c.ph48 = !c.ph48; applyStrip(c); explain(t48(c), 'son:48'); }), vbtn(c.st ? 'Ø R' : 'Ø', SEC.in, () => c.phase, () => { c.phase = !c.phase; applyStrip(c); explain(tPhase(c), c.phase ? 'warn' : 'son:phase'); })].map((b) => { ui.knobs.push(Object.assign(b, { _detail: true })); return b; })));
@@ -369,7 +369,7 @@ export function buildAudio(body, arg, ctx) {
       const vcaSel = selectEl([['', 'aucun'], ...Object.entries(AU.vca).map(([k, v]) => [k, v.label])], c.vca || '', (v) => { c.vca = v || null; applyStrip(c); explain(`${c.short} ${c.vca ? 'est commandé par ' + AU.vca[c.vca].label : 'n\'est plus dans un VCA'}. Un VCA (« voltage controlled amplifier », hérité de l'analogique) est un fader de commande : il agit sur le gain de ses tranches sans créer de bus.`, 'son:vca'); });
       const out = el('div', { class: 'vx-dsec' }, el('h4', { style: { color: SEC.pan } }, 'PANORAMIQUE ET DÉPARTS'),
         el('div', { class: 'vx-kr' }, K({ label: c.st ? 'BAL' : 'PAN', color: SEC.pan, min: -1, max: 1, step: 0.05, get: () => c.pan, set: (v) => { c.pan = v; }, fmt: (v) => (Math.abs(v) < 0.01 ? 'C' : (v < 0 ? 'G' : 'D') + Math.round(Math.abs(v) * 100)), def: 0, after: ap(() => tPan(c)) })),
-        outs, el('div', { class: 'field' }, el('label', {}, 'VCA'), vcaSel),
+        outs, el('div', { class: 'field' }, el('label', { for: vcaSel.id }, 'VCA'), vcaSel),
         el('p', { class: 'note' }, stripNote(c)));
       detail.append(head, el('div', { class: 'vx-dgrid' }, inp, eq, dyn, out));
       detail._draw = () => { const key = JSON.stringify([c.eq, c.hpf]); if (eqc._k !== key) { eqc._k = key; eqCurve(eqc, c, true); } dynCurve(dyc, c, true); };
@@ -398,6 +398,7 @@ export function buildAudio(body, arg, ctx) {
       const c = AU.ch[k];
       const status = el('td');
       const sel = selectEl((c.st ? ST_PORTS : MONO_PORTS).map((p) => [p, p]), c.src, (v) => { setPatch(k, v); explain(`Patch : ${c.short} ← ${v} (${portInfo(v)}).${v === c.home ? ' Conforme à la feuille de patch.' : ' Différent de la feuille de patch (' + c.home + ') : vérifiez que c\'est voulu.'}`, v === c.home ? 'son:patch' : 'warn'); upd(); });
+      sel.setAttribute('aria-label', 'Patch de ' + c.short);
       const what = el('td', { class: 'note' });
       const ph = el('td');
       const upd = () => { what.textContent = portInfo(c.src); const cond = portsOf(c.src).some((p) => PLUG[p] && PLUG[p].cond); ph.textContent = cond ? (c.ph48 ? '48 V' : '48 V COUPÉ') : '—'; ph.className = cond && !c.ph48 ? 'err' : ''; status.textContent = c.src === c.home ? 'conforme' : 'à vérifier (prévu : ' + c.home + ')'; status.className = c.src === c.home ? 'ok' : 'err'; };
@@ -416,14 +417,15 @@ export function buildAudio(body, arg, ctx) {
 
   // ---------- bus, N-1, embedder, retard ----------
   function tabBus() {
+    const SEND_NAME = { pgm: 'PGM', intl: 'INTL', n1: 'N-1 COMM', nxs: 'N-1 STUDIO', nxb: 'N-1 BT' };
     const tb = el('tbody');
     const cells = [];
     for (const k of AU.order) {
       const c = AU.ch[k];
       const tr = el('tr', {}, el('td', {}, el('b', {}, c.short)));
       for (const b of ['pgm', 'intl', 'n1', 'nxs', 'nxb']) {
-        const x = el('button', { class: 'vx-cell', onclick: () => { setSend(k, b, !c[b]); explain(SEND_TXT[b](c), sendBad(c, b) ? 'warn' : 'son:send'); } });
-        x.sync = () => { x.classList.toggle('on', !!c[b]); x.classList.toggle('bad', sendBad(c, b)); x.textContent = c[b] ? '●' : ''; };
+        const x = el('button', { class: 'vx-cell', 'aria-label': `${c.short} → ${SEND_NAME[b]}`, title: `Départ de ${c.short} vers ${SEND_NAME[b]}`, onclick: () => { setSend(k, b, !c[b]); explain(SEND_TXT[b](c), sendBad(c, b) ? 'warn' : 'son:send'); } });
+        x.sync = () => { x.setAttribute('aria-pressed', String(!!c[b])); x.classList.toggle('on', !!c[b]); x.classList.toggle('bad', sendBad(c, b)); x.textContent = c[b] ? '●' : ''; };
         cells.push(x); tr.appendChild(el('td', {}, x));
       }
       tb.appendChild(tr);
@@ -440,6 +442,7 @@ export function buildAudio(body, arg, ctx) {
     const avLcd = el('div', { class: 'lcd' });
     // embedder
     const embSel = AU.emb.map((v, i) => selectEl(EMB_OPTIONS, v, (nv) => { AU.emb[i] = nv; explain(`Paire ${2 * i + 1}-${2 * i + 2} du départ SDI : ${embLabel(nv)}. ${nv === SOUND_PLAN[i] ? 'Conforme au plan de son de la chaîne.' : `Le plan de son demande « ${embLabel(SOUND_PLAN[i])} » sur cette paire.`}`, nv === SOUND_PLAN[i] ? 'son:emb' : 'warn'); }));
+    embSel.forEach((s, i) => s.setAttribute('aria-label', `Paire ${2 * i + 1}-${2 * i + 2} du départ`));
     const embBody = el('tbody'); const embState = [];
     AU.emb.forEach((v, i) => { const plan = el('td'); const ok = el('td'); embState.push([plan, ok]); embBody.appendChild(el('tr', {}, el('td', {}, `${2 * i + 1}-${2 * i + 2}`), el('td', {}, embSel[i]), plan, ok)); });
     const embStatus = el('p', { class: 'note' });
@@ -475,8 +478,8 @@ export function buildAudio(body, arg, ctx) {
     const draw = () => {
       list.innerHTML = '';
       AU.snaps.forEach((s, i) => list.append(el('div', { class: 'vx-snap' + (AU.lastSnap === i ? ' on' : '') }, el('b', {}, `${i + 1} · ${s.name}`), el('span', { class: 'note' }, s.desc),
-        el('button', { class: 'btn small primary', onclick: () => { startAudio(); recallSnap(i); draw(); explain(`Snapshot « ${s.name} » rappelé : tous les réglages mémorisés (patch, gains, égaliseurs, dynamiques, faders, départs, VCA) reviennent d'un coup, les faders motorisés se replacent. ${s.desc}`, 'son:snap'); } }, 'RAPPELER'),
-        el('button', { class: 'btn small', onclick: () => { storeSnap(i); draw(); explain(`Snapshot « ${s.name} » mis à jour avec l'état actuel de la console.`, 'son:snap'); } }, 'MÉMORISER'))));
+        el('button', { class: 'btn small primary', onclick: () => { startAudio(); recallSnap(i); draw(); explain(`Snapshot « ${s.name} » rappelé : tous les réglages mémorisés (patch, gains, égaliseurs, dynamiques, faders, départs, VCA) reviennent d'un coup, les faders motorisés se replacent. ${s.desc}`, 'son:snap'); } }, 'Rappeler'),
+        el('button', { class: 'btn small', onclick: () => { storeSnap(i); draw(); explain(`Snapshot « ${s.name} » mis à jour avec l'état actuel de la console.`, 'son:snap'); } }, 'Mémoriser'))));
       list.append(el('button', { class: 'btn small', onclick: () => { storeSnap(AU.snaps.length, 'SNAP ' + (AU.snaps.length + 1)); draw(); explain('Nouveau snapshot mémorisé.', 'son:snap'); } }, '+ Nouveau snapshot'));
     };
     draw();

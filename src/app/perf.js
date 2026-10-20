@@ -47,7 +47,7 @@ function perfTest() {
     ]) kv.append(el('dt', {}, k), el('dd', { class: cls || '' }, v));
     const tips = el('ul', {});
     if (soft) tips.append(el('li', {}, 'Le navigateur n\'utilise pas la carte graphique : activez l\'accélération matérielle dans ses réglages, ou essayez un autre navigateur (Chrome, Edge, Firefox récents).'));
-    if (fps < 50) tips.append(el('li', {}, 'Branchez l\'ordinateur portable sur secteur et fermez les autres onglets lourds (visio, vidéos).'), el('li', {}, 'Moins de caméras = moins d\'images à calculer : le dispositif « Léger » (écran d\'accueil) aide beaucoup.'), el('li', {}, 'Une fenêtre plus petite ou un écran moins défini réduit aussi la charge.'));
+    if (fps < 50) tips.append(el('li', {}, 'Branchez l\'ordinateur portable sur secteur et fermez les autres onglets lourds (visio, vidéos).'), el('li', {}, 'Moins de caméras = moins d\'images à calculer : le plan à 6 caméras (plan des caméras, touche P) aide beaucoup.'), el('li', {}, 'Une fenêtre plus petite ou un écran moins défini réduit aussi la charge.'));
     const apply = rec !== S.quality ? el('button', { class: 'btn primary', onclick: () => { setQuality(rec); modal.close(); toast(`Qualité graphique : ${QUAL_LABEL[rec]}`, 'good'); } }, `Passer en qualité ${QUAL_LABEL[rec]} (recommandé)`) : null;
     modal.open('Diagnostic de performance', el('div', { class: 'list' }, el('p', { class: verdict[0] }, verdict[1]), kv,
       el('p', {}, rec !== S.quality ? `Qualité recommandée : ${QUAL_LABEL[rec]}.` : fps < 30 ? 'Vous êtes déjà en qualité Basse : suivez les conseils ci-dessous.' : `La qualité ${QUAL_LABEL[S.quality]} est adaptée à cet ordinateur.`),
@@ -64,5 +64,5 @@ let slowT = 0, slowWarned = false;
 export function watchFps(dt) {
   if (slowWarned || S.mode === 'start' || perfRunning || !FPS.shown) return;
   slowT = FPS.shown < 22 && S.quality !== 'basse' ? slowT + dt : 0;
-  if (slowT > 12) { slowWarned = true; toast('L\'affichage saccade. Guide → Réglages → « Tester les performances » pour trouver la bonne qualité graphique.', 'bad', 9000); }
+  if (slowT > 12) { slowWarned = true; toast('L\'affichage saccade. Guide → Réglages → « Tester les performances de cet ordinateur » pour trouver la bonne qualité graphique.', 'bad', 9000); }
 }

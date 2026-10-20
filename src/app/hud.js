@@ -10,6 +10,7 @@ import { AT } from '../atelier.js';
 import { $ } from '../ui/common.js';
 import { openSessionPanel } from '../ui/session_ui.js';
 import { openPupitre } from '../ui/pupitre.js';
+import { icon } from '../ui/icons.js';
 import { PL } from './player.js';
 
 // ----------------------------------------------------------------------------------
@@ -21,15 +22,15 @@ const soundLabel = () => (AU.muted ? 'Son coupé' : 'Son');
 export function buildToolbar() {
   const tb = $('#toolbar'); tb.innerHTML = '';
   // quatre touches : le pupitre (aller quelque part, tous les outils), le chef de car, le son, l'équipe
-  const b = (label, key, fn, id, title) => el('button', { class: 'tbtn', id, title: title || label + (key ? ' (' + key + ')' : ''), onclick: fn }, el('span', { class: 'tl' }, label), key ? el('kbd', {}, key) : null);
+  const b = (label, key, ico, fn, id, title) => el('button', { class: 'tbtn', id, title: title || label + (key ? ' (' + key + ')' : ''), onclick: fn }, icon(ico), el('span', { class: 'tl' }, label), key ? el('kbd', {}, key) : null);
   tb.append(
-    b('Pupitre', 'Tab', () => openPupitre(), 'tb-pupitre', 'Aller à un poste ou un endroit, et tous les outils (Tab ou T)'),
-    chefBtn(b('Chef de car', 'J', () => emit('chef'), 'tb-chef', 'Le chef de car vous explique le poste et vous guide pas à pas (J)')),
-    b(soundLabel(), null, () => { startAudio(); AU.muted = !AU.muted; applyFaders(); emit('soundToggle'); }, 'tb-son', 'Couper ou rétablir le son'),
-    b('Équipe', null, () => openSessionPanel(), 'tb-ses', 'Jouer à plusieurs : joueurs, rôles, ordres'));
+    b('Pupitre', 'Tab', 'pupitre', () => openPupitre(), 'tb-pupitre', 'Aller à un poste ou un endroit, et tous les outils (Tab ou T)'),
+    chefBtn(b('Chef de car', 'J', 'chef', () => emit('chef'), 'tb-chef', 'Le chef de car vous explique le poste et vous guide pas à pas (J)')),
+    b(soundLabel(), null, AU.muted ? 'muet' : 'son', () => { startAudio(); AU.muted = !AU.muted; applyFaders(); emit('soundToggle'); }, 'tb-son', 'Couper ou rétablir le son'),
+    b('Équipe', null, 'equipe', () => openSessionPanel(), 'tb-ses', 'Jouer à plusieurs : joueurs, rôles, ordres'));
   const son = $('#tb-son'); if (son) son.classList.toggle('muted', AU.muted);
 }
-on('soundToggle', () => { const son = $('#tb-son'); if (son) { son.querySelector('.tl').textContent = soundLabel(); son.classList.toggle('muted', AU.muted); } });
+on('soundToggle', () => { const son = $('#tb-son'); if (son) { son.querySelector('.tl').textContent = soundLabel(); son.querySelector('.ico')?.replaceWith(icon(AU.muted ? 'muet' : 'son')); son.classList.toggle('muted', AU.muted); } });
 
 // images par seconde affichées (mesurées en temps réel sur une demi-seconde)
 export const FPS = { shown: 0 };
@@ -41,7 +42,7 @@ function buildStatus() {
   const sb = $('#statusbar'); sb.innerHTML = '';
   const b = () => el('b');
   SB = { tc: b(), score: document.createTextNode(''), clock: b(), pgm: b(), pvw: b(), alarms: b(), fps: b(), alarmChip: null };
-  SB.alarmChip = el('span', { class: 'chip' }, 'Alarmes', SB.alarms);
+  SB.alarmChip = el('span', { class: 'chip', title: 'Liaisons caméras ou synchro en défaut, enregistrement EVS arrêté, transmission coupée' }, icon('alarme'), 'Alarmes', SB.alarms);
   sb.append(
     el('span', { class: 'chip tc' }, 'TC', SB.tc),
     el('span', { class: 'chip' }, SB.score, SB.clock),

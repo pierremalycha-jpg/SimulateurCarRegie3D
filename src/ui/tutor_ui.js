@@ -18,6 +18,7 @@ import { stationLesson, stationIds } from '../tutor/lessons/postes.js';
 import { STATION_INFO } from '../content/stations.js';
 import { FIRST_STEPS, FIRST_STEPS_TOUCH } from '../content/controls.js';
 import { rich } from './rich.js';
+import { icon } from './icons.js';
 import { report } from '../diag.js';
 
 // ----------------------------------------------------------------------------------
@@ -118,6 +119,10 @@ registerLessons(stationIds().map((id) => stationLesson(id, hasStation(id))).filt
 // familles de parcours, dans l'ordre d'une journée de car : on découvre, on règle, on exploite, on dépanne
 const PRESENT = 'Les postes du car';
 const DOMAINS = ['Prise en main', 'Réalisation et mélangeur', 'Image et caméras', 'Ralentis', 'Son', 'Liaisons, synchro et diffusion', 'Exploitation et dépannage', 'Réseau ST 2110', 'Matériel', PRESENT];
+// icône de chaque famille (ui/icons.js)
+const DOM_ICON = { 'Prise en main': 'prise-en-main', 'Réalisation et mélangeur': 'realisateur', 'Image et caméras': 'vision', Ralentis: 'evs', Son: 'mixage', 'Liaisons, synchro et diffusion': 'transmission', 'Exploitation et dépannage': 'exploitation', 'Réseau ST 2110': 'reseau', Matériel: 'materiel', [PRESENT]: 'postes' };
+// étiquette d'un encadré du chef : icône et mot
+const tag = (ico, text) => el('span', { class: 'chef-tag' }, icon(ico), text);
 const domRank = (d) => { const i = DOMAINS.indexOf(d); return i < 0 ? DOMAINS.length - 1 : i; };
 const plain = (s) => String(s).replace(/`|\*\*/g, '').replace(/^- /gm, '').replace(/\n+/g, ' ');
 
@@ -141,6 +146,7 @@ function hush() { try { if (S.chefSpeaking && window.speechSynthesis) window.spe
 export function toggleChef(force) {
   const open = force ?? !TUTOR.open;
   TUTOR.open = open;
+  document.body.classList.toggle('chef-open', open);
   if (!open) { hush(); UI.intro = false; if (UI.root) UI.root.hidden = true; spot(null); return; }
   if (!UI.root) build();
   UI.root.hidden = false; UI.min = false; UI.root.classList.remove('min');
@@ -162,13 +168,13 @@ function drag(head) {
   });
 }
 function header(sub) {
-  const voice = el('button', { class: 'chef-ico' + (UI.voice ? ' on' : ''), title: UI.voice ? 'Couper la voix du chef' : 'Faire parler le chef (synthèse vocale)', 'aria-pressed': String(UI.voice), onclick: () => { UI.voice = !UI.voice; try { localStorage.setItem('carregie.chefVoice', UI.voice ? '1' : '0'); } catch (e) { /* rien */ } if (!UI.voice) hush(); else { UI.said = ''; } render(true); } }, UI.voice ? 'Voix' : 'Muet');
+  const voice = el('button', { class: 'chef-ico' + (UI.voice ? ' on' : ''), title: UI.voice ? 'Couper la voix du chef' : 'Faire parler le chef (synthèse vocale)', 'aria-pressed': String(UI.voice), onclick: () => { UI.voice = !UI.voice; try { localStorage.setItem('carregie.chefVoice', UI.voice ? '1' : '0'); } catch (e) { /* rien */ } if (!UI.voice) hush(); else { UI.said = ''; } render(true); } }, icon(UI.voice ? 'son' : 'muet'), UI.voice ? 'Voix' : 'Muet');
   const h = el('header', { class: 'chef-head' },
     el('div', { class: 'chef-avatar', 'aria-hidden': 'true' }, 'O'),
     el('div', { class: 'chef-who' }, el('b', {}, `${CHEF.name}, ${CHEF.role}`), el('small', {}, sub || '')),
     voice,
-    el('button', { class: 'chef-ico', title: UI.min ? 'Agrandir' : 'Réduire', onclick: () => { UI.min = !UI.min; UI.root.classList.toggle('min', UI.min); render(true); } }, UI.min ? '▢' : '–'),
-    el('button', { class: 'chef-ico', title: 'Fermer (J)', onclick: () => toggleChef(false) }, '×'));
+    el('button', { class: 'chef-ico', title: UI.min ? 'Agrandir' : 'Réduire', 'aria-label': UI.min ? 'Agrandir le chef de car' : 'Réduire le chef de car', onclick: () => { UI.min = !UI.min; UI.root.classList.toggle('min', UI.min); render(true); } }, icon(UI.min ? 'agrandir' : 'reduire')),
+    el('button', { class: 'chef-ico', title: 'Fermer (J)', 'aria-label': 'Fermer le chef de car', onclick: () => toggleChef(false) }, icon('fermer')));
   drag(h);
   return h;
 }
@@ -200,7 +206,7 @@ export function render(force = false) {
   if (UI.said !== l.id + '/' + s.id) { UI.said = l.id + '/' + s.id; speak(say); }
   // le geste demandé
   if (s.do) {
-    const todo = el('div', { class: 'chef-do' + (TUTOR.done ? ' ok' : '') }, el('span', { class: 'chef-tag' }, TUTOR.done ? 'Fait' : 'À toi'), rich(val(s.do, c)));
+    const todo = el('div', { class: 'chef-do' + (TUTOR.done ? ' ok' : '') }, TUTOR.done ? tag('fait', 'Fait') : tag('a_toi', 'À toi'), rich(val(s.do, c)));
     const cli = s.cli ? val(s.cli, c) : null;
     if (cli && cli.length) {
       const box = el('div', { class: 'chef-cli' });
@@ -213,13 +219,17 @@ export function render(force = false) {
   if (s.quiz) {
     const q = s.quiz;
     const box = el('div', { class: 'chef-quiz' }, el('p', { class: 'chef-q' }, q.q));
-    q.choices.forEach((t, k) => box.append(el('button', { class: 'btn small chef-choice' + (TUTOR.answer === k ? (k === q.answer ? ' good' : ' bad') : ''), disabled: TUTOR.done, onclick: () => { answer(k); render(true); } }, t)));
-    if (TUTOR.answer != null) box.append(TUTOR.answer === q.answer ? el('div', { class: 'chef-ok' }, rich('**Exactement.** ' + q.why)) : el('div', { class: 'chef-bad' }, 'Pas tout à fait. Relis l\'explication et réessaie.'));
+    // après deux erreurs, le chef montre la bonne réponse : le stagiaire la choisit pour continuer
+    const shown = TUTOR.tries >= 2 && !TUTOR.done;
+    q.choices.forEach((t, k) => box.append(el('button', { class: 'btn small chef-choice' + (TUTOR.answer === k ? (k === q.answer ? ' good' : ' bad') : '') + (shown && k === q.answer ? ' hint' : ''), disabled: TUTOR.done, onclick: () => { answer(k); render(true); } }, t)));
+    if (TUTOR.answer === q.answer) box.append(el('div', { class: 'chef-ok' }, rich('**Exactement.** ' + q.why)));
+    else if (shown) box.append(el('div', { class: 'chef-bad' }, rich(`Ce n'est pas « ${q.choices[TUTOR.answer]} ». La bonne réponse est « ${q.choices[q.answer]} » : ${q.why}\n\nChoisis-la pour continuer.`)));
+    else if (TUTOR.answer != null) box.append(el('div', { class: 'chef-bad' }, `Pas « ${q.choices[TUTOR.answer]} ». Relis ce que je viens d'expliquer au-dessus, puis choisis une autre réponse.`));
     body.append(box);
   }
-  for (const n of UI.notes) body.append(el('div', { class: 'chef-hint' }, el('span', { class: 'chef-tag' }, 'Indice'), rich(n)));
+  for (const n of UI.notes) body.append(el('div', { class: 'chef-hint' }, tag('indice', 'Indice'), rich(n)));
   if (UI.feedback) body.append(el('div', { class: 'chef-note' }, UI.feedback));
-  if (s.do && TUTOR.done && s.ok) body.append(el('div', { class: 'chef-ok' }, el('span', { class: 'chef-tag' }, 'Bien joué'), rich(val(s.ok, c))));
+  if (s.do && TUTOR.done && s.ok) body.append(el('div', { class: 'chef-ok' }, tag('bravo', 'Bien joué'), rich(val(s.ok, c))));
   else if (s.do && !TUTOR.done) body.append(el('div', { class: 'chef-wait' }, el('i', { class: 'chef-dot' }), 'Je regarde ce que tu fais…'));
   UI.root.append(body);
   // actions
@@ -235,7 +245,7 @@ export function render(force = false) {
     if (s.auto) acts.append(el('button', { class: 'btn small', title: 'Le chef le fait devant toi et t\'explique', onclick: () => { if (g && !there) goTo(g); doForMe(); UI.feedback = TUTOR.done ? '' : 'J\'ai lancé l\'action ; ça devrait se voir dans un instant.'; render(true); } }, 'Fais-le pour moi'));
   }
   const nav = el('div', { class: 'chef-nav' },
-    el('button', { class: 'btn small', disabled: TUTOR.i === 0, onclick: () => { prev(); onStep(); } }, '◀'),
+    el('button', { class: 'btn small', 'aria-label': 'Étape précédente', title: 'Étape précédente', disabled: TUTOR.i === 0, onclick: () => { prev(); onStep(); } }, '◀'),
     el('button', { class: 'btn small' + (TUTOR.done ? ' primary' : ''), disabled: !TUTOR.done, onclick: () => { const last = TUTOR.i >= l.steps.length - 1; next(); if (last) finished(l); else onStep(); } }, TUTOR.i >= l.steps.length - 1 ? 'Terminer' : 'Suivant ▶'));
   UI.root.append(el('footer', { class: 'chef-foot' }, acts, nav,
     el('button', { class: 'chef-quit', onclick: () => quit() }, 'Quitter le parcours')));
@@ -267,7 +277,7 @@ function card(l) {
   const p = progressOf(l.id); const why = S.mode === 'start' ? '' : lessonBlocked(l); const ok = !why;
   const resume = TUTOR.lesson && TUTOR.lesson.id === l.id;
   return el('div', { class: 'chef-card' + (p.done ? ' done' : '') },
-    el('div', { class: 'grow' }, el('b', {}, l.title, p.done ? el('span', { class: 'chef-check', title: 'déjà fait' }, ' ✓') : null), el('small', {}, `${l.duration} · ${l.level}`), el('span', { class: 's' }, l.summary)),
+    el('div', { class: 'grow' }, el('b', {}, l.title, p.done ? el('span', { class: 'chef-check', title: 'Déjà fait' }, icon('fait'), el('span', { class: 'sr' }, 'déjà fait')) : null), el('small', {}, `${l.duration} · ${l.level}`), el('span', { class: 's' }, l.summary)),
     el('button', { class: 'btn small' + (ok ? ' primary' : ''), disabled: !ok, title: why, onclick: async () => {
       if (resume) { onStep(); return; }
       if (TUTOR.lesson && !(await ask(`Abandonner « ${TUTOR.lesson.title} » pour commencer « ${l.title} » ?`, { title: 'Changer de parcours', ok: 'Commencer « ' + l.title + ' »', cancel: 'Garder le parcours en cours' }))) return;
@@ -328,7 +338,7 @@ function renderHome() {
   body.append(el('h4', {}, here.length ? 'Tous les parcours' : 'Les parcours'));
   for (const dom of order) {
     const list = groups[dom]; const done = list.filter((l) => progressOf(l.id).done).length;
-    const det = el('details', { class: 'chef-more', 'data-dom': dom }, el('summary', {}, el('span', {}, dom), el('small', {}, `${done} / ${list.length}`)), ...list.map(card));
+    const det = el('details', { class: 'chef-more', 'data-dom': dom }, el('summary', {}, icon(DOM_ICON[dom] || 'guide'), el('span', {}, dom), el('small', {}, `${done} / ${list.length}`)), ...list.map(card));
     det.open = UI.openDom === dom;
     det.addEventListener('toggle', () => { if (det.open) UI.openDom = dom; else if (UI.openDom === dom) UI.openDom = ''; });
     body.append(det);

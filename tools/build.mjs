@@ -24,7 +24,7 @@ const bundle = async (external) => {
   const r = await esbuild.build({
     entryPoints: ['src/main.js'], bundle: true, format: 'esm', write: false, external: external ? ['three'] : [],
     minify, target: TARGET, define, legalComments: 'none', charset: 'utf8',
-    loader: { '.txt': 'text', '.bat': 'text', '.command': 'text', '.sh': 'text' }, // mode d'emploi et lanceurs du serveur réseau local
+    loader: { '.txt': 'text', '.bat': 'text', '.command': 'text', '.sh': 'text', '.svg': 'text' }, // mode d'emploi et lanceurs du serveur réseau local, icônes
   });
   let js = r.outputFiles[0].text;
   if (external) js = js.replace(/from\s*["']three["']/g, `from"${CDN}"`);

@@ -392,6 +392,45 @@ Tests :
   « Emmène-moi / Montre-moi » doit mettre en évidence un élément réel de la page, et « Fais-le pour moi » doit faire
   valider l'étape.
 
+## v18.1 : revue pédagogique, vocabulaire du car, accessibilité, icônes
+
+Relecture complète pour des étudiants de BTS MAV option TIEE. Les corrections évidentes sont faites ; les choix qui
+changent le contenu ou la pédagogie sont listés dans le rapport de revue (décisions D1 à D16).
+
+**Pédagogie des parcours du chef de car.**
+
+- Chaque geste demandé a 2 ou 3 indices, du principe au réglage exact ; le premier ne donne plus la réponse.
+- Les messages de réussite disent à quoi sert le geste dans le car.
+- Quiz réécrits : distracteurs tirés des erreurs typiques, explication de l'erreur. Après une mauvaise réponse, le
+  chef renvoie à son explication ; après deux, il donne la bonne réponse et son pourquoi, et l'étudiant la choisit.
+- Exercice du truquiste : le réflexe est chronométré au départ de la transition (un mix n'est plus pénalisé).
+- Erreurs techniques corrigées (PTP, débits et SDP, connecteurs, DSK, atelier).
+
+**Vocabulaire : le jargon du car, expliqué.** Termes expliqués à leur première apparition dans un parcours ; graphies
+harmonisées (PGM, PVW, N-1, line-up, multiview, normalé) ; glossaire réécrit (246 entrées, dont 55 nouvelles, triées,
+avec un thème), chaque définition dit d'abord à quoi sert le terme dans le car. Les raccourcis annoncés dans la
+fiche du mélangeur sont corrigés.
+
+**Interface.**
+
+- Environ 100 libellés repris : boutons qui disent ce qu'ils font, messages qui disent quoi faire, vouvoiement de
+  l'interface (seul le chef tutoie).
+- Confirmation avant de remplacer ou de démonter les caméras installées.
+- Qualité graphique et son rangés « Sur cet ordinateur ».
+
+**Accessibilité (WCAG 2.2 AA).** Le moteur axe-core passe sur 18 écrans (`tests/e2e/accessibilite.mjs`, dans la suite
+E2E). Il a fallu reprendre les contrastes (rouge des touches allumées porteuses de texte `--tally-key`, légendes,
+entrées non câblées, Vistonics) et les noms accessibles (touches de bus, champs, boutons à symbole seul). Le plan du
+car et les zones défilantes sont utilisables au clavier.
+
+**Icônes.** 56 dessins Phosphor (licence MIT, `@phosphor-icons/core`, graisse « bold ») intégrés au fichier par le
+chargeur texte d'esbuild (`src/ui/icons.js`, `icon(nom)`), donc hors ligne. On les trouve sur les touches du
+pupitre (postes, lieux, outils), dans la barre d'outils, sur les familles et les étiquettes du chef de car et sur les
+états (alarmes, parcours faits). Une icône est toujours à côté d'un texte et masquée aux lecteurs d'écran.
+
+**Mémoire 3D.** Après trois tours complets (16 postes, 14 lieux, caméra, plan, matériel), les géométries restent à
+258. Les textures plafonnent à 116 : c'est le tampon de 44 images du retour antenne qui se remplit, pas une fuite.
+
 ## Ce que contient la v18 : une interface « pupitre broadcast »
 
 Toute l'interface est refaite avec la matière du car régie. L'objectif : qu'on s'y repère plus vite et qu'on
@@ -719,7 +758,7 @@ npm run lint         # ESLint
 npm run typecheck    # TypeScript (navigateur + Node)
 npm test             # tests unitaires (node:test, ≈ 2 s)
 npm run check        # les quatre à la suite (ce que fait l'intégration continue)
-npm run test:e2e     # tests de bout en bout (Playwright, rendu logiciel : 22 suites, ≈ 60 min)
+npm run test:e2e     # tests de bout en bout (Playwright, rendu logiciel : 26 suites, ≈ 90 min)
 npm run serve:lan    # serveur réseau local (après la construction) : http://localhost:8080
 ```
 
@@ -747,6 +786,7 @@ node tools/shots.mjs dossier 1280 800 '["vision","hf"]'   # captures de postes
 | `diag.js` | Journal des erreurs (partagé avec `boot.js`) : erreurs non rattrapées, écouteurs d'événement, boucle de rendu, `console.error` ; version de l'application |
 | `ui/diag_ui.js` | Bandeau « Un problème est survenu » et fenêtre « Diagnostic technique » (texte à copier) |
 | `ui/pupitre.js` | Le pupitre (Tab ou T) : plan du car, touches des postes par zone, endroits du stade, équipiers, outils |
+| `ui/icons.js` | Icônes Phosphor intégrées au build (`icon(nom)`), toujours à côté d'un libellé |
 | `tutor/` | Chef de car : moteur des parcours (`engine.js`), lecture du réseau pour expliquer et vérifier (`net_helpers.js`), parcours réseau ST 2110 (`lessons/reseau.js`, `lessons/reseau_leaf.js`, `lessons/reseau_ops.js`), parcours des postes, compétences et matériel (`lessons/realisation.js`, `image.js`, `ralentis.js`, `son.js`, `liaisons.js`, `exploitation.js`, `materiel.js`, outils communs `kit.js`), présentation de chaque poste (`lessons/postes.js`) |
 | `ui/tutor_ui.js` | Panneau du chef de car : parcours proposés selon le poste et rangés par famille, étapes, mise en évidence, gestes « Fais-le pour moi » hors des postes (caméra, visionneuse, atelier), commandes vers le terminal, voix |
 | `app/` | Application : vue et qualité graphique (`view.js`), joueur et déplacements (`player.js`), visée et interactions (`interact.js`), cadreur (`camop.js`), téléportation et postes (`teleport.js`), barre d'outils et d'état (`hud.js`), clavier / souris / tactile (`input.js`), écran d'accueil et lancement (`start.js`), diagnostic de performance (`perf.js`), profileur `?perf` (`profiler.js`) |

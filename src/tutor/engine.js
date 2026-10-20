@@ -80,6 +80,7 @@ export const TUTOR = {
   hint: 0,         // indices montrés sur l'étape
   aided: false,    // « fais-le pour moi » utilisé sur l'étape
   answer: /** @type {number | null} */ (null),
+  tries: 0,        // mauvaises réponses à la question de l'étape
   entered: /** @type {Set<string>} */ (new Set()),
   mem: /** @type {Record<string, any>} */ ({}),
   stats: { aided: 0, hints: 0, wrong: 0 },
@@ -162,7 +163,7 @@ export function stopLesson(finished = false, cleanup = false) {
 }
 function enterStep() {
   const s = step(); if (!s) return;
-  TUTOR.t0 = now(); TUTOR.hint = 0; TUTOR.aided = false; TUTOR.answer = null;
+  TUTOR.t0 = now(); TUTOR.hint = 0; TUTOR.aided = false; TUTOR.answer = null; TUTOR.tries = 0;
   TUTOR.done = !isAction(s);
   const key = TUTOR.lesson.id + '/' + s.id;
   if (s.enter && !TUTOR.entered.has(key)) { TUTOR.entered.add(key); s.enter(ctx()); }
@@ -216,7 +217,7 @@ export function answer(k) {
   const s = step(); if (!s || !s.quiz || TUTOR.done) return false;
   TUTOR.answer = k;
   const ok = k === s.quiz.answer;
-  if (ok) TUTOR.done = true; else TUTOR.stats.wrong++;
+  if (ok) TUTOR.done = true; else { TUTOR.stats.wrong++; TUTOR.tries++; }
   emit('tutor', { type: 'answer', ok });
   return ok;
 }

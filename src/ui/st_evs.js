@@ -107,8 +107,8 @@ export function buildEVS(body, arg = 0, ctx) {
     const txt = {
       markin: `IN sur ${T(c.in ?? S.simTime)} : début du clip. Tous les angles enregistrés partagent ce timecode.`,
       markout: `OUT sur ${T(c.out ?? S.simTime)} : fin du clip (la lecture s'arrêtera ici).`,
-      gotoin: c.in != null ? `GOTO IN : la sortie se cale sur ${T(c.in)}, image figée, prête à partir.` : 'Pas de point IN.',
-      gotoout: c.out != null ? `GOTO OUT : calage sur le point de sortie ${T(c.out)}.` : 'Pas de point OUT.',
+      gotoin: c.in != null ? `GOTO IN : la sortie se cale sur ${T(c.in)}, image figée, prête à partir.` : 'Pas de point IN : marquez-le d\'abord (touche IN).',
+      gotoout: c.out != null ? `GOTO OUT : calage sur le point de sortie ${T(c.out)}.` : 'Pas de point OUT : marquez-le d\'abord (touche OUT).',
       live: 'LIVE (E/E) : la sortie montre l\'entrée en direct, sans retard. C\'est l\'état d\'attente normal entre deux ralentis.',
       play: 'PLAY : lecture à 100 %, vitesse réelle (souvent pour revoir une action complète ou un but sous un autre angle).',
       lastaction: S.lastAction ? `Calé 3 s avant la dernière action (${S.lastAction.label}) : IN et OUT posés automatiquement.` : 'Aucune action notée pour l\'instant.',

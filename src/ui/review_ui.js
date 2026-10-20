@@ -127,8 +127,8 @@ function tabValues(box) {
 function tabExtra(box) {
   const list = el('div', { class: 'list' });
   const dom = selectEl(Object.entries(DOMAINS), MYREV.domains[0] || 'vision', () => {});
-  const where = el('input', { type: 'text', maxlength: 120, placeholder: 'Où ? (poste, chapitre du guide, appareil…)' });
-  const text = el('textarea', { rows: 3, maxlength: 1000, placeholder: 'Ce qui est faux, ce qui manque, ce qui ne se fait pas comme ça sur le terrain…' });
+  const where = el('input', { type: 'text', id: 'rv-where', maxlength: 120, placeholder: 'Où ? (poste, chapitre du guide, appareil…)' });
+  const text = el('textarea', { rows: 3, maxlength: 1000, 'aria-label': 'Remarque', placeholder: 'Ce qui est faux, ce qui manque, ce qui ne se fait pas comme ça sur le terrain…' });
   const draw = () => {
     list.innerHTML = '';
     if (!MYREV.extra.length) list.append(el('p', { class: 'note' }, 'Aucune autre remarque pour l\'instant.'));
@@ -136,7 +136,7 @@ function tabExtra(box) {
       el('button', { class: 'btn small', onclick: () => { MYREV.extra.splice(i, 1); saveMyReviewSoon(); draw(); } }, 'Retirer'))));
   };
   box.append(el('p', { class: 'note' }, 'Tout ce qui n\'est pas dans la liste : une procédure différente chez vous, un réglage irréaliste, un vocabulaire maison, un manque.'),
-    el('div', { class: 'grid2' }, el('div', { class: 'field' }, el('label', {}, 'Domaine'), dom), el('div', { class: 'field' }, el('label', {}, 'Endroit'), where)), text,
+    el('div', { class: 'grid2' }, el('div', { class: 'field' }, el('label', { for: dom.id }, 'Domaine'), dom), el('div', { class: 'field' }, el('label', { for: 'rv-where' }, 'Endroit'), where)), text,
     el('div', { class: 'hwrow' }, el('button', { class: 'btn primary', onclick: () => { if (!text.value.trim()) { toast('Écrivez la remarque d\'abord.'); return; } MYREV.extra.push({ at: Date.now(), domain: dom.value, where: where.value.trim(), text: text.value.trim() }); text.value = ''; where.value = ''; saveMyReviewSoon(); draw(); } }, 'Ajouter la remarque')), list);
   draw();
 }
@@ -149,7 +149,7 @@ function tabSynth(box, show) {
   let reviews = [], names = {}, filter = 'issues';
   const decisions = { ...(CFG.review.items || {}) };
   const overrides = { ...(CFG.review.overrides || {}) };
-  const persist = async () => { const r = await saveConfig('review', { ...CFG.review, items: decisions, overrides }); toast(r.ok ? (r.local ? 'Arbitrage enregistré dans ce navigateur' : 'Arbitrage enregistré et partagé') : `Échec : ${r.message || r.code}`, r.ok ? 'good' : 'bad'); };
+  const persist = async () => { const r = await saveConfig('review', { ...CFG.review, items: decisions, overrides }); toast(r.ok ? (r.local ? 'Arbitrage enregistré dans ce navigateur' : 'Arbitrage enregistré et partagé') : `Arbitrage non enregistré (${r.message || r.code}) : réessayez dans un instant.`, r.ok ? 'good' : 'bad', r.ok ? 3200 : 6000); };
   const nm = (id) => (id === SH.uid ? 'vous' : (names[id] && names[id].name) || 'relecteur');
   const fBtns = el('div', { class: 'hwrow' }, el('span', { class: 'rl' }, 'Afficher'));
   for (const [k, l] of [['issues', 'Points à arbitrer (à corriger, désaccords)'], ['all', 'Tous les points'], ['values', 'Valeurs proposées'], ['extra', 'Autres remarques']]) fBtns.append(el('button', { class: 'hw small', 'data-f': k, onclick: () => { filter = k; draw(); } }, l));
@@ -197,7 +197,7 @@ function tabSynth(box, show) {
       tb.append(el('tr', {}, el('td', {}, `${p.group} · ${p.label}`), el('td', { class: 'mono' }, fmtParam(p, p.def)), el('td', { class: 'mono ' + (overrides[pid] != null ? 'ok' : '') }, overrides[pid] != null ? fmtParam(p, overrides[pid]) : '—'), cell,
         el('td', {}, overrides[pid] != null ? el('button', { class: 'btn small', disabled: !editable, onclick: async () => { delete overrides[pid]; await persist(); draw(); } }, 'Rétablir l\'origine') : '')));
     }
-    body.append(el('p', { class: 'note' }, 'Une valeur appliquée modifie tout de suite le simulateur pour tous ceux qui ouvrent la page (focales et ouvertures, seuils HF, portées, tolérances). « Rétablir » revient au chiffre d\'origine.'),
+    body.append(el('p', { class: 'note' }, 'Une valeur appliquée modifie tout de suite le simulateur pour tous ceux qui ouvrent la page (focales et ouvertures, seuils HF, portées, tolérances). « Rétablir l\'origine » remet le chiffre de départ.'),
       el('div', { class: 'tblwrap' }, el('table', { class: 'tbl' }, el('thead', {}, el('tr', {}, ...['Paramètre', 'Origine', 'Appliqué', 'Propositions', ''].map((h) => el('th', {}, h)))), tb)));
   }
   function drawExtra() {
@@ -236,7 +236,7 @@ function tabSynth(box, show) {
   };
   box.append(el('p', { class: 'note' }, editable ? 'Vous arbitrez : pour chaque point, retenez un statut et notez la correction ; appliquez les valeurs chiffrées proposées. Tout est partagé.' : 'Lecture seule : seuls le propriétaire et les éditeurs de la page arbitrent. Vous voyez les avis des autres relecteurs.'),
     head, fBtns, body,
-    el('div', { class: 'hwrow' }, el('button', { class: 'btn primary', disabled: !editable, onclick: persist }, 'Enregistrer l\'arbitrage'), el('button', { class: 'btn', onclick: exportCsv }, 'Exporter (CSV)'), el('button', { class: 'btn', onclick: exportHtml }, 'Rapport (HTML imprimable)')));
+    el('div', { class: 'hwrow' }, el('button', { class: 'btn primary', disabled: !editable, onclick: persist }, 'Enregistrer l\'arbitrage'), el('button', { class: 'btn', onclick: exportCsv }, 'Exporter (CSV)'), el('button', { class: 'btn', onclick: exportHtml }, 'Exporter le rapport (HTML imprimable)')));
   draw();
   return watchReviews(async (list) => {
     reviews = (list || []).filter((r) => r && r.data);

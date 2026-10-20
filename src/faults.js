@@ -72,7 +72,7 @@ S.faultsSolved = 0;
 export function injectFault(id, hidden = false) {
   const pool = FAULTS.filter((f) => f.can());
   const f = id === 'random' ? randPick(pool) : FAULTS.find((x) => x.id === id);
-  if (!f || !f.can()) { toast('Cette panne n\'est pas possible avec la configuration actuelle.', 'bad'); return; }
+  if (!f || !f.can()) { toast('Cette panne n\'est pas possible avec la configuration actuelle : choisissez-en une autre.', 'bad'); return; }
   const st = f.inject();
   const entry = { f, st, t0: S.time, hidden, done: false };
   ACTIVE.push(entry);

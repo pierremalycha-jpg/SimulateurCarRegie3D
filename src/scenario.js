@@ -20,28 +20,28 @@ const camOk = (c) => c.signalOK && c.genlock && c.meter.mean > 0.33 && c.meter.m
 const PHASES = [
   {
     id: 'patch', title: 'Brassage du car', max: 20, minutes: 12,
-    brief: 'Le car est vide : poste « Baie de brassage » (zone technique). Brassez les sources vers la grille, les sorties vers l\'EVS et les départs, et la référence vers les CCU.',
+    brief: 'Le car est vide : poste « Baie de brassage » (zone technique). Brassez les sources vers les entrées de la grille, les sorties de la grille vers l\'EVS et les départs, et la référence vers les CCU. Une liaison croisée (mauvaise prise) compte comme une erreur.',
     goals: () => { const s = patchScore(); return [[`Liaisons justes : ${s.ok} / ${s.total}`, s.pct >= 100], ['Aucune liaison croisée', !s.wrong.length]]; },
     score: () => Math.round(patchScore().pct / 100 * 20),
     done: () => patchScore().pct >= 100,
   },
   {
     id: 'lineup', title: 'Line-up des caméras', max: 25, minutes: 10,
-    brief: 'Poste Ingé vision : exposez et équilibrez chaque caméra système (niveau moyen 35-58 %, crêtes ≤ 103 %, écarts de couleur sous 2,5 %, référence verrouillée).',
+    brief: 'Poste Ingénieur vision : faites le line-up des caméras (réglage de chacune, puis matching pour qu\'elles se raccordent entre elles) : exposez et équilibrez chaque caméra système (niveau moyen 35 à 58 %, crêtes ≤ 103 %, écarts de couleur sous 2,5 %, référence verrouillée).',
     goals: () => { const sys = S.cams.filter(isSys); const ok = sys.filter(camOk).length; return [[`Caméras réglées : ${ok} / ${sys.length}`, ok === sys.length], ['Toutes verrouillées sur la référence', sys.every((c) => c.genlock)]]; },
     score: () => { const sys = S.cams.filter(isSys); return sys.length ? Math.round(sys.filter(camOk).length / sys.length * 25) : 0; },
     done: () => { const sys = S.cams.filter(isSys); return sys.length && sys.every(camOk); },
   },
   {
     id: 'line', title: 'Test de ligne avec la chaîne', max: 15, minutes: 6,
-    brief: 'Régie son : réglez l\'embedder du départ selon le plan de son de la chaîne, puis démutez « Mire 1 kHz ». Poste Transmission ou Grille : envoyez la mire sur le départ TX1. Quand la chaîne confirme, remettez le PGM sur le départ et coupez le 1 kHz.',
+    brief: 'Régie son : réglez l\'embedder du départ (il place les paires audio dans le signal envoyé à la chaîne) selon le plan de son de la chaîne, puis ouvrez la tranche « Mire 1 kHz » (coupez sa sourdine). Poste Transmission ou Grille : envoyez la mire sur le départ TX1. Quand la chaîne confirme, remettez le PGM sur le départ et coupez le 1 kHz.',
     goals: () => [['Embedder conforme au plan de son', soundPlanOk()], ['Mire envoyée sur le départ TX1', !!SC.line.bars], ['1 kHz envoyé', !!SC.line.tone], ['Réception confirmée par la chaîne', !!SC.line.confirmed], ['PGM remis sur le départ, 1 kHz coupé', !!SC.line.back]],
     score: () => (soundPlanOk() ? 3 : 0) + (SC.line.bars ? 3 : 0) + (SC.line.tone ? 3 : 0) + (SC.line.back ? 6 : 0),
     done: () => !!SC.line.back,
   },
   {
     id: 'air', title: 'À l\'antenne', max: 40, minutes: 5,
-    brief: 'Le match est à l\'antenne. Réalisez (ou laissez faire le truquiste) et surtout surveillez : des pannes vont arriver sans prévenir. Mettez au moins un ralenti à l\'antenne.',
+    brief: 'Le match est à l\'antenne. Réalisez (ou laissez faire le truquiste) et surtout surveillez : des pannes vont arriver sans prévenir, et plus vous les résolvez vite, plus elles rapportent. Mettez au moins un ralenti à l\'antenne, sans laisser partir de noir ni de mire.',
     goals: () => [[`Pannes résolues : ${SC.faults.filter((f) => f.done).length} / ${SC.faults.length}`, SC.faults.length > 0 && SC.faults.every((f) => f.done)], ['Un ralenti à l\'antenne', !!SC.air.replay], [`Secondes d'image en défaut à l'antenne : ${Math.round(SC.air.bad || 0)}`, (SC.air.bad || 0) < 3]],
     score: () => {
       let p = 0;
@@ -95,12 +95,12 @@ function finish() {
   log(`Fin du scénario : ${score} %.`);
   const box = $('#scenario'); if (box) box.hidden = true;
   const advice = [];
-  for (const p of SC.phases) if (p.pts < p.max * 0.7) advice.push({ patch: 'Brassage : reprenez la liste de câblage ligne par ligne ; vérifiez chaque nom au multiview.', lineup: 'Line-up : exposez d\'abord (iris, waveform), puis balance des blancs et noirs, puis matching au vecteurscope.', line: 'Test de ligne : mire ET 1 kHz, attendre la confirmation de la chaîne, et surtout remettre le PGM avant l\'antenne.', air: 'Direct : surveillez en permanence le multiview et le retour antenne ; une panne se traite en isolant le maillon fautif.' }[p.id]);
+  for (const p of SC.phases) if (p.pts < p.max * 0.7) advice.push({ patch: 'Brassage : reprenez la liste de câblage ligne par ligne (source → entrée de grille, sortie de grille → destination, DA → CCU) ; vérifiez chaque nom au multiview avant de passer à la suite.', lineup: 'Line-up : référence verrouillée d\'abord, puis balance des noirs et des blancs, exposition à l\'oscilloscope (niveau moyen 35 à 58 %, crêtes ≤ 103 %), et enfin raccord des couleurs au vecteurscope.', line: 'Test de ligne : embedder conforme au plan de son, mire ET 1 kHz, attendre la confirmation de la chaîne, puis remettre le PGM et couper le 1 kHz avant l\'antenne (c\'est l\'étape qui rapporte le plus).', air: 'Direct : surveillez en permanence le multiview et le retour antenne ; une panne résolue en moins d\'une minute rapporte 12 points, 4 au-delà de deux minutes. Isolez le maillon fautif plutôt que de tout vérifier.' }[p.id]);
   const rows = SC.phases.map((p) => el('tr', {}, el('td', {}, p.title), el('td', {}, `${p.pts} / ${p.max}`), el('td', {}, mmss(p.dur))));
   modal.open('Compte rendu · jour de match', el('div', { class: 'list' },
     el('div', { class: 'lcd amber big' }, `Score : ${score} %`),
     el('div', { class: 'tblwrap' }, el('table', { class: 'tbl compact' }, el('thead', {}, el('tr', {}, el('th', {}, 'Phase'), el('th', {}, 'Points'), el('th', {}, 'Durée'))), el('tbody', {}, ...rows))),
-    advice.length ? el('div', { class: 'hwpanel prose' }, el('h3', {}, 'À retravailler'), el('ul', { class: 'steps' }, advice.map((a) => el('li', {}, a)))) : el('p', { class: 'note ok' }, 'Toutes les phases sont réussies à plus de 70 %. Bravo !'),
+    advice.length ? el('div', { class: 'hwpanel prose' }, el('h3', {}, 'À retravailler'), el('ul', { class: 'steps' }, advice.map((a) => el('li', {}, a)))) : el('p', { class: 'note ok' }, 'Toutes les phases sont réussies à 70 % au moins. Bravo !'),
     el('h3', { class: 'eq-h' }, 'Journal'), el('ul', { class: 'steps prose' }, SC.log.map((l) => el('li', {}, `${mmss(l.t)} · ${l.text}`))),
     el('div', { class: 'hwrow' }, el('button', { class: 'btn', onclick: () => offerDownload('compte-rendu-jour-de-match.html', reportHTML(result)) }, 'Télécharger le compte rendu'), el('button', { class: 'btn primary', onclick: () => modal.close() }, 'Fermer')),
     el('p', { class: 'note' }, 'Le résultat est enregistré dans votre suivi (visible du formateur).')), { width: 820 });

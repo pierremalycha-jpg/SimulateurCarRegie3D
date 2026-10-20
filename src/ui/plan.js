@@ -10,7 +10,7 @@ import { addCamera, removeCamera, loadPreset, lineUpCamera, computeRoute } from 
 import { RF } from '../rf.js';
 import { recordedCams } from '../pipeline.js';
 import { playerName, playerNumber } from '../match.js';
-import { $, toast, selectEl, field } from './common.js';
+import { $, toast, selectEl, field, ask } from './common.js';
 import { openDevice } from '../equipment/viewer.js';
 
 export const PLAN = { cam: null, cx: 0, cz: -28, mpp: 0.3, sel: null, free: false, freeSlots: [], markers: {}, wedges: {}, hover: null, drag: null };
@@ -70,7 +70,7 @@ function buildLegend() {
 }
 function buildZoom() {
   const Z = $('#planzoom'); Z.innerHTML = '';
-  Z.append(el('button', { class: 'tbtn', onclick: () => { PLAN.mpp = clamp(PLAN.mpp / 1.3, 0.04, 1.2); } }, '+'), el('button', { class: 'tbtn', onclick: () => { PLAN.mpp = clamp(PLAN.mpp * 1.3, 0.04, 1.2); } }, '−'),
+  Z.append(el('button', { class: 'tbtn', 'aria-label': 'Zoom avant', title: 'Zoom avant', onclick: () => { PLAN.mpp = clamp(PLAN.mpp / 1.3, 0.04, 1.2); } }, '+'), el('button', { class: 'tbtn', 'aria-label': 'Zoom arrière', title: 'Zoom arrière', onclick: () => { PLAN.mpp = clamp(PLAN.mpp * 1.3, 0.04, 1.2); } }, '−'),
     el('button', { class: 'tbtn', onclick: () => { fitView(); } }, 'Vue complète'), el('button', { class: 'tbtn' + (PLAN.free ? ' on' : ''), onclick: (e) => { PLAN.free = !PLAN.free; e.currentTarget.classList.toggle('on', PLAN.free); toast(PLAN.free ? 'Placement libre : cliquez au bord du terrain ou en tribune pour créer une position.' : 'Placement libre désactivé'); } }, 'Placement libre'));
 }
 export function fitView() {
@@ -151,7 +151,7 @@ export function planPointer(type, e) {
     if (PLAN.free) {
       const [x, z] = worldOf(e.clientX, e.clientY);
       const sa = standAt(x, z); const o = sa ? sa.o : Math.min(0, bowlOffset(x, z));
-      if (Math.abs(x) > 113 || Math.abs(z) > 93) { toast('Hors du stade.'); return; }
+      if (Math.abs(x) > 113 || Math.abs(z) > 93) { toast('Hors du stade : cliquez au bord du terrain ou dans une tribune.'); return; }
       if (!sa && bowlOffset(x, z) > 0) { toast('Angle ouvert du stade : pas de tribune ici (pylône du toit).'); return; }
       let y = 1.6;
       if (o > 0) y = standHeightAt(x, z) + 1.4;
@@ -226,7 +226,7 @@ function camForm(slot, cam) {
       el('p', { class: 'note' }, `Raccordement : ${st.link === 'hf' ? 'récepteur HF ' + st.id + ' (baie HF)' : (Lk.power ? 'embase SMPTE/triax n° ' + st.id : 'fibre n° ' + st.id) + ' au pied de car → CCU ' + st.id}.`),
       el('div', { class: 'hwrow' },
         el('button', { class: 'btn primary', onclick: () => install(slot, cam, st) }, cam ? 'Appliquer' : 'Installer la caméra'),
-        cam ? el('button', { class: 'btn danger', onclick: () => { removeCamera(cam.id); PLAN.sel = slot ? 'slot:' + slot.id : null; renderPanel(); refreshMarkers(); } }, 'Démonter') : null,
+        cam ? el('button', { class: 'btn danger', onclick: () => { removeCamera(cam.id); PLAN.sel = slot ? 'slot:' + slot.id : null; renderPanel(); refreshMarkers(); } }, 'Démonter la caméra') : null,
         cam ? el('button', { class: 'btn', onclick: () => { closePlan(); emit('takeCamera', cam); } }, 'Prendre la caméra') : null,
         cam ? el('button', { class: 'btn', onclick: () => { closePlan(); emit('openStationNow', { id: 'vision', cam: cam.id }); } }, 'Régler au RCP') : null,
         cam ? el('button', { class: 'btn', onclick: () => openDevice('cam', cam.id) }, 'Voir le matériel') : null));
@@ -238,9 +238,9 @@ function camForm(slot, cam) {
 function install(slot, cam, st) {
   let paint = null;
   if (cam) { paint = { ...cam.paint }; removeCamera(cam.id); }
-  if (camById(st.id)) { toast(`La CAM ${st.id} existe déjà.`, 'bad'); return; }
+  if (camById(st.id)) { toast(`La CAM ${st.id} existe déjà : choisissez un autre numéro (CCU).`, 'bad'); return; }
   const c = addCamera({ id: st.id, type: st.type, lens: st.lens, link: st.link, role: st.role, slotId: slot ? slot.id : null, pos: slot ? slot.pos : null, targetPlayer: st.target });
-  if (!c) { toast('Plus de CCU disponible (16 maximum).', 'bad'); return; }
+  if (!c) { toast('Plus de CCU disponible (16 au plus) : démontez une caméra pour en installer une autre.', 'bad', 6000); return; }
   if (paint) Object.assign(c.paint, paint); else if (S.autoLineup) lineUpCamera(c);
   PLAN.sel = 'cam:' + c.id; renderPanel(); refreshMarkers();
   toast(`CAM ${c.id} installée · ${c.status.ok ? 'liaison OK' : c.status.reason}`, c.status.ok ? 'good' : 'bad');
@@ -252,8 +252,14 @@ export function renderPanel() {
   const head = el('div', { class: 'ph' },
     el('h2', {}, el('span', { class: 'tape' }, 'Plan des caméras'), el('button', { class: 'x', 'aria-label': 'Fermer', onclick: closePlan }, '×')),
     el('div', { class: 'hwrow' },
-      ...[['basique', 'Plan 6 cam.'], ['standard', 'Plan 12 cam.'], ['grand', 'Grand match 16']].map(([k, l]) => el('button', { class: 'btn small', onclick: () => { loadPreset(k, true); PLAN.sel = null; renderPanel(); refreshMarkers(); toast('Plan de caméras chargé : ' + l); } }, l)),
-      el('button', { class: 'btn small danger', onclick: () => { loadPreset('none'); renderPanel(); refreshMarkers(); } }, 'Tout démonter')),
+      ...[['basique', 'Plan à 6 caméras'], ['standard', 'Plan à 12 caméras'], ['grand', 'Grand dispositif (16 caméras)']].map(([k, l]) => el('button', { class: 'btn small', title: 'Remplace toutes les caméras installées par ce dispositif', onclick: async () => {
+        if (S.cams.length && !(await ask(`Remplacer les ${S.cams.length} caméras installées par ce dispositif (${l.toLowerCase()}) ? Leurs réglages seront perdus.`, { title: 'Changer de dispositif', ok: 'Remplacer les caméras' }))) return;
+        loadPreset(k, true); PLAN.sel = null; renderPanel(); refreshMarkers(); toast('Dispositif chargé : ' + l.toLowerCase());
+      } }, l)),
+      el('button', { class: 'btn small danger', onclick: async () => {
+        if (S.cams.length && !(await ask(`Démonter les ${S.cams.length} caméras installées ? Leurs réglages seront perdus.`, { title: 'Tout démonter', ok: 'Tout démonter', danger: true }))) return;
+        loadPreset('none'); renderPanel(); refreshMarkers();
+      } }, 'Tout démonter')),
     el('div', { class: 'hwrow' }, field('Format de production', selectEl(Object.entries(FORMATS).map(([k, v]) => [k, v.label]), S.format, (v) => { S.format = v; for (const c of S.cams) c.checkLink(); renderPanel(); refreshMarkers(); }))));
   const body = el('div', { class: 'pb' });
   P.append(head, body);
@@ -287,7 +293,7 @@ export function renderPanel() {
       el('span', { class: 'dot ' + (c.status.ok ? 'green' : 'red') }),
       el('div', { class: 'grow' }, el('div', { class: 't' }, `CAM ${c.id} · ${c.T.short} · ${ROLES[c.role].label}`), el('div', { class: 's' }, `${c.L.name} · ${LINKS[c.link].short}${c.route && c.route.length ? ' · ' + Math.round(c.route.length) + ' m' : ''}${c.status.ok ? '' : ' · ' + c.status.reason}`))));
   }
-  body.append(el('div', { class: 'hwpanel' }, el('h3', {}, 'Caméras installées'), list.children.length ? list : el('p', { class: 'note' }, 'Aucune.')));
+  body.append(el('div', { class: 'hwpanel' }, el('h3', {}, 'Caméras installées'), list.children.length ? list : el('p', { class: 'note' }, 'Aucune caméra installée.')));
   const al = el('div', { class: 'list' });
   for (const a of RF.antennas) al.appendChild(el('label', { class: 'item' }, Object.assign(el('input', { type: 'checkbox', id: 'pa_' + a.id }), { checked: a.on, onchange: (e) => { a.on = e.target.checked; refreshMarkers(); } }), el('div', { class: 'grow' }, el('div', { class: 't' }, a.label), el('div', { class: 's' }, `${a.kind === 'omni' ? 'omnidirectionnelle' : 'secteur'} · ${a.gain} dBi · reliée au car par fibre (RF sur fibre)`))));
   body.append(el('div', { class: 'hwpanel' }, el('h3', {}, 'Antennes de réception HF'), al));

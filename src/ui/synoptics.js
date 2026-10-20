@@ -188,11 +188,11 @@ function videoDiagram() {
   cams.forEach((c, i) => { const y = top + i * rowH + 14; D.wire([490, y], [530, y], ip ? 'ip' : 'video', { mode: 'straight' }); });
   // traitement
   const X = 700, BW = 360;
-  D.box('mixer', X, 100, BW, 76, `Mélangeur ${EQUIP.mixer}`, [`Pupitre ${EQUIP.mixPanel} · ${mixInputs()} entrées utilisées`, `PGM : ${sourceLabel(pgm)} · PST : ${sourceLabel(pst)}${MIX.dsk1.on ? ' · DSK habillage' : ''}`, 'Sorties : PGM, CLEAN, PVW, multiviewers intégrés'], { cls: 'big', dev: 'mixer' });
+  D.box('mixer', X, 100, BW, 76, `Mélangeur ${EQUIP.mixer}`, [`Pupitre ${EQUIP.mixPanel} · ${mixInputs()} entrées utilisées`, `PGM : ${sourceLabel(pgm)} · PST : ${sourceLabel(pst)}${MIX.dsk1.on ? ' · DSK habillage' : ''}`, 'Sorties : PGM, CLEAN, PVW, multiviews intégrés'], { cls: 'big', dev: 'mixer' });
   const evs = evsLayout();
   D.box('evs', X, 200, BW, 76, `Serveur EVS ${EQUIP.evsModel}${EQUIP.evsServers > 1 ? ' ×' + EQUIP.evsServers : ''}`, [`${evs.rec} entrées REC · ${evs.plays} sorties PLAY (PGM1${evs.plays > 1 ? ', PGM2' : ''})`, `LSM ×${EQUIP.lsmCount} (RS-422) · IPDirector (XNet)`, EVS.recording ? 'Enregistrement en cours' : 'ENREGISTREMENT ARRÊTÉ'], { cls: EVS.recording ? '' : 'err', dev: 'evs' });
   D.box('gfx', X, 300, 170, 50, 'Habillage', ['fill + key → DSK'], { dev: 'gfx' });
-  D.box('mv', X + 190, 300, 170, 50, 'Multiviewers', ['18 tuiles · UMD + tally'], { cls: ip && NET.mvSat ? 'err' : '', dev: 'mv' });
+  D.box('mv', X + 190, 300, 170, 50, 'Multiviews', ['18 tuiles · UMD + tally'], { cls: ip && NET.mvSat ? 'err' : '', dev: 'mv' });
   D.box('walls', X + 190, 380, 170, 50, 'Murs d\'écrans', ['production · vision · son'], { cls: 'ext' });
   D.box('grade1', X, 380, 170, 50, 'Grade 1 + scopes', [`vision : ${sourceLabel(ROUTER.map.AUX_VISION)}`], { dev: 'grade1' });
   const rx = 640; // bord droit de la grille
@@ -225,7 +225,7 @@ function videoDiagram() {
   D.wire(D.p('dec', 'l'), rIn(440), ip ? 'ip' : 'video', { label: 'RETOUR ANT. · STUDIO', d: `M${OX},272 H1090 V440 H${rx}`, lx: 900, ly: 440 });
   D.wire(rIn(460), D.p('giant', 'l'), 'fiber', { label: 'AUX écran géant (fibre)', d: `M${rx},460 H1095 V352 H${OX}`, lx: 900, ly: 460 });
   const ly = D.legend(OX, 420);
-  D.note(OX, ly + 30, ['Toutes les sources entrent dans la grille ; mélangeur, EVS,', 'multiviewers, départs et moniteurs reçoivent ce que la grille', 'leur envoie. Cliquez un bloc pour voir l\'appareil.']);
+  D.note(OX, ly + 30, ['Toutes les sources entrent dans la grille ; mélangeur, EVS,', 'multiviews, départs et moniteurs reçoivent ce que la grille', 'leur envoie. Cliquez un bloc pour voir l\'appareil.']);
   D.cartouche('Synoptique vidéo');
   return D;
 }
@@ -248,7 +248,7 @@ function syncDiagram() {
   D.wire(D.p('spg1', 'r'), D.p('chg', 'l', 0.3), 'ref', {});
   D.wire(D.p('spg2', 'r'), D.p('chg', 'l', 0.75), 'ref', { dash: true });
   D.wire(D.p('spg1', 'b', 0.8), D.p('ltc', 't', 0.8), 'ref', { mode: 'v', d: `M158,254 V262 H210 V360 H158 V370` });
-  const das = [['da1', 'DA black burst 1', 'CCU, grille'], ['da2', 'DA black burst 2', 'EVS, convertisseurs'], ['da3', 'DA tri-level 1', `XVS, multiviewers`], ['da4', 'DA tri-level 2', 'embedders, encodeurs']];
+  const das = [['da1', 'DA black burst 1', 'CCU, grille'], ['da2', 'DA black burst 2', 'EVS, convertisseurs'], ['da3', 'DA tri-level 1', `XVS, multiviews`], ['da4', 'DA tri-level 2', 'embedders, encodeurs']];
   das.forEach(([id, t, s2], i) => { D.box(id, 440, 100 + i * 90, 240, 52, t, ['→ ' + s2], { dev: 'da', n: i + 1 }); D.wire(D.p('chg', 'r'), D.p(id, 'l'), 'ref', { m: 400 }); });
   // équipements
   const ok = cams.filter((c) => c.genlock).length;
@@ -280,13 +280,13 @@ function syncDiagram() {
     D.box('gm2', 1310, 100, 160, 54, 'Grand maître 2', [NET.gm2 ? gmTxt(2) : 'PERDU'], { cls: NET.gm2 ? (gmTxt(2) !== 'en attente' ? 'ok' : '') : 'err', dev: 'spg', n: 2 });
     D.box('swr', 1130, 220, 160, 54, 'Fabric rouge', [ga('red') && ga('red').rogue ? 'GM NON TRAÇABLE !' : 'spines + leaves en BC'], { cls: NET.redState === 'down' || (ga('red') && ga('red').rogue) ? 'err' : NET.redState === 'degraded' ? 'warn' : '', dev: 'swred' });
     D.box('swb', 1310, 220, 160, 54, 'Fabric bleue', [ga('blue') && ga('blue').rogue ? 'GM NON TRAÇABLE !' : 'spines + leaves en BC'], { cls: NET.blueState === 'down' || (ga('blue') && ga('blue').rogue) ? 'err' : NET.blueState === 'degraded' ? 'warn' : '', dev: 'swblue' });
-    D.box('fol', 1130, 340, 340, 64, 'Appareils ST 2110 (suiveurs PTP)', ['CCU IP, passerelles, XVS, EVS, multiviewers', 'chaque appareil reçoit PTP par ses deux interfaces']);
+    D.box('fol', 1130, 340, 340, 64, 'Appareils ST 2110 (suiveurs PTP)', ['CCU IP, passerelles, XVS, EVS, multiviews', 'chaque appareil reçoit PTP par ses deux interfaces']);
     D.wire(D.p('gm1', 'b'), D.p('swr', 't'), 'ip', { mode: 'v' }); D.wire(D.p('gm2', 'b'), D.p('swb', 't'), 'ip', { mode: 'v' });
     D.wire(D.p('gm1', 'b', 0.8), D.p('swb', 't', 0.2), 'ip', { mode: 'v', dash: true }); D.wire(D.p('gm2', 'b', 0.2), D.p('swr', 't', 0.8), 'ip', { mode: 'v', dash: true });
     D.wire(D.p('swr', 'b'), D.p('fol', 't', 0.25), 'ip', { mode: 'v', bad: !NET.red }); D.wire(D.p('swb', 'b'), D.p('fol', 't', 0.75), 'ip', { mode: 'v', bad: !NET.blue });
     D.note(1130, 440, ['BMCA : si le grand maître 1 disparaît,', 'le 2 est élu après 3 Announce manqués', '(< 1 s en ST 2059-2). Domaine 127.', 'Détail : poste Réseau IP, onglet PTP.']);
   } else {
-    D.note(1120, 110, ['À retenir', '• Tout ce qui commute ou mélange doit être', '  verrouillé sur la même référence.', '• Une CCU non verrouillée : saut d\'image', '  au moment du CUT.', '• Les sources non synchrones (HF, duplex)', '  passent par un synchroniseur de trame,', '  qui ajoute 1 à 2 images de retard.', '• GPS perdu : le SPG tient sa fréquence', '  (holdover) pendant plusieurs heures.'], 'note');
+    D.note(1120, 110, ['À retenir', '• Tout ce qui commute ou mélange doit être', '  verrouillé sur la même référence.', '• Une CCU non verrouillée : saut d\'image', '  au moment du CUT.', '• Les sources non synchrones (HF, duplex)', '  passent par un synchroniseur d\'images,', '  qui ajoute 1 à 2 images de retard.', '• GPS perdu : le SPG tient sa fréquence', '  (holdover) pendant plusieurs heures.'], 'note');
   }
   D.legend(30, 660);
   D.cartouche('Synoptique synchronisation');
@@ -372,7 +372,7 @@ function commsDiagram() {
   D.box('mks', 290, 690, 220, 54, 'MKS-X7701 (tally)', ['GPI : 18 relais'], { dev: 'siu' });
   D.box('tc', 550, 690, 240, 54, 'Contrôleur de tally', ['TSL UMD sur IP']);
   D.box('t1', 830, 670, 300, 46, 'CCU → caméras', [`rouge : ${pgm && pgm.startsWith('CAM') ? pgm.replace('CAM', 'CAM ') : '—'} · vert : ${pst && pst.startsWith('CAM') ? pst.replace('CAM', 'CAM ') : '—'}`], { cls: pgm && pgm.startsWith('CAM') ? 'pgm' : '', dev: 'ccu' });
-  D.box('t2', 830, 730, 300, 46, 'Multiviewers', ['bordures rouge / verte + noms (UMD)'], { dev: 'mv' });
+  D.box('t2', 830, 730, 300, 46, 'Processeurs multiview', ['bordures rouge / verte + noms (UMD)'], { dev: 'mv' });
   D.box('t3', 1160, 670, 310, 46, 'Viseurs et lampes tally', ['le cadreur sait qu\'il est à l\'antenne'], { cls: 'ext' });
   D.box('t4', 1160, 730, 310, 46, 'EVS, grille, habillage', ['UMD, alarmes, tally des sources']);
   D.wire(D.p('xvs', 'r'), D.p('mks', 'l'), 'tally'); D.wire(D.p('mks', 'r'), D.p('tc', 'l'), 'tally');
@@ -412,7 +412,7 @@ function netDiagram() {
   D.wire(D.p('xt', 'b'), D.p('xnet', 't'), 'ip', { mode: 'v' });
   D.wire(D.p('ipdb', 'r'), D.p('xnet', 'l'), 'ip', { both: true });
   D.box('mgmt', 1150, 100, 200, 54, 'Switch de gestion', ['VLAN technique · NTP'], { dev: 'cns', n: 2 });
-  const mg = [['rt', 'Grille', 'panneaux X-Y, salvos', 'router'], ['mvc', 'Multiviewers', 'configuration, UMD', 'mv'], ['ic', 'Matrice intercom', 'configuration', 'icom'], ['sp', 'SPG', 'alarmes SNMP', 'spg'], ['enc', 'Encodeurs TX', 'supervision', 'tx1'], ['ups', 'Onduleurs', 'état batteries', 'ups']];
+  const mg = [['rt', 'Grille', 'panneaux X-Y, salvos', 'router'], ['mvc', 'Multiviews', 'configuration, UMD', 'mv'], ['ic', 'Matrice intercom', 'configuration', 'icom'], ['sp', 'SPG', 'alarmes SNMP', 'spg'], ['enc', 'Encodeurs TX', 'supervision', 'tx1'], ['ups', 'Onduleurs', 'état batteries', 'ups']];
   mg.forEach(([id, t, s2, dev], i) => { const x = 1010 + (i % 2) * 240, y = 200 + Math.floor(i / 2) * 90; D.box(id, x, y, 220, 54, t, [s2], { dev }); D.wire(D.p('mgmt', 'b'), D.p(id, 't'), 'ip', { mode: 'v', m: 180 }); });
   if (ip && FAB.res) {
     D.zone(10, 610, 1480, 460, 'Réseau média ST 2110 : deux fabrics spine-leaf indépendantes (ST 2022-7)');
@@ -434,7 +434,7 @@ function netDiagram() {
       }
     }
     const rx = Object.values(FAB.res.rxState); const lost = rx.filter((x) => !x.ok || x.loss > 0).length, unp = rx.filter((x) => x.ok && !x.protected).length;
-    D.box('dev', 20, 900, 1460, 58, 'Appareils ST 2110 : une carte sur le réseau rouge, une sur le bleu', [`CCU, XVS-6000, passerelles (EVS, HF, TX), multiviewers, audio · ${fmt(flowGbps(), 1)} Gb/s par flux vidéo · ${rx.length} réceptions, ${unp} sans protection, ${lost} en défaut`], { cls: lost ? 'err' : unp ? 'warn' : 'ok', info: 'reseau' });
+    D.box('dev', 20, 900, 1460, 58, 'Appareils ST 2110 : une carte sur le réseau rouge, une sur le bleu', [`CCU, XVS-6000, passerelles (EVS, HF, TX), multiviews, audio · ${fmt(flowGbps(), 1)} Gb/s par flux vidéo · ${rx.length} réceptions, ${unp} sans protection, ${lost} en défaut`], { cls: lost ? 'err' : unp ? 'warn' : 'ok', info: 'reseau' });
     D.box('ctl', 20, 990, 340, 54, 'SW-CTRL (contrôle / gestion)', ['VLAN 10 gestion OOB · VLAN 20 contrôle'], { cls: lv(FAB.switches['SW-CTRL']), dev: 'cns' });
     D.box('nm', 400, 990, 300, 54, 'Registre / contrôleur NMOS', [NET.nmos ? 'IS-04 · IS-05 OK' : 'INJOIGNABLE'], { cls: NET.nmos ? 'ok' : 'err', dev: 'nmos' });
     D.wire(D.p('ctl', 'r'), D.p('nm', 'l'), 'ip', { both: true });
@@ -509,7 +509,7 @@ function racksDiagram() {
 
 /** @type {Array<[string, string, Function, string]>} : clé, titre, dessin, aide */
 const TABS = [
-  ['video', 'Vidéo', videoDiagram, 'Le chemin des images : caméras → CCU → grille → mélangeur, EVS, multiviewers → départs vers la chaîne. Suivez une caméra à l\'antenne (cadre rouge) depuis le stade jusqu\'au TX actif.'],
+  ['video', 'Vidéo', videoDiagram, 'Le chemin des images : caméras → CCU → grille → mélangeur, EVS, multiviews → départs vers la chaîne. Suivez une caméra à l\'antenne (cadre rouge) depuis le stade jusqu\'au TX actif.'],
   ['sync', 'Synchronisation', syncDiagram, 'Tout ce qui commute doit être calé sur la même référence. Le SPG (verrouillé GPS) alimente les distributeurs, qui alimentent chaque appareil.'],
   ['audio', 'Audio', audioDiagram, 'Des micros du stade à l\'embedder du départ : bus PGM, international (sans voix) et N-1 (sans la voix de celui qui écoute).'],
   ['comms', 'Intercom · tally', commsDiagram, 'Qui parle à qui : postes à touches du car, cadreurs (dans la fibre), beltpacks, commentateurs, chaîne. Le tally part du mélangeur et allume les caméras et le multiview.'],
@@ -523,7 +523,7 @@ const TABS = [
 export function synopticsPanel(start = 'video') {
   let cur = start, paper = false, key = '';
   const tabs = el('div', { class: 'tabs' });
-  const host = el('div', { class: 'svgwrap synwrap' });
+  const host = el('div', { class: 'svgwrap synwrap', tabindex: 0, role: 'region', 'aria-label': 'Synoptique (défilez avec les flèches)' });
   const help = el('p', { class: 'note' });
   const draw = () => {
     const t = TABS.find((x) => x[0] === cur);
@@ -537,7 +537,7 @@ export function synopticsPanel(start = 'video') {
     host.appendChild(svg);
   };
   for (const [k, l] of TABS) tabs.appendChild(el('button', { class: 'tab', 'data-k': k, onclick: () => { cur = k; draw(); } }, l));
-  const paperBtn = el('button', { class: 'btn small', onclick: () => { paper = !paper; paperBtn.classList.toggle('primary', paper); draw(); } }, 'Fond blanc (impression)');
+  const paperBtn = el('button', { class: 'btn small', 'aria-pressed': 'false', onclick: () => { paper = !paper; paperBtn.classList.toggle('primary', paper); paperBtn.setAttribute('aria-pressed', String(paper)); draw(); } }, 'Fond blanc (impression)');
   const dl = el('button', { class: 'btn small', onclick: async () => {
     const svg = host.querySelector('svg'); if (!svg) return;
     const txt = '<?xml version="1.0" encoding="UTF-8"?>\n' + new XMLSerializer().serializeToString(svg);

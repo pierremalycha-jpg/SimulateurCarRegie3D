@@ -119,7 +119,7 @@ function termView(id, T) {
 }
 function lexView() {
   const list = el('div', { class: 'tp-lex' });
-  const search = el('input', { type: 'search', class: 'tp-search', placeholder: 'Chercher un terme (gigue, IGMP, BMCA…)', 'aria-label': 'Chercher un terme', value: TP.filter, spellcheck: 'false' });
+  const search = el('input', { type: 'search', class: 'tp-search', placeholder: 'Rechercher un terme (gigue, IGMP, BMCA…)', 'aria-label': 'Rechercher un terme', value: TP.filter, spellcheck: 'false' });
   const norm = (s) => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
   const fill = () => {
     const f = norm(TP.filter.trim());

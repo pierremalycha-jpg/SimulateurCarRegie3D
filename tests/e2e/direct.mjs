@@ -144,12 +144,12 @@ if (PART === 'all' || PART === 'audio') {
   for (const [t, n] of [['E/S et patch', 'a6-io'], ['Bus, N-1', 'a7-bus'], ['Snapshots', 'a8-snap'], ['Commentaires', 'a9-comm'], ['Comprendre', 'a10-vista']]) { await page.locator('.vx-tab', { hasText: t }).click(); await page.waitForTimeout(600); await shot(n); }
   // snapshot test de ligne : seule la mire
   await page.locator('.vx-tab', { hasText: 'Snapshots' }).click();
-  await page.locator('.vx-snap').filter({ hasText: 'TEST DE LIGNE' }).locator('button', { hasText: 'RAPPELER' }).click();
+  await page.locator('.vx-snap').filter({ hasText: 'TEST DE LIGNE' }).locator('button', { hasText: 'Rappeler' }).click();
   await page.waitForTimeout(1500);
   const lt = await lv();
   check('snapshot test de ligne : mire seule', !(await ev(() => window.__dbg.AU.ch.tone.mute)) && (await ev(() => window.__dbg.AU.ch.amb1.mute)), JSON.stringify(lt));
   log('PGM mire (attendu ≈ -18 dBFS crête)', lt.L);
-  await page.locator('.vx-snap').filter({ hasText: 'MATCH' }).first().locator('button', { hasText: 'RAPPELER' }).click();
+  await page.locator('.vx-snap').filter({ hasText: 'MATCH' }).first().locator('button', { hasText: 'Rappeler' }).click();
   // commentaires
   await page.waitForTimeout(8000);
   const cm = await ev(() => window.__dbg.CMT.log.map((l) => l.spk + ': ' + l.text).slice(-8));

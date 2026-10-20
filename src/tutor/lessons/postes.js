@@ -1,5 +1,6 @@
 // @ts-check
 import { STATION_INFO } from '../../content/stations.js';
+import { stationHints } from './kit.js';
 
 // ----------------------------------------------------------------------------------
 // « Présente-moi ce poste » : pour chaque poste, le chef de car reprend la fiche du poste
@@ -18,7 +19,8 @@ export function stationLesson(id, canOpen) {
     say: `On va au poste **${I.title}**. ${I.where ? `Il se trouve ici : ${I.where}.` : ''}`,
     do: 'Rejoins le poste (bouton « Emmène-moi »).',
     go: { station: id }, done: (c) => c.view().station === id, skip: (c) => c.view().station === id,
-    ok: 'Nous y sommes. Je te présente le poste.',
+    ok: 'Nous y sommes. Je te présente le poste : son rôle d\'abord, puis son matériel et sa façon de travailler.',
+    hints: stationHints(id),
     auto: (c) => c.io.go({ station: id }),
   });
   steps.push({ id: 'role', title: 'Le rôle', say: `**${I.title}**${!canOpen && I.where ? ` — ${I.where}` : ''}.\n\n${I.role}` });
@@ -28,7 +30,7 @@ export function stationLesson(id, canOpen) {
   return {
     id: 'poste-' + id, domain: 'Les postes du car', stations: [id],
     title: `Présente-moi : ${I.title}`, summary: I.where || '', duration: '3 min', level: 'découverte',
-    outro: 'Pour aller plus loin, la fiche complète du poste reste disponible (bouton « Le poste »), et le guide détaille chaque métier.',
+    outro: 'Pour aller plus loin, la fiche complète du poste reste disponible (bouton « Fiche du poste »), et le guide détaille chaque métier.',
     steps,
   };
 }

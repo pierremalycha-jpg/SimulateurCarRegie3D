@@ -38,6 +38,7 @@ const SUITES = [
   ['chef', 'chef', [], 20],
   ['fichier', 'fichier', [], 15],
   ['navigateurs', 'navigateurs', [], 15],
+  ['accessibilite', 'accessibilite', [], 25],
   ['reseau-ops', 'reseau-ops', [], 25],
   ['reseau-termes', 'termes', [], 20],
   ['chef-postes', 'chef-postes', [], 60],

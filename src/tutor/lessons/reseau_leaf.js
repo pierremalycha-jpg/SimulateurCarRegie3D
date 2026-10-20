@@ -1,5 +1,5 @@
 // @ts-check
-import { loadFactory, loadReference, writeMemory, markDirty } from '../../net/fabric.js';
+import { loadFactory, loadReference, writeMemory, markDirty, SSM_REF } from '../../net/fabric.js';
 import { CFG, host, refHost, devicePorts, portRange, portsShort, uplinks, leafPlan, accessOk, uplinkOk, ospfFull, ptpSynced, issuesOf, saved, rxSummary, devFlowsProtected } from '../net_helpers.js';
 
 // ----------------------------------------------------------------------------------
@@ -29,12 +29,12 @@ export const LESSON_LEAF = {
   steps: [
     {
       id: 'intro', title: 'Le travail du jour',
-      say: (c) => `Salut ! Je suis Olivier, le chef de car. Aujourd'hui, un cas classique : la **leaf caméras du réseau rouge** a grillé cette nuit, on l'a remplacée par un commutateur neuf. Il sort du carton : configuration usine, il ne sait rien faire.\n\nSur cette leaf arrivent les ${devs().length} CCU (${portsShort(devs().map((d) => d.port))}) et partent 4 liens 100 Gb/s vers les deux spines rouges. On va la configurer **couche par couche**, comme on le fait toujours : d'abord le physique, puis le niveau 2 (VLAN), le niveau 3 (adresses, routage), le multicast, la synchro PTP et les priorités. À chaque étape je t'explique pourquoi, et on vérifie avant de passer à la suite.`,
+      say: (c) => `Salut ! Je suis Olivier, le chef de car. Aujourd'hui, un cas classique : la **leaf caméras du réseau rouge** (le commutateur d'accès où sont branchées les CCU) a grillé cette nuit, on l'a remplacée par un commutateur neuf. Il sort du carton : configuration usine, il ne sait rien faire.\n\nSur cette leaf arrivent les ${devs().length} CCU (${portsShort(devs().map((d) => d.port))}) et partent 4 liens 100 Gb/s vers les deux spines rouges (le cœur du réseau).\n\nOn va la configurer **couche par couche**, comme on le fait toujours : d'abord le physique, puis le niveau 2 (VLAN), le niveau 3 (adresses, routage), le multicast, la synchro PTP et les priorités. À chaque étape je t'explique pourquoi, et on vérifie avant de passer à la suite.`,
     },
     {
       id: 'swap', title: 'Le commutateur neuf est en place',
       enter: () => { loadFactory(L); writeMemory(L); markDirty(); },
-      say: (c) => { const r = rxSummary(); return `Voilà, il est en baie et câblé, en configuration usine. Regarde ce que ça change : ${r.single.length} réceptions sur ${r.total} n'arrivent plus que par le réseau bleu, et **aucune n'est perdue**.\n\nC'est tout l'intérêt du double réseau **rouge / bleu (SMPTE ST 2022-7)** : chaque appareil émet ses flux sur les deux réseaux, et chaque récepteur garde, paquet par paquet, celui qui arrive. À l'antenne, personne n'a rien vu. Par contre, on n'a plus de secours sur les caméras : si le bleu tousse maintenant, l'image tombe. On s'y met.`; },
+      say: (c) => { const r = rxSummary(); return `Voilà, il est en baie et câblé, en configuration usine. Regarde ce que ça change : ${r.single.length} réceptions sur ${r.total} n'arrivent plus que par le réseau bleu, et **aucune n'est perdue**.\n\nC'est tout l'intérêt du double réseau **rouge / bleu (SMPTE ST 2022-7)** : chaque appareil émet ses flux sur les deux réseaux, et chaque récepteur garde, paquet par paquet, celui qui arrive. À l'antenne, personne n'a rien vu.\n\nPar contre, on n'a plus de secours sur les caméras : si le bleu tousse maintenant, l'image tombe. On s'y met.`; },
     },
     {
       id: 'open', title: 'Ouvrir le poste Réseau IP',
@@ -42,7 +42,7 @@ export const LESSON_LEAF = {
       do: 'Va au poste Réseau IP (bouton « Emmène-moi » si tu veux).',
       go: { station: 'reseau' },
       done: (c) => c.view().station === 'reseau', skip: (c) => c.view().station === 'reseau',
-      ok: 'Te voilà au poste. En haut, le bandeau résume l\'état des deux réseaux.',
+      ok: 'Te voilà au poste. En haut, le bandeau résume l\'état des deux réseaux : il te dira tout de suite si ta configuration remet le rouge d\'aplomb.',
       hints: ['Le poste est dans la zone technique, au fond du car, à côté des baies.', 'Touche Tab (le pupitre), puis la touche « Réseau IP » dans la rangée Technique.'],
       auto: (c) => c.io.go({ station: 'reseau' }),
     },
@@ -53,8 +53,8 @@ export const LESSON_LEAF = {
       go: { station: 'reseau', tab: 'switch', sw: L },
       show: (c) => (c.view().tab === 'switch' ? [{ sel: '#station .net-swbtn', text: host(L), label: 'la leaf neuve' }] : [{ sel: '#station .tabs .tab[data-k="switch"]', label: 'Commutateurs' }]),
       done: (c) => c.view().tab === 'switch' && c.view().sw === L,
-      ok: 'La face avant s\'affiche : ports 1 à 48 en SFP28 (25 Gb/s) pour les appareils, 49 à 56 en QSFP28 (100 Gb/s) pour les liens vers les spines. En usine, tous les ports sont dans le VLAN 1 et rien n\'est routé.',
-      hints: ['L\'onglet « Commutateurs » est le troisième en haut du poste.', 'Dans la colonne « Rouge », le bouton marqué « localhost ».'],
+      ok: 'La face avant s\'affiche : ports 1 à 48 en SFP28 (cages 25 Gb/s) pour les appareils, 49 à 56 en QSFP28 (cages 100 Gb/s) pour les liens vers les spines. En usine, tous les ports sont dans le VLAN 1 et rien n\'est routé : c\'est ce qu\'on va changer.',
+      hints: ['Un commutateur neuf ne porte pas encore son nom : cherche le nom par défaut.', 'L\'onglet « Commutateurs » est le deuxième en haut du poste.', 'Dans la colonne « Rouge », le bouton marqué « localhost ».'],
       auto: (c) => c.io.go({ station: 'reseau', tab: 'switch', sw: L, sub: 'ports' }),
     },
     {
@@ -64,16 +64,17 @@ export const LESSON_LEAF = {
       go: term, show: T('Terminal'),
       done: (c) => c.view().tab === 'switch' && c.view().sw === L && c.view().sub === 'term',
       ok: 'Le prompt « localhost# » t\'attend. Astuces : les mots s\'abrègent (sh int st), Tab complète, ↑ rappelle la commande précédente, « ? » liste ce qui est possible.',
+      hints: ['Le commutateur choisi a plusieurs sous-onglets sous sa face avant.', 'Le dernier sous-onglet : « Terminal (CLI) ».'],
       auto: (c) => c.io.go(term),
     },
     {
       id: 'lldp', title: 'Qui est branché où ?',
-      say: 'Avant de configurer quoi que ce soit, on vérifie le câblage. Le protocole **LLDP** fait que chaque équipement annonce son nom à son voisin : le commutateur sait donc ce qui est branché sur chaque port. C\'est la liste de câblage vérifiée, sans ouvrir la baie.',
+      say: 'Avant de configurer quoi que ce soit, on vérifie le câblage. Le protocole **LLDP** (Link Layer Discovery Protocol) fait que chaque équipement annonce son nom à son voisin : le commutateur sait donc ce qui est branché sur chaque port. C\'est la liste de câblage vérifiée, sans ouvrir la baie.',
       do: 'Tape la commande ci-dessous (clique-la pour la mettre dans le terminal, puis Entrée).',
       cli: ['show lldp neighbors'], sw: L, go: term, show: termInput,
       done: said('show lldp'),
       ok: (c) => `Tu vois les CCU sur ${portsShort(devs().map((d) => d.port))}, et les spines rouges sur Et49 à Et52 (deux liens par spine). Le câblage est bon : on peut configurer.`,
-      hints: ['Abrégé : « sh lldp nei ».'],
+      hints: ['C\'est une commande d\'affichage (« show ») qui interroge les voisins LLDP.', '« show lldp neighbors », abrégé « sh lldp nei », puis Entrée.'],
       auto: (c) => c.io.cli(L, ['show lldp neighbors']),
     },
     {
@@ -83,7 +84,7 @@ export const LESSON_LEAF = {
       cli: () => ['configure terminal', `hostname ${refHost(L)}`], sw: L, go: term, show: termInput,
       done: () => cfg().hostname === refHost(L),
       ok: () => `Le prompt est devenu « ${refHost(L)}(config)# » : on est en mode configuration. Note bien : tant qu'on n'a pas enregistré, tout ça n'est que dans la mémoire vive (la « running-config »).`,
-      hints: ['D\'abord « conf t », puis « hostname » suivi du nom.'],
+      hints: ['On ne modifie rien sans passer d\'abord en mode configuration.', 'D\'abord « conf t », puis « hostname » suivi du nom.', '« hostname leaf-r1-cam ».'],
     },
     {
       id: 'vlan', title: 'Le VLAN média',
@@ -91,8 +92,8 @@ export const LESSON_LEAF = {
       do: () => `Crée le VLAN ${P().vlan} et nomme-le ${P().name}.`,
       cli: () => [`vlan ${P().vlan}`, `name ${P().name}`], sw: L, go: term, show: termInput,
       done: () => !!cfg().vlans[P().vlan],
-      ok: '« show vlan » le liste maintenant, mais aucun port n\'y est encore : c\'est l\'étape suivante.',
-      hints: ['« vlan 101 » ouvre le VLAN (en le créant s\'il n\'existe pas), puis « name … ».'],
+      ok: 'Le VLAN existe : « show vlan » le liste maintenant, mais aucun port n\'y est encore : c\'est l\'étape suivante.',
+      hints: ['Le numéro suit le plan d\'adressage : 100 + numéro de la leaf sur le rouge.', '« vlan 101 » ouvre le VLAN (en le créant s\'il n\'existe pas), puis « name … » lui donne son nom.'],
     },
     {
       id: 'access', title: 'Les ports des CCU',
@@ -100,8 +101,8 @@ export const LESSON_LEAF = {
       do: 'Place les ports des CCU dans le VLAN média.',
       cli: () => [`interface ${R()}`, 'switchport mode access', `switchport access vlan ${P().vlan}`], sw: L, go: term, show: termInput,
       done: () => accessOk(L),
-      ok: '« show interfaces status » te montrerait maintenant le VLAN 101 en face de chaque CCU. Les cartes réseau des CCU sont déjà réglées (adresses 10.1.1.20 et suivantes, passerelle 10.1.1.1) : il leur manque juste la passerelle.',
-      hints: ['« interface » + la plage de ports, puis « switchport access vlan … ».', 'Si tu sélectionnes les ports un par un, ça marche aussi : c\'est juste plus long.'],
+      ok: 'Les CCU sont dans leur VLAN : « show interfaces status » te montrerait le VLAN 101 en face de chaque CCU. Leurs cartes réseau sont déjà réglées (adresses 10.1.1.20 et suivantes, passerelle 10.1.1.1) : il ne manque que cette passerelle, côté leaf.',
+      hints: ['Il faut d\'abord sélectionner les ports des CCU, puis leur dire dans quel VLAN ils sont.', '« interface » + la plage de ports, puis « switchport mode access » et « switchport access vlan … ».', 'Si tu sélectionnes les ports un par un, ça marche aussi : c\'est juste plus long.'],
     },
     {
       id: 'svi', title: 'La passerelle des CCU (SVI)',
@@ -109,8 +110,8 @@ export const LESSON_LEAF = {
       do: () => `Donne l'adresse ${P().svi} à l'interface Vlan${P().vlan}.`,
       cli: () => [`interface vlan${P().vlan}`, `ip address ${P().svi}`], sw: L, go: term, show: termInput,
       done: () => { const v = cfg().svis[P().vlan]; return !!v && v.ip === P().svi && !v.shutdown; },
-      ok: 'La SVI existe. Mais pour l\'instant le commutateur ne route pas encore : il faut l\'activer globalement.',
-      hints: ['« interface vlan101 » puis « ip address 10.1.1.1/24 ».'],
+      ok: 'La SVI existe : les CCU ont maintenant une passerelle. Mais pour l\'instant le commutateur ne route pas encore : il faut l\'activer globalement.',
+      hints: ['La passerelle se configure sur une interface virtuelle qui porte le numéro du VLAN.', '« interface vlan101 », puis « ip address » suivi de l\'adresse en .1 du sous-réseau.', '« interface vlan101 » puis « ip address 10.1.1.1/24 ».'],
     },
     {
       id: 'routing', title: 'Activer le routage',
@@ -118,16 +119,17 @@ export const LESSON_LEAF = {
       do: 'Active le routage IP.',
       cli: ['ip routing'], sw: L, go: term, show: termInput,
       done: () => cfg().ipRouting,
-      ok: 'Le routage est actif. Reste à relier la leaf au reste du réseau : les uplinks.',
+      ok: 'Le routage est actif : la leaf peut faire passer les paquets d\'un sous-réseau à l\'autre. Reste à la relier au reste du réseau : les uplinks.',
+      hints: ['C\'est un réglage global du commutateur, pas d\'une interface.', '« ip routing ».'],
     },
     {
       id: 'uplink1', title: 'Le premier uplink',
-      say: () => { const u = UP()[0]; return `Les 4 ports Ethernet49 à 52 sont les **uplinks** 100 Gb/s : deux vers spine-r1, deux vers spine-r2. Ce ne sont pas des ports d'accès mais des **liens routés** : chacun est un petit sous-réseau à deux adresses, un **/31** (une adresse côté leaf, une côté spine).\n\nTrois réglages comptent :\n- \`no switchport\` : le port devient un port routé (niveau 3) ;\n- l'adresse /31 : ici ${u.ip}, la spine est en ${u.peer} ;\n- vitesse **100g** et correction d'erreurs **Reed-Solomon** (RS-FEC), obligatoire en 100G sur fibre multimode : sans elle, le lien ne monte pas.\n\nLa MTU est déjà à 9214 (trames « jumbo ») : à l'intérieur du réseau, on laisse de la marge.`; },
+      say: () => { const u = UP()[0]; return `Les 4 ports Ethernet49 à 52 sont les **uplinks** 100 Gb/s : deux vers spine-r1, deux vers spine-r2. Ce ne sont pas des ports d'accès mais des **liens routés** : chacun est un petit sous-réseau à deux adresses, un **/31** (une adresse côté leaf, une côté spine).\n\nTrois réglages comptent :\n- \`no switchport\` : le port devient un port routé (niveau 3) ;\n- l'adresse /31 : ici ${u.ip}, la spine est en ${u.peer} ;\n- vitesse **100g** et correction d'erreurs **Reed-Solomon** (RS-FEC), obligatoire en 100G sur fibre multimode : sans elle, le lien ne monte pas.\n\nLa MTU (taille maximale d'une trame) est déjà à 9214 octets (trames « jumbo ») : à l'intérieur du réseau, on laisse de la marge.`; },
       do: () => `Configure Ethernet49 (vers spine-r1) : port routé, adresse ${UP()[0].ip}, 100g, RS-FEC.`,
       cli: () => ['interface ethernet49', 'no switchport', `ip address ${UP()[0].ip}`, 'speed 100g', 'error-correction encoding reed-solomon'], sw: L, go: term, show: termInput,
       done: () => uplinkOk(L, UP()[0]),
       ok: 'Le premier uplink est prêt : le lien vers spine-r1 est monté (voyant d\'Et49 sur la face avant). Il ne lui manque que le protocole de routage.',
-      hints: ['« int e49 » puis les quatre lignes.', 'L\'adresse côté leaf est l\'adresse impaire du /31.'],
+      hints: ['Un uplink n\'est pas un port d\'accès : il doit sortir du niveau 2 avant de recevoir une adresse.', '« int e49 », puis « no switchport », l\'adresse, la vitesse et la FEC.', 'L\'adresse côté leaf est l\'adresse impaire du /31 ; la FEC se règle par « error-correction encoding reed-solomon ».'],
     },
     {
       id: 'uplinks', title: 'Les trois autres uplinks',
@@ -136,15 +138,16 @@ export const LESSON_LEAF = {
       cli: () => UP().slice(1).flatMap((u) => [`interface ${u.port.toLowerCase()}`, 'no switchport', `ip address ${u.ip}`, 'speed 100g', 'error-correction encoding reed-solomon']), sw: L, go: term, show: termInput,
       done: () => UP().every((u) => uplinkOk(L, u)),
       ok: 'Les 4 uplinks sont montés. La leaf est physiquement reliée aux spines, mais elle ne connaît encore aucune route : elle ne sait pas où sont les autres sous-réseaux.',
+      hints: ['Même recette qu\'Ethernet49 : seule l\'adresse change d\'un port à l\'autre.', 'Chaque adresse suivante avance de 2 (un /31 par lien) ; elles sont rappelées dans mon explication.'],
     },
     {
       id: 'ospf', title: 'Le routage dynamique : OSPF',
-      say: () => `Pour apprendre les routes, la leaf parle **OSPF** avec les spines. Chaque routeur décrit ses liens, tous calculent les meilleurs chemins. Comme il y a 4 chemins de même coût vers chaque autre leaf, le trafic est réparti sur les 4 : c'est l'**ECMP**.\n\nTrois choses :\n- une **loopback** (${P().loopback}) qui sert d'identité stable au routeur (router-id) ;\n- le processus \`router ospf 1\` ;\n- on annonce les interfaces dans l'aire 0 : les 4 uplinks et la SVI (pour que le réseau des CCU soit connu de tous).`,
+      say: () => `Pour apprendre les routes, la leaf parle **OSPF** (Open Shortest Path First, protocole de routage dynamique) avec les spines. Chaque routeur décrit ses liens, tous calculent les meilleurs chemins. Comme il y a 4 chemins de même coût vers chaque autre leaf, le trafic unicast est réparti sur les 4 : c'est l'**ECMP** (Equal-Cost Multi-Path).\n\nTrois choses :\n- une **loopback** (${P().loopback}) qui sert d'identité stable au routeur (router-id) ;\n- le processus \`router ospf 1\` ;\n- on annonce les interfaces dans l'aire 0 : les 4 uplinks et la SVI (pour que le réseau des CCU soit connu de tous).`,
       do: 'Crée la loopback, le processus OSPF, puis annonce les uplinks et la SVI.',
       cli: () => ['interface loopback0', `ip address ${P().loopback}/32`, 'router ospf 1', `router-id ${P().loopback}`, 'interface ethernet49-52', 'ip ospf area 0.0.0.0', `interface vlan${P().vlan}`, 'ip ospf area 0.0.0.0'], sw: L, go: term, show: termInput,
       done: () => { const c = cfg(); return c.ospf.enabled && c.ospf.routerId === P().loopback && UP().every((u) => c.ports[u.port].ospf) && c.svis[P().vlan] && c.svis[P().vlan].ospf; },
-      ok: 'OSPF est configuré. Vérifions que les voisins répondent.',
-      hints: ['« interface ethernet49-52 » sélectionne les 4 uplinks d\'un coup.'],
+      ok: 'OSPF est configuré : la leaf va annoncer le sous-réseau des CCU et apprendre celui des autres. Vérifions que les voisins répondent.',
+      hints: ['Trois blocs dans l\'ordre : l\'identité (loopback), le processus OSPF, puis les interfaces annoncées.', '« interface ethernet49-52 » sélectionne les 4 uplinks d\'un coup ; « ip ospf area 0.0.0.0 » les annonce.', 'N\'oublie pas l\'interface vlan101 : sans elle, personne ne connaît le réseau des CCU.'],
     },
     {
       id: 'ospfcheck', title: 'Vérifier les voisins OSPF',
@@ -153,7 +156,7 @@ export const LESSON_LEAF = {
       cli: ['end', 'show ip ospf neighbor'], sw: L, go: term, show: termInput,
       done: (c) => said('show ip ospf neighbor')(c) && ospfFull(L) === 4,
       ok: '4 voisins en FULL : deux par spine. La leaf connaît maintenant tout le réseau rouge, et le réseau rouge connaît le sous-réseau des CCU. Mais les flux vidéo, eux, ne passent toujours pas : ce sont des flux **multicast**.',
-      hints: ['« sh ip ospf nei ».', 'S\'il en manque, regarde l\'adresse de l\'uplink concerné.'],
+      hints: ['Une commande « show » ne se tape pas en mode configuration : reviens d\'abord au mode normal.', '« end », puis « show ip ospf neighbor » (abrégé « sh ip ospf nei »).', 'S\'il manque un voisin, regarde l\'adresse et la FEC de l\'uplink concerné.'],
     },
     {
       id: 'mcglobal', title: 'Le multicast (1/2) : SSM',
@@ -161,7 +164,8 @@ export const LESSON_LEAF = {
       do: 'Active le routage multicast et règle la plage SSM.',
       cli: () => ['configure terminal', 'ip multicast-routing', `ip pim ssm range ${P().ssm}`], sw: L, go: term, show: termInput,
       done: () => cfg().mcastRouting && cfg().ssmRange === P().ssm,
-      ok: 'Le commutateur sait router le multicast. Reste à dire sur quelles interfaces.',
+      ok: 'Le commutateur sait router le multicast, dans la même plage SSM que le reste du car. Reste à dire sur quelles interfaces.',
+      hints: ['Deux réglages globaux, en mode configuration.', '« ip multicast-routing », puis « ip pim ssm range » suivi de la plage du plan d\'adressage.', `« ip pim ssm range ${SSM_REF} ».`],
     },
     {
       id: 'mcif', title: 'Le multicast (2/2) : PIM et IGMPv3',
@@ -169,8 +173,8 @@ export const LESSON_LEAF = {
       do: 'Active PIM sur les uplinks et la SVI, et IGMP version 3 sur la SVI.',
       cli: () => ['interface ethernet49-52', 'pim ipv4 sparse-mode', `interface vlan${P().vlan}`, 'pim ipv4 sparse-mode', 'ip igmp version 3'], sw: L, go: term, show: termInput,
       done: () => { const c = cfg(); const v = c.svis[P().vlan]; return UP().every((u) => c.ports[u.port].pim) && v && v.pim && v.igmp === 3; },
-      ok: 'C\'est le moment de vérité : les flux des caméras devraient repasser par le rouge.',
-      hints: ['« ip igmp version 3 » se tape sur l\'interface Vlan, pas sur les ports physiques.'],
+      ok: 'PIM remonte maintenant les abonnements vers les spines, et IGMPv3 écoute ceux des appareils : les flux des caméras devraient repasser par le rouge. C\'est le moment de vérité.',
+      hints: ['PIM va partout où passent les flux (uplinks et SVI) ; IGMP seulement là où sont les appareils.', '« interface ethernet49-52 » puis « pim ipv4 sparse-mode » ; ensuite « interface vlan101 », PIM de nouveau, et « ip igmp version 3 ».', '« ip igmp version 3 » se tape sur l\'interface Vlan, pas sur les ports physiques.'],
     },
     {
       id: 'flows', title: 'Les flux sont-ils revenus ?',
@@ -179,24 +183,26 @@ export const LESSON_LEAF = {
       go: { station: 'reseau', tab: 'flows' }, show: [{ sel: '#station .tabs .tab[data-k="flows"]', label: 'Flux NMOS · SDP' }],
       done: (c) => c.view().tab === 'flows' && devFlowsProtected(L),
       ok: 'Tout est « protégé 2022-7 » : chaque flux des caméras arrive de nouveau par les deux réseaux. Le secours est rétabli. Mais on n\'a pas fini : la synchro.',
-      hints: ['L\'onglet est le cinquième en haut du poste.', 'Si un flux reste « sans protection », regarde le détail : le chemin rouge indique où ça coince.'],
+      hints: ['L\'onglet est le quatrième en haut du poste.', 'Si un flux reste « sans protection », regarde le détail : le chemin rouge indique où ça coince.'],
       auto: (c) => c.io.go({ station: 'reseau', tab: 'flows' }),
     },
     {
       id: 'ptpglobal', title: 'PTP (1/2) : l\'horloge frontière',
-      say: () => `En ST 2110, il n'y a plus de signal de référence (black burst, tri-level) dans un câble : toute la synchro passe par **PTP** (IEEE 1588, profil **SMPTE ST 2059-2**). Les grands maîtres GPS donnent l'heure, et chaque commutateur est une **horloge frontière** (« boundary clock ») : il se cale sur son maître, puis redistribue l'heure à ses ports, en corrigeant son propre temps de traversée.\n\nTrois réglages globaux : le mode **boundary**, le **domaine ${P().domain}** (celui du car : un équipement dans un autre domaine ne voit pas nos maîtres) et le **profil smpte2059-2** (il fixe les cadences : 4 Announce et 8 Sync par seconde).`,
+      say: () => `En ST 2110, il n'y a plus de signal de référence (black burst, tri-level) dans un câble : toute la synchro passe par **PTP** (IEEE 1588, profil **SMPTE ST 2059-2**). Les grands maîtres GPS donnent l'heure, et chaque commutateur est une **horloge frontière** (« boundary clock ») : il se cale sur son maître par un port esclave, puis redevient maître sur ses autres ports et réémet l'heure de sa propre horloge. Les variations d'attente dans les commutateurs ne s'accumulent donc pas d'un étage à l'autre.\n\nTrois réglages globaux : le mode **boundary**, le **domaine ${P().domain}** (celui du car : un équipement dans un autre domaine ne voit pas nos maîtres) et le **profil smpte2059-2** (il fixe les cadences : 4 Announce et 8 Sync par seconde).`,
       do: 'Configure PTP en horloge frontière, domaine 127, profil ST 2059-2.',
       cli: ['configure terminal', 'ptp mode boundary', 'ptp domain 127', 'ptp profile smpte2059-2'], sw: L, go: term, show: termInput,
       done: () => { const p = cfg().ptp; return p.mode === 'boundary' && p.domain === P().domain && p.profile === 'smpte2059-2'; },
-      ok: 'L\'horloge est prête, mais aucun port ne parle encore PTP.',
+      ok: 'L\'horloge est prête, dans le bon domaine et au bon rythme ; mais aucun port ne parle encore PTP.',
+      hints: ['Trois réglages globaux : le rôle du commutateur, le domaine, le profil.', '« ptp mode boundary », « ptp domain 127 », « ptp profile smpte2059-2 ».'],
     },
     {
       id: 'ptpports', title: 'PTP (2/2) : les ports',
       say: () => `On active PTP sur les ports :\n- les **uplinks** en rôle dynamique : c'est par eux que la leaf entend les spines, et l'algorithme BMCA choisit lequel sera son port esclave ;\n- les **ports des CCU**, en **ptp role master** : la leaf est forcément maître vers les appareils. C'est une protection : si un appareil mal réglé s'annonçait comme grand maître, la leaf l'ignorerait au lieu de faire basculer tout le car sur une horloge pirate.`,
+      hints: ['Deux groupes de ports, deux réglages différents : les uplinks écoutent, les ports des CCU parlent.', '« interface ethernet49-52 » puis « ptp enable » ; ensuite la plage des CCU, « ptp enable » et « ptp role master ».'],
       do: 'Active PTP sur les uplinks, et sur les ports des CCU en rôle maître.',
       cli: () => ['interface ethernet49-52', 'ptp enable', `interface ${R()}`, 'ptp enable', 'ptp role master'], sw: L, go: term, show: termInput,
       done: () => { const c = cfg(); return UP().every((u) => c.ports[u.port].ptp) && devs().every(({ port }) => c.ports[port].ptp && c.ports[port].ptpRole === 'master'); },
-      ok: 'Vérifions qu\'elle est bien synchronisée.',
+      ok: 'PTP circule : les uplinks reçoivent l\'heure des spines et les ports des CCU la redistribuent, sans pouvoir être détournés. Vérifions qu\'elle est bien synchronisée.',
     },
     {
       id: 'ptpcheck', title: 'Vérifier la synchro',
@@ -205,14 +211,16 @@ export const LESSON_LEAF = {
       cli: ['end', 'show ptp'], sw: L, go: term, show: termInput,
       done: (c) => said('show ptp')(c) && ptpSynced(L),
       ok: 'La leaf suit le grand maître 1 par un uplink (son port esclave), avec un écart de quelques dizaines de nanosecondes. Les CCU reçoivent de nouveau l\'heure par les deux réseaux.',
+      hints: ['Commande d\'affichage : reviens d\'abord au mode normal.', '« end », puis « show ptp ».'],
     },
     {
       id: 'qos', title: 'Les priorités (QoS)',
-      say: 'Dernier réglage : les **priorités**. Chaque paquet porte une étiquette de priorité (le champ **DSCP**) : 46 pour PTP, 34 pour l\'audio, 26 pour la vidéo. Le commutateur doit la respecter, et PTP doit passer devant tout le monde : un message de synchro retardé dans une file d\'attente, c\'est une erreur de temps directement.\n\n`qos trust dscp` fait confiance au marquage, `qos map dscp 46 to traffic-class 7` met PTP dans la file la plus prioritaire.',
+      say: 'Dernier réglage : les **priorités** (QoS, qualité de service). Chaque paquet porte une étiquette de priorité (le champ **DSCP** de l\'en-tête IP) ; les valeurs du car, courantes en ST 2110 : 46 pour PTP, 34 pour l\'audio, 26 pour la vidéo. Le commutateur doit la respecter, et PTP doit passer devant tout le monde : un message de synchro retardé dans une file d\'attente, c\'est une erreur de temps directement.\n\n`qos trust dscp` fait confiance au marquage, `qos map dscp 46 to traffic-class 7` met PTP dans la file la plus prioritaire.',
       do: 'Fais respecter le DSCP et place PTP en tête.',
       cli: ['configure terminal', 'qos trust dscp', 'qos map dscp 46 to traffic-class 7'], sw: L, go: term, show: termInput,
       done: () => cfg().qos.trust === 'dscp' && cfg().qos.ptpPriority,
-      ok: 'Configuration terminée. Avant de crier victoire : le diagnostic.',
+      ok: 'Configuration terminée : PTP ne sera jamais retardé derrière la vidéo dans une file d\'attente. Avant de crier victoire : le diagnostic.',
+      hints: ['Deux réglages globaux : faire confiance au marquage, puis placer PTP dans la file la plus prioritaire.', '« qos trust dscp », puis « qos map dscp 46 to traffic-class 7 ».'],
     },
     {
       id: 'diag', title: 'Le diagnostic',
@@ -220,8 +228,8 @@ export const LESSON_LEAF = {
       do: 'Ouvre l\'onglet Diagnostic.',
       go: { station: 'reseau', tab: 'diag' }, show: [{ sel: '#station .tabs .tab[data-k="diag"]', label: 'Diagnostic' }],
       done: (c) => c.view().tab === 'diag' && issuesOf(L).length === 0,
-      ok: 'Plus aucune anomalie sur la leaf. Il en reste peut-être une, discrète, en gris : « configuration non enregistrée ».',
-      hints: ['S\'il reste une alarme sur la leaf, son bouton t\'emmène au bon port : relis l\'étape concernée.'],
+      ok: 'Plus aucune anomalie sur la leaf : on peut annoncer au réalisateur que le secours est rétabli. Il en reste peut-être une, discrète, en gris : « configuration non enregistrée ».',
+      hints: ['C\'est l\'avant-dernier onglet du poste.', 'S\'il reste une alarme sur la leaf, son bouton t\'emmène au bon port : relis l\'étape concernée.'],
       auto: (c) => c.io.go({ station: 'reseau', tab: 'diag' }),
     },
     {
@@ -232,11 +240,12 @@ export const LESSON_LEAF = {
       cli: ['write memory'], sw: L,
       done: () => saved(L),
       ok: '« Copy completed successfully. » La leaf redémarrerait maintenant exactement dans cet état.',
+      hints: ['Il faut recopier la running-config dans la startup-config.', '« write memory » (ou « copy running-config startup-config »).'],
     },
     {
       id: 'quiz', title: 'Une question pour finir',
       say: 'Une dernière question, pour voir si le principe est acquis.',
-      quiz: { q: 'Pendant toute l\'opération, l\'image des caméras n\'a jamais été perdue à l\'antenne. Pourquoi ?', choices: ['Les CCU gardent quelques secondes d\'image en mémoire', 'Chaque flux arrive aussi par le réseau bleu : le récepteur garde le paquet qui arrive (ST 2022-7)', 'Le mélangeur repasse automatiquement en SDI'], answer: 1, why: 'Exactement : deux réseaux indépendants, chaque flux émis sur les deux, et le récepteur reconstitue le flux paquet par paquet. On peut donc intervenir sur un réseau en plein direct, à condition que l\'autre soit sain : vérifie toujours l\'état du bleu avant de toucher au rouge (et inversement).' },
+      quiz: { q: 'Pendant toute l\'opération, l\'image des caméras n\'a jamais été perdue à l\'antenne. Pourquoi ?', choices: ['Les CCU gardent quelques secondes d\'image en mémoire', 'Chaque flux arrive aussi par le réseau bleu : le récepteur garde le paquet qui arrive (ST 2022-7)', 'Le mélangeur repasse automatiquement en SDI'], answer: 1, why: 'Deux réseaux indépendants, chaque flux émis sur les deux, et le récepteur reconstitue le flux paquet par paquet. Ni les CCU ni le mélangeur n\'ont de mémoire de secours ou de repli SDI : sans le bleu, l\'image serait tombée. On peut donc intervenir sur un réseau en plein direct, à condition que l\'autre soit sain : vérifie toujours l\'état du bleu avant de toucher au rouge (et inversement).' },
     },
   ],
 };

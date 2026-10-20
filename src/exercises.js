@@ -19,7 +19,7 @@ function camNum(src) { return src.startsWith('CAM') ? src.slice(3) : sourceLabel
 export function startExercise(mode) {
   EX.mode = mode; EX.score = 0; EX.max = 0; EX.n = 0; EX.order = null; EX.next = S.time + 3; EX.seq = []; EX.log = [];
   if (mode === 'td') setKeyMode('preset');
-  say('Exercice truquiste. Je vais annoncer les caméras : préparez au PST (touche du chiffre), puis envoyez au top (Espace = CUT, Entrée du pavé = AUTO). Bonne chance !');
+  say('Exercice truquiste. J\'annonce les caméras : prépare-les au PVW, la rangée preset (touche du chiffre), puis envoie au top avec la transition demandée (Espace = CUT, Entrée du pavé = AUTO). Bonne chance !');
 }
 export function stopExercise() { if (EX.mode) { EX.mode = null; EX.order = null; intercom('RÉAL', 'Exercice arrêté.'); } }
 
@@ -45,7 +45,7 @@ function finish() {
   modal.open('Résultat de l\'exercice truquiste', el('div', { class: 'prose' },
     el('p', {}, `Score : ${EX.score} / ${EX.max} (${pct} %).`),
     el('ul', { class: 'steps' }, EX.log.map((l) => el('li', {}, l))),
-    el('p', { class: 'note' }, 'Barème : préparation dans les 4 s = 1 point, exécution moins de 1,5 s après le top = 2 points (moins de 3 s = 1 point), bonne transition demandée = 1 point.')), { width: 700 });
+    el('p', { class: 'note' }, 'Barème : préparation au PVW dans les 4 s = 1 point ; transition lancée moins de 1,5 s après le top = 2 points (moins de 3 s = 1 point) ; transition demandée respectée (cut, mix ou volet logo) = 1 point. Une source non envoyée dans les 6 s compte comme manquée.')), { width: 700 });
 }
 
 export function updateExercises(dt) {
@@ -77,8 +77,10 @@ export function updateExercises(dt) {
       o.startTrans = { mixes: S.stats.mixes, stingers: S.stats.stingers, cuts: S.stats.cuts };
     }
   } else if (o.phase === 'go') {
+    // le réflexe se mesure au départ de la transition : un mix ou un volet dure ensuite 0,4 à 0,6 s
+    if (o.tStart == null && (MIX.auto || S.stats.cuts > o.startTrans.cuts || S.stats.mixes > o.startTrans.mixes || S.stats.stingers > o.startTrans.stingers)) o.tStart = now;
     if (meSource(MIX.pgm) === o.src && !MIX.auto) {
-      const d = now - o.t1;
+      const d = (o.tStart ?? now) - o.t1;
       let pts = d < 1.5 ? 2 : d < 3 ? 1 : 0;
       const did = S.stats.stingers > o.startTrans.stingers ? 'stinger' : S.stats.mixes > o.startTrans.mixes ? 'mix' : 'cut';
       const okType = did === o.kind || (o.kind === 'mix' && did === 'mix');
@@ -86,12 +88,12 @@ export function updateExercises(dt) {
       EX.score += pts;
       const msg = `${sourceLabel(o.src)} : ${d.toFixed(1).replace('.', ',')} s${okType ? '' : ` (transition attendue : ${o.kind === 'cut' ? 'cut' : o.kind === 'mix' ? 'mix' : 'volet logo'})`}`;
       EX.log.push(msg);
-      intercom('RÉAL', pts >= 3 ? 'Parfait.' : pts >= 2 ? 'Bien.' : 'Un peu lent !', pts >= 2 ? 'ok' : 'bad');
+      intercom('RÉAL', pts >= 3 ? 'Parfait.' : !okType ? `Mauvaise transition : je voulais un ${o.kind === 'cut' ? 'cut' : o.kind === 'mix' ? 'mix' : 'volet logo'}.` : d >= 1.5 ? 'Un peu lent !' : 'Bien.', pts >= 2 ? 'ok' : 'bad');
       if (o.after) o.after();
       EX.order = null; EX.next = now + 3 + rand() * 4;
     } else if (now - o.t1 > 6) {
       EX.log.push(`${sourceLabel(o.src)} : manqué`);
-      intercom('RÉAL', 'On l\'a ratée… on continue.', 'bad');
+      intercom('RÉAL', 'Trop tard, on l\'a ratée… on continue.', 'bad');
       EX.order = null; EX.next = now + 3;
     }
   }

@@ -27,8 +27,8 @@ export const MISSIONS = [
   { id: 'm4', title: 'Le serré', text: 'Installez une deuxième caméra sur la position 2 avec un très long zoom (UA107 ou UJ122) et la consigne « Serré porteur du ballon ».', check: () => { const c = cam('g_c2'); return c && c.role === 'serre' && c.L.fmax >= 900; } },
   { id: 'm5', title: 'Une caméra HF', text: 'Installez une Steadicam HF au bord du terrain et allumez au moins deux antennes de réception. Objectif : une marge HF supérieure à 3 dB.', check: () => S.cams.some((c) => c.rf && c.rf.margin > 3) && RF.antennas.filter((a) => a.on).length >= 2 },
   { id: 'm6', title: 'Entrer dans le car', text: 'Rejoignez le car régie (Tab, le pupitre, puis « Devant le car ») et entrez par les marches de la porte.', check: () => S.inTruck },
-  { id: 'm7', title: 'Le multiview', text: 'Asseyez-vous au poste Truquiste · Mélangeur (E). Repérez le PGM (cadre rouge, à droite) et le PVW (cadre vert, à gauche).', check: () => S.visited.melangeur },
-  { id: 'm8', title: 'Premier enchaîné', text: 'Au mélangeur : plan large au PGM, serré au PST, choisissez MIX puis AUTO (ou Entrée).', check: () => S.stats.mixes >= 1 },
+  { id: 'm7', title: 'Le multiview', text: 'Asseyez-vous au poste « Truquiste · XVS-6000 » (E). Repérez le PGM (cadre rouge, à droite) et le PVW (cadre vert, à gauche).', check: () => S.visited.melangeur },
+  { id: 'm8', title: 'Premier enchaîné', text: 'Au mélangeur : plan large au PGM, serré en preset (rangée B · PST, tuile PVW), choisissez MIX puis AUTO TRANS (ou Entrée du pavé numérique).', check: () => S.stats.mixes >= 1 },
   { id: 'm9', title: 'Exposition', text: 'Au poste Ingé vision, réglez l\'iris de la CAM 1 pour un niveau moyen entre 35 et 55 % (lisez le waveform).', check: () => { const c = camById(1); return S.visited.vision && c && c.meter.mean > 0.35 && c.meter.mean < 0.55; } },
   { id: 'm10', title: 'Le matching', text: 'Toujours en vision : égalisez la colorimétrie des CAM 1 et 2 (écarts rouge et bleu inférieurs à 2 %, voir sous les gains). AUTO WHITE ou réglage fin des gains R/B.', check: () => { const a = camById(1), b = camById(2); if (!a || !b || !S.visited.vision) return false; const ea = a.colorError(), eb = b.colorError(); return Math.abs(ea.r) < 0.02 && Math.abs(ea.b) < 0.02 && Math.abs(eb.r) < 0.02 && Math.abs(eb.b) < 0.02; } },
   { id: 'm10b', title: 'Les barres au line-up', text: 'Au poste Ingé vision, envoyez les barres d\'une caméra (touche BARS du RCP), retrouvez-les sur le multiview, puis revenez à l\'image.', check: () => S.flags && S.flags.barsCycle },
@@ -58,7 +58,7 @@ export function drawMissionCard() {
   if (box.dataset.m === m.id && !box.hidden) return;
   box.dataset.m = m.id; box.hidden = false; box.innerHTML = '';
   box.append(el('div', { class: 'k' }, `Mission ${done + 1} / ${MISSIONS.length}`), el('h4', {}, m.title), el('p', {}, m.text),
-    el('div', { class: 'row' }, el('button', { class: 'btn small', onclick: () => openGuide('missions') }, 'Toutes les missions'), el('button', { class: 'btn small', onclick: () => { S.missionsDone[m.id] = true; } }, 'Passer'), el('button', { class: 'btn small', onclick: () => { S.showMission = false; box.hidden = true; } }, 'Masquer')));
+    el('div', { class: 'row' }, el('button', { class: 'btn small', onclick: () => openGuide('missions') }, 'Toutes les missions'), el('button', { class: 'btn small', onclick: () => { S.missionsDone[m.id] = true; } }, 'Passer cette mission'), el('button', { class: 'btn small', onclick: () => { S.showMission = false; box.hidden = true; } }, 'Masquer')));
 }
 
 
@@ -93,7 +93,7 @@ export function openGuide(tab = 'missions', chapter = null) {
     }
     if (k === 'postes') {
       content.append(el('p', { class: 'note' }, 'Chaque poste du car et chaque équipement du stade, avec son rôle, son matériel et ses pièges. Dans le simulateur, approchez-vous et appuyez sur E.'));
-      for (const [id, where] of STATION_LIST) { const I = STATION_INFO[id]; if (!I) continue; content.appendChild(el('div', { class: 'item' }, el('div', { class: 'grow' }, el('div', { class: 't' }, I.title), el('div', { class: 's' }, `${where} · ${I.role.split('. ')[0]}.`)), el('button', { class: 'btn small', onclick: () => openInfo(id) }, 'Fiche'))); }
+      for (const [id, where] of STATION_LIST) { const I = STATION_INFO[id]; if (!I) continue; content.appendChild(el('div', { class: 'item' }, el('div', { class: 'grow' }, el('div', { class: 't' }, I.title), el('div', { class: 's' }, `${where} · ${I.role.split('. ')[0]}.`)), el('button', { class: 'btn small', onclick: () => openInfo(id) }, 'Voir la fiche'))); }
     }
     if (k === 'procedures') {
       const procs = CFG.car.procedures || [];
@@ -110,7 +110,7 @@ export function openGuide(tab = 'missions', chapter = null) {
     if (k === 'glossaire') {
       const q = el('input', { type: 'text', id: 'glq', placeholder: 'Rechercher un terme (SDI, genlock, DSK…)' });
       const list = el('div', { class: 'list' });
-      const render = () => { list.innerHTML = ''; const s = q.value.trim().toLowerCase(); for (const [t, d] of GLOSSARY) { if (s && !(t.toLowerCase().includes(s) || d.toLowerCase().includes(s))) continue; list.appendChild(el('div', { class: 'item' }, el('div', { class: 'grow' }, el('div', { class: 't' }, t), el('div', { class: 's', style: { fontSize: '13px', color: '#c7d0d7' } }, d)))); } };
+      const render = () => { list.innerHTML = ''; const nz = (x) => x.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, ''); const s = nz(q.value.trim()); for (const [t, d] of GLOSSARY) { if (s && !(nz(t).includes(s) || nz(d).includes(s))) continue; list.appendChild(el('div', { class: 'item' }, el('div', { class: 'grow' }, el('div', { class: 't' }, t), el('div', { class: 's', style: { fontSize: '13px', color: '#c7d0d7' } }, d)))); } };
       q.addEventListener('input', render); content.append(field('Recherche', q), list); render();
     }
     if (k === 'commandes') {

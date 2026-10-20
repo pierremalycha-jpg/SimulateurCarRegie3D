@@ -27,8 +27,8 @@ export const GUIDE = [
 <li><b>Configuration.</b> Affectation des CCU, de la grille, du multiview (noms et tally), de l'intercom, des entrées EVS, des sorties.</li>
 <li><b>Line-up.</b> Mires caméras, balance des noirs et des blancs, matching par la vision, test de chaque micro, test de chaque position intercom.</li>
 <li><b>Tests transmission.</b> Envoi de la mire + 1 kHz à la chaîne, identification, vérification du retour antenne, test du chemin de secours.</li>
-<li><b>Répétition et briefing.</b> Le réalisateur briefe les cadreurs et les EVS, l'habillage valide ses modèles.</li>
-<li><b>Prise d'antenne et direct.</b> Le scripte compte à rebours, le réalisateur réalise, le chef de car surveille.</li>
+<li><b>Répétition et briefing.</b> Le réalisateur briefe les cadreurs et les opérateurs ralenti, l'habillage valide ses modèles.</li>
+<li><b>Prise d'antenne et direct.</b> La scripte compte à rebours, le réalisateur réalise, le chef de car surveille.</li>
 <li><b>Fin d'antenne et démontage.</b> Dérushage éventuel, démontage, rapport technique.</li>
 </ol>`},
   {
@@ -36,7 +36,7 @@ export const GUIDE = [
 <p>Suivez le chemin d'une image, de l'objectif jusqu'au téléspectateur :</p>
 <ol class="steps">
 <li><b>Objectif → capteurs.</b> La lumière traverse le zoom (focale, iris, filtres ND) et un prisme qui la sépare sur 3 capteurs (rouge, vert, bleu).</li>
-<li><b>Caméra → CCU.</b> Par la fibre SMPTE (ou triax, fibre, HF), la caméra envoie l'image à sa CCU dans le car et reçoit en retour l'alimentation, l'intercom, le retour programme, le tally et la référence.</li>
+<li><b>Caméra → CCU.</b> Par la fibre SMPTE (ou triax, fibre seule, HF), la caméra envoie l'image à sa CCU dans le car et reçoit en retour l'alimentation, l'intercom, le retour programme, le tally et la référence.</li>
 <li><b>RCP.</b> L'ingénieur vision règle l'image depuis son RCP : la CCU relaie les réglages vers la tête de caméra, où se fait l'essentiel du traitement (gain, noir, couleurs, iris, filtres) ; la CCU assure surtout les conversions de sortie (UHD/HD, HDR/SDR).</li>
 <li><b>CCU → grille.</b> La sortie SDI (ou IP) de la CCU entre dans la grille.</li>
 <li><b>Grille → mélangeur, EVS, multiview.</b> La grille distribue chaque caméra au mélangeur, aux entrées d'enregistrement des EVS et aux tuiles du multiview.</li>
@@ -50,7 +50,7 @@ export const GUIDE = [
 <table class="tbl"><thead><tr><th>Format</th><th>Interface</th><th>Débit</th><th>Portée coax typique</th></tr></thead><tbody>
 <tr><td>1080i50 (HD entrelacé)</td><td>HD-SDI (ST 292)</td><td>1,485 Gb/s</td><td>≈ 120 à 150 m</td></tr>
 <tr><td>1080p50 (HD progressif)</td><td>3G-SDI (ST 424)</td><td>2,97 Gb/s</td><td>≈ 100 à 120 m</td></tr>
-<tr><td>2160p50 (UHD)</td><td>12G-SDI (ST 2082) ou 4 x 3G (quad-link)</td><td>11,88 Gb/s</td><td>≈ 70 m</td></tr>
+<tr><td>2160p50 (UHD)</td><td>12G-SDI (ST 2082) ou 4 × 3G (quad-link)</td><td>11,88 Gb/s</td><td>≈ 70 m</td></tr>
 <tr><td>Toutes</td><td>IP ST 2110 sur fibre 25/100 GbE</td><td>≈ 2,2 Gb/s (1080p50) à 8,6 Gb/s (UHD p50) par flux</td><td>fibre : plusieurs km</td></tr>
 </tbody></table>
 <p>En Europe, tout est à 50 Hz : 50 images par seconde (25 en entrelacé, 2 trames par image). Le timecode compte 25 images par seconde.</p>
@@ -75,16 +75,16 @@ export const GUIDE = [
 <p>La fibre SMPTE porte tout : vidéo vers le car, retour programme vers le viseur, intercom, tally, télécommandes du RCP et alimentation. Les mini-caméras et les convertisseurs fibre demandent une alimentation locale.</p>`},
   {
     id: 'optique', title: 'Optique et exposition', html: `
-<p><b>Focale et angle.</b> Sur un capteur 2/3" (9,59 mm de large), l'angle horizontal vaut 2 × arctan(9,59 / 2f) : 58° à 8,6 mm, 13,7° à 40 mm, 1,4° à 400 mm, 0,55° à 1000 mm. À 80 m, un champ de 7 m de large demande une focale d'environ 110 mm.</p>
-<p><b>Iris.</b> La suite f/1.4 – 2 – 2.8 – 4 – 5.6 – 8 – 11 – 16 : chaque valeur divise la lumière par 2. Le zoom perd de la luminosité en longue focale (ramping) et le doubleur coûte 2 diaphragmes.</p>
-<p><b>Repères d'exposition</b> (en plein jour, 0 dB, 50 i/s) : environ f/8 avec un ND 1/4. De nuit sous l'éclairage du stade (environ 2000 lux) : environ f/2.8 sans filtre. Ce sont les repères du simulateur : une caméra réelle de type HDC-5500 (sensibilité F11 sous 2000 lx pour un blanc à 89,9 %) est plus sensible de 2 à 3 diaphragmes, d'où plutôt un ND 1/16 ou 1/64 en plein soleil et un iris vers f/4 à f/8 de nuit selon l'objectif. Une caméra super ralenti 3x reçoit 3 fois moins de lumière par image (un diaphragme et demi).</p>
+<p><b>Focale et angle.</b> Sur un capteur 2/3" (9,59 mm de large), l'angle horizontal vaut 2 × arctan(9,59 / 2f) : 58° à 8,6 mm, 13,7° à 40 mm, 1,4° à 400 mm, 0,55° à 1 000 mm. À 80 m, un champ de 7 m de large demande une focale d'environ 110 mm.</p>
+<p><b>Iris.</b> La suite f/1,4 – 2 – 2,8 – 4 – 5,6 – 8 – 11 – 16 : chaque valeur divise la lumière par 2. Le zoom perd de la luminosité en longue focale (ramping) et le doubleur coûte 2 diaphragmes.</p>
+<p><b>Repères d'exposition</b> (en plein jour, 0 dB, 50 i/s) : environ f/8 avec un ND 1/4. De nuit sous l'éclairage du stade (environ 2 000 lux) : environ f/2,8 sans filtre. Ce sont les repères du simulateur : une caméra réelle de type HDC-5500 (sensibilité F11 sous 2 000 lx pour un blanc à 89,9 %) est plus sensible de 2 à 3 diaphragmes, d'où plutôt un ND 1/16 ou 1/64 en plein soleil et un iris vers f/4 à f/8 de nuit selon l'objectif. Une caméra super ralenti 3x reçoit 3 fois moins de lumière par image (un diaphragme et demi).</p>
 <p><b>Lire le waveform.</b> 0 % = noir, 100 % = blanc nominal (700 mV). Pelouse ensoleillée vers 40-55 %, peaux vers 50-70 %, maillot blanc juste sous 100 %. Au-dessus du knee point (95 % par défaut), les hautes lumières sont compressées, puis l'écrêteur (white clip) les limite : 103 % ici, une limite qu'exigent encore beaucoup de diffuseurs (c'était la tolérance en luminance de l'EBU R103-2000 ; depuis 2016, R103 admet une plage préférée jusqu'à 105 %, code 984 en 10 bits). Le signal SDI peut techniquement monter jusqu'à 109 %.</p>`},
   {
     id: 'objectifs', title: 'Caméras Sony HDC et objectifs Fujinon', html: `
-<p>Sur un match, les caméras principales sont des <b>caméras système</b> (type Sony HDC-5500 : trois capteurs CMOS 2/3" 4K, liaison fibre SMPTE vers leur CCU) équipées d'<b>objectifs « box »</b> : de gros zooms à servo, dans un boîtier rectangulaire. La caméra se loge par l'arrière dans un <b>adaptateur grand objectif</b> (série Sony HDLA) qui porte l'objectif à l'avant et le grand viseur (7 pouces) à l'arrière, sans démonter l'objectif. Le cadreur pilote le zoom à la poignée droite (bascule au pouce) et le point à la roue de gauche : ce sont les <b>demandes</b>, reliées au servo de l'objectif.</p>
+<p>Sur un match, les caméras principales sont des <b>caméras système</b> (type Sony HDC-5500 : trois capteurs CMOS 2/3" 4K, liaison fibre SMPTE vers leur CCU) équipées d'<b>objectifs « box »</b> : de gros zooms à servo, dans un boîtier rectangulaire. La caméra se loge par l'arrière dans un <b>adaptateur grand objectif</b> (série Sony HDLA) qui porte l'objectif à l'avant et le grand viseur (7 pouces) à l'arrière, sans démonter l'objectif. Le cadreur pilote le zoom par une bascule au pouce sur un manche et le point par une roue sur l'autre (le côté est une préférence d'opérateur) : ce sont les <b>demandes</b>, reliées au servo de l'objectif.</p>
 <h3>Objectifs box Fujinon 4K (chiffres constructeur)</h3>
 <table class="tbl"><thead><tr><th>Modèle</th><th>Focales</th><th>Ouverture</th><th>Distance mini</th><th>Masse</th></tr></thead><tbody>
-<tr><td>UA125x8BESM</td><td>8–1000 mm (16–2000 avec ×2)</td><td>f/1,7 jusqu'à 340 mm, f/5,0 à 1000 mm</td><td>3,0 m</td><td>26,6 kg</td></tr>
+<tr><td>UA125x8BESM</td><td>8–1 000 mm (16–2 000 avec ×2)</td><td>f/1,7 jusqu'à 340 mm, f/5,0 à 1 000 mm</td><td>3,0 m</td><td>26,6 kg</td></tr>
 <tr><td>UA107x8.4BESM</td><td>8,4–900 mm</td><td>f/1,7 jusqu'à 340 mm, f/4,5 à 900 mm</td><td>3,05 m</td><td>≈ 24 kg</td></tr>
 <tr><td>UA80x9BESM</td><td>9–720 mm (doubleurs ×1,2 et ×2)</td><td>f/1,7 jusqu'à 350 mm, f/3,5 à 720 mm</td><td>3,7 m</td><td>23,5 kg</td></tr>
 <tr><td>UA70x8.7BESM</td><td>8,7–610 mm</td><td>f/1,7 jusqu'à 340 mm, f/3,05 à 610 mm</td><td>3,05 m</td><td>≈ 24 kg</td></tr>
@@ -116,7 +116,7 @@ export const GUIDE = [
 <li><b>Effets :</b> micros canons bord terrain qui suivent le ballon (frappes, contacts), parfois micros paraboliques.</li>
 <li><b>Commentaires :</b> unité de commentaire en cabine, avec retour N-1.</li>
 <li><b>Son international :</b> ambiance + effets sans commentaire, livré à tous les diffuseurs.</li></ul>
-<p>Formats : stéréo et 5.1 (parfois immersif), 16 canaux embeddés en HD-SDI, jusqu'à 32 en 3G/12G-SDI (SMPTE ST 299-2). Loudness EBU R128 : -23 LUFS intégré, true peak ≤ -1 dBTP. Line-up : 1 kHz à -18 dBFS.</p>`},
+<p>Formats : stéréo et 5.1 (parfois immersif), 16 canaux embeddés en HD-SDI, jusqu'à 32 en 3G/12G-SDI (SMPTE ST 299-2). Loudness EBU R128 : −23 LUFS intégré, true peak ≤ −1 dBTP. Line-up : 1 kHz à −18 dBFS.</p>`},
   {
     id: 'vista', title: 'La console son : inspiration Studer Vista 1', html: `
 <p>La console du car s'inspire de la <b>Studer Vista 1</b>, la plus compacte des consoles Vista : une version 22 faders d'environ un mètre de large (idéale dans une cabine de car) et une version 32 faders. Son moteur de traitement (DSP) intégré est annoncé à 96 canaux (mono, stéréo ou 5.1). <i>Simulation pédagogique non officielle : interface et chiffres simplifiés.</i></p>
@@ -162,7 +162,7 @@ export const GUIDE = [
 <p>Un car régie est en général un semi-remorque d'environ 13,5 à 14,5 m (16,50 m au maximum avec le tracteur en Europe pour un ensemble articulé), souvent avec une ou deux extensions latérales qui doublent la largeur une fois déployées. Il est climatisé, isolé, et contient :</p>
 <ul><li><b>Régie production :</b> mur d'écrans (multiview), réalisateur, scripte, truquiste au mélangeur, habillage, production.</li>
 <li><b>Régie vision :</b> ingénieurs vision avec RCP, oscilloscopes et moniteur de référence, dans une lumière contrôlée.</li>
-<li><b>Régie ralentis :</b> opérateurs EVS/LSM.</li>
+<li><b>Régie ralentis :</b> opérateurs ralenti (serveurs EVS, télécommandes LSM).</li>
 <li><b>Régie son :</b> cabine isolée phoniquement avec la console.</li>
 <li><b>Zone technique :</b> baies CCU, grille, châssis du mélangeur, processeurs multiview, serveurs, synchro, intercom, transmission, énergie.</li></ul>
 <p>Autour du car, le <b>compound</b> accueille le groupe électrogène, le camion satellite (DSNG), parfois un car de complément (EVS, HF, unités de commentaires).</p>`},
@@ -186,7 +186,7 @@ export const GUIDE = [
 <li>Elle fournit les sorties dans les formats demandés (UHD, HD, HDR, SDR) ; le traitement de l'image proprement dit (« paint ») est en grande partie fait dans la tête.</li>
 </ul>
 <h3>4. Le RCP et le réseau caméras</h3>
-<p>Le RCP (type RCP-3500) se branche sur la CCU (câble 8 broches) ou sur le <b>réseau caméras</b> en Ethernet (LAN, alimenté en PoE). Un <b>CNS</b> (camera network system) gère qui commande quoi : un RCP par caméra, plus un pupitre maître (MSU / MCP) pour le chef vision qui peut prendre la main sur toutes les caméras et copier des réglages.</p>
+<p>Le RCP (type RCP-3500) se branche sur la CCU (câble 8 broches) ou sur le <b>réseau caméras</b> en Ethernet (LAN, alimenté en PoE). Un <b>CNS</b> (camera network system) gère qui commande quoi : un RCP par caméra, plus un pupitre maître (MSU / MCP) pour le chef vision (l'ingénieur vision responsable), qui peut prendre la main sur toutes les caméras et copier des réglages.</p>
 <p>Sur le RCP : joystick (iris en le poussant, master black en tournant la bague), molettes WHITE et BLACK/FLARE R/G/B, AWB et ABB, écran tactile pour le gamma, le knee, le détail, la matrice, les fichiers de scène, et les touches CALL, BARS, CAM PW, PANEL ACTIVE, PREVIEW.</p>
 <h3>5. Le line-up d'une caméra, dans l'ordre</h3>
 <ol>
@@ -308,7 +308,7 @@ export const GUIDE = [
 <li>Le flux descend par ce chemin ; le <b>snooping IGMP</b> de chaque leaf ne le fait sortir que sur les ports abonnés.</li></ol>
 <p>En <b>SSM</b> (Source-Specific Multicast) il n'y a pas de point de rendez-vous : la plage SSM doit contenir les groupes utilisés. Par défaut c'est 232.0.0.0/8 ; avec des groupes en 239.x il faut « ip pim ssm range 239.0.0.0/8 » partout. Le <b>querier</b> (la SVI en IGMPv3, ou un querier de niveau 2) interroge régulièrement les récepteurs ; sans lui, les abonnements expirent au bout de l'intervalle d'appartenance (260 s par défaut, 45 s dans le simulateur) : la panne apparaît plusieurs minutes après la vraie cause. Sans snooping, tous les flux du VLAN sont <b>inondés</b> sur tous les ports.</p>
 <h3>Bande passante</h3>
-<p>Un 1080p50 4:2:2 10 bits fait ≈ 2,1 Gb/s (≈ 2,2 avec les en-têtes), un UHD p50 ≈ 8,3 Gb/s (≈ 8,6), une paire audio ≈ 3 Mb/s. Une leaf « non bloquante » (autant de capacité d'uplink que de capacité d'accès) peut quand même saturer un lien précis : le hachage ECMP peut placer plusieurs gros flux sur le même uplink, et un multiviewer de 18 tuiles UHD demande plus de 150 Gb/s. <b>PIM ne connaît pas la bande passante</b> : un lien saturé perd des paquets pour <i>tous</i> les flux qui le traversent. Un <b>contrôleur SDN</b> (fonctions de multicast « non bloquant » des constructeurs) réserve la bande passante et <b>refuse</b> une connexion plutôt que de dégrader les autres. Le poste permet de comparer les deux modes.</p>
+<p>Un 1080p50 4:2:2 10 bits fait ≈ 2,1 Gb/s (≈ 2,2 avec les en-têtes), un UHD p50 ≈ 8,3 Gb/s (≈ 8,6), une paire audio ≈ 3 Mb/s. Une leaf « non bloquante » (autant de capacité d'uplink que de capacité d'accès) peut quand même saturer un lien précis : le hachage ECMP peut placer plusieurs gros flux sur le même uplink, et un multiview de 18 tuiles UHD demande plus de 150 Gb/s. <b>PIM ne connaît pas la bande passante</b> : un lien saturé perd des paquets pour <i>tous</i> les flux qui le traversent. Un <b>contrôleur SDN</b> (fonctions de multicast « non bloquant » des constructeurs) réserve la bande passante et <b>refuse</b> une connexion plutôt que de dégrader les autres. Le poste permet de comparer les deux modes.</p>
 <h3>PTP dans la fabric</h3>
 <p>Profil <b>SMPTE ST 2059-2</b> : domaine 127, Announce toutes les 2^-2 s, Sync et Delay_Req toutes les 2^-3 s, expiration après 3 Announce manqués. Les commutateurs sont des <b>horloges frontières</b> (boundary clocks) : chacun se cale sur son maître (port esclave) et redistribue l'heure. L'élection du grand maître (<b>BMCA</b>) compare dans l'ordre : priority1, clockClass (6 = verrouillé GPS, 7 = holdover, 248 = horloge libre), précision, variance, priority2, identité. Protections : appareils en « slave only », « ptp role master » sur les ports d'accès, PTP marqué DSCP 46 et servi en priorité.</p>
 <h3>NMOS et SDP</h3>
@@ -394,7 +394,7 @@ export const GUIDE = [
 </ul>
 <h3>Les fibres</h3>
 <ul>
-<li>Une fibre monomode perd environ 0,35 à 0,4 dB par kilomètre à 1310 nm : la longueur compte peu.</li>
+<li>Une fibre monomode perd environ 0,35 à 0,4 dB par kilomètre à 1 310 nm : la longueur compte peu.</li>
 <li>Ce sont les <b>connecteurs</b> qui font les pertes : environ 0,5 dB par connexion propre, beaucoup plus s'ils sont sales. Une poussière invisible sur une fibre de 9 µm suffit à couper une caméra.</li>
 <li>Réflexe : bouchon toujours en place, nettoyage (stylo, cassette) et inspection au microscope avant de connecter ; mesure du niveau reçu sur la CCU.</li>
 </ul>
@@ -413,7 +413,7 @@ export const GUIDE = [
 <h3>Le SPG</h3>
 <p>Asservi au GPS, il génère la référence vidéo, le timecode (LTC), le word clock audio (48 kHz) et le PTP. Il est doublé : un SPG de secours prend le relais automatiquement (changeover). En perte de GPS, il passe en <b>holdover</b> : son oscillateur (OCXO) reste stable des heures.</p>
 <h3>Retards et synchro labiale</h3>
-<p>Chaque traitement ajoute du retard : synchroniseur (1 image), multiviewer (1 à 2 images), liaison HF (de quelques dizaines de ms à plus d'une seconde selon l'encodage), transmission satellite. La vidéo et le son doivent rester alignés (lip-sync) : on retarde l'audio pour qu'il arrive en même temps que l'image. Repère (ITU-R BT.1359) : un décalage devient perceptible à partir d'environ 45 ms quand le son est en avance, et d'environ 125 ms quand il est en retard ; la tolérance de bout en bout de l'EBU R37 est plus serrée (son en avance de 40 ms au plus, en retard de 60 ms au plus).</p>`},
+<p>Chaque traitement ajoute du retard : synchroniseur (1 image), multiview (1 à 2 images), liaison HF (de quelques dizaines de ms à plus d'une seconde selon l'encodage), transmission satellite. La vidéo et le son doivent rester alignés (lip-sync) : on retarde l'audio pour qu'il arrive en même temps que l'image. Repère (ITU-R BT.1359) : un décalage devient perceptible à partir d'environ 45 ms quand le son est en avance, et d'environ 125 ms quand il est en retard ; la tolérance de bout en bout de l'EBU R37 est plus serrée (son en avance de 40 ms au plus, en retard de 60 ms au plus).</p>`},
   {
     id: 'icomguide', title: 'Ordres et intercom', html: `
 <p>Le système d'ordres relie toutes les personnes de la production. Sans lui, pas de réalisation possible : le réalisateur annonce chaque plan, la vision appelle un cadreur, l'EVS annonce qu'il est prêt.</p>
@@ -492,7 +492,7 @@ export const GUIDE = [
     id: 'relecture', title: 'Relecture technique par les métiers', html: `
 <p>Les chiffres du simulateur (focales et rampes d'ouverture, portées des liaisons, rapports C/N, latences, tolérance de synchro labiale, niveaux de line-up…) viennent de documentations publiques et d'usages courants. Ils doivent être <b>validés par des professionnels</b> avant de servir de référence.</p>
 <ul>
-<li><b>Relecteurs</b> : écran d'accueil → « Relecture technique (experts) ». Choisissez votre domaine (vision, son, réseau, ralentis, HF, niveaux, stade), donnez un avis par point (exact, à corriger, je ne sais pas, non applicable), commentez, et proposez des valeurs chiffrées. « Voir le guide » et « Ouvrir le poste » montrent le point dans le simulateur.</li>
+<li><b>Relecteurs</b> : écran d'accueil (feuille de service), cadre « Équipe et formation » → « Relecture technique ». Choisissez votre domaine (vision, son, réseau, ralentis, HF, niveaux, stade), donnez un avis par point (exact, à corriger, je ne sais pas, non applicable), commentez, et proposez des valeurs chiffrées. « Voir le guide » et « Ouvrir le poste » montrent le point dans le simulateur.</li>
 <li><b>Formateur</b> : Espace formateur → Relecture. La synthèse croise les relecteurs, met en avant les points contestés, et permet d'<b>appliquer</b> une valeur proposée : elle remplace celle du simulateur pour tous les stagiaires (« Rétablir l'origine » pour revenir). Rapport HTML et export CSV.</li>
 <li><b>Dispositif réel</b> : l'onglet « Dispositif réel » de l'Espace formateur enregistre l'implantation des caméras de votre car (positions, types, objectifs, liaisons) et la feuille de patch audio : les stagiaires démarrent alors sur <b>votre</b> installation.</li>
 </ul>`},

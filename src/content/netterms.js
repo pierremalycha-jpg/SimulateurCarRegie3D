@@ -442,7 +442,7 @@ export const TERMS = {
     see: ['bc', 'pirate', 'slave-only'],
   },
   'slave-only': {
-    t: 'Esclave seulement (slave only)', cat: 'PTP',
+    t: 'Esclave seulement (slave only)', aka: 'esclave uniquement, slave only', cat: 'PTP',
     short: 'Un appareil réglé pour ne jamais pouvoir devenir maître PTP.',
     body: "C'est le réglage attendu de tous les appareils terminaux (caméras, passerelles, mélangeurs…). Ils reçoivent l'heure et ne participent jamais à l'élection du maître.",
     car: 'Décocher « slave only » sur un appareil, avec un priority1 trop petit, crée une horloge pirate.',
@@ -480,7 +480,7 @@ export const TERMS = {
     see: ['bmca', 'grand-maitre', 'st2059'], ref: 'SMPTE ST 2059-2',
   },
   holdover: {
-    t: 'Maintien (holdover)', cat: 'PTP',
+    t: 'Holdover (maintien)', aka: 'maintien sur l\'oscillateur interne', cat: 'PTP',
     short: 'Une horloge qui a perdu sa référence continue sur son propre oscillateur, de plus en plus imprécise.',
     body: "Un grand maître qui perd le GPS passe en maintien (classe 7). Grâce à un bon oscillateur (quartz thermostaté, rubidium), il reste précis plusieurs minutes, voire plusieurs heures. Puis il **dérive** et finit par se déclasser (classe 52 ou 187).",
     see: ['clockclass', 'derive', 'grand-maitre'],

@@ -38,7 +38,7 @@ export function openTrainer(tab = 'car') {
   show(tab);
 }
 
-const saved = (r) => toast(r.ok ? (r.local ? 'Enregistré dans ce navigateur' : 'Enregistré et partagé') : `Échec de l'enregistrement : ${r.message || r.code}`, r.ok ? 'good' : 'bad');
+const saved = (r) => toast(r.ok ? (r.local ? 'Enregistré dans ce navigateur' : 'Enregistré et partagé') : `Enregistrement impossible (${r.message || r.code}) : réessayez. Seuls le propriétaire et les éditeurs de la page peuvent enregistrer.`, r.ok ? 'good' : 'bad', r.ok ? 3200 : 7000);
 
 // ---------------- le car ----------------
 function tabCar(box, editable) {
@@ -58,10 +58,10 @@ function tabCar(box, editable) {
   const planRow = el('div', { class: 'grid2' }, ...plan.map((v, i) => field(`Paire ${2 * i + 1}-${2 * i + 2} du départ`, selectEl(EMB_OPTIONS, v, (nv) => { plan[i] = nv; }))));
   box.append(el('h3', { class: 'eq-h' }, 'Identité et matériel du car'), fields,
     el('div', { class: 'kv' }, el('dt', {}, 'Mélangeur'), el('dd', {}, `${EQUIP.mixer} + pupitre ${EQUIP.mixPanel}`), el('dt', {}, 'Ralentis'), el('dd', {}, `${EQUIP.evsServers} × EVS ${EQUIP.evsModel}, ${EQUIP.lsmCount} LSM, IPDirector`), el('dt', {}, 'Répartition EVS (format actuel)'), el('dd', {}, L.label)),
-    el('p', { class: 'note' }, 'Les changements de matériel s\'appliquent au prochain démarrage du simulateur (bouton « Accueil » ou rechargement de la page).'),
+    el('p', { class: 'note' }, 'Les changements de matériel s\'appliquent au prochain démarrage du simulateur : rechargez la page pour revenir à l\'écran d\'accueil.'),
     el('h3', { class: 'eq-h' }, 'Plan de son habituel (embedder du départ)'), planRow,
     el('p', { class: 'note' }, 'C\'est le plan que la régie son doit reproduire sur l\'embedder, et que la chaîne vérifie pendant le test de ligne du scénario.'),
-    el('button', { class: 'btn primary', disabled: !editable, onclick: async () => { c.name = name.value.trim(); c.company = company.value.trim(); c.soundPlan = plan; saved(await saveConfig('car', c)); } }, 'Enregistrer'));
+    el('button', { class: 'btn primary', disabled: !editable, onclick: async () => { c.name = name.value.trim(); c.company = company.value.trim(); c.soundPlan = plan; saved(await saveConfig('car', c)); } }, 'Enregistrer les réglages du car'));
 }
 
 // ---------------- liste de câblage : import / export ----------------
@@ -127,14 +127,14 @@ function tabCables(box, editable) {
     preview.innerHTML = ''; pending = null;
     try {
       const rows = await readCablingFile(f);
-      if (!rows.length) { toast('Aucune ligne reconnue dans ce fichier', 'bad'); return; }
+      if (!rows.length) { toast('Aucune ligne reconnue dans ce fichier : il faut au moins une colonne Origine ou Destination remplie.', 'bad', 6000); return; }
       pending = { name: f.name, rows, importedAt: Date.now() };
       const t = el('table', { class: 'tbl compact cabtbl' }, el('thead', {}, el('tr', {}, ...['N°', 'Origine', 'Destination', 'Câble', 'Long.', 'Signal', 'Remarque'].map((h) => el('th', {}, h)))));
       const tb = el('tbody'); t.appendChild(tb);
       for (const r of rows.slice(0, 12)) tb.appendChild(el('tr', {}, ...['n', 'a', 'b', 'type', 'len', 'sig', 'note'].map((k) => el('td', {}, r[k]))));
       preview.append(el('p', { class: 'note' }, `${rows.length} lignes reconnues${rows.length >= 1500 ? ' (limité à 1 500)' : ''}. Aperçu des 12 premières :`), t);
       if (JSON.stringify(pending).length > 240000) { toast('Liste trop volumineuse pour être partagée : réduisez les colonnes Remarque.', 'bad'); pending = null; }
-    } catch (e) { toast('Lecture impossible : ' + e.message, 'bad'); }
+    } catch (e) { toast('Lecture impossible : ' + e.message + '. Enregistrez le fichier en CSV (séparateur ;) et réessayez.', 'bad', 7000); }
   });
   box.append(el('h3', { class: 'eq-h' }, 'Importer la liste de câblage de votre car'), info,
     el('p', { class: 'note' }, 'Formats : CSV (séparateur ; ou ,) ou Excel (.xlsx, première feuille). Colonnes reconnues par leur titre : N°, Origine, Destination, Câble/Type, Longueur, Signal, Remarque. Sans titres reconnus, l\'ordre ci-dessus est utilisé.'),
@@ -144,8 +144,8 @@ function tabCables(box, editable) {
     preview,
     el('h3', { class: 'eq-h' }, 'Exporter'),
     el('div', { class: 'hwrow' },
-      el('button', { class: 'btn', onclick: () => offerDownload('liste-cablage-simulateur.csv', cablingCSV(generatedRows())) }, 'Liste générée par le simulateur (CSV)'),
-      cur && cur.rows ? el('button', { class: 'btn', onclick: () => offerDownload('liste-cablage-' + (CFG.car.name || 'car').replace(/\W+/g, '-') + '.csv', cablingCSV(cur.rows)) }, 'Liste importée (CSV)') : null),
+      el('button', { class: 'btn', onclick: () => offerDownload('liste-cablage-simulateur.csv', cablingCSV(generatedRows())) }, 'Télécharger la liste générée (CSV)'),
+      cur && cur.rows ? el('button', { class: 'btn', onclick: () => offerDownload('liste-cablage-' + (CFG.car.name || 'car').replace(/\W+/g, '-') + '.csv', cablingCSV(cur.rows)) }, 'Télécharger la liste importée (CSV)') : null),
     el('p', { class: 'note' }, 'La liste importée s\'affiche au poste Chef de car (onglet Liste de câblage). La liste générée suit l\'installation simulée et sert de modèle pour l\'exercice de brassage.'));
 }
 
@@ -167,7 +167,7 @@ function tabProc(box, editable) {
   box.append(el('h3', { class: 'eq-h' }, 'Check-list de line-up (une ligne par point)'), el('p', { class: 'note' }, 'Remplace la check-list proposée au poste Chef de car.'), chk,
     el('h3', { class: 'eq-h' }, 'Procédures maison'), el('p', { class: 'note' }, 'Affichées dans le guide (onglet Procédures). Exemples : ouverture du car, procédure de mise en antenne, conduite à tenir en cas de perte de liaison.'), list,
     el('div', { class: 'hwrow' }, el('button', { class: 'btn', disabled: !editable, onclick: () => { procs.push({ title: 'Nouvelle procédure', steps: [] }); draw(); } }, 'Ajouter une procédure'),
-      el('button', { class: 'btn primary', disabled: !editable, onclick: async () => { c.checklist = chk.value.split('\n').map((x) => x.trim()).filter(Boolean); c.procedures = procs.filter((p) => p.title); saved(await saveConfig('car', c)); } }, 'Enregistrer')));
+      el('button', { class: 'btn primary', disabled: !editable, onclick: async () => { c.checklist = chk.value.split('\n').map((x) => x.trim()).filter(Boolean); c.procedures = procs.filter((p) => p.title); saved(await saveConfig('car', c)); } }, 'Enregistrer la check-list et les procédures')));
 }
 
 // ---------------- photos du matériel ----------------
@@ -206,16 +206,16 @@ function tabPhotos(box, editable) {
     marks();
     editor.append(el('h3', { class: 'eq-h' }, `Points cliquables · ${p.title || ''}`), el('p', { class: 'note' }, editable ? 'Cliquez sur la photo pour ajouter un point (un connecteur, un voyant, une commande), puis renseignez-le.' : 'Lecture seule.'),
       el('div', { class: 'photo-grid' }, wrap, formBox),
-      el('div', { class: 'hwrow' }, el('button', { class: 'btn primary', disabled: !editable, onclick: persist }, 'Enregistrer'), el('button', { class: 'btn danger', disabled: !editable, onclick: async () => { list.splice(i, 1); editor.innerHTML = ''; draw(); await persist(); } }, 'Supprimer la photo')));
+      el('div', { class: 'hwrow' }, el('button', { class: 'btn primary', disabled: !editable, onclick: persist }, 'Enregistrer les points'), el('button', { class: 'btn danger', disabled: !editable, onclick: async () => { list.splice(i, 1); editor.innerHTML = ''; draw(); await persist(); } }, 'Supprimer la photo')));
   }
   draw();
   box.append(el('h3', { class: 'eq-h' }, 'Photos de votre matériel'), el('p', { class: 'note' }, 'Ajoutez des photos de vos appareils (faces avant/arrière, baies) et placez-y des points cliquables : ils apparaissent dans la visionneuse de matériel, onglet « Photo ». ' + (SH.assets ? 'Les photos sont stockées avec la page et visibles par les personnes qui y ont accès.' : 'Hors de claude.ai, les photos restent dans ce navigateur.')),
     el('div', { class: 'hwrow' }, field('Appareil', devSel), field('Titre', title), file,
       el('button', { class: 'btn primary', disabled: !editable, onclick: async () => {
         const f = file.files[0]; if (!f) { toast('Choisissez une image'); return; }
-        if (f.size > 15 * 1024 * 1024) { toast('Image trop lourde (15 Mo max)', 'bad'); return; }
+        if (f.size > 15 * 1024 * 1024) { toast('Image trop lourde (15 Mo au plus) : réduisez-la ou choisissez-en une autre.', 'bad', 6000); return; }
         try { const r = await uploadPhoto(f); list.push({ asset: r.asset, url: r.asset ? null : r.url, device: devSel.value, title: title.value.trim() || f.name, hotspots: [] }); await persist(); draw(); edit(list.length - 1); }
-        catch (e) { toast('Envoi impossible : ' + (e.message || e.code), 'bad'); }
+        catch (e) { toast('Envoi de la photo impossible (' + (e.message || e.code) + ') : réessayez dans un instant.', 'bad', 6000); }
       } }, 'Ajouter la photo')),
     grid, editor);
 }
@@ -230,7 +230,7 @@ function tabEleves(box) {
   let rows = [];
   const draw = async (list) => {
     host.innerHTML = '';
-    if (!list) { host.append(el('p', { class: 'note warn' }, 'Lecture impossible pour le moment.')); return; }
+    if (!list) { host.append(el('p', { class: 'note warn' }, 'Suivi indisponible pour le moment : fermez puis rouvrez cet onglet dans un instant.')); return; }
     rows = list;
     const ids = list.filter((r) => !r.local).map((r) => r.id);
     const prof = await profilesOf(ids);
@@ -295,7 +295,7 @@ function tabReview(box) {
   const dec = Object.values((CFG.review && CFG.review.items) || {}).filter((x) => x && x.status).length;
   box.append(el('h3', { class: 'eq-h' }, 'Relecture par les métiers'),
     el('p', {}, 'Faites relire le simulateur par vos experts (ingénieurs vision, son, réseau, opérateurs ralentis, HF). Chacun donne son avis point par point, propose les bonnes valeurs chiffrées et signale ce qui manque. Vous arbitrez ensuite, et les corrections chiffrées s\'appliquent tout de suite au simulateur.'),
-    el('ol', {}, el('li', {}, 'Partagez la page avec vos experts au niveau « Contributeur » au moins (menu Partager de claude.ai).'), el('li', {}, 'Ils ouvrent « Relecture technique (experts) » sur l\'écran d\'accueil, choisissent leurs domaines et relisent.'), el('li', {}, 'Vous consolidez dans « Synthèse et arbitrage », appliquez les valeurs retenues, puis exportez le rapport.'), el('li', {}, 'Complétez l\'onglet « Dispositif réel » avec la liste de câblage, le plan de son, la feuille de patch et le dispositif caméras d\'un de vos cars.')),
+    el('ol', {}, el('li', {}, 'Partagez la page avec vos experts au niveau « Contributeur » au moins (menu Partager de claude.ai).'), el('li', {}, 'Ils ouvrent « Relecture technique » sur l\'écran d\'accueil, choisissent leurs domaines et relisent.'), el('li', {}, 'Vous consolidez dans « Synthèse et arbitrage », appliquez les valeurs retenues, puis exportez le rapport.'), el('li', {}, 'Complétez l\'onglet « Dispositif réel » avec la liste de câblage, le plan de son, la feuille de patch et le dispositif caméras d\'un de vos cars.')),
     el('div', { class: 'kv' }, el('dt', {}, 'Points arbitrés'), el('dd', {}, String(dec)), el('dt', {}, 'Valeurs corrigées appliquées'), el('dd', {}, String(ov))),
     el('div', { class: 'hwrow' }, el('button', { class: 'btn primary', onclick: () => openReview('synth') }, 'Synthèse et arbitrage'), el('button', { class: 'btn', onclick: () => openReview('me') }, 'Ma relecture')));
 }
@@ -312,10 +312,10 @@ function tabReel(box, editable) {
   const fromSim = () => {
     if (!S.cams.length) { toast('Démarrez le simulateur et installez vos caméras (plan caméras, touche P) avant d\'enregistrer le dispositif.', 'bad'); return; }
     CFG.car.camPreset = S.cams.filter((c) => c.slotId).map((c) => ({ slotId: c.slotId, type: c.type, lens: c.lens, link: c.link, role: c.role }));
-    drawCams(); toast(`${CFG.car.camPreset.length} caméras relevées : pensez à enregistrer.`);
+    drawCams(); toast(`${CFG.car.camPreset.length} caméras relevées : cliquez sur « Enregistrer le dispositif réel » pour les garder.`, '', 6000);
   };
   const fileIn = el('input', { type: 'file', accept: '.json,application/json', style: { display: 'none' } });
-  fileIn.onchange = async () => { const f = fileIn.files[0]; if (!f) return; try { const j = JSON.parse(await f.text()); const list = Array.isArray(j) ? j : j.cameras; if (!Array.isArray(list)) throw new Error('format'); CFG.car.camPreset = list.filter((o) => o && CAMERA_TYPES[o.type]).slice(0, 16).map((o) => ({ slotId: String(o.slotId || ''), type: o.type, lens: o.lens, link: o.link, role: o.role })); drawCams(); toast('Dispositif importé : pensez à enregistrer.'); } catch (e) { toast('Fichier non reconnu (JSON attendu : liste de caméras avec slotId, type, lens, link, role).', 'bad'); } fileIn.value = ''; };
+  fileIn.onchange = async () => { const f = fileIn.files[0]; if (!f) return; try { const j = JSON.parse(await f.text()); const list = Array.isArray(j) ? j : j.cameras; if (!Array.isArray(list)) throw new Error('format'); CFG.car.camPreset = list.filter((o) => o && CAMERA_TYPES[o.type]).slice(0, 16).map((o) => ({ slotId: String(o.slotId || ''), type: o.type, lens: o.lens, link: o.link, role: o.role })); drawCams(); toast('Dispositif importé : cliquez sur « Enregistrer le dispositif réel » pour le garder.', '', 6000); } catch (e) { toast('Fichier non reconnu (JSON attendu : liste de caméras avec slotId, type, lens, link, role).', 'bad'); } fileIn.value = ''; };
   // feuille de patch son
   const patchTa = el('textarea', { rows: 8, style: { width: '100%', fontFamily: 'var(--f-mono)' }, placeholder: 'N° tranche;Entrée;Nom court;Libellé\n1;MIC 1-2;AMB LEP;Couple ORTF tribune principale\n3;MIC 5;CANON 1;Canon derrière le but gauche' });
   const toLines = (list) => (list || AU.order.map((k) => AU.ch[k]).map((c) => ({ n: c.n, port: c.home, short: c.short, label: c.label }))).map((r) => [r.n, r.port, r.short, r.label].join(';')).join('\n');

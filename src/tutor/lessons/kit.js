@@ -10,6 +10,17 @@ import { mixInputs } from '../../equip.js';
 // ----------------------------------------------------------------------------------
 export const at = (id) => (c) => c.view().station === id;
 const titleOf = (id) => (STATION_INFO[id] ? STATION_INFO[id].title : id);
+/**
+ * indices communs pour rejoindre un poste : d'abord l'outil (le pupitre), puis l'endroit et le geste
+ * @param {string} id @returns {string[]}
+ */
+export function stationHints(id) {
+  const where = STATION_INFO[id] && STATION_INFO[id].where;
+  return [
+    'Le pupitre (touche Tab) range les postes du car par zone : production, vision et ralentis, technique, cabine son. Dans quelle zone travaille ce poste ?',
+    `${where ? `Ce poste se trouve ici : ${where}. ` : ''}Clique sa touche dans le pupitre, ou approche-toi, vise le poste et appuie sur E.`,
+  ];
+}
 
 /**
  * étape « aller au poste » (sautée si on y est déjà)
@@ -21,6 +32,7 @@ export function goStation(id, say, ok, more = {}) {
     id: 'open-' + id, title: `Aller au poste ${titleOf(id)}`, say,
     do: `Rejoins le poste ${titleOf(id)} (bouton « Emmène-moi » si tu ne sais pas où il est).`,
     go: { station: id }, done: at(id), skip: at(id), ok,
+    hints: stationHints(id),
     auto: (c) => c.io.go({ station: id }), ...more,
   };
 }

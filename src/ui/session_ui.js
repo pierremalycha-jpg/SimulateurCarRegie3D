@@ -50,7 +50,7 @@ const fileMode = () => location.protocol === 'file:';
 async function lanKit() {
   const r = await downloadLanKit();
   if (r === 'unavailable') toast('Archive indisponible ici : le serveur réseau local est fourni avec les sources du simulateur (dossier lan, ou dist/car-regie-serveur-lan.mjs).', 'bad', 7000);
-  else if (r === 'error') toast('Le téléchargement n\'a pas abouti.', 'bad');
+  else if (r === 'error') toast('Le téléchargement n\'a pas abouti : réessayez.', 'bad');
 }
 const lanKitRow = () => el('div', { class: 'ses-kit' },
   el('div', {}, el('b', {}, 'Jouer sur un réseau local, sans Internet'), el('p', { class: 'note' }, 'La personne qui héberge télécharge le serveur (Windows, macOS, Linux : Node.js nécessaire), le lance, et donne aux autres l\'adresse qu\'il affiche.')),
@@ -62,7 +62,7 @@ function drawJoin(body) {
   const pseudo = el('input', { type: 'text', value: getPseudo(), maxlength: 24, placeholder: 'Ex. Alice', class: 'ses-pseudo', id: 'ses-pseudo', autocomplete: 'nickname' });
   const code = el('input', { type: 'text', value: SES.code || randomCode(), maxlength: 12, class: 'ses-code', 'aria-label': 'Code de la partie' });
   for (const i of [pseudo, code]) i.addEventListener('keydown', (e) => e.stopPropagation());
-  const camSel = selectEl([...Array(16).keys()].map((i) => [i + 1, 'CAM ' + (i + 1)]), SES.cam || 1, () => draw());
+  const camSel = selectEl([...Array(16).keys()].map((i) => [i + 1, 'CAM ' + (i + 1)]), SES.cam || 1, () => draw(), null, 'Caméra');
   const cards = el('div', { class: 'ses-roles' });
   const camRow = el('div', { class: 'hwrow' }, el('span', { class: 'rl' }, 'Caméra'), camSel);
   const taken = () => (mode === 'join' && party ? party.players : []);
@@ -112,11 +112,11 @@ function drawJoin(body) {
       lan ? null : el('div', { class: 'hwrow' }, el('span', { class: 'rl' }, 'Code'), code, el('button', { class: 'btn small', onclick: () => { code.value = randomCode(); } }, 'Nouveau code')));
     else if (lan) pane.append(el('div', { class: 'hwrow' }, el('b', {}, 'Parties sur ce réseau'), srvName), list);
     else pane.append(el('div', { class: 'hwrow' }, el('span', { class: 'rl' }, 'Code de la partie'), code, el('span', { class: 'note' }, 'Même code = même car.')));
-    goBtn.textContent = m === 'host' ? 'Créer la partie' : 'Rejoindre';
+    goBtn.textContent = m === 'host' ? 'Créer la partie' : 'Rejoindre la partie';
     draw();
   }
   for (const [k, l] of [['host', 'Héberger une partie'], ['join', 'Rejoindre une partie']]) tabs.append(el('button', { class: 'tab', 'data-k': k, onclick: () => { chose = true; show(k); } }, l));
-  const goBtn = el('button', { class: 'btn primary' }, 'Rejoindre');
+  const goBtn = el('button', { class: 'btn primary' }, 'Rejoindre la partie');
   goBtn.onclick = async () => {
     const n = setPseudo(pseudo.value);
     if (!n) { pseudo.focus(); toast('Choisissez un pseudo : c\'est le nom que les autres verront au-dessus de votre personnage.', 'bad', 5000); return; }
@@ -127,7 +127,7 @@ function drawJoin(body) {
     goBtn.disabled = true;
     const r = await joinSession(c, role, { cam: role === 'cadreur' ? +camSel.value : null, cfg: startCb ? startCb.cfg() : null, host: mode === 'host' });
     goBtn.disabled = false;
-    if (!r.ok) { toast(r.why === 'not_permitted' ? 'Accès refusé : demandez au formateur de vous partager la page au niveau Contributeur.' : r.why === 'unreachable' ? 'Serveur réseau local injoignable : vérifiez qu\'il tourne toujours sur l\'ordinateur de l\'hôte.' : r.why === 'full' ? 'Partie complète.' : 'Impossible de rejoindre la partie (' + r.why + ').', 'bad', 7000); return; }
+    if (!r.ok) { toast(r.why === 'not_permitted' ? 'Accès refusé : demandez au formateur de vous partager la page au niveau Contributeur.' : r.why === 'unreachable' ? 'Serveur réseau local injoignable : vérifiez qu\'il tourne toujours sur l\'ordinateur de l\'hôte.' : r.why === 'full' ? 'Partie complète : rejoignez-en une autre ou demandez à l\'hôte d\'en créer une.' : 'Impossible de rejoindre la partie (' + r.why + ') : réessayez dans un instant.', 'bad', 7000); return; }
     clearInterval(timer); resetRoleStats();
     modal.close();
     if (S.mode === 'start' && startCb) await startCb.start();
@@ -194,8 +194,8 @@ function tabPeers(box) {
       // attribution en cours : on garde le choix affiché le temps que la présence du joueur suive
       const pend = PENDING.get(p.peer); const fresh = pend && Date.now() - pend.at < 10000 && (pend.role !== r || (r === 'cadreur' && +pend.cam !== +((p.presence && p.presence.cam) || 0)));
       const r0 = fresh ? pend.role : r, c0 = fresh && pend.cam ? pend.cam : (p.presence && p.presence.cam) || 1;
-      const camS = selectEl([...Array(16).keys()].map((i) => [i + 1, 'CAM ' + (i + 1)]), c0, (v) => { if (roleS.value === 'cadreur') { PENDING.set(p.peer, { role: 'cadreur', cam: +v, at: Date.now() }); assignRole(p.peer, 'cadreur', +v); } });
-      const roleS = selectEl(Object.entries(ROLES_S).map(([k, x]) => [k, x.label]), r0, (v) => { camS.hidden = v !== 'cadreur'; PENDING.set(p.peer, { role: v, cam: v === 'cadreur' ? +camS.value : null, at: Date.now() }); assignRole(p.peer, v, v === 'cadreur' ? +camS.value : null); });
+      const camS = selectEl([...Array(16).keys()].map((i) => [i + 1, 'CAM ' + (i + 1)]), c0, (v) => { if (roleS.value === 'cadreur') { PENDING.set(p.peer, { role: 'cadreur', cam: +v, at: Date.now() }); assignRole(p.peer, 'cadreur', +v); } }, null, 'Caméra de ' + nameOf(p));
+      const roleS = selectEl(Object.entries(ROLES_S).map(([k, x]) => [k, x.label]), r0, (v) => { camS.hidden = v !== 'cadreur'; PENDING.set(p.peer, { role: v, cam: v === 'cadreur' ? +camS.value : null, at: Date.now() }); assignRole(p.peer, v, v === 'cadreur' ? +camS.value : null); }, null, 'Rôle de ' + nameOf(p));
       camS.hidden = r0 !== 'cadreur';
       assign = el('td', {}, el('div', { class: 'hwrow' }, roleS, camS));
     }
@@ -206,11 +206,11 @@ function tabPeers(box) {
       el('td', { class: 'note' }, owned.map((id) => SLICE_LABEL[id] || id).join(', ') || '—'), assign));
   }
   const heads = ['Joueur', 'Rôle', '', 'Où', 'Pilote'].concat(canAssign() ? ['Attribuer un rôle'] : []);
-  const pseudoIn = el('input', { type: 'text', value: getPseudo(), maxlength: 24, style: { width: '160px' } });
-  pseudoIn.addEventListener('keydown', (e) => { e.stopPropagation(); if (e.key === 'Enter') { setPseudo(pseudoIn.value); toast('Pseudo mis à jour.'); } });
-  const roleSel = selectEl(Object.entries(ROLES_S).map(([k, r]) => [k, r.label]), SES.role, (v) => { setRole(v, v === 'cadreur' ? (SES.cam || 1) : null); });
+  const pseudoIn = el('input', { type: 'text', value: getPseudo(), maxlength: 24, 'aria-label': 'Mon pseudo', style: { width: '160px' } });
+  pseudoIn.addEventListener('keydown', (e) => { e.stopPropagation(); if (e.key === 'Enter') { setPseudo(pseudoIn.value); toast('Pseudo changé.'); } });
+  const roleSel = selectEl(Object.entries(ROLES_S).map(([k, r]) => [k, r.label]), SES.role, (v) => { setRole(v, v === 'cadreur' ? (SES.cam || 1) : null); }, null, 'Mon rôle');
   box.append(el('table', { class: 'tbl' }, el('thead', {}, el('tr', {}, ...heads.map((h) => el('th', {}, h)))), tb),
-    el('div', { class: 'hwrow' }, el('span', { class: 'rl' }, 'Mon pseudo'), pseudoIn, el('button', { class: 'btn small', onclick: () => { setPseudo(pseudoIn.value); toast('Pseudo mis à jour.'); } }, 'Changer'), el('span', { class: 'rl' }, 'Mon rôle'), roleSel),
+    el('div', { class: 'hwrow' }, el('span', { class: 'rl' }, 'Mon pseudo'), pseudoIn, el('button', { class: 'btn small', onclick: () => { setPseudo(pseudoIn.value); toast('Pseudo changé.'); } }, 'Changer le pseudo'), el('span', { class: 'rl' }, 'Mon rôle'), roleSel),
     el('h3', {}, 'Journal'), el('div', { class: 'ses-log' }, ...SES.log.slice(-14).reverse().map((l) => el('div', { class: 'note ' + (l.kind || '') }, `${new Date(l.at).toLocaleTimeString('fr-FR')} · ${l.text}`))));
 }
 // fiche du rôle : missions, objectifs en direct, accès au poste
@@ -229,27 +229,27 @@ const SLICE_LABEL = { mix: 'mélangeur', evs: 'EVS', gfx: 'habillage', router: '
 function tabOrders(box) {
   const feed = el('div', { class: 'ses-feed' });
   for (const o of SES.orders.slice(-30).reverse()) feed.append(orderRow(o));
-  const inp = el('input', { type: 'text', maxlength: 300, placeholder: 'Message à tous (intercom)', style: { flex: '1' } });
+  const inp = el('input', { type: 'text', maxlength: 300, placeholder: 'Message à tous (intercom)', 'aria-label': 'Message à tous', style: { flex: '1' } });
   const sendMsg = () => { if (!inp.value.trim()) return; chat(inp.value.trim()); inp.value = ''; };
   inp.addEventListener('keydown', (e) => { e.stopPropagation(); if (e.key === 'Enter') sendMsg(); });
-  box.append(el('div', { class: 'hwrow' }, inp, el('button', { class: 'btn primary small', onclick: sendMsg }, 'Envoyer')),
+  box.append(el('div', { class: 'hwrow' }, inp, el('button', { class: 'btn primary small', onclick: sendMsg }, 'Envoyer le message')),
     el('p', { class: 'note' }, 'Le réalisateur donne ses ordres depuis son poste (boutons « Prépare », « Top », « Enchaîne »…) : ils s\'affichent en grand chez le truquiste et l\'opérateur ralentis.'), feed);
 }
 
 // ---------------- formateur ----------------
 function tabTrainer(box) {
   const ok = FAULTS.filter((f) => !f.net && f.can());
-  const sel = selectEl(ok.map((f) => [f.id, `${f.label} (${f.where})`]), ok[0] && ok[0].id, () => {});
+  const sel = selectEl(ok.map((f) => [f.id, `${f.label} (${f.where})`]), ok[0] && ok[0].id, () => {}, null, 'Panne à injecter');
   const hidden = el('input', { type: 'checkbox', checked: true, id: 'ses-hid' });
-  const note = el('input', { type: 'text', maxlength: 300, placeholder: 'Annonce à tous (ex. « On prend l\'antenne dans 2 minutes »)', style: { flex: '1' } });
+  const note = el('input', { type: 'text', maxlength: 300, placeholder: 'Annonce à tous (ex. « On prend l\'antenne dans 2 minutes »)', 'aria-label': 'Annonce à tous', style: { flex: '1' } });
   note.addEventListener('keydown', (e) => e.stopPropagation());
   const act = el('tbody');
   for (const a of ACTIVE.filter((x) => x.session)) act.append(el('tr', {}, el('td', {}, a.f.label), el('td', {}, a.f.where), el('td', { class: a.done ? 'ok' : 'err' }, a.done ? `résolue en ${Math.round(a.dt)} s` : 'en cours')));
   box.append(el('p', { class: 'note' }, 'La panne est injectée chez le stagiaire qui tient le poste concerné (et chez tous). Les pannes du réseau IP ne sont pas proposées en session.'),
-    el('div', { class: 'hwrow' }, sel, el('label', { for: 'ses-hid', class: 'hwrow' }, hidden, 'cachée'), el('button', { class: 'btn primary', onclick: () => trainerInject(sel.value, hidden.checked) }, 'Injecter')),
+    el('div', { class: 'hwrow' }, sel, el('label', { for: 'ses-hid', class: 'hwrow' }, hidden, 'Panne cachée'), el('button', { class: 'btn primary', onclick: () => trainerInject(sel.value, hidden.checked) }, 'Injecter la panne')),
     el('table', { class: 'tbl' }, el('thead', {}, el('tr', {}, el('th', {}, 'Panne'), el('th', {}, 'Où'), el('th', {}, 'État'))), act),
     el('div', { class: 'hwrow' }, note, el('button', { class: 'btn small', onclick: () => { if (note.value.trim()) { announce(note.value.trim()); note.value = ''; } } }, 'Annoncer')),
-    el('div', { class: 'hwrow' }, el('button', { class: 'btn', onclick: () => downloadReport() }, 'Compte rendu (HTML)'), el('button', { class: 'btn primary', onclick: async () => { const r = await finishIfTrainer(true); toast(r && r.ok ? (r.file ? `Compte rendu enregistré sur l'ordinateur de l'hôte : ${r.file}.html` : 'Compte rendu enregistré (Espace formateur → Stagiaires).') : 'Compte rendu non enregistré : ' + ((r && (r.message || r.code)) || 'indisponible'), r && r.ok ? 'good' : 'bad'); } }, 'Enregistrer le compte rendu')));
+    el('div', { class: 'hwrow' }, el('button', { class: 'btn', onclick: () => downloadReport() }, 'Télécharger le compte rendu (HTML)'), el('button', { class: 'btn primary', onclick: async () => { const r = await finishIfTrainer(true); toast(r && r.ok ? (r.file ? `Compte rendu enregistré sur l'ordinateur de l'hôte : ${r.file}.html` : 'Compte rendu enregistré (Espace formateur → Stagiaires).') : 'Compte rendu non enregistré (' + ((r && (r.message || r.code)) || 'indisponible') + ') : téléchargez-le en HTML pour le garder.', r && r.ok ? 'good' : 'bad', 7000); } }, 'Enregistrer le compte rendu')));
 }
 function trainerInject(id, hidden) {
   const before = allKeys();
@@ -399,7 +399,7 @@ if (lockRoot) for (const t of ['pointerdown', 'mousedown', 'click', 'input', 'ch
     if (!x.closest('.st-body') || x.closest('.tabs, .vx-tabs, .tab, .vx-tab, .net-tabs, [data-ro-ok]')) return;
     if (t === 'keydown' && /** @type {KeyboardEvent} */ (e).code === 'Escape') return;
     e.preventDefault(); e.stopPropagation();
-    if (t === 'pointerdown' && performance.now() - lockToastT > 2500) { lockToastT = performance.now(); toast('Poste en lecture seule pendant la session.'); }
+    if (t === 'pointerdown' && performance.now() - lockToastT > 2500) { lockToastT = performance.now(); toast('Poste en lecture seule : pour le piloter, prenez son rôle (bouton « Équipe »).'); }
   }, { capture: true, passive: false });
 }
 // le réalisateur en session : ses ordres partent vers le truquiste humain s'il y en a un

@@ -39,7 +39,7 @@ export function buildIPD(body, arg, ctx) {
   const pl = el('div', { class: 'hwpanel ipd' }, el('h3', {}, 'Playlist'), plBody,
     el('div', { class: 'hwrow' }, el('span', { class: 'note' }, 'Lire sur'), chSel,
       el('button', { class: 'btn small primary', onclick: playPl }, 'Lire la playlist'),
-      el('button', { class: 'btn small', onclick: () => { EVS.playlist = []; explain('Playlist vidée.'); } }, 'Vider')),
+      el('button', { class: 'btn small', onclick: () => { EVS.playlist = []; explain('Playlist vidée.'); } }, 'Vider la playlist')),
     el('p', { class: 'note' }, 'Dans IPDirector, chaque élément peut avoir sa transition (cut, mix, volet) et sa vitesse ; ici les clips s\'enchaînent en cut à la vitesse du levier.'));
   // ---------- contrôle des canaux ----------
   const ctl = el('div', { class: 'hwpanel ipd' }, el('h3', {}, 'Control panel · canaux du serveur'), el('div', { class: 'list ipd-ch' }));
@@ -63,7 +63,7 @@ export function buildIPD(body, arg, ctx) {
     drawAll();
   }
   function playPl() {
-    if (!EVS.playlist.length) { toast('Playlist vide'); return; }
+    if (!EVS.playlist.length) { toast('Playlist vide : ajoutez des clips depuis la base.'); return; }
     evsAction(ch, 'plstplay'); explain(`Playlist lancée sur PGM${ch + 1} : ${EVS.playlist.length} clips. Le réalisateur peut la prendre au mélangeur (EVS ${ch ? 'B' : 'A'}).`);
   }
   function drawDb() {
@@ -87,8 +87,8 @@ export function buildIPD(body, arg, ctx) {
     name.addEventListener('change', () => { cl.name = name.value.slice(0, 40); explain(`Clip ${clipName(selIdx)} renommé « ${cl.name} » : le nom apparaît aussi sur l'écran du serveur côté LSM.`); drawDb(); });
     const pls = el('select', { 'aria-label': 'Joueur' }, el('option', { value: '' }, 'Ajouter un joueur…'), ...[...Array(22).keys()].map((p) => el('option', { value: p }, `${playerNumber(p)} ${playerName(p)}`)));
     pls.onchange = () => { if (pls.value === '') return; cl.kw = [...(cl.kw || []), playerName(+pls.value)]; drawAll(); };
-    const kws = el('div', { class: 'hwrow' }, ...KEYWORDS.slice(0, 7).map((k) => el('button', { class: 'btn small' + ((cl.kw || []).includes(k) ? ' primary' : ''), onclick: () => { cl.kw = (cl.kw || []).includes(k) ? cl.kw.filter((x) => x !== k) : [...(cl.kw || []), k]; drawAll(); } }, k)));
-    const stars = el('div', { class: 'hwrow' }, el('span', { class: 'note' }, 'Note'), ...[1, 2, 3].map((n) => el('button', { class: 'btn small' + ((cl.rating || 0) >= n ? ' primary' : ''), onclick: () => { cl.rating = cl.rating === n ? 0 : n; drawAll(); } }, '★'.repeat(n))));
+    const kws = el('div', { class: 'hwrow' }, ...KEYWORDS.slice(0, 7).map((k) => el('button', { class: 'btn small ipd-kw' + ((cl.kw || []).includes(k) ? ' primary' : ''), onclick: () => { cl.kw = (cl.kw || []).includes(k) ? cl.kw.filter((x) => x !== k) : [...(cl.kw || []), k]; drawAll(); } }, k)));
+    const stars = el('div', { class: 'hwrow' }, el('span', { class: 'note' }, 'Note'), ...[1, 2, 3].map((n) => el('button', { class: 'btn small' + ((cl.rating || 0) >= n ? ' primary' : ''), 'aria-label': `Note ${n} sur 3`, title: `Note ${n} sur 3`, onclick: () => { cl.rating = cl.rating === n ? 0 : n; drawAll(); } }, '★'.repeat(n))));
     detail.append(el('div', { class: 'kv' }, el('dt', {}, 'ID'), el('dd', {}, clipName(selIdx)), el('dt', {}, 'TC IN / OUT'), el('dd', {}, `${tc(S.tcOffset + cl.in)} / ${tc(S.tcOffset + cl.out)}`), el('dt', {}, 'Angles'), el('dd', {}, recordedCams().map((id, k) => `${'ABCDEFGH'[k]}=CAM ${id}`).join(' · '))),
       name, kws, el('div', { class: 'hwrow' }, pls), stars,
       el('div', { class: 'hwrow' },
@@ -98,7 +98,7 @@ export function buildIPD(body, arg, ctx) {
   function drawLogs() {
     logList.innerHTML = '';
     for (const lg of EVS.logs.slice(0, 12)) logList.appendChild(el('div', { class: 'item' }, el('span', { class: 'lcd amber' }, tc(S.tcOffset + lg.t).slice(3, 11)), el('div', { class: 'grow' }, el('div', { class: 't' }, lg.kw.join(' '))),
-      lg.clip != null ? el('span', { class: 'pill ok' }, clipName(lg.clip)) : el('button', { class: 'btn small', onclick: () => logToClip(lg) }, '→ Clip')));
+      lg.clip != null ? el('span', { class: 'pill ok' }, clipName(lg.clip)) : el('button', { class: 'btn small', title: 'Créer un clip depuis ce log', onclick: () => logToClip(lg) }, '→ Clip')));
     if (!EVS.logs.length) logList.appendChild(el('p', { class: 'note' }, 'Aucun log.'));
   }
   let lastEv = -1;
@@ -115,8 +115,8 @@ export function buildIPD(body, arg, ctx) {
     EVS.playlist.forEach((idx, j) => {
       const cl = EVS.clips[idx]; if (!cl) return; tot += cl.out - cl.in;
       plBody.appendChild(el('div', { class: 'item' }, el('span', { class: 'mono' }, `${j + 1}.`), el('div', { class: 'grow' }, el('div', { class: 't' }, `${clipName(idx)} ${cl.name || ''}`), el('div', { class: 's' }, `${fmt(cl.out - cl.in, 1)} s à 100 % · CAM ${cl.cam}`)),
-        el('button', { class: 'btn small', 'aria-label': 'Monter', onclick: () => { if (j > 0) { [EVS.playlist[j - 1], EVS.playlist[j]] = [EVS.playlist[j], EVS.playlist[j - 1]]; drawPl(); } } }, '↑'),
-        el('button', { class: 'btn small', 'aria-label': 'Retirer', onclick: () => { EVS.playlist.splice(j, 1); drawPl(); } }, '×')));
+        el('button', { class: 'btn small', 'aria-label': 'Monter dans la playlist', title: 'Monter dans la playlist', onclick: () => { if (j > 0) { [EVS.playlist[j - 1], EVS.playlist[j]] = [EVS.playlist[j], EVS.playlist[j - 1]]; drawPl(); } } }, '↑'),
+        el('button', { class: 'btn small', 'aria-label': 'Retirer de la playlist', title: 'Retirer de la playlist', onclick: () => { EVS.playlist.splice(j, 1); drawPl(); } }, '×')));
     });
     if (!EVS.playlist.length) plBody.appendChild(el('p', { class: 'note' }, 'Playlist vide : ajoutez des clips depuis la base.'));
     else plBody.appendChild(el('p', { class: 'note' }, `Durée totale à 100 % : ${fmt(tot, 1)} s (à 50 % : ${fmt(tot * 2, 1)} s).`));

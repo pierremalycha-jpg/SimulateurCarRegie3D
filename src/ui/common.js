@@ -58,7 +58,7 @@ export function intercom(who, msg, kind = '') {
 export const modal = {
   open(title, body, opts = {}) {
     const m = $('#modal'); m.innerHTML = '';
-    const close = el('button', { class: 'x', 'aria-label': 'Fermer', onclick: () => modal.close() }, '×');
+    const close = el('button', { class: 'x', 'aria-label': 'Fermer', title: 'Fermer (Échap)', onclick: () => modal.close() }, '×');
     const sheet = el('div', { class: 'sheet', style: opts.width ? { width: `min(${opts.width}px, 100%)` } : {} },
       el('header', {}, el('h2', { class: 'tape' }, title), ...(opts.headerExtra || []), close),
       el('div', { class: 'body' }, body));
@@ -101,8 +101,8 @@ export function knob(label, min, max, step, value, onInput, fmtv = (v) => v) {
   w.set = (v) => { if (document.activeElement !== inp) { inp.value = v; b.textContent = fmtv(v); } };
   return w;
 }
-export function selectEl(options, value, onChange, id) {
-  const s = el('select', { id: id || 's' + Math.random().toString(36).slice(2, 8) });
+export function selectEl(options, value, onChange, id, label) {
+  const s = el('select', { id: id || 's' + Math.random().toString(36).slice(2, 8), 'aria-label': label || null });
   for (const [v, l] of options) { const o = el('option', { value: v }, l); if (String(v) === String(value)) o.selected = true; s.appendChild(o); }
   s.addEventListener('change', () => onChange(s.value));
   return s;
