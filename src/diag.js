@@ -17,9 +17,13 @@ export const ERRS = (W.__carErrs = W.__carErrs || []);
 /** @type {((e: DiagError, isNew: boolean) => void)[]} */
 const subs = [];
 
-// sans intérêt pour le stagiaire : extensions du navigateur, « Script error. » sans détail (script
-// d'une autre origine), boucle de ResizeObserver (avertissement bénin des navigateurs)
-const NOISE = /ResizeObserver loop|^Script error\.?$/;
+// sans intérêt pour le stagiaire : extensions du navigateur, boucle de ResizeObserver
+// (avertissement bénin des navigateurs)
+const NOISE = /ResizeObserver loop/;
+// « Script error. » : le navigateur a masqué le détail (Safari, page ouverte comme fichier) ;
+// gardée et signalée, avec cette explication (les gestes et la boucle de rendu, eux, sont notés
+// à la source avec leur message)
+const MASKED = /^(Uncaught )?Script error\.?$/;
 const EXT = /(chrome|moz|safari|safari-web)-extension:\/\//;
 
 /** les erreurs qui méritent d'être signalées à l'écran */
@@ -28,6 +32,7 @@ export const visible = (/** @type {DiagError} */ e) => e.kind === 'erreur' || e.
 function add(o) {
   const e = { kind: o.kind || 'erreur', where: o.where || '', msg: String(o.msg || '').slice(0, 600), stack: String(o.stack || '').slice(0, 4000), src: o.src || '', line: o.line || 0, col: o.col || 0, t: o.t || Date.now(), n: o.n || 1 };
   if (e.kind !== 'ressource' && (NOISE.test(e.msg) || EXT.test(e.src) || EXT.test(e.stack))) e.kind = 'bruit';
+  else if (MASKED.test(e.msg)) e.msg = 'Erreur sans détail (le navigateur en a masqué le message)';
   const same = ERRS.find((x) => x !== o && x.msg === e.msg && x.where === e.where && x.kind === e.kind);
   if (same) { same.n++; same.t = e.t; } else { if (ERRS.length >= 80) ERRS.splice(0, 1); ERRS.push(e); }
   for (const f of subs) { try { f(same || e, !same); } catch (er) { /* l'affichage ne doit pas boucler sur lui-même */ } }

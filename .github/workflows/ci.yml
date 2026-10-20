@@ -70,10 +70,17 @@ jobs:
           npm install --no-save playwright@1.56.1
           npx playwright install --with-deps ${{ matrix.browser }}
       - run: npm run build
+      # Firefox : pas de pilote graphique en mode sans fenêtre sur la machine d'intégration ; on lui
+      # donne un affichage virtuel et le rendu logiciel de Mesa pour WebGL
+      - if: matrix.browser == 'firefox'
+        run: sudo apt-get install -y --no-install-recommends xvfb libgl1-mesa-dri libegl1 libgles2
       - name: Parcours de compatibilité (${{ matrix.browser }})
         env:
           E2E_BROWSER: ${{ matrix.browser }}
-        run: node tools/e2e.mjs navigateurs
+          E2E_HEADED: ${{ matrix.browser == 'firefox' && '1' || '' }}
+          LIBGL_ALWAYS_SOFTWARE: '1'
+        run: |
+          if [ "$E2E_HEADED" = "1" ]; then xvfb-run -a -s "-screen 0 1440x900x24" node tools/e2e.mjs navigateurs; else node tools/e2e.mjs navigateurs; fi
       # le résultat du test aussi en annotation (lisible sans télécharger journaux ni captures)
       - if: failure()
         name: Résultat en annotation

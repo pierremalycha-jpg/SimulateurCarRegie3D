@@ -1,7 +1,7 @@
 // @ts-check
 import * as THREE from 'three';
 import { S, emit, on } from './state.js';
-import { clamp } from './util.js';
+import { clamp, el } from './util.js';
 import { LIGHTING } from './data/exposure.js';
 import { TEAMS } from './data/match.js';
 import { buildWorld, applyLighting, updateWorld, paintTruckSign, W, TRUCK } from './world.js';
@@ -204,7 +204,7 @@ setDiagInfo(() => {
   return { gl: `${gl.getParameter(gl.VERSION)} · ${name} · texture max ${gl.getParameter(gl.MAX_TEXTURE_SIZE)} · ${mem.geometries} géométries, ${mem.textures} textures`, fps: `${FPS.shown} i/s` };
 });
 window.__dbg = { RENDER, openReview, openSessionPanel, SES, S, M, MIX, EVS, ROUTER, P, W, T, PL, pcam, COMMUT, CMT, applyAudio: applyAll, voiceGain, setMonitor, stripRms, corrNow, EX, teleport, openStation, closeStation, openPlan, closePlan, takeCamera, releaseCamera, start, openGuide, renderer, applyLighting, openDevice, openEquipmentIndex, openTrainer, CFG, SH, AU, SC, NET, FAB, NC, AN, emit, injectFault, clearFaults, ACTIVE, FAULTS, truckBlocked, truckFloorAt, goToStation, TRUCK, AT, atelierDebug, beginAtelier, endAtelier, avOk, AVATARS, avatarPositions, profSnapshot, profReset, TUTOR, toggleChef, startChefLesson, chefDoForMe, chefNext, stopChefLesson, PROG };
-window.__dbg.diag = { ERRS, report, diagText, openDiag }; window.__dbg.on = on;
+window.__dbg.diag = { ERRS, report, diagText, openDiag, el }; window.__dbg.on = on;
 // le programme a démarré : le filet du chargement (boot.js) n'a plus à intervenir
 window.__carReady = true;
 initDiagUI();

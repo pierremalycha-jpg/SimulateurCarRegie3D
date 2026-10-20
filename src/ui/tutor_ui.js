@@ -18,6 +18,7 @@ import { stationLesson, stationIds } from '../tutor/lessons/postes.js';
 import { STATION_INFO } from '../content/stations.js';
 import { FIRST_STEPS, FIRST_STEPS_TOUCH } from '../content/controls.js';
 import { rich } from './rich.js';
+import { report } from '../diag.js';
 
 // ----------------------------------------------------------------------------------
 // Le chef de car à l'écran : un panneau qui ne bloque pas le poste (on lit et on agit en
@@ -401,7 +402,8 @@ function dodge(r) {
 }
 
 // ---------------- boucle : vérifier l'étape, suivre l'élément à montrer ----------------
-setInterval(() => {
+setInterval(() => { try { tick(); } catch (e) { const r = report(e, 'chef de car (suivi de l\'étape)'); if (r && r.n === 1) console.error(e); } }, 250);
+function tick() {
   for (const b of document.querySelectorAll('.chef-btn')) b.classList.toggle('busy', !!TUTOR.lesson);
   if (!TUTOR.lesson) { if (UI.root && !UI.root.hidden && S.mode !== 'start') render(); return; }
   const was = TUTOR.done;
@@ -412,7 +414,7 @@ setInterval(() => {
     const s = step();
     spot(s && isAction(s) && !TUTOR.done && !UI.min ? targets(s) : null);
   }
-}, 250);
+}
 on('chef', () => toggleChef());
 // premier lancement d'une partie dans ce navigateur : le chef de car se présente de lui-même
 // (car prêt à l'antenne ou grand dispositif ; les autres vacations ont leur propre consigne)

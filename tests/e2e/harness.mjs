@@ -29,8 +29,11 @@ const browsers = new Set();
 export const BROWSER = process.env.E2E_BROWSER || 'chromium';
 export async function launch(extra = []) {
   const pw = await playwright();
-  const b = BROWSER === 'firefox' ? await pw.firefox.launch({ firefoxUserPrefs: { 'webgl.force-enabled': true } })
-    : BROWSER === 'webkit' ? await pw.webkit.launch()
+  // E2E_HEADED=1 : fenêtre visible (sous xvfb-run en intégration continue : Firefox n'y trouve un
+  // pilote graphique logiciel pour WebGL qu'avec un affichage)
+  const headless = process.env.E2E_HEADED !== '1';
+  const b = BROWSER === 'firefox' ? await pw.firefox.launch({ headless, firefoxUserPrefs: { 'webgl.force-enabled': true, 'webgl.disable-fail-if-major-performance-caveat': true } })
+    : BROWSER === 'webkit' ? await pw.webkit.launch({ headless })
       : await pw.chromium.launch({ args: [...GL_ARGS, ...extra] });
   browsers.add(b);
   return b;

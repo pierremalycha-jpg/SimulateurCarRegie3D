@@ -78,9 +78,16 @@ await ev(() => { const c = window.__dbg.S.cams[0]; c.update = c.__up; });
 T.check('erreur dans une image : notée une fois, le rendu continue', await until(page, (f) => window.__dbg.S.frame > f + 5, f1, 60000) && (await ev(() => window.__dbg.diag.ERRS.filter((e) => e.where === 'boucle de rendu').length)) === 1);
 // lancée par un script de la page (une erreur du code injecté par le test est masquée en « Script error. » par WebKit)
 await ev(() => { const sc = document.createElement('script'); sc.textContent = 'setTimeout(function () { throw new Error("essai : non rattrapée"); }, 0);'; document.body.append(sc); });
-await until(page, () => window.__dbg.diag.ERRS.some((e) => /non rattrapée/.test(e.msg)), null, 5000);
+await until(page, () => window.__dbg.diag.ERRS.some((e) => /non rattrapée|sans détail/.test(e.msg)), null, 5000);
 const d1 = await ev(() => window.__dbg.diag.diagText());
-T.check('diagnostic : les trois erreurs, avec leur endroit', /événement « essai-diag »/.test(d1) && /boucle de rendu · essai : image \(×\d+\)/.test(d1) && /non rattrapée/.test(d1), d1.split('\n').filter((l) => /^\d+\./.test(l)).join(' | '));
+// une erreur non rattrapée garde son message, sauf WebKit sur une page ouverte comme fichier :
+// il le masque (« Script error. »), le diagnostic le dit
+T.check('diagnostic : les trois erreurs, avec leur endroit', /événement « essai-diag »/.test(d1) && /boucle de rendu · essai : image \(×\d+\)/.test(d1) && /non rattrapée|sans détail/.test(d1), d1.split('\n').filter((l) => /^\d+\./.test(l)).join(' | '));
+// un geste de l'interface (clic) qui plante : noté à la source, avec le bouton et le message
+await ev(() => { document.body.append(window.__dbg.diag.el('button', { id: 'essai-clic', style: { position: 'fixed', left: '8px', top: '200px', zIndex: '60' }, onclick: () => { throw new Error('essai : clic'); } }, 'Essai')); });
+await page.locator('#essai-clic').click();
+T.check('erreur d\'un clic : notée avec le bouton et le message', await until(page, () => window.__dbg.diag.ERRS.some((e) => /clic sur button « Essai »/.test(e.where) && e.msg === 'essai : clic'), null, 5000));
+await ev(() => document.getElementById('essai-clic').remove());
 await page.locator('#diagbar button', { hasText: 'Copier le diagnostic' }).click();
 T.check('« Copier le diagnostic » répond', await until(page, () => /Copié|Sélectionné/.test(document.querySelector('#diagbar .btn.primary')?.textContent || ''), null, 5000));
 await shot('03-bandeau');

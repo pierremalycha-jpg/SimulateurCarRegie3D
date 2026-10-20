@@ -1,5 +1,6 @@
 // @ts-check
 // Utilitaires partagés
+import { report } from './diag.js';
 export const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
 export const lerp = (a, b, t) => a + (b - a) * t;
 export const smoothstep = (a, b, x) => { const t = clamp((x - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); };
@@ -78,13 +79,24 @@ export function roundRect(ctx, x, y, w, h, r) {
   ctx.closePath();
 }
 
+// geste de l'interface (clic, saisie…) : une erreur est notée dans le journal avec l'élément concerné,
+// au lieu de remonter au navigateur, qui en masque le détail (« Script error. ») dans une page
+// ouverte comme fichier sous Safari ; une promesse rejetée (gestionnaire async) aussi
+const GESTE = { click: 'clic', input: 'saisie', change: 'choix', keydown: 'touche', pointerdown: 'appui', toggle: 'ouverture' };
+function guard(type, node, f) {
+  const where = () => `${GESTE[type] || type} sur ${node.tagName.toLowerCase()}${node.textContent ? ` « ${node.textContent.trim().slice(0, 40)} »` : ''}`;
+  const fail = (er) => { report(er, where()); console.error(er); };
+  return function (ev) {
+    try { const r = f.call(this, ev); if (r && typeof r.then === 'function') r.then(null, fail); } catch (er) { fail(er); }
+  };
+}
 export const el = (tag, attrs = {}, ...children) => {
   const e = document.createElement(tag);
   for (const k in attrs) {
     const v = attrs[k];
     if (k === 'class') e.className = v;
     else if (k === 'style' && typeof v === 'object') Object.assign(e.style, v);
-    else if (k.startsWith('on') && typeof v === 'function') e.addEventListener(k.slice(2), v);
+    else if (k.startsWith('on') && typeof v === 'function') e.addEventListener(k.slice(2), guard(k.slice(2), e, v));
     else if (k === 'html') e.innerHTML = v;
     else if (v === true) e.setAttribute(k, '');
     else if (v !== false && v != null) e.setAttribute(k, v);
