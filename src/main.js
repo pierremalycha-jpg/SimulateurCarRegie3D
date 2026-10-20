@@ -43,11 +43,13 @@ import { PL, onDeck, eyePos, updatePlayer, updToolbar } from './app/player.js';
 import { takeCamera, releaseCamera, updateCamop } from './app/camop.js';
 import { AIM, updatePrompt } from './app/interact.js';
 import { teleport, goToStation, goToRolePost, placeAtStation } from './app/teleport.js';
-import { updateStatus } from './app/hud.js';
+import { updateStatus, FPS } from './app/hud.js';
 import { installInput } from './app/input.js';
 import { buildStart, start } from './app/start.js';
 import { installPerfTest, watchFps } from './app/perf.js';
 import { toggleChef } from './ui/tutor_ui.js';
+import { report, ERRS } from './diag.js';
+import { initDiagUI, setDiagInfo, diagText, openDiag } from './ui/diag_ui.js';
 import { TUTOR, startLesson as startChefLesson, doForMe as chefDoForMe, next as chefNext, stopLesson as stopChefLesson } from './tutor/engine.js';
 
 // ----------------------------------------------------------------------------------
@@ -108,6 +110,11 @@ let rfAcc = 0, slowAcc = 0;
 const EYE = new THREE.Vector3(), DIR = new THREE.Vector3();
 function frame(now) {
   requestAnimationFrame(frame);
+  // une image qui plante n'arrête pas le simulateur : l'erreur est notée (une fois, avec son
+  // nombre de répétitions, et signalée à l'écran) et l'image suivante repart
+  try { step(now); } catch (e) { const r = report(e, 'boucle de rendu'); if (r && r.n === 1) console.error(e); }
+}
+function step(now) {
   let dt = (now - last) / 1000; last = now;
   const realDt = Math.max(0.001, dt); // le compteur d'images par seconde mesure le temps réel, pas le pas de simulation borné
   dt = clamp(dt, 0.001, 0.05);
@@ -188,4 +195,16 @@ function updBrand() { paintTruckSign(CFG.car.name); const w2 = $('#where2'); if 
 document.fonts && document.fonts.ready.then(() => { W.boards && W.boards.redraw(); P.mvDirty = true; paintTruckSign(CFG.car.name); });
 requestAnimationFrame(frame);
 window.__S = S; // accès console pour le débogage
+// diagnostic : la carte graphique et la fluidité, pour le texte à copier
+setDiagInfo(() => {
+  const gl = renderer.getContext();
+  let name = gl.getParameter(gl.RENDERER);
+  if (/^WebKit WebGL$/.test(name)) { const ext = gl.getExtension('WEBGL_debug_renderer_info'); if (ext) name = gl.getParameter(ext.UNMASKED_RENDERER_WEBGL); }
+  const mem = renderer.info.memory;
+  return { gl: `${gl.getParameter(gl.VERSION)} · ${name} · texture max ${gl.getParameter(gl.MAX_TEXTURE_SIZE)} · ${mem.geometries} géométries, ${mem.textures} textures`, fps: `${FPS.shown} i/s` };
+});
 window.__dbg = { RENDER, openReview, openSessionPanel, SES, S, M, MIX, EVS, ROUTER, P, W, T, PL, pcam, COMMUT, CMT, applyAudio: applyAll, voiceGain, setMonitor, stripRms, corrNow, EX, teleport, openStation, closeStation, openPlan, closePlan, takeCamera, releaseCamera, start, openGuide, renderer, applyLighting, openDevice, openEquipmentIndex, openTrainer, CFG, SH, AU, SC, NET, FAB, NC, AN, emit, injectFault, clearFaults, ACTIVE, FAULTS, truckBlocked, truckFloorAt, goToStation, TRUCK, AT, atelierDebug, beginAtelier, endAtelier, avOk, AVATARS, avatarPositions, profSnapshot, profReset, TUTOR, toggleChef, startChefLesson, chefDoForMe, chefNext, stopChefLesson, PROG };
+window.__dbg.diag = { ERRS, report, diagText, openDiag }; window.__dbg.on = on;
+// le programme a démarré : le filet du chargement (boot.js) n'a plus à intervenir
+window.__carReady = true;
+initDiagUI();

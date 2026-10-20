@@ -9,3 +9,5 @@ dist/*.exe
 .cache/
 # tests de bout en bout : captures et journaux
 test-results/
+# captures d'écran de travail (hors dépôt)
+captures-v15/

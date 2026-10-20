@@ -1,6 +1,8 @@
 # Intégration continue : à chaque envoi, vérifications rapides (lint, types, tests unitaires,
-# construction). Les tests de bout en bout (navigateur, rendu logiciel, ≈ 50 min) se lancent
-# à la main depuis l'onglet Actions (« Run workflow », case « e2e »).
+# construction), puis le parcours court de compatibilité (tests/e2e/navigateurs.mjs) dans les trois
+# moteurs : Chromium (Chrome, Edge), Firefox et WebKit (Safari). Les tests de bout en bout complets
+# (rendu logiciel, plusieurs heures) se lancent à la main depuis l'onglet Actions (« Run workflow »,
+# case « e2e »).
 name: CI
 
 on:
@@ -46,6 +48,37 @@ jobs:
             dist/index.html
             dist/car-regie-serveur-lan.mjs
             dist/car-regie-reseau-local.zip
+
+  # compatibilité : feuille de service, chef de car, un poste, diagnostic et écran de secours
+  navigateurs:
+    needs: checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chromium, firefox, webkit]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Playwright et ${{ matrix.browser }}
+        run: |
+          npm install --no-save playwright@1.56.1
+          npx playwright install --with-deps ${{ matrix.browser }}
+      - run: npm run build
+      - name: Parcours de compatibilité (${{ matrix.browser }})
+        env:
+          E2E_BROWSER: ${{ matrix.browser }}
+        run: node tools/e2e.mjs navigateurs
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: navigateurs-${{ matrix.browser }}
+          path: test-results/
 
   e2e:
     if: github.event_name == 'workflow_dispatch' && inputs.e2e

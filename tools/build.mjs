@@ -3,11 +3,20 @@ import fs from 'fs';
 import { makeZip } from './zip.mjs';
 const CDN = 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.min.js';
 const minify = !process.argv.includes('--dev');
-const tpl = fs.readFileSync('src/index.template.html', 'utf8');
+const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+// navigateurs visés : esbuild adapte la syntaxe à ces versions, ou refuse de construire si c'est
+// impossible (Safari 15 : premier Safari qui accepte l'« await » au niveau du module)
+const TARGET = ['chrome100', 'edge100', 'firefox100', 'safari15'];
+const define = { __APP_VERSION__: JSON.stringify(pkg.version) };
+// filet de sécurité du chargement (src/boot.js) : script classique placé avant le programme
+const boot = esbuild.transformSync(fs.readFileSync('src/boot.js', 'utf8'), { minify, target: 'es2015', define, legalComments: 'none', charset: 'utf8' }).code;
+const raw = fs.readFileSync('src/index.template.html', 'utf8');
+if (!raw.includes('<!--BOOT-->')) throw new Error('src/index.template.html : marqueur <!--BOOT--> introuvable');
+const tpl = raw.replace('<!--BOOT-->', () => `<script>${boot}</script>`);
 const bundle = async (external) => {
   const r = await esbuild.build({
     entryPoints: ['src/main.js'], bundle: true, format: 'esm', write: false, external: external ? ['three'] : [],
-    minify, target: ['es2022'], legalComments: 'none', charset: 'utf8',
+    minify, target: TARGET, define, legalComments: 'none', charset: 'utf8',
     loader: { '.txt': 'text', '.bat': 'text', '.command': 'text', '.sh': 'text' }, // mode d'emploi et lanceurs du serveur réseau local
   });
   let js = r.outputFiles[0].text;

@@ -1,4 +1,5 @@
 // @ts-check
+import { openDiag } from './diag_ui.js';
 import { openDevice } from '../equipment/viewer.js';
 import { openTrainer } from './config.js';
 import { openReport } from './report.js';
@@ -125,7 +126,7 @@ export function openGuide(tab = 'missions', chapter = null) {
         field('Line-up automatique à l\'installation', selectEl([['1', 'Oui (caméras déjà réglées)'], ['0', 'Non (réglages par défaut, à faire en vision)']], S.autoLineup ? '1' : '0', (v) => { S.autoLineup = v === '1'; })),
         field('Étiquettes et câbles dans le stade', selectEl([['1', 'Afficher'], ['0', 'Masquer']], S.showLabels ? '1' : '0', (v) => emit('setLabels', v === '1')))),
         el('p', { class: 'note' }, LIGHTING[S.lighting].desc),
-        el('div', { class: 'hwrow' }, el('button', { class: 'btn', onclick: () => openTrainer('car') }, 'Espace formateur'), el('button', { class: 'btn', id: 'perfbtn', onclick: () => emit('perfTest') }, 'Tester les performances de cet ordinateur'), el('button', { class: 'btn', onclick: () => openReport('Simulateur (général)') }, 'Signaler une erreur')));
+        el('div', { class: 'hwrow' }, el('button', { class: 'btn', onclick: () => openTrainer('car') }, 'Espace formateur'), el('button', { class: 'btn', id: 'perfbtn', onclick: () => emit('perfTest') }, 'Tester les performances de cet ordinateur'), el('button', { class: 'btn', onclick: () => openReport('Simulateur (général)') }, 'Signaler une erreur'), el('button', { class: 'btn', onclick: () => openDiag() }, 'Diagnostic technique')));
     }
   };
   for (const [k, l] of T) tabs.appendChild(el('button', { class: 'tab', 'data-k': k, onclick: () => show(k) }, l));

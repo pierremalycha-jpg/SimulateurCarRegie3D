@@ -1,5 +1,6 @@
 // @ts-check
 // État global partagé de l'application
+import { report } from './diag.js';
 export const S = {
   quality: 'moyenne',
   format: 'HD',
@@ -26,7 +27,9 @@ export const S = {
 
 const listeners = {};
 export function on(name, fn) { (listeners[name] ||= []).push(fn); }
-export function emit(name, data) { (listeners[name] || []).forEach((f) => { try { f(data); } catch (e) { console.error(e); } }); }
+// un écouteur qui plante n'empêche pas les autres de recevoir l'événement ; l'erreur est notée
+// dans le journal (affichée à l'écran avec un diagnostic à copier) et dans la console
+export function emit(name, data) { (listeners[name] || []).forEach((f) => { try { f(data); } catch (e) { report(e, `événement « ${name} »`); console.error(e); } }); }
 
 export function camById(id) { return S.cams.find((c) => c.id === id); }
 export function nextCamId() { for (let i = 1; i <= S.maxCams; i++) if (!camById(i)) return i; return null; }

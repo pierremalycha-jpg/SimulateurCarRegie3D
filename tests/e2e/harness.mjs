@@ -24,9 +24,14 @@ export async function playwright() {
   return pw;
 }
 const browsers = new Set();
+// navigateur des tests : Chromium par défaut ; E2E_BROWSER=firefox ou webkit (moteur de Safari)
+// pour vérifier la compatibilité (tests/e2e/navigateurs.mjs, intégration continue)
+export const BROWSER = process.env.E2E_BROWSER || 'chromium';
 export async function launch(extra = []) {
-  const { chromium } = await playwright();
-  const b = await chromium.launch({ args: [...GL_ARGS, ...extra] });
+  const pw = await playwright();
+  const b = BROWSER === 'firefox' ? await pw.firefox.launch({ firefoxUserPrefs: { 'webgl.force-enabled': true } })
+    : BROWSER === 'webkit' ? await pw.webkit.launch()
+      : await pw.chromium.launch({ args: [...GL_ARGS, ...extra] });
   browsers.add(b);
   return b;
 }

@@ -392,6 +392,38 @@ Tests :
   « Emmène-moi / Montre-moi » doit mettre en évidence un élément réel de la page, et « Fais-le pour moi » doit faire
   valider l'étape.
 
+## v17.2 : les erreurs à l'écran, un diagnostic à copier, trois navigateurs testés
+
+Une panne ne passe plus inaperçue :
+
+- **Bandeau « Un problème est survenu »** dès qu'une erreur se produit. Le simulateur continue de tourner, le bandeau ne
+  bloque rien. Il signale :
+  - une erreur non rattrapée ou une promesse rejetée ;
+  - un écouteur d'événement qui plante (les autres écouteurs reçoivent quand même l'événement) ;
+  - une image de la boucle de rendu qui plante (l'image suivante repart ; l'erreur est notée une fois, avec son
+    nombre de répétitions) ;
+  - un message d'erreur d'une bibliothèque (shader refusé par la carte graphique…).
+- **Diagnostic technique à copier** (bandeau, feuille de service, Guide → Réglages). Il contient :
+  - la version, la page (fichier, claude.ai, réseau local), le navigateur et sa version, l'écran ;
+  - la carte graphique et la mémoire graphique utilisée ;
+  - les fonctions du navigateur présentes ou absentes ;
+  - l'état du simulateur et du chef de car (ouvert, à l'écran, recouvert par un autre élément) ;
+  - chaque erreur avec l'endroit où elle s'est produite et sa pile d'appels.
+- **Écran de secours au démarrage** : un petit script (`src/boot.js`) s'exécute avant le programme principal. Si
+  celui-ci ne peut pas démarrer (navigateur trop ancien, erreur au chargement), une explication s'affiche avec le
+  diagnostic à copier, au lieu d'une page vide.
+- **Version affichée** sur la feuille de service : on sait quel fichier on a ouvert.
+
+Compatibilité :
+
+- la construction vise explicitement Chrome et Edge 100, Firefox 100 et Safari 15 ; esbuild refuse de construire
+  si une syntaxe n'y passe pas ;
+- `tests/e2e/navigateurs.mjs` : parcours court (feuille de service, chef de car au clavier et aux boutons, un
+  poste, diagnostic, erreurs volontaires, écran de secours), lancé dans Chromium, Firefox et WebKit (moteur de
+  Safari) par l'intégration continue à chaque envoi (`E2E_BROWSER=firefox` ou `webkit` en local) ;
+- le bouton « Chef de car » de la barre d'outils garde son nom sur les écrans d'ordinateur portable (les autres
+  boutons n'y montrent que leur touche).
+
 ## v17.1 : le chef de car dès l'ouverture de la page
 
 Dans la version à partager (`Car-regie-3D.html`), on pouvait croire que le chef de car ne se lançait pas :
@@ -653,6 +685,9 @@ node tools/shots.mjs dossier 1280 800 '["vision","hf"]'   # captures de postes
 | Fichier | Rôle |
 | --- | --- |
 | `main.js` | Point d'entrée : initialisation du monde et du car, événements de l'application, boucle principale |
+| `boot.js` | Filet de sécurité du chargement, script classique placé avant le programme : note les premières erreurs, écran de secours avec diagnostic si le programme ne démarre pas |
+| `diag.js` | Journal des erreurs (partagé avec `boot.js`) : erreurs non rattrapées, écouteurs d'événement, boucle de rendu, `console.error` ; version de l'application |
+| `ui/diag_ui.js` | Bandeau « Un problème est survenu » et fenêtre « Diagnostic technique » (texte à copier) |
 | `tutor/` | Chef de car : moteur des parcours (`engine.js`), lecture du réseau pour expliquer et vérifier (`net_helpers.js`), parcours réseau ST 2110 (`lessons/reseau.js`, `lessons/reseau_leaf.js`, `lessons/reseau_ops.js`), parcours des postes, compétences et matériel (`lessons/realisation.js`, `image.js`, `ralentis.js`, `son.js`, `liaisons.js`, `exploitation.js`, `materiel.js`, outils communs `kit.js`), présentation de chaque poste (`lessons/postes.js`) |
 | `ui/tutor_ui.js` | Panneau du chef de car : parcours proposés selon le poste et rangés par famille, étapes, mise en évidence, gestes « Fais-le pour moi » hors des postes (caméra, visionneuse, atelier), commandes vers le terminal, voix |
 | `app/` | Application : vue et qualité graphique (`view.js`), joueur et déplacements (`player.js`), visée et interactions (`interact.js`), cadreur (`camop.js`), téléportation et postes (`teleport.js`), barre d'outils et d'état (`hud.js`), clavier / souris / tactile (`input.js`), écran d'accueil et lancement (`start.js`), diagnostic de performance (`perf.js`), profileur `?perf` (`profiler.js`) |

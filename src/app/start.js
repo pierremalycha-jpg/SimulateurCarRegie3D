@@ -16,6 +16,8 @@ import { lanAvailable } from '../multi/lan.js';
 import { openSessionPanel, setSessionStarter } from '../ui/session_ui.js';
 import { openReview } from '../ui/review_ui.js';
 import { openTrainer } from '../ui/config.js';
+import { openDiag } from '../ui/diag_ui.js';
+import { APP_VERSION } from '../diag.js';
 import { $, toast } from '../ui/common.js';
 import { setQuality } from './view.js';
 import { buildToolbar } from './hud.js';
@@ -100,12 +102,14 @@ export function buildStart() {
         el('details', { class: 'cs-box cs-keys' },
           el('summary', {}, 'Commandes clavier'),
           el('div', { class: 'keys' }, ...CONTROLS_HELP.map(([k, d]) => el('div', {}, el('kbd', {}, k), el('span', {}, d))))))),
-    el('p', { class: 'note cs-foot' }, 'Simulation non officielle, sans lien avec le club ni avec les constructeurs cités. Les caractéristiques techniques (objectifs, portées de câbles, seuils HF, niveaux vidéo et audio) sont des ordres de grandeur réalistes, donnés à titre pédagogique ; les noms d\'équipements sont des exemples de matériel courant.')));
+    el('p', { class: 'note cs-foot' }, 'Simulation non officielle, sans lien avec le club ni avec les constructeurs cités. Les caractéristiques techniques (objectifs, portées de câbles, seuils HF, niveaux vidéo et audio) sont des ordres de grandeur réalistes, donnés à titre pédagogique ; les noms d\'équipements sont des exemples de matériel courant.'),
+    // la version, pour savoir quel fichier on a ouvert ; le diagnostic, pour signaler un problème
+    el('p', { class: 'note cs-ver' }, el('span', { id: 'stversion' }, `Version ${APP_VERSION}`), el('button', { class: 'linkbtn', onclick: () => openDiag() }, 'Diagnostic technique'))));
 }
 
 export function start(preset, light, quality, sound, format = S.format, ip = false) {
   if (quality !== S.quality) setQuality(quality);
-  S.format = format; S.ipMode = !!ip; paintTruckSign(CFG.car.name);
+  S.format = format; S.ipMode = !!ip; S.preset = preset; paintTruckSign(CFG.car.name);
   applyLighting(light);
   if (preset === 'vierge') { loadPreset('none'); S.autoLineup = false; S.showMission = true; }
   else if (preset === 'brassage' || preset === 'scenario') { loadPreset('standard', preset !== 'scenario'); S.showMission = false; }

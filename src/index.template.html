@@ -3,6 +3,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=JetBrains+Mono:wght@400;600&family=Barlow+Condensed:wght@500;600;700&family=Barlow+Semi+Condensed:wght@500;600&display=swap">
+<!--BOOT-->
 <style>
 /* Régie mobile : panneaux anodisés, étiquettes de titreuse sur les postes, tally rouge (antenne) et vert (preset),
    afficheurs LCD bleus pour la sélection, timecode ambre. Thème sombre assumé : c'est la lumière d'un car en exploitation. */
@@ -57,7 +58,8 @@ kbd, .key { font-family: var(--f-mono); font-size: 11px; font-weight: 600; line-
 .tbtn:hover { background: var(--raise); color: var(--fg); }
 :not(.toolbar) > .tbtn { background: rgba(12,14,16,0.88); border-color: var(--line2); padding: 5px 10px; }
 .tbtn.on { background: var(--accent-d); border-color: #2b6a8e; color: var(--accent); }
-@media (max-width: 1360px) { .toolbar .tbtn:has(kbd) .tl { display: none; } .toolbar .tbtn:has(kbd) { padding: 4px; } }
+/* sur les écrans d'ordinateur portable, les boutons n'affichent que leur touche ; le chef de car garde son nom : c'est l'aide qu'on cherche */
+@media (max-width: 1360px) { .toolbar .tbtn:has(kbd) .tl { display: none; } .toolbar .tbtn:has(kbd) { padding: 4px; } .toolbar .tbtn.chef-btn:has(kbd) .tl { display: inline; } .toolbar .tbtn.chef-btn:has(kbd) { padding: 4px 8px 4px 4px; } }
 @media (max-width: 700px) { .topbar { flex-direction: column; align-items: stretch; } .toolbar { justify-content: flex-start; } }
 @media (pointer: coarse) { .tbtn kbd { display: none; } .toolbar .tbtn:has(kbd) .tl { display: inline; } .toolbar { flex-wrap: wrap; } }
 #crosshair { position: absolute; left: 50%; top: 50%; width: 18px; height: 18px; margin: -9px 0 0 -9px; pointer-events: none; }
@@ -616,6 +618,19 @@ textarea { background: var(--bg); border: 1px solid var(--line2); border-radius:
 #camop .zoombar { position: absolute; right: calc(var(--gut-r) + 10px); top: 30%; height: 40%; width: 8px; background: rgba(255,255,255,.18); border-radius: 4px; }
 #camop .zoombar i { position: absolute; left: -3px; width: 14px; height: 4px; background: var(--amber); }
 #err { position: fixed; inset: 0; z-index: 50; background: var(--bg); display: flex; align-items: center; justify-content: center; padding: 16px var(--gut-r) 16px var(--gut-l); }
+#err .sheet { max-height: calc(100vh - 32px); overflow: auto; }
+.boot-sheet { width: min(680px, 100%); }
+.boot-diag { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
+.boot-diag textarea, .diag-text { width: 100%; box-sizing: border-box; font: 12px/1.45 var(--f-mono, monospace); background: #0b0e11; color: #c9d1d7; border: 1px solid var(--line2, #333); border-radius: 4px; padding: 8px; resize: vertical; }
+.boot-diag .btn { align-self: flex-start; }
+#diagbar { position: fixed; z-index: 49; left: 50%; top: calc(58px + env(safe-area-inset-top, 0px)); transform: translateX(-50%); width: min(760px, calc(100vw - 32px)); display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; padding: 8px 8px 8px 12px; background: rgba(40,14,12,.96); border: 1px solid #a8382f; border-left: 4px solid var(--tally); border-radius: 6px; box-shadow: 0 10px 30px rgba(0,0,0,.5); color: var(--fg); font-size: 13.5px; }
+#diagbar[hidden] { display: none; }
+#diagbar b { color: #ffcbc6; }
+#diagbar .m { flex: 1 1 220px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #e6d6d4; font-family: var(--f-mono); font-size: 12px; }
+.diag p { margin: 0 0 10px; line-height: 1.5; }
+.cs-ver { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; margin-top: 6px; }
+.linkbtn { background: none; border: 0; padding: 0; color: var(--muted); text-decoration: underline; cursor: pointer; font: inherit; }
+.linkbtn:hover { color: var(--fg); }
 @media (max-width: 600px) {
   .brand span { display: none; }
   .toolbar { flex-wrap: wrap; overflow: visible; } .tsep { display: none; }
