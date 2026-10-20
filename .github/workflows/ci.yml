@@ -74,6 +74,12 @@ jobs:
         env:
           E2E_BROWSER: ${{ matrix.browser }}
         run: node tools/e2e.mjs navigateurs
+      # le résultat du test aussi en annotation (lisible sans télécharger journaux ni captures)
+      - if: failure()
+        name: Résultat en annotation
+        run: |
+          msg=$(tail -n 60 test-results/navigateurs.log | cut -c1-600 | sed -e 's/%/%25/g' -e 's/\r/%0D/g' | sed ':a;N;$!ba;s/\n/%0A/g')
+          echo "::error title=navigateurs (${{ matrix.browser }})::$msg"
       - if: always()
         uses: actions/upload-artifact@v4
         with:
