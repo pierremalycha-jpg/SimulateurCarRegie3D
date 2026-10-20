@@ -16,8 +16,16 @@ const URL_FILE = pathToFileURL(path.join(ROOT, 'dist/Car-regie-3D.html')).href +
 T.log('navigateur', BROWSER);
 
 const browser = await launch();
-const page = await openPage(browser, { url: URL_FILE, errors: T.errors, fresh: true });
+// prêt, ou arrêté sur un écran d'explication (WebGL absent, erreur au chargement) : on dit lequel
+const page = await openPage(browser, { url: URL_FILE, errors: T.errors, fresh: true, ready: '!!window.__dbg || !!document.querySelector("#err:not([hidden])")' });
 const ev = (f, a) => page.evaluate(f, a);
+if (!(await ev(() => !!window.__dbg))) {
+  await page.waitForTimeout(4000); // le filet du chargement ajoute son diagnostic
+  T.check('le simulateur démarre', false, await ev(() => document.getElementById('err').innerText + '\n' + (document.querySelector('#err textarea')?.value || '')));
+  await page.screenshot({ path: `${OUT}/${BROWSER}-00-arret.png` });
+  await T.finish();
+  process.exit();
+}
 const shot = async (n) => { await page.screenshot({ path: `${OUT}/${BROWSER}-${n}.png`, timeout: 180000 }); T.log('shot', n); };
 const chefOpen = () => until(page, () => { const c = document.querySelector('#chef'); return !!c && !c.hidden; }, null, 8000);
 const chefClosed = () => until(page, () => { const c = document.querySelector('#chef'); return !c || c.hidden; }, null, 8000);
@@ -68,7 +76,8 @@ const f1 = await ev(() => window.__dbg.S.frame);
 await until(page, () => (window.__dbg.diag.ERRS.find((e) => e.where === 'boucle de rendu')?.n || 0) > 3, null, 60000);
 await ev(() => { const c = window.__dbg.S.cams[0]; c.update = c.__up; });
 T.check('erreur dans une image : notée une fois, le rendu continue', await until(page, (f) => window.__dbg.S.frame > f + 5, f1, 60000) && (await ev(() => window.__dbg.diag.ERRS.filter((e) => e.where === 'boucle de rendu').length)) === 1);
-await ev(() => { setTimeout(() => { throw new Error('essai : non rattrapée'); }, 0); });
+// lancée par un script de la page (une erreur du code injecté par le test est masquée en « Script error. » par WebKit)
+await ev(() => { const sc = document.createElement('script'); sc.textContent = 'setTimeout(function () { throw new Error("essai : non rattrapée"); }, 0);'; document.body.append(sc); });
 await until(page, () => window.__dbg.diag.ERRS.some((e) => /non rattrapée/.test(e.msg)), null, 5000);
 const d1 = await ev(() => window.__dbg.diag.diagText());
 T.check('diagnostic : les trois erreurs, avec leur endroit', /événement « essai-diag »/.test(d1) && /boucle de rendu · essai : image \(×\d+\)/.test(d1) && /non rattrapée/.test(d1), d1.split('\n').filter((l) => /^\d+\./.test(l)).join(' | '));
