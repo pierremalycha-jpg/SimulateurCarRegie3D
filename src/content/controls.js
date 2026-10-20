@@ -8,7 +8,7 @@ export const CONTROLS_HELP = [
   ['E', 'Interagir : ouvrir un poste, prendre une caméra, lire une info'],
   ['V', 'Vol libre (Espace = monter, C = descendre)'],
   ['P', 'Plan des caméras (vue de dessus)'],
-  ['T', 'Se téléporter (car, terrain, passerelle…)'],
+  ['Tab ou T', 'Le pupitre : aller à un poste ou un endroit (car, terrain, passerelle…), et tous les outils'],
   ['G', 'Guide et missions'],
   ['J', 'Chef de car : explications du poste et parcours guidés pas à pas'],
   ['M', 'Moniteur retour PGM (coin de l\'écran)'],
@@ -21,5 +21,5 @@ export const CONTROLS_HELP = [
 ];
 
 // premiers gestes, rappelés au premier lancement (encart « Prise en main » ou chef de car)
-export const FIRST_STEPS = [['Z Q S D', 'se déplacer (flèches aussi)'], ['Souris', 'regarder : cliquez d\'abord dans la vue'], ['E', 'utiliser ce que vous visez'], ['T', 'aller directement à un endroit'], ['1 – 9', 'commuter une caméra à l\'antenne'], ['G', 'guide, missions et glossaire']];
+export const FIRST_STEPS = [['Z Q S D', 'se déplacer (flèches aussi)'], ['Souris', 'regarder : cliquez d\'abord dans la vue'], ['E', 'utiliser ce que vous visez'], ['Tab', 'le pupitre : aller à un poste, tous les outils'], ['1 – 9', 'commuter une caméra à l\'antenne'], ['G', 'guide, missions et glossaire']];
 export const FIRST_STEPS_TOUCH = [['Pouce gauche', 'se déplacer'], ['Glisser', 'regarder'], ['Bouton action', 'utiliser ce que vous visez'], ['Aller à', 'se téléporter devant un poste']];

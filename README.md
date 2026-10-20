@@ -392,6 +392,64 @@ Tests :
   « Emmène-moi / Montre-moi » doit mettre en évidence un élément réel de la page, et « Fais-le pour moi » doit faire
   valider l'étape.
 
+## Ce que contient la v18 : une interface « pupitre broadcast »
+
+Toute l'interface est refaite avec la matière du car régie. L'objectif : qu'on s'y repère plus vite et qu'on
+reconnaisse le vrai matériel.
+
+**Les codes de la matière.** Chaque couleur dit un état réel, comme sur un pupitre :
+
+- **Façades** en aluminium anodisé gris-bleu brossé ;
+- **touches** à capuchon rétroéclairé, qui s'enfoncent au clic ;
+- **afficheurs** en verre noir ;
+- **sérigraphie** claire ;
+- **LED** :
+  - rouge : antenne ;
+  - vert : prêt ou fait ;
+  - ambre : sélection, ou là où l'on est ;
+  - cyan : la voix du chef de car, comme une touche d'intercom.
+
+**Les polices**, intégrées à la page (paquets Fontsource, licence OFL), donc identiques en ligne, en fichier hors
+ligne et dans tous les navigateurs :
+
+- **Archivo** pour le texte ;
+- **Archivo Narrow** pour la sérigraphie et les titres, en casse normale (plus de capitales espacées, sauf sur les
+  touches qui imitent du vrai matériel) ;
+- **B612 Mono**, la police des écrans de cockpit, uniquement dans les afficheurs.
+
+**Ce qui change à l'écran** :
+
+- **Accueil** :
+  - une grande touche **« Prendre l'antenne »**, avec sa lampe Antenne ;
+  - la touche **« Visite guidée avec le chef de car »**, allumée d'office tant qu'on n'a pas fait le tour du car ;
+  - les conditions de captation en **sélecteurs à touches** (lumière, format, car SDI ou IP, qualité, son) ;
+  - la journée du car en **tranches** comme les bandeaux d'inscription d'une console : installation, atelier,
+    car vide, jour de match, grand dispositif.
+
+  Tout tient sur un écran de portable de 1280 × 800. Le pupitre se met sous tension à l'ouverture : les
+  afficheurs et les LED s'allument l'un après l'autre (désactivé si le système demande moins d'animations).
+- **Le pupitre (touche Tab, ou T)** remplace le menu « Aller à » et le grand plan du car :
+  - le plan du car et « vous êtes ici » ;
+  - une rangée de touches par zone (cabine son, production, vision et ralentis, technique) ;
+  - les endroits du stade et du compound ;
+  - les équipiers d'une session ;
+  - tous les outils avec leur touche : plan caméras, synoptiques, matériel, guide, chef de car, vol libre, retour
+    PGM, son, équipe, réglages, diagnostic.
+- **Barre d'outils** : quatre touches (Pupitre, Chef de car, Son, Équipe) sur une réglette vissée. Les raccourcis
+  clavier n'ont pas changé.
+- **Bande d'état** façon étiquette sous moniteur (UMD) : timecode, score, PGM et PVW avec leurs lampes de tally,
+  alarmes.
+- **Postes** :
+  - bandeau de façade, avec le nom du poste sur sa plaque et le métier en plus petit ;
+  - modules en plaques ;
+  - journal « Ce qui se passe » sur un afficheur ;
+  - sur un portable, les 22 touches d'un bus du mélangeur tiennent sur une ligne.
+- **Fenêtres** : des tiroirs de baie, avec une plaque vissée pour le titre et les onglets en rangée de touches à LED.
+- **Chef de car** : un panneau d'intercom. Lampe d'ordre cyan, avancement en bargraphe à LED, étiquettes en
+  touches allumées (ambre : à toi ; vert : fait ; cyan : indice).
+- `tests/e2e/navigateurs.mjs` vérifie aussi le pupitre : Tab l'ouvre, et la touche « Truquiste » emmène au poste
+  Mélangeur.
+
 ## v17.2 : les erreurs à l'écran, un diagnostic à copier, trois navigateurs testés
 
 Une panne ne passe plus inaperçue :
@@ -688,6 +746,7 @@ node tools/shots.mjs dossier 1280 800 '["vision","hf"]'   # captures de postes
 | `boot.js` | Filet de sécurité du chargement, script classique placé avant le programme : note les premières erreurs, écran de secours avec diagnostic si le programme ne démarre pas |
 | `diag.js` | Journal des erreurs (partagé avec `boot.js`) : erreurs non rattrapées, écouteurs d'événement, boucle de rendu, `console.error` ; version de l'application |
 | `ui/diag_ui.js` | Bandeau « Un problème est survenu » et fenêtre « Diagnostic technique » (texte à copier) |
+| `ui/pupitre.js` | Le pupitre (Tab ou T) : plan du car, touches des postes par zone, endroits du stade, équipiers, outils |
 | `tutor/` | Chef de car : moteur des parcours (`engine.js`), lecture du réseau pour expliquer et vérifier (`net_helpers.js`), parcours réseau ST 2110 (`lessons/reseau.js`, `lessons/reseau_leaf.js`, `lessons/reseau_ops.js`), parcours des postes, compétences et matériel (`lessons/realisation.js`, `image.js`, `ralentis.js`, `son.js`, `liaisons.js`, `exploitation.js`, `materiel.js`, outils communs `kit.js`), présentation de chaque poste (`lessons/postes.js`) |
 | `ui/tutor_ui.js` | Panneau du chef de car : parcours proposés selon le poste et rangés par famille, étapes, mise en évidence, gestes « Fais-le pour moi » hors des postes (caméra, visionneuse, atelier), commandes vers le terminal, voix |
 | `app/` | Application : vue et qualité graphique (`view.js`), joueur et déplacements (`player.js`), visée et interactions (`interact.js`), cadreur (`camop.js`), téléportation et postes (`teleport.js`), barre d'outils et d'état (`hud.js`), clavier / souris / tactile (`input.js`), écran d'accueil et lancement (`start.js`), diagnostic de performance (`perf.js`), profileur `?perf` (`profiler.js`) |

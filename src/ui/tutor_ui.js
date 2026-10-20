@@ -165,7 +165,7 @@ function header(sub) {
   const voice = el('button', { class: 'chef-ico' + (UI.voice ? ' on' : ''), title: UI.voice ? 'Couper la voix du chef' : 'Faire parler le chef (synthèse vocale)', 'aria-pressed': String(UI.voice), onclick: () => { UI.voice = !UI.voice; try { localStorage.setItem('carregie.chefVoice', UI.voice ? '1' : '0'); } catch (e) { /* rien */ } if (!UI.voice) hush(); else { UI.said = ''; } render(true); } }, UI.voice ? 'Voix' : 'Muet');
   const h = el('header', { class: 'chef-head' },
     el('div', { class: 'chef-avatar', 'aria-hidden': 'true' }, 'O'),
-    el('div', { class: 'chef-who' }, el('b', {}, `${CHEF.name} · ${CHEF.role}`), el('small', {}, sub || '')),
+    el('div', { class: 'chef-who' }, el('b', {}, `${CHEF.name}, ${CHEF.role}`), el('small', {}, sub || '')),
     voice,
     el('button', { class: 'chef-ico', title: UI.min ? 'Agrandir' : 'Réduire', onclick: () => { UI.min = !UI.min; UI.root.classList.toggle('min', UI.min); render(true); } }, UI.min ? '▢' : '–'),
     el('button', { class: 'chef-ico', title: 'Fermer (J)', onclick: () => toggleChef(false) }, '×'));
@@ -282,9 +282,10 @@ function launchWith(id) {
   const l = lessonById(id); if (!l) return;
   const infra = /** @type {HTMLSelectElement | null} */ (document.getElementById('stinfra'));
   if (infra && l.needs && l.needs.ip) infra.value = 'ip';
-  const b = /** @type {HTMLButtonElement | null} */ (document.querySelector('#start .cs-slot.main button'));
+  const b = /** @type {HTMLButtonElement | null} */ (document.getElementById('st-antenne'));
   if (!b) return;
   UI.intro = false; UI.openDom = l.domain;
+  const tour = document.getElementById('st-tour'); if (tour) tour.setAttribute('aria-pressed', 'false');
   b.click();
   if (S.mode === 'start') return;
   startLesson(id); onStep();
@@ -420,6 +421,9 @@ on('chef', () => toggleChef());
 // (car prêt à l'antenne ou grand dispositif ; les autres vacations ont leur propre consigne)
 on('started', ({ preset }) => {
   let seen; try { seen = localStorage.getItem('carregie.chefIntro') === '1'; localStorage.setItem('carregie.chefIntro', '1'); } catch (e) { seen = true; }
+  // feuille de service, touche « Visite guidée » allumée : le tour du car commence tout de suite
+  if (S.chefTour && !TUTOR.lesson) { UI.intro = false; UI.openDom = 'Prise en main'; toggleChef(true); startLesson('prise-en-main'); onStep(); dropOnboard(); return; }
+  if (S.chefTour === false && preset === 'standard') return;
   if (seen || TUTOR.open || !(preset === 'standard' || preset === 'grand')) return;
   UI.intro = true; UI.openDom = 'Prise en main';
   toggleChef(true); dropOnboard();

@@ -73,7 +73,8 @@ export function openStation(id, arg) {
   const fmBtn = el('button', { class: 'btn small', title: 'Un écran déplaçable, au choix, par-dessus le poste', onclick: () => toggleFloatMon(document.getElementById('floatmon') ? null : 'PGM') }, 'Moniteur flottant');
   const role = info.role ? info.role.split('. ')[0] + '.' : '';
   const head = el('div', { class: 'st-head' },
-    el('h2', { class: 'tape' }, S.ipMode && def.ipTitle ? def.ipTitle : def.title),
+    // plaque du poste : son nom, puis le métier en plus petit (« Mélangeur — truquiste »)
+    el('h2', { class: 'tape' }, ...(S.ipMode && def.ipTitle ? def.ipTitle : def.title).split(' — ').map((t, i) => (i ? el('small', {}, t) : t))),
     el('div', { class: 'role', title: info.role || '' }, role),
     el('div', { class: 'st-tools' }, devBtn, fmBtn,
       el('button', { class: 'btn small chef-btn', title: 'Le chef de car vous explique ce poste et vous guide pas à pas (J)', onclick: () => emit('chef') }, 'Chef de car'),

@@ -1,5 +1,5 @@
 // @ts-check
-import { S, emit } from '../state.js';
+import { S, emit, on } from '../state.js';
 import { el, tc, mmss } from '../util.js';
 import { TEAMS } from '../data/match.js';
 import { TRUCK, standAt } from '../world.js';
@@ -8,41 +8,28 @@ import { MIX, EVS, meSource, sourceLabel } from '../pipeline.js';
 import { AU, startAudio, applyFaders } from '../audio.js';
 import { AT } from '../atelier.js';
 import { $ } from '../ui/common.js';
-import { openTruckPlan } from '../ui/truckmap.js';
-import { openSynoptics } from '../ui/synoptics.js';
-import { openPlan } from '../ui/plan.js';
-import { openGuide } from '../ui/guide.js';
 import { openSessionPanel } from '../ui/session_ui.js';
-import { openEquipmentIndex } from '../equipment/viewer.js';
-import { PL, updToolbar } from './player.js';
-import { teleportMenu } from './teleport.js';
+import { openPupitre } from '../ui/pupitre.js';
+import { PL } from './player.js';
 
 // ----------------------------------------------------------------------------------
-// Affichage tête haute : barre d'outils, barre d'état (timecode, score, PGM / PVW, alarmes,
+// Affichage tête haute : barre d'outils, bande d'état (timecode, score, PGM / PVW, alarmes,
 // images par seconde) et lieu où l'on se trouve.
 // ----------------------------------------------------------------------------------
 const chefBtn = (btn) => { btn.classList.add('chef-btn'); return btn; };
+const soundLabel = () => (AU.muted ? 'Son coupé' : 'Son');
 export function buildToolbar() {
   const tb = $('#toolbar'); tb.innerHTML = '';
-  // groupes : se déplacer · la régie · l'aide · l'équipe et l'écoute
+  // quatre touches : le pupitre (aller quelque part, tous les outils), le chef de car, le son, l'équipe
   const b = (label, key, fn, id, title) => el('button', { class: 'tbtn', id, title: title || label + (key ? ' (' + key + ')' : ''), onclick: fn }, el('span', { class: 'tl' }, label), key ? el('kbd', {}, key) : null);
-  const sep = () => el('span', { class: 'tsep', 'aria-hidden': 'true' });
   tb.append(
-    b('Aller à', 'T', () => teleportMenu()),
-    b('Plan du car', 'Tab', () => openTruckPlan(), 'tb-truck'),
-    b('Vol libre', 'V', () => { PL.fly = !PL.fly; updToolbar(); }, 'tb-fly'),
-    sep(),
-    b('Plan caméras', 'P', () => openPlan()),
-    b('Synoptiques', 'Y', () => openSynoptics()),
-    b('Matériel', 'K', () => openEquipmentIndex()),
-    sep(),
-    b('Guide', 'G', () => openGuide('missions')),
+    b('Pupitre', 'Tab', () => openPupitre(), 'tb-pupitre', 'Aller à un poste ou un endroit, et tous les outils (Tab ou T)'),
     chefBtn(b('Chef de car', 'J', () => emit('chef'), 'tb-chef', 'Le chef de car vous explique le poste et vous guide pas à pas (J)')),
-    sep(),
-    b('Retour PGM', 'M', () => { $('#minimon').hidden = !$('#minimon').hidden; }),
-    b(AU.muted ? 'Son coupé' : 'Son', null, (e) => { startAudio(); AU.muted = !AU.muted; applyFaders(); e.currentTarget.querySelector('.tl').textContent = AU.muted ? 'Son coupé' : 'Son'; }),
+    b(soundLabel(), null, () => { startAudio(); AU.muted = !AU.muted; applyFaders(); emit('soundToggle'); }, 'tb-son', 'Couper ou rétablir le son'),
     b('Équipe', null, () => openSessionPanel(), 'tb-ses', 'Jouer à plusieurs : joueurs, rôles, ordres'));
+  const son = $('#tb-son'); if (son) son.classList.toggle('muted', AU.muted);
 }
+on('soundToggle', () => { const son = $('#tb-son'); if (son) { son.querySelector('.tl').textContent = soundLabel(); son.classList.toggle('muted', AU.muted); } });
 
 // images par seconde affichées (mesurées en temps réel sur une demi-seconde)
 export const FPS = { shown: 0 };
@@ -80,7 +67,6 @@ export function updateStatus(dt) {
   setText($('#minimon .lab'), 'PGM · ' + pgm);
   const zone = whereAmI();
   setText($('#where'), zone[0]); setText($('#where2'), zone[1]);
-  const tbt = $('#tb-truck'); if (tbt && tbt.hidden === S.inTruck) tbt.hidden = !S.inTruck;
 }
 export function whereAmI() {
   const p = PL.pos;

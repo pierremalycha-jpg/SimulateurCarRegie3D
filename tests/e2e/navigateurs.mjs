@@ -40,7 +40,7 @@ await page.keyboard.press('KeyJ');
 T.check('touche J sur la feuille de service', await chefOpen() && /Prendre l'antenne avec moi/.test(await chefText()));
 await page.keyboard.press('KeyJ');
 T.check('touche J referme le chef', await chefClosed());
-await page.locator('#start .cs-chef .btn').click();
+await page.locator('#st-chef').click();
 T.check('bouton « Chef de car » de la feuille de service', await chefOpen());
 await page.locator('#chef button', { hasText: 'Prendre l\'antenne avec moi' }).click();
 T.check('« Prendre l\'antenne avec moi » : car lancé, tour du car', await until(page, () => window.__dbg.S.mode === 'fps' && window.__dbg.TUTOR.lesson?.id === 'prise-en-main', null, 90000));
@@ -54,12 +54,21 @@ T.check('bouton « Chef de car » de la barre : ferme', await chefClosed());
 await page.locator('#tb-chef').click();
 T.check('bouton « Chef de car » de la barre : rouvre', await chefOpen());
 
+// le pupitre (Tab) : les postes rangés par zone du car, les outils ; une touche emmène au poste
+await ev(() => window.__dbg.toggleChef(false));
+await page.keyboard.press('Tab');
+T.check('Tab ouvre le pupitre : zones du car et outils', await until(page, () => /Pupitre/.test(document.querySelector('#modal h2')?.textContent || '') && document.querySelectorAll('#modal .pp-bank').length >= 4 && document.querySelectorAll('#modal .dkey.tool').length >= 10, null, 8000));
+await shot('02-pupitre');
+await page.locator('#modal .dkey', { hasText: 'Truquiste' }).click();
+T.check('touche « Truquiste » du pupitre : poste Mélangeur ouvert', await until(page, () => window.__dbg.S.mode === 'station' && window.__dbg.S.station === 'melangeur', null, 30000));
+await ev(() => window.__dbg.closeStation());
+
 // à un poste, la touche J ouvre le chef sur ce poste
 await ev(() => { window.__dbg.stopChefLesson(); window.__dbg.toggleChef(false); window.__dbg.openStation('melangeur'); });
 await until(page, () => window.__dbg.S.mode === 'station', null, 30000);
 await page.keyboard.press('KeyJ');
 T.check('touche J au poste Mélangeur : parcours du poste', await chefOpen() && /Ici, au poste/.test(await chefText()));
-await shot('02-poste');
+await shot('03-poste');
 await ev(() => { window.__dbg.toggleChef(false); window.__dbg.closeStation(); });
 
 // diagnostic sans erreur
@@ -91,7 +100,7 @@ T.check('erreur d\'un clic : notée avec le bouton et le message', await until(p
 await ev(() => document.getElementById('essai-clic').remove());
 await page.locator('#diagbar button', { hasText: 'Copier le diagnostic' }).click();
 T.check('« Copier le diagnostic » répond', await until(page, () => /Copié|Sélectionné/.test(document.querySelector('#diagbar .btn.primary')?.textContent || ''), null, 5000));
-await shot('03-bandeau');
+await shot('04-bandeau');
 // ces erreurs sont voulues : on les retire du bilan (Firefox écrit seulement « Error » dans la console)
 for (let i = T.errors.length - 1; i >= errsBefore; i--) if (/essai : |^(Uncaught )?Error$/.test(T.errors[i].trim())) T.errors.splice(i, 1);
 
@@ -101,5 +110,5 @@ const broken = simHtml().replace(/<script type="module">[\s\S]*<\/script>/, '<sc
 const p2 = await openPage(browser, { errors: errs2, fresh: true, before: (pg) => pg.route('http://local.test/**', (r) => r.fulfill({ body: broken, contentType: 'text/html' })), ready: '!!document.querySelector("#err:not([hidden]) .boot-diag")' });
 const d2 = await p2.evaluate(() => document.querySelector('#err .boot-diag textarea').value);
 T.check('écran de secours : diagnostic avec la version et l\'erreur de syntaxe', d2.includes(`Version : ${VERSION}`) && /\[erreur\]/.test(d2), d2.split('\n').slice(6, 10).join(' | '));
-await p2.screenshot({ path: `${OUT}/${BROWSER}-04-secours.png` });
+await p2.screenshot({ path: `${OUT}/${BROWSER}-05-secours.png` });
 await T.finish();

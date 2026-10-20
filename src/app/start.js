@@ -26,85 +26,101 @@ import { setupTouch } from './input.js';
 // ----------------------------------------------------------------------------------
 // Écran d'accueil (« feuille de service ») et lancement d'une partie.
 // ----------------------------------------------------------------------------------
+// sélecteur à touches (une seule allumée), qui se lit et se règle comme un <select> : .value
+function selector(id, label, options, value, onChange) {
+  const box = el('div', { class: 'seg', id, role: 'radiogroup', 'aria-label': label });
+  let cur = value;
+  const keys = options.map(([v, text, title], i) => el('button', { type: 'button', role: 'radio', 'aria-checked': String(v === value), title: title || text, style: `--d:${i}`, onclick: () => set(v) }, text));
+  const set = (v) => { cur = v; options.forEach(([o], i) => keys[i].setAttribute('aria-checked', String(o === v))); if (onChange) onChange(v); };
+  box.append(...keys);
+  Object.defineProperty(box, 'value', { get: () => cur, set });
+  return /** @type {HTMLElement & { value: string }} */ (box);
+}
+
 export function buildStart() {
   const s = $('#start');
-  const light = el('select', { id: 'stlight' }, ...Object.entries(LIGHTING).map(([k, v]) => el('option', { value: k }, v.label)));
-  const qual = el('select', { id: 'stqual' }, el('option', { value: 'basse' }, 'Basse (ordinateur portable)'), el('option', { value: 'moyenne' }, 'Moyenne'), el('option', { value: 'haute' }, 'Haute (carte graphique dédiée)'));
-  qual.value = S.quality;
-  const snd = el('input', { type: 'checkbox', id: 'stsnd' }); snd.checked = true;
-  const fmt = el('select', { id: 'stfmt' }, ...Object.entries(FORMATS).map(([k, v]) => el('option', { value: k }, v.label)));
-  fmt.value = S.format;
-  const infra = el('select', { id: 'stinfra' }, el('option', { value: 'sdi' }, 'Car SDI (grille coaxiale)'), el('option', { value: 'ip' }, 'Car IP (ST 2110, PTP, NMOS)'));
   const fmtNote = el('p', { class: 'note' });
   const updFmt = () => { S.format = fmt.value; paintTruckSign(CFG.car.name); fmtNote.textContent = `Avec ce format : ${evsLayout().label} ; mélangeur ${EQUIP.mixer} avec ${mixInputs()} entrées utilisées.`; };
-  fmt.onchange = updFmt; updFmt();
-  const go = (preset) => start(preset, light.value, qual.value, snd.checked, fmt.value, infra.value === 'ip');
+  const SHORT_LIGHT = { jour: 'Après-midi', fin: 'Soleil rasant', couvert: 'Couvert', nuit: 'Nuit' };
+  const SHORT_FMT = { HD: 'HD 1080p50', HDi: 'HD 1080i50', UHD: 'UHD HDR' };
+  const light = selector('stlight', 'Lumière', Object.entries(LIGHTING).map(([k, v]) => [k, SHORT_LIGHT[k] || v.label, v.label]), 'jour');
+  const fmt = selector('stfmt', 'Format de production', Object.entries(FORMATS).map(([k, v]) => [k, SHORT_FMT[k] || v.label, v.label]), S.format, () => updFmt());
+  const infra = selector('stinfra', 'Infrastructure du car', [['sdi', 'SDI', 'Car SDI : grille coaxiale'], ['ip', 'IP (ST 2110)', 'Car IP : ST 2110, PTP, NMOS']], 'sdi');
+  const qual = selector('stqual', 'Qualité graphique', [['basse', 'Basse', 'Basse : ordinateur portable'], ['moyenne', 'Moyenne'], ['haute', 'Haute', 'Haute : carte graphique dédiée']], S.quality);
+  const snd = selector('stsnd', 'Son', [['1', 'Ambiance et commentaires'], ['0', 'Coupé']], '1');
+  updFmt();
+  // visite guidée par le chef de car : proposée d'office tant qu'on ne l'a pas faite dans ce navigateur
+  let toured = true; try { toured = localStorage.getItem('carregie.chefIntro') === '1'; } catch (e) { /* stockage indisponible */ }
+  const tour = el('button', { type: 'button', id: 'st-tour', class: 'btn toggle', 'aria-pressed': String(!toured), onclick: () => tour.setAttribute('aria-pressed', String(tour.getAttribute('aria-pressed') !== 'true')) }, 'Visite guidée avec le chef de car');
+  const go = (preset) => { S.chefTour = preset === 'standard' && tour.getAttribute('aria-pressed') === 'true'; start(preset, light.value, qual.value, snd.value === '1', fmt.value, infra.value === 'ip'); };
   // session à plusieurs : on démarre le car prêt à l'antenne, avec les réglages de l'hôte s'il y en a déjà un
   setSessionStarter({
     cfg: () => ({ fmt: fmt.value, ip: infra.value === 'ip', light: light.value }),
     start: async () => {
       for (let i = 0; i < 25 && !(SES.hostPeer && !SES.hostPeer.sameTab && SES.hostPeer.presence.cfg); i++) await new Promise((r) => setTimeout(r, 120));
       const h = SES.hostPeer && !SES.hostPeer.sameTab && SES.hostPeer.presence.cfg;
-      start('standard', h ? h.light : light.value, qual.value, snd.checked, h ? h.fmt : fmt.value, h ? !!h.ip : infra.value === 'ip');
+      S.chefTour = false;
+      start('standard', h ? h.light : light.value, qual.value, snd.value === '1', h ? h.fmt : fmt.value, h ? !!h.ip : infra.value === 'ip');
     },
   });
-  const truckLine = el('div', { class: 'cs-truck', id: 'sttruck' });
-  const setTruck = () => { truckLine.textContent = [CFG.car.company, CFG.car.name].filter(Boolean).join(' · '); truckLine.hidden = !truckLine.textContent; updFmt(); };
+  const truckLine = el('span', { class: 'cs-truck', id: 'sttruck' });
+  const setTruck = () => { truckLine.textContent = [CFG.car.company, CFG.car.name].filter(Boolean).join(', '); truckLine.hidden = !truckLine.textContent; updFmt(); };
   setTruck(); on('config', setTruck); on('shared', setTruck);
-  // la journée d'un car régie : chaque mode du simulateur se place à son heure
-  const slot = (time, phase, title, desc, label, preset, primary) => el('li', { class: 'cs-slot' + (primary ? ' main' : '') },
-    el('time', {}, time),
-    el('div', { class: 'cs-what' }, el('small', {}, phase), el('b', {}, title), el('span', {}, desc)),
-    el('button', { class: 'btn' + (primary ? ' primary' : ''), onclick: () => go(preset) }, label));
-  const field = (id, label, ctl) => el('div', { class: 'field' }, el('label', { for: id }, label), ctl);
-  s.append(el('div', { class: 'callsheet' },
-    el('header', { class: 'cs-head' },
-      el('div', { class: 'cs-title' },
-        el('span', { class: 'tape' }, 'Feuille de service'),
+  // la journée d'un car régie avant l'antenne : chaque mode du simulateur à son heure
+  const strip = (time, title, desc, label, preset) => el('li', { class: 'dk-strip plate' },
+    el('div', { class: 'scribble glass' }, el('time', {}, time), el('b', {}, title)),
+    el('p', {}, desc),
+    el('button', { class: 'btn', onclick: () => go(preset) }, label));
+  const lan = lanAvailable();
+  s.append(el('div', { class: 'callsheet deck' },
+    el('header', { class: 'dk-head' },
+      el('div', { class: 'dk-title' },
         el('h1', {}, 'Car régie 3D'),
         el('p', { class: 'lede' }, 'Simulateur de formation aux métiers du car régie. Un match se joue en continu dans un stade inspiré de Bollaert-Delelis : tout ce que vous réglez se voit à l\'image, chaque action est expliquée.')),
-      el('dl', { class: 'cs-match' },
-        el('dt', {}, 'Rencontre'), el('dd', {}, 'RC Lens – AS Rivière'),
-        el('dt', {}, 'Lieu'), el('dd', {}, 'Stade Bollaert-Delelis (reconstitution)'),
-        el('dt', {}, 'Antenne'), el('dd', {}, '20:45 · coup d\'envoi 21:00'),
-        el('dt', {}, 'Chaîne du signal'), el('dd', { class: 'cs-chain' }, 'objectif → caméra → liaison → CCU → grille → mélangeur → antenne'),
+      el('div', { class: 'glass dk-match', role: 'group', 'aria-label': 'La rencontre de ce soir' },
+        el('span', {}, 'RC Lens – AS Rivière'),
+        el('span', { class: 'dim' }, 'Bollaert-Delelis, reconstitution'),
+        el('span', {}, el('em', {}, 'Antenne '), '20:45   ', el('em', {}, 'Coup d\'envoi '), '21:00'),
         truckLine)),
-    el('div', { class: 'cs-grid' },
-      el('section', { class: 'cs-day', 'aria-labelledby': 'cs-day-h' },
-        el('h2', { id: 'cs-day-h' }, 'Choisissez votre vacation'),
-        // le chef de car accompagne dès la feuille de service (bouton ou touche J)
-        el('div', { class: 'cs-chef' },
-          el('span', { class: 'chef-avatar', 'aria-hidden': 'true' }, 'O'),
-          el('p', {}, el('b', {}, 'Première fois ? '), 'Olivier, le chef de car, vous fait faire le tour du car puis vous guide pas à pas à chaque poste.'),
-          el('button', { class: 'btn chef-btn', title: 'Le chef de car vous accompagne pas à pas (touche J)', onclick: () => emit('chef') }, 'Chef de car', el('kbd', {}, 'J'))),
-        el('ol', { class: 'cs-slots' },
-          slot('08:00', 'Get-in', 'Installation pas à pas', 'Stade vide et missions guidées : placer les caméras, les câbler, les régler, puis réaliser.', 'Installer', 'vierge'),
-          slot('09:30', 'Préparation caméras', 'Atelier de montage', 'Monter une caméra pièce par pièce : pied, tête fluide, adaptateur, objectif, viseur, commandes de zoom et de point, fibre.', 'Monter une caméra', 'atelier'),
-          slot('11:00', 'Câblage', 'Le car vide', 'Rien n\'est brassé : reliez chaque source à la grille, les sorties aux destinations et la référence aux CCU, liste de câblage en main.', 'Brasser le car', 'brassage'),
-          slot('17:30', 'Line-up · test de ligne', 'Jour de match', 'Brassage, line-up, test de ligne avec la chaîne, puis le direct avec des pannes. Chronométré, noté, avec un compte rendu.', 'Lancer le scénario', 'scenario'),
-          slot('20:45', 'Antenne', 'Car prêt à l\'antenne', '12 caméras installées et réglées, 2 super ralentis, une Steadicam HF et une mini-caméra de but. Pour découvrir les postes.', 'Prendre l\'antenne', 'standard', true),
-          slot('20:45', 'Antenne · grand dispositif', 'Grand match, 16 caméras', 'Caméra volante, rail, grue, super ralenti, deux Steadicam HF. Demande un ordinateur puissant.', 'Grand dispositif', 'grand'))),
-      el('aside', { class: 'cs-side' },
-        el('section', { class: 'cs-box' },
-          el('h2', {}, 'Conditions de captation'),
-          el('div', { class: 'cs-fields' },
-            field('stlight', 'Lumière', light), field('stfmt', 'Format de production', fmt),
-            field('stinfra', 'Infrastructure', infra), field('stqual', 'Qualité graphique', qual)),
-          el('label', { class: 'cs-check', for: 'stsnd' }, snd, el('span', {}, 'Son : ambiance, frappes, sifflet, commentaires')),
-          fmtNote),
-        el('section', { class: 'cs-box' + (lanAvailable() ? ' cs-lan' : '') },
-          el('h2', {}, 'Équipe et formation'),
-          lanAvailable() ? el('p', { class: 'note' }, el('b', {}, 'Réseau local. '), 'Hébergez une partie ou rejoignez celle d\'un collègue : chacun choisit un pseudo et un rôle dans la prestation.') : null,
-          el('button', { class: 'btn primary', title: 'Plusieurs joueurs dans le même car, en direct : chacun son pseudo et son rôle', onclick: () => openSessionPanel() }, 'Jouer à plusieurs'),
-          el('div', { class: 'cs-row' },
-            el('button', { class: 'btn', onclick: () => openTrainer('car') }, 'Espace formateur'),
-            el('button', { class: 'btn', title: 'Pour les experts métier : valider ou corriger chaque point technique du simulateur', onclick: () => openReview('me') }, 'Relecture technique (experts)'))),
-        el('details', { class: 'cs-box cs-keys' },
+    el('section', { class: 'onair', 'aria-label': 'Prendre l\'antenne' },
+      el('button', { id: 'st-antenne', class: 'onair-key', onclick: () => go('standard') },
+        el('span', { class: 'onair-lamp', 'aria-hidden': 'true' }, 'Antenne'),
+        el('b', {}, 'Prendre l\'antenne'),
+        el('span', {}, 'Le car est prêt : 12 caméras installées et réglées, 2 super ralentis, une Steadicam HF, une mini-caméra de but. Le meilleur point de départ pour découvrir les postes.')),
+      el('div', { class: 'onair-chef' },
+        tour,
+        el('button', { type: 'button', id: 'st-chef', class: 'btn chef-btn', title: 'Les parcours guidés du chef de car (touche J)', onclick: () => emit('chef') }, 'Chef de car', el('kbd', {}, 'J')),
+        el('p', { class: 'note' }, 'Olivier, le chef de car, vous fait faire le tour du car puis vous guide pas à pas à chaque poste.'))),
+    el('section', { class: 'dk-capt plate', 'aria-labelledby': 'dk-capt-h' },
+      el('h2', { id: 'dk-capt-h' }, 'Conditions de captation'),
+      el('label', {}, 'Lumière'), light,
+      el('label', {}, 'Format'), fmt,
+      el('label', {}, 'Car'), infra,
+      el('label', {}, 'Qualité'), qual,
+      el('label', {}, 'Son'), snd,
+      fmtNote),
+    el('section', { class: 'dk-team plate' + (lan ? ' cs-lan' : ''), 'aria-labelledby': 'dk-team-h' },
+        el('h2', { id: 'dk-team-h' }, 'Équipe et formation'),
+        lan ? el('p', { class: 'note' }, el('b', {}, 'Réseau local. '), 'Hébergez une partie ou rejoignez celle d\'un collègue : chacun choisit un pseudo et un rôle dans la prestation.') : null,
+        el('button', { class: 'btn', title: 'Plusieurs joueurs dans le même car, en direct : chacun son pseudo et son rôle', onclick: () => openSessionPanel() }, 'Jouer à plusieurs'),
+        el('button', { class: 'btn', onclick: () => openTrainer('car') }, 'Espace formateur'),
+        el('button', { class: 'btn', title: 'Pour les experts métier : valider ou corriger chaque point technique du simulateur', onclick: () => openReview('me') }, 'Relecture technique')),
+    el('section', { class: 'dk-day', 'aria-labelledby': 'dk-day-h' },
+      el('h2', { id: 'dk-day-h' }, 'La journée du car, avant l\'antenne'),
+      el('ol', { class: 'dk-strips' },
+        strip('08:00', 'Installation', 'Stade vide : placer, câbler et régler les caméras, avec des missions guidées.', 'Installer le car', 'vierge'),
+        strip('09:30', 'Atelier de montage', 'Monter une caméra pièce par pièce, du pied jusqu\'à la fibre.', 'Monter une caméra', 'atelier'),
+        strip('11:00', 'Le car vide', 'Rien n\'est brassé : reliez chaque liaison avec la liste de câblage.', 'Brasser le car', 'brassage'),
+        strip('17:30', 'Jour de match', 'Line-up, test de ligne, puis le direct avec des pannes. Chronométré et noté.', 'Lancer le jour de match', 'scenario'),
+        strip('20:45', 'Grand dispositif', '16 caméras : volante, rail, grue, deux Steadicam. Ordinateur puissant conseillé.', 'Grand dispositif', 'grand'))),
+    el('footer', { class: 'dk-foot' },
+      el('div', { class: 'dk-side' },
+        el('details', { class: 'cs-keys' },
           el('summary', {}, 'Commandes clavier'),
-          el('div', { class: 'keys' }, ...CONTROLS_HELP.map(([k, d]) => el('div', {}, el('kbd', {}, k), el('span', {}, d))))))),
-    el('p', { class: 'note cs-foot' }, 'Simulation non officielle, sans lien avec le club ni avec les constructeurs cités. Les caractéristiques techniques (objectifs, portées de câbles, seuils HF, niveaux vidéo et audio) sont des ordres de grandeur réalistes, donnés à titre pédagogique ; les noms d\'équipements sont des exemples de matériel courant.'),
-    // la version, pour savoir quel fichier on a ouvert ; le diagnostic, pour signaler un problème
-    el('p', { class: 'note cs-ver' }, el('span', { id: 'stversion' }, `Version ${APP_VERSION}`), el('button', { class: 'linkbtn', onclick: () => openDiag() }, 'Diagnostic technique'))));
+          el('div', { class: 'keys' }, ...CONTROLS_HELP.map(([k, d]) => el('div', {}, el('kbd', {}, k), el('span', {}, d))))),
+        // la version, pour savoir quel fichier on a ouvert ; le diagnostic, pour signaler un problème
+        el('p', { class: 'note cs-ver' }, el('span', { id: 'stversion' }, `Version ${APP_VERSION}`), el('button', { class: 'linkbtn', onclick: () => openDiag() }, 'Diagnostic technique'))),
+      el('p', { class: 'note cs-foot' }, 'Simulation non officielle, sans lien avec le club ni avec les constructeurs cités. Les caractéristiques techniques (objectifs, portées de câbles, seuils HF, niveaux vidéo et audio) sont des ordres de grandeur réalistes, donnés à titre pédagogique ; les noms d\'équipements sont des exemples de matériel courant.'))));
 }
 
 export function start(preset, light, quality, sound, format = S.format, ip = false) {

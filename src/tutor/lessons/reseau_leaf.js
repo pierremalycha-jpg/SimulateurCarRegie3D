@@ -43,7 +43,7 @@ export const LESSON_LEAF = {
       go: { station: 'reseau' },
       done: (c) => c.view().station === 'reseau', skip: (c) => c.view().station === 'reseau',
       ok: 'Te voilà au poste. En haut, le bandeau résume l\'état des deux réseaux.',
-      hints: ['Le poste est dans la zone technique, au fond du car, à côté des baies.', 'Touche T (« Aller à… ») puis « Réseau IP » dans la liste des postes du car.'],
+      hints: ['Le poste est dans la zone technique, au fond du car, à côté des baies.', 'Touche Tab (le pupitre), puis la touche « Réseau IP » dans la rangée Technique.'],
       auto: (c) => c.io.go({ station: 'reseau' }),
     },
     {

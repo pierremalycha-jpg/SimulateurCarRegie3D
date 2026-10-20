@@ -1,21 +1,17 @@
 // @ts-check
 import { S } from '../state.js';
-import { el } from '../util.js';
-import { STATION_INFO } from '../content/stations.js';
 import { TRUCK } from '../world.js';
 import { truckBlocked, truckFloorAt, T } from '../truck.js';
 import { AT, ATELIER_DECK } from '../atelier.js';
-import { avatarPositions } from '../multi/avatars.js';
 import { ROLE_BRIEF } from '../multi/roles.js';
-import { openTruckPlan } from '../ui/truckmap.js';
 import { openStation, closeStation } from '../ui/stations.js';
 import { toast, modal } from '../ui/common.js';
 import { PL, onDeck, updToolbar } from './player.js';
 import { takeCamera } from './camop.js';
 
 // ----------------------------------------------------------------------------------
-// Se rendre quelque part : destinations du menu « Aller à », postes du car, équipiers d'une
-// session, poste attribué par la fiche de rôle.
+// Se rendre quelque part : destinations du pupitre (ui/pupitre.js), postes du car, équipiers
+// d'une session, poste attribué par la fiche de rôle.
 // ----------------------------------------------------------------------------------
 /** @type {Array<[string, number[], number, boolean, boolean?]>} : nom, position, cap, vol libre, dans le car */
 export const DESTS = [
@@ -56,7 +52,7 @@ export function placeAtStation(id) {
   const st = T.stations.find((s) => s.station === id);
   if (st) { PL.pos.set(st.pos.x, TRUCK.floor, st.pos.z); S.inTruck = true; PL.y = TRUCK.floor + 1.7; }
 }
-function goToMate(a) {
+export function goToMate(a) {
   // juste derrière lui, tourné dans la même direction (en hauteur hors du car : vol libre, comme les téléportations)
   const yaw = a.yaw || 0;
   S.inTruck = !!a.truck;
@@ -80,14 +76,4 @@ export function goToRolePost(role, camId) {
   }
   const B = ROLE_BRIEF[role]; const st = B && T.stations.find((x) => x.id === B.station);
   if (st) goToStation(st);
-}
-export function teleportMenu() {
-  const list = el('div', { class: 'list' });
-  DESTS.forEach((d, i) => list.appendChild(el('button', { class: 'item', style: { textAlign: 'left' }, onclick: () => { teleport(i); modal.close(); } }, el('div', { class: 'grow' }, el('div', { class: 't' }, d[0])))));
-  const posts = el('div', { class: 'hwrow' });
-  for (const st of T.stations) posts.append(el('button', { class: 'btn small', onclick: () => goToStation(st) }, st.label));
-  // session : rejoindre un équipier (on se place à côté de lui)
-  const mates = avatarPositions();
-  const team = mates.length ? el('div', { class: 'list' }, el('h3', {}, 'Rejoindre un équipier'), el('div', { class: 'hwrow' }, ...mates.map((a) => el('button', { class: 'btn small', style: { borderLeft: `4px solid ${a.color}` }, onclick: () => { goToMate(a); modal.close(); } }, a.name, el('small', { class: 'note' }, ' · ' + (a.cam ? 'CAM ' + a.cam : a.station ? (STATION_INFO[a.station] ? STATION_INFO[a.station].title : a.station) : a.truck ? 'dans le car' : 'dehors')))))) : null;
-  modal.open('Aller à…', el('div', { class: 'list' }, team, list, el('h3', {}, 'Postes du car (on s\'y rend et on l\'ouvre)'), posts, el('button', { class: 'btn', onclick: () => openTruckPlan() }, 'Plan du car (Tab)')), { width: 620 });
 }

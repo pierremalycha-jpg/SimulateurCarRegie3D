@@ -7,14 +7,13 @@ import { closeStation, stationKey } from '../ui/stations.js';
 import { termOpen, closeTerm } from '../ui/term.js';
 import { openPlan, closePlan, planPointer, planWheel } from '../ui/plan.js';
 import { openGuide } from '../ui/guide.js';
-import { openTruckPlan } from '../ui/truckmap.js';
 import { openSynoptics } from '../ui/synoptics.js';
 import { commutKey } from '../ui/commut.js';
 import { openDevice, openEquipmentIndex } from '../equipment/viewer.js';
 import { PL, KEYS, joy, onDeck, updToolbar } from './player.js';
 import { CAMOP, releaseCamera } from './camop.js';
 import { AIM, act } from './interact.js';
-import { teleportMenu } from './teleport.js';
+import { openPupitre } from '../ui/pupitre.js';
 
 // ----------------------------------------------------------------------------------
 // Entrées : clavier, souris (regard verrouillé ou glissé), molette, écran tactile.
@@ -54,11 +53,11 @@ function onKeyDown(e) {
   if (e.code === 'KeyI' && target) { if (target.kind === 'cam') { openDevice('cam', target.cam.id); return; } const id = target.kind === 'station' ? target.station : target.info; if (id) openInfo(id); }
   if (e.code === 'KeyV') { PL.fly = !PL.fly; updToolbar(); toast(PL.fly ? 'Vol libre : Espace pour monter, C pour descendre' : 'Vol libre désactivé'); }
   if (e.code === 'KeyP') openPlan();
-  if (e.code === 'KeyT') teleportMenu();
+  if (e.code === 'KeyT') { if (document.pointerLockElement) document.exitPointerLock(); openPupitre(); }
   if (e.code === 'KeyG') openGuide('missions');
   if (e.code === 'KeyH') openGuide('commandes');
   if (e.code === 'KeyK') { if (target && target.kind === 'station' && target.device) openDevice(target.device, 1); else openEquipmentIndex(); }
-  if (e.code === 'Tab' && S.inTruck) { e.preventDefault(); if (document.pointerLockElement) document.exitPointerLock(); openTruckPlan(); }
+  if (e.code === 'Tab') { e.preventDefault(); if (document.pointerLockElement) document.exitPointerLock(); openPupitre(); }
   if (e.code === 'KeyY') openSynoptics();
   if (e.code === 'KeyM') $('#minimon').hidden = !$('#minimon').hidden;
   if (commutKey(e, 'fps')) e.preventDefault();

@@ -1,24 +1,18 @@
 // @ts-check
 import { S, emit } from '../state.js';
 import { el } from '../util.js';
-import { $, modal } from './common.js';
+import { $ } from './common.js';
 import { T } from '../truck.js';
 import { TRUCK } from '../world.js';
 import { avatarPositions } from '../multi/avatars.js';
 
 // ----------------------------------------------------------------------------------
-// Plan du car : mini-plan dans l'interface (position, orientation, postes cliquables)
-// et grand plan (touche Tab) avec la liste des postes par zone.
+// Plan du car : mini-plan dans l'interface (position, orientation, postes cliquables) et
+// plan du pupitre (touche Tab).
 // ----------------------------------------------------------------------------------
 const NS = 'http://www.w3.org/2000/svg';
 const sv = (tag, attrs = {}, ...kids) => { const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); for (const c of kids) if (c != null) e.append(c); return e; };
 let mini = null, goTo = null, getPL = null;
-const ZONE_HINT = {
-  son: 'Cabine isolée : console, écoutes, loudness.',
-  prod: '1re rangée : scripte, réalisateur, truquiste. 2e rangée (estrade) : habillage, production, chef de car.',
-  vision: '1re rangée : ingénieurs vision (RCP). 2e rangée : ralentis (LSM) et IPDirector.',
-  tech: 'Baies : CCU, grille, mélangeur, réseau IP (spines, multiviewers), EVS, transmission, synchro, intercom, brassage, audio, HF. Les leaves IP sont en haut de chaque baie.',
-};
 
 function drawPlan(scale, labels) {
   const L = T.layout; const I = L.size;
@@ -76,10 +70,10 @@ function drawPlan(scale, labels) {
 
 export function initTruckMap(onGo, pl) {
   goTo = onGo; getPL = pl;
-  const box = el('div', { id: 'truckmap', hidden: true, title: 'Plan du car (Tab pour l\'agrandir)' });
+  const box = el('div', { id: 'truckmap', hidden: true, title: 'Plan du car : Tab ouvre le pupitre' });
   const plan = drawPlan(16, false);
-  box.append(el('div', { class: 'tmap-head' }, el('b', {}, 'Plan du car'), el('span', {}, matchMedia('(pointer: coarse)').matches ? 'Toucher un point : aller au poste' : 'Tab : agrandir · clic sur un point : aller au poste')), plan.svg);
-  box.addEventListener('click', () => openTruckPlan());
+  box.append(el('div', { class: 'tmap-head' }, el('b', {}, 'Plan du car'), el('span', {}, matchMedia('(pointer: coarse)').matches ? 'Touchez un point pour aller au poste' : 'Un point : aller au poste. Tab : le pupitre')), plan.svg);
+  box.addEventListener('click', () => emit('pupitre'));
   $('#hud').appendChild(box);
   mini = plan;
 }
@@ -113,24 +107,14 @@ function placePeers(plan) {
   }
 }
 
-let bigPlan = null;
-export function updateBigPlan() { if (bigPlan && getPL && bigPlan.svg.isConnected) place(bigPlan, getPL()); }
-export function openTruckPlan() {
-  const plan = drawPlan(48, true); bigPlan = plan;
+// plan pour le pupitre : postes cliquables, position du joueur (cachée hors du car)
+export function planFor(scale) {
+  const plan = drawPlan(scale, false);
   if (getPL) place(plan, getPL());
-  const zones = el('div', { class: 'tmap-zones' });
-  for (const z of T.layout.zones) {
-    const list = el('div', { class: 'hwrow' });
-    for (const s of T.stations.filter((x) => x.zone === z.id)) list.append(el('button', { class: 'btn small', onclick: () => goTo && goTo(s) }, s.label));
-    zones.append(el('div', { class: 'tmap-zone-card', style: { borderLeftColor: z.color } }, el('h3', {}, z.name), el('p', { class: 'note' }, ZONE_HINT[z.id] || ''), list));
-  }
-  modal.open('Plan du car régie', el('div', { class: 'list' },
-    el('p', { class: 'note' }, 'Vue de dessus. Le mur d\'écrans est en haut, la porte en bas. Une allée longe tout le car côté porte (de la cabine son à la zone technique) ; le passage entre la production et la vision mène à la 1re rangée. Cliquez sur un poste (point ou bouton) pour vous y rendre et l\'ouvrir.'),
-    el('div', { class: 'tmap-big' }, plan.svg), zones,
-    el('button', { class: 'btn', onclick: () => emit('openSynoptics') }, 'Synoptiques techniques du car (Y)'),
-    el('p', { class: 'note' }, 'Dans le car : Z Q S D pour marcher, souris pour regarder, E ou clic pour prendre le poste visé (il s\'allume en orange), I pour sa fiche, K pour voir son matériel, Tab pour ce plan.')), { width: 1000 });
+  plan.me.style.display = S.inTruck ? '' : 'none';
+  return plan.svg;
 }
-export function closeTruckPlan() { bigPlan = null; }
+
 // plan détaillé pour les synoptiques (styles intégrés pour l'export SVG)
 export function planSVG() {
   const p = drawPlan(48, true);
