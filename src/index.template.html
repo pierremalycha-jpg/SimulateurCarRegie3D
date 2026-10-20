@@ -1010,7 +1010,7 @@ textarea { background: var(--bg); border: 1px solid var(--line2); border-radius:
 .vx-strip.sel { border-color: #e5e7eb; box-shadow: 0 0 0 1px #e5e7eb inset; }
 .vx-strip.spill { animation: vxblink .8s steps(2) infinite; border-color: #fff; }
 .vx-strip.netlost { border-color: #ff3b30; }
-.vx-strip.empty { opacity: .4; }
+.vx-strip.empty > :not(.vx-scrib) { opacity: .4; } .vx-strip.empty .vx-scrib b, .vx-strip.empty .vx-scrib small { color: #838d96; }
 .vx-scrib { background: #06090b; border-top: 3px solid var(--g, #555); border-radius: 2px; padding: 2px 3px; display: grid; grid-template-columns: auto 1fr; column-gap: 3px; font-family: var(--f-mono); line-height: 1.1; min-height: 34px; }
 .vx-scrib b { font-size: 10px; color: #7b8792; } .vx-scrib span { font-size: 10.5px; color: #f2f4f6; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 700; }
 .vx-scrib small { grid-column: 1 / -1; font-size: 9px; color: #7b8792; white-space: nowrap; overflow: hidden; }
