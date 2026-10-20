@@ -63,6 +63,9 @@ export async function openPage(browser, o = {}) {
     await page.route('https://cdn.jsdelivr.net/**', (r) => r.fulfill({ body: THREE_JS, contentType: 'application/javascript', headers: { 'access-control-allow-origin': '*' } }));
     await page.route('http://local.test/**', (r) => r.fulfill({ body: simHtml(o.file), contentType: 'text/html' }));
   }
+  // le chef de car se présente de lui-même au premier lancement : les tests le font venir eux-mêmes,
+  // sauf ceux qui vérifient justement ce premier lancement (fresh)
+  if (!o.fresh) await page.addInitScript(() => { try { localStorage.setItem('carregie.chefIntro', '1'); } catch (e) { /* stockage indisponible */ } });
   if (o.before) await o.before(page);
   await page.goto(o.url || 'http://local.test/?' + query, { timeout: 180000 });
   await page.waitForFunction(o.ready || '!!window.__dbg', null, { timeout: 180000, polling: 200 });

@@ -19,3 +19,7 @@ export const CONTROLS_HELP = [
   ['Atelier de montage', 'E (ou clic) : prendre, monter, agir — maintenir pour les gestes longs · Q : reposer la pièce · molette : bulle et équilibrage'],
   ['Échap', 'Libérer la souris / fermer un poste'],
 ];
+
+// premiers gestes, rappelés au premier lancement (encart « Prise en main » ou chef de car)
+export const FIRST_STEPS = [['Z Q S D', 'se déplacer (flèches aussi)'], ['Souris', 'regarder : cliquez d\'abord dans la vue'], ['E', 'utiliser ce que vous visez'], ['T', 'aller directement à un endroit'], ['1 – 9', 'commuter une caméra à l\'antenne'], ['G', 'guide, missions et glossaire']];
+export const FIRST_STEPS_TOUCH = [['Pouce gauche', 'se déplacer'], ['Glisser', 'regarder'], ['Bouton action', 'utiliser ce que vous visez'], ['Aller à', 'se téléporter devant un poste']];

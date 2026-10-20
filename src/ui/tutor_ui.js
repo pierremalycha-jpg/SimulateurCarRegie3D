@@ -11,11 +11,12 @@ import { AT, atelierDebug } from '../atelier.js';
 import { netGo, netView, netType } from './st_network.js';
 import { releaseCamera } from '../app/camop.js';
 import { whereAmI } from '../app/hud.js';
-import { TUTOR, registerLessons, setIO, startLesson, stopLesson, next, prev, check, hint, doForMe, answer, step, isAction, ctx, val, lessonsFor, lessonBlocked, progressOf } from '../tutor/engine.js';
+import { TUTOR, registerLessons, setIO, startLesson, stopLesson, next, prev, check, hint, doForMe, answer, step, isAction, ctx, val, lessonsFor, lessonBlocked, lessonById, progressOf } from '../tutor/engine.js';
 import { NET_LESSONS } from '../tutor/lessons/reseau.js';
 import { ALL_STATION_LESSONS } from '../tutor/lessons/index.js';
 import { stationLesson, stationIds } from '../tutor/lessons/postes.js';
 import { STATION_INFO } from '../content/stations.js';
+import { FIRST_STEPS, FIRST_STEPS_TOUCH } from '../content/controls.js';
 import { rich } from './rich.js';
 
 // ----------------------------------------------------------------------------------
@@ -25,12 +26,13 @@ import { rich } from './rich.js';
 // utiliser, emmène au bon poste et au bon onglet, tape les commandes si on le lui demande.
 // ----------------------------------------------------------------------------------
 const CHEF = { name: 'Olivier', role: 'chef de car' };
-const UI = { root: /** @type {HTMLElement | null} */ (null), openDom: '', placed: false, min: false, said: '', lastKey: '', voice: false, notes: /** @type {string[]} */ ([]), feedback: '', spotUntil: 0 };
+const UI = { root: /** @type {HTMLElement | null} */ (null), openDom: '', placed: false, min: false, said: '', lastKey: '', voice: false, notes: /** @type {string[]} */ ([]), feedback: '', spotUntil: 0, intro: false };
 try { UI.voice = localStorage.getItem('carregie.chefVoice') === '1'; } catch (e) { /* stockage indisponible */ }
 
 // ---------------- entrées / sorties pour le moteur ----------------
 // onglets des autres postes (barre .tabs du poste, boutons data-k) : lus et choisis dans la page
-const stationTabs = () => /** @type {HTMLElement | null} */ (document.querySelector('#station .st-body .tabs:has(> .tab[data-k])'));
+// (sans le sélecteur :has(), inconnu des navigateurs d'avant 2023 : Firefox ESR 115 par exemple)
+const stationTabs = () => /** @type {HTMLElement | null} */ ([...document.querySelectorAll('#station .st-body .tabs')].find((t) => [...t.children].some((b) => b.matches('.tab[data-k]'))) || null);
 const stationTab = () => { const b = /** @type {HTMLElement | null} */ (stationTabs()?.querySelector(':scope > .tab.on')); return b ? b.dataset.k : null; };
 function clickTab(k) { const b = /** @type {HTMLElement | null} */ (stationTabs()?.querySelector(`:scope > .tab[data-k="${k}"]`)); if (b && !b.classList.contains('on')) b.click(); }
 const view = () => {
@@ -137,9 +139,8 @@ function hush() { try { if (S.chefSpeaking && window.speechSynthesis) window.spe
 // ---------------- panneau ----------------
 export function toggleChef(force) {
   const open = force ?? !TUTOR.open;
-  if (S.mode === 'start' && open) { toast('Lancez d\'abord une vacation : le chef de car vous attend dans le car.'); return; }
   TUTOR.open = open;
-  if (!open) { hush(); if (UI.root) UI.root.hidden = true; spot(null); return; }
+  if (!open) { hush(); UI.intro = false; if (UI.root) UI.root.hidden = true; spot(null); return; }
   if (!UI.root) build();
   UI.root.hidden = false; UI.min = false; UI.root.classList.remove('min');
   render(true);
@@ -171,6 +172,7 @@ function header(sub) {
   return h;
 }
 function where() {
+  if (S.mode === 'start') return 'Tu es sur la feuille de service, avant d\'entrer dans le car.';
   if (S.mode === 'station' && STATION_INFO[S.station]) return `Tu es au poste ${STATION_INFO[S.station].title}.`;
   if (S.mode === 'camop') return 'Tu es derrière une caméra.';
   const [zone] = whereAmI();
@@ -261,7 +263,7 @@ function renderFinish(l) {
 }
 
 function card(l) {
-  const p = progressOf(l.id); const why = lessonBlocked(l); const ok = !why;
+  const p = progressOf(l.id); const why = S.mode === 'start' ? '' : lessonBlocked(l); const ok = !why;
   const resume = TUTOR.lesson && TUTOR.lesson.id === l.id;
   return el('div', { class: 'chef-card' + (p.done ? ' done' : '') },
     el('div', { class: 'grow' }, el('b', {}, l.title, p.done ? el('span', { class: 'chef-check', title: 'déjà fait' }, ' ✓') : null), el('small', {}, `${l.duration} · ${l.level}`), el('span', { class: 's' }, l.summary)),
@@ -269,18 +271,50 @@ function card(l) {
       if (resume) { onStep(); return; }
       if (TUTOR.lesson && !(await ask(`Abandonner « ${TUTOR.lesson.title} » pour commencer « ${l.title} » ?`, { title: 'Changer de parcours', ok: 'Commencer « ' + l.title + ' »', cancel: 'Garder le parcours en cours' }))) return;
       if (TUTOR.lesson) stopLesson(false, false);
+      if (S.mode === 'start') { launchWith(l.id); return; }
       startLesson(l.id); onStep();
     } }, resume ? 'Reprendre' : p.done ? 'Refaire' : 'Commencer'));
 }
+// depuis la feuille de service : le chef lance le car prêt à l'antenne (en IP si le parcours le
+// demande) puis commence le parcours
+function launchWith(id) {
+  const l = lessonById(id); if (!l) return;
+  const infra = /** @type {HTMLSelectElement | null} */ (document.getElementById('stinfra'));
+  if (infra && l.needs && l.needs.ip) infra.value = 'ip';
+  const b = /** @type {HTMLButtonElement | null} */ (document.querySelector('#start .cs-slot.main button'));
+  if (!b) return;
+  UI.intro = false; UI.openDom = l.domain;
+  b.click();
+  if (S.mode === 'start') return;
+  startLesson(id); onStep();
+  if (id === 'prise-en-main') dropOnboard();
+}
 function renderHome() {
   if (lastDone) { renderFinish(lastDone); return; }
-  UI.root.append(header('à ton écoute'));
+  const atStart = S.mode === 'start';
+  UI.root.append(header(atStart ? 'avant la vacation' : UI.intro ? 'bienvenue dans le car' : 'à ton écoute'));
   if (UI.min) { UI.root.append(el('div', { class: 'chef-mini' }, 'Besoin d\'aide ? Agrandis-moi.')); return; }
   const body = el('div', { class: 'chef-body' });
   const st = S.mode === 'station' ? S.station : null;
   const { here, others } = lessonsFor(st);
-  body.append(rich(`Salut, moi c'est ${CHEF.name}, le chef de car. ${where()} Je peux te présenter un poste, ou t'accompagner pas à pas dans un parcours : je t'explique, tu fais, je vérifie.`));
-  const ipNeeded = [...here, ...others].some((l) => l.needs && l.needs.ip) && !S.ipMode;
+  if (atStart) {
+    // feuille de service : le chef propose d'entrer dans le car avec lui
+    body.append(rich(`Salut, moi c'est ${CHEF.name}, le chef de car. ${where()} Si tu découvres le simulateur, prends le **car prêt à l'antenne** : je t'y emmène et je te fais faire le tour. Tu peux aussi choisir directement un parcours ci-dessous, je lance le car pour toi.`),
+      el('div', { class: 'chef-acts' }, el('button', { class: 'btn small primary', onclick: () => launchWith('prise-en-main') }, 'Prendre l\'antenne avec moi')));
+  } else if (UI.intro) {
+    // premier lancement : les gestes de base, puis le tour du car
+    const rows = matchMedia('(pointer: coarse)').matches ? FIRST_STEPS_TOUCH : FIRST_STEPS;
+    body.append(rich(`Bienvenue au compound ! Moi c'est ${CHEF.name}, le chef de car. Je suis là pendant toute la vacation : bouton **Chef de car** ou touche **J**. Les gestes de base :`),
+      el('ul', { class: 'chef-keys' }, ...rows.map(([k, d]) => el('li', {}, el('kbd', {}, k), el('span', {}, d)))),
+      rich('On commence par le tour du car ? Cinq minutes : entrer dans le car, le plan caméras, les synoptiques, aller à un poste.'),
+      el('div', { class: 'chef-acts' },
+        el('button', { class: 'btn small primary', onclick: () => { UI.intro = false; startLesson('prise-en-main'); onStep(); } }, 'Commencer : se repérer'),
+        el('button', { class: 'btn small', onclick: () => { UI.intro = false; render(true); } }, 'Voir tous les parcours'),
+        el('button', { class: 'btn small', onclick: () => { toggleChef(false); toast('Le chef de car reste disponible : bouton « Chef de car » ou touche J.', '', 5000); } }, 'Plus tard')));
+    UI.root.append(body);
+    return;
+  } else body.append(rich(`Salut, moi c'est ${CHEF.name}, le chef de car. ${where()} Je peux te présenter un poste, ou t'accompagner pas à pas dans un parcours : je t'explique, tu fais, je vérifie.`));
+  const ipNeeded = !atStart && [...here, ...others].some((l) => l.needs && l.needs.ip) && !S.ipMode;
   if (ipNeeded) body.append(el('div', { class: 'chef-note' }, rich('Les parcours **réseau ST 2110** se font dans le **car IP**. Ce car est câblé en SDI : je peux le passer en IP tout de suite (réseau rouge et bleu, PTP, NMOS).'),
     el('button', { class: 'btn small primary', onclick: () => switchToIp() }, 'Passer le car en IP')));
   // ici : les parcours pratiques du poste d'abord, sa présentation ensuite
@@ -380,6 +414,19 @@ setInterval(() => {
   }
 }, 250);
 on('chef', () => toggleChef());
+// premier lancement d'une partie dans ce navigateur : le chef de car se présente de lui-même
+// (car prêt à l'antenne ou grand dispositif ; les autres vacations ont leur propre consigne)
+on('started', ({ preset }) => {
+  let seen; try { seen = localStorage.getItem('carregie.chefIntro') === '1'; localStorage.setItem('carregie.chefIntro', '1'); } catch (e) { seen = true; }
+  if (seen || TUTOR.open || !(preset === 'standard' || preset === 'grand')) return;
+  UI.intro = true; UI.openDom = 'Prise en main';
+  toggleChef(true); dropOnboard();
+});
+// le chef rappelle lui-même les premiers gestes : l'encart « Prise en main » n'est plus utile
+function dropOnboard() {
+  const ob = document.getElementById('onboard'); if (ob) ob.remove();
+  try { localStorage.setItem('carregie.onboard', '1'); } catch (e) { /* stockage indisponible */ }
+}
 on('station', () => {
   if (TUTOR.open) { render(true); return; }
   // la première fois qu'on ouvre un poste, le chef se présente (une fois par navigateur)

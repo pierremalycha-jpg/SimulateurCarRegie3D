@@ -27,10 +27,11 @@ function onKeyDown(e) {
   // fenêtre explicative « ? » : Échap la ferme (sans fermer le poste) ; les autres touches ne pilotent rien
   if (termOpen()) { if (e.code === 'Escape') { closeTerm(); e.preventDefault(); } return; }
   if (modal.isOpen) { if (e.code === 'Escape') modal.close(); return; }
+  const typing = isTyping(e);
+  // J : le chef de car, depuis n'importe où, feuille de service comprise
+  if (e.code === 'KeyJ' && !typing && !e.repeat && !e.ctrlKey && !e.metaKey && !e.altKey) { emit('chef'); e.preventDefault(); return; }
   if (S.mode === 'start') return;
-  if (isTyping(e) && e.code !== 'Escape') return;
-  // J : le chef de car, depuis n'importe où
-  if (e.code === 'KeyJ' && !e.repeat && !e.ctrlKey && !e.metaKey) { emit('chef'); e.preventDefault(); return; }
+  if (typing && e.code !== 'Escape') return;
   KEYS[e.code] = true;
   if (S.mode === 'station') {
     if (e.code === 'Escape') { closeStation(); e.preventDefault(); return; }

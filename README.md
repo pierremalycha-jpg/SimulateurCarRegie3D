@@ -295,7 +295,8 @@ Aucune fonction nouvelle pour le stagiaire : la v12 rend le simulateur plus sûr
 ## Ce que contient la v13 : le chef de car
 
 Un tuteur, **Olivier, chef de car**, accompagne le stagiaire poste par poste. On l'appelle à tout moment :
-bouton « Chef de car » de la barre d'outils, bouton « Chef de car » en tête de chaque poste, ou touche **J**.
+bouton « Chef de car » de la feuille de service ou de la barre d'outils, bouton « Chef de car » en tête de chaque
+poste, ou touche **J**.
 
 - **Il sait où l'on est** et propose d'abord ce qui concerne le poste ouvert.
 - **Il explique, puis demande un geste**, et vérifie sur l'état réel du simulateur que c'est fait. Ensuite il
@@ -390,6 +391,27 @@ Tests :
 - `tests/e2e/chef-postes.mjs` rejoue les 30 parcours dans le navigateur, par le panneau du chef. Pour chaque action,
   « Emmène-moi / Montre-moi » doit mettre en évidence un élément réel de la page, et « Fais-le pour moi » doit faire
   valider l'étape.
+
+## v17.1 : le chef de car dès l'ouverture de la page
+
+Dans la version à partager (`Car-regie-3D.html`), on pouvait croire que le chef de car ne se lançait pas :
+
+- sur la feuille de service, il n'y avait **pas de bouton** pour l'appeler, et la touche **J** était ignorée sans
+  rien afficher ;
+- le chef choisissait les onglets des postes avec le sélecteur CSS `:has()` ; les navigateurs d'avant 2023 ne le
+  connaissent pas (Firefox ESR 115, encore courant dans les établissements, Chrome avant la version 105) : le
+  panneau s'arrêtait sur une erreur.
+
+Ce qui change :
+
+- **Feuille de service** : une ligne « Première fois ? » avec le bouton **Chef de car** (ou touche **J**). Le chef
+  propose de **prendre l'antenne avec lui** : il lance le car prêt à l'antenne et commence le tour du car. Il
+  affiche aussi tous les parcours ; en choisir un lance le car (en IP si le parcours le demande), puis le parcours.
+- **Premier lancement** (car prêt à l'antenne ou grand dispositif) : le chef se présente de lui-même. Il rappelle
+  les gestes de base et propose « Commencer : se repérer ». Il ne le fait qu'une fois par navigateur.
+- Le chef n'utilise plus `:has()` dans son code.
+- `tests/e2e/fichier.mjs` ouvre le fichier comme un stagiaire qui le découvre : touche J sur la feuille de service,
+  clic sur « Prendre l'antenne », présentation du chef, tour du car, puis bouton « Chef de car » à la réouverture.
 
 ## v16.1 : le chef de car remarche dans l'application publiée
 

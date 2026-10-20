@@ -269,6 +269,11 @@ select, input[type=text], input[type=number] { background: var(--bg); border: 1p
 .cs-what span { color: var(--muted); font-size: 13.5px; line-height: 1.45; max-width: 62ch; }
 .cs-slot .btn { min-width: 150px; }
 .cs-slot.main { background: linear-gradient(90deg, rgba(232,57,47,.08), transparent 70%); }
+.cs-chef { display: flex; align-items: center; gap: 12px; margin: 0 0 12px; padding: 10px 12px; border: 1px solid var(--line); border-left: 4px solid var(--tape-y); border-radius: 6px; background: var(--panel); }
+.cs-chef p { margin: 0; flex: 1; min-width: 0; font-size: 13.5px; line-height: 1.45; color: #c6cdd3; }
+.cs-chef .btn { flex: none; display: inline-flex; gap: 8px; align-items: center; }
+@media (max-width: 600px) { .cs-chef { flex-wrap: wrap; } .cs-chef .btn { width: 100%; justify-content: center; } }
+@media (pointer: coarse) { .cs-chef kbd { display: none; } }
 .cs-side { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
 .cs-box { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 14px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
 .cs-box > .btn { width: 100%; }
@@ -1038,6 +1043,10 @@ tr.rv-prop td { background: rgba(255,176,32,.08); }
 .chef-bad { color: #ffb3ad; font-size: 13px; }
 .chef-foot { border-top: 1px solid var(--line); padding: 8px 10px; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
 .chef-acts { display: flex; flex-wrap: wrap; gap: 6px; flex: 1; }
+.chef-body .chef-acts { flex: none; }
+.chef-keys { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px 12px; }
+.chef-keys li { display: flex; gap: 8px; align-items: center; font-size: 13px; color: #d6dce1; min-width: 0; }
+.chef-keys kbd { flex: none; min-width: 3.4em; }
 .chef-nav { display: flex; gap: 6px; margin-left: auto; }
 .chef-quit { flex-basis: 100%; text-align: right; background: none; border: 0; color: var(--dim); font-size: 12px; cursor: pointer; text-decoration: underline; padding: 0; }
 .chef-quit:hover { color: var(--muted); }

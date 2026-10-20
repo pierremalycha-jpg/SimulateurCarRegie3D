@@ -1,7 +1,7 @@
 // @ts-check
 import { S, emit, on } from '../state.js';
 import { el } from '../util.js';
-import { CONTROLS_HELP } from '../content/controls.js';
+import { CONTROLS_HELP, FIRST_STEPS, FIRST_STEPS_TOUCH } from '../content/controls.js';
 import { LIGHTING } from '../data/exposure.js';
 import { FORMATS } from '../data/cameras.js';
 import { applyLighting, paintTruckSign } from '../world.js';
@@ -70,6 +70,11 @@ export function buildStart() {
     el('div', { class: 'cs-grid' },
       el('section', { class: 'cs-day', 'aria-labelledby': 'cs-day-h' },
         el('h2', { id: 'cs-day-h' }, 'Choisissez votre vacation'),
+        // le chef de car accompagne dès la feuille de service (bouton ou touche J)
+        el('div', { class: 'cs-chef' },
+          el('span', { class: 'chef-avatar', 'aria-hidden': 'true' }, 'O'),
+          el('p', {}, el('b', {}, 'Première fois ? '), 'Olivier, le chef de car, vous fait faire le tour du car puis vous guide pas à pas à chaque poste.'),
+          el('button', { class: 'btn chef-btn', title: 'Le chef de car vous accompagne pas à pas (touche J)', onclick: () => emit('chef') }, 'Chef de car', el('kbd', {}, 'J'))),
         el('ol', { class: 'cs-slots' },
           slot('08:00', 'Get-in', 'Installation pas à pas', 'Stade vide et missions guidées : placer les caméras, les câbler, les régler, puis réaliser.', 'Installer', 'vierge'),
           slot('09:30', 'Préparation caméras', 'Atelier de montage', 'Monter une caméra pièce par pièce : pied, tête fluide, adaptateur, objectif, viseur, commandes de zoom et de point, fibre.', 'Monter une caméra', 'atelier'),
@@ -123,6 +128,7 @@ export function start(preset, light, quality, sound, format = S.format, ip = fal
   else toast('Vous êtes dans le compound, devant le car régie. Cliquez dans la vue pour regarder, avancez avec Z Q S D.', '', 6000);
   if (matchMedia('(pointer: coarse)').matches) setupTouch();
   showOnboarding();
+  emit('started', { preset });
 }
 
 // première prise en main : les six gestes de base, affichés une fois (mémorisé dans ce navigateur)
@@ -130,9 +136,7 @@ function showOnboarding() {
   let seen = false; try { seen = localStorage.getItem('carregie.onboard') === '1'; } catch (e) { /* stockage indisponible */ }
   if (seen || $('#onboard')) return;
   const touch = matchMedia('(pointer: coarse)').matches;
-  const rows = touch
-    ? [['Pouce gauche', 'se déplacer'], ['Glisser', 'regarder'], ['Bouton action', 'utiliser ce que vous visez'], ['Aller à', 'se téléporter devant un poste']]
-    : [['Z Q S D', 'se déplacer (flèches aussi)'], ['Souris', 'regarder : cliquez d\'abord dans la vue'], ['E', 'utiliser ce que vous visez'], ['T', 'aller directement à un endroit'], ['1 – 9', 'commuter une caméra à l\'antenne'], ['G', 'guide, missions et glossaire']];
+  const rows = touch ? FIRST_STEPS_TOUCH : FIRST_STEPS;
   const close = () => { box.remove(); try { localStorage.setItem('carregie.onboard', '1'); } catch (e) { /* stockage indisponible */ } };
   const box = el('div', { id: 'onboard', role: 'dialog', 'aria-label': 'Prise en main' },
     el('span', { class: 'tape' }, 'Prise en main'),
