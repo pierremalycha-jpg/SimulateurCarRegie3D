@@ -28,10 +28,10 @@ import { setupTouch } from './input.js';
 // ----------------------------------------------------------------------------------
 // sélecteur à touches (une seule allumée), qui se lit et se règle comme un <select> : .value
 function selector(id, label, options, value, onChange) {
-  const box = el('div', { class: 'seg', id, role: 'radiogroup', 'aria-label': label });
+  const box = el('div', { class: 'seg', id, role: 'group', 'aria-label': label });
   let cur = value;
-  const keys = options.map(([v, text, title], i) => el('button', { type: 'button', role: 'radio', 'aria-checked': String(v === value), title: title || text, style: `--d:${i}`, onclick: () => set(v) }, text));
-  const set = (v) => { cur = v; options.forEach(([o], i) => keys[i].setAttribute('aria-checked', String(o === v))); if (onChange) onChange(v); };
+  const keys = options.map(([v, text, title], i) => el('button', { type: 'button', 'aria-pressed': String(v === value), title: title || text, style: `--d:${i}`, onclick: () => set(v) }, text));
+  const set = (v) => { cur = v; options.forEach(([o], i) => keys[i].setAttribute('aria-pressed', String(o === v))); if (onChange) onChange(v); };
   box.append(...keys);
   Object.defineProperty(box, 'value', { get: () => cur, set });
   return /** @type {HTMLElement & { value: string }} */ (box);

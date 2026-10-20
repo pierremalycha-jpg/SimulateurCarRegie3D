@@ -287,7 +287,7 @@ select:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px
 .deck .lede { font-size: 15px; line-height: 1.5; color: var(--muted); margin: 0; }
 /* afficheur : verre noir, caractères de cockpit, lignes de détail plus sombres */
 .glass { background: var(--glass); border: 1px solid #070a0c; border-radius: 3px; box-shadow: inset 0 1px 6px rgba(0,0,0,.8), 0 1px 0 rgba(255,255,255,.06); font-family: var(--f-mono); color: var(--lcd); text-shadow: 0 0 6px rgba(160,240,190,.25); }
-.dk-match { display: grid; gap: 3px; padding: 10px 14px; font-size: 13px; line-height: 1.35; min-width: min(360px, 100%); }
+.dk-match { display: grid; gap: 3px; padding: 10px 14px; font-size: 13px; line-height: 1.35; min-width: min(360px, 100%); box-sizing: border-box; }
 .dk-match .dim, .dk-match em { color: var(--lcd-dim); font-style: normal; }
 .dk-match .cs-truck { color: var(--amber); }
 /* la touche Antenne */
@@ -320,7 +320,7 @@ select:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px
 .seg button { flex: 1 1 auto; min-width: 0; background: linear-gradient(#444e58, #374049 60%, #313941); border: 1px solid #12171a; border-radius: 3px; padding: 5px 8px 4px; font-family: var(--f-disp); font-weight: 600; font-size: 13.5px; color: #cfd5d0;
   box-shadow: inset 0 1px 0 rgba(255,255,255,.12); white-space: nowrap; }
 .seg button:hover { color: #fff; background: linear-gradient(#4f5a65, #404a54 60%, #39424b); }
-.seg button[aria-checked="true"] { color: #241805; background: linear-gradient(#e9b864, #d9a043 60%, #cc9234); border-color: #5c4210; box-shadow: inset 0 1px 0 rgba(255,255,255,.35); }
+.seg button[aria-pressed="true"] { color: #241805; background: linear-gradient(#e9b864, #d9a043 60%, #cc9234); border-color: #5c4210; box-shadow: inset 0 1px 0 rgba(255,255,255,.35); }
 /* la journée du car : une tranche par vacation (bandeau d'inscription, consigne, touche) */
 .dk-day { grid-area: day; display: grid; gap: 10px; min-width: 0; }
 .dk-strips { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; }
@@ -346,7 +346,7 @@ select:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px
 /* mise sous tension : afficheurs, lampe et LED s'allument une fois, l'une après l'autre */
 @keyframes dk-power { 0% { opacity: .08; filter: saturate(0); } 60% { opacity: .5; } 100% { opacity: 1; filter: none; } }
 @keyframes dk-lamp { 0%, 30% { opacity: .15; box-shadow: none; } 38% { opacity: .9; } 44% { opacity: .3; } 100% { opacity: 1; } }
-.deck .glass, .deck .seg [aria-checked="true"] { animation: dk-power .5s ease-out both; animation-delay: calc(var(--d, 0) * 70ms + 150ms); }
+.deck .glass, .deck .seg [aria-pressed="true"] { animation: dk-power .5s ease-out both; animation-delay: calc(var(--d, 0) * 70ms + 150ms); }
 .deck .onair-lamp { animation: dk-lamp .9s ease-out both; animation-delay: .55s; }
 @media (max-width: 1100px) { .dk-strips { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 @media (max-width: 900px) {
