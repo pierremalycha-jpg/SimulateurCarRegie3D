@@ -141,6 +141,12 @@ export const RATTACHEMENT = {
     'reseau-depannage': ['2.13', '3.6'],
     'reseau-leaf': ['2.3', '2.14', '3.6'],
     'reseau-passerelle': ['2.3', '2.10', '3.6'],
+    'prism-waveform': ['1.4', '2.2', '2.9'],
+    'prism-gamut': ['1.4', '2.2'],
+    'prism-oeil': ['2.2', '2.13', '3.12'],
+    'ctrlnet-bases': ['3.6', '2.3'],
+    'ctrlnet-machine': ['2.3', '3.6', '2.10'],
+    'ctrlnet-depannage': ['2.13', '3.6'],
   },
   missions: {
     m1: ['2.10'], m2: ['1.1', '3.4'], m3: ['1.1', '2.10'], m3b: ['2.7'], m4: ['1.1', '3.4'], m5: ['2.7', '3.4'],

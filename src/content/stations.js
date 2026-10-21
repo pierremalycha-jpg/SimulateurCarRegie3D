@@ -1,5 +1,22 @@
 // @ts-check
 // Contenus pédagogiques : fiche de chaque poste (rôle, matériel, déroulé, conseils).
+import { S } from '../state.js';
+
+// poste « reseau » : sa fiche dépend du type de car
+const RESEAU_IP = {
+  title: 'Réseau IP ST 2110 (spine-leaf rouge / bleu)', where: 'Baie technique — baie « Réseau IP · Multiview » et commutateurs de haut de baie',
+  role: 'Dans un car IP, la grille est remplacée par deux réseaux Ethernet indépendants, rouge et bleu, qui transportent chaque flux en double (SMPTE ST 2022-7). Chaque réseau est une fabric spine-leaf : des leaves de haut de baie reçoivent les appareils, deux spines les relient. L\'ingénieur réseau configure les commutateurs (VLAN, routage OSPF, multicast PIM-SSM / IGMPv3, PTP, QoS) et surveille la bande passante.',
+  gear: ['2 × 2 spines 32 × 100 GbE (QSFP28)', '2 × 6 leaves 48 × 25 GbE + 8 × 100 GbE, une par zone (caméras, production, ralentis, monitoring, audio, passerelles)', 'Grands maîtres PTP GPS (ST 2059-2) raccordés aux spines', 'Commutateur de contrôle / gestion (NMOS, RCP, supervision)', 'Contrôleur NMOS (IS-04 / IS-05) et, souvent, un contrôleur SDN'],
+  process: ['Mise en service d\'un appareil (interface web) : adresses des cartes média A et B, adresse de contrôle et registre NMOS, domaine PTP, puis les abonnements', 'Avant l\'exploitation : vérifier les voisins OSPF et PIM, le grand maître élu, les ports en erreur', 'Contrôler que chaque réception est protégée (deux réseaux) et qu\'aucun lien n\'est saturé', 'Toute modification : la tester, puis « write memory »', 'En panne : couche 1 → VLAN → IP / OSPF → multicast → PTP → NMOS'],
+  tips: ['Un terme inconnu ? Le bouton « ? » à côté ouvre sa fiche, avec un schéma ; « Lexique » les regroupe toutes.', 'Une panne d\'un seul réseau ne se voit pas à l\'image : seules les alarmes la signalent.', 'Un lien saturé dégrade tous les flux qui le traversent.', 'Un appareil qui n\'est pas « slave only » peut se faire élire grand maître PTP.'],
+};
+const RESEAU_SDI = {
+  title: 'Réseau de contrôle (car SDI)', where: 'Baie technique — baie « Réseau · Multiview » (switch de cœur) ; switchs d\'accès sous les pupitres de production et de vision',
+  role: 'Dans un car SDI, les images passent par des câbles coaxiaux et la grille, mais tout ce qui se pilote passe par un réseau Ethernet Gigabit : les RCP règlent les caméras à travers leur CCU, le pupitre du mélangeur commande son processeur, le logiciel de grille envoie les prises, IPDirector dialogue avec les serveurs EVS, le tally et le nom des sources (UMD) arrivent au multiview, l\'intercom et la télécommande de la console son passent aussi par là. On tient le plan d\'adressage, on configure les switchs (VLAN, QoS) et on dépanne les machines qui ne répondent plus.',
+  gear: ['3 switchs Gigabit administrables : un cœur de niveau 3 (il route entre les VLAN) et deux switchs d\'accès PoE (production, vision)', 'Liens montants en trunk 802.1Q (plusieurs VLAN sur un câble) entre les switchs', 'Un VLAN par usage : gestion, caméras, production, ralentis, intercom et son, fichiers, invités', 'Routeur / pare-feu vers Internet et la chaîne, borne Wi-Fi pour les invités', 'Câbles RJ45 de catégorie 6 (100 m au plus par lien)'],
+  process: ['Avant l\'installation : le plan d\'adressage (une adresse fixe par machine, un VLAN par usage)', 'Mise en service d\'une machine : adresse, masque, passerelle, port du switch dans le bon VLAN, classe QoS, puis un ping', 'Avant l\'antenne : balayage depuis le PC de supervision, toutes les machines doivent répondre', 'En panne : câble et voyant du port, puis VLAN, puis adresse et masque, puis passerelle'],
+  tips: ['Un terme inconnu ? Le bouton « ? » ouvre sa fiche ; l\'onglet Formation reprend les bases.', 'Deux machines avec la même adresse se perturbent toutes les deux : on ne recopie jamais la configuration d\'une machine sur une autre sans changer l\'adresse.', 'Une passerelle fausse ne coupe pas une machine de son VLAN : elle la coupe du reste (supervision, heure, Internet).', 'Le VLAN se règle sur le port du switch, pas dans la machine.'],
+};
 
 export const STATION_INFO = {
   realisateur: {
@@ -51,6 +68,13 @@ export const STATION_INFO = {
     process: ['Line-up : balance des noirs (iris fermé), balance des blancs sur une charte, chargement des fichiers de scène', 'Matching : même niveau de noir, même balance des blancs, même gamma et même saturation pour toutes les caméras', 'Direct : suivi de l\'iris en continu (« riding »), ajustements fins des couleurs'],
     tips: ['Repères : pelouse en plein soleil vers 40-55 %, maillot blanc sous 100 %, noirs à 0-2 %.', 'Ouvrir l\'iris d\'un diaphragme double la lumière ; +6 dB de gain aussi, mais avec du bruit.', 'Au téléobjectif, l\'ouverture maximale diminue (ramping) : l\'image peut s\'assombrir quand le cadreur zoome.', 'Les caméras super ralenti reçoivent 3 ou 6 fois moins de lumière par image.'],
   },
+  mesure: {
+    title: 'Baie de mesure (PRISM)', where: 'Zone technique – au bout de la rangée côté porte',
+    role: 'Qualifie le signal lui-même, pas seulement l\'image : on y brasse une sortie de CCU, de la grille ou du mélangeur sur l\'instrument de mesure (type PRISM) pour lire le diagramme de l\'œil, la gigue, les erreurs CRC, la longueur de câble estimée et le timing par rapport à la référence.',
+    gear: ['Moniteur de mesure SDI / IP (type Telestream PRISM, anciennement Tektronix), option couche physique (œil, gigue, câble)', 'Jacks d\'écoute de la baie de brassage, cordons courts 75 Ω', 'Référence du SPG (black burst, tri-level) bouclée sur l\'instrument'],
+    process: ['Installation : mesurer chaque liaison coaxiale (affaiblissement, marge de l\'égaliseur, CRC à zéro)', 'Line-up : barres de chaque caméra au vecteurscope, timing de chaque source', 'Direct : surveiller les CRC ; une erreur sans défaut visible = liaison au bord de la falaise', 'Dépannage : œil, dépassement, longueur estimée, puis changer le cordon ou ajouter un répéteur'],
+    tips: ['La norme définit l\'œil à la sortie de l\'émetteur avec 1 m de câble : un œil brut fermé après 80 m en 3G est normal, regardez l\'œil égalisé.', 'Un dépassement de plus de 10 % trahit une rupture d\'impédance : connecteur mal serti, BNC 50 Ω, câble écrasé.', 'Le seul bon compte de CRC pendant une émission, c\'est zéro.'],
+  },
   brassage: {
     title: 'Baie de brassage (jackfield)', where: 'Zone technique',
     role: 'Panneaux de jacks vidéo, audio et référence placés entre les appareils et la grille : on y dérive, remplace ou contourne une liaison avec un cordon, sans toucher au câblage arrière.',
@@ -93,13 +117,8 @@ export const STATION_INFO = {
     process: ['Choisir la destination, puis la source, puis TAKE', 'Préparer des « salvos » (configurations complètes) avant le direct'],
     tips: ['Une erreur sur la grille peut envoyer du noir à la chaîne : toujours vérifier le retour antenne après une prise.'],
   },
-  reseau: {
-    title: 'Réseau IP ST 2110 (spine-leaf rouge / bleu)', where: 'Baie technique — baie « Réseau IP · Multiview » et commutateurs de haut de baie',
-    role: 'Dans un car IP, la grille est remplacée par deux réseaux Ethernet indépendants, rouge et bleu, qui transportent chaque flux en double (SMPTE ST 2022-7). Chaque réseau est une fabric spine-leaf : des leaves de haut de baie reçoivent les appareils, deux spines les relient. L\'ingénieur réseau configure les commutateurs (VLAN, routage OSPF, multicast PIM-SSM / IGMPv3, PTP, QoS) et surveille la bande passante.',
-    gear: ['2 × 2 spines 32 × 100 GbE (QSFP28)', '2 × 6 leaves 48 × 25 GbE + 8 × 100 GbE, une par zone (caméras, production, ralentis, monitoring, audio, passerelles)', 'Grands maîtres PTP GPS (ST 2059-2) raccordés aux spines', 'Commutateur de contrôle / gestion (NMOS, RCP, supervision)', 'Contrôleur NMOS (IS-04 / IS-05) et, souvent, un contrôleur SDN'],
-    process: ['Mise en service d\'un appareil (interface web) : adresses des cartes média A et B, adresse de contrôle et registre NMOS, domaine PTP, puis les abonnements', 'Avant l\'exploitation : vérifier les voisins OSPF et PIM, le grand maître élu, les ports en erreur', 'Contrôler que chaque réception est protégée (deux réseaux) et qu\'aucun lien n\'est saturé', 'Toute modification : la tester, puis « write memory »', 'En panne : couche 1 → VLAN → IP / OSPF → multicast → PTP → NMOS'],
-    tips: ['Un terme inconnu ? Le bouton « ? » à côté ouvre sa fiche, avec un schéma ; « Lexique » les regroupe toutes.', 'Une panne d\'un seul réseau ne se voit pas à l\'image : seules les alarmes la signalent.', 'Un lien saturé dégrade tous les flux qui le traversent.', 'Un appareil qui n\'est pas « slave only » peut se faire élire grand maître PTP.'],
-  },
+  // car SDI : réseau de contrôle Gigabit ; car IP : réseau ST 2110 (fiche inchangée)
+  get reseau() { return S.ipMode ? RESEAU_IP : RESEAU_SDI; },
   ccu: {
     title: 'Baie CCU (voies caméras)', where: 'Baie technique',
     role: 'Chaque caméra a sa CCU (Camera Control Unit) dans le car. La CCU alimente la caméra par le câble, reçoit l\'image, renvoie le retour vidéo, l\'intercom, le tally et la référence, et relaie les réglages du RCP.',
@@ -182,6 +201,6 @@ export const STATION_INFO = {
 // ordre et lieu des postes dans le guide (onglet « Les postes »)
 export const STATION_LIST = [
   ['realisateur', 'Car · production'], ['scripte', 'Car · production'], ['melangeur', 'Car · production'], ['habillage', 'Car · production'], ['producteur', 'Car · production'], ['chefdecar', 'Car · production'],
-  ['vision', 'Car · vision'], ['evs', 'Car · ralentis'], ['ipdirector', 'Car · ralentis'], ['son', 'Car · régie son'], ['hf', 'Car · zone technique'], ['grille', 'Car · zone technique'], ['brassage', 'Car · zone technique'], ['reseau', 'Car · zone technique'], ['ccu', 'Car · zone technique'], ['synchro', 'Car · zone technique'], ['transmission', 'Car · zone technique'], ['intercom', 'Car · zone technique'],
+  ['vision', 'Car · vision'], ['evs', 'Car · ralentis'], ['ipdirector', 'Car · ralentis'], ['son', 'Car · régie son'], ['hf', 'Car · zone technique'], ['grille', 'Car · zone technique'], ['mesure', 'Car · zone technique'], ['brassage', 'Car · zone technique'], ['reseau', 'Car · zone technique'], ['ccu', 'Car · zone technique'], ['synchro', 'Car · zone technique'], ['transmission', 'Car · zone technique'], ['intercom', 'Car · zone technique'],
   ['pieddecar', 'Compound'], ['energie', 'Compound'], ['cadreur', 'Stade'], ['antenne', 'Stade'], ['localtv', 'Stade'], ['commentateurs', 'Stade'], ['var', 'Stade'],
 ];

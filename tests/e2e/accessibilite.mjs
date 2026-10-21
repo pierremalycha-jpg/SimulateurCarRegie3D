@@ -13,7 +13,7 @@ const AXE = fs.readFileSync(createRequire(import.meta.url).resolve('axe-core/axe
 const TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'];
 
 const browser = await launch();
-const page = await openPage(browser, { errors: T.errors, fresh: true, title: true });
+const page = await openPage(browser, { errors: T.errors, fresh: true, title: true, before: (pg) => pg.emulateMedia({ reducedMotion: 'reduce' }) });
 const ev = (f, a) => page.evaluate(f, a);
 const all = {};
 async function scan(name, include) {
@@ -60,7 +60,7 @@ await until(page, () => !!document.querySelector('#modal .pupitre'), null, 8000)
 await scan('pupitre', '#modal');
 await ev(() => document.querySelector('#modal .x')?.click());
 // postes
-for (const st of ['melangeur', 'realisateur', 'vision', 'evs', 'son', 'reseau', 'grille']) {
+for (const st of ['melangeur', 'realisateur', 'vision', 'evs', 'son', 'reseau', 'grille', 'mesure']) {
   await ev((s) => window.__dbg.openStation(s), st);
   await until(page, (s) => window.__dbg.S.mode === 'station' && window.__dbg.S.station === s, st, 30000);
   await page.waitForTimeout(800);
