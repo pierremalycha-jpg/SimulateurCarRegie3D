@@ -428,11 +428,14 @@ export function prismInstrument(o) {
   function pick(id) { setInput(key, id); for (const T of P.tiles) T._persist = false; if (o.onInput) o.onInput(id); inKey = ''; buildInputs(); upd(true); }
 
   // ---- tuiles ----
+  // l'état peut changer ailleurs (le chef de car, « Fais-le pour moi ») : on reconstruit les tuiles si besoin
+  const sigOf = () => JSON.stringify([P.layout, P.layout === 1 ? P.sel : -1, P.tiles.map((t) => [t.app, t.mode, t.scale, t.cursor != null, t.bars, t.zoom, t.eq, t.filt, t.ref, t.gamut, t.safe])]);
+  let sig = '';
   /** @type {Array<{ T: any, sec: HTMLElement, cv: HTMLCanvasElement, read: HTMLElement, body: HTMLElement, kv: any, sz: string }>} */
   let tiles = [];
   const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(() => { for (const t of tiles) t.sz = ''; upd(true); }) : null;
   function buildTiles() {
-    screen.replaceChildren(); tiles = [];
+    sig = sigOf(); screen.replaceChildren(); tiles = [];
     P.tiles.forEach((T, i) => {
       const sel = el('select', { class: 'pz-app', 'aria-label': `Affichage de la tuile ${i + 1}`, 'data-tile': String(i) }, ...APPS.map(([a, l]) => el('option', { value: a }, l)));
       /** @type {HTMLSelectElement} */ (sel).value = T.app;
@@ -618,7 +621,7 @@ export function prismInstrument(o) {
   return {
     el: root,
     /** à appeler à 10 Hz par le poste */
-    update() { buildInputs(); upd(); },
+    update() { buildInputs(); if (sigOf() !== sig) buildTiles(); upd(); },
     refresh() { inKey = ''; buildInputs(); buildTiles(); },
     close() { if (ro) ro.disconnect(); SCOPE.active = false; SCOPE.hdr = false; },
     link: () => Lk,

@@ -195,7 +195,7 @@ export const RACKS = {
   patch: { title: 'Patch', units: [[1, 'blank'], [2, 'jack', 'VIDÉO IN 1-24'], [2, 'jack', 'VIDÉO IN 25-48'], [2, 'jack', 'GRILLE IN'], [2, 'jack', 'GRILLE OUT'], [2, 'jack', 'DÉPARTS / EVS'], [2, 'jack', 'RÉFÉRENCES'], [1, 'blank'], [2, 'jack', 'AUDIO']], device: 'pdc' },
   audio: { title: 'Audio', units: [[1, 'sw1', 'LEAF R5 · AUDIO'], [1, 'sw1', 'LEAF B5 · AUDIO'], [4, 'frame', 'CONSOLE · CŒUR DSP'], [1, 'madi', 'MADI / DANTE'], [1, 'madi', 'EMBEDDERS'], [1, 'madi', 'DÉSEMBEDDERS'], [1, 'vent'], [2, 'frame', 'UNITÉ COMMENTAIRE'], [1, 'pdu', 'PDU']] },
   rx: { title: 'Réception HF', units: [[1, 'blank'], [1, 'rx', 'RÉCEPTEUR HF 1'], [1, 'rx', 'RÉCEPTEUR HF 2'], [1, 'rx', 'RÉCEPTEUR HF 3'], [1, 'rx', 'RÉCEPTEUR HF 4'], [1, 'vent'], [2, 'dec', 'DÉCODEURS'], [2, 'frame', 'CONTRÔLE ANTENNES'], [1, 'pdu', 'PDU']], device: 'rx' },
-  ups: { title: 'Énergie', units: [[1, 'blank'], [3, 'ups', 'ONDULEUR'], [3, 'ups', 'ONDULEUR'], [1, 'vent'], [2, 'pdu', 'DISTRIBUTION 230 V'], [2, 'pdu', 'SURVEILLANCE ÉNERGIE']] },
+  ups: { title: 'Énergie · mesure', units: [[1, 'blank'], [3, 'frame', 'PRISM · MESURE SDI / IP'], [3, 'ups', 'ONDULEUR'], [3, 'ups', 'ONDULEUR'], [1, 'vent'], [2, 'pdu', 'DISTRIBUTION 230 V'], [2, 'pdu', 'SURVEILLANCE ÉNERGIE']] },
 };
 // rangées de baies de la zone technique : contre le mur d'écrans (côté gauche en entrant) et côté porte
 export const RACK_ROWS = { mur: ['ccu', 'ccu2', 'router', 'xvs', 'mv', 'evs', 'tx'], porte: ['spg', 'icom', 'patch', 'audio', 'rx', 'ups'] };
@@ -539,6 +539,8 @@ export function buildTruck() {
   st('mvproc', 'Baie de brassage', 6.3, 1.3, rk('patch'), { r: 1.1, station: 'brassage', zone: 'tech', device: 'pdc' });
   st('audiorack', 'Audio (MADI, embedders)', 6.9, 1.3, rk('audio'), { r: 1.1, station: 'son', zone: 'tech', short: 'Audio (MADI)' });
   st('hf', 'Régie HF', 7.75, -0.45, [8.65, 1.45, -0.45], { r: 1.3, zone: 'tech', device: 'rx' });
+  // baie de mesure (instrument type PRISM) au bout de la rangée côté porte : ui/prism_station.js
+  st('mesure', 'Baie de mesure (PRISM)', 8.0, 1.3, rk('ups'), { r: 1.1, zone: 'tech', device: 'prism', short: 'Mesure (PRISM)' });
   return scene;
 }
 

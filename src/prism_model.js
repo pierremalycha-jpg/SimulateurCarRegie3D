@@ -127,20 +127,21 @@ export function linkOf(p) {
   const f = sdiStd(); const h = hash(p.id);
   if (S.ipMode && p.kind !== 'spg') return { ip: true, f, p };
   const fl = PHY.faults[p.id] || null;
-  let len = p.len, extraDb = 0, rho = 0;
+  let len = p.len, lossX = 0, rho = 0;
   if (fl && fl.kind === 'touret' && !fl.rep) len += fl.len;
-  const attCable = lossOf(len, f);
+  const att = lossOf(len, f); // affaiblissement du câble (dépend de la fréquence : c'est lui que l'égaliseur compense)
   const eq = eqMax(f);
   if (fl && fl.kind === 'cable') {
-    // faux contact qui s'aggrave : la marge fond vite, puis lentement à travers la zone des erreurs CRC, puis plus rien
-    rho = 0.16;
+    // faux contact qui s'aggrave : rupture d'impédance (réflexions) et pertes par à-coups, qui mangent la marge
+    // vite, puis lentement à travers la zone des erreurs CRC, jusqu'à la perte du signal
     const sev = clamp((S.time - fl.t0) / fl.ramp, 0, 1);
-    const m0 = eq - attCable - 2 - 12 * rho;
+    rho = 0.2 + 0.08 * sev;
+    const m0 = eq - att - 2 - 12 * rho;
     const m = sev < 0.4 ? m0 + (2.5 - m0) * sev / 0.4 : 2.5 - 5 * (sev - 0.4) / 0.6;
-    extraDb = Math.max(0, eq - attCable - 12 * rho - m);
+    lossX = Math.max(0, eq - att - 12 * rho - m);
   }
-  const att = attCable + extraDb;
-  const margin = eq - att - 12 * rho; // marge de l'égaliseur ; une rupture d'impédance (réflexion) en mange
+  const attCable = att, extraDb = lossX;
+  const margin = eq - att - 12 * rho - lossX; // marge de l'égaliseur ; une rupture d'impédance (réflexion) en mange
   const src = srcSignal(p);
   const lock = src && margin > -1.5;
   // lignes en erreur par seconde : l'effet de falaise du numérique (rien, puis tout d'un coup)
@@ -153,7 +154,7 @@ export function linkOf(p) {
   const tj = f.tj * tjB * (0.85 + 0.3 * hash(p.id + 't')) + (lock ? ajX : 0);
   const ampSrc = p.kind === 'spg' ? 800 : 800 * (0.985 + 0.03 * h);
   const trSrc = f.tr * (p.kind === 'spg' ? 0.5 : 0.52 + 0.1 * h);
-  return { ip: false, f, p, fl, len, att, attCable, extraDb, eq, margin, rho, src, lock, crc, E, aj, tj, ampSrc, trSrc, tfSrc: trSrc * 1.05, ovs: 2.5 + 2 * h };
+  return { ip: false, f, p, fl, len, att, attCable, extraDb, lossX, eq, margin, rho, src, lock, crc, E, aj, tj, ampSrc, trSrc, tfSrc: trSrc * 1.05, ovs: 2.5 + 2 * h };
 }
 /** @typedef {ReturnType<typeof linkOf>} Link */
 
@@ -246,6 +247,8 @@ export function repairLink(id, act) {
   return { fixed, why };
 }
 export const phyFaultAt = (id) => PHY.faults[id] || null;
+// toutes les liaisons réparées (fin d'exercice, remise à zéro)
+export function clearPhy() { for (const id of Object.keys(PHY.faults)) delete PHY.faults[id]; PHY.ctr = {}; tickPhy(); }
 // caméra filaire de préférence hors antenne (la panne ne casse pas le programme d'entrée)
 export function pickFaultCam() {
   const pgm = meSource(MIX.pgm);
@@ -312,8 +315,8 @@ export function eyeSim(L, eq, nb = 360) {
   // de peau d'un vrai coaxial ralentit moins le début du front qu'un simple filtre RC)
   const tauRaw = 0.55 * Math.sqrt(Math.max(0, Math.pow(10, L.att / 10) - 1)) / Math.PI;
   // après l'égaliseur : reste un peu d'interférence entre symboles et du bruit, d'autant plus que la marge est faible
-  if (eq) { tauC = Math.min(tauRaw, 0.03 + 1.1 * Math.pow(1 - L.E, 1.5)); sig = 0.006 + 0.07 * Math.pow(1 - L.E, 2); }
-  else { tauC = tauRaw; sig = 0.006; }
+  if (eq) { tauC = 0.04 + 0.45 * Math.pow(1 - L.E, 1.5); sig = 0.004 + 0.09 * Math.pow(1 - L.E, 2); }
+  else { tauC = tauRaw; sig = 0.006 + 0.0035 * L.lossX; } // un faux contact ajoute du bruit et des à-coups
   const rho = L.rho;
   const ajSig = L.aj / 6; // gigue d'alignement (crête à crête ≈ 6 écarts-types)
   const bits = new Uint8Array(nb);
@@ -349,22 +352,27 @@ export function eyeSim(L, eq, nb = 360) {
   }
   const top = nu ? up / nu : 0, base = nd ? dn / nd : 0, amp = top - base;
   const open = amp > 0 && nu && nd ? Math.max(0, (minUp - maxDn) / amp) : 0;
-  // temps de montée et de descente (20 à 80 % entre les niveaux), dépassement
-  const cross = (s, lvl, rising) => { for (let j = 1; j < W; j++) { const a = s[j - 1], b = s[j]; if (rising ? a < lvl && b >= lvl : a > lvl && b <= lvl) return j - 1 + (lvl - a) / (b - a); } return NaN; };
-  let tr = 0, ntr = 0, tf = 0, ntf = 0, ovR = 0, ovF = 0;
+  // temps de montée et de descente (20 à 80 % entre les niveaux) et dépassement, sur les fronts moyennés
+  // (comme l'instrument : la moyenne efface le bruit, pas la forme du front)
+  const avgR = new Float32Array(W), avgF = new Float32Array(W); let ntr = 0, ntf = 0;
   for (let i = 0; i < segs.length; i++) {
-    const s = segs[i]; const P = pat[i];
-    if (P === 0b011) { const a = cross(s, base + 0.2 * amp, true), b = cross(s, base + 0.8 * amp, true); if (b > a) { tr += b - a; ntr++; } let mx = -Infinity; for (let j = spb / 2; j < W; j++) mx = Math.max(mx, s[j]); ovR = Math.max(ovR, (mx - top) / amp); }
-    if (P === 0b100) { const a = cross(s, top - 0.2 * amp, false), b = cross(s, top - 0.8 * amp, false); if (b > a) { tf += b - a; ntf++; } let mn = Infinity; for (let j = spb / 2; j < W; j++) mn = Math.min(mn, s[j]); ovF = Math.max(ovF, (base - mn) / amp); }
+    const P = pat[i]; const s = segs[i];
+    if (P === 0b011) { for (let j = 0; j < W; j++) avgR[j] += s[j]; ntr++; } else if (P === 0b100) { for (let j = 0; j < W; j++) avgF[j] += s[j]; ntf++; }
   }
-  const valid = L.lock && amp > 0.12 * L.ampSrc && ntr > 3 && ntf > 3;
+  for (let j = 0; j < W; j++) { avgR[j] /= ntr || 1; avgF[j] /= ntf || 1; }
+  const cross = (s, lvl, rising) => { for (let j = 1; j < W; j++) { const a = s[j - 1], b = s[j]; if (rising ? a < lvl && b >= lvl : a > lvl && b <= lvl) return j - 1 + (lvl - a) / (b - a); } return NaN; };
+  const tr = cross(avgR, base + 0.8 * amp, true) - cross(avgR, base + 0.2 * amp, true);
+  const tf = cross(avgF, top - 0.8 * amp, false) - cross(avgF, top - 0.2 * amp, false);
+  let mx = -Infinity, mn = Infinity; for (let j = spb / 2; j < W; j++) { mx = Math.max(mx, avgR[j]); mn = Math.min(mn, avgF[j]); }
+  const ovR = (mx - top) / amp, ovF = (base - mn) / amp;
+  const valid = L.lock && amp > 0.12 * L.ampSrc && open > 0.05 && ntr > 3 && ntf > 3 && isFinite(tr) && isFinite(tf); // œil fermé : pas de mesure
   const toPs = (smp) => smp / spb * uiPs;
   return {
     segs, spb, W, A,
     meas: {
       valid, amp, open,
-      tr: valid ? toPs(tr / ntr) : NaN, tf: valid ? toPs(tf / ntf) : NaN,
-      ovR: valid ? Math.max(0, ovR * 100 - 3 + L.ovs) : NaN, ovF: valid ? Math.max(0, ovF * 100 - 3 + L.ovs * 0.9) : NaN,
+      tr: valid ? toPs(tr) : NaN, tf: valid ? toPs(tf) : NaN,
+      ovR: valid ? Math.max(0, ovR * 100) + L.ovs : NaN, ovF: valid ? Math.max(0, ovF * 100) + L.ovs * 0.9 : NaN,
     },
   };
 }
