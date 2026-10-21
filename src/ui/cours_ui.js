@@ -8,6 +8,7 @@ import { TERMS } from '../content/netterms.js';
 import { openLayer, layerOpen, showTab, closeLayer } from './layer.js';
 import { chaptersSection, glossarySection, postesSection, materielSection, proceduresSection } from './guide.js';
 import { CHAPTERS, lessonById, allLessons, coursProgress, markSeen, recordQuiz, lessonDone, chapterDone } from '../cours/index.js';
+import { posteCible, estLecon } from '../cours/liens.js';
 
 // ----------------------------------------------------------------------------------
 // L'espace Cours, plein écran (touche G, entrée du titre, pupitre, menu du car) : il s'ouvre
@@ -23,11 +24,19 @@ const OLD_TAB = { chapitres: 'lecons', articles: 'chapitres' };
 const norm = (s) => String(s).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
 
 /**
- * @param {{ tab?: string, lesson?: string | null, chapter?: string | null } | string} [o]
- *   onglet (lecons, chapitres, glossaire, postes, materiel, procedures), leçon ou chapitre du guide à ouvrir
+ * @param {{ tab?: string, lesson?: string | null, chapter?: string | null, term?: string, poste?: string, fiche?: string } | string} [o]
+ *   onglet (lecons, chapitres, glossaire, postes, materiel, procedures), leçon ou chapitre du guide à ouvrir ;
+ *   term : fiche « ? » (les leçons qui la citent, la recherche sur son nom) ; poste : la leçon du poste (cours/liens.js)
  */
 export function openCours(o = {}) {
-  const opts = typeof o === 'string' ? { lesson: o } : o;
+  const opts = typeof o === 'string' ? { lesson: o } : { ...o };
+  if (opts.fiche && !opts.lesson && !opts.term) { if (estLecon(opts.fiche)) opts.lesson = opts.fiche; else if (TERMS[opts.fiche]) opts.term = opts.fiche; }
+  if (opts.poste && !opts.lesson) { const id = posteCible(opts.poste, S.ipMode); if (estLecon(id)) opts.lesson = id; else if (TERMS[id]) opts.term = id; }
+  if (opts.term && TERMS[opts.term]) {
+    // la première leçon qui cite la fiche ; sinon la recherche sur son nom (leçons et fiches)
+    const hit = allLessons().find(({ lesson }) => (lesson.terms || []).includes(opts.term));
+    if (hit) opts.lesson = hit.lesson.id; else { UI.q = TERMS[opts.term].t; UI.lesson = null; opts.tab = 'lecons'; }
+  }
   let tab = OLD_TAB[opts.tab || ''] || opts.tab || 'lecons';
   if (opts.lesson) { UI.lesson = opts.lesson; tab = 'lecons'; const f = lessonById(opts.lesson); if (f) UI.chapter = f.chapter.id; }
   const chapter = opts.chapter || null;

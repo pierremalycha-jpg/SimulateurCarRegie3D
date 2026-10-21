@@ -14,9 +14,10 @@ import { rich } from './rich.js';
 import { allLessons } from '../cours/index.js';
 
 // ----------------------------------------------------------------------------------
-// Bouton « ? » à côté des termes techniques du poste Réseau IP, et sa fenêtre explicative :
-// l'essentiel en une phrase, un schéma, l'explication, ce qu'on en voit dans le car, des renvois
-// et la norme de référence. Le lexique regroupe toutes les fiches.
+// Bouton « ? » à côté des termes techniques des postes, et sa fenêtre explicative : l'essentiel
+// en une phrase, un schéma, l'explication, ce qu'on en voit dans le car, des renvois et la norme
+// de référence. Le lexique regroupe toutes les fiches. Ce sont les fiches du Cours (rangées par
+// thème dans l'onglet Notions) : « Ouvrir dans le Cours » y mène.
 // La fenêtre n'est pas modale : la station reste visible et continue de vivre derrière.
 // ----------------------------------------------------------------------------------
 const TP = { box: /** @type {HTMLElement|null} */ (null), anchor: /** @type {HTMLElement|null} */ (null), stack: /** @type {string[]} */ ([]), cur: '', filter: '' };
@@ -126,7 +127,9 @@ function termView(id, T) {
       see.length ? el('div', { class: 'tp-see' }, el('b', {}, 'Voir aussi'), ...see.map((k) => el('button', { type: 'button', class: 'tp-chip', 'data-see': k, onclick: () => openTerm(k, null, 'push') }, TERMS[k].t))) : null,
       lessons.length ? el('div', { class: 'tp-see tp-cours' }, el('b', {}, 'Leçon'), ...lessons.map(({ lesson }) => el('button', { type: 'button', class: 'tp-chip', 'data-cours': lesson.id, title: 'Ouvrir la leçon dans les cours', onclick: () => { closeTerm(); emit('cours', { tab: 'chapitres', lesson: lesson.id }); } }, lesson.title))) : null,
       T.ref ? el('div', { class: 'tp-ref' }, 'Référence : ' + T.ref) : null),
-    el('footer', { class: 'tp-foot' }, el('button', { type: 'button', class: 'btn small', onclick: () => openTerm(LEX, null, 'push') }, `Lexique (${Object.keys(TERMS).length} termes)`))];
+    el('footer', { class: 'tp-foot' },
+      el('button', { type: 'button', class: 'btn small primary', 'data-cours': id, title: 'Les leçons qui en parlent, dans le Cours (plein écran)', onclick: () => { closeTerm(); emit('cours', { term: id }); } }, 'Ouvrir dans le Cours'),
+      el('button', { type: 'button', class: 'btn small', onclick: () => openTerm(LEX, null, 'push') }, `Lexique (${Object.keys(TERMS).length} termes)`))];
 }
 function lexView() {
   const list = el('div', { class: 'tp-lex' });
@@ -144,7 +147,7 @@ function lexView() {
   };
   search.addEventListener('input', () => { TP.filter = /** @type {HTMLInputElement} */ (search).value; fill(); });
   fill();
-  return [head('Lexique réseau et ST 2110', ''), el('div', { class: 'tp-scroll' }, el('p', { class: 'note' }, 'Toutes les fiches des boutons « ? » du poste Réseau IP, par famille.'), search, list)];
+  return [head('Lexique des postes', ''), el('div', { class: 'tp-scroll' }, el('p', { class: 'note' }, 'Toutes les fiches des boutons « ? » des postes, par famille. Le Cours les range aussi par thème (touche G).'), search, list)];
 }
 
 // à côté du bouton sur grand écran ; en bas de l'écran (feuille) sur téléphone

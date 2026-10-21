@@ -30,7 +30,7 @@ T.check('au moins une leçon par chapitre', ['signal', 'sdi', 'reseau', 'hf'].ev
 let shots = 0;
 for (const L of lessons) {
   await ev((id) => window.__dbg.openCours(id), L.id); await A.waitForTimeout(400);
-  const st = await ev(() => ({ h3: document.querySelector('#layer .co-page h3')?.textContent || '', ess: document.querySelectorAll('#layer .co-ess li').length, fig: !!document.querySelector('#layer .co-figbox svg, #layer .co-figbox canvas'), demo: document.querySelectorAll('#layer .co-demo-host *').length, q: document.querySelectorAll('#layer .co-q').length, car: !!document.querySelector('#layer .co-car'), chips: document.querySelectorAll('#layer .co-chip').length }));
+  const st = await ev(() => ({ h3: document.querySelector('#layer .co-page h2')?.textContent || '', ess: document.querySelectorAll('#layer .co-ess li').length, fig: !!document.querySelector('#layer .co-figbox svg, #layer .co-figbox canvas'), demo: document.querySelectorAll('#layer .co-demo-host *').length, q: document.querySelectorAll('#layer .co-q').length, car: !!document.querySelector('#layer .co-car'), chips: document.querySelectorAll('#layer .co-chip').length }));
   const ok = st.h3.startsWith(L.title) && st.ess >= 1 && st.ess <= 3 && (!L.fig || st.fig) && (!L.demo || st.demo > 0) && st.q === L.n && L.n === 3 && st.car;
   T.check(`leçon ${L.id} : essentiel, schéma, manipulation, « dans le car », quiz de 3`, ok, JSON.stringify(st));
   // quiz : la bonne réponse partout → leçon acquise
@@ -89,7 +89,7 @@ await eb(() => window.__dbg.openCours(window.__dbg.COURS.allLessons().find(({ le
 await B.click('#layer .co-terms .co-chip .q'); await B.waitForTimeout(400);
 T.check('fiche « ? » depuis une leçon : chip « Leçon » qui ramène à la leçon', await until(B, () => !!document.querySelector('.tp-cours .tp-chip'), null, 4000));
 await B.click('.tp-cours .tp-chip'); await B.waitForTimeout(400);
-T.check('la fiche se ferme et la leçon s\'affiche', await eb(() => !!document.querySelector('#layer .co-page h2') && !document.querySelector('.tp-cours')));
+T.check('la fiche se ferme et la leçon s\'affiche', await eb(() => !!document.querySelector('#layer .co-page h2') && [...document.querySelectorAll('.tp-cours')].every((e) => e.closest('[hidden]'))));
 // « Aller au poste » depuis une leçon : le poste s'ouvre, l'espace se ferme
 await B.click('#layer .co-car .btn.primary'); await B.waitForTimeout(1500);
 T.check('« Aller au poste » : le poste de la leçon s\'ouvre, l\'espace se ferme', await until(B, () => window.__dbg.S.mode === 'station' && !document.getElementById('layer'), null, 20000), await eb(() => window.__dbg.S.mode + ' ' + window.__dbg.S.station));

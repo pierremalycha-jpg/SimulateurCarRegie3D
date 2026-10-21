@@ -416,7 +416,11 @@ sous-réseau, un bilan de liaison HF…), l'explication, « pour aller plus loin
 car s'il le faut et ouvre le poste, ou le parcours du chef), les fiches « ? » liées et un quiz de trois questions
 dont chaque mauvaise réponse est expliquée ; une leçon est acquise quand le quiz est réussi en entier
 (`PROG.cours`, repris dans le livret et le suivi). La recherche trouve les leçons et les 140 fiches « ? » ; les
-fiches « ? » proposent la leçon qui les cite. Kit des leçons : `cours/kit.js` (SVG, canvas, curseurs, touches,
+fiches « ? » proposent la leçon qui les cite et « Ouvrir dans le Cours ». Les liens du Cours avec le reste
+(`cours/liens.js`) : chaque terme du glossaire qui a sa leçon ou sa fiche « ? » affiche un bouton « Leçon » ou
+« Fiche « ? » » ; le bouton « Cours » d'un poste et la touche G y ouvrent la leçon du poste (baie de mesure : le
+diagramme de l'œil ; réseau : adresses et VLAN en car SDI, multicast et PTP en car IP) ; l'onglet Postes donne la
+leçon de chaque poste. Un lien vers une leçon pas encore écrite s'allume le jour où elle l'est. Kit des leçons : `cours/kit.js` (SVG, canvas, curseurs, touches,
 lectures). Les autres onglets : les chapitres du guide par famille, le glossaire, les postes, le matériel, les
 procédures maison. Suite `tests/e2e/cours.mjs` (toutes les leçons).
 

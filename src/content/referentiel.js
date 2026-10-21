@@ -177,5 +177,7 @@ export const RATTACHEMENT = {
     'sdi-cest-quoi': ['2.10', '2.2'], 'sdi-oeil': ['2.2', '2.13', '3.9'], 'sdi-falaise': ['2.2', '2.13', '3.9'], 'sdi-embedded': ['2.10', '1.4'], 'sdi-cable': ['2.10', '3.9'],
     'reseau-ip': ['3.6', '2.10'], 'reseau-vlan': ['3.6', '2.10'], 'reseau-switch': ['3.6', '2.13'], 'reseau-multicast': ['3.6', '2.11'], 'reseau-ptp': ['3.6', '1.4'],
     'hf-frequences': ['2.10', '3.12'], 'hf-bilan': ['2.10', '2.7'], 'hf-antennes': ['2.7', '3.9'], 'hf-cofdm': ['2.11', '2.7'],
+    // chapitre Synchro, annoncé
+    'synchro-genlock': ['1.2', '1.4', '3.12'], 'synchro-timecode': ['1.3', '2.5'],
   },
 };
