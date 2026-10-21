@@ -51,7 +51,7 @@ const A = await newPage('host');   // formateur, hôte
 const B = await newPage('mix');    // truquiste
 const evA = (f, a) => A.evaluate(f, a), evB = (f, a) => B.evaluate(f, a);
 // A crée la session comme formateur
-await A.locator('button', { hasText: 'Jouer à plusieurs' }).click();
+await A.locator('.jo-team-seg button[data-v="coop"]').click(); await A.locator('#st-antenne').click();
 await A.waitForTimeout(500);
 await A.locator('#ses-pseudo').fill('Alice');
 await A.locator('.ses-role', { hasText: 'Formateur' }).click();
@@ -60,7 +60,7 @@ await A.locator('#modal button', { hasText: 'Créer la partie' }).click();
 await A.waitForTimeout(6000);
 check('A : session active, hôte', await evA(() => window.__dbg.SES.active && window.__dbg.S.mode === 'fps'));
 // B rejoint comme truquiste
-await B.locator('button', { hasText: 'Jouer à plusieurs' }).click();
+await B.locator('.jo-team-seg button[data-v="coop"]').click(); await B.locator('#st-antenne').click();
 await B.waitForTimeout(500);
 await B.locator('#ses-pseudo').fill('Bruno');
 await B.locator('#modal .tab', { hasText: 'Rejoindre une partie' }).click();

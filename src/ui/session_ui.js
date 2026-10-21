@@ -25,7 +25,7 @@ export function setSessionStarter(fn) { startCb = fn; }
 
 export async function openSessionPanel() {
   const body = el('div', { class: 'list' });
-  modal.open('Jouer à plusieurs', body, { width: 980 });
+  modal.open('Coopération', body, { width: 1040 });
   body.append(el('p', { class: 'note' }, 'Connexion…'));
   const room = await getRoom();
   if (!modal.isOpen) return;
@@ -55,6 +55,9 @@ async function lanKit() {
 const lanKitRow = () => el('div', { class: 'ses-kit' },
   el('div', {}, el('b', {}, 'Jouer sur un réseau local, sans Internet'), el('p', { class: 'note' }, 'La personne qui héberge télécharge le serveur (Windows, macOS, Linux : Node.js nécessaire), le lance, et donne aux autres l\'adresse qu\'il affiche.')),
   el('button', { class: 'btn small', onclick: () => lanKit() }, 'Télécharger le serveur réseau local (.zip)'));
+// le salon de coopération, comme le lobby d'un jeu en ligne : à gauche la connexion (l'adresse ou
+// le code à donner aux autres, le pseudo, créer ou rejoindre), à droite les postes de la
+// prestation, chacun avec la personne qui le tient ou « libre »
 function drawJoin(body) {
   const lan = transportKind() === 'lan';
   let role = SES.role !== 'observateur' ? SES.role : (canConfigure() && !lan ? 'formateur' : 'truquiste');
@@ -62,27 +65,37 @@ function drawJoin(body) {
   const pseudo = el('input', { type: 'text', value: getPseudo(), maxlength: 24, placeholder: 'Ex. Alice', class: 'ses-pseudo', id: 'ses-pseudo', autocomplete: 'nickname' });
   const code = el('input', { type: 'text', value: SES.code || randomCode(), maxlength: 12, class: 'ses-code', 'aria-label': 'Code de la partie' });
   for (const i of [pseudo, code]) i.addEventListener('keydown', (e) => e.stopPropagation());
+  pseudo.addEventListener('input', () => draw());
   const camSel = selectEl([...Array(16).keys()].map((i) => [i + 1, 'CAM ' + (i + 1)]), SES.cam || 1, () => draw(), null, 'Caméra');
-  const cards = el('div', { class: 'ses-roles' });
+  const cards = el('div', { class: 'ses-roles sl-slots', role: 'group', 'aria-label': 'Les postes de la prestation' });
   const camRow = el('div', { class: 'hwrow' }, el('span', { class: 'rl' }, 'Caméra'), camSel);
+  const count = el('span', { class: 'sl-count' });
   const taken = () => (mode === 'join' && party ? party.players : []);
   function draw() {
     cards.innerHTML = '';
+    const me = pseudo.value.trim() || 'vous';
     for (const [k, r] of Object.entries(ROLES_S)) {
       const who = taken().filter((p) => p.role === k && (k !== 'cadreur' || +p.cam === +camSel.value)).map((p) => p.name);
-      cards.append(el('button', { class: 'ses-role' + (k === role ? ' on' : '') + (who.length ? ' taken' : ''), style: { '--rc': ROLE_COLORS[k] }, onclick: () => { role = k; draw(); } },
-        el('b', {}, r.label), el('small', {}, r.desc), who.length ? el('em', {}, (k === 'cadreur' ? 'CAM ' + camSel.value + ' tenue par ' : 'Déjà pris par ') + who.join(', ') + (r.slices.length ? ' : vous seriez en lecture seule' : '')) : null));
+      const mine = k === role;
+      const names = [...who, ...(mine ? [me + ' (vous)'] : [])];
+      cards.append(el('button', { type: 'button', class: 'ses-role sl-slot' + (mine ? ' on' : '') + (who.length ? ' taken' : ''), style: { '--rc': ROLE_COLORS[k] }, 'aria-pressed': String(mine), onclick: () => { role = k; draw(); } },
+        el('b', {}, r.label),
+        el('span', { class: 'sl-who' + (names.length ? '' : ' free') }, names.length ? names.join(', ') : 'Libre'),
+        el('small', {}, r.desc),
+        who.length ? el('em', {}, (k === 'cadreur' ? 'CAM ' + camSel.value + ' tenue par ' : 'Déjà pris par ') + who.join(', ') + (r.slices.length ? ' : vous seriez en lecture seule' : '')) : null));
     }
     camRow.hidden = role !== 'cadreur';
+    const n = taken().length;
+    count.textContent = mode === 'join' && party ? `${n} joueur${n > 1 ? 's' : ''} dans la partie` : mode === 'host' ? 'Vous ouvrez le salon' : '';
   }
   // parties du réseau local
   const list = el('div', { class: 'ses-parties' });
   function drawParties() {
     list.innerHTML = '';
-    if (!parties.length) { list.append(el('p', { class: 'note' }, 'Aucune partie pour l\'instant. Demandez à l\'hôte de créer la sienne (onglet « Héberger »), la liste se met à jour toute seule.')); return; }
+    if (!parties.length) { list.append(el('p', { class: 'note' }, 'Aucune partie pour l\'instant. Demandez à l\'hôte de créer la sienne (« Créer une partie ») : la liste se met à jour toute seule.')); return; }
     for (const p of parties) {
       const sel = party && party.code === p.code;
-      list.append(el('button', { class: 'ses-party' + (sel ? ' on' : ''), onclick: () => { party = p; drawParties(); draw(); } },
+      list.append(el('button', { type: 'button', class: 'ses-party' + (sel ? ' on' : ''), 'aria-pressed': String(!!sel), onclick: () => { party = p; drawParties(); draw(); } },
         el('b', {}, 'Partie de ' + p.host), el('span', { class: 'note' }, `${p.count} joueur${p.count > 1 ? 's' : ''} · ${p.players.map((x) => `${x.name}${x.role ? ' (' + (ROLES_S[x.role] ? ROLES_S[x.role].label : x.role) + ')' : ''}`).join(', ')}`)));
     }
   }
@@ -103,20 +116,28 @@ function drawJoin(body) {
     drawParties(); draw();
   }
   const srvName = el('span', { class: 'note' });
-  const tabs = el('div', { class: 'tabs' });
+  const tabs = el('div', { class: 'tabs sl-tabs' });
   const pane = el('div', { class: 'list' });
+  // ce qu'il faut donner aux autres pour se connecter
+  const copy = (txt, what) => el('button', { type: 'button', class: 'btn small', onclick: async () => { try { await navigator.clipboard.writeText(txt()); toast(what + ' copiée.', 'good'); } catch (e) { toast('Copie impossible ici : notez-la à la main.', 'bad'); } } }, 'Copier');
+  const addr = `http://${location.host}`;
+  const info = lan
+    ? el('div', { class: 'sl-info lan' }, el('span', { class: 'sl-k' }, 'Adresse du salon'), el('code', { class: 'sl-addr' }, addr), copy(() => addr, 'Adresse'),
+      el('p', { class: 'note' }, 'Les autres joueurs, sur le même réseau (Wi-Fi ou câble), ouvrent cette adresse dans leur navigateur. Rien à installer.'))
+    : el('div', { class: 'sl-info' }, el('span', { class: 'sl-k' }, 'Code du salon'), code, copy(() => code.value, 'Code'),
+      el('p', { class: 'note' }, 'Tout le monde ouvre la même page publiée sur claude.ai et entre ce code : même code, même car.'));
   function show(m) {
-    mode = m; [...tabs.children].forEach((b) => b.classList.toggle('on', b.dataset.k === m));
+    mode = m; [...tabs.children].forEach((b) => { b.classList.toggle('on', b.dataset.k === m); b.setAttribute('aria-pressed', String(b.dataset.k === m)); });
     pane.innerHTML = '';
-    if (m === 'host') pane.append(el('p', {}, lan ? 'Vous créez la partie : votre ordinateur fait tourner le match pour tout le monde. Les autres la verront dans « Rejoindre une partie ».' : 'Vous créez la partie et vous faites tourner le match. Donnez le code aux autres participants.'),
-      lan ? null : el('div', { class: 'hwrow' }, el('span', { class: 'rl' }, 'Code'), code, el('button', { class: 'btn small', onclick: () => { code.value = randomCode(); } }, 'Nouveau code')));
+    if (m === 'host') pane.append(el('p', { class: 'note' }, lan ? 'Votre ordinateur fait tourner le match pour tout le monde. Les autres verront votre partie dans « Rejoindre une partie ».' : 'Vous faites tourner le match. Donnez le code ci-dessus aux autres joueurs.'),
+      lan ? null : el('button', { type: 'button', class: 'linkbtn', onclick: () => { code.value = randomCode(); } }, 'Tirer un nouveau code'));
     else if (lan) pane.append(el('div', { class: 'hwrow' }, el('b', {}, 'Parties sur ce réseau'), srvName), list);
-    else pane.append(el('div', { class: 'hwrow' }, el('span', { class: 'rl' }, 'Code de la partie'), code, el('span', { class: 'note' }, 'Même code = même car.')));
+    else pane.append(el('p', { class: 'note' }, 'Entrez ci-dessus le code que l\'hôte vous a donné.'));
     goBtn.textContent = m === 'host' ? 'Créer la partie' : 'Rejoindre la partie';
     draw();
   }
-  for (const [k, l] of [['host', 'Héberger une partie'], ['join', 'Rejoindre une partie']]) tabs.append(el('button', { class: 'tab', 'data-k': k, onclick: () => { chose = true; show(k); } }, l));
-  const goBtn = el('button', { class: 'btn primary' }, 'Rejoindre la partie');
+  for (const [k, l] of [['host', 'Créer une partie'], ['join', 'Rejoindre une partie']]) tabs.append(el('button', { type: 'button', class: 'tab', 'data-k': k, onclick: () => { chose = true; show(k); } }, l));
+  const goBtn = el('button', { class: 'btn primary sl-go' }, 'Rejoindre la partie');
   goBtn.onclick = async () => {
     const n = setPseudo(pseudo.value);
     if (!n) { pseudo.focus(); toast('Choisissez un pseudo : c\'est le nom que les autres verront au-dessus de votre personnage.', 'bad', 5000); return; }
@@ -131,16 +152,19 @@ function drawJoin(body) {
     clearInterval(timer); resetRoleStats();
     modal.close();
     if (S.mode === 'start' && startCb) await startCb.start();
-    toast(mode === 'host' ? (lan ? `Partie créée. Les autres la rejoignent depuis l'adresse du serveur, onglet « Rejoindre ».` : `Partie ${r.code} créée : donnez ce code aux autres participants.`) : `Vous êtes ${ROLES_S[role].label}${role === 'cadreur' ? ' (CAM ' + camSel.value + ')' : ''}.`, 'good', 7000);
+    toast(mode === 'host' ? (lan ? `Partie créée. Les autres la rejoignent depuis ${addr}, « Rejoindre une partie ».` : `Partie ${r.code} créée : donnez ce code aux autres joueurs.`) : `Vous êtes ${ROLES_S[role].label}${role === 'cadreur' ? ' (CAM ' + camSel.value + ')' : ''}.`, 'good', 7000);
   };
-  body.append(
-    el('div', { class: 'ses-banner' + (lan ? ' lan' : '') }, el('b', {}, lan ? 'Réseau local' : 'En ligne'), el('span', {}, lan ? 'Tout le monde est sur le même réseau et a ouvert l\'adresse du serveur de l\'hôte.' : 'Tout le monde a ouvert la page publiée sur claude.ai.')),
-    el('div', { class: 'hwrow' }, el('label', { class: 'rl', for: 'ses-pseudo' }, 'Votre pseudo'), pseudo, el('span', { class: 'note' }, 'Affiché au-dessus de votre personnage.')),
-    tabs, pane,
-    el('h3', {}, 'Votre rôle dans la prestation'), cards, camRow,
-    el('p', { class: 'note' }, 'Chaque poste du car n\'est piloté que par celui qui tient le rôle ; les autres le voient en direct, en lecture seule. L\'hôte (ou le formateur) peut réattribuer les rôles une fois la partie lancée.'),
-    el('div', { class: 'hwrow' }, goBtn),
-    lan ? null : lanKitRow());
+  body.append(el('div', { class: 'salon' },
+    el('section', { class: 'sl-conn', 'aria-label': 'Connexion' },
+      el('div', { class: 'ses-banner' + (lan ? ' lan' : '') }, el('b', {}, lan ? 'Réseau local' : 'En ligne'), el('span', {}, lan ? 'Servi par l\'ordinateur de l\'hôte' : 'Page publiée sur claude.ai')),
+      info,
+      el('label', { class: 'sl-k', for: 'ses-pseudo' }, 'Votre pseudo'), pseudo,
+      tabs, pane, goBtn),
+    el('section', { class: 'sl-room', 'aria-label': 'Les postes' },
+      el('div', { class: 'sl-head' }, el('h3', {}, 'Les postes de la prestation'), count),
+      cards, camRow,
+      el('p', { class: 'note' }, 'Choisissez votre poste. Chacun n\'est piloté que par celui qui le tient ; les autres le voient en direct, en lecture seule. L\'hôte (ou le formateur) peut réattribuer les postes une fois la partie lancée.'))),
+  lan ? null : lanKitRow());
   show(lan ? 'join' : 'host');
   if (lan) { poll(); timer = setInterval(poll, 2000); }
 }

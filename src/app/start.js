@@ -60,7 +60,7 @@ export function buildStart() {
   const SHORT_LIGHT = { jour: 'Après-midi', fin: 'Soleil rasant', couvert: 'Couvert', nuit: 'Nuit' };
   const SHORT_FMT = { HD: 'HD 1080p50', HDi: 'HD 1080i50', UHD: 'UHD HDR' };
   const capSum = el('span', { class: 'jo-capsum' });
-  const updSum = () => { capSum.textContent = [SHORT_LIGHT[light.value] || light.value, SHORT_FMT[fmt.value] || fmt.value, infra.value === 'ip' ? 'car IP' : 'car SDI', `qualité ${qual.value}`, snd.value === '1' ? 'son' : 'son coupé'].join(' · '); };
+  const updSum = () => { capSum.textContent = [SHORT_LIGHT[light.value] || light.value, SHORT_FMT[fmt.value] || fmt.value, infra.value === 'ip' ? 'car IP' : 'car SDI', `qualité ${qual.value}`, snd.value === '1' ? 'son activé' : 'son coupé'].join(' · '); };
   const updFmt = () => { S.format = fmt.value; paintTruckSign(CFG.car.name); fmtNote.textContent = `Avec ce format : ${evsLayout().label} ; mélangeur ${EQUIP.mixer} avec ${mixInputs()} entrées utilisées.`; updSum(); };
   const light = selector('stlight', 'Lumière', Object.entries(LIGHTING).map(([k, v]) => [k, SHORT_LIGHT[k] || v.label, v.label]), 'jour', () => updSum());
   const fmt = selector('stfmt', 'Format de production', Object.entries(FORMATS).map(([k, v]) => [k, SHORT_FMT[k] || v.label, v.label]), S.format, () => updFmt());
@@ -153,22 +153,26 @@ export function buildStart() {
         el('span', { class: 'dim' }, 'Bollaert-Delelis, reconstitution'),
         el('span', {}, el('em', {}, 'Antenne '), '20:45   ', el('em', {}, 'Coup d\'envoi '), '21:00'),
         truckLine)),
-    step(1, 'Le lieu', el('ul', { class: 'lx-wall jo-lieux' },
-      lieu('car', 'Car régie', 'Captation sportive au stade', true, ['car', 'terrain'], () => modes.querySelector('[aria-pressed="true"]')?.focus()),
-      concert ? lieu('concert', 'Salle de concert', concert.cadre, false, concert.icons, () => teaser(concert)) : null)),
-    step(2, 'Le mode', modes),
-    step(3, 'En équipe', el('div', { class: 'jo-team' }, teamSeg, teamNote)),
-    el('details', { class: 'jo-capt plate' },
-      el('summary', {}, el('b', {}, 'Conditions de captation'), capSum),
-      el('div', { class: 'jo-capt-grid' },
-        el('label', {}, 'Lumière'), light,
-        el('label', {}, 'Format'), fmt,
-        el('label', {}, 'Car'), infra,
-        fmtNote,
-        el('label', {}, 'Qualité'), qual,
-        el('label', {}, 'Son'), snd)),
-    el('section', { class: 'onair jo-go', 'aria-label': 'Lancer' },
-      el('button', { id: 'st-antenne', class: 'onair-key', onclick: () => go() }, lamp, goTitle, goDesc)),
+    el('div', { class: 'jo-steps' },
+      step(1, 'Le lieu', el('ul', { class: 'lx-wall jo-lieux' },
+        lieu('car', 'Car régie', 'Captation sportive au stade', true, ['car', 'terrain'], () => modes.querySelector('[aria-pressed="true"]')?.focus()),
+        concert ? lieu('concert', 'Salle de concert', concert.cadre, false, concert.icons, () => teaser(concert)) : null)),
+      step(2, 'Le mode', modes),
+      step(3, 'En équipe', el('div', { class: 'jo-team' }, teamSeg, teamNote),
+        lan ? el('p', { class: 'note cs-lan' }, el('b', {}, 'Réseau local'), ` : ce simulateur est servi par l'ordinateur de l'hôte (${location.host}).`) : null)),
+    // à droite : ce qui lance la partie, et les conditions de captation repliées dessous
+    el('aside', { class: 'jo-side', 'aria-label': 'Lancer la partie' },
+      el('section', { class: 'onair jo-go', 'aria-label': 'Lancer' },
+        el('button', { id: 'st-antenne', class: 'onair-key', onclick: () => go() }, lamp, goTitle, goDesc)),
+      el('details', { class: 'jo-capt plate' },
+        el('summary', {}, el('b', {}, 'Conditions de captation'), capSum),
+        el('div', { class: 'jo-capt-grid' },
+          el('label', {}, 'Lumière'), light,
+          el('label', {}, 'Format'), fmt,
+          el('label', {}, 'Car'), infra,
+          fmtNote,
+          el('label', {}, 'Qualité'), qual,
+          el('label', {}, 'Son'), snd))),
     el('footer', { class: 'jo-foot' },
       el('p', { class: 'note cs-ver' }, el('span', { id: 'stversion' }, `TIEE Simulator, version ${APP_VERSION}`), el('button', { class: 'linkbtn', onclick: () => openDiag() }, icon('diagnostic'), 'Diagnostic technique')),
       el('p', { class: 'note jo-credit' }, el('b', {}, 'Développé par Pierre MALYCHA'), ' · réalisé par le BTS Audiovisuel de Saint-Quentin (lycée Henri-Martin)'),

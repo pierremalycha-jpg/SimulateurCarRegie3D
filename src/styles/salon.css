@@ -1,0 +1,26 @@
+/* le salon de coopération (src/ui/session_ui.js, drawJoin) : la connexion à gauche, les postes de
+   la prestation à droite, chacun avec qui le tient, comme le lobby d'un jeu en ligne */
+.salon { display: grid; grid-template-columns: minmax(260px, 340px) minmax(0, 1fr); gap: 18px; align-items: start; }
+.sl-conn { display: grid; gap: 10px; padding: 14px; background: var(--well); border: 1px solid #0f1316; border-radius: 4px; box-shadow: inset 0 1px 3px rgba(0,0,0,.4); }
+.sl-conn .ses-pseudo { width: 100%; box-sizing: border-box; }
+.sl-k { font: 600 12.5px var(--f-leg); color: var(--muted); }
+/* l'adresse ou le code à donner aux autres : en grand, lisible de loin, comme un afficheur */
+.sl-info { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px 8px; align-items: center; padding: 10px 12px; background: var(--glass); border: 1px solid #070a0c; border-radius: 3px; }
+.sl-info .sl-k, .sl-info .note { grid-column: 1 / -1; margin: 0; }
+.sl-addr, .sl-info .ses-code { font: 600 19px var(--f-mono); color: #d3f3df; overflow-wrap: anywhere; }
+.sl-info .ses-code { width: 100%; box-sizing: border-box; background: #0b1013; border-color: #22303a; }
+.sl-tabs { margin-top: 4px; }
+.sl-tabs .tab { flex: 1; justify-content: center; }
+.sl-go { width: 100%; justify-content: center; padding-block: 10px; font-size: 15px; }
+.sl-room { display: grid; gap: 10px; min-width: 0; }
+.sl-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 12px; }
+.sl-head h3 { margin: 0; font: 700 17px var(--f-disp); }
+.sl-count { font: 13px var(--f-mono); color: var(--lcd-dim, #86a596); }
+.sl-slots { grid-template-columns: repeat(auto-fill, minmax(min(100%, 210px), 1fr)); gap: 8px; }
+.sl-slot { display: flex; flex-direction: column; gap: 3px; min-height: 92px; }
+.sl-who { display: flex; align-items: center; gap: 6px; font: 600 13.5px var(--f-body); color: var(--fg); }
+.sl-who::before { content: ""; flex: none; width: 8px; height: 8px; border-radius: 50%; background: var(--rc, var(--pvw)); box-shadow: 0 0 6px var(--rc, var(--pvw)); }
+.sl-who.free { color: var(--dim); font-weight: 400; }
+.sl-who.free::before { background: transparent; box-shadow: inset 0 0 0 1px #4a5560; }
+.sl-slot:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+@media (max-width: 760px) { .salon { grid-template-columns: minmax(0, 1fr); } }

@@ -1,0 +1,13 @@
+/* Visite guidée (Jouer > Visite guidée) : le plan de la visite dans le panneau du chef de car,
+   le tour du car puis les postes, cochés une fois vus, le prochain mis en avant */
+.chef-visit-list { list-style: none; margin: 4px 0 2px; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 2px 10px; counter-reset: visite; }
+.chef-visit button { all: unset; box-sizing: border-box; width: 100%; display: flex; align-items: center; gap: 8px; padding: 5px 6px; border-radius: 3px; cursor: pointer; color: var(--muted); font-size: 13px; line-height: 1.25; }
+.chef-visit button:hover { background: var(--well); color: var(--fg); }
+.chef-visit button:focus-visible { outline: 2px solid var(--cyan); outline-offset: 1px; }
+.chef-visit .chef-dot { width: 7px; height: 7px; animation: none; background: #2a3238; box-shadow: none; }
+.chef-visit.done button { color: var(--fg); }
+.chef-visit.done .ico { color: var(--pvw); flex: none; }
+.chef-visit.next button { color: var(--fg); background: var(--well); box-shadow: inset 3px 0 0 var(--cyan); }
+.chef-visit.next .chef-dot { background: var(--cyan); box-shadow: 0 0 6px var(--cyan); animation: chefPulse 1.2s ease-in-out infinite; }
+@media (max-width: 520px) { .chef-visit-list { grid-template-columns: 1fr; } }
+@media (prefers-reduced-motion: reduce) { .chef-visit.next .chef-dot { animation: none; } }

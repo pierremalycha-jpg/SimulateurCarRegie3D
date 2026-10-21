@@ -33,9 +33,9 @@ const newPage = async (id, q = 'lite') => openPage(await launch(), {
 const A = await newPage('alice');
 check('page servie par le serveur réseau local (three.js intégré)', await A.evaluate(() => !!window.CARREGIE_LAN && !!window.__dbg));
 check('accueil : bloc réseau local', await A.evaluate(() => /Réseau local/.test(document.querySelector('.cs-lan')?.textContent || '')));
-await A.locator('button', { hasText: 'Jouer à plusieurs' }).click();
+await A.locator('.jo-team-seg button[data-v="coop"]').click(); await A.locator('#st-antenne').click();
 await A.waitForTimeout(2500);
-check('pas encore de partie : onglet Héberger proposé', await A.evaluate(() => document.querySelector('#modal .tab.on')?.textContent === 'Héberger une partie'));
+check('pas encore de partie : onglet Héberger proposé', await A.evaluate(() => document.querySelector('#modal .tab.on')?.textContent === 'Créer une partie'));
 await A.screenshot({ path: OUT + '/l1-lobby-heberger.png' });
 await A.locator('#ses-pseudo').fill('Alice');
 await A.locator('.ses-role', { has: A.locator('b', { hasText: /^Réalisateur$/ }) }).click();
@@ -44,7 +44,7 @@ check('Alice en jeu, hôte', await until(A, () => window.__dbg.SES.active && win
 
 // ---- Bruno rejoint (truquiste) ----
 const B = await newPage('bruno');
-await B.locator('button', { hasText: 'Jouer à plusieurs' }).click();
+await B.locator('.jo-team-seg button[data-v="coop"]').click(); await B.locator('#st-antenne').click();
 await until(B, () => /Partie de Alice/.test(document.querySelector('.ses-parties')?.textContent || ''), null, 20000);
 check('Bruno voit la partie d\'Alice', await B.evaluate(() => /Partie de Alice/.test(document.querySelector('.ses-parties')?.textContent || '')));
 await B.locator('#ses-pseudo').fill('Bruno');
@@ -79,7 +79,7 @@ await A.screenshot({ path: OUT + '/l4-car-bruno-au-melangeur.png' });
 
 // ---- l'hôte attribue un rôle : Chloé arrive en observatrice, Alice la fait cadreuse CAM 3 ----
 const C = await newPage('chloe');
-await C.locator('button', { hasText: 'Jouer à plusieurs' }).click();
+await C.locator('.jo-team-seg button[data-v="coop"]').click(); await C.locator('#st-antenne').click();
 await until(C, () => /Partie de Alice/.test(document.querySelector('.ses-parties')?.textContent || ''), null, 20000);
 await C.locator('#ses-pseudo').fill('Chloé');
 await C.locator('.ses-role', { has: C.locator('b', { hasText: /^Observateur$/ }) }).click();

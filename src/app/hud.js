@@ -20,14 +20,15 @@ const chefBtn = (btn) => { btn.classList.add('chef-btn'); return btn; };
 const soundLabel = () => (AU.muted ? 'Son coupé' : 'Son');
 export function buildToolbar() {
   const tb = $('#toolbar'); tb.innerHTML = '';
-  // le pupitre (aller quelque part, tous les outils), le chef de car, le Cours, le son, le menu (tout le reste)
+  // le pupitre (aller quelque part, tous les outils), le chef de car (pendant un exercice ou la visite
+  // guidée : ui/tutor_ui.js l'affiche), le Cours, le son, le menu (tout le reste)
   const b = (label, key, ico, fn, id, title) => el('button', { class: 'tbtn', id, title: title || label + (key ? ' (' + key + ')' : ''), onclick: fn }, icon(ico), el('span', { class: 'tl' }, label), key ? el('kbd', {}, key) : null);
   tb.append(
     b('Pupitre', 'Tab', 'pupitre', () => openPupitre(), 'tb-pupitre', 'Aller à un poste ou un endroit, et tous les outils (Tab ou T)'),
     chefBtn(b('Chef de car', 'J', 'chef', () => emit('chef'), 'tb-chef', 'Le chef de car vous explique le poste et vous guide pas à pas (J)')),
-    b('Cours', 'G', 'cours', () => emit('cours'), 'tb-cours', 'Les notions techniques expliquées, les chapitres, le glossaire (G)'),
+    b('Cours', 'G', 'cours', () => emit('cours'), 'tb-cours', 'Les leçons et leurs exercices pratiques, le glossaire (G)'),
     b(soundLabel(), null, AU.muted ? 'muet' : 'son', () => { startAudio(); AU.muted = !AU.muted; applyFaders(); emit('soundToggle'); }, 'tb-son', 'Couper ou rétablir le son'),
-    b('Menu', 'Échap', 'menu', () => emit('menu'), 'tb-menu', 'S\'entraîner, réglages, Espace formateur, jouer à plusieurs, retour à l\'accueil (Échap)'));
+    b('Menu', 'Échap', 'menu', () => emit('menu'), 'tb-menu', 'Cours, réglages, équipe, retour à l\'accueil (Échap)'));
   const son = $('#tb-son'); if (son) son.classList.toggle('muted', AU.muted);
 }
 on('soundToggle', () => { const son = $('#tb-son'); if (son) { son.querySelector('.tl').textContent = soundLabel(); son.querySelector('.ico')?.replaceWith(icon(AU.muted ? 'muet' : 'son')); son.classList.toggle('muted', AU.muted); } });
