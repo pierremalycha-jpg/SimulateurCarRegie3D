@@ -20,7 +20,7 @@ import { posteCible, estLecon } from '../cours/liens.js';
 // ----------------------------------------------------------------------------------
 const UI = { lesson: /** @type {string | null} */ (null), chapter: /** @type {string | null} */ (null), demo: /** @type {{ destroy?: () => void } | null | void} */ (null), q: '', guideChapter: /** @type {string | null} */ (null) };
 const TABS = /** @type {[string, string][]} */ ([['lecons', 'Leçons'], ['chapitres', 'Chapitres'], ['glossaire', 'Glossaire'], ['postes', 'Postes'], ['materiel', 'Matériel'], ['procedures', 'Procédures']]);
-const OLD_TAB = { chapitres: 'lecons', articles: 'chapitres' };
+const OLD_TAB = { articles: 'chapitres' }; // ancien nom de l'onglet des chapitres du guide
 const norm = (s) => String(s).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
 
 /**

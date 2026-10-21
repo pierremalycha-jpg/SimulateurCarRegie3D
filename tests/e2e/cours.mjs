@@ -35,7 +35,7 @@ for (const L of lessons) {
   T.check(`leçon ${L.id} : essentiel, schéma, manipulation, « dans le car », quiz de 3`, ok, JSON.stringify(st));
   // quiz : la bonne réponse partout → leçon acquise
   const ans = await ev((id) => { const f = window.__dbg.COURS.lessonById(id); return f.lesson.quiz.map((q) => q.answer); }, L.id);
-  for (let i = 0; i < ans.length; i++) { const b = A.locator(`#layer .co-q:nth-of-type(${i + 1}) .co-choice-btn`).nth(ans[i]); await b.click({ timeout: 5000 }).catch(() => {}); }
+  for (let i = 0; i < ans.length; i++) { const b = A.locator(`#layer .co-q:nth-of-type(${i + 1}) .co-choice-btn`).nth(ans[i]); await b.click({ force: true, timeout: 5000 }).catch(() => {}); } // force : une manipulation animée retarde le test de stabilité de Playwright
   await A.waitForTimeout(200);
   T.check(`leçon ${L.id} : quiz réussi, leçon acquise`, await ev((id) => window.__dbg.COURS.lessonDone(id) && /leçon acquise/.test(document.querySelector('#layer .co-score')?.textContent || ''), L.id));
   if (shots < 12) { shots++; const p = await A.$('#layer .co-page'); if (p) await p.screenshot({ path: `${OUT}/10-${L.id}.png` }).catch(() => {}); }

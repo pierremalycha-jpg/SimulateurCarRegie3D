@@ -62,7 +62,7 @@ await page.locator('.lsm-key', { hasText: 'SHIFT' }).click();
 await page.locator('.lsm-key', { hasText: /^F1$/ }).click();
 await page.locator('.lsm-key', { hasText: 'SHIFT' }).click();
 await page.locator('.lsm-key', { hasText: /^F2$/ }).click();
-await page.locator('.lsm-key', { hasText: /^PLST$/ }).click();
+await page.locator('.lsm-key', { hasText: /^PLST(BROWSE)?$/ }).click();
 await page.locator('.lsm-key', { hasText: /^F1$/ }).click();
 await page.locator('.lsm-key', { hasText: /^F2$/ }).click();
 log('clips', await ev(() => window.__dbg.EVS.clips.filter(Boolean).length), 'playlist', await ev(() => window.__dbg.EVS.playlist.length));
