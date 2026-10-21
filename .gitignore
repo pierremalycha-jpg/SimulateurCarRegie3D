@@ -12,3 +12,6 @@ test-results/
 # captures d'écran de travail (hors dépôt)
 captures-v15/
 captures-v18/
+
+# copies de travail des agents
+.claude/worktrees/
