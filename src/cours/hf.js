@@ -24,21 +24,21 @@ const IMPL = 1.5; // marge d'implémentation du récepteur (comme rf.js)
 // 1. Bandes et fréquences
 // ======================================================================================
 const LOGMIN = Math.log10(400), LOGMAX = Math.log10(7600);
-const fx = (f) => 24 + (Math.log10(f) - LOGMIN) / (LOGMAX - LOGMIN) * 680;
+const fx = (f) => 150 + (Math.log10(f) - LOGMIN) / (LOGMAX - LOGMIN) * 554;
 /** @type {{ row: number, f1: number, f2: number, name: string, col: string, up?: boolean }[]} */
 const BANDS = [
   { row: 0, f1: 470, f2: 694, name: 'TNT 470–694', col: C.amber },
-  { row: 0, f1: 823, f2: 832, name: '823–832 · 863–865', col: C.amber }, { row: 0, f1: 863, f2: 865, name: '', col: C.amber },
+  { row: 0, f1: 823, f2: 832, name: '823–832 · 863–865', col: C.amber, up: true }, { row: 0, f1: 863, f2: 865, name: '', col: C.amber },
   { row: 0, f1: 1785, f2: 1805, name: '1 785–1 805', col: C.amber, up: true },
   { row: 1, f1: 694, f2: 790, name: '700', col: C.red }, { row: 1, f1: 791, f2: 862, name: '800', col: C.red, up: true }, { row: 1, f1: 1710, f2: 1880, name: '1 800', col: C.red }, { row: 1, f1: 1920, f2: 2170, name: '2 100', col: C.red, up: true }, { row: 1, f1: 2500, f2: 2690, name: '2 600', col: C.red }, { row: 1, f1: 3400, f2: 3800, name: '3,5 GHz (5G)', col: C.red, up: true },
   { row: 2, f1: 2200, f2: 2500, name: '« 2 GHz »', col: C.green }, { row: 2, f1: 5100, f2: 5900, name: '« 5 GHz »', col: C.green }, { row: 2, f1: 7000, f2: 7300, name: '≈ 7 GHz', col: C.green, up: true },
   { row: 3, f1: 1880, f2: 1900, name: 'DECT 1,9', col: C.cyan, up: true }, { row: 3, f1: 2400, f2: 2483.5, name: 'Wi-Fi 2,4', col: C.cyan }, { row: 3, f1: 5150, f2: 5350, name: 'Wi-Fi 5', col: C.cyan }, { row: 3, f1: 5470, f2: 5725, name: '', col: C.cyan }, { row: 3, f1: 5945, f2: 6425, name: 'Wi-Fi 6E', col: C.cyan, up: true },
 ];
-const ROWS = ['Micros HF (PMSE audio) : UHF partagé avec la TNT, plus quelques fenêtres', 'Téléphonie mobile 4G / 5G : interdit aux micros depuis 2019 (700 MHz)', 'Caméras HF (PMSE vidéo) : COFDM 8 à 10 MHz, canaux attribués', 'Intercom sans fil (DECT) et Wi-Fi : bandes libres, sans coordination'];
+const ROWS = [['Micros HF', 'PMSE audio, avec la TNT'], ['Mobile 4G / 5G', 'interdit aux micros'], ['Caméras HF', 'PMSE vidéo, COFDM'], ['DECT, Wi-Fi', 'bandes libres']];
 function figSpectre() {
-  const f = figure(720, 214, 'Le spectre de 0,4 à 7,6 GHz, échelle logarithmique : les micros HF en UHF 470–694 MHz partagés avec la TNT, les bandes de la téléphonie mobile qui les encadrent, les caméras HF vers 2 GHz, 5 GHz et 7 GHz, l\'intercom DECT à 1,9 GHz et le Wi-Fi à 2,4, 5 et 6 GHz');
-  const RY = (r) => 24 + r * 42;
-  ROWS.forEach((r, i) => { const y = RY(i); f.append(txt(24, y - 3, r, 'co-bit2', 'start')); f.append(sv('line', { x1: 24, y1: y + 18, x2: 704, y2: y + 18, stroke: C.line, strokeWidth: 1 })); });
+  const f = figure(720, 228, 'Le spectre de 0,4 à 7,6 GHz, échelle logarithmique : les micros HF en UHF 470–694 MHz partagés avec la TNT, les bandes de la téléphonie mobile qui les encadrent, les caméras HF vers 2 GHz, 5 GHz et 7 GHz, l\'intercom DECT à 1,9 GHz et le Wi-Fi à 2,4, 5 et 6 GHz');
+  const RY = (r) => 24 + r * 48;
+  ROWS.forEach(([r, sub], i) => { const y = RY(i); f.append(txt(24, y + 10, r, 'co-s', 'start'), txt(24, y + 22, sub, 'co-bit2', 'start')); f.append(sv('line', { x1: 150, y1: y + 18, x2: 704, y2: y + 18, stroke: C.line, strokeWidth: 1 })); });
   for (const b of BANDS) {
     const y = RY(b.row), x1 = fx(b.f1), x2 = Math.max(fx(b.f2), fx(b.f1) + 3);
     f.append(sv('rect', { x: x1, y: y + 2, width: x2 - x1, height: 16, fill: b.col, opacity: 0.8 }));
@@ -46,7 +46,7 @@ function figSpectre() {
     if (x2 - x1 > 64) f.append(txt((x1 + x2) / 2, y + 14, b.name, 'co-bit'));
     else f.append(txt((x1 + x2) / 2, b.up ? y - 3 : y + 29, b.name, 'co-bit2'));
   }
-  const yA = 196; f.append(sv('line', { x1: 24, y1: yA, x2: 704, y2: yA, stroke: C.grey, strokeWidth: 1 }));
+  const yA = 210; f.append(sv('line', { x1: 150, y1: yA, x2: 704, y2: yA, stroke: C.grey, strokeWidth: 1 }));
   for (const [t, l] of [[500, '0,5'], [700, '0,7'], [1000, '1'], [1500, '1,5'], [2000, '2'], [3000, '3'], [5000, '5'], [7000, '7 GHz']]) { const x = fx(+t); f.append(sv('line', { x1: x, y1: yA, x2: x, y2: yA + 5, stroke: C.grey })); f.append(txt(x, yA + 16, String(l), 'co-m')); }
   f.append(txt(704, 10, 'ordres de grandeur, France (ANFR / Arcep) : les attributions exactes se vérifient à chaque événement', 'co-bit2', 'end'));
   return f;
@@ -146,7 +146,7 @@ const OBST = { los: ['Ligne de vue', 0], tribune: ['Derrière une tribune (béto
 function figBilan() {
   const f = figure(720, 190, 'L\'échelle des dBm : 1 W = 30 dBm, 100 mW = 20 dBm, 1 mW = 0 dBm, 1 µW = −30 dBm, 1 nW = −60 dBm, 1 pW = −90 dBm ; une liaison HF part de 20 dBm et arrive vers −60 à −90 dBm. Chaque −3 dB divise la puissance par deux, chaque −10 dB par dix');
   f.append(txt(360, 14, 'Les dBm : la puissance en décibels par rapport à 1 mW', 'co-t'));
-  const y0 = 54, x0 = 80, x1 = 690, dBtoX = (d) => x0 + (d + 100) / 130 * (x1 - x0);
+  const y0 = 54, x0 = 80, x1 = 650, dBtoX = (d) => x0 + (d + 100) / 130 * (x1 - x0);
   f.append(sv('line', { x1: x0, y1: y0, x2: x1, y2: y0, stroke: C.grey, strokeWidth: 1.5 }));
   /** @type {[number, string, string, number][]} */
   const marks = [[30, '1 W', 'caméra au maximum', 1], [20, '100 mW', 'caméra HF usuelle', 0], [10, '10 mW', 'micro HF', 1], [0, '1 mW', 'référence', 0], [-30, '1 µW', '', 0], [-60, '1 nW', 'bon niveau reçu', 0], [-87, '2 pW', 'sensibilité 16-QAM', 0], [-100, '0,1 pW', 'plancher de bruit (8 MHz)', 1]];
@@ -267,7 +267,7 @@ function demoAnt(host) {
     g.fillStyle = '#0b0e10'; g.fillRect(0, 0, W, H);
     // tribunes et terrain
     g.fillStyle = '#1a2026'; g.fillRect(px(-70), py(-54), 140 * SC, 16 * SC); g.fillRect(px(-70), py(38), 140 * SC, 16 * SC);
-    g.fillStyle = C.grey; g.font = '10px sans-serif'; g.textAlign = 'center'; g.fillText('tribune principale (antennes sur le toit, 12 m)', OX, py(-50)); g.fillText('tribune d\'en face (réfléchit le signal)', OX, py(50));
+    g.fillStyle = C.grey; g.font = '10px sans-serif'; g.textAlign = 'center'; g.fillText('tribune principale (antennes sur le toit, 12 m)', OX, py(-39.5)); g.fillText('tribune d\'en face (réfléchit le signal)', OX, py(52));
     g.fillStyle = '#17331f'; g.fillRect(px(-52.5), py(-34), 105 * SC, 68 * SC); g.strokeStyle = '#3f7a4c'; g.lineWidth = 1; g.strokeRect(px(-52.5), py(-34), 105 * SC, 68 * SC); g.beginPath(); g.moveTo(px(0), py(-34)); g.lineTo(px(0), py(34)); g.stroke(); g.beginPath(); g.arc(px(0), py(0), 9.15 * SC, 0, Math.PI * 2); g.stroke();
     // antennes, faisceaux, rayons
     ANTS.forEach((a, i) => {
@@ -283,8 +283,9 @@ function demoAnt(host) {
     gh.fillStyle = '#0b0e10'; gh.fillRect(0, 0, CW, CH);
     const y = (v) => 8 + (-40 - v) / 70 * (CH - 16);
     gh.strokeStyle = '#2a3238'; gh.fillStyle = C.grey; gh.font = '10px monospace'; gh.textAlign = 'left';
-    for (const v of [-50, -70, -90, -110]) { gh.beginPath(); gh.moveTo(0, y(v)); gh.lineTo(CW, y(v)); gh.stroke(); gh.fillText(`${v} dBm`, 2, y(v) - 2); }
+    for (const v of [-50, -70, -110]) { gh.beginPath(); gh.moveTo(0, y(v)); gh.lineTo(CW, y(v)); gh.stroke(); gh.fillText(`${v} dBm`, 2, y(v) - 2); }
     gh.strokeStyle = C.red; gh.setLineDash([4, 3]); gh.beginPath(); gh.moveTo(0, y(SENS)); gh.lineTo(CW, y(SENS)); gh.stroke(); gh.setLineDash([]);
+    gh.fillStyle = C.red; gh.fillText(`sensibilité ${SENS} dBm`, 2, y(SENS) - 2);
     const trace = (k, colr, w) => { gh.strokeStyle = colr; gh.lineWidth = w; gh.beginPath(); hist.forEach((h, i) => { const x = CW - (hist.length - 1 - i) * (CW / 160); i ? gh.lineTo(x, y(h[k])) : gh.moveTo(x, y(h[k])); }); gh.stroke(); };
     trace(0, C.amber, 1); trace(1, C.cyan, 1); trace(2, '#fff', 2);
     gh.fillStyle = C.amber; gh.fillText('■ A', 300, CH - 4); gh.fillStyle = C.cyan; gh.fillText('■ B', 340, CH - 4); gh.fillStyle = '#fff'; gh.fillText('■ diversité (la meilleure des deux)', 380, CH - 4);
@@ -324,7 +325,7 @@ function figCofdm() {
   const tau = 40 * sc; sym(x0 + tau, y2, 'symbole n, retardé de 40 µs', true); sym(x0 + tau + (GI + TU) * sc, y2, 'symbole n + 1', true);
   f.append(sv('rect', { x: x0 + GI * sc, y: y1 - 6, width: TU * sc, height: y2 + 38 - y1, fill: 'none', stroke: C.green, strokeWidth: 1.5, strokeDasharray: '5 3' }));
   f.append(txt(x0 + GI * sc + TU * sc / 2, y2 + 46, 'fenêtre lue par le récepteur : l\'écho qui s\'y trouve est encore le symbole n, pas le précédent', 'co-s'));
-  f.append(txt(360, 166, 'intervalle de garde 1/4 : 56 µs en 2K (écho jusqu\'à 17 km), 224 µs en 8K · 1/32 : 7 µs (2 km) mais plus de débit', 'co-m'));
+  f.append(txt(360, 166, 'garde 1/4 : 56 µs en 2K (écho jusqu\'à 17 km), 224 µs en 8K · garde 1/32 : 7 µs (2 km), 20 % de débit en plus', 'co-s'));
   return f;
 }
 function demoCofdm(host) {
@@ -339,7 +340,7 @@ function demoCofdm(host) {
     g.fillStyle = '#0b0e10'; g.fillRect(0, 0, W, H);
     g.fillStyle = C.grey; g.font = '10px monospace'; g.textAlign = 'center';
     const tick = span >= 500 ? 100 : span >= 200 ? 50 : span >= 50 ? 10 : span >= 5 ? 1 : 0.25;
-    for (let t = 0; t <= span; t += tick) { g.fillText(`${fmtNum(t, tick < 1 ? 2 : 0)} µs`, t * sc, H - 6); g.fillStyle = '#2a3238'; g.fillRect(t * sc, H - 18, 1, 4); g.fillStyle = C.grey; }
+    for (let t = 0; t <= span; t += tick) { g.textAlign = t === 0 ? 'left' : 'center'; g.fillText(`${fmtNum(t, tick < 1 ? 2 : 0)} µs`, t * sc, H - 6); g.fillStyle = '#2a3238'; g.fillRect(t * sc, H - 18, 1, 4); g.fillStyle = C.grey; }
     const symbols = (y, off, dim, label) => {
       for (let k = 0; k * ts + off < span; k++) {
         const x = (k * ts + off) * sc;
