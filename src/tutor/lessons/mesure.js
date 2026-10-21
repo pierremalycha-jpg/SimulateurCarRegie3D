@@ -45,7 +45,7 @@ const WFM = {
     {
       id: 'intro', title: 'L\'instrument',
       enter: (c) => { c.mem.cam = pickCam([3, 4, 2, 5, 1]); },
-      say: 'À la vision, sous le Grade 1, il y a un **moniteur de mesure** : ici un **PRISM** (de Telestream, anciennement Tektronix). C\'est un écran tactile découpé en quatre **tuiles** ; chaque tuile choisit son affichage : waveform, vecteurscope, diamant, image…\n\nLe Grade 1 te dit si l\'image est belle ; le PRISM te dit si elle est **juste** : des niveaux chiffrés, comparables d\'une caméra à l\'autre et aux consignes du diffuseur.',
+      say: 'À la vision, à côté du **RCP** (le pupitre de réglage de la caméra) et sous le **Grade 1** (le moniteur de référence), il y a un **moniteur de mesure** : ici un **PRISM** (de Telestream, anciennement Tektronix). C\'est un écran tactile découpé en quatre **tuiles** ; chaque tuile choisit son affichage : waveform, vecteurscope, diamant, image…\n\nLe Grade 1 te dit si l\'image est belle ; le PRISM te dit si elle est **juste** : des niveaux chiffrés, comparables d\'une caméra à l\'autre et aux consignes du diffuseur.',
     },
     goVision('On va au poste vision, en régie vision et ralentis.', 'Le PRISM est sous le Grade 1 et le multiview, au-dessus du fil « Ce qui se passe ». Il mesure la caméra choisie au RCP.'),
     {
@@ -138,7 +138,7 @@ const GAMUT = {
     {
       id: 'bars', title: 'La mire dans les cibles',
       enter: (c) => { const k = cam(c); if (k) { k.panelActive = true; k.paint.bars = false; } },
-      say: 'Au line-up, chaque caméra envoie sa **mire** de barres. Les cases du vecteurscope sont les **cibles** : une par couleur de la mire.',
+      say: 'Au **line-up** (la vérification de toute la chaîne avant l\'antenne), chaque caméra envoie sa **mire** de barres. Les cases du vecteurscope sont les **cibles** : une par couleur de la mire.',
       do: 'Envoie les barres de la caméra (BARS) et regarde le vecteurscope.',
       go: (c) => ({ station: 'vision', cam: c.mem.cam }), show: [rcpBtn('BARS')],
       done: (c) => !!cam(c) && !!cam(c).paint.bars,
@@ -164,7 +164,7 @@ const GAMUT = {
     {
       id: 'sat', title: 'Une caméra hors gamut',
       enter: (c) => { const k = cam(c); if (k && c.mem.sat0 == null) { c.mem.sat0 = k.paint.sat; c.mem.knee0 = k.paint.kneeOn; c.mem.wclip0 = k.paint.wclip; k.paint.sat = 155; k.paint.kneeOn = false; k.paint.wclip = 109; k.panelActive = true; } },
-      say: (c) => `Je viens de pousser la saturation de la CAM ${c.mem.cam} à 155 %, de couper le knee et d'ouvrir le white clip à 109 % : les maillots sortent du diamant par les côtés, les blancs par les pointes. Le Grade 1 trouve ça « pétant » ; la chaîne, non.`,
+      say: (c) => `Je viens de pousser la saturation de la CAM ${c.mem.cam} à 155 %, de couper le **knee** (la compression des hautes lumières) et d'ouvrir le **white clip** (l'écrêteur des blancs) à 109 % : les maillots sortent du diamant par les côtés, les blancs par les pointes. Le Grade 1 trouve ça « pétant » ; la chaîne, non.`,
       do: 'Ramène l\'image dans le gamut : saturation à 115 % au plus, knee rallumé, white clip à 105 % au plus.',
       go: (c) => ({ station: 'vision', cam: c.mem.cam }), show: [{ sel: '#station .rcp-key', text: 'KNEE', label: 'touche KNEE' }, { sel: '#station .rcp-tab', text: 'PAINT', label: 'page PAINT' }],
       done: (c) => { const k = cam(c); return !!k && k.paint.sat <= 115 && k.paint.kneeOn && k.paint.wclip <= 105; },
@@ -210,7 +210,7 @@ const OEIL = {
     {
       id: 'ref', title: 'L\'œil de référence',
       enter: () => { setPreset('mesure', 'vision'); setInput('mesure', 'pgm'); ensureVisible('mesure'); },
-      say: 'On commence toujours par un signal connu. La sortie de test du **SPG** (le générateur de synchro), avec un cordon de 1 m : c\'est la mesure que décrit la norme.',
+      say: 'Le **diagramme de l\'œil** superpose des milliers de bits du signal : plus l\'« œil » est ouvert au centre, plus le récepteur distingue facilement les 0 des 1.\n\nOn commence toujours par un signal connu : la sortie de test du **SPG** (le générateur de synchro), avec un cordon de 1 m. C\'est la mesure que décrit la norme.',
       do: 'Mets l\'instrument sur le point « MIRE SPG » et choisis le préréglage « Couche physique ».',
       go: { station: 'mesure' }, show: [{ sel: '#station .mz-points button.hw', text: 'MIRE SPG', label: 'point MIRE SPG' }, { sel: '#station .pz-sel', label: 'préréglages' }],
       done: () => PRISM.mesure.input === 'spg' && showing('mesure', 'eye'),
@@ -230,7 +230,7 @@ const OEIL = {
     {
       id: 'find', title: 'Trouver la liaison malade',
       enter: (c) => { if (c.mem.pt) return; const k = pickFaultCam(); c.mem.cam = k ? k.id : (camIds(true)[0] || 1); c.mem.pt = 'ccu' + c.mem.cam; phyFault('cable', c.mem.pt, { ramp: 900, start: 0.6 }); },
-      say: 'Le contrôle qualité de la chaîne nous signale des erreurs sur une caméra, mais rien de visible à l\'image pour l\'instant. À toi de trouver la liaison malade : passe les sorties caméras sur l\'instrument et regarde l\'état SDI (les CRC) et l\'œil.',
+      say: 'Le contrôle qualité de la chaîne nous signale des erreurs sur une caméra, mais rien de visible à l\'image pour l\'instant. Chaque ligne du signal porte un **CRC** (une somme de contrôle) : le récepteur la recalcule, et une différence veut dire une ligne arrivée fausse.\n\nÀ toi de trouver la liaison malade : passe les sorties caméras sur l\'instrument et regarde l\'état SDI (les CRC) et l\'œil.',
       do: 'Trouve la sortie caméra qui fait des erreurs CRC et mets-la sur l\'instrument.',
       go: { station: 'mesure' }, show: (c) => [{ sel: '#station .mz-points button.hw', text: ptOf(c) ? ptOf(c).short : 'CCU', label: 'la sortie en erreur' }],
       done: (c) => PRISM.mesure.input === c.mem.pt,
@@ -240,7 +240,7 @@ const OEIL = {
     },
     {
       id: 'eq', title: 'Lire l\'œil',
-      say: 'Compare avec l\'œil de référence. En brut : le **dépassement** après chaque front passe au-dessus de 10 % (une rupture d\'impédance renvoie un écho), et la trace est bruitée. En égalisé : l\'œil se referme, la gigue d\'alignement monte.',
+      say: 'Compare avec l\'œil de référence. En brut : le **dépassement** après chaque front passe au-dessus de 10 % (une rupture d\'impédance renvoie un écho), et la trace est bruitée. En égalisé : l\'œil se referme et la **gigue** (les fronts qui n\'arrivent plus tout à fait à l\'heure) monte.',
       do: 'Passe la tuile Diagramme de l\'œil en « Égalisé ».',
       go: { station: 'mesure' }, show: [opt('eq', 'true', 'bouton Égalisé'), tileSel],
       done: (c) => PRISM.mesure.input === c.mem.pt && showing('mesure', 'eye', (t) => !!t.eq),
