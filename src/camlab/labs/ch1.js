@@ -25,6 +25,8 @@ const DEG = Math.PI / 180;
 const send = (ctx, s) => { if (ctx && ctx.lens) ctx.lens(s); };
 const readout = () => el('p', { class: 'cl-read' });
 const okWhite = (w) => w >= 80 && w < 99.6;
+/** une touche seule sur sa ligne, à sa largeur */
+const one = (b) => el('div', { class: 'c1-gestes' }, b);
 const pct = (v, d = 0) => fr(v * 100, d) + ' %';
 const mm = (f) => fr(f, f < 10 ? 1 : 0) + ' mm';
 const stops = (v) => fr(v, 1).replace('-', '−');
@@ -152,7 +154,7 @@ function frontale(ctx) {
     }));
   ang.row.hidden = true; tools.hidden = true;
   const read = readout();
-  const sh = shell({ vf, scope: sc, ctrls: [coat.row, btnRow(hood.btn), ang.row, tools, read], defis: [
+  const sh = shell({ vf, scope: sc, ctrls: [coat.row, one(hood.btn), ang.row, tools, read], defis: [
     'Choisis le traitement qui laisse passer plus de 90 % de la lumière à travers les 30 surfaces, et garde le voile sous 2 %.',
     'Un projecteur en contre-jour frappe la lentille. Remets le pare-soleil, puis fais déplacer le projecteur jusqu\'à ce que la lentille soit entièrement à l\'ombre.',
     'Un doigt a touché la lentille et la poussière du plateau s\'y est collée : nettoie-la sans la rayer.',
@@ -337,7 +339,7 @@ function macro(ctx) {
   });
   vf.canvas.addEventListener('wheel', (e) => { e.preventDefault(); st.s = clamp(st.s - Math.sign(e.deltaY) * 0.0012, 0, 1); rings.sync(); up(); }, { passive: false });
   const read = readout();
-  const sh = shell({ vf, ctrls: [...rings.rows, btnRow(lever.btn), ring.row, read], defis: [
+  const sh = shell({ vf, ctrls: [...rings.rows, one(lever.btn), ring.row, read], defis: [
     'Une petite mire est posée à 12 cm de la lentille, plus près que la distance minimale (0,3 m). Fais le point dessus.',
     'Sans toucher aux bagues de point et de macro, serre le zoom d\'au moins moitié : que devient l\'image ?',
     'La petite mire est retirée. Remets la macro au repos et bloquée, puis vérifie sur la grande mire à 3 m que le zoom est de nouveau parfocal : net en serré, puis en large.',
@@ -409,7 +411,7 @@ function defauts(ctx) {
   const rings = lensRings(st, () => up(), ['zoom', 'iris']);
   const alac = toggle('Correction ALAC', false, (v) => { st.alac = v; up(); });
   const read = readout();
-  const sh = shell({ vf: { canvas: view }, scope: sc, ctrls: [...rings.rows, btnRow(alac.btn), read], defis: [
+  const sh = shell({ vf: { canvas: view }, scope: sc, ctrls: [...rings.rows, one(alac.btn), read], defis: [
     'Au grand angle (4,5 mm), regarde le coin à la loupe : le rouge et le bleu ne tombent pas sur le vert. Active l\'ALAC : l\'écart doit passer sous un demi-photosite.',
     'À pleine ouverture, les coins sont plus sombres que le centre. Ferme l\'iris jusqu\'à ce qu\'ils gardent au moins 80 % du centre.',
     'Au grand angle, les lignes du bord se courbent. Trouve les focales où elles restent droites : distorsion sous 0,3 %.',
@@ -621,7 +623,7 @@ function boxPortable(ctx) {
   const zoom = slider('Zoom', 0, 1, 0.001, st.z, (v) => { st.z = v; up(); });
   const ext = toggle('Doubleur ×2', false, (v) => { st.ext = v; up(); });
   const read = readout();
-  const sh = shell({ vf: { canvas: view }, ctrls: [pick.row, zoom.row, btnRow(ext.btn), read], defis: [
+  const sh = shell({ vf: { canvas: view }, ctrls: [pick.row, zoom.row, one(ext.btn), read], defis: [
     'Plateau : cadre le présentateur en plan poitrine (60 cm de haut à 3 m) avec l\'objectif de la caméra du plateau.',
     'Tribune, à 80 m : cadre un joueur en pied (2 m de haut dans l\'image) avec au moins f/2 d\'ouverture, pour le match de nuit.',
     'Toujours à 80 m : cadre le visage du joueur (40 cm de haut). Quelle ouverture reste-t-il ?',
