@@ -26,28 +26,30 @@
 .c56-tal { margin-top: 6px; padding: 4px; background: var(--glass); border-radius: 3px; }
 
 /* éléments des schémas */
-.c56-r { text-anchor: end; }
-.c56-ok { fill: var(--pvw); } .c56-bad { fill: #ff7a70; } .c56-hi { fill: var(--accent); font-weight: 700; }
-.c56-remote { stroke: var(--cyan); stroke-width: 1.6; } .c56-own { stroke: var(--accent); stroke-width: 1.6; } .c56-out-c { stroke: #ff7a70; stroke-width: 1.6; }
-.c56-lever { stroke: #d8dcd6; stroke-width: 3; stroke-linecap: round; }
-.c56-cab { stroke: #8a949e; stroke-width: 3; } .c56-cab-h { stroke: var(--fibre); stroke-width: 5; } .c56-cab-s { stroke: #f5e663; stroke-width: 2.5; }
-.c56-dc { stroke: var(--pvw); stroke-width: 2.5; }
-.c56-cam { fill: #2a3036; stroke: #59646f; stroke-width: 1.5; } .c56-cam.on { stroke: var(--pvw); stroke-width: 2.5; }
-.c56-led { fill: #3a2422; stroke: #0b0f12; } .c56-led.on, .c56-led.green { fill: #22d65a; filter: drop-shadow(0 0 4px #22d65a); } .c56-led.red { fill: #ff2a1a; filter: drop-shadow(0 0 5px #ff2a1a); }
-.c56-led.big { stroke-width: 2; }
-.c56-lamp { fill: #4a3330; stroke: #0b0f12; } .c56-lamp.red { fill: #ff2a1a; filter: drop-shadow(0 0 6px #ff2a1a); }
-.c56-glass { fill: #0b1a2a; stroke: #2b3a4a; }
-.c56-btn { fill: #4a545e; stroke: #8a949e; } .c56-btn.on { fill: var(--accent); }
-.c56-knob { fill: #d8dcd6; stroke: #0b0f12; }
-.c56-ld { stroke: #0b0f12; stroke-width: 1; } .c56-ld.corps { fill: #7fd1a0; } .c56-ld.viseur { fill: #7fd3f3; } .c56-ld.objectif { fill: #ffd38a; } .c56-ld.lampe { fill: #ff8a80; }
-.c56-pgm { fill: #ff2a1a; } .c56-pvw { fill: #22d65a; }
-.c56-call { stroke: #ff7a70; stroke-width: 1.6; }
-.c56-mire { fill: #ecece6; } .c56-star { fill: #121212; } .c56-peak { fill: none; stroke: #fff; stroke-width: 1.6; stroke-dasharray: 3 2; }
-.c56-zeb { fill: rgba(255,255,255,.85); stroke: #121212; stroke-dasharray: 2 2; }
-.c56-cross { stroke: rgba(240,240,232,.8); stroke-width: 1.5; }
-.c56-head { fill: #3b4550; stroke: #59646f; } .c56-leg { fill: #2a3036; stroke: #59646f; }
-.c56-plt { fill: #8a949e; stroke: #59646f; } .c56-brk { fill: #2a3036; stroke: #59646f; }
-.c56-prom { fill: rgba(76,195,230,.18); stroke: var(--cyan); stroke-width: 1.5; }
-.c56-bar { fill: #59646f; stroke: #8a949e; }
-.c56-axis { fill: #07090c; stroke: var(--accent); stroke-width: 2.5; }
-.c56-cg { fill: none; stroke: #ff7a70; stroke-width: 2.5; } .c56-cgx { stroke: #ff7a70; stroke-width: 1.5; }
+.cf .c56-r { text-anchor: end; }
+.cf .c56-ok { fill: var(--pvw); } .cf .c56-bad { fill: #ff7a70; } .cf .c56-hi { fill: var(--accent); font-weight: 700; }
+.cf .c56-remote { stroke: var(--cyan); stroke-width: 1.6; } .cf .c56-own { stroke: var(--accent); stroke-width: 1.6; } .cf .c56-out-c { stroke: #ff7a70; stroke-width: 1.6; }
+.cf .c56-lever { stroke: #d8dcd6; stroke-width: 3; stroke-linecap: round; }
+.cf .c56-cab { stroke: #8a949e; stroke-width: 3; } .cf .c56-cab-h { stroke: var(--fibre); stroke-width: 5; } .cf .c56-cab-s { stroke: #f5e663; stroke-width: 2.5; }
+.cf .c56-dc { stroke: var(--pvw); stroke-width: 2.5; }
+.cf .c56-cam { fill: #2a3036; stroke: #59646f; stroke-width: 1.5; } .cf .c56-cam.on { stroke: var(--pvw); stroke-width: 2.5; }
+.cf .c56-led { fill: #3a2422; stroke: #0b0f12; } .cf .c56-led.on, .cf .c56-led.green { fill: #22d65a; filter: drop-shadow(0 0 4px #22d65a); } .cf .c56-led.red { fill: #ff2a1a; filter: drop-shadow(0 0 5px #ff2a1a); }
+.cf .c56-led.big { stroke-width: 2; }
+.cf .c56-lamp { fill: #4a3330; stroke: #0b0f12; } .cf .c56-lamp.red { fill: #ff2a1a; filter: drop-shadow(0 0 6px #ff2a1a); }
+.cf .c56-glass { fill: #0b1a2a; stroke: #2b3a4a; }
+.cf .c56-btn { fill: #4a545e; stroke: #8a949e; } .cf .c56-btn.on { fill: var(--accent); }
+.cf .c56-knob { fill: #d8dcd6; stroke: #0b0f12; }
+.cf .c56-ld { stroke: #0b0f12; stroke-width: 1; } .cf .c56-ld.corps { fill: #7fd1a0; } .cf .c56-ld.viseur { fill: #7fd3f3; } .cf .c56-ld.objectif { fill: #ffd38a; } .cf .c56-ld.lampe { fill: #ff8a80; }
+.cf .c56-pgm { fill: #ff2a1a; } .cf .c56-pvw { fill: #22d65a; }
+.cf .c56-call { stroke: #ff7a70; stroke-width: 1.6; }
+.cf .c56-mire { fill: #ecece6; } .cf .c56-star { fill: #121212; } .cf .c56-peak { fill: none; stroke: #fff; stroke-width: 1.6; stroke-dasharray: 3 2; }
+.cf .c56-zeb { fill: rgba(255,255,255,.85); stroke: #121212; stroke-dasharray: 2 2; }
+.cf .c56-cross { stroke: rgba(240,240,232,.8); stroke-width: 1.5; }
+.cf .c56-head { fill: #3b4550; stroke: #59646f; } .cf .c56-leg { fill: #2a3036; stroke: #59646f; }
+.cf .c56-plt { fill: #8a949e; stroke: #59646f; } .cf .c56-brk { fill: #2a3036; stroke: #59646f; }
+.cf .c56-prom { fill: rgba(76,195,230,.18); stroke: var(--cyan); stroke-width: 1.5; }
+.cf .c56-bar { fill: #59646f; stroke: #8a949e; }
+.cf .c56-axis { fill: #07090c; stroke: var(--accent); stroke-width: 2.5; }
+.cf .c56-cg { fill: none; stroke: #ff7a70; stroke-width: 2.5; } .cf .c56-cgx { stroke: #ff7a70; stroke-width: 1.5; }
+.cf .c56-ink { fill: #07090c; font-weight: 600; }
+.cf .c56-white { fill: #f1f1ea; } .cf .c56-zebl { stroke: #121212; stroke-width: 2; }

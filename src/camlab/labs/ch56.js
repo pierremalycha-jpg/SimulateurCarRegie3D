@@ -305,9 +305,9 @@ export const LABS_CH56 = {
       up();
     }, 'c56-seg4'));
     const page = el('details', { class: 'c56-page' }, el('summary', {}, 'Menu OPERATION, page 09 SWITCH ASSIGN1'), ...assignSegs.map((s) => s.row));
-    const rGain = seg('GAIN', [['L', '0 dB'], ['M', '6 dB'], ['H', '12 dB']], 'L', (val) => { st.rcp.gain = val; up(); });
-    const rNd = seg('ND', ND.map(([nm], i) => [i + 1, String(i + 1)]), 1, (val) => { st.rcp.filter = Number(val); up(); });
-    const rBars = toggle('BARS', false, (val) => { st.rcp.bars = val; up(); });
+    const rGain = seg('GAIN', [['L', '0 dB'], ['M', '6 dB'], ['H', '12 dB']], 'L', (val) => { st.rcp.gain = val; st.tried = ''; up(); });
+    const rNd = seg('ND', ND.map((_, i) => [i + 1, String(i + 1)]), 1, (val) => { st.rcp.filter = Number(val); st.tried = ''; up(); });
+    const rBars = toggle('BARS', false, (val) => { st.rcp.bars = val; st.tried = ''; up(); });
     const rcpBox = el('div', { class: 'cl-ctrls c56-rcp', hidden: true }, grp('Au RCP de la vision'), rGain.row, rNd.row, btnRow(rBars.btn));
     const read = readout();
     const sh = shell({ vf: v, scope: outMonitor(v, sc), ctrls: [mode.row, grp('Sur la caméra'), filter.row, gain.row, output.row, btnRow(ctemp.btn), btnRow(...assignBtns.map((b) => b.btn)), page, rcpBox, read], defis: [
@@ -369,7 +369,7 @@ export const LABS_CH56 = {
     const lenOf = (u) => { const L = 50 * Math.pow(240, u); return L < 1000 ? Math.round(L / 10) * 10 : Math.round(L / 50) * 50; };
     const lenPos = (L) => Math.log(L / 50) / Math.log(240);
     const fmtLen = (L) => (L < 1000 ? `${L} m` : `${fr(L / 1000, L < 10000 ? 2 : 1)} km`);
-    const init = () => ({ link: 'hybride', u: lenPos(150), src: 'aucune', loads: { viseur: true, objectif: true, lampe: false } });
+    const init = () => ({ link: 'hybride', u: lenPos(150), src: 'aucune', loads: { viseur: true, objectif: true, lampe: true } });
     const st = init();
     const defis = [false, false, false];
     const pic = liveSvg(176, 'La liaison entre la CCU et la caméra, la source sur DC IN et le budget d\'énergie de la tête', 'c56-alim');
@@ -410,15 +410,15 @@ export const LABS_CH56 = {
       const segs = [['corps', CHARGES.corps, 'corps'], ['viseur', CHARGES.viseur, 'viseur'], ['objectif', CHARGES.objectif, 'obj.'], ['lampe', CHARGES.lampe, 'lampe']];
       const used = segs.filter(([id]) => id === 'corps' || st.loads[id]);
       let x = 16; const k = 3.4; // 1 W = 3,4 px
-      const bar = used.map(([id, p, t]) => { const w = p * k, r = `<rect class="c56-ld ${id}" x="${x}" y="134" width="${w}" height="20"/>${w > 26 ? T(x + w / 2, 148, t, 'cf-tick ink') : ''}`; x += w; return r; }).join('');
-      const ccuTxt = st.link === 'seule' ? T(50, 72, 'pas de CCU', 'cf-s') : `<rect class="cf-box" x="12" y="38" width="80" height="54" rx="4"/>${T(52, 58, 'CCU', 'cf-bb mid')}${T(52, 74, 'HXCU-FB80', 'cf-tick')}<circle class="c56-led${b.by === 'ccu' && on ? ' on' : ''}" cx="52" cy="84" r="4"/>`;
-      const cable = st.link === 'seule' ? '' : `<line class="c56-cab ${cab}" x1="92" y1="64" x2="300" y2="64"/>${T(196, 54, `${st.link === 'hybride' ? 'fibre hybride' : 'fibre monomode (LC)'} · ${fmtLen(L)}`, 'cf-lbl')}${T(196, 82, st.link === 'hybride' ? (b.by === 'ccu' ? 'énergie et signaux' : 'signaux, mais plus d\'énergie') : 'signaux seulement, pas d\'énergie', 'cf-tick')}${b.linkOk === false ? T(196, 98, 'liaison hors des limites', 'cf-tick c56-bad') : ''}`;
-      const cam = `<rect class="c56-cam${on ? ' on' : ''}" x="300" y="38" width="112" height="54" rx="5"/><rect class="cf-vf" x="372" y="22" width="34" height="18" rx="2"/>${T(342, 60, 'HXC-FB80', 'cf-bb mid')}${T(342, 78, on ? `allumée · ≈ ${fr(b.P, 0)} W` : 'éteinte', on ? 'cf-tick c56-ok' : 'cf-tick c56-bad')}`;
-      const dcin = s ? `<line class="c56-dc" x1="356" y1="92" x2="356" y2="112"/><rect class="cf-box" x="304" y="112" width="104" height="22" rx="3"/>${T(356, 127, s.nom.replace(' de 95 Wh', ''), 'cf-tick')}${T(356, 148, `DC IN ${b.by === 'dcin' ? fr(b.I, 1) + ' A' : '(inutile)'}`, 'cf-tick')}` : T(356, 120, 'DC IN libre', 'cf-tick');
+      const bar = used.map(([id, p, t]) => { const w = p * k, r = `<rect class="c56-ld ${id}" x="${x}" y="134" width="${w}" height="20"/>${w > 26 ? T(x + w / 2, 148, t, 'cf-s c56-ink') : ''}`; x += w; return r; }).join('');
+      const ccuTxt = st.link === 'seule' ? T(50, 72, 'pas de CCU', 'cf-s') : `<rect class="cf-box" x="12" y="38" width="80" height="54" rx="4"/>${T(52, 58, 'CCU', 'cf-bb mid')}${T(52, 74, 'HXCU-FB80', 'cf-s')}<circle class="c56-led${b.by === 'ccu' && on ? ' on' : ''}" cx="52" cy="84" r="4"/>`;
+      const cable = st.link === 'seule' ? '' : `<line class="c56-cab ${cab}" x1="92" y1="64" x2="300" y2="64"/>${T(196, 54, `${st.link === 'hybride' ? 'fibre hybride' : 'fibre monomode (LC)'} · ${fmtLen(L)}`, 'cf-lbl')}${T(196, 82, st.link === 'hybride' ? (b.by === 'ccu' ? 'énergie et signaux' : 'signaux, mais plus d\'énergie') : 'signaux seulement, pas d\'énergie', 'cf-s')}${b.linkOk === false ? T(196, 98, 'liaison hors des limites', 'cf-s c56-bad') : ''}`;
+      const cam = `<rect class="c56-cam${on ? ' on' : ''}" x="300" y="38" width="112" height="54" rx="5"/><rect class="cf-vf" x="372" y="22" width="34" height="18" rx="2"/>${T(356, 60, 'HXC-FB80', 'cf-bb mid')}${T(356, 78, on ? `allumée · ≈ ${fr(b.P, 0)} W` : 'éteinte', on ? 'cf-s c56-ok' : 'cf-s c56-bad')}`;
+      const dcin = s ? `<line class="c56-dc" x1="356" y1="92" x2="356" y2="112"/><rect class="cf-box" x="304" y="112" width="104" height="22" rx="3"/>${T(356, 127, s.nom.replace(' de 95 Wh', ''), 'cf-s')}${T(356, 148, `DC IN ${b.by === 'dcin' ? fr(b.I, 1) + ' A' : '(inutile)'}`, 'cf-s')}` : T(356, 120, 'DC IN libre', 'cf-s');
       const max = CHARGES.corps + CHARGES.viseur + CHARGES.objectif + CHARGES.lampe;
       return `${T(16, 16, 'La liaison et l\'énergie', 'cf-t')}${ccuTxt}${cable}${cam}${dcin}
         ${T(16, 126, `Budget de la tête : ≈ ${fr(b.P, 0)} W`, 'cf-lbl l')}<rect class="cf-box" x="16" y="134" width="${max * k}" height="20"/>${bar}
-        ${T(16, 170, b.by === 'dcin' && isFinite(b.hours) ? `autonomie ≈ ${fr(b.hours, 1)} h` : b.by === 'ccu' ? 'la CCU fournit' : '', 'cf-tick l')}`;
+        ${T(16, 170, b.by === 'dcin' && isFinite(b.hours) ? `autonomie ≈ ${fr(b.hours, 1)} h` : b.by === 'ccu' ? 'la CCU fournit' : '', 'cf-s l')}`;
     }
     function up() {
       const L = lenOf(st.u);
@@ -433,7 +433,7 @@ export const LABS_CH56 = {
       send(ctx, { light: b.powered ? 0.5 : 0 });
     }
     sh.node.classList.add('c56-lab');
-    sh.node.append(btnRow(linkBtn('Recommencer', () => { Object.assign(st, init()); link.mark('hybride'); src.mark('aucune'); len.set(st.u); loads[0].set(true); loads[1].set(true); loads[2].set(false); defis.fill(false); up(); })));
+    sh.node.append(btnRow(linkBtn('Recommencer', () => { Object.assign(st, init()); link.mark('hybride'); src.mark('aucune'); len.set(st.u); loads.forEach((l) => l.set(true)); defis.fill(false); up(); })));
     up();
     return { node: sh.node, dispose() {} };
   },
@@ -488,15 +488,15 @@ export const LABS_CH56 = {
     function draw(lamps) {
       const lv = lamps.frontLevel;
       const front = `<rect class="cf-body" x="34" y="26" width="92" height="46" rx="4"/><rect class="c56-lamp${lamps.front ? ' red' : ''}" x="64" y="30" width="32" height="12" rx="2" style="opacity:${lamps.front ? 0.35 + 0.65 * lv : 1}"/>
-        <rect class="cf-body" x="44" y="76" width="72" height="40" rx="4"/><circle class="cf-lens" cx="80" cy="96" r="17"/><circle class="c56-glass" cx="80" cy="96" r="10"/>${T(80, 132, 'vue du plateau', 'cf-tick')}${T(80, 146, 'la lampe de tally du viseur', 'cf-tick')}`;
+        <rect class="cf-body" x="44" y="76" width="72" height="40" rx="4"/><circle class="cf-lens" cx="80" cy="96" r="17"/><circle class="c56-glass" cx="80" cy="96" r="10"/>${T(80, 132, 'vue du plateau', 'cf-s')}${T(80, 146, 'lampe de tally', 'cf-s')}`;
       const back = `<rect class="cf-body" x="166" y="20" width="140" height="82" rx="4"/><rect class="cf-vf" x="178" y="36" width="116" height="60" rx="2"/>
-        <circle class="c56-led${lamps.r ? ' red' : ''}" cx="190" cy="28" r="4"/>${T(198, 31, 'R TALLY', 'cf-tick l')}<circle class="c56-led${lamps.g ? ' green' : ''}" cx="252" cy="28" r="4"/>${T(260, 31, 'G', 'cf-tick l')}
-        ${T(236, 70, 'le viseur', 'cf-tick')}${T(236, 120, 'vue du cadreur', 'cf-tick')}`;
+        <circle class="c56-led${lamps.r ? ' red' : ''}" cx="190" cy="28" r="4"/>${T(198, 31, 'R TALLY', 'cf-s l')}<circle class="c56-led${lamps.g ? ' green' : ''}" cx="252" cy="28" r="4"/>${T(260, 31, 'G', 'cf-s l')}
+        ${T(236, 70, 'le viseur', 'cf-s')}${T(236, 120, 'vue du cadreur', 'cf-s')}`;
       const micY = { PROD: 92, OFF: 106, ENG: 120 }[st.mic];
-      const rearP = `<rect class="cf-plate" x="322" y="20" width="108" height="124" rx="5"/><circle class="c56-led big${lamps.rear ? ' red' : ''}" cx="342" cy="40" r="7"/>${T(354, 44, 'TALLY ' + st.rear, 'cf-tick l')}
-        <circle class="c56-btn${st.camCall ? ' on' : ''}" cx="342" cy="66" r="7"/>${T(354, 70, 'CALL', 'cf-tick l')}
-        ${T(370, 86, 'INTERCOM MIC', 'cf-tick')}<rect class="cf-sw" x="336" y="88" width="12" height="38" rx="2"/><rect class="c56-knob" x="334" y="${micY - 5}" width="16" height="10" rx="2"/>
-        ${['PROD', 'OFF', 'ENG'].map((t) => T(356, { PROD: 95, OFF: 109, ENG: 123 }[t], t, 'cf-tick l' + (t === st.mic ? ' c56-hi' : ''))).join('')}`;
+      const rearP = `<rect class="cf-plate" x="322" y="20" width="108" height="124" rx="5"/><circle class="c56-led big${lamps.rear ? ' red' : ''}" cx="342" cy="40" r="7"/>${T(354, 44, 'TALLY ' + st.rear, 'cf-s l')}
+        <circle class="c56-btn${st.camCall ? ' on' : ''}" cx="342" cy="66" r="7"/>${T(354, 70, 'CALL', 'cf-s l')}
+        ${T(370, 86, 'INTERCOM MIC', 'cf-s')}<rect class="cf-sw" x="336" y="88" width="12" height="38" rx="2"/><rect class="c56-knob" x="334" y="${micY - 5}" width="16" height="10" rx="2"/>
+        ${['PROD', 'OFF', 'ENG'].map((t) => T(356, { PROD: 95, OFF: 109, ENG: 123 }[t], t, 'cf-s l' + (t === st.mic ? ' c56-hi' : ''))).join('')}`;
       return front + back + rearP;
     }
     function up() {
@@ -693,10 +693,10 @@ export const LABS_CH56 = {
       'Règle le contrepoids : lâchée à +30° puis à −30°, la caméra doit rester où on la laisse.',
       'On pose le prompteur : verrou fermé d\'abord, puis rééquilibre la plaque et le contrepoids, et refais les deux essais.',
     ] });
-    let msg = '', raf = 0, last = 0;
+    let msg = '', raf = 0, last = 0, reached = 0;
     function test(sgn) {
       if (st.lock) { msg = 'Ouvre d\'abord le verrou d\'inclinaison.'; up(); return; }
-      st.th = sgn * Math.PI / 6; st.test = { sgn, t: 0, th0: st.th }; tilt.set(30 * sgn); msg = ''; kick(); up();
+      st.th = sgn * Math.PI / 6; st.test = { sgn, t0: performance.now(), th0: st.th }; tilt.set(30 * sgn); msg = ''; kick(); up();
     }
     const bal = () => balanceOf({ plate: st.plate, cb: st.cran * AXE.cran, prompteur: st.prompteur });
     /** la tête libre : le couple fait tourner la caméra, freinée par le fluide (ordre de grandeur) */
@@ -711,9 +711,8 @@ export const LABS_CH56 = {
         moving = Math.abs(th - st.th) > 1e-5; st.th = th; tilt.set(Math.round(deg(th)));
       }
       if (st.test) {
-        st.test.t += dt;
         if (Math.abs(st.th - st.test.th0) > 2 * Math.PI / 180) { st.test = null; msg = tau < 0 ? 'Elle redescend : le contrepoids est trop fort, ou le centre de gravité en avant.' : 'Elle continue de monter… ou de partir : le contrepoids ne compense pas le poids.'; }
-        else if (st.test.t >= 1) { st.held[st.test.sgn > 0 ? 'up' : 'down'] = true; msg = `Elle reste à ${st.test.sgn > 0 ? '+' : '−'}30°.`; st.test = null; }
+        else if (now - st.test.t0 >= 1000) { st.held[st.test.sgn > 0 ? 'up' : 'down'] = true; msg = `Elle reste à ${st.test.sgn > 0 ? '+' : '−'}30°.`; st.test = null; }
       }
       up();
       if (moving || st.test) raf = requestAnimationFrame(step);
@@ -737,7 +736,7 @@ export const LABS_CH56 = {
         <circle class="c56-cg" cx="${gx.toFixed(1)}" cy="${gy.toFixed(1)}" r="7"/><path class="c56-cgx" d="M${(gx - 7).toFixed(1)} ${gy.toFixed(1)} h14 M${gx.toFixed(1)} ${(gy - 7).toFixed(1)} v14"/>
         ${T(16, 18, `Masse ≈ ${fr(b.m, 1)} kg · ${verdict}`, 'cf-t')}
         ${T(16, 36, `Centre de gravité ${Math.abs(off) < 1 ? 'au-dessus de l\'axe' : `${fr(Math.abs(off) / S * 100, 1)} cm ${off > 0 ? 'en avant' : 'en arrière'} de l'axe`}, ${fr(b.Y * 100, 0)} cm au-dessus`, 'cf-sub')}
-        ${T(ax, ay + 22, 'tête fluide', 'cf-tick')}${T(ax + 44, ay + 4, st.lock ? 'verrou fermé' : 'tête libre', 'cf-tick l')}`;
+        ${T(ax, ay + 22, 'tête fluide', 'cf-s')}${T(ax + 44, ay + 4, st.lock ? 'verrou fermé' : 'tête libre', 'cf-s l')}`;
     }
     function up() {
       const b = bal(), plateCm = st.plate * 100;
@@ -746,8 +745,9 @@ export const LABS_CH56 = {
       if (defis[0] && !defis[1] && !st.prompteur && st.held.up && st.held.down && flatOk && cbOk) { defis[1] = true; st.held = { up: false, down: false }; }
       if (defis[1] && !defis[2] && st.prompteur && st.held.up && st.held.down && flatOk && cbOk) defis[2] = true;
       if (st.prompteur !== st.prompteurSeen) { st.held = { up: false, down: false }; st.prompteurSeen = st.prompteur; }
+      if (defis.filter(Boolean).length > reached) { reached = defis.filter(Boolean).length; msg = ''; }
       plate.out.textContent = `${plateCm >= 0 ? '+' : '−'}${fr(Math.abs(plateCm), 1)} cm`;
-      cb.out.textContent = `cran ${st.cran} · ${st.cran * AXE.cran} N·m`;
+      cb.out.textContent = `${st.cran * AXE.cran} N·m`;
       tilt.out.textContent = `${Math.round(deg(st.th))}°`;
       plate.input.disabled = !st.lock; tilt.input.disabled = st.lock; testUp.disabled = testDown.disabled = st.lock;
       read.textContent = `Couple du poids à l'horizontale : ${fr(Math.abs(b.m * G * b.X), 2)} N·m ${b.X > 0 ? 'vers l\'avant' : 'vers l\'arrière'} · à 30° il faudrait ${fr(b.need, 1)} N·m de contrepoids, la tête en donne ${st.cran * AXE.cran}.`;
@@ -772,7 +772,7 @@ export const LABS_CH56 = {
       return 'Remets-la à l\'horizontale.';
     }
     sh.node.classList.add('c56-lab');
-    sh.node.append(btnRow(linkBtn('Recommencer', () => { if (raf) cancelAnimationFrame(raf); raf = 0; Object.assign(st, init()); msg = ''; plate.set(0); cb.set(0); tilt.set(0); lock.set(true); prom.set(false); defis.fill(false); up(); })));
+    sh.node.append(btnRow(linkBtn('Recommencer', () => { if (raf) cancelAnimationFrame(raf); raf = 0; Object.assign(st, init()); msg = ''; reached = 0; plate.set(0); cb.set(0); tilt.set(0); lock.set(true); prom.set(false); defis.fill(false); up(); })));
     up();
     return { node: sh.node, dispose: () => { if (raf) cancelAnimationFrame(raf); raf = 0; } };
   },
