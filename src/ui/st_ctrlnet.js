@@ -145,8 +145,9 @@ function faceplate(sw, big = false) {
 function chip(id) {
   const d = N.devById(id), st = N.devState(id), at = N.attachPort(id), v = N.vlanOfDev(id);
   const where = d.wifi ? 'Wi-Fi' : at ? `P${at.n}` : 'admin.';
-  return el('button', { class: 'cn-chip' + (V.dev === id ? ' on' : ''), type: 'button', 'data-dev': id, style: vstyle(v), 'aria-label': `${d.name}, ${where}, VLAN ${v}, ${LVL[st.level]}`, onclick: () => N.ctrlGo({ tab: 'machines', dev: id }) },
-    led(st.level), el('span', { class: 'cn-chip-n' }, d.name), el('small', {}, `${where} · ${N.ipOf(id) || '—'}`));
+  // nom accessible = texte visible, complété (pour les lecteurs d'écran) du VLAN et de l'état
+  return el('button', { class: 'cn-chip' + (V.dev === id ? ' on' : ''), type: 'button', 'data-dev': id, style: vstyle(v), onclick: () => N.ctrlGo({ tab: 'machines', dev: id }) },
+    led(st.level), el('span', { class: 'cn-chip-n' }, d.name), el('small', {}, `${where} · ${N.ipOf(id) || '—'}`), el('span', { class: 'sr' }, `, VLAN ${v}, ${LVL[st.level]}`));
 }
 
 // ---------------- onglet Topologie ----------------
