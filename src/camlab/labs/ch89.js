@@ -529,7 +529,7 @@ export const LABS_CH89 = {
     const sh = shell({ vf: { canvas: view }, scope: sc, ctrls: [mire.row, ...rings.rows, btnRow(mag.btn), read], defis: [
       'Vérifier la liaison de la caméra jusqu\'au car, sans dépendre de la lumière ni de l\'objectif : choisis la mire, puis ferme l\'iris de deux crans pour le prouver.',
       'Faire le point : choisis la mire qui montre la moindre erreur de netteté. En serré, iris ouvert (f/4 ou plus ouvert), le disque gris du centre sous 1 cm.',
-      'Raccorder le noir et le gamma de deux caméras : choisis la mire, et expose son palier blanc entre 90 et 100 %.',
+      'Raccorder le noir et le gamma de deux caméras : choisis la mire, cadre-la en entier, et expose son palier blanc entre 90 et 100 %.',
     ] });
     const g = view.getContext('2d'); const id = g.createImageData(W, H);
     function paint(o, E) {
@@ -567,6 +567,7 @@ export const LABS_CH89 = {
       if (defis[1]) {
         if (st.m === 'bars') return 'Les barres sont fabriquées par la caméra : les deux caméras sortiraient les mêmes, même si leurs images ne se ressemblent pas. Pour raccorder, il faut une mire que les deux filment.';
         if (st.m === 'etoile') return 'L\'étoile n\'a que du noir et du blanc : aucun gris pour voir le gamma ni le noir.';
+        if (o.f > 28.5) return 'Élargis : la charte entière, ses onze paliers, doit tenir dans le cadre (la charte fait 1 m de large, à 3 m).';
         return white >= 99.6 ? 'Le palier blanc est écrêté : ferme un peu l\'iris.' : `Le palier blanc est à ${fr(white, 0)} % : ouvre l'iris jusqu'à 90 % au moins.`;
       }
       if (defis[0]) {
@@ -585,9 +586,10 @@ export const LABS_CH89 = {
       const E = isFinite(o.N) ? exposureOf(o.N) * LIGHT : 0;
       const b = isFinite(o.N) ? blur(o.f, D, o.dF, 0, o.N) : 0, disc = starGrey(o.f, D, b);
       const steps = CHART.map((v) => 100 * oetf709(v * E)), white = steps[10];
-      if (!defis[0] && st.m === 'bars' && Math.abs(Math.log2((isFinite(o.N) ? o.N : 1e3) / st.n0)) >= 1.9) defis[0] = true;
+      // deux crans d'iris : le nombre f multiplié ou divisé par 2 (un cran = √2)
+      if (!defis[0] && st.m === 'bars' && 2 * Math.abs(Math.log2((isFinite(o.N) ? o.N : 1e3) / st.n0)) >= 1.9) defis[0] = true;
       if (defis[0] && !defis[1] && st.m === 'etoile' && o.f >= 40 && o.N <= 4.05 && disc <= 10) defis[1] = true;
-      if (defis[1] && !defis[2] && st.m === 'charte' && white >= 90 && white < 99.6) defis[2] = true;
+      if (defis[1] && !defis[2] && st.m === 'charte' && o.f <= 28.5 && white >= 90 && white < 99.6) defis[2] = true;
       mag.set(st.mag);
       read.textContent = st.m === 'bars' ? `Barres 75 % : ${['gris', 'jaune', 'cyan', 'vert', 'magenta', 'rouge', 'bleu'].map((n, i) => `${n} ${fr(100 * ycc(BAR7[i][0], BAR7[i][1], BAR7[i][2])[0], 0)}`).join(' · ')} %`
         : st.m === 'etoile' ? `Tache de flou ${fr(b * 1000, 0)} µm sur le capteur · disque gris au centre de l'étoile : ${fr(disc / 10, 1)} cm sur la mire`
@@ -739,10 +741,10 @@ export const LABS_CH89 = {
       const yN = (n) => y0 - clamp(Math.log10(Math.max(n, 1)) / 3, 0, 1) * (y0 - y1);
       g.font = `600 10px ${MONO}`; g.textAlign = 'right'; g.fillStyle = '#9aa3a8';
       for (const n of [1, 10, 100, 1000]) { g.fillText(String(n), 336, yN(n) + 3); g.fillStyle = 'rgba(160,170,176,0.18)'; g.fillRect(340, yN(n), 132, 1); g.fillStyle = '#9aa3a8'; }
-      [['SDR', 'SDR 100 cd/m²', 352], ['HLG', 'HLG 1 000', 414]].forEach(([m, t, x]) => {
+      [['SDR', 'SDR|100 cd/m²', 352], ['HLG', 'HLG|1 000 cd/m²', 414]].forEach(([m, t, x]) => {
         const xx = Number(x);
         PTS.forEach(([l, , c], i) => { const n = nits(String(m), l, E), y = yN(n); g.fillStyle = c; g.globalAlpha = m === st.mode ? 1 : 0.45; g.fillRect(xx + i * 16, y, 12, y0 - y); });
-        g.globalAlpha = 1; g.fillStyle = '#c9ced2'; g.textAlign = 'center'; g.font = `600 10px ${SANS}`; g.fillText(String(t), xx + 22, y0 + 13);
+        g.globalAlpha = 1; g.fillStyle = '#c9ced2'; g.textAlign = 'center'; g.font = `600 10px ${SANS}`; String(t).split('|').forEach((s, i) => g.fillText(s, xx + 22, y0 + 13 + i * 12));
       });
       g.textAlign = 'center'; g.fillStyle = '#9aa3a8'; g.font = `600 10px ${SANS}`; g.fillText('sur l\'écran (cd/m²)', 406, y1 - 6 + 4);
     }

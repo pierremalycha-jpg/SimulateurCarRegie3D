@@ -35,7 +35,7 @@ export const FIGS_CH89 = {
       ${grid}
       <line class="c89-lim" x1="${L}" y1="${n1(Y(103))}" x2="${R}" y2="${n1(Y(103))}"/>${tx(R, n1(Y(103) - 4), '103 % : limite (EBU R 103)', 'c89-liml')}
       ${tr(0, 1, lv.curtain, '')}${tx(R - 2, n1(Y(lv.curtain) - 5), `rideau ${fr(lv.curtain, 0)} %`, 'c89-trl r')}
-      ${tr(0.08, 0.2, lv.card, `carte grise ${fr(lv.card, 0)} %`)}
+      ${tr(0.08, 0.2, lv.card, `carte grise ${fr(lv.card, 0)} %`, 'side')}
       ${tr(0.3, 0.7, lv.jacket, `veste ${fr(lv.jacket, 0)} %`, 'side')}
       ${tr(0.438, 0.562, lv.face, `visage ${fr(lv.face, 0)} %`)}
       ${tr(0.455, 0.545, lv.shirt, `chemise ${fr(lv.shirt, 0)} %`)}
@@ -121,7 +121,7 @@ export const FIGS_CH89 = {
       ${head('Même cadre, deux tailles de capteur', `Super 35, ${fr(ratio, 1)} fois plus large : focale ×${fr(ratio, 1)}, zone nette réduite.`)}
       <circle class="c89-circ s" cx="${cx}" cy="${cy}" r="${n1(28.57 / 2 * k)}"/>${rect(WS35, 14, 'c89-sens s')}
       <circle class="c89-circ" cx="${cx}" cy="${cy}" r="${n1(11 / 2 * k)}"/>${rect(W23, 5.39, 'c89-sens')}
-      ${tx(cx, n1(cy - 14 * k / 2 + 13), 'Super 35', 'c89-sl s')}${tx(cx, n1(cy + 4), '2/3″', 'c89-sl')}
+      ${tx(cx, n1(cy - 14 * k / 2 - 5), 'Super 35', 'c89-sl s')}${tx(cx, n1(cy + 4), '2/3″', 'c89-sl')}
       ${dim(n1(cx - WS35 * k / 2), 212, n1(cx + WS35 * k / 2), 212)}
       ${tx(cx, 234, 'Super 35 : environ 25 × 14 mm', 'cf-s')}${tx(cx, 249, '2/3″ : 9,59 × 5,39 mm', 'cf-s')}
       <g transform="translate(232 46)"><rect class="cf-box" x="0" y="0" width="200" height="200" rx="3"/>
@@ -149,8 +149,8 @@ export const FIGS_CH89 = {
       ${[0, 1, 2, 3, 4].map((l) => tx(n1(X(l)), y0 + 13, String(l), 'cf-tick')).join('')}
       <path class="c89-sdr" d="${sdr}"/><path class="c89-hlg" d="${hl}"/>
       <line class="c89-grid h" x1="${n1(X(1))}" y1="${y1}" x2="${n1(X(1))}" y2="${y0}"/>
-      ${tx(n1(X(1) + 4), n1(Y(100) - 5), 'SDR : écrêté', 'c89-sdrl l')}${tx(n1(X(2.6)), n1(Y(86) + 14), 'HLG', 'c89-hlgl l')}
-      ${tx(x1 - 2, n1(Y(75) - 4), 'blanc de réf. 75 %', 'c89-hlgl r')}
+      ${tx(n1(X(1) + 4), n1(Y(100) - 5), 'SDR : écrêté', 'c89-sdrl l')}${tx(n1(X(0.5) + 6), n1(Y(61) + 14), 'HLG', 'c89-hlgl l')}
+      ${tx(x1 - 2, n1(Y(75) + 13), 'blanc de réf. 75 %', 'c89-hlgl r')}
       ${tx((x0 + x1) / 2, y0 + 27, 'lumière de la scène (carton blanc = 1)', 'cf-s')}
       ${tx(16, 238, 'Écran HLG de 1 000 cd/m² : le blanc à 203 cd/m², les crêtes jusqu\'à 1 000.', 'cf-sub')}
       ${tx(16, 253, 'Gris 18 % : 41 % en SDR, 38 % en HLG.', 'cf-sub')}`);
