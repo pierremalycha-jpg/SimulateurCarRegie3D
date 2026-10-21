@@ -55,7 +55,7 @@ function explainTake(n, m, prev) {
   const outs = outsOfIn(m).filter((o) => o !== n);
   const p = outPlan(n), ip = inPlan(m);
   const tail = { tx: ' C\'est un départ vers la chaîne : vérifiez le retour antenne, puis verrouillez la sortie.', mel: ` Le bouton ${n} du mélangeur montre maintenant cette source.`, mv: ` La tuile ${n - 22} du multiview change d'image.`, evs: ` L'EVS enregistre maintenant cette source sur REC ${n - 22}.`, aux: ' Vérifiez l\'image sur l\'écran concerné.', free: ' Rien n\'est câblé sur cette sortie : la commutation est faite, mais aucune destination ne la reçoit.' }[p.group] || '';
-  explain(`Point de croisement établi : ${descIn(m)} → ${descOut(n)}${prev && prev !== m ? ` (au lieu de l'entrée ${prev})` : ''}. Une sortie ne reçoit qu'une source à la fois.${outs.length ? ` L'entrée ${m} alimente aussi ${outs.length === 1 ? 'la sortie ' + outs[0] : outs.length + ' autres sorties (' + outs.slice(0, 6).join(', ') + (outs.length > 6 ? '…' : '') + ')'} : une source peut partir vers autant de destinations qu'on veut.` : ''}${!ip.live ? ` Attention : rien n'est câblé sur l'entrée ${m}, la destination ne reçoit aucune image.` : ''}${tail}`, 'vh:take');
+  explain(`Point de croisement établi : ${descIn(m)} → ${descOut(n)}${prev && prev !== m ? ` (au lieu de l'entrée ${prev})` : ''}. Une sortie ne reçoit qu'une source à la fois.${outs.length ? ` L'entrée ${m} alimente aussi ${outs.length === 1 ? 'la sortie ' + outs[0] : outs.length + ' autres sorties (' + outs.slice(0, 6).join(', ') + (outs.length > 6 ? '…' : '') + ')'} : une source peut partir vers autant de destinations qu'on veut.` : ''}${!ip.live ? ` Attention : rien n'est câblé sur l'entrée ${m}, la destination ne reçoit aucune image.` : ''}${tail}`, 'grille:take');
 }
 function doRoute(n, m) {
   const prev = xpOf(n);
@@ -447,10 +447,17 @@ function buildSetup() {
   }
   const pre = el('pre', { class: 'vh-proto', tabindex: 0, role: 'region', 'aria-label': 'Blocs du protocole Ethernet envoyés par la grille' });
   const net = el('dl', { class: 'kv' });
+  // liaisons : format, reclocking, référence (chacun avec sa fiche « ? »)
+  const fmtDd = el('dd');
+  const link = el('dl', { class: 'kv' },
+    el('dt', {}, 'Format des liaisons', q('12g-sdi')), fmtDd,
+    el('dt', {}, 'Sorties', q('reclocking')), el('dd', {}, '40, reclockées (signal régénéré)'),
+    el('dt', {}, 'Référence', q('commutation-propre')), el('dd', {}, 'REF IN : tri-level du générateur de synchro, commutation au top image'));
   for (const [k, v] of [['Nom', VH_NET.name], ['Adresse IP', VH_NET.ip], ['Masque', VH_NET.mask], ['Passerelle', VH_NET.gw], ['DHCP', VH_NET.dhcp ? 'oui' : 'non (adresse fixe)'], ['Port de contrôle', `TCP ${VH_NET.port} (protocole Videohub)`], ['Clients', 'Videohub Control (ce poste), façade']]) net.append(el('dt', {}, k), el('dd', {}, v));
   const root = el('div', { class: 'vh-setup' },
     el('div', { class: 'panelgrid' },
       el('div', { class: 'hwpanel' }, el('h3', {}, 'Réseau', q('protocole-videohub')), net, el('p', { class: 'note' }, 'Valeurs du simulateur : à aligner sur le plan d\'adressage du réseau de contrôle du car.')),
+      el('div', { class: 'hwpanel' }, el('h3', {}, 'Liaisons'), link),
       el('div', { class: 'hwpanel' }, el('h3', {}, 'Configuration du car'),
         el('p', { class: 'note' }, 'Étiquettes d\'origine et routage enregistré du car (les sorties verrouillées ne bougent pas).'),
         el('div', { class: 'hwrow' },
@@ -479,6 +486,7 @@ function buildSetup() {
         const lt = l === 'U' ? 'U · verrouiller' : l === 'O' ? 'O · déverrouiller' : 'L · forcer'; if (O.lk.textContent !== lt) { O.lk.textContent = lt; O.lk.className = 'btn small vh-lkcell lk-' + l; O.lk.title = `Sortie ${n} : ${l === 'U' ? 'libre (U), la verrouiller' : l === 'O' ? 'verrouillée par ce poste (O), la déverrouiller' : 'verrouillée par un autre poste (L), forcer le déverrouillage'}`; }
       }
       const txt = protocolText(); if (pre.textContent !== txt) pre.textContent = txt;
+      const f = S.format === 'UHD' ? '2160p50 en 12G-SDI (11,88 Gb/s)' : S.format === 'HD' ? '1080p50 en 3G-SDI (2,97 Gb/s) ; 12G-SDI en UHD' : '1080i50 en HD-SDI (1,485 Gb/s) ; 12G-SDI en UHD'; if (fmtDd.textContent !== f) fmtDd.textContent = f;
     },
   };
 }
