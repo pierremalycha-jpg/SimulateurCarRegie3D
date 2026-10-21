@@ -2,6 +2,7 @@
 import { el } from '../util.js';
 import { registerChapter } from './index.js';
 import { FALAISE } from './sdi_falaise.js';
+import { GRILLE_LESSONS } from './sdi_grille.js';
 import { figure, sv, canvas, slider, choice, readout, fmtNum } from './kit.js';
 
 // ----------------------------------------------------------------------------------
@@ -468,5 +469,6 @@ Le **distributeur-répéteur** (DA, reclocker) est le remède aux longueurs : il
         { q: 'Un répéteur (reclocker) peut-il sauver une liaison qui passe par une pièce 50 Ω ?', choices: ['Oui, il régénère le signal', 'Non : il régénère aussi les erreurs déjà commises en amont ; il faut remplacer la pièce', 'Oui, à condition de le placer avant la pièce 50 Ω'], answer: 1, why: 'Un répéteur allonge une liaison trop longue mais ne répare pas un signal déjà lu de travers. Placé avant la pièce, il ne change rien à la réflexion qui suit. Seul le remplacement de la pièce 50 Ω corrige la liaison.' },
       ],
     },
+    ...GRILLE_LESSONS,
   ],
 });

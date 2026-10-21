@@ -22,6 +22,10 @@ import { PROG, saveProgressSoon } from '../shared.js';
  * @property {{ text: string, station?: string, tab?: string, lesson?: string, arg?: any }} [car] où ça se voit dans le simulateur : poste (et onglet), parcours du chef de car
  * @property {string[]} [terms] fiches « ? » liées (identifiants de content/netterms.js et des fichiers terms_*.js)
  * @property {string[]} [competences] compétences du référentiel TIEE travaillées (content/referentiel.js, « 1.4 »…), pour le livret
+ * @property {Array<{ id: string, intro: string }>} [exercises] exercices pratiques de la leçon : un parcours guidé d'Olivier
+ *   (identifiant de src/tutor/lessons) ou un exercice noté (« x-atelier », « x-brassage », « x-reseau », « x-match », voir
+ *   cours/exercices.js) ; intro : deux ou trois phrases qui relient la leçon au geste à faire dans le car
+ * @property {string} [article] article de référence du guide (content/guide.js), proposé en « Pour aller plus loin »
  * @property {Array<{ q: string, choices: Array<string | [string, string]>, answer: number, why: string }>} quiz trois questions ; un choix peut porter sa propre explication [texte, pourquoi]
  */
 /**
@@ -31,11 +35,13 @@ import { PROG, saveProgressSoon } from '../shared.js';
  * @property {string} icon icône (ui/icons.js)
  * @property {string} intro une ou deux phrases
  * @property {Lesson[]} lessons
+ * @property {{ label: string, sub?: string, event: string, arg?: any }} [module] un module à part ouvert depuis le chapitre
+ *   (ex. la caméra en 3D, src/camlab) : une entrée en tête de la liste du chapitre
  */
 /** @type {Chapter[]} */
 export const CHAPTERS = [];
 /** ordre des chapitres (les autres viennent après, dans l'ordre d'enregistrement) */
-const ORDER = ['signal', 'sdi', 'reseau', 'hf', 'son', 'synchro', 'image', 'mesure'];
+const ORDER = ['signal', 'sdi', 'synchro', 'camera', 'realisation', 'ralentis', 'son', 'reseau', 'hf', 'exploitation'];
 export function registerChapter(ch) {
   if (CHAPTERS.some((c) => c.id === ch.id)) return;
   CHAPTERS.push(ch);

@@ -16,8 +16,8 @@ import { RATTACHEMENT, COMPETENCES } from '../../src/content/referentiel.js';
 const planned = new Set(Object.keys(RATTACHEMENT.cours));
 const cible = (id) => !!(lessonById(id) || planned.has(id) || TERMS[id]);
 
-test('chapitres : signal, SDI, réseau, HF dans l\'ordre ; chaque leçon a sa forme', () => {
-  assert.deepEqual(CHAPTERS.slice(0, 4).map((c) => c.id), ['signal', 'sdi', 'reseau', 'hf']);
+test('chapitres dans l\'ordre pédagogique ; chaque leçon a sa forme', () => {
+  assert.deepEqual(CHAPTERS.map((c) => c.id), ['signal', 'sdi', 'synchro', 'camera', 'realisation', 'ralentis', 'son', 'reseau', 'hf', 'exploitation']);
   const ids = new Set();
   for (const { chapter, lesson } of allLessons()) {
     assert.ok(!ids.has(lesson.id), `${lesson.id} : identifiant en double`); ids.add(lesson.id);
@@ -62,4 +62,13 @@ test('référentiel : chaque leçon écrite est rattachée à des compétences c
     assert.ok(list && list.length, `${lesson.id} : sans compétence`);
     for (const c of list) assert.ok(codes.has(c), `${lesson.id} : compétence inconnue ${c}`);
   }
+});
+
+test('exercices pratiques : ids connus, chacun rangé une seule fois', async () => {
+  const { allExercises, exerciseInfo, SPECIAL } = await import('../../src/cours/exercices.js');
+  const all = allExercises();
+  const seen = new Map();
+  for (const x of all) { assert.ok(exerciseInfo(x.id), `${x.lesson.id} : exercice inconnu ${x.id}`); seen.set(x.id, (seen.get(x.id) || 0) + 1); }
+  for (const [id, n] of seen) assert.equal(n, 1, `${id} rangé ${n} fois`);
+  for (const id of Object.keys(SPECIAL)) assert.ok(id.startsWith('x-'));
 });
