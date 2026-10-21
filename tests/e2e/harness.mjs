@@ -73,7 +73,8 @@ export async function openPage(browser, o = {}) {
   }
   // le chef de car se présente de lui-même au premier lancement : les tests le font venir eux-mêmes,
   // sauf ceux qui vérifient justement ce premier lancement (fresh)
-  if (!o.fresh) await page.addInitScript(() => { try { localStorage.setItem('carregie.chefIntro', '1'); } catch (e) { /* stockage indisponible */ } });
+  // profil Formateur : les suites voient tout (espace formateur, relecture…) ; les pages « fresh » restent Étudiant
+  if (!o.fresh) await page.addInitScript(() => { try { localStorage.setItem('carregie.chefIntro', '1'); localStorage.setItem('carregie.profil', 'formateur'); } catch (e) { /* stockage indisponible */ } });
   if (o.before) await o.before(page);
   await page.goto(o.url || 'http://local.test/?' + query, { timeout: 180000 });
   await page.waitForFunction(o.ready || '!!window.__dbg', null, { timeout: 180000, polling: 200 });

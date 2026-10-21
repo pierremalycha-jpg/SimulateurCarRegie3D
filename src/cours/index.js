@@ -1,0 +1,59 @@
+// @ts-check
+import { PROG, saveProgressSoon } from '../shared.js';
+
+// ----------------------------------------------------------------------------------
+// Les cours : des chapitres (le signal vidéo, le SDI, le réseau, la HF…) faits de leçons, une par
+// terme technique. Chaque leçon donne l'essentiel en trois lignes, un schéma, une manipulation
+// interactive qui fait comprendre, l'explication, « dans le car » (où ça se voit dans le
+// simulateur), les fiches « ? » liées et un quiz court. Les leçons se lisent sans le stade 3D,
+// depuis l'écran titre, un téléphone ou un vidéoprojecteur. L'interface est dans ui/cours_ui.js.
+// ----------------------------------------------------------------------------------
+/**
+ * @typedef {object} Lesson
+ * @property {string} id
+ * @property {string} title
+ * @property {string} [minutes] durée de lecture, ex. « 6 min »
+ * @property {string[]} essentials l'essentiel, trois lignes au plus
+ * @property {() => Element} [figure] le schéma (SVG ou canvas), construit à l'affichage
+ * @property {(host: HTMLElement) => ({ destroy?: () => void } | void)} [demo] la manipulation interactive, montée dans host
+ * @property {string} [demoTitle] consigne de la manipulation
+ * @property {string} body l'explication (texte riche de ui/rich.js : **gras**, `code`, listes « - », paragraphes)
+ * @property {{ text: string, station?: string, arg?: any }} [car] où ça se voit dans le simulateur
+ * @property {string[]} [terms] fiches « ? » liées (identifiants de content/netterms.js et des fichiers terms_*.js)
+ * @property {Array<{ q: string, choices: string[], answer: number, why: string }>} quiz trois questions
+ */
+/**
+ * @typedef {object} Chapter
+ * @property {string} id
+ * @property {string} title
+ * @property {string} icon icône (ui/icons.js)
+ * @property {string} intro une ou deux phrases
+ * @property {Lesson[]} lessons
+ */
+/** @type {Chapter[]} */
+export const CHAPTERS = [];
+/** ordre des chapitres (les autres viennent après, dans l'ordre d'enregistrement) */
+const ORDER = ['signal', 'sdi', 'reseau', 'hf', 'son', 'synchro', 'image', 'mesure'];
+export function registerChapter(ch) {
+  if (CHAPTERS.some((c) => c.id === ch.id)) return;
+  CHAPTERS.push(ch);
+  CHAPTERS.sort((a, b) => { const ia = ORDER.indexOf(a.id), ib = ORDER.indexOf(b.id); return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib); });
+}
+/** @returns {{ chapter: Chapter, lesson: Lesson, i: number } | null} */
+export function lessonById(id) {
+  for (const chapter of CHAPTERS) { const i = chapter.lessons.findIndex((l) => l.id === id); if (i >= 0) return { chapter, lesson: chapter.lessons[i], i }; }
+  return null;
+}
+/** toutes les leçons, dans l'ordre des chapitres */
+export const allLessons = () => CHAPTERS.flatMap((c) => c.lessons.map((l) => ({ chapter: c, lesson: l })));
+
+// ---------------- progression (enregistrée avec celle du stagiaire) ----------------
+export function coursProgress(id) {
+  const P = PROG.cours = PROG.cours || {};
+  return P[id] || (P[id] = { seen: false, quiz: /** @type {{ score: number, total: number } | null} */ (null) });
+}
+export function markSeen(id) { const p = coursProgress(id); if (!p.seen) { p.seen = true; PROG.updatedAt = Date.now(); saveProgressSoon(); } }
+export function recordQuiz(id, score, total) { const p = coursProgress(id); if (!p.quiz || score >= p.quiz.score) p.quiz = { score, total }; PROG.updatedAt = Date.now(); saveProgressSoon(); }
+/** leçon acquise : quiz réussi en entier */
+export const lessonDone = (id) => { const q = coursProgress(id).quiz; return !!q && q.score === q.total; };
+export const chapterDone = (ch) => ch.lessons.filter((l) => lessonDone(l.id)).length;

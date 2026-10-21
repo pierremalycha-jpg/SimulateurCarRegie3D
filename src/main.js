@@ -47,6 +47,9 @@ import { updateStatus, FPS } from './app/hud.js';
 import { installInput } from './app/input.js';
 import { buildStart, start } from './app/start.js';
 import { initTitle, loadStep, tick, titleReady, enterFrom, showTitle } from './app/title.js';
+import { applyRole, PROFILE, setRole } from './app/profile.js';
+import { openCours } from './ui/cours_ui.js';
+import './cours/all.js';
 import * as CTRL from './net/ctrlnet.js';
 import { installPerfTest, watchFps } from './app/perf.js';
 import { toggleChef } from './ui/tutor_ui.js';
@@ -65,6 +68,7 @@ try { const q = localStorage.getItem('carregie.quality'); if (q) S.quality = q; 
 if (/[?&]lite/.test(location.search)) { S.lite = true; S.quality = 'basse'; }
 
 // écran titre : la construction se fait par étapes, chacune affichée avant la suivante
+applyRole();
 initTitle();
 loadStep('Chargement des polices', 6); await tick();
 // charge les polices avant de dessiner les textures (étiquettes, panneaux), sans bloquer plus de 2,5 s
@@ -219,6 +223,7 @@ setDiagInfo(() => {
 window.__dbg = { RENDER, openReview, openSessionPanel, SES, S, M, MIX, EVS, ROUTER, P, W, T, PL, pcam, COMMUT, CMT, applyAudio: applyAll, voiceGain, setMonitor, stripRms, corrNow, EX, teleport, openStation, closeStation, openPlan, closePlan, takeCamera, releaseCamera, start, openGuide, renderer, applyLighting, openDevice, openEquipmentIndex, openTrainer, CFG, SH, AU, SC, NET, FAB, NC, AN, emit, injectFault, clearFaults, ACTIVE, FAULTS, truckBlocked, truckFloorAt, goToStation, TRUCK, AT, atelierDebug, beginAtelier, endAtelier, avOk, AVATARS, avatarPositions, profSnapshot, profReset, TUTOR, toggleChef, startChefLesson, chefDoForMe, chefNext, stopChefLesson, PROG };
 window.__dbg.diag = { ERRS, report, diagText, openDiag, el }; window.__dbg.on = on;
 window.__dbg.title = { enter: enterFrom, show: showTitle };
+window.__dbg.openCours = openCours; window.__dbg.PROFILE = PROFILE; window.__dbg.setRole = setRole;
 window.__dbg.CTRL = CTRL;
 // le programme a démarré : le filet du chargement (boot.js) n'a plus à intervenir
 window.__carReady = true;

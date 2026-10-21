@@ -66,6 +66,12 @@ import iRecord from '@phosphor-icons/core/bold/record-bold.svg';
 import iMinus from '@phosphor-icons/core/bold/minus-bold.svg';
 import iCornersOut from '@phosphor-icons/core/bold/corners-out-bold.svg';
 import iX from '@phosphor-icons/core/bold/x-bold.svg';
+import iGraduationCap from '@phosphor-icons/core/bold/graduation-cap-bold.svg';
+import iBookBookmark from '@phosphor-icons/core/bold/book-bookmark-bold.svg';
+import iUserGear from '@phosphor-icons/core/bold/user-gear-bold.svg';
+import iSealCheck from '@phosphor-icons/core/bold/seal-check-bold.svg';
+import iKeyboard from '@phosphor-icons/core/bold/keyboard-bold.svg';
+import iNotebook from '@phosphor-icons/core/bold/notebook-bold.svg';
 
 /** nom dans l'application -> dessin SVG @type {Record<string, string>} */
 const SVG = {
@@ -87,6 +93,8 @@ const SVG = {
   tv: iTelevisionSimple, entrepot: iWarehouse, colis: iPackage, conference: iPresentation,
   webcam: iWebcam, hautparleur: iSpeakerHifi, lumiere: iLightbulbFilament,
   mesure: iPulse, // baie de mesure (PRISM)
+  // les cinq familles du menu et leurs outils (app/title.js, ui/pupitre.js, ui/cours_ui.js)
+  cours: iGraduationCap, lexique: iBookBookmark, formateur: iUserGear, relecture: iSealCheck, commandes: iKeyboard, livret: iNotebook,
 };
 export const ICON_NAMES = Object.keys(SVG);
 /**

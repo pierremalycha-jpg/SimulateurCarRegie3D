@@ -63,10 +63,27 @@ export function drawMissionCard() {
 
 
 const NET_CHAPTERS = ['ipguide', 'reseau', 'mesure2110'];
+// Les onglets de l'ancien guide, répartis dans les cinq familles du menu : le car (ce qu'on y
+// trouve), le chef de car (missions et livret), les réglages. « Comprendre » et le glossaire
+// sont devenus des onglets de la fenêtre Cours (ui/cours_ui.js).
+const TAB_LABEL = { missions: 'Missions', procedures: 'Procédures', postes: 'Les postes', materiel: 'Matériel', commandes: 'Commandes', reglages: 'Réglages' };
+const GROUPS = [
+  { id: 'car', title: 'Le car : postes, matériel, procédures', tabs: ['postes', 'materiel', 'procedures', 'commandes'] },
+  { id: 'chef', title: 'Missions et livret', tabs: ['missions'] },
+  { id: 'reglages', title: 'Réglages', tabs: ['reglages'] },
+];
+const COURS_TABS = { guide: 'articles', glossaire: 'glossaire', cours: 'chapitres' };
+/**
+ * ouvre la fenêtre du groupe qui contient l'onglet ; les anciens onglets « guide » (Comprendre),
+ * « glossaire » et « cours » ouvrent la fenêtre Cours à la bonne page
+ */
 export function openGuide(tab = 'missions', chapter = null) {
-  const tabs = el('div', { class: 'tabs' });
+  if (COURS_TABS[tab]) { emit('cours', { tab: COURS_TABS[tab], chapter: chapter || null }); return; }
+  const group = GROUPS.find((g) => g.tabs.includes(tab)) || GROUPS[0];
+  if (!group.tabs.includes(tab)) tab = group.tabs[0];
+  const tabs = el('div', { class: 'tabs', hidden: group.tabs.length < 2 ? '' : null });
   const content = el('div', { class: 'list' });
-  const T = [['missions', 'Missions'], ['guide', 'Comprendre'], ['procedures', 'Procédures'], ['postes', 'Les postes'], ['materiel', 'Matériel'], ['glossaire', 'Glossaire'], ['commandes', 'Commandes'], ['reglages', 'Réglages']];
+  const T = group.tabs.map((k) => [k, TAB_LABEL[k]]);
   const show = (k) => {
     content.innerHTML = '';
     [...tabs.children].forEach((b) => b.classList.toggle('on', b.dataset.k === k));
@@ -77,20 +94,6 @@ export function openGuide(tab = 'missions', chapter = null) {
       content.append(el('label', { class: 'item', for: 'showm' }, cb, el('span', {}, 'Afficher la mission en cours à l\'écran')),
         el('button', { class: 'btn small', onclick: () => { S.missionsDone = {}; $('#mission').dataset.m = ''; show('missions'); } }, 'Recommencer le parcours'));
     }
-    if (k === 'guide') {
-      const nav = el('div', { class: 'tabs' }); const art = el('div', { class: 'prose' });
-      let curG = GUIDE[0];
-      // chapitres ST 2110 et réseau : boutons « ? » des termes (tableaux) et accès au lexique
-      const lex = el('button', { class: 'btn small', onclick: () => openLexique(lex) }, 'Lexique réseau et ST 2110');
-      const open = (g) => {
-        curG = g; art.innerHTML = `<h3>${g.title}</h3>` + g.html; [...nav.children].forEach((b) => b.classList.toggle('on', b.dataset.g === g.id));
-        lex.hidden = !NET_CHAPTERS.includes(g.id); if (!lex.hidden) qify(art, 'h4, th, td:first-child');
-      };
-      for (const g of GUIDE) nav.appendChild(el('button', { class: 'tab', 'data-g': g.id, onclick: () => open(g) }, g.title));
-      content.append(nav, art, el('div', { class: 'hwrow' }, lex, el('button', { class: 'btn small', onclick: () => openReport('Guide · ' + curG.title) }, 'Signaler une erreur dans ce chapitre'))); open(GUIDE.find((g) => g.id === chapter) || GUIDE[0]);
-      art.querySelectorAll('table').forEach((t) => { const w = el('div', { class: 'tblwrap' }); t.replaceWith(w); w.appendChild(t); });
-      nav.addEventListener('click', () => art.querySelectorAll('table').forEach((t) => { if (!t.parentElement.classList.contains('tblwrap')) { const w = el('div', { class: 'tblwrap' }); t.replaceWith(w); w.appendChild(t); } }));
-    }
     if (k === 'postes') {
       content.append(el('p', { class: 'note' }, 'Chaque poste du car et chaque équipement du stade, avec son rôle, son matériel et ses pièges. Dans le simulateur, approchez-vous et appuyez sur E.'));
       for (const [id, where] of STATION_LIST) { const I = STATION_INFO[id]; if (!I) continue; content.appendChild(el('div', { class: 'item' }, el('div', { class: 'grow' }, el('div', { class: 't' }, I.title), el('div', { class: 's' }, `${where} · ${I.role.split('. ')[0]}.`)), el('button', { class: 'btn small', onclick: () => openInfo(id) }, 'Voir la fiche'))); }
@@ -99,19 +102,13 @@ export function openGuide(tab = 'missions', chapter = null) {
       const procs = CFG.car.procedures || [];
       content.append(el('p', { class: 'note' }, procs.length ? `Procédures de ${CFG.car.name || 'votre car'}, définies par le formateur.` : 'Aucune procédure maison pour l\'instant : le formateur peut en ajouter dans l\'Espace formateur (onglet Procédures).'));
       for (const p of procs) content.append(el('div', { class: 'hwpanel prose' }, el('h3', {}, p.title), el('ol', { class: 'steps' }, (p.steps || []).map((s) => el('li', {}, s)))));
-      content.append(el('div', { class: 'hwrow' }, el('button', { class: 'btn small', onclick: () => openTrainer('proc') }, 'Espace formateur')));
+      content.append(el('div', { class: 'hwrow' }, el('button', { class: 'btn small role-only', onclick: () => openTrainer('proc') }, 'Espace formateur')));
     }
     if (k === 'materiel') {
       content.append(el('p', { class: 'note' }, 'Faces avant et arrière des appareils, connecteurs, signaux et raccordements de votre installation. Inventaire des connecteurs d\'après les fiches techniques (chaîne caméra type Sony HDC-5500 / HDCU-5500 / RCP-3500, mélangeur Sony XVS-6000 et pupitre ICP-X7000, serveur EVS XT4K, télécommande LSM, IPDirector). Raccourci : touche K.'));
       const row = el('div', { class: 'grid2' });
       for (const [kk, l] of DEVICE_LIST) row.appendChild(el('button', { class: 'choice', onclick: () => openDevice(kk, ['cam', 'ccu', 'rcp'].includes(kk) && S.cams[0] ? S.cams[0].id : 1) }, el('b', { style: { fontSize: '17px' } }, l), el('span', {}, DEVICES[kk] ? DEVICES[kk].title : '')));
       content.append(row);
-    }
-    if (k === 'glossaire') {
-      const q = el('input', { type: 'text', id: 'glq', placeholder: 'Rechercher un terme (SDI, genlock, DSK…)' });
-      const list = el('div', { class: 'list' });
-      const render = () => { list.innerHTML = ''; const nz = (x) => x.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, ''); const s = nz(q.value.trim()); for (const [t, d] of GLOSSARY) { if (s && !(nz(t).includes(s) || nz(d).includes(s))) continue; list.appendChild(el('div', { class: 'item' }, el('div', { class: 'grow' }, el('div', { class: 't' }, t), el('div', { class: 's', style: { fontSize: '13px', color: '#c7d0d7' } }, d)))); } };
-      q.addEventListener('input', render); content.append(field('Recherche', q), list); render();
     }
     if (k === 'commandes') {
       const g = el('div', { class: 'keys' }); for (const [kk, d] of CONTROLS_HELP) g.appendChild(el('div', {}, el('kbd', {}, kk), d));
@@ -125,12 +122,35 @@ export function openGuide(tab = 'missions', chapter = null) {
         field('Voix du réalisateur virtuel', selectEl([['0', 'Texte seulement'], ['1', 'Synthèse vocale']], S.directorVoice ? '1' : '0', (v) => { S.directorVoice = v === '1'; })),
         field('Line-up automatique à l\'installation', selectEl([['1', 'Oui (caméras déjà réglées)'], ['0', 'Non (réglages par défaut, à faire en vision)']], S.autoLineup ? '1' : '0', (v) => { S.autoLineup = v === '1'; })),
         field('Étiquettes et câbles dans le stade', selectEl([['1', 'Afficher'], ['0', 'Masquer']], S.showLabels ? '1' : '0', (v) => emit('setLabels', v === '1')))),
-        el('p', { class: 'note' }, LIGHTING[S.lighting].desc),
-        el('div', { class: 'hwrow' }, el('button', { class: 'btn', onclick: () => openTrainer('car') }, 'Espace formateur'), el('button', { class: 'btn', id: 'perfbtn', onclick: () => emit('perfTest') }, 'Tester les performances de cet ordinateur'), el('button', { class: 'btn', onclick: () => openReport('Simulateur (général)') }, 'Signaler une erreur'), el('button', { class: 'btn', onclick: () => openDiag() }, 'Diagnostic technique')));
+        el('p', { class: 'note' }, (LIGHTING[S.lighting] || {}).desc || ''),
+        el('div', { class: 'hwrow' }, el('button', { class: 'btn role-only', onclick: () => openTrainer('car') }, 'Espace formateur'), el('button', { class: 'btn', id: 'perfbtn', onclick: () => emit('perfTest') }, 'Tester les performances de cet ordinateur'), el('button', { class: 'btn', onclick: () => openReport('Simulateur (général)') }, 'Signaler une erreur'), el('button', { class: 'btn', onclick: () => openDiag() }, 'Diagnostic technique')));
     }
   };
   for (const [k, l] of T) tabs.appendChild(el('button', { class: 'tab', 'data-k': k, onclick: () => show(k) }, l));
-  modal.open('Guide du car régie', el('div', { class: 'list' }, tabs, content), { width: 980 });
+  modal.open(group.title, el('div', { class: 'list' }, tabs, content), { width: 980 });
   show(tab);
 }
 on('openGuide', (ch) => openGuide('guide', typeof ch === 'string' ? ch : null));
+
+/** les articles « Comprendre » (content/guide.js) dans content ; chapter : identifiant du chapitre ouvert */
+export function articlesInto(content, chapter = null) {
+  const nav = el('div', { class: 'tabs' }); const art = el('div', { class: 'prose' });
+  let curG = GUIDE[0];
+  // chapitres ST 2110 et réseau : boutons « ? » des termes (tableaux) et accès au lexique
+  const lex = el('button', { class: 'btn small', onclick: () => openLexique(lex) }, 'Lexique réseau et ST 2110');
+  const open = (g) => {
+    curG = g; art.innerHTML = `<h3>${g.title}</h3>` + g.html; [...nav.children].forEach((b) => b.classList.toggle('on', b.dataset.g === g.id));
+    lex.hidden = !NET_CHAPTERS.includes(g.id); if (!lex.hidden) qify(art, 'h4, th, td:first-child');
+  };
+  for (const g of GUIDE) nav.appendChild(el('button', { class: 'tab', 'data-g': g.id, onclick: () => open(g) }, g.title));
+  content.append(nav, art, el('div', { class: 'hwrow' }, lex, el('button', { class: 'btn small', onclick: () => openReport('Guide · ' + curG.title) }, 'Signaler une erreur dans ce chapitre'))); open(GUIDE.find((g) => g.id === chapter) || GUIDE[0]);
+  art.querySelectorAll('table').forEach((t) => { const w = el('div', { class: 'tblwrap' }); t.replaceWith(w); w.appendChild(t); });
+  nav.addEventListener('click', () => art.querySelectorAll('table').forEach((t) => { if (!t.parentElement.classList.contains('tblwrap')) { const w = el('div', { class: 'tblwrap' }); t.replaceWith(w); w.appendChild(t); } }));
+}
+/** le glossaire (content/glossary.js), avec sa recherche, dans content */
+export function glossaireInto(content) {
+  const q = el('input', { type: 'text', id: 'glq', placeholder: 'Rechercher un terme (SDI, genlock, DSK…)' });
+  const list = el('div', { class: 'list' });
+  const render = () => { list.innerHTML = ''; const nz = (x) => x.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, ''); const s = nz(q.value.trim()); for (const [t, d] of GLOSSARY) { if (s && !(nz(t).includes(s) || nz(d).includes(s))) continue; list.appendChild(el('div', { class: 'item' }, el('div', { class: 'grow' }, el('div', { class: 't' }, t), el('div', { class: 's', style: { fontSize: '13px', color: '#c7d0d7' } }, d)))); } };
+  q.addEventListener('input', render); content.append(field('Recherche', q), list); render();
+}

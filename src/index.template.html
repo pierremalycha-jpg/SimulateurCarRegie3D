@@ -1320,12 +1320,13 @@ tr.rv-prop td { background: rgba(255,176,32,.08); }
       <p class="ti-sub">Simulateur de formation aux métiers du car régie</p>
     </header>
     <nav class="ti-menu" id="ti-menu" aria-label="Menu principal">
-      <button type="button" class="ti-key primary" id="ti-play" disabled><span class="ti-led" aria-hidden="true"></span><b>Entrer dans le car</b><small>La feuille de service : réglages de la captation, puis l'antenne</small></button>
-      <button type="button" class="ti-key" id="ti-lieux" disabled><span class="ti-led" aria-hidden="true"></span><b>Les lieux</b><small>Le car en service, et ce qui se prépare</small></button>
-      <button type="button" class="ti-key" id="ti-trainer" disabled><span class="ti-led" aria-hidden="true"></span><b>Espace formateur</b><small>Configuration du car, suivi des stagiaires</small></button>
-      <button type="button" class="ti-key" id="ti-settings" disabled><span class="ti-led" aria-hidden="true"></span><b>Réglages</b><small>Qualité graphique et son</small></button>
-      <button type="button" class="ti-key" id="ti-credits" disabled><span class="ti-led" aria-hidden="true"></span><b>Crédits</b><small>Version, auteurs, licences</small></button>
+      <button type="button" class="ti-key primary" id="ti-play" disabled><span class="ti-led" aria-hidden="true"></span><b>Jouer</b><small>Les lieux, la journée du car, l'antenne</small></button>
+      <button type="button" class="ti-key" id="ti-cours" disabled><span class="ti-led" aria-hidden="true"></span><b>Cours</b><small>Le signal vidéo, le SDI, le réseau, la HF : leçons, schémas, manipulations</small></button>
+      <button type="button" class="ti-key" id="ti-chef" disabled><span class="ti-led" aria-hidden="true"></span><b>Chef de car</b><small>Les parcours guidés, poste par poste, et le livret de missions</small></button>
+      <button type="button" class="ti-key role-only" id="ti-trainer" disabled><span class="ti-led" aria-hidden="true"></span><b>Formateur</b><small>Configuration du car, suivi des stagiaires, relecture, pannes</small></button>
+      <button type="button" class="ti-key" id="ti-settings" disabled><span class="ti-led" aria-hidden="true"></span><b>Réglages</b><small>Qualité graphique, son, profil, crédits</small></button>
     </nav>
+    <div class="ti-role" id="ti-role"><span id="ti-role-l">Profil</span><div class="seg" role="group" aria-labelledby="ti-role-l"><button type="button" data-v="etudiant" aria-pressed="true" title="Jouer, Cours, Chef de car, Réglages">Étudiant</button><button type="button" data-v="formateur" aria-pressed="false" title="En plus : l'espace formateur, le suivi, la relecture technique, les pannes">Formateur</button></div></div>
     <section class="ti-panel" id="ti-panel" hidden></section>
     <section class="ti-load" aria-label="Chargement">
       <div class="ti-bar wait" id="ti-bar" role="progressbar" aria-label="Chargement du simulateur" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><i></i></div>
