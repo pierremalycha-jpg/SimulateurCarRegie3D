@@ -24,6 +24,7 @@ import { buildToolbar } from './hud.js';
 import { setupTouch } from './input.js';
 import { icon } from '../ui/icons.js';
 import { LIEUX } from '../content/lieux.js';
+import { showTitle } from './title.js';
 
 // ----------------------------------------------------------------------------------
 // Écran d'accueil (« feuille de service ») et lancement d'une partie.
@@ -48,7 +49,9 @@ export function buildStart() {
   const light = selector('stlight', 'Lumière', Object.entries(LIGHTING).map(([k, v]) => [k, SHORT_LIGHT[k] || v.label, v.label]), 'jour');
   const fmt = selector('stfmt', 'Format de production', Object.entries(FORMATS).map(([k, v]) => [k, SHORT_FMT[k] || v.label, v.label]), S.format, () => updFmt());
   const infra = selector('stinfra', 'Infrastructure du car', [['sdi', 'SDI', 'Car SDI : grille coaxiale'], ['ip', 'IP (ST 2110)', 'Car IP : ST 2110, PTP, NMOS']], 'sdi');
-  const qual = selector('stqual', 'Qualité graphique', [['basse', 'Basse', 'Basse : ordinateur portable'], ['moyenne', 'Moyenne'], ['haute', 'Haute', 'Haute : carte graphique dédiée']], S.quality);
+  // qualité : celle choisie dans les réglages de l'écran titre, s'il y en a une (sauf en mode allégé)
+  let q0 = S.quality; try { if (!S.lite) q0 = localStorage.getItem('carregie.quality') || q0; } catch (e) { /* stockage indisponible */ }
+  const qual = selector('stqual', 'Qualité graphique', [['basse', 'Basse', 'Basse : ordinateur portable'], ['moyenne', 'Moyenne'], ['haute', 'Haute', 'Haute : carte graphique dédiée']], q0);
   const snd = selector('stsnd', 'Son', [['1', 'Ambiance et commentaires'], ['0', 'Coupé']], '1');
   updFmt();
   // visite guidée par le chef de car : proposée d'office tant qu'on ne l'a pas faite dans ce navigateur
@@ -109,6 +112,7 @@ export function buildStart() {
   s.append(el('div', { class: 'callsheet deck' },
     el('header', { class: 'dk-head' },
       el('div', { class: 'dk-title' },
+        el('button', { type: 'button', class: 'linkbtn dk-menu', id: 'st-menu', onclick: () => showTitle() }, icon('pupitre'), 'Menu principal'),
         el('h1', {}, 'Car régie 3D'),
         el('p', { class: 'lede' }, 'Simulateur de formation aux métiers du car régie. Un match se joue en continu dans un stade inspiré de Bollaert-Delelis : tout ce que vous réglez se voit à l\'image, chaque action est expliquée.')),
       el('div', { class: 'glass dk-match', role: 'group', 'aria-label': 'La rencontre de ce soir' },

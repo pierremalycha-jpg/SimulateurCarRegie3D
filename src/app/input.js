@@ -14,6 +14,7 @@ import { PL, KEYS, joy, onDeck, updToolbar } from './player.js';
 import { CAMOP, releaseCamera } from './camop.js';
 import { AIM, act } from './interact.js';
 import { openPupitre } from '../ui/pupitre.js';
+import { titleOpen, titleKey } from './title.js';
 
 // ----------------------------------------------------------------------------------
 // Entrées : clavier, souris (regard verrouillé ou glissé), molette, écran tactile.
@@ -21,6 +22,8 @@ import { openPupitre } from '../ui/pupitre.js';
 const isTyping = (e) => e.target && ['INPUT', 'SELECT', 'TEXTAREA'].includes(e.target.tagName) && e.target.type !== 'range' && e.target.type !== 'checkbox';
 
 function onKeyDown(e) {
+  // écran titre : seulement la navigation dans son menu
+  if (titleOpen()) { titleKey(e); return; }
   // confirmation dans la page : Échap = annuler, Entrée = bouton qui a le focus ; rien d'autre
   if (askOpen()) { if (e.code === 'Escape') { closeAsk(false); e.preventDefault(); } return; }
   // fenêtre explicative « ? » : Échap la ferme (sans fermer le poste) ; les autres touches ne pilotent rien

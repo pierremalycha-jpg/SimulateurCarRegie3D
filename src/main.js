@@ -46,6 +46,7 @@ import { teleport, goToStation, goToRolePost, placeAtStation } from './app/telep
 import { updateStatus, FPS } from './app/hud.js';
 import { installInput } from './app/input.js';
 import { buildStart, start } from './app/start.js';
+import { initTitle, loadStep, tick, titleReady, enterFrom, showTitle } from './app/title.js';
 import { installPerfTest, watchFps } from './app/perf.js';
 import { toggleChef } from './ui/tutor_ui.js';
 import { report, ERRS } from './diag.js';
@@ -62,6 +63,9 @@ S.kickoffTOD = S.tcOffset + 4;
 try { const q = localStorage.getItem('carregie.quality'); if (q) S.quality = q; } catch (e) { /* stockage indisponible */ }
 if (/[?&]lite/.test(location.search)) { S.lite = true; S.quality = 'basse'; }
 
+// écran titre : la construction se fait par étapes, chacune affichée avant la suivante
+initTitle();
+loadStep('Chargement des polices', 6); await tick();
 // charge les polices avant de dessiner les textures (étiquettes, panneaux), sans bloquer plus de 2,5 s
 try {
   await Promise.race([
@@ -70,13 +74,18 @@ try {
   ]);
 } catch (e) { /* polices indisponibles : polices de secours */ }
 
+loadStep('Construction du stade', 12); await tick();
 const renderer = createRenderer();
 buildWorld(renderer);
+loadStep('Le match et les joueurs', 42); await tick();
 initMatch(); buildPlayers(W.scene); initRecorder();
+loadStep('Le car régie et ses postes', 52); await tick();
 buildTruck();
+loadStep('Habillage et rendu', 70); await tick();
 initGfx();
 initRender(renderer, W, T);
 applyLighting('jour');
+loadStep('La chaîne vidéo : grille, mélangeur, multiview', 80); await tick();
 initPipeline();
 initPlan(W.scene);
 initAvatars(W.scene, T.scene, { stations: T.stations, chairs: T.chairs || [] });
@@ -185,6 +194,9 @@ function step(now) {
 
 buildStart();
 S.mode = 'start';
+// les shaders se compilent maintenant, plutôt qu'à la première image (qui figerait l'écran)
+loadStep('Préparation des matériaux', 90); await tick();
+try { renderer.compile(W.scene, pcam); renderer.compile(T.scene, pcam); } catch (e) { report(e, 'préparation des matériaux'); }
 initTruckMap((st) => goToStation(st), () => PL);
 installInput();
 installPerfTest();
@@ -205,6 +217,8 @@ setDiagInfo(() => {
 });
 window.__dbg = { RENDER, openReview, openSessionPanel, SES, S, M, MIX, EVS, ROUTER, P, W, T, PL, pcam, COMMUT, CMT, applyAudio: applyAll, voiceGain, setMonitor, stripRms, corrNow, EX, teleport, openStation, closeStation, openPlan, closePlan, takeCamera, releaseCamera, start, openGuide, renderer, applyLighting, openDevice, openEquipmentIndex, openTrainer, CFG, SH, AU, SC, NET, FAB, NC, AN, emit, injectFault, clearFaults, ACTIVE, FAULTS, truckBlocked, truckFloorAt, goToStation, TRUCK, AT, atelierDebug, beginAtelier, endAtelier, avOk, AVATARS, avatarPositions, profSnapshot, profReset, TUTOR, toggleChef, startChefLesson, chefDoForMe, chefNext, stopChefLesson, PROG };
 window.__dbg.diag = { ERRS, report, diagText, openDiag, el }; window.__dbg.on = on;
+window.__dbg.title = { enter: enterFrom, show: showTitle };
 // le programme a démarré : le filet du chargement (boot.js) n'a plus à intervenir
 window.__carReady = true;
 initDiagUI();
+titleReady();

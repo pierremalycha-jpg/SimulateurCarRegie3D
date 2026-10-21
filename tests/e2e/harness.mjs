@@ -51,7 +51,7 @@ const NOISE = /fonts\.g|ERR_FAILED|net::/; // polices bloquées, serveur réseau
 /**
  * Ouvre le simulateur dans un nouvel onglet et attend qu'il soit prêt (window.__dbg).
  * @param {any} browser
- * @param {{ viewport?: { width: number, height: number }, query?: string, id?: string, errors?: string[], mobile?: boolean, url?: string, file?: string, before?: (page: any) => any, ready?: string }} [o]
+ * @param {{ viewport?: { width: number, height: number }, query?: string, id?: string, errors?: string[], mobile?: boolean, url?: string, file?: string, before?: (page: any) => any, ready?: string, title?: boolean, fresh?: boolean }} [o]
  */
 export async function openPage(browser, o = {}) {
   const { viewport = { width: 1280, height: 800 }, query = 'lite', id = '', errors = [], mobile = false } = o;
@@ -77,6 +77,8 @@ export async function openPage(browser, o = {}) {
   if (o.before) await o.before(page);
   await page.goto(o.url || 'http://local.test/?' + query, { timeout: 180000 });
   await page.waitForFunction(o.ready || '!!window.__dbg', null, { timeout: 180000, polling: 200 });
+  // écran titre : les tests entrent directement sur la feuille de service, sauf ceux qui le vérifient (title)
+  if (!o.title) await page.evaluate(() => { try { window.__dbg && window.__dbg.title && window.__dbg.title.enter('start'); } catch (e) { /* ancienne version */ } });
   return page;
 }
 // attend une condition dans la page ; false si le délai est dépassé (au lieu de lever)

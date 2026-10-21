@@ -13,7 +13,7 @@ const AXE = fs.readFileSync(createRequire(import.meta.url).resolve('axe-core/axe
 const TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'];
 
 const browser = await launch();
-const page = await openPage(browser, { errors: T.errors, fresh: true });
+const page = await openPage(browser, { errors: T.errors, fresh: true, title: true });
 const ev = (f, a) => page.evaluate(f, a);
 const all = {};
 async function scan(name, include) {
@@ -33,6 +33,10 @@ async function scan(name, include) {
   await page.screenshot({ path: `${OUT}/${name}.png` });
 }
 
+// écran titre, une fois le chargement terminé
+await until(page, () => document.getElementById('title')?.classList.contains('ready'), null, 30000);
+await scan('titre');
+await ev(() => window.__dbg.title.enter('start'));
 // feuille de service, puis le chef de car ouvert dessus (touche J)
 await scan('accueil');
 // fiche « Ce qui se prépare » d'un lieu en préparation

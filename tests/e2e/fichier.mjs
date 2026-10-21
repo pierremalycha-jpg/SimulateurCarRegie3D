@@ -67,7 +67,10 @@ await page.reload();
 await page.waitForFunction('!!window.__dbg', null, { timeout: 180000, polling: 200 });
 T.check('progression retrouvée après réouverture', await until(page, () => !!window.__dbg.PROG.tutor?.['poste-melangeur']?.done, null, 15000));
 
-// deuxième ouverture : le chef ne s'impose plus ; son bouton de la feuille de service lance le car avec lui
+// deuxième ouverture : l'écran titre, puis la feuille de service ; le chef ne s'impose plus et son
+// bouton de la feuille de service lance le car avec lui
+await until(page, () => document.getElementById('title')?.classList.contains('ready'), null, 30000);
+await page.locator('#ti-play').click();
 await page.locator('#st-chef').click();
 T.check('bouton « Chef de car » de la feuille de service', await chefOpen());
 await page.locator('#chef button', { hasText: 'Prendre l\'antenne avec moi' }).click();

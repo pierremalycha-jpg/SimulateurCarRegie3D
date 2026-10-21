@@ -1,1 +1,62 @@
-/* écran titre et chargement */
+/* écran titre et chargement (src/app/title.js) : un pupitre de lancement, à gauche le menu et la
+   progression, à droite un moniteur sur mire qui passe au vert (tally PVW : prêt à passer) */
+#title { position: fixed; inset: 0; z-index: 40; overflow: auto; background: radial-gradient(ellipse at 72% 28%, #26303a 0%, #161b20 58%, #0e1215 100%); transition: background .6s; }
+/* tant que le titre est affiché, la feuille de service (qui le suit dans la page) reste cachée : on voit le stade derrière */
+#title:not([hidden]) ~ #start { visibility: hidden; }
+#title.ready { background: linear-gradient(100deg, rgba(20,25,29,.97) 0%, rgba(20,25,29,.9) 55%, rgba(20,25,29,.62) 100%); }
+.ti-wrap { box-sizing: border-box; min-height: 100%; max-width: 1180px; margin: 0 auto; padding: calc(28px + env(safe-area-inset-top, 0px)) var(--gut-r) calc(24px + env(safe-area-inset-bottom, 0px)) var(--gut-l);
+  display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); grid-template-areas: "head mon" "menu mon" "load tip"; gap: 22px 44px; align-content: center; }
+.ti-head { grid-area: head; align-self: end; }
+#ti-name { margin: 0 0 10px; font: 700 clamp(44px, 7vw, 84px)/.92 var(--f-disp); letter-spacing: -.015em; color: var(--fg); }
+.ti-sub { margin: 0; font-size: 16px; color: var(--muted); }
+.ti-menu, .ti-panel { grid-area: menu; display: grid; gap: 8px; align-content: start; min-width: 0; }
+.ti-menu[hidden] { display: none; }
+.ti-key { display: grid; grid-template-columns: auto minmax(0, 1fr); column-gap: 12px; align-items: center; padding: 10px 14px; text-align: left; font: inherit; color: var(--fg); cursor: pointer;
+  background: linear-gradient(#4a545e, #3b444d 58%, #343c44); border: 1px solid #161b1f; border-radius: 4px; box-shadow: inset 0 1px 0 rgba(255,255,255,.15), 0 2px 3px rgba(0,0,0,.35); }
+.ti-key .ti-led { grid-row: span 2; width: 8px; height: 8px; border-radius: 50%; background: #1b2024; box-shadow: inset 0 0 0 1px rgba(0,0,0,.5); }
+.ti-key b { font: 600 18px var(--f-disp); }
+.ti-key small { font-size: 13px; color: var(--muted); }
+.ti-key:hover:not(:disabled) { background: linear-gradient(#56616c, #46505a 58%, #3d464f); }
+.ti-key:active:not(:disabled) { transform: translateY(1px); }
+.ti-key:disabled { cursor: progress; opacity: .55; }
+.ti-key:not(:disabled) .ti-led { background: #3d4a42; }
+.ti-key.primary b { color: #ffd38a; }
+.ti-key.primary:not(:disabled) { border-color: #5c4210; }
+.ti-key.primary:not(:disabled) .ti-led { background: var(--pvw); box-shadow: 0 0 8px var(--pvw); }
+.ti-panel { padding: 14px 16px; background: var(--brush), linear-gradient(#333c45, #2c343c); border: 1px solid #161b1f; border-radius: 4px; box-shadow: inset 0 1px 0 rgba(255,255,255,.08); }
+.ti-panel h2 { margin: 0; font: 700 18px var(--f-disp); }
+.ti-panel p { margin: 0; font-size: 14px; line-height: 1.5; color: var(--muted); }
+.ti-panel ul { margin: 0; padding-left: 18px; display: grid; gap: 4px; font-size: 14px; color: var(--muted); }
+.ti-panel .ti-row { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 8px 12px; align-items: center; }
+.ti-panel .ti-row > span { font-size: 13.5px; color: var(--muted); }
+.ti-panel .btn { justify-self: start; }
+.ti-load { grid-area: load; display: grid; gap: 6px; align-self: start; }
+.ti-bar { height: 10px; overflow: hidden; background: var(--well); border: 1px solid #070a0c; border-radius: 2px; box-shadow: inset 0 1px 3px rgba(0,0,0,.6); }
+.ti-bar i { display: block; height: 100%; width: var(--p, 0%); background: repeating-linear-gradient(90deg, var(--pvw) 0 10px, #23824a 10px 12px); transition: width .35s; }
+.ti-bar.wait i { width: 30%; animation: ti-wait 1.4s ease-in-out infinite alternate; }
+@keyframes ti-wait { from { transform: translateX(-40%); } to { transform: translateX(270%); } }
+.ti-step { display: flex; justify-content: space-between; gap: 12px; margin: 0; font: 13px var(--f-mono); color: var(--muted); }
+.ti-step b { font-weight: 400; color: var(--fg); }
+.ti-tip { grid-area: tip; display: grid; gap: 4px; align-self: start; padding: 10px 14px; background: var(--glass); border: 1px solid #070a0c; border-left: 3px solid var(--cyan); border-radius: 3px; }
+.ti-tip-h { display: flex; justify-content: space-between; gap: 12px; margin: 0; font: 600 13px var(--f-disp); color: var(--cyan); }
+.ti-tip-h .linkbtn { font-size: 13px; }
+#ti-tip { min-height: 3em; margin: 0; font-size: 14.5px; line-height: 1.45; color: var(--fg); }
+.ti-mon { grid-area: mon; align-self: center; padding: 6px; background: #05080a; border: 1px solid #1d2428; border-radius: 3px; box-shadow: 0 10px 30px rgba(0,0,0,.45); }
+.ti-scr { position: relative; display: grid; place-items: center; aspect-ratio: 16 / 9; overflow: hidden;
+  background: linear-gradient(90deg, #c0c0c0 0 14.29%, #c0c000 0 28.57%, #00c0c0 0 42.86%, #00c000 0 57.14%, #c000c0 0 71.43%, #c00000 0 85.71%, #0000c0 0); }
+.ti-scr::after { content: ""; position: absolute; inset: 0; background: rgba(5,8,10,.5); transition: background .6s; }
+.ti-sig { position: absolute; z-index: 1; left: 50%; bottom: 12px; transform: translateX(-50%); padding: 2px 9px; white-space: nowrap; background: #05080a; color: #e3e7e1; font: 700 12px var(--f-mono); letter-spacing: .06em; text-transform: uppercase; }
+#title.ready .ti-scr::after { background: rgba(5,8,10,.2); }
+#title.ready .ti-sig { background: #15803d; color: #fff; }
+.ti-umd { display: flex; align-items: center; gap: 8px; padding: 6px 4px 2px; }
+.ti-umd i { flex: none; width: 9px; height: 9px; border-radius: 1px; background: #2a3238; }
+#title.ready .ti-umd i { background: var(--pvw); box-shadow: 0 0 6px var(--pvw); }
+.ti-umd b { font: 600 15px var(--f-disp); color: #d3f3df; }
+.ti-umd small { margin-left: auto; font: 12px var(--f-mono); color: #86a596; }
+@media (max-width: 900px) {
+  .ti-wrap { grid-template-columns: minmax(0, 1fr); grid-template-areas: "head" "menu" "load" "tip"; align-content: start; gap: 18px; }
+  .ti-mon { display: none; }
+}
+@media (prefers-reduced-motion: reduce) { .ti-bar.wait i { animation: none; } .ti-bar i, #title, .ti-scr::after { transition: none; } }
+/* retour au menu depuis la feuille de service */
+.dk-menu { position: relative; z-index: 1; display: inline-flex; align-items: center; gap: 2px; margin-bottom: 8px; }

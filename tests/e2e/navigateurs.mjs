@@ -17,7 +17,7 @@ T.log('navigateur', BROWSER);
 
 const browser = await launch();
 // prêt, ou arrêté sur un écran d'explication (WebGL absent, erreur au chargement) : on dit lequel
-const page = await openPage(browser, { url: URL_FILE, errors: T.errors, fresh: true, ready: '!!window.__dbg || !!document.querySelector("#err:not([hidden])")' });
+const page = await openPage(browser, { url: URL_FILE, errors: T.errors, fresh: true, title: true, ready: '!!window.__dbg || !!document.querySelector("#err:not([hidden])")' });
 const ev = (f, a) => page.evaluate(f, a);
 if (!(await ev(() => !!window.__dbg))) {
   await page.waitForTimeout(4000); // le filet du chargement ajoute son diagnostic
@@ -33,6 +33,15 @@ const chefText = () => ev(() => document.querySelector('#chef')?.textContent || 
 
 // démarrage : programme prêt, pas d'écran de secours, version affichée
 T.check('programme démarré, pas d\'écran de secours', await ev(() => !!window.__carReady && document.getElementById('err').hidden));
+
+// écran titre : affiché au chargement, menu allumé quand tout est prêt, entrée et retour
+T.check('écran titre : chargement terminé, menu allumé', await until(page, () => { const t = document.getElementById('title'); return !!t && !t.hidden && t.classList.contains('ready') && !document.getElementById('ti-play').disabled && /100/.test(document.getElementById('ti-pct').textContent); }, null, 30000));
+await page.locator('#ti-play').click();
+T.check('« Entrer dans le car » : feuille de service, touche Antenne prête', await until(page, () => document.getElementById('title').hidden && document.activeElement?.id === 'st-antenne', null, 8000));
+await page.locator('#st-menu').click();
+T.check('« Menu principal » : retour à l\'écran titre', await until(page, () => !document.getElementById('title').hidden, null, 8000));
+await page.keyboard.press('ArrowDown'); await page.keyboard.press('ArrowUp'); await page.keyboard.press('Enter');
+T.check('clavier : flèches puis Entrée sur « Entrer dans le car »', await until(page, () => document.getElementById('title').hidden, null, 8000));
 T.check('version affichée sur la feuille de service', (await ev(() => document.getElementById('stversion')?.textContent || '')).includes(VERSION));
 
 // le mur des lieux : le car en service, les autres en préparation ; un écran ouvre « Ce qui se prépare »
