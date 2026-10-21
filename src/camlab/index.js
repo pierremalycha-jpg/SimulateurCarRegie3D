@@ -7,6 +7,10 @@ import { buildRig, AXIS_H, FOCAL_PLANE } from './model.js';
 import { buildStudio } from './scene.js';
 import { PASTILLES, notionsAt } from './points.js';
 import { renderFiche } from './fiche.js';
+import { renderChapterQuiz, QUIZ } from './quiz.js';
+import { renderMes } from './mes.js';
+import { notionAcquise, acquises, chapterQuizBest } from './progress.js';
+import { lessonById } from '../cours/index.js';
 import { MIRE_D, ND, defocus, focusDist, zoomFocal, vfov, blurPx, exposureOf } from './optics.js';
 
 // ----------------------------------------------------------------------------------
@@ -15,12 +19,15 @@ import { MIRE_D, ND, defocus, focusDist, zoomFocal, vfov, blurPx, exposureOf } f
 // s'approche et la fiche s'ouvre à droite. Vue d'ensemble, vue éclatée, vue en coupe (le trajet
 // de la lumière jusqu'aux trois capteurs). Son propre rendu (un second contexte WebGL), construit
 // à la première ouverture ; la boucle du simulateur est en pause tant qu'il est ouvert.
+// La liste des notions coche les notions acquises (camlab/progress.js) et finit chaque chapitre
+// par son quiz (camlab/quiz.js) ; le bouton « Mise en service » ouvre l'exercice noté
+// (camlab/mes.js), qui pilote la caméra 3D et approche la vue du poste où l'on agit.
 // ----------------------------------------------------------------------------------
 
 export const CL = { open: false, built: false };
 /** @type {any} */
 let R = null;
-let titleWasOpen = false, raf = 0, openedFrom = '';
+let titleWasOpen = false, raf = 0, openedFrom = '', backLesson = '';
 
 /** le module est ouvert (les touches et la boucle du simulateur l'ignorent) */
 export const camlabOpen = () => CL.open;
@@ -110,11 +117,12 @@ async function build() {
   const bExplode = btn('Vue éclatée', 'Écarter les pièces de la caméra', () => setExplode(!R.explodeOn));
   const bCut = btn('Vue en coupe', 'Couper la caméra en deux et suivre la lumière', () => setCut(!R.rig.state.cut));
   const bList = btn('Les notions', 'Toutes les notions, chapitre par chapitre', () => toggleList());
+  const bMes = btn('Mise en service', 'Exercice noté : mettre la caméra en service, de l\'objectif au fichier de scène', () => { if (window.innerWidth < 900) toggleList(false); openMes(); }, 'cs-mesbtn');
   const bQuit = btn('Quitter', 'Revenir au menu (Échap)', () => closeCameraLab(), 'cl-quit');
   bQuit.append(' ', el('kbd', {}, 'Échap'));
   const bar = el('header', { class: 'cl-bar' },
     el('div', { class: 'cl-id' }, el('span', { class: 'tape y' }, 'La caméra'), el('small', {}, 'Type Sony HXC-FB80 · Fujinon ZA12x4.5BERD')),
-    el('div', { class: 'cl-views', role: 'toolbar', 'aria-label': 'Vues' }, bOverview, bExplode, bCut, bList),
+    el('div', { class: 'cl-views', role: 'toolbar', 'aria-label': 'Vues' }, bOverview, bExplode, bCut, bList, bMes),
     bQuit);
   const hint = el('p', { class: 'cl-hint-bar' }, 'Glisser pour tourner · molette ou pincer pour approcher · clic droit ou Maj pour déplacer · une pastille ouvre sa fiche');
   const loading = el('p', { class: 'cl-loading' }, 'Montage de la caméra…');
@@ -132,7 +140,7 @@ async function build() {
   const rig = buildRig();
   const studio = buildStudio(renderer, rig, q);
   const orbit = makeOrbit(camera, canvas);
-  R = { root, canvas, pins, side, list, bar, renderer, camera, rig, studio, orbit, explodeOn: false, explodeT: 0, pinEls: new Map(), anchors: new Map(), point: null, fiche: null, notion: null, rr: 0, ray: new THREE.Raycaster(), lens: null, bExplode, bCut };
+  R = { root, canvas, pins, side, list, bar, renderer, camera, rig, studio, orbit, explodeOn: false, explodeT: 0, pinEls: new Map(), anchors: new Map(), point: null, fiche: null, notion: null, rr: 0, ray: new THREE.Raycaster(), lens: null, bExplode, bCut, lensOut: 0, listRefs: null, panel: '', escT: 0, data: { NOTIONS, QUIZ } };
   rig.set({ zoom: 0.45, focus: 0.1, iris: 5.6, nd: 0 });
   buildPins();
   buildList();
@@ -237,7 +245,8 @@ function pick(e) {
 
 // ---------------- vues ----------------
 function overview(now = false) {
-  closeSide(); R.point = null;
+  if (!mesBusy()) closeSide();
+  R.point = null;
   setCut(false); setExplode(false);
   const t = new THREE.Vector3(-0.09, AXIS_H - 0.02, 0);
   if (now) { R.orbit.target.copy(t); R.orbit.sph.set(1.55, 1.25, Math.atan2(0.75, -0.62)); R.orbit.apply(); }
@@ -249,23 +258,25 @@ function setCut(on) { R.rig.setCut(on); R.bCut.classList.toggle('on', on); R.bCu
 /** ouvre une pastille : la vue s'approche, le panneau propose ses notions */
 function openPoint(id, notion) {
   const p = PASTILLES.find((x) => x.id === id); if (!p) return;
+  // pendant la mise en service, une pastille approche seulement la vue
+  if (mesBusy()) { flyToPastille(id); return; }
   R.point = id;
   if (p.mode === 'cut') setCut(true);
-  const a = R.anchors.get(id); const t = new THREE.Vector3();
-  if (a.userData.world) a.parent.localToWorld(t.copy(a.userData.center));
-  else if (p.look) t.set(p.look[0], p.look[1], p.look[2]).applyMatrix4(R.rig.cam.matrixWorld);
-  else a.getWorldPosition(t);
-  R.orbit.flyTo(t, new THREE.Vector3(p.dir[0], p.dir[1], p.dir[2]), p.dist);
+  flyToPastille(id);
   const ids = notionsAt(id);
   openNotion(notion || ids[0], id, false);
 }
 /** ouvre la fiche d'une notion (depuis une pastille, la liste ou « Voir aussi ») */
 function openNotion(nid, pointId = null, fly = true) {
   const f = NOTIONS[nid]; if (!f) return;
+  if (mesBusy()) { R.fiche.say('Mise en service en cours : termine-la, ou « Abandonner », avant d\'ouvrir une fiche.'); return; }
   if (fly && f.point && f.point !== R.point) { openPoint(f.point, nid); return; }
   R.notion = nid;
-  if (R.fiche) R.fiche.dispose();
-  R.fiche = renderFiche(nid, { open: (s) => openNotion(s), lens: (st) => lensFromLab(st) });
+  disposePanel(); R.panel = 'fiche';
+  R.fiche = renderFiche(nid, {
+    open: (s) => openNotion(s), lens: (st) => lensFromLab(st), progress: () => updateList(),
+    cours: (lesson) => closeCameraLab({ cours: { lesson } }), go: (g) => closeCameraLab({ go: g }),
+  });
   const pid = pointId || R.point;
   const p = PASTILLES.find((x) => x.id === pid);
   const ids = pid ? notionsAt(pid) : [];
@@ -277,12 +288,70 @@ function openNotion(nid, pointId = null, fly = true) {
     ...(tabs ? [tabs] : []),
     el('div', { class: 'cl-scroll' }, R.fiche.node));
   R.side.hidden = false; R.root.classList.add('side-open');
-  for (const b of R.list.querySelectorAll('[data-n]')) b.classList.toggle('cur', /** @type {HTMLElement} */ (b).dataset.n === nid);
+  for (const b of R.list.querySelectorAll('[data-n], [data-quiz]')) b.classList.toggle('cur', /** @type {HTMLElement} */ (b).dataset.n === nid);
   const sc = R.side.querySelector('.cl-scroll'); if (sc) sc.scrollTop = 0;
 }
-function closeSide() {
+/** libère le contenu du panneau (fiche, quiz ou mise en service) */
+function disposePanel() {
   if (R.fiche) { R.fiche.dispose(); R.fiche = null; }
+  R.panel = ''; R.side.classList.remove('cs-wide'); R.root.classList.remove('mes-open');
+}
+function closeSide() {
+  disposePanel();
   R.side.hidden = true; R.side.replaceChildren(); R.root.classList.remove('side-open'); R.notion = null; R.point = null; resetImage();
+  for (const b of R.list.querySelectorAll('[data-n], [data-quiz]')) b.classList.remove('cur');
+}
+/** la mise en service est en cours (pas sur son écran de départ ni sur son bilan) */
+const mesBusy = () => !!(R && R.panel === 'mes' && R.fiche && R.fiche.running && R.fiche.running());
+/** la vue s'approche d'une pastille, sans ouvrir de fiche */
+function flyToPastille(id) {
+  const p = PASTILLES.find((x) => x.id === id); const a = R.anchors.get(id); if (!p || !a) return;
+  const t = new THREE.Vector3();
+  if (a.userData.world) a.parent.localToWorld(t.copy(a.userData.center));
+  else if (p.look) t.set(p.look[0], p.look[1], p.look[2]).applyMatrix4(R.rig.cam.matrixWorld);
+  else a.getWorldPosition(t);
+  R.orbit.flyTo(t, new THREE.Vector3(p.dir[0], p.dir[1], p.dir[2]), p.dist);
+}
+/** l'objectif écarté de sa monture (0 : monté, 1 : démonté), pour la mise en service */
+const LENS_OUT = 0.22;
+function setLensOut(t) {
+  if (Math.abs(t - R.lensOut) < 1e-6) return;
+  R.rig.lens.lens.position.x += (t - R.lensOut) * LENS_OUT; R.lensOut = t; R.renderer.shadowMap.needsUpdate = true;
+}
+/** le panneau de droite, avec son titre */
+function showPanel(title, node, wide = false) {
+  R.side.replaceChildren(
+    el('div', { class: 'cl-sh' }, el('span', { class: 'cl-sp' }, title), el('button', { type: 'button', class: 'linkbtn cl-close', 'aria-label': 'Fermer le panneau', onclick: () => { closeSide(); } }, 'Fermer')),
+    el('div', { class: 'cl-scroll' }, node));
+  R.side.hidden = false; R.root.classList.add('side-open');
+  R.side.classList.toggle('cs-wide', wide); R.root.classList.toggle('mes-open', wide);
+  const sc = R.side.querySelector('.cl-scroll'); if (sc) sc.scrollTop = 0;
+}
+/** le quiz d'un chapitre */
+function openQuiz(n) {
+  if (mesBusy()) { R.fiche.say('Mise en service en cours : termine-la, ou « Abandonner », avant d\'ouvrir un quiz.'); return; }
+  disposePanel(); R.notion = null; R.point = null; resetImage();
+  R.panel = 'quiz';
+  R.fiche = renderChapterQuiz(n, { open: (id) => openNotion(id), progress: () => updateList() });
+  showPanel(`Quiz · chapitre ${n}`, R.fiche.node);
+  for (const b of R.list.querySelectorAll('[data-n], [data-quiz]')) b.classList.toggle('cur', /** @type {HTMLElement} */ (b).dataset.quiz === String(n));
+}
+/** l'exercice noté « Mise en service » */
+function openMes(o = {}) {
+  if (R.panel === 'mes' && !R.side.hidden) return;
+  disposePanel(); R.notion = null; R.point = null;
+  setCut(false); setExplode(false);
+  R.panel = 'mes';
+  const L = backLesson ? lessonById(backLesson) : null;
+  R.fiche = renderMes({
+    lens: (st) => lensFromLab(st), fly: (id) => flyToPastille(id), lensOut: (t) => setLensOut(t),
+    tally: (t) => { R.rig.set({ tally: t }); },
+    open: (id) => openNotion(id),
+    back: L ? { title: L.lesson.title, go: () => closeCameraLab({ cours: { lesson: L.lesson.id } }) } : null,
+  }, { variante: o.variante });
+  showPanel('Mise en service · exercice noté', R.fiche.node, true);
+  for (const b of R.list.querySelectorAll('[data-n], [data-quiz]')) b.classList.remove('cur');
+  flyToPastille('monture');
 }
 function toggleList(force) {
   const show = force != null ? force : R.list.hidden;
@@ -291,15 +360,46 @@ function toggleList(force) {
 function buildList() {
   const L = R.list;
   const ecrites = Object.values(NOTIONS).filter((n) => !n.prevu).length;
-  L.append(el('div', { class: 'cl-lh' }, el('b', {}, 'Les notions'), el('small', {}, `${ecrites} fiche${ecrites > 1 ? 's' : ''} écrite${ecrites > 1 ? 's' : ''} sur ${Object.keys(NOTIONS).length}`), el('button', { type: 'button', class: 'linkbtn', onclick: () => toggleList(false) }, 'Fermer')));
+  const total = Object.keys(NOTIONS).length;
+  const acqAll = el('span', { class: 'cs-acqn' });
+  L.append(el('div', { class: 'cl-lh' }, el('b', {}, 'Les notions'), el('small', {}, `${ecrites} fiche${ecrites > 1 ? 's' : ''} écrite${ecrites > 1 ? 's' : ''} sur ${total}`, ' · ', acqAll), el('button', { type: 'button', class: 'linkbtn', onclick: () => toggleList(false) }, 'Fermer')));
+  const refs = { acqAll, chaps: /** @type {{ n: number, ids: string[], count: HTMLElement, quiz: HTMLElement }[]} */ ([]), items: /** @type {Map<string, HTMLElement>} */ (new Map()) };
   for (const c of CHAPITRES) {
     const ul = el('ul', {});
-    for (const id of notionsDu(c.n)) {
+    const ids = notionsDu(c.n);
+    for (const id of ids) {
       const f = NOTIONS[id];
-      ul.append(el('li', {}, el('button', { type: 'button', 'data-n': id, class: 'cl-ni' + (f.prevu ? ' prevu' : ''), onclick: () => { if (window.innerWidth < 900) toggleList(false); openNotion(id); } },
-        el('i', { 'aria-hidden': 'true' }), f.t, f.prevu ? el('small', {}, `lot ${f.lot}`) : null)));
+      const b = el('button', { type: 'button', 'data-n': id, class: 'cl-ni' + (f.prevu ? ' prevu' : ''), onclick: () => { if (window.innerWidth < 900) toggleList(false); openNotion(id); } },
+        el('i', { 'aria-hidden': 'true' }), f.t, el('span', { class: 'sr cs-acq-sr' }), f.prevu ? el('small', {}, `lot ${f.lot}`) : null);
+      refs.items.set(id, b);
+      ul.append(el('li', {}, b));
     }
-    L.append(el('details', { class: 'cl-ch', open: c.n <= 2 }, el('summary', {}, el('b', {}, String(c.n)), c.nom), ul));
+    // à la fin du chapitre, son quiz
+    const qsmall = el('small', {});
+    ul.append(el('li', {}, el('button', { type: 'button', class: 'cs-qbtn', 'data-quiz': String(c.n), onclick: () => { if (window.innerWidth < 900) toggleList(false); openQuiz(c.n); } },
+      el('i', { 'aria-hidden': 'true' }), 'Quiz du chapitre', qsmall)));
+    const count = el('small', { class: 'cs-chn' });
+    refs.chaps.push({ n: c.n, ids, count, quiz: qsmall });
+    L.append(el('details', { class: 'cl-ch', open: c.n <= 2 }, el('summary', {}, el('b', {}, String(c.n)), c.nom, count), ul));
+  }
+  R.listRefs = refs;
+  updateList();
+}
+/** la progression dans la liste : notions acquises (coche), par chapitre et en tout, meilleur score des quiz */
+function updateList() {
+  const refs = R && R.listRefs; if (!refs) return;
+  const all = [...refs.items.keys()];
+  refs.acqAll.textContent = `${acquises(all)} / ${all.length} acquises`;
+  for (const [id, b] of refs.items) {
+    const ok = notionAcquise(id); b.classList.toggle('cs-acq', ok);
+    const sr = b.querySelector('.cs-acq-sr'); if (sr) sr.textContent = ok ? ' (acquise)' : '';
+  }
+  for (const c of refs.chaps) {
+    const a = acquises(c.ids); c.count.textContent = `${a} / ${c.ids.length}`;
+    c.count.setAttribute('aria-label', `${a} notion${a > 1 ? 's' : ''} acquise${a > 1 ? 's' : ''} sur ${c.ids.length}`);
+    const q = chapterQuizBest(c.n); const nq = (QUIZ[c.n] || []).length;
+    c.quiz.textContent = q ? `${q.score} / ${q.total}` : `${nq} questions`;
+    /** @type {HTMLElement} */ (c.quiz.parentElement).classList.toggle('cs-acq', !!q && q.score === q.total);
   }
 }
 
@@ -350,7 +450,11 @@ function loop(now) {
   const dt = Math.min(0.2, Math.max(0.001, (now - (last || now)) / 1000)); last = now;
   const { rig, orbit, renderer, camera, studio } = R;
   R.explodeT = clamp(R.explodeT + (R.explodeOn ? dt : -dt) * 1.4, 0, 1);
-  if (R.explodeT !== rig.state.explode) { rig.setExplode(R.explodeT); renderer.shadowMap.needsUpdate = true; }
+  if (R.explodeT !== rig.state.explode) {
+    rig.setExplode(R.explodeT); renderer.shadowMap.needsUpdate = true;
+    // la vue éclatée replace l'objectif : on garde l'écart de la mise en service
+    if (R.lensOut) rig.lens.lens.position.x += R.lensOut * LENS_OUT;
+  }
   orbit.update(dt);
   rig.update(dt);
   // la vue d'abord (elle recalcule les ombres s'il le faut, caméra comprise), puis l'image de la caméra
@@ -368,16 +472,31 @@ function onKey(e) {
   if (e.code === 'Escape') {
     e.preventDefault(); e.stopPropagation();
     if (!R.list.hidden && window.innerWidth < 900) { toggleList(false); return; }
+    // pendant la mise en service : une seconde pression sur Échap (dans les 3 s) abandonne
+    if (mesBusy()) {
+      const now = performance.now();
+      if (now - R.escT > 3000) { R.escT = now; R.fiche.say('Échap : appuie encore une fois pour abandonner la mise en service (rien n\'est noté).'); return; }
+      R.escT = 0;
+    }
     if (!R.side.hidden) { closeSide(); return; }
     closeCameraLab();
   }
 }
 
 // ---------------- ouvrir, fermer ----------------
-/** ouvre le module ; o.notion ou o.point : ouvrir directement une fiche */
+/** ce que l'ouverture demande : une fiche, une pastille, un quiz ou la mise en service */
+function route(o) {
+  if (o.notion) openNotion(o.notion); else if (o.point) openPoint(o.point);
+  else if (o.quiz) openQuiz(Number(o.quiz)); else if (o.mes) openMes(o);
+}
+/**
+ * Ouvre le module. o.notion ou o.point : ouvrir directement une fiche ; o.quiz : le quiz d'un
+ * chapitre ; o.mes : l'exercice « Mise en service » (o.variante : son éclairage) ; o.from :
+ * 'cours' pour y revenir en sortant, o.lesson : la leçon du Cours où revenir.
+ */
 export async function openCameraLab(o = {}) {
-  if (CL.open) return;
-  CL.open = true; openedFrom = o.from || '';
+  if (CL.open) { if (o.lesson) backLesson = o.lesson; if (R) route(o); return; }
+  CL.open = true; openedFrom = o.from || ''; backLesson = o.lesson || '';
   const title = document.getElementById('title');
   titleWasOpen = !!title && !title.hidden; if (title) title.hidden = true;
   if (!CL.built) {
@@ -385,19 +504,27 @@ export async function openCameraLab(o = {}) {
   }
   R.root.hidden = false; document.body.classList.add('camlab-on');
   resize(); last = 0; raf = requestAnimationFrame(loop);
-  if (o.notion) openNotion(o.notion); else if (o.point) openPoint(o.point);
+  updateList(); route(o);
   const first = /** @type {HTMLElement | null} */ (R.bar.querySelector('button')); if (first) first.focus({ preventScroll: true });
 }
-export function closeCameraLab() {
+/**
+ * Ferme le module. next.cours : ouvrir cette leçon du Cours ; next.go : aller à ce poste du car
+ * (« Emmène-moi ») ; sinon, venu du Cours, on y revient (sur la leçon d'où l'on venait).
+ * @param {{ cours?: any, go?: any } | null} [next]
+ */
+export function closeCameraLab(next = null) {
   if (!CL.open) return;
   CL.open = false; cancelAnimationFrame(raf);
   if (R) { closeSide(); R.root.hidden = true; }
   document.body.classList.remove('camlab-on');
   const title = document.getElementById('title');
   if (title && titleWasOpen) { title.hidden = false; const b = document.getElementById('ti-cours'); if (b) b.focus({ preventScroll: true }); }
-  // venu de l'onglet La caméra de l'espace Cours : on y revient
-  if (openedFrom === 'cours') emit('cours', { tab: 'camera' });
-  openedFrom = '';
+  const from = openedFrom, back = backLesson;
+  openedFrom = ''; backLesson = '';
+  if (next && next.cours) emit('cours', next.cours);
+  else if (next && next.go) emit('go', next.go);
+  // venu de l'espace Cours (chapitre La caméra, ou une leçon) : on y revient
+  else if (from === 'cours') emit('cours', back ? { lesson: back } : { tab: 'camera' });
 }
 /** accès de débogage et de test */
 export const camlabDebug = () => R;
