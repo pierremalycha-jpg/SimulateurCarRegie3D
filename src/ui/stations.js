@@ -61,7 +61,8 @@ const STATIONS = {
   synchro: { title: 'Synchro et timecode', build: buildSync, layout: 'top sm', dev: 'spg' },
   transmission: { title: 'Transmission', build: buildTX, layout: 'top' },
   intercom: { title: 'Intercom', build: buildIntercom, layout: 'none' },
-  reseau: { title: 'Réseau IP (ST 2110 · spine-leaf)', build: buildNetwork, layout: 'top sm', dev: 'swred' },
+  // car SDI : réseau de contrôle Gigabit (ui/st_ctrlnet.js) ; car IP : réseau ST 2110 (titre et matériel inchangés)
+  reseau: { title: 'Réseau de contrôle — switchs Gigabit · VLAN · QoS', ipTitle: 'Réseau IP (ST 2110 · spine-leaf)', build: buildNetwork, layout: 'top sm', get dev() { return S.ipMode ? 'swred' : 'rcp'; } },
 };
 export function hasStation(id) { return !!STATIONS[id]; }
 
@@ -125,8 +126,9 @@ const STATION_HELLO = {
   transmission: 'Comparez le départ vers la chaîne et le retour antenne (en retard de quelques secondes).',
   habillage: 'À gauche, la sortie fill/key du moteur graphique ; à droite, le programme : le graphique n\'y apparaît que si le DSK est à l\'antenne.',
   chefdecar: 'Le multiview reste visible pendant que vous lisez le synoptique ou injectez des pannes.',
-  reseau: 'Deux onglets. Technique : les deux réseaux rouge et bleu en spine-leaf, leurs commutateurs (interface graphique ou terminal), l\'adressage, les flux, PTP et le diagnostic. Exploitation : l\'interface épurée d\'un contrôleur et des appareils, pour régler les adresses, connecter une source à une destination et surveiller PTP et NMOS. Chaque réglage agit réellement sur ce que reçoivent le mélangeur, l\'EVS et le multiview.',
+  get reseau() { return S.ipMode ? STATION_HELLO_IP : 'Le car SDI a aussi son réseau : trois switchs Gigabit relient tout ce qui se pilote par Ethernet (RCP et CCU, pupitre et processeur du mélangeur, grille, EVS et IPDirector, tally, intercom, console son). Chaque machine a sa fiche (adresse IP, masque, passerelle, VLAN, QoS) ; l\'onglet Outils teste avec un ping, l\'onglet Formation explique les bases.'; },
 };
+const STATION_HELLO_IP = 'Deux onglets. Technique : les deux réseaux rouge et bleu en spine-leaf, leurs commutateurs (interface graphique ou terminal), l\'adressage, les flux, PTP et le diagnostic. Exploitation : l\'interface épurée d\'un contrôleur et des appareils, pour régler les adresses, connecter une source à une destination et surveiller PTP et NMOS. Chaque réglage agit réellement sur ce que reçoivent le mélangeur, l\'EVS et le multiview.';
 const later = (fn) => setTimeout(fn, 160);
 // moniteur du dock : label + écran 16/9 rendu par WebGL
 function dmon(src, label, cls = 'grow') { return el('div', { class: 'monwrap ' + cls }, el('div', { class: 'lab' }, label), el('div', { class: 'mon fill', 'data-gl': src })); }

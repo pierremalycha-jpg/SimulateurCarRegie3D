@@ -44,7 +44,7 @@ import { PROG, saveProgressSoon } from '../shared.js';
  * @property {string} summary
  * @property {string} duration
  * @property {string} level
- * @property {{ ip?: boolean, hf?: boolean, cams?: number }} [needs]
+ * @property {{ ip?: boolean, sdi?: boolean, hf?: boolean, cams?: number }} [needs]
  * @property {(c: Ctx) => void} [after] toujours appelé à la fin du parcours (terminé ou quitté)
  * @property {string} [outro]
  * @property {string} [cleanupLabel] ce que fait cleanup, proposé quand on quitte avant la fin
@@ -237,6 +237,7 @@ export function lessonsFor(station) {
 export function lessonBlocked(l) {
   const n = l.needs || {};
   if (n.ip && !S.ipMode) return 'Demande le car IP';
+  if (n.sdi && S.ipMode) return 'Demande le car SDI';
   if (n.hf && !S.cams.some((c) => c.rf)) return 'Demande une caméra HF (plan caméras)';
   if (n.cams && S.cams.length < n.cams) return `Demande au moins ${n.cams} caméras`;
   return '';

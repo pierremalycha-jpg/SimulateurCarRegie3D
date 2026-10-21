@@ -4,6 +4,7 @@ import { pbr } from './render.js';
 import { Builder, screenMaterial } from './geo.js';
 import { TRUCK } from './world.js';
 import { makeCanvas } from './util.js';
+import { S } from './state.js';
 import { EQUIP } from './equip.js';
 import { buildAudioDesk } from './audiodesk.js';
 
@@ -309,9 +310,12 @@ function hangingSign(text, lx, lz, w = 1.6, rotY = 0, color = '#e0b030') {
   m.translateZ(-0.002);
 }
 
-function stationLabel(text) {
+// text : libellé, ou fonction qui le donne (libellé qui suit le type de car, SDI ou IP)
+function stationLabel(label) {
   const c = makeCanvas(1024, 160); const g = c.getContext('2d');
   const draw = (hot) => {
+    const text = typeof label === 'function' ? label() : label;
+    s.userData.txt = text;
     g.clearRect(0, 0, 1024, 160);
     g.font = '700 74px "Barlow Condensed", "Arial Narrow", sans-serif';
     const w = Math.min(1000, g.measureText(text).width + 80);
@@ -506,6 +510,7 @@ export function buildTruck() {
   hangingSign('SORTIE', 0.75, 2.25, 0.7, 0, '#30c060');
 
   // postes : position debout (pos), point regardé (look), rayon, poste ouvert
+  // label et opts.short peuvent être des fonctions : le libellé suit alors le type de car (SDI ou IP)
   const st = (id, label, lx, lz, look, opts = {}) => {
     const fy = truckFloorAt(X(lx), Z(lz)) - F;
     const pos = new THREE.Vector3(X(lx), F + fy + 1.2, Z(lz));
@@ -514,7 +519,8 @@ export function buildTruck() {
     if (opts.zone === 'tech' && id !== 'hf') lab.position.y += (T.stations.filter((x) => x.zone === 'tech').length % 2) * 0.32;
     const ring = new THREE.Mesh(new THREE.RingGeometry(0.2, 0.26, 28), new THREE.MeshBasicMaterial({ color: 0x8a9098, transparent: true, opacity: 0.55, toneMapped: false, depthWrite: false }));
     ring.rotation.x = -Math.PI / 2; ring.position.set(X(lx), F + fy + 0.012, Z(lz)); scene.add(ring);
-    T.stations.push({ id, label, short: opts.short, pos, look: lk, r: opts.r || 1.6, station: opts.station || id, arg: opts.arg, device: opts.device, zone: opts.zone, sprite: lab, ring, lx, lz });
+    const val = (v) => (typeof v === 'function' ? v() : v);
+    T.stations.push({ id, get label() { return val(label); }, get short() { return val(opts.short); }, pos, look: lk, r: opts.r || 1.6, station: opts.station || id, arg: opts.arg, device: opts.device, zone: opts.zone, sprite: lab, ring, lx, lz });
   };
   st('son', 'Son', -6.75, -0.4, [-7.7, 0.9, -0.45], { zone: 'son', device: null });
   st('scripte', 'Scripte', -4.3, -0.75, [-4.3, 0.85, -1.55], { zone: 'prod' });
@@ -531,7 +537,7 @@ export function buildTruck() {
   st('ccu', 'Baie CCU', 4.55, -1.3, [4.55, 1.25, rackPos.ccu.faceZ - TRUCK.cz], { r: 1.3, zone: 'tech', device: 'ccu' });
   st('grille', 'Grille', 5.45, -1.3, rk('router'), { r: 1.2, zone: 'tech', device: 'router' });
   st('xvsrack', 'Mélangeur (processeur)', 6.05, -1.3, rk('xvs'), { r: 1.1, station: 'melangeur', zone: 'tech', device: 'mixer', short: 'Mélangeur (proc.)' });
-  st('reseau', 'Réseau IP · spines et multiview', 6.65, -1.3, rk('mv'), { r: 1.1, zone: 'tech', device: 'swred', short: 'Réseau IP' });
+  st('reseau', () => (S.ipMode ? 'Réseau IP · spines et multiview' : 'Réseau de contrôle · switchs et multiview'), 6.65, -1.3, rk('mv'), { r: 1.1, zone: 'tech', device: 'swred', short: () => (S.ipMode ? 'Réseau IP' : 'Réseau de contrôle') });
   st('evsrack', 'Serveur EVS XT4K', 7.25, -1.3, rk('evs'), { r: 1.1, station: 'evs', arg: 0, zone: 'tech', device: 'evs' });
   st('transmission', 'Transmission', 7.85, -1.3, rk('tx'), { r: 1.1, zone: 'tech', device: 'conv' });
   st('synchro', 'Synchro (SPG)', 5.1, 1.3, rk('spg'), { r: 1.1, zone: 'tech', device: 'spg' });
@@ -585,7 +591,7 @@ export function updateTruckView(eye, dir, targetId, t) {
   for (const s of T.stations) {
     const hot = s.id === targetId;
     s.sprite.visible = hot || shown.has(s);
-    if (s.sprite.userData.hot !== hot) { s.sprite.userData.hot = hot; s.sprite.userData.draw(hot); }
+    if (s.sprite.userData.hot !== hot || (hot || s.sprite.visible) && s.sprite.userData.txt !== s.label) { s.sprite.userData.hot = hot; s.sprite.userData.draw(hot); }
     s.ring.material.color.setHex(hot ? 0xffb020 : 0x8a9098);
     s.ring.material.opacity = hot ? 0.75 + 0.25 * Math.sin(t * 6) : 0.4;
   }
