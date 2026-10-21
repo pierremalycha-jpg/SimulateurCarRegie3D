@@ -45,6 +45,7 @@ const slot = (r) => ({ tex: r.tex, gain: 1.1 * r.scale });
 const sigOf = (n) => { const p = inPlan(n); if (!p.live) return 'aucun signal'; const r = inRes(n); return r.none || r.alarm === 'PAS DE SIGNAL' || r.alarm === 'NO SIG' ? 'aucun signal' : r.alarm && !['MIRE', 'BARRES'].includes(r.alarm) ? 'alarme ' + r.alarm : 'signal présent'; };
 const descIn = (n) => `entrée ${n} « ${inLabel(n)} »`;
 const descOut = (n) => `sortie ${n} « ${outLabel(n)} »`;
+const cap = (t) => t.charAt(0).toUpperCase() + t.slice(1);
 
 // ---------------- explications ----------------
 function explainSel(n) {
@@ -70,7 +71,7 @@ async function toggleLock(n) {
   const l = lockState(n);
   if (l === 'U') {
     setLock(n, 'O');
-    explain(`${descOut(n)} verrouillée (cadenas ambre, état O : verrouillée par ce poste). Plus personne ne peut la commuter : ni ce logiciel, ni la façade, ni un autre poste du réseau. On verrouille les sorties dont dépend l'antenne (départs TX1 et TX2) : une fausse manœuvre ne peut plus envoyer une autre image à la chaîne.`, 'vh:lock');
+    explain(`${cap(descOut(n))} verrouillée (cadenas ambre, état O : verrouillée par ce poste). Plus personne ne peut la commuter : ni ce logiciel, ni la façade, ni un autre poste du réseau. On verrouille les sorties dont dépend l'antenne (départs TX1 et TX2) : une fausse manœuvre ne peut plus envoyer une autre image à la chaîne.`, 'vh:lock');
     return;
   }
   if (l === 'L') {
@@ -79,7 +80,7 @@ async function toggleLock(n) {
     if (!ok) { explain(`Verrou de la sortie ${n} conservé. Une sortie verrouillée par un autre poste (état L) l'est souvent pour une bonne raison : demandez avant de forcer.`, 'vh:lock'); return; }
   }
   setLock(n, null);
-  explain(`${descOut(n)} déverrouillée (état U) : tous les postes peuvent de nouveau la commuter. Faites votre changement, puis reverrouillez-la si c'est une sortie critique.`, 'vh:lock');
+  explain(`${cap(descOut(n))} déverrouillée (état U) : tous les postes peuvent de nouveau la commuter. Faites votre changement, puis reverrouillez-la si c'est une sortie critique.`, 'vh:lock');
 }
 
 // ---------------- façade ----------------
@@ -91,7 +92,7 @@ function fpPick(n) {
   if (FP.mode === 'menu') return;
   if (FP.mode === 'out') { FP.out = n; FP.pending = false; FP.inp = null; explainSel(n); return; }
   FP.inp = n; FP.pending = n !== xpOf(FP.out);
-  explain(FP.pending ? `Source préparée sur la façade : ${descIn(n)} pour la ${descOut(FP.out)}. L'écran montre déjà son image ; TAKE valide, CLEAR annule. Rien n'est commuté pour l'instant.` : `${descIn(n)} est déjà la source de la sortie ${FP.out} : rien à valider.`, 'vh:fp');
+  explain(FP.pending ? `Source préparée sur la façade : ${descIn(n)} pour la ${descOut(FP.out)}. L'écran montre déjà son image ; TAKE valide, CLEAR annule. Rien n'est commuté pour l'instant.` : `${cap(descIn(n))} est déjà la source de la sortie ${FP.out} : rien à valider.`, 'vh:fp');
 }
 function fpDigit(d) {
   const now = performance.now();
@@ -264,7 +265,7 @@ function buildControl() {
 function swSource(m) {
   const n = SW.out;
   if (lockState(n) !== 'U' || !VH.take) { doRoute(n, m); return; }
-  if (m === xpOf(n)) { SW.pend = null; explain(`${descIn(m)} est déjà la source de la sortie ${n} : rien à commuter.`, 'vh:take'); return; }
+  if (m === xpOf(n)) { SW.pend = null; explain(`${cap(descIn(m))} est déjà la source de la sortie ${n} : rien à commuter.`, 'vh:take'); return; }
   SW.pend = m;
   explain(`Source préparée : ${descIn(m)} pour la ${descOut(n)}. Elle clignote, TAKE aussi : rien n'est commuté tant que vous ne validez pas (Annuler pour renoncer). C'est la sécurité contre les fausses manœuvres.`, 'vh:take');
 }
