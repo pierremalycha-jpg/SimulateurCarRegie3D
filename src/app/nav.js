@@ -129,7 +129,7 @@ export function openMenu() {
     el('section', { class: 'mn-col', 'aria-label': 'La partie et les espaces' },
       key('mn-resume', 'reprendre', 'Reprendre', 'Revenir au car', () => modal.close(), { primary: true, kbd: 'Échap' }),
       key('mn-cours', 'cours', 'Cours', 'Les notions techniques, les chapitres, le glossaire', then(() => openCours()), { kbd: 'G' }),
-      key('mn-train', 'entrainement', 'S\'entraîner', 'Les parcours du chef de car, les exercices notés', then(() => openEntrainement())),
+      key('mn-train', 'entrainement', 'S\'entraîner', 'Parcours du chef, exercices notés, livret de compétences', then(() => openEntrainement())),
       key('mn-trainer', 'formateur', 'Espace formateur', 'Configuration du car, suivi des stagiaires, relecture', then(() => openTrainer('car')))),
     el('section', { class: 'mn-col', 'aria-label': 'Réglages et outils' },
       key('mn-reglages', 'reglages', 'Réglages', 'Lumière, qualité graphique, affichage', then(openReglages)),

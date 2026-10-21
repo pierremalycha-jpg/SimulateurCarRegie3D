@@ -86,6 +86,13 @@ await until(page, () => window.__dbg.S.mode === 'station', null, 30000);
 await page.keyboard.press('KeyJ');
 T.check('touche J au poste Mélangeur : parcours du poste', await chefOpen() && /Ici, au poste/.test(await chefText()));
 await shot('03-poste');
+// livret de compétences depuis le chef : 4 blocs, 39 compétences ; le chef se réduit
+await page.locator('#chef button', { hasText: 'Mon livret de compétences' }).click();
+T.check('livret de compétences : 4 blocs, 39 compétences, chef réduit', await until(page, () => document.querySelectorAll('#modal .lv-card').length === 4 && document.querySelectorAll('#modal .lv-comp').length === 39 && document.querySelector('#chef').classList.contains('min'), null, 8000));
+await page.locator('#modal .lv-card').nth(1).click();
+T.check('livret : un bloc s\'ouvre depuis son résumé', await until(page, () => !!document.querySelectorAll('#modal details.lv-bloc')[1]?.open, null, 5000));
+await shot('03b-livret');
+await ev(() => document.querySelector('#modal .x')?.click());
 await ev(() => { window.__dbg.toggleChef(false); window.__dbg.closeStation(); });
 
 // diagnostic sans erreur

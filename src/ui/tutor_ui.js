@@ -20,6 +20,8 @@ import { FIRST_STEPS, FIRST_STEPS_TOUCH } from '../content/controls.js';
 import { rich } from './rich.js';
 import { icon } from './icons.js';
 import { report } from '../diag.js';
+import { codesOf } from '../livret.js';
+import { openLivret } from './livret.js';
 
 // ----------------------------------------------------------------------------------
 // Le chef de car à l'écran : un panneau qui ne bloque pas le poste (on lit et on agit en
@@ -277,7 +279,7 @@ function card(l) {
   const p = progressOf(l.id); const why = S.mode === 'start' ? '' : lessonBlocked(l); const ok = !why;
   const resume = TUTOR.lesson && TUTOR.lesson.id === l.id;
   return el('div', { class: 'chef-card' + (p.done ? ' done' : '') },
-    el('div', { class: 'grow' }, el('b', {}, l.title, p.done ? el('span', { class: 'chef-check', title: 'Déjà fait' }, icon('fait'), el('span', { class: 'sr' }, 'déjà fait')) : null), el('small', {}, `${l.duration} · ${l.level}`), el('span', { class: 's' }, l.summary)),
+    el('div', { class: 'grow' }, el('b', {}, l.title, p.done ? el('span', { class: 'chef-check', title: 'Déjà fait' }, icon('fait'), el('span', { class: 'sr' }, 'déjà fait')) : null), el('small', {}, `${l.duration} · ${l.level}`, comps(l)), el('span', { class: 's' }, l.summary)),
     el('button', { class: 'btn small' + (ok ? ' primary' : ''), disabled: !ok, title: why, onclick: async () => {
       if (resume) { onStep(); return; }
       if (TUTOR.lesson && !(await ask(`Abandonner « ${TUTOR.lesson.title} » pour commencer « ${l.title} » ?`, { title: 'Changer de parcours', ok: 'Commencer « ' + l.title + ' »', cancel: 'Garder le parcours en cours' }))) return;
@@ -285,6 +287,11 @@ function card(l) {
       if (S.mode === 'start') { launchWith(l.id); return; }
       startLesson(l.id); onStep();
     } }, resume ? 'Reprendre' : p.done ? 'Refaire' : 'Commencer'));
+}
+// compétences du référentiel travaillées par le parcours (livret de compétences)
+function comps(l) {
+  const c = codesOf('parcours', l.id);
+  return c.length ? el('span', { class: 'chef-comp', title: 'Compétences du référentiel TIEE travaillées : voir « Mon livret de compétences »' }, ' · compétence' + (c.length > 1 ? 's ' : ' ') + c.join(', ')) : null;
 }
 // depuis la feuille de service : le chef lance le car prêt à l'antenne (en IP si le parcours le
 // demande) puis commence le parcours
@@ -368,6 +375,8 @@ function renderHome() {
     det.addEventListener('toggle', () => { if (det.open) UI.openDom = dom; else if (UI.openDom === dom) UI.openDom = ''; });
     body.append(det);
   }
+  // le livret s'ouvre en grand : le chef se réduit pour ne pas le cacher
+  body.append(el('div', { class: 'chef-acts' }, el('button', { class: 'btn small', onclick: () => { UI.min = true; UI.root.classList.add('min'); render(true); openLivret(); } }, icon('fait'), 'Mon livret de compétences')));
   UI.root.append(body);
 }
 async function switchToIp() {

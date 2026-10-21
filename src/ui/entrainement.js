@@ -8,24 +8,25 @@ import { TUTOR, progressOf } from '../tutor/engine.js';
 import { MISSIONS, missionsSection } from './guide.js';
 import { PROG } from '../shared.js';
 import { NET_MISSIONS } from '../net/course.js';
+import { livretPanel, liveProg } from './livret.js';
+import { codesOf } from '../livret.js';
 
 // ----------------------------------------------------------------------------------
 // L'espace S'entraîner, plein écran : tout ce qui fait progresser, avec où l'on en est. Les
 // parcours du chef de car (par famille, dans l'ordre d'une journée de car), les exercices notés
-// (jour de match, brassage, atelier de montage, formation réseau) et les missions d'installation.
+// (jour de match, brassage, atelier de montage, formation réseau), les missions d'installation et
+// le livret de compétences du référentiel TIEE, qui fait le bilan de tout cela.
 // Un bouton lance ce qu'il faut : le car s'il n'est pas encore lancé, le parcours, le poste.
 // ----------------------------------------------------------------------------------
-const TABS = /** @type {[string, string][]} */ ([['parcours', 'Avec le chef de car'], ['exercices', 'Exercices notés'], ['missions', 'Missions d\'installation']]);
-// LIVRET : le livret de compétences (src/ui/livret.js) prendra ici un onglet ['livret', 'Mon livret'],
-// dessiné dans show() par livretPanel(PROG)
+const TABS = /** @type {[string, string][]} */ ([['parcours', 'Avec le chef de car'], ['exercices', 'Exercices notés'], ['missions', 'Missions d\'installation'], ['livret', 'Mon livret']]);
 const PRESENT = 'Les postes du car';
 const plural = (n, w) => `${n} ${w}${n > 1 ? 's' : ''}`;
 const bar = (done, total) => el('span', { class: 'tr-bar', role: 'img', 'aria-label': `${done} sur ${total}` }, el('i', { style: { width: `${total ? (done / total) * 100 : 0}%` } }));
 
-/** @param {string} [tab] parcours, exercices, missions */
+/** @param {string} [tab] parcours, exercices, missions, livret */
 export function openEntrainement(tab = 'parcours') {
   if (layerOpen() === 'entrainement') { showTab(tab); return; }
-  openLayer({ kind: 'entrainement', title: 'S\'entraîner', ico: 'entrainement', tabs: TABS, tab, show: (k, box) => ({ parcours, exercices, missions })[k](box) });
+  openLayer({ kind: 'entrainement', title: 'S\'entraîner', ico: 'entrainement', tabs: TABS, tab, show: (k, box) => ({ parcours, exercices, missions, livret })[k](box) });
 }
 on('entrainement', (tab) => openEntrainement(typeof tab === 'string' ? tab : 'parcours'));
 
@@ -34,8 +35,13 @@ function lessonRow(l) {
   const p = progressOf(l.id); const cur = TUTOR.lesson && TUTOR.lesson.id === l.id;
   return el('li', { class: 'tr-lesson' + (p.done ? ' done' : '') },
     el('i', { class: 'co-led' + (p.done ? ' green' : cur ? ' amber' : '') }),
-    el('span', { class: 'tr-l' }, el('b', {}, l.title), el('small', {}, `${l.duration} · ${l.level}${p.done ? ' · fait' : cur ? ' · en cours' : ''}`), el('span', {}, l.summary)),
+    el('span', { class: 'tr-l' }, el('b', {}, l.title), el('small', {}, `${l.duration} · ${l.level}${p.done ? ' · fait' : cur ? ' · en cours' : ''}`, comps(l)), el('span', {}, l.summary)),
     el('button', { type: 'button', class: 'btn small' + (p.done ? '' : ' primary'), 'data-lesson': l.id, onclick: () => emit('go', { lesson: l.id, label: l.title }) }, cur ? 'Reprendre' : p.done ? 'Refaire' : 'Commencer'));
+}
+// compétences du référentiel travaillées par le parcours (voir « Mon livret »)
+function comps(l) {
+  const c = codesOf('parcours', l.id);
+  return c.length ? ` · compétence${c.length > 1 ? 's' : ''} ${c.join(', ')}` : '';
 }
 function parcours(box) {
   const fams = lessonFamilies();
@@ -107,4 +113,11 @@ function missions(box) {
     el('p', { class: 'tr-sum' }, el('b', {}, `${md} / ${MISSIONS.length}`), ' missions réussies', bar(md, MISSIONS.length)),
     el('div', { class: 'hwrow' }, act('Installer le car (stade vide)', { preset: 'vierge' }, true)));
   const list = el('div'); missionsSection(list); box.append(list);
+}
+
+// ---------------- le livret de compétences ----------------
+function livret(box) {
+  box.classList.add('ly-narrow');
+  box.append(el('p', { class: 'note tr-lede' }, 'Ce que tu as pratiqué dans le simulateur, rangé selon le référentiel du BTS (option TIEE) : chaque parcours, mission ou exercice réussi fait avancer les compétences qu\'il travaille.'),
+    livretPanel(liveProg()));
 }

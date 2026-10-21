@@ -410,7 +410,7 @@ parcours (`src/app/nav.js`).
 
 **S'entraîner** (`src/ui/entrainement.js`) : les parcours du chef de car par famille, avec la progression ; les
 exercices notés (jour de match, car vide, atelier de montage, formation réseau, installation) avec leur meilleur
-résultat ; les missions d'installation. En cours de partie, lancer une autre vacation recharge le simulateur et
+résultat ; les missions d'installation ; « Mon livret » (le livret de compétences du référentiel TIEE). En cours de partie, lancer une autre vacation recharge le simulateur et
 la lance directement. Suite `tests/e2e/navigation.mjs`.
 
 ## v18.3 : écran titre, PRISM, grille Videohub, réseau de contrôle du car SDI
@@ -866,6 +866,8 @@ node tools/shots.mjs dossier 1280 800 '["vision","hf"]'   # captures de postes
 | `ui/prism_station.js` | La baie de mesure (poste `mesure`) |
 | `ui/st_ctrlnet.js` | Le poste Réseau de contrôle (car SDI) : six onglets |
 | `content/lieux.js` | Les lieux du simulateur : en service ou en préparation, avec leur fiche « Ce qui se prépare » |
+| `content/referentiel.js` | Référentiel du BTS MAV option TIEE (fiche RNCP37022) : 4 blocs, 39 compétences numérotées 1.1 à 4.5, couverture par le car et modules qui la complèteront ; rattachement des parcours, missions, phases du jour de match, missions réseau et exercices à ces compétences |
+| `livret.js`, `ui/livret.js` | Livret de compétences : niveau de chaque compétence calculé d'après la progression (à travailler, travaillée, consolidée, hors simulateur) ; affiché depuis le chef de car (« Mon livret de compétences ») et pour chaque stagiaire dans l'espace formateur, export CSV |
 | `ui/icons.js` | Icônes Phosphor intégrées au build (`icon(nom)`), toujours à côté d'un libellé |
 | `tutor/` | Chef de car : moteur des parcours (`engine.js`), lecture du réseau pour expliquer et vérifier (`net_helpers.js`), parcours réseau ST 2110 (`lessons/reseau.js`, `lessons/reseau_leaf.js`, `lessons/reseau_ops.js`), parcours des postes, compétences et matériel (`lessons/realisation.js`, `image.js`, `ralentis.js`, `son.js`, `liaisons.js`, `exploitation.js`, `materiel.js`, outils communs `kit.js`), présentation de chaque poste (`lessons/postes.js`) |
 | `ui/tutor_ui.js` | Panneau du chef de car : parcours proposés selon le poste et rangés par famille, étapes, mise en évidence, gestes « Fais-le pour moi » hors des postes (caméra, visionneuse, atelier), commandes vers le terminal, voix |
