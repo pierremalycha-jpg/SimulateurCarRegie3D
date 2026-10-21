@@ -111,13 +111,13 @@ await page.waitForTimeout(300);
 log('port info', await ev(() => document.querySelector('.eq-info h3')?.textContent));
 await shot('d-ccu-port');
 await ev(() => document.querySelector('#modal .x').click());
-// guide
+// chapitres du Cours
 await ev(() => window.__dbg.openGuide('guide'));
 await page.waitForTimeout(300);
-log('guide chapters', await ev(() => document.querySelectorAll('#modal [data-g]').length));
-await page.locator('#modal [data-g="evsarch"]').click();
+log('guide chapters', await ev(() => document.querySelectorAll('#layer [data-g]').length));
+await page.locator('#layer [data-g="evsarch"]').click();
 await shot('g-evs');
-await ev(() => document.querySelector('#modal .x').click());
+await ev(() => document.querySelector('#layer .ly-close').click());
 log('missions', await ev(() => Object.keys(window.__dbg.S.missionsDone).join(',')));
 console.log('ERRORS:\n' + errors.slice(0, 30).join('\n'));
 await browser.close();

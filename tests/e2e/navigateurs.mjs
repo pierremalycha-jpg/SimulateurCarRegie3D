@@ -37,11 +37,11 @@ T.check('programme démarré, pas d\'écran de secours', await ev(() => !!window
 // écran titre : affiché au chargement, menu allumé quand tout est prêt, entrée et retour
 T.check('écran titre : chargement terminé, menu allumé', await until(page, () => { const t = document.getElementById('title'); return !!t && !t.hidden && t.classList.contains('ready') && !document.getElementById('ti-play').disabled && /100/.test(document.getElementById('ti-pct').textContent); }, null, 30000));
 await page.locator('#ti-play').click();
-T.check('« Entrer dans le car » : feuille de service, touche Antenne prête', await until(page, () => document.getElementById('title').hidden && document.activeElement?.id === 'st-antenne', null, 8000));
+T.check('« Jouer » : feuille de service, touche Antenne prête', await until(page, () => document.getElementById('title').hidden && document.activeElement?.id === 'st-antenne', null, 8000));
 await page.locator('#st-menu').click();
 T.check('« Menu principal » : retour à l\'écran titre', await until(page, () => !document.getElementById('title').hidden, null, 8000));
 await page.keyboard.press('ArrowDown'); await page.keyboard.press('ArrowUp'); await page.keyboard.press('Enter');
-T.check('clavier : flèches puis Entrée sur « Entrer dans le car »', await until(page, () => document.getElementById('title').hidden, null, 8000));
+T.check('clavier : flèches puis Entrée sur « Jouer »', await until(page, () => document.getElementById('title').hidden, null, 8000));
 T.check('version affichée sur la feuille de service', (await ev(() => document.getElementById('stversion')?.textContent || '')).includes(VERSION));
 
 // le mur des lieux : le car en service, les autres en préparation ; un écran ouvre « Ce qui se prépare »

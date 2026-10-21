@@ -226,7 +226,9 @@ if (PART === 'all' || PART === 'mobile') {
 if (PART === 'all' || PART === 'review') {
   const page = await newPage('lite');
   const ev = (f, a) => page.evaluate(f, a); const shot = shotOf(page);
-  await page.locator('button', { hasText: 'Relecture technique' }).click();
+  // la relecture des experts : Espace formateur, onglet « Relecture technique », « Ma relecture »
+  await ev(() => window.__dbg.openTrainer('review'));
+  await page.locator('#modal button', { hasText: 'Ma relecture' }).click();
   await page.waitForTimeout(600);
   await page.locator('.rv-dom button', { hasText: 'Vision' }).click();
   const n = await page.locator('.rv-card').count();
