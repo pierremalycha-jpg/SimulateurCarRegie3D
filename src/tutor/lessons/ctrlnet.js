@@ -1,5 +1,5 @@
 // @ts-check
-// Parcours du chef de car : le réseau de contrôle du car SDI.
+// Exercices pratiques du réseau de contrôle du car SDI, menés par Olivier, le chef de car.
 import { emit } from '../../state.js';
 import { randPick } from '../../util.js';
 import { FAULTS, injectFault } from '../../faults.js';
@@ -7,12 +7,13 @@ import * as N from '../../net/ctrlnet.js';
 import { goStation, ui } from './kit.js';
 
 // ----------------------------------------------------------------------------------
-// Trois parcours au poste Réseau quand le car est en SDI : les bases (adresse, masque,
-// passerelle, VLAN, trunk, QoS, vérifiées au ping), mettre une machine sur le réseau (le PC
-// d'habillage remplacé, sorti d'usine) et dépanner une machine injoignable (une panne tirée au
-// sort : conflit d'adresse, mauvais VLAN, mauvais masque, câble). Les vérifications lisent le
-// modèle (net/ctrlnet.js) et le journal des actions (pings, balayage, fiches ouvertes) : les
-// parcours se rejouent sans navigateur.
+// Trois exercices au poste Réseau quand le car est en SDI, rangés dans les leçons du Cours : les
+// bases (adresse, masque, passerelle, VLAN, trunk, QoS, vérifiées au ping) et la mise en service
+// d'une machine (le PC d'habillage remplacé, sorti d'usine) pour la leçon « Adresse IP et masque » ;
+// le dépannage d'une machine injoignable (une panne tirée au sort : conflit d'adresse, mauvais VLAN,
+// mauvais masque, câble) pour la leçon « Comment un commutateur apprend ». Les vérifications lisent
+// le modèle (net/ctrlnet.js) et le journal des actions (pings, balayage, fiches ouvertes) : les
+// exercices se rejouent sans navigateur.
 // ----------------------------------------------------------------------------------
 N.addCtrlFaults(FAULTS);
 const D = 'Exploitation et dépannage';
@@ -29,15 +30,15 @@ function openTermFor(c, sel, id) { if (!ui(c, 'click', sel)) emit('netlog', { ty
 /** @type {import('../engine.js').Lesson} */
 const BASES = {
   id: 'ctrlnet-bases', domain: D, stations: ['reseau'], needs: { sdi: true },
-  title: 'Les bases du réseau du car',
-  summary: 'Adresse IP, masque, passerelle, VLAN, trunk et QoS, sur le vrai réseau de contrôle du car SDI, vérifiés au ping.',
+  title: 'Vérifier adresse, masque et passerelle au ping',
+  summary: 'Exercice de la leçon « Adresse IP et masque de sous-réseau » : lire l\'adresse et le masque d\'un RCP, faire un ping dans le même sous-réseau puis un autre par la passerelle, et voir au passage les VLAN, le trunk et la QoS du réseau de contrôle du car SDI.',
   duration: '12 min', level: 'découverte',
-  outro: 'Tu as les bases : une **adresse** et un **masque** disent qui est « chez soi », la **passerelle** fait sortir du sous-réseau, les **VLAN** séparent les usages, le **trunk** les transporte entre switchs et la **QoS** décide qui passe d\'abord. L\'onglet Formation garde tout ça sous la main.',
+  outro: 'Tu as les bases : une **adresse** et un **masque** disent qui est « chez soi », la **passerelle** fait sortir du sous-réseau, les **VLAN** séparent les usages, le **trunk** les transporte entre switchs et la **QoS** décide qui passe d\'abord. L\'onglet Formation du poste et la leçon « Adresse IP et masque » gardent tout ça sous la main.',
   after: () => { if (N.CN.copy) N.setCopy(false, { quiet: true }); },
   steps: [
     {
       id: 'intro', title: 'Un réseau dans un car SDI',
-      say: 'Dans ce car, les images passent en **SDI** : chacune sur son câble coaxial, à travers la grille. Mais tout ce qui se **pilote** passe par un réseau informatique ordinaire, en Ethernet à 1 Gb/s (Gigabit) :\n- les **RCP** règlent les caméras à travers leur **CCU** ;\n- le pupitre du mélangeur commande son processeur ;\n- IPDirector parle aux serveurs EVS, le tally et les noms arrivent au multiview, l\'intercom passe aussi par là.\n\nSi ce réseau tombe, les images restent… mais plus personne ne peut rien régler.',
+      say: 'Leçon « Adresse IP et masque » : le masque dit quelle partie de l\'adresse désigne le réseau ; deux machines du même sous-réseau se parlent directement, les autres passent par la **passerelle**. On va le vérifier sur le vrai réseau du car.\n\nDans ce car, les images passent en **SDI** : chacune sur son câble coaxial, à travers la grille. Mais tout ce qui se **pilote** passe par un réseau informatique ordinaire, en Ethernet à 1 Gb/s (Gigabit) :\n- les **RCP** règlent les caméras à travers leur **CCU** ;\n- le pupitre du mélangeur commande son processeur ;\n- IPDirector parle aux serveurs EVS, le tally et les noms arrivent au multiview, l\'intercom passe aussi par là.\n\nSi ce réseau tombe, les images restent… mais plus personne ne peut rien régler.',
     },
     goStation('reseau', 'Ça se passe au poste **Réseau**, dans la zone technique : c\'est notre console de supervision.', 'En haut, le bandeau d\'état : switchs, machines, fonctions du car, liens montants. Dessous, six onglets.'),
     {
@@ -52,7 +53,7 @@ const BASES = {
     },
     {
       id: 'adresse', title: 'Adresse et masque',
-      say: 'L\'**adresse IP** du RCP 1, c\'est 10.1.20.31 : son adresse sur le réseau. Dans ce car, elle se lit facilement : **10.1**, le car ; **20**, le VLAN des caméras ; **31**, la machine.\n\nLe **masque** 255.255.255.0 (on dit aussi **/24**) dit que les trois premiers nombres désignent le réseau : toutes les machines en 10.1.20.quelque chose sont « chez lui », et il leur parle directement.',
+      say: 'L\'**adresse IP** du RCP 1, c\'est 10.1.20.31 : son adresse sur le réseau, 32 bits écrits en quatre nombres. Dans ce car, elle se lit facilement : **10.1**, le car ; **20**, le VLAN des caméras ; **31**, la machine.\n\nLe **masque** 255.255.255.0 (on dit aussi **/24** : 24 bits de réseau sur 32) dit que les trois premiers nombres désignent le réseau : toutes les machines en 10.1.20.quelque chose sont « chez lui », et il leur parle directement.',
       do: 'Ouvre la fiche « ? » du masque, dans la fiche du RCP 1.',
       go: { station: 'reseau' }, show: () => [{ sel: '#station .cn-field[data-field="mask"] .q', label: '?' }, ...machineTargets('rcp1', 'RCP 1')],
       done: (c) => c.seen('term', (e) => e.id === 'sous-reseau'),
@@ -115,7 +116,7 @@ const gfxPort = () => { const at = N.attachPort('gfxpc'); return at ? N.portOf(a
 const MACHINE = {
   id: 'ctrlnet-machine', domain: D, stations: ['reseau'], needs: { sdi: true },
   title: 'Mettre une machine sur le réseau',
-  summary: 'Le PC d\'habillage est remplacé : le ranger dans son VLAN, lui donner son adresse fixe, son masque, sa passerelle et sa classe de QoS, puis vérifier au ping.',
+  summary: 'Exercice de la leçon « Adresse IP et masque de sous-réseau » : le PC d\'habillage est remplacé ; le ranger dans son VLAN, lui donner son adresse fixe, son masque, sa passerelle et sa classe de QoS, puis vérifier au ping, dans son sous-réseau et depuis un autre VLAN.',
   duration: '10 min', level: 'débutant',
   outro: 'La mise en service, dans l\'ordre : le **VLAN** du port, l\'**adresse**, le **masque**, la **passerelle**, la **classe de QoS**, puis deux pings : un dans le VLAN, un depuis un autre VLAN. Et on note tout au plan d\'adressage.',
   cleanupLabel: 'Remettre le PC d\'habillage comme au plan',
@@ -129,7 +130,7 @@ const MACHINE = {
         N.moveDevice('gfxpc', 'prod', 8, { quiet: true });
         N.setDevice('gfxpc', { dhcp: true, ip: '192.168.1.100', prefix: 24, gw: '192.168.1.1', qos: 'donnees' }, { quiet: true });
       },
-      say: 'Le PC d\'habillage est tombé en panne ; le technicien a installé le PC de secours et l\'a branché sur un **port libre**, le port 8 du SW-PROD. Il sort d\'usine : il attend une adresse automatique (**DHCP**), et le port 8 est resté dans le **VLAN 1**, le VLAN par défaut, où il n\'y a personne. Résultat : l\'habillage n\'accède plus au NAS (le stockage où sont ses modèles et ses logos).',
+      say: 'Leçon « Adresse IP et masque » : une machine n\'est en service que si son adresse et son masque la placent dans le bon sous-réseau, et si sa passerelle est une adresse de ce sous-réseau.\n\nLe PC d\'habillage est tombé en panne ; le technicien a installé le PC de secours et l\'a branché sur un **port libre**, le port 8 du SW-PROD. Il sort d\'usine : il attend une adresse automatique (**DHCP**), et le port 8 est resté dans le **VLAN 1**, le VLAN par défaut, où il n\'y a personne. Résultat : l\'habillage n\'accède plus au NAS (le stockage où sont ses modèles et ses logos).',
     },
     goStation('reseau', 'On va au poste **Réseau** pour le mettre en service.', 'Regarde le bandeau : une fonction du car est touchée, « PC d\'habillage → NAS ».'),
     {
@@ -218,7 +219,7 @@ const fixed = (c) => { const e = c.mem.entry; if (!e) return true; try { return 
 const DEPANNAGE = {
   id: 'ctrlnet-depannage', domain: D, stations: ['reseau'], needs: { sdi: true },
   title: 'Dépanner une machine injoignable',
-  summary: 'Une panne cachée sur le réseau de contrôle (conflit d\'adresse, mauvais VLAN, mauvais masque ou câble) : la trouver avec méthode, la réparer, vérifier.',
+  summary: 'Exercice de la leçon « Comment un commutateur apprend (table MAC) » : une panne cachée sur le réseau de contrôle (conflit d\'adresse, mauvais VLAN, mauvais masque ou câble), à localiser avec méthode (balayage, fiche, voyant du port, table MAC), à réparer et à vérifier au ping.',
   duration: '10 min', level: 'intermédiaire',
   outro: 'La méthode vaut pour toutes les pannes réseau : **constater** (qui se plaint, quelle fonction est perdue), **localiser** (balayage, fiche, diagnostic), **réparer** en remontant les couches (câble, VLAN, adresse et masque, passerelle), puis **vérifier** au ping. Et on prévient celui qui s\'était plaint.',
   cleanupLabel: 'Réparer la panne',
@@ -233,7 +234,7 @@ const DEPANNAGE = {
         const R = N.evaluate(); const f = N.FUNCS.find((x) => !R.funcs[x.key].ok && c.mem.devs.some((d) => d === x.a || d === x.b));
         c.mem.who = f ? f.who : 'LA CHAÎNE'; c.mem.msg = f ? f.lost : 'Quelque chose ne répond plus en régie.';
       },
-      say: (c) => `Une panne vient d'arriver sur le réseau de contrôle. ${c.mem.who} appelle à l'intercom : « ${c.mem.msg} »\n\nOn ne touche à rien au hasard. La méthode : **constater**, **localiser**, **réparer**, **vérifier**.`,
+      say: (c) => `Leçon « Comment un commutateur apprend » : le switch note l'adresse MAC de chaque machine qui parle et le port où elle est branchée ; une machine absente de sa table n'envoie plus rien.\n\nUne panne vient d'arriver sur le réseau de contrôle. ${c.mem.who} appelle à l'intercom : « ${c.mem.msg} »\n\nOn ne touche à rien au hasard. La méthode : **constater**, **localiser**, **réparer**, **vérifier**.`,
     },
     goStation('reseau', 'Direction le poste **Réseau**.', 'Le bandeau le confirme : une fonction du car est en défaut.'),
     {
@@ -258,7 +259,7 @@ const DEPANNAGE = {
     },
     {
       id: 'methode', title: 'Par où commencer',
-      say: 'Avant de corriger, on se rappelle l\'ordre : du plus simple au plus fin.',
+      say: 'Avant de corriger, on se rappelle l\'ordre : du plus simple au plus fin. L\'onglet Switchs aide à trancher : il montre le voyant de chaque port et la **table MAC** de chaque switch. Une machine qui n\'y figure pas n\'a envoyé aucune trame (câble, port coupé) ; une machine apprise mais injoignable parle, mais pas au bon endroit (VLAN, adresse, masque).',
       quiz: { q: 'Une machine ne répond plus. Par quoi commences-tu ?', choices: ['Lui changer son adresse IP', 'Le câble et le voyant de son port, puis le VLAN du port', 'Redémarrer le switch de cœur'], answer: 1, why: 'On remonte les couches : d\'abord le câble et le voyant (couche 1), puis le VLAN du port (couche 2), puis l\'adresse et le masque, enfin la passerelle. Changer l\'adresse au hasard crée souvent un conflit de plus ; redémarrer le cœur couperait tout le car pendant une minute, pour rien.' },
     },
     {
@@ -283,7 +284,7 @@ const DEPANNAGE = {
     },
     {
       id: 'quiz', title: 'Question',
-      say: 'Pour t\'entraîner à reconnaître les pannes.',
+      say: 'Pour reconnaître ces pannes du premier coup.',
       quiz: { q: 'Une machine a son voyant de port allumé et apparaît dans la table MAC du switch, mais ne répond à personne, pas même à l\'ARP. Cause la plus probable ?', choices: ['Le câble est débranché', 'Sa passerelle est fausse', 'Son port est dans le mauvais VLAN'], answer: 2, why: 'Voyant allumé et MAC apprise : le câble va bien (couche 1). Une passerelle fausse ne l\'empêcherait pas de répondre aux machines de son VLAN. Reste le VLAN : la machine parle, mais dans un autre réseau virtuel que ses partenaires, qui n\'entendent pas ses réponses.' },
     },
   ],

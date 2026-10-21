@@ -374,6 +374,7 @@ Le débit se déduit du raster : 2 640 × 1 125 mots × 25 images × 2 flux × 1
 - 1 mot toutes les 6,73 ns à 148,5 MHz (1080p50) : une ligne dure 17,8 µs, une image 20 ms.`,
       car: { text: 'La grille Videohub du car, les baies CCU et la transmission se parlent en 3G-SDI (1080p50) ou 12G-SDI (UHD) : ce sont les câbles coaxiaux BNC que vous suivez dans la zone technique. La tuile État SDI de la baie de mesure lit le format (VPID) et les CRC de chaque signal.', station: 'grille' },
       terms: ['12g-sdi', 'crc-edh', 'vpid', 'amplitude-sdi'],
+      competences: ['2.10', '2.2'], article: 'formats',
       quiz: [
         { q: 'Quel débit pour le 3G-SDI ?', choices: ['1,485 Gb/s', '2,97 Gb/s', '11,88 Gb/s'], answer: 1, why: '3G-SDI (ST 424) = 2,97 Gb/s, de quoi porter le 1080p50. 1,485 Gb/s est le HD-SDI (1080i, 720p) ; 11,88 Gb/s le 12G-SDI (2160p50).' },
         { q: 'À quoi servent les mots EAV et SAV ?', choices: ['À transporter le son', 'À marquer la fin et le début de la vidéo active de chaque ligne', 'À corriger les erreurs de transmission'], answer: 1, why: 'EAV (End of Active Video) et SAV (Start) encadrent la zone active de chaque ligne et portent les bits F, V, H. Le son est dans l\'HANC, entre les deux ; les erreurs sont détectées (pas corrigées) par le CRC.' },
@@ -403,6 +404,7 @@ Les règles qui en découlent dans un car : des **liaisons courtes** (la grille 
 - Les longueurs de cette leçon sont des ordres de grandeur : elles dépendent du câble, de son âge, des connecteurs et du récepteur.`,
       car: { text: 'À la baie de mesure, le préréglage « Couche physique » du PRISM affiche le diagramme de l\'œil (brut et égalisé), la gigue, l\'affaiblissement estimé en mètres de 1694A, la marge de l\'égaliseur et les CRC. La panne « touret » du scénario met plus de 100 m de câble en 3G sur une caméra : c\'est le moment de le lire.', station: 'mesure' },
       terms: ['oeil', 'affaiblissement', 'egaliseur', 'effet-falaise', 'gigue-alignement', 'ui', 'crc-edh'],
+      competences: ['2.2', '2.13', '3.9'], article: 'formats',
       quiz: [
         { q: 'Pourquoi un même câble porte-t-il moins loin le 12G-SDI que le HD-SDI ?', choices: ['Parce que le 12G demande plus d\'amplitude', 'Parce que l\'affaiblissement du coaxial augmente avec la fréquence, et le 12G va huit fois plus vite', 'Parce que le 12G n\'est pas compatible avec le BNC'], answer: 1, why: 'L\'amplitude est la même (800 mV) et le BNC aussi. Mais à 5,94 GHz de demi-horloge, un 1694A perd ≈ 58 dB/100 m contre ≈ 18 en HD : la longueur utile tombe de ≈ 200 m à ≈ 70 m.' },
         { q: 'Que fait l\'égaliseur d\'un récepteur SDI ?', choices: ['Il remonte les hautes fréquences perdues dans le câble et rouvre l\'œil, jusqu\'à sa limite', 'Il corrige les bits faux', 'Il augmente la tension du signal jusqu\'à 1,6 V'], answer: 0, why: 'L\'égaliseur compense l\'affaiblissement du câble (20 dB garantis en HD et 3G, davantage en pratique). Il ne corrige aucun bit : au-delà de sa limite, les erreurs apparaissent d\'un coup. 1,6 V, c\'est ce qu\'on mesure sur une sortie non terminée, un défaut.' },
@@ -434,6 +436,7 @@ Dans le car, l'audio part de la régie son vers la vidéo : l'**embedder** (souv
 - Une commutation de grille entre deux sources aux groupes différents coupe le son sans toucher à l'image : vérifier l'embedding de chaque source.`,
       car: { text: 'La baie CCU sort les caméras avec leurs ambiances embarquées ; le mélangeur réinsère le mixage de la régie son dans le programme ; la transmission désembedde pour vérifier au casque. Au poste vision, le multiview affiche les barre-graphes des groupes embarqués sous chaque source.', station: 'ccu' },
       terms: ['vpid', 'crc-edh', 'grille', 'commutation-propre'],
+      competences: ['2.10', '1.4'], article: 'songuide',
       quiz: [
         { q: 'Combien de canaux audio un HD-SDI peut-il embarquer (ST 299-1) ?', choices: ['2', '8', '16'], answer: 2, why: 'Quatre groupes de quatre canaux : 16, à 48 kHz et jusqu\'à 24 bits. Le 3G et le 12G en acceptent 32 (ST 299-2). Deux canaux, c\'est une seule paire AES ; huit, deux groupes.' },
         { q: 'Où est placé le paquet audio dans le signal ?', choices: ['Dans la vidéo active, à la place de quelques pixels', 'Dans l\'HANC, entre l\'EAV et le SAV de chaque ligne', 'Dans un deuxième câble'], answer: 1, why: 'Les paquets ancillary occupent la suppression horizontale (HANC) pour l\'audio, verticale (VANC) pour le timecode et le VPID. Ils ne touchent jamais à la vidéo active, et il n\'y a qu\'un câble : c\'est tout l\'intérêt.' },
@@ -463,6 +466,7 @@ Le **distributeur-répéteur** (DA, reclocker) est le remède aux longueurs : il
 - Au-delà de ce que le coaxial permet, la **fibre** : SMPTE pour les caméras, convertisseurs SDI ↔ fibre pour une liaison longue, puis le réseau IP.`,
       car: { text: 'Dans la zone technique du car : la baie de brassage, les DA, les cordons et les tourets de 1694A. La panne « cordon abîmé » du scénario fait monter le dépassement à la baie de mesure ; la panne « touret » allonge une liaison 3G au-delà de 100 m, et le bouton « Insérer un répéteur » sauve l\'une mais pas l\'autre.', station: 'brassage' },
       terms: ['overshoot', 'reclocker', 'reclocking', 'amplitude-sdi', 'affaiblissement', 'egaliseur'],
+      competences: ['2.10', '3.9'], article: 'cablage',
       quiz: [
         { q: 'Un cordon BNC 50 Ω inséré dans une liaison SDI courte…', choices: ['Ne change rien : il s\'emboîte, le signal passe', 'Crée une réflexion (≈ 20 % du signal) et un dépassement qui peuvent fermer l\'œil', 'Double l\'affaiblissement du câble'], answer: 1, why: 'La rupture d\'impédance renvoie une partie du signal vers la source ; les fronts suivants se déforment (dépassement > 10 %), l\'œil se ferme même sur 5 m. L\'affaiblissement, lui, ne dépend que de la longueur et de la fréquence.' },
         { q: 'Une chaîne CCU → grille (120 m) → mélangeur (25 m) en 3G : quelle longueur compte pour l\'égaliseur du mélangeur ?', choices: ['145 m', '25 m', '120 m'], answer: 1, why: 'La grille égalise et réhorloge chaque signal avant de le renvoyer : le mélangeur ne voit que ses 25 m. Les 120 m sont le problème de l\'entrée de la grille. Le budget se compte par liaison.' },

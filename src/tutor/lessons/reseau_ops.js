@@ -3,8 +3,8 @@ import { FAB, CTL_GW, NMOS_REG, PTP_REF, sviIp, subnetOf, factoryDevice, setDevi
 import { route } from '../../pipeline.js';
 
 // ----------------------------------------------------------------------------------
-// Parcours du chef de car dans l'onglet Exploitation du poste Réseau IP : remettre en service une
-// passerelle IP → SDI sortie d'usine depuis son interface web (adresses, contrôle et NMOS, PTP),
+// Exercice pratique de la leçon « Multicast et IGMP » du Cours, mené par Olivier, dans l'onglet
+// Exploitation du poste Réseau IP : remettre en service une passerelle IP → SDI sortie d'usine depuis son interface web (adresses, contrôle et NMOS, PTP),
 // l'abonner à la main au clean feed, vérifier au moniteur et montrer la protection ST 2022-7.
 // ----------------------------------------------------------------------------------
 const DEV = 'gwstade', RX = 'AUX_GIANT', SRC = 'v:CLEAN';
@@ -26,8 +26,8 @@ const toDev = (c) => (atDev(c) ? null : c.view().mode !== 'ops' ? [{ sel: '#stat
 /** @type {import('../engine.js').Lesson} */
 export const LESSON_GW = {
   id: 'reseau-passerelle', domain: 'Réseau ST 2110', stations: ['reseau'], needs: { ip: true },
-  title: 'Mettre en service une passerelle (interface web)',
-  summary: 'La passerelle des écrans d\'angle sort d\'usine. Depuis son interface : adresses rouge et bleue, contrôle et registre NMOS, PTP, puis abonnement au clean feed, contrôlé au moniteur.',
+  title: 'Mettre en service une passerelle IP vers SDI',
+  summary: 'Exercice de la leçon « Multicast et IGMP (car IP, ST 2110) » : la passerelle des écrans d\'angle sort d\'usine. Depuis son interface web : adresses rouge et bleue, contrôle et registre NMOS, PTP, puis abonnement au clean feed, à la main au couple (source, groupe) puis par NMOS, contrôlé au moniteur.',
   duration: '12 min', level: 'intermédiaire',
   cleanupLabel: 'remettre la passerelle dans sa configuration du car',
   cleanup: (c) => { setDeviceNet(DEV, plan(c)); setRxManual(RX, null); },
@@ -40,7 +40,7 @@ export const LESSON_GW = {
         c.mem.orig = { nics: { red: n('red'), blue: n('blue') }, ctlIp: d.ctlIp, ctlMask: d.ctlMask, ctlGw: d.ctlGw, nmosReg: d.nmosReg, ptp: { domain: d.ptp.domain, slaveOnly: d.ptp.slaveOnly } };
         factoryDevice(DEV);
       },
-      say: 'La **passerelle des écrans d\'angle** (elle reçoit un flux ST 2110 et le rend en SDI vers les écrans du stade) vient d\'être remplacée. L\'appareil neuf est dans sa **configuration d\'usine** : adresses en 192.168.x.100, aucun registre NMOS (l\'annuaire des appareils du car), PTP dans le domaine 0.\n\nOn va la configurer depuis **son interface web**, comme sur une vraie passerelle, puis lui faire recevoir le clean feed, et vérifier à l\'image.',
+      say: 'La **passerelle des écrans d\'angle** (elle reçoit un flux ST 2110 et le rend en SDI vers les écrans du stade) vient d\'être remplacée. L\'appareil neuf est dans sa **configuration d\'usine** : adresses en 192.168.x.100, aucun registre NMOS (l\'annuaire des appareils du car), PTP dans le domaine 0.\n\nOn va la configurer depuis **son interface web**, comme sur une vraie passerelle, puis lui faire recevoir le clean feed. Comme tout récepteur multicast (leçon « Multicast et IGMP »), elle ne reçoit un flux que si elle s\'y abonne : au couple (source, groupe) en SSM, sur chacun des deux réseaux. Et on vérifie à l\'image.',
     },
     {
       id: 'open', title: 'L\'interface de l\'appareil',
