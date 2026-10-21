@@ -12,7 +12,7 @@ import { whereAmI } from '../app/hud.js';
 import { planFor } from './truckmap.js';
 import { openPlan } from './plan.js';
 import { openSynoptics } from './synoptics.js';
-import { openGuide } from './guide.js';
+import { openReglages, openCommandes } from './guide.js';
 import { openSessionPanel } from './session_ui.js';
 import { openEquipmentIndex } from '../equipment/viewer.js';
 import { openDiag } from './diag_ui.js';
@@ -50,7 +50,7 @@ const FAMILIES = () => [
     ['Plan caméras', 'P', 'plan', () => { close(); openPlan(); }],
     ['Synoptiques', 'Y', 'synoptiques', () => { close(); openSynoptics(); }],
     ['Matériel', 'K', 'materiel', () => { close(); openEquipmentIndex(); }],
-    ['Le car', '', 'car', () => { close(); openGuide('postes'); }],
+    ['Le car', '', 'car', () => { close(); emit('cours', { tab: 'postes' }); }],
     ['Vol libre', 'V', 'vol', () => { PL.fly = !PL.fly; updToolbar(); }, () => PL.fly],
     ['Retour PGM', 'M', 'retour', () => { const m = $('#minimon'); if (m) m.hidden = !m.hidden; }, minimonOn],
     ['Équipe', '', 'equipe', () => { close(); openSessionPanel(); }]] },
@@ -59,14 +59,14 @@ const FAMILIES = () => [
     ['Glossaire', '', 'lexique', () => { close(); openCours({ tab: 'glossaire' }); }]] },
   { title: 'Chef de car', tools: [
     ['Chef de car', 'J', 'chef', () => { close(); emit('chef'); }],
-    ['Missions et livret', '', 'livret', () => { close(); openGuide('missions'); }]] },
+    ['Parcours et livret', '', 'livret', () => { close(); emit('entrainement'); }]] },
   { title: 'Formateur', role: true, tools: [
     ['Espace formateur', '', 'formateur', () => { close(); openTrainer('car'); }],
     ['Relecture technique', '', 'relecture', () => { close(); openReview('me'); }]] },
   { title: 'Réglages', tools: [
-    ['Réglages', '', 'reglages', () => { close(); openGuide('reglages'); }],
+    ['Réglages', '', 'reglages', () => { close(); openReglages(); }],
     ['Son', '', AU.muted ? 'muet' : 'son', () => { startAudio(); AU.muted = !AU.muted; applyFaders(); emit('soundToggle'); }, () => !AU.muted],
-    ['Commandes', 'H', 'commandes', () => { close(); openGuide('commandes'); }],
+    ['Commandes', 'H', 'commandes', () => { close(); openCommandes(); }],
     ['Diagnostic technique', '', 'diagnostic', () => { close(); openDiag(); }]] },
 ];
 

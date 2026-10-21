@@ -72,11 +72,20 @@ await ev(() => window.__dbg.toggleChef(true));
 await page.waitForTimeout(500);
 await scan('chef', '#chef');
 await ev(() => window.__dbg.toggleChef(false));
-// guide : missions, glossaire
+// les espaces : Cours (touche G), chef de car ; le menu du car (Échap)
 await page.keyboard.press('KeyG');
-await until(page, () => !!document.querySelector('#modal'), null, 8000);
+await until(page, () => !!document.querySelector('#layer .co-page'), null, 8000);
 await page.waitForTimeout(500);
-await scan('guide', '#modal');
+await scan('cours', '#layer');
+await page.locator('#layer .ly-tabs .tab[data-k="chapitres"]').click();
+await scan('cours-chapitres', '#layer');
+await ev(() => window.__dbg.emit('entrainement'));
+await until(page, () => !!document.querySelector('#layer .tr-fam'), null, 8000);
+await scan('entrainement', '#layer');
+await page.keyboard.press('Escape');
+await page.keyboard.press('Escape');
+await until(page, () => !!document.querySelector('#modal .mn'), null, 8000);
+await scan('menu', '#modal');
 await ev(() => document.querySelector('#modal .x')?.click());
 // fenêtres des outils : plan caméras, synoptiques, matériel, équipe, diagnostic
 for (const [name, key] of [['plan-cameras', 'KeyP'], ['synoptiques', 'KeyY'], ['materiel', 'KeyK']]) {

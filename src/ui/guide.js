@@ -1,9 +1,7 @@
 // @ts-check
 import { openDiag } from './diag_ui.js';
 import { openDevice } from '../equipment/viewer.js';
-import { openTrainer } from './config.js';
 import { openReport } from './report.js';
-import { livretInto } from './livret.js';
 import { qify, openLexique } from './term.js';
 import { CFG } from '../shared.js';
 import { DEVICE_LIST, DEVICES } from '../equipment/devices.js';
@@ -59,100 +57,127 @@ export function drawMissionCard() {
   if (box.dataset.m === m.id && !box.hidden) return;
   box.dataset.m = m.id; box.hidden = false; box.innerHTML = '';
   box.append(el('div', { class: 'k' }, `Mission ${done + 1} / ${MISSIONS.length}`), el('h4', {}, m.title), el('p', {}, m.text),
-    el('div', { class: 'row' }, el('button', { class: 'btn small', onclick: () => openGuide('missions') }, 'Toutes les missions'), el('button', { class: 'btn small', onclick: () => { S.missionsDone[m.id] = true; } }, 'Passer cette mission'), el('button', { class: 'btn small', onclick: () => { S.showMission = false; box.hidden = true; } }, 'Masquer')));
+    el('div', { class: 'row' }, el('button', { class: 'btn small', onclick: () => emit('entrainement', 'missions') }, 'Toutes les missions'), el('button', { class: 'btn small', onclick: () => { S.missionsDone[m.id] = true; } }, 'Passer cette mission'), el('button', { class: 'btn small', onclick: () => { S.showMission = false; box.hidden = true; } }, 'Masquer')));
 }
 
 
-const NET_CHAPTERS = ['ipguide', 'reseau', 'mesure2110'];
-// Les onglets de l'ancien guide, répartis dans les cinq familles du menu : le car (ce qu'on y
-// trouve), le chef de car (missions et livret), les réglages. « Comprendre » et le glossaire
-// sont devenus des onglets de la fenêtre Cours (ui/cours_ui.js).
-const TAB_LABEL = { missions: 'Missions', livret: 'Livret du stagiaire', procedures: 'Procédures', postes: 'Les postes', materiel: 'Matériel', commandes: 'Commandes', reglages: 'Réglages' };
-const GROUPS = [
-  { id: 'car', title: 'Le car : postes, matériel, procédures', tabs: ['postes', 'materiel', 'procedures', 'commandes'] },
-  { id: 'chef', title: 'Missions et livret', tabs: ['missions', 'livret'] },
-  { id: 'reglages', title: 'Réglages', tabs: ['reglages'] },
-];
-const COURS_TABS = { guide: 'articles', glossaire: 'glossaire', cours: 'chapitres' };
-/**
- * ouvre la fenêtre du groupe qui contient l'onglet ; les anciens onglets « guide » (Comprendre),
- * « glossaire » et « cours » ouvrent la fenêtre Cours à la bonne page
- */
-export function openGuide(tab = 'missions', chapter = null) {
-  if (COURS_TABS[tab]) { emit('cours', { tab: COURS_TABS[tab], chapter: chapter || null }); return; }
-  const group = GROUPS.find((g) => g.tabs.includes(tab)) || GROUPS[0];
-  if (!group.tabs.includes(tab)) tab = group.tabs[0];
-  const tabs = el('div', { class: 'tabs', hidden: group.tabs.length < 2 ? '' : null });
-  const content = el('div', { class: 'list' });
-  const T = group.tabs.map((k) => [k, TAB_LABEL[k]]);
-  const show = (k) => {
-    content.innerHTML = '';
-    [...tabs.children].forEach((b) => b.classList.toggle('on', b.dataset.k === k));
-    if (k === 'missions') {
-      content.append(el('p', { class: 'note' }, 'Un parcours d\'intégration pas à pas, du câblage d\'une caméra au dépannage. Les missions se valident automatiquement.'));
-      for (const m of MISSIONS) content.appendChild(el('div', { class: 'item' + (currentMission() === m ? ' sel' : '') }, el('span', { class: 'dot ' + (S.missionsDone[m.id] ? 'green' : currentMission() === m ? 'amber' : '') }), el('div', { class: 'grow' }, el('div', { class: 't' }, m.title), el('div', { class: 's' }, m.text))));
-      const cb = el('input', { type: 'checkbox', id: 'showm' }); cb.checked = S.showMission; cb.onchange = () => { S.showMission = cb.checked; $('#mission').dataset.m = ''; };
-      content.append(el('label', { class: 'item', for: 'showm' }, cb, el('span', {}, 'Afficher la mission en cours à l\'écran')),
-        el('button', { class: 'btn small', onclick: () => { S.missionsDone = {}; $('#mission').dataset.m = ''; show('missions'); } }, 'Recommencer le parcours'));
-    }
-    if (k === 'livret') livretInto(content, MISSIONS);
-    if (k === 'postes') {
-      content.append(el('p', { class: 'note' }, 'Chaque poste du car et chaque équipement du stade, avec son rôle, son matériel et ses pièges. Dans le simulateur, approchez-vous et appuyez sur E.'));
-      for (const [id, where] of STATION_LIST) { const I = STATION_INFO[id]; if (!I) continue; content.appendChild(el('div', { class: 'item' }, el('div', { class: 'grow' }, el('div', { class: 't' }, I.title), el('div', { class: 's' }, `${where} · ${I.role.split('. ')[0]}.`)), el('button', { class: 'btn small', onclick: () => openInfo(id) }, 'Voir la fiche'))); }
-    }
-    if (k === 'procedures') {
-      const procs = CFG.car.procedures || [];
-      content.append(el('p', { class: 'note' }, procs.length ? `Procédures de ${CFG.car.name || 'votre car'}, définies par le formateur.` : 'Aucune procédure maison pour l\'instant : le formateur peut en ajouter dans l\'Espace formateur (onglet Procédures).'));
-      for (const p of procs) content.append(el('div', { class: 'hwpanel prose' }, el('h3', {}, p.title), el('ol', { class: 'steps' }, (p.steps || []).map((s) => el('li', {}, s)))));
-      content.append(el('div', { class: 'hwrow' }, el('button', { class: 'btn small role-only', onclick: () => openTrainer('proc') }, 'Espace formateur')));
-    }
-    if (k === 'materiel') {
-      content.append(el('p', { class: 'note' }, 'Faces avant et arrière des appareils, connecteurs, signaux et raccordements de votre installation. Inventaire des connecteurs d\'après les fiches techniques (chaîne caméra type Sony HDC-5500 / HDCU-5500 / RCP-3500, mélangeur Sony XVS-6000 et pupitre ICP-X7000, serveur EVS XT4K, télécommande LSM, IPDirector). Raccourci : touche K.'));
-      const row = el('div', { class: 'grid2' });
-      for (const [kk, l] of DEVICE_LIST) row.appendChild(el('button', { class: 'choice', onclick: () => openDevice(kk, ['cam', 'ccu', 'rcp'].includes(kk) && S.cams[0] ? S.cams[0].id : 1) }, el('b', { style: { fontSize: '17px' } }, l), el('span', {}, DEVICES[kk] ? DEVICES[kk].title : '')));
-      content.append(row);
-    }
-    if (k === 'commandes') {
-      const g = el('div', { class: 'keys' }); for (const [kk, d] of CONTROLS_HELP) g.appendChild(el('div', {}, el('kbd', {}, kk), d));
-      content.append(g, el('p', { class: 'note' }, 'Sur tablette : joystick à gauche pour avancer, glisser à droite pour regarder, bouton E pour interagir. Dans un poste, les raccourcis du poste sont indiqués en bas de l\'écran.'));
-    }
-    if (k === 'reglages') {
-      content.append(el('div', { class: 'grid2' },
-        field('Lumière', selectEl(Object.entries(LIGHTING).map(([k2, v]) => [k2, v.label]), S.lighting, (v) => emit('setLighting', v))),
-        field('Qualité graphique', selectEl([['basse', 'Basse (portable)'], ['moyenne', 'Moyenne'], ['haute', 'Haute (bonne carte graphique)']], S.quality, (v) => emit('setQuality', v))),
-        field('Éclairage de nuit', selectEl([['led', 'LED « flicker-free »'], ['halide', 'Iodures métalliques 50 Hz (scintillement en super ralenti)']], S.flickerLamps ? 'halide' : 'led', (v) => { S.flickerLamps = v === 'halide'; })),
-        field('Voix du réalisateur virtuel', selectEl([['0', 'Texte seulement'], ['1', 'Synthèse vocale']], S.directorVoice ? '1' : '0', (v) => { S.directorVoice = v === '1'; })),
-        field('Line-up automatique à l\'installation', selectEl([['1', 'Oui (caméras déjà réglées)'], ['0', 'Non (réglages par défaut, à faire en vision)']], S.autoLineup ? '1' : '0', (v) => { S.autoLineup = v === '1'; })),
-        field('Étiquettes et câbles dans le stade', selectEl([['1', 'Afficher'], ['0', 'Masquer']], S.showLabels ? '1' : '0', (v) => emit('setLabels', v === '1')))),
-        el('p', { class: 'note' }, (LIGHTING[S.lighting] || {}).desc || ''),
-        el('div', { class: 'hwrow' }, el('button', { class: 'btn role-only', onclick: () => openTrainer('car') }, 'Espace formateur'), el('button', { class: 'btn', id: 'perfbtn', onclick: () => emit('perfTest') }, 'Tester les performances de cet ordinateur'), el('button', { class: 'btn', onclick: () => openReport('Simulateur (général)') }, 'Signaler une erreur'), el('button', { class: 'btn', onclick: () => openDiag() }, 'Diagnostic technique')));
-    }
+// ----------------------------------------------------------------------------------
+// Le contenu de l'ancien Guide (touche G), rangé à sa place : les chapitres, le glossaire, les
+// postes, le matériel et les procédures vont dans le Cours ; les missions dans S'entraîner ; les
+// réglages et les commandes dans le menu (Échap). Chaque partie se dessine dans une boîte, pour
+// l'espace qui l'accueille. openGuide(onglet, chapitre) reste l'entrée commune et aiguille.
+// ----------------------------------------------------------------------------------
+/** les missions d'installation : liste, mission affichée à l'écran, recommencer */
+export function missionsSection(box) {
+  const draw = () => {
+    box.replaceChildren();
+    for (const m of MISSIONS) box.appendChild(el('div', { class: 'item' + (currentMission() === m ? ' sel' : '') }, el('span', { class: 'dot ' + (S.missionsDone[m.id] ? 'green' : currentMission() === m ? 'amber' : '') }), el('div', { class: 'grow' }, el('div', { class: 't' }, m.title), el('div', { class: 's' }, m.text))));
+    const cb = el('input', { type: 'checkbox', id: 'showm' }); cb.checked = S.showMission; cb.onchange = () => { S.showMission = cb.checked; $('#mission').dataset.m = ''; };
+    box.append(el('label', { class: 'item', for: 'showm' }, cb, el('span', {}, 'Afficher la mission en cours à l\'écran')),
+      el('div', { class: 'hwrow' }, el('button', { class: 'btn small', onclick: () => { S.missionsDone = {}; $('#mission').dataset.m = ''; draw(); } }, 'Recommencer le parcours')));
   };
-  for (const [k, l] of T) tabs.appendChild(el('button', { class: 'tab', 'data-k': k, onclick: () => show(k) }, l));
-  modal.open(group.title, el('div', { class: 'list' }, tabs, content), { width: 980 });
-  show(tab);
+  box.classList.add('list'); draw();
+}
+
+// chapitres, par famille (l'ordre d'une journée : la production, l'image, les liaisons, le son, l'IP)
+/** @type {[string, string[]][]} */
+export const CHAPTER_GROUPS = [
+  ['La production', ['deroule', 'stade', 'car', 'icomguide', 'cablage', 'securite']],
+  ['Image et caméras', ['chaine', 'formats', 'optique', 'objectifs', 'camsys', 'montage', 'hdrguide', 'mesures']],
+  ['Liaisons et synchro', ['liaisons', 'hfguide', 'sync', 'timing']],
+  ['Son et ralentis', ['songuide', 'vista', 'evsarch']],
+  ['Production IP', ['ipguide', 'reseau', 'mesure2110']],
+  ['Le simulateur', ['sessions', 'relecture']],
+];
+const NET_CHAPTERS = ['ipguide', 'reseau', 'mesure2110'];
+/** les chapitres : à gauche la liste par famille, à droite le chapitre ouvert */
+export function chaptersSection(box, chapter = null) {
+  const art = el('article', { class: 'prose gd-art', tabindex: '-1' });
+  const nav = el('nav', { class: 'gd-nav plate', 'aria-label': 'Les chapitres' });
+  const lex = el('button', { class: 'btn small', onclick: () => openLexique(lex) }, 'Lexique réseau et ST 2110');
+  const tools = el('div', { class: 'hwrow' }, lex);
+  let cur = GUIDE[0];
+  const report = el('button', { class: 'btn small', onclick: () => openReport('Guide · ' + cur.title) }, 'Signaler une erreur dans ce chapitre');
+  tools.append(report);
+  const grouped = new Set(CHAPTER_GROUPS.flatMap(([, ids]) => ids));
+  /** @type {[string, string[]][]} */
+  const groups = [...CHAPTER_GROUPS, ['Autres chapitres', GUIDE.map((g) => g.id).filter((id) => !grouped.has(id))]];
+  const open = (g) => {
+    cur = g;
+    art.innerHTML = `<h2>${g.title}</h2>` + g.html;
+    art.querySelectorAll('table').forEach((t) => { const w = el('div', { class: 'tblwrap' }); t.replaceWith(w); w.appendChild(t); });
+    lex.hidden = !NET_CHAPTERS.includes(g.id); if (!lex.hidden) qify(art, 'h4, th, td:first-child');
+    for (const b of /** @type {NodeListOf<HTMLElement>} */ (nav.querySelectorAll('[data-g]'))) b.setAttribute('aria-current', String(b.dataset.g === g.id));
+    const sc = box.closest('.ly-scroll'); if (sc && art.getBoundingClientRect().top < 0) art.scrollIntoView({ block: 'start' });
+  };
+  nav.append(...groups.filter(([, ids]) => ids.length).map(([name, ids]) => el('section', { class: 'gd-theme' },
+    el('h3', {}, el('span', {}, name)),
+    el('ul', { class: 'gd-items' }, ...ids.map((id) => GUIDE.find((g) => g.id === id)).filter(Boolean).map((g) => el('li', {},
+      el('button', { type: 'button', class: 'gd-item plain', 'data-g': g.id, onclick: () => { open(g); art.focus({ preventScroll: true }); } }, el('span', {}, el('b', {}, g.title)))))))));
+  box.append(el('div', { class: 'gd-wrap' }, nav, el('div', { class: 'gd-main' }, art, tools)));
+  open(GUIDE.find((g) => g.id === chapter) || GUIDE[0]);
+}
+/** le glossaire : 246 termes, recherche sans accents */
+export function glossarySection(box) {
+  const q = el('input', { type: 'search', id: 'glq', placeholder: 'Rechercher un terme (SDI, genlock, DSK…)', autocomplete: 'off', spellcheck: 'false' });
+  const list = el('div', { class: 'list' });
+  const count = el('p', { class: 'note' });
+  const render = () => { list.innerHTML = ''; const nz = (x) => x.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, ''); const s = nz(q.value.trim()); let n = 0; for (const [t, d] of GLOSSARY) { if (s && !(nz(t).includes(s) || nz(d).includes(s))) continue; n++; list.appendChild(el('div', { class: 'item' }, el('div', { class: 'grow' }, el('div', { class: 't' }, t), el('div', { class: 's', style: { fontSize: '13px', color: '#c7d0d7' } }, d)))); } count.textContent = s ? `${n} terme${n > 1 ? 's' : ''} sur ${GLOSSARY.length}` : `${GLOSSARY.length} termes, de A à Z. Les notions les plus importantes ont aussi leur fiche, dans l'onglet Notions.`; };
+  q.addEventListener('input', render);
+  box.append(el('div', { class: 'list ly-narrow' }, field('Recherche', q), count, list)); render();
+}
+/** les postes du car et du stade : rôle, et la fiche complète */
+export function postesSection(box) {
+  box.append(el('p', { class: 'note' }, 'Chaque poste du car et chaque équipement du stade, avec son rôle, son matériel et ses pièges. Dans le simulateur, approchez-vous et appuyez sur E.'));
+  const list = el('div', { class: 'list' });
+  for (const [id, where] of STATION_LIST) { const I = STATION_INFO[id]; if (!I) continue; list.appendChild(el('div', { class: 'item' }, el('div', { class: 'grow' }, el('div', { class: 't' }, I.title), el('div', { class: 's' }, `${where} · ${I.role.split('. ')[0]}.`)), el('button', { class: 'btn small', onclick: () => openInfo(id) }, 'Voir la fiche'))); }
+  box.append(list);
+}
+/** le matériel : faces avant et arrière, connecteurs */
+export function materielSection(box) {
+  box.append(el('p', { class: 'note' }, 'Faces avant et arrière des appareils, connecteurs, signaux et raccordements de votre installation. Inventaire des connecteurs d\'après les fiches techniques (chaîne caméra type Sony HDC-5500 / HDCU-5500 / RCP-3500, mélangeur Sony XVS-6000 et pupitre ICP-X7000, serveur EVS XT4K, télécommande LSM, IPDirector). Dans le car : touche K.'));
+  const row = el('div', { class: 'grid2' });
+  for (const [kk, l] of DEVICE_LIST) row.appendChild(el('button', { class: 'choice', onclick: () => openDevice(kk, ['cam', 'ccu', 'rcp'].includes(kk) && S.cams[0] ? S.cams[0].id : 1) }, el('b', { style: { fontSize: '17px' } }, l), el('span', {}, DEVICES[kk] ? DEVICES[kk].title : '')));
+  box.append(row);
+}
+/** les procédures maison, écrites par le formateur */
+export function proceduresSection(box) {
+  const procs = CFG.car.procedures || [];
+  box.append(el('p', { class: 'note' }, procs.length ? `Procédures de ${CFG.car.name || 'votre car'}, définies par le formateur.` : 'Aucune procédure maison pour l\'instant : le formateur peut en ajouter dans l\'Espace formateur (onglet Procédures).'));
+  for (const p of procs) box.append(el('div', { class: 'hwpanel prose' }, el('h3', {}, p.title), el('ol', { class: 'steps' }, (p.steps || []).map((s) => el('li', {}, s)))));
+}
+/** toutes les commandes du clavier */
+export function commandesSection(box) {
+  const g = el('div', { class: 'keys' }); for (const [kk, d] of CONTROLS_HELP) g.appendChild(el('div', {}, el('kbd', {}, kk), d));
+  box.append(g, el('p', { class: 'note' }, 'Sur tablette : joystick à gauche pour avancer, glisser à droite pour regarder, bouton E pour interagir. Dans un poste, les raccourcis du poste sont indiqués en bas de l\'écran.'));
+}
+/** les réglages de la partie en cours */
+export function reglagesSection(box) {
+  box.append(el('div', { class: 'grid2' },
+    field('Lumière', selectEl(Object.entries(LIGHTING).map(([k2, v]) => [k2, v.label]), S.lighting, (v) => emit('setLighting', v))),
+    field('Qualité graphique', selectEl([['basse', 'Basse (portable)'], ['moyenne', 'Moyenne'], ['haute', 'Haute (bonne carte graphique)']], S.quality, (v) => emit('setQuality', v))),
+    field('Éclairage de nuit', selectEl([['led', 'LED « flicker-free »'], ['halide', 'Iodures métalliques 50 Hz (scintillement en super ralenti)']], S.flickerLamps ? 'halide' : 'led', (v) => { S.flickerLamps = v === 'halide'; })),
+    field('Voix du réalisateur virtuel', selectEl([['0', 'Texte seulement'], ['1', 'Synthèse vocale']], S.directorVoice ? '1' : '0', (v) => { S.directorVoice = v === '1'; })),
+    field('Line-up automatique à l\'installation', selectEl([['1', 'Oui (caméras déjà réglées)'], ['0', 'Non (réglages par défaut, à faire en vision)']], S.autoLineup ? '1' : '0', (v) => { S.autoLineup = v === '1'; })),
+    field('Étiquettes et câbles dans le stade', selectEl([['1', 'Afficher'], ['0', 'Masquer']], S.showLabels ? '1' : '0', (v) => emit('setLabels', v === '1')))),
+  el('p', { class: 'note' }, LIGHTING[S.lighting].desc),
+  el('div', { class: 'hwrow' }, el('button', { class: 'btn', id: 'perfbtn', onclick: () => emit('perfTest') }, 'Tester les performances de cet ordinateur'), el('button', { class: 'btn', onclick: () => openReport('Simulateur (général)') }, 'Signaler une erreur'), el('button', { class: 'btn', onclick: () => openDiag() }, 'Diagnostic technique')));
+}
+export function openReglages() { const b = el('div', { class: 'list' }); reglagesSection(b); modal.open('Réglages', b, { width: 900 }); }
+export function openCommandes() { const b = el('div', { class: 'list' }); commandesSection(b); modal.open('Commandes', b, { width: 900 }); }
+
+/**
+ * L'entrée commune de l'ancien Guide : chaque onglet va dans l'espace qui l'accueille maintenant.
+ * @param {string} [tab] missions, guide, procedures, postes, materiel, glossaire, commandes, reglages
+ * @param {string | null} [chapter] chapitre à ouvrir (onglet « guide »)
+ */
+export function openGuide(tab = 'guide', chapter = null) {
+  if (modal.isOpen) modal.close();
+  if (tab === 'missions') emit('entrainement', 'missions');
+  else if (tab === 'reglages') openReglages();
+  else if (tab === 'commandes') openCommandes();
+  else if (tab === 'glossaire') emit('cours', { tab: 'glossaire' });
+  else if (tab === 'postes' || tab === 'materiel' || tab === 'procedures') emit('cours', { tab: tab === 'procedures' ? 'procedures' : tab });
+  else emit('cours', { tab: 'chapitres', chapter });
 }
 on('openGuide', (ch) => openGuide('guide', typeof ch === 'string' ? ch : null));
-
-/** les articles « Comprendre » (content/guide.js) dans content ; chapter : identifiant du chapitre ouvert */
-export function articlesInto(content, chapter = null) {
-  const nav = el('div', { class: 'tabs' }); const art = el('div', { class: 'prose' });
-  let curG = GUIDE[0];
-  // chapitres ST 2110 et réseau : boutons « ? » des termes (tableaux) et accès au lexique
-  const lex = el('button', { class: 'btn small', onclick: () => openLexique(lex) }, 'Lexique réseau et ST 2110');
-  const open = (g) => {
-    curG = g; art.innerHTML = `<h3>${g.title}</h3>` + g.html; [...nav.children].forEach((b) => b.classList.toggle('on', b.dataset.g === g.id));
-    lex.hidden = !NET_CHAPTERS.includes(g.id); if (!lex.hidden) qify(art, 'h4, th, td:first-child');
-  };
-  for (const g of GUIDE) nav.appendChild(el('button', { class: 'tab', 'data-g': g.id, onclick: () => open(g) }, g.title));
-  content.append(nav, art, el('div', { class: 'hwrow' }, lex, el('button', { class: 'btn small', onclick: () => openReport('Guide · ' + curG.title) }, 'Signaler une erreur dans ce chapitre'))); open(GUIDE.find((g) => g.id === chapter) || GUIDE[0]);
-  art.querySelectorAll('table').forEach((t) => { const w = el('div', { class: 'tblwrap' }); t.replaceWith(w); w.appendChild(t); });
-  nav.addEventListener('click', () => art.querySelectorAll('table').forEach((t) => { if (!t.parentElement.classList.contains('tblwrap')) { const w = el('div', { class: 'tblwrap' }); t.replaceWith(w); w.appendChild(t); } }));
-}
-/** le glossaire (content/glossary.js), avec sa recherche, dans content */
-export function glossaireInto(content) {
-  const q = el('input', { type: 'text', id: 'glq', placeholder: 'Rechercher un terme (SDI, genlock, DSK…)' });
-  const list = el('div', { class: 'list' });
-  const render = () => { list.innerHTML = ''; const nz = (x) => x.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, ''); const s = nz(q.value.trim()); for (const [t, d] of GLOSSARY) { if (s && !(nz(t).includes(s) || nz(d).includes(s))) continue; list.appendChild(el('div', { class: 'item' }, el('div', { class: 'grow' }, el('div', { class: 't' }, t), el('div', { class: 's', style: { fontSize: '13px', color: '#c7d0d7' } }, d)))); } };
-  q.addEventListener('input', render); content.append(field('Recherche', q), list); render();
-}

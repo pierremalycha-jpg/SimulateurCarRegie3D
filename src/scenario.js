@@ -17,7 +17,7 @@ export const SC = { on: false, phase: -1, t0: 0, tp: 0, phases: [], log: [], lin
 
 const camOk = (c) => c.signalOK && c.genlock && c.meter.mean > 0.33 && c.meter.mean < 0.6 && c.meter.peak <= 1.04 && Math.abs(c.colorError().r) < 0.025 && Math.abs(c.colorError().b) < 0.025;
 
-const PHASES = [
+export const PHASES = [
   {
     id: 'patch', title: 'Brassage du car', max: 20, minutes: 12,
     brief: 'Le car est vide : poste « Baie de brassage » (zone technique). Brassez les sources vers les entrées de la grille, les sorties de la grille vers l\'EVS et les départs, et la référence vers les CCU. Une liaison croisée (mauvaise prise) compte comme une erreur.',

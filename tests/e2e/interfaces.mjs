@@ -26,7 +26,7 @@ for (const [k, st] of [['u06', 'melangeur'], ['u07', 'vision'], ['u08', 'son'], 
   if (!want(k)) continue;
   await ev((st) => window.__dbg.openStation(st), st); await shot(k + '-poste-' + st, 2000); await ev(() => window.__dbg.closeStation());
 }
-if (want('u12')) { await ev(() => window.__dbg.openGuide()); await shot('u12-guide'); await ev(() => document.querySelector('#modal .x')?.click()); }
+if (want('u12')) { await ev(() => window.__dbg.openGuide()); await shot('u12-cours'); await ev(() => document.querySelector('#layer .ly-close')?.click()); }
 if (want('u13')) { await ev(() => window.__dbg.openEquipmentIndex()); await shot('u13-materiel'); await ev(() => document.querySelector('#modal .x')?.click()); }
 if (want('u14')) { await ev(() => window.__dbg.openTrainer()); await shot('u14-formateur'); await ev(() => document.querySelector('#modal .x')?.click()); }
 if (want('u15')) { await ev(() => window.__dbg.openSessionPanel()); await shot('u15-session'); await ev(() => document.querySelector('#modal .x')?.click()); }

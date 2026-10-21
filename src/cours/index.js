@@ -18,9 +18,11 @@ import { PROG, saveProgressSoon } from '../shared.js';
  * @property {(host: HTMLElement) => ({ destroy?: () => void } | void)} [demo] la manipulation interactive, montée dans host
  * @property {string} [demoTitle] consigne de la manipulation
  * @property {string} body l'explication (texte riche de ui/rich.js : **gras**, `code`, listes « - », paragraphes)
- * @property {{ text: string, station?: string, arg?: any }} [car] où ça se voit dans le simulateur
+ * @property {string} [plus] pour aller plus loin (replié)
+ * @property {{ text: string, station?: string, tab?: string, lesson?: string, arg?: any }} [car] où ça se voit dans le simulateur : poste (et onglet), parcours du chef de car
  * @property {string[]} [terms] fiches « ? » liées (identifiants de content/netterms.js et des fichiers terms_*.js)
- * @property {Array<{ q: string, choices: string[], answer: number, why: string }>} quiz trois questions
+ * @property {string[]} [competences] compétences du référentiel TIEE travaillées (content/referentiel.js, « 1.4 »…), pour le livret
+ * @property {Array<{ q: string, choices: Array<string | [string, string]>, answer: number, why: string }>} quiz trois questions ; un choix peut porter sa propre explication [texte, pourquoi]
  */
 /**
  * @typedef {object} Chapter

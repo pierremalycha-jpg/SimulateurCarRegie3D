@@ -56,7 +56,8 @@ await shot('02-chef');
 await page.keyboard.press('KeyJ');
 
 // jouer à plusieurs : explication propre au fichier, pas de téléchargement impossible
-await page.locator('#tb-ses').click();
+await page.locator('#tb-menu').click();
+await page.locator('#mn-equipe').click();
 T.check('panneau « Jouer à plusieurs » : quoi lancer', await until(page, () => /Cette copie est un fichier/.test(document.body.textContent) && /Car-regie-3D\.exe/.test(document.body.textContent), null, 15000));
 T.check('pas de bouton de téléchargement du serveur', await ev(() => ![...document.querySelectorAll('button')].some((b) => /Télécharger le serveur/.test(b.textContent))));
 await shot('03-plusieurs');

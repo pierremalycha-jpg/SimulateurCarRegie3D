@@ -15,6 +15,8 @@ import { PROFILE, setRole } from './profile.js';
 export const TITLE = { ready: false, pct: 0 };
 const TIPS = [
   'Tab ou T ouvre le pupitre : tous les postes du car et les outils, à une touche.',
+  'Le Cours explique chaque notion avec un schéma et une manipulation : touche G dans le car, ou ici, pendant que le car se prépare.',
+  'Dans le car, Échap ouvre le menu : le Cours, le chef de car, les réglages, et le profil Formateur.',
   'Touche J : je suis là pendant toute la vacation. Au poste où tu es, je te propose les parcours qui s\'y font.',
   'Avant l\'antenne, on fait le line-up : chaque caméra est exposée et équilibrée pour se raccorder aux autres.',
   'Tally rouge : la caméra est à l\'antenne. Tally vert : elle est prête à passer, en PVW.',
@@ -47,12 +49,12 @@ export function initTitle() {
   if (next) { next.hidden = false; next.onclick = () => { setTip(tipI + 1); rotate(); }; }
   rotate();
   $('#ti-play').onclick = () => enterFrom('start');
-  $('#ti-cours').onclick = () => emit('cours', { tab: 'chapitres' });
-  $('#ti-chef').onclick = () => enterFrom('chef');
+  $('#ti-cours').onclick = () => emit('cours');
+  $('#ti-chef').onclick = () => emit('entrainement');
   $('#ti-trainer').onclick = () => enterFrom('trainer');
   $('#ti-settings').onclick = () => openPanel('settings');
-  // les cours et les réglages ne dépendent pas du stade : disponibles pendant le chargement
-  for (const id of ['#ti-cours', '#ti-settings']) /** @type {HTMLButtonElement} */ ($(id)).disabled = false;
+  // les cours, l'espace du chef et les réglages ne dépendent pas du stade : disponibles pendant le chargement
+  for (const id of ['#ti-cours', '#ti-chef', '#ti-settings']) /** @type {HTMLButtonElement} */ ($(id)).disabled = false;
   // le profil : Étudiant ou Formateur, mémorisé ; il change aussi depuis les réglages
   const role = $('#ti-role');
   if (role) for (const b of role.querySelectorAll('button')) {
@@ -95,7 +97,6 @@ export function enterFrom(target = 'start') {
   const t = $('#title'); if (t) t.hidden = true;
   closePanel();
   if (target === 'trainer') { openTrainer('car'); return; }
-  if (target === 'chef') { emit('chef'); return; }
   if (target === 'lieux') {
     const wall = $('#start .dk-lieux'); const first = /** @type {HTMLElement | null} */ ($('#start .lx'));
     if (wall) wall.scrollIntoView({ block: 'start' });

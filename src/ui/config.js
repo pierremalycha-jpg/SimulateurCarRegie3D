@@ -8,6 +8,7 @@ import { buildCabling, endLabel, SIG } from '../equipment/cabling.js';
 import { DEVICES, DEVICE_LIST } from '../equipment/devices.js';
 import { MISSIONS } from './guide.js';
 import { NET_MISSIONS } from '../net/course.js';
+import { livretPanel, livretCell, livretCSV, liveProg } from './livret.js';
 import { EMB_OPTIONS, SOUND_PLAN, AU, MONO_PORTS, ST_PORTS } from '../audio.js';
 import { openReview } from './review_ui.js';
 import { CAMERA_TYPES, LENSES, LINKS, ROLES } from '../data/cameras.js';
@@ -224,9 +225,9 @@ function tabPhotos(box, editable) {
 function tabEleves(box) {
   const canSeeAll = !SH.db || SH.canEdit || SH.isOwner;
   box.append(el('h3', { class: 'eq-h' }, 'Suivi des stagiaires'));
-  if (!canSeeAll) { box.append(el('p', { class: 'note' }, 'Seul le formateur voit la progression de tous les stagiaires. Votre propre progression est enregistrée automatiquement.'), myProgress()); return; }
+  if (!canSeeAll) { box.append(el('p', { class: 'note' }, 'Seul le formateur voit la progression de tous les stagiaires. Votre propre progression est enregistrée automatiquement.'), myProgress(), el('h3', { class: 'eq-h' }, 'Mon livret de compétences'), livretPanel(liveProg())); return; }
   const host = el('div', { class: 'list' });
-  box.append(el('p', { class: 'note' }, SH.db ? 'Chaque personne qui ouvre la page avec un accès « Contributeur » enregistre sa progression ici (missions, scénarios, brassage, signalements d\'erreur, performances de son ordinateur). Avec un accès « Lecteur », la progression reste dans son navigateur.' : 'Mode local : seule la progression de ce navigateur est visible.'), host);
+  box.append(el('p', { class: 'note' }, SH.db ? 'Chaque personne qui ouvre la page avec un accès « Contributeur » enregistre sa progression ici (missions, parcours du chef de car, scénarios, brassage, signalements d\'erreur, performances de son ordinateur). Cliquez sur une ligne pour voir son livret de compétences. Avec un accès « Lecteur », la progression reste dans son navigateur.' : 'Mode local : seule la progression de ce navigateur est visible.'), host);
   let rows = [];
   const draw = async (list) => {
     host.innerHTML = '';
@@ -235,24 +236,28 @@ function tabEleves(box) {
     const ids = list.filter((r) => !r.local).map((r) => r.id);
     const prof = await profilesOf(ids);
     const total = MISSIONS.length;
-    const t = el('table', { class: 'tbl compact' }, el('thead', {}, el('tr', {}, ...['Stagiaire', 'Missions', 'Scénario (meilleur)', 'Brassage', 'Montage caméra', 'Parcours réseau', 'Quiz 2110', 'Examen réseau', 'Ordinateur', 'Signalements', 'Dernière activité'].map((h) => el('th', {}, h)))));
+    const t = el('table', { class: 'tbl compact' }, el('thead', {}, el('tr', {}, ...['Stagiaire', 'Compétences travaillées', 'Missions', 'Scénario (meilleur)', 'Brassage', 'Montage caméra', 'Parcours réseau', 'Quiz 2110', 'Examen réseau', 'Ordinateur', 'Signalements', 'Dernière activité'].map((h) => el('th', {}, h)))));
     const tb = el('tbody'); t.appendChild(tb);
     for (const r of list) {
-      const d = r.data || {}; const best = (d.scenarios || []).reduce((m, s) => Math.max(m, s.score || 0), 0);
+      const d = progOf(r); const best = (d.scenarios || []).reduce((m, s) => Math.max(m, s.score || 0), 0);
       const nm = r.local ? 'Ce navigateur' : (prof[r.id] && prof[r.id].name) || 'Stagiaire';
       const tr = el('tr', { style: { cursor: 'pointer' }, onclick: () => detail(nm, d) },
-        el('td', {}, nm), el('td', {}, `${Object.keys(d.missions || {}).length} / ${total}`), el('td', {}, (d.scenarios || []).length ? best + ' %' : '—'), el('td', {}, d.patchBest ? d.patchBest + ' %' : '—'), el('td', {}, rigCell(d)),
+        el('td', {}, nm), el('td', {}, livretCell(d)), el('td', {}, `${Object.keys(d.missions || {}).length} / ${total}`), el('td', {}, (d.scenarios || []).length ? best + ' %' : '—'), el('td', {}, d.patchBest ? d.patchBest + ' %' : '—'), el('td', {}, rigCell(d)),
         el('td', {}, netCell(d).course), el('td', {}, netCell(d).quiz), el('td', {}, netCell(d).exam),
         el('td', {}, d.perf ? `${d.perf.fps} i/s · ${String(d.perf.gpu || '').slice(0, 28)}` : '—'), el('td', {}, String((d.reports || []).length)), el('td', {}, d.updatedAt ? new Date(d.updatedAt).toLocaleString('fr-FR') : '—'));
       tb.appendChild(tr);
     }
-    if (!list.length) tb.appendChild(el('tr', {}, el('td', { colspan: 11, class: 'note' }, 'Aucune progression enregistrée pour l\'instant.')));
-    host.append(el('div', { class: 'tblwrap' }, t), el('div', { class: 'hwrow' }, el('button', { class: 'btn small', onclick: () => exportCSV(prof) }, 'Exporter le suivi (CSV)')), detBox);
+    if (!list.length) tb.appendChild(el('tr', {}, el('td', { colspan: 12, class: 'note' }, 'Aucune progression enregistrée pour l\'instant.')));
+    host.append(el('div', { class: 'tblwrap' }, t), el('div', { class: 'hwrow' }, el('button', { class: 'btn small', onclick: () => exportCSV(prof) }, 'Exporter le suivi (CSV)'), el('button', { class: 'btn small', onclick: () => offerDownload('livrets-competences.csv', livretCSV(rows.map((r) => ({ name: nameOf(r, prof), prog: progOf(r) })))) }, 'Exporter les livrets (CSV)')), detBox);
   };
   const detBox = el('div', { class: 'list' });
+  // ce navigateur : avec les missions réussies depuis le dernier enregistrement
+  const progOf = (r) => (r.local ? liveProg() : r.data || {});
+  const nameOf = (r, prof) => (r.local ? 'Ce navigateur' : (prof[r.id] && prof[r.id].name) || r.id);
   function detail(nm, d) {
     detBox.innerHTML = '';
-    detBox.append(el('h3', { class: 'eq-h' }, nm),
+    detBox.append(el('h3', { class: 'eq-h' }, nm), livretPanel(d),
+      el('h3', { class: 'eq-h' }, 'Résultats détaillés'),
       el('p', { class: 'note' }, 'Missions réussies : ' + (MISSIONS.filter((m) => (d.missions || {})[m.id]).map((m) => m.title).join(', ') || 'aucune')));
     const N = d.net || {};
     const nm2 = NET_MISSIONS.filter((m) => (N.missions || {})[m.id]);
@@ -265,7 +270,7 @@ function tabEleves(box) {
   }
   function exportCSV(prof) {
     const lines = ['Stagiaire;Missions;Meilleur scénario (%);Brassage (%);Montage caméra;Parcours réseau;Quiz 2110 (%);Examen réseau (%);Fps;Carte graphique;Signalements;Dernière activité'];
-    for (const r of rows) { const d = r.data || {}; const best = (d.scenarios || []).reduce((m, s) => Math.max(m, s.score || 0), 0); const nc = netCell(d); lines.push([r.local ? 'Ce navigateur' : (prof[r.id] && prof[r.id].name) || r.id, Object.keys(d.missions || {}).length, best, d.patchBest || 0, rigCell(d), nc.course, nc.quiz.replace(' %', ''), nc.exam.replace(' %', ''), d.perf ? d.perf.fps : '', d.perf ? d.perf.gpu : '', (d.reports || []).length, d.updatedAt ? new Date(d.updatedAt).toISOString() : ''].join(';')); }
+    for (const r of rows) { const d = progOf(r); const best = (d.scenarios || []).reduce((m, s) => Math.max(m, s.score || 0), 0); const nc = netCell(d); lines.push([nameOf(r, prof), Object.keys(d.missions || {}).length, best, d.patchBest || 0, rigCell(d), nc.course, nc.quiz.replace(' %', ''), nc.exam.replace(' %', ''), d.perf ? d.perf.fps : '', d.perf ? d.perf.gpu : '', (d.reports || []).length, d.updatedAt ? new Date(d.updatedAt).toISOString() : ''].join(';')); }
     offerDownload('suivi-stagiaires.csv', '﻿' + lines.join('\r\n'));
   }
   const unsub = watchAllProgress(draw);
@@ -295,7 +300,7 @@ function tabReview(box) {
   const dec = Object.values((CFG.review && CFG.review.items) || {}).filter((x) => x && x.status).length;
   box.append(el('h3', { class: 'eq-h' }, 'Relecture par les métiers'),
     el('p', {}, 'Faites relire le simulateur par vos experts (ingénieurs vision, son, réseau, opérateurs ralentis, HF). Chacun donne son avis point par point, propose les bonnes valeurs chiffrées et signale ce qui manque. Vous arbitrez ensuite, et les corrections chiffrées s\'appliquent tout de suite au simulateur.'),
-    el('ol', {}, el('li', {}, 'Partagez la page avec vos experts au niveau « Contributeur » au moins (menu Partager de claude.ai).'), el('li', {}, 'Ils ouvrent « Relecture technique » sur l\'écran d\'accueil, choisissent leurs domaines et relisent.'), el('li', {}, 'Vous consolidez dans « Synthèse et arbitrage », appliquez les valeurs retenues, puis exportez le rapport.'), el('li', {}, 'Complétez l\'onglet « Dispositif réel » avec la liste de câblage, le plan de son, la feuille de patch et le dispositif caméras d\'un de vos cars.')),
+    el('ol', {}, el('li', {}, 'Partagez la page avec vos experts au niveau « Contributeur » au moins (menu Partager de claude.ai).'), el('li', {}, 'Ils ouvrent l\'Espace formateur depuis l\'écran titre, onglet « Relecture technique », puis « Ma relecture » : ils choisissent leurs domaines et relisent.'), el('li', {}, 'Vous consolidez dans « Synthèse et arbitrage », appliquez les valeurs retenues, puis exportez le rapport.'), el('li', {}, 'Complétez l\'onglet « Dispositif réel » avec la liste de câblage, le plan de son, la feuille de patch et le dispositif caméras d\'un de vos cars.')),
     el('div', { class: 'kv' }, el('dt', {}, 'Points arbitrés'), el('dd', {}, String(dec)), el('dt', {}, 'Valeurs corrigées appliquées'), el('dd', {}, String(ov))),
     el('div', { class: 'hwrow' }, el('button', { class: 'btn primary', onclick: () => openReview('synth') }, 'Synthèse et arbitrage'), el('button', { class: 'btn', onclick: () => openReview('me') }, 'Ma relecture')));
 }
