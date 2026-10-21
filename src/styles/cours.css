@@ -200,3 +200,33 @@ body:not(.role-formateur) .role-only { display: none !important; }
 .co-link { padding: 4px 8px; background: var(--well); border-radius: 3px; }
 .co-link b { min-width: 170px; font: 600 13px var(--f-disp); color: var(--muted); }
 
+/* chapitre camera (cours/camera.js) : la chaîne caméra, le montage et l'équilibrage */
+.co-fig .cm-flow { stroke-dasharray: 7 5; animation: cm-flow .9s linear infinite; }
+.co-fig .cm-flow.rev { animation-direction: reverse; }
+.co-fig .cm-flow.still { animation: none; stroke-dasharray: none; }
+@keyframes cm-flow { to { stroke-dashoffset: -12; } }
+.cm-syn > svg { min-width: 560px; } /* la chaîne reste lisible sur téléphone : elle défile dans son cadre */
+.cm-pool { align-content: flex-start; }
+.cm-pool .btn { text-align: left; white-space: normal; line-height: 1.3; }
+.cm-done { margin: 0; padding-left: 24px; display: grid; gap: 3px; font-size: 13px; }
+.cm-done li::marker { color: var(--amber); font-family: var(--f-mono); }
+@media (prefers-reduced-motion: reduce) { .co-fig .cm-flow { animation: none; } }
+/* chapitre sdi, leçon la grille (cours/sdi_grille.js) : matrice 6 × 6, verrous, message réseau */
+.co-mxwrap { max-width: 100%; overflow-x: auto; }
+.co-mx { border-collapse: separate; border-spacing: 3px; }
+.co-mx th { padding: 2px 4px; text-align: center; white-space: nowrap; font-weight: 400; }
+.co-mx th span { display: block; font: 10.5px var(--f-mono); color: var(--muted); }
+.co-mx th b { display: block; font: 600 12.5px var(--f-disp); color: var(--fg); }
+.co-mx tbody th { text-align: right; }
+.co-xp, .co-lock { min-width: 42px; height: 30px; padding: 0 6px; border: 1px solid #12171a; border-radius: 3px; background: #0b0e10; color: #3a434c; font: 600 15px var(--f-mono); cursor: pointer; }
+.co-xp:hover, .co-lock:hover { border-color: var(--line2); background: #151b20; }
+.co-xp.on { color: var(--amber); border-color: #5c4210; background: #2a2210; }
+.co-xp.pend { color: var(--tally); border-color: var(--tally); animation: co-mx-blink .8s steps(2, start) infinite; }
+.co-lock { font: 600 11px var(--f-disp); color: var(--muted); }
+.co-lock.on { color: var(--amber); border-color: #6b4a08; background: #2a2210; }
+.co-take.armed { animation: co-mx-blink .8s steps(2, start) infinite; }
+@keyframes co-mx-blink { 50% { opacity: .35; } }
+.co-proto { margin: 0; padding: 8px 10px; font: 12.5px/1.45 var(--f-mono); color: var(--lcd, #d3f3df); background: var(--glass); border: 1px solid #070a0c; border-radius: 3px; white-space: pre-wrap; }
+.co-mxstate td.co-bad { color: var(--tally); }
+@media (prefers-reduced-motion: reduce) { .co-xp.pend, .co-take.armed { animation: none; } }
+@media (max-width: 600px) { .co-xp, .co-lock { min-width: 32px; height: 28px; padding: 0 3px; } .co-mx th b { font-size: 11.5px; } }
