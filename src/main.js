@@ -47,6 +47,7 @@ import { updateStatus, FPS } from './app/hud.js';
 import { installInput } from './app/input.js';
 import { buildStart, start } from './app/start.js';
 import { initTitle, loadStep, tick, titleReady, enterFrom, showTitle } from './app/title.js';
+import { initCamLab, camlabOpen } from './camlab/index.js';
 import * as CTRL from './net/ctrlnet.js';
 import { installPerfTest, watchFps } from './app/perf.js';
 import { openMenu, restart, resumeAfterReload } from './app/nav.js';
@@ -67,6 +68,7 @@ if (/[?&]lite/.test(location.search)) { S.lite = true; S.quality = 'basse'; }
 
 // écran titre : la construction se fait par étapes, chacune affichée avant la suivante
 initTitle();
+initCamLab();
 loadStep('Chargement des polices', 6); await tick();
 // charge les polices avant de dessiner les textures (étiquettes, panneaux), sans bloquer plus de 2,5 s
 try {
@@ -126,6 +128,8 @@ function frame(now) {
   try { step(now); } catch (e) { const r = report(e, 'boucle de rendu'); if (r && r.n === 1) console.error(e); }
 }
 function step(now) {
+  // module « La caméra » ouvert : le simulateur attend, sans rien calculer ni dessiner
+  if (camlabOpen()) { last = now; return; }
   let dt = (now - last) / 1000; last = now;
   const realDt = Math.max(0.001, dt); // le compteur d'images par seconde mesure le temps réel, pas le pas de simulation borné
   dt = clamp(dt, 0.001, 0.05);
