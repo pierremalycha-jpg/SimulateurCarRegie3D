@@ -49,7 +49,7 @@ import { buildStart, start } from './app/start.js';
 import { initTitle, loadStep, tick, titleReady, enterFrom, showTitle } from './app/title.js';
 import { applyRole, PROFILE, setRole } from './app/profile.js';
 import { openCours } from './ui/cours_ui.js';
-import './cours/signal.js';
+import './cours/all.js';
 import * as CTRL from './net/ctrlnet.js';
 import { installPerfTest, watchFps } from './app/perf.js';
 import { toggleChef } from './ui/tutor_ui.js';

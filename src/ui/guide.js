@@ -122,7 +122,7 @@ export function openGuide(tab = 'missions', chapter = null) {
         field('Voix du réalisateur virtuel', selectEl([['0', 'Texte seulement'], ['1', 'Synthèse vocale']], S.directorVoice ? '1' : '0', (v) => { S.directorVoice = v === '1'; })),
         field('Line-up automatique à l\'installation', selectEl([['1', 'Oui (caméras déjà réglées)'], ['0', 'Non (réglages par défaut, à faire en vision)']], S.autoLineup ? '1' : '0', (v) => { S.autoLineup = v === '1'; })),
         field('Étiquettes et câbles dans le stade', selectEl([['1', 'Afficher'], ['0', 'Masquer']], S.showLabels ? '1' : '0', (v) => emit('setLabels', v === '1')))),
-        el('p', { class: 'note' }, LIGHTING[S.lighting].desc),
+        el('p', { class: 'note' }, (LIGHTING[S.lighting] || {}).desc || ''),
         el('div', { class: 'hwrow' }, el('button', { class: 'btn role-only', onclick: () => openTrainer('car') }, 'Espace formateur'), el('button', { class: 'btn', id: 'perfbtn', onclick: () => emit('perfTest') }, 'Tester les performances de cet ordinateur'), el('button', { class: 'btn', onclick: () => openReport('Simulateur (général)') }, 'Signaler une erreur'), el('button', { class: 'btn', onclick: () => openDiag() }, 'Diagnostic technique')));
     }
   };
