@@ -28,8 +28,8 @@ function figGrille() {
       f.append(sv('path', { d: `M${x - 3} ${y - 2} v-3 a3 3 0 0 1 6 0 v3`, fill: 'none', stroke: C.amber, strokeWidth: 1.5 }), sv('rect', { x: x - 5, y: y - 2, width: 10, height: 8, rx: 1, fill: C.amber }));
     }
   });
-  f.append(txt(X(3), Y(5) + 34, 'une ligne : un seul point fermé · une colonne : autant qu\'on veut', 'co-s'));
-  f.append(txt(X(3), Y(5) + 52, 'la colonne CAM 2 alimente MÉL 2 et MV 13 ; TX1 et TX2, verrouillés, reçoivent le PGM', 'co-s'));
+  f.append(txt(280, Y(5) + 34, 'une ligne : un seul point fermé · une colonne : autant qu\'on veut', 'co-s'));
+  f.append(txt(280, Y(5) + 52, 'CAM 2 alimente MÉL 2 et MV 13 ; TX1 et TX2, verrouillés, reçoivent le PGM', 'co-s'));
   // ce qui commande la grille
   const gx = 384;
   f.append(txt(gx, 58, 'commandée par', 'co-t', 'start'));
