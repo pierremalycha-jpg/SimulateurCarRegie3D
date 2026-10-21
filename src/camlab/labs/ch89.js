@@ -553,7 +553,7 @@ export const LABS_CH89 = {
               }
             }
           } else {
-            if (Math.abs(X) > 0.5 || Math.abs(Y) > 0.2) v = 0.05;
+            if (Math.abs(X) > 0.5 || Math.abs(Y) > 0.2) v = 0.012; // un fond sombre, pour ne pas se confondre avec un palier
             else v = CHART[Math.min(10, Math.floor((X + 0.5) * 11))];
           }
           const s = 255 * enc(v * E); d[i] = s; d[i + 1] = s; d[i + 2] = s; d[i + 3] = 255;
