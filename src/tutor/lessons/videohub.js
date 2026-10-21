@@ -62,7 +62,7 @@ const ROUTE = {
       do: (c) => `IN, puis l'entrée ${c.mem.cam} (CAM ${c.mem.cam}), puis TAKE.`,
       go: { station: 'grille' }, show: [face('in', 'IN'), face('knob', 'molette'), face('take', 'TAKE')],
       done: (c) => ROUTER.map.AUX_GIANT === 'CAM' + c.mem.cam,
-      ok: (c) => `Point de croisement établi : entrée ${c.mem.cam} → sortie 33. L'écran géant montre la CAM ${c.mem.cam}. L'écran de la façade t'a montré l'image avant de valider : on regarde toujours avant de prendre.`,
+      ok: (c) => `**Point de croisement** établi (la liaison, dans la grille, entre une entrée et une sortie) : entrée ${c.mem.cam} → sortie 33. L'écran géant montre la CAM ${c.mem.cam}. L'écran de la façade t'a montré l'image avant de valider : on regarde toujours avant de prendre.`,
       hints: ['Une touche fait passer en choix de la source ; le numéro de l\'entrée d\'une caméra est celui de la caméra.', 'IN, puis le numéro de la caméra (ou la molette), puis TAKE quand il clignote.'],
       auto: (c) => { vhRoute(33, c.mem.cam); FP.mode = 'out'; FP.out = 33; FP.pending = false; FP.inp = null; },
     },
@@ -151,7 +151,7 @@ const LOCK = {
     },
     {
       id: 'try', title: 'Une fausse manœuvre',
-      say: 'Vérifions. Envoie la **mire** (entrée 22 « MIRE SPG ») sur la sortie 31, comme le ferait une fausse manœuvre.',
+      say: 'Vérifions. Envoie la **mire** (les barres de couleur du générateur de synchro, entrée 22 « MIRE SPG ») sur la sortie 31, comme le ferait une fausse manœuvre.',
       do: 'Destination 31, source 22 (puis TAKE si elle clignote) : la grille doit refuser.',
       go: { station: 'grille', tab: 'control' },
       show: (c) => (onTab(c, 'control') ? [dest(31, 'TX1 FIBRE'), src(22, 'MIRE SPG')] : tab('control', 'Videohub Control')),
