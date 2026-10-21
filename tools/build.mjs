@@ -18,8 +18,10 @@ const fontCss = FONTS.flatMap(([family, pkg, weights]) => weights.map((w) => {
   return `@font-face{font-family:"${family}";font-style:normal;font-weight:${w};font-display:swap;src:url(data:font/woff2;base64,${b64}) format("woff2")}`;
 })).join('');
 const raw = fs.readFileSync('src/index.template.html', 'utf8');
-for (const m of ['<!--BOOT-->', '<!--FONTS-->']) if (!raw.includes(m)) throw new Error(`src/index.template.html : marqueur ${m} introuvable`);
-const tpl = raw.replace('<!--BOOT-->', () => `<script>${boot}</script>`).replace('<!--FONTS-->', () => `<style>${fontCss}</style>`);
+for (const m of ['<!--BOOT-->', '<!--FONTS-->', '/*STYLES*/']) if (!raw.includes(m)) throw new Error(`src/index.template.html : marqueur ${m} introuvable`);
+// styles propres à une fonction (menu, PRISM, Videohub, réseau du car…) : src/styles/*.css, par ordre alphabétique
+const styles = fs.readdirSync('src/styles').filter((f) => f.endsWith('.css')).sort().map((f) => `/* ${f} */\n` + fs.readFileSync('src/styles/' + f, 'utf8')).join('\n');
+const tpl = raw.replace('<!--BOOT-->', () => `<script>${boot}</script>`).replace('<!--FONTS-->', () => `<style>${fontCss}</style>`).replace('/*STYLES*/', () => styles);
 const bundle = async (external) => {
   const r = await esbuild.build({
     entryPoints: ['src/main.js'], bundle: true, format: 'esm', write: false, external: external ? ['three'] : [],

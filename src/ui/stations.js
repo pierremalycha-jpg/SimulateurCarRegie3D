@@ -34,6 +34,8 @@ import { buildCabling, SIG, DEV_NAMES, endLabel } from '../equipment/cabling.js'
 import { DEVICE_LIST } from '../equipment/devices.js';
 import { CFG, offerDownload } from '../shared.js';
 import { checklistItems, cablingCSV, generatedRows } from './config.js';
+import { buildVideohub } from './st_videohub.js';
+import { buildPrismStation } from './prism_station.js';
 
 export const ST = { cur: null, lastUpd: 0 };
 
@@ -51,7 +53,9 @@ const STATIONS = {
   ipdirector: { title: 'IPDirector — base de clips EVS', build: buildIPD, layout: 'top sm', dev: 'ipd' },
   son: { title: 'Régie son · console (inspiration Studer Vista 1)', build: buildAudio, layout: 'top sm', dev: 'audio' },
   hf: { title: 'Régie HF', build: buildHF, layout: 'side', dev: 'rx' },
-  grille: { title: 'Grille de commutation', build: buildRouter, layout: 'top', dev: 'router', ipTitle: 'Contrôleur IP (ST 2110 / NMOS)' },
+  // car SDI : grille type Videohub (ui/st_videohub.js) ; car IP : contrôleur NMOS (buildRouter)
+  grille: { title: 'Grille de commutation', build: (b, a, c) => (S.ipMode || !buildVideohub ? buildRouter(b, a, c) : buildVideohub(b, a, c)), layout: 'top', dev: 'router', ipTitle: 'Contrôleur IP (ST 2110 / NMOS)' },
+  mesure: { title: 'Baie de mesure — PRISM', build: buildPrismStation, layout: 'top', dev: 'prism' },
   brassage: { title: 'Baie de brassage (jackfield)', build: buildPatch, layout: 'top sm', dev: 'router' },
   ccu: { title: 'Baie CCU', build: buildCCU, layout: 'side', dev: 'ccu' },
   synchro: { title: 'Synchro et timecode', build: buildSync, layout: 'top sm', dev: 'spg' },

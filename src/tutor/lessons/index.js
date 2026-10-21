@@ -6,10 +6,13 @@ import { RALENTI_LESSONS } from './ralentis.js';
 import { SON_LESSONS } from './son.js';
 import { LIAISON_LESSONS } from './liaisons.js';
 import { MATERIEL_LESSONS } from './materiel.js';
+import { MESURE_LESSONS } from './mesure.js';
+import { VIDEOHUB_LESSONS } from './videohub.js';
+import { CTRLNET_LESSONS } from './ctrlnet.js';
 
 // ----------------------------------------------------------------------------------
 // Parcours pratiques du chef de car pour tous les postes, les compétences et le matériel (le
 // réseau ST 2110 a les siens dans reseau.js, et chaque poste sa présentation dans postes.js).
 // ----------------------------------------------------------------------------------
 /** @type {import('../engine.js').Lesson[]} */
-export const ALL_STATION_LESSONS = [...EXPLOITATION_LESSONS, ...REALISATION_LESSONS, ...IMAGE_LESSONS, ...RALENTI_LESSONS, ...SON_LESSONS, ...LIAISON_LESSONS, ...MATERIEL_LESSONS];
+export const ALL_STATION_LESSONS = [...EXPLOITATION_LESSONS, ...REALISATION_LESSONS, ...IMAGE_LESSONS, ...RALENTI_LESSONS, ...SON_LESSONS, ...LIAISON_LESSONS, ...MATERIEL_LESSONS, ...MESURE_LESSONS, ...VIDEOHUB_LESSONS, ...CTRLNET_LESSONS];

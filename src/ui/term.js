@@ -3,6 +3,11 @@ import { el } from '../util.js';
 import { emit } from '../state.js';
 import { CATS, TERMS, termFor } from '../content/netterms.js';
 import { FIGS } from './term_figs.js';
+// fiches et schémas ajoutés par d'autres postes (mesure vidéo, réseau de contrôle du car SDI)
+import '../content/terms_mesure.js';
+import '../content/terms_ctrlnet.js';
+import './figs_mesure.js';
+import './figs_ctrlnet.js';
 import { rich } from './rich.js';
 
 // ----------------------------------------------------------------------------------

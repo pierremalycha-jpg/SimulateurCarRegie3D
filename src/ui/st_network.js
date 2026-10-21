@@ -14,6 +14,7 @@ import { offerDownload } from '../shared.js';
 import { OPS, tabOps, opsDock, opsKey } from './net_ops.js';
 import { q, qify, openLexique } from './term.js';
 import { TERMS } from '../content/netterms.js';
+import { buildCtrlNet } from './st_ctrlnet.js';
 
 // ----------------------------------------------------------------------------------
 // Poste « Réseau IP », en deux onglets :
@@ -36,13 +37,8 @@ const log = (type, o = {}) => emit('netlog', { type, ...o });
 export function buildNetwork(body, arg, ctx) {
   const mvMon = el('div', { class: 'monwrap grow' }, el('div', { class: 'lab' }, 'Multiview (les flux reçus par son processeur)'), el('div', { class: 'mon fill', 'data-gl': 'mv' }));
   ctx.dock.append(mvMon);
-  if (!S.ipMode) {
-    body.append(el('div', { class: 'hwpanel prose' }, el('h3', {}, 'Car en SDI'),
-      el('p', {}, 'Ce car est câblé en SDI (coaxial, grille de commutation). Le réseau média ST 2110 n\'existe que dans le car IP : pour passer en IP, demandez-le au chef de car (touche J, « Passer le car en IP ») ou rechargez la page et choisissez « Car : IP (ST 2110) » sur l\'écran d\'accueil.'),
-      el('p', {}, 'Vous pouvez quand même consulter le chapitre « Réseau ST 2110 spine-leaf » du guide.'),
-      el('button', { class: 'btn', onclick: () => emit('openGuide', 'reseau') }, 'Ouvrir le chapitre du guide')));
-    return {};
-  }
+  // car SDI : le réseau de contrôle Gigabit (ui/st_ctrlnet.js)
+  if (!S.ipMode) return buildCtrlNet(body, arg, ctx);
   if (!FAB.res || FAB.key !== topoKey()) buildFabric();
   if (arg && FAB.switches[arg]) { V.sw = arg; V.tab = 'switch'; V.mode = 'tech'; }
   // bandeau d'écrans : le multiview en Technique, la source et la destination en Exploitation
