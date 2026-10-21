@@ -3,9 +3,10 @@ import { el, clamp, mulberry32 } from '../util.js';
 import { LINKS } from '../data/cameras.js';
 
 // ----------------------------------------------------------------------------------
-// Manipulations des fiches de cours (« À toi de jouer ») : un réglage, son effet à l'écran, la
-// voix d'Olivier qui commente, et trois défis qui se cochent seuls. Chaque manipulation reçoit
-// son conteneur et rend une fonction de nettoyage (animations arrêtées quand la fiche se ferme).
+// Manipulation de la leçon « La falaise numérique » (cours/sdi_falaise.js) : la longueur du câble,
+// le format et l'égaliseur ; le diagramme de l'œil et l'image au multiview, la voix d'Olivier qui
+// commente, trois défis qui se cochent seuls. Reçoit son conteneur et rend une fonction de
+// nettoyage (animations arrêtées quand la leçon se ferme).
 // ----------------------------------------------------------------------------------
 
 // ---------------- SDI : la falaise numérique ----------------
@@ -154,16 +155,15 @@ function labSdi(host) {
   const defiList = el('ul', { class: 'co-defis' });
   const doneBox = el('p', { class: 'co-say-done', hidden: true }, 'Tu as trouvé la falaise trois fois : la portée dépend du débit, et l\'égaliseur fait le reste. Retiens qu\'on garde toujours de la marge.');
   host.append(
-    el('div', { class: 'co-lab-h' }, el('span', { class: 'tape' }, 'À toi de jouer'), el('b', {}, 'La falaise numérique')),
     el('div', { class: 'co-say' }, el('span', { class: 'co-who' }, 'Olivier'), say),
     el('div', { class: 'co-ctl' },
-      el('div', { class: 'co-seg', role: 'group', 'aria-label': 'Format du signal' }, ...fmtKeys),
+      el('div', { class: 'lab-seg', role: 'group', 'aria-label': 'Format du signal' }, ...fmtKeys),
       el('div', { class: 'co-len' }, el('label', { for: 'co-sdi-len' }, 'Longueur du câble coaxial'), len, lenOut),
       eqBtn),
     el('div', { class: 'co-lab-grid' },
       el('figure', { class: 'co-panel' }, eye, el('figcaption', {}, 'Diagramme de l\'œil, mesuré au récepteur')),
       el('figure', { class: 'co-panel' }, el('div', { class: 'co-mon' }, pic, el('div', { class: 'co-umd' }, el('i'), el('b', {}, 'CAM 1'), el('small', {}, 'multiview'))), el('figcaption', {}, 'Ce que voit le réalisateur'))),
-    el('div', { class: 'co-read glass' },
+    el('div', { class: 'lab-read glass' },
       el('span', {}, 'Atténuation', ro.att), el('span', {}, 'Ouverture de l\'œil', ro.open), el('span', {}, 'Erreurs CRC', ro.crc), el('span', { class: 'co-st' }, ro.led, ro.state)),
     el('div', { class: 'co-defi-box' }, el('h4', {}, 'Les défis d\'Olivier'), defiList, doneBox));
   // tailles des canevas : à la largeur affichée, en pixels de l'écran
@@ -216,5 +216,4 @@ function labSdi(host) {
   return () => { removeEventListener('resize', onResize); if (raf) cancelAnimationFrame(raf); };
 }
 
-/** @type {Record<string, (host: HTMLElement) => (() => void)>} */
-export const LABS = { sdi: labSdi };
+export { labSdi, SDI_FMT };
