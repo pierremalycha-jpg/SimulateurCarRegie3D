@@ -4,9 +4,11 @@ import { el, clamp, fmt } from '../util.js';
 import { maxAperture } from '../data/cameras.js';
 import { GAINS, ND_FILTERS, SHUTTERS } from '../data/exposure.js';
 import { toast, intercom, hwBtn } from './common.js';
-import { ROUTER, SCOPE, drawScopes, tallyOf } from '../pipeline.js';
+import { ROUTER, SCOPE, tallyOf } from '../pipeline.js';
 import { explain, rotary, joystick, chainBox } from './widgets.js';
 import { openDevice } from '../equipment/viewer.js';
+import { prismInstrument } from './prism.js';
+import { PRISM, pointById, setInput } from '../prism_model.js';
 
 const IR_MIN = 1.4, IR_MAX = 22;
 const irisToPos = (n) => 1 - Math.log(n / IR_MIN) / Math.log(IR_MAX / IR_MIN);
@@ -14,35 +16,44 @@ const posToIris = (p) => IR_MIN * Math.pow(IR_MAX / IR_MIN, 1 - p);
 const stopsTxt = (s) => `${s > 0 ? '+' : ''}${fmt(s, 1)} diaphragme${Math.abs(s) >= 2 ? 's' : ''}`;
 const SCENES = {};
 
-// Poste ingénieur vision : RCP (type RCP-3500) + moniteur de référence + oscilloscope
+// Poste ingénieur vision : RCP (type RCP-3500) + moniteur de référence + instrument de mesure (type PRISM)
 /** @param {HTMLElement} body @param {any} [arg] caméra demandée ({ cam }) ou rang du pupitre @param {any} [ctx] */
 export function buildVision(body, arg = 0, ctx) {
   let sel = S.cams.length ? (arg === 1 ? (S.cams.find((c) => c.id > 6) || S.cams[0]).id : S.cams[0].id) : null;
   if (arg && typeof arg === 'object' && camById(arg.cam)) sel = arg.cam;
   const cam = () => camById(sel);
   // ---------------- dock : moniteurs toujours visibles ----------------
-  const scopeC = el('canvas', { class: 'scope', width: 640, height: 360 });
-  const modeBtns = { luma: el('button', { class: 'minibtn' }, 'LUMA'), parade: el('button', { class: 'minibtn' }, 'PARADE RVB'), hlg: el('button', { class: 'minibtn', title: 'Mesurer la sortie HDR (HLG) de la CCU' }, 'HLG') };
   // sortie SDR (BT.709) et sortie HDR (HLG) de la même CCU
   const monSDR = el('div', { class: 'mon fill', 'data-gl': 'AUX_VISION', title: 'Sortie SDR BT.709' });
   const monHDR = el('div', { class: 'mon fill', 'data-gl': 'HDR', title: 'Sortie HDR HLG (simulation d\'un moniteur HDR sur votre écran)', hidden: true });
   const hdrBtns = { sdr: el('button', { class: 'minibtn' }, 'SDR'), hlg: el('button', { class: 'minibtn' }, 'HDR HLG'), both: el('button', { class: 'minibtn' }, 'SDR | HDR') };
   const setHdr = (m) => {
-    S.hdrView = m !== 'sdr'; if (!S.hdrView) SCOPE.hdr = false;
+    S.hdrView = m !== 'sdr'; if (!S.hdrView) { SCOPE.hdr = false; if (PRISM.vision.input === 'hlg') { setInput('vision', 'sdr'); if (prism) prism.refresh(); } }
     monSDR.hidden = m === 'hlg'; monHDR.hidden = m === 'sdr'; monSDR.parentElement && monSDR.parentElement.classList.toggle('both', m === 'both');
     for (const k in hdrBtns) hdrBtns[k].classList.toggle('on', k === m);
     explain({ sdr: 'Moniteur en SDR (BT.709) : c\'est la sortie que règlent la plupart des ingénieurs vision, le blanc nominal est à 100 %.', hlg: 'Sortie HDR (HLG) de la CCU, vue sur un moniteur HDR simulé : les hautes lumières (ciel, maillots au soleil, projecteurs) gardent du détail au lieu d\'être écrêtées. Le blanc de référence est à 75 % du signal (ITU-R BT.2408).', both: 'Les deux sorties de la même CCU côte à côte. En production « single stream » (type SR Live), on règle l\'image sur la sortie SDR et la HDR suit : même iris, mêmes noirs, mêmes couleurs ; seule la courbe change.' }[m], 'rcp:hdr');
   };
   for (const k in hdrBtns) hdrBtns[k].onclick = () => setHdr(k);
-  modeBtns.hlg.onclick = () => { if (!S.hdrView) setHdr('both'); SCOPE.hdr = !SCOPE.hdr; explain(SCOPE.hdr ? 'Oscilloscope sur la sortie HLG : le blanc de référence (une feuille blanche, un maillot blanc à l\'ombre) doit tomber vers 75 % ; au-dessus, la marge pour les hautes lumières.' : 'Oscilloscope sur la sortie SDR.', 'rcp:scope'); };
-  for (const k of ['luma', 'parade']) modeBtns[k].onclick = () => { SCOPE.mode = k; explain(k === 'parade' ? 'Parade RVB : les trois composantes côte à côte. Un blanc neutre a ses trois traces à la même hauteur ; un noir neutre aussi, en bas.' : 'Waveform luminance : hauteur = niveau de chaque colonne de l\'image, de 0 % (noir) à 100 % (blanc nominal).'); };
+  // instrument de mesure (type PRISM) : la sortie SDR ou HDR (HLG) de la CCU choisie au RCP, par la sortie AUX
+  // de la grille qui alimente aussi le Grade 1 (sa couche physique est donc celle d'une sortie de grille)
+  if (!['sdr', 'hlg'].includes(PRISM.vision.input)) PRISM.vision.input = 'sdr';
+  /** @type {any} */ let prism = null;
+  prism = prismInstrument({
+    key: 'vision',
+    inputs: () => [{ id: 'sdr', label: 'Sortie SDR (BT.709) de la CCU', short: 'SDR BT.709' }, { id: 'hlg', label: 'Sortie HDR (HLG) de la CCU', short: 'HDR HLG' }],
+    route: (id) => ({ src: 'CAM' + sel, hdr: id === 'hlg' && S.hdrView, point: pointById('auxv'), label: `CAM ${sel} · ${id === 'hlg' ? 'HDR HLG' : 'SDR'}` }),
+    onInput: (id) => {
+      if (id === 'hlg' && !S.hdrView) setHdr('both');
+      explain(id === 'hlg' ? 'PRISM sur la sortie HLG : le blanc de référence (une feuille blanche, un maillot blanc à l\'ombre) doit tomber vers 75 %, un gris à 18 % vers 38 % ; au-dessus de 75 %, la marge pour les hautes lumières. Le diagramme CIE (préréglage HDR) place les couleurs de la scène face aux triangles BT.709 et BT.2020.' : 'PRISM sur la sortie SDR (BT.709) : le blanc nominal est à 100 % (700 mV).', 'rcp:scope');
+    },
+  });
   const meterTxt = el('span', { class: 'meter' });
   const chain = chainBox();
   ctx.dock.append(
-    el('div', { class: 'monwrap' }, el('div', { class: 'lab labrow' }, el('span', {}, 'Moniteur de référence Grade 1'), hdrBtns.sdr, hdrBtns.hlg, hdrBtns.both), el('div', { class: 'refpair' }, monSDR, monHDR)),
     el('div', { class: 'dockrow' },
-      el('div', { class: 'monwrap grow' }, el('div', { class: 'lab labrow' }, el('span', {}, 'Oscilloscope'), modeBtns.luma, modeBtns.parade, modeBtns.hlg), scopeC),
+      el('div', { class: 'monwrap grow', style: { flex: '1.6 1 0' } }, el('div', { class: 'lab labrow' }, el('span', {}, 'Moniteur de référence Grade 1'), hdrBtns.sdr, hdrBtns.hlg, hdrBtns.both), el('div', { class: 'refpair' }, monSDR, monHDR)),
       el('div', { class: 'monwrap grow' }, el('div', { class: 'lab labrow' }, el('span', {}, 'Multiview'), meterTxt), el('div', { class: 'mon fill', 'data-gl': 'mv' }))),
+    el('div', { class: 'monwrap vision-prism' }, el('div', { class: 'lab' }, 'Moniteur de mesure (type PRISM) : waveform, vecteurscope, gamut'), prism.el),
     ctx.explainBox);
   for (const k in hdrBtns) hdrBtns[k].classList.toggle('on', k === 'sdr');
   // ---------------- sélection de la caméra ----------------
@@ -68,7 +79,7 @@ export function buildVision(body, arg = 0, ctx) {
     sel = id; S.selCam = id; SCOPE.src = 'CAM' + id; SCOPE.active = true;
     ROUTER.map.AUX_VISION = 'CAM' + id; emit('router', {});
     buildPanel();
-    const c = cam(); if (c) explain(`RCP affecté à la CAM ${id} (${c.T.label}, ${c.L.name}). Son image est sur le moniteur de référence et l'oscilloscope.`);
+    const c = cam(); if (c) explain(`RCP affecté à la CAM ${id} (${c.T.label}, ${c.L.name}). Son image est sur le moniteur de référence et le PRISM.`);
   }
 
   function buildPanel() {
@@ -197,15 +208,12 @@ export function buildVision(body, arg = 0, ctx) {
   }
   if (sel) select(sel);
   let lastCams = ''; let lastOv = 0;
-  const g = scopeC.getContext('2d');
   return {
     update() {
       const ck = S.cams.map((c) => c.id).join();
       if (ck !== lastCams) { lastCams = ck; rebuildSel(); if (!camById(sel) && S.cams.length) select(S.cams[0].id); }
       for (const c of S.cams) { const b = camBtns[c.id]; if (!b) continue; const t = tallyOf('CAM' + c.id); b.className = 'hw' + (t === 2 ? ' pgm' : t === 1 ? ' pst' : '') + (c.id === sel ? ' selcam' : ''); }
-      for (const k of ['luma', 'parade']) modeBtns[k].classList.toggle('on', SCOPE.mode === k);
-      modeBtns.hlg.classList.toggle('on', !!SCOPE.hdr);
-      drawScopes(g, 640, 360, SCOPE.data, SCOPE.mode, 'CAM ' + sel);
+      prism.update();
       const c = cam(); if (!c) return;
       meterTxt.textContent = `CAM ${c.id} · moyen ${Math.round(c.meter.mean * 100)} % · crêtes ${Math.round(c.meter.peak * 100)} %`;
       const t = tallyOf('CAM' + c.id);
@@ -214,7 +222,7 @@ export function buildVision(body, arg = 0, ctx) {
       refresh();
       if (performance.now() - lastOv > 500) { lastOv = performance.now(); drawOverview(); }
     },
-    close() { SCOPE.active = false; S.hdrView = false; SCOPE.hdr = false; },
+    close() { prism.close(); SCOPE.active = false; S.hdrView = false; SCOPE.hdr = false; },
   };
   function drawOverview() {
     overview.innerHTML = '';

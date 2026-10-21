@@ -1,1 +1,70 @@
-/* instrument de mesure type PRISM (poste vision, baie de mesure) */
+/* instrument de mesure type PRISM (poste vision, baie de mesure) : un boîtier sombre et sobre, un écran
+   tactile en quatre tuiles ; la tuile choisie est cerclée d'ambre. Les valeurs sont du texte (lisibles,
+   accessibles), les traces sont dessinées sur des canvas à la taille réelle de chaque tuile. */
+.prism { --pz-h: 430px; min-width: 0; }
+.pz-bezel { background: linear-gradient(#262c32, #1b2025); border: 1px solid #0b0e10; border-radius: 6px; padding: 6px; box-shadow: inset 0 1px 0 rgba(255,255,255,.06), 0 2px 6px rgba(0,0,0,.45); display: flex; flex-direction: column; gap: 5px; }
+.pz-top { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; min-width: 0; }
+.pz-brand { font-family: var(--f-disp); font-weight: 700; font-size: 13px; letter-spacing: .14em; color: #e3e7e1; display: inline-flex; align-items: baseline; gap: 5px; }
+.pz-brand small { font-weight: 600; font-size: 10.5px; letter-spacing: .06em; color: var(--muted); }
+.pz-chip { font-family: var(--f-mono); font-size: 11.5px; color: #e8f0ea; background: #070a0c; border: 1px solid #000; border-radius: 3px; padding: 3px 7px; min-width: 0; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pz-led { width: 9px; height: 9px; border-radius: 50%; background: #2a3036; flex: none; box-shadow: inset 0 0 0 1px rgba(0,0,0,.5); }
+.pz-led.ok { background: #33c46c; box-shadow: 0 0 6px rgba(51,196,108,.7); }
+.pz-led.warn { background: var(--amber); box-shadow: 0 0 6px rgba(255,176,32,.7); }
+.pz-led.bad { background: var(--tally); box-shadow: 0 0 6px rgba(240,55,44,.8); }
+.pz-sp { flex: 1 1 auto; }
+.pz-in { display: flex; min-width: 0; }
+.pz-seg { display: inline-flex; gap: 2px; background: #0b0f12; border: 1px solid #05070a; border-radius: 4px; padding: 2px; }
+.pz-b { font-family: var(--f-disp); font-weight: 600; font-size: 12.5px; line-height: 1.1; color: #dde4e8; background: linear-gradient(#36404a, #2b333b); border: 1px solid #10151a; border-radius: 3px; padding: 4px 8px; white-space: nowrap; }
+.pz-b:hover { color: #fff; background: linear-gradient(#424d58, #343d46); }
+.pz-b[aria-pressed="true"] { color: #1c1303; background: linear-gradient(#ffc457, #f0a52a); border-color: #6b4a0e; }
+.pz-b.sm { font-size: 11.5px; padding: 2px 6px; }
+.pz-sel, .pz-app { font-family: var(--f-disp); font-weight: 600; font-size: 12.5px; color: #e3e7e1; background: #0e1316; border: 1px solid #3a444e; border-radius: 3px; padding: 3px 4px; max-width: 100%; min-width: 0; }
+.pz-insel { max-width: 260px; }
+.pz-app { font-size: 12px; padding: 1px 2px; max-width: 132px; }
+.pz-screen { height: var(--pz-h); display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-template-rows: minmax(0, 1fr) minmax(0, 1fr); gap: 4px; background: #000; border: 1px solid #000; border-radius: 3px; padding: 3px; }
+.pz-screen.one { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); }
+.pz-tile { display: flex; flex-direction: column; min-width: 0; min-height: 0; background: #05080a; border: 1px solid #1f262c; border-radius: 2px; }
+.pz-tile.sel { border-color: var(--amber); box-shadow: 0 0 0 1px rgba(255,176,32,.35); }
+.pz-th { display: flex; align-items: center; gap: 4px; padding: 2px 3px; background: #11171b; border-bottom: 1px solid #1f262c; min-width: 0; flex-wrap: wrap; }
+.pz-th .q { margin-left: 0; }
+.pz-n { font-family: var(--f-mono); font-size: 11px; color: var(--muted); width: 1.2em; text-align: center; }
+.pz-opts { display: flex; gap: 3px; flex-wrap: wrap; min-width: 0; }
+.pz-opts .pz-seg { padding: 1px; }
+.pz-body { flex: 1 1 auto; min-height: 0; display: flex; }
+.pz-cw { position: relative; flex: 1 1 auto; min-width: 0; min-height: 0; }
+.pz-cv { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.pz-cv:focus-visible { outline-offset: -2px; }
+.pz-side > .pz-cw { flex: 1.5 1 0; }
+.pz-kv { flex: 1 1 0; min-width: 0; border-collapse: collapse; font-size: 11.5px; align-self: center; margin: 0 4px; }
+.pz-kv th { text-align: left; font-family: var(--f-disp); font-weight: 600; color: #c4ced4; padding: 1px 4px 1px 0; white-space: nowrap; }
+.pz-kv td { font-family: var(--f-mono); padding: 1px 4px; white-space: nowrap; color: #e8f0ea; }
+.pz-kv td.lim { color: #a9b4ba; font-size: 10.5px; }
+.pz-kv td.ok, .pz-dl dd.ok { color: #86e596; }
+.pz-kv td.bad, .pz-dl dd.bad { color: #ff9a90; }
+.pz-dl dd.warn { color: #ffd27a; }
+.pz-kvonly { overflow: auto; }
+.pz-status { display: flex; flex-direction: column; gap: 4px; padding: 4px 6px; min-width: 0; width: 100%; }
+.pz-dl { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 1px 10px; margin: 0; font-size: 11.5px; }
+.pz-dl dt { font-family: var(--f-disp); font-weight: 600; color: #c4ced4; white-space: nowrap; }
+.pz-dl dd { margin: 0; font-family: var(--f-mono); color: #e8f0ea; overflow-wrap: anywhere; }
+.pz-status .pz-b { align-self: flex-start; }
+.pz-read { flex: none; font-family: var(--f-mono); font-size: 11px; line-height: 1.3; color: #cfdad3; background: #080c0e; border-top: 1px solid #161d22; padding: 2px 5px; min-height: 1.3em; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.pz-read.bad { color: #ffa197; }
+/* au poste vision : à côté du Grade 1, l'instrument prend la largeur du bandeau d'écrans */
+.vision-prism { flex: none; }
+/* baie de mesure : l'instrument en grand, les liaisons dessous */
+.mesure-prism .prism { --pz-h: clamp(340px, 64vh, 760px); }
+.mz-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; align-items: start; }
+@media (max-width: 900px) { .mz-grid { grid-template-columns: minmax(0, 1fr); } .prism { --pz-h: 520px; } .pz-screen { grid-template-columns: minmax(0, 1fr); grid-template-rows: repeat(4, minmax(0, 1fr)); } .pz-screen.one { grid-template-rows: minmax(0, 1fr); } }
+.mz-points { display: flex; flex-direction: column; gap: 6px; }
+.mz-points .hwrow { gap: 5px; }
+.mz-points .hw { min-width: 64px; }
+.mz-points .hw.err { box-shadow: inset 0 -3px 0 var(--tally); }
+.mz-path { font-size: 13px; color: var(--fg); line-height: 1.45; }
+.mz-chain { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font-family: var(--f-mono); font-size: 12px; }
+.mz-chain span { background: var(--well); border: 1px solid #0f1316; border-radius: 3px; padding: 3px 7px; }
+.mz-chain span.bad { border-color: var(--tally); color: #ffb3ab; }
+.mz-chain i { color: var(--muted); font-style: normal; }
+.mz-fix { display: flex; gap: 6px; flex-wrap: wrap; }
+.mz-lim { font-size: 12.5px; min-width: 0; }
+.mz-lim th, .mz-lim td { padding: 4px 6px; }

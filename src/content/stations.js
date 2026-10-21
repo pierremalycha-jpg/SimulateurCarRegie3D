@@ -68,6 +68,13 @@ export const STATION_INFO = {
     process: ['Line-up : balance des noirs (iris fermé), balance des blancs sur une charte, chargement des fichiers de scène', 'Matching : même niveau de noir, même balance des blancs, même gamma et même saturation pour toutes les caméras', 'Direct : suivi de l\'iris en continu (« riding »), ajustements fins des couleurs'],
     tips: ['Repères : pelouse en plein soleil vers 40-55 %, maillot blanc sous 100 %, noirs à 0-2 %.', 'Ouvrir l\'iris d\'un diaphragme double la lumière ; +6 dB de gain aussi, mais avec du bruit.', 'Au téléobjectif, l\'ouverture maximale diminue (ramping) : l\'image peut s\'assombrir quand le cadreur zoome.', 'Les caméras super ralenti reçoivent 3 ou 6 fois moins de lumière par image.'],
   },
+  mesure: {
+    title: 'Baie de mesure (PRISM)', where: 'Zone technique – au bout de la rangée côté porte',
+    role: 'Qualifie le signal lui-même, pas seulement l\'image : on y brasse une sortie de CCU, de la grille ou du mélangeur sur l\'instrument de mesure (type PRISM) pour lire le diagramme de l\'œil, la gigue, les erreurs CRC, la longueur de câble estimée et le timing par rapport à la référence.',
+    gear: ['Moniteur de mesure SDI / IP (type Telestream PRISM, anciennement Tektronix), option couche physique (œil, gigue, câble)', 'Jacks d\'écoute de la baie de brassage, cordons courts 75 Ω', 'Référence du SPG (black burst, tri-level) bouclée sur l\'instrument'],
+    process: ['Installation : mesurer chaque liaison coaxiale (affaiblissement, marge de l\'égaliseur, CRC à zéro)', 'Line-up : barres de chaque caméra au vecteurscope, timing de chaque source', 'Direct : surveiller les CRC ; une erreur sans défaut visible = liaison au bord de la falaise', 'Dépannage : œil, dépassement, longueur estimée, puis changer le cordon ou ajouter un répéteur'],
+    tips: ['La norme définit l\'œil à la sortie de l\'émetteur avec 1 m de câble : un œil brut fermé après 80 m en 3G est normal, regardez l\'œil égalisé.', 'Un dépassement de plus de 10 % trahit une rupture d\'impédance : connecteur mal serti, BNC 50 Ω, câble écrasé.', 'Le seul bon compte de CRC pendant une émission, c\'est zéro.'],
+  },
   brassage: {
     title: 'Baie de brassage (jackfield)', where: 'Zone technique',
     role: 'Panneaux de jacks vidéo, audio et référence placés entre les appareils et la grille : on y dérive, remplace ou contourne une liaison avec un cordon, sans toucher au câblage arrière.',
@@ -194,6 +201,6 @@ export const STATION_INFO = {
 // ordre et lieu des postes dans le guide (onglet « Les postes »)
 export const STATION_LIST = [
   ['realisateur', 'Car · production'], ['scripte', 'Car · production'], ['melangeur', 'Car · production'], ['habillage', 'Car · production'], ['producteur', 'Car · production'], ['chefdecar', 'Car · production'],
-  ['vision', 'Car · vision'], ['evs', 'Car · ralentis'], ['ipdirector', 'Car · ralentis'], ['son', 'Car · régie son'], ['hf', 'Car · zone technique'], ['grille', 'Car · zone technique'], ['brassage', 'Car · zone technique'], ['reseau', 'Car · zone technique'], ['ccu', 'Car · zone technique'], ['synchro', 'Car · zone technique'], ['transmission', 'Car · zone technique'], ['intercom', 'Car · zone technique'],
+  ['vision', 'Car · vision'], ['evs', 'Car · ralentis'], ['ipdirector', 'Car · ralentis'], ['son', 'Car · régie son'], ['hf', 'Car · zone technique'], ['grille', 'Car · zone technique'], ['mesure', 'Car · zone technique'], ['brassage', 'Car · zone technique'], ['reseau', 'Car · zone technique'], ['ccu', 'Car · zone technique'], ['synchro', 'Car · zone technique'], ['transmission', 'Car · zone technique'], ['intercom', 'Car · zone technique'],
   ['pieddecar', 'Compound'], ['energie', 'Compound'], ['cadreur', 'Stade'], ['antenne', 'Stade'], ['localtv', 'Stade'], ['commentateurs', 'Stade'], ['var', 'Stade'],
 ];

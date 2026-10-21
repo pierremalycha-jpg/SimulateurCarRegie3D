@@ -29,7 +29,7 @@ const ZONE_NAME = { son: 'Cabine son', prod: 'Production', vision: 'Vision et ra
 const OUT_NAME = ['Devant le car', null, null, null, null, 'Bord terrain', 'Sortie du tunnel', 'Tunnel et vestiaires', 'Passerelle caméras', 'Derrière le but', 'Kop Marek', 'Angle et pylône', 'Toit (antennes HF)', 'Vue aérienne'];
 const OUT_ICON = ['car', null, null, null, null, 'terrain', 'tunnel', 'vestiaires', 'passerelle', 'but', 'kop', 'pylone', 'toit', 'aerien'];
 // icône de chaque poste du car (ui/icons.js), à côté de son nom
-const STATION_ICON = { son: 'mixage', scripte: 'scripte', realisateur: 'realisateur', melangeur: 'melangeur', habillage: 'habillage', producteur: 'producteur', chefdecar: 'chef', vision1: 'vision', vision2: 'vision', evsA: 'evs', evsB: 'ipdirector', ccu: 'ccu', grille: 'grille', xvsrack: 'processeur', reseau: 'reseau', evsrack: 'serveur', transmission: 'transmission', synchro: 'synchro', intercom: 'intercom', mvproc: 'brassage', audiorack: 'audio', hf: 'hf' };
+const STATION_ICON = { son: 'mixage', scripte: 'scripte', realisateur: 'realisateur', melangeur: 'melangeur', habillage: 'habillage', producteur: 'producteur', chefdecar: 'chef', vision1: 'vision', vision2: 'vision', evsA: 'evs', evsB: 'ipdirector', ccu: 'ccu', grille: 'grille', xvsrack: 'processeur', reseau: 'reseau', evsrack: 'serveur', transmission: 'transmission', synchro: 'synchro', intercom: 'intercom', mvproc: 'brassage', audiorack: 'audio', hf: 'hf', mesure: 'diagnostic' };
 
 // touche à afficheur : l'icône gravée sur la touche, la légende dans une petite fenêtre, une LED d'état
 function dkey(label, onclick, opts = {}) {
