@@ -392,6 +392,28 @@ Tests :
   « Emmène-moi / Montre-moi » doit mettre en évidence un élément réel de la page, et « Fais-le pour moi » doit faire
   valider l'étape.
 
+## v18.4 : des menus par profil, cinq familles, une section Cours
+
+**On ne se perd plus entre formateur, chef de car et joueur.** Deux profils (`src/app/profile.js`), choisis sous
+le menu de l'écran titre et mémorisés : **Étudiant** voit Jouer, Cours, Chef de car et Réglages ; **Formateur** a
+en plus l'espace formateur, le suivi des stagiaires, la relecture technique et les pannes (éléments `.role-only`).
+Les mêmes **cinq familles** partout : l'écran titre (Jouer · Cours · Chef de car · Formateur · Réglages, les
+crédits dans Réglages), le pupitre (Tab : outils rangés par famille), la feuille de service. L'ancien « Guide du
+car régie » à huit onglets est réparti : **Le car** (postes, matériel, procédures, commandes), **Missions et
+livret** (le parcours d'intégration et le livret du stagiaire, `src/ui/livret.js`), **Réglages** ; « Comprendre »
+et le glossaire sont devenus des onglets de la fenêtre Cours.
+
+**La section Cours** (`src/cours/`, fenêtre `src/ui/cours_ui.js`, touche G, entrée du titre, pupitre). Quatre
+chapitres, une leçon par terme technique, lisibles sans le stade 3D (depuis l'écran titre, sur un téléphone ou un
+vidéoprojecteur) : **Le signal vidéo numérique** (`cours/signal.js`), **Le SDI** (`cours/sdi.js`), **Le réseau**
+(`cours/reseau.js`), **La HF** (`cours/hf.js`). Chaque leçon : l'essentiel en trois lignes, un schéma SVG, une
+manipulation qui calcule vraiment (par exemple une image réellement sous-échantillonnée en 4:4:4 / 4:2:2 / 4:2:0
+avec une loupe, un diagramme de l'œil qui se ferme avec la longueur du câble, un masque de sous-réseau, un bilan de
+liaison HF), l'explication, « dans le car » (un bouton vers le poste quand on est dans le car), les fiches « ? »
+liées et un quiz de trois questions ; une leçon est acquise quand le quiz est réussi en entier (progression
+`PROG.cours`, dans le livret et le suivi). Les fiches « ? » proposent la leçon qui les cite. Kit des leçons :
+`cours/kit.js` (SVG, canvas, curseurs, touches, lectures). Suite `tests/e2e/cours.mjs` (toutes les leçons).
+
 ## v18.3 : écran titre, PRISM, grille Videohub, réseau de contrôle du car SDI
 
 **Écran titre et chargement.** La page s'ouvre sur un écran titre (`src/app/title.js`, écrit dans
@@ -831,7 +853,11 @@ node tools/shots.mjs dossier 1280 800 '["vision","hf"]'   # captures de postes
 | `diag.js` | Journal des erreurs (partagé avec `boot.js`) : erreurs non rattrapées, écouteurs d'événement, boucle de rendu, `console.error` ; version de l'application |
 | `ui/diag_ui.js` | Bandeau « Un problème est survenu » et fenêtre « Diagnostic technique » (texte à copier) |
 | `ui/pupitre.js` | Le pupitre (Tab ou T) : plan du car, touches des postes par zone, endroits du stade, équipiers, outils |
-| `app/title.js` | Écran titre : menu, progression du chargement, conseils d'Olivier, réglages et crédits |
+| `app/title.js` | Écran titre : menu à cinq entrées, bascule de profil, progression du chargement, conseils d'Olivier, réglages et crédits |
+| `app/profile.js` | Profil Étudiant / Formateur, mémorisé ; classe `role-formateur` sur `body`, éléments `.role-only` |
+| `cours/index.js`, `cours/kit.js`, `cours/*.js` | La section Cours : chapitres et leçons (signal, SDI, réseau, HF), progression, kit des schémas et manipulations |
+| `ui/cours_ui.js` | La fenêtre Cours : chapitres et leçons, articles du guide, glossaire |
+| `ui/livret.js` | Le livret du stagiaire : missions, parcours du chef, cours, exercices |
 | `prism_model.js` | Modèle de la liaison SDI pour le PRISM : normes, points de mesure, œil, gigue, timing, pannes |
 | `videohub.js` | Modèle de la grille Videohub 40 × 40 : plan des ports, étiquettes, verrous, protocole, pannes |
 | `ui/st_videohub.js` | Le poste Grille en car SDI : façade, Videohub Control, monitoring, matrice, Setup |
