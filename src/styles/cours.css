@@ -78,3 +78,10 @@ body:not(.role-formateur) .role-only { display: none !important; }
 .co-smooth { image-rendering: auto; }
 .co-demo-host > .note { margin: 0; max-width: 80ch; }
 @media (max-width: 820px) { .co-2 { grid-template-columns: minmax(0, 1fr); } }
+/* chapitre sdi */
+.co-emb { display: flex; flex-wrap: wrap; gap: 8px; }
+.co-emb-g { display: flex; align-items: center; gap: 8px; margin: 0; padding: 4px 10px 6px; border: 1px solid var(--line); border-radius: 3px; }
+.co-emb-g legend { padding: 0 4px; font-size: 12px; color: var(--muted); }
+.co-chk { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; color: var(--fg); }
+.co-link { padding: 4px 8px; background: var(--well); border-radius: 3px; }
+.co-link b { min-width: 170px; font: 600 13px var(--f-disp); color: var(--muted); }
