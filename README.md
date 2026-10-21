@@ -392,7 +392,7 @@ Tests :
   « Emmène-moi / Montre-moi » doit mettre en évidence un élément réel de la page, et « Fais-le pour moi » doit faire
   valider l'étape.
 
-## Navigation : quatre espaces et la section Cours (en préparation)
+## Navigation : quatre espaces et la section Cours
 
 **Quatre espaces, les mêmes partout.** L'écran titre mène à **Jouer** (la feuille de service, puis le car), au
 **Cours**, à **S'entraîner** et à l'**Espace formateur**, plus les réglages et les crédits. Dans le car, la barre
@@ -407,6 +407,16 @@ pendant le chargement : notions (une fiche par terme technique, avec schéma, ma
 SDI pour commencer, `src/content/cours/`), chapitres par famille, glossaire, postes, matériel, procédures. Les
 boutons « Emmène-moi » et « Parcours du chef » d'une fiche lancent le car si besoin, puis ouvrent le poste ou le
 parcours (`src/app/nav.js`).
+
+**La bibliothèque des notions** range par thème (signal vidéo, mesure vidéo, synchronisation, liaisons, réseau,
+son) les notions de cours puis les 140 fiches du lexique des boutons « ? », par famille ; le thème de la fiche
+ouverte se déplie seul, la recherche couvre tout. Une fiche du lexique a son « Emmène-moi » vers le poste où on
+la voit. Les liens vers les fiches sont dans `src/content/cours/liens.js` : chaque terme du glossaire qui a sa
+fiche affiche un bouton « Fiche » (62 aujourd'hui ; un lien vers une fiche en préparation s'allume tout seul le
+jour où elle est écrite), le bouton « Cours » d'un poste et la touche G y ouvrent la fiche du poste (baie de
+brassage : SDI ; baie de mesure : waveform ; réseau : ST 2110 ou réseau de contrôle selon le car), l'onglet
+Postes donne la notion de chaque poste. La petite fenêtre des boutons « ? » reste (le poste reste visible) et
+gagne « Ouvrir dans le Cours ». Tests : `tests/unit/cours.test.mjs`.
 
 **S'entraîner** (`src/ui/entrainement.js`) : les parcours du chef de car par famille, avec la progression ; les
 exercices notés (jour de match, car vide, atelier de montage, formation réseau, installation) avec leur meilleur
@@ -855,7 +865,7 @@ node tools/shots.mjs dossier 1280 800 '["vision","hf"]'   # captures de postes
 | `app/title.js` | Écran titre : menu, progression du chargement, conseils d'Olivier, réglages et crédits |
 | `app/nav.js` | Navigation entre les espaces : menu du car (Échap), aiguillage des boutons « Emmène-moi », « Commencer », « Lancer » (car lancé si besoin), changement de vacation |
 | `ui/layer.js` | Espaces plein écran (Cours, S'entraîner) : plaque, onglets, Fermer (Échap), ligne d'état |
-| `ui/cours/` | Section Cours : l'espace (`espace.js`), la liste des notions (`cours.js`), une fiche (`fiche.js`), schémas (`figs.js`) et manipulations (`labs.js`) ; contenus dans `content/cours/` |
+| `ui/cours/` | Section Cours : l'espace (`espace.js`), la bibliothèque des notions par thème (`cours.js`), une fiche (`fiche.js`), schémas (`figs.js`) et manipulations (`labs.js`) ; contenus dans `content/cours/`, liens avec le glossaire et les postes dans `content/cours/liens.js` |
 | `ui/entrainement.js` | S'entraîner : parcours du chef par famille, exercices notés, missions d'installation |
 | `ui/guide.js` | Missions d'installation et parties de l'ancien guide (chapitres, glossaire, postes, matériel, procédures, réglages, commandes), dessinées dans l'espace qui les accueille |
 | `prism_model.js` | Modèle de la liaison SDI pour le PRISM : normes, points de mesure, œil, gigue, timing, pannes |

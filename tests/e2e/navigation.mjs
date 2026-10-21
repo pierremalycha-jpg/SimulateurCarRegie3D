@@ -1,7 +1,8 @@
 // Navigation entre les espaces : écran titre (Jouer, Cours, S'entraîner, Espace formateur), Cours
-// plein écran par-dessus le titre et dans le car, S'entraîner qui lance le car et le parcours du
-// chef, menu du car (Échap), boutons « Emmène-moi », touche G dans un poste, pupitre, changement
-// de vacation (le simulateur se recharge et lance la vacation demandée), téléphone.
+// plein écran par-dessus le titre et dans le car (bibliothèque par thème, glossaire et postes reliés
+// aux fiches), S'entraîner qui lance le car et le parcours du chef, menu du car (Échap), boutons
+// « Emmène-moi », bouton « Cours » et touche G dans un poste (la fiche du poste), pupitre,
+// changement de vacation (le simulateur se recharge et lance la vacation demandée), téléphone.
 // node tests/e2e/navigation.mjs [dossier]
 import { launch, openPage, outDir, until, reporter } from './harness.mjs';
 const OUT = outDir('navigation');
@@ -20,6 +21,7 @@ await shot('01-titre');
 // Cours par-dessus le titre : notions, chapitres, glossaire, postes, matériel
 await page.locator('#ti-cours').click();
 T.check('Cours ouvert par-dessus le titre, fiche SDI', await layer('cours') && await ev(() => /SDI/.test(document.querySelector('#layer .co-fiche h2')?.textContent || '') && !document.getElementById('title').hidden));
+T.check('bibliothèque : six thèmes, Signal vidéo déplié, les 140 fiches du lexique rangées', await ev(() => document.querySelectorAll('#layer details.co-theme').length === 6 && document.querySelector('#layer details.co-theme[data-k="video"]').open && !document.querySelector('#layer details.co-theme[data-k="reseau"]').open && document.querySelectorAll('#layer .co-item').length >= 149));
 await shot('02-cours');
 await page.locator('#layer .ly-tabs .tab[data-k="chapitres"]').click();
 T.check('Chapitres : tous les chapitres du guide, par famille', await ev(() => document.querySelectorAll('#layer [data-g]').length >= 24 && document.querySelectorAll('#layer .co-theme').length >= 5));
@@ -28,7 +30,10 @@ T.check('chapitre réseau : boutons « ? » et lexique', await until(page, () =>
 await page.locator('#layer .ly-tabs .tab[data-k="glossaire"]').click();
 await page.locator('#glq').fill('genlock');
 T.check('glossaire : recherche', await until(page, () => document.querySelectorAll('#layer .item').length >= 1 && document.querySelectorAll('#layer .item').length < 10, null, 3000));
+await page.locator('#layer .item .btn[data-fiche]').first().click();
+T.check('glossaire : bouton « Fiche » → la fiche, onglet Notions', await until(page, () => document.querySelector('#layer .ly-tabs .tab.on')?.dataset.k === 'notions' && !!document.querySelector('#layer .co-fiche[data-fiche="timing-ref"]'), null, 3000));
 await page.locator('#layer .ly-tabs .tab[data-k="postes"]').click();
+T.check('postes : bouton « Notion » vers la fiche du poste (brassage → SDI)', await ev(() => [...document.querySelectorAll('#layer .item .btn[data-fiche]')].some((b) => b.dataset.fiche === 'sdi')));
 await page.locator('#layer .btn', { hasText: 'Voir la fiche' }).first().click();
 T.check('fiche d\'un poste par-dessus le Cours', await until(page, () => !document.getElementById('modal').hidden && +getComputedStyle(document.getElementById('modal')).zIndex > +getComputedStyle(document.getElementById('layer')).zIndex, null, 4000));
 await page.keyboard.press('Escape');
@@ -68,11 +73,11 @@ T.check('menu → Cours', await layer('cours') && await ev(() => document.getEle
 await page.locator('#layer .btn', { hasText: 'Emmène-moi' }).first().click();
 T.check('« Emmène-moi » de la fiche SDI : poste Baie de brassage', await until(page, () => window.__dbg.S.mode === 'station' && window.__dbg.S.station === 'brassage' && !document.getElementById('layer'), null, 30000));
 await page.keyboard.press('KeyG');
-T.check('touche G dans un poste : le Cours', await layer('cours'));
+T.check('touche G dans un poste : le Cours, sur la fiche du poste (SDI)', await layer('cours') && await ev(() => document.querySelector('#layer .co-fiche')?.dataset.fiche === 'sdi'));
 await page.keyboard.press('Escape');
 T.check('Échap : le Cours se ferme, le poste reste ouvert', await noLayer() && await ev(() => window.__dbg.S.mode === 'station'));
 await page.locator('#station .st-tools .btn', { hasText: 'Cours' }).click();
-T.check('bouton « Cours » du poste', await layer('cours'));
+T.check('bouton « Cours » du poste : la fiche du poste', await layer('cours') && await ev(() => document.querySelector('#layer .co-fiche')?.dataset.fiche === 'sdi'));
 await page.keyboard.press('Escape'); await page.keyboard.press('Escape');
 await until(page, () => window.__dbg.S.mode === 'fps', null, 8000);
 await page.keyboard.press('Tab');
