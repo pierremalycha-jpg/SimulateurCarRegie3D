@@ -320,7 +320,7 @@ function demoMcast(host) {
       svg.append(sv('rect', { x: 30, y: y - Math.min(9, step / 2 - 1), width: 80, height: Math.min(18, step - 2), rx: 2, fill: C.box, stroke: C.amber, strokeWidth: 1 }));
       if (step >= 14) svg.append(txt(70, y + 4, `Cam ${i + 1} · 239.1.1.${i + 1}`, 'co-bit2'));
       svg.append(sv('line', { x1: 110, y1: y, x2: lx, y2: y, stroke: col(worst, 25), strokeWidth: width(worst, 25) }));
-      if (i === 0) svg.append(txt(165, y - 6, `${fmtNum(up, 1)} Gb/s ↑${down ? ` · ${fmtNum(down, 1)} ↓` : ''}`, 'co-m'));
+      if (i === 0) svg.append(txt(165, y - 7, `↑ ${fmtNum(up, 1)}${down ? ` · ↓ ${fmtNum(down, 1)}` : ''} Gb/s`, 'co-bit2'));
     }
     // lien entre les leaves
     svg.append(sv('line', { x1: lx + 60, y1: ly + lh / 2, x2: rx, y2: ly + lh / 2, stroke: col(L.trunk, 100), strokeWidth: width(L.trunk, 100) * 1.3 }));
