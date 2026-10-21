@@ -112,7 +112,7 @@ function demoGrille(host) {
         const on = xp[j] === i, p = !!pend && pend.d === j && pend.s === i;
         return el('td', {}, el('button', { type: 'button', class: 'co-xp' + (on ? ' on' : '') + (p ? ' pend' : ''), 'aria-pressed': String(on), 'aria-label': `Sortie ${d.n} ${d.label} ← entrée ${s.n} ${lab(i)}${on ? ', point fermé' : ''}`, onclick: () => click(j, i) }, on || p ? '●' : '·'));
       }),
-      el('td', {}, el('button', { type: 'button', class: 'co-lock' + (lock[j] ? ' on' : ''), 'aria-pressed': String(lock[j]), 'aria-label': `Verrouiller la sortie ${d.n} ${d.label}`, onclick: () => toggleLock(j) }, lock[j] ? 'LOCK' : 'libre'))));
+      el('td', {}, el('button', { type: 'button', class: 'co-lock' + (lock[j] ? ' on' : ''), 'aria-pressed': String(lock[j]), 'aria-label': `${lock[j] ? 'LOCK' : 'libre'} : verrou de la sortie ${d.n} ${d.label}`, onclick: () => toggleLock(j) }, lock[j] ? 'LOCK' : 'libre'))));
     mx.replaceChildren(el('thead', {}, head), el('tbody', {}, ...rows));
     state.replaceChildren(el('thead', {}, el('tr', {}, ...['Sortie', 'Destination', 'Reçoit', 'Image réelle', 'Verrou'].map((t) => el('th', {}, t)))),
       el('tbody', {}, ...DST.map((d, j) => { const s = xp[j]; const bad = lab(s) !== SRC[s].label; return el('tr', {}, el('td', {}, String(d.n)), el('td', { title: d.to }, d.label), el('td', {}, `IN ${SRC[s].n} « ${lab(s)} »`), el('td', { class: bad ? 'co-bad' : '' }, SRC[s].label + (bad ? ' ≠ étiquette' : '')), el('td', { title: lock[j] ? 'verrouillée par ce poste' : 'libre' }, lock[j] ? 'O' : 'U')); })));

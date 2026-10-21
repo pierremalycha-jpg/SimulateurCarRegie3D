@@ -63,6 +63,7 @@ await A.keyboard.press('Escape'); await A.waitForTimeout(300);
 T.check('fermeture : l\'écran titre est toujours là, focus rendu à Cours', await ev(() => !document.getElementById('layer') && !document.getElementById('title').hidden && document.activeElement?.id === 'ti-cours'));
 // le suivi : chapitres, à faire ensuite, et le livret de compétences complet
 await A.click('#ti-cours'); await A.waitForTimeout(500);
+await ev(() => window.__dbg.emit('cours', { home: true })); await A.waitForTimeout(300); // le Cours rouvre sur la dernière leçon lue
 T.check('Cours : le suivi compte les leçons acquises', await ev((n) => (document.querySelector('#layer .co-kpi b')?.textContent || '').startsWith(n + ' /'), lessons.length));
 await A.click('#layer .btn:has-text("Ouvrir le livret complet")'); await A.waitForTimeout(400);
 T.check('livret complet : les quatre blocs du référentiel, 39 compétences', await ev(() => document.querySelectorAll('#modal .lv-card').length === 4 && document.querySelectorAll('#modal .lv-comp').length === 39));

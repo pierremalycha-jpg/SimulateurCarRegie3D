@@ -47,7 +47,7 @@ T.check('version affichée sur la feuille de service', (await ev(() => document.
 // le lieu : le car en service, la salle de concert en préparation (fiche « Ce qui se prépare »)
 T.check('lieux : 2 écrans, le car en service', await ev(() => document.querySelectorAll('.jo-lieux .lx').length === 2 && document.querySelector('.lx.on')?.dataset.lieu === 'car'));
 await page.locator('.lx[data-lieu="concert"]').click();
-T.check('écran « Salle de concert » : fiche « Ce qui se prépare »', await until(page, () => /Ce qui se prépare : Salle de concert/.test(document.querySelector('#modal h2')?.textContent || '') && !!document.querySelector('#modal .lx-wait button'), null, 8000));
+T.check('écran « Salle de concert » : fiche « Ce qui se prépare »', await until(page, () => /Ce qui se prépare : Salle de concert/.test(document.querySelector('#modal h2')?.textContent || '') && !!document.querySelector('#modal .lx-teaser li'), null, 8000));
 await ev(() => document.querySelector('#modal .x')?.click());
 await page.locator('.lx[data-lieu="car"]').click();
 T.check('écran « Car régie » : le choix du mode prend le focus', await until(page, () => !!document.activeElement?.matches('.jo-mode[aria-pressed="true"]'), null, 5000));

@@ -78,6 +78,8 @@ function lecons(box) {
     page.replaceChildren();
     const found = UI.lesson ? lessonById(UI.lesson) : null;
     if (found) lessonPage(page, found, render); else home(page, render);
+    // un schéma qui contient des touches (ports, récepteurs, maillons) est un groupe, pas une image
+    for (const s of page.querySelectorAll('svg[role="img"]')) if (s.querySelector('[tabindex], a, button')) s.setAttribute('role', 'group');
     const sc = box.closest('.ly-scroll'); if (sc && page.getBoundingClientRect().top < 0) page.scrollIntoView({ block: 'start' });
   };
   box.append(el('div', { class: 'co-grid' }, nav, page));

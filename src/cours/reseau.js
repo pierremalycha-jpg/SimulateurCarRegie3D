@@ -291,6 +291,8 @@ function demoMcast(host) {
   const on = /** @type {Record<string, boolean>} */ ({ mel: true, mv: true, evs: true, mon: true, prism: false });
   const W = 720, H = 300;
   const svg = figure(W, H, 'Caméras à gauche, deux commutateurs leaf, récepteurs à droite : la couleur de chaque lien dit sa charge (vert, ambre, rouge saturé). Cliquez un récepteur pour l\'abonner ou le désabonner');
+  // le schéma contient des touches (les récepteurs) : c'est un groupe, pas une image
+  svg.setAttribute('role', 'group');
   const read = readout(['Lien de la caméra 1 (25 Gb/s)', 'Lien entre les deux leaves (100 Gb/s)', 'Port du moniteur vision (10 Gb/s)', 'Abonnement du moniteur']);
   const verdict = el('p', { class: 'co-verdict' });
   const col = (load, cap) => load > cap ? C.red : load > 0.6 * cap ? C.amber : load > 0 ? C.green : '#3a444c';
@@ -330,7 +332,7 @@ function demoMcast(host) {
       const y = ly + 24 + k * 44, load = L.rx[k];
       svg.append(sv('line', { x1: rx + 60, y1: y, x2: 560, y2: y, stroke: col(load, r.cap), strokeWidth: width(load, r.cap) }));
       svg.append(txt(505, y - 6, `${fmtNum(load, 1)} / ${r.cap}`, 'co-m'));
-      const g = sv('g', { class: 'co-port', tabindex: '0', role: 'button', 'aria-pressed': String(on[r.id]), 'aria-label': `${r.name} : ${on[r.id] ? 'abonné' : 'non abonné'}` });
+      const g = sv('g', { class: 'co-port', tabindex: '0', role: 'button', 'aria-pressed': String(on[r.id]) }); // nom : le texte affiché (récepteur, abonnement)
       g.append(sv('rect', { x: 560, y: y - 17, width: 150, height: 34, rx: 3, fill: on[r.id] ? '#1c3a2a' : C.box, stroke: on[r.id] ? C.green : C.grey, strokeWidth: 1.5 }));
       g.append(txt(635, y - 3, r.name, 'co-s'), txt(635, y + 11, on[r.id] ? `IGMP join · ${r.wants(n)} flux` : 'pas abonné', 'co-m'));
       const toggle = () => { on[r.id] = !on[r.id]; draw(); };
