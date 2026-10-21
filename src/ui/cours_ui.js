@@ -18,7 +18,7 @@ import { posteCible, estLecon } from '../cours/liens.js';
 // « ? », le quiz. Puis les chapitres du guide, le glossaire, les postes, le matériel, les
 // procédures (ui/guide.js).
 // ----------------------------------------------------------------------------------
-const UI = { lesson: /** @type {string | null} */ (null), chapter: /** @type {string | null} */ (null), demo: /** @type {{ destroy?: () => void } | null | void} */ (null), q: '' };
+const UI = { lesson: /** @type {string | null} */ (null), chapter: /** @type {string | null} */ (null), demo: /** @type {{ destroy?: () => void } | null | void} */ (null), q: '', guideChapter: /** @type {string | null} */ (null) };
 const TABS = /** @type {[string, string][]} */ ([['lecons', 'Leçons'], ['chapitres', 'Chapitres'], ['glossaire', 'Glossaire'], ['postes', 'Postes'], ['materiel', 'Matériel'], ['procedures', 'Procédures']]);
 const OLD_TAB = { chapitres: 'lecons', articles: 'chapitres' };
 const norm = (s) => String(s).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
@@ -41,14 +41,15 @@ export function openCours(o = {}) {
   if (opts.lesson) { UI.lesson = opts.lesson; tab = 'lecons'; const f = lessonById(opts.lesson); if (f) UI.chapter = f.chapter.id; }
   const chapter = opts.chapter || null;
   if (chapter && tab === 'lecons' && CHAPTERS.some((c) => c.id === chapter)) { UI.chapter = chapter; const c = CHAPTERS.find((x) => x.id === chapter); UI.lesson = c && c.lessons[0] ? c.lessons[0].id : null; }
-  const want = { chapter: chapter && tab === 'chapitres' ? chapter : null };
+  // chapitre du guide demandé : lu par l'onglet Chapitres, même si l'espace est déjà ouvert
+  UI.guideChapter = chapter && tab === 'chapitres' ? chapter : null;
   // déjà ouvert : on change d'onglet (ou de leçon) sans tout reconstruire
   if (layerOpen() === 'cours') { showTab(tab); return; }
   openLayer({
     kind: 'cours', title: 'Cours', ico: 'cours', tabs: TABS, tab,
     show: (k, box) => {
       if (k === 'lecons') { lecons(box); return stopDemo; }
-      if (k === 'chapitres') { chaptersSection(box, want.chapter); want.chapter = null; return; }
+      if (k === 'chapitres') { chaptersSection(box, UI.guideChapter); UI.guideChapter = null; return; }
       if (k === 'glossaire') glossarySection(box);
       if (k === 'postes') postesSection(box);
       if (k === 'materiel') materielSection(box);
