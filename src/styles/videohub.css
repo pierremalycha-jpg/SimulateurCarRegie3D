@@ -9,7 +9,7 @@
 .vh-brand { flex: 1 0 100%; display: flex; align-items: center; gap: 10px; font-family: var(--f-disp); font-weight: 600; font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: #dfe3e6; }
 .vh-brand .vh-model { color: #b4bcc2; letter-spacing: .08em; }
 .vh-leds { margin-left: auto; display: flex; gap: 10px; }
-.vh-led { display: inline-flex; align-items: center; gap: 4px; font-size: 10.5px; letter-spacing: .06em; color: #b9c1c7; }
+.vh-led { display: inline-flex; align-items: center; gap: 4px; font-size: 10.5px; letter-spacing: .06em; color: #b9c1c7; white-space: nowrap; }
 .vh-led i { width: 6px; height: 6px; border-radius: 50%; background: #1c2023; box-shadow: inset 0 0 0 1px rgba(0,0,0,.6); }
 .vh-led.on i { background: #33d46d; box-shadow: 0 0 5px rgba(51,212,109,.8); }
 
@@ -96,7 +96,7 @@
 .vh-t { position: absolute; right: 5px; bottom: 5px; width: 7px; height: 7px; border-radius: 50%; }
 .vh-b.t-pgm .vh-t { background: #ff2a2a; box-shadow: 0 0 5px #ff2a2a; } .vh-b.t-pvw .vh-t { background: #25d55a; box-shadow: 0 0 5px #25d55a; }
 @media (max-width: 1000px) { .vh-grid { grid-template-columns: repeat(8, minmax(0, 1fr)); } }
-@media (max-width: 700px) { .vh-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); } .vh-knob { width: 64px; height: 64px; } .vh-knobwrap { margin-left: 0; } }
+@media (max-width: 700px) { .vh-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); } .vh-knob { width: 64px; height: 64px; } .vh-knobwrap { margin-left: 0; } .vh-brand { flex-wrap: wrap; } .vh-brand .vh-model { display: none; } .vh-leds { gap: 7px; } .vh-lcd { max-width: 100%; } }
 
 /* ---------- monitoring : mosaïques 8 × 5 (une texture WebGL), boutons de clic dessous ---------- */
 .vh-monitor { display: flex; flex-direction: column; gap: 8px; }

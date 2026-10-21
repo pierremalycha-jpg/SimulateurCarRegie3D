@@ -473,14 +473,14 @@ function videohubDevice() {
   for (let i = 0; i < 10; i++) front.push({ t: 'btn', id: 'keys', x: 380 + (i % 5) * 58, y: 60 + Math.floor(i / 5) * 62, w: 50, h: 48, l: String((i + 1) % 10), litKey: 'key' + i });
   [['out', 'OUT'], ['in', 'IN'], ['clear', 'CLEAR'], ['take', 'TAKE'], ['lock', 'LOCK'], ['menu', 'MENU'], ['set', 'SET']].forEach(([id, l], i) => front.push({ t: 'btn', id: id === 'set' ? 'menu' : id, x: 690 + (i % 4) * 62, y: 60 + Math.floor(i / 4) * 62, w: 54, h: 48, l, litKey: id, litColor: id === 'take' ? '#ff3b30' : id === 'in' ? '#f3f1e8' : '#ffb020' }));
   front.push({ t: 'knob', id: 'knob', x: 1000, y: 112, r: 52, l: 'MOLETTE' });
-  ['PSU 1', 'PSU 2', 'REF', 'LAN'].forEach((l, i) => front.push({ t: 'led', id: 'led' + i, x: 954 + i * 30, y: 30, l }));
+  ['PSU 1', 'PSU 2', 'REF', 'LAN'].forEach((l, i) => front.push({ t: 'led', id: 'led' + i, x: 920 + i * 40, y: 26, l }));
   const rear = /** @type {Item[]} */ ([{ t: 'body', x: 10, y: 10, w: 1180, h: 400, r: 6 }, { t: 'text', x: 34, y: 36, s: 'VIDEOHUB 40×40 12G · face arrière (disposition schématique)', size: 13, w: 700 }]);
   const P = {};
   const grp = (pref, from, y, label, d) => {
     rear.push({ t: 'group', x: 40, y: y - 40, w: 20 * 46 + 22, h: 64, l: label });
     for (let i = 0; i < 20; i++) {
       const n = from + i, id = pref + n;
-      rear.push({ t: 'port', id, k: 'bnc', x: 66 + i * 46, y, l: String(n), small: true });
+      rear.push({ t: 'port', id, k: 'bnc', x: 66 + i * 46, y, l: (d === 'in' ? 'IN ' : 'OUT ') + n, small: true });
       P[id] = M(`${d === 'in' ? 'SDI IN' : 'SDI OUT'} ${n}`, BNC, 'video', d, SDI_STD, d === 'in' ? 'Entrée 12G-SDI : format détecté automatiquement (SD, HD, 3G, 6G, 12G), égaliseur de câble.' : 'Sortie 12G-SDI reclockée : le signal y est régénéré (horloge propre, gigue retirée).');
     }
   };

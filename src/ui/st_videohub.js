@@ -95,7 +95,7 @@ function fpPick(n) {
 }
 function fpDigit(d) {
   const now = performance.now();
-  if (now - DIG.t > 1600) DIG.s = '';
+  if (now - DIG.t > 3000) DIG.s = '';
   DIG.t = now;
   let s = DIG.s + d, n = +s;
   if (s.length === 2 && (n < 1 || n > VH_N)) { s = String(d); n = d; }
@@ -181,9 +181,10 @@ function buildFace() {
       const menuOn = FP.mode === 'menu';
       vid.hidden = menuOn || !FP.video; menu.hidden = !menuOn;
       const o = FP.out, x = FP.mode === 'in' && FP.inp ? FP.inp : xpOf(o);
-      topNum.textContent = String(o).padStart(2, '0'); topLab.textContent = outLabel(o);
+      const txt = (n, t) => { if (n.textContent !== t) n.textContent = t; };
+      txt(topNum, String(o).padStart(2, '0')); txt(topLab, outLabel(o));
       topLk.className = 'vh-lk ' + ({ U: 'off', O: 'own', L: 'other' }[lockState(o)]);
-      botNum.textContent = x ? String(x).padStart(2, '0') : '--'; botLab.textContent = x ? inLabel(x) : 'aucune'; botFmt.textContent = FP.pending ? 'TAKE ?' : FMT();
+      txt(botNum, x ? String(x).padStart(2, '0') : '--'); txt(botLab, x ? inLabel(x) : 'aucune'); txt(botFmt, FP.pending ? 'TAKE ?' : FMT());
       if (menuOn) {
         const k = MENU.map(([l, v], i) => (i === FP.menu ? '› ' : '  ') + l + ' : ' + v()).join('|');
         if (menu.dataset.k !== k) { menu.dataset.k = k; menu.replaceChildren(...MENU.map(([l, v], i) => el('div', { class: i === FP.menu ? 'on' : '' }, el('b', {}, l), el('span', {}, v())))); }
@@ -231,8 +232,9 @@ function buildControl() {
   const last = new Map();
   const set = (node, cls, l, s, title, pressed = null) => {
     const k = cls + '|' + l + '|' + s + '|' + title; if (last.get(node) === k) return; last.set(node, k);
-    node.className = cls; node.children[1].textContent = l; node.children[2].textContent = s; node.setAttribute('aria-label', title);
+    node.className = cls; node.children[1].textContent = l; node.children[2].textContent = s; node.title = title;
     if (pressed != null) node.setAttribute('aria-pressed', String(pressed));
+    const lk = node.querySelector('.vh-lk'); if (lk) lk.className = 'vh-lk ' + (/ lk-O/.test(cls) ? 'own' : / lk-L/.test(cls) ? 'other' : 'off');
   };
   return {
     root,
@@ -443,7 +445,7 @@ function buildSetup() {
     const to = el('td', { class: 'note' }), lk = el('button', { type: 'button', class: 'btn small vh-lkcell', onclick: () => toggleLock(n) });
     outRows.push({ outp, to, lk }); outBody.append(el('tr', {}, el('th', { scope: 'row' }, String(n)), el('td', {}, outp), to, el('td', {}, lk)));
   }
-  const pre = el('pre', { class: 'vh-proto', tabindex: 0, 'aria-label': 'Blocs du protocole Ethernet envoyés par la grille' });
+  const pre = el('pre', { class: 'vh-proto', tabindex: 0, role: 'region', 'aria-label': 'Blocs du protocole Ethernet envoyés par la grille' });
   const net = el('dl', { class: 'kv' });
   for (const [k, v] of [['Nom', VH_NET.name], ['Adresse IP', VH_NET.ip], ['Masque', VH_NET.mask], ['Passerelle', VH_NET.gw], ['DHCP', VH_NET.dhcp ? 'oui' : 'non (adresse fixe)'], ['Port de contrôle', `TCP ${VH_NET.port} (protocole Videohub)`], ['Clients', 'Videohub Control (ce poste), façade']]) net.append(el('dt', {}, k), el('dd', {}, v));
   const root = el('div', { class: 'vh-setup' },
@@ -474,7 +476,7 @@ function buildSetup() {
         if (document.activeElement !== O.outp && O.outp.value !== outLabel(n)) O.outp.value = outLabel(n);
         O.outp.classList.toggle('changed', !!VH.labels.out[n]);
         const t = o.to || 'rien de câblé'; if (O.to.textContent !== t) O.to.textContent = t;
-        const lt = l === 'U' ? 'U · verrouiller' : l === 'O' ? 'O · déverrouiller' : 'L · forcer'; if (O.lk.textContent !== lt) { O.lk.textContent = lt; O.lk.className = 'btn small vh-lkcell lk-' + l; O.lk.setAttribute('aria-label', `Sortie ${n} : ${l === 'U' ? 'libre, verrouiller' : l === 'O' ? 'verrouillée par ce poste, déverrouiller' : 'verrouillée par un autre poste, forcer le déverrouillage'}`); }
+        const lt = l === 'U' ? 'U · verrouiller' : l === 'O' ? 'O · déverrouiller' : 'L · forcer'; if (O.lk.textContent !== lt) { O.lk.textContent = lt; O.lk.className = 'btn small vh-lkcell lk-' + l; O.lk.title = `Sortie ${n} : ${l === 'U' ? 'libre (U), la verrouiller' : l === 'O' ? 'verrouillée par ce poste (O), la déverrouiller' : 'verrouillée par un autre poste (L), forcer le déverrouillage'}`; }
       }
       const txt = protocolText(); if (pre.textContent !== txt) pre.textContent = txt;
     },
@@ -531,7 +533,7 @@ export function buildVideohubStation(body, arg, ctx) {
         if (k !== mxKey) mxKey = k;
         MX.update(mxKey);
       }
-      if (DIG.s && performance.now() - DIG.t > 1600) DIG.s = '';
+      if (DIG.s && performance.now() - DIG.t > 3000) DIG.s = '';
       if (SW.tab === 'mon') for (const M of [MIN, MOUT]) M.hit.childNodes.forEach((b, i) => { const n = i + 1; const a = M.kind === 'in' ? `Entrée ${n} ${inLabel(n)}, ${sigOf(n)}` : `Sortie ${n} ${outLabel(n)}, reçoit ${xpOf(n) ? 'entrée ' + xpOf(n) + ' ' + inLabel(xpOf(n)) : 'rien'}`; const e = /** @type {HTMLElement} */ (b); if (e.getAttribute('aria-label') !== a) e.setAttribute('aria-label', a); });
     },
     frame() { if (SW.tab === 'mon') { renderMosaic(MIN); renderMosaic(MOUT); } },
