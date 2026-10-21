@@ -392,6 +392,32 @@ Tests :
   « Emmène-moi / Montre-moi » doit mettre en évidence un élément réel de la page, et « Fais-le pour moi » doit faire
   valider l'étape.
 
+## v18.3 : écran titre, PRISM, grille Videohub, réseau de contrôle du car SDI
+
+**Écran titre et chargement.** La page s'ouvre sur un écran titre (`src/app/title.js`, écrit dans
+`index.template.html` pour s'afficher avant même le programme) : menu (entrer dans le car, les lieux, espace
+formateur, réglages, crédits), barre de progression réelle (la construction du stade et du car est découpée en
+étapes dans `main.js`, les shaders sont compilés avant la première image) et conseils d'Olivier. Un moniteur sur
+mire passe au vert quand tout est prêt. « Menu principal » sur la feuille de service y ramène. Les tests entrent
+directement sur la feuille de service (harnais), sauf ceux qui vérifient le titre.
+
+**PRISM : l'instrument de mesure** (`src/ui/prism.js`, modèle `src/prism_model.js`). Un instrument façon
+Telestream PRISM, en tuiles, au poste vision (préréglage Vision) et dans une nouvelle **baie de mesure** en zone
+technique (préréglage Couche physique). Affichages vidéo calculés sur l'image réellement rendue : image, waveform
+(Y, YCbCr, parade RVB, mV ou %, curseur), vecteurscope, lightning, diamant, split diamant, arrowhead, CIE 1931,
+histogramme. Couche physique depuis un modèle de la liaison SDI : diagramme de l'œil (brut ou égalisé, mesures),
+gigue, timing par rapport à la référence, état SDI (CRC, affaiblissement, longueur estimée). 29 fiches « ? » et
+13 schémas (`content/terms_mesure.js`, `ui/figs_mesure.js`), 3 parcours d'Olivier (`tutor/lessons/mesure.js`),
+2 pannes de liaison (cordon abîmé, touret resté en ligne). Suite `tests/e2e/prism.mjs`.
+
+**Réseau de contrôle du car SDI** (`src/net/ctrlnet.js`, poste `src/ui/st_ctrlnet.js`). En car SDI, le poste
+Réseau devient le réseau de contrôle Gigabit : 3 switchs administrables, 49 machines (CCU et RCP, mélangeur, grille,
+EVS, intercom, console, SPG…), 7 VLAN, plan d'adressage, QoS, ping, tables ARP et MAC, charge des liens. Fiche
+modifiable par machine (adresse, masque, passerelle, VLAN, classe QoS) avec explication et validation de chaque
+champ. Onglet Formation « les bases, simplement ». 14 fiches « ? » et 12 schémas, 4 pannes (conflit d'adresse,
+mauvais VLAN, mauvais masque, câble), 3 parcours d'Olivier. Le car IP garde son réseau ST 2110. Suite
+`tests/e2e/ctrlnet.mjs`.
+
 ## v18.2 : le mur des lieux
 
 La feuille de service s'ouvre sur **les lieux** du simulateur, présentés comme un multiview : un écran par
@@ -796,6 +822,12 @@ node tools/shots.mjs dossier 1280 800 '["vision","hf"]'   # captures de postes
 | `diag.js` | Journal des erreurs (partagé avec `boot.js`) : erreurs non rattrapées, écouteurs d'événement, boucle de rendu, `console.error` ; version de l'application |
 | `ui/diag_ui.js` | Bandeau « Un problème est survenu » et fenêtre « Diagnostic technique » (texte à copier) |
 | `ui/pupitre.js` | Le pupitre (Tab ou T) : plan du car, touches des postes par zone, endroits du stade, équipiers, outils |
+| `app/title.js` | Écran titre : menu, progression du chargement, conseils d'Olivier, réglages et crédits |
+| `prism_model.js` | Modèle de la liaison SDI pour le PRISM : normes, points de mesure, œil, gigue, timing, pannes |
+| `net/ctrlnet.js` | Réseau de contrôle Gigabit du car SDI : switchs, machines, VLAN, QoS, ping, tables, pannes |
+| `ui/prism.js` | L'instrument de mesure en tuiles (poste vision et baie de mesure) |
+| `ui/prism_station.js` | La baie de mesure (poste `mesure`) |
+| `ui/st_ctrlnet.js` | Le poste Réseau de contrôle (car SDI) : six onglets |
 | `content/lieux.js` | Les lieux du simulateur : en service ou en préparation, avec leur fiche « Ce qui se prépare » |
 | `ui/icons.js` | Icônes Phosphor intégrées au build (`icon(nom)`), toujours à côté d'un libellé |
 | `tutor/` | Chef de car : moteur des parcours (`engine.js`), lecture du réseau pour expliquer et vérifier (`net_helpers.js`), parcours réseau ST 2110 (`lessons/reseau.js`, `lessons/reseau_leaf.js`, `lessons/reseau_ops.js`), parcours des postes, compétences et matériel (`lessons/realisation.js`, `image.js`, `ralentis.js`, `son.js`, `liaisons.js`, `exploitation.js`, `materiel.js`, outils communs `kit.js`), présentation de chaque poste (`lessons/postes.js`) |
