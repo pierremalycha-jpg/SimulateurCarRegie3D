@@ -23,7 +23,7 @@ import { intercom } from './ui/common.js';
 export const VH_N = 40;
 export const VH_MODEL = 'Videohub 40×40 12G';
 // réseau de contrôle : valeurs du simulateur (à aligner sur le plan d'adressage du car SDI)
-export const VH_NET = { name: 'GRILLE CAR SDI', ip: '192.168.10.40', mask: '255.255.255.0', gw: '192.168.10.1', dhcp: false, port: 9990 };
+export const VH_NET = { name: 'GRILLE CAR SDI', ip: '10.1.30.20', mask: '255.255.255.0', gw: '10.1.30.1', dhcp: false, port: 9990 }; // même adresse que la machine « grid » du réseau de contrôle (net/ctrlnet.js)
 
 /** @typedef {{ labels: { in: Record<number, string>, out: Record<number, string> }, locks: Record<number, 'O' | 'L'>, xp: Record<number, number>, take: boolean, last: { out: number, inp: number, t: number } | null, lockedBy: Record<number, string> }} VhState */
 /** @returns {VhState} */

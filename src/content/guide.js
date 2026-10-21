@@ -39,7 +39,7 @@ export const GUIDE = [
 <li><b>Caméra → CCU.</b> Par la fibre SMPTE (ou triax, fibre seule, HF), la caméra envoie l'image à sa CCU dans le car et reçoit en retour l'alimentation, l'intercom, le retour programme, le tally et la référence.</li>
 <li><b>RCP.</b> L'ingénieur vision règle l'image depuis son RCP : la CCU relaie les réglages vers la tête de caméra, où se fait l'essentiel du traitement (gain, noir, couleurs, iris, filtres) ; la CCU assure surtout les conversions de sortie (UHD/HD, HDR/SDR).</li>
 <li><b>CCU → grille.</b> La sortie SDI (ou IP) de la CCU entre dans la grille.</li>
-<li><b>Grille → mélangeur, EVS, multiview.</b> La grille distribue chaque caméra au mélangeur, aux entrées d'enregistrement des EVS et aux tuiles du multiview.</li>
+<li><b>Grille → mélangeur, EVS, multiview.</b> La grille distribue chaque caméra au mélangeur, aux entrées d'enregistrement des EVS et aux tuiles du multiview. Dans ce car, la grille 40 × 40 n'a pas assez de sorties pour tout : les tuiles 1 à 12 du multiview sont câblées en direct (sortie SDI 3 des CCU, distributeur), la grille ne sert que les tuiles 13 à 18.</li>
 <li><b>Mélangeur → PGM.</b> Le truquiste construit le programme : commutations, ralentis, habillage (DSK).</li>
 <li><b>Son.</b> L'audio du programme est mixé en régie son puis embeddé dans le SDI du PGM.</li>
 <li><b>Transmission.</b> Le PGM (et souvent le clean feed) part vers la chaîne par fibre, IP ou satellite, sur deux chemins.</li>

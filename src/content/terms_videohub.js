@@ -74,7 +74,7 @@ const ADD = {
     t: 'Protocole Ethernet Videohub', aka: 'TCP 9990', cat: CAT,
     short: 'Un protocole texte : un client se connecte au port TCP 9990 de la grille, reçoit tout son état (étiquettes, verrous, routage), puis chaque changement.',
     body: "Le protocole est fait de **blocs** : un titre en capitales suivi de « : », des lignes, puis une ligne vide. À la connexion, la grille envoie tout son état :\n- `PROTOCOL PREAMBLE` (version) et `VIDEOHUB DEVICE` (modèle, nombre de ports) ;\n- `INPUT LABELS` et `OUTPUT LABELS` : une ligne « numéro étiquette » par port ;\n- `VIDEO OUTPUT LOCKS` : U, O ou L pour chaque sortie ;\n- `VIDEO OUTPUT ROUTING` : une ligne « sortie entrée » par sortie.\n\nLes ports sont numérotés **à partir de 0** : la ligne `30 23` veut dire « sortie 31 ← entrée 24 ». Pour commuter, un client envoie un bloc de la même forme (`VIDEO OUTPUT ROUTING:`, `30 23`, une ligne vide) ; la grille répond `ACK` et prévient tous les clients. C'est ainsi que la façade, les logiciels et les automatismes restent d'accord.",
-    car: "Poste Grille, onglet Videohub Setup : les blocs que la grille du car enverrait à un client, mis à jour en direct. Elle est en 192.168.10.40 sur le réseau de contrôle.",
+    car: "Poste Grille, onglet Videohub Setup : les blocs que la grille du car enverrait à un client, mis à jour en direct. Elle est en 10.1.30.20 (VLAN 30, production) sur le réseau de contrôle du car.",
     see: ['reseau-ctl', 'verrou-sortie', 'etiquette'], ref: 'Blackmagic Design, Videohub Ethernet Protocol',
   },
 };

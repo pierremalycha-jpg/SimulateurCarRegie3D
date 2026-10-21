@@ -9,6 +9,7 @@ import { explain } from './widgets.js';
 import { q } from './term.js';
 import { renderer } from '../app/view.js';
 import { ROUTER, EXTRA_SLOTS, resolve, tallyOf, defaultRouting } from '../pipeline.js';
+import { ctrlFunc } from '../net/ctrlnet.js';
 import {
   VH, VH_N, VH_MODEL, VH_NET, VH_PANEL as FP, VH_MON, inPlan, outPlan, inLabel, outLabel, setInLabel, setOutLabel, resetLabels,
   xpOf, outsOfIn, srcOfIn, lockState, setLock, vhRoute, protocolText,
@@ -59,6 +60,9 @@ function explainTake(n, m, prev) {
   explain(`Point de croisement établi : ${descIn(m)} → ${descOut(n)}${prev && prev !== m ? ` (au lieu de l'entrée ${prev})` : ''}. Une sortie ne reçoit qu'une source à la fois.${outs.length ? ` L'entrée ${m} alimente aussi ${outs.length === 1 ? 'la sortie ' + outs[0] : outs.length + ' autres sorties (' + outs.slice(0, 6).join(', ') + (outs.length > 6 ? '…' : '') + ')'} : une source peut partir vers autant de destinations qu'on veut.` : ''}${!ip.live ? ` Attention : rien n'est câblé sur l'entrée ${m}, la destination ne reçoit aucune image.` : ''}${tail}`, 'grille:take');
 }
 function doRoute(n, m) {
+  // en car SDI, la prise part en Ethernet vers la carte de contrôle de la grille
+  const k = ctrlFunc('grille');
+  if (!k.ok) { SW.pend = null; toast('Grille injoignable par le réseau de contrôle.', 'bad'); explain(`Prise refusée : le logiciel ne joint plus la grille (${k.why}). Les points de croisement en place restent, mais aucune nouvelle prise ne passe : voyez le poste Réseau.`, 'warn:ctrl'); return false; }
   const prev = xpOf(n);
   const err = vhRoute(n, m);
   SW.pend = null;
