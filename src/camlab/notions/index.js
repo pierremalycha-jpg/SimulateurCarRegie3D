@@ -23,6 +23,12 @@ import { CAPTEUR } from './capteur.js';
 import { BALANCE } from './balance.js';
 import { MENU } from './menu.js';
 import { CONNECTIQUE } from './connectique.js';
+import { CH1 } from './ch1.js';
+import { CH23 } from './ch23.js';
+import { CH4 } from './ch4.js';
+import { CH56 } from './ch56.js';
+import { CH7 } from './ch7.js';
+import { CH89 } from './ch89.js';
 
 /**
  * @typedef {object} Question
@@ -70,7 +76,7 @@ export const CHAPITRES = [
 const prevu = (t, chap, lot, point, short, extra = {}) => ({ t, chap, lot, point, short, prevu: true, ...extra });
 
 /** @type {Record<string, FicheCamera>} */
-export const NOTIONS = {
+const ANNONCE = {
   // ---- 1. L'objectif ----
   frontale: prevu('La lentille frontale', 1, 2, 'frontale', 'La première lentille que traverse la lumière : son traitement anti-reflet, le pare-soleil qui la protège, et comment la nettoyer sans la rayer.'),
   focale: FOCALE,
@@ -132,6 +138,12 @@ export const NOTIONS = {
   hdr: prevu('UHD et HDR', 9, 3, undefined, 'Quatre fois plus de pixels et une plus grande plage de luminosité (HLG, BT.2020) : ce que fait la HDC-5500 du car et pas la FB80.'),
   hfr: prevu('Le super ralenti', 9, 3, undefined, 'Filmer à 150 ou 300 images par seconde pour ralentir sans saccade : les caméras HFR du car et le serveur EVS.'),
 };
+
+/** les fiches écrites des lots 2 et 3, chapitre par chapitre (notions/ch*.js) */
+const ECRITES = { ...CH1, ...CH23, ...CH4, ...CH56, ...CH7, ...CH89 };
+/** toutes les notions, dans l'ordre : la fiche écrite quand elle existe, sinon la fiche annoncée */
+/** @type {Record<string, FicheCamera>} */
+export const NOTIONS = Object.fromEntries(Object.entries(ANNONCE).map(([id, f]) => [id, ECRITES[id] || f]));
 
 /** identifiants des notions, dans l'ordre du trajet de la lumière */
 export const ORDRE = Object.keys(NOTIONS);

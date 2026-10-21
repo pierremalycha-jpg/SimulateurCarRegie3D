@@ -7,13 +7,14 @@
 // large, cercle de confusion 0,011 mm), Fujinon ZA12x4.5BERD, mode d'emploi HXC-FB80.
 // ----------------------------------------------------------------------------------
 
-const ARROW = '<defs><marker id="cf-a" viewBox="0 0 8 8" refX="4" refY="4" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L8 4 L0 8 z" class="cf-arrow"/></marker></defs>';
-const svg = (h, label, body) => `<svg class="cf" viewBox="0 0 440 ${h}" role="img" aria-label="${label}">${ARROW}${body}</svg>`;
-const tx = (x, y, t, cls = 'cf-s') => `<text class="${cls}" x="${x}" y="${y}">${t}</text>`;
-const head = (title, sub) => tx(16, 16, title, 'cf-t') + tx(16, 32, sub, 'cf-sub');
-const rays = (x0, ys, x1, y1, cls = 'cf-ray') => ys.map((y) => `<line class="${cls}" x1="${x0}" y1="${y}" x2="${x1}" y2="${y1}"/>`).join('');
-const dim = (x1, y1, x2, y2) => `<line class="cf-dim" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" marker-start="url(#cf-a)" marker-end="url(#cf-a)"/>`;
-const n1 = (v) => v.toFixed(1);
+import { svg, tx, head, rays, dim, n1 } from './figkit.js';
+import { FIGS_CH1 } from './figs/ch1.js';
+import { FIGS_CH23 } from './figs/ch23.js';
+import { FIGS_CH4 } from './figs/ch4.js';
+import { FIGS_CH56 } from './figs/ch56.js';
+import { FIGS_CH7 } from './figs/ch7.js';
+import { FIGS_CH89 } from './figs/ch89.js';
+
 
 /** une rangée du schéma du tirage : objectif, monture, prisme, capteur ; les rayons convergent en xf */
 function tirageRow(y, title, sub, xf, ok) {
@@ -65,7 +66,7 @@ function rgbBars(x0, title, sub, hs, caption) {
   return `<line class="cf-axis" x1="${x0 - 6}" y1="${base}" x2="${x0 + 106}" y2="${base}"/>${tx(x0 + 50, 54, title, 'cf-bb mid')}${tx(x0 + 50, 68, sub)}${bars}${tx(x0 + 50, 208, caption, 'cf-s')}`;
 }
 
-export const FIGS = {
+const BASE = {
   /** le tirage juste et le tirage faux ; la règle du réglage */
   tirage: () => svg(372, 'Schéma : avec un tirage juste, les rayons se rejoignent sur le capteur ; avec un tirage faux, ils se rejoignent avant et font une tache floue.', `
     ${tirageRow(4, 'Tirage juste', 'L\'image se forme exactement sur le capteur : un point net.', 262, true)}
@@ -212,3 +213,6 @@ export const FIGS = {
       ${jacks}`);
   },
 };
+
+/** tous les schémas : ceux du premier lot, puis ceux de chaque chapitre (figs/*.js) */
+export const FIGS = { ...BASE, ...FIGS_CH1, ...FIGS_CH23, ...FIGS_CH4, ...FIGS_CH56, ...FIGS_CH7, ...FIGS_CH89 };
