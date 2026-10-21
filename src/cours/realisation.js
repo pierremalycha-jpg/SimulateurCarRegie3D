@@ -300,7 +300,7 @@ function demoKeys(host) {
       const x = i % IW, y = (i / IW) | 0;
       if (x >= BOX.x0 && x < BOX.x1 && y >= BOX.y0 && y < BOX.y1) {
         // bord d'une lettre posée sur le bandeau : dans le key de l'habillage, entre le fond du bandeau (0,72) et le plein (1)
-        if (refKey(i) > 0.75 && refKey(i) < 0.97) { softRef++; if (k > 0.05 && k < 0.95) soft++; }
+        if (refKey(i) > 0.75 && refKey(i) < 0.97) { softRef++; if (k > 0.02 && k < 0.98) soft++; }
         diff += Math.abs(yRes - yRef); cnt++;
       }
     }
@@ -413,7 +413,7 @@ function demoOrders(host) {
     read.set('Timecode (horloge maître)', `${tc(f)} (images de 00 à 24)`);
     read.set('À l\'antenne', st.pos > 0 ? `${M.name(st.pgm)} → ${M.name(st.pst)}, enchaîné à ${Math.round(st.pos * 100)} %` : M.name(st.pgm));
     read.set('En preset', `${M.name(st.pst)}${prepared ? ' : annoncée, tally vert' : ' : rien d\'annoncé'}`);
-    read.set('Plan en cours depuis', `${tc(f - cutAt).slice(3)} (${fmtS((f - cutAt) / 25, 1)})`);
+    read.set('Plan en cours depuis', `${fmtS((f - cutAt) / 25, 1)} (${tc(f - cutAt).slice(3)} en minutes:secondes:images)`);
     read.set('Délai entre l\'ordre et l\'image', lastDelay || '—');
     read.set('Ordres de coupe', `${tops} « Top » ou « Enchaîne » · ${blind} « Envoie » sans annonce · ${cuts} changement${cuts > 1 ? 's' : ''} de plan`);
   };
@@ -447,7 +447,7 @@ function figOrders() {
   const f = figure(720, 196, 'Chronogramme d\'un enchaînement d\'ordres : le réalisateur annonce « Prépare la 3 » (la CAM 3 passe en preset, tally vert), dit « Top » (coupe : CAM 3 à l\'antenne, tally rouge), annonce « Prépare la 1 » puis « Enchaîne » (fondu d\'une seconde). La scripte note chaque action avec son timecode.');
   const x0 = 130, X = (s) => x0 + s * 56, Y0 = 34;
   f.append(txt(10, 16, 'Les ordres, ce qu\'ils font, quand', 'co-t', 'start'));
-  for (let s = 0; s <= 10; s++) f.append(sv('line', { x1: X(s), y1: Y0 - 6, x2: X(s), y2: 168, stroke: C.line }), txt(X(s), 186, `21:04:${String(10 + s).padStart(2, '0')}:00`.slice(3), 'co-s'));
+  for (let s = 0; s <= 10; s++) f.append(sv('line', { x1: X(s), y1: Y0 - 6, x2: X(s), y2: 168, stroke: C.line }), txt(X(s), 186, `21:04:${String(10 + s).padStart(2, '0')}`, 'co-s'));
   const lane = (y, label) => f.append(txt(10, y + 14, label, 'co-s', 'start'));
   lane(Y0, 'Réalisateur'); lane(Y0 + 34, 'Truquiste'); lane(Y0 + 68, 'Programme'); lane(Y0 + 102, 'Tally CAM 3');
   const bubble = (s, text) => { const w = text.length * 6.4 + 12; f.append(sv('rect', { x: X(s), y: Y0, width: w, height: 20, rx: 10, fill: '#2a3238', stroke: C.amber }), txt(X(s) + w / 2, Y0 + 14, text, 'co-s')); };

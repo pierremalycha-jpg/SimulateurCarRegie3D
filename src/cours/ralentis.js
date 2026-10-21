@@ -95,7 +95,7 @@ function demoTrains(host) {
   const drawTimeline = () => {
     gt.fillStyle = '#0b1013'; gt.fillRect(0, 0, TW, TH);
     gt.font = '11px Arial, sans-serif';
-    for (let s = 0; s <= SPAN; s += 5) { gt.strokeStyle = '#2a3238'; gt.beginPath(); gt.moveTo(X(s), 14); gt.lineTo(X(s), TH - 20); gt.stroke(); gt.fillStyle = '#aab4ba'; gt.fillText(tc(T0 + s).slice(0, 8), X(s) - 22, TH - 6); }
+    for (let s = 0; s <= SPAN; s += 5) { gt.strokeStyle = '#2a3238'; gt.beginPath(); gt.moveTo(X(s), 14); gt.lineTo(X(s), TH - 20); gt.stroke(); gt.fillStyle = '#aab4ba'; gt.fillText(tc(T0 + s).slice(0, 8), Math.min(X(s) - 22, TW - 50), TH - 6); }
     gt.fillStyle = 'rgba(255,211,138,0.22)'; gt.fillRect(X(KICK - 0.6), 14, X(GOAL) - X(KICK - 0.6), TH - 34);
     gt.fillStyle = C.amber; gt.fillText('tir', X(KICK - 0.6) + 2, 11);
     TRAINS.forEach(([name, a], i) => {

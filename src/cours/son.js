@@ -56,22 +56,29 @@ function ambSignals() {
 }
 function demoStrip(host) {
   const src = canonSignal(), amb = ambSignals();
-  const wv = canvas(720, 220, 'co-canvas co-smooth'), ph = canvas(720, 170, 'co-canvas co-smooth');
+  const wv = canvas(720, 290, 'co-canvas co-smooth'), ph = canvas(720, 170, 'co-canvas co-smooth');
   const gw = wv.getContext('2d'), gp = ph.getContext('2d');
   let gain = 40, p48 = true, fader = 0, inv = false, share = 90;
   const read = readout(['Crête d\'entrée', 'Marge avant 0 dBFS', 'Échantillons écrêtés', 'Bruit du préampli (ordre de grandeur)', 'Crête après le fader']);
   const read2 = readout(['Corrélateur (−1 à +1)', 'Mono (G + D) ÷ 2, par rapport à une voie', 'À l\'écoute en mono']);
   const verdict = el('p', { class: 'co-verdict' });
-  const W0 = 600, H = 220, mid = H / 2, FULL = 1.3, Y = (v) => mid - Math.max(-FULL, Math.min(FULL, v)) / FULL * (mid - 12);
+  // deux bandes : l'entrée (après le gain) en haut, la sortie du fader en bas, à la même échelle
+  const W0 = 600, H = 290, FULL = 1.3, LANES = [{ mid: 80, half: 62 }, { mid: 222, half: 52 }];
+  const Yl = (v, l) => LANES[l].mid - Math.max(-FULL, Math.min(FULL, v)) / FULL * LANES[l].half, Y = (v) => Yl(v, 0);
   const drawStrip = () => {
     const k = p48 ? Math.pow(10, (MIC0 + gain) / 20) : 0, f = Math.pow(10, fader / 20);
     let peakIn = 0, clipped = 0;
     gw.fillStyle = '#0b1013'; gw.fillRect(0, 0, 720, H);
     // repères : 0 dBFS (l'écrêtage) et −18 dBFS (le niveau d'alignement)
-    for (const [v, col, lab] of [[1, C.tally, '0 dBFS'], [-1, C.tally, ''], [0.126, '#5a646c', '−18 dBFS'], [-0.126, '#5a646c', '']]) {
-      gw.strokeStyle = /** @type {string} */ (col); gw.setLineDash([4, 4]); gw.beginPath(); gw.moveTo(0, Y(/** @type {number} */ (v))); gw.lineTo(W0, Y(/** @type {number} */ (v))); gw.stroke(); gw.setLineDash([]);
-      if (lab) { gw.fillStyle = /** @type {string} */ (col); gw.font = '11px Arial, sans-serif'; gw.fillText(/** @type {string} */ (lab), 6, Y(/** @type {number} */ (v)) - 4); }
+    for (const l of [0, 1]) {
+      for (const [v, col, lab] of [[1, C.tally, '0 dBFS'], [-1, C.tally, ''], [0.126, '#5a646c', '−18 dBFS'], [-0.126, '#5a646c', '']]) {
+        const y = Yl(/** @type {number} */ (v), l);
+        gw.strokeStyle = /** @type {string} */ (col); gw.setLineDash([4, 4]); gw.beginPath(); gw.moveTo(0, y); gw.lineTo(W0, y); gw.stroke(); gw.setLineDash([]);
+        if (lab && l === 0) { gw.fillStyle = /** @type {string} */ (col); gw.font = '11px Arial, sans-serif'; gw.fillText(/** @type {string} */ (lab), W0 - 60, y - 4); }
+      }
     }
+    gw.fillStyle = '#aab4ba'; gw.font = '11px Arial, sans-serif';
+    gw.fillText('entrée, après le gain (ambre ; rouge : écrêtée)', 6, 12); gw.fillText(`après le fader (${fader > 0 ? '+' : fader < 0 ? '−' : ''}${Math.abs(fader)} dB)`, 6, 162);
     const per = NS / W0;
     for (let x = 0; x < W0; x++) {
       let lo = 9, hi = -9, rlo = 9, rhi = -9, cl = false;
@@ -82,7 +89,7 @@ function demoStrip(host) {
       }
       if (rhi > 1 || rlo < -1) { gw.fillStyle = 'rgba(240,55,44,0.25)'; gw.fillRect(x, Y(rhi), 1, Y(rlo) - Y(rhi)); } // ce que le micro aurait donné, au-delà de 0 dBFS : perdu
       gw.fillStyle = cl ? C.tally : C.amber; gw.fillRect(x, Y(hi), 1, Math.max(1, Y(lo) - Y(hi)));
-      gw.fillStyle = 'rgba(127,211,243,0.85)'; gw.fillRect(x, Y(hi * f), 1, Math.max(1, Y(lo * f) - Y(hi * f)));
+      gw.fillStyle = cl ? C.red : C.cyan; gw.fillRect(x, Yl(hi * f, 1), 1, Math.max(1, Yl(lo * f, 1) - Yl(hi * f, 1)));
     }
     // le crête-mètre : −60 à 0 dBFS, OVL au-dessus
     const MX = 640, MW = 30, M0 = 30, M1 = H - 12, my = (d) => M1 - (Math.max(-60, Math.min(0, d)) + 60) / 60 * (M1 - M0);
@@ -93,7 +100,6 @@ function demoStrip(host) {
     gw.strokeStyle = '#e8eef2'; gw.beginPath(); gw.moveTo(MX + MW + 4, my(-18)); gw.lineTo(MX + MW + 8, my(-18)); gw.lineTo(MX + MW + 8, my(-10)); gw.lineTo(MX + MW + 4, my(-10)); gw.stroke();
     gw.fillStyle = '#aab4ba'; gw.font = '10px Arial, sans-serif';
     for (const d of [0, -10, -18, -30, -60]) gw.fillText(String(d).replace('-', '−'), MX - 26, my(d) + 4);
-    gw.fillText('entrée (ambre), écrêtée (rouge), après le fader (cyan)', 6, H - 6);
     const would = MIC0 + gain;
     read.set('Crête d\'entrée', !p48 ? 'aucune : micro statique sans 48 V, il ne délivre rien' : `${fmtDb(Math.min(0, pk))}FS, soit ${fmtNum(Math.pow(10, Math.min(0, pk) / 20) * 100)} % de la pleine échelle${would > 0 ? ` (le micro en demandait ${fmtDb(would)}FS)` : ''}`);
     read.set('Marge avant 0 dBFS', !p48 ? '—' : would >= 0 ? 'aucune : le convertisseur est saturé' : `${fmtNum(-would, 1)} dB`);
@@ -247,7 +253,7 @@ function demoN1(host) {
   drawLip();
 }
 function figN1() {
-  const f = figure(720, 226, 'Les départs de la console : le programme (PGM) et le son international (INTL) partent embeddés vers la chaîne ; chaque N-1 renvoie le programme moins la voix de celui qui l\'écoute. Sur le chemin de l\'image, les traitements ajoutent du retard : on retarde le son d\'autant.');
+  const f = figure(720, 244, 'Les départs de la console : le programme (PGM) et le son international (INTL) partent embeddés vers la chaîne ; chaque N-1 renvoie le programme moins la voix de celui qui l\'écoute. Sur le chemin de l\'image, les traitements ajoutent du retard : on retarde le son d\'autant.');
   f.append(txt(10, 16, 'Les départs : chacun reçoit le programme moins sa propre voix', 'co-t', 'start'));
   f.append(box(10, 30, 130, 50), txt(75, 50, 'Cabine', 'co-t'), txt(75, 68, 'COMM 1 · COMM 2', 'co-m'));
   f.append(box(10, 92, 130, 34), txt(75, 114, 'Ambiances, canons', 'co-s'));
@@ -255,9 +261,9 @@ function figN1() {
   f.append(box(234, 50, 140, 64, C.amber), txt(304, 74, 'Console', 'co-t'), txt(304, 92, 'bus PGM, INTL, N-1', 'co-s'));
   f.append(arrow(376, 64, 440, 48), box(444, 28, 266, 40, C.cyan), txt(577, 44, 'Embedder du départ (plan de son)', 'co-s'), txt(577, 60, 'paire 1-2 : PGM · paire 3-4 : INTL', 'co-m'));
   f.append(arrow(376, 100, 440, 104), box(444, 84, 266, 40, C.green), txt(577, 100, 'N-1 COMM = PGM − COMM 1 − COMM 2', 'co-m'), txt(577, 116, 'retour casque des commentateurs', 'co-s'));
-  f.append(sv('path', { d: 'M577 126 V136 H75 V128', fill: 'none', stroke: C.green, strokeDasharray: '4 3' }));
+  f.append(sv('path', { d: 'M577 126 V140 H4 V55 H6', fill: 'none', stroke: C.green, strokeDasharray: '4 3' }), arrow(2, 55, 10, 55, C.green), txt(300, 136, 'le N-1 revient au casque des commentateurs, sans leurs voix', 'co-s', 'middle', { fill: C.green }));
   // la synchro labiale
-  const Y = 170;
+  const Y = 188;
   f.append(txt(10, Y - 10, 'La synchro labiale : le son attend l\'image', 'co-t', 'start'));
   f.append(txt(10, Y + 14, 'image', 'co-s', 'start'), txt(10, Y + 40, 'son', 'co-s', 'start'));
   const seg = (x, w, y, label, col) => f.append(sv('rect', { x, y, width: w, height: 18, rx: 2, fill: col, opacity: 0.75 }), txt(x + w / 2, y + 13, label, 'co-s', 'middle', { fill: '#0b0e10' }));
