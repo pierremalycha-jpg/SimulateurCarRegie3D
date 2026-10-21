@@ -54,11 +54,6 @@ import iChalkboardTeacher from '@phosphor-icons/core/bold/chalkboard-teacher-bol
 import iCheckCircle from '@phosphor-icons/core/bold/check-circle-bold.svg';
 import iHandPointing from '@phosphor-icons/core/bold/hand-pointing-bold.svg';
 import iLightbulbFilament from '@phosphor-icons/core/bold/lightbulb-filament-bold.svg';
-import iTelevisionSimple from '@phosphor-icons/core/bold/television-simple-bold.svg';
-import iWarehouse from '@phosphor-icons/core/bold/warehouse-bold.svg';
-import iPackage from '@phosphor-icons/core/bold/package-bold.svg';
-import iPresentation from '@phosphor-icons/core/bold/presentation-bold.svg';
-import iWebcam from '@phosphor-icons/core/bold/webcam-bold.svg';
 import iPulse from '@phosphor-icons/core/bold/pulse-bold.svg';
 import iStar from '@phosphor-icons/core/bold/star-bold.svg';
 import iWarning from '@phosphor-icons/core/bold/warning-bold.svg';
@@ -95,8 +90,7 @@ const SVG = {
   a_toi: iHandPointing, indice: iLightbulbFilament, bravo: iStar, alarme: iWarning,
   antenne: iRecord, reduire: iMinus, agrandir: iCornersOut, fermer: iX,
   // les lieux (content/lieux.js)
-  tv: iTelevisionSimple, entrepot: iWarehouse, colis: iPackage, conference: iPresentation,
-  webcam: iWebcam, hautparleur: iSpeakerHifi, lumiere: iLightbulbFilament,
+  hautparleur: iSpeakerHifi, lumiere: iLightbulbFilament,
   mesure: iPulse, // baie de mesure (PRISM)
   // les cinq familles du menu et leurs outils (app/title.js, ui/pupitre.js, ui/cours_ui.js)
   cours: iGraduationCap, lexique: iBookBookmark, formateur: iUserGear, relecture: iSealCheck, commandes: iKeyboard, livret: iNotebook,

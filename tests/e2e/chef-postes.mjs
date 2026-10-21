@@ -25,8 +25,8 @@ await ev(() => { try { localStorage.setItem('carregie.onboard', '1'); } catch (e
 T.check('partie lancée (car SDI)', await until(page, () => window.__dbg.S.mode === 'fps', null, 60000));
 await page.waitForTimeout(3000);
 await ev(() => window.__dbg.toggleChef(true));
-// l'accueil : les familles de parcours, repliées, avec leur progression
-T.check('accueil du chef : familles de parcours', await until(page, () => document.querySelectorAll('#chef details.chef-more').length >= 8, null, 8000), await ev(() => [...document.querySelectorAll('#chef details.chef-more summary')].map((s) => s.textContent).join(' | ')));
+// l'accueil hors d'un poste : plus de liste de familles, le Cours range tous les exercices
+T.check('accueil du chef : renvoi au Cours, pas de familles', await until(page, () => !document.querySelector('#chef details.chef-more') && [...document.querySelectorAll('#chef button')].some((b) => /Tous les exercices/.test(b.textContent)), null, 8000));
 await shot('00-accueil');
 
 const misses = [];

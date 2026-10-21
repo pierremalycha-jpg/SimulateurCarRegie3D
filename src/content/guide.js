@@ -469,14 +469,14 @@ export const GUIDE = [
 <p>Une captation est un travail d'équipe : le réalisateur annonce, le truquiste exécute, l'opérateur ralenti prépare, la vision et le son ajustent, la technique surveille. Le mode <b>« Jouer à plusieurs »</b> met plusieurs joueurs dans le <b>même car</b>, chacun sur son ordinateur, devant le <b>même match</b>. Chacun a un <b>pseudo</b> et un <b>rôle</b> ; on voit les autres se déplacer dans le stade et dans le car.</p>
 <h3>Deux façons de se connecter</h3>
 <ul>
-<li><b>Réseau local (sans Internet)</b> : la personne qui héberge lance le petit serveur fourni : sous Windows, double-clic sur <code>Car-regie-3D.exe</code> (rien à installer, le navigateur s'ouvre tout seul) ; ailleurs, l'archive « réseau local » (Windows, macOS ou Linux, Node.js nécessaire). Il affiche une adresse du type <code>http://192.168.1.20:8080</code> : les autres l'ouvrent dans leur navigateur, rien à installer. Tout le monde doit être sur le même réseau (même box, même Wi-Fi ou même switch).</li>
+<li><b>Réseau local (sans Internet)</b> : la personne qui héberge lance le petit serveur fourni : sous Windows, double-clic sur <code>TIEE-Simulator.exe</code> (rien à installer, le navigateur s'ouvre tout seul) ; ailleurs, l'archive « réseau local » (Windows, macOS ou Linux, Node.js nécessaire). Il affiche une adresse du type <code>http://192.168.1.20:8080</code> : les autres l'ouvrent dans leur navigateur, rien à installer. Tout le monde doit être sur le même réseau (même box, même Wi-Fi ou même switch).</li>
 <li><b>En ligne</b> : dans la page publiée sur claude.ai, partagée aux stagiaires (niveau « Contributeur » au moins). L'hôte crée la partie et donne son code.</li>
 </ul>
 <h3>Héberger, rejoindre</h3>
 <ul>
-<li>Accueil → « Jouer à plusieurs » (ou bouton « Équipe » de la barre d'outils). Choisissez votre <b>pseudo</b> : il s'affiche au-dessus de votre personnage.</li>
-<li><b>Héberger une partie</b> : votre ordinateur fait tourner le match pour tous. <b>Rejoindre une partie</b> : sur le réseau local, les parties en cours s'affichent toutes seules, avec qui tient quel rôle.</li>
-<li><b>Rôles</b> : formateur, réalisateur, truquiste, ralentis (EVS), son, vision, technique, habillage, cadreur (une caméra chacun), observateur. Un rôle déjà pris est signalé. L'hôte ou le formateur peut <b>réattribuer les rôles</b> (« Équipe » → Participants).</li>
+<li>Jouer → En équipe : <b>Coopération</b>, puis « Ouvrir le salon ». Le salon montre l'adresse (réseau local) ou le code (en ligne) à donner aux autres. Choisissez votre <b>pseudo</b> : il s'affiche au-dessus de votre personnage.</li>
+<li><b>Créer une partie</b> : votre ordinateur fait tourner le match pour tous. <b>Rejoindre une partie</b> : sur le réseau local, les parties en cours s'affichent toutes seules, avec qui tient quel rôle.</li>
+<li><b>Les postes du salon</b> : formateur, réalisateur, truquiste, ralentis (EVS), son, vision, technique, habillage, cadreur (une caméra chacun), observateur. Chaque poste montre qui le tient, ou « Libre ». L'hôte ou le formateur peut <b>réattribuer les rôles</b> (« Équipe » → Participants).</li>
 </ul>
 <h3>Pendant la prestation</h3>
 <ul>
@@ -492,7 +492,7 @@ export const GUIDE = [
     id: 'relecture', title: 'Relecture technique par les métiers', html: `
 <p>Les chiffres du simulateur (focales et rampes d'ouverture, portées des liaisons, rapports C/N, latences, tolérance de synchro labiale, niveaux de line-up…) viennent de documentations publiques et d'usages courants. Ils doivent être <b>validés par des professionnels</b> avant de servir de référence.</p>
 <ul>
-<li><b>Relecteurs</b> : écran d'accueil (feuille de service), cadre « Équipe et formation » → « Relecture technique ». Choisissez votre domaine (vision, son, réseau, ralentis, HF, niveaux, stade), donnez un avis par point (exact, à corriger, je ne sais pas, non applicable), commentez, et proposez des valeurs chiffrées. « Voir le guide » et « Ouvrir le poste » montrent le point dans le simulateur.</li>
+<li><b>Relecteurs</b> : Réglages, profil Formateur, « Espace formateur » → « Relecture technique ». Choisissez votre domaine (vision, son, réseau, ralentis, HF, niveaux, stade), donnez un avis par point (exact, à corriger, je ne sais pas, non applicable), commentez, et proposez des valeurs chiffrées. « Voir le guide » et « Ouvrir le poste » montrent le point dans le simulateur.</li>
 <li><b>Formateur</b> : Espace formateur → Relecture. La synthèse croise les relecteurs, met en avant les points contestés, et permet d'<b>appliquer</b> une valeur proposée : elle remplace celle du simulateur pour tous les stagiaires (« Rétablir l'origine » pour revenir). Rapport HTML et export CSV.</li>
 <li><b>Dispositif réel</b> : l'onglet « Dispositif réel » de l'Espace formateur enregistre l'implantation des caméras de votre car (positions, types, objectifs, liaisons) et la feuille de patch audio : les stagiaires démarrent alors sur <b>votre</b> installation.</li>
 </ul>`},

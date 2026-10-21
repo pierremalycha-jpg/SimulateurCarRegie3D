@@ -1,13 +1,13 @@
 #!/usr/bin/env node
 // @ts-check
 // ----------------------------------------------------------------------------------
-// Car régie 3D — serveur réseau local (aucune dépendance : Node.js 18 ou plus récent)
+// TIEE Simulator — serveur réseau local (aucune dépendance : Node.js 18 ou plus récent)
 //
 //   node lan/serveur.mjs              (port 8080, ou le suivant s'il est pris)
 //   node lan/serveur.mjs --port 9000  (port imposé)
 //   node lan/serveur.mjs --ouvrir     (ouvre aussi la page dans le navigateur)
 //
-// Car-regie-3D.exe (tools/exe.mjs) est ce même serveur dans un exécutable Windows, lancé avec
+// TIEE-Simulator.exe (tools/exe.mjs) est ce même serveur dans un exécutable Windows, lancé avec
 // --ouvrir --exe : rien à installer, et un second double-clic rouvre simplement la page.
 //
 // La personne qui héberge lance ce serveur sur son ordinateur. Les autres ouvrent, dans leur
@@ -30,7 +30,7 @@ const argPort = process.argv.indexOf('--port');
 const ASKED = +(argPort > 0 ? process.argv[argPort + 1] : process.env.PORT) || 0; // port imposé
 let PORT = ASKED || 8080;
 const OPEN = process.argv.includes('--ouvrir'); // ouvrir la page dans le navigateur une fois prêt
-const EXE = process.argv.includes('--exe');     // lancé par Car-regie-3D.exe (fenêtre de console à part)
+const EXE = process.argv.includes('--exe');     // lancé par TIEE-Simulator.exe (fenêtre de console à part)
 const MAX_MSG = 4 * 1024 * 1024; // un message WebSocket ne dépasse jamais 4 Mo
 const MAX_PEERS = 40;            // par partie
 
@@ -239,7 +239,7 @@ function openBrowser(url) {
     c.on('error', () => console.log(`  Ouvrez vous-même ${url} dans votre navigateur.`)); c.unref();
   } catch (e) { console.log(`  Ouvrez vous-même ${url} dans votre navigateur.`); }
 }
-// ce port est-il tenu par un serveur Car régie 3D déjà lancé (second double-clic) ?
+// ce port est-il tenu par un serveur TIEE Simulator déjà lancé (second double-clic) ?
 const isOurs = (port) => new Promise((res) => {
   const req = http.get({ host: '127.0.0.1', port, path: '/api/parties', timeout: 1500 }, (r) => {
     let b = ''; r.setEncoding('utf8'); r.on('data', (d) => { b += d; });
@@ -251,7 +251,7 @@ let tries = 0;
 server.on('error', async (/** @type {NodeJS.ErrnoException} */ e) => {
   if (e.code === 'EADDRINUSE' && !ASKED) {
     if (await isOurs(PORT)) {
-      console.log(`\n  Car régie 3D tourne déjà sur cet ordinateur : http://localhost:${PORT}`);
+      console.log(`\n  TIEE Simulator tourne déjà sur cet ordinateur : http://localhost:${PORT}`);
       if (OPEN) { console.log('  La page s\'ouvre dans votre navigateur.'); openBrowser(`http://localhost:${PORT}`); }
       setTimeout(() => process.exit(0), EXE ? 4000 : 0);
       return;
@@ -259,17 +259,17 @@ server.on('error', async (/** @type {NodeJS.ErrnoException} */ e) => {
     // port pris par un autre logiciel : on essaie les suivants
     if (++tries < 10) { PORT++; server.close(); server.listen(PORT, '0.0.0.0'); return; }
   }
-  if (e.code === 'EADDRINUSE') console.error(`Le port ${PORT} est déjà utilisé. Essayez : ${EXE ? 'Car-regie-3D.exe' : 'node car-regie-serveur-lan.mjs'} --port ${PORT + 1}`);
+  if (e.code === 'EADDRINUSE') console.error(`Le port ${PORT} est déjà utilisé. Essayez : ${EXE ? 'TIEE-Simulator.exe' : 'node car-regie-serveur-lan.mjs'} --port ${PORT + 1}`);
   else console.error(e);
   fatal();
 });
 server.listen(PORT, '0.0.0.0', () => {
   const ips = lanAddresses();
-  console.log('\n  Car régie 3D · serveur réseau local\n');
+  console.log('\n  TIEE Simulator · serveur réseau local\n');
   console.log(`  Sur cet ordinateur : http://localhost:${PORT}`);
   if (ips.length) for (const a of ips) console.log(`  Pour les autres     : http://${a.address}:${PORT}   (${a.name})`);
   else console.log('  Aucune carte réseau trouvée : branchez-vous au réseau local (câble ou Wi-Fi).');
   console.log('\n  Tout le monde doit être sur le même réseau. Si personne ne peut se connecter, autorisez');
-  console.log(`  ${EXE ? 'Car régie 3D' : 'Node.js'} dans le pare-feu (réseau privé). ${EXE ? 'Fermez cette fenêtre' : 'Ctrl+C'} pour arrêter.\n`);
+  console.log(`  ${EXE ? 'TIEE Simulator' : 'Node.js'} dans le pare-feu (réseau privé). ${EXE ? 'Fermez cette fenêtre' : 'Ctrl+C'} pour arrêter.\n`);
   if (OPEN) openBrowser(`http://localhost:${PORT}`);
 });

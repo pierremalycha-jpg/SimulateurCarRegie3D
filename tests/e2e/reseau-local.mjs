@@ -25,7 +25,7 @@ const errors = []; let fails = 0;
 const log = (...a) => console.log(...a);
 const check = (n, ok, x = '') => { if (!ok) fails++; log(ok ? 'OK  ' : 'FAIL', n, x); };
 const newPage = async (id, q = 'lite') => openPage(await launch(), {
-  id, errors, url: `http://localhost:${PORT}/?${q}`, ready: '!!window.__dbg && !!document.querySelector("#start .callsheet")',
+  id, errors, url: `http://localhost:${PORT}/?${q}`, ready: '!!window.__dbg && !!document.querySelector("#start .jouer")',
   before: (page) => page.addInitScript(() => { try { localStorage.setItem('carregie.onboard', '1'); } catch (e) { /* */ } }),
 });
 

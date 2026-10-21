@@ -37,7 +37,7 @@ async function scan(name, include) {
 await until(page, () => document.getElementById('title')?.classList.contains('ready'), null, 30000);
 await scan('titre');
 await ev(() => window.__dbg.title.enter('start'));
-// feuille de service, puis le chef de car ouvert dessus (touche J)
+// écran Jouer, puis le chef de car ouvert dessus (touche J), les Réglages
 await scan('accueil');
 // fiche « Ce qui se prépare » d'un lieu en préparation
 await page.locator('.lx[data-lieu="concert"]').click();
@@ -48,8 +48,12 @@ await page.keyboard.press('KeyJ');
 await until(page, () => { const c = document.querySelector('#chef'); return !!c && !c.hidden; }, null, 15000);
 await scan('accueil-chef');
 await ev(() => window.__dbg.toggleChef(false));
-// en jeu : barre d'outils, bande UMD
-await ev(() => { const b = document.getElementById('st-tour'); if (b && b.getAttribute('aria-pressed') === 'true') b.click(); });
+await page.locator('#st-reglages').click();
+await until(page, () => !!document.querySelector('#modal .rg'), null, 8000);
+await scan('reglages', '#modal');
+await ev(() => document.querySelector('#modal .x')?.click());
+// en jeu (car installé) : barre d'outils, bande UMD
+await page.locator('.jo-mode[data-mode="installe"]').click();
 await page.locator('#st-antenne').click();
 await until(page, () => window.__dbg.S.mode === 'fps', null, 90000);
 await ev(() => window.__dbg.toggleChef(false));
@@ -67,21 +71,21 @@ for (const st of ['melangeur', 'realisateur', 'vision', 'evs', 'son', 'reseau', 
   await scan('poste-' + st);
   await ev(() => window.__dbg.closeStation());
 }
-// chef de car en jeu (accueil des familles)
+// chef de car en jeu, à un poste (ses exercices)
+await ev(() => window.__dbg.openStation('melangeur'));
+await until(page, () => window.__dbg.S.mode === 'station', null, 30000);
 await ev(() => window.__dbg.toggleChef(true));
 await page.waitForTimeout(500);
 await scan('chef', '#chef');
-await ev(() => window.__dbg.toggleChef(false));
-// les espaces : Cours (touche G), chef de car ; le menu du car (Échap)
+await ev(() => { window.__dbg.toggleChef(false); window.__dbg.closeStation(); });
+// le Cours (touche G) : le suivi, une leçon et ses exercices pratiques ; le menu du car (Échap)
 await page.keyboard.press('KeyG');
 await until(page, () => !!document.querySelector('#layer .co-page'), null, 8000);
 await page.waitForTimeout(500);
 await scan('cours', '#layer');
-await page.locator('#layer .ly-tabs .tab[data-k="chapitres"]').click();
-await scan('cours-chapitres', '#layer');
-await ev(() => window.__dbg.emit('entrainement'));
-await until(page, () => !!document.querySelector('#layer .tr-fam'), null, 8000);
-await scan('entrainement', '#layer');
+await ev(() => window.__dbg.emit('cours', { lesson: 'reseau-multicast' }));
+await until(page, () => !!document.querySelector('#layer .co-exos'), null, 8000);
+await scan('cours-lecon', '#layer');
 await page.keyboard.press('Escape');
 await page.keyboard.press('Escape');
 await until(page, () => !!document.querySelector('#modal .mn'), null, 8000);

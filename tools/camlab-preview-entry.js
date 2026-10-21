@@ -7,7 +7,7 @@ import { el } from '../src/util.js';
 const home = el('div', { id: 'title', class: 'cl-home' },
   el('div', { class: 'cl-home-in' },
     el('h1', {}, 'La caméra'),
-    el('p', {}, 'Maquette du module du simulateur Car régie 3D : une caméra de plateau type Sony HXC-FB80 avec son zoom Fujinon, pièce par pièce.'),
+    el('p', {}, 'Maquette du module du TIEE Simulator : une caméra de plateau type Sony HXC-FB80 avec son zoom Fujinon, pièce par pièce.'),
     el('button', { type: 'button', class: 'ti-key primary', id: 'ti-camera' }, el('span', { class: 'ti-led', 'aria-hidden': 'true' }), el('b', {}, 'La caméra'), el('small', {}, 'Connaître la caméra de plateau, de la lentille au moniteur'))));
 document.body.append(home);
 const css = document.createElement('style');

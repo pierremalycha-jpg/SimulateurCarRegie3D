@@ -1,5 +1,5 @@
 // ----------------------------------------------------------------------------------
-// Version à partager : Car-regie-3D.exe et le kit dist/Car-regie-3D-partage.zip.
+// Version à partager : TIEE-Simulator.exe et le kit dist/TIEE-Simulator-partage.zip.
 // L'exécutable est le serveur réseau local (page du simulateur incluse) dans un exécutable
 // Node.js autonome (« single executable application ») : on double-clique, le navigateur
 // s'ouvre sur le simulateur, et les autres ordinateurs du réseau local peuvent rejoindre la
@@ -30,9 +30,9 @@ import { makeZip } from './zip.mjs';
 const ROOT = path.resolve(import.meta.dirname, '..');
 const CACHE = path.join(ROOT, '.cache/exe');
 const SRV = path.join(ROOT, 'dist/car-regie-serveur-lan.mjs');
-const HTML = path.join(ROOT, 'dist/Car-regie-3D.html');
-const EXE = path.join(ROOT, 'dist/Car-regie-3D.exe');
-const KIT = path.join(ROOT, 'dist/Car-regie-3D-partage.zip');
+const HTML = path.join(ROOT, 'dist/TIEE-Simulator.html');
+const EXE = path.join(ROOT, 'dist/TIEE-Simulator.exe');
+const KIT = path.join(ROOT, 'dist/TIEE-Simulator-partage.zip');
 const FUSE = 'NODE_SEA_FUSE_fce680ab2cc467b6e072b8b5df1996b2';
 const V = process.version; // le blob ne fonctionne qu'avec la même version de Node que node.exe
 const PKG = JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8'));
@@ -47,7 +47,7 @@ fs.mkdirSync(CACHE, { recursive: true });
 const main = path.join(CACHE, 'serveur.cjs');
 await esbuild.build({
   entryPoints: [SRV], outfile: main, bundle: true, platform: 'node', format: 'cjs', target: 'node22', legalComments: 'none', logLevel: 'warning',
-  define: { 'import.meta.url': '"file:///Car-regie-3D.exe"' }, // la page est intégrée : le chemin ne sert pas
+  define: { 'import.meta.url': '"file:///TIEE-Simulator.exe"' }, // la page est intégrée : le chemin ne sert pas
   // lancé d'un double-clic : ouvrir la page, et garder la fenêtre ouverte sur une erreur
   banner: { js: 'process.argv.splice(2, 0, "--ouvrir", "--exe");' },
 });
@@ -99,8 +99,8 @@ const ver = PKG.version.split('.').map(Number);
 vi.setFileVersion(ver[0], ver[1] || 0, ver[2] || 0, 0, lang.lang);
 vi.setProductVersion(ver[0], ver[1] || 0, ver[2] || 0, 0, lang.lang);
 vi.setStringValues(lang, {
-  FileDescription: 'Car régie 3D', ProductName: 'Car régie 3D', InternalName: 'Car-regie-3D', OriginalFilename: 'Car-regie-3D.exe',
-  CompanyName: 'Car régie 3D (formation)', FileVersion: PKG.version, ProductVersion: PKG.version,
+  FileDescription: 'TIEE Simulator', ProductName: 'TIEE Simulator', InternalName: 'TIEE-Simulator', OriginalFilename: 'TIEE-Simulator.exe',
+  CompanyName: 'BTS Audiovisuel, lycée Henri-Martin (Saint-Quentin)', FileVersion: PKG.version, ProductVersion: PKG.version,
   LegalCopyright: `Simulation non officielle, sans lien avec le club. Contient Node.js ${V} (licence MIT, © contributeurs de Node.js).`,
   Comments: 'Simulateur 3D de car régie pour la formation des techniciens : serveur réseau local et page du simulateur.',
 });
@@ -123,22 +123,22 @@ secs.forEach((x, i) => {
   const next = i + 1 < secs.length ? secs[i + 1].virtualAddress : fin.newHeader.optionalHeader.sizeOfImage;
   if (end > next) throw new Error(`section ${x.name} : déborde sur la suivante (${end.toString(16)} > ${next.toString(16)})`);
 });
-console.log('dist/Car-regie-3D.exe', mb(out.length), '· sha256', sha256(out).slice(0, 16));
+console.log('dist/TIEE-Simulator.exe', mb(out.length), '· sha256', sha256(out).slice(0, 16));
 
 // ---------------- 6. le kit à partager ----------------
 const crlf = (s) => s.replace(/\r?\n/g, '\r\n');
 const licFile = path.join(CACHE, `LICENSE-node-${V}.txt`);
 if (!fs.existsSync(licFile)) fs.writeFileSync(licFile, await (await fetch(`https://raw.githubusercontent.com/nodejs/node/${V}/LICENSE`)).text());
-const licences = ['three.js', '========', fs.readFileSync(path.join(ROOT, 'node_modules/three/LICENSE'), 'utf8'), '', `Node.js ${V} (inclus dans Car-regie-3D.exe)`, '=================================', fs.readFileSync(licFile, 'utf8')].join('\n');
-const dir = 'Car-regie-3D/';
+const licences = ['three.js', '========', fs.readFileSync(path.join(ROOT, 'node_modules/three/LICENSE'), 'utf8'), '', `Node.js ${V} (inclus dans TIEE-Simulator.exe)`, '=================================', fs.readFileSync(licFile, 'utf8')].join('\n');
+const dir = 'TIEE-Simulator/';
 const kit = makeZip([
-  { name: dir + 'Car-regie-3D.html', data: fs.readFileSync(HTML) },
-  { name: dir + 'Car-regie-3D.exe', data: out },
+  { name: dir + 'TIEE-Simulator.html', data: fs.readFileSync(HTML) },
+  { name: dir + 'TIEE-Simulator.exe', data: out },
   { name: dir + 'LISEZMOI.txt', data: crlf(fs.readFileSync(path.join(ROOT, 'partage/LISEZMOI.txt'), 'utf8')) },
   { name: dir + 'LICENCES.txt', data: crlf(licences) },
 ]);
 fs.writeFileSync(KIT, kit);
-console.log('dist/Car-regie-3D-partage.zip', mb(kit.length));
+console.log('dist/TIEE-Simulator-partage.zip', mb(kit.length));
 
 // ---------------- 7. (option) le même blob dans le node de cette machine, lancé pour de vrai ----------------
 if (process.argv.includes('--verifier')) {

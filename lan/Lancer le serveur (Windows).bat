@@ -1,5 +1,5 @@
 @echo off
-rem Car regie 3D - serveur reseau local (double-cliquer)
+rem TIEE Simulator - serveur reseau local (double-cliquer)
 cd /d "%~dp0"
 where node >nul 2>nul
 if errorlevel 1 (

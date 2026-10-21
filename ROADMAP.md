@@ -1,15 +1,15 @@
 # Feuille de route
 
 Version complète, avec la frise, la couverture du référentiel et les outils :
-https://claude.ai/artifact/66qXXNdPDeDcUuTbWeLNTx (page privée, à partager depuis son menu ; son calendrier
-précède la décision du 21 octobre 2026 ci-dessous).
+https://claude.ai/artifact/66qXXNdPDeDcUuTbWeLNTx (page privée, à partager depuis son menu).
 
 Rattachement au référentiel, compétence par compétence, et plan de modules :
 https://claude.ai/artifact/CC1su9aPGFspDxWwi8qSGP (page privée).
 
 **Vision.** Un simulateur où chaque compétence de l'option TIEE du BTS MAV se pratique sur un lieu
 réaliste, de la préparation du matériel à l'entrepôt jusqu'au direct, en passant par le câblage, les
-réglages et la panne.
+réglages et la panne. Son nom : **TIEE Simulator**, réalisé par le BTS Audiovisuel de Saint-Quentin (lycée
+Henri-Martin), développé par Pierre MALYCHA.
 
 **Règles du chantier.**
 
@@ -24,18 +24,17 @@ Calendrier indicatif, calé sur l'année scolaire (les épreuves ont lieu en mai
 
 | Version | Période | Contenu |
 |---|---|---|
+| v19 | oct. 2026 (fait) | TIEE Simulator : trois entrées (Jouer, Cours, Réglages) ; Jouer = le lieu (car régie, salle de concert en préparation), le mode (car installé, tout à faire, visite guidée), solo ou coopération (salon) ; le chef de car devient les exercices pratiques des leçons du Cours ; Cours à un seul sommaire avec page de suivi, dix chapitres |
 | v18.2 | nov. 2026 | Mur des lieux sur l'accueil (fait), puis décisions D1 à D16 de la revue v18.1, premier test en classe, mesure d'usage, CLAUDE.md et skills maison |
 | v18.5 | oct. 2026 (fait) | La caméra de plateau en 3D dans le Cours (onglet La caméra) : caméra type Sony HXC-FB80 et zoom Fujinon, 23 pastilles, 51 notions en 9 chapitres de la lentille frontale au moniteur, lot 1 écrit (12 fiches : schéma, manipulation sur la caméra et l'image du viseur, trois questions d'Olivier) ; lots 2 et 3, quiz de chapitre et parcours noté « Mise en service » à suivre |
 | v18.4 | oct. 2026 (fait) | Menus par profil (Étudiant / Formateur, mémorisé) ; cinq familles partout (écran titre, pupitre, menu du car) : Jouer, Cours, Chef de car, Formateur, Réglages ; section Cours en plein écran : chapitres Le signal vidéo numérique, Le SDI, Le réseau, La HF, une leçon par terme (l'essentiel, schéma, manipulation qui calcule, « dans le car », fiches « ? », quiz) ; espace du chef de car (parcours guidés, exercices notés, missions, livret de compétences TIEE) |
 | v18.3 | oct. 2026 (fait) | Écran titre avec chargement par étapes ; instrument de mesure type PRISM au poste vision et dans une baie de mesure (waveform, parade, vecteurscope, diamant, split diamant, œil, gigue) ; grille Videohub 40×40 avec monitoring ; réseau de contrôle Gigabit du car SDI (VLAN, QoS, pannes) ; les trois reliés : sans réseau, RCP, grille, IPDirector et mélangeur ne commandent plus |
 | Modules du car | nov. 2026 – janv. 2027 | Les compétences que le car ne travaille pas encore (blocs 3 et 4) : M1 livret de compétences, M2 « La commande du diffuseur » (dossier initial, choix et chiffrage du dispositif), M3 « Après le coup de sifflet » (clips, PAD, archive), M4 « Recette et maintenance » (get-in sécurisé, réception, recette, maintenance préventive) |
-| v19 | févr. – mars 2027 | Socle multi-lieux : format de lieu, moteur de signaux unique (vidéo, audio, commande, réseau, énergie), catalogue de matériel unique, lieux chargés à la demande, un tuteur par métier, livret de compétences ouvert à tous les lieux |
-| v20 | avr. – juin 2027 | Plateau TV et régie en dur : studio, régie fixe, patch SDI, émission sur conducteur, premier DMX, mode examen |
-| v21 | juil. – sept. 2027 | Entrepôt : cahier des charges, baies 19", flight cases, budget électrique, chargement, exports, éditeur de pannes pour le formateur |
-| v22 | oct. – déc. 2027 | Conférence et régie mobile : mélangeur logiciel type vMix, Stream Deck, PTZ, HDMI, son de salle, événement hybride et streaming, rejouer et débriefer |
-| v23 | janv. – mars 2028 | Concert, le son : façade, retours, Dante, diffusion et calage, niveaux sonores, captation |
-| v24 | avr. – juin 2028 | Concert, la lumière : console DMX, Art-Net et sACN, projecteurs, plan de feu, électricité et accroche |
-| v25 | juil. – août 2028 | Édition 2028-2029 : épreuve blanche multi-lieux, bilan des mesures, veille sur le référentiel (fiche enregistrée jusqu'au 31 août 2027) |
+| v20 | févr. – mars 2027 | Socle multi-lieux : format de lieu, moteur de signaux unique (vidéo, audio, commande, réseau, énergie), catalogue de matériel unique, lieux chargés à la demande, un tuteur par métier, livret de compétences ouvert à tous les lieux |
+| v21 | avr. – juin 2027 | Entrepôt, un mode à part (hors de Jouer) : cahier des charges, baies 19", flight cases, budget électrique, chargement, exports, éditeur de pannes pour le formateur |
+| v22 | juil. – sept. 2027 | Salle de concert, le son : façade, retours, Dante, diffusion et calage, niveaux sonores, captation |
+| v23 | oct. – déc. 2027 | Salle de concert, la lumière : console DMX, Art-Net et sACN, projecteurs, plan de feu, électricité et accroche |
+| v24 | 2028 | Édition 2028-2029 : épreuve blanche, bilan des mesures, veille sur le référentiel (fiche enregistrée jusqu'au 31 août 2027) |
 
 **Un lieu est fini quand** l'événement se joue de bout en bout, avec au moins 6 parcours du tuteur, des
 pannes, une documentation exportable, la relecture d'un professionnel du domaine, ses tests automatiques
@@ -43,14 +42,17 @@ et 30 images par seconde sur le PC le plus faible de l'établissement.
 
 **Décidé.**
 
-- 21 octobre 2026 : les quatre modules du car passent avant le plateau TV. Ils comblent 8 des 9
-  compétences absentes du car sans nouveau décor ; les versions suivantes glissent d'environ deux mois.
+- 21 octobre 2026 : les quatre modules du car passent avant les autres lieux. Ils comblent 8 des 9
+  compétences absentes du car sans nouveau décor.
+- 21 octobre 2026 (v19) : l'ensemble s'appelle **TIEE Simulator** (R2). L'écran Jouer ne propose que deux
+  lieux, le car régie et la salle de concert ; le plateau TV et la conférence sont retirés de la feuille de
+  route ; l'entrepôt devient un mode à part. Le chef de car n'est plus une entrée : ses parcours sont les
+  exercices pratiques des leçons du Cours, et sa présentation du car devient le mode « Visite guidée ».
 
 **Décisions ouvertes.**
 
-- R1 : l'ordre des lieux, et la place d'un lieu « Nodal et régie finale » (technicien de trafic,
-  technicien de régie finale, responsable nodal), proposé par le rattachement, avant ou à la place du concert.
-- R2 : le nom de l'ensemble.
+- R1 : la place d'un lieu « Nodal et régie finale » (technicien de trafic, technicien de régie finale,
+  responsable nodal), proposé par le rattachement, avant ou à la place de la salle de concert.
 - R3 : le public (TIEE seul, ou aussi les options Son et Image) ; le concert sert surtout ces deux options.
 - R4 : brancher le vrai matériel de l'établissement.
 - R5 : les relecteurs professionnels.

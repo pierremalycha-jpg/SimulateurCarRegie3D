@@ -6,7 +6,8 @@ import { q, openTerm } from './term.js';
 import { icon } from './icons.js';
 import { TERMS } from '../content/netterms.js';
 import { openLayer, layerOpen, showTab, closeLayer } from './layer.js';
-import { glossarySection, postesSection, materielSection, openArticle } from './guide.js';
+import { glossarySection, postesSection, materielSection, proceduresSection, openArticle } from './guide.js';
+import { CFG } from '../shared.js';
 import { CHAPTERS, lessonById, allLessons, coursProgress, markSeen, recordQuiz, lessonDone, chapterDone } from '../cours/index.js';
 import { posteCible, estLecon } from '../cours/liens.js';
 import { exercisesOf, exerciseInfo, exerciseDone, specialState, allExercises } from '../cours/exercices.js';
@@ -151,6 +152,8 @@ function home(page, render) {
             el('td', {}, cx.length ? el('span', { class: 'co-cell' }, bar(cxd, cx.length, 'Exercices'), `${cxd} / ${cx.length}`) : '—'),
             el('td', {}, first ? el('button', { type: 'button', class: 'btn small', onclick: () => open(first.id) }, cd === cl && cl ? 'Revoir' : cd ? 'Continuer' : 'Commencer') : ch.module ? el('button', { type: 'button', class: 'btn small', onclick: () => { closeLayer(false); emit(ch.module.event, ch.module.arg); } }, 'Ouvrir') : null));
         })))),
+    // les procédures maison du formateur, quand il en a écrit (Espace formateur, onglet Procédures)
+    (CFG.car.procedures || []).length ? el('section', { class: 'co-procs', 'aria-label': 'Procédures du car' }, el('h4', {}, 'Les procédures du car'), (() => { const b = el('div'); proceduresSection(b); return b; })()) : null,
     el('section', { class: 'co-livret', 'aria-label': 'Livret de compétences' }, el('h4', {}, 'Mon livret de compétences (BTS MAV, option TIEE)'),
       el('div', { class: 'co-blocs' }, ...L.blocs.map((b) => { const w = b.count.consolidee + b.count.travaillee; const n = b.comps.length - b.count.absent; return el('div', { class: 'co-bloc' }, el('b', {}, b.id), el('span', {}, b.titre), bar(w, n, b.id), el('small', {}, `${w} / ${n} travaillées`)); })),
       el('div', { class: 'hwrow' }, el('button', { type: 'button', class: 'btn small', onclick: () => openLivret() }, 'Ouvrir le livret complet')),
@@ -173,8 +176,7 @@ function lessonPage(page, { chapter, lesson, i }, render) {
   if (L.car) {
     // « Aller au poste » : le car est lancé s'il ne l'est pas encore (app/nav.js)
     page.append(el('section', { class: 'co-car' }, el('h4', {}, icon('car'), 'Dans le car'), el('p', {}, L.car.text),
-      L.car.station ? el('div', { class: 'hwrow' }, el('button', { class: 'btn small primary', onclick: () => emit('go', { station: L.car.station, tab: L.car.tab, label: 'Aller au poste' }) }, S.mode === 'start' ? 'Lancer le car et aller au poste' : 'Aller au poste'),
-        L.car.lesson ? el('button', { class: 'btn small', onclick: () => emit('go', { lesson: L.car.lesson }) }, 'Parcours du chef') : null) : null));
+      L.car.station ? el('div', { class: 'hwrow' }, el('button', { class: 'btn small primary', onclick: () => emit('go', { station: L.car.station, tab: L.car.tab, label: 'Aller au poste' }) }, S.mode === 'start' ? 'Lancer le car et aller au poste' : 'Aller au poste')) : null));
   }
   if (L.article) page.append(el('div', { class: 'hwrow co-article' }, el('button', { type: 'button', class: 'btn small', onclick: () => openArticle(L.article) }, icon('guide'), 'Lire l\'article de référence')));
   const xs = exercisesOf(L);

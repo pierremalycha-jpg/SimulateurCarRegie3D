@@ -166,7 +166,7 @@ function tabProc(box, editable) {
   };
   draw();
   box.append(el('h3', { class: 'eq-h' }, 'Check-list de line-up (une ligne par point)'), el('p', { class: 'note' }, 'Remplace la check-list proposée au poste Chef de car.'), chk,
-    el('h3', { class: 'eq-h' }, 'Procédures maison'), el('p', { class: 'note' }, 'Affichées dans le guide (onglet Procédures). Exemples : ouverture du car, procédure de mise en antenne, conduite à tenir en cas de perte de liaison.'), list,
+    el('h3', { class: 'eq-h' }, 'Procédures maison'), el('p', { class: 'note' }, 'Affichées dans le Cours, sur la page « Mon suivi ». Exemples : ouverture du car, procédure de mise en antenne, conduite à tenir en cas de perte de liaison.'), list,
     el('div', { class: 'hwrow' }, el('button', { class: 'btn', disabled: !editable, onclick: () => { procs.push({ title: 'Nouvelle procédure', steps: [] }); draw(); } }, 'Ajouter une procédure'),
       el('button', { class: 'btn primary', disabled: !editable, onclick: async () => { c.checklist = chk.value.split('\n').map((x) => x.trim()).filter(Boolean); c.procedures = procs.filter((p) => p.title); saved(await saveConfig('car', c)); } }, 'Enregistrer la check-list et les procédures')));
 }

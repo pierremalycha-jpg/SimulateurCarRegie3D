@@ -1,5 +1,5 @@
 #!/bin/bash
-# Car régie 3D — serveur réseau local (Linux : ./lancer-serveur.sh)
+# TIEE Simulator — serveur réseau local (Linux : ./lancer-serveur.sh)
 cd "$(dirname "$0")"
 if ! command -v node >/dev/null 2>&1; then
   echo "Node.js n'est pas installé. Installez la version LTS depuis https://nodejs.org puis relancez."

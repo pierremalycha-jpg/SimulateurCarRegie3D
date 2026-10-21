@@ -620,7 +620,7 @@ export const TERMS = {
     t: 'Passerelle IP ↔ SDI', aka: 'gateway, edge device', cat: 'Exploitation',
     short: 'Un appareil qui convertit des signaux SDI en flux ST 2110, ou l\'inverse.',
     body: "Indispensable pour les équipements encore en SDI : serveurs, écrans, liaisons. Côté SDI, elle **désembedde** l'audio et les données ; côté IP, elle émet ou reçoit les flux -20, -30 et -40, synchronisés par PTP. Elle se configure comme tout appareil ST 2110 : adresses, NMOS, PTP, abonnements.",
-    car: 'La passerelle des écrans d\'angle reçoit un flux et le rend en SDI vers les écrans du stade. C\'est le parcours « Mettre en service une passerelle » du chef de car.',
+    car: 'La passerelle des écrans d\'angle reçoit un flux et le rend en SDI vers les écrans du stade. C\'est l\'exercice « Mettre en service une passerelle IP vers SDI » de la leçon « Multicast et IGMP » du Cours.',
     see: ['st2110', 'interface-media'],
   },
   'sortie-usine': {

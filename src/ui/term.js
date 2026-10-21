@@ -125,7 +125,7 @@ function termView(id, T) {
       rich(T.body, 'tp-body'),
       T.car ? el('div', { class: 'tp-car' }, el('b', {}, 'Dans le car'), el('span', {}, T.car)) : null,
       see.length ? el('div', { class: 'tp-see' }, el('b', {}, 'Voir aussi'), ...see.map((k) => el('button', { type: 'button', class: 'tp-chip', 'data-see': k, onclick: () => openTerm(k, null, 'push') }, TERMS[k].t))) : null,
-      lessons.length ? el('div', { class: 'tp-see tp-cours' }, el('b', {}, 'Leçon'), ...lessons.map(({ lesson }) => el('button', { type: 'button', class: 'tp-chip', 'data-cours': lesson.id, title: 'Ouvrir la leçon dans les cours', onclick: () => { closeTerm(); emit('cours', { tab: 'chapitres', lesson: lesson.id }); } }, lesson.title))) : null,
+      lessons.length ? el('div', { class: 'tp-see tp-cours' }, el('b', {}, 'Leçon'), ...lessons.map(({ lesson }) => el('button', { type: 'button', class: 'tp-chip', 'data-cours': lesson.id, title: 'Ouvrir la leçon dans les cours', onclick: () => { closeTerm(); emit('cours', { lesson: lesson.id }); } }, lesson.title))) : null,
       T.ref ? el('div', { class: 'tp-ref' }, 'Référence : ' + T.ref) : null),
     el('footer', { class: 'tp-foot' },
       el('button', { type: 'button', class: 'btn small primary', 'data-cours': id, title: 'Les leçons qui en parlent, dans le Cours (plein écran)', onclick: () => { closeTerm(); emit('cours', { term: id }); } }, 'Ouvrir dans le Cours'),

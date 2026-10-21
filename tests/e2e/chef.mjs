@@ -20,7 +20,10 @@ await ev(() => { try { localStorage.setItem('carregie.onboard', '1'); } catch (e
 T.check('partie lancée', await until(page, () => window.__dbg.S.mode === 'fps'));
 await page.keyboard.press('KeyJ');
 T.check('touche J : le chef apparaît', await until(page, () => !document.querySelector('#chef').hidden, null, 5000));
-T.check('accueil : parcours réseau listés', await ev(() => /Mettre en service une leaf neuve/.test(document.querySelector('#chef').textContent)));
+T.check('hors d\'un poste : le chef invite à s\'asseoir et renvoie au Cours', await ev(() => /Assieds-toi à un poste/.test(document.querySelector('#chef').textContent) && [...document.querySelectorAll('#chef button')].some((b) => /Tous les exercices/.test(b.textContent)) && !document.querySelector('#chef details.chef-more')));
+// au poste réseau : les exercices de ce poste, et la proposition de passer en IP
+await ev(() => window.__dbg.openStation('reseau')); await page.waitForTimeout(800);
+T.check('au poste : « Ici, au poste » et ses exercices', await until(page, () => /Ici, au poste/.test(document.querySelector('#chef').textContent) && /Mettre en service une leaf neuve/.test(document.querySelector('#chef').textContent), null, 5000));
 T.check('car SDI : proposition de passer en IP', await ev(() => [...document.querySelectorAll('#chef button')].some((b) => /Passer le car en IP/.test(b.textContent))));
 await shot('01-accueil-sdi');
 await clickChef('Passer le car en IP');
@@ -29,11 +32,10 @@ await page.locator('#ask [data-ask="ok"]').click();
 T.check('car passé en IP', await until(page, () => window.__dbg.S.ipMode && !!window.__dbg.FAB.res, null, 10000));
 
 // ---- parcours « leaf neuve » ----
-// les parcours sont rangés par famille, repliée : on ouvre « Réseau ST 2110 »
-await page.locator('#chef details.chef-more summary', { hasText: 'Réseau ST 2110' }).click();
-T.check('famille Réseau ST 2110 dépliée', await until(page, () => !!document.querySelector('#chef details.chef-more[open][data-dom="Réseau ST 2110"]'), null, 5000));
 await page.locator('#chef .chef-card', { hasText: 'Mettre en service une leaf neuve' }).locator('button').click();
-T.check('parcours commencé', await until(page, () => window.__dbg.TUTOR.lesson && window.__dbg.TUTOR.lesson.id === 'reseau-leaf', null, 5000));
+T.check('exercice commencé', await until(page, () => window.__dbg.TUTOR.lesson && window.__dbg.TUTOR.lesson.id === 'reseau-leaf', null, 5000));
+// on quitte le poste : l'exercice y ramènera (« Emmène-moi »)
+await ev(() => window.__dbg.closeStation()); await page.waitForTimeout(400);
 await shot('02-intro');
 await clickChef('Suivant'); // intro
 T.check('leaf remplacée (configuration usine)', await ev(() => window.__dbg.FAB.switches['LEAF-R1'].running.hostname === 'localhost'));

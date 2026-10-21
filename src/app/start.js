@@ -72,6 +72,8 @@ export function buildStart() {
   updFmt();
   // le choix : le lieu, le mode, seul ou en coopération
   const PICK = { mode: 'installe', team: 'solo' };
+  // premier lancement dans ce navigateur : la visite guidée est proposée d'office
+  try { if (localStorage.getItem('carregie.chefIntro') !== '1') PICK.mode = 'visite'; } catch (e) { /* stockage indisponible */ }
   const run = (preset) => start(preset, light.value, qual.value, snd.value === '1', fmt.value, infra.value === 'ip');
   const go = () => {
     const M = MODES.find((m) => m.id === PICK.mode) || MODES[0];

@@ -12,7 +12,7 @@ const OUT = outDir('navigateurs');
 const T = reporter();
 const ROOT = path.resolve(import.meta.dirname, '../..');
 const VERSION = JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8')).version;
-const URL_FILE = pathToFileURL(path.join(ROOT, 'dist/Car-regie-3D.html')).href + '?lite';
+const URL_FILE = pathToFileURL(path.join(ROOT, 'dist/TIEE-Simulator.html')).href + '?lite';
 T.log('navigateur', BROWSER);
 
 const browser = await launch();
@@ -44,23 +44,22 @@ await page.keyboard.press('ArrowDown'); await page.keyboard.press('ArrowUp'); aw
 T.check('clavier : flèches puis Entrée sur « Jouer »', await until(page, () => document.getElementById('title').hidden, null, 8000));
 T.check('version affichée sur la feuille de service', (await ev(() => document.getElementById('stversion')?.textContent || '')).includes(VERSION));
 
-// le mur des lieux : le car en service, les autres en préparation ; un écran ouvre « Ce qui se prépare »
-T.check('mur des lieux : 5 écrans, le car en service', await ev(() => document.querySelectorAll('.lx-wall .lx').length === 5 && document.querySelector('.lx.on')?.dataset.lieu === 'car'));
-await page.locator('.lx[data-lieu="plateau"]').click();
-T.check('écran « Plateau TV » : fiche « Ce qui se prépare »', await until(page, () => /Ce qui se prépare : Plateau TV/.test(document.querySelector('#modal h2')?.textContent || '') && !!document.querySelector('#modal .lx-wait button'), null, 8000));
+// le lieu : le car en service, la salle de concert en préparation (fiche « Ce qui se prépare »)
+T.check('lieux : 2 écrans, le car en service', await ev(() => document.querySelectorAll('.jo-lieux .lx').length === 2 && document.querySelector('.lx.on')?.dataset.lieu === 'car'));
+await page.locator('.lx[data-lieu="concert"]').click();
+T.check('écran « Salle de concert » : fiche « Ce qui se prépare »', await until(page, () => /Ce qui se prépare : Salle de concert/.test(document.querySelector('#modal h2')?.textContent || '') && !!document.querySelector('#modal .lx-wait button'), null, 8000));
 await ev(() => document.querySelector('#modal .x')?.click());
 await page.locator('.lx[data-lieu="car"]').click();
-T.check('écran « Car régie » : la touche Antenne prend le focus', await until(page, () => document.activeElement?.id === 'st-antenne', null, 5000));
+T.check('écran « Car régie » : le choix du mode prend le focus', await until(page, () => !!document.activeElement?.matches('.jo-mode[aria-pressed="true"]'), null, 5000));
 
-// chef de car : touche J et bouton de la feuille de service
+// chef de car : touche J sur l'écran Jouer, puis la visite guidée
 await page.keyboard.press('KeyJ');
-T.check('touche J sur la feuille de service', await chefOpen() && /Prendre l'antenne avec moi/.test(await chefText()));
+T.check('touche J sur l\'écran Jouer', await chefOpen() && /Visite guidée/.test(await chefText()));
 await page.keyboard.press('KeyJ');
 T.check('touche J referme le chef', await chefClosed());
-await page.locator('#st-chef').click();
-T.check('bouton « Chef de car » de la feuille de service', await chefOpen());
-await page.locator('#chef button', { hasText: 'Prendre l\'antenne avec moi' }).click();
-T.check('« Prendre l\'antenne avec moi » : car lancé, tour du car', await until(page, () => window.__dbg.S.mode === 'fps' && window.__dbg.TUTOR.lesson?.id === 'prise-en-main', null, 90000));
+await page.locator('.jo-mode[data-mode="visite"]').click();
+await page.locator('#st-antenne').click();
+T.check('« Visite guidée » : car lancé, tour du car', await until(page, () => window.__dbg.S.mode === 'fps' && window.__dbg.TUTOR.lesson?.id === 'prise-en-main', null, 90000));
 const f0 = await ev(() => window.__dbg.S.frame);
 T.check('le rendu tourne', await until(page, (f) => window.__dbg.S.frame > f + 5, f0, 60000));
 await shot('01-partie');
@@ -80,11 +79,11 @@ await page.locator('#modal .dkey', { hasText: 'Truquiste' }).click();
 T.check('touche « Truquiste » du pupitre : poste Mélangeur ouvert', await until(page, () => window.__dbg.S.mode === 'station' && window.__dbg.S.station === 'melangeur', null, 30000));
 await ev(() => window.__dbg.closeStation());
 
-// à un poste, la touche J ouvre le chef sur ce poste
-await ev(() => { window.__dbg.stopChefLesson(); window.__dbg.toggleChef(false); window.__dbg.openStation('melangeur'); });
+// visite arrêtée : à un poste, la touche J ouvre le chef sur les exercices de ce poste
+await ev(() => { window.__dbg.stopChefLesson(); window.__dbg.S.visite = false; window.__dbg.toggleChef(false); window.__dbg.openStation('melangeur'); });
 await until(page, () => window.__dbg.S.mode === 'station', null, 30000);
 await page.keyboard.press('KeyJ');
-T.check('touche J au poste Mélangeur : parcours du poste', await chefOpen() && /Ici, au poste/.test(await chefText()));
+T.check('touche J au poste Mélangeur : exercices du poste', await chefOpen() && /Ici, au poste/.test(await chefText()));
 await shot('03-poste');
 // livret de compétences depuis le chef : 4 blocs, 39 compétences ; le chef se réduit
 await page.locator('#chef button', { hasText: 'Mon livret de compétences' }).click();

@@ -1,11 +1,11 @@
-CAR RÉGIE 3D — JOUER À PLUSIEURS SUR UN RÉSEAU LOCAL
-====================================================
+TIEE SIMULATOR — JOUER À PLUSIEURS SUR UN RÉSEAU LOCAL
+======================================================
 
 Une personne héberge la partie : son ordinateur fait tourner le serveur et le match.
 Les autres n'installent rien : ils ouvrent une adresse dans leur navigateur.
 
 1. SUR L'ORDINATEUR QUI HÉBERGE
-   (Sous Windows, sans rien installer : Car-regie-3D.exe, du kit de partage, fait la même chose.)
+   (Sous Windows, sans rien installer : TIEE-Simulator.exe, du kit de partage, fait la même chose.)
    - Installez Node.js (version LTS) depuis https://nodejs.org (une seule fois).
    - Lancez le serveur :
        Windows : double-cliquez « Lancer le serveur (Windows).bat »
@@ -19,10 +19,10 @@ Les autres n'installent rien : ils ouvrent une adresse dans leur navigateur.
    - Si Windows demande l'autorisation du pare-feu pour Node.js, acceptez pour les réseaux privés.
 
 2. DANS LE NAVIGATEUR (tout le monde, hôte compris)
-   - Ouvrez l'adresse, cliquez « Jouer à plusieurs ».
+   - Ouvrez l'adresse, cliquez « Jouer », puis En équipe : « Coopération » et « Ouvrir le salon ».
    - Choisissez un pseudo : il s'affiche au-dessus de votre personnage.
-   - L'hôte : onglet « Héberger une partie », choisit son rôle, « Créer la partie ».
-   - Les autres : onglet « Rejoindre une partie », choisissent la partie, leur rôle, « Rejoindre ».
+   - L'hôte : « Créer une partie », choisit son poste, « Créer la partie ».
+   - Les autres : « Rejoindre une partie », choisissent la partie, leur poste, « Rejoindre la partie ».
    - L'hôte (ou le formateur) peut réattribuer les rôles : bouton « Équipe » > Participants.
 
 3. LES RÔLES

@@ -1,4 +1,6 @@
-# Car régie 3D — simulateur de formation
+# TIEE Simulator — simulateur de formation au car régie
+
+Réalisé par le BTS Audiovisuel de Saint-Quentin (lycée Henri-Martin), développé par Pierre MALYCHA.
 
 Simulateur pédagogique d'une captation de football en car régie : stade 3D, plan de caméras, liaisons
 (SMPTE, triax, fibre, coax, IP, HF), car régie visitable en vue à la première personne et postes
@@ -12,7 +14,7 @@ liste de câblage générée à partir de l'installation.
 
 ## Profil matériel
 
-Le simulateur est réglé sur ce parc (modifiable dans l'Espace formateur → « Le car ») :
+Le simulateur est réglé sur ce parc (modifiable dans Réglages, profil Formateur, Espace formateur → « Le car ») :
 
 - mélangeur Sony XVS-6000 avec pupitre ICP-X7000 (16 entrées utilisées en UHD, 22 en HD) ;
 - un serveur EVS XT4K (UHD : 3 REC + 1 PLAY ; HD : 8 REC + 2 PLAY en ChannelMAX, 6 + 2 sinon) ;
@@ -391,6 +393,56 @@ Tests :
 - `tests/e2e/chef-postes.mjs` rejoue les 30 parcours dans le navigateur, par le panneau du chef. Pour chaque action,
   « Emmène-moi / Montre-moi » doit mettre en évidence un élément réel de la page, et « Fais-le pour moi » doit faire
   valider l'étape.
+
+## v19 : TIEE Simulator, trois entrées, des exercices pratiques dans le Cours
+
+**Plus simple : Jouer, Cours, Réglages.** L'application s'appelle **TIEE Simulator**, réalisée par le BTS
+Audiovisuel de Saint-Quentin (logo du BTS sur l'écran titre, `src/assets/logo-bts-av.png`), développée par Pierre
+MALYCHA (pied de l'écran titre, de l'écran Jouer et « À propos »). L'écran titre (`src/app/title.js`) n'a plus que
+trois entrées ; le chef de car et l'espace formateur ne sont plus des entrées à part. Les mêmes trois partout : menu
+du car (Échap, `src/app/nav.js` : Reprendre, Cours, Réglages, Équipe en coopération, Retour à l'accueil), pupitre
+(Tab : outils du car, Cours, Réglages), barre d'outils (Pupitre, Cours, Son, Menu ; le bouton du chef n'apparaît que
+pendant un exercice ou la visite, touche J à tout moment).
+
+**Réglages** (`src/ui/settings.js`) : une seule fenêtre, la même depuis le titre, Jouer et le car. Sur cet
+ordinateur (qualité, son), la partie en cours (lumière, éclairage de nuit, voix, étiquettes), le profil Étudiant /
+Formateur, l'espace formateur (profil Formateur : configuration du car, suivi des stagiaires, relecture technique),
+l'aide (touches, diagnostic, test des performances, signaler une erreur) et « À propos ».
+
+**Jouer** (`src/app/start.js`, `src/styles/jouer.css`) : trois choix numérotés, la touche Antenne à droite.
+1. **Le lieu** : le car régie, et la salle de concert en préparation (fiche « Ce qui se prépare »). Le plateau TV et
+   la conférence sont retirés ; l'entrepôt deviendra un mode à part (`ROADMAP.md`).
+2. **Le mode** : **Car installé** (tout est prêt, on prend l'antenne), **Tout à faire** (stade vide, car non brassé,
+   caméras non réglées, réseau de contrôle aux réglages d'usine, `factoryCtrlNet()` ; une liste de tâches se coche
+   toute seule : brasser le car, configurer le réseau de contrôle, poser et régler les caméras), **Visite guidée**
+   (Olivier fait le tour du car, puis présente chaque poste l'un après l'autre : plan de la visite, « Poste
+   suivant » ; proposé d'office au premier lancement).
+3. **En équipe** : Solo ou **Coopération**, qui ouvre le **salon** (`src/ui/session_ui.js`, `src/styles/salon.css`)
+   comme le lobby d'un jeu en ligne : l'adresse à donner aux autres (réseau local) ou le code (en ligne), le pseudo,
+   créer ou rejoindre une partie, et les postes de la prestation avec la personne qui tient chacun ou « Libre ».
+Les conditions de captation (lumière, format, car SDI ou IP, qualité, son) sont repliées sous la touche Antenne.
+
+**Le chef de car devient les exercices pratiques du Cours.** Les 46 parcours d'Olivier sont rangés, chacun une
+seule fois, dans la leçon qui les explique (`src/cours/exercices.js`, test unitaire) et réécrits en exercices de
+cette leçon (titre à l'infinitif, rappel de la leçon, chiffres de la leçon repris dans les étapes). Les exercices
+notés y sont aussi : l'atelier de montage (La caméra), le car vide (Le SDI), la formation réseau ST 2110 (Le
+réseau), le jour de match (L'exploitation). « Commencer » lance le car si besoin et ouvre l'exercice avec Olivier ;
+à la fin, « Revenir à la leçon ». Au poste, la touche J ne propose que les exercices de ce poste. L'ancien espace du
+chef (`ui/entrainement.js`) disparaît : ses missions sont la liste de tâches du mode « Tout à faire », son livret
+est dans le Cours.
+
+**Le Cours** (`src/ui/cours_ui.js`, `src/styles/cours-suivi.css`) : barre **Leçons · Glossaire · Postes ·
+Matériel** (plus d'onglets Chapitres, Procédures ni La caméra), **un seul sommaire** à gauche (les chapitres, leurs
+leçons, le module 3D de la caméra dans son chapitre), et au milieu la page **Mon suivi** : leçons acquises,
+exercices faits, compétences travaillées, « à faire ensuite », un tableau par chapitre et le livret de compétences.
+Dix chapitres, dans l'ordre d'apprentissage (`cours/index.js`, `ORDER`) : le signal, le SDI, la synchro, la caméra,
+la réalisation, les ralentis, le son, le réseau, la HF, l'exploitation. Chaque leçon cite son article de référence
+(l'ancien guide, ouvert par-dessus le Cours) et ses compétences. Les procédures maison du formateur s'affichent sur
+« Mon suivi » quand il en a écrit.
+
+Les fichiers à partager s'appellent `TIEE-Simulator.html`, `TIEE-Simulator.exe` et `TIEE-Simulator-partage.zip`.
+Suites E2E mises à jour : `navigation`, `cours`, `chef`, `chef-postes`, `fichier`, `navigateurs`, `camera`,
+`accessibilite`, `session`, `reseau-local`.
 
 ## v18.5 : la caméra de plateau en 3D
 
@@ -897,18 +949,19 @@ node tools/shots.mjs dossier 1280 800 '["vision","hf"]'   # captures de postes
 | `diag.js` | Journal des erreurs (partagé avec `boot.js`) : erreurs non rattrapées, écouteurs d'événement, boucle de rendu, `console.error` ; version de l'application |
 | `ui/diag_ui.js` | Bandeau « Un problème est survenu » et fenêtre « Diagnostic technique » (texte à copier) |
 | `ui/pupitre.js` | Le pupitre (Tab ou T) : plan du car, touches des postes par zone, endroits du stade, équipiers, outils |
-| `app/title.js` | Écran titre : menu à cinq entrées, bascule de profil, progression du chargement, conseils d'Olivier, réglages et crédits |
+| `app/title.js` | Écran titre TIEE Simulator : logo du BTS, trois entrées (Jouer, Cours, Réglages), progression du chargement, conseils d'Olivier, mentions |
+| `ui/settings.js` | Réglages : une seule fenêtre (ordinateur, partie en cours, profil, espace formateur, aide, à propos) |
 | `app/profile.js` | Profil Étudiant / Formateur, mémorisé ; classe `role-formateur` sur `body`, éléments `.role-only` |
-| `cours/index.js`, `cours/kit.js`, `cours/all.js`, `cours/signal.js`, `cours/sdi.js`, `cours/reseau.js`, `cours/hf.js` | La section Cours : chapitres et leçons (signal, SDI, réseau, HF), progression, kit des schémas et manipulations |
+| `cours/index.js`, `cours/kit.js`, `cours/all.js`, un fichier par chapitre (`signal.js`, `sdi.js`, `synchro.js`, `camera.js`, `realisation.js`, `ralentis.js`, `son.js`, `reseau.js`, `hf.js`, `exploitation.js`) | La section Cours : dix chapitres et leurs leçons, ordre d'apprentissage, progression, kit des schémas et manipulations |
+| `cours/exercices.js` | Les exercices pratiques de chaque leçon : parcours d'Olivier (chacun dans une seule leçon) et exercices notés (atelier, car vide, formation réseau, jour de match), leur état |
 | `cours/liens.js` | Les liens du Cours avec le reste : terme du glossaire → leçon ou fiche « ? », poste → leçon (bouton « Cours », touche G) |
 | `cours/sdi_falaise.js`, `cours/lab_sdi.js`, `cours/figs_sdi.js` | Leçon « La falaise numérique » : diagramme de l'œil et image qui casse avec la longueur du câble, défis d'Olivier |
-| `ui/cours_ui.js` | L'espace Cours : leçons (chapitres, recherche, quiz, progression), chapitres du guide, glossaire, postes, matériel, procédures |
-| `app/nav.js` | Navigation entre les familles : menu du car (Échap), aiguillage des boutons « Aller au poste », « Commencer », « Lancer » (car lancé si besoin), changement de vacation |
-| `ui/layer.js` | Espaces plein écran (Cours, chef de car) : plaque, onglets, Fermer (Échap), ligne d'état |
-| `ui/entrainement.js` | L'espace du chef de car : parcours par famille, exercices notés, missions d'installation, livret |
-| `ui/guide.js` | Missions d'installation et parties de l'ancien guide (chapitres, glossaire, postes, matériel, procédures, réglages, commandes), dessinées dans l'espace qui les accueille |
+| `ui/cours_ui.js` | L'espace Cours : un seul sommaire, page « Mon suivi » (progression, à faire ensuite, livret), leçons (quiz, exercices pratiques, article de référence), glossaire, postes, matériel |
+| `app/nav.js` | Navigation entre les trois entrées : menu du car (Échap), aiguillage des boutons « Aller au poste », « Commencer » (car lancé si besoin), changement de vacation |
+| `ui/layer.js` | Espace plein écran (le Cours) : plaque, onglets, Fermer (Échap), ligne d'état |
+| `ui/guide.js` | Missions d'installation (liste des tâches), articles de référence des leçons, glossaire, postes, matériel, procédures maison, commandes |
 | `content/referentiel.js` | Référentiel du BTS MAV option TIEE (fiche RNCP37022) : 4 blocs, 39 compétences numérotées 1.1 à 4.5, couverture par le car et modules qui la complèteront ; rattachement des parcours, missions, phases du jour de match, missions réseau, exercices et leçons |
-| `livret.js`, `ui/livret.js` | Livret de compétences : niveau de chaque compétence calculé d'après la progression (à travailler, travaillée, consolidée, hors simulateur) ; affiché depuis le chef de car, l'espace du chef et pour chaque stagiaire dans l'espace formateur, export CSV |
+| `livret.js`, `ui/livret.js` | Livret de compétences : niveau de chaque compétence calculé d'après la progression (à travailler, travaillée, consolidée, hors simulateur) ; affiché sur la page « Mon suivi » du Cours, depuis le chef de car et pour chaque stagiaire dans l'espace formateur, export CSV |
 | `prism_model.js` | Modèle de la liaison SDI pour le PRISM : normes, points de mesure, œil, gigue, timing, pannes |
 | `videohub.js` | Modèle de la grille Videohub 40 × 40 : plan des ports, étiquettes, verrous, protocole, pannes |
 | `ui/st_videohub.js` | Le poste Grille en car SDI : façade, Videohub Control, monitoring, matrice, Setup |
@@ -916,11 +969,11 @@ node tools/shots.mjs dossier 1280 800 '["vision","hf"]'   # captures de postes
 | `ui/prism.js` | L'instrument de mesure en tuiles (poste vision et baie de mesure) |
 | `ui/prism_station.js` | La baie de mesure (poste `mesure`) |
 | `ui/st_ctrlnet.js` | Le poste Réseau de contrôle (car SDI) : six onglets |
-| `content/lieux.js` | Les lieux du simulateur : en service ou en préparation, avec leur fiche « Ce qui se prépare » |
+| `content/lieux.js` | Les lieux de l'écran Jouer : le car régie, la salle de concert en préparation (fiche « Ce qui se prépare ») |
 | `ui/icons.js` | Icônes Phosphor intégrées au build (`icon(nom)`), toujours à côté d'un libellé |
 | `tutor/` | Chef de car : moteur des parcours (`engine.js`), lecture du réseau pour expliquer et vérifier (`net_helpers.js`), parcours réseau ST 2110 (`lessons/reseau.js`, `lessons/reseau_leaf.js`, `lessons/reseau_ops.js`), parcours des postes, compétences et matériel (`lessons/realisation.js`, `image.js`, `ralentis.js`, `son.js`, `liaisons.js`, `exploitation.js`, `materiel.js`, outils communs `kit.js`), présentation de chaque poste (`lessons/postes.js`) |
-| `ui/tutor_ui.js` | Panneau du chef de car : parcours proposés selon le poste et rangés par famille, étapes, mise en évidence, gestes « Fais-le pour moi » hors des postes (caméra, visionneuse, atelier), commandes vers le terminal, voix |
-| `app/` | Application : vue et qualité graphique (`view.js`), joueur et déplacements (`player.js`), visée et interactions (`interact.js`), cadreur (`camop.js`), téléportation et postes (`teleport.js`), barre d'outils et d'état (`hud.js`), clavier / souris / tactile (`input.js`), écran d'accueil et lancement (`start.js`), diagnostic de performance (`perf.js`), profileur `?perf` (`profiler.js`) |
+| `ui/tutor_ui.js` | Panneau du chef de car : exercices du poste où l'on est, visite guidée (tour du car puis chaque poste), retour à la leçon du Cours, étapes, mise en évidence, gestes « Fais-le pour moi » hors des postes (caméra, visionneuse, atelier), commandes vers le terminal, voix |
+| `app/` | Application : vue et qualité graphique (`view.js`), joueur et déplacements (`player.js`), visée et interactions (`interact.js`), cadreur (`camop.js`), téléportation et postes (`teleport.js`), barre d'outils et d'état (`hud.js`), clavier / souris / tactile (`input.js`), écran Jouer, modes et lancement (`start.js`), diagnostic de performance (`perf.js`), profileur `?perf` (`profiler.js`) |
 | `data/` | Catalogues techniques : caméras, objectifs, liaisons, formats (`cameras.js`) ; positions et antennes du stade (`stadium.js`) ; HF COFDM (`rf.js`) ; exposition et lumières (`exposure.js`) ; équipes (`match.js`) |
 | `content/` | Contenus pédagogiques : fiches de poste (`stations.js`), glossaire (`glossary.js`), fiches des termes réseau et ST 2110 (`netterms.js`), chapitres du guide (`guide.js`), commandes (`controls.js`) |
 | `state.js` | État partagé de la simulation (`S`) et bus d'événements (`on` / `emit`) |
@@ -952,7 +1005,7 @@ node tools/shots.mjs dossier 1280 800 '["vision","hf"]'   # captures de postes
 | `review.js` | Points techniques à faire relire par le formateur |
 | `gfx.js` | Habillage (score, bandeaux, statistiques) |
 | `atelier.js` | Atelier de montage de la CAM 1 : pièces, ordre des opérations et prérequis, visée, fantômes, gestes maintenus, réglages à la molette, mise en service, rapport |
-| `ui/` | Session (`session_ui.js`), relecture (`review_ui.js`), réseau IP (`st_network.js` : onglet Technique, `net_ops.js` : onglet Exploitation, `net_tools.js`, `net_course.js`, `term.js` et `term_figs.js` : boutons « ? », fiches et schémas), synoptiques (`synoptics.js`), plan du car (`truckmap.js`), postes (`stations.js`, `st_audio.js`, `commut.js`, `st_vision.js`, `st_evs.js`, `st_mixer.js`, `st_ipd.js`, `st_patch.js`), espace formateur (`config.js`), rapports (`report.js`), plan, guide, missions |
+| `ui/` | Session et salon de coopération (`session_ui.js`), relecture (`review_ui.js`), réseau IP (`st_network.js` : onglet Technique, `net_ops.js` : onglet Exploitation, `net_tools.js`, `net_course.js`, `term.js` et `term_figs.js` : boutons « ? », fiches et schémas), synoptiques (`synoptics.js`), plan du car (`truckmap.js`), postes (`stations.js`, `st_audio.js`, `commut.js`, `st_vision.js`, `st_evs.js`, `st_mixer.js`, `st_ipd.js`, `st_patch.js`), espace formateur (`config.js`), rapports (`report.js`), plan, guide, missions |
 | `equipment/` | Visionneuse de matériel : appareils (`devices.js`), liste de câblage (`cabling.js`), rendu SVG et photos (`viewer.js`) |
 | `faults.js`, `exercises.js` | Simulateur de pannes, réalisateur virtuel et opérateur EVS automatique |
 

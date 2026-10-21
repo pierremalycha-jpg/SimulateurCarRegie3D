@@ -4,7 +4,7 @@ import { S } from '../state.js';
 import { icon } from './icons.js';
 
 // ----------------------------------------------------------------------------------
-// Les espaces plein écran (Cours, S'entraîner) : ils s'ouvrent par-dessus tout le reste, écran
+// L'espace plein écran (le Cours) : ils s'ouvrent par-dessus tout le reste, écran
 // titre compris, et se referment sur ce qu'on faisait (Échap ou « Fermer »). Un seul à la fois.
 // En-tête : le nom de l'espace, ses onglets, le bouton Fermer ; dessous, la page qui défile. Une
 // ligne d'état en bas de l'écran porte les messages de l'espace (le car se prépare encore…).

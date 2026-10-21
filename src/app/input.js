@@ -31,7 +31,7 @@ function onKeyDown(e) {
   // fenêtre explicative « ? » : Échap la ferme (sans fermer le poste) ; les autres touches ne pilotent rien
   if (termOpen()) { if (e.code === 'Escape') { closeTerm(); e.preventDefault(); } return; }
   if (modal.isOpen) { if (e.code === 'Escape') modal.close(); return; }
-  // Cours, S'entraîner (plein écran, par-dessus l'écran titre aussi) : Échap les referme
+  // le Cours (plein écran, par-dessus l'écran titre aussi) : Échap le referme
   if (layerOpen()) { if (e.code === 'Escape') { closeLayer(); e.preventDefault(); } return; }
   // écran titre : seulement la navigation dans son menu
   if (titleOpen()) { titleKey(e); return; }

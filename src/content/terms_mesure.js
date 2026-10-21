@@ -42,7 +42,7 @@ const ADD = {
     t: 'Parade RVB', aka: 'RGB parade', cat: V,
     short: 'Le waveform en trois morceaux côte à côte : rouge, vert, bleu. Sur un blanc ou un gris neutre, les trois traces sont à la même hauteur.',
     body: "C'est l'outil de la **balance** :\n- en haut, sur les blancs et les gris clairs : une trace plus haute que les deux autres signale une dominante de cette couleur (balance des blancs à reprendre, AWB ou gains WHITE) ;\n- en bas, sur les noirs : les trois traces doivent partir du même niveau (balance des noirs, ABB ou réglages BLACK).\n\nPour le **matching**, on compare deux caméras sur le même objet : mêmes hauteurs de R, G et B.",
-    car: 'Tuile Waveform, bouton RVB. Le parcours « Lire le PRISM : waveform et parade » fait corriger un noir rouge au RCP.',
+    car: 'Tuile Waveform, bouton RVB. L\'exercice « Lire les niveaux au waveform et à la parade » (Cours, leçon sur les niveaux) fait corriger un noir rouge au RCP.',
     fig: 'parade', see: ['waveform', 'ycbcr', 'vecteurscope'],
   },
   ycbcr: {

@@ -46,8 +46,8 @@ fs.writeFileSync('dist/index-lan.html', lan);
 console.log('dist/index-lan.html', (lan.length / 1024).toFixed(0) + ' KB');
 // version à partager : le même document, à ouvrir d'un double-clic (file://), sans Internet ni serveur
 const solo = lan.replace('<!--LAN-->', '');
-fs.writeFileSync('dist/Car-regie-3D.html', solo);
-console.log('dist/Car-regie-3D.html', (solo.length / 1024).toFixed(0) + ' KB');
+fs.writeFileSync('dist/TIEE-Simulator.html', solo);
+console.log('dist/TIEE-Simulator.html', (solo.length / 1024).toFixed(0) + ' KB');
 // serveur autonome : un seul fichier à copier sur l'ordinateur qui héberge (node car-regie-serveur-lan.mjs)
 const srv = fs.readFileSync('lan/serveur.mjs', 'utf8');
 if (!srv.includes('let PAGE = null;')) throw new Error('lan/serveur.mjs : marqueur PAGE introuvable');

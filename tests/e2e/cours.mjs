@@ -1,24 +1,28 @@
-// Menus par profil et section Cours (v18.4) : l'écran titre à cinq entrées et sa bascule de profil,
-// la fenêtre Cours depuis le titre (chapitres, chaque leçon : essentiel, schéma, manipulation,
-// quiz, progression), les fenêtres regroupées (Le car, Missions et livret, Réglages), le pupitre par
-// famille, la touche G, le lien fiche « ? » → leçon, et le livret du stagiaire.
+// Section Cours (v19) : l'écran titre à trois entrées et le profil dans les Réglages, le Cours
+// depuis le titre (un seul sommaire ; chaque leçon : essentiel, schéma, manipulation, quiz,
+// exercices pratiques, article de référence ; le suivi), le pupitre, la touche G, le lien
+// fiche « ? » → leçon, le menu du car et le livret du stagiaire.
 // node tests/e2e/cours.mjs [dossier]
 import { launch, openPage, outDir, until, reporter } from './harness.mjs';
 const OUT = outDir('cours');
 const T = reporter();
 const browser = await launch();
 
-// ---------------- écran titre : profil et cinq entrées ----------------
+// ---------------- écran titre : trois entrées, profil dans les Réglages ----------------
 const A = await openPage(browser, { title: true, fresh: true, errors: T.errors });
 await until(A, () => !!document.querySelector('#title.ready'), null, 180000);
 const ev = (f, a) => A.evaluate(f, a);
 const visibleKeys = () => ev(() => [...document.querySelectorAll('#ti-menu .ti-key')].filter((b) => b.offsetParent).map((b) => b.querySelector('b').textContent));
-T.check('profil Étudiant par défaut : Jouer, Cours, Chef de car, Réglages', JSON.stringify(await visibleKeys()) === JSON.stringify(['Jouer', 'Cours', 'Chef de car', 'Réglages']), String(await visibleKeys()));
-await A.click('#ti-role button[data-v="formateur"]'); await A.waitForTimeout(200);
-T.check('profil Formateur : l\'entrée Formateur apparaît', (await visibleKeys()).includes('Formateur'));
+T.check('écran titre : Jouer, Cours, Réglages', JSON.stringify(await visibleKeys()) === JSON.stringify(['Jouer', 'Cours', 'Réglages']), String(await visibleKeys()));
+await A.click('#ti-settings'); await A.waitForTimeout(300);
+T.check('Réglages (Étudiant par défaut) : pas d\'espace formateur', await ev(() => !document.getElementById('rg-trainer')?.offsetParent));
+await A.click('#modal .seg[aria-label="Profil"] button[data-v="formateur"]'); await A.waitForTimeout(200);
+T.check('profil Formateur : l\'espace formateur apparaît dans les Réglages', await ev(() => !!document.getElementById('rg-trainer')?.offsetParent));
 T.check('profil mémorisé', await ev(() => localStorage.getItem('carregie.profil') === 'formateur' && document.body.classList.contains('role-formateur')));
-await A.click('#ti-role button[data-v="etudiant"]'); await A.waitForTimeout(200);
-T.check('retour Étudiant : l\'entrée Formateur disparaît', !(await visibleKeys()).includes('Formateur'));
+await A.click('#modal .seg[aria-label="Profil"] button[data-v="etudiant"]'); await A.waitForTimeout(200);
+T.check('retour Étudiant : l\'espace formateur disparaît', await ev(() => !document.getElementById('rg-trainer')?.offsetParent));
+T.check('trois entrées quel que soit le profil', JSON.stringify(await visibleKeys()) === JSON.stringify(['Jouer', 'Cours', 'Réglages']));
+await A.keyboard.press('Escape'); await A.waitForTimeout(200);
 await A.screenshot({ path: `${OUT}/01-titre.png` });
 
 // ---------------- Cours depuis le titre ----------------
@@ -45,24 +49,28 @@ T.check('progression enregistrée (PROG.cours)', await ev(() => Object.values(wi
 await A.fill('#layer #co-search', 'ptp'); await A.waitForTimeout(300);
 T.check('recherche « ptp » : des fiches « ? » (et des leçons si le chapitre réseau en parle)', await ev(() => document.querySelectorAll('#layer .co-list .co-chip').length >= 1));
 await A.fill('#layer #co-search', ''); await A.waitForTimeout(200);
-// onglets Chapitres et Glossaire (l'ancien « Comprendre »)
-await A.click('#layer .ly-tabs .tab[data-k="chapitres"]'); await A.waitForTimeout(300);
-T.check('onglet Chapitres : les chapitres du guide par famille', await ev(() => document.querySelectorAll('#layer [data-g]').length >= 24 && !!document.querySelector('#layer .gd-art h2')));
+// barre du Cours : Leçons, Glossaire, Postes, Matériel ; l'article de référence d'une leçon
+T.check('barre du Cours : Leçons, Glossaire, Postes, Matériel', await ev(() => [...document.querySelectorAll('#layer .ly-tabs .tab')].map((t) => t.dataset.k).join(',') === 'lecons,glossaire,postes,materiel'));
+await ev(() => window.__dbg.openCours('reseau-ptp')); await A.waitForTimeout(300);
+await A.click('#layer .co-article .btn'); await A.waitForTimeout(300);
+T.check('« Lire l\'article de référence » : l\'article du guide par-dessus le Cours', await ev(() => !document.getElementById('modal').hidden && document.querySelectorAll('#modal .prose p, #modal p').length > 3));
+await A.keyboard.press('Escape'); await A.waitForTimeout(200);
 await A.click('#layer .ly-tabs .tab[data-k="glossaire"]'); await A.waitForTimeout(300);
 T.check('onglet Glossaire : la recherche', await ev(() => !!document.querySelector('#layer #glq') && document.querySelectorAll('#layer .item').length > 50));
 await A.click('#layer .ly-tabs .tab[data-k="postes"]'); await A.waitForTimeout(300);
 T.check('onglet Postes : les fiches des postes', await ev(() => document.querySelectorAll('#layer .item').length >= 20));
 await A.keyboard.press('Escape'); await A.waitForTimeout(300);
 T.check('fermeture : l\'écran titre est toujours là, focus rendu à Cours', await ev(() => !document.getElementById('layer') && !document.getElementById('title').hidden && document.activeElement?.id === 'ti-cours'));
-// Chef de car depuis le titre : l'espace du chef (parcours, exercices, missions, livret)
-await A.click('#ti-chef'); await A.waitForTimeout(600);
-T.check('Chef de car depuis le titre : l\'espace du chef, parcours par famille', await ev(() => !!document.querySelector('#layer.ly-entrainement') && document.querySelectorAll('#layer .tr-fam').length >= 8));
-await A.click('#layer .ly-tabs .tab[data-k="livret"]'); await A.waitForTimeout(400);
-T.check('« Mon livret » : les quatre blocs du référentiel, 39 compétences', await ev(() => document.querySelectorAll('#layer .lv-card').length === 4 && document.querySelectorAll('#layer .lv-comp').length === 39));
+// le suivi : chapitres, à faire ensuite, et le livret de compétences complet
+await A.click('#ti-cours'); await A.waitForTimeout(500);
+T.check('Cours : le suivi compte les leçons acquises', await ev((n) => (document.querySelector('#layer .co-kpi b')?.textContent || '').startsWith(n + ' /'), lessons.length));
+await A.click('#layer .btn:has-text("Ouvrir le livret complet")'); await A.waitForTimeout(400);
+T.check('livret complet : les quatre blocs du référentiel, 39 compétences', await ev(() => document.querySelectorAll('#modal .lv-card').length === 4 && document.querySelectorAll('#modal .lv-comp').length === 39));
 await A.screenshot({ path: `${OUT}/02-livret.png` });
+await A.keyboard.press('Escape'); await A.waitForTimeout(200);
 await A.keyboard.press('Escape'); await A.waitForTimeout(300);
 await A.click('#ti-play'); await A.waitForTimeout(400);
-T.check('feuille de service (Étudiant) : pas d\'espace formateur ni de relecture, liens Cours et Chef de car', await ev(() => ![...document.querySelectorAll('#start .dk-team .btn, #start .dk-nav .dk-menu')].some((b) => b.offsetParent && /formateur|Relecture/i.test(b.textContent)) && !!document.getElementById('st-cours') && !!document.getElementById('st-train')));
+T.check('écran Jouer : liens Cours et Réglages, ni espace formateur ni relecture', await ev(() => !!document.getElementById('st-cours') && !!document.getElementById('st-reglages') && ![...document.querySelectorAll('#start button')].some((b) => b.offsetParent && /formateur|Relecture/i.test(b.textContent))));
 await A.close();
 
 // ---------------- dans le car : pupitre par famille, fenêtres regroupées, G, fiche → leçon, livret ----------------
@@ -72,11 +80,8 @@ await eb(() => window.__dbg.start('vierge'));
 await until(B, () => window.__dbg.S.mode !== 'start', null, 60000); await B.waitForTimeout(1000);
 await B.keyboard.press('Tab'); await B.waitForTimeout(500);
 const fams = () => eb(() => [...document.querySelectorAll('#modal .pp-fam')].filter((f) => f.offsetParent).map((f) => f.querySelector('h3').textContent));
-T.check('pupitre (Formateur, harnais) : cinq familles', JSON.stringify(await fams()) === JSON.stringify(['Jouer', 'Cours', 'Chef de car', 'Formateur', 'Réglages']), String(await fams()));
-T.check('pupitre : au moins 15 touches d\'outil', await eb(() => document.querySelectorAll('#modal .dkey.tool').length >= 15));
-await eb(() => window.__dbg.setRole('etudiant')); await B.waitForTimeout(100);
-T.check('pupitre (Étudiant) : la famille Formateur disparaît', !(await fams()).includes('Formateur'));
-await eb(() => window.__dbg.setRole('formateur'));
+T.check('pupitre : outils du car, Cours, Réglages', JSON.stringify(await fams()) === JSON.stringify(['Dans le car', 'Cours', 'Réglages']), String(await fams()));
+T.check('pupitre : au moins 12 touches d\'outil', await eb(() => document.querySelectorAll('#modal .dkey.tool').length >= 12));
 await B.screenshot({ path: `${OUT}/20-pupitre.png` });
 await B.click('#modal .dkey.tool:has-text("Cours")'); await B.waitForTimeout(400);
 T.check('touche Cours du pupitre : l\'espace Cours', await eb(() => !!document.querySelector('#layer.ly-cours')));
@@ -101,17 +106,17 @@ await eb(() => window.__dbg.openGuide('reglages')); await B.waitForTimeout(300);
 T.check('openGuide(reglages) : la fenêtre Réglages', await eb(() => document.querySelector('#modal h2')?.textContent === 'Réglages' && !document.getElementById('modal').hidden));
 await B.keyboard.press('Escape'); await B.waitForTimeout(300);
 await eb(() => window.__dbg.openGuide('guide', 'reseau')); await B.waitForTimeout(300);
-T.check('openGuide(guide, chapitre) : l\'espace Cours, onglet Chapitres, bon chapitre', await eb(() => !!document.querySelector('#layer .ly-tabs .tab.on[data-k="chapitres"]') && /ST 2110/.test(document.querySelector('#layer .gd-art h2')?.textContent || '')));
+T.check('openGuide(guide, chapitre) : la leçon qui cite cet article', await eb(() => !!document.querySelector('#layer .ly-tabs .tab.on[data-k="lecons"]') && window.__dbg.COURS.lessonById(document.querySelector('#layer .co-les.on[data-lesson]')?.dataset.lesson || '')?.lesson.article === 'reseau'));
 await B.keyboard.press('Escape'); await B.waitForTimeout(300);
-// le menu du car (Échap) : cinq familles, Formateur selon le profil
+// le menu du car (Échap) : Reprendre, Cours, Réglages, Retour à l'accueil
 await B.keyboard.press('Escape'); await B.waitForTimeout(400);
-T.check('menu du car : Cours, Chef de car, Formateur (profil Formateur), Réglages', await eb(() => !!document.querySelector('#modal .mn') && ['mn-cours', 'mn-chef', 'mn-trainer', 'mn-reglages'].every((id) => document.getElementById(id)?.offsetParent)));
-await eb(() => window.__dbg.setRole('etudiant')); await B.waitForTimeout(100);
-T.check('menu du car (Étudiant) : plus de Formateur', await eb(() => !document.getElementById('mn-trainer')?.offsetParent));
-await eb(() => window.__dbg.setRole('formateur'));
+T.check('menu du car : Cours et Réglages, plus de Chef de car ni de Formateur', await eb(() => !!document.querySelector('#modal .mn') && ['mn-cours', 'mn-reglages'].every((id) => document.getElementById(id)?.offsetParent) && !document.getElementById('mn-chef') && !document.getElementById('mn-trainer')));
 await B.screenshot({ path: `${OUT}/30-menu.png` });
+await B.click('#mn-reglages'); await B.waitForTimeout(300);
+T.check('Réglages dans le car (Formateur) : l\'espace formateur', await eb(() => !!document.getElementById('rg-trainer')?.offsetParent));
 await B.keyboard.press('Escape'); await B.waitForTimeout(300);
-await eb(() => window.__dbg.emit('entrainement', 'livret')); await B.waitForTimeout(400);
-T.check('espace du chef, Mon livret : les compétences et les leçons du Cours comptées', await eb(() => document.querySelectorAll('#layer .lv-comp').length === 39 && [...document.querySelectorAll('#layer .lv-act em')].some((e) => e.textContent === 'Cours')));
+await eb(() => window.__dbg.emit('cours', { home: true })); await B.waitForTimeout(400);
+await B.click('#layer .btn:has-text("Ouvrir le livret complet")'); await B.waitForTimeout(400);
+T.check('livret : les compétences et les leçons du Cours comptées', await eb(() => document.querySelectorAll('#modal .lv-comp').length === 39 && [...document.querySelectorAll('#modal .lv-act em')].some((e) => e.textContent === 'Cours')));
 await B.screenshot({ path: `${OUT}/31-livret.png` });
 await T.finish();

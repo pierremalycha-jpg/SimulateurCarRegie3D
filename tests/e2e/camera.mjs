@@ -1,6 +1,6 @@
-// La caméra de plateau en 3D (v18.5) : l'onglet La caméra de l'espace Cours ouvre le module, les
+// La caméra de plateau en 3D (v18.5) : le chapitre « La caméra » du Cours ouvre le module, les
 // pastilles et la liste des notions ouvrent une fiche (schéma, manipulation, questions d'Olivier),
-// le simulateur reste en pause pendant ce temps, Échap ramène dans le Cours sur le même onglet.
+// le simulateur reste en pause pendant ce temps, Échap ramène dans le Cours sur le même chapitre.
 // node tests/e2e/camera.mjs [dossier]
 import { launch, openPage, outDir, until, reporter } from './harness.mjs';
 const OUT = outDir('camera');
@@ -11,13 +11,12 @@ const A = await openPage(browser, { title: true, fresh: true, errors: T.errors }
 await until(A, () => !!document.querySelector('#title.ready'), null, 180000);
 const ev = (f, a) => A.evaluate(f, a);
 
-// ---------------- depuis le titre : Cours, onglet La caméra ----------------
+// ---------------- depuis le titre : Cours, chapitre « La caméra », module 3D ----------------
 await A.click('#ti-cours'); await A.waitForTimeout(500);
-T.check('Cours : l\'onglet La caméra est là, et la carte sur la page des leçons', await ev(() => !!document.querySelector('#layer.ly-cours .ly-tabs .tab[data-k="camera"]') && [...document.querySelectorAll('#layer .co-card b')].some((b) => b.textContent === 'La caméra')));
-await A.click('#layer .ly-tabs .tab[data-k="camera"]'); await A.waitForTimeout(300);
-T.check('onglet La caméra : la présentation et le bouton', await ev(() => !!document.querySelector('#layer .co-camera') && !!document.querySelector('#layer .co-camera .btn.primary')));
+await ev(() => window.__dbg.emit('cours', { chapter: 'camera' })); await A.waitForTimeout(300);
+T.check('Cours, chapitre La caméra : l\'entrée « La caméra en 3D » dans le sommaire', await ev(() => !!document.querySelector('#layer.ly-cours details.co-chap[open] .co-module') && /La caméra en 3D/.test(document.querySelector('#layer .co-module').textContent)));
 await A.screenshot({ path: `${OUT}/01-onglet.png` });
-await A.click('#layer .co-camera .btn.primary');
+await A.click('#layer details.co-chap[open] .co-module');
 await until(A, () => window.__dbg.camlab() && !document.querySelector('.camlab .cl-loading') && !document.querySelector('.camlab').hidden, null, 120000);
 await A.waitForTimeout(1500);
 T.check('le module s\'ouvre plein écran, l\'espace Cours s\'est refermé, le titre est caché', await ev(() => !document.getElementById('layer') && document.getElementById('title').hidden && document.body.classList.contains('camlab-on')));
@@ -52,7 +51,7 @@ T.check('la manipulation déplace la bague de zoom de la caméra 3D', z1 > z0 + 
 T.check('les touches du simulateur sont ignorées pendant le module', await ev(() => { const before = window.__dbg.S.mode; document.dispatchEvent(new KeyboardEvent('keydown', { key: 'g', bubbles: true })); return !document.getElementById('layer') && window.__dbg.S.mode === before; }));
 await A.keyboard.press('Escape'); await A.waitForTimeout(300); // referme la fiche
 await A.keyboard.press('Escape'); await A.waitForTimeout(600); // quitte le module
-T.check('Échap : retour dans le Cours, onglet La caméra, écran titre visible', await ev(() => !document.body.classList.contains('camlab-on') && !!document.querySelector('#layer.ly-cours .ly-tabs .tab.on[data-k="camera"]') && !document.getElementById('title').hidden));
+T.check('Échap : retour dans le Cours, chapitre La caméra, écran titre visible', await ev(() => !document.body.classList.contains('camlab-on') && !!document.querySelector('#layer.ly-cours details.co-chap[open] .co-module') && !document.getElementById('title').hidden));
 await A.screenshot({ path: `${OUT}/03-retour.png` });
 await A.keyboard.press('Escape'); await A.waitForTimeout(300);
 T.check('fermeture du Cours : le titre reprend le focus', await ev(() => !document.getElementById('layer') && document.activeElement?.id === 'ti-cours'));

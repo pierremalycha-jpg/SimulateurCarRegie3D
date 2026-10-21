@@ -1,5 +1,5 @@
 #!/bin/bash
-# Car régie 3D — serveur réseau local (macOS : double-cliquer ; la première fois, clic droit > Ouvrir)
+# TIEE Simulator — serveur réseau local (macOS : double-cliquer ; la première fois, clic droit > Ouvrir)
 cd "$(dirname "$0")"
 if ! command -v node >/dev/null 2>&1; then
   echo "Node.js n'est pas installé. Installez la version LTS depuis https://nodejs.org puis relancez."
