@@ -13,7 +13,7 @@ const AXE = fs.readFileSync(createRequire(import.meta.url).resolve('axe-core/axe
 const TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'];
 
 const browser = await launch();
-const page = await openPage(browser, { errors: T.errors, fresh: true, title: true });
+const page = await openPage(browser, { errors: T.errors, fresh: true, title: true, before: (pg) => pg.emulateMedia({ reducedMotion: 'reduce' }) });
 const ev = (f, a) => page.evaluate(f, a);
 const all = {};
 async function scan(name, include) {
