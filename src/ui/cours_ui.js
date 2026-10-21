@@ -19,7 +19,7 @@ import { posteCible, estLecon } from '../cours/liens.js';
 // procédures (ui/guide.js).
 // ----------------------------------------------------------------------------------
 const UI = { lesson: /** @type {string | null} */ (null), chapter: /** @type {string | null} */ (null), demo: /** @type {{ destroy?: () => void } | null | void} */ (null), q: '', guideChapter: /** @type {string | null} */ (null) };
-const TABS = /** @type {[string, string][]} */ ([['lecons', 'Leçons'], ['chapitres', 'Chapitres'], ['glossaire', 'Glossaire'], ['postes', 'Postes'], ['materiel', 'Matériel'], ['procedures', 'Procédures']]);
+const TABS = /** @type {[string, string][]} */ ([['lecons', 'Leçons'], ['camera', 'La caméra'], ['chapitres', 'Chapitres'], ['glossaire', 'Glossaire'], ['postes', 'Postes'], ['materiel', 'Matériel'], ['procedures', 'Procédures']]);
 const OLD_TAB = { chapitres: 'lecons', articles: 'chapitres' };
 const norm = (s) => String(s).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
 
@@ -49,6 +49,7 @@ export function openCours(o = {}) {
     kind: 'cours', title: 'Cours', ico: 'cours', tabs: TABS, tab,
     show: (k, box) => {
       if (k === 'lecons') { lecons(box); return stopDemo; }
+      if (k === 'camera') { cameraSection(box); box.classList.add('ly-narrow'); return; }
       if (k === 'chapitres') { chaptersSection(box, UI.guideChapter); UI.guideChapter = null; return; }
       if (k === 'glossaire') glossarySection(box);
       if (k === 'postes') postesSection(box);
@@ -60,6 +61,18 @@ export function openCours(o = {}) {
 }
 on('cours', (o) => openCours(o && typeof o === 'object' ? o : typeof o === 'string' ? o : {}));
 function stopDemo() { try { if (UI.demo && UI.demo.destroy) UI.demo.destroy(); } catch (e) { /* démonstration déjà démontée */ } UI.demo = null; }
+
+// ---------------- l'onglet La caméra : le module 3D (src/camlab/) ----------------
+/** l'espace se ferme et le module s'ouvre par-dessus ; en le quittant, on revient ici (camlab/index.js) */
+function openCamera() { closeLayer(false); emit('camera', { from: 'cours' }); }
+function cameraSection(box) {
+  box.append(el('article', { class: 'co-page co-camera' },
+    el('h2', {}, 'La caméra de plateau, en 3D'),
+    el('p', { class: 'lede' }, 'Une caméra type Sony HXC-FB80 avec son zoom Fujinon, à tourner dans tous les sens. Chaque pastille rapproche la vue et ouvre une fiche : l\'essentiel, un schéma, une manipulation sur la caméra (les bagues bougent, l\'image du viseur suit) et trois questions d\'Olivier.'),
+    el('p', {}, 'Neuf chapitres, de la lentille frontale au moniteur : l\'objectif (focale, zoom, point, diaphragme, profondeur de champ, tirage optique), les filtres et le prisme, les capteurs, le traitement de l\'image, le corps de la caméra (menu, connectique), le viseur, la voie caméra, jusqu\'au moniteur.'),
+    el('div', { class: 'hwrow' }, el('button', { type: 'button', class: 'btn primary', onclick: openCamera }, icon('cours'), 'Ouvrir la caméra en 3D')),
+    el('p', { class: 'note' }, 'La caméra se tourne à la souris ou au doigt, la molette rapproche ; Échap revient ici.')));
+}
 
 // ---------------- l'onglet Leçons ----------------
 function lecons(box) {
@@ -111,7 +124,9 @@ function home(page, render) {
     el('p', { class: 'lede' }, 'Un chapitre par domaine, une leçon par terme technique. Chaque leçon tient en quelques minutes : l\'essentiel, un schéma, une manipulation pour comprendre, puis où le retrouver dans le car et un quiz. Le chef de car vous y renvoie quand un terme vous manque.'),
     el('p', { class: 'note' }, total ? `${done} leçon${done > 1 ? 's' : ''} acquise${done > 1 ? 's' : ''} sur ${total} (quiz réussi en entier).` : 'Les chapitres arrivent.'),
     el('div', { class: 'co-cards' }, ...CHAPTERS.map((ch) => el('button', { type: 'button', class: 'co-card', onclick: () => { UI.chapter = ch.id; UI.lesson = ch.lessons[0] ? ch.lessons[0].id : null; render(); } },
-      icon(ch.icon), el('b', {}, ch.title), el('span', {}, ch.intro), el('small', {}, `${ch.lessons.length} leçon${ch.lessons.length > 1 ? 's' : ''} · ${chapterDone(ch)} acquise${chapterDone(ch) > 1 ? 's' : ''}`)))));
+      icon(ch.icon), el('b', {}, ch.title), el('span', {}, ch.intro), el('small', {}, `${ch.lessons.length} leçon${ch.lessons.length > 1 ? 's' : ''} · ${chapterDone(ch)} acquise${chapterDone(ch) > 1 ? 's' : ''}`))),
+    el('button', { type: 'button', class: 'co-card', onclick: () => showTab('camera') },
+      icon('cours'), el('b', {}, 'La caméra'), el('span', {}, 'La caméra de plateau en 3D : objectif, prisme, capteurs, menu, connectique, jusqu\'au moniteur.'), el('small', {}, '12 fiches écrites sur 51'))));
 }
 function lessonPage(page, { chapter, lesson, i }, render) {
   markSeen(lesson.id);

@@ -392,6 +392,22 @@ Tests :
   « Emmène-moi / Montre-moi » doit mettre en évidence un élément réel de la page, et « Fais-le pour moi » doit faire
   valider l'étape.
 
+## v18.5 : la caméra de plateau en 3D
+
+**Connaître la caméra, pièce par pièce.** Dans le Cours, l'onglet **La caméra** (`src/camlab/`) ouvre une caméra de
+plateau type Sony HXC-FB80 avec son zoom Fujinon ZA12x4.5, construite dans le code (`camlab/model.js`), sur un
+plateau avec son coin vision (`camlab/scene.js`). On la tourne à la souris ; 23 pastilles (`camlab/points.js`)
+rapprochent la vue et ouvrent une fiche. Les 51 notions (`camlab/notions/`, une fiche par fichier, 9 chapitres de
+la lentille frontale au moniteur) suivent un moule : l'essentiel, un schéma SVG (`camlab/figs.js`), une manipulation
+sur la caméra (`camlab/labs/` : les bagues de la 3D bougent, l'image du viseur et du moniteur suit, `camlab/vf.js`
+simule le viseur et ses zébras, `camlab/optics.js` calcule), l'explication, « sur la vraie caméra », « dans le
+car », trois questions d'Olivier, les notions liées, la référence et les compétences TIEE. Le lot 1 est écrit (12
+notions) : focale, zoom, point, diaphragme, profondeur de champ, tirage optique, filtres ND, prisme, capteur,
+balance des blancs et des noirs, menu, connectique ; menus, procédure ABB/AWB, commutateurs et prises suivent le
+mode d'emploi de la HXC-FB80. Les 39 autres notions sont annoncées « en préparation ». Le simulateur se met en pause
+pendant le module ; Échap revient au Cours. Maquette autonome : `node tools/camlab-preview.mjs sortie.html
+[--local] [--fragment]`. Tests : `tests/unit/camlab.test.mjs`, suite `tests/e2e/camera.mjs`.
+
 ## v18.4 : des menus par profil, cinq familles, une section Cours, le livret de compétences
 
 **On ne se perd plus entre formateur, chef de car et joueur.** Deux profils (`src/app/profile.js`), choisis sous
