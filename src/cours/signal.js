@@ -122,7 +122,7 @@ Pourquoi le car reste en 4:2:2 : l'image va être **incrustée** (chroma key du 
 - 4:2:2 : 2,07 Gb/s (deux tiers), c'est le 3G-SDI à 2,97 Gb/s une fois la suppression et les données ajoutées.
 - 4:2:0 : 1,56 Gb/s (la moitié), avant compression H.264 ou HEVC.`,
       car: { text: 'Au poste vision, le PRISM affiche le waveform en YCbCr : la trace Y d\'un côté, Cb et Cr de l\'autre. La baie de mesure donne le format exact du signal (4:2:2 10 bits, 3G-SDI).', station: 'vision' },
-      terms: ['ycbcr', 'waveform', 'sdi-format'],
+      terms: ['ycbcr', 'waveform', 'vpid'],
       quiz: [
         { q: 'En 4:2:2, combien d\'échantillons de couleur Cb pour 4 pixels d\'une ligne ?', choices: ['4', '2', '1'], answer: 1, why: '4:2:2 se lit « 4 Y, 2 Cb, 2 Cr » sur quatre pixels : la couleur est portée par un pixel sur deux. 4 serait du 4:4:4 ; 1 par ligne et par colonne, du 4:2:0.' },
         { q: 'Pourquoi le car garde-t-il du 4:2:2 alors que le public reçoit du 4:2:0 ?', choices: ['Parce que le SDI ne sait pas transporter du 4:2:0', 'Parce que les incrustations, ralentis et corrections ont besoin de couleur précise sur les contours', 'Parce que le 4:2:0 est de moins bonne qualité en luminance'], answer: 1, why: 'La luminance est identique dans les trois cas : c\'est la couleur qui est réduite. Les traitements du car (chroma key, habillage, étalonnage) exigent une couleur fine ; en bout de chaîne, le 4:2:0 suffit à l\'œil.' },

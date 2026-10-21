@@ -59,7 +59,7 @@ export const POSTES = {
   son: ['sdi-embedded'],
   transmission: ['signal-formats', 'sdi-cest-quoi', '12g-sdi'],
   melangeur: ['signal-422', 'signal-formats'],
-  evsA: ['signal-formats', 'signal-bits'],
+  evs: ['signal-formats', 'signal-bits'],
 };
 /** la cible du bouton « Cours » d'un poste ('' : aucune, le Cours s'ouvre où on l'a laissé) */
 export function posteCible(id, ip = false) {
