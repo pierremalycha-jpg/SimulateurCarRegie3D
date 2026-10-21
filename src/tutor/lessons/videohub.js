@@ -11,7 +11,8 @@ import { goStation, camIds } from './kit.js';
 //   · router une caméra de la façade puis du logiciel Videohub Control, lire le monitoring ;
 //   · verrouiller les départs vers la chaîne, vérifier le refus, retrouver deux étiquettes inversées.
 // Tout est vérifié sur l'état réel de la grille (videohub.js) : points de croisement, verrous,
-// étiquettes, sélection de la façade, vignette cliquée dans le monitoring.
+// étiquettes, sélection de la façade, vignette cliquée dans le monitoring. Les deux sont les exercices
+// pratiques de la leçon « La grille de commutation » du Cours (cours/sdi_grille.js).
 // ----------------------------------------------------------------------------------
 const D = 'Liaisons, synchro et diffusion';
 const face = (k, label) => ({ sel: `#station .vh-face [data-fp="${k}"]`, label });
@@ -32,8 +33,8 @@ function freeOuts(c, outs) { c.mem.locks = c.mem.locks || {}; for (const n of ou
 /** @type {import('../engine.js').Lesson} */
 const ROUTE = {
   id: 'videohub-routage', domain: D, stations: ['grille'], needs: { sdi: true, cams: 2 },
-  title: 'La Videohub : router une caméra, lire le monitoring',
-  summary: 'La façade (OUT, IN, TAKE), le logiciel Videohub Control et le monitoring des 40 entrées et 40 sorties : une caméra vers l\'écran géant et vers une tuile du multiview.',
+  title: 'Router une caméra sur la Videohub et lire le monitoring',
+  summary: 'Exercice de la leçon « La grille de commutation » : la façade (OUT, IN, TAKE), le logiciel Videohub Control et le monitoring des 40 entrées et 40 sorties ; une même caméra vers l\'écran géant et vers une tuile du multiview.',
   duration: '8 min', level: 'débutant',
   outro: 'Sur une grille, toujours le même ordre : la destination, la source, TAKE, puis on vérifie l\'image (écran de la façade, monitoring, multiview). Une source peut partir vers autant de sorties qu\'on veut ; une sortie ne reçoit qu\'une source.',
   cleanupLabel: 'Remettre l\'écran géant et la tuile 13',
@@ -42,7 +43,7 @@ const ROUTE = {
     {
       id: 'intro', title: 'La Videohub',
       enter: (c) => { c.mem.cam = pickCam(); c.mem.giant = ROUTER.map.AUX_GIANT; c.mem.mv13 = ROUTER.map.MV13; freeOuts(c, [33, 35]); },
-      say: 'La grille de ce car est une **Videohub 40 × 40 12G** : 40 **entrées** (les sources : caméras, serveurs EVS, sorties du mélangeur…) et 40 **sorties** (les destinations : entrées du mélangeur, enregistreurs, départs, écrans). Chaque sortie peut recevoir n\'importe quelle entrée.\n\nOn la commande de sa **façade** (un écran, des touches, une molette) ou du logiciel **Videohub Control**, par le réseau. Le **monitoring** montre en direct toutes les entrées et toutes les sorties.',
+      say: 'Leçon « La grille de commutation » : chaque sortie reçoit une seule source, une source peut partir vers toutes les sorties, et l\'on commute toujours dans l\'ordre destination, source, TAKE.\n\nLa grille de ce car est une **Videohub 40 × 40 12G** : 40 **entrées** (les sources : caméras, serveurs EVS, sorties du mélangeur…) et 40 **sorties** (les destinations : entrées du mélangeur, enregistreurs, départs, écrans). Chaque sortie peut recevoir n\'importe quelle entrée.\n\nOn la commande de sa **façade** (un écran, des touches, une molette) ou du logiciel **Videohub Control**, par le réseau. Le **monitoring** montre en direct toutes les entrées et toutes les sorties.',
     },
     goStation('grille', 'La grille est dans la zone technique.', 'En haut, la façade de la Videohub ; dessous, le logiciel Videohub Control, le monitoring, la matrice et les réglages (Videohub Setup).'),
     {
@@ -58,7 +59,7 @@ const ROUTE = {
     },
     {
       id: 'fp-in', title: 'Façade : la source et TAKE',
-      say: (c) => `La source ensuite : la CAM ${c.mem.cam}. Touche **IN** : la molette parcourt les entrées et l'écran montre l'image de chacune **avant** la commutation. Dès qu'une autre source est choisie, CLEAR et TAKE clignotent : **TAKE** valide, CLEAR annule.`,
+      say: (c) => `La source ensuite : la CAM ${c.mem.cam}, câblée sur l'entrée ${c.mem.cam}. Touche **IN** : la molette parcourt les entrées et l'écran montre l'image de chacune **avant** la commutation. Dès qu'une autre source est choisie, CLEAR et TAKE clignotent : **TAKE** valide, CLEAR annule.`,
       do: (c) => `IN, puis l'entrée ${c.mem.cam} (CAM ${c.mem.cam}), puis TAKE.`,
       go: { station: 'grille' }, show: [face('in', 'IN'), face('knob', 'molette'), face('take', 'TAKE')],
       done: (c) => ROUTER.map.AUX_GIANT === 'CAM' + c.mem.cam,
@@ -112,8 +113,8 @@ const ROUTE = {
 /** @type {import('../engine.js').Lesson} */
 const LOCK = {
   id: 'videohub-verrou', domain: D, stations: ['grille'], needs: { sdi: true, cams: 2 },
-  title: 'La Videohub : verrouiller les départs, corriger une étiquette',
-  summary: 'Verrouiller les sorties TX1 et TX2 vers la chaîne, constater le refus d\'une fausse manœuvre, puis retrouver au monitoring et dans Videohub Setup deux étiquettes de caméras inversées.',
+  title: 'Verrouiller les départs et corriger une étiquette sur la Videohub',
+  summary: 'Exercice de la leçon « La grille de commutation » : verrouiller les sorties TX1 et TX2 vers la chaîne, constater le refus d\'une fausse manœuvre, puis retrouver au monitoring et dans Videohub Setup deux étiquettes de caméras inversées.',
   duration: '9 min', level: 'intermédiaire',
   outro: 'Trois réflexes de grille : verrouiller les départs, regarder l\'image avant de valider, relire les étiquettes au line-up. À la fin du parcours, je déverrouille les départs pour les autres exercices ; en exploitation, ils restent verrouillés pendant tout le direct.',
   cleanupLabel: 'Déverrouiller les départs et réparer les étiquettes',
@@ -125,7 +126,7 @@ const LOCK = {
     {
       id: 'intro', title: 'Les départs vers la chaîne',
       enter: (c) => { freeOuts(c, [31, 32, 35]); route('AUX_TX1', 'PGM'); route('AUX_TX2', 'PGM'); },
-      say: 'Les sorties 31 et 32 de la grille partent vers la chaîne : **TX1** par la fibre, **TX2** par le satellite (le secours). Or la grille se commande de partout : sa façade, le logiciel sur plusieurs ordinateurs, des panneaux, des automatismes. Une fausse manœuvre sur ces sorties, et la chaîne diffuse autre chose que le programme.\n\nOn les **verrouille** (LOCK) : une sortie verrouillée refuse toute commutation, d\'où qu\'elle vienne.',
+      say: 'Leçon « La grille de commutation » : une sortie verrouillée refuse toute commutation, d\'où qu\'elle vienne, et une étiquette n\'est qu\'un nom.\n\nLes sorties 31 et 32 de la grille partent vers la chaîne : **TX1** par la fibre, **TX2** par le satellite (le secours). Or la grille se commande de partout : sa façade, le logiciel sur plusieurs ordinateurs, des panneaux, des automatismes. Une fausse manœuvre sur ces sorties, et la chaîne diffuse autre chose que le programme.\n\nOn les **verrouille** (LOCK) : une sortie verrouillée refuse toute commutation, d\'où qu\'elle vienne.',
     },
     goStation('grille', 'La grille est dans la zone technique.', 'La façade en haut, le logiciel Videohub Control dessous.'),
     {
@@ -135,7 +136,7 @@ const LOCK = {
       go: { station: 'grille', tab: 'control' },
       show: (c) => (onTab(c, 'control') ? [dest(31, 'TX1 FIBRE'), { sel: '#station .vh-lockbtn', label: 'verrouiller' }] : tab('control', 'Videohub Control')),
       done: () => lockState(31) !== 'U',
-      ok: 'Cadenas ambre : la sortie 31 est verrouillée par ce poste (état O dans le protocole de la grille). Plus aucune commutation possible, ni d\'ici, ni de la façade, ni d\'un autre poste.',
+      ok: 'Cadenas ambre : la sortie 31 est verrouillée par ce poste (état O dans le protocole de la grille ; U = libre, L = verrouillée par un autre poste). Plus aucune commutation possible, ni d\'ici, ni de la façade, ni d\'un autre poste.',
       hints: ['La sortie d\'abord, puis le bouton de verrou à côté de TAKE.', 'Bouton 31 « TX1 FIBRE » dans les destinations, puis « Verrouiller la sortie 31 ».'],
       auto: () => setLock(31, 'O'),
     },
