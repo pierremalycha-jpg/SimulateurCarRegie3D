@@ -45,8 +45,9 @@ Entre deux lignes d'image, dans la suppression, le signal transporte des donnée
 - **Le niveau.** 800 mV crête à crête sur 75 Ω à la sortie. Un T BNC qui partage un câble casse l'impédance : réflexions, œil fermé.
 - **L'UHD en quad-link.** Quatre câbles 3G portent chacun un quart de l'image : quatre carrés (square division), ou quatre images entières en HD entrelacées point par point (2SI), lisibles sur un moniteur HD.
 - **La gigue.** Si la position des transitions varie trop, l'œil se ferme aussi sur les côtés : le récepteur ne sait plus quand lire le bit.`,
-  car: { text: 'Dans le car SDI, presque tout arrive à la grille par des câbles coaxiaux : sorties des CCU, serveurs EVS, habillage, duplex. À la baie de brassage, un cordon oublié ou croisé se voit tout de suite au multiview ; à la baie de mesure, le PRISM montre l\'œil et compte les erreurs CRC. Dans le plan caméras, une liaison coaxiale trop longue est refusée.', station: 'mesure', lesson: 'prism-oeil' },
+  car: { text: 'Dans le car SDI, presque tout arrive à la grille par des câbles coaxiaux : sorties des CCU, serveurs EVS, habillage, duplex. À la baie de brassage, un cordon oublié ou croisé se voit tout de suite au multiview ; à la baie de mesure, le PRISM montre l\'œil et compte les erreurs CRC. Dans le plan caméras, une liaison coaxiale trop longue est refusée.', station: 'mesure' },
   terms: ['oeil', 'effet-falaise', 'affaiblissement', 'egaliseur', 'crc-edh', 'vpid'],
+  competences: ['2.2', '2.13', '3.9'], article: 'liaisons',
   quiz: [
     { q: 'Une caméra est reliée en 12G-SDI par 90 m de câble coaxial. Que voit-on au multiview ?',
       choices: [['Une image un peu plus sombre et moins nette.', 'C\'était le cas en analogique. En numérique, l\'image ne se dégrade pas peu à peu : elle est parfaite, ou elle casse.'],

@@ -463,6 +463,7 @@ Pourquoi le car reste en 4:2:2 : l'image va être **incrustée** (chroma key du 
 - 4:2:0 : 1,56 Gb/s (la moitié), avant compression H.264 ou HEVC.`,
       car: { text: 'Au poste vision, le PRISM affiche le waveform en YCbCr : la trace Y d\'un côté, Cb et Cr de l\'autre. La baie de mesure donne le format exact du signal (4:2:2 10 bits, 3G-SDI).', station: 'vision' },
       terms: ['ycbcr', 'waveform', 'vpid'],
+      competences: ['1.4', '2.2'], article: 'formats',
       quiz: [
         { q: 'En 4:2:2, combien d\'échantillons de couleur Cb pour 4 pixels d\'une ligne ?', choices: ['4', '2', '1'], answer: 1, why: '4:2:2 se lit « 4 Y, 2 Cb, 2 Cr » sur quatre pixels : la couleur est portée par un pixel sur deux. 4 serait du 4:4:4 ; 1 par ligne et par colonne, du 4:2:0.' },
         { q: 'Pourquoi le car garde-t-il du 4:2:2 alors que le public reçoit du 4:2:0 ?', choices: ['Parce que le SDI ne sait pas transporter du 4:2:0', 'Parce que les incrustations, ralentis et corrections ont besoin de couleur précise sur les contours', 'Parce que le 4:2:0 est de moins bonne qualité en luminance'], answer: 1, why: 'La luminance est identique dans les trois cas : c\'est la couleur qui est réduite. Les traitements du car (chroma key, habillage, étalonnage) exigent une couleur fine ; en bout de chaîne, le 4:2:0 suffit à l\'œil.' },
@@ -492,6 +493,7 @@ Le SDI transporte des mots de 10 bits (ST 292-1, ST 424, ST 2082) ; une source 8
 - 12 bits : 4 096 niveaux ; caméras cinéma, fichiers RAW et intermédiaires de post-production.`,
       car: { text: 'À la baie de mesure, l\'État SDI du PRISM lit l\'identifiant de charge utile (ST 352) : « 4:2:2 10 bits ». Au poste vision, c\'est en 10 bits que l\'ingénieur vision joue sur le master black et le gain sans faire apparaître de bandes dans le ciel du stade.', station: 'mesure' },
       terms: ['vpid', 'waveform', 'hdr-hlg'],
+      competences: ['1.4', '2.2'], article: 'mesures',
       quiz: [
         { q: 'Combien de niveaux par composante en 10 bits ?', choices: ['256', '1 000', '1 024'], answer: 2, why: '2 puissance 10 = 1 024, soit quatre fois les 256 niveaux du 8 bits. « 1 000 » est l\'approximation à éviter : les codes vont de 0 à 1 023, et le noir vidéo est au code 64, le blanc à 940.' },
         { q: 'Dans quelle image les bandes de quantification se voient-elles d\'abord ?', choices: ['Un dégradé lent (ciel, mur éclairé en biais)', 'Une pelouse bien exposée et texturée', 'Un texte blanc sur fond noir'], answer: 0, why: 'Les marches ne sont visibles que là où le niveau varie lentement sur une grande surface. La texture de la pelouse et les contrastes forts masquent l\'erreur de quantification, qui ne fait qu\'un demi-pas.' },
@@ -520,6 +522,7 @@ Pourquoi un waveform : parce que l'œil s'adapte et se trompe, pas l'instrument.
 - Le rouge, le vert et le bleu peuvent dépasser alors que la luminance est légale : c'est le rôle du diamant et du gamut.`,
       car: { text: 'Au poste vision, le waveform du PRISM lit l\'image de la caméra sélectionnée ; les réglages de gain et de master black du RCP se voient tout de suite sur la trace, avec la ligne des 100 % et celle du zéro. La baie de mesure donne le même waveform sur n\'importe quel point de la grille.', station: 'vision' },
       terms: ['waveform', 'gamut', 'mire-75', 'parade-rvb'],
+      competences: ['1.4', '2.2'], article: 'mesures',
       quiz: [
         { q: 'À quel code 10 bits se trouve le blanc 100 % ?', choices: ['1 023', '940', '700'], answer: 1, why: 'Le blanc légal est au code 940 (235 en 8 bits), le noir au code 64. 1 023 est le haut de l\'échelle, réservé ; 700 est la valeur en millivolts, pas en code.' },
         { q: 'Que montre un trait horizontal plat sur la ligne des 100 % du waveform ?', choices: ['Une image bien exposée', 'Des blancs écrêtés : le détail est perdu', 'Un défaut du câble SDI'], answer: 1, why: 'Tous les points plus clairs que 100 % ont été ramenés au même niveau : plus de relief dans les blancs (maillot, ciel). Un câble en défaut donne des erreurs CRC et des éclats, pas un trait plat.' },
@@ -549,6 +552,7 @@ Les cadences : l'Europe est à 25 et 50 Hz, les Amériques et le Japon à 29,97 
 - 2160p25 : 5,94 Gb/s (6G). 2160p50 : 11,88 Gb/s (12G, ou 4 × 3G).`,
       car: { text: 'La grille Videohub du car commute du 3G-SDI en 1080p50 et du 12G-SDI en UHD. À la baie de mesure, l\'État SDI donne le format exact de chaque source (identifiant ST 352) et la tuile Timing la durée d\'une ligne : 17,8 µs en 1080p50, 35,6 µs en 1080i.', station: 'grille' },
       terms: ['12g-sdi', 'vpid', 'timing-ref'],
+      competences: ['1.4', '2.10'], article: 'formats',
       quiz: [
         { q: 'Combien de trames par seconde en 1080i25 ?', choices: ['25', '50', '100'], answer: 1, why: 'Une image entrelacée = deux trames (lignes impaires, lignes paires) prises à 20 ms d\'écart : 25 images font 50 trames. On dit aussi « 1080i50 » pour la même chose.' },
         { q: 'Quelle liaison SDI pour du 1080p50 4:2:2 10 bits ?', choices: ['HD-SDI (1,485 Gb/s)', '3G-SDI (2,97 Gb/s)', '12G-SDI (11,88 Gb/s)'], answer: 1, why: '1080p50 vaut 2 640 × 1 125 × 50 × 20 bits = 2,97 Gb/s : le 3G. Le HD-SDI porte le 1080i25 et le 720p50 (moitié moins) ; le 12G est celui du 2160p50.' },
@@ -578,6 +582,7 @@ Pourquoi le car sort HDR **et** SDR : le diffuseur UHD reçoit du HLG BT.2020, l
 - BT.2100 : primaires BT.2020, courbes HLG ou PQ, 10 bits au minimum.`,
       car: { text: 'Au poste vision, le moniteur Grade 1 bascule SDR | HDR et le PRISM a une entrée « HDR HLG » : la tuile CIE 1931 place les couleurs de l\'image dans les triangles 709 et 2020, le waveform trace la ligne du blanc de référence à 75 %. La transmission envoie les deux versions.', station: 'vision' },
       terms: ['cie1931', 'gamut', 'hdr-hlg', 'ycbcr'],
+      competences: ['1.4', '2.2'], article: 'hdrguide',
       quiz: [
         { q: 'Que représente le triangle d\'un espace de couleur sur le diagramme CIE ?', choices: ['Les couleurs que l\'espace peut reproduire (son gamut)', 'Les trois niveaux de gris de référence', 'La plage de luminance de l\'écran'], answer: 0, why: 'Les sommets sont les primaires R, V, B ; tout mélange est à l\'intérieur. La luminance n\'y figure pas : le diagramme xy ne montre que la chromaticité.' },
         { q: 'À quel niveau le HLG place-t-il le blanc de référence (graphismes, papier blanc) ?', choices: ['100 %', '75 %', '50 %'], answer: 1, why: 'BT.2408 : 75 %, soit 203 cd/m² sur un écran de 1 000 cd/m². Le quart supérieur de l\'échelle est gardé pour les reflets et les sources. 100 % serait le blanc SDR ; 50 % est le niveau HLG de la lumière qui saturait une caméra SDR.' },
