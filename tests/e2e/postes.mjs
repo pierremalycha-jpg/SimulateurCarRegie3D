@@ -56,7 +56,7 @@ await shot('v-floatmon');
 await ev(() => { window.__dbg.closeStation(); window.__dbg.openStation('evs'); });
 await page.waitForTimeout(1500);
 log('floatmon removed', await ev(() => !document.getElementById('floatmon')));
-await page.locator('.lsm-key', { hasText: 'MARK IN' }).click();
+await page.locator('.lsm-key', { hasText: /^IN(GOTO IN)?$/ }).click();
 await page.waitForTimeout(300);
 await page.locator('.lsm-key', { hasText: 'SHIFT' }).click();
 await page.locator('.lsm-key', { hasText: /^F1$/ }).click();

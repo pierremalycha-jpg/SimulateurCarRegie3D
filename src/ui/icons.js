@@ -59,6 +59,7 @@ import iWarehouse from '@phosphor-icons/core/bold/warehouse-bold.svg';
 import iPackage from '@phosphor-icons/core/bold/package-bold.svg';
 import iPresentation from '@phosphor-icons/core/bold/presentation-bold.svg';
 import iWebcam from '@phosphor-icons/core/bold/webcam-bold.svg';
+import iPulse from '@phosphor-icons/core/bold/pulse-bold.svg';
 import iStar from '@phosphor-icons/core/bold/star-bold.svg';
 import iWarning from '@phosphor-icons/core/bold/warning-bold.svg';
 import iRecord from '@phosphor-icons/core/bold/record-bold.svg';
@@ -93,6 +94,7 @@ const SVG = {
   // les lieux (content/lieux.js)
   tv: iTelevisionSimple, entrepot: iWarehouse, colis: iPackage, conference: iPresentation,
   webcam: iWebcam, hautparleur: iSpeakerHifi, lumiere: iLightbulbFilament,
+  mesure: iPulse, // baie de mesure (PRISM)
 };
 export const ICON_NAMES = Object.keys(SVG);
 /**

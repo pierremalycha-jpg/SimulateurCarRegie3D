@@ -3,6 +3,7 @@ import { S, emit, camById } from '../../state.js';
 import { ROUTER, route } from '../../pipeline.js';
 import { RF, channelInfo } from '../../rf.js';
 import { patchEmpty, patchNormal } from '../../patch.js';
+import { lockState, setLock } from '../../videohub.js';
 import { goStation, ui, hw, btn, camIds } from './kit.js';
 
 // ----------------------------------------------------------------------------------
@@ -130,6 +131,11 @@ const SYNC = {
 };
 
 // ---------------- grille ----------------
+// car SDI : la Videohub 40 × 40 (ui/st_videohub.js) ; car IP : le contrôleur NMOS (boutons data-d / data-s)
+const vhUi = () => visible('#station .vh-ctl');
+const vhTargets = (c, out, outLabel, inp, inLabel) => (c.view().tab === 'control'
+  ? [{ sel: `#station .vh-dest button[data-out="${out}"]`, label: outLabel }, { sel: `#station .vh-src button[data-in="${inp}"]`, label: inLabel }, { sel: '#station .vh-take', label: 'TAKE' }]
+  : [{ sel: '#station .tabs .tab[data-k="control"]', label: 'Videohub Control' }]);
 /** @type {import('../engine.js').Lesson} */
 const ROUTE = {
   id: 'grille-routage', domain: D, stations: ['grille'],
@@ -138,35 +144,42 @@ const ROUTE = {
   duration: '6 min', level: 'débutant',
   outro: 'La grille relie n\'importe quelle source à n\'importe quelle destination. On choisit toujours la destination d\'abord, la source ensuite, puis TAKE ; et on vérifie au moniteur.',
   cleanupLabel: 'Remettre la vignette et les départs',
-  cleanup: (c) => { if (c.mem.old) route('MV8', c.mem.old); route('AUX_TX1', 'PGM'); route('AUX_TX2', 'PGM'); },
+  cleanup: (c) => { if (c.mem.old) route('MV13', c.mem.old); route('AUX_TX1', 'PGM'); route('AUX_TX2', 'PGM'); },
   steps: [
     {
       id: 'intro', title: 'La grille',
-      enter: (c) => { c.mem.old = ROUTER.map.MV8; const ids = camIds(); c.mem.src = 'CAM' + ([4, 5, 6, 3].find((i) => ids.includes(i) && ROUTER.map.MV8 !== 'CAM' + i) || ids[0]); },
-      say: 'La **grille de commutation** distribue tous les signaux du car : les entrées du mélangeur, les vignettes du multiview, les enregistrements de l\'EVS, les départs vers la chaîne. Chaque **destination** (une entrée d\'appareil) reçoit une **source** (une sortie d\'appareil).',
+      enter: (c) => {
+        // un verrou laissé par un autre exercice ne doit pas bloquer celui-ci
+        if (!S.ipMode) for (const n of [31, 32, 35]) if (lockState(n) !== 'U') setLock(n, null);
+        c.mem.old = ROUTER.map.MV13; const ids = camIds().filter((i) => i <= 16); c.mem.src = 'CAM' + ([4, 5, 6, 3].find((i) => ids.includes(i) && ROUTER.map.MV13 !== 'CAM' + i) || ids[0]);
+      },
+      say: () => 'La **grille de commutation** distribue tous les signaux du car : les entrées du mélangeur, les vignettes du multiview, les enregistrements de l\'EVS, les départs vers la chaîne. Chaque **destination** (une entrée d\'appareil) reçoit une **source** (une sortie d\'appareil).' + (S.ipMode ? '\n\nDans le car IP, un contrôleur NMOS joue ce rôle sur le réseau ST 2110.' : '\n\nDans ce car SDI, c\'est une **Videohub 40 × 40** : 40 entrées (les sources), 40 sorties (les destinations).'),
     },
-    goStation('grille', 'Le poste grille est dans la zone technique.', 'Trois colonnes : la destination, la source, puis TAKE (la touche qui exécute la commutation) : toujours dans cet ordre.', { hints: ['Les postes techniques sont regroupés dans la zone technique du car.', 'Touche Tab (le pupitre), puis la touche du poste dans la rangée Technique ; ou « Emmène-moi ».'] }),
+    goStation('grille', 'Le poste grille est dans la zone technique.', 'Trois colonnes : la destination, la source, puis TAKE (la touche qui exécute la commutation) : toujours dans cet ordre.', {
+      ok: () => (S.ipMode ? 'Trois colonnes : la destination, la source, puis CONNECT (la touche qui exécute la connexion) : toujours dans cet ordre.' : 'En haut, la façade de la Videohub ; dessous, le logiciel Videohub Control : les destinations, les sources, puis TAKE (la touche qui exécute la commutation) : toujours dans cet ordre.'),
+      hints: ['Les postes techniques sont regroupés dans la zone technique du car.', 'Touche Tab (le pupitre), puis la touche du poste dans la rangée Technique ; ou « Emmène-moi ».'],
+    }),
     {
       id: 'mv', title: 'Une vignette du multiview',
-      say: (c) => `Le réalisateur veut voir la ${c.mem.src.replace('CAM', 'CAM ')} sur la vignette 8 du multiview. Destination d'abord (groupe Multiview, MV 8), source ensuite, puis TAKE.`,
-      do: (c) => `Envoie la ${c.mem.src.replace('CAM', 'CAM ')} sur MV 8.`,
-      go: { station: 'grille' },
-      show: (c) => (visible('#station button.hw[data-d="MV8"]') ? [{ sel: '#station button.hw[data-d="MV8"]', label: 'MV 8' }, { sel: `#station button.hw[data-s="${c.mem.src}"]`, label: c.mem.src }] : [{ sel: '#station .tabs .tab', text: 'Multiview', label: 'groupe Multiview' }]),
-      done: (c) => ROUTER.map.MV8 === c.mem.src,
+      say: (c) => `Le réalisateur veut voir la ${c.mem.src.replace('CAM', 'CAM ')} sur la vignette 13 du multiview. ${S.ipMode ? 'Destination d\'abord (groupe Multiview, MV 13), source ensuite, puis CONNECT.' : 'Sur la Videohub, la vignette 13 est alimentée par la sortie 35 « MV 13 » : destination d\'abord, source ensuite, puis TAKE.'}`,
+      do: (c) => (S.ipMode ? `Envoie la ${c.mem.src.replace('CAM', 'CAM ')} sur MV 13.` : `Envoie la ${c.mem.src.replace('CAM', 'CAM ')} sur la sortie 35 « MV 13 » (Videohub Control).`),
+      go: () => (S.ipMode ? { station: 'grille' } : { station: 'grille', tab: 'control' }),
+      show: (c) => (vhUi() || (!S.ipMode && c.view().tab !== 'control') ? vhTargets(c, 35, 'MV 13', +c.mem.src.slice(3), c.mem.src) : visible('#station button.hw[data-d="MV13"]') ? [{ sel: '#station button.hw[data-d="MV13"]', label: 'MV 13' }, { sel: `#station button.hw[data-s="${c.mem.src}"]`, label: c.mem.src }] : [{ sel: '#station .tabs .tab', text: 'Multiview', label: 'groupe Multiview' }]),
+      done: (c) => ROUTER.map.MV13 === c.mem.src,
       ok: 'La vignette a changé : le réalisateur voit la caméra demandée. Les destinations du multiview se règlent en général une fois pour toutes avant le match.',
-      hints: ['Destination d\'abord : les vignettes sont rangées dans le groupe Multiview.', 'Groupe Multiview → MV 8, puis la caméra dans les sources, puis TAKE.'],
-      auto: (c) => route('MV8', c.mem.src),
+      hints: ['Destination d\'abord : la vignette 13 du multiview (sur la Videohub du car SDI, c\'est la sortie 35 « MV 13 »).', 'MV 13, puis la caméra dans les sources, puis TAKE.'],
+      auto: (c) => route('MV13', c.mem.src),
     },
     {
       id: 'tx', title: 'Un départ sur la mire',
-      enter: () => { route('AUX_TX1', 'BARS'); route('AUX_TX2', 'BARS'); },
+      enter: () => { if (!S.ipMode) for (const n of [31, 32]) if (lockState(n) !== 'U') setLock(n, null); route('AUX_TX1', 'BARS'); route('AUX_TX2', 'BARS'); },
       say: 'Alerte de la chaîne : elle reçoit la **mire** (les barres de couleur) au lieu du programme. Une mauvaise manipulation a routé les barres sur les départs TX (les sorties vers la chaîne). On remet le **PGM** (le programme, ce qui part à l\'antenne) sur le départ en service.',
-      do: 'Remets PGM sur le départ TX1 (groupe « Départs et AUX »).',
-      go: { station: 'grille' },
-      show: () => (visible('#station button.hw[data-d="AUX_TX1"]') ? [{ sel: '#station button.hw[data-d="AUX_TX1"]', label: 'départ TX1' }, { sel: '#station button.hw[data-s="PGM"]', label: 'PGM' }] : [{ sel: '#station .tabs .tab', text: 'Départs', label: 'groupe Départs et AUX' }]),
+      do: () => (S.ipMode ? 'Remets PGM sur le départ TX1 (groupe « Départs et AUX »).' : 'Remets le PGM (entrée 24) sur la sortie 31 « TX1 FIBRE ».'),
+      go: () => (S.ipMode ? { station: 'grille' } : { station: 'grille', tab: 'control' }),
+      show: (c) => (vhUi() || (!S.ipMode && c.view().tab !== 'control') ? vhTargets(c, 31, 'départ TX1', 24, 'PGM') : visible('#station button.hw[data-d="AUX_TX1"]') ? [{ sel: '#station button.hw[data-d="AUX_TX1"]', label: 'départ TX1' }, { sel: '#station button.hw[data-s="PGM"]', label: 'PGM' }] : [{ sel: '#station .tabs .tab', text: 'Départs', label: 'groupe Départs et AUX' }]),
       done: () => txOk(),
       ok: 'La chaîne a de nouveau le programme. Pense aussi au départ de secours TX2 : s\'il garde la mire, une bascule sur le secours enverrait les barres à l\'antenne.',
-      hints: ['Destination d\'abord : les départs sont dans leur propre groupe.', 'Groupe « Départs et AUX » → TX1, puis la source PGM, puis TAKE.'],
+      hints: ['Destination d\'abord : le départ TX1 (sur la Videohub, sortie 31 « TX1 FIBRE » ; sur le contrôleur IP, groupe « Départs et AUX »).', 'TX1, puis la source PGM, puis TAKE.'],
       auto: () => { route('AUX_TX1', 'PGM'); route('AUX_TX2', 'PGM'); },
     },
     {
@@ -228,13 +241,13 @@ const PATCH = {
     },
     {
       id: 'tx', title: 'Le départ vers la chaîne',
-      say: 'La sortie 49 de la grille porte le départ TX1 : on la brasse vers le **codeur de transmission** (il compresse le programme pour la liaison vers la chaîne).',
-      do: 'Brasse OUT 49 → CODEUR TX1.',
-      go: { station: 'brassage' }, show: [jack('outputs', 'OUT 49'), jack('outputs', 'CODEUR TX1')],
-      done: () => S.patch.outputs[49] === 'TX1',
+      say: 'La sortie 31 de la grille porte le départ TX1 : on la brasse vers le **codeur de transmission** (il compresse le programme pour la liaison vers la chaîne).',
+      do: 'Brasse OUT 31 → CODEUR TX1.',
+      go: { station: 'brassage' }, show: [jack('outputs', 'OUT 31'), jack('outputs', 'CODEUR TX1')],
+      done: () => S.patch.outputs[31] === 'TX1',
       ok: 'Le programme repart vers la chaîne : sans ce cordon, tout le travail du car resterait dans le car.',
-      hints: ['Champ du milieu : sorties de la grille vers les destinations.', 'Clique la prise « OUT 49 », puis la prise « CODEUR TX1 ».'],
-      auto: () => { S.patch.outputs[49] = 'TX1'; emit('router', {}); },
+      hints: ['Champ du milieu : sorties de la grille vers les destinations.', 'Clique la prise « OUT 31 », puis la prise « CODEUR TX1 ».'],
+      auto: () => { S.patch.outputs[31] = 'TX1'; emit('router', {}); },
     },
     {
       id: 'back', title: 'Retour au car normalisé',

@@ -6,7 +6,7 @@ import { MIX, TRANS, WIPES, mixSetPst, mixSetPgm, mixCut, mixAuto, mixTbar, dskT
 import { EQUIP, mixInputs } from '../equip.js';
 import { explain } from './widgets.js';
 import { openDevice } from '../equipment/viewer.js';
-import { COMMUT, commutKey, setKeyMode, keyLegend, keyModeLabel } from './commut.js';
+import { COMMUT, commutKey, setKeyMode, keyLegend, keyModeLabel, mixerOk } from './commut.js';
 
 // Nom court affiché sur l'OLED au-dessus d'un bouton de croisement
 function oledName(n) {
@@ -47,6 +47,7 @@ export function buildMixer(body, arg, ctx) {
     rowsP.appendChild(row);
   }
   function press(bus, n) {
+    if (!mixerOk()) return;
     if (bus === 'pgm') mixSetPgm(n); else if (bus === 'pst') mixSetPst(n);
     else { MIX.key1.src = n; explain(`Bus de clé : ${sourceLabel(meSource(n))} sera incrustée par KEY 1 (redimensionneur 2,5D du keyer).`, 'mix:keybus'); }
   }

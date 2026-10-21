@@ -4,6 +4,7 @@ import { ROUTER, sourceLabel } from '../pipeline.js';
 import { RF } from '../rf.js';
 import { EQUIP, evsLayout, mixInputs } from '../equip.js';
 import { FAB } from '../net/fabric.js';
+import { inPlan, outPlan, xpOf } from '../videohub.js';
 
 // ----------------------------------------------------------------------------------
 // Plan de câblage de l'installation, généré à partir de la configuration courante.
@@ -12,7 +13,7 @@ import { FAB } from '../net/fabric.js';
 export const DEV_NAMES = {
   cam: 'Caméra', ccu: 'CCU', rcp: 'RCP', pdc: 'Pied de car', router: 'Grille', mixer: 'Mélangeur XVS-6000', mixpanel: 'Pupitre ICP-X7000', siu: 'Interface MKS-X7700', mv: 'Multiviewer', evs: 'Serveur XT4K', lsm: 'Télécommande LSM', ipd: 'Poste IPDirector', xnet: 'Switch XNet', swred: 'Leaf IP rouge', swblue: 'Leaf IP bleue', spinered: 'Spine IP rouge', spineblue: 'Spine IP bleue', swctl: 'Switch de contrôle', gw: 'Passerelle SDI/IP', nmos: 'Contrôleur NMOS', evsmon: 'Écran du serveur EVS',
   spg: 'Générateur de synchro', da: 'Distributeur de référence', icom: 'Matrice intercom', cns: 'Switch réseau caméras (CNS)', msu: 'MSU (pupitre maître)', gfx: 'Moteur graphique',
-  rx: 'Récepteur HF', conv: 'Convertisseur fibre', emb: 'Embedder audio', tx1: 'Encodeur TX1', tx2: 'Encodeur satellite TX2', audio: 'Console son', grade1: 'Moniteur Grade 1', giant: 'Écran géant', ups: 'Onduleur / distribution', localtv: 'Local technique TV', headset: 'Casque cadreur', lens: 'Optique', vf: 'Viseur', battery: 'Batterie', txhf: 'Émetteur HF',
+  rx: 'Récepteur HF', conv: 'Convertisseur fibre', dav: 'Distributeur vidéo SDI', emb: 'Embedder audio', tx1: 'Encodeur TX1', tx2: 'Encodeur satellite TX2', audio: 'Console son', grade1: 'Moniteur Grade 1', giant: 'Écran géant', ups: 'Onduleur / distribution', localtv: 'Local technique TV', headset: 'Casque cadreur', lens: 'Optique', vf: 'Viseur', battery: 'Batterie', txhf: 'Émetteur HF',
 };
 export const SIG = {
   video: { label: 'Vidéo SDI', color: '#46c6f2' }, ref: { label: 'Référence (synchro)', color: '#ffd23f' }, audio: { label: 'Audio', color: '#7ee081' },
@@ -20,37 +21,27 @@ export const SIG = {
   fiber: { label: 'Fibre caméra', color: '#ff8a1f' }, ip: { label: 'Réseau IP', color: '#2fd6c8' }, rf: { label: 'Radiofréquence', color: '#d65cf2' },
 };
 
-// numérotation de la grille (entrées / sorties)
+// numérotation de la grille : Videohub 40 × 40 du car SDI (plan détaillé dans videohub.js)
+//   entrées 1-16 caméras, 17-27 serveurs, habillage, mire, mélangeur, retour ; 33-40 copies SDR (UHD)
+//   sorties 1-22 mélangeur, 23-30 EVS REC, 31-34 départs et moniteur, 35-40 tuiles 13-18 du multiview
 export const RIN = { cam: (n) => n, evsA: 17, evsB: 18, gfxFill: 19, gfxKey: 20, studio: 21, bars: 22, black: 23, pgm: 24, clean: 25, pvw: 26, ret: 27, camSdr: (n) => 32 + n };
-export const ROUT = { me: (i) => i, mv: (i) => 22 + i, rec: (i) => 40 + i, tx1: 49, tx2: 50, giant: 51, vision: 52, retCam: (n) => 52 + n };
+export const ROUT = { me: (i) => i, mv: (i) => 22 + i, rec: (i) => 22 + i, tx1: 31, tx2: 32, giant: 33, vision: 34 };
 export function routerInLabel(i) {
-  if (i >= 1 && i <= 16) return `CAM ${i}`;
-  if (i >= 33 && i <= 48) return `CAM ${i - 32} (copie SDR)`;
-  return { 17: 'EVS A (PGM1)', 18: 'EVS B (PGM2)', 19: 'HABILLAGE fill', 20: 'HABILLAGE key', 21: 'STUDIO (duplex)', 22: 'MIRE (SPG)', 23: 'NOIR', 24: 'PGM', 25: 'CLEAN FEED', 26: 'PVW', 27: 'RETOUR ANTENNE' }[i] || null;
+  if (i < 1 || i > 40) return null;
+  const p = inPlan(i);
+  if (p.src.startsWith('VH') && !p.live) return null;
+  return p.def;
 }
 export function routerOutLabel(i) {
-  if (i >= 1 && i <= 22) return `Mélangeur IN ${i}`;
-  if (i >= 23 && i <= 40) return `Multiviewer IN ${i - 22}`;
-  if (i >= 41 && i <= 48) return `EVS REC ${i - 40}`;
-  if (i >= 53 && i <= 68) return `Retour viseur CAM ${i - 52}`;
-  return { 49: 'Départ TX1 (fibre)', 50: 'Départ TX2 (satellite)', 51: 'Écran géant', 52: 'Moniteur Grade 1' }[i] || null;
+  if (i < 1 || i > 40) return null;
+  const p = outPlan(i); if (!p.dest) return null;
+  if (p.dest.startsWith('ME')) return `Mélangeur IN ${p.dest.slice(2)}`;
+  if (p.dest.startsWith('MV')) return `Multiviewer IN ${p.dest.slice(2)}`;
+  if (p.dest.startsWith('REC')) return `EVS REC ${p.dest.slice(3)}`;
+  return { AUX_TX1: 'Départ TX1 (fibre)', AUX_TX2: 'Départ TX2 (satellite)', AUX_GIANT: 'Écran géant', AUX_VISION: 'Moniteur Grade 1' }[p.dest] || null;
 }
-const srcToRouterIn = (id) => {
-  if (!id) return null;
-  if (id.startsWith('CAM')) return RIN.cam(+id.slice(3));
-  return { EVSA: 17, EVSB: 18, GFX: 19, STUDIO: 21, BARS: 22, BLACK: 23, PGM: 24, CLEAN: 25, PVW: 26, RETANT: 27 }[id] || null;
-};
-export function routerCrosspoint(outIdx) {
-  // quelle entrée est commutée sur cette sortie ?
-  let dest;
-  if (outIdx <= 22) dest = 'ME' + outIdx;
-  else if (outIdx <= 40) dest = 'MV' + (outIdx - 22);
-  else if (outIdx <= 48) dest = 'REC' + (outIdx - 40);
-  else dest = { 49: 'AUX_TX1', 50: 'AUX_TX2', 51: 'AUX_GIANT', 52: 'AUX_VISION' }[outIdx];
-  if (outIdx >= 53 && outIdx <= 68) return RIN.pgm; // retour programme vers les viseurs
-  const src = dest ? ROUTER.map[dest] : null;
-  return srcToRouterIn(src);
-}
+// quelle entrée est commutée sur cette sortie ?
+export function routerCrosspoint(outIdx) { return outIdx >= 1 && outIdx <= 40 ? xpOf(outIdx) : null; }
 
 export const isSystemCam = (c) => c && !['pov', 'ptz', 'drone'].includes(c.type) && c.link !== 'hf';
 
@@ -86,8 +77,10 @@ export function buildCabling() {
     add(P('headset', c.id, 'out'), P('cam', c.id, 'icom1'), 'Casque intercom XLR-5', 'comms', 3, 'Le cadreur entend le réalisateur et lui répond (ordres transportés par la fibre)');
     // CCU
     add(P('ccu', c.id, 'sdi1'), P('router', 1, 'in' + RIN.cam(c.id)), sdiType, 'video', 2, `Sortie principale ${S.format === 'UHD' ? 'UHD HDR (HLG)' : 'HD'}`);
-    if (S.format === 'UHD') add(P('ccu', c.id, 'sdi2'), P('router', 1, 'in' + RIN.camSdr(c.id)), 'Coax 3G-SDI', 'video', 2, 'Copie HD SDR (BT.709) pour les diffuseurs HD');
-    add(P('router', 1, 'out' + ROUT.retCam(c.id)), P('ccu', c.id, 'prompter'), 'Coax (retour programme)', 'video', 2, 'Retour PGM vers le viseur (bouton RET de l\'optique)');
+    // la grille 40 × 40 n'a de place que pour 8 copies SDR (entrées 33 à 40)
+    if (S.format === 'UHD' && c.id <= 8) add(P('ccu', c.id, 'sdi2'), P('router', 1, 'in' + RIN.camSdr(c.id)), 'Coax 3G-SDI', 'video', 2, 'Copie HD SDR (BT.709) pour les diffuseurs HD');
+    // retour programme : copie du PGM par un distributeur (aucune sortie de la grille 40 × 40 n'y est consacrée)
+    if (!S.ipMode) add(P('dav', 2, 'out' + c.id), P('ccu', c.id, 'prompter'), 'Coax (retour programme)', 'video', 2, 'Retour PGM vers le viseur (bouton RET de l\'optique)');
     add(P('ccu', c.id, 'char'), P('mv', 1, 'in' + (24 + c.id)), 'Coax SDI', 'video', 2, 'Sortie CHARACTER : image avec menus et état pour la vision');
     add(P('da', 1, 'out' + (((i) % 8) + 1)), P('ccu', c.id, 'refin'), 'Coax 75 Ω (référence tri-level)', 'ref', 2, c.genlock ? 'Verrouillé' : 'RÉFÉRENCE ABSENTE', c.genlock);
     add(P('icom', 1, 'p' + c.id), P('ccu', c.id, 'icom'), 'Multipaire D-sub 50 (éclaté)', 'comms', 3, 'Intercom PROD/ENG, programme et tally R/G/Y');
@@ -114,7 +107,15 @@ export function buildCabling() {
   add(P('spg', 1, 'ref1'), P('rx', 1, 'ref'), 'Coax 75 Ω', 'ref', 2);
   // grille -> mélangeur, multiviewer, EVS, départs
   for (let i = 1; i <= mixInputs(); i++) add(P('router', 1, 'out' + ROUT.me(i)), P('mixer', 1, 'in' + i), sdiType, 'video', 3, `Bus ${i} : ${sourceLabel(ROUTER.map['ME' + i])}`);
-  for (let i = 1; i <= 18; i++) add(P('router', 1, 'out' + ROUT.mv(i)), P('mv', 1, 'in' + i), sdiType, 'video', 3, `Tuile ${i} : ${sourceLabel(ROUTER.map['MV' + i])}`);
+  // multiview : tuiles 13 à 18 par la grille (sorties 35 à 40) ; tuiles 1 à 12 câblées en direct (hors grille)
+  for (let i = 13; i <= 18; i++) add(P('router', 1, 'out' + ROUT.mv(i)), P('mv', 1, 'in' + i), sdiType, 'video', 3, `Tuile ${i} : ${sourceLabel(ROUTER.map['MV' + i])}`);
+  if (!S.ipMode) {
+    for (let i = 1; i <= 12; i++) {
+      const src = ROUTER.map['MV' + i]; const cam = src && src.startsWith('CAM') ? S.cams.find((x) => 'CAM' + x.id === src) : null;
+      add(cam && isSystemCam(cam) ? P('ccu', cam.id, 'sdi3') : P('dav', 1, 'out' + i), P('mv', 1, 'in' + i), sdiType, 'video', 3, `Tuile ${i} : ${sourceLabel(src)} (câblage direct, hors grille)`);
+    }
+    add(P('mixer', 1, 'out4'), P('dav', 2, 'in'), sdiType, 'video', 2, 'AUX du mélangeur : programme vers le distributeur des retours viseurs');
+  }
   // serveurs ralentis (XT4K) : répartition des canaux selon le format
   const L = evsLayout();
   for (let i = 1; i <= L.rec; i++) add(P('router', 1, 'out' + ROUT.rec(i)), P('evs', L.recServer(i), 'sdi' + L.recPort(i)), sdiType, 'video', 3, `REC ${i} : ${ROUTER.map['REC' + i] ? sourceLabel(ROUTER.map['REC' + i]) + (ROUTER.phase['REC' + i] ? ' phase ' + 'ABCDEF'[ROUTER.phase['REC' + i]] : '') : 'libre'}`);

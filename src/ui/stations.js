@@ -61,7 +61,8 @@ const STATIONS = {
   synchro: { title: 'Synchro et timecode', build: buildSync, layout: 'top sm', dev: 'spg' },
   transmission: { title: 'Transmission', build: buildTX, layout: 'top' },
   intercom: { title: 'Intercom', build: buildIntercom, layout: 'none' },
-  reseau: { title: 'Réseau IP (ST 2110 · spine-leaf)', build: buildNetwork, layout: 'top sm', dev: 'swred' },
+  // car SDI : réseau de contrôle Gigabit (ui/st_ctrlnet.js) ; car IP : réseau ST 2110 (titre et matériel inchangés)
+  reseau: { title: 'Réseau de contrôle — switchs Gigabit · VLAN · QoS', ipTitle: 'Réseau IP (ST 2110 · spine-leaf)', build: buildNetwork, layout: 'top sm', get dev() { return S.ipMode ? 'swred' : 'rcp'; } },
 };
 export function hasStation(id) { return !!STATIONS[id]; }
 
@@ -125,8 +126,9 @@ const STATION_HELLO = {
   transmission: 'Comparez le départ vers la chaîne et le retour antenne (en retard de quelques secondes).',
   habillage: 'À gauche, la sortie fill/key du moteur graphique ; à droite, le programme : le graphique n\'y apparaît que si le DSK est à l\'antenne.',
   chefdecar: 'Le multiview reste visible pendant que vous lisez le synoptique ou injectez des pannes.',
-  reseau: 'Deux onglets. Technique : les deux réseaux rouge et bleu en spine-leaf, leurs commutateurs (interface graphique ou terminal), l\'adressage, les flux, PTP et le diagnostic. Exploitation : l\'interface épurée d\'un contrôleur et des appareils, pour régler les adresses, connecter une source à une destination et surveiller PTP et NMOS. Chaque réglage agit réellement sur ce que reçoivent le mélangeur, l\'EVS et le multiview.',
+  get reseau() { return S.ipMode ? STATION_HELLO_IP : 'Le car SDI a aussi son réseau : trois switchs Gigabit relient tout ce qui se pilote par Ethernet (RCP et CCU, pupitre et processeur du mélangeur, grille, EVS et IPDirector, tally, intercom, console son). Chaque machine a sa fiche (adresse IP, masque, passerelle, VLAN, QoS) ; l\'onglet Outils teste avec un ping, l\'onglet Formation explique les bases.'; },
 };
+const STATION_HELLO_IP = 'Deux onglets. Technique : les deux réseaux rouge et bleu en spine-leaf, leurs commutateurs (interface graphique ou terminal), l\'adressage, les flux, PTP et le diagnostic. Exploitation : l\'interface épurée d\'un contrôleur et des appareils, pour régler les adresses, connecter une source à une destination et surveiller PTP et NMOS. Chaque réglage agit réellement sur ce que reçoivent le mélangeur, l\'EVS et le multiview.';
 const later = (fn) => setTimeout(fn, 160);
 // moniteur du dock : label + écran 16/9 rendu par WebGL
 function dmon(src, label, cls = 'grow') { return el('div', { class: 'monwrap ' + cls }, el('div', { class: 'lab' }, label), el('div', { class: 'mon fill', 'data-gl': src })); }
@@ -687,7 +689,7 @@ function buildTX(body, arg, ctx) {
   const st = el('div', { class: 'kv' });
   const p1 = hwBtn('TX1', { sub: 'fibre', onclick: () => { S.txPath = 1; explain('Chemin TX1 (fibre opérateur, encodeur JPEG XS) : faible latence et haute qualité. C\'est le chemin principal.', 'tx:path'); } });
   const p2 = hwBtn('TX2', { sub: 'satellite', onclick: () => { S.txPath = 2; emit('repair', 'tx'); explain('Chemin TX2 (satellite, HEVC) : secours indépendant de la fibre. Latence plus forte (≈ 0,25 s de trajet par bond géostationnaire + codage), et le retour antenne arrive encore plus tard.', 'tx:path'); } });
-  const test = hwBtn('ENVOYER LA MIRE', { sub: 'test de ligne', onclick: () => { const cur = ROUTER.map.AUX_TX1; if (cur === 'BARS') { route('AUX_TX1', 'PGM'); route('AUX_TX2', 'PGM'); } else { route('AUX_TX1', 'BARS'); route('AUX_TX2', 'BARS'); } } });
+  const test = hwBtn('ENVOYER LA MIRE', { sub: 'test de ligne', onclick: () => { const cur = ROUTER.map.AUX_TX1; const to = cur === 'BARS' ? 'PGM' : 'BARS'; const err = route('AUX_TX1', to) || route('AUX_TX2', to); if (err) { toast(err, 'bad'); explain(err + ' Pour un test de ligne, le chef de car déverrouille les départs à la grille, puis les reverrouille.', 'warn:tx'); } } });
   ctx.dock.append(el('div', { class: 'dockrow' }, dmon(S.txPath === 2 ? 'AUX_TX2' : 'AUX_TX1', 'Départ vers la chaîne'), dmon('RETANT', 'Retour antenne (après diffusion)')));
   body.append(el('div', { class: 'panelgrid' }, el('div', { class: 'hwpanel' }, el('h3', {}, 'Chemin de transmission'), el('div', { class: 'hwrow' }, p1, p2, test), st),
       el('div', { class: 'hwpanel prose' }, el('h3', {}, 'À retenir'), el('p', {}, STATION_INFO.transmission.tips[0]), el('p', {}, 'Test de ligne avant l\'antenne : on envoie la mire avec le 1 kHz, la chaîne confirme réception et niveaux. Les deux chemins (fibre et satellite) sont testés.'))));

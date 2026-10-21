@@ -23,8 +23,8 @@ export function tabCourse(box, R) {
     el('div', { class: 'hwrow' },
       el('button', { class: 'btn small primary', onclick: () => openQuiz(R) }, 'Quiz ST 2110 (10 questions)'),
       el('button', { class: 'btn small', onclick: async () => { if (!(await ask('Lancer l\'examen réseau ? Trois pannes cachées vont être injectées l\'une après l\'autre (15 min maximum). Le réseau est d\'abord remis en configuration de référence.', { title: 'Examen réseau', ok: 'Lancer l\'examen' }))) return; startExam(); R.refresh(); } }, 'Examen réseau (3 pannes, 15 min)'),
-      el('button', { class: 'btn small', onclick: () => emit('openGuide', 'reseau') }, 'Guide : réseau spine-leaf'),
-      el('button', { class: 'btn small', onclick: () => emit('openGuide', 'mesure2110') }, 'Guide : mesurer un flux 2110'),
+      el('button', { class: 'btn small', onclick: () => emit('openGuide', 'reseau') }, 'Cours : réseau spine-leaf'),
+      el('button', { class: 'btn small', onclick: () => emit('openGuide', 'mesure2110') }, 'Cours : mesurer un flux 2110'),
       el('button', { class: 'btn small', onclick: async () => { if (await ask('Effacer votre progression sur le parcours réseau ?', { title: 'Recommencer le parcours réseau', ok: 'Effacer ma progression', danger: true })) { resetCourse(); R.refresh(); } } }, 'Recommencer le parcours'))));
   if (NC.done) { const m = NET_MISSIONS.find((x) => x.id === NC.done.id); box.append(el('div', { class: 'hwpanel net-done' }, el('h3', {}, `Mission réussie : ${m.title} · ${NC.done.pts}/10`), el('p', {}, m.learn), el('div', { class: 'hwrow' }, nextBtn(m, R), el('button', { class: 'btn small', onclick: () => { NC.done = null; R.refresh(); } }, 'Fermer')))); }
   if (NC.active) missionCard(box, R);

@@ -4,6 +4,7 @@ import { pbr } from './render.js';
 import { Builder, screenMaterial } from './geo.js';
 import { TRUCK } from './world.js';
 import { makeCanvas } from './util.js';
+import { S } from './state.js';
 import { EQUIP } from './equip.js';
 import { buildAudioDesk } from './audiodesk.js';
 
@@ -195,7 +196,7 @@ export const RACKS = {
   patch: { title: 'Patch', units: [[1, 'blank'], [2, 'jack', 'VIDÉO IN 1-24'], [2, 'jack', 'VIDÉO IN 25-48'], [2, 'jack', 'GRILLE IN'], [2, 'jack', 'GRILLE OUT'], [2, 'jack', 'DÉPARTS / EVS'], [2, 'jack', 'RÉFÉRENCES'], [1, 'blank'], [2, 'jack', 'AUDIO']], device: 'pdc' },
   audio: { title: 'Audio', units: [[1, 'sw1', 'LEAF R5 · AUDIO'], [1, 'sw1', 'LEAF B5 · AUDIO'], [4, 'frame', 'CONSOLE · CŒUR DSP'], [1, 'madi', 'MADI / DANTE'], [1, 'madi', 'EMBEDDERS'], [1, 'madi', 'DÉSEMBEDDERS'], [1, 'vent'], [2, 'frame', 'UNITÉ COMMENTAIRE'], [1, 'pdu', 'PDU']] },
   rx: { title: 'Réception HF', units: [[1, 'blank'], [1, 'rx', 'RÉCEPTEUR HF 1'], [1, 'rx', 'RÉCEPTEUR HF 2'], [1, 'rx', 'RÉCEPTEUR HF 3'], [1, 'rx', 'RÉCEPTEUR HF 4'], [1, 'vent'], [2, 'dec', 'DÉCODEURS'], [2, 'frame', 'CONTRÔLE ANTENNES'], [1, 'pdu', 'PDU']], device: 'rx' },
-  ups: { title: 'Énergie', units: [[1, 'blank'], [3, 'ups', 'ONDULEUR'], [3, 'ups', 'ONDULEUR'], [1, 'vent'], [2, 'pdu', 'DISTRIBUTION 230 V'], [2, 'pdu', 'SURVEILLANCE ÉNERGIE']] },
+  ups: { title: 'Énergie · mesure', units: [[1, 'blank'], [3, 'frame', 'PRISM · MESURE SDI / IP'], [3, 'ups', 'ONDULEUR'], [3, 'ups', 'ONDULEUR'], [1, 'vent'], [2, 'pdu', 'DISTRIBUTION 230 V'], [2, 'pdu', 'SURVEILLANCE ÉNERGIE']] },
 };
 // rangées de baies de la zone technique : contre le mur d'écrans (côté gauche en entrant) et côté porte
 export const RACK_ROWS = { mur: ['ccu', 'ccu2', 'router', 'xvs', 'mv', 'evs', 'tx'], porte: ['spg', 'icom', 'patch', 'audio', 'rx', 'ups'] };
@@ -309,9 +310,12 @@ function hangingSign(text, lx, lz, w = 1.6, rotY = 0, color = '#e0b030') {
   m.translateZ(-0.002);
 }
 
-function stationLabel(text) {
+// text : libellé, ou fonction qui le donne (libellé qui suit le type de car, SDI ou IP)
+function stationLabel(label) {
   const c = makeCanvas(1024, 160); const g = c.getContext('2d');
   const draw = (hot) => {
+    const text = typeof label === 'function' ? label() : label;
+    s.userData.txt = text;
     g.clearRect(0, 0, 1024, 160);
     g.font = '700 74px "Barlow Condensed", "Arial Narrow", sans-serif';
     const w = Math.min(1000, g.measureText(text).width + 80);
@@ -506,6 +510,7 @@ export function buildTruck() {
   hangingSign('SORTIE', 0.75, 2.25, 0.7, 0, '#30c060');
 
   // postes : position debout (pos), point regardé (look), rayon, poste ouvert
+  // label et opts.short peuvent être des fonctions : le libellé suit alors le type de car (SDI ou IP)
   const st = (id, label, lx, lz, look, opts = {}) => {
     const fy = truckFloorAt(X(lx), Z(lz)) - F;
     const pos = new THREE.Vector3(X(lx), F + fy + 1.2, Z(lz));
@@ -514,7 +519,8 @@ export function buildTruck() {
     if (opts.zone === 'tech' && id !== 'hf') lab.position.y += (T.stations.filter((x) => x.zone === 'tech').length % 2) * 0.32;
     const ring = new THREE.Mesh(new THREE.RingGeometry(0.2, 0.26, 28), new THREE.MeshBasicMaterial({ color: 0x8a9098, transparent: true, opacity: 0.55, toneMapped: false, depthWrite: false }));
     ring.rotation.x = -Math.PI / 2; ring.position.set(X(lx), F + fy + 0.012, Z(lz)); scene.add(ring);
-    T.stations.push({ id, label, short: opts.short, pos, look: lk, r: opts.r || 1.6, station: opts.station || id, arg: opts.arg, device: opts.device, zone: opts.zone, sprite: lab, ring, lx, lz });
+    const val = (v) => (typeof v === 'function' ? v() : v);
+    T.stations.push({ id, get label() { return val(label); }, get short() { return val(opts.short); }, pos, look: lk, r: opts.r || 1.6, station: opts.station || id, arg: opts.arg, device: opts.device, zone: opts.zone, sprite: lab, ring, lx, lz });
   };
   st('son', 'Son', -6.75, -0.4, [-7.7, 0.9, -0.45], { zone: 'son', device: null });
   st('scripte', 'Scripte', -4.3, -0.75, [-4.3, 0.85, -1.55], { zone: 'prod' });
@@ -531,7 +537,7 @@ export function buildTruck() {
   st('ccu', 'Baie CCU', 4.55, -1.3, [4.55, 1.25, rackPos.ccu.faceZ - TRUCK.cz], { r: 1.3, zone: 'tech', device: 'ccu' });
   st('grille', 'Grille', 5.45, -1.3, rk('router'), { r: 1.2, zone: 'tech', device: 'router' });
   st('xvsrack', 'Mélangeur (processeur)', 6.05, -1.3, rk('xvs'), { r: 1.1, station: 'melangeur', zone: 'tech', device: 'mixer', short: 'Mélangeur (proc.)' });
-  st('reseau', 'Réseau IP · spines et multiview', 6.65, -1.3, rk('mv'), { r: 1.1, zone: 'tech', device: 'swred', short: 'Réseau IP' });
+  st('reseau', () => (S.ipMode ? 'Réseau IP · spines et multiview' : 'Réseau de contrôle · switchs et multiview'), 6.65, -1.3, rk('mv'), { r: 1.1, zone: 'tech', device: 'swred', short: () => (S.ipMode ? 'Réseau IP' : 'Réseau de contrôle') });
   st('evsrack', 'Serveur EVS XT4K', 7.25, -1.3, rk('evs'), { r: 1.1, station: 'evs', arg: 0, zone: 'tech', device: 'evs' });
   st('transmission', 'Transmission', 7.85, -1.3, rk('tx'), { r: 1.1, zone: 'tech', device: 'conv' });
   st('synchro', 'Synchro (SPG)', 5.1, 1.3, rk('spg'), { r: 1.1, zone: 'tech', device: 'spg' });
@@ -539,6 +545,8 @@ export function buildTruck() {
   st('mvproc', 'Baie de brassage', 6.3, 1.3, rk('patch'), { r: 1.1, station: 'brassage', zone: 'tech', device: 'pdc' });
   st('audiorack', 'Audio (MADI, embedders)', 6.9, 1.3, rk('audio'), { r: 1.1, station: 'son', zone: 'tech', short: 'Audio (MADI)' });
   st('hf', 'Régie HF', 7.75, -0.45, [8.65, 1.45, -0.45], { r: 1.3, zone: 'tech', device: 'rx' });
+  // baie de mesure (instrument type PRISM) au bout de la rangée côté porte : ui/prism_station.js
+  st('mesure', 'Baie de mesure (PRISM)', 8.0, 1.3, rk('ups'), { r: 1.1, zone: 'tech', device: 'prism', short: 'Mesure (PRISM)' });
   return scene;
 }
 
@@ -585,7 +593,7 @@ export function updateTruckView(eye, dir, targetId, t) {
   for (const s of T.stations) {
     const hot = s.id === targetId;
     s.sprite.visible = hot || shown.has(s);
-    if (s.sprite.userData.hot !== hot) { s.sprite.userData.hot = hot; s.sprite.userData.draw(hot); }
+    if (s.sprite.userData.hot !== hot || (hot || s.sprite.visible) && s.sprite.userData.txt !== s.label) { s.sprite.userData.hot = hot; s.sprite.userData.draw(hot); }
     s.ring.material.color.setHex(hot ? 0xffb020 : 0x8a9098);
     s.ring.material.opacity = hot ? 0.75 + 0.25 * Math.sin(t * 6) : 0.4;
   }

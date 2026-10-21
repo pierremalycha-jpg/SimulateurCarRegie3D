@@ -8,6 +8,8 @@ import '../content/terms_mesure.js';
 import '../content/terms_ctrlnet.js';
 import './figs_mesure.js';
 import './figs_ctrlnet.js';
+import '../content/terms_videohub.js';
+import './figs_videohub.js';
 import { rich } from './rich.js';
 
 // ----------------------------------------------------------------------------------

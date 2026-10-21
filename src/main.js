@@ -47,6 +47,7 @@ import { updateStatus, FPS } from './app/hud.js';
 import { installInput } from './app/input.js';
 import { buildStart, start } from './app/start.js';
 import { initTitle, loadStep, tick, titleReady, enterFrom, showTitle } from './app/title.js';
+import * as CTRL from './net/ctrlnet.js';
 import { installPerfTest, watchFps } from './app/perf.js';
 import { openMenu, restart, resumeAfterReload } from './app/nav.js';
 import { toggleChef } from './ui/tutor_ui.js';
@@ -220,6 +221,7 @@ window.__dbg = { RENDER, openReview, openSessionPanel, SES, S, M, MIX, EVS, ROUT
 window.__dbg.diag = { ERRS, report, diagText, openDiag, el }; window.__dbg.on = on;
 window.__dbg.title = { enter: enterFrom, show: showTitle };
 window.__dbg.nav = { openMenu, restart };
+window.__dbg.CTRL = CTRL;
 // le programme a démarré : le filet du chargement (boot.js) n'a plus à intervenir
 window.__carReady = true;
 initDiagUI();

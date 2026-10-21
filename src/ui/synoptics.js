@@ -184,7 +184,7 @@ function videoDiagram() {
   // grille / cœur IP
   const gy = top - 6, gh = n * rowH + 6;
   const netBad = ip && (!NET.red || !NET.blue || !NET.nmos);
-  D.box('router', 530, gy, 110, gh, ip ? 'ST 2110' : 'GRILLE', ip ? ['rouge + bleu', `${fmt(flowGbps(), 1)} Gb/s / flux`, NET.nmos ? 'NMOS OK' : 'NMOS HS'] : ['3G/12G', '144 × 144', 'salvos'], { cls: 'big ' + (netBad ? 'warn' : ''), dev: ip ? 'swred' : 'router' });
+  D.box('router', 530, gy, 110, gh, ip ? 'ST 2110' : 'GRILLE', ip ? ['rouge + bleu', `${fmt(flowGbps(), 1)} Gb/s / flux`, NET.nmos ? 'NMOS OK' : 'NMOS HS'] : ['Videohub 12G', '40 × 40', 'sorties verrouillables'], { cls: 'big ' + (netBad ? 'warn' : ''), dev: ip ? 'swred' : 'router' });
   cams.forEach((c, i) => { const y = top + i * rowH + 14; D.wire([490, y], [530, y], ip ? 'ip' : 'video', { mode: 'straight' }); });
   // traitement
   const X = 700, BW = 360;

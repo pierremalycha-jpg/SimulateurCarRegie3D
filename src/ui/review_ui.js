@@ -83,7 +83,7 @@ function tabMe(box) {
         b.dataset.k = k; b.classList.toggle('on', mine.op === k); ops.appendChild(b);
       }
       const links = el('div', { class: 'hwrow' });
-      if (where.guide) links.append(el('button', { class: 'btn small', onclick: () => { modal.close(); emit('openGuide', where.guide); } }, 'Voir le guide : ' + chapterTitle(where.guide)));
+      if (where.guide) links.append(el('button', { class: 'btn small', onclick: () => { modal.close(); emit('openGuide', where.guide); } }, 'Voir dans le Cours : ' + chapterTitle(where.guide)));
       if (where.station && S.mode !== 'start') links.append(el('button', { class: 'btn small', onclick: () => { modal.close(); emit('openStationNow', { id: where.station }); } }, 'Ouvrir le poste'));
       const card = el('div', { class: 'item review rv-card', 'data-op': mine.op || '' },
         el('div', { class: 'grow' }, el('div', { class: 't' }, text), el('div', { class: 's' }, 'Source : ' + src),
@@ -127,7 +127,7 @@ function tabValues(box) {
 function tabExtra(box) {
   const list = el('div', { class: 'list' });
   const dom = selectEl(Object.entries(DOMAINS), MYREV.domains[0] || 'vision', () => {});
-  const where = el('input', { type: 'text', id: 'rv-where', maxlength: 120, placeholder: 'Où ? (poste, chapitre du guide, appareil…)' });
+  const where = el('input', { type: 'text', id: 'rv-where', maxlength: 120, placeholder: 'Où ? (poste, fiche ou chapitre du Cours, appareil…)' });
   const text = el('textarea', { rows: 3, maxlength: 1000, 'aria-label': 'Remarque', placeholder: 'Ce qui est faux, ce qui manque, ce qui ne se fait pas comme ça sur le terrain…' });
   const draw = () => {
     list.innerHTML = '';

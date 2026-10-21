@@ -20,6 +20,7 @@ Calendrier indicatif, calé sur l'année scolaire (les épreuves ont lieu en mai
 | Version | Période | Contenu |
 |---|---|---|
 | v18.2 | nov. 2026 | Mur des lieux sur l'accueil (fait), puis décisions D1 à D16 de la revue v18.1, rattachement au référentiel, premier test en classe, mesure d'usage, CLAUDE.md et skills maison |
+| v18.3 | oct. 2026 (fait) | Écran titre avec chargement par étapes ; instrument de mesure type PRISM au poste vision et dans une baie de mesure (waveform, parade, vecteurscope, diamant, split diamant, œil, gigue) ; grille Videohub 40×40 avec monitoring ; réseau de contrôle Gigabit du car SDI (VLAN, QoS, pannes) ; les trois reliés : sans réseau, RCP, grille, IPDirector et mélangeur ne commandent plus |
 | v19 | déc. 2026 – janv. 2027 | Socle multi-lieux : format de lieu, moteur de signaux unique (vidéo, audio, commande, réseau, énergie), catalogue de matériel unique, lieux chargés à la demande, un tuteur par métier, livret de compétences |
 | v20 | févr. – avr. 2027 | Plateau TV et régie en dur : studio, régie fixe, patch SDI, émission sur conducteur, premier DMX, mode examen |
 | v21 | mai – juil. 2027 | Entrepôt : cahier des charges, baies 19", flight cases, budget électrique, chargement, exports, éditeur de pannes pour le formateur |
