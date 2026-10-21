@@ -73,3 +73,8 @@ body:not(.role-formateur) .role-only { display: none !important; }
 /* pupitre : les outils par famille */
 .pp-fams { display: grid; gap: 8px; }
 .pp-fam h3 { font: 600 13px var(--f-disp); color: var(--muted); margin: 0 0 4px 2px; }
+/* chapitre signal */
+.co-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.co-smooth { image-rendering: auto; }
+.co-demo-host > .note { margin: 0; max-width: 80ch; }
+@media (max-width: 820px) { .co-2 { grid-template-columns: minmax(0, 1fr); } }
