@@ -131,7 +131,7 @@ export function openMenu() {
   const body = el('div', { class: 'mn' },
     el('section', { class: 'mn-col', 'aria-label': 'La partie et les espaces' },
       key('mn-resume', 'reprendre', 'Reprendre', 'Revenir au car', () => modal.close(), { primary: true, kbd: 'Échap' }),
-      key('mn-cours', 'cours', 'Cours', 'Les leçons (signal, SDI, réseau, HF), les chapitres, le glossaire', then(() => openCours()), { kbd: 'G' }),
+      key('mn-cours', 'cours', 'Cours', 'Les leçons (signal, SDI, réseau, HF), la caméra en 3D, les chapitres, le glossaire', then(() => openCours()), { kbd: 'G' }),
       key('mn-chef', 'chef', 'Chef de car', 'Parcours guidés, exercices notés, missions, livret de compétences', then(() => openEntrainement())),
       keyRole('mn-trainer', 'formateur', 'Formateur', 'Configuration du car, suivi des stagiaires, relecture, pannes', then(() => openTrainer('car')))),
     el('section', { class: 'mn-col', 'aria-label': 'Réglages et outils' },

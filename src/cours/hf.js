@@ -298,7 +298,7 @@ function demoAnt(host) {
   cv.addEventListener('pointerdown', pick); cv.addEventListener('pointermove', (ev) => { if (ev.buttons) pick(ev); });
   cv.style.cursor = 'crosshair';
   const step = () => { cam.x += 0.8 * dir; if (cam.x > 52) dir = -1; if (cam.x < -52) dir = 1; draw(); };
-  const runBtn = el('button', { class: 'btn small', onclick: () => { running = !running; runBtn.textContent = running ? 'Arrêter la caméra' : 'La caméra court le long de la touche'; if (running) timer = setInterval(step, 80); else clearInterval(timer); } }, 'La caméra court le long de la touche');
+  const runBtn = el('button', { class: 'btn small', onclick: () => { running = !running; runBtn.textContent = running ? 'Arrêter la caméra' : 'La caméra court le long de la touche'; if (running) timer = window.setInterval(step, 80); else window.clearInterval(timer); } }, 'La caméra court le long de la touche');
   host.append(
     el('div', { class: 'co-ctl' },
       choice('Antennes de réception', Object.keys(ANT).map((k) => [k, `${ANT[k].name} ${ANT[k].gain} dBi`]), type, (v) => { type = v; draw(); }),

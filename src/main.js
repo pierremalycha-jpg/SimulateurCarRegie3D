@@ -47,6 +47,7 @@ import { updateStatus, FPS } from './app/hud.js';
 import { installInput } from './app/input.js';
 import { buildStart, start } from './app/start.js';
 import { initTitle, loadStep, tick, titleReady, enterFrom, showTitle } from './app/title.js';
+import { initCamLab, camlabOpen, camlabDebug } from './camlab/index.js';
 import { applyRole, PROFILE, setRole } from './app/profile.js';
 import { openCours } from './ui/cours_ui.js';
 import { CHAPTERS as COURS_CHAPTERS, allLessons, lessonById as coursLessonById, lessonDone as coursLessonDone } from './cours/index.js';
@@ -72,6 +73,7 @@ if (/[?&]lite/.test(location.search)) { S.lite = true; S.quality = 'basse'; }
 // écran titre : la construction se fait par étapes, chacune affichée avant la suivante
 applyRole();
 initTitle();
+initCamLab();
 loadStep('Chargement des polices', 6); await tick();
 // charge les polices avant de dessiner les textures (étiquettes, panneaux), sans bloquer plus de 2,5 s
 try {
@@ -131,6 +133,8 @@ function frame(now) {
   try { step(now); } catch (e) { const r = report(e, 'boucle de rendu'); if (r && r.n === 1) console.error(e); }
 }
 function step(now) {
+  // module « La caméra » ouvert : le simulateur attend, sans rien calculer ni dessiner
+  if (camlabOpen()) { last = now; return; }
   let dt = (now - last) / 1000; last = now;
   const realDt = Math.max(0.001, dt); // le compteur d'images par seconde mesure le temps réel, pas le pas de simulation borné
   dt = clamp(dt, 0.001, 0.05);
@@ -226,7 +230,7 @@ window.__dbg = { RENDER, openReview, openSessionPanel, SES, S, M, MIX, EVS, ROUT
 window.__dbg.diag = { ERRS, report, diagText, openDiag, el }; window.__dbg.on = on;
 window.__dbg.title = { enter: enterFrom, show: showTitle };
 window.__dbg.nav = { openMenu, restart };
-window.__dbg.openCours = openCours; window.__dbg.PROFILE = PROFILE; window.__dbg.setRole = setRole;
+window.__dbg.openCours = openCours; window.__dbg.PROFILE = PROFILE; window.__dbg.setRole = setRole; window.__dbg.camlab = camlabDebug;
 window.__dbg.COURS = { CHAPTERS: COURS_CHAPTERS, allLessons, lessonById: coursLessonById, lessonDone: coursLessonDone };
 window.__dbg.CTRL = CTRL;
 // le programme a démarré : le filet du chargement (boot.js) n'a plus à intervenir
