@@ -51,7 +51,7 @@ const close = {
 const CAMERA = {
   id: 'materiel-camera', domain: D, stations: ['ccu', 'vision'],
   title: 'Repérer les connecteurs de la caméra système et de sa CCU',
-  summary: 'Exercice de la leçon « La caméra système » : le câble hybride SMPTE, l\'intercom du cadreur, puis l\'arrière de la CCU : fibre, référence et sortie vers la grille.',
+  summary: 'Exercice de la leçon « La chaîne caméra : tête, fibre, CCU, RCP » : le câble hybride SMPTE, l\'intercom du cadreur, puis l\'arrière de la CCU : fibre, référence et sortie vers la grille.',
   duration: '6 min', level: 'découverte',
   outro: 'Une caméra système, c\'est une tête légère sur le terrain et sa CCU dans le car, reliées par un seul câble : tout passe par lui, dans les deux sens.',
   steps: [
@@ -108,7 +108,7 @@ const SPG = {
 const EVS_HW = {
   id: 'materiel-evs', domain: D, stations: ['evs', 'ipdirector'],
   title: 'Repérer les connecteurs du serveur ralenti EVS XT',
-  summary: 'Exercice de la leçon « Le serveur ralenti » : l\'arrière du serveur, ses entrées et sorties SDI configurables, la référence, le timecode et le réseau XNet.',
+  summary: 'Exercice de la leçon « Le serveur ralenti : trains, IN et vitesse » : l\'arrière du serveur, ses entrées et sorties SDI configurables, la référence, le timecode et le réseau XNet.',
   duration: '5 min', level: 'découverte',
   outro: 'Le serveur enregistre toutes ses entrées en continu, sur le même timecode : c\'est ce qui permet de relire n\'importe quel angle au même instant.',
   steps: [
@@ -135,7 +135,7 @@ const EVS_HW = {
 const ROUTER_HW = {
   id: 'materiel-grille', domain: D, stations: ['grille', 'melangeur'],
   title: 'Repérer les connecteurs de la grille et du mélangeur',
-  summary: 'Exercice de la leçon « La grille » : l\'arrière de la grille (entrées, sorties, référence), puis celui du processeur du mélangeur.',
+  summary: 'Exercice de la leçon « La grille de commutation » : l\'arrière de la grille (entrées, sorties, référence), puis celui du processeur du mélangeur.',
   duration: '5 min', level: 'découverte',
   outro: 'La grille distribue, le mélangeur fabrique le programme : ce sont deux appareils distincts, reliés par des dizaines de câbles.',
   steps: [

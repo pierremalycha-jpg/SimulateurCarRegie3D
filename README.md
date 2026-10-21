@@ -422,7 +422,7 @@ l'aide (touches, diagnostic, test des performances, signaler une erreur) et « �
    créer ou rejoindre une partie, et les postes de la prestation avec la personne qui tient chacun ou « Libre ».
 Les conditions de captation (lumière, format, car SDI ou IP, qualité, son) sont repliées sous la touche Antenne.
 
-**Le chef de car devient les exercices pratiques du Cours.** Les 46 parcours d'Olivier sont rangés, chacun une
+**Le chef de car devient les exercices pratiques du Cours.** Les 42 parcours d'Olivier sont rangés, chacun une
 seule fois, dans la leçon qui les explique (`src/cours/exercices.js`, test unitaire) et réécrits en exercices de
 cette leçon (titre à l'infinitif, rappel de la leçon, chiffres de la leçon repris dans les étapes). Les exercices
 notés y sont aussi : l'atelier de montage (La caméra), le car vide (Le SDI), la formation réseau ST 2110 (Le
@@ -435,8 +435,15 @@ est dans le Cours.
 Matériel** (plus d'onglets Chapitres, Procédures ni La caméra), **un seul sommaire** à gauche (les chapitres, leurs
 leçons, le module 3D de la caméra dans son chapitre), et au milieu la page **Mon suivi** : leçons acquises,
 exercices faits, compétences travaillées, « à faire ensuite », un tableau par chapitre et le livret de compétences.
-Dix chapitres, dans l'ordre d'apprentissage (`cours/index.js`, `ORDER`) : le signal, le SDI, la synchro, la caméra,
-la réalisation, les ralentis, le son, le réseau, la HF, l'exploitation. Chaque leçon cite son article de référence
+Dix chapitres et 36 leçons, dans l'ordre d'apprentissage (`cours/index.js`, `ORDER`) : le signal (5), le SDI (6, dont
+la grille de commutation), la synchro (référence et genlock, timecode), la caméra (la chaîne caméra, monter une
+caméra de stade, et le module 3D), la réalisation (mélangeur, incrustations, ordres), les ralentis (serveur, clips),
+le son (la tranche, N-1 et synchro labiale), le réseau (5), la HF (4), l'exploitation (line-up, dépannage, intercom,
+transmission, jour de match) ; 46 exercices pratiques en tout. Chaque nouvelle leçon a sa manipulation qui calcule
+(mini-mélangeur et barre T, clé linéaire pixel par pixel, trains EVS et levier, N-1, phase H et V d'une source,
+conversion de timecode et drop-frame, chaîne caméra et budget d'énergie, équilibrage d'une caméra, grille 6 × 6 aux
+ports de la Videohub, parade RVB d'un line-up, dépannage par dichotomie, matrice d'intercom, bascule de
+transmission, déroulé d'une journée de match). Chaque leçon cite son article de référence
 (l'ancien guide, ouvert par-dessus le Cours) et ses compétences. Les procédures maison du formateur s'affichent sur
 « Mon suivi » quand il en a écrit.
 

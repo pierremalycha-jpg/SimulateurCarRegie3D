@@ -142,7 +142,7 @@ const vhTargets = (c, out, outLabel, inp, inLabel) => (c.view().tab === 'control
 const ROUTE = {
   id: 'grille-routage', domain: D, stations: ['grille'],
   title: 'Router une source vers une destination à la grille',
-  summary: 'Exercice de la leçon « La grille » : la destination d\'abord, la source ensuite, puis TAKE ; changer une vignette du multiview, puis remettre le programme sur un départ vers la chaîne.',
+  summary: 'Exercice de la leçon « La grille de commutation » : la destination d\'abord, la source ensuite, puis TAKE ; changer une vignette du multiview, puis remettre le programme sur un départ vers la chaîne.',
   duration: '6 min', level: 'débutant',
   outro: 'La grille relie n\'importe quelle source à n\'importe quelle destination. On choisit toujours la destination d\'abord, la source ensuite, puis TAKE ; et on vérifie au moniteur.',
   cleanupLabel: 'Remettre la vignette et les départs',

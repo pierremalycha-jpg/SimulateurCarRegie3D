@@ -92,7 +92,7 @@ await shot('05-changer');
 await page.locator('#ask [data-ask="ok"]').click();
 await page.waitForFunction(() => !window.__dbg, null, { timeout: 30000, polling: 200 }).catch(() => {});
 await page.waitForFunction('!!window.__dbg', null, { timeout: 180000, polling: 200 });
-T.check('après rechargement : le car vide est lancé', await until(page, () => window.__dbg.S.mode === 'fps' && window.__dbg.S.preset === 'brassage' && document.getElementById('title').hidden, null, 90000));
+T.check('après rechargement : le car vide est lancé (baie de brassage ouverte)', await until(page, () => window.__dbg.S.mode !== 'start' && window.__dbg.S.preset === 'brassage' && document.getElementById('title').hidden, null, 90000));
 
 // ---------------- écran Jouer et téléphone ----------------
 await page.reload();

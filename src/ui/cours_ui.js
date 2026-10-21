@@ -148,8 +148,8 @@ function home(page, render) {
           const first = ch.lessons.find((l) => !lessonDone(l.id)) || ch.lessons[0];
           return el('tr', {},
             el('th', { scope: 'row' }, icon(ch.icon), ch.title),
-            el('td', {}, el('span', { class: 'co-cell' }, bar(cd, cl, 'Leçons'), `${cd} / ${cl}`)),
-            el('td', {}, cx.length ? el('span', { class: 'co-cell' }, bar(cxd, cx.length, 'Exercices'), `${cxd} / ${cx.length}`) : '—'),
+            el('td', { 'data-l': 'Leçons' }, el('span', { class: 'co-cell' }, bar(cd, cl, 'Leçons'), `${cd} / ${cl}`)),
+            el('td', { 'data-l': 'Exercices' }, cx.length ? el('span', { class: 'co-cell' }, bar(cxd, cx.length, 'Exercices'), `${cxd} / ${cx.length}`) : '—'),
             el('td', {}, first ? el('button', { type: 'button', class: 'btn small', onclick: () => open(first.id) }, cd === cl && cl ? 'Revoir' : cd ? 'Continuer' : 'Commencer') : ch.module ? el('button', { type: 'button', class: 'btn small', onclick: () => { closeLayer(false); emit(ch.module.event, ch.module.arg); } }, 'Ouvrir') : null));
         })))),
     // les procédures maison du formateur, quand il en a écrit (Espace formateur, onglet Procédures)

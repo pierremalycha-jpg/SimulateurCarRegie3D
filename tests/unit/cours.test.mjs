@@ -52,7 +52,8 @@ test('liens : glossaire → leçon ou fiche, poste → leçon, cibles existantes
   assert.equal(titreDe('signal-422'), 'L\'échantillonnage 4:2:2');
   assert.equal(premiere(['leçon-inconnue', 'ptp']), 'ptp');
   assert.ok(posteCible('vision') === 'signal-422');
-  assert.equal(posteCible('cadreur'), '');
+  assert.equal(posteCible('cadreur'), 'camera-systeme');
+  assert.equal(posteCible('truquiste-inconnu'), '');
   // seules des cibles existantes sont proposées
   for (const [t] of GLOSSARY) { const f = cibleDuTerme(t); if (f) assert.ok(lessonById(f) || TERMS[f], `${t} → ${f}`); }
 });

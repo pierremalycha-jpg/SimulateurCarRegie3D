@@ -46,6 +46,13 @@
 .co-article { margin: 0; }
 @media (max-width: 760px) {
   .co-kpis, .co-next-row { grid-template-columns: minmax(0, 1fr); }
+  /* le tableau par chapitre devient une liste : le chapitre, puis ses deux barres et le bouton */
+  .co-ptab, .co-ptab tbody { display: block; }
+  .co-ptab thead { display: none; }
+  .co-ptab tr { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto; gap: 4px 10px; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--line); }
+  .co-ptab tbody th { grid-column: 1 / -1; white-space: normal; }
+  .co-ptab th, .co-ptab td { padding: 0; border: 0; }
+  .co-ptab td[data-l]::before { content: attr(data-l); display: block; font-size: 11.5px; color: var(--muted); }
   .co-blocs { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .co-exo { grid-template-columns: auto minmax(0, 1fr); }
   .co-exo > .btn { grid-column: 2; justify-self: start; }
