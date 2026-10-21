@@ -1,0 +1,47 @@
+/* module « La caméra », chapitre 1 (l'objectif), lots 2 et 3 : schémas (figs/ch1.js) et manipulations (labs/ch1.js).
+   Classes préfixées c1- ; les couleurs reprennent les variables de l'interface. */
+
+/* schémas */
+.cf .c1-r { text-anchor: end; }
+.cf .c1-sm { font-size: 11.5px; }
+.cf .c1-ink { fill: #07090c; }
+.c1-track { fill: var(--well); stroke: var(--line); }
+.c1-glass { stroke: var(--cyan); stroke-width: 4; stroke-linecap: round; }
+.c1-hood { fill: none; stroke: #aab4ba; stroke-width: 3; stroke-linecap: round; }
+.c1-proj { stroke: var(--fibre); stroke-width: 2.2; }
+.c1-sun { fill: var(--fibre); stroke: #fff3b8; stroke-width: 1.5; }
+.c1-ramp { fill: rgba(240,55,44,.12); }
+.c1-curve { fill: none; stroke: var(--pvw); stroke-width: 2.6; stroke-linejoin: round; }
+.c1-curve.ext { stroke: var(--accent); stroke-dasharray: 6 4; }
+.c1-ext { fill: rgba(255,176,32,.35); stroke: var(--accent); stroke-width: 1.5; }
+.c1-scene { fill: rgba(76,195,230,.08); stroke: var(--muted); }
+.c1-quarter { fill: rgba(255,176,32,.22); stroke: var(--accent); stroke-dasharray: 4 3; }
+.c1-move { fill: none; stroke: var(--accent); stroke-width: 1.5; stroke-dasharray: 4 3; }
+.c1-white { fill: #ecece6; } .c1-black { fill: #121212; } .c1-dark { fill: #0b0d10; }
+.c1-fr { fill: #ff5a4e; } .c1-fb { fill: #4ca0ff; }
+.c1-ray { stroke-width: 1.4; } .c1-ray.r { stroke: #ff5a4e; } .c1-ray.g { stroke: var(--pvw); } .c1-ray.b { stroke: #4ca0ff; }
+.c1-pt.r { fill: #ff5a4e; } .c1-pt.g { fill: var(--pvw); } .c1-pt.b { fill: #4ca0ff; }
+.c1-grid { fill: none; stroke: var(--fg); stroke-width: 1.2; opacity: .8; }
+.c1-veil { fill: rgba(200,205,215,.16); }
+.c1-ghost { fill: rgba(120,200,255,.18); stroke: rgba(160,220,255,.6); }
+.c1-frame { fill: none; stroke: #07090c; stroke-width: 2; } .c1-frame.b { stroke-dasharray: 5 3; }
+.c1-ring { fill: #4a545e; stroke: #8a949e; stroke-width: 2; }
+.c1-face { fill: #9aa3aa; stroke: #c8ced4; } .c1-throat { fill: #0b0d10; stroke: #2b3036; stroke-width: 2; }
+.c1-notch { fill: #0b0d10; stroke: var(--accent); }
+.c1-lever { fill: var(--accent); stroke: #6b4a08; }
+.c1-grip { fill: #2a3036; stroke: #59646f; }
+.c1-box { fill: #17181a; stroke: #59646f; stroke-width: 1.5; }
+.c1-lens-f { fill: #2b3f55; stroke: var(--cyan); }
+.c1-zext { fill: var(--accent); opacity: .75; }
+
+/* manipulations */
+.c1-gestes { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; min-width: 0; }
+.c1-gestes .btn { white-space: normal; text-align: left; }
+.c1-cap { font: 600 12.5px var(--f-disp); color: var(--muted); }
+.c1-pinrow { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.c1-pins { display: flex; flex-wrap: wrap; gap: 4px; min-width: 0; }
+.c1-pin { padding: 2px 7px; font: 11.5px var(--f-mono); color: var(--dim); background: var(--well); border: 1px solid #0b0f12; border-radius: 10px; }
+.c1-pin.on { color: #b9f5cf; background: var(--pvw-d); border-color: var(--pvw); }
+.camlab .c1-chart, .camlab .c1-cadre { cursor: default; }
+.c1-loupebox { display: grid; gap: 4px; margin-top: 6px; }
+.c1-loupe { display: block; width: min(100%, 320px); height: auto; aspect-ratio: 16 / 9; image-rendering: pixelated; border: 1px solid #000; border-radius: 2px; background: #000; }
