@@ -154,9 +154,9 @@ export function codes10(y, cb, cr) {
 }
 /** les formats : trame totale (points par ligne, lignes), images par seconde, interface (SMPTE ST 274, ST 296) */
 export const FORMATS = {
-  '1080i50': { w: 2640, h: 1125, fps: 25, sdi: 'HD-SDI', norme: 'ST 292-1', act: '1 920 × 1 080, deux trames' },
-  '720p50': { w: 1980, h: 750, fps: 50, sdi: 'HD-SDI', norme: 'ST 292-1', act: '1 280 × 720' },
-  '1080p50': { w: 2640, h: 1125, fps: 50, sdi: '3G-SDI', norme: 'ST 424', act: '1 920 × 1 080' },
+  '1080i50': { w: 2640, h: 1125, fps: 25, sdi: 'HD-SDI', norme: 'ST 292-1', act: '1 920 × 1 080, deux trames' },
+  '720p50': { w: 1980, h: 750, fps: 50, sdi: 'HD-SDI', norme: 'ST 292-1', act: '1 280 × 720' },
+  '1080p50': { w: 2640, h: 1125, fps: 50, sdi: '3G-SDI', norme: 'ST 424', act: '1 920 × 1 080' },
 };
 /** débit série (bit/s) : points par ligne totale × lignes totales × images/s × 2 mots (Y' et C) × 10 bits */
 export const sdiRate = (fmt) => { const f = FORMATS[fmt]; return f.w * f.h * f.fps * 2 * 10; };
@@ -256,15 +256,15 @@ function drawFace(g, face, title, plugged) {
 const CCU_JACKS = [
   { id: 'fibre', nom: 'CAMERA', type: 'prise de la fibre hybride', x: 42, y: 70, kind: 'fibre', lbl: 'CAMERA' },
   { id: 'ac', nom: 'AC IN', type: 'prise secteur', x: 42, y: 152, kind: 'ac', lbl: 'AC IN' },
-  { id: 'refin', nom: 'REFERENCE IN', type: 'BNC', x: 110, y: 60, kind: 'bnc', lbl: 'IN' },
-  { id: 'refloop', nom: 'REFERENCE (boucle)', type: 'BNC', x: 110, y: 100, kind: 'bnc', lbl: 'boucle' },
+  { id: 'refin', nom: 'REFERENCE IN', type: 'BNC', x: 104, y: 60, kind: 'bnc', lbl: 'IN' },
+  { id: 'refloop', nom: 'REFERENCE (boucle)', type: 'BNC', x: 104, y: 100, kind: 'bnc', lbl: 'boucle' },
   { id: 'prompter', nom: 'PROMPTER IN', type: 'BNC, vidéo analogique', x: 156, y: 60, kind: 'bnc', lbl: 'IN' },
   { id: 'promploop', nom: 'PROMPTER (boucle)', type: 'BNC', x: 156, y: 100, kind: 'bnc', lbl: 'boucle' },
-  { id: 'retv1', nom: 'RET VBS 1', type: 'BNC, vidéo analogique', x: 202, y: 60, kind: 'bnc', lbl: '1' },
-  { id: 'retv2', nom: 'RET VBS 2', type: 'BNC, vidéo analogique', x: 202, y: 100, kind: 'bnc', lbl: '2' },
-  { id: 'rets1', nom: 'RET SDI 1', type: 'BNC, SDI', x: 246, y: 60, kind: 'bnc', lbl: '1' },
-  { id: 'rets2', nom: 'RET SDI 2', type: 'BNC, SDI', x: 246, y: 100, kind: 'bnc', lbl: '2' },
-  { id: 'icom', nom: 'INTERCOM/TALLY', type: 'D-sub 25 broches', x: 322, y: 66, kind: 'dsub', lbl: 'INTERCOM/TALLY' },
+  { id: 'retv1', nom: 'RET VBS 1', type: 'BNC, vidéo analogique', x: 208, y: 60, kind: 'bnc', lbl: '1' },
+  { id: 'retv2', nom: 'RET VBS 2', type: 'BNC, vidéo analogique', x: 208, y: 100, kind: 'bnc', lbl: '2' },
+  { id: 'rets1', nom: 'RET SDI 1', type: 'BNC, SDI', x: 258, y: 60, kind: 'bnc', lbl: '1' },
+  { id: 'rets2', nom: 'RET SDI 2', type: 'BNC, SDI', x: 258, y: 100, kind: 'bnc', lbl: '2' },
+  { id: 'icom', nom: 'INTERCOM/TALLY', type: 'D-sub 25 broches', x: 330, y: 66, kind: 'dsub', lbl: 'INTERCOM/TALLY' },
   { id: 'rcp', nom: 'RCP', type: 'rond 8 broches', x: 400, y: 66, kind: 'multi', lbl: 'RCP' },
   ...[1, 2, 3, 4].map((i) => ({ id: 'sdi' + i, nom: 'SDI OUT HD/SD ' + i, type: 'BNC, sortie SDI', x: 98 + (i - 1) * 27, y: 162, kind: 'bnc', lbl: String(i) })),
   ...[1, 2, 3, 4].map((i) => ({ id: 'g' + i, nom: 'SDI OUT 3G/4K/HD ' + i, type: 'BNC, sortie SDI', x: 230 + (i - 1) * 27, y: 162, kind: 'bnc', lbl: String(i) })),
@@ -404,7 +404,7 @@ export const LABS_CH7 = {
       plugB.classList.toggle('on', st.plugged);
       const parts = [];
       if (st.view && !st.plugged) { const b = faceB(st.view); parts.push(`Cette face : zone du cœur ${dirty(st.view) ? 'sale' : 'propre'}, ${fr(b * 100, 1)} % de la lumière arrêtée (${fr(lossDb(b), 2)} dB).`); }
-      parts.push(`Si l'on branchait maintenant : fibre 1 (vers la CCU) ${fr(fibreLoss(1), 2)} dB, fibre 2 (vers la caméra) ${fr(fibreLoss(2), 2)} dB, dont ${fr(CONN_DB, 1)} dB pour une connexion propre (ordre de grandeur).`);
+      parts.push(`${st.plugged ? 'Branché' : 'Si l\'on branchait maintenant'} : fibre 1 (vers la CCU) ${fr(fibreLoss(1), 2)} dB, fibre 2 (vers la caméra) ${fr(fibreLoss(2), 2)} dB, dont ${fr(CONN_DB, 1)} dB pour une connexion propre (ordre de grandeur).`);
       read.textContent = parts.join(' ');
       sh.done(defis); sh.say(olivier());
       send(ctx, { light: st.plugged && st.campw ? 0.5 : 0 });
@@ -426,7 +426,7 @@ export const LABS_CH7 = {
     // ---- la face arrière ----
     const svg = document.createElementNS(NS, 'svg'); svg.setAttribute('viewBox', '0 0 440 196'); svg.setAttribute('class', 'cf c7-ccupanel'); svg.setAttribute('role', 'group'); svg.setAttribute('aria-label', 'Face arrière de la CCU : les prises');
     mk(svg, 'rect', { x: 3, y: 3, width: 434, height: 190, rx: 6, class: 'c7-plate' });
-    for (const [x, t] of [[110, 'REFERENCE'], [156, 'PROMPTER'], [202, 'RET VBS'], [246, 'RET SDI']]) mk(svg, 'text', { x, y: 32, class: 'c7-plbl' }).textContent = t;
+    for (const [x, t] of [[104, 'REFERENCE'], [156, 'PROMPTER'], [208, 'RET VBS'], [258, 'RET SDI']]) mk(svg, 'text', { x, y: 32, class: 'c7-plbl' }).textContent = t;
     mk(svg, 'text', { x: 138, y: 138, class: 'c7-plbl' }).textContent = 'SDI OUT · HD/SD';
     mk(svg, 'text', { x: 270, y: 138, class: 'c7-plbl' }).textContent = 'SDI OUT · 3G/4K/HD';
     const holes = new Map();
@@ -655,7 +655,7 @@ export const LABS_CH7 = {
         mk(schema, 'circle', { cx: inX, cy: y + 30, r: 7, class: 'c7-bnc' }); mk(schema, 'circle', { cx: loopX, cy: y + 30, r: 7, class: 'c7-bnc' });
         mk(schema, 'text', { x: inX, y: y + 45, class: 'c7-tl' }).textContent = 'IN'; mk(schema, 'text', { x: loopX, y: y + 45, class: 'c7-tl' }).textContent = 'boucle';
         const c = ch[k];
-        mk(schema, 'text', { x: 372, y: y + 34, class: 'c7-tl' }).textContent = !c.sig ? 'libre' : `${c.sig === 'tri' ? 'tri-level' : 'b. burst'} ${fr(0.6 * (1 + c.gamma) * (c.sig === 'bb' ? 0.5 : 1), 1)} V`;
+        mk(schema, 'text', { x: 334, y: y + 34, class: 'c7-tl l' }).textContent = !c.sig ? 'libre' : `${c.sig === 'tri' ? 'tri-level' : 'b. burst'} ${fr(0.6 * (1 + c.gamma) * (c.sig === 'bb' ? 0.5 : 1), 1)} V`;
         if (st.term[k]) { mk(schema, 'rect', { x: loopX + 8, y: y + 24, width: 22, height: 12, rx: 2, class: 'c7-term' }); mk(schema, 'text', { x: loopX + 19, y: y + 33, class: 'c7-tl ink' }).textContent = '75'; }
       });
       st.src.forEach((s, k) => {
@@ -668,7 +668,11 @@ export const LABS_CH7 = {
     }
     function olivier(info, ch) {
       if (msg) return msg;
-      if (defis[2]) return 'Trois CCU verrouillées sur le tri-level, deux lignes terminées : 0,6 V partout. Et si l\'on doit sortir la CCU 2 de la baie, on recâble d\'abord la CCU 3, sinon elle perd la référence avec elle.';
+      if (defis[2]) {
+        // la CCU qui passe la référence à une autre par sa boucle : on ne la retire pas sans recâbler l'autre
+        const k = st.src.findIndex((s) => s[0] === 'L'), j = k >= 0 ? Number(st.src[k].slice(1)) : -1;
+        return `Trois CCU verrouillées sur le tri-level, chaque ligne terminée : 0,6 V partout.${j >= 0 ? ` Et si l'on doit sortir la CCU ${j + 1} de la baie, on recâble d'abord la CCU ${k + 1}, sinon elle perd la référence avec elle.` : ''}`;
+      }
       if (defis[1]) {
         const open = ch.find((c) => c.sig && c.gamma);
         return open ? `Une ligne n'est pas terminée : sur sa CCU, le tri-level mesure ${fr(0.6 * 2, 1)} V crête à crête au lieu de 0,6. Un bouchon au bout, sur la boucle de la dernière CCU de la chaîne.` : 'Mesure les trois CCU.';
@@ -730,7 +734,7 @@ export const LABS_CH7 = {
     const table = el('div', { class: 'c7-codes', role: 'status' });
     const rate = readout();
     const sh = shell({ vf, ctrls: [outSw.row, table, fmtSw.row, outCard.row, rate], defis: [
-      'Mesure un blanc puis un noir de la mire (clic sur l\'image) : Cb et Cr à 512, la couleur est nulle ; seul Y\' change.',
+      'Mesure un blanc puis un noir de la mire (clic sur l\'image) : Cb et Cr restent près de 512, il n\'y a presque pas de couleur ; seul Y\' change.',
       'Passe la caméra en barres (OUTPUT : BARS) et pointe la barre rouge : Y\' = 204, Cb = 435, Cr = 848.',
       'La production demande du 1080p50 : choisis le format, et la carte de sorties de la CCU qui peut le porter.',
     ] });
@@ -761,15 +765,15 @@ export const LABS_CH7 = {
         return c ? `Y' ${c[0]}, Cb ${c[1]}, Cr ${c[2]}. La barre rouge est la sixième en partant de la gauche.` : 'Pointe une barre.';
       }
       if (st.bars) return 'Repasse sur CAM : le premier défi se fait sur l\'image de la mire.';
-      if (st.seenW && !st.seenK) return 'Le blanc : Y\' vers 880, Cb et Cr à 512. Pointe maintenant un noir : une branche de l\'étoile.';
-      if (st.seenK && !st.seenW) return 'Un noir : Y\' près de 64, Cb et Cr toujours à 512. Pointe maintenant le blanc de la mire.';
+      if (st.seenW && !st.seenK) return 'Le blanc : Y\' vers 880, Cb et Cr près de 512 (le carton de la mire est à peine crème : Cb un peu sous 512). Pointe maintenant un noir : une branche de l\'étoile.';
+      if (st.seenK && !st.seenW) return 'Un noir : Y\' bas, vers 64, Cb et Cr toujours près de 512. Pointe maintenant le blanc de la mire.';
       return 'Clique sur l\'image (ou les flèches du clavier) : la croix mesure le point, ses trois valeurs et leurs codes sur 10 bits.';
     }
     function show() {
       const yc = px ? ycbcr(px[0], px[1], px[2]) : null;
       const c = yc ? codes10(yc[0], yc[1], yc[2]) : null;
       if (c && !st.bars) {
-        const neutral = Math.abs(c[1] - 512) <= 6 && Math.abs(c[2] - 512) <= 6;
+        const neutral = Math.abs(c[1] - 512) <= 12 && Math.abs(c[2] - 512) <= 12;
         if (neutral && c[0] >= 800) st.seenW = true;
         if (neutral && c[0] <= 140) st.seenK = true;
       }

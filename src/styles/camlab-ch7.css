@@ -15,7 +15,7 @@
 
 /* face arrière de la CCU */
 .c7-plate { fill: #2a3036; stroke: #0b0f12; }
-.c7-plbl { fill: var(--muted); font: 9.5px var(--f-mono); text-anchor: middle; }
+.c7-plbl { fill: var(--muted); font: 8.5px var(--f-mono); text-anchor: middle; }
 .c7-jack { cursor: pointer; } .c7-jack:focus-visible { outline: none; }
 .c7-jk-ring { fill: none; stroke: #0b0f12; stroke-width: 2; } .c7-jk-body { fill: #4a545e; stroke: #8a949e; } .c7-jk-pin { fill: #c8ced4; } .c7-jk-red { fill: #d23a2e; }
 .c7-jk-lbl { fill: var(--fg); font: 9px var(--f-mono); text-anchor: middle; }
