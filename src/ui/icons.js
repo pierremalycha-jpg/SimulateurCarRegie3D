@@ -66,6 +66,12 @@ import iRecord from '@phosphor-icons/core/bold/record-bold.svg';
 import iMinus from '@phosphor-icons/core/bold/minus-bold.svg';
 import iCornersOut from '@phosphor-icons/core/bold/corners-out-bold.svg';
 import iX from '@phosphor-icons/core/bold/x-bold.svg';
+import iGraduationCap from '@phosphor-icons/core/bold/graduation-cap-bold.svg';
+import iTarget from '@phosphor-icons/core/bold/target-bold.svg';
+import iList from '@phosphor-icons/core/bold/list-bold.svg';
+import iKeyboard from '@phosphor-icons/core/bold/keyboard-bold.svg';
+import iHouse from '@phosphor-icons/core/bold/house-bold.svg';
+import iPlay from '@phosphor-icons/core/bold/play-bold.svg';
 
 /** nom dans l'application -> dessin SVG @type {Record<string, string>} */
 const SVG = {
@@ -83,6 +89,8 @@ const SVG = {
   'prise-en-main': iCompass, exploitation: iWrench, postes: iChalkboardTeacher, fait: iCheckCircle,
   a_toi: iHandPointing, indice: iLightbulbFilament, bravo: iStar, alarme: iWarning,
   antenne: iRecord, reduire: iMinus, agrandir: iCornersOut, fermer: iX,
+  // les espaces et le menu (app/nav.js)
+  cours: iGraduationCap, entrainement: iTarget, menu: iList, formateur: iChalkboardTeacher, commandes: iKeyboard, accueil: iHouse, reprendre: iPlay,
   // les lieux (content/lieux.js)
   tv: iTelevisionSimple, entrepot: iWarehouse, colis: iPackage, conference: iPresentation,
   webcam: iWebcam, hautparleur: iSpeakerHifi, lumiere: iLightbulbFilament,

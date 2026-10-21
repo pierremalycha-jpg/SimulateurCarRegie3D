@@ -32,7 +32,7 @@ export function stationLesson(id, canOpen) {
   return {
     id: 'poste-' + id, domain: 'Les postes du car', stations: [id],
     get title() { return `Présente-moi : ${I().title}`; }, get summary() { return I().where || ''; }, duration: '3 min', level: 'découverte',
-    outro: 'Pour aller plus loin, la fiche complète du poste reste disponible (bouton « Fiche du poste »), et le guide détaille chaque métier.',
+    outro: 'Pour aller plus loin, la fiche complète du poste reste disponible (bouton « Fiche du poste »), et le Cours (onglet Postes) la reprend avec tous les autres postes.',
     steps,
   };
 }

@@ -90,14 +90,14 @@ await page.keyboard.press('Escape'); await page.waitForTimeout(200);
 T.check('Échap : la fiche d\'abord, la fenêtre SDP ensuite', !(await pop()) && await ev(() => !document.querySelector('#modal').hidden));
 await page.keyboard.press('Escape'); await page.waitForTimeout(200);
 
-// ---- guide, chapitre réseau ----
+// ---- Cours, chapitre réseau ----
 T.check('le poste est toujours ouvert', await ev(() => window.__dbg.S.mode === 'station' && document.querySelector('#modal').hidden));
 await ev(() => window.__dbg.openGuide('guide', 'reseau'));
-T.check('guide, chapitre réseau : « ? » dans les tableaux et bouton du lexique', await until(page, () => ['spine', 'leaf', 'uplink', 'grand-maitre'].every((k) => document.querySelector(`#modal .prose .q[data-term="${k}"]`)) && [...document.querySelectorAll('#modal .btn')].some((b) => /Lexique/.test(b.textContent) && !b.hidden), null, 6000));
-await click('#modal .prose .q[data-term="uplink"]');
-T.check('fiche « uplink » depuis le guide', /lien montant|uplink/i.test((await pop())?.t || ''));
+T.check('Cours, chapitre réseau : « ? » dans les tableaux et bouton du lexique', await until(page, () => ['spine', 'leaf', 'uplink', 'grand-maitre'].every((k) => document.querySelector(`#layer .prose .q[data-term="${k}"]`)) && [...document.querySelectorAll('#layer .btn')].some((b) => /Lexique/.test(b.textContent) && !b.hidden), null, 6000));
+await click('#layer .prose .q[data-term="uplink"]');
+T.check('fiche « uplink » depuis le Cours, par-dessus', /lien montant|uplink/i.test((await pop())?.t || '') && await ev(() => +getComputedStyle(document.querySelector('#termpop')).zIndex > +getComputedStyle(document.querySelector('#layer')).zIndex));
 await page.keyboard.press('Escape'); await page.keyboard.press('Escape'); await page.waitForTimeout(300);
-T.check('Échap deux fois : fiche puis guide fermés, retour au poste', !(await pop()) && await ev(() => document.querySelector('#modal').hidden && window.__dbg.S.mode === 'station'));
+T.check('Échap deux fois : fiche puis Cours fermés, retour au poste', !(await pop()) && await ev(() => !document.querySelector('#layer') && document.querySelector('#modal').hidden && window.__dbg.S.mode === 'station'));
 
 // ---- téléphone ----
 await page.setViewportSize({ width: 390, height: 844 }); await page.waitForTimeout(500);
