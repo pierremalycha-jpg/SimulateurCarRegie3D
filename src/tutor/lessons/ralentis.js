@@ -35,7 +35,7 @@ function bestAngle() {
 const REPLAY = {
   id: 'evs-ralenti', domain: D, stations: ['evs', 'melangeur'],
   title: 'Faire un ralenti et l\'envoyer à l\'antenne',
-  summary: 'Repérer l\'action, choisir l\'angle (caméra HFR), préparer l\'EVS au mélangeur, entrer et sortir en volet logo.',
+  summary: 'Exercice de la leçon « Le serveur ralenti : trains, IN et vitesse » : vérifier l\'enregistrement, poser l\'IN sur l\'action, choisir l\'angle super ralenti, préparer le serveur au mélangeur, entrer et sortir en volet logo.',
   duration: '10 min', level: 'débutant',
   outro: 'C\'est la mécanique d\'un ralenti : l\'opérateur EVS cale l\'action et l\'angle pendant le jeu, annonce « ralenti prêt », le réalisateur le demande, le truquiste l\'envoie en volet logo et l\'opérateur lance la lecture.',
   after: handsBack,
@@ -43,12 +43,12 @@ const REPLAY = {
     {
       id: 'intro', title: 'Le serveur ralenti',
       enter: handsOff,
-      say: 'Le serveur **EVS** (le serveur de ralentis) enregistre en permanence plusieurs caméras, que la grille lui envoie sur ses entrées REC. L\'opérateur, à sa télécommande **LSM**, peut à tout moment revenir en arrière sur n\'importe quel angle, marquer un point d\'entrée (IN) et relire à vitesse variable avec le levier.\n\nPendant ce parcours, c\'est toi l\'opérateur : l\'automatique du simulateur te laisse la main.',
+      say: 'La leçon l\'a montré : le serveur enregistre en boucle toutes ses entrées sur le même timecode, et une action relue dure (OUT − IN) ÷ vitesse. Le serveur **EVS** reçoit ses caméras de la grille, sur ses entrées d\'enregistrement (REC). L\'opérateur, à sa télécommande **LSM**, peut à tout moment revenir en arrière sur n\'importe quel angle, marquer un point d\'entrée (IN) et relire à vitesse variable avec le levier.\n\nPendant ce parcours, c\'est toi l\'opérateur : l\'automatique du simulateur te laisse la main.',
     },
     goStation('evs', 'On va au poste ralentis, à côté de la régie de production.', 'La télécommande LSM : touches de fonction, levier de vitesse à droite, molette jog (la roue qui avance ou recule image par image), et la ligne d\'enregistrement de chaque caméra.'),
     {
       id: 'rec', title: 'L\'enregistrement tourne',
-      say: 'Premier réflexe : l\'enregistrement doit tourner. Sans REC, pas de ralenti possible après l\'arrêt.',
+      say: 'Premier réflexe : l\'enregistrement doit tourner. Sans REC, les trains n\'avancent plus : rien de ce qui se passe après l\'arrêt ne pourra être rejoué.',
       do: 'Relance l\'enregistrement (REC).',
       go: { station: 'evs' }, show: [key('REC')], skip: () => EVS.recording,
       done: () => EVS.recording,
@@ -70,7 +70,7 @@ const REPLAY = {
     {
       id: 'angle', title: 'Choisir l\'angle',
       enter: (c) => { c.mem.best = bestAngle(); const k = camById(c.mem.best); c.mem.hfr = k ? k.hfr || 1 : 1; },
-      say: (c) => `Toutes les caméras enregistrées sont disponibles au même instant. Pour un ralenti, on choisit l'angle qui montre le mieux l'action, et si possible une caméra **HFR** (haute fréquence d'images) : la CAM ${c.mem.best}${c.mem.hfr > 1 ? ` tourne à ${c.mem.hfr} fois la cadence, son ralenti sera fluide` : ' est un serré, idéal pour le détail'}.`,
+      say: (c) => `Toutes les caméras enregistrées sont disponibles au même instant, puisqu'elles partagent le même timecode. Pour un ralenti, on choisit l'angle qui montre le mieux l'action, et si possible une caméra **HFR** (haute fréquence d'images) : la CAM ${c.mem.best}${c.mem.hfr > 1 ? ` tourne à ${c.mem.hfr} fois la cadence (${c.mem.hfr * 50} images/s) : relue à ${Math.round(100 / c.mem.hfr)} %, chaque image enregistrée n'est montrée qu'une fois, le ralenti est fluide` : ' est un serré, idéal pour le détail'}.`,
       do: (c) => `Choisis l'angle de la CAM ${c.mem.best}.`,
       go: { station: 'evs' }, show: (c) => [{ sel: `#station .lsm-key[data-id="${c.mem.best}"]`, label: `CAM ${c.mem.best}` }],
       done: (c) => c.seen('evs', (e) => e.action === 'cam') && chA().cam === c.mem.best,
@@ -123,8 +123,8 @@ const REPLAY = {
 /** @type {import('../engine.js').Lesson} */
 const CLIPS = {
   id: 'evs-clips', domain: D, stations: ['evs'],
-  title: 'Clips et playlist au LSM',
-  summary: 'Marquer IN et OUT, ranger deux clips sur les touches F, les enchaîner en playlist pour un résumé.',
+  title: 'Ranger des clips et les enchaîner en playlist',
+  summary: 'Exercice de la leçon « Clips et playlists : garder, nommer, enchaîner » : marquer IN et OUT, ranger deux clips sur les touches F de la LSM, les enchaîner en playlist et la lire.',
   duration: '8 min', level: 'intermédiaire',
   outro: 'Les clips rangés pendant le match font les résumés de la mi-temps et de la fin : chaque bonne action se garde tout de suite, sur une page et une touche.',
   after: handsBack,
@@ -132,7 +132,7 @@ const CLIPS = {
     {
       id: 'intro', title: 'Garder les actions',
       enter: handsOff,
-      say: 'Un ralenti part de l\'enregistrement continu. Pour le garder, on en fait un **clip** : un IN, un OUT, un angle, rangés sur une touche F de la page en cours. Plusieurs clips s\'enchaînent ensuite en **playlist**.',
+      say: 'Dans la leçon : la boucle d\'enregistrement finit par écraser ses images les plus anciennes, et ce qu\'on veut garder devient un clip. Un **clip**, c\'est un IN et un OUT sur les trains, avec les angles enregistrés, rangé sur une touche F de la page en cours et protégé de l\'écrasement. Plusieurs clips s\'enchaînent ensuite en **playlist**.',
     },
     goStation('evs', 'Retour à la télécommande LSM.', 'Les touches F1 à F10 de la page en cours : vides, elles enregistrent un clip ; pleines, elles le rappellent.'),
     {
@@ -149,7 +149,7 @@ const CLIPS = {
     {
       id: 'save', title: 'Ranger le clip',
       enter: (c) => { c.mem.n = clipCount(); },
-      say: 'On range le clip sur une touche F **vide** de la page en cours : il prend un nom du type 111A (page 1, banque 1, touche 1, angle A).',
+      say: 'On range le clip sur une touche F **vide** de la page en cours : il prend un nom du type 111A (page 1, banque 1, touche F1, angle A), qui est son adresse sur la télécommande.',
       do: 'Appuie sur une touche F vide.',
       go: { station: 'evs' }, show: [key('F1', 'une touche F vide')],
       done: (c) => clipCount() > c.mem.n,
@@ -181,7 +181,7 @@ const CLIPS = {
     },
     {
       id: 'play', title: 'Lire la playlist',
-      say: 'PLAY, en mode playlist, lit les clips l\'un après l\'autre, à la vitesse du levier.',
+      say: 'PLAY, en mode playlist, lit les clips l\'un après l\'autre, à la vitesse du levier. Avec des coupes entre les clips, la durée de la playlist est la somme des durées lues.',
       do: 'Lance la lecture de la playlist (PLAY en mode PLST).',
       go: { station: 'evs' }, show: [key('PLAY')],
       done: () => EVS.ch.some((ch) => ch.pl),
@@ -205,8 +205,8 @@ const changed = (c, f) => EVS.clips.some((cl, i) => cl && c.mem.snap[i] && f(cl,
 /** @type {import('../engine.js').Lesson} */
 const IPD = {
   id: 'ipdirector-clips', domain: D, stations: ['ipdirector'],
-  title: 'IPDirector : nommer et retrouver les clips',
-  summary: 'La base de clips partagée : renommer un clip, le décrire par des mots-clés, le noter, l\'ajouter à la playlist.',
+  title: 'Nommer, décrire et retrouver un clip dans IPDirector',
+  summary: 'Exercice de la leçon « Clips et playlists : garder, nommer, enchaîner » : dans la base de clips partagée, renommer un clip, lui donner un mot-clé et une note, puis l\'ajouter à la playlist.',
   duration: '6 min', level: 'débutant',
   outro: 'Un clip bien nommé et décrit se retrouve en quelques secondes, par n\'importe quel opérateur : c\'est ce qui permet de monter un résumé pendant que le match continue.',
   steps: [
@@ -217,7 +217,7 @@ const IPD = {
         c.mem.idx = EVS.clips.map((cl, i) => (cl ? i : -1)).filter((i) => i >= 0).pop();
         c.mem.snap = snap(); c.mem.pl0 = EVS.playlist.length;
       },
-      say: '**IPDirector** est le logiciel de gestion des clips des serveurs EVS. Tous les clips du car y apparaissent ; un **logueur** les nomme, leur ajoute des mots-clés (but, tir, carton, joueur) et une note, pour que les opérateurs les retrouvent vite.',
+      say: 'La leçon l\'a dit : un clip mal nommé est un clip perdu. **IPDirector** est le logiciel de gestion des clips des serveurs EVS. Tous les clips du car y apparaissent ; un **logueur** les nomme, leur ajoute des mots-clés (BUT, TIR, CARTON, un joueur) et une note, pour que les opérateurs les retrouvent vite.',
     },
     goStation('ipdirector', 'Le poste IPDirector est à côté des ralentis.', 'À gauche, la base de clips ; au centre, le clip sélectionné ; à droite, la playlist.'),
     {
@@ -232,7 +232,7 @@ const IPD = {
     },
     {
       id: 'kw', title: 'Des mots-clés',
-      say: 'Les mots-clés servent aux recherches : « tous les tirs », « tous les cartons ».',
+      say: 'Les mots-clés servent aux recherches : « tous les tirs », « tous les cartons ». Leur liste est fixée avant le match : une recherche « TIR » ne retrouve pas un clip noté « frappe ».',
       do: 'Ajoute au moins un mot-clé à un clip (TIR, BUT, ARRÊT…).',
       go: { station: 'ipdirector' }, show: [{ sel: '#station .hwpanel.ipd .ipd-kw', text: 'TIR', label: 'mots-clés' }, PICK],
       done: (c) => changed(c, (cl, s) => (cl.kw || []).length > s.kw),

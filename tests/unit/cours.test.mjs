@@ -19,9 +19,11 @@ const cible = (id) => !!(lessonById(id) || planned.has(id) || TERMS[id]);
 test('chapitres dans l\'ordre pédagogique ; chaque leçon a sa forme', () => {
   assert.deepEqual(CHAPTERS.map((c) => c.id), ['signal', 'sdi', 'synchro', 'camera', 'realisation', 'ralentis', 'son', 'reseau', 'hf', 'exploitation']);
   const ids = new Set();
+  // préfixe des leçons : l'id du chapitre, abrégé pour les plus longs
+  const PREFIX = { realisation: 'real', exploitation: 'expl' };
   for (const { chapter, lesson } of allLessons()) {
     assert.ok(!ids.has(lesson.id), `${lesson.id} : identifiant en double`); ids.add(lesson.id);
-    assert.ok(lesson.id.startsWith(chapter.id + '-'), `${lesson.id} : préfixe du chapitre ${chapter.id}`);
+    assert.ok(lesson.id.startsWith((PREFIX[chapter.id] || chapter.id) + '-'), `${lesson.id} : préfixe du chapitre ${chapter.id}`);
     assert.ok(lesson.title && lesson.body && lesson.essentials.length >= 1 && lesson.essentials.length <= 3, `${lesson.id} : titre, explication, essentiel en 3 lignes`);
     assert.equal(lesson.quiz.length, 3, `${lesson.id} : trois questions`);
     for (const q of lesson.quiz) {
