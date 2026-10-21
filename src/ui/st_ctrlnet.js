@@ -123,7 +123,7 @@ function portLevel(sw, n) {
 }
 function faceplate(sw, big = false) {
   const S2 = N.swById(sw); const rj = S2.ports - S2.sfp;
-  const cols = rj / 2, W = 16 + cols * 22 + 18 + S2.sfp * 26 + 10, H = 66;
+  const cols = rj / 2, W = 16 + cols * 22 + 18 + S2.sfp * 26 + 10, H = 74;
   const svg = sv('svg', { viewBox: `0 0 ${W} ${H}`, class: 'cn-face' + (big ? ' big' : ''), role: 'img', 'aria-label': `Face avant de ${S2.name} : ${S2.ports} ports, couleur du VLAN de chaque port, voyant allumé quand le lien est monté` });
   svg.append(sv('rect', { x: 0, y: 0, width: W, height: H, rx: 4, class: 'cn-face-bg' }), sv('text', { x: 8, y: 11, class: 'cn-face-t' }, S2.name));
   const port = (n, x, y, w) => {
@@ -133,18 +133,18 @@ function faceplate(sw, big = false) {
       sv('title', {}, `Port ${n}${u ? ' · ' + (u.dev ? name(u.dev) : 'lien montant vers ' + N.swById(u.peer.sw).name) : ' · libre'} · ${p.mode === 'trunk' ? 'trunk ' + p.allowed.join(',') : 'VLAN ' + p.vlan}${u ? (p.cable ? (p.enabled ? ' · lien 1 Gb/s' : ' · désactivé') : ' · câble débranché') : ''}`),
       sv('rect', { x, y, width: w, height: 16, rx: 2, fill, opacity: u && p.cable ? 1 : 0.35 }),
       sv('rect', { x: x + 3, y: y + 4, width: w - 6, height: 8, rx: 1, fill: '#0b0e11' }),
-      sv('circle', { cx: x + w / 2, cy: y + (y < 30 ? -4 : 21), r: 2.4, class: 'cn-pled ' + lv }),
-      sv('text', { x: x + w / 2, y: y + (y < 30 ? -8 : 31), class: 'cn-pn' }, String(n)));
+      sv('circle', { cx: x + w / 2, cy: y + (y < 36 ? -4 : 21), r: 2.4, class: 'cn-pled ' + lv }),
+      sv('text', { x: x + w / 2, y: y + (y < 36 ? -8 : 31), class: 'cn-pn' }, String(n)));
     g.addEventListener('click', () => N.ctrlGo({ tab: 'switchs', sw, dev: u && u.dev ? u.dev : V.dev }));
     return g;
   };
-  for (let n = 1; n <= rj; n++) { const c = Math.floor((n - 1) / 2), top = n % 2 === 1; svg.append(port(n, 12 + c * 22, top ? 24 : 42, 18)); }
-  for (let k = 0; k < S2.sfp; k++) svg.append(port(rj + 1 + k, 16 + cols * 22 + 14 + k * 26, 32, 22));
+  for (let n = 1; n <= rj; n++) { const c = Math.floor((n - 1) / 2), top = n % 2 === 1; svg.append(port(n, 12 + c * 22, top ? 30 : 48, 18)); }
+  for (let k = 0; k < S2.sfp; k++) svg.append(port(rj + 1 + k, 16 + cols * 22 + 14 + k * 26, 38, 22));
   return svg;
 }
 function chip(id) {
   const d = N.devById(id), st = N.devState(id), at = N.attachPort(id), v = N.vlanOfDev(id);
-  const where = d.wifi ? 'Wi-Fi' : at ? `port ${at.n}` : 'admin.';
+  const where = d.wifi ? 'Wi-Fi' : at ? `P${at.n}` : 'admin.';
   return el('button', { class: 'cn-chip' + (V.dev === id ? ' on' : ''), type: 'button', 'data-dev': id, style: vstyle(v), 'aria-label': `${d.name}, ${where}, VLAN ${v}, ${LVL[st.level]}`, onclick: () => N.ctrlGo({ tab: 'machines', dev: id }) },
     led(st.level), el('span', { class: 'cn-chip-n' }, d.name), el('small', {}, `${where} · ${N.ipOf(id) || '—'}`));
 }
@@ -194,12 +194,12 @@ function tabMachines(box) {
     tb.append(el('tr', { class: 'cn-mrow' + (V.dev === d.id ? ' on' : ''), 'data-dev': d.id },
       el('td', {}, led(st.level), el('span', { class: 'sr' }, LVL[st.level])),
       el('td', { style: vstyle(v), class: 'cn-vcell' }, el('button', { class: 'cn-link', type: 'button', onclick: () => N.ctrlGo({ dev: d.id }) }, d.name)),
-      el('td', {}, d.wifi ? `Wi-Fi (${name(d.wifi)})` : at ? `${N.swById(at.sw).name} · ${at.n}` : N.swById(c.sw).name),
+      el('td', { class: 'nowrap' }, d.wifi ? 'Wi-Fi' : at ? `${N.swById(at.sw).name} · ${at.n}` : N.swById(c.sw).name),
       el('td', {}, String(v)),
       el('td', { class: 'mono' }, d.ifaces ? d.ifaces.map((f) => f.ip).join(' · ') : (c.dhcp ? 'DHCP · ' : '') + (N.ipOf(d.id) || '—')),
       el('td', { class: 'mono' }, d.ifaces ? '/24' : '/' + (c.dhcp ? N.leaseOf(d.id).prefix : c.prefix)),
       el('td', { class: 'mono' }, d.ifaces ? '—' : (c.dhcp ? N.leaseOf(d.id).gw : c.gw) || '—'),
-      el('td', {}, N.QOS[c.qos] ? N.QOS[c.qos].name : c.qos)));
+      el('td', {}, N.QOS[c.qos] ? N.QOS[c.qos].short : c.qos)));
   }
   const table = el('div', { class: 'tblwrap cn-mwrap' }, el('table', { class: 'tbl cn-mtbl' },
     el('thead', {}, el('tr', {}, el('th', {}, el('span', { class: 'sr' }, 'État')), el('th', {}, 'Machine'), el('th', {}, 'Branchée sur'), el('th', { 'data-qterm': 'vlan' }, 'VLAN'),

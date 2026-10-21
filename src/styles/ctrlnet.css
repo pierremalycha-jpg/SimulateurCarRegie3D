@@ -60,7 +60,8 @@
 .cn-mwrap { max-height: 62vh; overflow: auto; }
 .cn-mtbl { min-width: 640px; font-size: 12.5px; }
 .cn-mtbl td, .cn-mtbl th { padding: 4px 6px; }
-.cn-vcell { border-left: 4px solid !important; }
+.cn-vcell { border-left-width: 4px !important; border-left-style: solid !important; }
+.cn-content td.nowrap { white-space: nowrap; }
 .cn-mrow.on td { background: #2f2716; }
 .cn-link { background: none; border: 0; padding: 0; color: var(--fg); font: 600 13px var(--f-body); text-align: left; text-decoration: underline; text-decoration-color: rgba(227,231,225,.35); text-underline-offset: 2px; }
 .cn-link:hover { color: #fff; text-decoration-color: var(--accent); }

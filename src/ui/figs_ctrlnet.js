@@ -156,7 +156,7 @@ const LF = {
     b += node(150, 150, 240, 40, 'SW-CŒUR (passerelles .1)', '10.1.10.1 · 10.1.20.1 · 10.1.30.1 …', { s: AMB });
     b += L(365, 80, 330, 148, { c: AMB, w: 2, arrow: 'm' }) + L(230, 148, 200, 82, { c: AMB, w: 2, arrow: 'm' });
     b += T(420, 112, 'pas « chez moi » :', { a: 'middle', s: 10.5, c: AMB }) + T(470, 140, 'à la passerelle', { a: 'middle', s: 10.5, c: AMB });
-    b += T(270, 212, 'La machine compare l\'adresse visée à son sous-réseau : dedans, elle envoie directement ; dehors, à sa passerelle.', { a: 'middle', s: 10.5 });
+    b += T(270, 212, 'Dans son sous-réseau : en direct. Ailleurs : par sa passerelle.', { a: 'middle', s: 11.5 });
     return svg(540, 222, b, 'La passerelle : la porte de sortie du sous-réseau');
   },
   // ---------------- méthode de dépannage ----------------

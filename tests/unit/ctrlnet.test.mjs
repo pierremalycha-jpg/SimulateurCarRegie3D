@@ -63,6 +63,7 @@ test('ping : même VLAN sans routeur, autre VLAN par la passerelle, invités iso
   assert.equal(routed.state, 'ok');
   assert.ok(routed.hops.some((h) => /routage/.test(h)));
   assert.match(N.explainPing(routed), /passerelle 10\.1\.10\.1/);
+  assert.ok(!/ de (PC|RCP|CCU) /.test(N.explainPing(routed)), 'pas de « de PC de supervision » sans article');
   assert.equal(N.ping('supv', 'swvision').state, 'ok', 'adresse d\'administration d\'un switch');
   assert.equal(N.ping('supv', 'router').state, 'ok');
   assert.equal(N.ping('ipd', 'chaine').state, 'ok', 'la production sort sur Internet');

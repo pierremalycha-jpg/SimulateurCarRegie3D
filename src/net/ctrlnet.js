@@ -91,14 +91,14 @@ export const DHCP_POOL = [100, 199];
  * (EF 46 pour la voix, CS4 32 pour l'interactif temps réel, CS2 16 pour la gestion, CS1 8 pour ce qui
  * peut attendre) ; CoS 5 pour la voix est l'usage le plus courant. Attention : en 802.1p, la CoS 1
  * (« arrière-plan ») passe APRÈS la CoS 0 (« au mieux »).
- * @type {Record<string, { name: string, cos: number, dscp: number, phb: string, rank: number, what: string }>}
+ * @type {Record<string, { name: string, short: string, cos: number, dscp: number, phb: string, rank: number, what: string }>}
  */
 export const QOS = {
-  voix: { name: 'Voix (intercom)', cos: 5, dscp: 46, phb: 'EF', rank: 0, what: 'Intercom : une voix hachée s\'entend tout de suite. File prioritaire stricte.' },
-  commande: { name: 'Commande et tally', cos: 4, dscp: 32, phb: 'CS4', rank: 1, what: 'RCP, pupitre du mélangeur, grille, tally, télécommande de la console : peu de débit, mais il faut que ça réponde tout de suite.' },
-  gestion: { name: 'Gestion', cos: 2, dscp: 16, phb: 'CS2', rank: 2, what: 'Supervision (SNMP), heure (NTP), interfaces web des appareils.' },
-  donnees: { name: 'Données (au mieux)', cos: 0, dscp: 0, phb: 'DF', rank: 3, what: 'Le reste : base de clips IPDirector, échanges ordinaires.' },
-  fichiers: { name: 'Fichiers et Internet', cos: 1, dscp: 8, phb: 'CS1', rank: 4, what: 'Copies de fichiers, Internet, invités : ça peut attendre, ça passe en dernier.' },
+  voix: { name: 'Voix (intercom)', short: 'Voix', cos: 5, dscp: 46, phb: 'EF', rank: 0, what: 'Intercom : une voix hachée s\'entend tout de suite. File prioritaire stricte.' },
+  commande: { name: 'Commande et tally', short: 'Commande', cos: 4, dscp: 32, phb: 'CS4', rank: 1, what: 'RCP, pupitre du mélangeur, grille, tally, télécommande de la console : peu de débit, mais il faut que ça réponde tout de suite.' },
+  gestion: { name: 'Gestion', short: 'Gestion', cos: 2, dscp: 16, phb: 'CS2', rank: 2, what: 'Supervision (SNMP), heure (NTP), interfaces web des appareils.' },
+  donnees: { name: 'Données (au mieux)', short: 'Données', cos: 0, dscp: 0, phb: 'DF', rank: 3, what: 'Le reste : base de clips IPDirector, échanges ordinaires.' },
+  fichiers: { name: 'Fichiers et Internet', short: 'Fichiers', cos: 1, dscp: 8, phb: 'CS1', rank: 4, what: 'Copies de fichiers, Internet, invités : ça peut attendre, ça passe en dernier.' },
 };
 export const QOS_ORDER = Object.keys(QOS).sort((a, b) => QOS[a].rank - QOS[b].rank);
 
@@ -477,14 +477,14 @@ export function send(src, dst) {
   let nh = dst;
   if (!local) {
     if (d.ifaces) return routeFrom(src, f.vlan, dst, hops, 0);
-    if (f.gw == null) return fail(`${ipStr(dst)} n'est pas dans le sous-réseau de ${nameOf(src)} (${ipStr(netOf(f.ip, f.prefix))}/${f.prefix}) et la machine n'a pas de passerelle.`, 'Régler la passerelle (.1 de son VLAN).');
-    if (!sameNet(f.gw, f.ip, f.prefix)) return fail(`La passerelle ${ipStr(f.gw)} de ${nameOf(src)} n'est pas dans son sous-réseau (${ipStr(netOf(f.ip, f.prefix))}/${f.prefix}) : la machine ne sait pas la joindre.`, 'Vérifier le masque et la passerelle.');
+    if (f.gw == null) return fail(`${ipStr(dst)} est hors du sous-réseau de la machine (${ipStr(netOf(f.ip, f.prefix))}/${f.prefix}), et elle n'a pas de passerelle.`, 'Régler la passerelle (.1 de son VLAN).');
+    if (!sameNet(f.gw, f.ip, f.prefix)) return fail(`La passerelle ${ipStr(f.gw)} n'est pas dans le sous-réseau de la machine (${ipStr(netOf(f.ip, f.prefix))}/${f.prefix}) : elle ne sait pas la joindre.`, 'Vérifier le masque et la passerelle.');
     nh = f.gw;
   }
   const who = arpWho(fromSw, f.vlan, nh);
   if (!who.length) {
     if (local) return fail(`Dans le VLAN ${f.vlan}, personne ne répond à l'ARP « qui a ${ipStr(nh)} ? » : la machine visée n'est pas dans ce VLAN, ou pas joignable.`, 'Vérifier le VLAN des deux ports et l\'adresse de la machine visée.');
-    return fail(`La passerelle ${ipStr(nh)} ne répond pas dans le VLAN ${f.vlan} : ce n'est pas la passerelle de ce VLAN, ou le port de ${nameOf(src)} n'est pas dans le bon VLAN.`, 'La passerelle d\'un VLAN est son adresse .1 (interface VLAN du cœur).');
+    return fail(`La passerelle ${ipStr(nh)} ne répond pas dans le VLAN ${f.vlan} : ce n'est pas la passerelle de ce VLAN, ou le port de la machine n'est pas dans le bon VLAN.`, 'La passerelle d\'un VLAN est son adresse .1 (interface VLAN du cœur).');
   }
   const unstable = who.length > 1 ? who.map((w) => w.id) : undefined;
   const w = who[0];
@@ -588,12 +588,12 @@ export function explainPing(r) {
   const A = nameOf(r.a), B = nameOf(r.b);
   if (r.state === 'instable') return `${r.why} ${r.fix}`;
   if (!r.ok) return `${A} ne joint pas ${B}. ${r.why}${r.fix ? ' À vérifier : ' + r.fix : ''}`;
-  if (r.b === 'chaine') return `${B} est sur Internet : ${A} confie le paquet à sa passerelle (${CN.m[r.a].gw || 'routeur'}), le cœur l'envoie au routeur par sa route par défaut, et le routeur / pare-feu le fait sortir vers Internet. La réponse revient par le même chemin.`;
+  if (r.b === 'chaine') return `${B} est sur Internet. ${A} confie le paquet à sa passerelle (${(CN.m[r.a].dhcp ? leaseOf(r.a).gw : CN.m[r.a].gw) || 'le routeur'}) ; le cœur l'envoie au routeur par sa route par défaut, et le routeur / pare-feu le fait sortir. La réponse revient par le même chemin.`;
   const fa = ifacesOf(r.a)[0], fb = ifacesOf(r.b === 'core' ? 'core' : r.req.to)[0];
   if (!fa || !fb) return `${A} joint ${B}.`;
   const routed = r.hops.some((h) => /routage|Routeur/.test(h));
   if (!routed) return `${A} et ${B} sont dans le même VLAN (${fa.vlan}) et le même sous-réseau (${ipStr(netOf(fa.ip, fa.prefix))}/${fa.prefix}) : ${A} demande « qui a ${r.dstIp} ? » (ARP), ${B} répond avec son adresse MAC, et les trames passent ${swOf(r.a) === swOf(r.b) ? `par le switch ${swById(swOf(r.a)).name}` : 'd\'un switch à l\'autre par le lien montant (trunk 802.1Q, étiquette VLAN ' + fa.vlan + ')'}, sans routeur.`;
-  return `${B} (${r.dstIp}) n'est pas dans le sous-réseau de ${A} (${ipStr(netOf(fa.ip, fa.prefix))}/${fa.prefix}) : ${A} confie le paquet à sa passerelle ${fa.gw != null ? ipStr(fa.gw) : ''}, l'interface VLAN ${fa.vlan} du SW-CŒUR, qui le route vers le VLAN ${fb.vlan}. ${B} répond par sa propre passerelle (${fb.gw != null ? ipStr(fb.gw) : '?'}) : les deux doivent être justes.`;
+  return `${A} (${ipStr(netOf(fa.ip, fa.prefix))}/${fa.prefix}) et ${B} (${r.dstIp}) ne sont pas dans le même sous-réseau. ${A} confie donc le paquet à sa passerelle ${fa.gw != null ? ipStr(fa.gw) : ''}, l'interface VLAN ${fa.vlan} du SW-CŒUR, qui le route vers le VLAN ${fb.vlan}. ${B} répond par sa propre passerelle (${fb.gw != null ? ipStr(fb.gw) : '?'}) : les deux doivent être justes.`;
 }
 /** ping fait au poste : mémorisé pour l'affichage et noté pour le chef de car */
 export function doPing(a, b) {
