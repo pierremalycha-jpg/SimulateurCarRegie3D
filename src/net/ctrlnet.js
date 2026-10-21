@@ -572,6 +572,21 @@ export function ping(a, b) {
   }
   return { ...base, req, rep, state: 'ok', ok: true, why: '', fix: '', hops: req.hops };
 }
+/**
+ * le résultat d'un ping expliqué simplement : pourquoi ça passe (même VLAN ou routage) ou pourquoi ça casse
+ * @param {ReturnType<typeof ping>} r @returns {string}
+ */
+export function explainPing(r) {
+  const A = nameOf(r.a), B = nameOf(r.b);
+  if (r.state === 'instable') return `${r.why} ${r.fix}`;
+  if (!r.ok) return `${A} ne joint pas ${B}. ${r.why}${r.fix ? ' À vérifier : ' + r.fix : ''}`;
+  if (r.b === 'chaine') return `${B} est sur Internet : ${A} confie le paquet à sa passerelle (${CN.m[r.a].gw || 'routeur'}), le cœur l'envoie au routeur par sa route par défaut, et le routeur / pare-feu le fait sortir vers Internet. La réponse revient par le même chemin.`;
+  const fa = ifacesOf(r.a)[0], fb = ifacesOf(r.b === 'core' ? 'core' : r.req.to)[0];
+  if (!fa || !fb) return `${A} joint ${B}.`;
+  const routed = r.hops.some((h) => /routage|Routeur/.test(h));
+  if (!routed) return `${A} et ${B} sont dans le même VLAN (${fa.vlan}) et le même sous-réseau (${ipStr(netOf(fa.ip, fa.prefix))}/${fa.prefix}) : ${A} demande « qui a ${r.dstIp} ? » (ARP), ${B} répond avec son adresse MAC, et les trames passent ${swOf(r.a) === swOf(r.b) ? `par le switch ${swById(swOf(r.a)).name}` : 'd\'un switch à l\'autre par le lien montant (trunk 802.1Q, étiquette VLAN ' + fa.vlan + ')'}, sans routeur.`;
+  return `${B} (${r.dstIp}) n'est pas dans le sous-réseau de ${A} (${ipStr(netOf(fa.ip, fa.prefix))}/${fa.prefix}) : ${A} confie le paquet à sa passerelle ${fa.gw != null ? ipStr(fa.gw) : ''}, l'interface VLAN ${fa.vlan} du SW-CŒUR, qui le route vers le VLAN ${fb.vlan}. ${B} répond par sa propre passerelle (${fb.gw != null ? ipStr(fb.gw) : '?'}) : les deux doivent être justes.`;
+}
 /** ping fait au poste : mémorisé pour l'affichage et noté pour le chef de car */
 export function doPing(a, b) {
   const r = ping(a, b);
