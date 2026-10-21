@@ -7,9 +7,11 @@ import { lockState, setLock } from '../../videohub.js';
 import { goStation, ui, hw, btn, camIds } from './kit.js';
 
 // ----------------------------------------------------------------------------------
-// Parcours « Liaisons, synchro et diffusion » : HF, générateur de synchro, grille, baie de
-// brassage, transmission, intercom. Les défauts sont créés au début de l'étape et vérifiés sur
-// l'état réel (marge HF, verrouillage, table de la grille, cordons, chemin de transmission).
+// Parcours « Liaisons, synchro et diffusion », exercices pratiques des leçons du Cours : HF (hf-bilan),
+// générateur de synchro (synchro-genlock), grille (sdi-grille), baie de brassage (sdi-cable),
+// transmission (expl-transmission), intercom (expl-intercom). Les défauts sont créés au début de
+// l'étape et vérifiés sur l'état réel (marge HF, verrouillage, table de la grille, cordons, chemin de
+// transmission).
 // ----------------------------------------------------------------------------------
 const D = 'Liaisons, synchro et diffusion';
 const ALLOWED = [2230, 2290, 2310, 2330, 2350];
@@ -21,8 +23,8 @@ const hfCam = (c) => camById(c.mem.cam);
 /** @type {import('../engine.js').Lesson} */
 const HF = {
   id: 'hf-liaisons', domain: D, stations: ['hf'], needs: { hf: true },
-  title: 'Liaisons HF : antennes et changement de fréquence',
-  summary: 'La diversité d\'antennes, la marge de réception, un brouillage sur le canal d\'une caméra HF et le passage sur un canal attribué libre.',
+  title: 'Rétablir une liaison HF : diversité et changement de canal',
+  summary: 'Exercice de la leçon « Le bilan de liaison » : mettre une deuxième antenne en service pour remonter la marge, puis sortir une caméra HF d\'un brouillage en passant sur un canal attribué libre.',
   duration: '8 min', level: 'intermédiaire',
   outro: 'Une liaison HF se coordonne avant le match (canaux attribués par l\'organisateur), se surveille à la marge pendant le match, et se dépanne en changeant de canal ou d\'antenne, jamais au hasard.',
   cleanupLabel: 'Supprimer le brouilleur',
@@ -32,7 +34,7 @@ const HF = {
     {
       id: 'intro', title: 'Les liaisons HF',
       enter: (c) => { const k = S.cams.find((x) => x.rf); c.mem.cam = k ? k.id : 0; },
-      say: (c) => `Les caméras sans fil (steadicam, caméra portée${c.mem.cam ? `, ici la CAM ${c.mem.cam}` : ''}) envoient leur image par un émetteur **COFDM** (modulation numérique répartie sur de nombreuses porteuses, résistante aux échos), vers des antennes de réception autour du stade.\n\nLa qualité se juge à la **marge** : l'écart entre le signal reçu et le minimum nécessaire pour décoder. Sous quelques dB, l'image se fige en blocs, puis disparaît.`,
+      say: (c) => `Rappel de la leçon : la **marge** est l'écart entre le niveau reçu et la sensibilité du récepteur ; au-dessus de 10 dB on est tranquille, sous 3 dB le moindre creux fait décrocher l'image, d'un coup (l'effet falaise).\n\nLes caméras sans fil (steadicam, caméra portée${c.mem.cam ? `, ici la CAM ${c.mem.cam}` : ''}) envoient leur image par un émetteur **COFDM** (modulation numérique répartie sur de nombreuses porteuses, résistante aux échos), vers des antennes de réception autour du stade. Sous quelques dB de marge, l'image se fige en blocs, puis disparaît.`,
     },
     goStation('hf', 'La régie HF est dans la zone technique.', 'En haut, les antennes ; au milieu, une carte par liaison ; dans le moniteur, le spectre et la carte de couverture : tout ce qu\'il faut pour surveiller la marge.', { hints: ['Les postes techniques sont regroupés dans la zone technique du car.', 'Touche Tab (le pupitre), puis la touche du poste dans la rangée Technique ; ou « Emmène-moi ».'] }),
     {
@@ -74,8 +76,8 @@ const HF = {
 /** @type {import('../engine.js').Lesson} */
 const SYNC = {
   id: 'synchro-reference', domain: D, stations: ['synchro', 'ccu'],
-  title: 'Synchro : générateur, GPS et référence des caméras',
-  summary: 'Le générateur de synchro et son GPS, le mode holdover, et des CCU qui ont perdu la référence.',
+  title: 'Gérer une perte du GPS et des CCU décrochées',
+  summary: 'Exercice de la leçon « La référence et le genlock » : le générateur de synchro et son GPS, le mode holdover, puis des CCU qui ont perdu la référence à re-verrouiller.',
   duration: '6 min', level: 'intermédiaire',
   outro: 'Tout le car bat au rythme du générateur de synchro (SPG). Le GPS lui donne l\'heure exacte ; s\'il le perd, il continue sur son oscillateur (holdover) et l\'antenne ne voit rien.',
   cleanupLabel: 'Rétablir GPS et références',
@@ -83,7 +85,7 @@ const SYNC = {
   steps: [
     {
       id: 'intro', title: 'La synchro',
-      say: 'Pour mélanger des images, toutes les sources doivent commencer chaque image **au même instant**. Le **générateur de synchro** (SPG, Sync Pulse Generator) distribue à tout le car une **référence** : black burst (noir codé, hérité de la SD) ou tri-level (synchro à trois niveaux, pour la HD).\n\nIl distribue aussi le **timecode** (l\'heure qui date chaque image), et il est lui-même calé sur le temps GPS.',
+      say: 'Rappel de la leçon : pour couper d\'une source à l\'autre sans saut, toutes commencent chaque image **au même instant**, parce qu\'elles sont verrouillées (**genlock**) sur la même référence.\n\nLe **générateur de synchro** (SPG, Sync Pulse Generator) distribue cette **référence** à tout le car : black burst (noir codé, hérité de la SD) ou tri-level (synchro à trois niveaux, pour la HD). Il distribue aussi le **timecode** (l\'heure qui date chaque image), et il est lui-même calé sur le temps GPS.',
     },
     goStation('synchro', 'Le poste synchro est dans la zone technique.', 'En haut, le timecode maître ; dans le tableau, l\'état du générateur et de ses sorties : c\'est là qu\'on lit s\'il est verrouillé sur le GPS.', { hints: ['Les postes techniques sont regroupés dans la zone technique du car.', 'Touche Tab (le pupitre), puis la touche du poste dans la rangée Technique ; ou « Emmène-moi ».'] }),
     {
@@ -92,7 +94,7 @@ const SYNC = {
       do: 'Simule une perte GPS.',
       go: { station: 'synchro' }, show: [btn('perte GPS', 'perte GPS')],
       done: () => !!S.faults.gps,
-      ok: 'Le SPG passe en **holdover** (maintien) : il continue sur son oscillateur interne, très stable. Rien ne change à l\'image, parce que tout le car reste calé sur le même générateur.',
+      ok: 'Le SPG passe en **holdover** (maintien) : il continue sur son oscillateur interne thermostaté, qui ne dérive que de quelques dizaines à quelques centaines de nanosecondes par heure. Rien ne change à l\'image, parce que tout le car reste calé sur le même générateur.',
       hints: ['Les simulations de panne sont des boutons du poste synchro.', 'Le bouton « perte GPS ».'],
       auto: () => { S.faults.gps = true; },
     },
@@ -114,7 +116,7 @@ const SYNC = {
     {
       id: 'relock', title: 'Des CCU décrochées',
       enter: (c) => { const ids = camIds(true).slice(1, 3); c.mem.cams = ids; for (const id of ids) { const k = camById(id); if (k) k.genlock = false; } },
-      say: (c) => `Après une coupure du distributeur de référence, les CCU ${c.mem.cams.join(' et ')} ne sont plus verrouillées. Depuis la synchro, on peut toutes les re-verrouiller d'un coup.`,
+      say: (c) => `Après une coupure du distributeur de référence, les CCU ${c.mem.cams.join(' et ')} ne sont plus verrouillées : leurs images dérivent sur leur propre quartz et sauteraient à la coupe. Depuis la synchro, on peut toutes les re-verrouiller d'un coup.`,
       do: 'Re-verrouille toutes les CCU.',
       go: { station: 'synchro' }, show: [btn('Re-verrouiller', 'toutes les CCU')],
       done: (c) => (c.mem.cams || []).every((id) => { const k = camById(id); return !k || k.genlock; }),
@@ -139,8 +141,8 @@ const vhTargets = (c, out, outLabel, inp, inLabel) => (c.view().tab === 'control
 /** @type {import('../engine.js').Lesson} */
 const ROUTE = {
   id: 'grille-routage', domain: D, stations: ['grille'],
-  title: 'La grille : router une source vers une destination',
-  summary: 'Destinations et sources, une vignette du multiview à changer, puis un départ vers la chaîne à remettre sur le programme.',
+  title: 'Router une source vers une destination à la grille',
+  summary: 'Exercice de la leçon « La grille » : la destination d\'abord, la source ensuite, puis TAKE ; changer une vignette du multiview, puis remettre le programme sur un départ vers la chaîne.',
   duration: '6 min', level: 'débutant',
   outro: 'La grille relie n\'importe quelle source à n\'importe quelle destination. On choisit toujours la destination d\'abord, la source ensuite, puis TAKE ; et on vérifie au moniteur.',
   cleanupLabel: 'Remettre la vignette et les départs',
@@ -153,7 +155,7 @@ const ROUTE = {
         if (!S.ipMode) for (const n of [31, 32, 35]) if (lockState(n) !== 'U') setLock(n, null);
         c.mem.old = ROUTER.map.MV13; const ids = camIds().filter((i) => i <= 16); c.mem.src = 'CAM' + ([4, 5, 6, 3].find((i) => ids.includes(i) && ROUTER.map.MV13 !== 'CAM' + i) || ids[0]);
       },
-      say: () => 'La **grille de commutation** distribue tous les signaux du car : les entrées du mélangeur, les vignettes du multiview, les enregistrements de l\'EVS, les départs vers la chaîne. Chaque **destination** (une entrée d\'appareil) reçoit une **source** (une sortie d\'appareil).' + (S.ipMode ? '\n\nDans le car IP, un contrôleur NMOS joue ce rôle sur le réseau ST 2110.' : '\n\nDans ce car SDI, c\'est une **Videohub 40 × 40** : 40 entrées (les sources), 40 sorties (les destinations).'),
+      say: () => 'Rappel de la leçon : la grille relie n\'importe quelle source à n\'importe quelle destination, et l\'on choisit toujours la destination d\'abord, la source ensuite, puis TAKE.\n\nLa **grille de commutation** distribue tous les signaux du car : les entrées du mélangeur, les vignettes du multiview, les enregistrements de l\'EVS, les départs vers la chaîne. Chaque **destination** (une entrée d\'appareil) reçoit une **source** (une sortie d\'appareil).' + (S.ipMode ? '\n\nDans le car IP, un contrôleur NMOS joue ce rôle sur le réseau ST 2110.' : '\n\nDans ce car SDI, c\'est une **Videohub 40 × 40** : 40 entrées (les sources), 40 sorties (les destinations).'),
     },
     goStation('grille', 'Le poste grille est dans la zone technique.', 'Trois colonnes : la destination, la source, puis TAKE (la touche qui exécute la commutation) : toujours dans cet ordre.', {
       ok: () => (S.ipMode ? 'Trois colonnes : la destination, la source, puis CONNECT (la touche qui exécute la connexion) : toujours dans cet ordre.' : 'En haut, la façade de la Videohub ; dessous, le logiciel Videohub Control : les destinations, les sources, puis TAKE (la touche qui exécute la commutation) : toujours dans cet ordre.'),
@@ -195,8 +197,8 @@ const jack = (field, label) => ({ sel: `#pf-${field} + .patch-field g.jack[aria-
 /** @type {import('../engine.js').Lesson} */
 const PATCH = {
   id: 'brassage-cordons', domain: D, stations: ['brassage'], needs: { cams: 1 },
-  title: 'Baie de brassage : câbler un car vide',
-  summary: 'Le jackfield normalé, puis un car vide : une CCU vers la grille, sa référence, le départ vers le codeur de transmission.',
+  title: 'Câbler un car vide à la baie de brassage',
+  summary: 'Exercice de la leçon « Connecteurs, câbles, brassage » : la baie normalée, puis un car vide à brasser : une CCU vers la grille, sa référence, le départ vers le codeur de transmission.',
   duration: '8 min', level: 'intermédiaire',
   outro: 'Dans un car normalisé, chaque liaison passe par la baie sans cordon ; un cordon sert à dévier un signal (secours, test). Le brassage complet d\'un car vide, c\'est l\'exercice du même nom au poste.',
   cleanupLabel: 'Remettre le car normalisé',
@@ -206,7 +208,7 @@ const PATCH = {
     {
       id: 'intro', title: 'Le jackfield',
       enter: (c) => { c.mem.cam = camIds(true)[0] || 1; },
-      say: 'Entre les équipements et la grille, tous les signaux passent par une **baie de brassage** (jackfield, un panneau de prises où l\'on branche des cordons). Elle est **normalée** (on dit aussi « normalisée ») : sans cordon, chaque sortie est reliée à l\'entrée prévue. Pour cet exercice, je débranche tout : c\'est le « car vide ».',
+      say: 'Rappel de la leçon : la baie de brassage est le carrefour des liaisons ; chaque passage y ajoute deux connecteurs et un cordon, et un cordon inséré coupe la liaison habituelle pour la dévier.\n\nEntre les équipements et la grille, tous les signaux passent par une **baie de brassage** (jackfield, un panneau de prises où l\'on branche des cordons). Elle est **normalée** (on dit aussi « normalisée ») : sans cordon, chaque sortie est reliée à l\'entrée prévue. Pour cet exercice, je débranche tout : c\'est le « car vide ».',
     },
     goStation('brassage', 'La baie de brassage est dans la zone technique.', 'Trois champs : sources vers entrées de la grille, sorties de la grille vers les destinations, distributeur de référence vers les CCU. On les câblera dans cet ordre.', { hints: ['Les postes techniques sont regroupés dans la zone technique du car.', 'Touche Tab (le pupitre), puis la touche du poste dans la rangée Technique ; ou « Emmène-moi ».'] }),
     {
@@ -271,8 +273,8 @@ const PATCH = {
 /** @type {import('../engine.js').Lesson} */
 const TX = {
   id: 'transmission-secours', domain: D, stations: ['transmission'],
-  title: 'Transmission : mire, départ et bascule de secours',
-  summary: 'Envoyer la mire avant l\'antenne, revenir au programme, basculer sur la liaison de secours quand la fibre principale tombe.',
+  title: 'Envoyer la mire et basculer sur le secours',
+  summary: 'Exercice de la leçon « La transmission : départ, retour, secours » : envoyer la mire avant l\'antenne, revenir au programme, puis basculer sur la liaison de secours quand la fibre principale tombe.',
   duration: '6 min', level: 'débutant',
   outro: 'La transmission, c\'est le lien avec la chaîne : un départ principal, un secours prêt, et le retour antenne à surveiller en permanence.',
   cleanupLabel: 'Rétablir la liaison principale',
@@ -281,12 +283,12 @@ const TX = {
   steps: [
     {
       id: 'intro', title: 'La transmission',
-      say: 'Le programme part vers la chaîne par deux liaisons : **TX1** (fibre de l\'opérateur, principale) et **TX2** (secours, souvent satellite ou une autre fibre). La chaîne renvoie ce qu\'elle diffuse : le **retour antenne**.',
+      say: 'Rappel de la leçon : le programme part vers la chaîne par deux chemins prêts en permanence, et le retour antenne, ce que la chaîne diffuse vraiment, revient avec plusieurs secondes de retard.\n\nIci, **TX1** est la fibre de l\'opérateur, codée en JPEG XS (le principal), et **TX2** un camion satellite, codé en HEVC (le secours). La chaîne renvoie ce qu\'elle diffuse : le **retour antenne**.',
     },
     goStation('transmission', 'Le poste transmission est dans la zone technique.', 'À gauche le départ, à droite le retour antenne ; dans le tableau, l\'état des deux liaisons : d\'un regard, tu sais ce que la chaîne reçoit.', { hints: ['Les postes techniques sont regroupés dans la zone technique du car.', 'Touche Tab (le pupitre), puis la touche du poste dans la rangée Technique ; ou « Emmène-moi ».'] }),
     {
       id: 'bars', title: 'La mire',
-      say: 'Avant la prise d\'antenne, la chaîne reçoit la **mire** (barres de couleur et son de test 1 kHz) pour vérifier niveaux et paires audio.',
+      say: 'Avant la prise d\'antenne, c\'est le **test de ligne** : la chaîne reçoit la **mire** (barres à 75 %, 1 kHz à −18 dBFS sur chaque paire audio, ident) pour vérifier l\'image, les niveaux et l\'ordre des paires.',
       do: 'Envoie la mire à la chaîne.',
       go: { station: 'transmission' }, show: [hw('ENVOYER LA MIRE')],
       done: () => ROUTER.map.AUX_TX1 === 'BARS',
@@ -311,7 +313,7 @@ const TX = {
       do: 'Bascule sur TX2.',
       go: { station: 'transmission' }, show: [hw('TX2')],
       done: () => S.txPath === 2,
-      ok: 'Le programme repart par TX2. La chaîne a perdu quelques secondes, pas plus : c\'est pour ça qu\'un secours doit toujours être prêt.',
+      ok: 'Le programme repart par TX2. La chaîne a perdu quelques secondes, pas plus, et comme le satellite a près de 0,75 s de retard de plus que la fibre, elle revoit un petit morceau d\'action. C\'est pour ça qu\'un secours doit toujours être prêt, et porter le programme.',
       hints: ['On ne répare pas la fibre en direct : on change de liaison.', 'La touche « TX2 ».'],
       auto: () => { S.txPath = 2; emit('repair', 'tx'); },
     },
@@ -328,14 +330,14 @@ const icpTalk = (nth, label) => ({ sel: `#station .icp > .icp-key:${nth} .icp-ta
 /** @type {import('../engine.js').Lesson} */
 const ICOM = {
   id: 'intercom-parler', domain: D, stations: ['intercom'],
-  title: 'L\'intercom : parler à la bonne personne',
-  summary: 'Le panneau de la régie : touches TALK et LISTEN, le canal des cadreurs, un point direct vers l\'EVS, et le retour des commentateurs.',
+  title: 'Parler à la bonne personne à l\'intercom',
+  summary: 'Exercice de la leçon « L\'intercom : parler à la bonne personne » : le panneau de la régie, ses touches TALK et LISTEN, la conférence des cadreurs, une touche vers l\'EVS et le retour des commentateurs.',
   duration: '5 min', level: 'découverte',
   outro: 'L\'intercom relie tout le car : cadreurs, vision, son, EVS, plateau, chaîne. Règle d\'or : des phrases courtes, et on ferme le TALK dès qu\'on a fini de parler.',
   steps: [
     {
       id: 'intro', title: 'L\'intercom',
-      say: 'L\'**intercom** est le réseau d\'ordres du car. Chaque poste a un panneau : **TALK** ouvre ton micro vers un groupe ou une personne, **LISTEN** te fait entendre ce canal. Les cadreurs écoutent le réalisateur en permanence dans leur casque.',
+      say: 'Rappel de la leçon : une matrice relie tous les postes ; on parle par la touche la plus étroite (conférence, point à point, IFB), le nom d\'abord, et on referme le TALK dès qu\'on a fini.\n\nL\'**intercom** est le réseau d\'ordres du car. Chaque poste a un panneau : **TALK** ouvre ton micro vers un groupe ou une personne, **LISTEN** te fait entendre ce canal. Les cadreurs écoutent le réalisateur en permanence dans leur casque.',
     },
     goStation('intercom', 'Le panneau principal est en régie de production.', 'Chaque touche : un écran (le nom du canal), TALK et LISTEN. Lis toujours le nom avant d\'ouvrir le micro.', { hints: ['Le panneau principal est en régie de production, avec le réalisateur.', 'Touche Tab (le pupitre), puis la touche « Intercom » ; ou « Emmène-moi ».'] }),
     {
@@ -350,11 +352,11 @@ const ICOM = {
     },
     {
       id: 'evs', title: 'Un point direct',
-      say: 'Pour ne pas encombrer la conférence, on parle en **point à point** à un seul poste : ici l\'opérateur ralenti (l\'**EVS**, le serveur de ralentis).',
+      say: 'Pour ne pas encombrer la conférence des cadreurs, on prend une touche plus étroite, vers un seul groupe : ici les opérateurs ralenti (l\'**EVS**, le serveur de ralentis).',
       do: 'Ouvre le TALK vers EVS.',
       go: { station: 'intercom' }, show: [{ sel: '#station .icp > .icp-key', text: 'EVS', label: 'touche EVS' }],
       done: (c) => c.seen('intercom', (e) => /EVS/.test(e.msg || '')),
-      ok: 'Seul l\'opérateur EVS t\'entend : les cadreurs gardent leur canal libre pour les ordres du réalisateur.',
+      ok: 'Seuls les opérateurs ralenti t\'entendent : les cadreurs gardent leur canal libre pour les ordres du réalisateur.',
       hints: ['Cherche la touche dont l\'écran porte le nom du poste ralenti.', 'Sur la touche EVS, appuie sur TALK.'],
       auto: (c) => { const keys = typeof document !== 'undefined' ? [...document.querySelectorAll('#station .icp > .icp-key')] : []; const k = keys.find((n) => /EVS/.test(n.textContent || '')); if (k) /** @type {HTMLElement} */ (k.querySelector('.icp-talk')).click(); },
     },

@@ -5,7 +5,8 @@ import { ui } from './kit.js';
 // ----------------------------------------------------------------------------------
 // Parcours « Matériel » : la visionneuse d'appareils, connecteur par connecteur. Chaque étape
 // ouvre l'appareil sur la bonne face et demande de cliquer un connecteur ; sa fiche (norme,
-// type de prise, rôle dans le car) s'affiche à droite.
+// type de prise, rôle dans le car) s'affiche à droite. Ce sont les exercices pratiques des leçons
+// camera-systeme, synchro-genlock, ralentis-evs, sdi-grille et expl-transmission du Cours.
 // ----------------------------------------------------------------------------------
 const D = 'Matériel';
 // ouvrir un appareil (sur une face donnée)
@@ -49,14 +50,14 @@ const close = {
 /** @type {import('../engine.js').Lesson} */
 const CAMERA = {
   id: 'materiel-camera', domain: D, stations: ['ccu', 'vision'],
-  title: 'La caméra système et sa CCU',
-  summary: 'Le câble hybride SMPTE, l\'intercom du cadreur, puis l\'arrière de la CCU : fibre, référence et sortie vers la grille.',
+  title: 'Repérer les connecteurs de la caméra système et de sa CCU',
+  summary: 'Exercice de la leçon « La caméra système » : le câble hybride SMPTE, l\'intercom du cadreur, puis l\'arrière de la CCU : fibre, référence et sortie vers la grille.',
   duration: '6 min', level: 'découverte',
   outro: 'Une caméra système, c\'est une tête légère sur le terrain et sa CCU dans le car, reliées par un seul câble : tout passe par lui, dans les deux sens.',
   steps: [
     {
       id: 'intro', title: 'La visionneuse',
-      say: 'La **visionneuse de matériel** montre les faces des appareils du car. Chaque connecteur est cliquable : sa fiche donne le type de prise, la norme et son rôle. On commence par la caméra système (la caméra reliée au car par fibre, avec sa voie de commande).',
+      say: 'Rappel de la leçon : une caméra système, c\'est une tête sur le terrain et sa CCU dans le car, reliées par un seul câble hybride qui porte tout, dans les deux sens.\n\nLa **visionneuse de matériel** montre les faces des appareils du car. Chaque connecteur est cliquable : sa fiche donne le type de prise, la norme et son rôle. On commence par la tête de caméra.',
     },
     device('cam', 'cam', 'arriere', { title: 'La tête de caméra', text: 'L\'arrière de la tête de caméra : c\'est là qu\'arrivent le câble vers le car, les casques, les sorties vidéo locales.', do: 'Ouvre la caméra dans la visionneuse (face arrière).' }, 'Voilà l\'arrière de la tête.'),
     port('fibre', 'cam', 'ccu', 'Le câble hybride', 'Le connecteur le plus important : celui de la **fibre hybride SMPTE** (connecteur ST 304, câble ST 311), avec deux fibres monomodes et des conducteurs en cuivre.', 'CCU (fibre hybride)', 'Un seul câble transporte l\'image vers le car, le retour programme, l\'intercom, le tally (le voyant rouge « à l\'antenne »), les commandes du RCP (le pupitre de réglage de l\'ingénieur vision), et l\'alimentation de la caméra par le cuivre.', 'arriere'),
@@ -78,19 +79,19 @@ const CAMERA = {
 /** @type {import('../engine.js').Lesson} */
 const SPG = {
   id: 'materiel-synchro', domain: D, stations: ['synchro'],
-  title: 'Le générateur de synchro et le distributeur',
-  summary: 'Le SPG : son GPS, ses sorties tri-level et black burst, le timecode ; puis le distributeur qui alimente chaque appareil.',
+  title: 'Repérer les sorties du générateur de synchro et du distributeur',
+  summary: 'Exercice de la leçon « La référence et le genlock » : le SPG, son GPS, ses sorties tri-level et timecode, puis le distributeur qui recopie la référence pour chaque appareil.',
   duration: '5 min', level: 'découverte',
   outro: 'Le SPG est le cœur du car : une référence (pour que les images soient en phase) et un timecode (pour les dater), tous deux calés sur le temps GPS.',
   steps: [
     {
       id: 'intro', title: 'Le SPG',
-      say: 'Le **générateur de synchro** (SPG, Sync Pulse Generator) fabrique les signaux de référence (black burst, tri-level) et le timecode de tout le car.',
+      say: 'Rappel de la leçon : chaque appareil du car se verrouille (genlock) sur la même référence, distribuée en étoile depuis un seul générateur calé sur le GPS.\n\nCe **générateur de synchro** (SPG, Sync Pulse Generator) fabrique les signaux de référence (black burst, tri-level) et le timecode de tout le car.',
     },
     device('spg', 'spg', 'arriere', { title: 'Le SPG', text: 'Ouvrons sa face arrière.', do: 'Ouvre le générateur de synchro (face arrière).' }, 'Une rangée de BNC : chaque sortie part vers un groupe d\'appareils.'),
-    port('gps', 'spg', 'gps', 'Le GPS', 'Une antenne GPS sur le toit donne l\'heure exacte au générateur.', 'GPS', 'Tous les cars et la chaîne sont ainsi à la même heure, à moins d\'une microseconde près.', 'arriere'),
-    port('tls', 'spg', 'tls1', 'Le tri-level', 'La référence des équipements HD (synchro à trois niveaux).', 'TRI-LEVEL 1', 'Une impulsion à trois niveaux (bas, haut, retour au noir) par ligne : le top de synchro des appareils HD.', 'arriere'),
-    port('ltc', 'spg', 'ltc1', 'Le timecode', 'Le timecode heure du jour (LTC, transmis comme un signal audio) part vers les enregistreurs et les serveurs.', 'LTC 1', 'Il date les images ; il ne les synchronise pas.', 'arriere'),
+    port('gps', 'spg', 'gps', 'Le GPS', 'Une antenne GPS sur le toit donne l\'heure exacte au générateur.', 'GPS', 'Tous les cars et la chaîne sont ainsi à la même heure, à quelques dizaines de nanosecondes près : deux cars calés sur le GPS produisent des références en phase sans être reliés.', 'arriere'),
+    port('tls', 'spg', 'tls1', 'Le tri-level', 'La référence des équipements HD (synchro à trois niveaux).', 'TRI-LEVEL 1', 'Une impulsion par ligne, −300 mV puis +300 mV (0,59 µs chacun en 1080i) : le repère de temps est le passage à 0 V, au milieu.', 'arriere'),
+    port('ltc', 'spg', 'ltc1', 'Le timecode', 'Le timecode heure du jour (LTC, 80 bits par image transmis comme un signal audio) part vers les enregistreurs et les serveurs.', 'LTC 1', 'Il date les images ; il ne les synchronise pas.', 'arriere'),
     device('da', 'da', 'arriere', { title: 'Le distributeur', text: 'Une sortie du SPG ne suffit pas pour vingt appareils : un **distributeur** (DA, Distribution Amplifier) la recopie.', do: 'Ouvre le distributeur de référence.' }, 'Une entrée, huit sorties identiques.'),
     port('dain', 'da', 'in', 'L\'entrée', 'L\'entrée reçoit la référence du SPG.', 'IN', 'Chaque sortie en est une copie, isolée des autres : un court-circuit sur une sortie ne perturbe pas les autres appareils.', 'arriere'),
     {
@@ -106,14 +107,14 @@ const SPG = {
 /** @type {import('../engine.js').Lesson} */
 const EVS_HW = {
   id: 'materiel-evs', domain: D, stations: ['evs', 'ipdirector'],
-  title: 'Le serveur ralenti EVS XT',
-  summary: 'L\'arrière du serveur : entrées et sorties SDI configurables, référence, timecode, réseau XNet.',
+  title: 'Repérer les connecteurs du serveur ralenti EVS XT',
+  summary: 'Exercice de la leçon « Le serveur ralenti » : l\'arrière du serveur, ses entrées et sorties SDI configurables, la référence, le timecode et le réseau XNet.',
   duration: '5 min', level: 'découverte',
   outro: 'Le serveur enregistre toutes ses entrées en continu, sur le même timecode : c\'est ce qui permet de relire n\'importe quel angle au même instant.',
   steps: [
     {
       id: 'intro', title: 'Le serveur',
-      say: 'Le **serveur ralenti** (EVS) enregistre plusieurs caméras en continu et relit sur une ou deux sorties, piloté par la télécommande **LSM** (le pupitre de l\'opérateur ralenti, avec son levier de vitesse).',
+      say: 'Rappel de la leçon : le **serveur ralenti** (EVS) enregistre plusieurs caméras en continu, toutes datées par le même timecode, et relit sur une ou deux sorties, piloté par la télécommande **LSM** (le pupitre de l\'opérateur ralenti, avec son levier de vitesse).',
     },
     device('evs', 'evs', 'arriere', { title: 'L\'arrière du serveur', text: 'Ouvrons l\'arrière du serveur.', do: 'Ouvre le serveur EVS (face arrière).' }, 'Douze connecteurs vidéo, la synchro, le réseau.'),
     port('sdi', 'evs', 'sdi1', 'Les connecteurs vidéo', 'Les BNC vidéo sont affectés par configuration : en entrée (enregistrement) ou en sortie (lecture, multiview).', 'SDI 1', 'La configuration dit combien d\'entrées et de sorties : par exemple 8 enregistrements et 2 lectures.', 'arriere'),
@@ -133,18 +134,18 @@ const EVS_HW = {
 /** @type {import('../engine.js').Lesson} */
 const ROUTER_HW = {
   id: 'materiel-grille', domain: D, stations: ['grille', 'melangeur'],
-  title: 'La grille et le mélangeur',
-  summary: 'L\'arrière de la grille (entrées, sorties, référence) et du processeur du mélangeur.',
+  title: 'Repérer les connecteurs de la grille et du mélangeur',
+  summary: 'Exercice de la leçon « La grille » : l\'arrière de la grille (entrées, sorties, référence), puis celui du processeur du mélangeur.',
   duration: '5 min', level: 'découverte',
   outro: 'La grille distribue, le mélangeur fabrique le programme : ce sont deux appareils distincts, reliés par des dizaines de câbles.',
   steps: [
     {
       id: 'intro', title: 'Deux appareils',
-      say: 'La **grille** relie les sources aux destinations ; le **mélangeur** (son processeur, dans une baie) fabrique le programme à partir de ses entrées. Le pupitre du truquiste (l\'opérateur du mélangeur) n\'est qu\'une télécommande.',
+      say: 'Rappel de la leçon : la **grille** relie n\'importe quelle source à n\'importe quelle destination, et commute au top image, entre deux images.\n\nLe **mélangeur** (son processeur, dans une baie) fabrique le programme à partir de ses entrées ; le pupitre du truquiste (l\'opérateur du mélangeur) n\'est qu\'une télécommande. Ce sont deux appareils distincts.',
     },
     device('router', 'router', 'arriere', { title: 'La grille', text: 'L\'arrière de la grille : des rangées d\'entrées et de sorties vidéo.', do: 'Ouvre la grille.' }, 'Chaque BNC est une entrée ou une sortie.'),
     port('in', 'router', 'in1', 'Une entrée', 'Les entrées reçoivent les sources : CCU, serveurs, habillage…', 'IN 1', 'Chaque entrée peut être envoyée sur n\'importe quelle sortie.', 'arriere'),
-    port('ref', 'router', 'ref', 'La référence', 'La grille aussi reçoit la référence.', 'REF IN', 'Elle commute pendant l\'intervalle de suppression (le court moment sans image active, entre deux images) : il lui faut savoir quand il arrive.', 'arriere'),
+    port('ref', 'router', 'ref', 'La référence', 'La grille aussi reçoit la référence.', 'REF IN', 'Elle commute pendant l\'intervalle de suppression (le court moment sans image active, entre deux images), sur une ligne prévue pour cela : il lui faut savoir quand il arrive.', 'arriere'),
     device('mixer', 'mixer', 'arriere', { title: 'Le mélangeur', text: 'Le processeur du mélangeur, en baie.', do: 'Ouvre le processeur du mélangeur.' }, 'Ses entrées viennent des sorties de la grille.'),
     port('mixin', 'mixer', 'in1', 'Une entrée du mélangeur', 'Chaque entrée du mélangeur correspond à un bouton des rangées PGM (le programme) et PVW (la rangée preset : la source prête à passer).', 'IN 1', 'La grille choisit ce qui arrive sur chaque entrée : c\'est ainsi qu\'on change une source du mélangeur sans recâbler.', 'arriere'),
     {
@@ -160,20 +161,20 @@ const ROUTER_HW = {
 /** @type {import('../engine.js').Lesson} */
 const PDC = {
   id: 'materiel-pied-de-car', domain: D, stations: [],
-  title: 'Le pied de car : raccorder le car au stade',
-  summary: 'Le panneau extérieur du car : la terre et l\'énergie, les embases caméras, le départ fibre vers l\'opérateur.',
+  title: 'Raccorder le car au stade : le pied de car',
+  summary: 'Exercice de la leçon « La transmission : départ, retour, secours » : le panneau extérieur du car, la terre et l\'énergie, une embase caméra, et le départ FIBRE TX par où le programme quitte le car.',
   duration: '4 min', level: 'découverte',
   outro: 'Le pied de car est le premier et le dernier geste d\'une installation : la terre en premier, l\'énergie ensuite, puis les caméras et la transmission.',
   steps: [
     {
       id: 'intro', title: 'Le pied de car',
-      say: 'À l\'arrière du car, le **pied de car** est le panneau où arrivent tous les câbles venant du stade : énergie, caméras, intercom, transmission, GPS. Chaque câble s\'y branche sur une **embase** (une prise fixe du panneau).',
+      say: 'Rappel de la leçon : le programme quitte le car par la fibre de l\'opérateur, le départ principal, raccordée au pied de car ; le secours part à côté, par le camion satellite.\n\nÀ l\'arrière du car, le **pied de car** est le panneau où arrivent tous les câbles venant du stade : énergie, caméras, intercom, transmission, GPS. Chaque câble s\'y branche sur une **embase** (une prise fixe du panneau).',
     },
     device('pdc', 'pdc', 'arriere', { title: 'Le panneau', text: 'Ouvrons le panneau extérieur.', do: 'Ouvre le pied de car.' }, 'Chaque embase est repérée : on ne se trompe pas de prise sous la pluie.'),
     port('earth', 'pdc', 'earth', 'La terre', 'La sécurité d\'abord.', 'TERRE', 'La liaison à la terre se raccorde toujours avant l\'énergie, et se débranche en dernier.', 'arriere'),
     port('power', 'pdc', 'power', 'L\'énergie', 'Le car est alimenté en triphasé (trois phases, pour les fortes puissances).', 'ÉNERGIE', 'Par le réseau du stade ou par un groupe électrogène, souvent les deux, avec un onduleur pour les coupures.', 'arriere'),
     port('smpte', 'pdc', 'smpte1', 'Une embase caméra', 'Chaque caméra a son embase fibre hybride.', 'SMPTE 1', 'Le câble tiré depuis la position caméra s\'y raccorde ; derrière, il rejoint la CCU 1.', 'arriere'),
-    port('tx', 'pdc', 'txfib', 'Le départ transmission', 'Le programme quitte le car par ici.', 'FIBRE TX', 'C\'est la fibre de l\'opérateur de transmission, vers la chaîne.', 'arriere'),
+    port('tx', 'pdc', 'txfib', 'Le départ transmission', 'Le programme quitte le car par ici.', 'FIBRE TX', 'C\'est la fibre de l\'opérateur de transmission, vers la chaîne : le départ principal (TX1), codé en JPEG XS.', 'arriere'),
     {
       id: 'quiz', title: 'Question',
       say: 'Une question de sécurité.',
