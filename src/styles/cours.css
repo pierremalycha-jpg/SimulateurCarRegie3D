@@ -200,3 +200,14 @@ body:not(.role-formateur) .role-only { display: none !important; }
 .co-link { padding: 4px 8px; background: var(--well); border-radius: 3px; }
 .co-link b { min-width: 170px; font: 600 13px var(--f-disp); color: var(--muted); }
 
+/* chapitre realisation */
+.co-4 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+.co-4 .co-canvas { image-rendering: auto; }
+.co-2 .co-canvas { image-rendering: auto; }
+@media (max-width: 820px) { .co-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+/* chapitre ralentis */
+.co-scroll { overflow-x: auto; max-width: 100%; }
+.co-pl { width: 100%; font-size: 12.5px; }
+.co-pl td { vertical-align: middle; }
+.co-pl select { font: 12.5px var(--f-mono); padding: 1px 4px; }
+.co-pl .co-btns { flex-wrap: nowrap; gap: 4px; }
