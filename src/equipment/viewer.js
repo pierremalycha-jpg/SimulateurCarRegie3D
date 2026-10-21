@@ -8,6 +8,7 @@ import { deviceCables, endLabel, portName, DEV_NAMES, SIG, routerInLabel, router
 import { EVS, ROUTER, MIX, meSource, sourceLabel, TRANS } from '../pipeline.js';
 import { EQUIP, evsLayout } from '../equip.js';
 import { CFG, photoUrl } from '../shared.js';
+import { VH_PANEL, inLabel, outLabel, xpOf, lockState } from '../videohub.js';
 import { openReport } from '../ui/report.js';
 
 const NS = 'http://www.w3.org/2000/svg';
@@ -67,6 +68,13 @@ function liveState(key, n) {
     st.lever = MIX.pos;
     st.lcd.menu = [`${EQUIP.mixer}`, `TRANS ${TRANS[MIX.trans]}`, `RATE ${MIX.rate}f`, `PGM ${sourceLabel(meSource(MIX.pgm))}`, `PST ${sourceLabel(meSource(MIX.pst))}`];
     st.btn.dsk = MIX.dsk1.on || MIX.dsk2.on;
+  }
+  if (key === 'router' && !S.ipMode) {
+    // façade de la Videohub : la sortie choisie, sa source (ou la source préparée), le verrou
+    const P = VH_PANEL, o = P.out, x = P.pending && P.inp ? P.inp : xpOf(o);
+    st.lcd.lcd = [`OUT ${o}  ${outLabel(o)}${lockState(o) !== 'U' ? '  [LOCK]' : ''}`, `IN  ${x || '--'}  ${x ? inLabel(x) : ''}`, P.pending ? 'TAKE ?  (CLEAR pour annuler)' : '', S.format === 'UHD' ? '2160p50  12G-SDI' : S.format === 'HD' ? '1080p50  3G-SDI' : '1080i50  HD-SDI'];
+    st.btn.out = P.mode === 'out'; st.btn.in = P.mode === 'in'; st.btn.take = P.pending; st.btn.clear = P.pending; st.btn.lock = lockState(o) !== 'U'; st.btn.menu = P.mode === 'menu';
+    for (const k of ['led0', 'led1', 'led2', 'led3']) st.led[k] = 'green';
   }
   return st;
 }

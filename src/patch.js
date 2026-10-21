@@ -33,8 +33,8 @@ export function physLabel(p) {
   }
   return { EVS1: 'EVS PGM1', EVS2: 'EVS PGM2', GFXF: 'GFX FILL', GFXK: 'GFX KEY', STUDIO: 'DUPLEX', SPGBARS: 'SPG MIRE', MIXPGM: 'MÉL. PGM', MIXCLN: 'MÉL. CLEAN', MIXPVW: 'MÉL. PVW', RXRET: 'RX RETOUR' }[p] || p;
 }
-// sorties de grille brassables et leur clé de routage
-export const OUT_KEY = (o) => (o >= 41 && o <= 48 ? 'REC' + (o - 40) : { 49: 'AUX_TX1', 50: 'AUX_TX2', 51: 'AUX_GIANT', 52: 'AUX_VISION' }[o]);
+// sorties de grille brassables et leur clé de routage (numérotation de la Videohub 40 × 40 : videohub.js)
+export const OUT_KEY = (o) => (o >= 23 && o <= 30 ? 'REC' + (o - 22) : { 31: 'AUX_TX1', 32: 'AUX_TX2', 33: 'AUX_GIANT', 34: 'AUX_VISION' }[o]);
 export const DEST_LABEL = (d) => (d.startsWith('EVSREC') ? `EVS REC ${d.slice(6)}` : { TX1: 'CODEUR TX1', TX2: 'CODEUR TX2', GIANT: 'ÉCRAN GÉANT', GRADE1: 'GRADE 1' }[d] || d);
 
 export function fields() {
@@ -42,7 +42,7 @@ export function fields() {
   const cams = [...S.cams].sort((a, b) => a.id - b.id);
   const srcTop = [...cams.map((c) => 'CAM:' + c.id), 'EVS1', ...(L.plays > 1 ? ['EVS2'] : []), 'GFXF', 'GFXK', 'STUDIO', 'SPGBARS', 'MIXPGM', 'MIXCLN', 'MIXPVW', 'RXRET'];
   const inBottom = [...Array(16).keys()].map((i) => i + 1).concat([17, 18, 19, 20, 21, 22, 24, 25, 26, 27]);
-  const outTop = [...Array(L.rec).keys()].map((i) => 41 + i).concat([49, 50, 51, 52]);
+  const outTop = [...Array(L.rec).keys()].map((i) => 23 + i).concat([31, 32, 33, 34]);
   const destBottom = [...Array(L.rec).keys()].map((i) => 'EVSREC' + (i + 1)).concat(['TX1', 'TX2', 'GIANT', 'GRADE1']);
   const sysCams = cams.filter(isSys);
   return {
@@ -56,7 +56,7 @@ export function fields() {
 export function expected() {
   const F = fields(); const e = { inputs: {}, outputs: {}, refs: {} };
   for (const p of F.inputs.top) { const n = routerInOf(physToLogical(p)); if (n) e.inputs[n] = p; }
-  for (const o of F.outputs.top) e.outputs[o] = o <= 48 ? 'EVSREC' + (o - 40) : { 49: 'TX1', 50: 'TX2', 51: 'GIANT', 52: 'GRADE1' }[o];
+  for (const o of F.outputs.top) e.outputs[o] = o <= 30 ? 'EVSREC' + (o - 22) : { 31: 'TX1', 32: 'TX2', 33: 'GIANT', 34: 'GRADE1' }[o];
   for (const id of F.refs.bottom) e.refs[id] = id;
   return e;
 }

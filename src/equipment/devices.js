@@ -453,20 +453,58 @@ export function routerInDesc(i) { return `Entrée ${i} de la grille.`; }
 const DEV = {};
 DEV.cam = camDevice(); DEV.ccu = ccuDevice(); DEV.rcp = rcpDevice(); DEV.evs = evsDevice(); DEV.lsm = lsmDevice();
 
-DEV.router = rackGeneric('router', 'Grille de commutation (exemple de matrice 12G-SDI)', 'La grille reçoit toutes les sources (caméras, serveurs, mélangeur, habillage, retours) et les distribue vers toutes les destinations. Ici : 48 entrées et 68 sorties visibles (les grilles de car font souvent 144 à 288 ports, ou sont en IP).', {
-  w: 1000, h: 640, label: 'GRILLE · face arrière (extrait)',
-  groups: [
-    { l: 'Entrées 1 à 48', prefix: 'in', from: 1, count: 48, cols: 16, rows: 3, x: 66, y: 100, dx: 54, dy: 62, k: 'bnc', conn: BNC, s: 'video', d: 'in', std: SDI_STD, name: (i) => `IN ${i}`, desc: (i) => 'Entrée de la grille.' },
-    { l: 'Sorties 1 à 68', prefix: 'out', from: 1, count: 68, cols: 17, rows: 4, x: 66, y: 340, dx: 51, dy: 62, k: 'bnc', conn: BNC, s: 'video', d: 'out', std: SDI_STD, name: (i) => `OUT ${i}`, desc: (i) => 'Sortie de la grille.' },
-  ],
-  ports: [
-    { id: 'ref', k: 'bnc', x: 930, y: 100, l: 'REF', meta: M('REF IN', BNC, 'ref', 'in', REF_STD, 'La grille commute sur l\'intervalle de suppression : elle doit être verrouillée sur la référence.') },
-    { id: 'lan1', k: 'rj45', x: 930, y: 170, l: 'LAN 1', meta: M('LAN 1', 'RJ-45', 'ip', 'io', '', 'Contrôle (panneaux X-Y, broadcast controller).') },
-    { id: 'lan2', k: 'rj45', x: 930, y: 230, l: 'LAN 2', meta: M('LAN 2', 'RJ-45', 'ip', 'io', '', 'Contrôle redondant.') },
-  ],
-  specs: [['Format', '12G-SDI (UHD) / 3G / HD, ou IP ST 2110 sur les cars récents'], ['Commutation', 'Dans l\'intervalle de suppression (« clean switch ») si verrouillée sur la référence'], ['Contrôle', 'Panneaux X-Y, salvos, noms de sources (UMD), tally']],
-  lesson: ['Le nom d\'une source suit le signal : la grille pousse les noms (UMD) vers le multiview.', 'Une erreur de prise sur une sortie « départ » envoie la mauvaise image à la chaîne : toujours vérifier au retour antenne.'],
-});
+DEV.router = videohubDevice();
+// Grille du car SDI : Videohub 40 × 40 12G (inspiration Blackmagic Design, 2U) ; façade et face arrière schématiques
+function videohubDevice() {
+  const C = {
+    lcd: M('Écran LCD', 'Écran couleur intégré', 'video', '', '', 'Affiche le numéro et l\'étiquette de la sortie choisie et de sa source, avec la vidéo de la source : on voit l\'image avant même de commuter. Ses menus donnent accès aux réglages (réseau, langue…).'),
+    keys: M('Touches numérotées', 'Touches rétroéclairées', 'data', '', '', 'Entrée directe d\'un numéro de sortie ou de source (deux chiffres pour 10 à 40). Elles servent aussi de raccourcis vers des sources choisies.'),
+    out: M('Touche OUT', 'Touche rétroéclairée', 'data', '', '', 'Passe la façade en choix de la destination : la molette et les touches numérotées choisissent la sortie.'),
+    in: M('Touche IN', 'Touche rétroéclairée', 'data', '', '', 'Passe la façade en choix de la source : l\'écran montre l\'image de l\'entrée parcourue, avant toute commutation.'),
+    clear: M('Touche CLEAR', 'Touche rétroéclairée', 'data', '', '', 'Annule la source préparée : rien n\'est commuté.'),
+    take: M('Touche TAKE', 'Touche rétroéclairée rouge', 'data', '', '', 'Valide la commutation préparée : le point de croisement entre l\'entrée et la sortie est établi. CLEAR et TAKE clignotent tant qu\'une source attend.'),
+    lock: M('Touche LOCK', 'Touche rétroéclairée', 'data', '', '', 'Verrouille ou déverrouille la sortie choisie : verrouillée, plus personne ne peut la commuter (façade, logiciel, autres postes du réseau).'),
+    menu: M('Touches MENU et SET', 'Touches rétroéclairées', 'data', '', '', 'MENU ouvre les réglages sur l\'écran (réseau, affichage) ; la molette les parcourt, SET valide.'),
+    knob: M('Molette', 'Métal usiné, revêtement caoutchouc, crantage électronique', 'data', '', '', 'Fait défiler les sorties, les sources (par numéro) ou les menus.'),
+    leds: M('Voyants', 'LED', 'data', '', '', 'Alimentations, référence et réseau de contrôle (voyants simplifiés du simulateur).'),
+  };
+  const front = /** @type {Item[]} */ ([{ t: 'body', x: 10, y: 10, w: 1080, h: 200, r: 6 }, { t: 'text', x: 34, y: 38, s: 'VIDEOHUB 40×40 12G · façade (schématique)', size: 13, w: 700 }]);
+  front.push({ t: 'lcd', id: 'lcd', x: 40, y: 56, w: 300, h: 134 });
+  for (let i = 0; i < 10; i++) front.push({ t: 'btn', id: 'keys', x: 380 + (i % 5) * 58, y: 60 + Math.floor(i / 5) * 62, w: 50, h: 48, l: String((i + 1) % 10), litKey: 'key' + i });
+  [['out', 'OUT'], ['in', 'IN'], ['clear', 'CLEAR'], ['take', 'TAKE'], ['lock', 'LOCK'], ['menu', 'MENU'], ['set', 'SET']].forEach(([id, l], i) => front.push({ t: 'btn', id: id === 'set' ? 'menu' : id, x: 690 + (i % 4) * 62, y: 60 + Math.floor(i / 4) * 62, w: 54, h: 48, l, litKey: id, litColor: id === 'take' ? '#ff3b30' : id === 'in' ? '#f3f1e8' : '#ffb020' }));
+  front.push({ t: 'knob', id: 'knob', x: 1000, y: 112, r: 52, l: 'MOLETTE' });
+  ['PSU 1', 'PSU 2', 'REF', 'LAN'].forEach((l, i) => front.push({ t: 'led', id: 'led' + i, x: 920 + i * 40, y: 26, l }));
+  const rear = /** @type {Item[]} */ ([{ t: 'body', x: 10, y: 10, w: 1180, h: 400, r: 6 }, { t: 'text', x: 34, y: 36, s: 'VIDEOHUB 40×40 12G · face arrière (disposition schématique)', size: 13, w: 700 }]);
+  const P = {};
+  const grp = (pref, from, y, label, d) => {
+    rear.push({ t: 'group', x: 40, y: y - 40, w: 20 * 46 + 22, h: 64, l: label });
+    for (let i = 0; i < 20; i++) {
+      const n = from + i, id = pref + n;
+      rear.push({ t: 'port', id, k: 'bnc', x: 66 + i * 46, y, l: (d === 'in' ? 'IN ' : 'OUT ') + n, small: true });
+      P[id] = M(`${d === 'in' ? 'SDI IN' : 'SDI OUT'} ${n}`, BNC, 'video', d, SDI_STD, d === 'in' ? 'Entrée 12G-SDI : format détecté automatiquement (SD, HD, 3G, 6G, 12G), égaliseur de câble.' : 'Sortie 12G-SDI reclockée : le signal y est régénéré (horloge propre, gigue retirée).');
+    }
+  };
+  grp('in', 1, 90, 'Entrées 1 à 20', 'in'); grp('in', 21, 170, 'Entrées 21 à 40', 'in');
+  grp('out', 1, 270, 'Sorties 1 à 20', 'out'); grp('out', 21, 350, 'Sorties 21 à 40', 'out');
+  const extra = [
+    ['ref', 'bnc', 1020, 90, 'REF IN', M('REF IN', BNC, 'ref', 'in', REF_STD, 'Référence de synchro (tri-level ou black burst) : la grille commute au bon moment de l\'image, dans l\'intervalle de suppression. Les sources doivent elles-mêmes être synchrones.')],
+    ['refloop', 'bnc', 1090, 90, 'LOOP', M('REF LOOP', BNC, 'ref', 'out', REF_STD, 'Boucle de la référence (à terminer sur 75 Ω si elle ne sert pas).')],
+    ['lan1', 'rj45', 1020, 170, 'ETHERNET', M('ETHERNET', 'RJ-45', 'ip', 'io', '10/100/1000BASE-T, protocole Videohub (TCP 9990)', 'Réseau de contrôle : logiciel Videohub Control, panneaux de commande, automatismes.')],
+    ['usb', 'usb', 1090, 170, 'USB', M('USB', 'USB-C', 'data', 'io', 'USB', 'Mise à jour du logiciel interne et configuration (Videohub Setup).')],
+    ['rs422', 'dsub9', 1055, 250, 'RS-422', M('RS-422', 'D-sub 9', 'data', 'in', 'RS-422', 'Commande série des points de croisement par un automatisme (selon les modèles).')],
+    ['psu1', 'iec', 1020, 340, 'PSU 1', M('Alimentation 1', 'IEC', 'power', 'in', '100-240 V', 'Alimentation secteur.')],
+    ['psu2', 'iec', 1090, 340, 'PSU 2', M('Alimentation 2', 'IEC', 'power', 'in', '100-240 V', 'Alimentation redondante, sur un autre départ de l\'onduleur.')],
+  ];
+  for (const [id, k, x, y, l, meta] of extra) { rear.push({ t: 'port', id, k, x, y, l }); P[id] = meta; }
+  return {
+    key: 'router', title: 'Grille SDI · Videohub 40×40 12G (inspiration Blackmagic Design)', multi: false,
+    intro: 'La grille du car SDI : 40 entrées et 40 sorties 12G-SDI dans 2 unités de baie. Chaque entrée peut aller vers n\'importe quelle sortie. Elle se commande de sa façade (écran, touches, molette) ou par le réseau Ethernet (logiciel Videohub Control, panneaux, automatismes).',
+    views: { avant: { label: 'Façade', w: 1100, h: 220, items: front }, arriere: { label: 'Face arrière', w: 1200, h: 420, items: rear } },
+    ports: P, controls: C,
+    specs: [['Entrées / sorties', '40 × 12G-SDI / 40 × 12G-SDI, format détecté sur chaque entrée (SD, HD, 3G, 6G, 12G)'], ['Sorties', 'Reclockées (signal régénéré)'], ['Référence', 'Tri-level ou black burst, avec boucle'], ['Contrôle', 'Façade (écran, touches, molette), Ethernet (protocole texte TCP 9990), USB'], ['Logiciels', 'Videohub Control (routage), Videohub Setup (étiquettes, réseau)'], ['Dans ce car', 'Entrées 1-16 caméras, 17-27 serveurs, habillage, mire, mélangeur, retour ; sorties 1-22 mélangeur, 23-30 EVS, 31-34 départs et Grade 1, 35-40 multiview']],
+    lesson: ['Une entrée peut alimenter plusieurs sorties ; une sortie ne reçoit qu\'une entrée.', 'Une erreur de prise sur une sortie « départ » envoie la mauvaise image à la chaîne : on verrouille ces sorties et on vérifie toujours au retour antenne.', 'Les étiquettes ne sont que des noms : une étiquette fausse fait router la mauvaise image.'],
+  };
+}
 DEV.mixer = xvsDevice(); DEV.mixpanel = icpDevice(); DEV.siu = siuDevice(); DEV.ipd = ipdDevice();
 DEV.mv = rackGeneric('mv', 'Processeur multiview', 'Assemble jusqu\'à des dizaines de sources sur les écrans de la régie, avec les étiquettes (UMD), le tally, les horloges, les vumètres et les alarmes (perte de signal, image figée, noir).', {
   w: 1000, h: 420, label: 'MULTIVIEWER · face arrière',
@@ -561,5 +599,5 @@ export const DEVICES = DEV;
 export function deviceDef(key) { return DEV[LINKMAP[key] || key]; }
 export const DEVICE_LIST = [
   ['cam', 'Caméra système (tête)'], ['ccu', 'CCU (voie caméra)'], ['rcp', 'RCP (pupitre vision)'], ['evs', 'Serveur ralenti EVS XT4K'], ['lsm', 'Télécommande LSM'], ['ipd', 'Poste IPDirector'],
-  ['router', 'Grille'], ['mixer', 'Mélangeur XVS-6000 (processeur)'], ['mixpanel', 'Pupitre ICP-X7000'], ['siu', 'Interface MKS-X7700 (tally)'], ['mv', 'Multiviewer'], ['spg', 'Générateur de synchro'], ['da', 'Distributeur de référence'], ['rx', 'Récepteur HF'], ['conv', 'Convertisseur fibre'], ['audio', 'Console son (cœur et E/S)'], ['pdc', 'Pied de car'],
+  ['router', 'Grille (Videohub 40×40)'], ['mixer', 'Mélangeur XVS-6000 (processeur)'], ['mixpanel', 'Pupitre ICP-X7000'], ['siu', 'Interface MKS-X7700 (tally)'], ['mv', 'Multiviewer'], ['spg', 'Générateur de synchro'], ['da', 'Distributeur de référence'], ['rx', 'Récepteur HF'], ['conv', 'Convertisseur fibre'], ['audio', 'Console son (cœur et E/S)'], ['pdc', 'Pied de car'],
 ];

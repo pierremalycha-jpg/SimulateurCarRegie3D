@@ -112,10 +112,10 @@ export const STATION_INFO = {
   },
   grille: {
     title: 'Grille de commutation (router)', where: 'Baie technique',
-    role: 'La grille relie n\'importe quelle source à n\'importe quelle destination : entrées du mélangeur, tuiles du multiview, entrées d\'enregistrement EVS, départs vers la chaîne, moniteurs. C\'est le cœur de la configuration du car.',
-    gear: ['Matrice SDI ou IP (type Evertz EQX, Grass Valley NV, Ross Ultrix) de plusieurs centaines d\'entrées/sorties', 'Panneaux de commande X-Y, système de contrôle (broadcast controller)', 'Gestion des noms de sources (UMD) et du tally'],
-    process: ['Choisir la destination, puis la source, puis TAKE', 'Préparer des « salvos » (configurations complètes) avant le direct'],
-    tips: ['Une erreur sur la grille peut envoyer du noir à la chaîne : toujours vérifier le retour antenne après une prise.'],
+    role: 'La grille relie n\'importe quelle source à n\'importe quelle destination : entrées du mélangeur, tuiles du multiview, entrées d\'enregistrement EVS, départs vers la chaîne, moniteurs. C\'est le cœur de la configuration du car. Dans le car SDI, c\'est une Videohub 40 × 40 12G ; dans le car IP, un contrôleur NMOS qui connecte les flux du réseau.',
+    gear: ['Car SDI : Videohub 40 × 40 12G (inspiration Blackmagic Design), 40 entrées et 40 sorties 12G-SDI reclockées, façade avec écran, touches et molette', 'Logiciels Videohub Control (routage, verrous) et Videohub Setup (étiquettes, réseau), protocole Ethernet TCP 9990', 'Monitoring des entrées et des sorties', 'Car IP : contrôleur NMOS (IS-04 / IS-05) sur les réseaux ST 2110 rouge et bleu'],
+    process: ['Choisir la destination, puis la source, puis TAKE ; vérifier l\'image (écran de la façade, monitoring, multiview)', 'Verrouiller les départs vers la chaîne (TX1, TX2) avant l\'antenne', 'Relire les étiquettes avec la liste de câblage au line-up', 'Garder la configuration du car (étiquettes, routage) pour la rappeler d\'un geste'],
+    tips: ['Une erreur sur la grille peut envoyer du noir ou la mire à la chaîne : toujours vérifier le retour antenne après une prise.', 'Une étiquette n\'est qu\'un nom : si elle est fausse, on route la mauvaise image en croyant bien faire.', 'La Videohub 40 × 40 n\'a que 40 sorties : les tuiles 1 à 12 du multiview sont câblées en direct, la dernière rangée (13 à 18) passe par la grille.'],
   },
   // car SDI : réseau de contrôle Gigabit ; car IP : réseau ST 2110 (fiche inchangée)
   get reseau() { return S.ipMode ? RESEAU_IP : RESEAU_SDI; },
