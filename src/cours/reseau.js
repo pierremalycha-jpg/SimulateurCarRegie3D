@@ -452,7 +452,7 @@ Autres ordres de grandeur :
 - Dans le car IP (ST 2110), chaque appareil a trois adresses : la carte média rouge (10.1.x.y), la carte média bleue (10.2.x.y, même fin d'adresse) et le contrôle (10.20.0.0/22, un réseau à part).
 
 Deux machines avec la **même adresse** se perturbent toutes les deux : la table ARP des voisins bascule de l'une à l'autre, et le RCP répond une fois sur deux. Première chose à vérifier quand une machine fraîchement installée fonctionne par intermittence.`,
-      car: { text: 'Au poste Réseau (baie technique, car SDI) : le plan d\'adressage du réseau de contrôle, la mise en service d\'une machine (adresse, masque, passerelle, VLAN du port) et le ping. Les pannes « masque faux », « passerelle fausse » et « conflit d\'adresses » y sont jouées.', station: 'reseau' },
+      car: { text: 'Au poste Réseau (baie technique, car SDI) : le plan d\'adressage du réseau de contrôle, la mise en service d\'une machine (adresse, masque, passerelle, VLAN du port) et le ping. Les pannes « masque faux » et « conflit d\'adresses » y sont jouées ; une passerelle fausse se reconnaît au ping depuis un autre VLAN.', station: 'reseau' },
       terms: ['sous-reseau', 'passerelle', 'conflit-ip', 'dhcp', 'ping', 'routage'],
       competences: ['3.6', '2.10'], article: 'reseau',
       quiz: [
