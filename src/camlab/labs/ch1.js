@@ -331,7 +331,7 @@ function macro(ctx) {
   const vf = makeViewfinder();
   const rings = lensRings(st, () => up(), ['zoom', 'point']);
   const ring = slider('Bague macro', 0, 1, 0.001, 0, (v) => { st.m = v; msg = ''; up(); });
-  const lever = toggle('Bouton macro : bague débloquée', false, (v) => {
+  const lever = toggle('Bouton macro', false, (v) => {
     if (!v && st.m > 0.004) { lever.set(true); msg = 'La bague macro ne se rebloque qu\'au repos : ramène-la d\'abord en butée, sur son repère.'; up(); return; }
     st.free = v; if (!v) { st.m = 0; ring.set(0); } msg = ''; up();
   });
@@ -407,7 +407,7 @@ function defauts(ctx) {
   const defis = [false, false, false];
   let raf = 0;
   const rings = lensRings(st, () => up(), ['zoom', 'iris']);
-  const alac = toggle('ALAC (correction de l\'objectif)', false, (v) => { st.alac = v; up(); });
+  const alac = toggle('Correction ALAC', false, (v) => { st.alac = v; up(); });
   const read = readout();
   const sh = shell({ vf: { canvas: view }, scope: sc, ctrls: [...rings.rows, btnRow(alac.btn), read], defis: [
     'Au grand angle (4,5 mm), regarde le coin à la loupe : le rouge et le bleu ne tombent pas sur le vert. Active l\'ALAC : l\'écart doit passer sous un demi-photosite.',
@@ -445,6 +445,7 @@ function defauts(ctx) {
     drawScope(sc, id);
     const g = view.getContext('2d');
     g.strokeStyle = '#ffb020'; g.lineWidth = 2; g.strokeRect(W - LW / Z / 3 - 1, 1, LW / Z / 3, LH / Z / 3);
+    g.fillStyle = 'rgba(0,0,0,0.55)'; g.fillRect(6, 6, 104, st.alac ? 62 : 42);
     g.font = '600 15px "B612 Mono", monospace'; g.fillStyle = 'rgba(240,240,232,0.92)'; g.shadowColor = 'rgba(0,0,0,0.8)'; g.shadowBlur = 3; g.textAlign = 'left';
     g.fillText(`Z ${mm(p.f)}`, 12, 22); g.fillText(`F${fr(p.N, 1)}`, 12, 42); if (st.alac) g.fillText('ALAC', 12, 62); g.shadowBlur = 0;
   }
@@ -574,7 +575,7 @@ function monture(ctx) {
     }
     if (defis[1] && !defis[2]) {
       if (st.dirt && o.f <= 6) seenWide = true;
-      if (seenWide && !st.dirt && mounted && st.rubber && live && o.f <= 6 && b <= COC) defis[2] = true;
+      if (seenWide && !st.dirt && mounted && st.rubber && live && o.f <= 6 && b <= COC) { defis[2] = true; msg = ''; }
     }
     bPower.textContent = st.power ? 'Éteindre la caméra' : 'Allumer la caméra'; bPower.classList.toggle('on', st.power);
     bCap.textContent = st.cap ? 'Retirer le bouchon de la monture' : 'Remettre le bouchon';

@@ -102,7 +102,7 @@ function macro() {
   return svg(300, 'Schéma : la bague de point avance le groupe frontal, jusqu\'à 0,3 m ; la bague macro déplace le groupe arrière et fait le point plus près, au grand angle. Pour passer de 0,3 m à 12 cm, il faut décaler l\'image de 0,10 mm à 4,5 mm, 0,50 mm à 10 mm, 14,6 mm à 54 mm : le décalage varie comme le carré de la focale, le zoom n\'est plus parfocal.', `
     ${row(4, 'La bague de point', 'Le groupe frontal avance ; au plus près : 0,3 m (distance minimale).', 'point')}
     ${row(110, 'La bague macro', 'Le groupe arrière décale l\'image de la même longueur à toutes les focales.', 'macro')}
-    ${tx(16, 236, 'De 0,3 m à 12 cm : décalage = f² × (1/0,12 − 1/0,3), lentille mince', 'cf-bs')}
+    ${tx(16, 236, 'De 300 à 120 mm : décalage = f² × (1/120 − 1/300), tout en mm (lentille mince)', 'cf-bs')}
     ${tab}${tx(16, 294, 'Le décalage est fixe, l\'erreur varie en f² : le zoom n\'est plus parfocal.', 'cf-bs')}`);
 }
 

@@ -3,7 +3,7 @@
 // Fiche « La macro ». Fiche Fujinon ZA12x4.5BERD : distance minimale de mise au point (M.O.D.) 0,3 m,
 // comptée depuis la lentille frontale. La bague macro déplace le groupe arrière : l'image recule ou
 // avance d'une même longueur à toutes les focales. Lentille mince : pour passer de 0,3 m à une distance
-// d, il faut décaler l'image de f² × (1/d − 1/0,3) ; de 0,3 m à 12 cm, 0,10 mm à 4,5 mm, 0,50 mm à
+// d, il faut décaler l'image de f² × (1/d − 1/300), f et d en mm ; de 0,3 m à 12 cm, 0,10 mm à 4,5 mm, 0,50 mm à
 // 10 mm, 14,6 mm à 54 mm. D'où la macro au grand angle, et un zoom qui n'est plus parfocal. La course
 // de la bague macro de la maquette (0,95 mm dans l'espace image) est un ordre de grandeur, pas un
 // chiffre de la fiche. La manipulation (camlab/labs/ch1.js, « macro ») fait le point à 12 cm, serre le
@@ -50,6 +50,6 @@ export const MACRO = {
     },
   ],
   see: ['point', 'tirage', 'zoom', 'pdc', 'focale'],
-  ref: 'Fiche Fujinon ZA12x4.5BERD : M.O.D. 0,3 m (depuis la lentille frontale), macro ; lentille mince : décalage de l\'image Δ = f² × (1/d − 1/d₀) ; réglage du tirage : doubleur sur ×1, macro au repos (notice de l\'objectif)',
+  ref: 'Fiche Fujinon ZA12x4.5BERD : M.O.D. 0,3 m (depuis la lentille frontale), macro ; lentille mince : décalage de l\'image Δ = f² × (1/d − 1/d₀) (f, d et d₀ en mm) ; réglage du tirage : doubleur sur ×1, macro au repos (notice de l\'objectif)',
   competences: ['2.9', '2.7'],
 };
