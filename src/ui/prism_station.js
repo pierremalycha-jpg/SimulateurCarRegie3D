@@ -30,6 +30,8 @@ export function buildPrismStation(body, arg, ctx) {
     route,
     onInput: (id) => { const p = pointById(id); if (!p) return; drawPoints(); drawLink(true); explain(`Entrée de l'instrument : ${p.label}. ${p.path}.`, 'mz:in'); },
   });
+  // bandeau d'écrans réduit : l'instrument est la pièce maîtresse du poste, juste dessous
+  ctx.dock.style.maxHeight = '30vh'; ctx.dock.style.setProperty('--dockh', 'calc(30vh - 58px)');
   ctx.dock.append(el('div', { class: 'monwrap' }, monLab, mon), ctx.explainBox);
 
   // ---- points de mesure (comme les jacks d'écoute de la baie de brassage) ----
@@ -146,7 +148,7 @@ if (!(/** @type {any} */ (DEVICES)).prism) {
   /** @type {any} */ (DEVICES).prism = {
     key: 'prism', title: 'Moniteur de mesure SDI / IP (type Telestream, ex-Tektronix, PRISM)', multi: false,
     intro: 'L\'instrument de mesure vidéo de la vision et de la zone technique : un écran tactile découpé en tuiles (waveform, vecteurscope, gamut, image, œil, gigue, timing, état SDI). Il mesure aussi bien une entrée SDI qu\'un flux IP ST 2110.',
-    views: { avant: { label: 'Face avant', w: 760, h: 270, items: front }, arriere: { label: 'Face arrière', w: 760, h: 270, items } },
+    views: { arriere: { label: 'Face arrière', w: 760, h: 270, items }, avant: { label: 'Face avant', w: 760, h: 270, items: front } },
     ports, controls: {},
     specs: [['Entrées', '4 × SDI (jusqu\'au 12G-SDI) et 2 × SFP28 25 GbE (ST 2110)'], ['Affichages', 'image, waveform (Y, YCbCr, parade RVB), vecteurscope, lightning, diamant, split diamant, arrowhead, CIE 1931, histogramme, œil, gigue, timing, état'], ['Couche physique', 'option œil et gigue : amplitude, montée, descente, dépassement, gigue de timing et d\'alignement, longueur de câble estimée'], ['Référence', 'black burst ou tri-level (entrée bouclée), PTP']],
     lesson: ['On mesure au plus près de ce qu\'on veut qualifier : l\'œil d\'une sortie se mesure avec un cordon court.', 'Des erreurs CRC sans défaut visible à l\'image : la liaison est au bord de l\'effet de falaise, il faut la reprendre avant le direct.', 'Au line-up, chaque caméra passe par l\'instrument en barres : les points tombent dans les cibles 75 % du vecteurscope.'],

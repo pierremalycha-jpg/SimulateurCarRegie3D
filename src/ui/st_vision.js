@@ -44,7 +44,7 @@ export function buildVision(body, arg = 0, ctx) {
     route: (id) => ({ src: 'CAM' + sel, hdr: id === 'hlg' && S.hdrView, point: pointById('auxv'), label: `CAM ${sel} · ${id === 'hlg' ? 'HDR HLG' : 'SDR'}` }),
     onInput: (id) => {
       if (id === 'hlg' && !S.hdrView) setHdr('both');
-      explain(id === 'hlg' ? 'PRISM sur la sortie HLG : le blanc de référence (une feuille blanche, un maillot blanc à l\'ombre) doit tomber vers 75 %, un gris à 18 % vers 38 % ; au-dessus de 75 %, la marge pour les hautes lumières. Le diagramme CIE se lit alors en BT.2020.' : 'PRISM sur la sortie SDR (BT.709) : le blanc nominal est à 100 % (700 mV).', 'rcp:scope');
+      explain(id === 'hlg' ? 'PRISM sur la sortie HLG : le blanc de référence (une feuille blanche, un maillot blanc à l\'ombre) doit tomber vers 75 %, un gris à 18 % vers 38 % ; au-dessus de 75 %, la marge pour les hautes lumières. Le diagramme CIE (préréglage HDR) place les couleurs de la scène face aux triangles BT.709 et BT.2020.' : 'PRISM sur la sortie SDR (BT.709) : le blanc nominal est à 100 % (700 mV).', 'rcp:scope');
     },
   });
   const meterTxt = el('span', { class: 'meter' });

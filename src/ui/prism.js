@@ -131,13 +131,13 @@ function drawWfm(g, w, h, k, T, V) {
   // graticule : mV ou %
   const ticks = T.scale === 'pct' ? [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1] : [0, 1, 2, 3, 4, 5, 6, 7].map((v) => v / 7);
   for (const v of ticks) { const y = yOf(v); line(g, m.l, y, m.l + pw, y, (Math.round(v * 100) % 50 === 0 || T.scale !== 'pct') ? GRAT : GRAT2); text(g, T.scale === 'pct' ? String(Math.round(v * 100)) : String(Math.round(v * 700)), m.l - 4 * k, y + 3.5 * k, k, { a: 'right' }); }
-  line(g, m.l, yOf(1.09), m.l + pw, yOf(1.09), 'rgba(255,110,100,0.7)', 1, [4 * k, 4 * k]); text(g, T.scale === 'pct' ? '109' : '763', m.l - 4 * k, yOf(1.09) + 3.5 * k, k, { a: 'right', c: WARN });
+  line(g, m.l, yOf(1.09), m.l + pw, yOf(1.09), 'rgba(255,110,100,0.7)', 1, [4 * k, 4 * k]); text(g, T.scale === 'pct' ? '109 % (plafond)' : '763 mV (109 %)', m.l + pw - 3 * k, yOf(1.09) - 3 * k, k, { a: 'right', c: WARN, s: 9.5 });
   if (V.hdr) {
     line(g, m.l, yOf(0.75), m.l + pw, yOf(0.75), CYAN, 1, [6 * k, 4 * k]); text(g, 'blanc réf. HLG 75 %', m.l + 4 * k, yOf(0.75) - 3 * k, k, { c: CYAN });
     line(g, m.l, yOf(0.38), m.l + pw, yOf(0.38), 'rgba(92,200,236,0.5)', 1, [2 * k, 4 * k]); text(g, 'gris 18 % : 38 %', m.l + 4 * k, yOf(0.38) - 3 * k, k, { c: CYAN });
   }
   if (mode !== 'y') { for (const i of [1, 2]) line(g, m.l + i * third, m.t, m.l + i * third, m.t + ph, GRAT2); const lb = mode === 'rgb' ? ['R', 'G', 'B'] : ['Y', 'Cb', 'Cr']; lb.forEach((s, i) => text(g, s, m.l + i * third + 4 * k, m.t + 11 * k, k, { c: TXT, w: 700 })); if (mode === 'ycbcr') for (const i of [1, 2]) line(g, m.l + i * third, yOf(0.5), m.l + (i + 1) * third, yOf(0.5), 'rgba(255,196,90,0.6)', 1, [3 * k, 3 * k]); }
-  text(g, T.scale === 'pct' ? '%' : 'mV', 4 * k, m.t + 9 * k, k, { c: TXT });
+  text(g, T.scale === 'pct' ? '%' : 'mV', 4 * k, h - 3 * k, k, { c: TXT });
   if (T.cursor != null) { const y = yOf(T.cursor); line(g, m.l, y, m.l + pw, y, '#ffd060', 1.5); text(g, `${Math.round(T.cursor * 700)} mV · ${fmt(T.cursor * 100, 1)} %`, m.l + pw - 4 * k, y - 4 * k, k, { a: 'right', c: '#ffd060', w: 700 }); }
   T._yOf = { m, ph, lo, hi };
 }
@@ -215,7 +215,7 @@ function drawLightning(g, w, h, k, T, V) {
 // ---------------- diamant et split diamant ----------------
 function drawDiamond(g, w, h, k, T, V, split) {
   const cx = w / 2, cy = h / 2; const gap = split ? 14 * k : 0;
-  const s = Math.min((h / 2 - gap / 2 - 8 * k) / 2, (w / 2 - 10 * k) / 1.1);
+  const s = Math.min((h / 2 - gap / 2 - 16 * k) / 2, (w / 2 - 10 * k) / 1.1);
   const yT = cy - gap / 2, yB = cy + gap / 2; // noir du losange haut et du losange bas
   const img = acc(T, Math.floor(w), Math.floor(h)); const d = img.data; const { buf, W, H } = V;
   for (let i = 0; i < W * H; i++) {
@@ -256,7 +256,7 @@ function drawCie(g, w, h, k, T, V) {
   const ox = (w - 0.8 * s) / 2, oy = h - (h - 0.9 * s) / 2;
   const X = (x) => ox + x * s, Y = (y) => oy - y * s;
   const img = acc(T, Math.floor(w), Math.floor(h)); const d = img.data; const { buf, W, H } = V;
-  const M = XYZ[V.hdr ? 'bt2020' : 'bt709']; const lin = V.hdr ? linHLG : linSDR;
+  const M = XYZ.bt709; const lin = V.hdr ? linHLG : linSDR;
   for (let i = 0; i < W * H; i += 2) {
     const p = i * 4; const r = lin(buf[p] / 255 * 1.1), gg = lin(buf[p + 1] / 255 * 1.1), b = lin(buf[p + 2] / 255 * 1.1);
     const XX = M[0][0] * r + M[0][1] * gg + M[0][2] * b, YY = M[1][0] * r + M[1][1] * gg + M[1][2] * b, ZZ = M[2][0] * r + M[2][1] * gg + M[2][2] * b; const sum = XX + YY + ZZ;
@@ -274,10 +274,10 @@ function drawCie(g, w, h, k, T, V) {
 }
 function cieRead(V) {
   // part des points hors du triangle BT.709 (en HLG : hors BT.2020 aussi)
-  const { buf, W, H } = V; const M = XYZ[V.hdr ? 'bt2020' : 'bt709']; const lin = V.hdr ? linHLG : linSDR; let n = 0, out = 0;
+  const { buf, W, H } = V; const M = XYZ.bt709; const lin = V.hdr ? linHLG : linSDR; let n = 0, out = 0;
   const inside = (pr, x, y) => { let s = 0; for (let i = 0; i < 3; i++) { const [x1, y1] = pr[i], [x2, y2] = pr[(i + 1) % 3]; const c = (x2 - x1) * (y - y1) - (y2 - y1) * (x - x1); if (c < -1e-4) s |= 1; else if (c > 1e-4) s |= 2; } return s !== 3; };
   for (let i = 0; i < W * H; i += 3) { const p = i * 4; const r = lin(buf[p] / 255 * 1.1), gg = lin(buf[p + 1] / 255 * 1.1), b = lin(buf[p + 2] / 255 * 1.1); const XX = M[0][0] * r + M[0][1] * gg + M[0][2] * b, YY = M[1][0] * r + M[1][1] * gg + M[1][2] * b, ZZ = M[2][0] * r + M[2][1] * gg + M[2][2] * b; const s = XX + YY + ZZ; if (YY < 0.004 || s <= 0) continue; n++; if (!inside(PRIM.bt709, XX / s, YY / s)) out++; }
-  return `${V.hdr ? 'signal BT.2100 HLG' : 'signal BT.709'} · points hors du triangle BT.709 : ${n ? pct(out / n) : '—'}`;
+  return `${V.hdr ? 'signal BT.2100 HLG (scène en primaires BT.709)' : 'signal BT.709'} · points hors du triangle BT.709 : ${n ? pct(out / n) : '—'}`;
 }
 
 // ---------------- histogramme ----------------
@@ -363,7 +363,7 @@ function drawTiming(g, w, h, k, T, tm) {
   line(g, cx - rx, cy, cx + rx, cy, GRAT2); line(g, cx, cy - ry, cx, cy + ry, GRAT2);
   g.strokeStyle = GRAT; g.beginPath(); g.arc(cx, cy, 9 * k, 0, 7); g.stroke();
   text(g, 'en avance', cx - rx + 4 * k, cy - 4 * k, k, { c: TXT }); text(g, 'en retard', cx + rx - 4 * k, cy - 4 * k, k, { a: 'right', c: TXT });
-  text(g, `± ${fmt(f.lineUs / 2, 1)} µs`, cx + rx - 2 * k, cy + ry - 4 * k, k, { a: 'right' }); text(g, `± ${f.lines / 2} lignes`, cx + 4 * k, cy - ry + 11 * k, k);
+  text(g, `± ${fmt(f.lineUs / 2, 1)} µs`, cx + rx - 2 * k, cy + ry - 4 * k, k, { a: 'right' }); text(g, `± ${Math.floor(f.lines / 2)} lignes`, cx + 4 * k, cy - ry + 11 * k, k);
   if (tm.ip) { text(g, tm.ptp ? 'PTP verrouillé' : 'PTP perdu', cx, cy + 24 * k, k, { a: 'center', c: tm.ptp ? '#7fe08f' : WARN, w: 700 }); return; }
   const x = cx + clamp(tm.h / (f.lineUs / 2), -1, 1) * rx, y = cy + clamp(tm.v / (f.lines / 2), -1, 1) * ry;
   g.fillStyle = tm.locked ? '#7fe08f' : WARN; g.beginPath(); g.arc(x, y, 5 * k, 0, 7); g.fill();
@@ -449,7 +449,8 @@ export function prismInstrument(o) {
       const head = el('div', { class: 'pz-th' }, el('span', { class: 'pz-n' }, String(i + 1)), sel, opts, el('span', { class: 'pz-sp' }), q(TERM_OF[keyOf(T)] || 'prism'), big);
       const cv = /** @type {HTMLCanvasElement} */ (el('canvas', { class: 'pz-cv', role: 'img', 'aria-label': APP_NAME[T.app], tabindex: T.app === 'wfm' && T.cursor != null ? '0' : null }));
       const read = el('div', { class: 'pz-read' });
-      const body = el('div', { class: 'pz-body' + (T.app === 'status' ? ' pz-kvonly' : T.app === 'eye' ? ' pz-side' : '') });
+      // l'état SDI peut défiler dans une petite tuile : la zone est atteignable au clavier
+      const body = el('div', T.app === 'status' ? { class: 'pz-body pz-kvonly', tabindex: '0', role: 'region', 'aria-label': `Tuile ${i + 1} : état SDI` } : { class: 'pz-body' + (T.app === 'eye' ? ' pz-side' : '') });
       const kv = T.app === 'eye' ? eyeTable() : T.app === 'status' ? statusList() : null;
       if (T.app !== 'status') body.append(el('div', { class: 'pz-cw' }, cv));
       if (kv) body.append(kv.el);
@@ -558,7 +559,7 @@ export function prismInstrument(o) {
           else if (T.app === 'arrow') { drawArrow(g, W, H, k, T, V); setCell(t.read, `composite PAL : crête haute ${pct(stats.comp[0], 0)} · crête basse ${pct(stats.comp[1], 0)}`, 'pz-read' + (stats.comp[0] > 4 / 3 + 0.01 || stats.comp[1] < -1 / 3 - 0.01 ? ' bad' : '')); }
           else if (T.app === 'cie') { drawCie(g, W, H, k, T, V); setCell(t.read, cieRead(V), 'pz-read'); }
           else if (T.app === 'histo') { drawHisto(g, W, H, k, T, V); setCell(t.read, `luminance maxi ${pct(stats.ymax)} · mini ${pct(stats.ymin)} · moyenne ${pct(stats.ymean, 0)}`, 'pz-read'); }
-          else if (T.app === 'pic') { drawPic(g, W, H, k, T, V); setCell(t.read, T.gamut ? gamutRead(stats) : `${r.label} · ${V.hdr ? 'HDR HLG' : 'SDR BT.709'}`, 'pz-read' + (T.gamut && stats.gam > 0.01 ? ' bad' : '')); }
+          else if (T.app === 'pic') { drawPic(g, W, H, k, T, V); setCell(t.read, T.gamut ? gamutRead(stats) : `${r.label} · ${V.hdr ? 'BT.2100 HLG' : 'BT.709'}`, 'pz-read' + (T.gamut && stats.gam > 0.01 ? ' bad' : '')); }
           continue;
         }
         // couche physique
@@ -584,15 +585,16 @@ export function prismInstrument(o) {
     const C = t.kv && t.kv.cells; if (!C) return;
     const f = sdiStd(); const ok = (b) => (b ? 'ok' : 'bad');
     if (T.app === 'eye') {
+      const okv = (b) => 'v ' + ok(b);
       const has = !!(meas && meas.valid);
       const n = (v, d = 0, u = '') => (has && isFinite(v) ? fmt(v, d) + u : '—');
-      setCell(C.amp.v, n(meas ? meas.amp : NaN, 0, ' mV'), has ? ok(Math.abs(meas.amp - AMP_NOM) <= AMP_NOM * AMP_TOL) : 'v'); setCell(C.amp.lim, '800 ± 10 %', 'lim');
-      setCell(C.tr.v, n(meas ? meas.tr : NaN, 0, ' ps'), has ? ok(meas.tr <= f.tr) : 'v'); setCell(C.tr.lim, `≤ ${f.tr} ps`, 'lim');
-      setCell(C.tf.v, n(meas ? meas.tf : NaN, 0, ' ps'), has ? ok(meas.tf <= f.tr) : 'v'); setCell(C.tf.lim, `≤ ${f.tr} ps`, 'lim');
-      const dtv = has ? Math.abs(meas.tr - meas.tf) : NaN; setCell(C.dt.v, n(dtv, 0, ' ps'), has ? ok(dtv <= f.dtr) : 'v'); setCell(C.dt.lim, `≤ ${f.dtr} ps`, 'lim');
-      const ov = has ? Math.max(meas.ovR, meas.ovF) : NaN; setCell(C.ov.v, n(ov, 1, ' %'), has ? ok(ov <= OVERSHOOT_MAX) : 'v'); setCell(C.ov.lim, `≤ ${OVERSHOOT_MAX} %`, 'lim');
-      setCell(C.open.v, meas ? Math.round(meas.open * 100) + ' %' : '—', meas ? (meas.open > 0.35 ? 'ok' : 'bad') : 'v'); setCell(C.open.lim, T.eq ? 'au centre' : '(brut)', 'lim');
-      setCell(C.aj.v, L && L.lock ? fmt(L.aj, 2) + ' UI' : '—', L && L.lock ? ok(L.aj <= f.aj) : 'v'); setCell(C.aj.lim, `≤ ${fmt(f.aj, 1)} UI`, 'lim');
+      setCell(C.amp.v, n(meas ? meas.amp : NaN, 0, ' mV'), has ? okv(Math.abs(meas.amp - AMP_NOM) <= AMP_NOM * AMP_TOL) : 'v'); setCell(C.amp.lim, '800 ± 10 %', 'lim');
+      setCell(C.tr.v, n(meas ? meas.tr : NaN, 0, ' ps'), has ? okv(meas.tr <= f.tr) : 'v'); setCell(C.tr.lim, `≤ ${f.tr} ps`, 'lim');
+      setCell(C.tf.v, n(meas ? meas.tf : NaN, 0, ' ps'), has ? okv(meas.tf <= f.tr) : 'v'); setCell(C.tf.lim, `≤ ${f.tr} ps`, 'lim');
+      const dtv = has ? Math.abs(meas.tr - meas.tf) : NaN; setCell(C.dt.v, n(dtv, 0, ' ps'), has ? okv(dtv <= f.dtr) : 'v'); setCell(C.dt.lim, `≤ ${f.dtr} ps`, 'lim');
+      const ov = has ? Math.max(meas.ovR, meas.ovF) : NaN; setCell(C.ov.v, n(ov, 1, ' %'), has ? okv(ov <= OVERSHOOT_MAX) : 'v'); setCell(C.ov.lim, `≤ ${OVERSHOOT_MAX} %`, 'lim');
+      setCell(C.open.v, meas ? Math.round(meas.open * 100) + ' %' : '—', meas ? (meas.open > 0.35 ? 'v ok' : 'v bad') : 'v'); setCell(C.open.lim, T.eq ? 'au centre' : '(brut)', 'lim');
+      setCell(C.aj.v, L && L.lock ? fmt(L.aj, 2) + ' UI' : '—', L && L.lock ? okv(L.aj <= f.aj) : 'v'); setCell(C.aj.lim, `≤ ${fmt(f.aj, 1)} UI`, 'lim');
       return;
     }
     // état SDI
