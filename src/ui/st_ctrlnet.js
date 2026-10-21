@@ -444,7 +444,7 @@ function tabOutils(box) {
     const bad = SW.rows.filter((r) => r.state !== 'ok');
     sweepBox.append(el('p', { class: 'cn-okline' }, led(bad.length ? 'err' : 'ok'), `${SW.rows.length - bad.length} sur ${SW.rows.length} répondent.`),
       el('div', { class: 'cn-sweep-l' }, ...SW.rows.map((r) => el('button', { type: 'button', class: 'cn-sw-i ' + (r.state === 'ok' ? 'ok' : 'err'), title: r.why || 'répond', onclick: () => N.ctrlGo({ tab: 'machines', dev: r.id }) }, led(r.state === 'ok' ? 'ok' : r.state === 'instable' ? 'warn' : 'err'), name(r.id)))),
-      bad.length ? el('ul', { class: 'cn-issues' }, ...bad.map((r) => el('li', { class: 'err' }, led('err'), el('span', {}, el('b', {}, name(r.id) + ' : '), r.why)))) : null);
+      ...(bad.length ? [el('ul', { class: 'cn-issues' }, ...bad.map((r) => el('li', { class: 'err' }, led('err'), el('span', {}, el('b', {}, name(r.id) + ' : '), r.why))))] : []));
   }
   box.append(sweepBox);
   // tables ARP et MAC

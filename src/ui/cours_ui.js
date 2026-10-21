@@ -153,7 +153,7 @@ function home(page, render) {
             el('td', {}, first ? el('button', { type: 'button', class: 'btn small', onclick: () => open(first.id) }, cd === cl && cl ? 'Revoir' : cd ? 'Continuer' : 'Commencer') : ch.module ? el('button', { type: 'button', class: 'btn small', onclick: () => { closeLayer(false); emit(ch.module.event, ch.module.arg); } }, 'Ouvrir') : null));
         })))),
     // les procédures maison du formateur, quand il en a écrit (Espace formateur, onglet Procédures)
-    (CFG.car.procedures || []).length ? el('section', { class: 'co-procs', 'aria-label': 'Procédures du car' }, el('h4', {}, 'Les procédures du car'), (() => { const b = el('div'); proceduresSection(b); return b; })()) : null,
+    ...((CFG.car.procedures || []).length ? [el('section', { class: 'co-procs', 'aria-label': 'Procédures du car' }, el('h4', {}, 'Les procédures du car'), (() => { const b = el('div'); proceduresSection(b); return b; })())] : []),
     el('section', { class: 'co-livret', 'aria-label': 'Livret de compétences' }, el('h4', {}, 'Mon livret de compétences (BTS MAV, option TIEE)'),
       el('div', { class: 'co-blocs' }, ...L.blocs.map((b) => { const w = b.count.consolidee + b.count.travaillee; const n = b.comps.length - b.count.absent; return el('div', { class: 'co-bloc' }, el('b', {}, b.id), el('span', {}, b.titre), bar(w, n, b.id), el('small', {}, `${w} / ${n} travaillées`)); })),
       el('div', { class: 'hwrow' }, el('button', { type: 'button', class: 'btn small', onclick: () => openLivret() }, 'Ouvrir le livret complet')),

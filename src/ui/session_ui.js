@@ -130,7 +130,7 @@ function drawJoin(body) {
     mode = m; [...tabs.children].forEach((b) => { b.classList.toggle('on', b.dataset.k === m); b.setAttribute('aria-pressed', String(b.dataset.k === m)); });
     pane.innerHTML = '';
     if (m === 'host') pane.append(el('p', { class: 'note' }, lan ? 'Votre ordinateur fait tourner le match pour tout le monde. Les autres verront votre partie dans « Rejoindre une partie ».' : 'Vous faites tourner le match. Donnez le code ci-dessus aux autres joueurs.'),
-      lan ? null : el('button', { type: 'button', class: 'linkbtn', onclick: () => { code.value = randomCode(); } }, 'Tirer un nouveau code'));
+      ...(lan ? [] : [el('button', { type: 'button', class: 'linkbtn', onclick: () => { code.value = randomCode(); } }, 'Tirer un nouveau code')]));
     else if (lan) pane.append(el('div', { class: 'hwrow' }, el('b', {}, 'Parties sur ce réseau'), srvName), list);
     else pane.append(el('p', { class: 'note' }, 'Entrez ci-dessus le code que l\'hôte vous a donné.'));
     goBtn.textContent = m === 'host' ? 'Créer la partie' : 'Rejoindre la partie';
@@ -164,7 +164,7 @@ function drawJoin(body) {
       el('div', { class: 'sl-head' }, el('h3', {}, 'Les postes de la prestation'), count),
       cards, camRow,
       el('p', { class: 'note' }, 'Choisissez votre poste. Chacun n\'est piloté que par celui qui le tient ; les autres le voient en direct, en lecture seule. L\'hôte (ou le formateur) peut réattribuer les postes une fois la partie lancée.'))),
-  lan ? null : lanKitRow());
+  ...(lan ? [] : [lanKitRow()]));
   show(lan ? 'join' : 'host');
   if (lan) { poll(); timer = setInterval(poll, 2000); }
 }
