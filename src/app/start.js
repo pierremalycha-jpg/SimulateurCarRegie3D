@@ -14,8 +14,6 @@ import { CFG } from '../shared.js';
 import { SES } from '../multi/session.js';
 import { lanAvailable } from '../multi/lan.js';
 import { openSessionPanel, setSessionStarter } from '../ui/session_ui.js';
-import { openReview } from '../ui/review_ui.js';
-import { openTrainer } from '../ui/config.js';
 import { openDiag } from '../ui/diag_ui.js';
 import { APP_VERSION } from '../diag.js';
 import { $, toast, modal } from '../ui/common.js';
@@ -40,6 +38,15 @@ function selector(id, label, options, value, onChange) {
   return /** @type {HTMLElement & { value: string }} */ (box);
 }
 
+const SHEET = { go: /** @type {((preset: string, o?: { ip?: boolean }) => void) | null} */ (null) };
+/**
+ * Lance une vacation depuis la feuille de service (car prêt à l'antenne, installation, atelier…),
+ * avec ses conditions de captation. Rien ne se passe si la partie est déjà commencée.
+ * @param {string} preset standard, vierge, atelier, brassage, scenario, grand
+ * @param {{ ip?: boolean }} [o] ip : car IP (ST 2110)
+ */
+export function launch(preset, o = {}) { if (S.mode === 'start' && SHEET.go) SHEET.go(preset, o); }
+
 export function buildStart() {
   const s = $('#start');
   const fmtNote = el('p', { class: 'note' });
@@ -58,6 +65,8 @@ export function buildStart() {
   let toured = true; try { toured = localStorage.getItem('carregie.chefIntro') === '1'; } catch (e) { /* stockage indisponible */ }
   const tour = el('button', { type: 'button', id: 'st-tour', class: 'btn toggle', 'aria-pressed': String(!toured), onclick: () => tour.setAttribute('aria-pressed', String(tour.getAttribute('aria-pressed') !== 'true')) }, 'Visite guidée avec le chef de car');
   const go = (preset) => { S.chefTour = preset === 'standard' && tour.getAttribute('aria-pressed') === 'true'; start(preset, light.value, qual.value, snd.value === '1', fmt.value, infra.value === 'ip'); };
+  // depuis S'entraîner ou le Cours : la vacation demandée, avec les réglages de la feuille, sans visite guidée
+  SHEET.go = (preset, o = {}) => { if (o.ip) infra.value = 'ip'; S.chefTour = false; start(preset, light.value, qual.value, snd.value === '1', fmt.value, infra.value === 'ip'); };
   // session à plusieurs : on démarre le car prêt à l'antenne, avec les réglages de l'hôte s'il y en a déjà un
   setSessionStarter({
     cfg: () => ({ fmt: fmt.value, ip: infra.value === 'ip', light: light.value }),
@@ -112,7 +121,10 @@ export function buildStart() {
   s.append(el('div', { class: 'callsheet deck' },
     el('header', { class: 'dk-head' },
       el('div', { class: 'dk-title' },
-        el('button', { type: 'button', class: 'linkbtn dk-menu', id: 'st-menu', onclick: () => showTitle() }, icon('pupitre'), 'Menu principal'),
+        el('nav', { class: 'dk-nav', 'aria-label': 'Les autres espaces' },
+          el('button', { type: 'button', class: 'linkbtn dk-menu', id: 'st-menu', onclick: () => showTitle() }, icon('pupitre'), 'Menu principal'),
+          el('button', { type: 'button', class: 'linkbtn dk-menu', id: 'st-cours', onclick: () => emit('cours') }, icon('cours'), 'Cours'),
+          el('button', { type: 'button', class: 'linkbtn dk-menu', id: 'st-train', onclick: () => emit('entrainement') }, icon('entrainement'), 'S\'entraîner')),
         el('h1', {}, 'Car régie 3D'),
         el('p', { class: 'lede' }, 'Simulateur de formation aux métiers du car régie. Un match se joue en continu dans un stade inspiré de Bollaert-Delelis : tout ce que vous réglez se voit à l\'image, chaque action est expliquée.')),
       el('div', { class: 'glass dk-match', role: 'group', 'aria-label': 'La rencontre de ce soir' },
@@ -140,11 +152,10 @@ export function buildStart() {
       el('label', {}, 'Qualité'), qual,
       el('label', {}, 'Son'), snd),
     el('section', { class: 'dk-team plate' + (lan ? ' cs-lan' : ''), 'aria-labelledby': 'dk-team-h' },
-        el('h2', { id: 'dk-team-h' }, 'Équipe et formation'),
-        lan ? el('p', { class: 'note' }, el('b', {}, 'Réseau local. '), 'Hébergez une partie ou rejoignez celle d\'un collègue : chacun choisit un pseudo et un rôle dans la prestation.') : null,
-        el('button', { class: 'btn', title: 'Plusieurs joueurs dans le même car, en direct : chacun son pseudo et son rôle', onclick: () => openSessionPanel() }, 'Jouer à plusieurs'),
-        el('button', { class: 'btn', onclick: () => openTrainer('car') }, 'Espace formateur'),
-        el('button', { class: 'btn', title: 'Pour les experts métier : valider ou corriger chaque point technique du simulateur', onclick: () => openReview('me') }, 'Relecture technique')),
+        el('h2', { id: 'dk-team-h' }, 'En équipe'),
+        lan ? el('p', { class: 'note' }, el('b', {}, 'Réseau local. '), 'Hébergez une partie ou rejoignez celle d\'un collègue : chacun choisit un pseudo et un rôle dans la prestation.')
+          : el('p', { class: 'note' }, 'Plusieurs joueurs dans le même car, en direct : chacun son pseudo et son rôle dans la prestation.'),
+        el('button', { class: 'btn', title: 'Plusieurs joueurs dans le même car, en direct : chacun son pseudo et son rôle', onclick: () => openSessionPanel() }, 'Jouer à plusieurs')),
     el('section', { class: 'dk-day', 'aria-labelledby': 'dk-day-h' },
       el('h2', { id: 'dk-day-h' }, 'La journée du car, avant l\'antenne'),
       el('ol', { class: 'dk-strips' },

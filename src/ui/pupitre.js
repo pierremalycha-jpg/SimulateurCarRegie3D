@@ -12,7 +12,7 @@ import { whereAmI } from '../app/hud.js';
 import { planFor } from './truckmap.js';
 import { openPlan } from './plan.js';
 import { openSynoptics } from './synoptics.js';
-import { openGuide } from './guide.js';
+import { openReglages } from './guide.js';
 import { openSessionPanel } from './session_ui.js';
 import { openEquipmentIndex } from '../equipment/viewer.js';
 import { openDiag } from './diag_ui.js';
@@ -44,13 +44,14 @@ const TOOLS = () => [
   ['Plan caméras', 'P', 'plan', () => { close(); openPlan(); }],
   ['Synoptiques', 'Y', 'synoptiques', () => { close(); openSynoptics(); }],
   ['Matériel', 'K', 'materiel', () => { close(); openEquipmentIndex(); }],
-  ['Guide', 'G', 'guide', () => { close(); openGuide('missions'); }],
+  ['Cours', 'G', 'cours', () => { close(); emit('cours'); }],
+  ['S\'entraîner', '', 'entrainement', () => { close(); emit('entrainement'); }],
   ['Chef de car', 'J', 'chef', () => { close(); emit('chef'); }],
   ['Vol libre', 'V', 'vol', () => { PL.fly = !PL.fly; updToolbar(); }, () => PL.fly],
   ['Retour PGM', 'M', 'retour', () => { const m = $('#minimon'); if (m) m.hidden = !m.hidden; }, minimonOn],
   ['Son', '', AU.muted ? 'muet' : 'son', () => { startAudio(); AU.muted = !AU.muted; applyFaders(); emit('soundToggle'); }, () => !AU.muted],
   ['Équipe', '', 'equipe', () => { close(); openSessionPanel(); }],
-  ['Réglages', '', 'reglages', () => { close(); openGuide('reglages'); }],
+  ['Réglages', '', 'reglages', () => { close(); openReglages(); }],
   ['Diagnostic technique', '', 'diagnostic', () => { close(); openDiag(); }],
 ];
 

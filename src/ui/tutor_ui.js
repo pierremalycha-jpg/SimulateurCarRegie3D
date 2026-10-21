@@ -11,7 +11,7 @@ import { AT, atelierDebug } from '../atelier.js';
 import { netGo, netView, netType } from './st_network.js';
 import { releaseCamera } from '../app/camop.js';
 import { whereAmI } from '../app/hud.js';
-import { TUTOR, registerLessons, setIO, startLesson, stopLesson, next, prev, check, hint, doForMe, answer, step, isAction, ctx, val, lessonsFor, lessonBlocked, lessonById, progressOf } from '../tutor/engine.js';
+import { TUTOR, LESSONS, registerLessons, setIO, startLesson, stopLesson, next, prev, check, hint, doForMe, answer, step, isAction, ctx, val, lessonsFor, lessonBlocked, lessonById, progressOf } from '../tutor/engine.js';
 import { NET_LESSONS } from '../tutor/lessons/reseau.js';
 import { ALL_STATION_LESSONS } from '../tutor/lessons/index.js';
 import { stationLesson, stationIds } from '../tutor/lessons/postes.js';
@@ -300,6 +300,31 @@ function launchWith(id) {
   if (S.mode === 'start') return;
   startLesson(id); onStep();
   if (id === 'prise-en-main') dropOnboard();
+}
+// ---------------- depuis les autres écrans (S'entraîner, Cours) ----------------
+/** les familles de parcours, dans l'ordre d'une journée de car, avec leur icône et leurs parcours */
+export function lessonFamilies() {
+  const groups = {};
+  for (const l of LESSONS) (groups[l.domain] = groups[l.domain] || []).push(l);
+  return Object.keys(groups).sort((a, b) => domRank(a) - domRank(b)).map((dom) => ({ dom, icon: DOM_ICON[dom] || 'guide', lessons: groups[dom] }));
+}
+/**
+ * Commence un parcours avec le chef, d'où que l'on soit : sur la feuille de service, le car est
+ * lancé d'abord (en IP si le parcours le demande) ; dans le car, le panneau du chef s'ouvre sur
+ * la première étape. Un parcours en cours n'est abandonné qu'avec l'accord du stagiaire.
+ * @param {string} id
+ */
+export async function beginLesson(id) {
+  const l = lessonById(id); if (!l) return;
+  if (TUTOR.lesson && TUTOR.lesson.id === id) { toggleChef(true); return; }
+  if (TUTOR.lesson && !(await ask(`Abandonner « ${TUTOR.lesson.title} » pour commencer « ${l.title} » ?`, { title: 'Changer de parcours', ok: 'Commencer « ' + l.title + ' »', cancel: 'Garder le parcours en cours' }))) return;
+  if (TUTOR.lesson) stopLesson(false, false);
+  lastDone = null; UI.intro = false; UI.openDom = l.domain;
+  toggleChef(true);
+  if (S.mode === 'start') { launchWith(id); return; }
+  // le parcours demande un car IP, une caméra HF… : le chef l'explique dans sa liste
+  if (lessonBlocked(l)) { render(true); toast(`« ${l.title} » : ${lessonBlocked(l).toLowerCase()}.`, 'bad', 6000); return; }
+  startLesson(id); onStep();
 }
 function renderHome() {
   if (lastDone) { renderFinish(lastDone); return; }

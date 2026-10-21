@@ -6,7 +6,8 @@ import { $, toast, modal, openInfo, askOpen, closeAsk } from '../ui/common.js';
 import { closeStation, stationKey } from '../ui/stations.js';
 import { termOpen, closeTerm } from '../ui/term.js';
 import { openPlan, closePlan, planPointer, planWheel } from '../ui/plan.js';
-import { openGuide } from '../ui/guide.js';
+import { openCommandes } from '../ui/guide.js';
+import { layerOpen, closeLayer } from '../ui/layer.js';
 import { openSynoptics } from '../ui/synoptics.js';
 import { commutKey } from '../ui/commut.js';
 import { openDevice, openEquipmentIndex } from '../equipment/viewer.js';
@@ -22,13 +23,15 @@ import { titleOpen, titleKey } from './title.js';
 const isTyping = (e) => e.target && ['INPUT', 'SELECT', 'TEXTAREA'].includes(e.target.tagName) && e.target.type !== 'range' && e.target.type !== 'checkbox';
 
 function onKeyDown(e) {
-  // écran titre : seulement la navigation dans son menu
-  if (titleOpen()) { titleKey(e); return; }
   // confirmation dans la page : Échap = annuler, Entrée = bouton qui a le focus ; rien d'autre
   if (askOpen()) { if (e.code === 'Escape') { closeAsk(false); e.preventDefault(); } return; }
   // fenêtre explicative « ? » : Échap la ferme (sans fermer le poste) ; les autres touches ne pilotent rien
   if (termOpen()) { if (e.code === 'Escape') { closeTerm(); e.preventDefault(); } return; }
   if (modal.isOpen) { if (e.code === 'Escape') modal.close(); return; }
+  // Cours, S'entraîner (plein écran, par-dessus l'écran titre aussi) : Échap les referme
+  if (layerOpen()) { if (e.code === 'Escape') { closeLayer(); e.preventDefault(); } return; }
+  // écran titre : seulement la navigation dans son menu
+  if (titleOpen()) { titleKey(e); return; }
   const typing = isTyping(e);
   // J : le chef de car, depuis n'importe où, feuille de service comprise
   if (e.code === 'KeyJ' && !typing && !e.repeat && !e.ctrlKey && !e.metaKey && !e.altKey) { emit('chef'); e.preventDefault(); return; }
@@ -37,7 +40,9 @@ function onKeyDown(e) {
   KEYS[e.code] = true;
   if (S.mode === 'station') {
     if (e.code === 'Escape') { closeStation(); e.preventDefault(); return; }
-    if (stationKey(e)) e.preventDefault();
+    if (stationKey(e)) { e.preventDefault(); return; }
+    // G : le Cours, si le poste ne se sert pas de la touche
+    if (e.code === 'KeyG' && !e.ctrlKey && !e.metaKey && !e.altKey) emit('cours');
     return;
   }
   if (S.mode === 'plan') { if (e.code === 'Escape' || e.code === 'KeyP') closePlan(); return; }
@@ -57,8 +62,10 @@ function onKeyDown(e) {
   if (e.code === 'KeyV') { PL.fly = !PL.fly; updToolbar(); toast(PL.fly ? 'Vol libre : Espace pour monter, C pour descendre' : 'Vol libre désactivé'); }
   if (e.code === 'KeyP') openPlan();
   if (e.code === 'KeyT') { if (document.pointerLockElement) document.exitPointerLock(); openPupitre(); }
-  if (e.code === 'KeyG') openGuide('missions');
-  if (e.code === 'KeyH') openGuide('commandes');
+  if (e.code === 'KeyG') { if (document.pointerLockElement) document.exitPointerLock(); emit('cours'); }
+  if (e.code === 'KeyH') openCommandes();
+  // Échap : la souris est déjà libérée (le navigateur le fait au premier appui) : le menu du car
+  if (e.code === 'Escape' && !document.pointerLockElement) { emit('menu'); e.preventDefault(); }
   if (e.code === 'KeyK') { if (target && target.kind === 'station' && target.device) openDevice(target.device, 1); else openEquipmentIndex(); }
   if (e.code === 'Tab') { e.preventDefault(); if (document.pointerLockElement) document.exitPointerLock(); openPupitre(); }
   if (e.code === 'KeyY') openSynoptics();

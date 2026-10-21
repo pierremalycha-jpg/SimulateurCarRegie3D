@@ -18,7 +18,7 @@ const go = (g) => {
   toast.textContent = g.station ? 'Dans le simulateur, ce bouton vous emmène au poste et l\\'ouvre.' : 'Dans le simulateur, ce bouton lance ce parcours avec le chef de car.';
   toast.hidden = false; clearTimeout(timer); timer = setTimeout(() => { toast.hidden = true; }, 4000);
 };
-document.getElementById('cours-app').append(coursView({ go }));
+document.getElementById('cours-app').append(coursView({ go, hash: true }).node);
 `;
 const r = await esbuild.build({
   stdin: { contents: entry, resolveDir: '.', loader: 'js' }, bundle: true, format: 'esm', write: false, minify: true,

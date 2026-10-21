@@ -1,5 +1,6 @@
 // @ts-check
 import { el } from '../util.js';
+import { emit } from '../state.js';
 import { $ } from '../ui/common.js';
 import { APP_VERSION } from '../diag.js';
 import { openTrainer } from '../ui/config.js';
@@ -7,12 +8,16 @@ import { openTrainer } from '../ui/config.js';
 // ----------------------------------------------------------------------------------
 // Écran titre : écrit dans la page (index.template.html), il s'affiche dès l'ouverture, avant
 // même le programme. Pendant que le stade et le car se construisent (main.js, par étapes), il
-// montre la progression et les conseils d'Olivier ; quand tout est prêt, le menu s'allume :
-// entrer dans le car (feuille de service), les lieux, l'espace formateur, les réglages, les crédits.
+// montre la progression et les conseils d'Olivier ; quand tout est prêt, le menu s'allume. Le menu
+// mène aux quatre espaces (Jouer : la feuille de service, Cours, S'entraîner, Espace formateur),
+// aux réglages et aux crédits. Le Cours, S'entraîner, les réglages et les crédits ne dépendent
+// pas du stade : ils s'ouvrent pendant le chargement.
 // ----------------------------------------------------------------------------------
 export const TITLE = { ready: false, pct: 0 };
 const TIPS = [
   'Tab ou T ouvre le pupitre : tous les postes du car et les outils, à une touche.',
+  'Le Cours explique chaque notion avec un schéma et une manipulation : touche G dans le car, ou ici, pendant que le car se prépare.',
+  'Dans le car, Échap ouvre le menu : le Cours, S\'entraîner, les réglages, l\'Espace formateur.',
   'Touche J : je suis là pendant toute la vacation. Au poste où tu es, je te propose les parcours qui s\'y font.',
   'Avant l\'antenne, on fait le line-up : chaque caméra est exposée et équilibrée pour se raccorder aux autres.',
   'Tally rouge : la caméra est à l\'antenne. Tally vert : elle est prête à passer, en PVW.',
@@ -45,12 +50,13 @@ export function initTitle() {
   if (next) { next.hidden = false; next.onclick = () => { setTip(tipI + 1); rotate(); }; }
   rotate();
   $('#ti-play').onclick = () => enterFrom('start');
-  $('#ti-lieux').onclick = () => enterFrom('lieux');
   $('#ti-trainer').onclick = () => enterFrom('trainer');
   $('#ti-settings').onclick = () => openPanel('settings');
   $('#ti-credits').onclick = () => openPanel('credits');
-  // réglages et crédits ne dépendent pas du stade : disponibles pendant le chargement
-  for (const id of ['#ti-settings', '#ti-credits']) /** @type {HTMLButtonElement} */ ($(id)).disabled = false;
+  // une touche data-emit ouvre un espace qui ne dépend pas du stade (Cours, S'entraîner) : elle envoie
+  // son événement et marche pendant le chargement, comme les réglages et les crédits
+  for (const k of keys()) if (k.dataset.emit) k.onclick = () => emit(/** @type {string} */ (k.dataset.emit));
+  for (const k of keys()) if (k.dataset.emit || k.id === 'ti-settings' || k.id === 'ti-credits') k.disabled = false;
 }
 
 /** étape du chargement : libellé et avancement (0 à 100) */
@@ -81,18 +87,12 @@ export function titleReady() {
   if (titleOpen() && (!panel || panel.hidden) && !t.contains(document.activeElement)) $('#ti-play').focus({ preventScroll: true });
 }
 
-/** quitter l'écran titre vers la feuille de service, les lieux ou l'espace formateur */
+/** quitter l'écran titre vers la feuille de service ou l'espace formateur */
 export function enterFrom(target = 'start') {
   if (!TITLE.ready) return;
   const t = $('#title'); if (t) t.hidden = true;
   closePanel();
   if (target === 'trainer') { openTrainer('car'); return; }
-  if (target === 'lieux') {
-    const wall = $('#start .dk-lieux'); const first = /** @type {HTMLElement | null} */ ($('#start .lx'));
-    if (wall) wall.scrollIntoView({ block: 'start' });
-    if (first) first.focus({ preventScroll: true });
-    return;
-  }
   const a = /** @type {HTMLElement | null} */ ($('#st-antenne')); if (a) a.focus({ preventScroll: true });
 }
 /** revenir à l'écran titre (bouton « Menu principal » de la feuille de service) */
@@ -131,7 +131,7 @@ function settings() {
     el('div', { class: 'ti-row' },
       ...seg('Qualité graphique', 'ti-q', [['basse', 'Basse'], ['moyenne', 'Moyenne'], ['haute', 'Haute']], q, (v) => { setStart('stqual', v); try { localStorage.setItem('carregie.quality', v); } catch (e) { /* stockage indisponible */ } }),
       ...seg('Son', 'ti-s', [['1', 'Ambiance et commentaires'], ['0', 'Coupé']], startValue('stsnd', '1'), (v) => setStart('stsnd', v))),
-    el('p', {}, 'Basse convient aux ordinateurs portables ; Haute demande une carte graphique dédiée. D\'autres réglages sont dans le guide (touche G), une fois dans le car.')];
+    el('p', {}, 'Basse convient aux ordinateurs portables ; Haute demande une carte graphique dédiée. Les autres réglages (lumière, affichage) sont dans le menu du car : touche Échap.')];
 }
 function credits() {
   return [el('h2', {}, 'Crédits'),

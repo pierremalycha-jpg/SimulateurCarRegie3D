@@ -1,0 +1,92 @@
+/* les espaces plein écran (src/ui/layer.js : Cours, S'entraîner) et le menu du car (src/app/nav.js).
+   Un espace se lit comme un poste du car : une plaque d'en-tête en alu avec ses onglets, puis la
+   page. Il passe par-dessus l'écran titre ; les fenêtres qu'il ouvre (fiche d'un poste, matériel)
+   passent par-dessus lui. */
+#layer { position: fixed; inset: 0; z-index: 42; display: flex; flex-direction: column; background: var(--brush), var(--bg); color: var(--fg); font-family: var(--f-body); }
+body.layer-on #modal.overlay { z-index: 43; }
+.ly-head { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; padding: calc(8px + env(safe-area-inset-top, 0px)) var(--gut-r) 8px var(--gut-l); border-bottom: 1px solid #10151a;
+  background: var(--brush), linear-gradient(#3a434c, #2e363e); box-shadow: inset 0 1px 0 rgba(255,255,255,.08), 0 2px 6px rgba(0,0,0,.35); position: relative; z-index: 1; }
+.ly-head h2.tape { margin: 0; font-size: 18px; padding: 4px 12px; }
+.ly-head h2 .ico { color: var(--amber); }
+.ly-tabs { flex: 0 1 auto; }
+.ly-close { margin-left: auto; display: inline-flex; align-items: center; gap: 6px; }
+.ly-scroll { flex: 1; min-height: 0; overflow: auto; overscroll-behavior: contain; }
+.ly-page { box-sizing: border-box; max-width: 1240px; margin: 0 auto; padding: 18px var(--gut-r) calc(40px + env(safe-area-inset-bottom, 0px)) var(--gut-l); }
+.ly-page.ly-narrow, .ly-narrow { max-width: 980px; }
+.ly-page > .note:first-child { margin-top: 0; }
+.ly-msg { position: fixed; z-index: 44; left: 50%; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); max-width: calc(100vw - 32px); margin: 0; padding: 9px 16px;
+  background: var(--brush), rgba(44,52,60,.97); border: 1px solid #161b1f; border-radius: 4px; box-shadow: inset 4px 0 0 var(--amber), 0 8px 24px rgba(0,0,0,.45); font-size: 14px; }
+.ly-msg[hidden] { display: none; }
+/* Cours : les chapitres dans le même moule que les notions */
+.co-item.plain { grid-template-columns: minmax(0, 1fr); }
+.co-chap { max-width: 76ch; }
+.co-chap:focus { outline: none; }
+.co-chap > h2:first-child { margin: 0 0 12px; font: 700 clamp(28px, 4vw, 40px)/1.05 var(--f-disp); color: var(--fg); text-wrap: balance; }
+.co-chap + .hwrow { margin-top: 18px; }
+
+/* S'entraîner */
+.tr-intro { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px 24px; align-items: center; margin-bottom: 18px; }
+.tr-intro .co-say p { min-height: 0; }
+.tr-sum { display: flex; align-items: center; gap: 8px; margin: 0; color: var(--muted); font-size: 14px; white-space: nowrap; }
+.tr-sum b { font: 700 22px var(--f-disp); color: var(--fg); }
+.tr-bar { display: inline-block; width: 120px; height: 6px; border-radius: 3px; background: var(--glass); box-shadow: inset 0 0 0 1px #070a0c; overflow: hidden; vertical-align: middle; }
+.tr-bar i { display: block; height: 100%; background: var(--pvw); box-shadow: 0 0 6px rgba(51,196,108,.6); }
+.tr-fam .tr-bar { width: 100%; margin: -2px 0 8px; }
+.tr-fams { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 360px), 1fr)); gap: 14px; align-items: start; }
+.tr-fam { padding: 12px; min-width: 0; }
+.tr-fam.wide { grid-column: 1 / -1; }
+.tr-fam h3, .tr-ex h3 { display: flex; align-items: center; gap: 8px; margin: 0 0 8px; font: 600 17px var(--f-disp); }
+.tr-fam h3 .ico, .tr-ex h3 .ico { color: var(--muted); font-size: 18px; }
+.tr-fam h3 small { margin-left: auto; font: 12.5px var(--f-mono); color: var(--dim); }
+.tr-fam .note { margin: 0 0 10px; }
+.tr-lessons, .tr-keys { list-style: none; margin: 0; padding: 0; }
+.tr-lessons { display: grid; gap: 6px; }
+.tr-lesson { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 4px 10px; align-items: center; padding: 8px 10px; background: var(--well); border: 1px solid #0f1316; border-radius: 3px; box-shadow: inset 0 1px 2px rgba(0,0,0,.35); }
+.tr-l { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.tr-l b { font: 600 15px var(--f-disp); }
+.tr-l small { font: 12px var(--f-mono); color: var(--dim); }
+.tr-l span { font-size: 13px; line-height: 1.4; color: var(--muted); }
+.tr-keys { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 210px), 1fr)); gap: 6px; }
+.tr-key { width: 100%; display: flex; align-items: center; gap: 8px; padding: 7px 10px; text-align: left; font: 600 14px var(--f-disp); color: var(--fg); border: 1px solid #161b1f; border-radius: 3px; background: linear-gradient(#3e4852, #343c45); box-shadow: inset 0 1px 0 rgba(255,255,255,.1); }
+.tr-key:hover { background: linear-gradient(#4a545e, #3b444d); }
+.tr-key span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tr-lede { margin: 0 0 14px; max-width: 80ch; }
+.tr-exs { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr)); gap: 14px; }
+.tr-ex { display: flex; flex-direction: column; gap: 8px; padding: 14px; }
+.tr-ex p { margin: 0; font-size: 14px; line-height: 1.5; color: #d5dade; }
+.tr-ex .hwrow { margin-top: auto; }
+.tr-status { display: flex; align-items: center; gap: 8px; padding: 6px 10px; background: var(--glass); border: 1px solid #070a0c; border-radius: 3px; font: 13px var(--f-mono); color: var(--muted) !important; }
+.tr-status.ok { color: #c6f2d6 !important; }
+@media (max-width: 640px) {
+  .tr-intro { grid-template-columns: minmax(0, 1fr); }
+  .tr-lesson { grid-template-columns: auto minmax(0, 1fr); }
+  .tr-lesson > .btn { grid-column: 2; justify-self: start; }
+  .ly-head h2.tape { font-size: 16px; }
+}
+
+/* le menu du car (Échap) : deux colonnes de touches, comme le menu de l'écran titre */
+.mn { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 14px; }
+.mn-col { display: grid; gap: 8px; align-content: start; }
+.mn-key { grid-template-columns: auto minmax(0, 1fr) auto; width: 100%; box-sizing: border-box; }
+.mn-key .ico { grid-column: 1; grid-row: 1 / span 2; font-size: 20px; color: var(--muted); }
+.mn-key b { grid-column: 2; grid-row: 1; }
+.mn-key small { grid-column: 2; grid-row: 2; }
+.mn-key kbd { grid-column: 3; grid-row: 1 / span 2; }
+.mn-key.primary .ico { color: var(--pvw); }
+.mn-key[aria-pressed="false"] .ico { color: #ffb4ad; }
+@media (max-width: 600px) { .mn { grid-template-columns: minmax(0, 1fr); } .mn-key kbd { display: none; } }
+@media (pointer: coarse) { .mn-key kbd { display: none; } }
+
+/* feuille de service : les autres espaces, à côté du retour au menu principal */
+.dk-nav { display: flex; flex-wrap: wrap; gap: 4px 16px; }
+/* retour à l'accueil : le temps d'enregistrer la progression */
+#leaving.overlay { z-index: 50; }
+#leaving p { margin: 0; padding: 16px 22px; font: 600 16px var(--f-disp); }
+/* téléphone : la plaque et « Fermer » sur une ligne, les onglets dessous */
+@media (max-width: 640px) {
+  .ly-head { gap: 8px; }
+  .ly-close { order: 1; }
+  .ly-tabs { order: 2; flex-basis: 100%; }
+  .ly-tabs .tab { padding: 5px 9px 4px 19px; font-size: 13px; }
+  .ly-tabs .tab::before { left: 7px; }
+}

@@ -15,8 +15,10 @@ const KIND = { lab: ['green', 'avec manipulation'], term: ['amber', 'fiche du le
 const norm = (s) => String(s).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
 
 /**
- * @param {{ go: (target: { label: string, station?: string, lesson?: string }) => void, start?: string }} opts
- * @returns {HTMLElement}
+ * @param {{ go: (target: { label: string, station?: string, lesson?: string }) => void, start?: string, hash?: boolean }} opts
+ *   go : « Emmène-moi » et parcours du chef ; start : fiche ouverte d'abord ; hash : la fiche ouverte
+ *   s'écrit dans l'adresse de la page (#sdi) et s'y relit (maquette seule)
+ * @returns {{ node: HTMLElement, dispose: () => void }}
  */
 export function coursView(opts) {
   let cur = '', dispose = () => {};
@@ -60,19 +62,20 @@ export function coursView(opts) {
     main.scrollTop = 0;
     const top = main.getBoundingClientRect().top;
     if (top < 0) main.scrollIntoView({ block: 'start' });
-    try { history.replaceState(null, '', '#' + (id === '*lexique' ? 'lexique' : id)); } catch (e) { /* page sans historique */ }
+    if (opts.hash) { try { history.replaceState(null, '', '#' + (id === '*lexique' ? 'lexique' : id)); } catch (e) { /* page sans historique */ } }
   }
   // sur téléphone, la liste des notions se replie au-dessus de la fiche
   const narrow = matchMedia('(max-width: 760px)');
   const navBody = el('div', { class: 'co-navbody', id: 'co-navbody' }, search, list);
   const toggle = el('button', { type: 'button', class: 'btn small co-navtoggle', 'aria-controls': 'co-navbody', onclick: () => setNav(navBody.hidden) }, `Toutes les notions (${Object.keys(FICHES).length})`);
   function setNav(on) { navBody.hidden = !on; toggle.setAttribute('aria-expanded', String(on)); }
-  narrow.addEventListener('change', () => setNav(!narrow.matches));
+  const onNarrow = () => setNav(!narrow.matches);
+  narrow.addEventListener('change', onNarrow);
   const wrap = el('div', { class: 'co-wrap' },
     el('nav', { class: 'co-nav plate', 'aria-label': 'Les notions' }, toggle, navBody),
     main);
   setNav(!narrow.matches);
-  const h = decodeURIComponent((location.hash || '').slice(1));
-  open(h === 'lexique' ? '*lexique' : FICHES[h] || TERMS[h] ? h : (opts.start || 'sdi'));
-  return wrap;
+  const h = opts.hash ? decodeURIComponent((location.hash || '').slice(1)) : opts.start || '';
+  open(h === 'lexique' || h === '*lexique' ? '*lexique' : FICHES[h] || TERMS[h] ? h : (opts.start || 'sdi'));
+  return { node: wrap, dispose: () => { dispose(); dispose = () => {}; narrow.removeEventListener('change', onNarrow); } };
 }
