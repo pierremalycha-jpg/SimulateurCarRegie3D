@@ -11,7 +11,18 @@
 // caméra 3D où la notion s'ouvre (camlab/points.js). `cours` : fiche du Cours déjà prévue, que
 // la pastille ouvre au lieu d'en écrire une seconde.
 // ----------------------------------------------------------------------------------
+import { FOCALE } from './focale.js';
+import { ZOOM } from './zoom.js';
+import { POINT } from './point.js';
+import { IRIS } from './iris.js';
+import { PDC } from './pdc.js';
 import { TIRAGE } from './tirage.js';
+import { ND_FILTRES } from './nd.js';
+import { PRISME } from './prisme.js';
+import { CAPTEUR } from './capteur.js';
+import { BALANCE } from './balance.js';
+import { MENU } from './menu.js';
+import { CONNECTIQUE } from './connectique.js';
 
 /**
  * @typedef {object} Question
@@ -62,11 +73,11 @@ const prevu = (t, chap, lot, point, short, extra = {}) => ({ t, chap, lot, point
 export const NOTIONS = {
   // ---- 1. L'objectif ----
   frontale: prevu('La lentille frontale', 1, 2, 'frontale', 'La première lentille que traverse la lumière : son traitement anti-reflet, le pare-soleil qui la protège, et comment la nettoyer sans la rayer.'),
-  focale: prevu('Focale et angle de champ', 1, 1, 'zoom', 'La focale fixe l\'angle de champ : 4,5 mm voit large, 54 mm voit serré. Sur un capteur 2/3", une même focale cadre plus serré que sur un grand capteur.'),
-  zoom: prevu('Le zoom', 1, 1, 'zoom', 'Rapport de zoom, zoom motorisé ou à la main, et zoom parfocal : le point reste juste quand on zoome, si le tirage est bien réglé.'),
-  point: prevu('La mise au point', 1, 1, 'point', 'La bague de point et son échelle des distances ; le geste du cadreur : faire le point en serré, puis élargir. Rien n\'est net plus près que la distance minimale (0,3 m).'),
-  iris: prevu('Le diaphragme', 1, 1, 'iris', 'L\'iris dose la lumière. Chaque cran du nombre f (1,8 · 2,8 · 4 · 5,6 · 8…) laisse passer deux fois moins de lumière que le précédent.'),
-  pdc: prevu('La profondeur de champ', 1, 1, 'point', 'La zone nette devant et derrière le point. Elle grandit quand on ferme l\'iris, quand on élargit et quand le sujet s\'éloigne.'),
+  focale: FOCALE,
+  zoom: ZOOM,
+  point: POINT,
+  iris: IRIS,
+  pdc: PDC,
   ramping: prevu('Le ramping', 1, 2, 'zoom', 'Au bout du zoom, l\'objectif perd de la lumière : f/1,8 jusqu\'à 41 mm, puis f/2,4 à 54 mm. L\'image s\'assombrit si l\'iris est déjà grand ouvert.'),
   doubleur: prevu('Le doubleur de focale', 1, 2, 'doubleur', 'Le levier ×2 double la focale (9–108 mm) mais divise la lumière par quatre : deux diaphragmes perdus.'),
   macro: prevu('La macro', 1, 2, 'macro', 'La bague macro permet de filmer plus près que la distance minimale. Pendant ce temps, le zoom n\'est plus parfocal.'),
@@ -75,19 +86,19 @@ export const NOTIONS = {
   monture: prevu('La monture B4 et le câble de l\'objectif', 1, 2, 'monture', 'La baïonnette 2/3" verrouille l\'objectif sur la caméra ; le câble 12 broches l\'alimente et transmet l\'iris, le zoom et les données de l\'objectif.'),
   'box-portable': prevu('Objectif portable ou box', 1, 3, 'manches', 'Un objectif portable se tient à la main ; un objectif box de stade se pilote seulement par les commandes reportées sur les manches.'),
   // ---- 2. Les filtres et le prisme ----
-  nd: prevu('Les filtres ND', 2, 1, 'filtres', 'Des verres gris neutres qui retirent de la lumière sans changer les couleurs : CLEAR, 1/4, 1/16, 1/64. Ils permettent de garder l\'iris ouvert en plein soleil.'),
+  nd: ND_FILTRES,
   cc: prevu('Température de couleur et filtres CC', 2, 2, 'filtres', 'La lumière d\'une lampe tungstène (3200 K) est plus orange que celle du jour (5600 K). Le bouton COLOR TEMP. compense électroniquement.'),
-  prisme: prevu('Le prisme dichroïque', 2, 1, 'bloc', 'Le bloc prisme sépare la lumière blanche en rouge, vert et bleu, et envoie chaque couleur sur son propre capteur. Les trois capteurs sont calés au pixel près.'),
+  prisme: PRISME,
   olpf: prevu('Filtre passe-bas optique et filtre infrarouge', 2, 3, 'bloc', 'Devant les capteurs, un filtre adoucit très légèrement l\'image pour éviter le moiré, un autre arrête l\'infrarouge invisible à l\'œil.'),
   // ---- 3. Les capteurs ----
-  capteur: prevu('Le capteur CMOS 2/3"', 3, 1, 'bloc', 'Un capteur de 9,6 × 5,4 mm et ses 1920 × 1080 photosites, chacun sous une microlentille. Trois capteurs, un par couleur, au lieu d\'un capteur à filtres colorés.'),
+  capteur: CAPTEUR,
   gain: prevu('Sensibilité, gain et bruit', 3, 2, 'commandes', 'Le gain amplifie le signal du capteur : +6 dB vaut un diaphragme de plus, mais aussi plus de bruit. La FB80 donne f/13 à 2000 lux en 50 Hz.'),
   shutter: prevu('L\'obturateur électronique', 3, 2, 'menu', 'La durée d\'exposition de chaque image. 1/50 s par défaut ; plus court, le mouvement devient saccadé. Le clear scan supprime le scintillement d\'un écran LED.'),
   exposition: prevu('L\'exposition : qui fait quoi', 3, 2, 'iris', 'Iris, ND, gain et shutter changent tous la luminosité, mais chacun a un prix : profondeur de champ, bruit ou mouvement. L\'ordre des réglages compte.'),
   formats: prevu('Formats et cadences', 3, 3, 'menu', '1080i50, 1080p50, 720p50 : nombre de lignes, images par seconde, entrelacé ou progressif.', { cours: 'formats' }),
   // ---- 4. Le traitement de l'image ----
   quantif: prevu('Conversion et quantification', 4, 3, 'bloc', 'Le signal du capteur devient des nombres. 10 bits en sortie : 64 pour le noir, 940 pour le blanc.', { cours: 'quantification' }),
-  balance: prevu('Balance des blancs et des noirs', 4, 1, 'commandes', 'Montrer un carton blanc à la caméra pour qu\'elle le rende blanc, quelle que soit la lumière ; caler les trois noirs, iris fermé.'),
+  balance: BALANCE,
   noir: prevu('Le niveau du noir', 4, 3, 'rcp', 'Le master black règle le noir de l\'image. Trop haut, l\'image se délave ; trop bas, les ombres se bouchent.'),
   gamma: prevu('Gamma et black gamma', 4, 3, 'menu', 'La courbe qui répartit les tons entre le noir et le blanc, et le réglage qui ouvre ou referme les ombres.'),
   knee: prevu('Knee et white clip', 4, 3, 'menu', 'Le coude qui comprime les hautes lumières pour garder du détail dans une fenêtre, et le plafond au-dessus duquel le blanc est écrêté.'),
@@ -96,8 +107,8 @@ export const NOTIONS = {
   fichiers: prevu('Les fichiers de réglage', 4, 3, 'menu', 'Scène, référence, objectif, opérateur : sauvegarder un réglage pour le retrouver demain ou le copier sur une autre caméra.'),
   // ---- 5. Le corps de la caméra ----
   commandes: prevu('Les commandes du corps', 5, 2, 'commandes', 'FILTER, COLOR TEMP., ASSIGN 1 à 3, gain, sortie, balance : ce que l\'on règle sur le côté de la caméra, et ce que la vision règle à distance.'),
-  menu: prevu('Le menu de la caméra', 5, 1, 'menu', 'Les pages OPERATION, PAINT, MAINTENANCE et FILE : où trouver chaque réglage, et lesquels la CCU ou le RCP verrouillent.'),
-  connectique: prevu('La connectique', 5, 1, 'connectique', 'DC IN, AUDIO 2 IN, intercom, EARPHONE, REMOTE, DC OUT, TEST OUT, PROMPTER/GENLOCK, SDI OUT, SDI I/O : à quoi sert chaque prise de la face arrière.'),
+  menu: MENU,
+  connectique: CONNECTIQUE,
   alimentation: prevu('L\'alimentation', 5, 2, 'connectique', 'La CCU alimente la caméra par la fibre hybride jusqu\'à 600 m ; au-delà, sur fibre monomode (10 km), la caméra s\'alimente sur place par DC IN.'),
   tally: prevu('Tally, call et intercom', 5, 2, 'intercom', 'Le rouge dit « tu es à l\'antenne », le vert « tu es prêt ». CALL appelle la vision ; l\'intercom PROD ou ENG relie le cadreur à la régie.'),
   retours: prevu('Retours vidéo et prompteur', 5, 2, 'intercom', 'RET 1 et RET 2 SEL montrent au cadreur le programme ou une autre source dans le viseur ; la prise PROMPTER envoie le texte au prompteur.'),

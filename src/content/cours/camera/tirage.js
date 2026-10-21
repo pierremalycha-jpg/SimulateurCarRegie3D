@@ -3,7 +3,7 @@
 // Fiche « Le tirage optique » (back focus, bague F.f des objectifs Fujinon). Monture 2/3" à
 // baïonnette (B4) : tirage 48,00 mm dans l'air (norme BTA S-1005). Objectif de référence :
 // Fujinon ZA12x4.5BERD, 4,5–54 mm, f/1,8 jusqu'à 41 mm puis f/2,4 à 54 mm, distance minimale
-// 0,3 m (fiche constructeur). La manipulation (camlab/labs.js, « tirage ») reprend la procédure.
+// 0,3 m (fiche constructeur). La manipulation (camlab/labs/optique.js, « tirage ») reprend la procédure.
 // Texte : paragraphes séparés par une ligne vide, listes « - » et « 1. », **gras** (ui/rich.js).
 // ----------------------------------------------------------------------------------
 

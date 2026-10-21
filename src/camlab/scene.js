@@ -37,6 +37,7 @@ const FONT = '"Archivo Narrow", "Arial Narrow", sans-serif';
 const SCREEN_VS = 'varying vec2 vUv; void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }';
 const SCREEN_FS = `
 uniform sampler2D map; uniform float blur; uniform float exposure; uniform vec3 wb; uniform float vignette; uniform float power; uniform float bars; uniform float range; uniform vec2 texel;
+uniform float chan; uniform vec2 zebra;
 varying vec2 vUv;
 const int N = 24;
 vec3 tap(vec2 uv) { return texture2D(map, clamp(uv, vec2(0.001), vec2(0.999))).rgb; }
@@ -64,13 +65,17 @@ void main() {
     c = mix(c, 0.85 + (c - 0.85) * 0.22, step(0.85, c));
     c = min(c, vec3(1.09));
   }
+  // viseur : une seule voie (VF OUT Y, R, G ou B), puis les zébras entre zebra.x et zebra.y
+  if (chan > 0.5) { float v = chan < 1.5 ? dot(c, vec3(0.2126, 0.7152, 0.0722)) : chan < 2.5 ? c.r : chan < 3.5 ? c.g : c.b; c = vec3(v); }
+  float L = dot(min(c, vec3(1.0)), vec3(0.2126, 0.7152, 0.0722));
+  if (L >= zebra.x && L <= zebra.y && mod(gl_FragCoord.x + gl_FragCoord.y, 10.0) < 4.0) c = vec3(0.92);
   float v = 1.0 - vignette * pow(length(vUv - 0.5) * 1.25, 3.0);
   gl_FragColor = vec4(min(c * range, vec3(1.0)) * v, 1.0);
 }`;
 /** matière d'un écran qui montre l'image de la caméra (viseur, moniteur) */
 export function screenMaterial(tex, w, h, vignette = 0) {
   return new THREE.ShaderMaterial({
-    uniforms: { map: { value: tex }, blur: { value: 0 }, exposure: { value: 1 }, wb: { value: new THREE.Vector3(1, 1, 1) }, vignette: { value: vignette }, power: { value: 1 }, bars: { value: 0 }, range: { value: 1 }, texel: { value: new THREE.Vector2(1 / w, 1 / h) } },
+    uniforms: { map: { value: tex }, blur: { value: 0 }, exposure: { value: 1 }, wb: { value: new THREE.Vector3(1, 1, 1) }, vignette: { value: vignette }, power: { value: 1 }, bars: { value: 0 }, range: { value: 1 }, chan: { value: 0 }, zebra: { value: new THREE.Vector2(9, 9) }, texel: { value: new THREE.Vector2(1 / w, 1 / h) } },
     vertexShader: SCREEN_VS, fragmentShader: SCREEN_FS, toneMapped: false,
   });
 }

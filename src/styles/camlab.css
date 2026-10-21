@@ -81,7 +81,23 @@
 .cf-ray { stroke: var(--fibre); stroke-width: 1.6; } .cf-dot { fill: var(--fibre); } .cf-spot { stroke: var(--fibre); stroke-width: 6; stroke-linecap: round; opacity: .55; }
 .cf-dim { stroke: var(--muted); stroke-width: 1; } .cf-arrow { fill: var(--muted); }
 .cf-t { fill: var(--fg); font-size: 16px; font-weight: 700; } .cf-t.ok { fill: var(--pvw); } .cf-t.bad { fill: #ff7a70; } .cf-sub { fill: var(--muted); font-size: 12px; }
-.cf-box { fill: var(--well); stroke: var(--line); } .cf-bt { fill: var(--accent); font-size: 13px; font-weight: 700; } .cf-bs { fill: var(--muted); font-size: 11.5px; } .cf-bb { fill: var(--fg); font-size: 13px; font-weight: 700; }
+.cf-box { fill: var(--well); stroke: var(--line); } .cf-bt { fill: var(--accent); font-size: 13px; font-weight: 700; } .cf-bs { fill: var(--muted); font-size: 11.5px; } .cf-bb { fill: var(--fg); font-size: 13px; font-weight: 700; } .cf-bb.mid { text-anchor: middle; font-size: 12px; }
+.cf-s.r { text-anchor: end; } .cf-s.l { text-anchor: start; } .cf-bs.sm { font-size: 10px; }
+.cf-lbl { fill: var(--fg); font-size: 11.5px; text-anchor: middle; } .cf-lbl.l { text-anchor: start; }
+.cf-tick { fill: var(--muted); font-size: 10.5px; text-anchor: middle; font-family: var(--f-mono); } .cf-tick.l { text-anchor: start; } .cf-tick.ink { fill: #07090c; }
+.cf-body { fill: #3b4550; stroke: #59646f; } .cf-wedge { fill: rgba(255,176,32,.14); stroke: var(--fibre); stroke-width: 1.4; }
+.cf-dash { stroke: var(--muted); stroke-width: 1; stroke-dasharray: 4 3; } .cf-axis { stroke: var(--muted); stroke-width: 1; } .cf-zone { fill: var(--pvw); opacity: .85; }
+.cf-ray-w { stroke: #f3f1e8; stroke-width: 4; } .cf-ray-y { stroke: #ffd27a; stroke-width: 4; } .cf-ray-r { stroke: #ff5a4e; stroke-width: 4; } .cf-ray-g { stroke: var(--pvw); stroke-width: 4; } .cf-ray-b { stroke: #4ca0ff; stroke-width: 4; }
+.cf-sensor.r { stroke: #ff5a4e; } .cf-sensor.b { stroke: #4ca0ff; } .cf-dichro { stroke: var(--cyan); stroke-width: 2.5; }
+.cf-bar-r { fill: #ff5a4e; } .cf-bar-g { fill: var(--pvw); } .cf-bar-b { fill: #4ca0ff; }
+.cf-blade { fill: #2a3036; stroke: #59646f; } .cf-hole { fill: #ffe9b8; }
+.cf-nd0 { fill: rgba(255,255,255,.05); stroke: #8a949e; } .cf-beam { fill: var(--fibre); }
+.cf-face { fill: #11211a; stroke: var(--pvw); } .cf-dim-box { fill: none; stroke: var(--accent); } .cf-cell { fill: #1b2a24; stroke: #2f4a3c; } .cf-cell.hi { stroke: var(--accent); stroke-width: 2; } .cf-ml { fill: rgba(255,255,255,.14); stroke: rgba(255,255,255,.35); }
+.cf-well { fill: var(--well); stroke: var(--line2); } .cf-fill { fill: var(--pvw); opacity: .85; }
+.cf-vf { fill: #000; stroke: #2b2e33; } .cf-mono { fill: #f3f1e8; font: 10.5px var(--f-mono); } .cf-mono.hi { fill: var(--accent); }
+.cf-knob { fill: #2d343b; stroke: #59646f; stroke-width: 2; } .cf-accent { fill: var(--accent); } .cf-sw { fill: #1b2025; stroke: #4a545e; }
+.cf-plate { fill: #2a3036; stroke: #0b0f12; } .cf-jk { fill: #4a545e; stroke: #8a949e; stroke-width: 2; } .cf-jk.img { stroke: var(--cyan); } .cf-jk.son { stroke: var(--accent); } .cf-jk.alim { stroke: var(--pvw); }
+.cf-jk-pin { fill: #c8ced4; } .cf-jk-lbl { fill: var(--fg); font: 9.5px var(--f-mono); text-anchor: middle; }
 
 /* manipulation */
 .cl-lab { display: grid; gap: 10px; }
@@ -96,6 +112,23 @@
 .cl-ff .cl-out { color: var(--dim); font-family: var(--f-body); font-size: 11.5px; }
 .cl-seg { grid-column: span 2; }
 .cl-btns { grid-template-columns: auto auto 1fr; justify-items: start; } .cl-btns .linkbtn { justify-self: end; }
+.cl-read { margin: 0; font: 12.5px/1.5 var(--f-mono); color: var(--muted); } .cl-read:empty { display: none; }
+.cl-scope { margin-top: 6px; } .cl-scopec { display: block; width: 100%; height: auto; border-radius: 2px; background: #000; }
+.cl-rkw { display: flex; align-items: center; gap: 6px; min-width: 0; } .cl-rkw b { font: 700 12px var(--f-mono); color: var(--muted); } .cl-rocker { flex: 1; min-width: 0; accent-color: var(--accent); }
+.cl-marks { margin-top: -8px; } .cl-mk { position: relative; display: block; height: 14px; }
+.cl-mk i { position: absolute; top: 0; transform: translateX(-50%); font: 10.5px var(--f-mono); font-style: normal; color: var(--dim); white-space: nowrap; }
+.cl-knobs { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.cl-knob { position: relative; width: 44px; height: 44px; padding: 0; border-radius: 50%; border: 1px solid #0b0f12; cursor: pointer;
+  background: radial-gradient(circle at 40% 35%, #5a646e, #2d343b 70%); box-shadow: inset 0 0 0 2px #1a1f24, 0 2px 4px rgba(0,0,0,.5); }
+.cl-knob i { position: absolute; inset: 0; transition: transform .12s; } .cl-knob i::before { content: ""; position: absolute; left: 50%; top: 4px; width: 4px; height: 12px; margin-left: -2px; border-radius: 2px; background: var(--accent); }
+.cl-knob:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.cl-vf-plate { padding: 10px; } .cl-plate-bg { fill: #2a3036; stroke: #0b0f12; } .cl-plate-sw { fill: #1b2025; stroke: #4a545e; }
+.cl-jack { cursor: pointer; } .cl-jack:focus-visible { outline: none; } .cl-jk-ring { fill: none; stroke: #0b0f12; stroke-width: 2; } .cl-jk-body { fill: #4a545e; stroke: #8a949e; } .cl-jk-pin { fill: #c8ced4; }
+.cl-jk-lbl { fill: var(--fg); font: 9.5px var(--f-mono); text-anchor: middle; }
+.cl-jack:hover .cl-jk-body, .cl-jack:focus-visible .cl-jk-body { stroke: var(--accent); stroke-width: 2; }
+.cl-jack.used .cl-jk-body { fill: var(--pvw-d); stroke: var(--pvw); } .cl-jack.used .cl-jk-lbl { fill: #b9f5cf; }
+.cl-gear .cl-chip.on { color: var(--accent-ink); background: linear-gradient(#ffc24f, #f0a218); border-color: #6b4a08; }
+.cl-gear .cl-chip.done { opacity: .5; text-decoration: line-through; cursor: default; }
 .cl-olivier { padding: 8px 12px; background: var(--glass); border: 1px solid #070a0c; border-left: 3px solid var(--cyan); border-radius: 3px; }
 .cl-olivier b { font: 700 13px var(--f-disp); color: var(--cyan); } .cl-say { margin: 2px 0 0; font-size: 14px; line-height: 1.45; min-height: 2.9em; }
 .cl-defis { margin: 0; padding: 0; list-style: none; counter-reset: d; display: grid; gap: 4px; }

@@ -38,7 +38,10 @@ test('chaque pastille ouvre au moins une notion, et ses notions existent', () =>
 
 test('une fiche écrite suit le moule : schéma, manipulation, textes, trois questions valides, liens', () => {
   const ecrites = ORDRE.filter((id) => !NOTIONS[id].prevu);
-  assert.ok(ecrites.includes('tirage'));
+  // le lot 1 est écrit en entier : ses douze notions ont une fiche, un schéma et une manipulation
+  const lot1 = ORDRE.filter((id) => NOTIONS[id].lot === 1);
+  assert.deepEqual(lot1.filter((id) => !ecrites.includes(id)), [], 'lot 1 : fiches en préparation');
+  for (const id of lot1) assert.ok(NOTIONS[id].fig && NOTIONS[id].lab, `${id} : schéma et manipulation`);
   for (const id of ecrites) {
     const f = NOTIONS[id];
     for (const k of ['body', 'vraie', 'plus', 'car', 'ref']) assert.ok(f[k] && f[k].length > 60 && !bad(f[k]), `${id} : ${k}`);

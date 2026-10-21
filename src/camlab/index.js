@@ -3,7 +3,7 @@ import * as THREE from 'three';
 import { el, clamp, lerp } from '../util.js';
 import { on } from '../state.js';
 import { NOTIONS, CHAPITRES, notionsDu } from '../content/cours/camera/index.js';
-import { buildRig, AXIS_H } from './model.js';
+import { buildRig, AXIS_H, FOCAL_PLANE } from './model.js';
 import { buildStudio } from './scene.js';
 import { PASTILLES, notionsAt } from './points.js';
 import { renderFiche } from './fiche.js';
@@ -282,7 +282,7 @@ function openNotion(nid, pointId = null, fly = true) {
 }
 function closeSide() {
   if (R.fiche) { R.fiche.dispose(); R.fiche = null; }
-  R.side.hidden = true; R.side.replaceChildren(); R.root.classList.remove('side-open'); R.notion = null; R.point = null; R.lens = null;
+  R.side.hidden = true; R.side.replaceChildren(); R.root.classList.remove('side-open'); R.notion = null; R.point = null; resetImage();
 }
 function toggleList(force) {
   const show = force != null ? force : R.list.hidden;
@@ -304,18 +304,38 @@ function buildList() {
 }
 
 // ---------------- la caméra pilotée par une manipulation ----------------
+// st : bagues et filtre (zoom, focus, iris, ff, nd, ext, macro), et l'image : light (lumière du
+// plateau, 1 par défaut), gain (dB), wb (dominante R, V, B), bars, chan (VF OUT), zebra ([bas,
+// haut] en %), mireD (distance de la mire, m). Une manipulation n'envoie que ce qu'elle règle.
+const RIG_KEYS = ['zoom', 'focus', 'iris', 'ff', 'nd', 'ext', 'macro'];
+const CHANS = ['COLOR', 'Y', 'R', 'G', 'B'];
 function lensFromLab(st) {
   R.lens = st;
-  R.rig.set({ zoom: st.zoom, focus: st.focus, iris: st.iris, ff: st.ff, nd: st.nd });
+  const o = {}; for (const k of RIG_KEYS) if (st[k] != null && st[k] >= 0) o[k] = st[k];
+  if (Object.keys(o).length) R.rig.set(o);
+  setMire(st.mireD || MIRE_D);
+  const vfm = R.studio.vfMat.uniforms, mon = R.studio.monMat.uniforms;
+  const wb = st.wb || [1, 1, 1];
+  for (const u of [vfm, mon]) { u.wb.value.set(wb[0], wb[1], wb[2]); u.bars.value = st.bars ? 1 : 0; }
+  vfm.chan.value = Math.max(0, CHANS.indexOf(st.chan || 'COLOR'));
+  if (st.zebra) vfm.zebra.value.set(st.zebra[0] / 100, st.zebra[1] / 100); else vfm.zebra.value.set(9, 9);
   R.renderer.shadowMap.needsUpdate = true;
 }
+/** la mire du plateau, avancée ou reculée par une manipulation */
+function setMire(D) {
+  const x = FOCAL_PLANE + D;
+  if (Math.abs(R.studio.mire.position.x - x) < 1e-6) return;
+  R.studio.mire.position.x = x; R.studio.dirty = true; R.renderer.shadowMap.needsUpdate = true;
+}
+/** fiche refermée : l'image redevient celle de la caméra seule */
+function resetImage() { lensFromLab({}); R.lens = null; }
 /** l'image de la caméra : focale, flou de mise au point, lumière reçue */
 function cameraImage(dt) {
-  const s = R.rig.state;
-  const f = zoomFocal(s.zoom), dF = focusDist(s.focus), N = s.iris;
+  const s = R.rig.state, L = R.lens || {};
+  const f = zoomFocal(s.zoom), dF = focusDist(s.focus), N = Math.min(s.iris, 64);
   const H = R.studio.rt.height;
-  const blurR = blurPx(Math.abs(defocus(f, MIRE_D, dF, s.ff)) / N, H) / 2;
-  const E = exposureOf(N, ND[s.nd || 0][1]);
+  const blurR = blurPx(Math.abs(defocus(f, L.mireD || MIRE_D, dF, s.ff)) / N, H) / 2;
+  const E = s.iris >= 99 ? 0 : exposureOf(N, ND[s.nd || 0][1], L.gain || 0) * (L.light != null ? L.light : 1);
   for (const m of [R.studio.vfMat, R.studio.monMat]) { m.uniforms.blur.value = blurR; m.uniforms.exposure.value = E * EXPO_K; }
   R.studio.renderView(dt, THREE.MathUtils.radToDeg(vfov(f)));
 }

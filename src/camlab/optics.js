@@ -60,3 +60,36 @@ export const exposureOf = (N, nd = 1, gainDb = 0) => (8 / N) ** 2 * nd * 10 ** (
 export const effAperture = (N, f, ext = false) => Math.max(N, maxAperture(f, ext));
 /** diamètre de la tache de flou en pixels d'une image de hauteur H pixels */
 export const blurPx = (blurMm, H) => blurMm / SENSOR.h * H;
+/** angle de champ horizontal (radians) à la focale f */
+export const hfov = (f) => 2 * Math.atan(SENSOR.w / 2 / f);
+/** largeur du champ (m) cadrée à la distance D (m) */
+export const fieldWidth = (D, f) => D * SENSOR.w / f;
+/** distance hyperfocale (m) : point réglé là, tout est net de sa moitié jusqu'à l'infini */
+export const hyperfocal = (f, N) => (f * f / (N * COC) + f) / 1000;
+/** limites de la zone nette (m) autour du point s (m) : [proche, lointaine] (Infinity au-delà de l'hyperfocale) */
+export function dofLimits(f, N, s) {
+  const H = hyperfocal(f, N), fm = f / 1000;
+  const near = s * (H - fm) / (H + s - 2 * fm);
+  const far = s >= H ? Infinity : s * (H - fm) / (H - s);
+  return [near, far];
+}
+/** lumière reçue en diaphragmes, par rapport à f/8 sans filtre ni gain */
+export const stopsOf = (E) => Math.log2(E);
+
+// ---- couleur de la lumière : le corps noir (lieu de Planck, CIE 1931), en RVB linéaire BT.709 ----
+/** composantes R, V, B (linéaires, V = 1) d'une lumière blanche de température T (K) */
+export function kelvinRGB(T) {
+  const t = clamp(T, 1700, 20000), t2 = t * t, t3 = t2 * t;
+  const x = t <= 4000 ? -0.2661239e9 / t3 - 0.2343589e6 / t2 + 0.8776956e3 / t + 0.179910 : -3.0258469e9 / t3 + 2.1070379e6 / t2 + 0.2226347e3 / t + 0.240390;
+  const y = t <= 2222 ? -1.1063814 * x ** 3 - 1.34811020 * x * x + 2.18555832 * x - 0.20219683
+    : t <= 4000 ? -0.9549476 * x ** 3 - 1.37418593 * x * x + 2.09137015 * x - 0.16748867
+      : 3.0817580 * x ** 3 - 5.87338670 * x * x + 3.75112997 * x - 0.37001483;
+  const X = x / y, Z = (1 - x - y) / y;
+  const r = 3.2406 * X - 1.5372 - 0.4986 * Z, g = -0.9689 * X + 1.8758 + 0.0415 * Z, b = 0.0557 * X - 0.2040 + 1.0570 * Z;
+  return [Math.max(0, r / g), 1, Math.max(0, b / g)];
+}
+/** dominante d'un blanc éclairé à Tlight (K) par une caméra balancée pour Tcam (K) : gains R, V, B */
+export function castOf(Tlight, Tcam) {
+  const l = kelvinRGB(Tlight), c = kelvinRGB(Tcam);
+  return [l[0] / c[0], 1, l[2] / c[2]];
+}
