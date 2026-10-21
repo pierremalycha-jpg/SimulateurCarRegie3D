@@ -94,7 +94,7 @@ function figTrame() {
     const px = cx + +r * Math.cos(-0.6), py = cy + +r * Math.sin(-0.6);
     f.append(sv('line', { x1: px, y1: py, x2: 112, y2: cy + +dy, stroke: '#8a949c', strokeWidth: 0.6 }), sv('text', { x: 114, y: cy + +dy + 4, class: 'co-s' }, label));
   });
-  f.append(sv('text', { x: 100, y: 156, textAnchor: 'middle', class: 'co-s' }, 'connecteur BNC 75 Ω · 800 mV crête à crête'));
+  f.append(sv('text', { x: 112, y: 156, textAnchor: 'middle', class: 'co-s' }, 'BNC 75 Ω · 800 mV crête à crête'));
   const g = sv('g', { transform: 'translate(230 0)' });
   g.append(sv('text', { x: 95, y: 16, textAnchor: 'middle', class: 'co-t' }, 'Une image 1080 (pas à l\'échelle)'));
   g.append(sv('rect', { x: 0, y: 26, width: 190, height: 124, fill: '#1a2229', stroke: '#59646f' }));
@@ -197,7 +197,7 @@ function figOeil() {
   for (const x of [100, 250]) f.append(sv('ellipse', { cx: x, cy: (hi + lo) / 2, rx: 9, ry: 7, fill: '#ff8a80', 'fill-opacity': 0.45 }));
   f.append(sv('line', { x1: cx, y1: hi, x2: cx, y2: lo, stroke: '#ffd38a', strokeWidth: 1, 'stroke-dasharray': '3 3' }), sv('text', { x: cx, y: 44, textAnchor: 'middle', class: 'co-s', fill: '#ffd38a' }, 'instant de lecture : l\'ouverture est la marge'));
   f.append(sv('line', { x1: 350, y1: hi, x2: 350, y2: lo, stroke: '#e3e7e1' }), sv('line', { x1: 345, y1: hi, x2: 355, y2: hi, stroke: '#e3e7e1' }), sv('line', { x1: 345, y1: lo, x2: 355, y2: lo, stroke: '#e3e7e1' }), sv('text', { x: 358, y: 94, class: 'co-m' }, '800 mV'), sv('text', { x: 358, y: 106, class: 'co-s' }, '± 10 %'));
-  f.append(sv('text', { x: 100, y: 160, textAnchor: 'middle', class: 'co-s', fill: '#ff8a80' }, 'croisement : sa largeur est la gigue'), sv('text', { x: 250, y: 160, textAnchor: 'middle', class: 'co-s' }, 'pente des fronts : temps de montée 20–80 %'));
+  f.append(sv('text', { x: 100, y: 160, textAnchor: 'middle', class: 'co-s', fill: '#ff8a80' }, 'croisement : sa largeur est la gigue'), sv('text', { x: 412, y: 160, textAnchor: 'end', class: 'co-s' }, 'pente des fronts = temps de montée'));
   f.append(sv('line', { x1: 100, y1: 172, x2: 250, y2: 172, stroke: '#e3e7e1' }), sv('line', { x1: 100, y1: 167, x2: 100, y2: 177, stroke: '#e3e7e1' }), sv('line', { x1: 250, y1: 167, x2: 250, y2: 177, stroke: '#e3e7e1' }), sv('text', { x: cx, y: 187, textAnchor: 'middle', class: 'co-s' }, '1 UI : 673 ps en HD · 337 ps en 3G · 84 ps en 12G'));
   return f;
 }
@@ -260,11 +260,12 @@ function demoEmbedded(host) {
 function figEmbedded() {
   const f = figure(420, 150, 'Anatomie d\'un paquet ancillary : drapeau 000 3FF 3FF, DID, SDID (ou DBN), nombre de mots, données, somme de contrôle ; exemples : audio ST 299-1, timecode ATC, VPID');
   f.append(sv('text', { x: 10, y: 16, class: 'co-t' }, 'Un paquet ancillary (ST 291)'));
-  const parts = [['ADF', 3, '000 3FF 3FF', '#ff8a80'], ['DID', 1, 'type', '#7fd3f3'], ['SDID', 1, 'ou DBN', '#7fd3f3'], ['DC', 1, 'nb mots', '#7fd3f3'], ['UDW', 8, 'les données (0 à 255 mots)', '#ffd38a'], ['CS', 1, 'contrôle', '#7fd1a0']];
-  let x = 10; const unit = 26;
-  for (const [name, n, sub, col] of parts) { const w = +n * unit; f.append(sv('rect', { x, y: 28, width: w - 2, height: 30, fill: col, 'fill-opacity': 0.75 }), sv('text', { x: x + w / 2 - 1, y: 48, textAnchor: 'middle', class: 'co-t' }, name), sv('text', { x: x + w / 2 - 1, y: 72, textAnchor: 'middle', class: 'co-s' }, sub)); x += w; }
-  const rows = [['Audio ST 299-1', 'DID 2E7 à 2E4 (groupes 1 à 4) · 31 mots : 4 canaux × 1 échantillon, dans l\'HANC du flux C, à chaque ligne'], ['Timecode ATC (ST 12-2)', 'DID 60, SDID 60 · 16 UDW, 23 mots · dans la suppression verticale, une fois par image'], ['VPID (ST 352)', 'DID 41, SDID 01 · 4 UDW, 11 mots · annonce le format : 1080p50, 4:2:2 10 bits, SDR ou HLG']];
-  rows.forEach(([t, d], i) => f.append(sv('text', { x: 10, y: 98 + i * 18, class: 'co-m' }, t), sv('text', { x: 150, y: 98 + i * 18, class: 'co-s' }, d)));
+  /** @type {[string, number, string, string, number][]} */
+  const parts = [['ADF', 64, '000 3FF 3FF', '#ff8a80', 0], ['DID', 36, 'type', '#7fd3f3', 0], ['SDID', 40, 'sous-type', '#7fd3f3', 1], ['DC', 36, 'n mots', '#7fd3f3', 0], ['UDW', 150, 'les données : n mots (0 à 255)', '#ffd38a', 0], ['CS', 36, 'somme', '#7fd1a0', 1]];
+  let x = 10;
+  for (const [name, w, sub, col, row] of parts) { f.append(sv('rect', { x, y: 28, width: w - 2, height: 30, fill: col, 'fill-opacity': 0.75 }), sv('text', { x: x + w / 2 - 1, y: 48, textAnchor: 'middle', class: 'co-t' }, name), sv('text', { x: x + w / 2 - 1, y: 72 + row * 12, textAnchor: 'middle', class: 'co-s' }, sub)); x += w; }
+  const rows = [['Audio ST 299-1', 'DID 2E7…2E4 · 31 mots · 4 canaux · HANC du flux C, chaque ligne'], ['ATC ST 12-2', 'DID 60, SDID 60 · 23 mots · VANC, une fois par image'], ['VPID ST 352', 'DID 41, SDID 01 · 11 mots · VANC : annonce le format']];
+  rows.forEach(([t, d], i) => f.append(sv('text', { x: 10, y: 106 + i * 17, class: 'co-m' }, t), sv('text', { x: 112, y: 106 + i * 17, class: 'co-s' }, d)));
   return f;
 }
 
@@ -326,20 +327,20 @@ function figCable() {
     for (const a of [40, 220]) f.append(sv('rect', { x: x + 30 * Math.cos(a * Math.PI / 180) - 3, y: 70 + 30 * Math.sin(a * Math.PI / 180) - 3, width: 6, height: 6, fill: '#8a949c' }));
     f.append(sv('text', { x, y: 118, textAnchor: 'middle', class: 'co-t' }, label));
   };
-  bnc(50, 'BNC 75 Ω', false); bnc(140, 'BNC 50 Ω', true);
-  f.append(sv('text', { x: 50, y: 132, textAnchor: 'middle', class: 'co-s' }, 'broche fine, air'), sv('text', { x: 140, y: 132, textAnchor: 'middle', class: 'co-s' }, 'broche épaisse, diélectrique blanc'), sv('text', { x: 95, y: 146, textAnchor: 'middle', class: 'co-s' }, 'même bague, s\'emboîtent : c\'est le piège'));
+  bnc(46, 'BNC 75 Ω', false); bnc(150, 'BNC 50 Ω', true);
+  f.append(sv('text', { x: 46, y: 132, textAnchor: 'middle', class: 'co-s' }, 'broche fine,'), sv('text', { x: 46, y: 144, textAnchor: 'middle', class: 'co-s' }, 'air autour'), sv('text', { x: 150, y: 132, textAnchor: 'middle', class: 'co-s' }, 'broche épaisse,'), sv('text', { x: 150, y: 144, textAnchor: 'middle', class: 'co-s' }, 'isolant blanc'), sv('text', { x: 98, y: 16, textAnchor: 'middle', class: 'co-s' }, 'même bague : elles s\'emboîtent, c\'est le piège'));
   // jackfield
   const g = sv('g', { transform: 'translate(210 30)' });
   g.append(sv('text', { x: 0, y: 0, class: 'co-t' }, 'Brassage'), sv('rect', { x: 0, y: 8, width: 100, height: 52, fill: '#2b2f33', stroke: '#59646f' }));
   for (let r = 0; r < 2; r++) for (let k = 0; k < 8; k++) g.append(sv('circle', { cx: 9 + k * 12, cy: 20 + r * 26, r: 4, fill: '#0b1013', stroke: '#8a949c' }));
   g.append(sv('path', { d: 'M21 20 C 21 8, 45 8, 45 20', fill: 'none', stroke: '#ffd38a', strokeWidth: 2 }), sv('path', { d: 'M69 46 C 69 34, 93 34, 93 46', fill: 'none', stroke: '#ffd38a', strokeWidth: 2 }));
-  g.append(sv('text', { x: 0, y: 76, class: 'co-s' }, 'cordons courts, ≈ 0,5 dB'), sv('text', { x: 0, y: 88, class: 'co-s' }, 'par passage, à compter'));
+  g.append(sv('text', { x: 0, y: 76, class: 'co-s' }, '≈ 0,5 dB par passage,'), sv('text', { x: 0, y: 88, class: 'co-s' }, 'à compter'));
   f.append(g);
-  const d = sv('g', { transform: 'translate(330 30)' });
+  const d = sv('g', { transform: 'translate(322 30)' });
   d.append(sv('text', { x: 0, y: 0, class: 'co-t' }, 'DA · répéteur'), sv('rect', { x: 14, y: 14, width: 56, height: 46, fill: '#333c45', stroke: '#59646f' }), sv('text', { x: 42, y: 41, textAnchor: 'middle', class: 'co-m' }, 'EQ+CLK'));
   d.append(sv('line', { x1: 0, y1: 37, x2: 14, y2: 37, stroke: '#ffd38a', strokeWidth: 2 }));
   for (let k = 0; k < 4; k++) d.append(sv('line', { x1: 70, y1: 20 + k * 12, x2: 86, y2: 20 + k * 12, stroke: '#7fd1a0', strokeWidth: 2 }));
-  d.append(sv('text', { x: 0, y: 76, class: 'co-s' }, 'égalise, réhorloge, distribue :'), sv('text', { x: 0, y: 88, class: 'co-s' }, 'le câble repart de zéro'));
+  d.append(sv('text', { x: 0, y: 76, class: 'co-s' }, 'égalise et réhorloge :'), sv('text', { x: 0, y: 88, class: 'co-s' }, 'le câble repart de 0'));
   f.append(d);
   return f;
 }
