@@ -183,8 +183,8 @@ function setLost(c, lost) {
   if (lost) {
     PHY.lost.add(c.id);
     if (!Object.prototype.hasOwnProperty.call(c, 'checkLink')) {
-      const base = Object.getPrototypeOf(c).checkLink;
-      c.checkLink = function () { base.call(this); if (this._sdiLost) this.status = { ok: false, reason: LOST_WHY, power: this.status.power, warn: '' }; };
+      const base = Object.getPrototypeOf(c).checkLink; const cc = /** @type {any} */ (c);
+      cc.checkLink = () => { base.call(cc); if (cc._sdiLost) cc.status = { ok: false, reason: LOST_WHY, power: cc.status.power, warn: '' }; };
     }
   } else {
     PHY.lost.delete(c.id);
@@ -254,7 +254,7 @@ export function pickFaultCam() {
   return (free.length ? randPick(free) : randPick(all)) || null;
 }
 const sdiCar = () => !S.ipMode && S.cams.some((c) => !c.rf && c.signalOK);
-FAULTS.push(
+/** @type {any[]} */ (FAULTS).push(
   {
     id: 'sdicable', label: 'Cordon SDI abîmé entre une CCU et la grille (faux contact qui s\'aggrave)', where: 'Baie de mesure',
     can: sdiCar,
