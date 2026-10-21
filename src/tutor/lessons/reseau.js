@@ -7,8 +7,9 @@ import { LESSON_LEAF } from './reseau_leaf.js';
 import { LESSON_GW } from './reseau_ops.js';
 
 // ----------------------------------------------------------------------------------
-// Parcours du chef de car pour le réseau ST 2110 : visite commentée, PTP, dépannage
-// méthodique (la mise en service d'une leaf est dans reseau_leaf.js).
+// Exercices pratiques du réseau ST 2110, menés par Olivier, le chef de car : visite commentée et
+// dépannage méthodique (leçon « Multicast et IGMP » du Cours), PTP (leçon « PTP »). La mise en
+// service d'une leaf est dans reseau_leaf.js, celle d'une passerelle dans reseau_ops.js.
 // ----------------------------------------------------------------------------------
 const net = (tab, more = {}) => ({ station: 'reseau', tab, ...more });
 const tabSel = (k, label) => [{ sel: `#station .tabs .tab[data-k="${k}"]`, label }];
@@ -20,14 +21,14 @@ const ROW = (rx) => [{ sel: `#station tr[data-rx="${rx}"]`, label: 'cette ligne'
 /** @type {import('../engine.js').Lesson} */
 const LESSON_TOUR = {
   id: 'reseau-visite', domain: 'Réseau ST 2110', stations: ['reseau'], needs: { ip: true },
-  title: 'Le réseau du car en 15 minutes',
-  summary: 'Visite commentée : pourquoi l\'IP, les deux réseaux rouge et bleu, spines et leaves, le plan d\'adressage, un flux de bout en bout, son SDP, PTP et les mesures.',
+  title: 'Visiter le réseau du car IP et suivre un flux',
+  summary: 'Exercice de la leçon « Multicast et IGMP (car IP, ST 2110) » : visite commentée du poste Réseau IP, des réseaux rouge et bleu aux spines et leaves, le plan d\'adressage des groupes multicast, un flux suivi de bout en bout, son SDP, PTP et les mesures.',
   duration: '15 min', level: 'débutant',
-  outro: 'Voilà le tour du propriétaire. Retiens trois idées : chaque signal est un flux multicast, chaque flux existe deux fois (rouge et bleu), et tout le monde est à l\'heure grâce à PTP. Si tu veux mettre les mains dedans, fais « Mettre en service une leaf neuve ».',
+  outro: 'Voilà le tour du propriétaire. Retiens trois idées : chaque signal est un flux multicast, chaque flux existe deux fois (rouge et bleu), et tout le monde est à l\'heure grâce à PTP. Pour mettre les mains dedans, passe à l\'exercice suivant de la leçon : « Mettre en service une leaf neuve ».',
   steps: [
     {
       id: 'intro', title: 'Pourquoi un car IP ?',
-      say: 'Bienvenue dans le car IP. Dans un car SDI, chaque signal a son câble coaxial et passe par une grille de commutation : une caméra, un câble ; un écran, un câble.\n\nIci, tous les signaux voyagent sur un **réseau Ethernet**, selon la norme **SMPTE ST 2110**. Chaque « essence » (vidéo, audio, données) est un flux séparé : la vidéo sans compression (ST 2110-20), l\'audio (ST 2110-30, compatible AES67), les données annexes (ST 2110-40 : timecode, sous-titres).\n\nOn peut donc envoyer l\'audio d\'une source ailleurs que sa vidéo, sans désembedder (sans extraire le son du signal SDI).\n\nCe qui remplace la grille : un réseau de commutateurs, un protocole de synchro (**PTP**, l\'heure commune transportée par le réseau) et un système de contrôle (**NMOS**, qui dit à chaque récepteur quel flux écouter). Je te fais visiter.',
+      say: 'Bienvenue dans le car IP. Dans un car SDI, chaque signal a son câble coaxial et passe par une grille de commutation : une caméra, un câble ; un écran, un câble.\n\nIci, tous les signaux voyagent sur un **réseau Ethernet**, selon la norme **SMPTE ST 2110**. Chaque « essence » (vidéo, audio, données) est un flux séparé : la vidéo sans compression (ST 2110-20), l\'audio (ST 2110-30, compatible AES67), les données annexes (ST 2110-40 : timecode, sous-titres).\n\nOn peut donc envoyer l\'audio d\'une source ailleurs que sa vidéo, sans désembedder (sans extraire le son du signal SDI).\n\nCe qui remplace la grille : un réseau de commutateurs, un protocole de synchro (**PTP**, l\'heure commune transportée par le réseau) et un système de contrôle (**NMOS**, qui dit à chaque récepteur quel flux écouter).\n\nEt chaque flux est **multicast** (leçon « Multicast et IGMP ») : la caméra en envoie une seule copie vers un groupe, le réseau la recopie vers les récepteurs qui l\'ont demandée par IGMP. Je te fais visiter.',
     },
     {
       id: 'open', title: 'Le poste Réseau IP',
@@ -98,7 +99,7 @@ const LESSON_TOUR = {
     },
     {
       id: 'flow', title: 'Un flux de bout en bout',
-      say: 'Onglet **Flux NMOS · SDP**. Chaque ligne est un **récepteur** : entrée du mélangeur, multiview, enregistrement EVS, retour viseur… Quand on commute à la grille, c\'est un contrôleur qui dit au récepteur quel flux écouter (NMOS **IS-05**, l\'interface de connexion) ; le récepteur s\'abonne alors aux deux groupes, rouge et bleu.',
+      say: 'Onglet **Flux NMOS · SDP**. Chaque ligne est un **récepteur** : entrée du mélangeur, multiview, enregistrement EVS, retour viseur… Quand on commute à la grille, c\'est un contrôleur qui dit au récepteur quel flux écouter (NMOS **IS-05**, l\'interface de connexion) ; le récepteur s\'abonne alors par **IGMPv3** aux deux groupes, rouge et bleu, chacun avec l\'adresse de sa source : le couple (source, groupe) du SSM.',
       do: 'Ouvre l\'onglet et clique sur la ligne « ME1 » (entrée 1 du mélangeur).',
       go: net('flows', { rx: 'ME1' }), show: (c) => (c.view().tab === 'flows' ? ROW('ME1') : tabSel('flows', 'Flux NMOS · SDP')),
       done: (c) => c.view().tab === 'flows' && (c.seen('rx', (e) => e.rx === 'ME1') || c.view().rx === 'ME1'),
@@ -121,7 +122,7 @@ const LESSON_TOUR = {
       say: 'Onglet **PTP**. Deux **grands maîtres** (horloges de référence calées sur le GPS) donnent l\'heure ; chaque commutateur la relaie (horloge frontière) jusqu\'aux appareils. Chaque paquet porte l\'heure PTP de sa capture : c\'est ce qui permet de mélanger des sources, de garder le son calé sur l\'image et de commuter sans saut.',
       do: 'Ouvre l\'onglet PTP et regarde quel grand maître est élu sur chaque réseau.',
       go: net('ptp'), show: tabSel('ptp', 'PTP'), done: onTab('ptp'),
-      ok: 'Le grand maître 1 est élu partout : il a la meilleure priorité (priority1 = 100 contre 110 ; le plus petit gagne). Le parcours « PTP : qui donne l\'heure ? » détaille l\'élection et le secours.',
+      ok: 'Le grand maître 1 est élu partout : il a la meilleure priorité (priority1 = 100 contre 110 ; le plus petit gagne). L\'exercice « Couper un grand maître PTP et observer le secours », dans la leçon « PTP », détaille l\'élection.',
       hints: ['La synchro a son propre onglet en haut du poste.', 'Onglet « PTP », puis la ligne « Grand maître élu par réseau ».'],
       auto: goTab('ptp'),
     },
@@ -140,7 +141,7 @@ const LESSON_TOUR = {
       say: 'Enfin l\'onglet **Diagnostic** : toutes les anomalies du réseau, triées, avec un bouton qui t\'emmène au bon commutateur et au bon port. En bas, la **méthode de dépannage** couche par couche. C\'est la page qu\'on ouvre en premier quand quelque chose ne va pas.',
       do: 'Ouvre l\'onglet Diagnostic.',
       go: net('diag'), show: tabSel('diag', 'Diagnostic'), done: onTab('diag'),
-      ok: 'Si tout est vert, « Aucune anomalie » : tu sais où regarder en premier le jour où ça ne va pas. Le parcours « Dépannage : une caméra a disparu » te fera pratiquer.',
+      ok: 'Si tout est vert, « Aucune anomalie » : tu sais où regarder en premier le jour où ça ne va pas. L\'exercice « Dépanner une caméra disparue du réseau » te fera pratiquer.',
       hints: ['C\'est l\'avant-dernier onglet du poste.', 'Onglet « Diagnostic ».'],
       auto: goTab('diag'),
     },
@@ -158,14 +159,14 @@ const camsLocked = () => S.cams.every((cam) => camPtpOk(cam.id));
 /** @type {import('../engine.js').Lesson} */
 const LESSON_PTP = {
   id: 'reseau-ptp', domain: 'Réseau ST 2110', stations: ['reseau', 'synchro'], needs: { ip: true },
-  title: 'PTP : qui donne l\'heure ?',
-  summary: 'Grands maîtres, élection (BMCA), horloges frontières : on coupe un grand maître en plein direct pour voir le secours, puis on comprend le danger d\'une horloge pirate.',
+  title: 'Couper un grand maître PTP et observer le secours',
+  summary: 'Exercice de la leçon « PTP : l\'horloge du car IP » : lire le grand maître élu et le vérifier en ligne de commande, couper le grand maître 1 en plein direct pour voir le secours (élection BMCA), puis comprendre le danger d\'une horloge pirate.',
   duration: '10 min', level: 'intermédiaire',
   outro: 'PTP en trois phrases : les grands maîtres sont élus par le BMCA (priority1 d\'abord, puis la qualité d\'horloge), chaque commutateur relaie l\'heure en horloge frontière, et un appareil ne doit jamais pouvoir devenir maître (« slave only » et ports « ptp role master »).',
   steps: [
     {
       id: 'intro', title: 'Plus de câble de référence',
-      say: 'En SDI, on distribue une **référence** à chaque appareil par un câble : black burst (noir codé, hérité de la SD) ou tri-level (synchro à trois niveaux, pour la HD). En IP, plus de câble : tout le monde se cale sur une heure commune, transportée par le réseau avec le protocole **PTP** (Precision Time Protocol, IEEE 1588), profil **SMPTE ST 2059-2**.\n\nChaque appareil connaît l\'heure à quelques dizaines de nanosecondes près ; la norme ST 2059-1 dit comment en déduire le début de chaque image. Résultat : toutes les caméras sont « en phase » sans aucun câble de synchro.',
+      say: 'En SDI, on distribue une **référence** à chaque appareil par un câble : black burst (noir codé, hérité de la SD) ou tri-level (synchro à trois niveaux, pour la HD). En IP, plus de câble : tout le monde se cale sur une heure commune, transportée par le réseau avec le protocole **PTP** (Precision Time Protocol, IEEE 1588), profil **SMPTE ST 2059-2**.\n\nChaque appareil connaît l\'heure à quelques dizaines de nanosecondes près ; la norme ST 2059-1 dit comment en déduire le début de chaque image. Résultat : toutes les caméras sont « en phase » sans aucun câble de synchro.\n\nLa leçon « PTP » a montré comment un esclave calcule son décalage avec quatre instants (t1 à t4) ; cet exercice regarde l\'autre bout de la chaîne : qui est le grand maître, et ce qui se passe quand il s\'arrête.',
     },
     {
       id: 'open', title: 'L\'onglet PTP',
@@ -178,7 +179,7 @@ const LESSON_PTP = {
     },
     {
       id: 'bmca', title: 'L\'élection (BMCA)',
-      say: () => `Les deux grands maîtres sont des horloges GPS. Chacun annonce sa « qualité » plusieurs fois par seconde (messages Announce). Tous les commutateurs appliquent le même algorithme, le **BMCA** (Best Master Clock Algorithm, l'élection du meilleur maître), qui compare dans l'ordre :\n1. **priority1** (réglée à la main : le plus petit gagne) ;\n2. la **classe d'horloge** (6 = verrouillée GPS, 7 = GPS perdu, en maintien) ;\n3. la précision et la stabilité annoncées ;\n4. **priority2**, puis l'identité.\n\nIci, le grand maître 1 a priority1 = 100, le 2 a 110 : c'est le 1 qui est élu (rouge : ${gmName('red')} ; bleu : ${gmName('blue')}).`,
+      say: () => `Les deux grands maîtres sont des horloges GPS. Chacun annonce sa « qualité » plusieurs fois par seconde (messages Announce). Tous les commutateurs appliquent le même algorithme, le **BMCA** (Best Master Clock Algorithm, l'élection du meilleur maître), qui compare dans l'ordre :\n1. **priority1** (réglée à la main : le plus petit gagne) ;\n2. la **classe d'horloge** (6 = verrouillée GPS, 7 = GPS perdu, en maintien ou holdover) ;\n3. la précision et la stabilité annoncées ;\n4. **priority2**, puis l'identité.\n\nIci, le grand maître 1 a priority1 = 100, le 2 a 110 : c'est le 1 qui est élu (rouge : ${gmName('red')} ; bleu : ${gmName('blue')}).`,
     },
     {
       id: 'parent', title: 'Le voir en ligne de commande',
@@ -231,8 +232,8 @@ const portFixed = (c, color) => { const n = nicOf(c, color); if (!n) return fals
 /** @type {import('../engine.js').Lesson} */
 const LESSON_FIX = {
   id: 'reseau-depannage', domain: 'Réseau ST 2110', stations: ['reseau'], needs: { ip: true },
-  title: 'Dépannage : une caméra a disparu',
-  summary: 'Le réalisateur n\'a plus une caméra. On applique la méthode : constater, délimiter, descendre les couches, réparer, enregistrer.',
+  title: 'Dépanner une caméra disparue du réseau',
+  summary: 'Exercice de la leçon « Multicast et IGMP (car IP, ST 2110) » : le réalisateur n\'a plus une caméra, ses flux multicast n\'arrivent plus par aucun des deux réseaux. On applique la méthode : constater, délimiter, descendre les couches, réparer, enregistrer.',
   duration: '12 min', level: 'intermédiaire',
   outro: 'La méthode vaut pour toutes les pannes : délimiter d\'abord (une source ou toutes ? un réseau ou les deux ?), puis descendre les couches (physique, VLAN, IP, multicast, PTP) jusqu\'à la cause. Et ne jamais oublier d\'enregistrer la correction.',
   steps: [
@@ -240,7 +241,7 @@ const LESSON_FIX = {
       id: 'call', title: '« La caméra est noire ! »',
       // panne cachée, enregistrée sur les deux leaves (elle survivrait à un redémarrage)
       enter: (c) => { c.mem.entry = injectFault('vlanccu', true); for (const color of ['red', 'blue']) { const n = nicOf(c, color); if (n) writeMemory(n.sw); } markDirty(); },
-      say: (c) => `Le réalisateur à l'intercom : « La **${camOf(c)}**, je ne l'ai plus ! ». Pas de panique, on applique la méthode. Première question, toujours la même : **qu'est-ce qui est touché exactement ?** Une seule source ou plusieurs ? Un seul réseau ou les deux ?`,
+      say: (c) => `Le réalisateur à l'intercom : « La **${camOf(c)}**, je ne l'ai plus ! ». En IP, une image qui manque, c'est un flux multicast qui n'arrive plus au récepteur : soit l'émetteur n'émet plus vers son groupe, soit l'abonnement ne remonte plus jusqu'à lui.\n\nPas de panique, on applique la méthode. Première question, toujours la même : **qu'est-ce qui est touché exactement ?** Une seule source ou plusieurs ? Un seul réseau ou les deux ?`,
     },
     {
       id: 'flows', title: 'Délimiter',

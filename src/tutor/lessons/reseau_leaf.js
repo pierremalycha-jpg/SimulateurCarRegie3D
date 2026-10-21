@@ -3,8 +3,9 @@ import { loadFactory, loadReference, writeMemory, markDirty, SSM_REF } from '../
 import { CFG, host, refHost, devicePorts, portRange, portsShort, uplinks, leafPlan, accessOk, uplinkOk, ospfFull, ptpSynced, issuesOf, saved, rxSummary, devFlowsProtected } from '../net_helpers.js';
 
 // ----------------------------------------------------------------------------------
-// Parcours du chef de car : mettre en service, couche par couche, une leaf neuve (la leaf
-// caméras du réseau rouge, sortie de son carton en configuration usine).
+// Exercice pratique de la leçon « Multicast et IGMP » du Cours, mené par Olivier, le chef de car :
+// mettre en service, couche par couche, une leaf neuve (la leaf caméras du réseau rouge, sortie de
+// son carton en configuration usine).
 // ----------------------------------------------------------------------------------
 const L = 'LEAF-R1';
 const P = () => leafPlan(L);
@@ -21,7 +22,7 @@ const said = (pat) => (c) => c.seen('cli', (e) => e.ok && e.sw === L && e.pat &&
 export const LESSON_LEAF = {
   id: 'reseau-leaf', domain: 'Réseau ST 2110', stations: ['reseau'], needs: { ip: true },
   title: 'Mettre en service une leaf neuve',
-  summary: 'Le commutateur des caméras (réseau rouge) a été remplacé. On le configure ensemble, couche par couche : ports, VLAN, routage, OSPF, multicast, PTP, QoS, puis on enregistre.',
+  summary: 'Exercice de la leçon « Multicast et IGMP (car IP, ST 2110) » : le commutateur des caméras (réseau rouge) a été remplacé. On le configure couche par couche (ports, VLAN, routage, OSPF, multicast SSM avec PIM et IGMPv3, PTP, QoS), puis on enregistre.',
   duration: '25 min', level: 'intermédiaire',
   cleanupLabel: 'Remettre la leaf caméras rouge dans sa configuration de référence',
   cleanup: () => { loadReference(L); writeMemory(L); markDirty(); },
@@ -29,7 +30,7 @@ export const LESSON_LEAF = {
   steps: [
     {
       id: 'intro', title: 'Le travail du jour',
-      say: (c) => `Salut ! Je suis Olivier, le chef de car. Aujourd'hui, un cas classique : la **leaf caméras du réseau rouge** (le commutateur d'accès où sont branchées les CCU) a grillé cette nuit, on l'a remplacée par un commutateur neuf. Il sort du carton : configuration usine, il ne sait rien faire.\n\nSur cette leaf arrivent les ${devs().length} CCU (${portsShort(devs().map((d) => d.port))}) et partent 4 liens 100 Gb/s vers les deux spines rouges (le cœur du réseau).\n\nOn va la configurer **couche par couche**, comme on le fait toujours : d'abord le physique, puis le niveau 2 (VLAN), le niveau 3 (adresses, routage), le multicast, la synchro PTP et les priorités. À chaque étape je t'explique pourquoi, et on vérifie avant de passer à la suite.`,
+      say: (c) => `Salut ! Je suis Olivier, le chef de car. Aujourd'hui, un cas classique : la **leaf caméras du réseau rouge** (le commutateur d'accès où sont branchées les CCU) a grillé cette nuit, on l'a remplacée par un commutateur neuf. Il sort du carton : configuration usine, il ne sait rien faire.\n\nSur cette leaf arrivent les ${devs().length} CCU (${portsShort(devs().map((d) => d.port))}) et partent 4 liens 100 Gb/s vers les deux spines rouges (le cœur du réseau).\n\nOn va la configurer **couche par couche**, comme on le fait toujours : d'abord le physique, puis le niveau 2 (VLAN), le niveau 3 (adresses, routage), le multicast, la synchro PTP et les priorités. À chaque étape je t'explique pourquoi, et on vérifie avant de passer à la suite.\n\nLe cœur de l'affaire, c'est le **multicast** de la leçon : tant que la leaf ne sait pas router les groupes (PIM) ni entendre les abonnements des récepteurs (IGMPv3), aucun flux de caméra ne repasse par le rouge.`,
     },
     {
       id: 'swap', title: 'Le commutateur neuf est en place',
@@ -169,7 +170,7 @@ export const LESSON_LEAF = {
     },
     {
       id: 'mcif', title: 'Le multicast (2/2) : PIM et IGMPv3',
-      say: () => `Deux protocoles travaillent ensemble :\n- **IGMPv3**, côté appareils : c'est par lui qu'un récepteur dit « je veux tel groupe de telle source ». On l'active sur la SVI, en version 3 (indispensable pour le SSM). La SVI devient aussi le **querier** : elle redemande régulièrement qui écoute quoi, sans quoi le snooping finit par couper les flux.\n- **PIM** (sparse-mode), entre routeurs : il remonte l'abonnement vers la source, de leaf en spine. On l'active sur les 4 uplinks et sur la SVI.`,
+      say: () => `Deux protocoles travaillent ensemble :\n- **IGMPv3**, côté appareils : c'est par lui qu'un récepteur dit « je veux tel groupe de telle source ». On l'active sur la SVI, en version 3 (indispensable pour le SSM). La SVI devient aussi le **querier** : elle redemande régulièrement (toutes les 125 s par défaut) qui écoute quoi, sans quoi le snooping finit par couper les flux.\n- **PIM** (sparse-mode), entre routeurs : il remonte l'abonnement vers la source, de leaf en spine. On l'active sur les 4 uplinks et sur la SVI.`,
       do: 'Active PIM sur les uplinks et la SVI, et IGMP version 3 sur la SVI.',
       cli: () => ['interface ethernet49-52', 'pim ipv4 sparse-mode', `interface vlan${P().vlan}`, 'pim ipv4 sparse-mode', 'ip igmp version 3'], sw: L, go: term, show: termInput,
       done: () => { const c = cfg(); const v = c.svis[P().vlan]; return UP().every((u) => c.ports[u.port].pim) && v && v.pim && v.igmp === 3; },

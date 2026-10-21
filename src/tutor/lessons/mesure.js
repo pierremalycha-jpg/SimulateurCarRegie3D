@@ -1,9 +1,10 @@
 // @ts-check
-// Parcours du chef de car : la mesure vidéo (PRISM).
+// Exercices pratiques de la mesure vidéo (PRISM), menés par Olivier, le chef de car.
 // ----------------------------------------------------------------------------------
-// Trois parcours : lire le waveform et la parade (poste vision), le gamut au vecteurscope, au diamant
-// et au split diamant (poste vision), qualifier une liaison SDI au diagramme de l'œil et trouver un
-// cordon abîmé (baie de mesure). Les gestes se vérifient sur l'état du simulateur : affichages des
+// Trois exercices, chacun rangé dans sa leçon du Cours : lire le waveform et la parade (leçon
+// « Niveaux », poste vision), le gamut au vecteurscope, au diamant et au split diamant (leçon « Espaces
+// de couleur », poste vision), qualifier une liaison SDI au diagramme de l'œil et trouver un cordon
+// abîmé (leçon « Longueur de câble et diagramme de l'œil », baie de mesure). Les gestes se vérifient sur l'état du simulateur : affichages des
 // tuiles de l'instrument (prism_model.js), réglages de la caméra au RCP, couche physique de la liaison.
 // ----------------------------------------------------------------------------------
 import { S, camById } from '../../state.js';
@@ -35,8 +36,8 @@ const ensureVisible = (key) => { if (PRISM[key].layout === 1) PRISM[key].layout 
 /** @type {import('../engine.js').Lesson} */
 const WFM = {
   id: 'prism-waveform', domain: D, stations: ['vision', 'mesure'],
-  title: 'Lire le PRISM : waveform et parade',
-  summary: 'L\'instrument de mesure de la vision : ses tuiles, le waveform en mV et en %, le curseur, la parade RVB et un noir rouge à corriger au RCP.',
+  title: 'Lire les niveaux au waveform et à la parade',
+  summary: 'Exercice de la leçon « Niveaux : 0–100 %, noir à 64, blanc à 940 » : mettre une tuile du PRISM en waveform, lire les niveaux en mV et en % au curseur, puis corriger au RCP un noir qui tire au rouge sur la parade RVB.',
   duration: '10 min', level: 'débutant',
   outro: 'Le Grade 1 dit si c\'est beau, le PRISM dit si c\'est juste. Une habitude d\'ingénieur vision : l\'œil sur le moniteur, un coup d\'œil au waveform et à la parade à chaque réglage, et des chiffres plutôt qu\'une impression.',
   cleanupLabel: 'Remettre le noir de la caméra',
@@ -45,7 +46,7 @@ const WFM = {
     {
       id: 'intro', title: 'L\'instrument',
       enter: (c) => { c.mem.cam = pickCam([3, 4, 2, 5, 1]); },
-      say: 'À la vision, à côté du **RCP** (le pupitre de réglage de la caméra) et sous le **Grade 1** (le moniteur de référence), il y a un **moniteur de mesure** : ici un **PRISM** (de Telestream, anciennement Tektronix). C\'est un écran tactile découpé en quatre **tuiles** ; chaque tuile choisit son affichage : waveform, vecteurscope, diamant, image…\n\nLe Grade 1 te dit si l\'image est belle ; le PRISM te dit si elle est **juste** : des niveaux chiffrés, comparables d\'une caméra à l\'autre et aux consignes du diffuseur.',
+      say: 'Leçon « Niveaux » : le noir vidéo est à **0 %** (code 64 en 10 bits), le blanc à **100 %** (code 940), et seul un instrument dit où sont vraiment les niveaux, parce que l\'œil s\'adapte et se trompe.\n\nÀ la vision, à côté du **RCP** (le pupitre de réglage de la caméra) et sous le **Grade 1** (le moniteur de référence), il y a un **moniteur de mesure** : ici un **PRISM** (de Telestream, anciennement Tektronix). C\'est un écran tactile découpé en quatre **tuiles** ; chaque tuile choisit son affichage : waveform, vecteurscope, diamant, image…\n\nLe Grade 1 te dit si l\'image est belle ; le PRISM te dit si elle est **juste** : des niveaux chiffrés, comparables d\'une caméra à l\'autre et aux consignes du diffuseur.',
     },
     goVision('On va au poste vision, en régie vision et ralentis.', 'Le PRISM est sous le Grade 1 et le multiview, au-dessus du fil « Ce qui se passe ». Il mesure la caméra choisie au RCP.'),
     {
@@ -61,7 +62,7 @@ const WFM = {
     },
     {
       id: 'lire', title: 'Lire les niveaux',
-      say: 'De bas en haut : **0 mV** = noir, **700 mV** = blanc nominal, soit **100 %**. Le bouton mV / % change seulement l\'échelle : 1 % vaut 7 mV.\n\nRepères de jour : pelouse vers **40 à 55 %**, maillots blancs **sous 100 %** (103 % au plus selon le diffuseur), noirs **entre 0 et 2 %**. La ligne pointillée rouge à 109 %, c\'est le plafond du signal numérique.',
+      say: 'De bas en haut : **0 mV** = noir (code 64), **700 mV** = blanc nominal (code 940), soit **100 %** : c\'est la plage légale. Le bouton mV / % change seulement l\'échelle : 1 % vaut 7 mV.\n\nRepères de jour : pelouse vers **40 à 55 %**, maillots blancs **sous 100 %** (103 % au plus selon le diffuseur, EBU R 103), noirs **entre 0 et 2 %**. La ligne pointillée rouge à 109 % (763 mV, code 1 019) est le plafond des super-blancs que le SDI transporte : entre 100 et 109 %, le signal passe, mais il n\'est plus légal.',
     },
     {
       id: 'curseur', title: 'Le curseur',
@@ -91,7 +92,7 @@ const WFM = {
     {
       id: 'noir', title: 'Un noir qui tire au rouge',
       enter: (c) => { const k = cam(c); if (k) { k.panelActive = true; k.paint.blackR += 120; } },
-      say: (c) => `Je viens de dérégler le noir rouge de la CAM ${c.mem.cam} : sur la parade, en bas, la trace rouge part plus haut que la verte et la bleue. Les ombres de la tribune virent au rouge.`,
+      say: (c) => `Je viens de dérégler le noir rouge de la CAM ${c.mem.cam} (le niveau de noir du seul rouge ; le master black, lui, déplace les trois) : sur la parade, en bas, la trace rouge part plus haut que la verte et la bleue. Les ombres de la tribune virent au rouge.`,
       do: 'Rééquilibre les noirs : balance des noirs automatique ou molette BLACK R.',
       go: (c) => ({ station: 'vision', cam: c.mem.cam }), show: [rcpBtn('ABB')],
       done: (c) => { const k = cam(c); if (!k) return false; const e = k.colorError(); return Math.abs(e.blackR) < 0.006 && Math.abs(e.blackB) < 0.006; },
@@ -111,17 +112,17 @@ const WFM = {
 /** @type {import('../engine.js').Lesson} */
 const GAMUT = {
   id: 'prism-gamut', domain: D, stations: ['vision'],
-  title: 'Gamut : vecteurscope, diamant et split diamant',
-  summary: 'La mire au vecteurscope (cibles 75 %), une caméra trop saturée qui sort du diamant, et ce que montre le split diamant.',
+  title: 'Vérifier le gamut au vecteurscope et au diamant',
+  summary: 'Exercice de la leçon « Espaces de couleur : BT.709, BT.2020, HDR » : la mire dans les cibles 75 % du vecteurscope, une caméra trop saturée qui sort du diamant et que l\'on ramène dans le gamut au RCP, puis le split diamant.',
   duration: '10 min', level: 'intermédiaire',
-  outro: 'Le vecteurscope dit la teinte et la saturation ; le diamant dit si le signal est légal en RVB. Une image peut être belle au Grade 1 et refusée au contrôle qualité : on vérifie le gamut avant l\'antenne, surtout quand on pousse la saturation.',
+  outro: 'Le vecteurscope dit la teinte et la saturation ; le diamant dit si le signal est légal en RVB. Une image peut être belle au Grade 1 et refusée au contrôle qualité : on vérifie le gamut avant l\'antenne, surtout quand on pousse la saturation, et sur la sortie SDR d\'une production HDR, où les couleurs du triangle BT.2020 doivent rentrer dans celui du BT.709.',
   cleanupLabel: 'Remettre la caméra comme avant',
   cleanup: (c) => { const k = cam(c); if (k) { k.paint.bars = false; if (c.mem.sat0 != null) { k.paint.sat = c.mem.sat0; k.paint.kneeOn = c.mem.knee0; k.paint.wclip = c.mem.wclip0; } } },
   steps: [
     {
       id: 'intro', title: 'Le gamut',
       enter: (c) => { c.mem.cam = pickCam([4, 5, 2, 3, 1]); },
-      say: 'Le **gamut**, c\'est l\'ensemble des valeurs qu\'un signal peut prendre sans sortir de ses limites. Le câble transporte Y, Cb et Cr ; mais toutes leurs combinaisons ne se reconvertissent pas en rouge, vert et bleu entre 0 et 700 mV. Une couleur **hors gamut** sera écrêtée plus loin (codeur, émetteur) et changera de teinte ; la chaîne peut même refuser le programme au contrôle qualité.',
+      say: 'Leçon « Espaces de couleur » : le **gamut** d\'un espace, c\'est le triangle des couleurs que ses trois primaires savent reproduire (BT.709 en HD, BT.2020 en UHD).\n\nÀ la mesure, on vérifie la même chose sur le signal. Le câble transporte Y, Cb et Cr ; mais toutes leurs combinaisons ne se reconvertissent pas en rouge, vert et bleu entre 0 et 700 mV. Une couleur hors du triangle, ou trop lumineuse et trop saturée à la fois, ressort avec une composante sous 0 ou au-dessus de 700 mV : elle est **hors gamut**. Elle sera écrêtée plus loin (codeur, émetteur) et changera de teinte ; la chaîne peut même refuser le programme au contrôle qualité.',
     },
     goVision('On retourne au poste vision.', 'On va se servir du vecteurscope et du diamant du PRISM.'),
     {
@@ -168,7 +169,7 @@ const GAMUT = {
       do: 'Ramène l\'image dans le gamut : saturation à 115 % au plus, knee rallumé, white clip à 105 % au plus.',
       go: (c) => ({ station: 'vision', cam: c.mem.cam }), show: [{ sel: '#station .rcp-key', text: 'KNEE', label: 'touche KNEE' }, { sel: '#station .rcp-tab', text: 'PAINT', label: 'page PAINT' }],
       done: (c) => { const k = cam(c); return !!k && k.paint.sat <= 115 && k.paint.kneeOn && k.paint.wclip <= 105; },
-      ok: 'La trace est rentrée dans les losanges : chaque composante reste entre 0 et 700 mV. Le knee compresse les hautes lumières au lieu de les laisser filer ; le white clip est le plafond de sécurité.',
+      ok: 'La trace est rentrée dans les losanges : chaque composante reste entre 0 et 700 mV, dans les −5 à 105 % que tolère le diffuseur sur R, V et B (EBU R 103). Le knee compresse les hautes lumières au lieu de les laisser filer ; le white clip est le plafond de sécurité.',
       hints: ['Une trace qui sort par un côté du diamant = une couleur trop saturée ; par une pointe = des blancs trop hauts. Trois réglages du RCP sont en cause.', 'Page PAINT : molette SATURATION ; touches assignables : KNEE ; page GAMMA / KNEE : molette WHITE CLIP.', 'Saturation vers 100 %, KNEE allumé, WHITE CLIP à 103 % : la trace rentre dans les losanges.'],
       auto: (c) => { const k = cam(c); k.paint.sat = 100; k.paint.kneeOn = true; k.paint.wclip = 103; },
     },
@@ -178,7 +179,7 @@ const GAMUT = {
       do: 'Mets une autre tuile en Split diamant.',
       go: (c) => ({ station: 'vision', cam: c.mem.cam }), show: [tileSel],
       done: () => showing('vision', 'split'),
-      ok: 'Rien entre les losanges : la chaîne du car écrête à 0. Sur une source extérieure (un duplex, un serveur), le split diamant attrape les noirs négatifs que le diamant cache.',
+      ok: 'Rien entre les losanges : la caméra ne descend pas sous le noir. Sur une source extérieure (un duplex, un serveur), le split diamant attrape les sous-noirs (le SDI les transporte jusqu\'à −7 %) que le diamant cache.',
       hints: ['C\'est un affichage à part entière dans la liste des tuiles.', 'Choisis « Split diamant » dans la liste d\'une autre tuile.'],
       auto: () => { const i = PRISM.vision.tiles.findIndex((t) => t.app !== 'diamond'); setTile('vision', i < 0 ? 0 : i, { app: 'split' }); },
     },
@@ -196,7 +197,7 @@ const ptOf = (c) => pointById(c.mem.pt);
 const OEIL = {
   id: 'prism-oeil', domain: 'Liaisons, synchro et diffusion', stations: ['mesure'],
   title: 'Qualifier une liaison SDI au diagramme de l\'œil',
-  summary: 'La couche physique du SDI : l\'œil de référence, l\'amplitude, puis une sortie de CCU qui fait des erreurs CRC, à trouver et à réparer avant qu\'elle tombe.',
+  summary: 'Exercice de la leçon « Longueur de câble et diagramme de l\'œil » : l\'œil de référence de la mire du SPG, l\'amplitude, l\'œil brut et l\'œil égalisé, puis une sortie de CCU qui fait des erreurs CRC, à trouver et à réparer avant la falaise.',
   duration: '12 min', level: 'intermédiaire',
   outro: 'Une liaison numérique ne prévient pas : parfaite, puis coupée. Ce qui prévient, ce sont les CRC et la marge. On qualifie chaque liaison à l\'installation (œil, longueur, CRC à zéro) et on surveille les CRC pendant le direct.',
   cleanupLabel: 'Réparer la liaison en panne',
@@ -204,7 +205,7 @@ const OEIL = {
   steps: [
     {
       id: 'intro', title: 'La couche physique',
-      say: () => { const f = sdiStd(); return `Jusqu'ici, on a mesuré l'**image**. Ici, on mesure le **signal** : en ${f.name}, un train de bits à ${f.rate} sur un câble coaxial de 75 Ω. Le câble atténue, les connecteurs renvoient des échos, l'horloge tremble : c'est la **couche physique**, le signal électrique avant qu'on lise ses bits.${S.ipMode ? '\n\nDans le car IP, les caméras arrivent en ST 2110 sur le réseau : seule la mire du SPG reste en coaxial. Pour la panne de ce parcours, refais-le dans le car SDI.' : ''}`; },
+      say: () => { const f = sdiStd(); return `Leçon « Longueur de câble et diagramme de l'œil » : le coaxial atténue d'autant plus que la fréquence est haute, l'égaliseur du récepteur rouvre l'œil jusqu'à son budget, puis l'image tombe d'un coup.\n\nLe waveform mesure l'**image** ; ici, on mesure le **signal** : en ${f.name}, un train de bits à ${f.rate} sur un câble coaxial de 75 Ω. Le câble atténue, les connecteurs renvoient des échos, l'horloge tremble : c'est la **couche physique**, le signal électrique avant qu'on lise ses bits.${S.ipMode ? '\n\nDans le car IP, les caméras arrivent en ST 2110 sur le réseau : seule la mire du SPG reste en coaxial. Pour la panne de cet exercice, refais-le dans le car SDI.' : ''}`; },
     },
     goStation('mesure', 'La baie de mesure est dans la zone technique, au bout de la rangée côté porte.', 'L\'instrument en grand ; dessous, les points de mesure et la liaison mesurée.'),
     {
@@ -225,7 +226,7 @@ const OEIL = {
     },
     {
       id: 'brut', title: 'Brut ou égalisé',
-      say: 'La norme définit l\'œil à la sortie de l\'émetteur. Après 80 m de câble en 3G, l\'**œil brut** est fermé : c\'est normal, le câble atténue les hautes fréquences. Chaque récepteur a un **égaliseur** qui les remonte et rouvre l\'œil : l\'**œil égalisé** montre ce que lit vraiment la grille.\n\nL\'instrument lit aussi le réglage de son égaliseur : il en déduit l\'**affaiblissement** du câble et sa **longueur** (tuile État SDI), et la **marge** qui reste.',
+      say: 'La norme définit l\'œil à la sortie de l\'émetteur. Après 80 m de 1694A en 3G (déjà 20 dB à 1,485 GHz, tout le budget que la norme garantit), l\'**œil brut** est fermé : c\'est normal, le câble atténue les hautes fréquences. Chaque récepteur a un **égaliseur** adaptatif qui les remonte et rouvre l\'œil : l\'**œil égalisé** montre ce que lit vraiment la grille.\n\nL\'instrument lit aussi le réglage de son égaliseur : il en déduit l\'**affaiblissement** du câble et sa **longueur** (tuile État SDI), et la **marge** qui reste.',
     },
     {
       id: 'find', title: 'Trouver la liaison malade',
