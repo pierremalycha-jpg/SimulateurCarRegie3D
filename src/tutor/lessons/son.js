@@ -20,8 +20,8 @@ const cell = (k, bus) => { const i = AU.order.indexOf(k); const col = ['pgm', 'i
 /** @type {import('../engine.js').Lesson} */
 const STRIP = {
   id: 'son-tranche', domain: D, stations: ['son'],
-  title: 'La console : gain, alimentation 48 V et phase',
-  summary: 'Un canon qui sature, un micro statique sans alimentation, une ambiance en opposition de phase : on corrige à la tranche d\'entrée.',
+  title: 'Corriger une tranche : gain, 48 V et polarité',
+  summary: 'Exercice de la leçon « La tranche : gain, 48 V, phase, égaliseur, fader » : un canon qui sature, un micro statique sans alimentation, une ambiance en opposition de phase, corrigés à l\'entrée des tranches.',
   duration: '8 min', level: 'débutant',
   outro: 'L\'ordre de réglage d\'une tranche : le gain d\'entrée (crêtes entre −18 et −10 dBFS), l\'alimentation et la polarité, puis seulement le correcteur, la dynamique et le fader.',
   cleanupLabel: 'Remettre les trois tranches',
@@ -29,7 +29,7 @@ const STRIP = {
   steps: [
     {
       id: 'intro', title: 'La console son',
-      say: 'La console reçoit les micros du stade (ambiances, **canons** — des micros très directifs — au bord du terrain), les commentateurs, les ralentis, le duplex… Chaque source arrive sur une **tranche** (une colonne de réglages : gain, correcteur, dynamique, fader).\n\nLe premier réglage, et le plus important, est celui d\'**entrée** : un signal qui sature à l\'entrée est perdu, aucun fader ne le rattrapera.',
+      say: 'La leçon l\'a montré : au-delà de 0 dBFS, le son est écrêté, et aucun fader ne le répare. La console reçoit les micros du stade (ambiances, **canons** — des micros très directifs — au bord du terrain), les commentateurs, les ralentis, le duplex… Chaque source arrive sur une **tranche** (une colonne de réglages : gain, polarité, correcteur, dynamique, fader).\n\nLe premier réglage, et le plus important, est celui d\'**entrée** : gain, alimentation 48 V, polarité. Un signal qui sature à l\'entrée est perdu.',
     },
     goStation('son', 'On va en cabine son, à l\'arrière du car.', 'La surface : deux baies de tranches, les écrans Vistonics (écrans de réglage entourés de molettes) au-dessus de chaque groupe de faders.'),
     {
@@ -46,18 +46,18 @@ const STRIP = {
     {
       id: 'ph48', title: 'Un micro sans alimentation',
       enter: () => { AU.ch.amb2.ph48 = false; applyStrip(AU.ch.amb2); },
-      say: 'L\'ambiance du kop (la tribune des supporters, derrière le but : **AMB KOP**) est muette. Ce couple est fait de micros **statiques** (à condensateur) : ils ont besoin de l\'**alimentation fantôme 48 V**, envoyée par la console dans le câble micro.',
+      say: 'L\'ambiance du kop (la tribune des supporters, derrière le but : **AMB KOP**) est muette. Ce couple est fait de micros **statiques** (à condensateur) : ils ont besoin de l\'**alimentation fantôme 48 V**, envoyée par la console dans le câble micro lui-même. Sans elle, ils ne délivrent rien.',
       do: 'Allume l\'alimentation 48 V (touche 48V) de la tranche AMB KOP.',
       go: { station: 'son' }, show: inTab('Console', view('ENTRÉE'), strip('AMB KOP')),
       done: () => AU.ch.amb2.ph48,
-      ok: 'L\'ambiance revient. Les micros dynamiques n\'en ont pas besoin, et le 48 V ne les gêne pas.',
+      ok: 'L\'ambiance revient. Les micros dynamiques n\'en ont pas besoin, et le 48 V ne les gêne pas s\'ils sont câblés en symétrique.',
       hints: ['Un micro statique muet : c\'est souvent son alimentation qui manque, et elle se règle à l\'entrée de la tranche.', 'Vue ENTRÉE, tranche AMB KOP : la touche 48V.'],
       auto: () => { AU.ch.amb2.ph48 = true; applyStrip(AU.ch.amb2); },
     },
     {
       id: 'phase', title: 'Une phase inversée',
       enter: () => { AU.ch.amb1.phase = true; applyStrip(AU.ch.amb1); },
-      say: 'Sur l\'ambiance tribune (**AMB LEP**), une voie du couple est en **opposition de phase** : le **corrélateur** (l\'indicateur de phase entre les deux voies, de −1 à +1) passe sous zéro et l\'ambiance se creuse, surtout en mono. On rétablit la polarité (touche Ø).',
+      say: 'Sur l\'ambiance tribune (**AMB LEP**), une voie du couple a sa polarité inversée : les deux voies sont en **opposition de phase**. Le **corrélateur** (l\'indicateur de phase entre les deux voies, de −1 à +1) passe sous zéro et l\'ambiance se creuse, jusqu\'à presque disparaître en mono, où la partie commune aux deux micros s\'annule. On rétablit la polarité (touche Ø).',
       do: 'Désactive l\'inversion de polarité (Ø) de la tranche AMB LEP.',
       go: { station: 'son' }, show: inTab('Console', view('ENTRÉE'), strip('AMB LEP')),
       done: () => !AU.ch.amb1.phase,
@@ -77,8 +77,8 @@ const STRIP = {
 /** @type {import('../engine.js').Lesson} */
 const FEEDS = {
   id: 'son-departs', domain: D, stations: ['son', 'transmission'],
-  title: 'N-1 des commentateurs, synchro labiale et plan de son',
-  summary: 'Un consultant qui s\'entend en écho, un son décalé de l\'image, des paires audio inversées vers la chaîne : on corrige les départs.',
+  title: 'Corriger les départs : N-1, synchro labiale, plan de son',
+  summary: 'Exercice de la leçon « N-1, synchro labiale et départs » : un consultant qui s\'entend en écho, un son décalé de l\'image, des paires audio inversées vers la chaîne, corrigés dans l\'onglet des départs.',
   duration: '10 min', level: 'intermédiaire',
   outro: 'Les départs sont ce que reçoivent les autres : la chaîne (programme et international), les commentateurs (N-1), le studio et le bord terrain. Une erreur ne s\'entend pas forcément en régie : il faut vérifier chaque départ.',
   cleanupLabel: 'Remettre les départs',
@@ -86,7 +86,7 @@ const FEEDS = {
   steps: [
     {
       id: 'intro', title: 'Les départs',
-      say: 'Le son ne part pas qu\'à l\'antenne. Chaque commentateur reçoit dans son casque un **N-1** (« mix-minus ») : tout le programme **sauf sa propre voix**. Elle reviendrait avec le retard de la chaîne, et il s\'entendrait en écho.',
+      say: 'La leçon l\'a montré : le son ne part pas qu\'à l\'antenne. Chaque commentateur reçoit dans son casque un **N-1** (« mix-minus ») : tout le programme **sauf sa propre voix**. Elle lui reviendrait avec le retard du son du car (le retard de ligne), et il s\'entendrait en écho.',
     },
     goStation('son', 'On reste en cabine son.', 'L\'onglet « Bus, N-1, départ » montre qui va dans quel départ.'),
     {
@@ -103,12 +103,12 @@ const FEEDS = {
     {
       id: 'sync', title: 'La synchro labiale',
       enter: () => { setLineDelay(AU.lineDelay + 180); },
-      say: () => `L'image traverse des équipements qui la retardent (synchroniseurs, multiview, ralentis). Le son, lui, arrive tout de suite : il faut le **retarder** du même temps.\n\nIci, le décalage est de ${avOffsetMs()} ms : les lèvres ne collent plus à la voix. La tolérance est de −40 ms (son en avance) à +60 ms (son en retard).`,
+      say: () => `L'image traverse des équipements qui la retardent (synchroniseur d'images, conversions, liaison HF). Le son, lui, arrive presque tout de suite : il faut le **retarder** du même temps.\n\nIci, le décalage est de ${avOffsetMs()} ms : les lèvres ne collent plus à la voix. La tolérance de bout en bout (EBU R37) va de −40 ms (son en avance) à +60 ms (son en retard) ; dans le car, on vise 0 ms.`,
       do: 'Règle le retard de ligne pour revenir dans la tolérance.',
       go: { station: 'son' }, show: inTab('Bus', { sel: '#station input[aria-label="Retard de ligne"]', label: 'retard de ligne' }),
       done: () => avOk(),
       ok: () => `Décalage ${avOffsetMs()} ms : dans la tolérance. Le téléspectateur ne voit plus de décalage entre les lèvres et la voix.`,
-      hints: ['Onglet « Bus, N-1, départ », panneau « Retard de ligne » : l\'afficheur dit si le son est en avance ou en retard, et de combien.', 'Une image vaut 20 ms à 50 Hz : compte combien d\'images il faut retirer ou ajouter.', 'Le curseur « Retard de ligne », ou les boutons − 1 image / + 1 image, jusqu\'à ce que l\'afficheur passe au vert.'],
+      hints: ['Onglet « Bus, N-1, départ », panneau « Retard de ligne » : l\'afficheur dit si le son est en avance ou en retard, et de combien.', 'Les boutons de la console avancent par pas de 20 ms, une image en 1080p50 (une trame en 1080i50) : compte combien de pas il faut retirer ou ajouter.', 'Le curseur « Retard de ligne », ou les boutons − 1 image / + 1 image, jusqu\'à ce que l\'afficheur passe au vert.'],
       auto: () => setLineDelay(AU.follow ? 0 : videoLatencyMs(AU.pgmSrc)),
     },
     {

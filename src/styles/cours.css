@@ -211,3 +211,9 @@ body:not(.role-formateur) .role-only { display: none !important; }
 .co-pl td { vertical-align: middle; }
 .co-pl select { font: 12.5px var(--f-mono); padding: 1px 4px; }
 .co-pl .co-btns { flex-wrap: nowrap; gap: 4px; }
+/* chapitre son */
+.co-mx td, .co-mx th { text-align: center; }
+.co-mx td:first-child, .co-mx th:first-child { text-align: left; }
+.co-mxb { width: 30px; height: 22px; padding: 0; border: 1px solid var(--line); border-radius: 3px; background: #0b0e10; color: var(--pvw); font: 14px var(--f-mono); cursor: pointer; }
+.co-mxb.on { background: var(--pvw-d, #113b22); border-color: var(--pvw); }
+.co-mxb.bad { border-color: var(--tally); box-shadow: 0 0 0 1px var(--tally); color: var(--tally); }

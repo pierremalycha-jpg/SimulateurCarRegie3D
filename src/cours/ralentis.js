@@ -24,6 +24,8 @@ function tc(sec) {
   return `${p(Math.floor(f / 90000) % 24)}:${p(Math.floor(f / 1500) % 60)}:${p(Math.floor(f / 25) % 60)}:${p(f % 25)}`;
 }
 const OUT_FPS = 50; // sortie du serveur en 1080p50
+/** vitesse lue au levier, en fraction du temps réel : « 33 % » et « 67 % » valent un tiers et deux tiers exactement, comme les vitesses préréglées */
+const lever = (pct) => (pct === 33 ? 1 / 3 : pct === 67 ? 2 / 3 : pct / 100);
 
 // ======================================================================================
 // 1. Le serveur : trains, IN, OUT, vitesse
@@ -92,7 +94,7 @@ function demoTrains(host) {
   const drawTimeline = () => {
     gt.fillStyle = '#0b1013'; gt.fillRect(0, 0, TW, TH);
     gt.font = '11px Arial, sans-serif';
-    for (let s = 0; s <= SPAN; s += 5) { gt.strokeStyle = '#2a3238'; gt.beginPath(); gt.moveTo(X(s), 14); gt.lineTo(X(s), TH - 20); gt.stroke(); gt.fillStyle = '#aab4ba'; gt.fillText(tc(T0 + s).slice(3, 8), X(s) - 14, TH - 6); }
+    for (let s = 0; s <= SPAN; s += 5) { gt.strokeStyle = '#2a3238'; gt.beginPath(); gt.moveTo(X(s), 14); gt.lineTo(X(s), TH - 20); gt.stroke(); gt.fillStyle = '#aab4ba'; gt.fillText(tc(T0 + s).slice(0, 8), X(s) - 22, TH - 6); }
     gt.fillStyle = 'rgba(255,211,138,0.22)'; gt.fillRect(X(KICK - 0.6), 14, X(GOAL) - X(KICK - 0.6), TH - 34);
     gt.fillStyle = C.amber; gt.fillText('tir', X(KICK - 0.6) + 2, 11);
     TRAINS.forEach(([name, a], i) => {
@@ -112,7 +114,7 @@ function demoTrains(host) {
   // la pellicule : en haut les images enregistrées de l'angle à partir de l'IN, en bas les images de sortie, et laquelle chacune montre
   const drawStrip = () => {
     gf.fillStyle = '#0b1013'; gf.fillRect(0, 0, TW, 96);
-    const fpsRec = 50 * A().hfr, start = inP != null ? inP : cur, NOUT = 16, v = speed / 100;
+    const fpsRec = 50 * A().hfr, start = inP != null ? inP : cur, NOUT = 16, v = lever(speed);
     const shown = []; for (let j = 0; j < NOUT; j++) shown.push(Math.floor((start + j * v / OUT_FPS) * fpsRec + 1e-6));
     const first = shown[0], NREC = Math.max(1, Math.min(24, shown[NOUT - 1] - first + 1)), cw = (TW - 100) / Math.max(NREC, NOUT);
     gf.font = '10px Arial, sans-serif'; gf.fillStyle = '#aab4ba'; gf.fillText(`enregistrées (${fpsRec} i/s)`, 4, 22); gf.fillText('sortie (50 i/s)', 4, 84);
@@ -131,7 +133,7 @@ function demoTrains(host) {
     gv.fillText(`${A().name} · ${tc(T0 + t)}${playing ? ` · ▶ ${speed} %` : ' · ❚❚'}`, 8, 15);
   };
   const calc = () => {
-    const v = speed / 100, fpsRec = 50 * A().hfr;
+    const v = lever(speed), fpsRec = 50 * A().hfr;
     if (inP == null || outP == null || outP <= inP) {
       read.set('IN · OUT', inP == null ? 'posez un IN (et un OUT), ou DERN. ACTION' : `IN ${tc(T0 + inP)} · OUT à poser après l'IN`);
       read.set('Durée de l\'action (OUT − IN)', '—'); read.set('Durée à l\'antenne', '—'); read.set('Images enregistrées de l\'angle, entre IN et OUT', '—'); read.set('Images de sortie (50 par seconde)', '—');
@@ -151,7 +153,7 @@ function demoTrains(host) {
   const play = () => {
     if (playing) { cur = playT; stop(); redraw(); return; }
     playT = inP != null ? inP : cur; playing = true; playBtn.textContent = 'Pause ❚❚';
-    timer = window.setInterval(() => { playT += (speed / 100) / OUT_FPS; const end = outP != null && outP > (inP ?? 0) ? outP : SPAN; if (playT >= end) { playT = end; cur = end; stop(); } drawTimeline(); drawPreview(); }, 1000 / OUT_FPS);
+    timer = window.setInterval(() => { playT += lever(speed) / OUT_FPS; const end = outP != null && outP > (inP ?? 0) ? outP : SPAN; if (playT >= end) { playT = end; cur = end; stop(); } drawTimeline(); drawPreview(); }, 1000 / OUT_FPS);
   };
   const playBtn = el('button', { class: 'btn small primary', type: 'button', onclick: play }, 'Lire ▶');
   const curS = slider('Molette (jog)', 0, SPAN, cur, 0.04, (v) => { cur = v; if (playing) stop(); redraw(); }, (v) => tc(T0 + v).slice(3));
@@ -170,10 +172,10 @@ function demoTrains(host) {
         b('DERN. ACTION', () => { inP = KICK - 3; outP = KICK + 2.5; setCur(inP); }, 'IN trois secondes avant le tir, OUT deux secondes et demie après'),
         playBtn)),
     tl,
+    el('figure', { class: 'co-figc' }, fs, el('figcaption', {}, 'Quelle image enregistrée part à chaque image de sortie : les 16 premières, à partir de l\'IN')),
     el('div', { class: 'co-2' },
       el('figure', { class: 'co-figc' }, pv, el('figcaption', {}, 'Sortie du serveur : l\'image enregistrée montrée à l\'instant lu')),
-      el('figure', { class: 'co-figc' }, fs, el('figcaption', {}, 'Quelle image enregistrée part à chaque image de sortie (16 premières, à partir de l\'IN)'))),
-    read.el);
+      read.el));
   redraw();
   return { destroy: () => clearInterval(timer) };
 }
@@ -186,7 +188,7 @@ function figTrains() {
   f.append(sv('rect', { x: X(18), y: Y0, width: X(23.5) - X(18), height: 122, fill: '#7fd3f3', opacity: 0.16 }));
   f.append(sv('line', { x1: X(18), y1: Y0 - 4, x2: X(18), y2: Y0 + 124, stroke: C.pvw, strokeWidth: 2 }), txt(X(18), Y0 - 8, 'IN', 'co-m'));
   f.append(sv('line', { x1: X(23.5), y1: Y0 - 4, x2: X(23.5), y2: Y0 + 124, stroke: C.tally, strokeWidth: 2 }), txt(X(23.5), Y0 - 8, 'OUT', 'co-m'));
-  f.append(sv('circle', { cx: R + 10, cy: Y0 + 60, r: 5, fill: C.tally }), txt(R + 20, Y0 + 56, 'direct', 'co-s', 'start'), txt(R + 20, Y0 + 70, '● REC', 'co-s', 'start'));
+  f.append(sv('circle', { cx: R + 10, cy: Y0 + 60, r: 5, fill: C.tally }), txt(R + 20, Y0 + 56, 'direct', 'co-s', 'start'), txt(R + 20, Y0 + 70, 'enregistrement', 'co-s', 'start'));
   f.append(txt(R + 20, Y0 + 92, 'la boucle avance ;', 'co-s', 'start'), txt(R + 20, Y0 + 106, 'le plus ancien', 'co-s', 'start'), txt(R + 20, Y0 + 120, 'est écrasé', 'co-s', 'start'));
   for (let s = 0; s <= 30; s += 10) f.append(txt(X(s), Y0 + 140, `21:12:${20 + s}:00`, 'co-s'));
   f.append(txt(L, Y0 + 162, 'Phase A : images 1, 4, 7… · phase B : 2, 5, 8… · phase C : 3, 6, 9… : 3 × 50 = 150 images/s, recombinées par le serveur', 'co-s', 'start'));
