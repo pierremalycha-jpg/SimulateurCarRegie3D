@@ -3,12 +3,14 @@ import { el } from '../util.js';
 import { $ } from '../ui/common.js';
 import { APP_VERSION } from '../diag.js';
 import { openTrainer } from '../ui/config.js';
+import { emit } from '../state.js';
+import { PROFILE, setRole } from './profile.js';
 
 // ----------------------------------------------------------------------------------
 // Écran titre : écrit dans la page (index.template.html), il s'affiche dès l'ouverture, avant
 // même le programme. Pendant que le stade et le car se construisent (main.js, par étapes), il
-// montre la progression et les conseils d'Olivier ; quand tout est prêt, le menu s'allume :
-// entrer dans le car (feuille de service), les lieux, l'espace formateur, les réglages, les crédits.
+// montre la progression et les conseils d'Olivier ; quand tout est prêt, le menu s'allume, en cinq
+// entrées : Jouer (feuille de service), Cours, Chef de car, Formateur (profil Formateur), Réglages.
 // ----------------------------------------------------------------------------------
 export const TITLE = { ready: false, pct: 0 };
 const TIPS = [
@@ -45,12 +47,18 @@ export function initTitle() {
   if (next) { next.hidden = false; next.onclick = () => { setTip(tipI + 1); rotate(); }; }
   rotate();
   $('#ti-play').onclick = () => enterFrom('start');
-  $('#ti-lieux').onclick = () => enterFrom('lieux');
+  $('#ti-cours').onclick = () => emit('cours', { tab: 'chapitres' });
+  $('#ti-chef').onclick = () => enterFrom('chef');
   $('#ti-trainer').onclick = () => enterFrom('trainer');
   $('#ti-settings').onclick = () => openPanel('settings');
-  $('#ti-credits').onclick = () => openPanel('credits');
-  // réglages et crédits ne dépendent pas du stade : disponibles pendant le chargement
-  for (const id of ['#ti-settings', '#ti-credits']) /** @type {HTMLButtonElement} */ ($(id)).disabled = false;
+  // les cours et les réglages ne dépendent pas du stade : disponibles pendant le chargement
+  for (const id of ['#ti-cours', '#ti-settings']) /** @type {HTMLButtonElement} */ ($(id)).disabled = false;
+  // le profil : Étudiant ou Formateur, mémorisé ; il change aussi depuis les réglages
+  const role = $('#ti-role');
+  if (role) for (const b of role.querySelectorAll('button')) {
+    b.setAttribute('aria-pressed', String(b.dataset.v === PROFILE.role));
+    b.addEventListener('click', () => { setRole(b.dataset.v); for (const x of role.querySelectorAll('button')) x.setAttribute('aria-pressed', String(x === b)); });
+  }
 }
 
 /** étape du chargement : libellé et avancement (0 à 100) */
@@ -81,12 +89,13 @@ export function titleReady() {
   if (titleOpen() && (!panel || panel.hidden) && !t.contains(document.activeElement)) $('#ti-play').focus({ preventScroll: true });
 }
 
-/** quitter l'écran titre vers la feuille de service, les lieux ou l'espace formateur */
+/** quitter l'écran titre vers la feuille de service, les lieux, le chef de car ou l'espace formateur */
 export function enterFrom(target = 'start') {
   if (!TITLE.ready) return;
   const t = $('#title'); if (t) t.hidden = true;
   closePanel();
   if (target === 'trainer') { openTrainer('car'); return; }
+  if (target === 'chef') { emit('chef'); return; }
   if (target === 'lieux') {
     const wall = $('#start .dk-lieux'); const first = /** @type {HTMLElement | null} */ ($('#start .lx'));
     if (wall) wall.scrollIntoView({ block: 'start' });
@@ -104,15 +113,15 @@ export function showTitle() {
 
 // ---------------- réglages et crédits : un panneau à la place du menu ----------------
 function openPanel(kind) {
-  const p = $('#ti-panel'), menu = $('#ti-menu'); if (!p || !menu) return;
+  const p = $('#ti-panel'), menu = $('#ti-menu'), role = $('#ti-role'); if (!p || !menu) return;
   p.replaceChildren(...(kind === 'settings' ? settings() : credits()), el('button', { type: 'button', class: 'btn', id: 'ti-back', onclick: () => closePanel(true) }, 'Retour au menu'));
-  menu.hidden = true; p.hidden = false;
+  menu.hidden = true; p.hidden = false; if (role) role.hidden = true;
   const first = /** @type {HTMLElement | null} */ (p.querySelector('button')); if (first) first.focus({ preventScroll: true });
 }
 function closePanel(focusMenu = false) {
   const p = $('#ti-panel'), menu = $('#ti-menu'); if (!p || !menu) return;
   if (p.hidden) return;
-  p.hidden = true; p.replaceChildren(); menu.hidden = false;
+  p.hidden = true; p.replaceChildren(); menu.hidden = false; const role = $('#ti-role'); if (role) role.hidden = false;
   if (focusMenu) { const k = keys().find((b) => !b.disabled); if (k) k.focus({ preventScroll: true }); }
 }
 // une rangée de touches à bascule ; la valeur va aussi au sélecteur de la feuille de service
@@ -131,7 +140,9 @@ function settings() {
     el('div', { class: 'ti-row' },
       ...seg('Qualité graphique', 'ti-q', [['basse', 'Basse'], ['moyenne', 'Moyenne'], ['haute', 'Haute']], q, (v) => { setStart('stqual', v); try { localStorage.setItem('carregie.quality', v); } catch (e) { /* stockage indisponible */ } }),
       ...seg('Son', 'ti-s', [['1', 'Ambiance et commentaires'], ['0', 'Coupé']], startValue('stsnd', '1'), (v) => setStart('stsnd', v))),
-    el('p', {}, 'Basse convient aux ordinateurs portables ; Haute demande une carte graphique dédiée. D\'autres réglages sont dans le guide (touche G), une fois dans le car.')];
+    el('p', {}, 'Basse convient aux ordinateurs portables ; Haute demande une carte graphique dédiée. D\'autres réglages (lumière, étiquettes, voix du réalisateur) sont dans Réglages, une fois dans le car.'),
+    el('p', {}, 'Le profil se choisit sous le menu : Étudiant voit Jouer, Cours, Chef de car et Réglages ; Formateur a en plus l\'espace formateur, le suivi, la relecture technique et les pannes.'),
+    ...credits()];
 }
 function credits() {
   return [el('h2', {}, 'Crédits'),

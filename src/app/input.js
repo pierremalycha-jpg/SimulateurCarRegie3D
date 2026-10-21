@@ -7,6 +7,7 @@ import { closeStation, stationKey } from '../ui/stations.js';
 import { termOpen, closeTerm } from '../ui/term.js';
 import { openPlan, closePlan, planPointer, planWheel } from '../ui/plan.js';
 import { openGuide } from '../ui/guide.js';
+import { openCours } from '../ui/cours_ui.js';
 import { openSynoptics } from '../ui/synoptics.js';
 import { commutKey } from '../ui/commut.js';
 import { openDevice, openEquipmentIndex } from '../equipment/viewer.js';
@@ -57,7 +58,7 @@ function onKeyDown(e) {
   if (e.code === 'KeyV') { PL.fly = !PL.fly; updToolbar(); toast(PL.fly ? 'Vol libre : Espace pour monter, C pour descendre' : 'Vol libre désactivé'); }
   if (e.code === 'KeyP') openPlan();
   if (e.code === 'KeyT') { if (document.pointerLockElement) document.exitPointerLock(); openPupitre(); }
-  if (e.code === 'KeyG') openGuide('missions');
+  if (e.code === 'KeyG') openCours({ tab: 'chapitres' });
   if (e.code === 'KeyH') openGuide('commandes');
   if (e.code === 'KeyK') { if (target && target.kind === 'station' && target.device) openDevice(target.device, 1); else openEquipmentIndex(); }
   if (e.code === 'Tab') { e.preventDefault(); if (document.pointerLockElement) document.exitPointerLock(); openPupitre(); }
