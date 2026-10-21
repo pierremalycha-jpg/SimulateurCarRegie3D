@@ -151,6 +151,8 @@ function wfmRead(T, st) {
 // ---------------- vecteurscope ----------------
 function drawVec(g, w, h, k, T, V) {
   const cx = w / 2, cy = h / 2, R = Math.min(w, h) / 2 - 12 * k; const z = T.zoom === 5 ? 5 : 1;
+  // tuile trop petite (téléphone à forte densité, mise en page pas encore faite) : rien à tracer
+  if (R < 8) { g.fillStyle = BG; g.fillRect(0, 0, w, h); return; }
   const sc = R / 0.56 * z; // 0,5 de Cb ou Cr (couleur pleine) près du bord
   const S0 = Math.floor(2 * R); const img = acc(T, S0, S0); const d = img.data;
   const { buf, W, H } = V; const inc = z === 5 ? 60 : 34;

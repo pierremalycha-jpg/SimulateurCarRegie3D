@@ -447,6 +447,13 @@ transmission, déroulé d'une journée de match). Chaque leçon cite son article
 (l'ancien guide, ouvert par-dessus le Cours) et ses compétences. Les procédures maison du formateur s'affichent sur
 « Mon suivi » quand il en a écrit.
 
+**v19.0.1** : sur un téléphone à forte densité d'écran (Android, application Claude), le poste Vision s'arrêtait sur
+une erreur : la tuile vecteurscope de l'instrument de mesure, écrasée à quelques pixels, calculait un rayon
+négatif. Le vecteurscope ne trace plus rien sur une tuile trop petite, et sous 600 px de large les quatre tuiles
+s'empilent à leur hauteur naturelle avec au moins 190 px de trace chacune (`src/ui/prism.js`, `src/styles/prism.css`).
+La suite `mobile` ouvre le poste Vision sur un écran ×3 de 426 × 779 et fait passer les 13 affichages de mesure sur
+des tuiles minuscules.
+
 Les fichiers à partager s'appellent `TIEE-Simulator.html`, `TIEE-Simulator.exe` et `TIEE-Simulator-partage.zip`.
 Suites E2E mises à jour : `navigation`, `cours`, `chef`, `chef-postes`, `fichier`, `navigateurs`, `camera`,
 `accessibilite`, `session`, `reseau-local`.

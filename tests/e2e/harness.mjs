@@ -51,11 +51,11 @@ const NOISE = /fonts\.g|ERR_FAILED|net::/; // polices bloquées, serveur réseau
 /**
  * Ouvre le simulateur dans un nouvel onglet et attend qu'il soit prêt (window.__dbg).
  * @param {any} browser
- * @param {{ viewport?: { width: number, height: number }, query?: string, id?: string, errors?: string[], mobile?: boolean, url?: string, file?: string, before?: (page: any) => any, ready?: string, title?: boolean, fresh?: boolean }} [o]
+ * @param {{ viewport?: { width: number, height: number }, query?: string, id?: string, errors?: string[], mobile?: boolean, dpr?: number, url?: string, file?: string, before?: (page: any) => any, ready?: string, title?: boolean, fresh?: boolean }} [o]
  */
 export async function openPage(browser, o = {}) {
   const { viewport = { width: 1280, height: 800 }, query = 'lite', id = '', errors = [], mobile = false } = o;
-  const page = await browser.newPage({ viewport, ...(mobile ? { hasTouch: true, isMobile: true, deviceScaleFactor: 1 } : {}) });
+  const page = await browser.newPage({ viewport, ...(mobile ? { hasTouch: true, isMobile: true, deviceScaleFactor: o.dpr || 1 } : o.dpr ? { deviceScaleFactor: o.dpr } : {}) });
   // rendu logiciel lent et machine partagée : les actions et captures attendent jusqu'à 3 min
   page.setDefaultTimeout(180000);
   const tag = id ? id + ': ' : '';

@@ -56,6 +56,13 @@
 .mesure-prism .prism { --pz-h: clamp(340px, 64vh, 760px); }
 .mz-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; align-items: start; }
 @media (max-width: 900px) { .mz-grid { grid-template-columns: minmax(0, 1fr); } .prism { --pz-h: 520px; } .pz-screen { grid-template-columns: minmax(0, 1fr); grid-template-rows: repeat(4, minmax(0, 1fr)); } .pz-screen.one { grid-template-rows: minmax(0, 1fr); } }
+/* téléphone : les tuiles s'empilent à leur hauteur naturelle, chaque trace garde de quoi se lire
+   (les commandes d'une tuile passent sur deux ou trois lignes) */
+@media (max-width: 600px) {
+  .pz-screen, .mesure-prism .pz-screen { height: auto; grid-template-rows: none; grid-auto-rows: auto; }
+  .pz-cw { min-height: 190px; }
+  .pz-screen.one .pz-cw { min-height: 300px; }
+}
 .mz-points { display: flex; flex-direction: column; gap: 6px; }
 .mz-points .hwrow { gap: 5px; }
 .mz-points .hw { min-width: 64px; }
