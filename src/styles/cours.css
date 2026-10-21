@@ -205,6 +205,7 @@ body:not(.role-formateur) .role-only { display: none !important; }
 .co-fig .cm-flow.rev { animation-direction: reverse; }
 .co-fig .cm-flow.still { animation: none; stroke-dasharray: none; }
 @keyframes cm-flow { to { stroke-dashoffset: -12; } }
+.cm-syn > svg { min-width: 560px; } /* la chaîne reste lisible sur téléphone : elle défile dans son cadre */
 .cm-pool { align-content: flex-start; }
 .cm-pool .btn { text-align: left; white-space: normal; line-height: 1.3; }
 .cm-done { margin: 0; padding-left: 24px; display: grid; gap: 3px; font-size: 13px; }
@@ -228,3 +229,4 @@ body:not(.role-formateur) .role-only { display: none !important; }
 .co-proto { margin: 0; padding: 8px 10px; font: 12.5px/1.45 var(--f-mono); color: var(--lcd, #d3f3df); background: var(--glass); border: 1px solid #070a0c; border-radius: 3px; white-space: pre-wrap; }
 .co-mxstate td.co-bad { color: var(--tally); }
 @media (prefers-reduced-motion: reduce) { .co-xp.pend, .co-take.armed { animation: none; } }
+@media (max-width: 600px) { .co-xp, .co-lock { min-width: 32px; height: 28px; padding: 0 3px; } .co-mx th b { font-size: 11.5px; } }

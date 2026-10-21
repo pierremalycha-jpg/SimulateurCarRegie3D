@@ -24,7 +24,7 @@ const fmtDbm = (v) => fmtNum(v, 1).replace('-', '−');
 // ================= leçon 1 : la chaîne caméra =================
 // ---------------- le schéma : qui règle quoi ----------------
 function figQui() {
-  const f = figure(520, 200, 'Qui règle quoi : à gauche, ce que le cadreur règle sur la caméra (cadre, zoom, point, doubleur, viseur, appel) ; à droite, ce que l\'ingénieur vision règle au RCP (iris, noir, gain, filtres, balances, menus) ; entre les deux, la fibre qui porte l\'image vers le car et les réglages vers la tête');
+  const f = figure(520, 212, 'Qui règle quoi : à gauche, ce que le cadreur règle sur la caméra (cadre, zoom, point, doubleur, viseur, appel) ; à droite, ce que l\'ingénieur vision règle au RCP (iris, noir, gain, filtres, balances, menus) ; entre les deux, la fibre qui porte l\'image vers le car et les réglages vers la tête');
   f.append(txt(120, 16, 'Le cadreur, sur la caméra', 'co-t'), txt(392, 16, 'L\'ingénieur vision, au RCP', 'co-t'));
   // la caméra, objectif vers la gauche (le terrain)
   f.append(rect(22, 46, 96, 32, '#17181a'), sv('rect', { x: 18, y: 50, width: 5, height: 24, fill: '#0b1a2a' }), txt(70, 66, 'objectif box', 'co-s'));
@@ -41,7 +41,7 @@ function figQui() {
   const right = ['iris (joystick) et master black (bague)', 'gain, shutter, filtres ND et CC', 'balances : AWB, ABB, WHITE R et B', 'détail, gamma, knee, matrice (menus)', 'CAM PW, BARS, PANEL ACTIVE'];
   left.forEach((s, i) => f.append(txt(14, 122 + i * 15, '• ' + s, 'co-s', 'start')));
   right.forEach((s, i) => f.append(txt(270, 122 + i * 15, '• ' + s, 'co-s', 'start')));
-  f.append(txt(260, 196, 'Le MSU du chef vision atteint toutes les caméras ; le menu PAINT de la caméra suit le RCP.', 'co-s'));
+  f.append(txt(260, 206, 'Le MSU du chef vision atteint toutes les caméras ; le menu PAINT de la caméra suit le RCP.', 'co-s'));
   return f;
 }
 
@@ -184,7 +184,7 @@ function demoChaine(host) {
   };
   host.append(
     el('div', { class: 'co-ctl' }, choice('Ce qui circule', Object.entries(SIGS).map(([k, s]) => [k, s.label]), sig, (x) => { sig = x; draw(); })),
-    svg, note,
+    el('div', { class: 'co-mxwrap cm-syn' }, svg), note,
     el('div', { class: 'co-ctl' },
       slider('Longueur du câble', 0, 100, v, 1, (x) => { v = x; draw(); }, (x) => fmtLen(lenOf(x))),
       choice('Liaison', [['hyb', 'fibre hybride', 'La CCU alimente la tête par le cuivre du câble'], ['sm', 'monomode + alim. locale', 'Fibre monomode seule avec kit de conversion : la tête s\'alimente sur place']], link, (x) => { link = x; draw(); }),
@@ -215,7 +215,7 @@ function figRig() {
   f.append(txt(36, 40, '← terrain', 'co-s', 'start'));
   const rows = ['pied lourd et araignée · 15 kg', 'tête fluide · 18 kg', 'plaque coulissante · 1,5 kg', 'adaptateur grand objectif · 15,5 kg', 'tête de caméra · 5 kg', 'objectif box · 23,5 kg (à deux)', 'viseur 7,4" · 3,3 kg'];
   rows.forEach((s, i) => { const y = 30 + i * 18; f.append(sv('circle', { cx: 290, cy: y - 4, r: 7, fill: '#5c4210', stroke: C.amber }), txt(290, y, String(i + 1), 'co-m'), txt(303, y, s, 'co-s', 'start')); });
-  f.append(txt(283, 166, 'sur la tête : ≈ 49 kg', 'co-m', 'start'), txt(283, 182, 'complète : ≈ 85 kg avec manches et commandes', 'co-s', 'start'));
+  f.append(txt(283, 166, 'sur la tête : ≈ 49 kg', 'co-m', 'start'), txt(283, 182, 'complète : ≈ 85 kg', 'co-m', 'start'), txt(283, 197, 'avec manches et commandes', 'co-s', 'start'));
   f.append(txt(20, 220, '+ axe d\'inclinaison de la tête · numéros : ordre du montage', 'co-s', 'start'));
   return f;
 }
@@ -341,7 +341,7 @@ function demoMontage(host) {
     el('div', { class: 'co-2' }, el('div', {}, el('p', { class: 'co-note' }, 'Les gestes, dans le désordre :'), pool), el('div', {}, el('p', { class: 'co-note' }, 'Votre montage :'), list)),
     verdict, el('div', { class: 'co-ctl' }, again), read.el,
     el('h5', { class: 'co-h5' }, '2 · Équilibrer avant / arrière'),
-    el('div', { class: 'co-ctl' }, slider('Plaque', -12, 12, 0, 0.5, (x) => { d = x / 100; drawBal(); }, (x) => (x > 0 ? '+' : '') + fmtNum(x, 1) + ' cm vers l\'avant'), ...chks),
+    el('div', { class: 'co-ctl' }, slider('Plaque', -12, 12, 0, 0.5, (x) => { d = x / 100; drawBal(); }, (x) => (x === 0 ? 'au milieu' : fmtNum(Math.abs(x), 1) + (x > 0 ? ' cm vers l\'avant' : ' cm vers l\'arrière'))), ...chks),
     el('div', { class: 'co-2' }, svg, el('div', { class: 'co-demo-host' }, bverdict, bread.el)));
   drawOrder(); drawBal();
 }

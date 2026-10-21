@@ -14,10 +14,10 @@ const txt = (x, y, s, cls = 'co-s', anchor = 'middle') => sv('text', { x, y, tex
 
 // ---------------- le schéma : la matrice ----------------
 function figGrille() {
-  const f = figure(470, 214, 'Une grille vue comme une matrice : une ligne par sortie (destination), une colonne par entrée (source) ; un seul point fermé par ligne, autant qu\'on veut par colonne ; les deux départs vers la chaîne sont verrouillés ; à droite, ce qui commande la grille par le réseau');
+  const f = figure(560, 230, 'Une grille vue comme une matrice : une ligne par sortie (destination), une colonne par entrée (source) ; un seul point fermé par ligne, autant qu\'on veut par colonne ; les deux départs vers la chaîne sont verrouillés ; à droite, ce qui commande la grille par le réseau');
   const ins = ['CAM 1', 'CAM 2', 'CAM 3', 'EVS A', 'PGM', 'CLEAN', 'MIRE'], outs = ['MÉL 1', 'MÉL 2', 'MV 13', 'ÉCRAN', 'TX1', 'TX2'];
   const xp = [0, 1, 1, 5, 4, 4], locked = [4, 5];
-  const X = (i) => 76 + i * 34, Y = (j) => 52 + j * 24;
+  const X = (i) => 80 + i * 40, Y = (j) => 52 + j * 24;
   f.append(txt(X(3), 14, 'entrées : les sources →', 'co-t'), txt(8, 34, 'sorties ↓', 'co-s', 'start'));
   ins.forEach((s, i) => f.append(txt(X(i), 36, s, 'co-s'), sv('line', { x1: X(i), y1: Y(0) - 12, x2: X(i), y2: Y(outs.length - 1) + 12, stroke: C.line })));
   outs.forEach((s, j) => {
@@ -29,10 +29,10 @@ function figGrille() {
     }
   });
   f.append(txt(X(3), Y(5) + 34, 'une ligne : un seul point fermé · une colonne : autant qu\'on veut', 'co-s'));
-  f.append(txt(X(3), Y(5) + 50, 'la colonne CAM 2 alimente MÉL 2 et MV 13 ; TX1 et TX2, verrouillés, reçoivent le PGM', 'co-s'));
+  f.append(txt(X(3), Y(5) + 52, 'la colonne CAM 2 alimente MÉL 2 et MV 13 ; TX1 et TX2, verrouillés, reçoivent le PGM', 'co-s'));
   // ce qui commande la grille
-  const gx = 360;
-  f.append(txt(gx + 46, 58, 'commandée par', 'co-t'));
+  const gx = 384;
+  f.append(txt(gx, 58, 'commandée par', 'co-t', 'start'));
   ['sa façade (OUT, IN, TAKE)', 'Videohub Control', 'des panneaux', 'des automatismes'].forEach((s, i) => f.append(txt(gx, 80 + i * 18, '← ' + s, 'co-s', 'start')));
   f.append(txt(gx, 162, 'par le réseau : TCP 9990', 'co-m', 'start'), txt(gx, 178, '10.1.30.20, VLAN 30', 'co-m', 'start'));
   return f;
