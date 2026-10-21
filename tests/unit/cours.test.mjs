@@ -66,6 +66,11 @@ test('référentiel : chaque leçon écrite est rattachée à des compétences c
 
 test('exercices pratiques : ids connus, chacun rangé une seule fois', async () => {
   const { allExercises, exerciseInfo, SPECIAL } = await import('../../src/cours/exercices.js');
+  // les parcours d'Olivier s'enregistrent dans le moteur (comme le fait ui/tutor_ui.js au chargement)
+  const { registerLessons } = await import('../../src/tutor/engine.js');
+  const { ALL_STATION_LESSONS } = await import('../../src/tutor/lessons/index.js');
+  const { NET_LESSONS } = await import('../../src/tutor/lessons/reseau.js');
+  registerLessons([...NET_LESSONS, ...ALL_STATION_LESSONS]);
   const all = allExercises();
   const seen = new Map();
   for (const x of all) { assert.ok(exerciseInfo(x.id), `${x.lesson.id} : exercice inconnu ${x.id}`); seen.set(x.id, (seen.get(x.id) || 0) + 1); }
