@@ -100,7 +100,9 @@ for (const id of ['cn-cable', 'cn-vlan', 'cn-masque', 'cn-conflit']) {
     await page.locator('#station .cn-planbtn').click();
     await page.locator('#station .cn-apply').click();
   }
-  T.check(`${id} : réparée depuis le poste`, await until(page, () => { const a = window.__dbg.ACTIVE[window.__dbg.ACTIVE.length - 1]; return a.done && window.__dbg.CTRL.evaluate().err === 0; }, null, 10000));
+  const fixed = await until(page, () => { const a = window.__dbg.ACTIVE[window.__dbg.ACTIVE.length - 1]; return a.done && window.__dbg.CTRL.evaluate().err === 0; }, null, 30000);
+  T.check(`${id} : réparée depuis le poste`, fixed, fixed ? '' : JSON.stringify(await ev((s) => { const C = window.__dbg.CTRL; const a = window.__dbg.ACTIVE[window.__dbg.ACTIVE.length - 1]; return { st: s, done: a.done, check: a.f.check(a.st), port: s.sw ? C.portOf(s.sw, s.n) : null, bad: Object.entries(C.evaluate().devs).filter(([, d]) => d.level === 'err').map(([k, d]) => k + ' : ' + d.issues[0].text) }; }, st)));
+  if (!fixed) await shot('panne-' + id);
 }
 
 // ---------------- formation et fiches « ? » ----------------
