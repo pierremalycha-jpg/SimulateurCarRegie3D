@@ -47,6 +47,7 @@ import { updateStatus, FPS } from './app/hud.js';
 import { installInput } from './app/input.js';
 import { buildStart, start } from './app/start.js';
 import { initTitle, loadStep, tick, titleReady, enterFrom, showTitle } from './app/title.js';
+import './ui/settings.js';
 import { initCamLab, camlabOpen, camlabDebug } from './camlab/index.js';
 import { applyRole, PROFILE, setRole } from './app/profile.js';
 import { openCours } from './ui/cours_ui.js';

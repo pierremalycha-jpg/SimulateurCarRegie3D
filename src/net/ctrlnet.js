@@ -249,6 +249,18 @@ export function resetDevice(id, quiet = false) {
   changed({ quiet, why: 'reset-dev', dev: id });
 }
 export const planOf = (id) => { const d = devById(id); return d ? planDev(d) : null; };
+/**
+ * mode « Tout à faire » : les RCP et les CCU sortent du carton avec leur adresse d'usine
+ * (192.168.0.x, sans passerelle) ; il faut leur donner l'adresse du plan pour que chaque RCP
+ * reprenne la main sur sa caméra
+ */
+export function factoryCtrlNet() {
+  resetCtrlNet(true);
+  for (let n = 1; n <= 12; n++) {
+    for (const [id, k] of /** @type {[string, number][]} */ ([['rcp' + n, 100], ['ccu' + n, 10]])) if (CN.m[id]) Object.assign(CN.m[id], { ip: `192.168.0.${k + n}`, prefix: 24, gw: '', dhcp: false });
+  }
+  changed({ quiet: true, why: 'factory' });
+}
 export const planPortOf = (sw, n) => planPort(sw, n);
 
 // ---------------- événements ----------------

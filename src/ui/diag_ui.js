@@ -65,7 +65,7 @@ export function diagText() {
   const shown = ERRS.filter((e) => e.kind !== 'ressource' && e.kind !== 'bruit');
   const res = ERRS.filter((e) => e.kind === 'ressource');
   const lines = [
-    'Car régie 3D · diagnostic',
+    'TIEE Simulator · diagnostic',
     `Version : ${APP_VERSION}`,
     `Date : ${new Date().toISOString()} (heure locale ${new Date().toLocaleString('fr-FR')})`,
     `Page : ${where()}`,

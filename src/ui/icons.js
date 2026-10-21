@@ -76,6 +76,7 @@ import iTarget from '@phosphor-icons/core/bold/target-bold.svg';
 import iList from '@phosphor-icons/core/bold/list-bold.svg';
 import iHouse from '@phosphor-icons/core/bold/house-bold.svg';
 import iPlay from '@phosphor-icons/core/bold/play-bold.svg';
+import iCube from '@phosphor-icons/core/bold/cube-bold.svg';
 
 /** nom dans l'application -> dessin SVG @type {Record<string, string>} */
 const SVG = {
@@ -100,7 +101,7 @@ const SVG = {
   // les cinq familles du menu et leurs outils (app/title.js, ui/pupitre.js, ui/cours_ui.js)
   cours: iGraduationCap, lexique: iBookBookmark, formateur: iUserGear, relecture: iSealCheck, commandes: iKeyboard, livret: iNotebook,
   // le menu du car (app/nav.js) et l'espace du chef de car (ui/entrainement.js)
-  entrainement: iTarget, menu: iList, accueil: iHouse, reprendre: iPlay,
+  entrainement: iTarget, menu: iList, accueil: iHouse, reprendre: iPlay, cube: iCube,
 };
 export const ICON_NAMES = Object.keys(SVG);
 /**

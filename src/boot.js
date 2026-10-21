@@ -30,7 +30,7 @@
   var noModules = !('noModule' in document.createElement('script'));
 
   function diagText(reason) {
-    var lines = ['Car régie 3D · diagnostic du démarrage', 'Version : ' + (typeof __APP_VERSION__ === 'string' ? __APP_VERSION__ : 'dev'), 'Date : ' + new Date().toISOString(),
+    var lines = ['TIEE Simulator · diagnostic du démarrage', 'Version : ' + (typeof __APP_VERSION__ === 'string' ? __APP_VERSION__ : 'dev'), 'Date : ' + new Date().toISOString(),
       'Page : ' + location.protocol + (location.protocol === 'file:' ? ' (fichier ouvert sur l\'ordinateur)' : ' ' + location.host),
       'Navigateur : ' + navigator.userAgent, 'Langue : ' + navigator.language + ' · écran ' + screen.width + '×' + screen.height,
       'Cause probable : ' + reason, '', 'Erreurs notées (' + errs.length + ') :'];

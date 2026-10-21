@@ -1,0 +1,51 @@
+/* l'écran Jouer (src/app/start.js) : trois choix numérotés (le lieu, le mode, l'équipe), les
+   conditions de captation repliées, puis la grande touche rouge qui lance la partie */
+.jouer { --lcd: #d3f3df; --lcd-dim: #86a596; box-sizing: border-box; max-width: 1120px; margin: 0 auto; display: grid; gap: 16px;
+  padding: calc(20px + env(safe-area-inset-top, 0px)) var(--gut-r) calc(24px + env(safe-area-inset-bottom, 0px)) var(--gut-l); }
+.jo-head { display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "nav nav" "title match"; gap: 10px 24px; align-items: end; }
+.jo-head .dk-nav { grid-area: nav; }
+.jo-title { grid-area: title; min-width: 0; }
+.jo-title h1 { margin: 0 0 6px; font: 700 clamp(36px, 4.6vw, 54px)/.95 var(--f-disp); letter-spacing: -.01em; }
+.jo-title .lede { margin: 0; max-width: 64ch; font-size: 15px; line-height: 1.5; color: var(--muted); }
+.jo-head .dk-match { grid-area: match; }
+.jo-step { display: grid; gap: 8px; }
+.jo-step h2 { display: flex; align-items: center; gap: 10px; margin: 0; font: 700 17px var(--f-disp); }
+.jo-n { display: inline-grid; place-items: center; width: 24px; height: 24px; border-radius: 3px; background: var(--glass); border: 1px solid #070a0c; color: var(--amber); font: 700 13px var(--f-mono); }
+/* le lieu : deux écrans de multiview, le car en service, la salle de concert en préparation */
+.jo-lieux { grid-template-columns: repeat(2, minmax(0, 1fr)); max-width: 640px; }
+.jo-lieux .lx-sil .ico { width: 36px; height: 36px; }
+/* le mode : trois touches larges, une seule allumée */
+.jo-modes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.jo-mode { display: grid; grid-template-columns: auto minmax(0, 1fr); grid-template-rows: auto 1fr; gap: 4px 10px; align-items: start; padding: 12px 14px; text-align: left; font: inherit; color: var(--fg); cursor: pointer;
+  background: linear-gradient(#3e4852, #343c45); border: 1px solid #161b1f; border-radius: 4px; box-shadow: inset 0 1px 0 rgba(255,255,255,.1), 0 2px 3px rgba(0,0,0,.3); }
+.jo-mode .ico { grid-row: span 2; width: 26px; height: 26px; color: var(--muted); }
+.jo-mode b { font: 600 17px var(--f-disp); }
+.jo-mode span { font-size: 13.5px; line-height: 1.45; color: var(--muted); }
+.jo-mode:hover:not(:disabled) { background: linear-gradient(#4a545e, #3b444d); }
+.jo-mode[aria-pressed="true"] { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent), 0 0 14px rgba(255,176,32,.18); }
+.jo-mode[aria-pressed="true"] .ico, .jo-mode[aria-pressed="true"] b { color: #ffd38a; }
+.jo-mode:disabled { cursor: not-allowed; opacity: .45; }
+/* l'équipe */
+.jo-team { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; }
+.jo-team-seg { flex: 0 0 auto; }
+.jo-team-seg button { min-width: 130px; }
+.jo-team .note { flex: 1 1 320px; margin: 0; }
+/* conditions de captation : repliées, le résumé sur la ligne */
+.jo-capt { padding: 0; }
+.jo-capt > summary { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 14px; padding: 10px 14px; cursor: pointer; }
+.jo-capt > summary b { font: 600 15px var(--f-disp); }
+.jo-capt-grid { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 9px 12px; align-items: center; padding: 4px 14px 14px; }
+.jo-capt-grid > label { font-size: 13px; color: var(--muted); }
+.jo-capt-grid .note { grid-column: 1 / -1; margin: 0; }
+.jo-capsum { font: 12.5px var(--f-mono); color: var(--lcd-dim); }
+.jo-go .onair-key { width: 100%; }
+.jo-foot { display: grid; gap: 6px; padding-top: 10px; border-top: 1px solid var(--line); }
+.jo-foot p { margin: 0; }
+.jo-credit b { color: var(--fg); }
+@media (max-width: 900px) {
+  .jo-head { grid-template-columns: minmax(0, 1fr); grid-template-areas: "nav" "title" "match"; }
+  .jo-modes { grid-template-columns: minmax(0, 1fr); }
+  .jo-lieux { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); overflow: visible; }
+  .jo-lieux > li { flex: initial; }
+}
+@media (max-width: 520px) { .jo-lieux { grid-template-columns: minmax(0, 1fr); } .jo-capt-grid { grid-template-columns: minmax(0, 1fr); } }

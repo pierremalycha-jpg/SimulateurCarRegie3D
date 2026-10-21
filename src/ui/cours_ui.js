@@ -6,73 +6,66 @@ import { q, openTerm } from './term.js';
 import { icon } from './icons.js';
 import { TERMS } from '../content/netterms.js';
 import { openLayer, layerOpen, showTab, closeLayer } from './layer.js';
-import { chaptersSection, glossarySection, postesSection, materielSection, proceduresSection } from './guide.js';
+import { glossarySection, postesSection, materielSection, openArticle } from './guide.js';
 import { CHAPTERS, lessonById, allLessons, coursProgress, markSeen, recordQuiz, lessonDone, chapterDone } from '../cours/index.js';
 import { posteCible, estLecon } from '../cours/liens.js';
+import { exercisesOf, exerciseInfo, exerciseDone, specialState, allExercises } from '../cours/exercices.js';
+import { TUTOR } from '../tutor/engine.js';
+import { livret } from '../livret.js';
+import { liveProg, openLivret } from './livret.js';
 
 // ----------------------------------------------------------------------------------
-// L'espace Cours, plein écran (touche G, entrée du titre, pupitre, menu du car) : il s'ouvre
-// par-dessus tout, écran titre compris, même pendant le chargement. Onglet Leçons : à gauche les
-// chapitres et leurs leçons (et la recherche, qui trouve aussi les fiches « ? »), à droite la
-// leçon : l'essentiel, le schéma, la manipulation, l'explication, « dans le car », les fiches
-// « ? », le quiz. Puis les chapitres du guide, le glossaire, les postes, le matériel, les
-// procédures (ui/guide.js).
+// L'espace Cours, plein écran (touche G, menu titre, écran Jouer, pupitre, menu du car) : il s'ouvre
+// par-dessus tout, écran titre compris, même pendant le chargement. Quatre onglets : Leçons, Glossaire,
+// Postes, Matériel. Leçons : à gauche le seul menu (recherche, chapitres et leçons, la caméra en 3D) ;
+// à droite, la leçon (l'essentiel, schéma, manipulation, explication, dans le car, exercices
+// pratiques, fiches « ? », quiz), ou, sans leçon choisie, le suivi : progression, ce qu'il reste à
+// faire, livret de compétences.
 // ----------------------------------------------------------------------------------
-const UI = { lesson: /** @type {string | null} */ (null), chapter: /** @type {string | null} */ (null), demo: /** @type {{ destroy?: () => void } | null | void} */ (null), q: '', guideChapter: /** @type {string | null} */ (null) };
-const TABS = /** @type {[string, string][]} */ ([['lecons', 'Leçons'], ['camera', 'La caméra'], ['chapitres', 'Chapitres'], ['glossaire', 'Glossaire'], ['postes', 'Postes'], ['materiel', 'Matériel'], ['procedures', 'Procédures']]);
-const OLD_TAB = { articles: 'chapitres' }; // ancien nom de l'onglet des chapitres du guide
+const UI = { lesson: /** @type {string | null} */ (null), chapter: /** @type {string | null} */ (null), demo: /** @type {{ destroy?: () => void } | null | void} */ (null), q: '' };
+const TABS = /** @type {[string, string][]} */ ([['lecons', 'Leçons'], ['glossaire', 'Glossaire'], ['postes', 'Postes'], ['materiel', 'Matériel']]);
+// anciens onglets (chapitres du guide, procédures, caméra) : tout est maintenant dans les leçons
+const OLD_TAB = { chapitres: 'lecons', articles: 'lecons', procedures: 'lecons', camera: 'lecons', notions: 'lecons' };
 const norm = (s) => String(s).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
 
 /**
- * @param {{ tab?: string, lesson?: string | null, chapter?: string | null, term?: string, poste?: string, fiche?: string } | string} [o]
- *   onglet (lecons, chapitres, glossaire, postes, materiel, procedures), leçon ou chapitre du guide à ouvrir ;
- *   term : fiche « ? » (les leçons qui la citent, la recherche sur son nom) ; poste : la leçon du poste (cours/liens.js)
+ * @param {{ tab?: string, lesson?: string | null, chapter?: string | null, term?: string, poste?: string, fiche?: string, article?: string | null, home?: boolean } | string} [o]
+ *   onglet (lecons, glossaire, postes, materiel), leçon ou chapitre à ouvrir ; term : fiche « ? » (la leçon qui
+ *   la cite) ; poste : la leçon du poste (cours/liens.js) ; article : article de l'ancien guide (la leçon
+ *   qui le cite) ; home : le suivi de la progression
  */
 export function openCours(o = {}) {
   const opts = typeof o === 'string' ? { lesson: o } : { ...o };
+  if (opts.tab === 'camera') opts.chapter = 'camera';
+  if (opts.home) { UI.lesson = null; UI.chapter = null; }
   if (opts.fiche && !opts.lesson && !opts.term) { if (estLecon(opts.fiche)) opts.lesson = opts.fiche; else if (TERMS[opts.fiche]) opts.term = opts.fiche; }
   if (opts.poste && !opts.lesson) { const id = posteCible(opts.poste, S.ipMode); if (estLecon(id)) opts.lesson = id; else if (TERMS[id]) opts.term = id; }
+  if (opts.article) {
+    const hit = allLessons().find(({ lesson }) => lesson.article === opts.article);
+    if (hit) opts.lesson = hit.lesson.id; else { openArticle(opts.article); return; }
+  }
   if (opts.term && TERMS[opts.term]) {
     // la première leçon qui cite la fiche ; sinon la recherche sur son nom (leçons et fiches)
     const hit = allLessons().find(({ lesson }) => (lesson.terms || []).includes(opts.term));
     if (hit) opts.lesson = hit.lesson.id; else { UI.q = TERMS[opts.term].t; UI.lesson = null; opts.tab = 'lecons'; }
   }
-  let tab = OLD_TAB[opts.tab || ''] || opts.tab || 'lecons';
-  if (opts.lesson) { UI.lesson = opts.lesson; tab = 'lecons'; const f = lessonById(opts.lesson); if (f) UI.chapter = f.chapter.id; }
-  const chapter = opts.chapter || null;
-  if (chapter && tab === 'lecons' && CHAPTERS.some((c) => c.id === chapter)) { UI.chapter = chapter; const c = CHAPTERS.find((x) => x.id === chapter); UI.lesson = c && c.lessons[0] ? c.lessons[0].id : null; }
-  // chapitre du guide demandé : lu par l'onglet Chapitres, même si l'espace est déjà ouvert
-  UI.guideChapter = chapter && tab === 'chapitres' ? chapter : null;
-  // déjà ouvert : on change d'onglet (ou de leçon) sans tout reconstruire
+  const tab = OLD_TAB[opts.tab || ''] || opts.tab || 'lecons';
+  if (opts.lesson) { UI.lesson = opts.lesson; const f = lessonById(opts.lesson); if (f) UI.chapter = f.chapter.id; }
+  else if (opts.chapter && CHAPTERS.some((c) => c.id === opts.chapter)) { UI.chapter = opts.chapter; const c = CHAPTERS.find((x) => x.id === opts.chapter); UI.lesson = c && c.lessons[0] ? c.lessons[0].id : null; }
   if (layerOpen() === 'cours') { showTab(tab); return; }
   openLayer({
     kind: 'cours', title: 'Cours', ico: 'cours', tabs: TABS, tab,
     show: (k, box) => {
       if (k === 'lecons') { lecons(box); return stopDemo; }
-      if (k === 'camera') { cameraSection(box); box.classList.add('ly-narrow'); return; }
-      if (k === 'chapitres') { chaptersSection(box, UI.guideChapter); UI.guideChapter = null; return; }
       if (k === 'glossaire') glossarySection(box);
       if (k === 'postes') postesSection(box);
       if (k === 'materiel') materielSection(box);
-      if (k === 'procedures') proceduresSection(box);
       box.classList.add('ly-narrow');
     },
   });
 }
 on('cours', (o) => openCours(o && typeof o === 'object' ? o : typeof o === 'string' ? o : {}));
 function stopDemo() { try { if (UI.demo && UI.demo.destroy) UI.demo.destroy(); } catch (e) { /* démonstration déjà démontée */ } UI.demo = null; }
-
-// ---------------- l'onglet La caméra : le module 3D (src/camlab/) ----------------
-/** l'espace se ferme et le module s'ouvre par-dessus ; en le quittant, on revient ici (camlab/index.js) */
-function openCamera() { closeLayer(false); emit('camera', { from: 'cours' }); }
-function cameraSection(box) {
-  box.append(el('article', { class: 'co-page co-camera' },
-    el('h2', {}, 'La caméra de plateau, en 3D'),
-    el('p', { class: 'lede' }, 'Une caméra type Sony HXC-FB80 avec son zoom Fujinon, à tourner dans tous les sens. Chaque pastille rapproche la vue et ouvre une fiche : l\'essentiel, un schéma, une manipulation sur la caméra (les bagues bougent, l\'image du viseur suit) et trois questions d\'Olivier.'),
-    el('p', {}, 'Neuf chapitres, de la lentille frontale au moniteur : l\'objectif (focale, zoom, point, diaphragme, profondeur de champ, tirage optique), les filtres et le prisme, les capteurs, le traitement de l\'image, le corps de la caméra (menu, connectique), le viseur, la voie caméra, jusqu\'au moniteur.'),
-    el('div', { class: 'hwrow' }, el('button', { type: 'button', class: 'btn primary', onclick: openCamera }, icon('cours'), 'Ouvrir la caméra en 3D')),
-    el('p', { class: 'note' }, 'La caméra se tourne à la souris ou au doigt, la molette rapproche ; Échap revient ici.')));
-}
 
 // ---------------- l'onglet Leçons ----------------
 function lecons(box) {
@@ -103,11 +96,16 @@ function drawNav(nav, render) {
       if (!hits.length && !terms.length) list.append(el('p', { class: 'note' }, 'Rien ne correspond.'));
       return;
     }
+    list.append(el('button', { type: 'button', class: 'co-les co-home' + (!UI.lesson ? ' on' : ''), 'aria-current': !UI.lesson ? 'true' : null, onclick: () => { UI.lesson = null; render(); } }, icon('livret'), 'Mon suivi'));
     for (const ch of CHAPTERS) {
       const done = chapterDone(ch);
-      const det = el('details', { class: 'co-chap', open: UI.chapter === ch.id || (!UI.chapter && CHAPTERS[0] === ch) ? '' : null },
-        el('summary', {}, icon(ch.icon), el('span', {}, ch.title), el('small', {}, `${done} / ${ch.lessons.length}`)),
-        ch.lessons.length ? el('ol', {}, ...ch.lessons.map((l) => el('li', {}, lesBtn(ch, l, render)))) : el('p', { class: 'note' }, 'Les leçons arrivent.'));
+      const xs = ch.lessons.flatMap((l) => exercisesOf(l)); const xd = xs.filter((x) => exerciseDone(x.id)).length;
+      const det = el('details', { class: 'co-chap', open: UI.chapter === ch.id ? '' : null },
+        el('summary', {}, icon(ch.icon), el('span', {}, ch.title), el('small', { title: `${done} leçon(s) acquise(s) sur ${ch.lessons.length}` + (xs.length ? `, ${xd} exercice(s) fait(s) sur ${xs.length}` : '') }, `${done} / ${ch.lessons.length}`)),
+        el('ol', {},
+          ch.module ? el('li', {}, el('button', { type: 'button', class: 'co-les co-module', onclick: () => { closeLayer(false); emit(ch.module.event, ch.module.arg); } }, icon('cube'), el('span', {}, ch.module.label, ch.module.sub ? el('small', {}, ch.module.sub) : null))) : null,
+          ...ch.lessons.map((l) => el('li', {}, lesBtn(ch, l, render)))),
+        !ch.lessons.length && !ch.module ? el('p', { class: 'note' }, 'Les leçons arrivent.') : null);
       det.addEventListener('toggle', () => { if (det.open) UI.chapter = ch.id; });
       list.append(det);
     }
@@ -118,15 +116,45 @@ function drawNav(nav, render) {
 }
 const lesBtn = (ch, l, render) => el('button', { type: 'button', class: 'co-les' + (UI.lesson === l.id ? ' on' : '') + (lessonDone(l.id) ? ' done' : ''), 'data-lesson': l.id, 'aria-current': UI.lesson === l.id ? 'true' : null, onclick: () => { UI.lesson = l.id; UI.chapter = ch.id; render(); } }, lessonDone(l.id) ? icon('fait') : null, l.title);
 
+// le suivi : où l'on en est, ce qu'il reste à faire, le livret de compétences
 function home(page, render) {
-  const total = allLessons().length, done = allLessons().filter(({ lesson }) => lessonDone(lesson.id)).length;
-  page.append(el('h2', {}, 'Les cours'),
-    el('p', { class: 'lede' }, 'Un chapitre par domaine, une leçon par terme technique. Chaque leçon tient en quelques minutes : l\'essentiel, un schéma, une manipulation pour comprendre, puis où le retrouver dans le car et un quiz. Le chef de car vous y renvoie quand un terme vous manque.'),
-    el('p', { class: 'note' }, total ? `${done} leçon${done > 1 ? 's' : ''} acquise${done > 1 ? 's' : ''} sur ${total} (quiz réussi en entier).` : 'Les chapitres arrivent.'),
-    el('div', { class: 'co-cards' }, ...CHAPTERS.map((ch) => el('button', { type: 'button', class: 'co-card', onclick: () => { UI.chapter = ch.id; UI.lesson = ch.lessons[0] ? ch.lessons[0].id : null; render(); } },
-      icon(ch.icon), el('b', {}, ch.title), el('span', {}, ch.intro), el('small', {}, `${ch.lessons.length} leçon${ch.lessons.length > 1 ? 's' : ''} · ${chapterDone(ch)} acquise${chapterDone(ch) > 1 ? 's' : ''}`))),
-    el('button', { type: 'button', class: 'co-card', onclick: () => showTab('camera') },
-      icon('cours'), el('b', {}, 'La caméra'), el('span', {}, 'La caméra de plateau en 3D : objectif, prisme, capteurs, menu, connectique, jusqu\'au moniteur.'), el('small', {}, '12 fiches écrites sur 51'))));
+  const lessons = allLessons(); const ld = lessons.filter(({ lesson }) => lessonDone(lesson.id)).length;
+  const xs = allExercises(); const xd = xs.filter((x) => exerciseDone(x.id)).length;
+  const L = livret(liveProg()); const inSim = L.total - L.count.absent; const worked = L.count.consolidee + L.count.travaillee;
+  const pct = (a, b) => (b ? Math.round((a / b) * 100) : 0);
+  const bar = (a, b, label) => el('span', { class: 'co-bar', role: 'img', 'aria-label': `${label} : ${a} sur ${b}` }, el('i', { style: { width: pct(a, b) + '%' } }));
+  const open = (lessonId) => { UI.lesson = lessonId; const f = lessonById(lessonId); UI.chapter = f ? f.chapter.id : null; render(); };
+  // la suite : la première leçon non acquise, le premier exercice non fait (dans l'ordre du Cours)
+  const nextL = lessons.find(({ lesson }) => !lessonDone(lesson.id));
+  const nextX = xs.find((x) => !exerciseDone(x.id));
+  const nextXi = nextX ? exerciseInfo(nextX.id) : null;
+  page.append(el('h2', {}, 'Mon suivi'),
+    el('p', { class: 'lede' }, 'Chaque leçon explique une notion avec un schéma et une manipulation ; son quiz la valide. Ses exercices pratiques se font dans le car, avec Olivier qui guide et vérifie. Choisissez un chapitre dans la liste, ou reprenez ci-dessous.'),
+    el('div', { class: 'co-kpis' },
+      el('div', { class: 'co-kpi' }, el('b', {}, `${ld} / ${lessons.length}`), el('span', {}, 'leçons acquises'), bar(ld, lessons.length, 'Leçons acquises')),
+      el('div', { class: 'co-kpi' }, el('b', {}, `${xd} / ${xs.length}`), el('span', {}, 'exercices pratiques faits'), bar(xd, xs.length, 'Exercices faits')),
+      el('div', { class: 'co-kpi' }, el('b', {}, `${worked} / ${inSim}`), el('span', {}, 'compétences du BTS travaillées'), bar(worked, inSim, 'Compétences travaillées'))),
+    el('section', { class: 'co-next', 'aria-label': 'À faire ensuite' }, el('h4', {}, 'À faire ensuite'),
+      el('div', { class: 'co-next-row' },
+        nextL ? el('button', { type: 'button', class: 'co-next-item', onclick: () => open(nextL.lesson.id) }, el('small', {}, `Leçon · ${nextL.chapter.title}`), el('b', {}, nextL.lesson.title), el('span', {}, nextL.lesson.minutes || '')) : el('p', { class: 'note' }, 'Toutes les leçons sont acquises.'),
+        nextX && nextXi ? el('button', { type: 'button', class: 'co-next-item', onclick: () => open(nextX.lesson.id) }, el('small', {}, `Exercice pratique · ${nextX.lesson.title}`), el('b', {}, nextXi.title), el('span', {}, `${nextXi.duration} · ${nextXi.level}`)) : el('p', { class: 'note' }, 'Tous les exercices sont faits.'))),
+    el('section', { class: 'co-prog', 'aria-label': 'Par chapitre' }, el('h4', {}, 'Par chapitre'),
+      el('table', { class: 'co-ptab' },
+        el('thead', {}, el('tr', {}, el('th', {}, 'Chapitre'), el('th', {}, 'Leçons'), el('th', {}, 'Exercices'), el('th', {}, el('span', { class: 'sr' }, 'Reprendre')))),
+        el('tbody', {}, ...CHAPTERS.map((ch) => {
+          const cl = ch.lessons.length, cd = chapterDone(ch);
+          const cx = ch.lessons.flatMap((l) => exercisesOf(l)); const cxd = cx.filter((x) => exerciseDone(x.id)).length;
+          const first = ch.lessons.find((l) => !lessonDone(l.id)) || ch.lessons[0];
+          return el('tr', {},
+            el('th', { scope: 'row' }, icon(ch.icon), ch.title),
+            el('td', {}, el('span', { class: 'co-cell' }, bar(cd, cl, 'Leçons'), `${cd} / ${cl}`)),
+            el('td', {}, cx.length ? el('span', { class: 'co-cell' }, bar(cxd, cx.length, 'Exercices'), `${cxd} / ${cx.length}`) : '—'),
+            el('td', {}, first ? el('button', { type: 'button', class: 'btn small', onclick: () => open(first.id) }, cd === cl && cl ? 'Revoir' : cd ? 'Continuer' : 'Commencer') : ch.module ? el('button', { type: 'button', class: 'btn small', onclick: () => { closeLayer(false); emit(ch.module.event, ch.module.arg); } }, 'Ouvrir') : null));
+        })))),
+    el('section', { class: 'co-livret', 'aria-label': 'Livret de compétences' }, el('h4', {}, 'Mon livret de compétences (BTS MAV, option TIEE)'),
+      el('div', { class: 'co-blocs' }, ...L.blocs.map((b) => { const w = b.count.consolidee + b.count.travaillee; const n = b.comps.length - b.count.absent; return el('div', { class: 'co-bloc' }, el('b', {}, b.id), el('span', {}, b.titre), bar(w, n, b.id), el('small', {}, `${w} / ${n} travaillées`)); })),
+      el('div', { class: 'hwrow' }, el('button', { type: 'button', class: 'btn small', onclick: () => openLivret() }, 'Ouvrir le livret complet')),
+      el('p', { class: 'note' }, 'Une compétence est travaillée quand une leçon, un exercice ou une tâche qui la font pratiquer est réussi. Le livret dit ce qui a été pratiqué ; la valider reste le rôle du formateur.')));
 }
 function lessonPage(page, { chapter, lesson, i }, render) {
   markSeen(lesson.id);
@@ -148,6 +176,10 @@ function lessonPage(page, { chapter, lesson, i }, render) {
       L.car.station ? el('div', { class: 'hwrow' }, el('button', { class: 'btn small primary', onclick: () => emit('go', { station: L.car.station, tab: L.car.tab, label: 'Aller au poste' }) }, S.mode === 'start' ? 'Lancer le car et aller au poste' : 'Aller au poste'),
         L.car.lesson ? el('button', { class: 'btn small', onclick: () => emit('go', { lesson: L.car.lesson }) }, 'Parcours du chef') : null) : null));
   }
+  if (L.article) page.append(el('div', { class: 'hwrow co-article' }, el('button', { type: 'button', class: 'btn small', onclick: () => openArticle(L.article) }, icon('guide'), 'Lire l\'article de référence')));
+  const xs = exercisesOf(L);
+  if (xs.length) page.append(el('section', { class: 'co-exos', 'aria-label': 'Exercices pratiques' }, el('h4', {}, icon('chef'), xs.length > 1 ? 'Exercices pratiques' : 'Exercice pratique'),
+    ...xs.map((x) => exerciseCard(x, L))));
   const terms = (L.terms || []).filter((id) => TERMS[id]);
   if (terms.length) page.append(el('section', { class: 'co-terms' }, el('h4', {}, 'Fiches « ? »'), el('div', { class: 'co-chips' }, ...terms.map((id) => el('span', { class: 'co-chip' }, TERMS[id].t, q(id))))));
   page.append(quiz(L, render));
@@ -182,3 +214,14 @@ function quiz(L, render) {
 }
 /** ferme l'espace Cours s'il est ouvert (depuis « Aller au poste », par exemple) */
 export function closeCours() { if (layerOpen() === 'cours') closeLayer(false); }
+
+// un exercice pratique : ce qu'on y fait, son état, « Commencer » (le car se lance si besoin)
+function exerciseCard(x, L) {
+  const I = exerciseInfo(x.id); if (!I) return null;
+  const done = exerciseDone(x.id);
+  const st = I.special ? specialState(x.id).text : done ? 'fait' : TUTOR.lesson && TUTOR.lesson.id === x.id ? 'en cours' : 'pas encore fait';
+  return el('div', { class: 'co-exo' + (done ? ' done' : ''), 'data-exercise': x.id },
+    el('i', { class: 'co-led' + (done ? ' green' : ''), 'aria-hidden': 'true' }),
+    el('div', { class: 'co-exo-t' }, el('b', {}, I.title), el('small', {}, `${I.duration} · ${I.level} · ${st}`), el('p', {}, x.intro || I.summary)),
+    el('button', { type: 'button', class: 'btn small' + (done ? '' : ' primary'), onclick: () => { S.coursBack = L.id; emit('go', { ...I.go, label: I.title }); } }, done ? 'Refaire' : S.mode === 'start' ? 'Commencer (lance le car)' : 'Commencer'));
+}

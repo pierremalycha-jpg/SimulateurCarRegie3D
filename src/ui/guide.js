@@ -17,6 +17,8 @@ import { $, modal, openInfo, toast, selectEl, field } from './common.js';
 import { MIX, meSource, EVS } from '../pipeline.js';
 import { GFX } from '../gfx.js';
 import { RF } from '../rf.js';
+import { patchScore } from '../patch.js';
+import { ctrlCam } from '../net/ctrlnet.js';
 
 const cam = (slot) => S.cams.find((c) => c.slotId === slot);
 export const MISSIONS = [
@@ -27,6 +29,8 @@ export const MISSIONS = [
   { id: 'm4', title: 'Le serré', text: 'Installez une deuxième caméra sur la position 2 avec un très long zoom (UA107 ou UJ122) et la consigne « Serré porteur du ballon ».', check: () => { const c = cam('g_c2'); return c && c.role === 'serre' && c.L.fmax >= 900; } },
   { id: 'm5', title: 'Une caméra HF', text: 'Installez une Steadicam HF au bord du terrain et allumez au moins deux antennes de réception. Objectif : une marge HF supérieure à 3 dB.', check: () => S.cams.some((c) => c.rf && c.rf.margin > 3) && RF.antennas.filter((a) => a.on).length >= 2 },
   { id: 'm6', title: 'Entrer dans le car', text: 'Rejoignez le car régie (Tab, le pupitre, puis « Devant le car ») et entrez par les marches de la porte.', check: () => S.inTruck },
+  { id: 'mz-patch', title: 'Brasser le car', text: 'Le car n\'est pas brassé : au poste « Baie de brassage » (zone technique), reliez chaque liaison en suivant la liste de câblage (sources vers la grille, sorties vers l\'EVS et les départs, référence vers les CCU). Objectif : 100 %.', check: () => S.preset === 'zero' && S.patch.on && patchScore().pct >= 100 },
+  { id: 'mz-net', title: 'Le réseau de contrôle', text: 'Les RCP et les CCU sortent du carton avec leur adresse d\'usine (192.168.0.x). Au poste « Réseau de contrôle », donnez à ceux des caméras installées l\'adresse du plan (10.1.20.x/24, passerelle 10.1.20.1) : chaque RCP doit reprendre la main sur sa caméra.', check: () => S.preset === 'zero' && S.cams.length > 0 && S.cams.every((c) => ctrlCam(c.id).ok) },
   { id: 'm7', title: 'Le multiview', text: 'Asseyez-vous au poste « Truquiste · XVS-6000 » (E). Repérez le PGM (cadre rouge, à droite) et le PVW (cadre vert, à gauche).', check: () => S.visited.melangeur },
   { id: 'm8', title: 'Premier enchaîné', text: 'Au mélangeur : plan large au PGM, serré en preset (rangée B · PST, tuile PVW), choisissez MIX puis AUTO TRANS (ou Entrée du pavé numérique).', check: () => S.stats.mixes >= 1 },
   { id: 'm9', title: 'Exposition', text: 'Au poste Ingé vision, réglez l\'iris de la CAM 1 pour un niveau moyen entre 35 et 55 % (lisez le waveform).', check: () => { const c = camById(1); return S.visited.vision && c && c.meter.mean > 0.35 && c.meter.mean < 0.55; } },
@@ -58,15 +62,15 @@ export function drawMissionCard() {
   if (box.dataset.m === m.id && !box.hidden) return;
   box.dataset.m = m.id; box.hidden = false; box.innerHTML = '';
   box.append(el('div', { class: 'k' }, `Mission ${done + 1} / ${MISSIONS.length}`), el('h4', {}, m.title), el('p', {}, m.text),
-    el('div', { class: 'row' }, el('button', { class: 'btn small', onclick: () => emit('entrainement', 'missions') }, 'Toutes les missions'), el('button', { class: 'btn small', onclick: () => { S.missionsDone[m.id] = true; } }, 'Passer cette mission'), el('button', { class: 'btn small', onclick: () => { S.showMission = false; box.hidden = true; } }, 'Masquer')));
+    el('div', { class: 'row' }, el('button', { class: 'btn small', onclick: () => openMissions() }, 'Toutes les tâches'), el('button', { class: 'btn small', onclick: () => { S.missionsDone[m.id] = true; } }, 'Passer cette mission'), el('button', { class: 'btn small', onclick: () => { S.showMission = false; box.hidden = true; } }, 'Masquer')));
 }
 
 
 // ----------------------------------------------------------------------------------
-// Le contenu de l'ancien Guide (touche G), rangé à sa place : les chapitres, le glossaire, les
-// postes, le matériel et les procédures vont dans le Cours ; les missions dans S'entraîner ; les
-// réglages et les commandes dans le menu (Échap). Chaque partie se dessine dans une boîte, pour
-// l'espace qui l'accueille. openGuide(onglet, chapitre) reste l'entrée commune et aiguille.
+// Le contenu de l'ancien Guide, rangé à sa place : le glossaire, les postes et le matériel sont des
+// onglets du Cours ; les articles sont l'« article de référence » des leçons (openArticle) ; les
+// tâches du mode « Tout à faire » ont leur fenêtre (openMissions) ; les réglages sont dans la
+// fenêtre Réglages (ui/settings.js). openGuide(onglet, chapitre) reste l'entrée commune et aiguille.
 // ----------------------------------------------------------------------------------
 /** les missions d'installation : liste, mission affichée à l'écran, recommencer */
 export function missionsSection(box) {
@@ -184,21 +188,35 @@ export function reglagesSection(box) {
   el('p', { class: 'note' }, (LIGHTING[S.lighting] || {}).desc || ''),
   el('div', { class: 'hwrow' }, el('button', { class: 'btn', id: 'perfbtn', onclick: () => emit('perfTest') }, 'Tester les performances de cet ordinateur'), el('button', { class: 'btn', onclick: () => openReport('Simulateur (général)') }, 'Signaler une erreur'), el('button', { class: 'btn', onclick: () => openDiag() }, 'Diagnostic technique')));
 }
-export function openReglages() { const b = el('div', { class: 'list' }); reglagesSection(b); modal.open('Réglages', b, { width: 900 }); }
+export function openReglages() { emit('settings'); }
 export function openCommandes() { const b = el('div', { class: 'list' }); commandesSection(b); modal.open('Commandes', b, { width: 900 }); }
 
+/** les tâches du mode « Tout à faire » (missions d'installation) */
+export function openMissions() {
+  const box = el('div'); missionsSection(box);
+  modal.open('Les tâches de l\'installation', el('div', { class: 'list' }, el('p', { class: 'note' }, 'Elles se cochent toutes seules quand vous agissez ; la tâche en cours s\'affiche en haut à gauche de l\'écran.'), box), { width: 820 });
+}
+/** un article de référence du guide (content/guide.js), proposé par une leçon du Cours */
+export function openArticle(id) {
+  const g = GUIDE.find((x) => x.id === id); if (!g) return;
+  const art = el('article', { class: 'prose gd-art' });
+  art.innerHTML = `<h2>${g.title}</h2>` + g.html;
+  art.querySelectorAll('table').forEach((t) => { const w = el('div', { class: 'tblwrap' }); t.replaceWith(w); w.appendChild(t); });
+  if (NET_CHAPTERS.includes(g.id)) qify(art, 'h4, th, td:first-child');
+  modal.open('Article de référence', el('div', { class: 'list' }, art, el('div', { class: 'hwrow' }, el('button', { class: 'btn small', onclick: () => openReport('Article · ' + g.title) }, 'Signaler une erreur dans cet article'))), { width: 900 });
+}
 /**
- * L'entrée commune de l'ancien Guide : chaque onglet va dans l'espace qui l'accueille maintenant.
- * @param {string} [tab] missions, guide, procedures, postes, materiel, glossaire, commandes, reglages
- * @param {string | null} [chapter] chapitre à ouvrir (onglet « guide »)
+ * L'entrée commune de l'ancien Guide : chaque onglet va là où il est maintenant. Un « chapitre »
+ * de l'ancien guide ouvre la leçon du Cours qui le cite comme article de référence.
+ * @param {string} [tab] missions, guide, postes, materiel, glossaire, commandes, reglages
+ * @param {string | null} [chapter] article du guide
  */
 export function openGuide(tab = 'guide', chapter = null) {
   if (modal.isOpen) modal.close();
-  if (tab === 'missions') emit('entrainement', 'missions');
-  else if (tab === 'reglages') openReglages();
+  if (tab === 'missions') openMissions();
+  else if (tab === 'reglages') emit('settings');
   else if (tab === 'commandes') openCommandes();
-  else if (tab === 'glossaire') emit('cours', { tab: 'glossaire' });
-  else if (tab === 'postes' || tab === 'materiel' || tab === 'procedures') emit('cours', { tab: tab === 'procedures' ? 'procedures' : tab });
-  else emit('cours', { tab: 'chapitres', chapter });
+  else if (tab === 'glossaire' || tab === 'postes' || tab === 'materiel') emit('cours', { tab });
+  else emit('cours', { article: chapter });
 }
 on('openGuide', (ch) => openGuide('guide', typeof ch === 'string' ? ch : null));
