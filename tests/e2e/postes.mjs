@@ -53,18 +53,20 @@ await page.selectOption('#fmsrc', 'CAM2');
 await page.waitForTimeout(1200);
 await shot('v-floatmon');
 // ---- EVS ----
+// touches F du LSM par position : leur étiquette change avec le clip qu'elles portent
+const fkey = (i) => page.locator('.lsm-pad .lsm-row').first().locator('.lsm-key').nth(i);
 await ev(() => { window.__dbg.closeStation(); window.__dbg.openStation('evs'); });
 await page.waitForTimeout(1500);
 log('floatmon removed', await ev(() => !document.getElementById('floatmon')));
 await page.locator('.lsm-key', { hasText: /^IN(GOTO IN)?$/ }).click();
 await page.waitForTimeout(300);
 await page.locator('.lsm-key', { hasText: 'SHIFT' }).click();
-await page.locator('.lsm-key', { hasText: /^F1(?![0-9])/ }).click();
+await fkey(0).click();
 await page.locator('.lsm-key', { hasText: 'SHIFT' }).click();
-await page.locator('.lsm-key', { hasText: /^F2(?![0-9])/ }).click();
+await fkey(1).click();
 await page.locator('.lsm-key', { hasText: /^PLST(BROWSE)?$/ }).click();
-await page.locator('.lsm-key', { hasText: /^F1(?![0-9])/ }).click();
-await page.locator('.lsm-key', { hasText: /^F2(?![0-9])/ }).click();
+await fkey(0).click();
+await fkey(1).click();
 log('clips', await ev(() => window.__dbg.EVS.clips.filter(Boolean).length), 'playlist', await ev(() => window.__dbg.EVS.playlist.length));
 await page.locator('.lsm-key', { hasText: 'PLST PLAY' }).click();
 await page.waitForTimeout(600);
