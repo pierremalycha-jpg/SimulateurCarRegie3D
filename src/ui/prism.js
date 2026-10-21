@@ -321,8 +321,10 @@ function drawEye(g, w, h, k, T, L, E) {
   if (T._persist) { g.fillStyle = 'rgba(5,8,10,0.6)'; g.fillRect(0, 0, w, h); } else { g.fillStyle = BG; g.fillRect(0, 0, w, h); }
   T._persist = true;
   g.save(); g.beginPath(); g.rect(m.l, m.t, pw, ph); g.clip();
-  g.globalCompositeOperation = 'lighter'; g.strokeStyle = 'rgba(70,220,110,0.16)'; g.lineWidth = 1.1 * k;
-  for (const s of E.segs) { g.beginPath(); for (let j = 0; j < E.W; j++) { const x = xOf(j), y = yOf(s[j]); if (j) g.lineTo(x, y); else g.moveTo(x, y); } g.stroke(); }
+  // quelques paquets de traces, chacun en un seul tracé (bien plus rapide qu'un tracé par bit)
+  g.globalCompositeOperation = 'lighter'; g.strokeStyle = 'rgba(70,220,110,0.32)'; g.lineWidth = 1.1 * k;
+  const segs = E.segs.slice(0, 160), B = 6;
+  for (let b = 0; b < B; b++) { g.beginPath(); for (let i = b; i < segs.length; i += B) { const s = segs[i]; for (let j = 0; j < E.W; j++) { const x = xOf(j), y = yOf(s[j]); if (j) g.lineTo(x, y); else g.moveTo(x, y); } } g.stroke(); }
   g.restore(); g.globalCompositeOperation = 'source-over';
   // graticule : tension (mV) et temps (UI et ps)
   g.fillStyle = BG; g.fillRect(0, 0, m.l - 1, h); g.fillRect(0, h - m.b + 1, w, m.b);
@@ -567,7 +569,7 @@ export function prismInstrument(o) {
         if (Lk.ip && T.app !== 'timing') { msg(g, W, H, k, 'ENTRÉE IP (ST 2110)', 'pas de couche SDI : voir l\'analyseur du poste Réseau IP'); setCell(t.read, 'Le diagramme de l\'œil et la gigue SDI ne s\'appliquent qu\'aux liaisons coaxiales.', 'pz-read'); if (t.kv) fillKv(t, T, Lk, null); continue; }
         if (T.app === 'eye') {
           if (!Lk.lock) { msg(g, W, H, k, 'PAS DE VERROUILLAGE', 'l\'instrument ne retrouve pas l\'horloge du signal'); T._persist = false; fillKv(t, T, Lk, null); setCell(t.read, `Affaiblissement estimé : plus de ${Math.round(Lk.eq)} dB (égaliseur en butée).`, 'pz-read bad'); continue; }
-          const E = eyeSim(Lk, !!T.eq); drawEye(g, W, H, k, T, Lk, E); fillKv(t, T, Lk, E.meas);
+          const E = eyeSim(Lk, !!T.eq, 240); drawEye(g, W, H, k, T, Lk, E); fillKv(t, T, Lk, E.meas);
           setCell(t.read, T.eq ? `ouverture ${Math.round(E.meas.open * 100)} % · marge de l'égaliseur ${fmt(Lk.margin, 1)} dB` : `câble : ${fmt(Lk.att, 1)} dB à ${halfTxt(f)} (≈ ${Math.round(lenOf(Lk.att, f))} m de ${CABLE})`, 'pz-read');
         } else if (T.app === 'jitter') {
           if (!Lk.lock) { msg(g, W, H, k, 'PAS DE VERROUILLAGE'); setCell(t.read, '', 'pz-read bad'); continue; }

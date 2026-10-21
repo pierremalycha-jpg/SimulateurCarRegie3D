@@ -15,7 +15,7 @@ const pop = () => ev(() => { const p = document.querySelector('#termpop'); retur
 
 await ev(() => { try { localStorage.setItem('carregie.onboard', '1'); } catch (e) { /* */ } window.__dbg.start('standard', 'jour', 'basse', false, 'HD', false); });
 T.check('partie lancée (car SDI, 1080p50)', await until(page, () => window.__dbg.S.mode === 'fps' && !window.__dbg.S.ipMode, null, 90000));
-await page.waitForTimeout(2000);
+{ const f0 = await ev(() => window.__dbg.S.frame); await page.waitForTimeout(10000); T.log('dans le stade : images rendues en 10 s', (await ev(() => window.__dbg.S.frame)) - f0); }
 
 // ---------------- poste vision ----------------
 await ev(() => window.__dbg.openStation('vision'));
@@ -24,6 +24,7 @@ T.check('le waveform est calculé sur l\'image rendue', await until(page, () => 
 T.check('parade RVB : niveaux R, G, B lus', await until(page, () => /^R \d+ %/.test(document.querySelectorAll('#station .pz-tile .pz-read')[1].textContent), null, 30000), await read(1));
 T.check('vecteurscope : balance lue sur les gris', /gris et blancs|pas assez de gris/.test(await read(2)), await read(2));
 T.check('boutons SDR / HDR du Grade 1 toujours là', await ev(() => [...document.querySelectorAll('#station button')].some((b) => /SDR \| HDR/.test(b.textContent))));
+{ const f0 = await ev(() => window.__dbg.S.frame); await page.waitForTimeout(10000); T.log('poste vision : images rendues en 10 s', (await ev(() => window.__dbg.S.frame)) - f0); }
 await shot('01-vision-prism');
 // changer l'affichage d'une tuile : explication en direct, « ? » de l'affichage
 await page.selectOption('#station .pz-app[data-tile="3"]', 'diamond');
@@ -65,7 +66,8 @@ T.check('baie de mesure : instrument, points de mesure, liaison', await until(pa
 T.check('œil de la mire du SPG : amplitude et montée dans les limites', await until(page, () => { const t = document.querySelector('#station .pz-kv'); if (!t) return false; const v = [...t.querySelectorAll('td.v')]; return v.length && /\d+ mV/.test(v[0].textContent) && v[0].className.includes('ok') && v[1].className.includes('ok'); }, null, 30000), await ev(() => [...document.querySelectorAll('#station .pz-kv tr')].map((r) => r.textContent).join(' | ')));
 T.check('état SDI : format, CRC, longueur estimée', await until(page, () => /3G-SDI/.test(document.querySelector('#station .pz-dl').textContent) && /m \(Belden 1694A\)/.test(document.querySelector('#station .pz-dl').textContent), null, 20000));
 T.check('les termes de l\'instrument ont leur « ? »', await ev(() => ['amplitude-sdi', 'temps-montee', 'overshoot', 'crc-edh', 'affaiblissement', 'egaliseur', 'timing-ref', 'ui'].every((k) => document.querySelector(`#station .q[data-term="${k}"]`))));
-await page.waitForTimeout(1200); await shot('10-baie-mire-spg');
+{ const f0 = await ev(() => window.__dbg.S.frame); await page.waitForTimeout(10000); T.log('baie de mesure : images rendues en 10 s', (await ev(() => window.__dbg.S.frame)) - f0); }
+await shot('10-baie-mire-spg');
 // panne : cordon abîmé sur une sortie de CCU
 const pt = await ev(() => { const e = window.__dbg.injectFault('sdicable'); return e ? e.st.point : null; });
 T.check('panne « cordon abîmé » injectée', !!pt, pt);
@@ -78,7 +80,7 @@ await page.locator('#station .mz-fix button', { hasText: 'Insérer un répéteur
 T.check('un répéteur ne répare pas le cordon (explication)', await until(page, () => /rupture d'impédance reste|Il faut changer le cordon/.test(document.querySelector('#station .ex-item .ex-t').textContent), null, 8000));
 await page.locator('#station .mz-fix button', { hasText: 'Remplacer le cordon' }).click();
 T.check('cordon remplacé : panne résolue', await until(page, () => window.__dbg.ACTIVE.filter((a) => a.f.id === 'sdicable').every((a) => a.done) && !document.querySelector('#station .mz-chain span.bad'), null, 20000),
-  await ev(() => [document.querySelector('#toast')?.textContent, document.querySelector('#station .ex-item .ex-t')?.textContent.slice(0, 60), JSON.stringify(window.__dbg.ACTIVE.map((a) => [a.f.id, a.done, a.st]))].join(' | ')));
+  await ev(() => [document.querySelector('#toast')?.textContent, document.querySelector('#station .ex-item .ex-t')?.textContent.slice(0, 60), JSON.stringify(window.__dbg.ACTIVE.map((a) => [a.f.id, a.done, a.st])), 'image ' + window.__dbg.S.frame].join(' | ')));
 await ev(() => window.__dbg.closeStation());
 // la visionneuse de matériel connaît l'appareil
 await ev(() => window.__dbg.openDevice('prism'));
@@ -117,6 +119,7 @@ for (const id of ['prism-waveform', 'prism-gamut', 'prism-oeil']) {
 }
 T.check('« Emmène-moi / Montre-moi » trouve l\'élément à chaque action', misses.length === 0, misses.join(', '));
 // au téléphone : les tuiles passent les unes sous les autres, sans débordement horizontal
+await ev(() => window.__dbg.toggleChef(false));
 await page.setViewportSize({ width: 400, height: 860 });
 await ev(() => window.__dbg.openStation('mesure'));
 await page.waitForTimeout(2500);

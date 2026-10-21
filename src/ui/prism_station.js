@@ -13,6 +13,7 @@ import { qify, liveKv } from './term.js';
 import { prismInstrument } from './prism.js';
 import { PRISM, measurePoints, pointById, setInput, linkOf, counters, repairLink, sdiStd, lenOf, CABLE, SDI_STD } from '../prism_model.js';
 import { DEVICES, DEVICE_LIST } from '../equipment/devices.js';
+import { updateFaults } from '../faults.js';
 
 const HELLO = 'Baie de mesure : choisissez un point de mesure (une sortie de CCU, une sortie de la grille, le PGM ou la mire du SPG), puis lisez l\'instrument. Préréglage « Couche physique » : l\'œil, la gigue, l\'état SDI (erreurs CRC, longueur de câble) et le timing. Chaque tuile a son « ? ».';
 
@@ -68,6 +69,7 @@ export function buildPrismStation(body, arg, ctx) {
     const p = pointById(P.input); if (!p) return;
     if (S.ipMode && p.kind !== 'spg') { toast('Car IP : cette entrée est un flux ST 2110, il n\'y a pas de cordon SDI à changer.', 'bad'); return; }
     const r = repairLink(p.id, act);
+    if (r.fixed) updateFaults(); // la panne du simulateur est close tout de suite (« Panne résolue »)
     toast(r.fixed ? (act === 'cordon' ? `${p.short} : cordon remplacé` : `${p.short} : répéteur inséré`) : 'Mesure inchangée', r.fixed ? 'good' : '');
     explain(r.why, r.fixed ? 'ok:fix' : 'warn:fix');
     drawLink(true); drawPoints();
