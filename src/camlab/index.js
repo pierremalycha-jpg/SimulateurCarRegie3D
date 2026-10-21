@@ -277,14 +277,18 @@ function openNotion(nid, pointId = null, fly = true) {
     open: (s) => openNotion(s), lens: (st) => lensFromLab(st), progress: () => updateList(),
     cours: (lesson) => closeCameraLab({ cours: { lesson } }), go: (g) => closeCameraLab({ go: g }),
   });
-  const pid = pointId || R.point;
+  // la pastille de la fiche (celle d'où l'on vient, sinon la sienne) ; une notion sans pastille
+  // (chapitre 9) n'hérite pas de la dernière ouverte : l'en-tête donne alors son chapitre, sans onglets
+  const pid = pointId || f.point || null;
+  R.point = pid;
   const p = PASTILLES.find((x) => x.id === pid);
+  const chap = CHAPITRES.find((c) => c.n === f.chap);
   const ids = pid ? notionsAt(pid) : [];
   const tabs = ids.length > 1 ? el('div', { class: 'cl-tabs', role: 'tablist', 'aria-label': 'Notions de ce point' }, ...ids.map((s) => el('button', {
     type: 'button', role: 'tab', class: 'cl-tab' + (NOTIONS[s].prevu ? ' prevu' : ''), 'aria-selected': String(s === nid), onclick: () => openNotion(s, pid, false),
   }, NOTIONS[s].t))) : null;
   R.side.replaceChildren(
-    el('div', { class: 'cl-sh' }, el('span', { class: 'cl-sp' }, p ? p.nom : 'Notion'), el('button', { type: 'button', class: 'linkbtn cl-close', 'aria-label': 'Fermer la fiche', onclick: () => { closeSide(); } }, 'Fermer')),
+    el('div', { class: 'cl-sh' }, el('span', { class: 'cl-sp' }, p ? p.nom : chap ? chap.nom : 'Notion'), el('button', { type: 'button', class: 'linkbtn cl-close', 'aria-label': 'Fermer la fiche', onclick: () => { closeSide(); } }, 'Fermer')),
     ...(tabs ? [tabs] : []),
     el('div', { class: 'cl-scroll' }, R.fiche.node));
   R.side.hidden = false; R.root.classList.add('side-open');
@@ -429,19 +433,26 @@ function setMire(D) {
   R.studio.mire.position.x = x; R.studio.dirty = true; R.renderer.shadowMap.needsUpdate = true;
 }
 /** fiche refermée : l'image redevient celle de la caméra seule */
-function resetImage() { lensFromLab({}); R.lens = null; }
+function resetImage() { lensFromLab({}); R.rig.set({ ext: 0, macro: 0 }); R.lens = null; }
 /** l'image de la caméra : focale, flou de mise au point, lumière reçue */
 function cameraImage(dt) {
   const s = R.rig.state, L = R.lens || {};
-  const f = zoomFocal(s.zoom), dF = focusDist(s.focus), N = Math.min(s.iris, 64);
+  // doubleur engagé (clé ext) : la focale double, et l'erreur de point dans l'image avec son carré ;
+  // la manipulation envoie l'iris obtenu (deux diaphragmes perdus compris). Macro (clé macro, 0 à 1) :
+  // l'image est décalée, la mire du plateau à 3 m sort du point.
+  const k = Number(s.ext) >= 0.5 ? 2 : 1;
+  const f = zoomFocal(s.zoom) * k, dF = focusDist(s.focus), N = Math.min(s.iris, 64);
   const H = R.studio.rt.height;
-  const blurR = blurPx(Math.abs(defocus(f, L.mireD || MIRE_D, dF, s.ff)) / N, H) / 2;
+  const err = k * k * defocus(f / k, L.mireD || MIRE_D, dF, (s.ff || 0) - clamp(Number(s.macro) || 0, 0, 1) * MACRO_SHIFT);
+  const blurR = blurPx(Math.abs(err) / N, H) / 2;
   const E = s.iris >= 99 ? 0 : exposureOf(N, ND[s.nd || 0][1], L.gain || 0) * (L.light != null ? L.light : 1);
   for (const m of [R.studio.vfMat, R.studio.monMat]) { m.uniforms.blur.value = blurR; m.uniforms.exposure.value = E * EXPO_K; }
   R.studio.renderView(dt, THREE.MathUtils.radToDeg(vfov(f)));
 }
 /** lumière du plateau ramenée à l'image : à f/8 sans filtre, le blanc de la mire vers 90 % */
 const EXPO_K = 0.9;
+/** décalage d'image de la bague macro à fond (mm) : l'ordre de grandeur de la manipulation « macro » */
+const MACRO_SHIFT = 0.95;
 
 // ---------------- boucle ----------------
 let last = 0;
