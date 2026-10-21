@@ -12,7 +12,7 @@ import { BLOCS, COMPETENCES, RATTACHEMENT } from './content/referentiel.js';
 // Le livret dit ce qui a été pratiqué ; la validation d'une compétence reste au formateur.
 // ----------------------------------------------------------------------------------
 
-/** @typedef {'parcours' | 'mission' | 'phase' | 'reseau' | 'exercice'} Kind */
+/** @typedef {'parcours' | 'mission' | 'phase' | 'reseau' | 'exercice' | 'cours'} Kind */
 /** @typedef {'absent' | 'a_faire' | 'travaillee' | 'consolidee'} Niveau */
 /** @typedef {{ kind: Kind, ref: string, done: boolean, aided: boolean }} Activite */
 
@@ -21,11 +21,11 @@ export const SEUIL_PHASE = 0.6, SEUIL_SCORE = 60, CONSOLIDE = 3;
 export const NIVEAUX = { consolidee: 'Consolidée', travaillee: 'Travaillée', a_faire: 'À travailler', absent: 'Hors simulateur' };
 
 /** @type {Record<Kind, Record<string, string[]>>} */
-const TABLES = { parcours: RATTACHEMENT.parcours, mission: RATTACHEMENT.missions, phase: RATTACHEMENT.phases, reseau: RATTACHEMENT.reseau, exercice: RATTACHEMENT.exercices };
+const TABLES = { parcours: RATTACHEMENT.parcours, mission: RATTACHEMENT.missions, phase: RATTACHEMENT.phases, reseau: RATTACHEMENT.reseau, exercice: RATTACHEMENT.exercices, cours: RATTACHEMENT.cours };
 /** compétences travaillées par une activité */
 export const codesOf = (/** @type {Kind} */ kind, /** @type {string} */ ref) => TABLES[kind][ref] || [];
 
-/** activités rattachées à chaque compétence, dans l'ordre parcours, missions, jour de match, réseau, exercices */
+/** activités rattachées à chaque compétence, dans l'ordre parcours, missions, jour de match, réseau, exercices, cours */
 export const ACTIVITES = (() => {
   /** @type {Record<string, { kind: Kind, ref: string }[]>} */
   const m = Object.fromEntries(COMPETENCES.map((c) => [c.code, []]));
@@ -40,6 +40,7 @@ export function activityState(prog, /** @type {Kind} */ kind, /** @type {string}
   switch (kind) {
     case 'parcours': { const t = (P.tutor || {})[ref]; return { done: !!(t && t.done), aided: !!(t && t.done && t.aided) }; }
     case 'mission': return { done: !!(P.missions || {})[ref], aided: false };
+    case 'cours': { const c = (P.cours || {})[ref]; return { done: !!(c && c.quiz && c.quiz.total && c.quiz.score === c.quiz.total), aided: false }; }
     case 'phase': return { done: (P.scenarios || []).some((s) => (s.phases || []).some((p) => p.id === ref && p.max > 0 && p.pts / p.max >= SEUIL_PHASE)), aided: false };
     case 'reseau': { const r = (N.missions || {})[ref]; return { done: !!r, aided: !!(r && r.aided) }; }
     case 'exercice': return {

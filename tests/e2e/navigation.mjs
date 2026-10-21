@@ -1,7 +1,8 @@
-// Navigation entre les espaces : écran titre (Jouer, Cours, S'entraîner, Espace formateur), Cours
-// plein écran par-dessus le titre et dans le car, S'entraîner qui lance le car et le parcours du
-// chef, menu du car (Échap), boutons « Emmène-moi », touche G dans un poste, pupitre, changement
-// de vacation (le simulateur se recharge et lance la vacation demandée), téléphone.
+// Navigation entre les cinq familles : écran titre (Jouer, Cours, Chef de car, Formateur selon le
+// profil, Réglages), Cours et espace du chef en plein écran par-dessus le titre et dans le car,
+// « Commencer » qui lance le car et le parcours du chef, menu du car (Échap), « Aller au poste »
+// depuis une leçon, touche G dans un poste, pupitre, changement de vacation (le simulateur se
+// recharge et lance la vacation demandée), téléphone.
 // node tests/e2e/navigation.mjs [dossier]
 import { launch, openPage, outDir, until, reporter } from './harness.mjs';
 const OUT = outDir('navigation');
@@ -14,15 +15,15 @@ const layer = (kind) => until(page, (k) => !!document.querySelector('#layer.ly-'
 const noLayer = () => until(page, () => !document.getElementById('layer'), null, 4000);
 
 // ---------------- écran titre ----------------
-T.check('écran titre prêt : Jouer, Cours, S\'entraîner, Espace formateur, Réglages, Crédits', await until(page, () => document.getElementById('title').classList.contains('ready') && ['ti-play', 'ti-cours', 'ti-train', 'ti-trainer', 'ti-settings', 'ti-credits'].every((id) => !document.getElementById(id).disabled), null, 60000));
+T.check('écran titre prêt : Jouer, Cours, Chef de car, Formateur (harnais : profil Formateur), Réglages', await until(page, () => document.getElementById('title').classList.contains('ready') && ['ti-play', 'ti-cours', 'ti-chef', 'ti-trainer', 'ti-settings'].every((id) => { const b = document.getElementById(id); return b && !b.disabled && b.offsetParent; }), null, 60000));
 await shot('01-titre');
 
-// Cours par-dessus le titre : notions, chapitres, glossaire, postes, matériel
+// Cours par-dessus le titre : leçons, chapitres, glossaire, postes, matériel
 await page.locator('#ti-cours').click();
-T.check('Cours ouvert par-dessus le titre, fiche SDI', await layer('cours') && await ev(() => /SDI/.test(document.querySelector('#layer .co-fiche h2')?.textContent || '') && !document.getElementById('title').hidden));
+T.check('Cours ouvert par-dessus le titre, sur les leçons', await layer('cours') && await ev(() => !!document.querySelector('#layer .co-page') && !document.getElementById('title').hidden));
 await shot('02-cours');
 await page.locator('#layer .ly-tabs .tab[data-k="chapitres"]').click();
-T.check('Chapitres : tous les chapitres du guide, par famille', await ev(() => document.querySelectorAll('#layer [data-g]').length >= 24 && document.querySelectorAll('#layer .co-theme').length >= 5));
+T.check('Chapitres : tous les chapitres du guide, par famille', await ev(() => document.querySelectorAll('#layer [data-g]').length >= 24 && document.querySelectorAll('#layer .gd-theme').length >= 5));
 await page.locator('#layer [data-g="reseau"]').click();
 T.check('chapitre réseau : boutons « ? » et lexique', await until(page, () => !!document.querySelector('#layer .prose .q[data-term="spine"]'), null, 4000));
 await page.locator('#layer .ly-tabs .tab[data-k="glossaire"]').click();
@@ -36,10 +37,10 @@ T.check('Échap : la fiche se ferme, le Cours reste', await until(page, () => do
 await page.keyboard.press('Escape');
 T.check('Échap : le Cours se ferme, l\'écran titre revient', await noLayer() && await ev(() => !document.getElementById('title').hidden));
 
-// S'entraîner : parcours par famille, exercices, missions ; « Commencer » lance le car et le parcours
-await page.locator('#ti-train').click();
-T.check('S\'entraîner : familles de parcours du chef', await layer('entrainement') && await ev(() => document.querySelectorAll('#layer .tr-fam').length >= 8 && document.querySelectorAll('#layer [data-lesson]').length >= 40));
-await shot('03-entrainement');
+// Chef de car : parcours par famille, exercices, missions, livret ; « Commencer » lance le car et le parcours
+await page.locator('#ti-chef').click();
+T.check('Chef de car : familles de parcours', await layer('entrainement') && await ev(() => document.querySelectorAll('#layer .tr-fam').length >= 8 && document.querySelectorAll('#layer [data-lesson]').length >= 30));
+await shot('03-chef');
 await page.locator('#layer .ly-tabs .tab[data-k="exercices"]').click();
 T.check('exercices notés : cinq exercices avec leur suivi', await ev(() => document.querySelectorAll('#layer .tr-ex').length === 5 && document.querySelectorAll('#layer .tr-status').length === 5));
 await page.locator('#layer .ly-tabs .tab[data-k="missions"]').click();
@@ -49,13 +50,13 @@ T.check('« Mon livret » : les quatre blocs du référentiel', await until(page
 await shot('03b-livret');
 await page.locator('#layer .ly-tabs .tab[data-k="parcours"]').click();
 await page.locator('#layer [data-lesson="chef-lineup"]').click();
-T.check('« Commencer » depuis le titre : car lancé, parcours du chef ouvert', await until(page, () => window.__dbg.S.mode === 'fps' && window.__dbg.TUTOR.lesson?.id === 'chef-lineup' && !document.getElementById('layer') && document.getElementById('title').hidden && !document.querySelector('#chef').hidden, null, 90000));
+T.check('« Commencer » depuis le titre : car lancé, parcours du chef ouvert', await until(page, () => window.__dbg.S.mode === 'fps' && window.__dbg.TUTOR.lesson?.id === 'chef-lineup' && !document.getElementById('layer') && document.getElementById('title').hidden, null, 60000));
 await ev(() => { window.__dbg.stopChefLesson(); window.__dbg.toggleChef(false); });
 
 // ---------------- dans le car ----------------
 T.check('barre d\'outils : Pupitre, Chef de car, Cours, Son, Menu', await ev(() => [...document.querySelectorAll('#toolbar .tbtn')].map((b) => b.id).join(',') === 'tb-pupitre,tb-chef,tb-cours,tb-son,tb-menu'));
 await page.keyboard.press('Escape');
-T.check('Échap : le menu du car, dix touches', await until(page, () => !!document.querySelector('#modal .mn') && document.querySelectorAll('#modal .mn-key').length === 10, null, 4000));
+T.check('Échap : le menu du car, dix touches, cinq familles', await until(page, () => !!document.querySelector('#modal .mn') && document.querySelectorAll('#modal .mn-key').length === 10 && ['mn-cours', 'mn-chef', 'mn-trainer', 'mn-reglages'].every((id) => document.getElementById(id)), null, 4000));
 await shot('04-menu');
 await page.locator('#mn-son').click();
 T.check('menu : le son se coupe', await ev(() => window.__dbg.AU.muted && document.getElementById('mn-son').getAttribute('aria-pressed') === 'false'));
@@ -65,8 +66,9 @@ T.check('« Reprendre » ferme le menu', await ev(() => document.getElementById(
 await page.locator('#tb-menu').click();
 await page.locator('#mn-cours').click();
 T.check('menu → Cours', await layer('cours') && await ev(() => document.getElementById('modal').hidden));
-await page.locator('#layer .btn', { hasText: 'Emmène-moi' }).first().click();
-T.check('« Emmène-moi » de la fiche SDI : poste Baie de brassage', await until(page, () => window.__dbg.S.mode === 'station' && window.__dbg.S.station === 'brassage' && !document.getElementById('layer'), null, 30000));
+await ev(() => window.__dbg.openCours('signal-422'));
+await page.locator('#layer .co-car .btn.primary').click();
+T.check('« Aller au poste » de la leçon 4:2:2 : poste vision', await until(page, () => window.__dbg.S.mode === 'station' && window.__dbg.S.station === 'vision' && !document.getElementById('layer'), null, 30000));
 await page.keyboard.press('KeyG');
 T.check('touche G dans un poste : le Cours', await layer('cours'));
 await page.keyboard.press('Escape');
@@ -76,9 +78,9 @@ T.check('bouton « Cours » du poste', await layer('cours'));
 await page.keyboard.press('Escape'); await page.keyboard.press('Escape');
 await until(page, () => window.__dbg.S.mode === 'fps', null, 8000);
 await page.keyboard.press('Tab');
-T.check('pupitre : Cours et S\'entraîner parmi les outils', await until(page, () => ['Cours', 'S\'entraîner'].every((t) => [...document.querySelectorAll('#modal .dkey.tool')].some((b) => b.textContent.includes(t))), null, 6000));
-await page.locator('#modal .dkey.tool', { hasText: 'S\'entraîner' }).click();
-T.check('pupitre → S\'entraîner', await layer('entrainement'));
+T.check('pupitre : cinq familles, Cours et Parcours et livret parmi les outils', await until(page, () => document.querySelectorAll('#modal .pp-fam').length === 5 && ['Cours', 'Parcours et livret'].every((t) => [...document.querySelectorAll('#modal .dkey.tool')].some((b) => b.textContent.includes(t))), null, 6000));
+await page.locator('#modal .dkey.tool', { hasText: 'Parcours et livret' }).click();
+T.check('pupitre → espace du chef', await layer('entrainement'));
 // changer de vacation en cours de partie : confirmation, rechargement, la vacation se lance
 await page.locator('#layer .ly-tabs .tab[data-k="exercices"]').click();
 await page.locator('#layer .tr-ex .btn', { hasText: 'Monter une caméra' }).click();
@@ -89,12 +91,17 @@ await page.waitForFunction(() => !window.__dbg, null, { timeout: 30000, polling:
 await page.waitForFunction('!!window.__dbg', null, { timeout: 180000, polling: 200 });
 T.check('après rechargement : l\'atelier de montage est lancé', await until(page, () => window.__dbg.S.mode === 'fps' && window.__dbg.S.preset === 'atelier' && document.getElementById('title').hidden, null, 90000));
 
-// ---------------- feuille de service et téléphone ----------------
+// ---------------- feuille de service, profil et téléphone ----------------
 await page.reload();
 await page.waitForFunction('!!window.__dbg', null, { timeout: 180000, polling: 200 });
 await until(page, () => document.getElementById('title').classList.contains('ready'), null, 60000);
+await page.locator('#ti-role button[data-v="etudiant"]').click();
+T.check('profil Étudiant : plus d\'entrée Formateur sur le titre', await ev(() => !document.getElementById('ti-trainer').offsetParent));
 await page.locator('#ti-play').click();
-T.check('feuille de service : liens Cours et S\'entraîner, plus d\'Espace formateur ni de relecture', await ev(() => !!document.getElementById('st-cours') && !!document.getElementById('st-train') && ![...document.querySelectorAll('#start button')].some((b) => /Espace formateur|Relecture technique/.test(b.textContent))));
+T.check('feuille de service (Étudiant) : liens Cours et Chef de car, pas de Formateur ni de relecture', await ev(() => !!document.getElementById('st-cours') && !!document.getElementById('st-train') && ![...document.querySelectorAll('#start button')].some((b) => b.offsetParent && /formateur|Relecture/i.test(b.textContent))));
+await page.locator('#ti-role button[data-v="formateur"]').click().catch(() => {});
+await ev(() => window.__dbg.setRole('formateur'));
+T.check('profil Formateur : Espace formateur et Relecture technique sur la feuille', await ev(() => [...document.querySelectorAll('#start button')].filter((b) => b.offsetParent && /Espace formateur|Relecture technique/.test(b.textContent)).length === 2));
 await page.locator('#st-cours').click();
 T.check('feuille → Cours', await layer('cours'));
 await page.keyboard.press('Escape');

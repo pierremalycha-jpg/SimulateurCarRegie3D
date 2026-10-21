@@ -46,6 +46,7 @@ test('rattachement : chaque activité citée existe et chaque parcours pratique 
   for (const id of Object.keys(RATTACHEMENT.reseau)) assert.ok(NET_MISSIONS.some((m) => m.id === id), 'mission réseau inconnue : ' + id);
   assert.deepEqual(NET_MISSIONS.map((m) => m.id).filter((id) => !RATTACHEMENT.reseau[id]), [], 'mission réseau sans compétence');
   assert.deepEqual(codesOf('parcours', 'chef-depannage'), ['2.13', '3.10']);
+  assert.ok(Object.keys(RATTACHEMENT.cours).length >= 19, 'leçons du Cours rattachées');
   assert.deepEqual(codesOf('parcours', 'inconnu'), []);
 });
 
@@ -79,7 +80,10 @@ test('livret : chaque source de progression compte (parcours, missions, jour de 
     net: { missions: { n9: { pts: 8, aided: true } }, quiz: [{ score: 40 }], exams: [{ score: 75 }] },
     patchBest: 100,
     rigs: [],
+    cours: { 'signal-422': { seen: true, quiz: { score: 3, total: 3 } }, 'sdi-oeil': { seen: true, quiz: { score: 2, total: 3 } } },
   };
+  assert.equal(activityState(prog, 'cours', 'signal-422').done, true, 'leçon acquise : quiz réussi en entier');
+  assert.equal(activityState(prog, 'cours', 'sdi-oeil').done, false, 'quiz raté : leçon non acquise');
   assert.deepEqual(activityState(prog, 'parcours', 'chef-depannage'), { done: true, aided: true });
   assert.equal(activityState(prog, 'parcours', 'reseau-depannage').done, false);
   assert.equal(activityState(prog, 'phase', 'air').done, true);
@@ -100,6 +104,7 @@ test('livret : chaque source de progression compte (parcours, missions, jour de 
   // 2.10 : brassage seul parmi ses activités
   assert.equal(c('2.10').niveau, 'travaillee');
   assert.equal(c('3.6').niveau, 'travaillee', 'examen réseau');
+  assert.ok(c('1.4').acts.some((a) => a.kind === 'cours' && a.ref === 'signal-422' && a.done), 'la leçon 4:2:2 compte pour 1.4');
   assert.equal(c('1.1').niveau, 'a_faire');
   assert.equal(c('3.1').niveau, 'absent');
   const b2 = L.blocs.find((b) => b.id === 'BC02');

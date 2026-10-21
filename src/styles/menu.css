@@ -5,12 +5,16 @@
 #title:not([hidden]) ~ #start { visibility: hidden; }
 #title.ready { background: linear-gradient(100deg, rgba(20,25,29,.97) 0%, rgba(20,25,29,.9) 55%, rgba(20,25,29,.62) 100%); }
 .ti-wrap { box-sizing: border-box; min-height: 100%; max-width: 1180px; margin: 0 auto; padding: calc(28px + env(safe-area-inset-top, 0px)) var(--gut-r) calc(24px + env(safe-area-inset-bottom, 0px)) var(--gut-l);
-  display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); grid-template-areas: "head mon" "menu mon" "load tip"; gap: 22px 44px; align-content: center; }
+  display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); grid-template-areas: "head mon" "menu mon" "role mon" "load tip"; gap: 22px 44px; align-content: center; }
 .ti-head { grid-area: head; align-self: end; }
 #ti-name { margin: 0 0 10px; font: 700 clamp(44px, 7vw, 84px)/.92 var(--f-disp); letter-spacing: -.015em; color: var(--fg); }
 .ti-sub { margin: 0; font-size: 16px; color: var(--muted); }
 .ti-menu, .ti-panel { grid-area: menu; display: grid; gap: 8px; align-content: start; min-width: 0; }
 .ti-menu[hidden] { display: none; }
+/* le profil, sous le menu : Étudiant ou Formateur */
+.ti-role { grid-area: role; display: flex; align-items: center; gap: 10px; font-size: 13.5px; color: var(--muted); }
+.ti-role[hidden] { display: none; }
+.ti-role .seg { flex: 0 1 300px; }
 .ti-key { display: grid; grid-template-columns: auto minmax(0, 1fr); column-gap: 12px; align-items: center; padding: 10px 14px; text-align: left; font: inherit; color: var(--fg); cursor: pointer;
   background: linear-gradient(#4a545e, #3b444d 58%, #343c44); border: 1px solid #161b1f; border-radius: 4px; box-shadow: inset 0 1px 0 rgba(255,255,255,.15), 0 2px 3px rgba(0,0,0,.35); }
 .ti-key .ti-led { grid-row: span 2; width: 8px; height: 8px; border-radius: 50%; background: #1b2024; box-shadow: inset 0 0 0 1px rgba(0,0,0,.5); }
@@ -54,7 +58,7 @@
 .ti-umd b { font: 600 15px var(--f-disp); color: #d3f3df; }
 .ti-umd small { margin-left: auto; font: 12px var(--f-mono); color: #86a596; }
 @media (max-width: 900px) {
-  .ti-wrap { grid-template-columns: minmax(0, 1fr); grid-template-areas: "head" "menu" "load" "tip"; align-content: start; gap: 18px; }
+  .ti-wrap { grid-template-columns: minmax(0, 1fr); grid-template-areas: "head" "menu" "role" "load" "tip"; align-content: start; gap: 18px; }
   .ti-mon { display: none; }
 }
 @media (prefers-reduced-motion: reduce) { .ti-bar.wait i { animation: none; } .ti-bar i, #title, .ti-scr::after { transition: none; } }

@@ -72,9 +72,9 @@ await ev(() => window.__dbg.toggleChef(true));
 await page.waitForTimeout(500);
 await scan('chef', '#chef');
 await ev(() => window.__dbg.toggleChef(false));
-// les espaces : Cours (touche G), S'entraîner ; le menu du car (Échap)
+// les espaces : Cours (touche G), chef de car ; le menu du car (Échap)
 await page.keyboard.press('KeyG');
-await until(page, () => !!document.querySelector('#layer .co-fiche'), null, 8000);
+await until(page, () => !!document.querySelector('#layer .co-page'), null, 8000);
 await page.waitForTimeout(500);
 await scan('cours', '#layer');
 await page.locator('#layer .ly-tabs .tab[data-k="chapitres"]').click();

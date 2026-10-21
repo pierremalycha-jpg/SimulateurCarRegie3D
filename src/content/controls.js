@@ -17,7 +17,7 @@ export const CONTROLS_HELP = [
   ['I', 'Fiche du poste visé · sur une caméra : son matériel (connecteurs)'],
   ['Au poste', 'Bouton « Moniteur flottant » : un écran déplaçable au choix ; bouton « Matériel » : l\'appareil du poste'],
   ['Atelier de montage', 'E (ou clic) : prendre, monter, agir — maintenir pour les gestes longs · Q : reposer la pièce · molette : bulle et équilibrage'],
-  ['Échap', 'Libérer la souris, puis ouvrir le menu (Cours, S\'entraîner, réglages, Espace formateur…) · dans un poste : le quitter'],
+  ['Échap', 'Libérer la souris, puis ouvrir le menu (Cours, chef de car, réglages, formateur…) · dans un poste : le quitter'],
 ];
 
 // premiers gestes, rappelés au premier lancement (encart « Prise en main » ou chef de car)

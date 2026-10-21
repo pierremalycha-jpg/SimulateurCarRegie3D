@@ -2,7 +2,7 @@
 // pastilles de la caméra 3D, et le modèle d'optique qui fait tourner les manipulations.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { NOTIONS, CHAPITRES, ORDRE, notionsDu } from '../../src/content/cours/camera/index.js';
+import { NOTIONS, CHAPITRES, ORDRE, notionsDu } from '../../src/camlab/notions/index.js';
 import { PASTILLES, notionsAt } from '../../src/camlab/points.js';
 import { FIGS } from '../../src/camlab/figs.js';
 import { LABS } from '../../src/camlab/labs.js';

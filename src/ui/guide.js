@@ -9,6 +9,7 @@ import { S, emit, on, camById } from '../state.js';
 import { el } from '../util.js';
 import { CONTROLS_HELP } from '../content/controls.js';
 import { GLOSSARY } from '../content/glossary.js';
+import { cibleDuTerme, posteCible, titreDe, estLecon } from '../cours/liens.js';
 import { GUIDE } from '../content/guide.js';
 import { STATION_INFO, STATION_LIST } from '../content/stations.js';
 import { LIGHTING } from '../data/exposure.js';
@@ -92,9 +93,9 @@ export const CHAPTER_GROUPS = [
 const NET_CHAPTERS = ['ipguide', 'reseau', 'mesure2110'];
 /** les chapitres : à gauche la liste par famille, à droite le chapitre ouvert */
 export function chaptersSection(box, chapter = null) {
-  const art = el('article', { class: 'prose co-chap', tabindex: '-1' });
-  const nav = el('nav', { class: 'co-nav plate', 'aria-label': 'Les chapitres' });
-  const lex = el('button', { class: 'btn small', onclick: () => openLexique(lex) }, 'Lexique réseau et ST 2110');
+  const art = el('article', { class: 'prose gd-art', tabindex: '-1' });
+  const nav = el('nav', { class: 'gd-nav plate', 'aria-label': 'Les chapitres' });
+  const lex = el('button', { class: 'btn small', onclick: () => openLexique(lex) }, 'Lexique des postes');
   const tools = el('div', { class: 'hwrow' }, lex);
   let cur = GUIDE[0];
   const report = el('button', { class: 'btn small', onclick: () => openReport('Guide · ' + cur.title) }, 'Signaler une erreur dans ce chapitre');
@@ -110,27 +111,47 @@ export function chaptersSection(box, chapter = null) {
     for (const b of /** @type {NodeListOf<HTMLElement>} */ (nav.querySelectorAll('[data-g]'))) b.setAttribute('aria-current', String(b.dataset.g === g.id));
     const sc = box.closest('.ly-scroll'); if (sc && art.getBoundingClientRect().top < 0) art.scrollIntoView({ block: 'start' });
   };
-  nav.append(...groups.filter(([, ids]) => ids.length).map(([name, ids]) => el('section', { class: 'co-theme' },
+  nav.append(...groups.filter(([, ids]) => ids.length).map(([name, ids]) => el('section', { class: 'gd-theme' },
     el('h3', {}, el('span', {}, name)),
-    el('ul', { class: 'co-items' }, ...ids.map((id) => GUIDE.find((g) => g.id === id)).filter(Boolean).map((g) => el('li', {},
-      el('button', { type: 'button', class: 'co-item plain', 'data-g': g.id, onclick: () => { open(g); art.focus({ preventScroll: true }); } }, el('span', {}, el('b', {}, g.title)))))))));
-  box.append(el('div', { class: 'co-wrap' }, nav, el('div', { class: 'co-main' }, art, tools)));
+    el('ul', { class: 'gd-items' }, ...ids.map((id) => GUIDE.find((g) => g.id === id)).filter(Boolean).map((g) => el('li', {},
+      el('button', { type: 'button', class: 'gd-item plain', 'data-g': g.id, onclick: () => { open(g); art.focus({ preventScroll: true }); } }, el('span', {}, el('b', {}, g.title)))))))));
+  box.append(el('div', { class: 'gd-wrap' }, nav, el('div', { class: 'gd-main' }, art, tools)));
   open(GUIDE.find((g) => g.id === chapter) || GUIDE[0]);
 }
-/** le glossaire : 246 termes, recherche sans accents */
+/** le glossaire : 246 termes, recherche sans accents ; un terme qui a sa fiche y mène (onglet Notions) */
 export function glossarySection(box) {
   const q = el('input', { type: 'search', id: 'glq', placeholder: 'Rechercher un terme (SDI, genlock, DSK…)', autocomplete: 'off', spellcheck: 'false' });
   const list = el('div', { class: 'list' });
   const count = el('p', { class: 'note' });
-  const render = () => { list.innerHTML = ''; const nz = (x) => x.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, ''); const s = nz(q.value.trim()); let n = 0; for (const [t, d] of GLOSSARY) { if (s && !(nz(t).includes(s) || nz(d).includes(s))) continue; n++; list.appendChild(el('div', { class: 'item' }, el('div', { class: 'grow' }, el('div', { class: 't' }, t), el('div', { class: 's', style: { fontSize: '13px', color: '#c7d0d7' } }, d)))); } count.textContent = s ? `${n} terme${n > 1 ? 's' : ''} sur ${GLOSSARY.length}` : `${GLOSSARY.length} termes, de A à Z. Les notions les plus importantes ont aussi leur fiche, dans l'onglet Notions.`; };
+  const fiches = GLOSSARY.map(([t]) => cibleDuTerme(t));
+  const nf = fiches.filter(Boolean).length;
+  const render = () => {
+    list.innerHTML = '';
+    const nz = (x) => x.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+    const s = nz(q.value.trim()); let n = 0;
+    GLOSSARY.forEach(([t, d], i) => {
+      if (s && !(nz(t).includes(s) || nz(d).includes(s))) return;
+      n++;
+      const f = fiches[i];
+      list.appendChild(el('div', { class: 'item' }, el('div', { class: 'grow' }, el('div', { class: 't' }, t), el('div', { class: 's', style: { fontSize: '13px', color: '#c7d0d7' } }, d)),
+        f ? el('button', { type: 'button', class: 'btn small', 'data-fiche': f, title: (estLecon(f) ? 'Ouvrir la leçon « ' : 'Ouvrir la fiche « ') + titreDe(f) + ' »', onclick: () => emit('cours', { fiche: f }) }, estLecon(f) ? 'Leçon' : 'Fiche « ? »') : null));
+    });
+    count.textContent = s ? `${n} terme${n > 1 ? 's' : ''} sur ${GLOSSARY.length}` : `${GLOSSARY.length} termes, de A à Z. ${nf} d'entre eux ont leur leçon ou leur fiche « ? », avec un schéma : boutons « Leçon » et « Fiche « ? » ».`;
+  };
   q.addEventListener('input', render);
   box.append(el('div', { class: 'list ly-narrow' }, field('Recherche', q), count, list)); render();
 }
-/** les postes du car et du stade : rôle, et la fiche complète */
+/** les postes du car et du stade : rôle, la notion technique du poste et la fiche complète */
 export function postesSection(box) {
   box.append(el('p', { class: 'note' }, 'Chaque poste du car et chaque équipement du stade, avec son rôle, son matériel et ses pièges. Dans le simulateur, approchez-vous et appuyez sur E.'));
   const list = el('div', { class: 'list' });
-  for (const [id, where] of STATION_LIST) { const I = STATION_INFO[id]; if (!I) continue; list.appendChild(el('div', { class: 'item' }, el('div', { class: 'grow' }, el('div', { class: 't' }, I.title), el('div', { class: 's' }, `${where} · ${I.role.split('. ')[0]}.`)), el('button', { class: 'btn small', onclick: () => openInfo(id) }, 'Voir la fiche'))); }
+  for (const [id, where] of STATION_LIST) {
+    const I = STATION_INFO[id]; if (!I) continue;
+    const f = posteCible(id, S.ipMode);
+    list.appendChild(el('div', { class: 'item' }, el('div', { class: 'grow' }, el('div', { class: 't' }, I.title), el('div', { class: 's' }, `${where} · ${I.role.split('. ')[0]}.`)),
+      f ? el('button', { class: 'btn small', 'data-fiche': f, title: 'La notion technique de ce poste, dans le Cours', onclick: () => emit('cours', { fiche: f }) }, (estLecon(f) ? 'Leçon : ' : 'Fiche : ') + titreDe(f)) : null,
+      el('button', { class: 'btn small', onclick: () => openInfo(id) }, 'Voir la fiche')));
+  }
   box.append(list);
 }
 /** le matériel : faces avant et arrière, connecteurs */

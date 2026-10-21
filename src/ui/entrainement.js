@@ -12,13 +12,13 @@ import { livretPanel, liveProg } from './livret.js';
 import { codesOf } from '../livret.js';
 
 // ----------------------------------------------------------------------------------
-// L'espace S'entraîner, plein écran : tout ce qui fait progresser, avec où l'on en est. Les
+// L'espace du chef de car (entrée « Chef de car » du menu), plein écran : tout ce qui fait progresser, avec où l'on en est. Les
 // parcours du chef de car (par famille, dans l'ordre d'une journée de car), les exercices notés
 // (jour de match, brassage, atelier de montage, formation réseau), les missions d'installation et
 // le livret de compétences du référentiel TIEE, qui fait le bilan de tout cela.
 // Un bouton lance ce qu'il faut : le car s'il n'est pas encore lancé, le parcours, le poste.
 // ----------------------------------------------------------------------------------
-const TABS = /** @type {[string, string][]} */ ([['parcours', 'Avec le chef de car'], ['exercices', 'Exercices notés'], ['missions', 'Missions d\'installation'], ['livret', 'Mon livret']]);
+const TABS = /** @type {[string, string][]} */ ([['parcours', 'Parcours guidés'], ['exercices', 'Exercices notés'], ['missions', 'Missions d\'installation'], ['livret', 'Mon livret']]);
 const PRESENT = 'Les postes du car';
 const plural = (n, w) => `${n} ${w}${n > 1 ? 's' : ''}`;
 const bar = (done, total) => el('span', { class: 'tr-bar', role: 'img', 'aria-label': `${done} sur ${total}` }, el('i', { style: { width: `${total ? (done / total) * 100 : 0}%` } }));
@@ -26,7 +26,7 @@ const bar = (done, total) => el('span', { class: 'tr-bar', role: 'img', 'aria-la
 /** @param {string} [tab] parcours, exercices, missions, livret */
 export function openEntrainement(tab = 'parcours') {
   if (layerOpen() === 'entrainement') { showTab(tab); return; }
-  openLayer({ kind: 'entrainement', title: 'S\'entraîner', ico: 'entrainement', tabs: TABS, tab, show: (k, box) => ({ parcours, exercices, missions, livret })[k](box) });
+  openLayer({ kind: 'entrainement', title: 'Chef de car', ico: 'chef', tabs: TABS, tab, show: (k, box) => ({ parcours, exercices, missions, livret })[k](box) });
 }
 on('entrainement', (tab) => openEntrainement(typeof tab === 'string' ? tab : 'parcours'));
 

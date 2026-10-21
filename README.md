@@ -392,26 +392,66 @@ Tests :
   « Emmène-moi / Montre-moi » doit mettre en évidence un élément réel de la page, et « Fais-le pour moi » doit faire
   valider l'étape.
 
-## Navigation : quatre espaces et la section Cours (en préparation)
+## v18.5 : la caméra de plateau en 3D
 
-**Quatre espaces, les mêmes partout.** L'écran titre mène à **Jouer** (la feuille de service, puis le car), au
-**Cours**, à **S'entraîner** et à l'**Espace formateur**, plus les réglages et les crédits. Dans le car, la barre
-d'outils se réduit à Pupitre (Tab), Chef de car (J), Cours (G), Son et **Menu** (Échap) ; le menu reprend les
-espaces, les réglages, les commandes, l'équipe, le diagnostic et le retour à l'accueil. L'ancien Guide (G) est
-éclaté : chapitres, glossaire, postes, matériel et procédures vont dans le Cours, les missions dans S'entraîner, les
-réglages et les commandes dans le menu. La relecture des experts passe par l'Espace formateur (onglet « Relecture
-technique », « Ma relecture »).
+**Connaître la caméra, pièce par pièce.** Dans le Cours, l'onglet **La caméra** (`src/camlab/`) ouvre une caméra de
+plateau type Sony HXC-FB80 avec son zoom Fujinon ZA12x4.5, construite dans le code (`camlab/model.js`), sur un
+plateau avec son coin vision (`camlab/scene.js`). On la tourne à la souris ; 23 pastilles (`camlab/points.js`)
+rapprochent la vue et ouvrent une fiche. Les 51 notions (`camlab/notions/`, une fiche par fichier, 9 chapitres de
+la lentille frontale au moniteur) suivent un moule : l'essentiel, un schéma SVG (`camlab/figs.js`), une manipulation
+sur la caméra (`camlab/labs/` : les bagues de la 3D bougent, l'image du viseur et du moniteur suit, `camlab/vf.js`
+simule le viseur et ses zébras, `camlab/optics.js` calcule), l'explication, « sur la vraie caméra », « dans le
+car », trois questions d'Olivier, les notions liées, la référence et les compétences TIEE. Le lot 1 est écrit (12
+notions) : focale, zoom, point, diaphragme, profondeur de champ, tirage optique, filtres ND, prisme, capteur,
+balance des blancs et des noirs, menu, connectique ; menus, procédure ABB/AWB, commutateurs et prises suivent le
+mode d'emploi de la HXC-FB80. Les 39 autres notions sont annoncées « en préparation ». Le simulateur se met en pause
+pendant le module ; Échap revient au Cours. Maquette autonome : `node tools/camlab-preview.mjs sortie.html
+[--local] [--fragment]`. Tests : `tests/unit/camlab.test.mjs`, suite `tests/e2e/camera.mjs`.
 
-**Le Cours** (`src/ui/cours/espace.js`) s'ouvre en plein écran par-dessus tout le reste, écran titre compris et
-pendant le chargement : notions (une fiche par terme technique, avec schéma, manipulation et trois questions :
-SDI pour commencer, `src/content/cours/`), chapitres par famille, glossaire, postes, matériel, procédures. Les
-boutons « Emmène-moi » et « Parcours du chef » d'une fiche lancent le car si besoin, puis ouvrent le poste ou le
-parcours (`src/app/nav.js`).
+## v18.4 : des menus par profil, cinq familles, une section Cours, le livret de compétences
 
-**S'entraîner** (`src/ui/entrainement.js`) : les parcours du chef de car par famille, avec la progression ; les
-exercices notés (jour de match, car vide, atelier de montage, formation réseau, installation) avec leur meilleur
-résultat ; les missions d'installation ; « Mon livret » (le livret de compétences du référentiel TIEE). En cours de partie, lancer une autre vacation recharge le simulateur et
-la lance directement. Suite `tests/e2e/navigation.mjs`.
+**On ne se perd plus entre formateur, chef de car et joueur.** Deux profils (`src/app/profile.js`), choisis sous
+le menu de l'écran titre et mémorisés : **Étudiant** voit Jouer, Cours, Chef de car et Réglages ; **Formateur** a
+en plus l'espace formateur, le suivi des stagiaires, la relecture technique et les pannes (éléments `.role-only`).
+Les mêmes **cinq familles** partout : l'écran titre (Jouer · Cours · Chef de car · Formateur · Réglages, les
+crédits dans Réglages), la feuille de service (liens Cours, Chef de car, Formateur), le menu du car (Échap,
+`src/app/nav.js` : Reprendre, Cours, Chef de car, Formateur, Réglages, Commandes, Son, Équipe, Diagnostic, Retour à
+l'accueil), le pupitre (Tab : outils rangés par famille), la barre d'outils (Pupitre, Chef de car, Cours, Son,
+Menu). L'ancien « Guide du car régie » à huit onglets est réparti (`src/ui/guide.js`) : chapitres, glossaire,
+postes, matériel et procédures dans le Cours ; missions dans l'espace du chef de car ; réglages et commandes dans
+le menu. La relecture des experts passe par l'espace formateur (onglet « Relecture technique », « Ma relecture »).
+
+**La section Cours** (`src/cours/`, espace `src/ui/cours_ui.js` sur `src/ui/layer.js`, touche G, entrée du titre,
+pupitre, menu, bouton « Cours » de chaque poste). Elle s'ouvre en plein écran par-dessus tout le reste, écran titre
+compris et pendant le chargement, et se lit sans le stade 3D (téléphone, vidéoprojecteur). Quatre chapitres, une
+leçon par terme technique : **Le signal vidéo numérique** (`cours/signal.js`), **Le SDI** (`cours/sdi.js`), **Le
+réseau** (`cours/reseau.js`), **La HF** (`cours/hf.js`). Chaque leçon : l'essentiel en trois lignes, un schéma SVG,
+une manipulation qui calcule vraiment (une image réellement sous-échantillonnée en 4:4:4 / 4:2:2 / 4:2:0 avec une
+loupe, un diagramme de l'œil qui se ferme avec la longueur du câble jusqu'à la falaise numérique, un masque de
+sous-réseau, un bilan de liaison HF…), l'explication, « pour aller plus loin », « dans le car » (un bouton lance le
+car s'il le faut et ouvre le poste, ou le parcours du chef), les fiches « ? » liées et un quiz de trois questions
+dont chaque mauvaise réponse est expliquée ; une leçon est acquise quand le quiz est réussi en entier
+(`PROG.cours`, repris dans le livret et le suivi). La recherche trouve les leçons et les 140 fiches « ? » ; les
+fiches « ? » proposent la leçon qui les cite et « Ouvrir dans le Cours ». Les liens du Cours avec le reste
+(`cours/liens.js`) : chaque terme du glossaire qui a sa leçon ou sa fiche « ? » affiche un bouton « Leçon » ou
+« Fiche « ? » » ; le bouton « Cours » d'un poste et la touche G y ouvrent la leçon du poste (baie de mesure : le
+diagramme de l'œil ; réseau : adresses et VLAN en car SDI, multicast et PTP en car IP) ; l'onglet Postes donne la
+leçon de chaque poste. Un lien vers une leçon pas encore écrite s'allume le jour où elle l'est. Kit des leçons : `cours/kit.js` (SVG, canvas, curseurs, touches,
+lectures). Les autres onglets : les chapitres du guide par famille, le glossaire, les postes, le matériel, les
+procédures maison. Suite `tests/e2e/cours.mjs` (toutes les leçons).
+
+**L'espace du chef de car** (`src/ui/entrainement.js`) : les parcours d'Olivier par famille avec leur progression
+(« Commencer » lance le car si besoin, puis le parcours), les exercices notés (jour de match, car vide, atelier de
+montage, formation réseau, installation) avec leur meilleur résultat, les missions d'installation et **Mon livret**.
+En cours de partie, lancer une autre vacation recharge le simulateur et la lance directement.
+
+**Le livret de compétences** (`src/content/referentiel.js`, `src/livret.js`, `src/ui/livret.js`) : le référentiel du
+BTS MAV option TIEE (fiche RNCP37022), 4 blocs et 39 compétences numérotées 1.1 à 4.5, et le rattachement des
+parcours du chef, des missions, des phases du jour de match, des missions réseau, des exercices et des leçons du
+Cours à ces compétences. Le niveau de chaque compétence (à travailler, travaillée, consolidée, hors simulateur)
+se calcule d'après la progression ; le stagiaire l'ouvre depuis le chef de car ou l'espace du chef, le formateur le
+voit pour chaque stagiaire dans l'espace formateur et l'exporte en CSV. Le plan des modules du car qui comblent les
+compétences absentes est dans `ROADMAP.md`.
 
 ## v18.3 : écran titre, PRISM, grille Videohub, réseau de contrôle du car SDI
 
@@ -852,12 +892,18 @@ node tools/shots.mjs dossier 1280 800 '["vision","hf"]'   # captures de postes
 | `diag.js` | Journal des erreurs (partagé avec `boot.js`) : erreurs non rattrapées, écouteurs d'événement, boucle de rendu, `console.error` ; version de l'application |
 | `ui/diag_ui.js` | Bandeau « Un problème est survenu » et fenêtre « Diagnostic technique » (texte à copier) |
 | `ui/pupitre.js` | Le pupitre (Tab ou T) : plan du car, touches des postes par zone, endroits du stade, équipiers, outils |
-| `app/title.js` | Écran titre : menu, progression du chargement, conseils d'Olivier, réglages et crédits |
-| `app/nav.js` | Navigation entre les espaces : menu du car (Échap), aiguillage des boutons « Emmène-moi », « Commencer », « Lancer » (car lancé si besoin), changement de vacation |
-| `ui/layer.js` | Espaces plein écran (Cours, S'entraîner) : plaque, onglets, Fermer (Échap), ligne d'état |
-| `ui/cours/` | Section Cours : l'espace (`espace.js`), la liste des notions (`cours.js`), une fiche (`fiche.js`), schémas (`figs.js`) et manipulations (`labs.js`) ; contenus dans `content/cours/` |
-| `ui/entrainement.js` | S'entraîner : parcours du chef par famille, exercices notés, missions d'installation |
+| `app/title.js` | Écran titre : menu à cinq entrées, bascule de profil, progression du chargement, conseils d'Olivier, réglages et crédits |
+| `app/profile.js` | Profil Étudiant / Formateur, mémorisé ; classe `role-formateur` sur `body`, éléments `.role-only` |
+| `cours/index.js`, `cours/kit.js`, `cours/all.js`, `cours/signal.js`, `cours/sdi.js`, `cours/reseau.js`, `cours/hf.js` | La section Cours : chapitres et leçons (signal, SDI, réseau, HF), progression, kit des schémas et manipulations |
+| `cours/liens.js` | Les liens du Cours avec le reste : terme du glossaire → leçon ou fiche « ? », poste → leçon (bouton « Cours », touche G) |
+| `cours/sdi_falaise.js`, `cours/lab_sdi.js`, `cours/figs_sdi.js` | Leçon « La falaise numérique » : diagramme de l'œil et image qui casse avec la longueur du câble, défis d'Olivier |
+| `ui/cours_ui.js` | L'espace Cours : leçons (chapitres, recherche, quiz, progression), chapitres du guide, glossaire, postes, matériel, procédures |
+| `app/nav.js` | Navigation entre les familles : menu du car (Échap), aiguillage des boutons « Aller au poste », « Commencer », « Lancer » (car lancé si besoin), changement de vacation |
+| `ui/layer.js` | Espaces plein écran (Cours, chef de car) : plaque, onglets, Fermer (Échap), ligne d'état |
+| `ui/entrainement.js` | L'espace du chef de car : parcours par famille, exercices notés, missions d'installation, livret |
 | `ui/guide.js` | Missions d'installation et parties de l'ancien guide (chapitres, glossaire, postes, matériel, procédures, réglages, commandes), dessinées dans l'espace qui les accueille |
+| `content/referentiel.js` | Référentiel du BTS MAV option TIEE (fiche RNCP37022) : 4 blocs, 39 compétences numérotées 1.1 à 4.5, couverture par le car et modules qui la complèteront ; rattachement des parcours, missions, phases du jour de match, missions réseau, exercices et leçons |
+| `livret.js`, `ui/livret.js` | Livret de compétences : niveau de chaque compétence calculé d'après la progression (à travailler, travaillée, consolidée, hors simulateur) ; affiché depuis le chef de car, l'espace du chef et pour chaque stagiaire dans l'espace formateur, export CSV |
 | `prism_model.js` | Modèle de la liaison SDI pour le PRISM : normes, points de mesure, œil, gigue, timing, pannes |
 | `videohub.js` | Modèle de la grille Videohub 40 × 40 : plan des ports, étiquettes, verrous, protocole, pannes |
 | `ui/st_videohub.js` | Le poste Grille en car SDI : façade, Videohub Control, monitoring, matrice, Setup |
@@ -866,8 +912,6 @@ node tools/shots.mjs dossier 1280 800 '["vision","hf"]'   # captures de postes
 | `ui/prism_station.js` | La baie de mesure (poste `mesure`) |
 | `ui/st_ctrlnet.js` | Le poste Réseau de contrôle (car SDI) : six onglets |
 | `content/lieux.js` | Les lieux du simulateur : en service ou en préparation, avec leur fiche « Ce qui se prépare » |
-| `content/referentiel.js` | Référentiel du BTS MAV option TIEE (fiche RNCP37022) : 4 blocs, 39 compétences numérotées 1.1 à 4.5, couverture par le car et modules qui la complèteront ; rattachement des parcours, missions, phases du jour de match, missions réseau et exercices à ces compétences |
-| `livret.js`, `ui/livret.js` | Livret de compétences : niveau de chaque compétence calculé d'après la progression (à travailler, travaillée, consolidée, hors simulateur) ; affiché depuis le chef de car (« Mon livret de compétences ») et pour chaque stagiaire dans l'espace formateur, export CSV |
 | `ui/icons.js` | Icônes Phosphor intégrées au build (`icon(nom)`), toujours à côté d'un libellé |
 | `tutor/` | Chef de car : moteur des parcours (`engine.js`), lecture du réseau pour expliquer et vérifier (`net_helpers.js`), parcours réseau ST 2110 (`lessons/reseau.js`, `lessons/reseau_leaf.js`, `lessons/reseau_ops.js`), parcours des postes, compétences et matériel (`lessons/realisation.js`, `image.js`, `ralentis.js`, `son.js`, `liaisons.js`, `exploitation.js`, `materiel.js`, outils communs `kit.js`), présentation de chaque poste (`lessons/postes.js`) |
 | `ui/tutor_ui.js` | Panneau du chef de car : parcours proposés selon le poste et rangés par famille, étapes, mise en évidence, gestes « Fais-le pour moi » hors des postes (caméra, visionneuse, atelier), commandes vers le terminal, voix |

@@ -10,6 +10,7 @@ import { NET_MISSIONS } from '../net/course.js';
 import { PHASES } from '../scenario.js';
 import { FICHE, MODULES } from '../content/referentiel.js';
 import { livret, NIVEAUX, CONSOLIDE } from '../livret.js';
+import { lessonById as coursLesson } from '../cours/index.js';
 
 // ----------------------------------------------------------------------------------
 // Le livret de compétences à l'écran : un résumé par bloc (épreuve, barre des niveaux), puis
@@ -21,7 +22,7 @@ import { livret, NIVEAUX, CONSOLIDE } from '../livret.js';
 /** progression de ce navigateur, avec les missions réussies depuis le dernier enregistrement */
 export const liveProg = () => ({ ...PROG, missions: { ...PROG.missions, ...S.missionsDone } });
 
-const KIND = { parcours: 'Parcours', mission: 'Mission', phase: 'Jour de match', reseau: 'Réseau ST 2110', exercice: 'Exercice' };
+const KIND = { parcours: 'Parcours', mission: 'Mission', phase: 'Jour de match', reseau: 'Réseau ST 2110', exercice: 'Exercice', cours: 'Cours' };
 const EXO = { brassage: 'Brassage complet du car', atelier: 'Monter une caméra à l\'atelier', quiz2110: 'Quiz ST 2110 réussi', examenReseau: 'Examen réseau réussi' };
 const ORDER = /** @type {const} */ (['consolidee', 'travaillee', 'a_faire', 'absent']);
 const PILL = { consolidee: 'pill ok', travaillee: 'pill warn', a_faire: 'pill', absent: 'pill lv-off' };
@@ -34,6 +35,7 @@ export function activityLabel(a) {
     case 'mission': return find(MISSIONS);
     case 'phase': return find(PHASES);
     case 'reseau': return find(NET_MISSIONS);
+    case 'cours': { const f = coursLesson(a.ref); return f ? f.lesson.title : a.ref; }
     default: return EXO[a.ref] || a.ref;
   }
 }

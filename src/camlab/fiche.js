@@ -1,7 +1,7 @@
 // @ts-check
 import { el } from '../util.js';
 import { rich } from '../ui/rich.js';
-import { NOTIONS, CHAPITRES } from '../content/cours/camera/index.js';
+import { NOTIONS, CHAPITRES } from './notions/index.js';
 import { FIGS } from './figs.js';
 import { LABS } from './labs.js';
 

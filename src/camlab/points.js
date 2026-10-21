@@ -1,5 +1,5 @@
 // @ts-check
-import { NOTIONS, ORDRE } from '../content/cours/camera/index.js';
+import { NOTIONS, ORDRE } from './notions/index.js';
 
 // ----------------------------------------------------------------------------------
 // Les pastilles de la caméra 3D : où elles s'accrochent, de quel côté elles se voient, d'où on
@@ -9,7 +9,7 @@ import { NOTIONS, ORDRE } from '../content/cours/camera/index.js';
 // la pastille, sa position est lue dans la scène).
 // `view` : direction depuis laquelle on regarde (vers la pastille) et distance (m). `mode` : vue
 // à prendre en arrivant (coupe pour voir le prisme). Les notions d'une pastille sont celles
-// dont `point` la désigne (content/cours/camera/index.js), plus `extra`.
+// dont `point` la désigne (camlab/notions/index.js), plus `extra`.
 // ----------------------------------------------------------------------------------
 
 /**

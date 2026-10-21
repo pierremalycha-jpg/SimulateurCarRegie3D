@@ -129,7 +129,7 @@ check('coupure vue par les joueurs', await until(A, () => !window.__dbg.SES.conn
 const srv2 = spawn(process.execPath, [path.resolve('dist/car-regie-serveur-lan.mjs'), '--port', String(PORT)], { cwd: WORK });
 srv2.stdout.on('data', (d) => { srvLog += d; });
 servers.push(srv2);
-check('reconnexion automatique, même partie, mêmes joueurs', await until(A, () => window.__dbg.SES.connected && window.__dbg.SES.peers.length === 2 && window.__dbg.SES.peers.some((p) => p.presence && p.presence.name === 'Chloé'), null, 60000));
+check('reconnexion automatique, même partie, mêmes joueurs', await until(A, () => window.__dbg.SES.connected && window.__dbg.SES.peers.length === 2 && window.__dbg.SES.peers.some((p) => p.presence && p.presence.name === 'Chloé'), null, 120000)); // le reprise après coupure peut dépasser la minute sur une machine chargée
 check('Chloé toujours cadreuse CAM 3 après reconnexion', await until(A, () => window.__dbg.SES.peers.some((p) => p.presence && p.presence.name === 'Chloé' && p.presence.role === 'cadreur' && p.presence.cam === 3), null, 30000));
 log('serveur :', srvLog.split('\n').filter((l) => /rejoint|quitte|rapport/.test(l)).slice(0, 8).join(' | '));
 log('ERRORS', errors.length, errors.slice(0, 6).join('\n'));

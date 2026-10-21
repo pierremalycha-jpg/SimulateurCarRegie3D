@@ -67,9 +67,13 @@ import iMinus from '@phosphor-icons/core/bold/minus-bold.svg';
 import iCornersOut from '@phosphor-icons/core/bold/corners-out-bold.svg';
 import iX from '@phosphor-icons/core/bold/x-bold.svg';
 import iGraduationCap from '@phosphor-icons/core/bold/graduation-cap-bold.svg';
+import iBookBookmark from '@phosphor-icons/core/bold/book-bookmark-bold.svg';
+import iUserGear from '@phosphor-icons/core/bold/user-gear-bold.svg';
+import iSealCheck from '@phosphor-icons/core/bold/seal-check-bold.svg';
+import iKeyboard from '@phosphor-icons/core/bold/keyboard-bold.svg';
+import iNotebook from '@phosphor-icons/core/bold/notebook-bold.svg';
 import iTarget from '@phosphor-icons/core/bold/target-bold.svg';
 import iList from '@phosphor-icons/core/bold/list-bold.svg';
-import iKeyboard from '@phosphor-icons/core/bold/keyboard-bold.svg';
 import iHouse from '@phosphor-icons/core/bold/house-bold.svg';
 import iPlay from '@phosphor-icons/core/bold/play-bold.svg';
 
@@ -89,12 +93,14 @@ const SVG = {
   'prise-en-main': iCompass, exploitation: iWrench, postes: iChalkboardTeacher, fait: iCheckCircle,
   a_toi: iHandPointing, indice: iLightbulbFilament, bravo: iStar, alarme: iWarning,
   antenne: iRecord, reduire: iMinus, agrandir: iCornersOut, fermer: iX,
-  // les espaces et le menu (app/nav.js)
-  cours: iGraduationCap, entrainement: iTarget, menu: iList, formateur: iChalkboardTeacher, commandes: iKeyboard, accueil: iHouse, reprendre: iPlay,
   // les lieux (content/lieux.js)
   tv: iTelevisionSimple, entrepot: iWarehouse, colis: iPackage, conference: iPresentation,
   webcam: iWebcam, hautparleur: iSpeakerHifi, lumiere: iLightbulbFilament,
   mesure: iPulse, // baie de mesure (PRISM)
+  // les cinq familles du menu et leurs outils (app/title.js, ui/pupitre.js, ui/cours_ui.js)
+  cours: iGraduationCap, lexique: iBookBookmark, formateur: iUserGear, relecture: iSealCheck, commandes: iKeyboard, livret: iNotebook,
+  // le menu du car (app/nav.js) et l'espace du chef de car (ui/entrainement.js)
+  entrainement: iTarget, menu: iList, accueil: iHouse, reprendre: iPlay,
 };
 export const ICON_NAMES = Object.keys(SVG);
 /**

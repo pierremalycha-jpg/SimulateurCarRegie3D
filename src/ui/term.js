@@ -11,11 +11,13 @@ import './figs_ctrlnet.js';
 import '../content/terms_videohub.js';
 import './figs_videohub.js';
 import { rich } from './rich.js';
+import { allLessons } from '../cours/index.js';
 
 // ----------------------------------------------------------------------------------
-// Bouton « ? » à côté des termes techniques du poste Réseau IP, et sa fenêtre explicative :
-// l'essentiel en une phrase, un schéma, l'explication, ce qu'on en voit dans le car, des renvois
-// et la norme de référence. Le lexique regroupe toutes les fiches.
+// Bouton « ? » à côté des termes techniques des postes, et sa fenêtre explicative : l'essentiel
+// en une phrase, un schéma, l'explication, ce qu'on en voit dans le car, des renvois et la norme
+// de référence. Le lexique regroupe toutes les fiches. Ce sont les fiches du Cours (rangées par
+// thème dans l'onglet Notions) : « Ouvrir dans le Cours » y mène.
 // La fenêtre n'est pas modale : la station reste visible et continue de vivre derrière.
 // ----------------------------------------------------------------------------------
 const TP = { box: /** @type {HTMLElement|null} */ (null), anchor: /** @type {HTMLElement|null} */ (null), stack: /** @type {string[]} */ ([]), cur: '', filter: '' };
@@ -113,6 +115,8 @@ function head(title, cat) {
 function termView(id, T) {
   const fig = T.fig && FIGS[T.fig] ? el('figure', { class: 'tp-fig', html: FIGS[T.fig]() }) : null;
   const see = (T.see || []).filter((k) => TERMS[k]);
+  // les leçons des cours qui citent cette fiche (cours/index.js)
+  const lessons = allLessons().filter(({ lesson }) => (lesson.terms || []).includes(id));
   return [head(T.t, T.cat),
     el('div', { class: 'tp-scroll' },
       T.aka ? el('div', { class: 'tp-aka' }, T.aka) : null,
@@ -121,8 +125,11 @@ function termView(id, T) {
       rich(T.body, 'tp-body'),
       T.car ? el('div', { class: 'tp-car' }, el('b', {}, 'Dans le car'), el('span', {}, T.car)) : null,
       see.length ? el('div', { class: 'tp-see' }, el('b', {}, 'Voir aussi'), ...see.map((k) => el('button', { type: 'button', class: 'tp-chip', 'data-see': k, onclick: () => openTerm(k, null, 'push') }, TERMS[k].t))) : null,
+      lessons.length ? el('div', { class: 'tp-see tp-cours' }, el('b', {}, 'Leçon'), ...lessons.map(({ lesson }) => el('button', { type: 'button', class: 'tp-chip', 'data-cours': lesson.id, title: 'Ouvrir la leçon dans les cours', onclick: () => { closeTerm(); emit('cours', { tab: 'chapitres', lesson: lesson.id }); } }, lesson.title))) : null,
       T.ref ? el('div', { class: 'tp-ref' }, 'Référence : ' + T.ref) : null),
-    el('footer', { class: 'tp-foot' }, el('button', { type: 'button', class: 'btn small', onclick: () => openTerm(LEX, null, 'push') }, `Lexique (${Object.keys(TERMS).length} termes)`))];
+    el('footer', { class: 'tp-foot' },
+      el('button', { type: 'button', class: 'btn small primary', 'data-cours': id, title: 'Les leçons qui en parlent, dans le Cours (plein écran)', onclick: () => { closeTerm(); emit('cours', { term: id }); } }, 'Ouvrir dans le Cours'),
+      el('button', { type: 'button', class: 'btn small', onclick: () => openTerm(LEX, null, 'push') }, `Lexique (${Object.keys(TERMS).length} termes)`))];
 }
 function lexView() {
   const list = el('div', { class: 'tp-lex' });
@@ -140,7 +147,7 @@ function lexView() {
   };
   search.addEventListener('input', () => { TP.filter = /** @type {HTMLInputElement} */ (search).value; fill(); });
   fill();
-  return [head('Lexique réseau et ST 2110', ''), el('div', { class: 'tp-scroll' }, el('p', { class: 'note' }, 'Toutes les fiches des boutons « ? » du poste Réseau IP, par famille.'), search, list)];
+  return [head('Lexique des postes', ''), el('div', { class: 'tp-scroll' }, el('p', { class: 'note' }, 'Toutes les fiches des boutons « ? » des postes, par famille. Le Cours les range aussi par thème (touche G).'), search, list)];
 }
 
 // à côté du bouton sur grand écran ; en bas de l'écran (feuille) sur téléphone

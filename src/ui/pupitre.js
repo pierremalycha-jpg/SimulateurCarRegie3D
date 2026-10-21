@@ -12,17 +12,21 @@ import { whereAmI } from '../app/hud.js';
 import { planFor } from './truckmap.js';
 import { openPlan } from './plan.js';
 import { openSynoptics } from './synoptics.js';
-import { openReglages } from './guide.js';
+import { openReglages, openCommandes } from './guide.js';
 import { openSessionPanel } from './session_ui.js';
 import { openEquipmentIndex } from '../equipment/viewer.js';
 import { openDiag } from './diag_ui.js';
+import { openCours } from './cours_ui.js';
+import { openTrainer } from './config.js';
+import { openReview } from './review_ui.js';
 import { icon } from './icons.js';
 
 // ----------------------------------------------------------------------------------
 // Le pupitre (touche Tab, ou T) : un panneau de commande comme celui d'une grille. En haut,
 // le plan du car et la position du joueur ; dessous, une rangée de touches par zone du car (dans
-// l'ordre du plan), les endroits hors du car et les équipiers ; en bas, les outils, chacun avec
-// sa touche du clavier. Une touche allumée en ambre : là où l'on est, ou l'outil en service.
+// l'ordre du plan), les endroits hors du car et les équipiers ; en bas, les outils, par famille
+// (les mêmes cinq que le menu : Jouer, Cours, Chef de car, Formateur, Réglages), chacun avec sa
+// touche du clavier. Une touche allumée en ambre : là où l'on est, ou l'outil en service.
 // ----------------------------------------------------------------------------------
 const ZONE_NAME = { son: 'Cabine son', prod: 'Production', vision: 'Vision et ralentis', tech: 'Technique' };
 // noms courts des endroits hors du car (ceux de DESTS restent pour les autres menus)
@@ -38,21 +42,32 @@ function dkey(label, onclick, opts = {}) {
 }
 const close = () => modal.close();
 const minimonOn = () => { const m = $('#minimon'); return !!m && !m.hidden; };
-// outils : nom, touche, icône, action, état (pour la LED)
-/** @returns {Array<[string, string, string, () => void, (() => boolean)?]>} */
-const TOOLS = () => [
-  ['Plan caméras', 'P', 'plan', () => { close(); openPlan(); }],
-  ['Synoptiques', 'Y', 'synoptiques', () => { close(); openSynoptics(); }],
-  ['Matériel', 'K', 'materiel', () => { close(); openEquipmentIndex(); }],
-  ['Cours', 'G', 'cours', () => { close(); emit('cours'); }],
-  ['S\'entraîner', '', 'entrainement', () => { close(); emit('entrainement'); }],
-  ['Chef de car', 'J', 'chef', () => { close(); emit('chef'); }],
-  ['Vol libre', 'V', 'vol', () => { PL.fly = !PL.fly; updToolbar(); }, () => PL.fly],
-  ['Retour PGM', 'M', 'retour', () => { const m = $('#minimon'); if (m) m.hidden = !m.hidden; }, minimonOn],
-  ['Son', '', AU.muted ? 'muet' : 'son', () => { startAudio(); AU.muted = !AU.muted; applyFaders(); emit('soundToggle'); }, () => !AU.muted],
-  ['Équipe', '', 'equipe', () => { close(); openSessionPanel(); }],
-  ['Réglages', '', 'reglages', () => { close(); openReglages(); }],
-  ['Diagnostic technique', '', 'diagnostic', () => { close(); openDiag(); }],
+// outils : nom, touche, icône, action, état (pour la LED) ; rangés par famille
+/** @typedef {[string, string, string, () => void, (() => boolean)?]} Tool */
+/** @returns {Array<{ title: string, role?: boolean, tools: Tool[] }>} */
+const FAMILIES = () => [
+  { title: 'Jouer', tools: [
+    ['Plan caméras', 'P', 'plan', () => { close(); openPlan(); }],
+    ['Synoptiques', 'Y', 'synoptiques', () => { close(); openSynoptics(); }],
+    ['Matériel', 'K', 'materiel', () => { close(); openEquipmentIndex(); }],
+    ['Le car', '', 'car', () => { close(); emit('cours', { tab: 'postes' }); }],
+    ['Vol libre', 'V', 'vol', () => { PL.fly = !PL.fly; updToolbar(); }, () => PL.fly],
+    ['Retour PGM', 'M', 'retour', () => { const m = $('#minimon'); if (m) m.hidden = !m.hidden; }, minimonOn],
+    ['Équipe', '', 'equipe', () => { close(); openSessionPanel(); }]] },
+  { title: 'Cours', tools: [
+    ['Cours', 'G', 'cours', () => { close(); openCours({ tab: 'chapitres' }); }],
+    ['Glossaire', '', 'lexique', () => { close(); openCours({ tab: 'glossaire' }); }]] },
+  { title: 'Chef de car', tools: [
+    ['Chef de car', 'J', 'chef', () => { close(); emit('chef'); }],
+    ['Parcours et livret', '', 'livret', () => { close(); emit('entrainement'); }]] },
+  { title: 'Formateur', role: true, tools: [
+    ['Espace formateur', '', 'formateur', () => { close(); openTrainer('car'); }],
+    ['Relecture technique', '', 'relecture', () => { close(); openReview('me'); }]] },
+  { title: 'Réglages', tools: [
+    ['Réglages', '', 'reglages', () => { close(); openReglages(); }],
+    ['Son', '', AU.muted ? 'muet' : 'son', () => { startAudio(); AU.muted = !AU.muted; applyFaders(); emit('soundToggle'); }, () => !AU.muted],
+    ['Commandes', 'H', 'commandes', () => { close(); openCommandes(); }],
+    ['Diagnostic technique', '', 'diagnostic', () => { close(); openDiag(); }]] },
 ];
 
 export function openPupitre() {
@@ -85,14 +100,15 @@ export function openPupitre() {
       k.style.setProperty('--mate', a.color); k.classList.add('mate');
       return k;
     })) : null));
-  // outils
-  const tools = el('div', { class: 'pp-tools' });
+  // outils, par famille
+  const tools = el('div', { class: 'pp-tools pp-fams' });
   const drawTools = () => {
-    tools.replaceChildren(...TOOLS().map(([name, key, ico, fn, state]) => {
-      const b = dkey(name, () => { fn(); if (state) drawTools(); }, { kbd: key || null, ico, on: state ? state() : false, toggle: !!state });
-      b.classList.add('tool');
-      return b;
-    }));
+    tools.replaceChildren(...FAMILIES().map((f) => el('section', { class: 'pp-fam' + (f.role ? ' role-only' : '') }, el('h3', {}, f.title),
+      el('div', { class: 'pp-keys' }, ...f.tools.map(([name, key, ico, fn, state]) => {
+        const b = dkey(name, () => { fn(); if (state) drawTools(); }, { kbd: key || null, ico, on: state ? state() : false, toggle: !!state });
+        b.classList.add('tool');
+        return b;
+      })))));
   };
   drawTools();
   body.append(el('section', { class: 'pp-toolbar', 'aria-label': 'Outils' }, el('h2', {}, 'Outils'), tools));

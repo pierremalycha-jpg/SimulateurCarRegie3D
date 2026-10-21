@@ -15,6 +15,8 @@ import { SES } from '../multi/session.js';
 import { lanAvailable } from '../multi/lan.js';
 import { openSessionPanel, setSessionStarter } from '../ui/session_ui.js';
 import { openDiag } from '../ui/diag_ui.js';
+import { openReview } from '../ui/review_ui.js';
+import { openTrainer } from '../ui/config.js';
 import { APP_VERSION } from '../diag.js';
 import { $, toast, modal } from '../ui/common.js';
 import { setQuality } from './view.js';
@@ -124,7 +126,8 @@ export function buildStart() {
         el('nav', { class: 'dk-nav', 'aria-label': 'Les autres espaces' },
           el('button', { type: 'button', class: 'linkbtn dk-menu', id: 'st-menu', onclick: () => showTitle() }, icon('pupitre'), 'Menu principal'),
           el('button', { type: 'button', class: 'linkbtn dk-menu', id: 'st-cours', onclick: () => emit('cours') }, icon('cours'), 'Cours'),
-          el('button', { type: 'button', class: 'linkbtn dk-menu', id: 'st-train', onclick: () => emit('entrainement') }, icon('entrainement'), 'S\'entraîner')),
+          el('button', { type: 'button', class: 'linkbtn dk-menu', id: 'st-train', onclick: () => emit('entrainement') }, icon('chef'), 'Chef de car'),
+          el('button', { type: 'button', class: 'linkbtn dk-menu role-only', id: 'st-trainer', onclick: () => openTrainer('car') }, icon('formateur'), 'Formateur')),
         el('h1', {}, 'Car régie 3D'),
         el('p', { class: 'lede' }, 'Simulateur de formation aux métiers du car régie. Un match se joue en continu dans un stade inspiré de Bollaert-Delelis : tout ce que vous réglez se voit à l\'image, chaque action est expliquée.')),
       el('div', { class: 'glass dk-match', role: 'group', 'aria-label': 'La rencontre de ce soir' },
@@ -155,7 +158,10 @@ export function buildStart() {
         el('h2', { id: 'dk-team-h' }, 'En équipe'),
         lan ? el('p', { class: 'note' }, el('b', {}, 'Réseau local. '), 'Hébergez une partie ou rejoignez celle d\'un collègue : chacun choisit un pseudo et un rôle dans la prestation.')
           : el('p', { class: 'note' }, 'Plusieurs joueurs dans le même car, en direct : chacun son pseudo et son rôle dans la prestation.'),
-        el('button', { class: 'btn', title: 'Plusieurs joueurs dans le même car, en direct : chacun son pseudo et son rôle', onclick: () => openSessionPanel() }, 'Jouer à plusieurs')),
+        el('button', { class: 'btn', title: 'Plusieurs joueurs dans le même car, en direct : chacun son pseudo et son rôle', onclick: () => openSessionPanel() }, 'Jouer à plusieurs'),
+        // profil Formateur : l'espace formateur et la relecture des experts, aussi depuis la feuille
+        el('button', { class: 'btn role-only', onclick: () => openTrainer('car') }, 'Espace formateur'),
+        el('button', { class: 'btn role-only', title: 'Pour les experts métier : valider ou corriger chaque point technique du simulateur', onclick: () => openReview('me') }, 'Relecture technique')),
     el('section', { class: 'dk-day', 'aria-labelledby': 'dk-day-h' },
       el('h2', { id: 'dk-day-h' }, 'La journée du car, avant l\'antenne'),
       el('ol', { class: 'dk-strips' },

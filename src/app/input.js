@@ -44,8 +44,8 @@ function onKeyDown(e) {
   if (S.mode === 'station') {
     if (e.code === 'Escape') { closeStation(); e.preventDefault(); return; }
     if (stationKey(e)) { e.preventDefault(); return; }
-    // G : le Cours, si le poste ne se sert pas de la touche
-    if (e.code === 'KeyG' && !e.ctrlKey && !e.metaKey && !e.altKey) emit('cours');
+    // G : le Cours sur la fiche du poste, si le poste ne se sert pas de la touche
+    if (e.code === 'KeyG' && !e.ctrlKey && !e.metaKey && !e.altKey) emit('cours', { poste: S.station });
     return;
   }
   if (S.mode === 'plan') { if (e.code === 'Escape' || e.code === 'KeyP') closePlan(); return; }

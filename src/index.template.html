@@ -1279,7 +1279,7 @@ tr.rv-prop td { background: rgba(255,176,32,.08); }
 .tp-chip { padding: 4px 10px 3px; border-radius: 3px; border: 1px solid #161b1f; background: linear-gradient(#4a545e, #3b444d 58%, #343c44); color: #e9ece6; font: 600 13px var(--f-disp); box-shadow: inset 0 1px 0 rgba(255,255,255,.14), 0 1px 2px rgba(0,0,0,.35); }
 .tp-chip:hover { background: linear-gradient(#56616c, #46505a 58%, #3d464f); }
 .tp-ref { color: var(--muted); font-size: 12px; }
-.tp-foot { display: flex; justify-content: flex-end; padding: 8px 16px; border-top: 1px solid #161b1f; }
+.tp-foot { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; padding: 8px 16px; border-top: 1px solid #161b1f; }
 .tp-search { width: 100%; padding: 8px 10px; border-radius: 6px; border: 1px solid var(--line2); background: #0f1215; }
 .tp-lex h4 { margin: 10px 0 6px; color: var(--accent); font: 600 13.5px var(--f-leg); }
 .tp-lexgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 6px; }
@@ -1320,14 +1320,13 @@ tr.rv-prop td { background: rgba(255,176,32,.08); }
       <p class="ti-sub">Simulateur de formation aux métiers du car régie</p>
     </header>
     <nav class="ti-menu" id="ti-menu" aria-label="Menu principal">
-      <button type="button" class="ti-key primary" id="ti-play" disabled><span class="ti-led" aria-hidden="true"></span><b>Jouer</b><small>La feuille de service : choisir sa vacation, puis prendre l'antenne</small></button>
-      <button type="button" class="ti-key" id="ti-cours" data-emit="cours" disabled><span class="ti-led" aria-hidden="true"></span><b>Cours</b><small>Les notions techniques, avec schémas et manipulations</small></button>
-      <button type="button" class="ti-key" id="ti-train" data-emit="entrainement" disabled><span class="ti-led" aria-hidden="true"></span><b>S'entraîner</b><small>Les parcours du chef de car, les exercices notés, le livret de compétences</small></button>
-      <button type="button" class="ti-key" id="ti-camera" data-emit="camera" disabled><span class="ti-led" aria-hidden="true"></span><b>La caméra</b><small>Connaître la caméra de plateau, de la lentille au moniteur</small></button>
-      <button type="button" class="ti-key" id="ti-trainer" disabled><span class="ti-led" aria-hidden="true"></span><b>Espace formateur</b><small>Configuration du car, suivi des stagiaires, relecture</small></button>
-      <button type="button" class="ti-key" id="ti-settings" disabled><span class="ti-led" aria-hidden="true"></span><b>Réglages</b><small>Qualité graphique et son</small></button>
-      <button type="button" class="ti-key" id="ti-credits" disabled><span class="ti-led" aria-hidden="true"></span><b>Crédits</b><small>Version, auteurs, licences</small></button>
+      <button type="button" class="ti-key primary" id="ti-play" disabled><span class="ti-led" aria-hidden="true"></span><b>Jouer</b><small>Les lieux, la journée du car, l'antenne</small></button>
+      <button type="button" class="ti-key" id="ti-cours" disabled><span class="ti-led" aria-hidden="true"></span><b>Cours</b><small>Le signal vidéo, le SDI, le réseau, la HF, la caméra en 3D : leçons, schémas, manipulations</small></button>
+      <button type="button" class="ti-key" id="ti-chef" disabled><span class="ti-led" aria-hidden="true"></span><b>Chef de car</b><small>Les parcours guidés d'Olivier, les exercices notés, les missions, le livret de compétences</small></button>
+      <button type="button" class="ti-key role-only" id="ti-trainer" disabled><span class="ti-led" aria-hidden="true"></span><b>Formateur</b><small>Configuration du car, suivi des stagiaires, relecture, pannes</small></button>
+      <button type="button" class="ti-key" id="ti-settings" disabled><span class="ti-led" aria-hidden="true"></span><b>Réglages</b><small>Qualité graphique, son, profil, crédits</small></button>
     </nav>
+    <div class="ti-role" id="ti-role"><span id="ti-role-l">Profil</span><div class="seg" role="group" aria-labelledby="ti-role-l"><button type="button" data-v="etudiant" aria-pressed="true" title="Jouer, Cours, Chef de car, Réglages">Étudiant</button><button type="button" data-v="formateur" aria-pressed="false" title="En plus : l'espace formateur, le suivi, la relecture technique, les pannes">Formateur</button></div></div>
     <section class="ti-panel" id="ti-panel" hidden></section>
     <section class="ti-load" aria-label="Chargement">
       <div class="ti-bar wait" id="ti-bar" role="progressbar" aria-label="Chargement du simulateur" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><i></i></div>

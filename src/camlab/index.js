@@ -1,8 +1,8 @@
 // @ts-check
 import * as THREE from 'three';
 import { el, clamp, lerp } from '../util.js';
-import { on } from '../state.js';
-import { NOTIONS, CHAPITRES, notionsDu } from '../content/cours/camera/index.js';
+import { on, emit } from '../state.js';
+import { NOTIONS, CHAPITRES, notionsDu } from './notions/index.js';
 import { buildRig, AXIS_H, FOCAL_PLANE } from './model.js';
 import { buildStudio } from './scene.js';
 import { PASTILLES, notionsAt } from './points.js';
@@ -20,12 +20,12 @@ import { MIRE_D, ND, defocus, focusDist, zoomFocal, vfov, blurPx, exposureOf } f
 export const CL = { open: false, built: false };
 /** @type {any} */
 let R = null;
-let titleWasOpen = false, raf = 0;
+let titleWasOpen = false, raf = 0, openedFrom = '';
 
 /** le module est ouvert (les touches et la boucle du simulateur l'ignorent) */
 export const camlabOpen = () => CL.open;
 
-/** l'événement « camera » ouvre le module (touche #ti-camera de l'écran titre, data-emit) */
+/** l'événement « camera » ouvre le module (onglet La caméra de l'espace Cours, ui/cours_ui.js) */
 export function initCamLab() {
   on('camera', (o) => openCameraLab(o || {}));
 }
@@ -377,7 +377,7 @@ function onKey(e) {
 /** ouvre le module ; o.notion ou o.point : ouvrir directement une fiche */
 export async function openCameraLab(o = {}) {
   if (CL.open) return;
-  CL.open = true;
+  CL.open = true; openedFrom = o.from || '';
   const title = document.getElementById('title');
   titleWasOpen = !!title && !title.hidden; if (title) title.hidden = true;
   if (!CL.built) {
@@ -394,7 +394,10 @@ export function closeCameraLab() {
   if (R) { closeSide(); R.root.hidden = true; }
   document.body.classList.remove('camlab-on');
   const title = document.getElementById('title');
-  if (title && titleWasOpen) { title.hidden = false; const b = document.getElementById('ti-camera'); if (b) b.focus({ preventScroll: true }); }
+  if (title && titleWasOpen) { title.hidden = false; const b = document.getElementById('ti-cours'); if (b) b.focus({ preventScroll: true }); }
+  // venu de l'onglet La caméra de l'espace Cours : on y revient
+  if (openedFrom === 'cours') emit('cours', { tab: 'camera' });
+  openedFrom = '';
 }
 /** accès de débogage et de test */
 export const camlabDebug = () => R;
