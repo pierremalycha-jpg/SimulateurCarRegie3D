@@ -878,7 +878,9 @@ node tools/shots.mjs dossier 1280 800 '["vision","hf"]'   # captures de postes
 | `ui/pupitre.js` | Le pupitre (Tab ou T) : plan du car, touches des postes par zone, endroits du stade, équipiers, outils |
 | `app/title.js` | Écran titre : menu à cinq entrées, bascule de profil, progression du chargement, conseils d'Olivier, réglages et crédits |
 | `app/profile.js` | Profil Étudiant / Formateur, mémorisé ; classe `role-formateur` sur `body`, éléments `.role-only` |
-| `cours/index.js`, `cours/kit.js`, `cours/*.js` | La section Cours : chapitres et leçons (signal, SDI, réseau, HF), progression, kit des schémas et manipulations |
+| `cours/index.js`, `cours/kit.js`, `cours/all.js`, `cours/signal.js`, `cours/sdi.js`, `cours/reseau.js`, `cours/hf.js` | La section Cours : chapitres et leçons (signal, SDI, réseau, HF), progression, kit des schémas et manipulations |
+| `cours/liens.js` | Les liens du Cours avec le reste : terme du glossaire → leçon ou fiche « ? », poste → leçon (bouton « Cours », touche G) |
+| `cours/sdi_falaise.js`, `cours/lab_sdi.js`, `cours/figs_sdi.js` | Leçon « La falaise numérique » : diagramme de l'œil et image qui casse avec la longueur du câble, défis d'Olivier |
 | `ui/cours_ui.js` | L'espace Cours : leçons (chapitres, recherche, quiz, progression), chapitres du guide, glossaire, postes, matériel, procédures |
 | `app/nav.js` | Navigation entre les familles : menu du car (Échap), aiguillage des boutons « Aller au poste », « Commencer », « Lancer » (car lancé si besoin), changement de vacation |
 | `ui/layer.js` | Espaces plein écran (Cours, chef de car) : plaque, onglets, Fermer (Échap), ligne d'état |
