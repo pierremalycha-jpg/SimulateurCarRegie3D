@@ -202,8 +202,6 @@ body:not(.role-formateur) .role-only { display: none !important; }
 
 /* chapitre realisation */
 .co-4 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
-.co-4 .co-canvas { image-rendering: auto; }
-.co-2 .co-canvas { image-rendering: auto; }
 @media (max-width: 820px) { .co-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 /* chapitre ralentis */
 .co-scroll { overflow-x: auto; max-width: 100%; }

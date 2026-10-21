@@ -156,7 +156,7 @@ function monitorLabel(g, text, col) { g.fillStyle = 'rgba(0,0,0,0.65)'; g.fillRe
 // ======================================================================================
 function demoMixer(host) {
   const S = sourceCanvases(), M = mixer(), st = M.st;
-  const pvw = canvas(SW, SH), pgm = canvas(SW, SH), mv = SCENES.map(() => canvas(SW, SH));
+  const pvw = canvas(SW, SH, 'co-canvas co-smooth'), pgm = canvas(SW, SH, 'co-canvas co-smooth'), mv = SCENES.map(() => canvas(SW, SH, 'co-canvas co-smooth'));
   const gp = pgm.getContext('2d'), gv = pvw.getContext('2d'), gm = mv.map((c) => c.getContext('2d'));
   const read = readout(['À l\'antenne (PGM)', 'En preset (PST)', 'Tally rouge', 'Tally vert', 'Durée de la transition', 'Dernier geste']);
   const opts = SCENES.map((s, i) => [String(i), String(i + 1), `${s.name} (${s.role})`]);
@@ -262,7 +262,7 @@ function demoKeys(host) {
   drawLarge(/** @type {CanvasRenderingContext2D} */ (fond.getContext('2d')), IW, IH, 2.2);
   const bg = /** @type {CanvasRenderingContext2D} */ (fond.getContext('2d')).getImageData(0, 0, IW, IH).data;
   const band = layerOf(drawBandeau), score = layerOf(drawScore), n = IW * IH;
-  const fillC = canvas(IW, IH), keyC = canvas(IW, IH), outC = canvas(IW, IH);
+  const fillC = canvas(IW, IH, 'co-canvas co-smooth'), keyC = canvas(IW, IH, 'co-canvas co-smooth'), outC = canvas(IW, IH, 'co-canvas co-smooth');
   const gf = fillC.getContext('2d'), gk = keyC.getContext('2d'), go = outC.getContext('2d');
   const fillImg = new Uint8ClampedArray(n * 4), keyImg = new Uint8ClampedArray(n * 4), outImg = new Uint8ClampedArray(n * 4);
   // le fill tel qu'il sort de l'habillage, sur fond noir ; sa luminance est la source de la clé luminance
@@ -371,7 +371,7 @@ function figKeys() {
 const REACT = { prep: 6, top: 4, envoie: 15, mix: 25 };
 function demoOrders(host) {
   const S = sourceCanvases(), M = mixer(), st = M.st; st.fps = 25; st.dur = REACT.mix; st.pst = 3;
-  const pvw = canvas(SW, SH), pgm = canvas(SW, SH), gp = pgm.getContext('2d'), gv = pvw.getContext('2d');
+  const pvw = canvas(SW, SH, 'co-canvas co-smooth'), pgm = canvas(SW, SH, 'co-canvas co-smooth'), gp = pgm.getContext('2d'), gv = pvw.getContext('2d');
   const TC0 = ((21 * 60 + 4) * 60 + 10) * 25; // 21:04:10:00, l'horloge maître du car
   const t0 = performance.now();
   const frame = () => TC0 + Math.floor((performance.now() - t0) / 40);
