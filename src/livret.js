@@ -12,7 +12,7 @@ import { BLOCS, COMPETENCES, RATTACHEMENT } from './content/referentiel.js';
 // Le livret dit ce qui a été pratiqué ; la validation d'une compétence reste au formateur.
 // ----------------------------------------------------------------------------------
 
-/** @typedef {'parcours' | 'mission' | 'phase' | 'reseau' | 'exercice' | 'cours'} Kind */
+/** @typedef {'parcours' | 'mission' | 'phase' | 'reseau' | 'exercice' | 'cours' | 'camera'} Kind */
 /** @typedef {'absent' | 'a_faire' | 'travaillee' | 'consolidee'} Niveau */
 /** @typedef {{ kind: Kind, ref: string, done: boolean, aided: boolean }} Activite */
 
@@ -21,11 +21,11 @@ export const SEUIL_PHASE = 0.6, SEUIL_SCORE = 60, CONSOLIDE = 3;
 export const NIVEAUX = { consolidee: 'Consolidée', travaillee: 'Travaillée', a_faire: 'À travailler', absent: 'Hors simulateur' };
 
 /** @type {Record<Kind, Record<string, string[]>>} */
-const TABLES = { parcours: RATTACHEMENT.parcours, mission: RATTACHEMENT.missions, phase: RATTACHEMENT.phases, reseau: RATTACHEMENT.reseau, exercice: RATTACHEMENT.exercices, cours: RATTACHEMENT.cours };
+const TABLES = { parcours: RATTACHEMENT.parcours, mission: RATTACHEMENT.missions, phase: RATTACHEMENT.phases, reseau: RATTACHEMENT.reseau, exercice: RATTACHEMENT.exercices, cours: RATTACHEMENT.cours, camera: RATTACHEMENT.camera };
 /** compétences travaillées par une activité */
 export const codesOf = (/** @type {Kind} */ kind, /** @type {string} */ ref) => TABLES[kind][ref] || [];
 
-/** activités rattachées à chaque compétence, dans l'ordre parcours, missions, jour de match, réseau, exercices, cours */
+/** activités rattachées à chaque compétence, dans l'ordre parcours, missions, jour de match, réseau, exercices, cours, caméra */
 export const ACTIVITES = (() => {
   /** @type {Record<string, { kind: Kind, ref: string }[]>} */
   const m = Object.fromEntries(COMPETENCES.map((c) => [c.code, []]));
@@ -41,6 +41,12 @@ export function activityState(prog, /** @type {Kind} */ kind, /** @type {string}
     case 'parcours': { const t = (P.tutor || {})[ref]; return { done: !!(t && t.done), aided: !!(t && t.done && t.aided) }; }
     case 'mission': return { done: !!(P.missions || {})[ref], aided: false };
     case 'cours': { const c = (P.cours || {})[ref]; return { done: !!(c && c.quiz && c.quiz.total && c.quiz.score === c.quiz.total), aided: false }; }
+    // module caméra (même règle que camlab/progress.js) : la mise en service à 60 sur 100, une notion à 3 sur 3
+    case 'camera': {
+      const C = P.camera || {};
+      if (ref === 'mes') { const b = (C.mes || {}).best; return { done: !!b && (b.score || 0) >= SEUIL_SCORE, aided: false }; }
+      const n = (C.notions || {})[ref]; return { done: !!(n && n.total && n.score === n.total), aided: false };
+    }
     case 'phase': return { done: (P.scenarios || []).some((s) => (s.phases || []).some((p) => p.id === ref && p.max > 0 && p.pts / p.max >= SEUIL_PHASE)), aided: false };
     case 'reseau': { const r = (N.missions || {})[ref]; return { done: !!r, aided: !!(r && r.aided) }; }
     case 'exercice': return {
