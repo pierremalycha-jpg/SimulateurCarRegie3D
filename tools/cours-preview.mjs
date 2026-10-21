@@ -40,7 +40,7 @@ body { overflow: auto; overscroll-behavior: auto; background: var(--bg); color: 
 #co-toast { position: fixed; z-index: 50; left: 50%; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); max-width: calc(100vw - 32px); padding: 9px 16px; background: var(--brush), rgba(44,52,60,.97); border: 1px solid #161b1f; border-radius: 4px; box-shadow: inset 4px 0 0 var(--cyan), 0 8px 24px rgba(0,0,0,.45); font-size: 14px; }
 </style>
 <div class="cp-page">
-  <header class="cp-top"><span class="tape">Cours</span><p class="note">Maquette de la section Cours, à valider : une fiche avec manipulation (SDI), trois fiches reprises du lexique réseau, huit en préparation. Version ${pkg.version}.</p></header>
+  <header class="cp-top"><span class="tape">Cours</span><p class="note">Maquette de la section Cours : une fiche avec manipulation (SDI), les 140 fiches du lexique rangées par thème, huit fiches en préparation. Version ${pkg.version}.</p></header>
   <div id="cours-app"></div>
 </div>
 <div id="co-toast" role="status" hidden></div>

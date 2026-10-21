@@ -4,20 +4,24 @@ import { rich } from '../rich.js';
 import { FICHES, THEMES } from '../../content/cours/index.js';
 import { TERMS } from '../../content/netterms.js';
 import { FIGS } from '../term_figs.js';
+import '../figs_mesure.js';
+import '../figs_ctrlnet.js';
+import '../figs_videohub.js';
+import { FAMILLE_POSTE } from '../../content/cours/liens.js';
 import { COURS_FIGS } from './figs.js';
 import { LABS } from './labs.js';
 
 // ----------------------------------------------------------------------------------
 // Une fiche de cours à l'écran, toujours dans le même ordre : l'essentiel, le schéma, « À toi de
 // jouer », l'explication, « Pour aller plus loin », « Dans le car », les trois questions
-// d'Olivier, les renvois et la norme. Une fiche du lexique réseau (TERMS) s'affiche dans le même
-// moule, sans manipulation ni questions pour l'instant.
+// d'Olivier, les renvois et la norme. Une fiche du lexique (TERMS) s'affiche dans le même moule,
+// sans manipulation ni questions pour l'instant, avec « Emmène-moi » vers le poste de sa famille.
 // ----------------------------------------------------------------------------------
 
 /**
  * @typedef {object} FicheCtx
  * @property {(id: string) => void} open ouvrir une autre fiche
- * @property {(target: { label: string, station?: string, lesson?: string }) => void} go « Emmène-moi », parcours du chef
+ * @property {(target: { label: string, station?: string, lesson?: string, ip?: boolean }) => void} go « Emmène-moi », parcours du chef
  */
 
 /** titre d'une fiche du cours ou du lexique */
@@ -56,12 +60,13 @@ export function ficheView(id, ctx) {
         el('button', { type: 'button', class: 'btn small', onclick: () => ctx.open('sdi') }, 'Voir la fiche SDI')));
     return { node, dispose };
   }
-  // fiche du lexique réseau, reprise telle quelle
+  // fiche du lexique, reprise telle quelle
   if (!F || F.term) {
     const fig = T.fig && FIGS[T.fig] ? el('figure', { class: 'co-fig', html: FIGS[T.fig]() }) : null;
+    const go = FAMILLE_POSTE[T.cat] ? [FAMILLE_POSTE[T.cat]] : [];
     node.append(el('p', { class: 'co-short' }, T.short), fig, rich(T.body, 'co-body'),
-      T.car ? carBox(T.car, [], ctx) : null,
-      el('p', { class: 'co-from note' }, 'Fiche du lexique réseau, reprise telle quelle. Manipulation et questions à venir.'),
+      T.car || go.length ? carBox(T.car || '', go, ctx) : null,
+      el('p', { class: 'co-from note' }, 'Fiche du lexique des postes (boutons « ? »), reprise telle quelle. Manipulation et questions à venir.'),
       seeRow((T.see || []).filter((k) => TERMS[k]), ctx), T.ref ? el('p', { class: 'co-ref' }, 'Référence : ' + T.ref) : null);
     return { node, dispose };
   }
@@ -78,7 +83,7 @@ export function ficheView(id, ctx) {
 }
 
 function carBox(text, go, ctx) {
-  return el('section', { class: 'co-car' }, el('b', {}, 'Dans le car'), el('p', {}, text),
+  return el('section', { class: 'co-car' }, el('b', {}, 'Dans le car'), text ? el('p', {}, text) : null,
     go.length ? el('div', { class: 'co-go' }, ...go.map((g) => el('button', { type: 'button', class: 'btn small' + (g.station ? ' primary' : ''), onclick: () => ctx.go(g) }, g.label))) : null);
 }
 

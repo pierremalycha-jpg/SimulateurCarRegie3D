@@ -1,7 +1,7 @@
 // Poste Réseau IP, boutons « ? » des termes techniques : fiche de la gigue depuis l'analyseur de flux
 // (schéma compris), renvois « Voir aussi » et retour, Échap qui ferme la fiche sans quitter le poste,
-// boutons dans les onglets Technique et Exploitation, lexique et recherche, fiche en bas d'écran au
-// téléphone.
+// boutons dans les onglets Technique et Exploitation, lexique et recherche, « Ouvrir dans le Cours »,
+// fiche en bas d'écran au téléphone.
 // node tests/e2e/termes.mjs [dossier]
 import { launch, openPage, outDir, until, reporter } from './harness.mjs';
 const OUT = outDir('termes');
@@ -98,6 +98,16 @@ await click('#layer .prose .q[data-term="uplink"]');
 T.check('fiche « uplink » depuis le Cours, par-dessus', /lien montant|uplink/i.test((await pop())?.t || '') && await ev(() => +getComputedStyle(document.querySelector('#termpop')).zIndex > +getComputedStyle(document.querySelector('#layer')).zIndex));
 await page.keyboard.press('Escape'); await page.keyboard.press('Escape'); await page.waitForTimeout(300);
 T.check('Échap deux fois : fiche puis Cours fermés, retour au poste', !(await pop()) && await ev(() => !document.querySelector('#layer') && document.querySelector('#modal').hidden && window.__dbg.S.mode === 'station'));
+
+// ---- « Ouvrir dans le Cours » depuis la fenêtre ----
+await click('#station .q[data-term="is-05"]');
+T.check('fenêtre IS-05 : bouton « Ouvrir dans le Cours »', (await pop()) && await ev(() => !!document.querySelector('#termpop [data-cours="is-05"]')));
+await click('#termpop [data-cours]');
+T.check('le Cours s\'ouvre sur la même fiche, thème Réseau déplié, la fenêtre se ferme', await until(page, () => document.querySelector('#layer .co-fiche')?.dataset.fiche === 'is-05' && document.querySelector('#termpop').hidden && document.querySelector('#layer details.co-theme[data-k="reseau"]').open && document.querySelector('#layer .co-item[aria-current="true"]')?.dataset.fiche === 'is-05', null, 4000));
+T.check('… avec « Emmène-moi au poste Réseau IP »', await ev(() => [...document.querySelectorAll('#layer .co-go .btn')].some((b) => /Réseau IP/.test(b.textContent))));
+await shot('03b-cours-is05');
+await page.keyboard.press('Escape'); await page.waitForTimeout(300);
+T.check('Échap : le Cours se ferme, retour au poste', await ev(() => !document.querySelector('#layer') && window.__dbg.S.mode === 'station'));
 
 // ---- téléphone ----
 await page.setViewportSize({ width: 390, height: 844 }); await page.waitForTimeout(500);
