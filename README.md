@@ -423,9 +423,14 @@ le menu. La relecture des experts passe par l'espace formateur (onglet « Relect
 
 **La section Cours** (`src/cours/`, espace `src/ui/cours_ui.js` sur `src/ui/layer.js`, touche G, entrée du titre,
 pupitre, menu, bouton « Cours » de chaque poste). Elle s'ouvre en plein écran par-dessus tout le reste, écran titre
-compris et pendant le chargement, et se lit sans le stade 3D (téléphone, vidéoprojecteur). Quatre chapitres, une
-leçon par terme technique : **Le signal vidéo numérique** (`cours/signal.js`), **Le SDI** (`cours/sdi.js`), **Le
-réseau** (`cours/reseau.js`), **La HF** (`cours/hf.js`). Chaque leçon : l'essentiel en trois lignes, un schéma SVG,
+compris et pendant le chargement, et se lit sans le stade 3D (téléphone, vidéoprojecteur). Quatre chapitres, 19
+leçons, une par terme technique : **Le signal vidéo numérique** (`cours/signal.js` : 4:2:2, 8 ou 10 bits, niveaux
+64–940, formats et cadences, espaces de couleur et HDR), **Le SDI** (`cours/sdi.js` : la trame, longueur de câble et
+diagramme de l'œil, la falaise numérique, audio et données embarqués, connecteurs et brassage), **Le réseau**
+(`cours/reseau.js` : adresse IP et masque, VLAN et commutateur, table MAC, multicast et IGMP, PTP), **La HF**
+(`cours/hf.js` : bandes et fréquences, bilan de liaison, antennes et diversité, COFDM). Les adresses, VLAN, plan de
+fréquences et portées sont ceux du simulateur (réseau de contrôle, `data/rf.js`, `data/cameras.js`) : l'élève retrouve
+les mêmes nombres au poste. Chaque leçon : l'essentiel en trois lignes, un schéma SVG,
 une manipulation qui calcule vraiment (une image réellement sous-échantillonnée en 4:4:4 / 4:2:2 / 4:2:0 avec une
 loupe, un diagramme de l'œil qui se ferme avec la longueur du câble jusqu'à la falaise numérique, un masque de
 sous-réseau, un bilan de liaison HF…), l'explication, « pour aller plus loin », « dans le car » (un bouton lance le
