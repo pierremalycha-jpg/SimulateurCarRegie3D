@@ -35,6 +35,8 @@ export const VH = ROUTER.vh;
 // sélection de la façade (partagée par le poste et la visionneuse de matériel) :
 // mode 'out' (choix de la destination), 'in' (choix de la source), 'menu' ; inp = source préparée avant TAKE
 export const VH_PANEL = { mode: 'out', out: 1, inp: /** @type {number | null} */ (null), pending: false, menu: 0, video: true };
+// dernières vignettes cliquées dans le monitoring (le chef de car vérifie qu'on a su lire la mosaïque)
+export const VH_MON = { pickIn: /** @type {number | null} */ (null), pickOut: /** @type {number | null} */ (null) };
 
 // ---------------- plan des entrées ----------------
 // entrées fixes : [source du simulateur, étiquette du car, appareil câblé]
@@ -136,7 +138,9 @@ export function setLock(n, owner, by = '') {
 ROUTER.guard = (dest) => {
   if (S.ipMode) return null;
   const n = outOfDest(dest);
-  return n && VH.locks[n] ? lockMsg(n) : null;
+  if (!n || !VH.locks[n]) return null;
+  emit('router', { vhRefused: n });
+  return lockMsg(n);
 };
 
 /**
@@ -144,10 +148,12 @@ ROUTER.guard = (dest) => {
  * @param {number} out @param {number} inp
  */
 export function vhRoute(out, inp) {
-  if (VH.locks[out]) return lockMsg(out);
   const p = outPlan(out); const src = srcOfIn(inp);
   if (p.dest) { const err = route(p.dest, src); if (err) return err; }
-  else { VH.xp[out] = inp; emit('router', { vhOut: out, src }); }
+  else {
+    if (VH.locks[out]) { emit('router', { vhRefused: out }); return lockMsg(out); }
+    VH.xp[out] = inp; emit('router', { vhOut: out, src });
+  }
   VH.last = { out, inp, t: S.time };
   return null;
 }
@@ -202,7 +208,7 @@ const VH_FAULTS = [
       return { a, b };
     },
     check: (st) => inLabel(st.a) === 'CAM ' + st.a && inLabel(st.b) === 'CAM ' + st.b && ROUTER.map.MV13 === 'CAM' + st.a,
-    repair: (st) => { delete VH.labels.in[st.a]; delete VH.labels.in[st.b]; route('MV13', 'CAM' + st.a); },
+    repair: (st) => { delete VH.labels.in[st.a]; delete VH.labels.in[st.b]; if (VH.locks[35]) setLock(35, null); route('MV13', 'CAM' + st.a); },
     hint: 'La tuile 13 du multiview ne montre pas la caméra demandée. Monitoring des entrées de la grille : comparez chaque image à son étiquette ; deux étiquettes sont inversées. Videohub Setup : corriger les étiquettes, puis router la bonne caméra sur la sortie 35 (MV 13).',
   },
 ];

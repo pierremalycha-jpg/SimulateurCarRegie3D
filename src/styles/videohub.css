@@ -1,1 +1,130 @@
-/* grille type Videohub 40×40 (façade, logiciel, monitoring) */
+/* grille type Videohub 40×40 (façade, logiciel, monitoring) — ui/st_videohub.js */
+
+/* ---------- façade (2U, face noire, oreilles de baie) ---------- */
+.vh-face { flex: 1 1 auto; min-width: 0; display: flex; align-items: stretch; align-self: flex-start; max-width: 1180px; background: linear-gradient(#1b1e21, #101214 70%, #0c0e10); border: 1px solid #000; border-radius: 3px; color: #eef0f1; box-shadow: inset 0 1px 0 rgba(255,255,255,.07), 0 4px 10px rgba(0,0,0,.55); }
+.vh-ear { flex: 0 0 20px; display: flex; flex-direction: column; justify-content: space-between; align-items: center; padding: 12px 0; background: linear-gradient(90deg, #24282c, #363b40 50%, #24282c); }
+.vh-ear.l { border-right: 1px solid #000; } .vh-ear.r { border-left: 1px solid #000; }
+.vh-ear i { width: 8px; height: 14px; border-radius: 4px; background: #050607; box-shadow: inset 0 1px 2px #000, 0 1px 0 rgba(255,255,255,.12); }
+.vh-main { flex: 1 1 auto; min-width: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; padding: 7px 12px 10px; }
+.vh-brand { flex: 1 0 100%; display: flex; align-items: center; gap: 10px; font-family: var(--f-disp); font-weight: 600; font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: #dfe3e6; }
+.vh-brand .vh-model { color: #b4bcc2; letter-spacing: .08em; }
+.vh-leds { margin-left: auto; display: flex; gap: 10px; }
+.vh-led { display: inline-flex; align-items: center; gap: 4px; font-size: 10.5px; letter-spacing: .06em; color: #b9c1c7; }
+.vh-led i { width: 6px; height: 6px; border-radius: 50%; background: #1c2023; box-shadow: inset 0 0 0 1px rgba(0,0,0,.6); }
+.vh-led.on i { background: #33d46d; box-shadow: 0 0 5px rgba(51,212,109,.8); }
+
+/* écran LCD : étiquettes au-dessus et au-dessous, vidéo au milieu (dessinée par WebGL) */
+.vh-lcd { flex: 1 1 200px; max-width: 330px; min-width: 180px; display: flex; flex-direction: column; background: #000; border: 2px solid #040505; border-radius: 3px; box-shadow: inset 0 0 0 1px #2c3136, 0 0 0 1px #1d2125; overflow: hidden; }
+.vh-lcdrow { display: flex; align-items: baseline; gap: 6px; padding: 3px 6px; min-width: 0; font-family: var(--f-disp); font-weight: 600; font-size: 13px; color: #fff; white-space: nowrap; background: #07090b; }
+.vh-tag { flex: none; padding: 0 4px; border-radius: 2px; font-size: 10.5px; letter-spacing: .06em; background: #ffb020; color: #1a1205; }
+.vh-lcdrow:last-child .vh-tag { background: #f3f1e8; color: #15191c; }
+.vh-num { flex: none; font-family: var(--f-mono); font-weight: 400; color: #ffcf73; }
+.vh-lab { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.vh-fmt { margin-left: auto; flex: none; font-family: var(--f-mono); font-size: 10.5px; color: #c3cad0; }
+.vh-lcdvid.mon { width: 100%; aspect-ratio: 16/9; border: 0; border-radius: 0; }
+.vh-lcdmenu { aspect-ratio: 16/9; padding: 6px 8px; display: flex; flex-direction: column; gap: 3px; font-family: var(--f-mono); font-size: 11px; color: #e6eaed; overflow: hidden; }
+.vh-lcdmenu div { display: flex; flex-direction: column; padding: 1px 4px; border-radius: 2px; }
+.vh-lcdmenu div.on { background: #ffb020; color: #1a1205; }
+.vh-lcdmenu b { font-family: var(--f-disp); font-size: 12px; }
+.vh-lcdmenu span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* touches rétroéclairées : blanc = source, ambre = destination / sélection, rouge = TAKE et verrou */
+.vh-digits { display: grid; grid-template-columns: repeat(5, 36px); gap: 5px; }
+.vh-fn { display: grid; grid-template-columns: repeat(4, 50px); gap: 5px; }
+.vh-key { height: 34px; padding: 0 2px; border-radius: 4px; border: 1px solid #000; background: linear-gradient(#41474d, #2d3237 60%, #272b2f); color: #f1f3f4; font-family: var(--f-disp); font-weight: 700; font-size: 13.5px; letter-spacing: .03em; box-shadow: inset 0 1px 0 rgba(255,255,255,.14), 0 2px 2px rgba(0,0,0,.65); }
+.vh-key:hover { background: linear-gradient(#4b5258, #363c42 60%, #2f3439); }
+.vh-key:active { transform: translateY(1px); box-shadow: inset 0 1px 3px rgba(0,0,0,.6); }
+.vh-key.lit-a { background: #ffb020; color: #1a1205; border-color: #6a4a0c; box-shadow: 0 0 10px rgba(255,176,32,.45), inset 0 1px 0 rgba(255,255,255,.4); }
+.vh-key.lit-w { background: #f3f1e8; color: #15191c; border-color: #8b8a83; box-shadow: 0 0 10px rgba(255,255,240,.35), inset 0 1px 0 #fff; }
+.vh-key.lit-r { background: var(--tally-key); color: #fff; border-color: #ff8a80; box-shadow: 0 0 12px rgba(255,59,48,.5); }
+.vh-key.blink { animation: vhblink 1s steps(2, start) infinite; }
+@keyframes vhblink { 50% { filter: brightness(.55); } }
+
+/* molette : métal usiné, revêtement caoutchouc, crantage électronique */
+.vh-knobwrap { display: flex; flex-direction: column; align-items: center; gap: 4px; margin-left: auto; }
+.vh-knob { width: 74px; height: 74px; border-radius: 50%; padding: 6px; background: radial-gradient(circle at 50% 40%, #50565c, #2a2e32 60%, #15171a 72%); box-shadow: 0 0 0 3px #08090a, 0 0 0 4px #31363b, 0 5px 12px rgba(0,0,0,.75); cursor: grab; touch-action: none; }
+.vh-knob:active { cursor: grabbing; }
+.vh-knob:focus-visible { outline: 2px solid var(--amber); outline-offset: 5px; }
+.vh-knobcap { position: relative; width: 100%; height: 100%; border-radius: 50%; background: repeating-conic-gradient(from 0deg, #1d2023 0 5deg, #262a2e 5deg 10deg); box-shadow: inset 0 2px 4px rgba(255,255,255,.08), inset 0 -3px 6px rgba(0,0,0,.6); transition: transform .08s linear; }
+.vh-knobcap i { position: absolute; left: 50%; top: 9%; width: 11px; height: 11px; margin-left: -5.5px; border-radius: 50%; background: radial-gradient(circle at 50% 35%, #0a0b0c, #33383d); box-shadow: inset 0 1px 2px #000; }
+.vh-cap { font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase; color: #b9c1c7; }
+.vh-lk { display: inline-block; width: 11px; height: 13px; flex: none; }
+.vh-lk svg { display: block; width: 100%; height: 100%; }
+.vh-lk.off { visibility: hidden; } .vh-lk.own { color: #ffb020; } .vh-lk.other { color: #ff6b5e; }
+
+/* ---------- logiciel Videohub Control ---------- */
+.vh-app { background: #26292d; border: 1px solid #0b0c0d; border-radius: 6px; overflow: hidden; box-shadow: 0 6px 18px rgba(0,0,0,.4); }
+.vh-title { display: flex; align-items: center; gap: 10px; padding: 6px 10px; background: linear-gradient(#3b3f44, #2f3337); border-bottom: 1px solid #111315; font-size: 13px; color: #eef0f1; flex-wrap: wrap; }
+.vh-dots { display: inline-flex; gap: 5px; } .vh-dots i { width: 10px; height: 10px; border-radius: 50%; background: #5d636a; }
+.vh-conn { margin-left: auto; display: inline-flex; align-items: center; gap: 6px; font-family: var(--f-mono); font-size: 11.5px; color: #cdd3d8; }
+.vh-body { padding: 10px 12px 12px; display: flex; flex-direction: column; gap: 8px; }
+.vh-top { display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-start; }
+.vh-monw { flex: 0 1 280px; min-width: 170px; }
+.vh-smon.mon { width: 100%; }
+.vh-acts { flex: 1 1 260px; min-width: 0; display: flex; flex-direction: column; gap: 8px; }
+.vh-status { white-space: normal; font-size: 13px; line-height: 1.35; min-height: 2.9em; }
+.vh-take { min-width: 96px; height: 44px; border-radius: 4px; border: 1px solid #1c0b0a; background: linear-gradient(#5a2b29, #482220 60%, #3f1d1b); color: #ffd2cd; font-family: var(--f-disp); font-weight: 700; font-size: 17px; letter-spacing: .06em; }
+.vh-take.armed { background: var(--tally-key); color: #fff; border-color: #ff8a80; box-shadow: 0 0 14px rgba(255,59,48,.55); animation: vhblink 1s steps(2, start) infinite; }
+.vh-take:disabled { opacity: .5; }
+.vh-lockbtn { display: inline-flex; align-items: center; gap: 6px; }
+.vh-lockbtn .vh-lk.off { visibility: visible; color: #aab4ba; }
+.vh-chk { display: inline-flex; align-items: center; gap: 6px; font-size: 13.5px; color: var(--fg); }
+.vh-chk input { width: 16px; height: 16px; accent-color: var(--amber); }
+.vh-h { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; margin: 4px 0 0; font-family: var(--f-disp); font-size: 15px; color: var(--fg); }
+.vh-h small { font-family: var(--f-body); font-weight: 400; font-size: 12.5px; color: var(--muted); }
+.vh-grid { display: grid; grid-template-columns: repeat(10, minmax(0, 1fr)); gap: 4px; }
+.vh-b { position: relative; min-width: 0; min-height: 50px; padding: 4px 5px 3px; display: flex; flex-direction: column; align-items: flex-start; gap: 1px; text-align: left; border-radius: 4px; border: 1px solid #141618; background: linear-gradient(#585e64, #4a4f55 60%, #44494f); color: #f4f6f7; box-shadow: inset 0 1px 0 rgba(255,255,255,.12), 0 1px 2px rgba(0,0,0,.4); }
+.vh-b:hover { background: linear-gradient(#63696f, #545a60 60%, #4d5359); }
+.vh-b:active { transform: translateY(1px); }
+.vh-b .n { font-family: var(--f-mono); font-size: 10.5px; color: #d8dde1; }
+.vh-b .l { max-width: 100%; font-family: var(--f-disp); font-weight: 700; font-size: 13px; line-height: 1.1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.vh-b .s { max-width: 100%; font-size: 10.5px; line-height: 1.15; color: #e1e5e8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.vh-b .vh-lk { position: absolute; right: 4px; top: 4px; }
+.vh-b.free { background: linear-gradient(#3e4348, #363a3f); }
+.vh-b.free .l { font-weight: 500; color: #ccd2d7; }
+.vh-b.nosig { background: linear-gradient(#34383c, #2e3235); }
+.vh-b.nosig .s { color: #ffa198; }
+.vh-b.sel { background: linear-gradient(#ffc650, #eca21d); color: #1a1205; border-color: #6a4a0c; box-shadow: 0 0 10px rgba(255,176,32,.4); }
+.vh-b.sel .n, .vh-b.sel .s { color: #3d2b05; }
+.vh-b.cur { background: #f3f1e8; color: #15191c; border-color: #8b8a83; box-shadow: 0 0 9px rgba(255,255,240,.3); }
+.vh-b.cur .n, .vh-b.cur .s { color: #3b4248; }
+.vh-b.pend { background: #6b201b; color: #fff; border-color: #ff8a80; animation: vhblink 1s steps(2, start) infinite; }
+.vh-b.pend .n, .vh-b.pend .s { color: #ffe1dd; }
+.vh-b.locked { box-shadow: inset 0 0 0 2px rgba(255,107,94,.55); }
+.vh-b.locked.lk-O { box-shadow: inset 0 0 0 2px rgba(255,176,32,.6); }
+.vh-b.sel .vh-lk.own, .vh-b.cur .vh-lk.own { color: #6a4a0c; }
+.vh-t { position: absolute; right: 5px; bottom: 5px; width: 7px; height: 7px; border-radius: 50%; }
+.vh-b.t-pgm .vh-t { background: #ff2a2a; box-shadow: 0 0 5px #ff2a2a; } .vh-b.t-pvw .vh-t { background: #25d55a; box-shadow: 0 0 5px #25d55a; }
+@media (max-width: 1000px) { .vh-grid { grid-template-columns: repeat(8, minmax(0, 1fr)); } }
+@media (max-width: 700px) { .vh-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); } .vh-knob { width: 64px; height: 64px; } .vh-knobwrap { margin-left: 0; } }
+
+/* ---------- monitoring : mosaïques 8 × 5 (une texture WebGL), boutons de clic dessous ---------- */
+.vh-monitor { display: flex; flex-direction: column; gap: 8px; }
+.vh-mos { display: flex; flex-direction: column; gap: 6px; }
+.vh-mosbox { position: relative; width: 100%; max-width: 1180px; aspect-ratio: 1024 / 520; }
+.vh-mosmon.mon { position: absolute; inset: 0; width: 100%; height: 100%; aspect-ratio: auto; max-width: none; border-radius: 2px; }
+.vh-hit { position: absolute; inset: 0; display: grid; grid-template-columns: repeat(8, 1fr); grid-template-rows: repeat(5, 1fr); }
+.vh-hit button { min-width: 0; background: transparent; border: 0; padding: 0; cursor: pointer; }
+.vh-seg { flex: 0 1 auto; }
+.vh-legend { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; }
+.vh-sw { display: inline-block; width: 12px; height: 12px; border-radius: 2px; border: 2px solid; margin-left: 6px; }
+.vh-sw.red { border-color: #ff2a2a; } .vh-sw.green { border-color: #25d55a; } .vh-sw.amber { border-color: #ffb020; } .vh-sw.white { border-color: #f3f1e8; } .vh-sw.alarm { background: #c4161c; border-color: #c4161c; }
+
+/* ---------- matrice ---------- */
+.vh-matrix { display: flex; flex-direction: column; gap: 8px; }
+.vh-mxwrap { overflow: auto; max-width: 100%; max-height: 72vh; border: 1px solid var(--line); border-radius: 4px; background: #101418; align-self: flex-start; }
+.vh-mx { display: block; cursor: crosshair; }
+
+/* ---------- Videohub Setup ---------- */
+.vh-setup { display: flex; flex-direction: column; gap: 12px; }
+.vh-tables { grid-template-columns: repeat(auto-fit, minmax(330px, 1fr)); }
+.vh-tblwrap { max-height: 430px; overflow: auto; border: 1px solid #12171a; border-radius: 3px; }
+.vh-tbl { width: 100%; }
+.vh-tbl th[scope="row"] { font-family: var(--f-mono); font-weight: 400; width: 2.4em; }
+.vh-tbl td { vertical-align: middle; }
+.vh-tbl input { width: 100%; min-width: 7em; padding: 3px 6px; background: var(--glass); color: var(--fg); border: 1px solid var(--line2); border-radius: 3px; font-family: var(--f-mono); font-size: 12.5px; }
+.vh-tbl input.changed { border-color: var(--amber); }
+.vh-tbl td.err { color: #ff9d94; }
+.vh-lkcell { white-space: nowrap; font-family: var(--f-mono); font-size: 11.5px; }
+.vh-lkcell.lk-O { color: #ffcf73; border-color: #8a5f0e; } .vh-lkcell.lk-L { color: #ffb3ab; border-color: #a8382f; }
+.vh-proto { margin: 0; max-height: 300px; overflow: auto; padding: 8px 10px; background: var(--glass); color: #cfe9d6; border: 1px solid var(--line); border-radius: 4px; font-family: var(--f-mono); font-size: 12px; line-height: 1.4; }
