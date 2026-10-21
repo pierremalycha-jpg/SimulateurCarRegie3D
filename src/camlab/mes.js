@@ -398,8 +398,11 @@ export function createMes(o = {}) {
     mark();
     return changed;
   }
-  /** le moment où chaque étape a été faite la première fois */
-  function mark() { if (!on) return; for (const e of ETAPES) if (firstDone[e.id] == null && done(e.id)) firstDone[e.id] = clock() - t0; }
+  /** le moment où chaque étape est faite (une étape défaite ensuite, des blancs effacés par les noirs refaits, repart à zéro) */
+  function mark() {
+    if (!on) return;
+    for (const e of ETAPES) { if (!done(e.id)) delete firstDone[e.id]; else if (firstDone[e.id] == null) firstDone[e.id] = clock() - t0; }
+  }
 
   return {
     V, errors, firstDone,

@@ -17,12 +17,15 @@ import { recordNotion, notionAcquise, camProg } from './progress.js';
 // Une notion pas encore écrite montre son essentiel et le lot où elle arrive.
 // Les questions d'Olivier sont enregistrées (camlab/progress.js) : seule la première réponse de
 // chaque question compte, la notion est acquise quand les trois le sont dans la même série.
+// Une manipulation renvoie { node, dispose, hint? } : hint, sa consigne au-dessus d'elle.
 // ctx = { open(id) : ouvrir une autre notion, lens(state) : piloter la caméra 3D,
 //   progress() : la progression a changé, cours(id) : ouvrir une leçon du Cours (le module se
 //   ferme), go(cible) : « Emmène-moi » vers un poste du car (le module se ferme) }
 // ----------------------------------------------------------------------------------
 
 const LOTS = { 1: 'premier', 2: 'deuxième', 3: 'troisième' };
+/** consigne par défaut des manipulations des chapitres 1 à 3 (une manipulation peut donner la sienne : hint) */
+const HINT_OPTIQUE = 'Les bagues de la caméra suivent tes réglages ; l\'image du viseur aussi.';
 
 /** les trois questions d'Olivier, leur score et « Refaire les questions » */
 function quiz(id, f, ctx, onChange) {
@@ -92,8 +95,11 @@ export function renderFiche(id, ctx) {
   }
   if (f.fig && FIGS[f.fig]) node.append(el('figure', { class: 'cl-fig', html: FIGS[f.fig]() }));
   if (f.lab && LABS[f.lab]) {
-    const lab = LABS[f.lab](ctx); disposers.push(lab.dispose);
-    node.append(section('À toi', el('p', { class: 'cl-hint' }, 'Les bagues de la caméra suivent tes réglages ; l\'image du viseur aussi.'), lab.node));
+    const lab = /** @type {{ node: Element, dispose: () => void, hint?: string }} */ (LABS[f.lab](ctx)); disposers.push(lab.dispose);
+    // la consigne : celle que donne la manipulation (hint), sinon, pour l'objectif, les filtres et
+    // les capteurs (chapitres 1 à 3), les bagues et le viseur qui suivent ; rien ailleurs
+    const hint = lab.hint != null ? lab.hint : f.chap <= 3 ? HINT_OPTIQUE : '';
+    node.append(section('À toi', hint ? el('p', { class: 'cl-hint' }, hint) : null, lab.node));
   }
   if (f.body) node.append(section('Comprendre', rich(f.body, 'chef-say cl-rich')));
   if (f.vraie) node.append(section('Sur la vraie caméra', rich(f.vraie, 'chef-say cl-rich')));

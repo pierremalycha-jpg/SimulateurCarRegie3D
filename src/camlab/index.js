@@ -313,7 +313,7 @@ function flyToPastille(id) {
   R.orbit.flyTo(t, new THREE.Vector3(p.dir[0], p.dir[1], p.dir[2]), p.dist);
 }
 /** l'objectif écarté de sa monture (0 : monté, 1 : démonté), pour la mise en service */
-const LENS_OUT = 0.22;
+const LENS_OUT = 0.14;
 function setLensOut(t) {
   if (Math.abs(t - R.lensOut) < 1e-6) return;
   R.rig.lens.lens.position.x += (t - R.lensOut) * LENS_OUT; R.lensOut = t; R.renderer.shadowMap.needsUpdate = true;
@@ -351,7 +351,8 @@ function openMes(o = {}) {
   }, { variante: o.variante });
   showPanel('Mise en service · exercice noté', R.fiche.node, true);
   for (const b of R.list.querySelectorAll('[data-n], [data-quiz]')) b.classList.remove('cur');
-  flyToPastille('monture');
+  // la caméra entière, objectif posé devant sa monture ; chaque poste approche ensuite la vue
+  R.orbit.flyTo(new THREE.Vector3(-0.09, AXIS_H - 0.02, 0), new THREE.Vector3(0.75, 0.33, -0.62), 1.55);
 }
 function toggleList(force) {
   const show = force != null ? force : R.list.hidden;
