@@ -11,6 +11,7 @@ import './figs_ctrlnet.js';
 import '../content/terms_videohub.js';
 import './figs_videohub.js';
 import { rich } from './rich.js';
+import { allLessons } from '../cours/index.js';
 
 // ----------------------------------------------------------------------------------
 // Bouton « ? » à côté des termes techniques du poste Réseau IP, et sa fenêtre explicative :
@@ -113,6 +114,8 @@ function head(title, cat) {
 function termView(id, T) {
   const fig = T.fig && FIGS[T.fig] ? el('figure', { class: 'tp-fig', html: FIGS[T.fig]() }) : null;
   const see = (T.see || []).filter((k) => TERMS[k]);
+  // les leçons des cours qui citent cette fiche (cours/index.js)
+  const lessons = allLessons().filter(({ lesson }) => (lesson.terms || []).includes(id));
   return [head(T.t, T.cat),
     el('div', { class: 'tp-scroll' },
       T.aka ? el('div', { class: 'tp-aka' }, T.aka) : null,
@@ -121,6 +124,7 @@ function termView(id, T) {
       rich(T.body, 'tp-body'),
       T.car ? el('div', { class: 'tp-car' }, el('b', {}, 'Dans le car'), el('span', {}, T.car)) : null,
       see.length ? el('div', { class: 'tp-see' }, el('b', {}, 'Voir aussi'), ...see.map((k) => el('button', { type: 'button', class: 'tp-chip', 'data-see': k, onclick: () => openTerm(k, null, 'push') }, TERMS[k].t))) : null,
+      lessons.length ? el('div', { class: 'tp-see tp-cours' }, el('b', {}, 'Leçon'), ...lessons.map(({ lesson }) => el('button', { type: 'button', class: 'tp-chip', 'data-cours': lesson.id, title: 'Ouvrir la leçon dans les cours', onclick: () => { closeTerm(); emit('cours', { tab: 'chapitres', lesson: lesson.id }); } }, lesson.title))) : null,
       T.ref ? el('div', { class: 'tp-ref' }, 'Référence : ' + T.ref) : null),
     el('footer', { class: 'tp-foot' }, el('button', { type: 'button', class: 'btn small', onclick: () => openTerm(LEX, null, 'push') }, `Lexique (${Object.keys(TERMS).length} termes)`))];
 }

@@ -3,6 +3,7 @@ import { openDiag } from './diag_ui.js';
 import { openDevice } from '../equipment/viewer.js';
 import { openTrainer } from './config.js';
 import { openReport } from './report.js';
+import { livretInto } from './livret.js';
 import { qify, openLexique } from './term.js';
 import { CFG } from '../shared.js';
 import { DEVICE_LIST, DEVICES } from '../equipment/devices.js';
@@ -66,10 +67,10 @@ const NET_CHAPTERS = ['ipguide', 'reseau', 'mesure2110'];
 // Les onglets de l'ancien guide, répartis dans les cinq familles du menu : le car (ce qu'on y
 // trouve), le chef de car (missions et livret), les réglages. « Comprendre » et le glossaire
 // sont devenus des onglets de la fenêtre Cours (ui/cours_ui.js).
-const TAB_LABEL = { missions: 'Missions', procedures: 'Procédures', postes: 'Les postes', materiel: 'Matériel', commandes: 'Commandes', reglages: 'Réglages' };
+const TAB_LABEL = { missions: 'Missions', livret: 'Livret du stagiaire', procedures: 'Procédures', postes: 'Les postes', materiel: 'Matériel', commandes: 'Commandes', reglages: 'Réglages' };
 const GROUPS = [
   { id: 'car', title: 'Le car : postes, matériel, procédures', tabs: ['postes', 'materiel', 'procedures', 'commandes'] },
-  { id: 'chef', title: 'Missions et livret', tabs: ['missions'] },
+  { id: 'chef', title: 'Missions et livret', tabs: ['missions', 'livret'] },
   { id: 'reglages', title: 'Réglages', tabs: ['reglages'] },
 ];
 const COURS_TABS = { guide: 'articles', glossaire: 'glossaire', cours: 'chapitres' };
@@ -94,6 +95,7 @@ export function openGuide(tab = 'missions', chapter = null) {
       content.append(el('label', { class: 'item', for: 'showm' }, cb, el('span', {}, 'Afficher la mission en cours à l\'écran')),
         el('button', { class: 'btn small', onclick: () => { S.missionsDone = {}; $('#mission').dataset.m = ''; show('missions'); } }, 'Recommencer le parcours'));
     }
+    if (k === 'livret') livretInto(content, MISSIONS);
     if (k === 'postes') {
       content.append(el('p', { class: 'note' }, 'Chaque poste du car et chaque équipement du stade, avec son rôle, son matériel et ses pièges. Dans le simulateur, approchez-vous et appuyez sur E.'));
       for (const [id, where] of STATION_LIST) { const I = STATION_INFO[id]; if (!I) continue; content.appendChild(el('div', { class: 'item' }, el('div', { class: 'grow' }, el('div', { class: 't' }, I.title), el('div', { class: 's' }, `${where} · ${I.role.split('. ')[0]}.`)), el('button', { class: 'btn small', onclick: () => openInfo(id) }, 'Voir la fiche'))); }

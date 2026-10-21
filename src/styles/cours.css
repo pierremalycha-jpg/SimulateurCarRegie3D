@@ -73,3 +73,16 @@ body:not(.role-formateur) .role-only { display: none !important; }
 /* pupitre : les outils par famille */
 .pp-fams { display: grid; gap: 8px; }
 .pp-fam h3 { font: 600 13px var(--f-disp); color: var(--muted); margin: 0 0 4px 2px; }
+/* livret du stagiaire (ui/livret.js) */
+.lv-sec { display: grid; gap: 6px; padding: 10px 12px; background: var(--well); border: 1px solid #0f1316; border-radius: 3px; }
+.lv-sec h3 { margin: 0 0 2px; font: 600 15px var(--f-disp); }
+.lv-row { display: grid; grid-template-columns: minmax(120px, 220px) minmax(0, 1fr) 64px; gap: 10px; align-items: center; font-size: 13.5px; }
+.lv-l { color: var(--muted); }
+.lv-bar { height: 10px; background: #0d1114; border: 1px solid #070a0c; border-radius: 2px; overflow: hidden; }
+.lv-bar i { display: block; height: 100%; background: linear-gradient(90deg, #2f8f5a, var(--pvw)); transition: width .3s; }
+.lv-v { font: 600 13px var(--f-mono); color: var(--lcd, #d3f3df); text-align: right; }
+.lv-note { margin: 2px 0 0; font-size: 13px; color: var(--muted); }
+.lv-kv { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 4px 14px; margin: 0; font-size: 13.5px; }
+.lv-kv dt { color: var(--muted); }
+.lv-kv dd { margin: 0; font-family: var(--f-mono); color: var(--lcd, #d3f3df); }
+@media (max-width: 600px) { .lv-row { grid-template-columns: minmax(0, 1fr) 64px; } .lv-row .lv-bar { grid-column: 1 / -1; } }
