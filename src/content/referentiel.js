@@ -147,6 +147,8 @@ export const RATTACHEMENT = {
     'ctrlnet-bases': ['3.6', '2.3'],
     'ctrlnet-machine': ['2.3', '3.6', '2.10'],
     'ctrlnet-depannage': ['2.13', '3.6'],
+    'videohub-routage': ['2.10', '2.9'],
+    'videohub-verrou': ['3.12', '2.10', '1.2'],
   },
   missions: {
     m1: ['2.10'], m2: ['1.1', '3.4'], m3: ['1.1', '2.10'], m3b: ['2.7'], m4: ['1.1', '3.4'], m5: ['2.7', '3.4'],

@@ -25,6 +25,7 @@ Calendrier indicatif, calé sur l'année scolaire (les épreuves ont lieu en mai
 | Version | Période | Contenu |
 |---|---|---|
 | v18.2 | nov. 2026 | Mur des lieux sur l'accueil (fait), puis décisions D1 à D16 de la revue v18.1, premier test en classe, mesure d'usage, CLAUDE.md et skills maison |
+| v18.3 | oct. 2026 (fait) | Écran titre avec chargement par étapes ; instrument de mesure type PRISM au poste vision et dans une baie de mesure (waveform, parade, vecteurscope, diamant, split diamant, œil, gigue) ; grille Videohub 40×40 avec monitoring ; réseau de contrôle Gigabit du car SDI (VLAN, QoS, pannes) ; les trois reliés : sans réseau, RCP, grille, IPDirector et mélangeur ne commandent plus |
 | Modules du car | nov. 2026 – janv. 2027 | Les compétences que le car ne travaille pas encore (blocs 3 et 4) : M1 livret de compétences, M2 « La commande du diffuseur » (dossier initial, choix et chiffrage du dispositif), M3 « Après le coup de sifflet » (clips, PAD, archive), M4 « Recette et maintenance » (get-in sécurisé, réception, recette, maintenance préventive) |
 | v19 | févr. – mars 2027 | Socle multi-lieux : format de lieu, moteur de signaux unique (vidéo, audio, commande, réseau, énergie), catalogue de matériel unique, lieux chargés à la demande, un tuteur par métier, livret de compétences ouvert à tous les lieux |
 | v20 | avr. – juin 2027 | Plateau TV et régie en dur : studio, régie fixe, patch SDI, émission sur conducteur, premier DMX, mode examen |

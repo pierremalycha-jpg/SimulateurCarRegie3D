@@ -410,6 +410,15 @@ gigue, timing par rapport à la référence, état SDI (CRC, affaiblissement, lo
 13 schémas (`content/terms_mesure.js`, `ui/figs_mesure.js`), 3 parcours d'Olivier (`tutor/lessons/mesure.js`),
 2 pannes de liaison (cordon abîmé, touret resté en ligne). Suite `tests/e2e/prism.mjs`.
 
+**Grille Videohub 40 × 40** (`src/videohub.js`, poste `src/ui/st_videohub.js`). En car SDI, la grille est une
+Videohub 40 × 40 12G (inspiration Blackmagic) : façade (écran avec la vidéo de la source, touches OUT / IN / TAKE / LOCK,
+molette), logiciel Videohub Control (destinations et sources, TAKE, verrouillage des sorties), monitoring vivant des 40
+entrées et des 40 sorties (une seule texture, rafraîchissement tournant), matrice pédagogique, Videohub Setup
+(réseau, étiquettes, protocole Ethernet TCP 9990 en direct). Le verrou est réel : une sortie verrouillée refuse toute
+commutation, d'où qu'elle vienne. Le car a 52 destinations pour 40 sorties : les tuiles 1 à 12 du multiview sont
+câblées hors grille, et la baie de brassage est renumérotée en conséquence. 9 fiches « ? », 2 schémas, 2 parcours
+d'Olivier, 2 pannes. Le car IP garde son contrôleur NMOS. Suite `tests/e2e/videohub.mjs`.
+
 **Réseau de contrôle du car SDI** (`src/net/ctrlnet.js`, poste `src/ui/st_ctrlnet.js`). En car SDI, le poste
 Réseau devient le réseau de contrôle Gigabit : 3 switchs administrables, 49 machines (CCU et RCP, mélangeur, grille,
 EVS, intercom, console, SPG…), 7 VLAN, plan d'adressage, QoS, ping, tables ARP et MAC, charge des liens. Fiche
@@ -824,6 +833,8 @@ node tools/shots.mjs dossier 1280 800 '["vision","hf"]'   # captures de postes
 | `ui/pupitre.js` | Le pupitre (Tab ou T) : plan du car, touches des postes par zone, endroits du stade, équipiers, outils |
 | `app/title.js` | Écran titre : menu, progression du chargement, conseils d'Olivier, réglages et crédits |
 | `prism_model.js` | Modèle de la liaison SDI pour le PRISM : normes, points de mesure, œil, gigue, timing, pannes |
+| `videohub.js` | Modèle de la grille Videohub 40 × 40 : plan des ports, étiquettes, verrous, protocole, pannes |
+| `ui/st_videohub.js` | Le poste Grille en car SDI : façade, Videohub Control, monitoring, matrice, Setup |
 | `net/ctrlnet.js` | Réseau de contrôle Gigabit du car SDI : switchs, machines, VLAN, QoS, ping, tables, pannes |
 | `ui/prism.js` | L'instrument de mesure en tuiles (poste vision et baie de mesure) |
 | `ui/prism_station.js` | La baie de mesure (poste `mesure`) |

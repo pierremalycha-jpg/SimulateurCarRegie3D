@@ -81,10 +81,15 @@ export function allSources() {
 export function sourceLabel(id) {
   if (!id) return '—';
   if (id.startsWith('CAM')) return `CAM ${id.slice(3)}`;
+  // entrées de la grille du car SDI sans source du simulateur (Videohub : entrée libre, copie SDR, découpe)
+  if (id === 'GFXK') return 'GFX KEY';
+  if (/^VH\d+$/.test(id)) return 'GRILLE IN ' + id.slice(2);
   const s = EXTRA_SOURCES.find((x) => x.id === id); return s ? s.label : id;
 }
 
-export const ROUTER = { map: {}, phase: {}, customMV: false, customREC: false, lastTake: null };
+// vh : état propre à la Videohub du car SDI (étiquettes, verrous, ui/st_videohub.js et videohub.js) ;
+// guard(dest) : refus éventuel d'une commutation (sortie verrouillée), installé par videohub.js
+export const ROUTER = { map: {}, phase: {}, customMV: false, customREC: false, lastTake: null, vh: null, guard: null };
 export const DESTS = [];
 for (let i = 1; i <= 22; i++) DESTS.push({ id: 'ME' + i, group: 'Mélangeur', label: `Entrée ${i}` });
 for (let i = 1; i <= 18; i++) DESTS.push({ id: 'MV' + i, group: 'Multiview', label: `Tuile ${i}` });
@@ -154,6 +159,7 @@ export function route(dest, src) {
     // la connexion IS-05 remplace les paramètres de transport saisis à la main sur le récepteur
     if (rx && FAB.rxManual[rx.id]) setRxManual(rx.id, null);
   }
+  if (ROUTER.guard) { const g = ROUTER.guard(dest); if (g) return g; }
   if (dest.startsWith('ME') && +dest.slice(2) > mixInputs()) return `Entrée ${dest.slice(2)} indisponible : en 4K, le ${EQUIP.mixer} n'a que ${mixInputs()} entrées dans cette configuration.`;
   if (dest.startsWith('REC')) { const err = routeRec(+dest.slice(3), src); if (!err) emit('router', { dest, src }); return err; }
   ROUTER.map[dest] = src;
@@ -494,6 +500,7 @@ export function resolve(id, depth = 0, direct = false, dest = null) {
       return { tex: ch.rt.texture, scale: 1, alarm: '' };
     }
     case 'GFX': return { tex: P.rts.gfx.texture, scale: 1 };
+    case 'GFXK': return { tex: noSignalTex('GFX KEY', 'Signal de découpe de l\'habillage'), scale: SC };
     case 'STUDIO': return { tex: TEX.studio, scale: SC };
     case 'BARS': return { tex: TEX.bars, scale: SC, alarm: 'MIRE' };
     case 'BLACK': return { tex: TEX.black, scale: SC };
@@ -504,6 +511,12 @@ export function resolve(id, depth = 0, direct = false, dest = null) {
       if (S.faults.tx && S.txPath === 1) return { tex: noSignalTex('PERTE RETOUR', 'Liaison TX1 coupée'), scale: SC, alarm: 'PERTE' };
       const r = retTexture(); return { tex: r || TEX.black, scale: 1 };
     }
+  }
+  // Videohub du car SDI : entrée sans source du simulateur (copie SDR d'une caméra en UHD, sinon rien de câblé)
+  if (/^VH\d+$/.test(id)) {
+    const n = +id.slice(2), k = n - 32;
+    if (S.format === 'UHD' && k >= 1 && k <= 8 && camById(k)) return resolve('CAM' + k, depth + 1);
+    return { tex: noSignalTex('PAS DE SIGNAL', `Grille IN ${n} : rien n'est câblé`), scale: SC, alarm: 'NO SIG', none: true };
   }
   return { tex: TEX.black, scale: SC };
 }
@@ -938,7 +951,10 @@ const slotMat = new THREE.ShaderMaterial({
   depthTest: false, depthWrite: false,
 });
 const slotScene = new THREE.Scene(); const slotQuad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), slotMat); slotQuad.frustumCulled = false; slotScene.add(slotQuad);
+// écrans ajoutés par un poste (monitoring de la Videohub…) : id → () => ({ tex, gain })
+export const EXTRA_SLOTS = {};
 export function slotTexture(id) {
+  if (EXTRA_SLOTS[id]) return EXTRA_SLOTS[id]();
   if (id === 'mv') return { tex: P.rts.mv.texture, gain: 1 };
   if (id === 'HDR') return { tex: P.rts.hdr.texture, gain: 1.1, hdr: 1 };
   if (id === 'HLGRAW') return { tex: P.rts.hdr.texture, gain: 1.1 };

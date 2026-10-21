@@ -9,6 +9,7 @@ import { explain, rotary, joystick, chainBox } from './widgets.js';
 import { openDevice } from '../equipment/viewer.js';
 import { prismInstrument } from './prism.js';
 import { PRISM, pointById, setInput } from '../prism_model.js';
+import { ctrlCam } from '../net/ctrlnet.js';
 
 const IR_MIN = 1.4, IR_MAX = 22;
 const irisToPos = (n) => 1 - Math.log(n / IR_MIN) / Math.log(IR_MAX / IR_MIN);
@@ -73,7 +74,9 @@ export function buildVision(body, arg = 0, ctx) {
     el('div', { class: 'hwrow', style: { alignItems: 'flex-start', gap: '14px' } }, panelHost, overview));
 
   let W = {};
-  const touch = (stage, fn) => (...a) => { const c = cam(); if (!c) return; if (c.panelActive === false) { toast('PANEL ACTIVE éteint : rallumez-le pour régler la caméra.', 'bad'); explain('Réglage refusé : PANEL ACTIVE est éteint. On l\'éteint pour verrouiller une caméra réglée ; rallumez-le pour reprendre la main.', 'warn:locked'); return; } fn(c, ...a); chain.update(c, stage); };
+  const touch = (stage, fn) => (...a) => { const c = cam(); if (!c) return;
+    if (!S.ipMode) { const k = ctrlCam(c.id); if (!k.ok) { toast(`CCU ${c.id} injoignable par le réseau de contrôle.`, 'bad'); explain(`Réglage refusé : le RCP ne joint plus la CCU ${c.id} par le réseau de contrôle du car (${k.why}). L'image passe toujours en SDI, mais plus aucune commande : voyez le poste Réseau.`, 'warn:ctrl'); return; } }
+    if (c.panelActive === false) { toast('PANEL ACTIVE éteint : rallumez-le pour régler la caméra.', 'bad'); explain('Réglage refusé : PANEL ACTIVE est éteint. On l\'éteint pour verrouiller une caméra réglée ; rallumez-le pour reprendre la main.', 'warn:locked'); return; } fn(c, ...a); chain.update(c, stage); };
   let irisSeq = null;
   function select(id) {
     sel = id; S.selCam = id; SCOPE.src = 'CAM' + id; SCOPE.active = true;

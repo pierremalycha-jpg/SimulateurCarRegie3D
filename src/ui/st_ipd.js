@@ -6,6 +6,7 @@ import { EVS, evsAction, recordedCams, clipName, MIX, meSource } from '../pipeli
 import { recRange, playerName, playerNumber } from '../match.js';
 import { evsLayout, EQUIP } from '../equip.js';
 import { explain } from './widgets.js';
+import { ctrlFunc } from '../net/ctrlnet.js';
 import { openDevice } from '../equipment/viewer.js';
 
 const KEYWORDS = ['BUT', 'TIR', 'ARRÊT', 'FAUTE', 'CORNER', 'HORS-JEU', 'CARTON', 'CONTRE', 'BELLE ACTION', 'AMBIANCE'];
@@ -47,7 +48,10 @@ export function buildIPD(body, arg, ctx) {
     el('div', { class: 'hwrow' }, el('button', { class: 'btn small', onclick: () => openDevice('ipd', 1) }, 'Voir le poste IPDirector'), el('button', { class: 'btn small', onclick: () => openDevice('evs', 1) }, `Voir le serveur ${EQUIP.evsModel}`)),
     el('p', { class: 'note' }, 'IPDirector travaille sur les mêmes clips que la télécommande LSM : un clip sauvegardé au poste ralentis apparaît ici, un nom ou un mot-clé ajouté ici apparaît sur l\'écran du serveur. Interface simplifiée inspirée des modules Database explorer, Clip logger, Playlist et Control panel.'));
 
+  // en car SDI, IPDirector pilote le serveur par le réseau de contrôle
+  const evsOk = () => { const k = ctrlFunc('evs'); if (k.ok) return true; toast('Serveur EVS injoignable par le réseau de contrôle.', 'bad'); explain(`Action refusée : IPDirector ne joint plus le serveur EVS (${k.why}). L'enregistrement continue sur le serveur, mais ni log ni clip ne passent : voyez le poste Réseau.`, 'warn:ctrl'); return false; };
   function logNow(kw) {
+    if (!evsOk()) return;
     const t = S.simTime;
     EVS.logs.unshift({ t, kw: [kw], cam: recordedCams()[0] || null });
     if (EVS.logs.length > 60) EVS.logs.pop();
