@@ -11,7 +11,8 @@ import { figure, sv, canvas, slider, choice, readout, fmtNum } from './kit.js';
 // la polarité (corrélation, perte en mono), les compositions des N-1 et le décalage son/image.
 // ----------------------------------------------------------------------------------
 const C = { grey: '#8a949c', amber: '#ffd38a', red: '#ff8a80', green: '#7fd1a0', cyan: '#7fd3f3', box: '#1a2026', line: '#2a3238', tally: '#f0372c', pvw: '#33c46c' };
-const txt = (x, y, s, cls = 'co-s', anchor = 'middle', more = {}) => sv('text', { x, y, textAnchor: anchor, class: cls, ...more }, s);
+// more.fill : la couleur du texte, passée en style (la classe du schéma imposerait sinon la sienne)
+const txt = (x, y, s, cls = 'co-s', anchor = 'middle', more = {}) => sv('text', { x, y, textAnchor: anchor, class: cls, ...(more.fill ? { style: `fill: ${more.fill}` } : {}) }, s);
 const box = (x, y, w, h, stroke = C.grey, fill = C.box) => sv('rect', { x, y, width: w, height: h, rx: 3, fill, stroke, strokeWidth: 1.2 });
 const arrow = (x1, y1, x2, y2, col = C.grey) => {
   const a = Math.atan2(y2 - y1, x2 - x1), s = 6, g = sv('g', {});
@@ -58,10 +59,10 @@ function demoStrip(host) {
   const wv = canvas(720, 220, 'co-canvas co-smooth'), ph = canvas(720, 170, 'co-canvas co-smooth');
   const gw = wv.getContext('2d'), gp = ph.getContext('2d');
   let gain = 40, p48 = true, fader = 0, inv = false, share = 90;
-  const read = readout(['Crête d\'entrée', 'Marge avant 0 dBFS', 'Échantillons écrêtés', 'Bruit du préampli (ordre de grandeur)', 'Crête après le fader', 'Verdict']);
+  const read = readout(['Crête d\'entrée', 'Marge avant 0 dBFS', 'Échantillons écrêtés', 'Bruit du préampli (ordre de grandeur)', 'Crête après le fader']);
   const read2 = readout(['Corrélateur (−1 à +1)', 'Mono (G + D) ÷ 2, par rapport à une voie', 'À l\'écoute en mono']);
   const verdict = el('p', { class: 'co-verdict' });
-  const W0 = 600, H = 220, mid = H / 2, FULL = 1.6, Y = (v) => mid - Math.max(-FULL, Math.min(FULL, v)) / FULL * (mid - 12);
+  const W0 = 600, H = 220, mid = H / 2, FULL = 1.3, Y = (v) => mid - Math.max(-FULL, Math.min(FULL, v)) / FULL * (mid - 12);
   const drawStrip = () => {
     const k = p48 ? Math.pow(10, (MIC0 + gain) / 20) : 0, f = Math.pow(10, fader / 20);
     let peakIn = 0, clipped = 0;
@@ -94,10 +95,10 @@ function demoStrip(host) {
     for (const d of [0, -10, -18, -30, -60]) gw.fillText(String(d).replace('-', '−'), MX - 26, my(d) + 4);
     gw.fillText('entrée (ambre), écrêtée (rouge), après le fader (cyan)', 6, H - 6);
     const would = MIC0 + gain;
-    read.set('Crête d\'entrée', !p48 ? 'aucune : micro statique sans 48 V, il ne délivre rien' : `${fmtDb(Math.min(0, pk))}FS${would > 0 ? ` (le micro en demandait ${fmtDb(would)}FS)` : ''}`);
+    read.set('Crête d\'entrée', !p48 ? 'aucune : micro statique sans 48 V, il ne délivre rien' : `${fmtDb(Math.min(0, pk))}FS, soit ${fmtNum(Math.pow(10, Math.min(0, pk) / 20) * 100)} % de la pleine échelle${would > 0 ? ` (le micro en demandait ${fmtDb(would)}FS)` : ''}`);
     read.set('Marge avant 0 dBFS', !p48 ? '—' : would >= 0 ? 'aucune : le convertisseur est saturé' : `${fmtNum(-would, 1)} dB`);
     read.set('Échantillons écrêtés', clipped ? `${fmtNum(clipped)} sur ${fmtNum(NS)} (${fmtNum(clipped / FS * 1000, 1)} ms de son déformé)` : 'aucun');
-    read.set('Bruit du préampli (ordre de grandeur)', `${fmtNum(-145 + gain)} dBFS${p48 ? '' : ' : on n\'entend plus que lui'}`);
+    read.set('Bruit du préampli (ordre de grandeur)', `−${fmtNum(145 - gain)} dBFS${p48 ? '' : ' : on n\'entend plus que lui'}`);
     read.set('Crête après le fader', !p48 ? '—' : `${fmtDb(Math.min(0, pk) + fader)}FS${clipped ? ' : plus bas, mais toujours écrêté' : ''}`);
     const v = !p48 ? ['ko', 'Muet : un micro statique (à condensateur) a besoin de l\'alimentation fantôme 48 V.'] : would >= 0 ? ['ko', `Écrêté : baissez le GAIN d'au moins ${fmtNum(would + 10, 0)} dB. Le fader n'y peut rien, la forme d'onde est déjà coupée.`] : would > -10 ? ['warn', 'Crêtes au-dessus de −10 dBFS : trop peu de marge pour un tir plus fort ou un cri du public.'] : would < -24 ? ['warn', 'Trop bas : le signal se rapproche du souffle ; montez le gain vers des crêtes de −18 à −10 dBFS.'] : ['ok', 'Bien réglé : crêtes entre −18 et −10 dBFS environ, de la marge avant 0 dBFS.'];
     verdict.className = 'co-verdict ' + v[0]; verdict.textContent = v[1];
@@ -150,7 +151,7 @@ function figStrip() {
   const X = (d) => 60 + (d + 60) / 66 * 600, Y = 176;
   f.append(txt(10, Y - 22, 'L\'échelle numérique (dBFS : décibels sous le maximum)', 'co-t', 'start'));
   f.append(sv('rect', { x: X(-60), y: Y, width: X(-18) - X(-60), height: 12, fill: C.pvw, opacity: 0.5 }), sv('rect', { x: X(-18), y: Y, width: X(-10) - X(-18), height: 12, fill: C.amber, opacity: 0.8 }), sv('rect', { x: X(-10), y: Y, width: X(0) - X(-10), height: 12, fill: '#e6c33a', opacity: 0.45 }), sv('rect', { x: X(0), y: Y, width: X(6) - X(0), height: 12, fill: C.tally, opacity: 0.8 }));
-  for (const d of [-60, -40, -18, -10, 0]) f.append(sv('line', { x1: X(d), y1: Y - 4, x2: X(d), y2: Y + 16, stroke: '#e8eef2' }), txt(X(d), Y + 28, (d ? '−' + -d : '0') + ' dBFS', 'co-m'));
+  for (const d of [-60, -40, -18, -10, 0]) f.append(sv('line', { x1: X(d), y1: Y - 4, x2: X(d), y2: Y + 16, stroke: '#e8eef2' }), txt(X(d), Y + 28, d ? '−' + -d : '0 dBFS', 'co-m'));
   f.append(txt((X(-18) + X(-10)) / 2, Y - 6, 'crêtes visées', 'co-s'), txt(X(-18), Y + 42, 'alignement : 1 kHz à −18 dBFS = 0 dBu (EBU R68)', 'co-s'), txt(X(3), Y - 6, 'écrêtage', 'co-s', 'middle', { fill: C.red }));
   return f;
 }
@@ -219,7 +220,7 @@ function demoN1(host) {
     gl.fillStyle = 'rgba(255,211,138,0.85)'; gl.fillRect(X(-45), y, X(125) - X(-45), 14);
     gl.fillStyle = C.pvw; gl.fillRect(X(-40), y + 4, X(60) - X(-40), 6);
     gl.fillStyle = '#fff'; gl.fillRect(X(off) - 1.5, y - 6, 3, 26);
-    gl.fillStyle = '#aab4ba'; for (const m of [-200, -100, 0, 100, 200]) gl.fillText(`${m > 0 ? '+' : m < 0 ? '−' : ''}${Math.abs(m)} ms`, X(m) - 16, y + 32);
+    gl.fillStyle = '#aab4ba'; for (const m of [-200, -100, 0, 100, 200]) gl.fillText(`${m > 0 ? '+' : m < 0 ? '−' : ''}${Math.abs(m)} ms`, Math.min(X(m) - 16, 664), y + 32);
     gl.fillText('son en avance', 70, 98); gl.fillText('son en retard', 640, 98);
     const r37 = off >= -40 && off <= 60, det = off >= -45 && off <= 125, acc = off >= -90 && off <= 185;
     read2.set('Décalage son / image', off === 0 ? '0 ms : synchrones' : `${fmtNum(Math.abs(off))} ms, son en ${off > 0 ? 'retard' : 'avance'} (${fmtNum(Math.abs(aDelay - vDelay))} image${Math.abs(aDelay - vDelay) > 1 ? 's' : ''})`);
@@ -241,7 +242,7 @@ function demoN1(host) {
       choice('Format', [['50', '1080p50', '20 ms par image'], ['25', '1080i50', '40 ms par image']], '50', (v) => { fps = +v; drawLip(); }),
       sl('Retard de l\'image (traitements)', vDelay, (v) => { vDelay = v; drawLip(); }),
       sl('Retard du son (retard de ligne)', aDelay, (v) => { aDelay = v; drawLip(); })),
-    el('figure', { class: 'co-figc' }, lip, el('figcaption', {}, 'Le test du flash et du bip : en haut l\'image, en bas le son ; dessous, les seuils (vert : EBU R37 ; ambre foncé : décalage non remarqué ; ambre clair : acceptable ; rouge : gênant)')),
+    el('figure', { class: 'co-figc' }, lip, el('figcaption', {}, 'Le test du flash et du bip : en haut l\'image, en bas le son ; dessous, les seuils (vert : EBU R37 ; ambre clair : décalage non remarqué ; ambre foncé : remarqué mais acceptable ; rouge : gênant)')),
     verdict, read2.el);
   drawLip();
 }
@@ -282,7 +283,7 @@ registerChapter({
       demo: demoStrip,
       body: `La console reçoit chaque source sur une **tranche** : une colonne de réglages traversée dans un ordre fixe (dans le simulateur : entrée, gain et 48 V, polarité, passe-haut, égaliseur, dynamique, retard, panoramique, fader, puis les bus). Le premier réglage est le plus important : le **gain d'entrée** (préamplificateur) adapte le niveau très faible d'un micro, quelques millivolts, à l'échelle de la console.
 
-Cette échelle est numérique : le **dBFS** (décibels sous la pleine échelle) compte vers le bas à partir de **0 dBFS**, la plus grande valeur que le convertisseur sait écrire. Au-delà, il n'y a plus de nombre : les crêtes sont coupées à plat, c'est l'**écrêtage** (le voyant OVL), un son dur et définitivement abîmé. On règle donc le gain pour des crêtes entre **−18 et −10 dBFS** environ : le niveau d'alignement est à −18 dBFS (le 1 kHz de line-up, qui correspond à 0 dBu selon l'EBU R68), et les 18 dB au-dessus sont la **marge** (*headroom*) qui absorbe un tir plus fort ou un cri du public. Trop bas, le signal se rapproche du souffle du préampli. Le **fader** vient après : il ne fait que doser un signal déjà converti. Baisser le fader d'un micro écrêté donne un son écrêté moins fort.
+Cette échelle est numérique : le **dBFS** (décibels sous la pleine échelle) compte vers le bas à partir de **0 dBFS**, la plus grande valeur que le convertisseur sait écrire. Au-delà, il n'y a plus de nombre : les crêtes sont coupées à plat, c'est l'**écrêtage** (le voyant OVL), un son dur et définitivement abîmé. On règle donc le gain pour des crêtes entre **−18 et −10 dBFS** environ : le niveau d'alignement est à −18 dBFS (le 1 kHz de line-up, qui correspond à 0 dBu selon l'EBU R68), et les 18 dB au-dessus sont la **marge** (headroom) qui absorbe un tir plus fort ou un cri du public. Trop bas, le signal se rapproche du souffle du préampli. Le **fader** vient après : il ne fait que doser un signal déjà converti. Baisser le fader d'un micro écrêté donne un son écrêté moins fort.
 
 L'**alimentation fantôme 48 V** (P48, IEC 61938) est envoyée par la console dans le câble micro lui-même, sur les deux conducteurs de modulation. Les micros **statiques** (à condensateur) en ont besoin : canons du bord terrain, couples d'ambiance. Sans elle, ils ne délivrent rien. Les micros **dynamiques** (souvent ceux des micros-casques des commentateurs) n'en ont pas besoin et ne sont pas gênés par elle, s'ils sont câblés en symétrique.
 
@@ -308,7 +309,7 @@ Viennent ensuite les traitements : le **passe-haut** coupe le grondement inutile
     {
       id: 'son-n1', title: 'N-1, synchro labiale et départs', minutes: '8 min',
       essentials: [
-        'Chaque commentateur reçoit un **N-1** (*mix-minus*) : tout le programme **sauf sa propre voix**, qui lui reviendrait retardée, en écho.',
+        'Chaque commentateur reçoit un **N-1** (mix-minus) : tout le programme **sauf sa propre voix**, qui lui reviendrait retardée, en écho.',
         'L\'image est retardée par les traitements (synchroniseur, conversions, liaison HF…) : on **retarde le son** d\'autant pour garder la **synchro labiale** (EBU R37 : de 40 ms d\'avance à 60 ms de retard, de bout en bout).',
         'Le son du départ est **embeddé** dans le SDI selon le **plan de son** de la chaîne : paire 1 programme, paire 2 international…',
       ],
@@ -317,7 +318,7 @@ Viennent ensuite les traitements : le **passe-haut** coupe le grondement inutile
       demo: demoN1,
       body: `Le son ne part pas qu'à l'antenne. La console fabrique plusieurs **départs** (des bus) : le **programme** (PGM, tout le mélange, commentaires compris), le **son international** (INTL : ambiances et effets, sans aucune voix, pour les diffuseurs étrangers qui y posent leurs commentaires), et des **retours** pour ceux qui parlent à l'antenne : commentateurs, présentateur en studio, journaliste bord terrain.
 
-Chacun de ces retours est un **N-1** (*mix-minus*, « tout sauf moi ») : le programme **moins la voix de celui qui l'écoute**. Le commentateur entend le match, le studio et le bord terrain, mais pas lui-même : sa voix est déjà dans son casque par sa propre unité de commentaire. S'il la recevait aussi par le programme, elle lui reviendrait après le retard du son du car (retard de ligne, quelques dizaines à quelques centaines de millisecondes), ou après l'aller-retour de la liaison pour le studio : un écho qui empêche de parler, voire un larsen. Une seule case mal mise dans la matrice suffit, et elle ne s'entend pas en régie : il faut écouter chaque départ.
+Chacun de ces retours est un **N-1** (mix-minus, « tout sauf moi ») : le programme **moins la voix de celui qui l'écoute**. Le commentateur entend le match, le studio et le bord terrain, mais pas lui-même : sa voix est déjà dans son casque par sa propre unité de commentaire. S'il la recevait aussi par le programme, elle lui reviendrait après le retard du son du car (retard de ligne, quelques dizaines à quelques centaines de millisecondes), ou après l'aller-retour de la liaison pour le studio : un écho qui empêche de parler, voire un larsen. Une seule case mal mise dans la matrice suffit, et elle ne s'entend pas en régie : il faut écouter chaque départ.
 
 L'**image** traverse des équipements qui la retardent : synchroniseur d'images (une image), conversions de format, liaison HF de la caméra sans fil (plusieurs images selon le codage). Le **son**, lui, arrive presque tout de suite à la console. Pour que les lèvres et la voix coïncident (la **synchro labiale**), on **retarde le son** du même temps, avec le retard de ligne de la console, compté en images : une image vaut 20 ms en 1080p50, 40 ms en 1080i50. Repères : l'EBU R37 tolère, de bout en bout, un son en avance de 40 ms au plus et en retard de 60 ms au plus (et demande 5 ms d'avance, 15 ms de retard au plus à chaque étape : dans le car, on vise 0 ms). La recommandation ITU-R BT.1359 situe le décalage remarqué vers 45 ms d'avance et 125 ms de retard, et le décalage gênant au-delà de 90 ms d'avance et 185 ms de retard. Le son en avance se remarque plus vite : dans la nature, la lumière arrive toujours avant le son.
 

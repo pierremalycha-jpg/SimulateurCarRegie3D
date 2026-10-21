@@ -10,7 +10,8 @@ import { figure, sv, canvas, slider, choice, readout, fmtNum } from './kit.js';
 // image enregistrée part à chaque image de sortie (50 images/s), et la durée d'une playlist.
 // ----------------------------------------------------------------------------------
 const C = { grey: '#8a949c', amber: '#ffd38a', red: '#ff8a80', green: '#7fd1a0', cyan: '#7fd3f3', box: '#1a2026', line: '#2a3238', tally: '#f0372c', pvw: '#33c46c' };
-const txt = (x, y, s, cls = 'co-s', anchor = 'middle', more = {}) => sv('text', { x, y, textAnchor: anchor, class: cls, ...more }, s);
+// more.fill : la couleur du texte, passée en style (la classe du schéma imposerait sinon la sienne)
+const txt = (x, y, s, cls = 'co-s', anchor = 'middle', more = {}) => sv('text', { x, y, textAnchor: anchor, class: cls, ...(more.fill ? { style: `fill: ${more.fill}` } : {}) }, s);
 const box = (x, y, w, h, stroke = C.grey, fill = C.box) => sv('rect', { x, y, width: w, height: h, rx: 3, fill, stroke, strokeWidth: 1.2 });
 const arrow = (x1, y1, x2, y2, col = C.grey) => {
   const a = Math.atan2(y2 - y1, x2 - x1), s = 6, g = sv('g', {});
@@ -219,7 +220,7 @@ function demoPlaylist(host) {
   const bar = canvas(640, 54, 'co-canvas co-smooth'), gb = bar.getContext('2d');
   const read = readout(['Clips trouvés', 'Somme des durées lues', 'Recouvrements des transitions', 'Durée de la playlist à l\'antenne', 'Écart à l\'objectif']);
   const stars = (n) => '★'.repeat(n) + '☆'.repeat(3 - n);
-  const lenOf = (it) => CLIPS[it.c].dur / (it.speed / 100);
+  const lenOf = (it) => CLIPS[it.c].dur / lever(it.speed);
   const ovOf = (it, i) => (i < pl.length - 1 ? TRANS[it.trans].images / OUT_FPS : 0);
   const sel = (opts, v, on, label) => { const s = /** @type {HTMLSelectElement} */ (el('select', { 'aria-label': label }, ...opts.map(([k, t]) => el('option', { value: k, selected: String(k) === String(v) }, t)))); s.addEventListener('change', () => on(s.value)); return s; };
   const draw = () => {
@@ -278,10 +279,10 @@ function figClips() {
   const Y = 118;
   f.append(txt(10, Y - 4, 'Une playlist, lue par un canal du serveur', 'co-t', 'start'));
   const seg = (x, w, label, sub, col) => f.append(sv('rect', { x, y: Y + 6, width: w, height: 30, fill: col, opacity: 0.7 }), txt(x + w / 2, Y + 19, label, 'co-s', 'middle', { fill: '#0b0e10' }), txt(x + w / 2, Y + 31, sub, 'co-s', 'middle', { fill: '#0b0e10' }));
-  seg(10, 140, '111A · 100 %', '6,2 s', C.green); seg(130, 230, '112C · 33 %', '3,2 ÷ 0,33 = 9,7 s', C.cyan); seg(340, 140, '114A · 100 %', '5,0 s', C.green);
+  seg(10, 140, '111A · 100 %', '6,2 s', C.green); seg(130, 230, '112C · 33 %', '3,2 s × 3 = 9,6 s', C.cyan); seg(340, 140, '114A · 100 %', '5,0 s', C.green);
   f.append(sv('rect', { x: 130, y: Y + 2, width: 20, height: 38, fill: C.amber, opacity: 0.6 }), sv('rect', { x: 340, y: Y + 2, width: 20, height: 38, fill: C.amber, opacity: 0.6 }));
   f.append(txt(140, Y + 54, 'mix 0,5 s', 'co-s'), txt(350, Y + 54, 'mix 0,5 s', 'co-s'));
-  f.append(txt(500, Y + 18, 'Durée = 6,2 + 9,7 + 5,0', 'co-m', 'start'), txt(500, Y + 34, '− 2 × 0,5 = 19,9 s', 'co-m', 'start'));
+  f.append(txt(500, Y + 18, 'Durée = 6,2 + 9,6 + 5,0', 'co-m', 'start'), txt(500, Y + 34, '− 2 × 0,5 = 19,8 s', 'co-m', 'start'));
   return f;
 }
 
@@ -301,7 +302,7 @@ registerChapter({
       demo: demoTrains,
       body: `Le **serveur ralenti** (dans le car, un EVS XT4K) enregistre sans arrêt plusieurs sources que la grille lui envoie : chaque entrée d'enregistrement est un **train**, une boucle de plusieurs heures. Tant que l'enregistrement tourne, chaque image de chaque entrée est disponible ; quand la boucle est pleine, les images les plus anciennes sont écrasées. Tous les trains portent le même **timecode** (celui du générateur de synchro, entré en LTC) : on peut passer d'un angle à l'autre sur la même action, à l'image près. Le nombre de canaux est fixe et se partage entre enregistrement et lecture : sur un XT4K, 8 canaux en HD (par exemple 6 entrées et 2 sorties ; 12 canaux avec l'option ChannelMAX), 4 en UHD (3 entrées et 1 sortie).
 
-Le geste, à la télécommande **LSM** : l'action vient d'avoir lieu ; l'opérateur revient en arrière à la molette (*jog*), ou rappelle la dernière action, et pose un **IN** quelques secondes avant, pour que le ralenti parte avec de l'élan ; il choisit l'**angle** (n'importe quelle caméra enregistrée, au même instant) et annonce « ralenti prêt ». Le réalisateur le demande, le truquiste prépare la sortie du serveur au mélangeur et entre en volet logo, l'opérateur pousse le **levier** : la lecture part. Un **OUT** marque la fin de l'action. Arrêter l'enregistrement est la pire erreur du poste : rien de ce qui se passe ensuite ne pourra être rejoué.
+Le geste, à la télécommande **LSM** : l'action vient d'avoir lieu ; l'opérateur revient en arrière à la molette (jog), ou rappelle la dernière action, et pose un **IN** quelques secondes avant, pour que le ralenti parte avec de l'élan ; il choisit l'**angle** (n'importe quelle caméra enregistrée, au même instant) et annonce « ralenti prêt ». Le réalisateur le demande, le truquiste prépare la sortie du serveur au mélangeur et entre en volet logo, l'opérateur pousse le **levier** : la lecture part. Un **OUT** marque la fin de l'action. Arrêter l'enregistrement est la pire erreur du poste : rien de ce qui se passe ensuite ne pourra être rejoué.
 
 Le **levier** règle la vitesse de 0 à 100 % ; une plage étendue (jusqu'à 200 %, ou en marche arrière) se règle dans la configuration. La durée à l'antenne se calcule : **(OUT − IN) ÷ vitesse**. Une action de 4 s relue à 50 % dure 8 s ; à 33 %, 12 s. En football, on relit le plus souvent entre 25 et 50 %.
 
@@ -337,7 +338,7 @@ Pourquoi un ralenti saccade : la sortie du serveur donne 50 images par seconde (
 
 **IPDirector** est le logiciel de gestion des clips des serveurs EVS : une base de données partagée par tous les serveurs du réseau (XNet) et tous les postes. Le **logueur** y nomme chaque clip (l'action, le joueur, la minute), y ajoute des **mots-clés** (BUT, TIR, ARRÊT, CARTON), les joueurs concernés et une **note** (une à trois étoiles). En direct, il peut aussi « logger » une action d'un geste, au bon timecode, avant même d'en faire un clip. Le vocabulaire est fixé avant le match : si un clip est noté « frappe » et que la recherche demande « TIR », il est perdu.
 
-Une **playlist** est une suite de clips lue par un canal du serveur : le résumé de la mi-temps, les meilleurs moments, les buts de la soirée. Chaque élément a sa **vitesse** (un super ralenti à 33 %, une action large à 100 %) et une **transition** vers le suivant : coupe, mix ou volet, d'une durée en images. Pendant un mix, les deux clips sont à l'écran en même temps : la transition **recouvre** la fin de l'un et le début de l'autre. D'où le calcul : **durée = somme des (durée du clip ÷ vitesse) − somme des durées de transition**. Trois clips de 6,2 s à 100 %, 3,2 s à 33 % et 5 s à 100 %, reliés par deux mix de 25 images (0,5 s en 1080p50), font 6,2 + 9,7 + 5 − 1 = 19,9 s.
+Une **playlist** est une suite de clips lue par un canal du serveur : le résumé de la mi-temps, les meilleurs moments, les buts de la soirée. Chaque élément a sa **vitesse** (un super ralenti à 33 %, une action large à 100 %) et une **transition** vers le suivant : coupe, mix ou volet, d'une durée en images. Pendant un mix, les deux clips sont à l'écran en même temps : la transition **recouvre** la fin de l'un et le début de l'autre. D'où le calcul : **durée = somme des (durée du clip ÷ vitesse) − somme des durées de transition**. Trois clips de 6,2 s à 100 %, 3,2 s à 33 % et 5 s à 100 %, reliés par deux mix de 25 images (0,5 s en 1080p50), font 6,2 + 9,6 + 5 − 1 = 19,8 s.
 
 Le travail pendant le match : l'opérateur LSM range les clips au fil des actions ; IPDirector les nomme et les classe ; à la mi-temps, la playlist du résumé est prête, envoyée à l'antenne par le mélangeur (entrée et sortie en volet logo) ou transférée au montage. Le producteur donne la durée attendue : on ajuste en retirant un clip ou en changeant une vitesse.`,
       car: { text: 'Au poste IPDirector, la base de clips à gauche (nom, mots-clés, note), le clip choisi au centre et la playlist à droite ; au poste Ralentis, les touches F de la télécommande LSM, la touche PLST qui passe les touches F en mode playlist, et PLAY.', station: 'ipdirector' },
