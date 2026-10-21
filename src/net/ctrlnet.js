@@ -291,6 +291,7 @@ export function setDevice(id, cfg, o = {}) {
  * @returns {Record<string, string>}
  */
 export function checkFields(f, dhcp = false) {
+  /** @type {Record<string, string>} */
   const e = {};
   if (dhcp) return e;
   if (parseIp(f.ip) == null) e.ip = 'Une adresse IPv4 s\'écrit en quatre nombres de 0 à 255 séparés par des points, par exemple 10.1.20.33.';
@@ -456,9 +457,10 @@ function arpWho(fromSw, v, ip) {
 /** switch où se trouve une machine (celui de son port, du point d'accès, ou le switch lui-même) */
 export function swOf(id) { if (id === 'core@' || id === 'chaine') return 'core'; const at = attachPort(id); return at ? at.sw : CN.m[id] ? CN.m[id].sw : 'core'; }
 
+/** @typedef {{ ok: boolean, to?: string, hops: string[], why?: string, fix?: string, unstable?: string[] }} Sent résultat de l'envoi d'un paquet */
 /**
  * envoie un paquet de la machine `src` vers l'adresse `dst` (nombre)
- * @returns {{ ok: boolean, to?: string, hops: string[], why?: string, fix?: string, unstable?: string[] }}
+ * @returns {Sent}
  */
 export function send(src, dst) {
   const hops = [nameOf(src)];
@@ -498,7 +500,10 @@ export function send(src, dst) {
 }
 const swPath = (a, b, v) => (a === b ? `${swById(a).name} (VLAN ${v})` : `${swById(a).name} → lien montant (trunk, VLAN ${v}) → ${swById(b).name}`);
 
-/** le paquet est arrivé dans un routeur (`r` = 'core@' ou 'router') par le VLAN `inV` (0 : depuis Internet) */
+/**
+ * le paquet est arrivé dans un routeur (`r` = 'core@' ou 'router') par le VLAN `inV` (0 : depuis Internet)
+ * @returns {Sent}
+ */
 function routeFrom(r, inV, dst, hops, depth) {
   const fail = (why, fix = '') => ({ ok: false, hops, why, fix });
   if (depth > 4) return fail('Boucle de routage.');
@@ -534,7 +539,10 @@ function routeFrom(r, inV, dst, hops, depth) {
   if (dst === parseIp(CHAINE.ip)) { hops.push('Internet', CHAINE.name); return { ok: true, to: 'chaine', hops }; }
   return fail(`Personne ne répond à ${ipStr(dst)} sur Internet.`);
 }
-/** dernier saut : le routeur cherche la machine par ARP dans le VLAN de sortie */
+/**
+ * dernier saut : le routeur cherche la machine par ARP dans le VLAN de sortie
+ * @returns {Sent}
+ */
 function deliver(fromSw, v, dst, hops, rname, routerId = '') {
   const sw = routerId ? swOf(routerId) : fromSw;
   const who = arpWho(sw, v, dst).filter((w) => w.id !== routerId && w.id !== 'core@');
@@ -683,7 +691,7 @@ function diagnose(id, conf, funcs) {
     if (!r.ok && linkUp('supv')) add('warn', `Ne répond plus au PC de supervision : ${r.why}`);
     else if (id !== 'spg' && d.kind !== 'switch' && !d.ifaces && !ping(id, 'spg').ok && linkUp('spg')) add('warn', 'Ne joint pas le serveur NTP (synchro) : son horloge va dériver.');
   }
-  const level = iss.some((i) => i.sev === 'err') ? 'err' : iss.length ? 'warn' : 'ok';
+  const level = /** @type {'ok' | 'warn' | 'err'} */ (iss.some((i) => i.sev === 'err') ? 'err' : iss.length ? 'warn' : 'ok');
   return { level, issues: iss };
 }
 /** état d'une machine (calculé à la demande) */
