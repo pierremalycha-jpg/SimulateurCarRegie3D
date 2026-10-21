@@ -392,6 +392,27 @@ Tests :
   « Emmène-moi / Montre-moi » doit mettre en évidence un élément réel de la page, et « Fais-le pour moi » doit faire
   valider l'étape.
 
+## Navigation : quatre espaces et la section Cours (en préparation)
+
+**Quatre espaces, les mêmes partout.** L'écran titre mène à **Jouer** (la feuille de service, puis le car), au
+**Cours**, à **S'entraîner** et à l'**Espace formateur**, plus les réglages et les crédits. Dans le car, la barre
+d'outils se réduit à Pupitre (Tab), Chef de car (J), Cours (G), Son et **Menu** (Échap) ; le menu reprend les
+espaces, les réglages, les commandes, l'équipe, le diagnostic et le retour à l'accueil. L'ancien Guide (G) est
+éclaté : chapitres, glossaire, postes, matériel et procédures vont dans le Cours, les missions dans S'entraîner, les
+réglages et les commandes dans le menu. La relecture des experts passe par l'Espace formateur (onglet « Relecture
+technique », « Ma relecture »).
+
+**Le Cours** (`src/ui/cours/espace.js`) s'ouvre en plein écran par-dessus tout le reste, écran titre compris et
+pendant le chargement : notions (une fiche par terme technique, avec schéma, manipulation et trois questions :
+SDI pour commencer, `src/content/cours/`), chapitres par famille, glossaire, postes, matériel, procédures. Les
+boutons « Emmène-moi » et « Parcours du chef » d'une fiche lancent le car si besoin, puis ouvrent le poste ou le
+parcours (`src/app/nav.js`).
+
+**S'entraîner** (`src/ui/entrainement.js`) : les parcours du chef de car par famille, avec la progression ; les
+exercices notés (jour de match, car vide, atelier de montage, formation réseau, installation) avec leur meilleur
+résultat ; les missions d'installation. En cours de partie, lancer une autre vacation recharge le simulateur et
+la lance directement. Suite `tests/e2e/navigation.mjs`.
+
 ## v18.3 : écran titre, PRISM, grille Videohub, réseau de contrôle du car SDI
 
 **Écran titre et chargement.** La page s'ouvre sur un écran titre (`src/app/title.js`, écrit dans
@@ -832,6 +853,11 @@ node tools/shots.mjs dossier 1280 800 '["vision","hf"]'   # captures de postes
 | `ui/diag_ui.js` | Bandeau « Un problème est survenu » et fenêtre « Diagnostic technique » (texte à copier) |
 | `ui/pupitre.js` | Le pupitre (Tab ou T) : plan du car, touches des postes par zone, endroits du stade, équipiers, outils |
 | `app/title.js` | Écran titre : menu, progression du chargement, conseils d'Olivier, réglages et crédits |
+| `app/nav.js` | Navigation entre les espaces : menu du car (Échap), aiguillage des boutons « Emmène-moi », « Commencer », « Lancer » (car lancé si besoin), changement de vacation |
+| `ui/layer.js` | Espaces plein écran (Cours, S'entraîner) : plaque, onglets, Fermer (Échap), ligne d'état |
+| `ui/cours/` | Section Cours : l'espace (`espace.js`), la liste des notions (`cours.js`), une fiche (`fiche.js`), schémas (`figs.js`) et manipulations (`labs.js`) ; contenus dans `content/cours/` |
+| `ui/entrainement.js` | S'entraîner : parcours du chef par famille, exercices notés, missions d'installation |
+| `ui/guide.js` | Missions d'installation et parties de l'ancien guide (chapitres, glossaire, postes, matériel, procédures, réglages, commandes), dessinées dans l'espace qui les accueille |
 | `prism_model.js` | Modèle de la liaison SDI pour le PRISM : normes, points de mesure, œil, gigue, timing, pannes |
 | `videohub.js` | Modèle de la grille Videohub 40 × 40 : plan des ports, étiquettes, verrous, protocole, pannes |
 | `ui/st_videohub.js` | Le poste Grille en car SDI : façade, Videohub Control, monitoring, matrice, Setup |
