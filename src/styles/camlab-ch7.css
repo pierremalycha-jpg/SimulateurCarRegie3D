@@ -1,0 +1,81 @@
+/* module « La caméra », chapitre 7 (la voie caméra) : manipulations (.c7-*) et schémas (.c7f-*) des fiches
+   fibre, CCU, RCP, genlock, signal de sortie et line-up. Ce fichier est chargé avant camlab.css : les règles qui
+   retouchent une classe commune (.cl-vfc) sont écrites avec deux classes. */
+
+/* ---------------- manipulations ---------------- */
+.cl-vfc.c7-micro, .cl-vfc.c7-split { cursor: default; }
+.cl-vfc.c7-pick { cursor: crosshair; }
+.cl-vfc.c7-pick:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.c7-refscope { display: block; width: 100%; height: auto; aspect-ratio: 640 / 250; border-radius: 2px; background: #000; }
+.c7-refwrap, .c7-ccuwrap { margin-top: 6px; }
+.c7-refmap, .c7-ccupanel { display: block; width: 100%; height: auto; }
+.c7-scopes { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); gap: 6px; margin-top: 6px; align-items: start; }
+.c7-sc canvas { display: block; width: 100%; height: auto; border-radius: 2px; background: #000; }
+.c7-vec { aspect-ratio: 1; }
+
+/* face arrière de la CCU */
+.c7-plate { fill: #2a3036; stroke: #0b0f12; }
+.c7-plbl { fill: var(--muted); font: 8.5px var(--f-mono); text-anchor: middle; }
+.c7-jack { cursor: pointer; } .c7-jack:focus-visible { outline: none; }
+.c7-jk-ring { fill: none; stroke: #0b0f12; stroke-width: 2; } .c7-jk-body { fill: #4a545e; stroke: #8a949e; } .c7-jk-pin { fill: #c8ced4; } .c7-jk-red { fill: #d23a2e; }
+.c7-jk-lbl { fill: var(--fg); font: 9px var(--f-mono); text-anchor: middle; }
+.c7-jack:hover .c7-jk-body { stroke: var(--accent); stroke-width: 2; }
+.c7-jack:focus-visible .c7-jk-body { stroke: #fff; stroke-width: 2.5; }
+.c7-jack.used .c7-jk-body { fill: var(--pvw-d); stroke: var(--pvw); } .c7-jack.used .c7-jk-lbl { fill: #b9f5cf; }
+
+/* afficheurs : l'état de la voie (CCU), l'écran du RCP, les fenêtres de gain et de filtre */
+.c7-ccud, .c7-rcpd { display: grid; gap: 2px; padding: 7px 10px; border-radius: 3px; border: 1px solid #000; font: 12px/1.45 var(--f-mono); box-shadow: inset 0 0 0 1px #1b2a24; }
+.c7-ccud { background: #0c1a12; color: #7bf29a; }
+.c7-ccud div { display: grid; grid-template-columns: 82px minmax(0, 1fr); gap: 8px; } .c7-ccud b { color: #b9f5cf; font-weight: 600; }
+.c7-rcpd { background: #0d1520; color: #9fd4ff; box-shadow: inset 0 0 0 1px #1a2a3a; }
+.c7-rcpd div { display: flex; flex-wrap: wrap; gap: 2px 14px; } .c7-rcpd b { color: #e8f3ff; } .c7-rcpd .on { color: var(--accent); }
+.c7-steps .cl-lbl { white-space: nowrap; }
+.c7-stepbox { display: inline-flex; align-items: center; gap: 6px; }
+.c7-win { display: inline-block; min-width: 72px; padding: 3px 6px; text-align: center; font: 12px var(--f-mono); color: #9fd4ff; background: #0d1520; border: 1px solid #000; border-radius: 2px; }
+.btn.c7-call.on { color: #fff; background: linear-gradient(#e0473c, #b3261d); border-color: #5e130e; }
+
+/* la boucle de référence : une ligne par CCU */
+.c7-ccurows { display: grid; gap: 6px; }
+.c7-ccurow { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; padding: 6px 8px; background: var(--well); border: 1px solid #0b0f12; border-radius: 3px; }
+.c7-ccurow > b { font: 700 13px var(--f-disp); min-width: 46px; }
+.c7-in { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--muted); }
+.c7-sel { max-width: 100%; padding: 3px 4px; font: 13px var(--f-body); color: var(--fg); background: #1b2025; border: 1px solid var(--line2); border-radius: 3px; }
+.c7-sel:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.c7-lock { font: 12px var(--f-mono); } .c7-lock.ok { color: #b9f5cf; } .c7-lock.warn { color: #ffd38a; } .c7-lock.ko { color: #ffc2bc; }
+.c7-box { fill: var(--well); stroke: var(--line); } .c7-box.ok { stroke: var(--pvw); stroke-width: 2; } .c7-box.warn { stroke: #ffd38a; stroke-width: 2; }
+.c7-bt { fill: var(--fg); font: 700 12px var(--f-disp); text-anchor: middle; }
+.c7-bnc { fill: #4a545e; stroke: #c8ced4; }
+.c7-tl { fill: var(--muted); font: 10px var(--f-mono); text-anchor: middle; } .c7-tl.r { text-anchor: end; } .c7-tl.l { text-anchor: start; } .c7-tl.ink { fill: #07090c; font-weight: 700; }
+.c7-term { fill: var(--accent); }
+.c7-cable { fill: none; stroke-width: 2.5; } .c7-cable.tri { stroke: var(--cyan); } .c7-cable.bb { stroke: #ffd38a; }
+
+/* les codes d'un point, les mesures du line-up */
+.c7-codes { display: grid; gap: 3px; padding: 6px 10px; font: 12.5px/1.45 var(--f-mono); background: var(--glass); border: 1px solid #070a0c; border-radius: 3px; }
+.c7-codes div { display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 8px; }
+.c7-codes b { color: var(--fg); font-weight: 600; } .c7-codes span { color: var(--muted); overflow-wrap: anywhere; }
+.c7-codes .c7-big { color: var(--fg); font-weight: 700; } .c7-codes span.ok { color: #b9f5cf; }
+
+@media (max-width: 899px) {
+  .c7-ccud div, .c7-codes div { grid-template-columns: 74px minmax(0, 1fr); }
+}
+
+/* ---------------- schémas ---------------- */
+.cf .c7f-mid { text-anchor: middle; }
+.c7f-jacket { fill: #1b2025; stroke: #59646f; stroke-width: 2; } .c7f-inner { fill: #2a3036; } .c7f-buf { fill: #3b4550; stroke: #8a949e; }
+.c7f-fib1 { fill: var(--accent); } .c7f-fib2 { fill: var(--cyan); } .c7f-cu { fill: #e0915a; stroke: #8a5a35; } .c7f-lv { fill: #c8ced4; } .c7f-fill { fill: #59646f; }
+.c7f-ferrule { fill: #3b4550; stroke: #59646f; } .c7f-clad { fill: #b4bbc1; stroke: #6d757c; } .c7f-core { fill: #f4fbff; stroke: var(--cyan); }
+.c7f-zone { fill: none; stroke: var(--accent); stroke-width: 1.4; stroke-dasharray: 4 3; } .c7f-dust { fill: #1e1b17; }
+.c7f-up { stroke: var(--accent); stroke-width: 2.5; } .c7f-down { stroke: var(--cyan); stroke-width: 2.5; } .c7f-cuL { stroke: #e0915a; stroke-width: 2.5; }
+.c7f-lead { stroke: var(--muted); stroke-width: 0.8; } .c7f-leaddot { fill: var(--accent); }
+.c7f-btn { fill: #3b3d41; stroke: #59646f; } .c7f-btn.red { fill: #c8261d; } .c7f-btn.amb { fill: #e2a025; }
+.c7f-btxt { fill: #f1f1ea; font: 700 7.5px var(--f-disp); text-anchor: middle; }
+.c7f-lcd, .c7f-win { fill: #0d1520; stroke: #2b2e33; } .c7f-lcdt { fill: #9fd4ff; font: 9.5px var(--f-mono); }
+.c7f-stickbase { fill: #1b1c1f; stroke: #59646f; } .c7f-stick { stroke: #c8ced4; stroke-width: 4; stroke-linecap: round; } .c7f-stickknob { fill: #e2a025; stroke: #6b4a08; }
+.c7f-scope { fill: #05070a; stroke: #2b2e33; } .c7f-zero { stroke: rgba(150,210,180,.35); stroke-width: 1; } .c7f-wave { fill: none; stroke: #7fe8a6; stroke-width: 1.8; }
+.c7f-bnc { fill: #4a545e; stroke: #c8ced4; } .c7f-cable { fill: none; stroke: var(--cyan); stroke-width: 2.5; }
+.c7f-term { fill: var(--accent); } .c7f-termt { fill: #07090c; font: 700 8.5px var(--f-mono); text-anchor: middle; }
+.c7f-px { fill: #3b4550; stroke: #8a949e; } .c7f-c { fill: rgba(255,176,32,.16); stroke: var(--accent); }
+.c7f-word { fill: #2a3036; stroke: #8a949e; } .c7f-word.c { stroke: var(--accent); } .c7f-scale { fill: #3b4550; }
+.c7f-num { fill: #5c4210; stroke: #ffd38a; }
+.c7f-tr { stroke-width: 3; } .c7f-tr.r { stroke: #ff5a4e; } .c7f-tr.g { stroke: var(--pvw); } .c7f-tr.b { stroke: #4ca0ff; }
+.c7f-sep { stroke: rgba(255,255,255,.18); stroke-dasharray: 2 2; }
