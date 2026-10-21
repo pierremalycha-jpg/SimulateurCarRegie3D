@@ -40,6 +40,7 @@ const SUITES = [
   ['navigateurs', 'navigateurs', [], 15],
   ['accessibilite', 'accessibilite', [], 25],
   ['ctrlnet', 'ctrlnet', [], 20],
+  ['prism', 'prism', [], 20],
   ['reseau-ops', 'reseau-ops', [], 25],
   ['reseau-termes', 'termes', [], 20],
   ['chef-postes', 'chef-postes', [], 60],

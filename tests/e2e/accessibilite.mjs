@@ -60,7 +60,7 @@ await until(page, () => !!document.querySelector('#modal .pupitre'), null, 8000)
 await scan('pupitre', '#modal');
 await ev(() => document.querySelector('#modal .x')?.click());
 // postes
-for (const st of ['melangeur', 'realisateur', 'vision', 'evs', 'son', 'reseau', 'grille']) {
+for (const st of ['melangeur', 'realisateur', 'vision', 'evs', 'son', 'reseau', 'grille', 'mesure']) {
   await ev((s) => window.__dbg.openStation(s), st);
   await until(page, (s) => window.__dbg.S.mode === 'station' && window.__dbg.S.station === s, st, 30000);
   await page.waitForTimeout(800);
