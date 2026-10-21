@@ -68,7 +68,7 @@ await page.locator('.lsm-key', { hasText: /^PLST(BROWSE)?$/ }).click();
 await fkey(0).click();
 await fkey(1).click();
 log('clips', await ev(() => window.__dbg.EVS.clips.filter(Boolean).length), 'playlist', await ev(() => window.__dbg.EVS.playlist.length));
-await page.locator('.lsm-key', { hasText: 'PLST PLAY' }).click();
+await page.locator('.lsm-key', { hasText: /^PLAY/ }).click(); // en mode PLST, PLAY lance la playlist
 await page.waitForTimeout(600);
 log('pl playing', await ev(() => JSON.stringify(window.__dbg.EVS.ch[0].pl)));
 await page.locator('.lsm-key', { hasText: 'DERN. ACTION' }).click();
