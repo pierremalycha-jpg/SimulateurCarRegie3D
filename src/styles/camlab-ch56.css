@@ -1,0 +1,53 @@
+/* module « La caméra » (src/camlab/), chapitres 5 et 6 : le corps de la caméra, le viseur et le cadreur.
+   Manipulations (labs/ch56.js) et schémas (figs/ch56.js) ; les classes communes sont dans camlab.css. */
+
+/* les manipulations */
+.c56-lab .cl-btns { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.c56-lab .cl-btns .linkbtn { margin-left: auto; }
+.c56-grp { margin: 6px 0 0; font: 700 12px var(--f-disp); text-transform: uppercase; letter-spacing: .06em; color: var(--cyan); }
+.c56-page { padding: 6px 8px; border: 1px solid var(--line); border-radius: 3px; background: rgba(0,0,0,.14); display: grid; gap: 6px; }
+.c56-page summary { cursor: pointer; font: 600 13px var(--f-disp); color: var(--fg); }
+.c56-page .cl-row { grid-template-columns: 104px minmax(0, 1fr); }
+.c56-rcp { padding: 6px 8px 8px; border: 1px solid #1f5a73; border-radius: 3px; background: rgba(76,195,230,.06); }
+.c56-red { box-shadow: 0 0 0 2px var(--tally), 0 0 12px rgba(255,60,40,.55); }
+.c56-log { margin: 0; padding: 6px 10px 6px 26px; display: grid; gap: 3px; font-size: 13px; line-height: 1.4; color: var(--muted); background: var(--well); border: 1px solid #0b0f12; border-radius: 3px; }
+.c56-log li:last-child { color: var(--fg); }
+
+/* la sortie de la caméra, en petit, à côté de la forme d'onde */
+.c56-out { display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr); gap: 8px; align-items: start; }
+.c56-mon { margin: 0; }
+.c56-monc { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; border-radius: 2px; background: #000; }
+.c56-mon figcaption { margin-top: 3px; font: 11px var(--f-mono); color: var(--muted); }
+@media (max-width: 520px) { .c56-out { grid-template-columns: minmax(0, 1fr); } }
+
+/* les schémas vivants des manipulations (alimentation, tally, équilibrage) */
+.c56-live { display: block; width: 100%; }
+.c56-live svg { display: block; width: 100%; height: auto; }
+.c56-tal { margin-top: 6px; padding: 4px; background: var(--glass); border-radius: 3px; }
+
+/* éléments des schémas */
+.c56-r { text-anchor: end; }
+.c56-ok { fill: var(--pvw); } .c56-bad { fill: #ff7a70; } .c56-hi { fill: var(--accent); font-weight: 700; }
+.c56-remote { stroke: var(--cyan); stroke-width: 1.6; } .c56-own { stroke: var(--accent); stroke-width: 1.6; } .c56-out-c { stroke: #ff7a70; stroke-width: 1.6; }
+.c56-lever { stroke: #d8dcd6; stroke-width: 3; stroke-linecap: round; }
+.c56-cab { stroke: #8a949e; stroke-width: 3; } .c56-cab-h { stroke: var(--fibre); stroke-width: 5; } .c56-cab-s { stroke: #f5e663; stroke-width: 2.5; }
+.c56-dc { stroke: var(--pvw); stroke-width: 2.5; }
+.c56-cam { fill: #2a3036; stroke: #59646f; stroke-width: 1.5; } .c56-cam.on { stroke: var(--pvw); stroke-width: 2.5; }
+.c56-led { fill: #3a2422; stroke: #0b0f12; } .c56-led.on, .c56-led.green { fill: #22d65a; filter: drop-shadow(0 0 4px #22d65a); } .c56-led.red { fill: #ff2a1a; filter: drop-shadow(0 0 5px #ff2a1a); }
+.c56-led.big { stroke-width: 2; }
+.c56-lamp { fill: #4a3330; stroke: #0b0f12; } .c56-lamp.red { fill: #ff2a1a; filter: drop-shadow(0 0 6px #ff2a1a); }
+.c56-glass { fill: #0b1a2a; stroke: #2b3a4a; }
+.c56-btn { fill: #4a545e; stroke: #8a949e; } .c56-btn.on { fill: var(--accent); }
+.c56-knob { fill: #d8dcd6; stroke: #0b0f12; }
+.c56-ld { stroke: #0b0f12; stroke-width: 1; } .c56-ld.corps { fill: #7fd1a0; } .c56-ld.viseur { fill: #7fd3f3; } .c56-ld.objectif { fill: #ffd38a; } .c56-ld.lampe { fill: #ff8a80; }
+.c56-pgm { fill: #ff2a1a; } .c56-pvw { fill: #22d65a; }
+.c56-call { stroke: #ff7a70; stroke-width: 1.6; }
+.c56-mire { fill: #ecece6; } .c56-star { fill: #121212; } .c56-peak { fill: none; stroke: #fff; stroke-width: 1.6; stroke-dasharray: 3 2; }
+.c56-zeb { fill: rgba(255,255,255,.85); stroke: #121212; stroke-dasharray: 2 2; }
+.c56-cross { stroke: rgba(240,240,232,.8); stroke-width: 1.5; }
+.c56-head { fill: #3b4550; stroke: #59646f; } .c56-leg { fill: #2a3036; stroke: #59646f; }
+.c56-plt { fill: #8a949e; stroke: #59646f; } .c56-brk { fill: #2a3036; stroke: #59646f; }
+.c56-prom { fill: rgba(76,195,230,.18); stroke: var(--cyan); stroke-width: 1.5; }
+.c56-bar { fill: #59646f; stroke: #8a949e; }
+.c56-axis { fill: #07090c; stroke: var(--accent); stroke-width: 2.5; }
+.c56-cg { fill: none; stroke: #ff7a70; stroke-width: 2.5; } .c56-cgx { stroke: #ff7a70; stroke-width: 1.5; }
