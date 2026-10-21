@@ -115,7 +115,7 @@ function demoGrille(host) {
       el('td', {}, el('button', { type: 'button', class: 'co-lock' + (lock[j] ? ' on' : ''), 'aria-pressed': String(lock[j]), 'aria-label': `Verrouiller la sortie ${d.n} ${d.label}`, onclick: () => toggleLock(j) }, lock[j] ? 'LOCK' : 'libre'))));
     mx.replaceChildren(el('thead', {}, head), el('tbody', {}, ...rows));
     state.replaceChildren(el('thead', {}, el('tr', {}, ...['Sortie', 'Destination', 'Reçoit', 'Image réelle', 'Verrou'].map((t) => el('th', {}, t)))),
-      el('tbody', {}, ...DST.map((d, j) => { const s = xp[j]; const bad = lab(s) !== SRC[s].label; return el('tr', {}, el('td', {}, String(d.n)), el('td', { title: d.to }, d.label), el('td', {}, `entrée ${SRC[s].n} « ${lab(s)} »`), el('td', { class: bad ? 'co-bad' : '' }, SRC[s].label + (bad ? ' : étiquette fausse' : '')), el('td', {}, lock[j] ? 'O (ce poste)' : 'U')); })));
+      el('tbody', {}, ...DST.map((d, j) => { const s = xp[j]; const bad = lab(s) !== SRC[s].label; return el('tr', {}, el('td', {}, String(d.n)), el('td', { title: d.to }, d.label), el('td', {}, `IN ${SRC[s].n} « ${lab(s)} »`), el('td', { class: bad ? 'co-bad' : '' }, SRC[s].label + (bad ? ' ≠ étiquette' : '')), el('td', { title: lock[j] ? 'verrouillée par ce poste' : 'libre' }, lock[j] ? 'O' : 'U')); })));
     take.disabled = !pend || !useTake; take.classList.toggle('armed', !!pend); clear.disabled = !pend;
     read.set('Points de croisement fermés', `${DST.length} sur ${DST.length * SRC.length} : un par sortie, jamais deux (Videohub du car : 40 sur 1 600)`);
     read.set('Entrées utilisées', SRC.map((s, i) => { const k = xp.filter((x) => x === i).length; return `${lab(i)} → ${k || 'aucune'}`; }).join(' · '));

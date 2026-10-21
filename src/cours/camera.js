@@ -18,6 +18,8 @@ const txt = (x, y, s, cls = 'co-s', anchor = 'middle') => sv('text', { x, y, tex
 const rect = (x, y, w, h, fill, stroke = C.line, extra = {}) => sv('rect', { x, y, width: w, height: h, rx: 3, fill, stroke, strokeWidth: 1.2, ...extra });
 const at = (e, k, v) => e.setAttribute(k, String(v));
 const G = 9.81;
+/** décibels avec le vrai signe moins */
+const fmtDbm = (v) => fmtNum(v, 1).replace('-', '−');
 
 // ================= leçon 1 : la chaîne caméra =================
 // ---------------- le schéma : qui règle quoi ----------------
@@ -135,11 +137,11 @@ function demoChaine(host) {
   const flow = (e, on, dir) => { at(e, 'stroke-width', on ? 4 : e === lanes.cu || Object.values(lanes).includes(e) ? 3 : 2); e.setAttribute('class', on ? 'cm-flow' + (dir === 'rev' ? ' rev' : dir === 'still' ? ' still' : '') : ''); };
   const draw = () => {
     const S = SIGS[sig];
-    const L = lenOf(v), hyb = link === 'hyb';
+    const L = lenOf(v), hyb = link === 'hyb', powered = !hyb || powerAt(L, LOADS[load]).ok;
     // les voies et les liaisons vers les appareils
     for (const k of ['f1', 'f2', 'cu']) {
       const on = S.lanes.includes(k) && (k !== 'cu' || hyb);
-      at(lanes[k], 'stroke', on ? (k === 'cu' ? C.copper : k === 'f1' ? C.amber : C.cyan) : C.dim);
+      at(lanes[k], 'stroke', on ? (k === 'cu' ? (powered ? C.copper : C.red) : k === 'f1' ? C.amber : C.cyan) : C.dim);
       flow(lanes[k], on, k === 'f1' ? 'fwd' : 'rev');
     }
     for (const [id] of DEVS) {
@@ -169,15 +171,15 @@ function demoChaine(host) {
       read.set('Perdu dans le câble', 'aucune énergie dans le câble');
       read.set('Longueur maximale', `≈ ${SM_MAX} km annoncés pour le kit monomode (la lumière irait à ≈ ${fmtNum(Lopt)} km)`);
     }
-    read.set('Niveau optique à la CCU', `${fmtNum(rx, 1)} dBm : ${rx < -30 ? 'pas de signal' : rx < RX_MIN ? 'la liaison décroche' : rx < -15 ? 'faible, sans marge' : 'normal (−5 à −15 dBm)'}`);
+    read.set('Niveau optique à la CCU', `${fmtDbm(rx)} dBm : ${rx < -30 ? 'pas de signal' : rx < RX_MIN ? 'la liaison décroche' : rx < -15 ? 'faible, sans marge' : 'normal (−5 à −15 dBm)'}`);
     // le verdict : la pire des deux limites
     let cls = 'ok', msg;
     if (hyb && !pw.ok) { cls = 'ko'; msg = `À ${fmtLen(L)}, la tête ne s'allume pas : la chute de tension dans le cuivre empêche la CCU de faire passer ${P} W (à la baie CCU : ALIM. COUPÉE). Passez en fibre monomode avec une alimentation locale.`; }
-    else if (rx < RX_MIN) { cls = 'ko'; msg = `${fmtNum(rx, 1)} dBm à la CCU : la liaison décroche${DIRT[dirt] ? ' ; nettoyez les connecteurs avant tout' : ''}.`; }
-    else if (!hyb && L > SM_MAX * 1000) { cls = 'warn'; msg = `Au-delà des ≈ ${SM_MAX} km annoncés pour le kit monomode : hors de la fiche, même si la lumière arrive encore (${fmtNum(rx, 1)} dBm).`; }
+    else if (rx < RX_MIN) { cls = 'ko'; msg = `${fmtDbm(rx)} dBm à la CCU : la liaison décroche${DIRT[dirt] ? ' ; nettoyez les connecteurs avant tout' : ''}.`; }
+    else if (!hyb && L > SM_MAX * 1000) { cls = 'warn'; msg = `Au-delà des ≈ ${SM_MAX} km annoncés pour le kit monomode : hors de la fiche, même si la lumière arrive encore (${fmtDbm(rx)} dBm).`; }
     else if (hyb && L > 0.85 * pw.Lmax) { cls = 'warn'; msg = `La tête s'allume, mais la tension n'est plus qu'à ${fmtNum(pw.V)} V : aucune marge. Le constructeur annonce un peu moins que cette limite théorique.`; }
-    else if (rx < -15) { cls = 'warn'; msg = `${fmtNum(rx, 1)} dBm : l'image passe, sans marge. Un connecteur sale coûte plusieurs décibels : nettoyez et mesurez.`; }
-    else msg = `Liaison bonne : ${hyb ? `tête alimentée par la CCU (${fmtNum(pw.V)} V)` : 'tête alimentée sur place'}, ${fmtNum(rx, 1)} dBm à la CCU.`;
+    else if (rx < -15) { cls = 'warn'; msg = `${fmtDbm(rx)} dBm : l'image passe, sans marge. Un connecteur sale coûte plusieurs décibels : nettoyez et mesurez.`; }
+    else msg = `Liaison bonne : ${hyb ? `tête alimentée par la CCU (${fmtNum(pw.V)} V)` : 'tête alimentée sur place'}, ${fmtDbm(rx)} dBm à la CCU.`;
     verdict.className = 'co-verdict ' + cls; verdict.textContent = msg;
   };
   host.append(
@@ -189,7 +191,7 @@ function demoChaine(host) {
       choice('Tête', [['box', `objectif box · ${LOADS.box} W`, 'Tête, objectif box et viseur 7" : ordre de grandeur'], ['port', `objectif portable · ${LOADS.port} W`, 'Tête, objectif portable et petit viseur : ordre de grandeur']], load, (x) => { load = x; draw(); }),
       choice('Connecteurs', [['propre', 'propres'], ['poussiere', 'une poussière', '+ 3 dB, ordre de grandeur'], ['sale', 'un sale', '+ 10 dB, ordre de grandeur']], dirt, (x) => { dirt = x; draw(); })),
     verdict, read.el,
-    el('p', { class: 'note' }, `Modèle d'ordre de grandeur : la CCU envoie ${V0} V, le cuivre fait ${R_KM} Ω/km aller-retour, la tête prend une puissance fixe ; la lumière part à ${PTX} dBm et perd ${fmtNum(ATT_KM, 1)} dB/km et ${fmtNum(CONN_DB, 1)} dB par connexion (trois : caméra, prise murale, pied de car).`));
+    el('p', { class: 'note' }, `Modèle d'ordre de grandeur : la CCU envoie ${V0} V, le cuivre fait ${R_KM} Ω/km aller-retour, la tête prend une puissance fixe ; la lumière part à ${fmtDbm(PTX)} dBm et perd ${fmtNum(ATT_KM, 1)} dB/km et ${fmtNum(CONN_DB, 1)} dB par connexion (trois : caméra, prise murale, pied de car).`));
   draw();
 }
 
@@ -259,7 +261,7 @@ const PAY = [
   { id: 'plaque', label: 'plaque', m: 1.5, x: 0, y: 0.09, w: 0.40, h: 0.03, fill: '#59646f' },
   { id: 'adapt', label: 'adaptateur', m: 15.5, x: -0.15, y: 0.20, w: 0.30, h: 0.19, fill: '#2c3035' },
   { id: 'cam', label: 'caméra', m: 5, x: -0.36, y: 0.27, w: 0.16, h: 0.15, fill: '#333c45' },
-  { id: 'lens', label: 'objectif box', m: 23.5, x: 0.31, y: 0.28, w: 0.62, h: 0.19, fill: '#17181a' },
+  { id: 'lens', label: 'objectif box', m: 23.5, x: 0.32, y: 0.28, w: 0.62, h: 0.19, fill: '#17181a' },
   { id: 'vf', label: 'viseur (3,3 kg)', m: 3.3, x: -0.12, y: 0.46, w: 0.18, h: 0.11, fill: '#2c3035', opt: true, on: true },
   { id: 'hood', label: 'pare-soleil (0,4 kg)', m: 0.4, x: 0.65, y: 0.28, w: 0.06, h: 0.24, fill: '#3a434c', opt: true, on: false },
 ];
@@ -340,7 +342,7 @@ function demoMontage(host) {
     verdict, el('div', { class: 'co-ctl' }, again), read.el,
     el('h5', { class: 'co-h5' }, '2 · Équilibrer avant / arrière'),
     el('div', { class: 'co-ctl' }, slider('Plaque', -12, 12, 0, 0.5, (x) => { d = x / 100; drawBal(); }, (x) => (x > 0 ? '+' : '') + fmtNum(x, 1) + ' cm vers l\'avant'), ...chks),
-    svg, bverdict, bread.el);
+    el('div', { class: 'co-2' }, svg, el('div', { class: 'co-demo-host' }, bverdict, bread.el)));
   drawOrder(); drawBal();
 }
 
