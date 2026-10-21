@@ -126,6 +126,8 @@ function mergeProgress(d) {
   PROG.perf = PROG.perf || d.perf || null;
   PROG.patchBest = Math.max(PROG.patchBest || 0, d.patchBest || 0);
   { const seenA = new Set((PROG.rigs || []).map((x) => x.at)); PROG.rigs = PROG.rigs || []; for (const x of d.rigs || []) if (!seenA.has(x.at)) PROG.rigs.push(x); }
+  // parcours du chef de car : un parcours réussi ailleurs le reste ici
+  if (d.tutor) { const T = PROG.tutor = PROG.tutor || {}; for (const [id, p] of Object.entries(d.tutor)) if (p && (!T[id] || (p.done && !T[id].done))) T[id] = p; }
   if (d.net) {
     const n = PROG.net = PROG.net || { missions: {}, quiz: [], exams: [] };
     n.missions = { ...(d.net.missions || {}), ...n.missions };
