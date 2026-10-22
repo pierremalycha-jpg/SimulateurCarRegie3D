@@ -197,7 +197,7 @@ export const MISSIONS = [
   {
     id: 'conference', titre: 'Conférence à trois caméras PTZ', client: 'Le lycée, pour la cérémonie de remise des diplômes',
     brief: 'Trois caméras PTZ pilotées depuis un seul pupitre, un mélangeur, l\'enregistrement du programme et le micro de la salle embarqué dans l\'image. La régie tient dans une baie mobile et sur une table.',
-    contraintes: ['Une seule personne au pupitre : les trois caméras se pilotent depuis le même AW-RP150, et leur tally s\'allume.', 'Le programme est enregistré sur un HyperDeck.', 'Le micro XLR de la salle arrive dans le programme par un Teranex (embedder).', 'Toutes les adresses IP sont fixes et dans le même sous-réseau.'],
+    contraintes: ['Une seule personne au pupitre : les trois caméras se pilotent depuis le même AW-RP150, et leur tally s\'allume.', 'Le programme est enregistré sur un HyperDeck.', 'Le micro XLR de la salle arrive dans le programme par un Teranex (embedder).', 'Toutes les adresses IP sont fixes et dans le même sous-réseau.', 'Budget : 25 000 € HT (ordres de grandeur du catalogue) : à vous de choisir les caméras et le reste pour tenir dedans.'],
     budget: 25000, niveau: 'intermédiaire', duree: '30 min', competences: ['2.1', '2.7', '2.9', '2.10', '3.9'],
     exigences: [exCameras(3), exPilotage, exTally, exEnregistrement, exMicro, exAdresses, exPoe, exAlim],
   },
