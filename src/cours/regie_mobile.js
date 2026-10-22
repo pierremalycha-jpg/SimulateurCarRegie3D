@@ -64,16 +64,16 @@ function figRegieMobile() {
   const f = figure(440, 190, 'Une régie mobile à trois caméras PTZ : les caméras envoient leur image en SDI au mélangeur et sont pilotées en IP par le pupitre à travers un switch PoE+ qui les alimente ; le programme part vers un enregistreur et un embedder ajoute le micro de la salle');
   const box = (x, y, w, t, s) => { f.append(sv('rect', { x, y, width: w, height: 32, rx: 3, fill: '#1a2128', stroke: '#8a949c' }), sv('text', { x: x + w / 2, y: y + 14, textAnchor: 'middle', class: 'co-t', style: 'font-size: 11.5px' }, t)); if (s) f.append(sv('text', { x: x + w / 2, y: y + 27, textAnchor: 'middle', class: 'co-s' }, s)); };
   for (let i = 0; i < 3; i++) box(4, 6 + i * 44, 78, `CAM ${i + 1} PTZ`, i < 2 ? 'AW-HE130' : 'AW-HE20');
-  box(150, 6, 70, 'Pupitre', 'AW-RP150'); box(150, 50, 70, 'Switch PoE+', '24 ports · 300 W');
+  box(150, 6, 70, 'Pupitre', 'AW-RP150'); box(240, 6, 70, 'Routeur', 'Internet · DHCP'); box(150, 50, 70, 'Switch PoE+', '24 ports · 300 W');
   box(260, 50, 80, 'Mélangeur', 'ATEM HD8 ISO'); box(360, 50, 76, 'Enregistreur', 'HyperDeck');
-  box(150, 110, 70, 'Micro salle', 'XLR'); box(260, 110, 80, 'Embedder', 'Teranex A→SDI');
-  box(150, 150, 70, 'Routeur', 'Internet · DHCP'); box(360, 110, 76, 'Moniteur', 'multiview');
-  // IP (vert) : chaque caméra vers le switch ; SDI (bleu) : chaque caméra vers le mélangeur, en passant sous le switch
+  box(150, 110, 70, 'Micro salle', 'XLR'); box(260, 110, 80, 'Embedder', 'Teranex A→SDI'); box(360, 110, 76, 'Moniteur', 'multiview');
+  // IP (vert) : chaque caméra vers le switch ; SDI (bleu) : chaque caméra vers le dessous du mélangeur, sous le switch
+  const GY = [30, 74, 100], BY = [18, 62, 120];
   for (let i = 0; i < 3; i++) {
-    f.append(sv('path', { d: `M82 ${18 + i * 44} H${112 + i * 6} V${58 + i * 6} H150`, stroke: '#7fd1a0', strokeWidth: 1.5, fill: 'none' }));
-    f.append(sv('path', { d: `M82 ${30 + i * 44} H${132 + i * 6} V${96 + i * 4} H${272 + i * 10} V82`, stroke: '#7fd3f3', strokeWidth: 1.5, fill: 'none' }));
+    f.append(sv('path', { d: `M82 ${GY[i]} H${112 + i * 6} V${58 + i * 6} H150`, stroke: '#7fd1a0', strokeWidth: 1.5, fill: 'none' }));
+    f.append(sv('path', { d: `M82 ${BY[i]} H${132 + i * 6} V${96 + i * 4} H${272 + i * 10} V82`, stroke: '#7fd3f3', strokeWidth: 1.5, fill: 'none' }));
   }
-  f.append(sv('path', { d: 'M185 38 V50', stroke: '#7fd1a0', strokeWidth: 1.5 }), sv('path', { d: 'M220 60 H260', stroke: '#7fd1a0', strokeWidth: 1.5 }), sv('path', { d: 'M185 82 V150', stroke: '#7fd1a0', strokeWidth: 1.5 }));
+  f.append(sv('path', { d: 'M185 38 V50', stroke: '#7fd1a0', strokeWidth: 1.5 }), sv('path', { d: 'M220 64 H260', stroke: '#7fd1a0', strokeWidth: 1.5 }), sv('path', { d: 'M240 22 H230 V56 H220', stroke: '#7fd1a0', strokeWidth: 1.5, fill: 'none' }));
   f.append(sv('path', { d: 'M340 66 H360', stroke: '#7fd3f3', strokeWidth: 2 }), sv('path', { d: 'M220 126 H260', stroke: '#ffd38a', strokeWidth: 1.5 }), sv('path', { d: 'M320 110 V82', stroke: '#7fd3f3', strokeWidth: 1.5 }), sv('path', { d: 'M332 82 V98 H398 V110', stroke: '#7fd3f3', strokeWidth: 1.2, fill: 'none', 'stroke-dasharray': '3 3' }));
   f.append(sv('text', { x: 4, y: 160, class: 'co-s', style: 'fill: #7fd3f3' }, 'bleu : vidéo SDI'), sv('text', { x: 4, y: 172, class: 'co-s', style: 'fill: #7fd1a0' }, 'vert : réseau IP'), sv('text', { x: 4, y: 184, class: 'co-s', style: 'fill: #ffd38a' }, 'ambre : audio'));
   return f;
