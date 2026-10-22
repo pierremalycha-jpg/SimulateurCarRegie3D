@@ -9,7 +9,7 @@
 // d'après l'édition espagnole du mode d'emploi (à vérifier). Fiche technique : shutter lent
 // (SLS) de 2 à 8 images, en 1080. Secteur 50 Hz : lumière modulée à 100 Hz. Ballon à 5 m/s :
 // 10 cm pendant 1/50 s, 1 cm à 1/500. Scintillement d'une lumière sinusoïdale à F pour une pose
-// te : 2 m |sin(π F te) ÷ (π F te)|, nul pour un nombre entier de périodes. Perte de lumière :
+// te (contraste (max − min) ÷ (max + min)) : m |sin(π F te) ÷ (π F te)|, nul pour un nombre entier de périodes. Perte de lumière :
 // log2(te × 50) diaphragmes (1/500 : −3,3). La manipulation (camlab/labs/ch23.js, « shutter »).
 // ----------------------------------------------------------------------------------
 

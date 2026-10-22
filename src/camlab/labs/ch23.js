@@ -71,18 +71,18 @@ export const SHUTTERS_50 = [['OFF', 1 / 50], ['1/60', 1 / 60], ['1/125', 1 / 125
 export const sinc = (x) => (Math.abs(x) < 1e-9 ? 1 : Math.sin(Math.PI * x) / (Math.PI * x));
 /** angle d'obturation équivalent (degrés) : 360° = toute la durée d'une image */
 export const shutterAngle = (te, fps = 50) => 360 * te * fps;
-/** scintillement d'une lumière sinusoïdale (fréquence F, modulation m) vue avec un temps de pose te : (max − min) / moyenne */
-export const flicker = (F, te, m) => 2 * m * Math.abs(sinc(F * te));
+/** scintillement d'une lumière sinusoïdale (fréquence F, modulation m) vue avec un temps de pose te : (max − min) / (max + min) */
+export const flicker = (F, te, m) => m * Math.abs(sinc(F * te));
 /** lumière moyenne, sur [t, t + te], d'une source allumée une fraction d de chaque période (écran à LED, fréquence F) */
 export function pwmMean(F, d, t, te) {
   const S = (u) => { const c = Math.floor(u * F); return (c * d + Math.min(u * F - c, d)) / F; };
   return (S(t + te) - S(t)) / te;
 }
-/** bandes d'un écran (F, d) dans une image lue de haut en bas en Tread : (max − min) / moyenne */
+/** bandes d'un écran (F, d) dans une image lue de haut en bas en Tread : (max − min) / (max + min) */
 export function bandContrast(F, d, te, t0 = 0, Tread = 1 / 50, n = 160) {
   let lo = Infinity, hi = -Infinity;
   for (let i = 0; i < n; i++) { const v = pwmMean(F, d, t0 + (i / n) * Tread, te); if (v < lo) lo = v; if (v > hi) hi = v; }
-  return (hi - lo) / d;
+  return hi + lo > 0 ? (hi - lo) / (hi + lo) : 0;
 }
 
 /** période (en photosites) sur le capteur d'un motif de période pMm (mm) à D (m), focale f (mm) */
@@ -106,6 +106,10 @@ export function moire(fx, fy, olpf, N) {
   const fa = Math.hypot(fold(fx), fold(fy));
   return { alias, c: Math.abs(mtf(fx, fy, olpf, N)), fringe: fa > 1e-6 ? 1 / fa : Infinity };
 }
+/** défi : de fausses rayures bien visibles, sans filtre (repliées, plus larges que 2,5 photosites, contraste d'au moins 10 %) */
+export const falseStripes = (off) => off.alias && off.fringe >= 2.5 && off.c >= 0.1;
+/** défi : le filtre efface ces fausses rayures (moins de 10 % de contraste, au moins 2,5 fois moins que sans lui) */
+export const erasedByOlpf = (on, off) => on.alias && off.c >= 0.1 && on.c < 0.1 && off.c >= 2.5 * on.c;
 
 /** les formats de sortie de la HXC-FB80 montrés ici (fiche technique) : pixels, raster complet, images par seconde, balayage */
 export const FORMATS_FB80 = {
@@ -199,13 +203,15 @@ export const LABS_CH23 = {
   // =================================================================================
   /** le filtre passe-bas optique contre le moiré, et le filtre infrarouge */
   olpf(ctx) {
-    const W = 640, H = 360, PW = 160, PH = 90, S = W / PW, NF = 5.6, TH = 3 * Math.PI / 180;
+    // deux vues du même carré de 40 × 45 photosites, 8 pixels d'écran par photosite ; iris f/2,8 ;
+    // rayures inclinées de 8° : repliées, elles penchent de l'autre côté
+    const W = 640, H = 360, PW = 40, PH = 45, S = 8, NF = 2.8, TH = 8 * Math.PI / 180;
     const SC = {
       chemise: { nom: 'une chemise à rayures de 2 mm, à 3 m', p: 2, D: 3, kind: 'stripes', hi: [0.78, 0.78, 0.76], lo: [0.02, 0.025, 0.08] },
       led: { nom: 'un mur LED au pas de 3,9 mm, à 8 m', p: 3.9, D: 8, kind: 'dots', hi: [0.95, 0.9, 0.86], lo: [0.012, 0.012, 0.014] },
       ir: { nom: 'un tissu noir, une plante et une télécommande sous les projecteurs', p: 1, D: 3, kind: 'ir', hi: [1, 1, 1], lo: [0, 0, 0] },
     };
-    const st = { z: zoomPos(30), s: pointPos(MIRE_D), n: irisPos(NF), nd: 1, sc: 'chemise', olpf: true, ir: true, remote: false, sawIR: false, f1: 0 };
+    const st = { z: zoomPos(30), s: pointPos(MIRE_D), n: irisPos(NF), nd: 1, sc: 'chemise', olpf: true, ir: true, remote: false, sawIR: false };
     const defis = [false, false, false];
     const view = cnv(W, H); view.className = 'cl-vfc'; view.setAttribute('role', 'img');
     const strip = cnv(W, 130); strip.className = 'c23-strip'; strip.setAttribute('role', 'img');
@@ -217,8 +223,8 @@ export const LABS_CH23 = {
     const remote = toggle('Appuyer sur la télécommande', false, (v) => { st.remote = v; up(); });
     const read = readout();
     const sh = shell({ vf: { canvas: view }, scope: strip, ctrls: [scS.row, ...rings.rows, btnRow(lp.btn, irT.btn), btnRow(remote.btn), el('p', { class: 'cl-hint' }, 'Retirer un filtre n\'est possible que dans la maquette : sur la caméra, ils sont collés devant les capteurs.'), read], defis: [
-      'Retire le filtre passe-bas, puis cherche la focale où la chemise (ou le mur LED) se couvre de franges qu\'elle n\'a pas : le moiré.',
-      'À la même focale, remets le filtre passe-bas : les franges doivent presque disparaître.',
+      'Retire le filtre passe-bas, puis élargis le cadre jusqu\'à ce que les photosites dessinent des rayures que la chemise n\'a pas : plus larges, penchées de l\'autre côté. C\'est le moiré.',
+      'Remets le filtre, puis cherche la focale où il efface le mieux ces fausses rayures : juste au-delà de la limite des deux photosites.',
       'Sous les projecteurs, retire le filtre infrarouge et appuie sur la télécommande : la caméra voit ce que l\'œil ne voit pas. Puis remets le filtre.',
     ] });
     // ---- le motif vu par les photosites : série de Fourier, chaque terme atténué par la chaîne ----
@@ -237,30 +243,35 @@ export const LABS_CH23 = {
     const valueAt = (T, mean, u, v) => { let x = mean; for (const [a, fx, fy] of T) x += a * Math.cos(2 * Math.PI * (fx * u + fy * v)); return clamp(x, 0, 1); };
     function drawPattern(scn, P) {
       const { mean, out } = terms(scn.kind, P);
+      // ce que comptent les photosites : ouverture du photosite, filtre passe-bas, objectif
       const T = out.map(([a, fx, fy]) => [a * mtf(fx, fy, st.olpf, NF), fx, fy]);
+      // l'image que l'objectif forme sur le capteur, avant les photosites (diffraction seule)
+      const To = out.map(([a, fx, fy]) => [a * mtfDiff(Math.hypot(fx, fy) / PITCH, NF), fx, fy]);
       const id = g.createImageData(W, H), d = id.data;
+      const put = (q, val) => { d[q] = enc8(scn.lo[0] + (scn.hi[0] - scn.lo[0]) * val); d[q + 1] = enc8(scn.lo[1] + (scn.hi[1] - scn.lo[1]) * val); d[q + 2] = enc8(scn.lo[2] + (scn.hi[2] - scn.lo[2]) * val); d[q + 3] = 255; };
+      for (let y = 0; y < H; y++) for (let x = 0; x < W / 2; x++) put((y * W + x) * 4, valueAt(To, mean, (x + 0.5) / S - PW / 2, (y + 0.5) / S - PH / 2));
       for (let j = 0; j < PH; j++) for (let i = 0; i < PW; i++) {
         const val = valueAt(T, mean, i - PW / 2 + 0.5, j - PH / 2 + 0.5);
-        const r = enc8(scn.lo[0] + (scn.hi[0] - scn.lo[0]) * val), gg = enc8(scn.lo[1] + (scn.hi[1] - scn.lo[1]) * val), b = enc8(scn.lo[2] + (scn.hi[2] - scn.lo[2]) * val);
-        for (let y = j * S; y < (j + 1) * S; y++) for (let x = i * S; x < (i + 1) * S; x++) { const q = (y * W + x) * 4; d[q] = r; d[q + 1] = gg; d[q + 2] = b; d[q + 3] = 255; }
+        for (let y = j * S; y < (j + 1) * S; y++) for (let x = W / 2 + i * S; x < W / 2 + (i + 1) * S; x++) put((y * W + x) * 4, val);
       }
       g.putImageData(id, 0, 0);
-      g.font = '600 13px "B612 Mono", monospace'; g.fillStyle = 'rgba(5,7,10,.75)'; g.fillRect(8, H - 28, 330, 20); g.fillStyle = '#e8e8e2'; g.textAlign = 'left';
-      g.fillText(`160 × 90 photosites au centre du capteur, ×${S}`, 14, H - 13);
-      // la rangée du milieu, reprise en bas
-      g.strokeStyle = 'rgba(255,176,32,.8)'; g.lineWidth = 1.5; g.strokeRect((PW / 2 - 16) * S, (PH / 2 - 1) * S, 32 * S, S);
-      // la rangée : le motif sur le capteur, puis la valeur de chaque photosite
+      g.fillStyle = '#05070a'; g.fillRect(W / 2 - 1, 0, 2, H);
+      g.font = '600 13px "B612 Mono", monospace'; g.textAlign = 'left';
+      for (const [x, t] of /** @type {[number, string][]} */ ([[8, 'sur le capteur'], [W / 2 + 8, 'compté par les photosites']])) { g.fillStyle = 'rgba(5,7,10,.78)'; g.fillRect(x - 2, H - 28, g.measureText(t).width + 12, 20); g.fillStyle = '#e8e8e2'; g.fillText(t, x + 4, H - 13); }
+      // la rangée reprise en bas
+      g.strokeStyle = 'rgba(255,176,32,.85)'; g.lineWidth = 1.5; g.strokeRect(W / 2 + 4 * S, 22 * S, 32 * S, S);
+      // la rangée : l'image sur le capteur, puis la valeur de chaque photosite
       const w = W - 40, cell = w / 32, x0 = 20;
       gs.fillStyle = '#05070a'; gs.fillRect(0, 0, W, 130);
       gs.font = '600 11px "B612 Mono", monospace'; gs.textAlign = 'left'; gs.fillStyle = 'rgba(150,210,180,.75)';
-      gs.fillText('le motif sur le capteur (avant les photosites)', x0, 13);
+      gs.fillText('l\'image sur le capteur, le long de la rangée', x0, 13);
       for (let px = 0; px < w; px++) {
-        const u = (px / cell) - 16; const ph = (Math.cos(TH) * u) / P; const on = scn.kind === 'stripes' ? Math.cos(2 * Math.PI * ph) > 0 : Math.abs(ph - Math.round(ph)) < 0.21;
-        gs.fillStyle = on ? '#d9d9d2' : '#1d2433'; gs.fillRect(x0 + px, 18, 1, 22);
+        const v = enc8(scn.lo[1] + (scn.hi[1] - scn.lo[1]) * valueAt(To, mean, px / cell - 16, 0));
+        gs.fillStyle = `rgb(${v},${v},${v})`; gs.fillRect(x0 + px, 18, 1, 22);
       }
-      gs.fillStyle = 'rgba(150,210,180,.75)'; gs.fillText('ce que mesure chaque photosite de la rangée', x0, 58);
+      gs.fillStyle = 'rgba(150,210,180,.75)'; gs.fillText('ce que compte chaque photosite de la rangée', x0, 58);
       for (let i = 0; i < 32; i++) {
-        const v = valueAt(T, mean, i - 16 + 0.5, 0.5), h = 4 + v * 52;
+        const v = valueAt(T, mean, i - 16 + 0.5, 0), h = 4 + v * 52;
         gs.fillStyle = '#2b3036'; gs.fillRect(x0 + i * cell + 1, 64, cell - 2, 56);
         gs.fillStyle = '#4cc3e6'; gs.fillRect(x0 + i * cell + 1, 120 - h, cell - 2, h);
       }
@@ -324,7 +335,7 @@ export const LABS_CH23 = {
     function up() {
       const o = rings.read(); rings.show();
       const scn = SC[st.sc];
-      let info, m = null;
+      let info, m = null, off = null;
       if (scn.kind === 'ir') {
         drawIR();
         view.setAttribute('aria-label', 'Le viseur : une veste noire, une plante, une carte blanche et une télécommande sous les projecteurs');
@@ -335,32 +346,37 @@ export const LABS_CH23 = {
       } else {
         const P = periodPx(scn.p, o.f, scn.D);
         const fx = Math.cos(TH) / P, fy = Math.sin(TH) / P;
-        m = moire(fx, fy, st.olpf, NF);
-        const off = moire(fx, fy, false, NF);
+        m = moire(fx, fy, true, NF); off = moire(fx, fy, false, NF);
         drawPattern(scn, P);
-        view.setAttribute('aria-label', `Les photosites du centre du capteur devant ${scn.nom}`);
-        strip.setAttribute('aria-label', 'Une rangée de photosites : le motif sur le capteur, et la valeur mesurée par chaque photosite');
-        if (!defis[0] && !st.olpf && off.alias && off.c >= 0.2) { defis[0] = true; st.f1 = o.f; }
-        if (defis[0] && !defis[1] && st.olpf && m.alias && m.c < 0.12 && Math.abs(o.f - st.f1) < 0.5) defis[1] = true;
-        if (defis[0] && !defis[1] && !st.olpf && off.alias && off.c >= 0.2) st.f1 = o.f;
-        info = `Devant la caméra, ${scn.nom}. Focale ${fr(o.f, 1)} mm : ${fr(P, 2)} photosite par période (il en faut au moins 2). ${m.alias ? `Repliement : des franges tous les ${isFinite(m.fringe) ? fr(m.fringe, 0) : '∞'} photosites, contraste ${pct(m.c)}.` : `Pas de repliement : le motif est vu tel qu'il est (contraste ${pct(m.c)}).`} Iris f/5,6.`;
+        view.setAttribute('aria-label', `À gauche, l'image de ${scn.nom} sur le capteur ; à droite, ce qu'en comptent les photosites`);
+        strip.setAttribute('aria-label', 'Une rangée de photosites : l\'image sur le capteur, et la valeur comptée par chaque photosite');
+        if (falseStripes(off) && !st.olpf && !defis[0]) defis[0] = true;
+        if (defis[0] && !defis[1] && st.olpf && erasedByOlpf(m, off)) defis[1] = true;
+        const per = scn.kind === 'stripes' ? 'rayure' : 'période';
+        info = `Devant la caméra, ${scn.nom}. Focale ${fr(o.f, 1)} mm : ${fr(P, 2)} photosite par ${per} (la limite : 2). ${off.alias ? `Repliement : de fausses rayures tous les ${isFinite(off.fringe) ? fr(off.fringe, 1) : '∞'} photosites, contraste ${pct(off.c)} sans filtre, ${pct(m.c)} avec.` : `Pas de repliement : le motif est compté tel qu'il est (contraste ${pct(st.olpf ? m.c : off.c)}).`} Iris f/2,8.`;
       }
       read.textContent = info;
-      sh.done(defis); sh.say(olivier(scn, m));
+      sh.done(defis); sh.say(olivier(scn, m, off));
       send(ctx, lensState(st, o, { light: 0.5 }));
     }
-    function olivier(scn, m) {
+    function olivier(scn, m, off) {
       if (scn.kind === 'ir') {
         if (defis[2]) return 'Le filtre infrarouge est collé devant les capteurs : sur la vraie caméra, la LED de la télécommande reste presque invisible et le noir reste noir. Sans lui, le tissu synthétique vire au bordeaux et la plante au rose : ils renvoient beaucoup d\'infrarouge.';
         if (!st.ir) return st.remote ? 'La LED brille : 940 nm, invisible à l\'œil, mais le silicium la voit. Regarde aussi la veste noire et la plante. Remets le filtre infrarouge.' : 'Sans filtre, l\'infrarouge entre surtout dans la voie rouge : la veste noire vire au bordeaux, la plante au rose, même le blanc rosit. Appuie sur la télécommande.';
         return 'Avec le filtre infrarouge, l\'image est juste. Retire-le, pour voir ce que le capteur verrait sans lui.';
       }
-      if (defis[1] && defis[0]) return defis[2] ? 'Tout est vu.' : 'Le filtre passe-bas étale chaque point sur deux photosites : ce qui est plus fin que deux photosites est effacé avant d\'être mal compté. Prix : un très léger flou. Passe au tissu noir et à la télécommande.';
-      if (!m) return '';
-      if (defis[0]) return st.olpf ? (m.c < 0.12 ? 'Franges effacées.' : `Avec le filtre, il en reste ${pct(m.c)} : reviens à la focale de tout à l'heure, juste au-delà de la limite des deux photosites, là où le filtre est le plus efficace.`) : 'Moiré trouvé : ces franges ne sont pas sur la chemise, elles naissent de l\'échantillonnage. Remets le filtre passe-bas sans toucher au zoom.';
+      if (defis[1] && defis[0]) return defis[2] ? 'Tout est vu.' : 'Le filtre passe-bas étale chaque point sur deux photosites : il efface ce qui est juste au-delà de la limite, avant que ce soit mal compté. Plus fin encore, il en laisse passer une partie, que l\'ouverture des photosites et l\'objectif atténuent : c\'est pour cela qu\'il reste des moirés. Passe au tissu noir et à la télécommande.';
+      if (!m || !off) return '';
+      if (defis[0]) {
+        if (!st.olpf) return 'Moiré trouvé : ces rayures ne sont pas sur la chemise, elles naissent du comptage par les photosites. Remets le filtre passe-bas.';
+        if (!off.alias) return 'Ici, le motif est plus gros que deux photosites : il n\'y a rien à replier, rien à effacer. Élargis un peu.';
+        if (erasedByOlpf(m, off)) return 'Effacées.';
+        return `Avec le filtre, les fausses rayures gardent ${pct(m.c)} de contraste (${pct(off.c)} sans). À cette finesse, il en laisse passer une partie : resserre jusqu'à un peu moins de deux photosites par rayure, là où il est le plus efficace.`;
+      }
       if (st.olpf) return 'Le filtre passe-bas est en place, comme sur la vraie caméra. Retire-le (maquette) pour voir ce qu\'il évite.';
-      if (!m.alias) return 'Le motif fait plus de deux photosites par période : chaque rayure est bien comptée. Élargis le cadre (focale plus courte) : les rayures deviennent plus fines sur le capteur.';
-      if (m.c < 0.2) return `Repliement, mais faible (${pct(m.c)}) : l'objectif à f/5,6 et le photosite lui-même adoucissent déjà les détails trop fins. Resserre un peu, juste en dessous de deux photosites par période.`;
+      if (!off.alias) return 'Chaque rayure couvre plus de deux photosites : elle est comptée juste, les deux côtés se ressemblent. Élargis le cadre (focale plus courte) : les rayures deviennent plus fines sur le capteur.';
+      if (off.fringe < 2.5) return `Repliement : à droite, les rayures ne sont plus tout à fait celles de gauche (tous les ${fr(off.fringe, 1)} photosites). Élargis encore un peu : elles vont s'élargir et pencher de l'autre côté.`;
+      if (off.c < 0.1) return `Les fausses rayures sont trop pâles (${pct(off.c)}) : à cette finesse, l'ouverture des photosites et l'objectif effacent presque tout. Resserre un peu.`;
       return 'Moiré.';
     }
     sh.node.append(btnRow(linkBtn('Recommencer', () => { Object.assign(st, { z: zoomPos(30), sc: 'chemise', olpf: true, ir: true, remote: false, sawIR: false }); rings.sync(); scS.mark('chemise'); lp.set(true); irT.set(true); remote.set(false); defis.fill(false); up(); })));

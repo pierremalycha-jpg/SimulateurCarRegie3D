@@ -107,9 +107,9 @@ export const FIGS_CH23 = {
     }).join('');
     const ms = [0, 1, 2, 3, 4].map((k) => tx(x0 + k * fw, 160, `${k * 20} ms`, 'cf-tick')).join('');
     let wave = ''; for (let x = 0; x <= 2 * fw * 2; x += 2) { const t = x / fw * 20; wave += `${x ? 'L' : 'M'}${x0 + x} ${n1(206 - 12 * Math.cos(2 * Math.PI * t / 10))} `; }
-    const wins = [['1/50 s : 2 vibrations', 2 * fw, true], ['1/60 s : 1,67 vibration', 2 * fw / 1.2, false], ['1/100 s : 1 vibration', fw, true]].map(([l, w, ok], i) => {
+    const wins = [['1/50 s', 2 * fw, true, '2 vibrations : stable'], ['1/60 s', 2 * fw / 1.2, false, '1,67 : scintille'], ['1/100 s', fw, true, '1 vibration : stable']].map(([l, w, ok, r], i) => {
       const y = 232 + i * 17;
-      return `<rect class="${ok ? 'c23-win' : 'c23-bad'}" x="${x0}" y="${y - 9}" width="${n1(+w)}" height="11" rx="2"/>${tx(16, y, String(l), 'cf-tick l')}${tx(x0 + 2 * fw + 12, y, ok ? 'pas de scintillement' : 'scintille', ok ? 'c23-ok' : 'c23-ko')}`;
+      return `<rect class="${ok ? 'c23-win' : 'c23-bad'}" x="${x0}" y="${y - 9}" width="${n1(+w)}" height="11" rx="2"/>${tx(16, y, String(l), 'cf-tick l')}${tx(x0 + 2 * fw + 8, y, String(r), ok ? 'c23-ok' : 'c23-ko')}`;
     }).join('');
     return svg(296, 'Schéma : quatre images de 20 ms. Shutter OFF, le capteur reçoit la lumière pendant toute l\'image et les traces du ballon se touchent ; à 1/100 s pendant la moitié, à 1/500 s pendant un dixième : des trous entre les images, le mouvement saute. En bas, une lumière qui vibre à 100 Hz : 1/50 s et 1/100 s en contiennent un nombre entier de vibrations et ne scintillent pas ; 1/60 s scintille.', `
       ${head('Ce que garde chaque image', '50 images par seconde, 20 ms chacune : le shutter n\'en garde qu\'une partie.')}

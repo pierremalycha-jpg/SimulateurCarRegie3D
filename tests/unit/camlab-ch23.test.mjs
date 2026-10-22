@@ -9,7 +9,7 @@ import { LABS } from '../../src/camlab/labs.js';
 import { dofLimits, maxAperture, castOf, ND } from '../../src/camlab/optics.js';
 import {
   PITCH, whiteLin, videoPct, okPct, nAt0dB, dbGain, stopsOfDb, snrAt, minGain, budget, GAINS, mired, wien,
-  SHUTTERS_50, flicker, pwmMean, bandContrast, shutterAngle, periodPx, mtf, moire, fold,
+  SHUTTERS_50, flicker, pwmMean, bandContrast, shutterAngle, periodPx, mtf, moire, fold, falseStripes, erasedByOlpf,
   FORMATS_FB80, sdiGbps, sdiFor, pixelsPerSecond,
 } from '../../src/camlab/labs/ch23.js';
 
@@ -74,14 +74,14 @@ test('obturateur : vitesses de la FB80 en 50 Hz, flou, angle, scintillement et c
   assert.equal(shutterAngle(1 / 50), 360); assert.ok(near(shutterAngle(1 / 100), 180));
   // lampes sur le secteur 50 Hz : 100 Hz ; un nombre entier de vibrations ne scintille pas
   assert.ok(flicker(100, 1 / 50, 0.5) < 1e-9 && flicker(100, 1 / 100, 0.5) < 1e-9);
-  assert.ok(flicker(100, 1 / 60, 0.5) > 0.1 && flicker(100, 1 / 125, 0.5) > 0.2);
+  assert.ok(flicker(100, 1 / 60, 0.5) > 0.05 && flicker(100, 1 / 125, 0.5) > 0.1);
   // aucune vitesse fixe plus courte que 1/90 ne tombe juste : seul l'ECS (100 ou 200 Hz) y arrive
   for (const [l, te] of SHUTTERS_50) if (te <= 1 / 90) assert.ok(flicker(100, te, 0.5) >= 0.03, l);
   assert.ok(okPct(videoPct(whiteLin({ lux: 700, N: 5.6, te: 1 / 100 }))), 'ECS 100 Hz : l\'iris rattrape');
   // l'écran à 60 Hz : la moyenne d'une période entière ne dépend pas de l'instant
   for (const t of [0, 0.003, 0.011]) assert.ok(near(pwmMean(60, 0.5, t, 1 / 60), 0.5, 1e-9));
   assert.ok(bandContrast(60, 0.5, 1 / 60) < 1e-6, 'clear scan à 60 Hz : plus de bandes');
-  assert.ok(bandContrast(60, 0.5, 1 / 50) > 0.2, 'OFF : des bandes');
+  assert.ok(bandContrast(60, 0.5, 1 / 50) > 0.1, 'OFF : des bandes');
   // le ballon à 5 m/s : 10 cm à 1/50, 2 cm à 1/250
   assert.ok(near(5 * (1 / 50), 0.1) && near(5 * (1 / 250), 0.02));
 });
@@ -92,18 +92,24 @@ test('moiré : la limite des deux photosites, et le filtre passe-bas qui efface 
   assert.ok(near(periodPx(3.9, 20.4, 8), 2, 0.01), 'mur LED à 8 m : vers 20 mm');
   assert.ok(Math.abs(mtf(0.5, 0, true, 5.6)) < 1e-12, 'le filtre est nul à la limite des deux photosites');
   assert.ok(near(fold(0.7), -0.3, 1e-12));
-  // défis : sans filtre, une focale donne du moiré marqué ; à cette même focale, le filtre l'efface
-  const TH = 3 * Math.PI / 180;
-  let found = 0;
-  for (let f = 4.5; f <= 54; f += 0.05) {
-    for (const [p, D] of [[2, 3], [3.9, 8]]) {
+  // juste au-delà de la limite, le filtre efface presque tout ; vers un photosite par période, il laisse passer
+  assert.ok(Math.abs(mtf(0.52, 0, true, 2.8)) < 0.1 * Math.abs(mtf(0.52, 0, false, 2.8)));
+  assert.ok(Math.abs(mtf(0.8, 0, true, 2.8)) > 0.7 * Math.abs(mtf(0.8, 0, false, 2.8)));
+  // les défis de la manipulation (iris f/2,8, rayures inclinées de 8°), pour la chemise et pour le mur LED :
+  // une plage de focales où les fausses rayures se voient, une autre où le filtre les efface
+  const TH = 8 * Math.PI / 180;
+  for (const [p, D] of [[2, 3], [3.9, 8]]) {
+    const seen = [], gone = [];
+    for (let f = 4.5; f <= 54; f += 0.02) {
       const P = periodPx(p, f, D), fx = Math.cos(TH) / P, fy = Math.sin(TH) / P;
-      const off = moire(fx, fy, false, 5.6), on = moire(fx, fy, true, 5.6);
-      if (off.alias && off.c >= 0.2) { found++; assert.ok(on.c < 0.12, `f = ${f.toFixed(2)} mm : le filtre efface`); }
-      if (!off.alias) assert.ok(P >= 2 * Math.cos(TH) - 1e-6, 'pas de repliement au-delà de deux photosites (le motif est incliné de 3°)');
+      const off = moire(fx, fy, false, 2.8), on = moire(fx, fy, true, 2.8);
+      if (falseStripes(off)) { seen.push(f); assert.ok(fold(fx) < 0, 'repliées, elles penchent de l\'autre côté'); }
+      if (erasedByOlpf(on, off)) gone.push(f);
+      if (!off.alias) assert.ok(P >= 2 * Math.cos(TH) - 1e-6, 'pas de repliement au-delà de deux photosites');
     }
+    assert.ok(seen.length > 20 && gone.length > 20, `${p} mm à ${D} m : ${seen.length} et ${gone.length} focales`);
+    assert.ok(Math.min(...gone) > Math.max(...seen), 'le filtre est le plus efficace plus près de la limite des deux photosites');
   }
-  assert.ok(found > 40, 'une plage de focales où le moiré se voit');
 });
 
 test('formats de la FB80 : débits SDI du raster complet et liaison nécessaire', () => {
