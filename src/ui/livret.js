@@ -24,7 +24,7 @@ import { NOTIONS } from '../camlab/notions/index.js';
 export const liveProg = () => ({ ...PROG, missions: { ...PROG.missions, ...S.missionsDone } });
 
 const KIND = { parcours: 'Parcours', mission: 'Mission', phase: 'Jour de match', reseau: 'Réseau ST 2110', exercice: 'Exercice', cours: 'Cours', camera: 'Caméra 3D' };
-const EXO = { brassage: 'Brassage complet du car', atelier: 'Monter une caméra à l\'atelier', quiz2110: 'Quiz ST 2110 réussi', examenReseau: 'Examen réseau réussi' };
+const EXO = { brassage: 'Brassage complet du car', atelier: 'Monter une caméra à l\'atelier', quiz2110: 'Quiz ST 2110 réussi', examenReseau: 'Examen réseau réussi', entrepot: 'Une régie mobile montée dans l\'entrepôt (mission réussie)' };
 const ORDER = /** @type {const} */ (['consolidee', 'travaillee', 'a_faire', 'absent']);
 const PILL = { consolidee: 'pill ok', travaillee: 'pill warn', a_faire: 'pill', absent: 'pill lv-off' };
 

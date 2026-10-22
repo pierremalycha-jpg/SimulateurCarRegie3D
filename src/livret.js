@@ -51,7 +51,8 @@ export function activityState(prog, /** @type {Kind} */ kind, /** @type {string}
     case 'reseau': { const r = (N.missions || {})[ref]; return { done: !!r, aided: !!(r && r.aided) }; }
     case 'exercice': return {
       done: ref === 'brassage' ? (P.patchBest || 0) >= 100 : ref === 'atelier' ? (P.rigs || []).length > 0
-        : ref === 'quiz2110' ? best(N.quiz) >= SEUIL_SCORE : ref === 'examenReseau' ? best(N.exams) >= SEUIL_SCORE : false,
+        : ref === 'quiz2110' ? best(N.quiz) >= SEUIL_SCORE : ref === 'examenReseau' ? best(N.exams) >= SEUIL_SCORE
+          : ref === 'entrepot' ? Object.values((P.entrepot || {}).missions || {}).some((m) => m && m.best && (m.best.score ?? m.best) >= SEUIL_SCORE) : false,
       aided: false,
     };
   }
