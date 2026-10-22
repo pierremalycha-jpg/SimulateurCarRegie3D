@@ -20,7 +20,8 @@ Tout est en français (code commenté en français, interface, commits).
 - **Jouer** : le lieu (car régie ; salle de concert en préparation, `src/content/lieux.js`), le mode (car
   installé, tout à faire, visite guidée), solo ou coopération (salon `src/ui/session_ui.js`), conditions de
   captation repliées. Pas de liste de scénarios : les exercices notés (car vide, atelier, jour de match,
-  formation réseau) se lancent depuis leur leçon du Cours. L'entrepôt sera un mode à part (ROADMAP.md).
+  formation réseau, mise en service de la caméra) se lancent depuis leur leçon du Cours. L'entrepôt sera un
+  mode à part (ROADMAP.md).
 - **Réglages** : une seule fenêtre (`src/ui/settings.js`), avec le profil Étudiant / Formateur
   (`src/app/profile.js`) ; l'espace formateur (configuration, suivi, relecture) n'y apparaît qu'au profil
   Formateur (classe `role-only`).
@@ -32,14 +33,20 @@ Tout est en français (code commenté en français, interface, commits).
   un schéma, une manipulation qui calcule vraiment, l'explication, « dans le car », fiches « ? », quiz de
   3 questions (chaque mauvaise réponse expliquée), ses **exercices pratiques** et son article de référence.
   Ne pas recréer `src/content/cours/` ni `src/ui/cours/`, ni d'onglet Chapitres ou Procédures.
+- **La caméra en 3D** (`src/camlab/`, ouverte depuis le chapitre La caméra du Cours) : 51 notions écrites, une
+  fiche par fichier (`notions/<id>.js`) rangée dans le registre de son groupe (`notions/ch1.js` … `ch89.js`),
+  schéma dans `figs/`, manipulation dans `labs/` (elle pilote la 3D par `ctx.lens`, clés listées dans
+  `index.js`), styles `src/styles/camlab-<groupe>.css`. Le moule est vérifié par `tests/unit/camlab.test.mjs`
+  (compétences du référentiel, leçon `cours` existante). Notions acquises et quiz : `progress.js`, `quiz.js` ;
+  exercice noté « Mise en service » : `mes.js` (exercice pratique `x-camera` de la leçon `camera-systeme`).
 - **Exercices pratiques** : les parcours d'Olivier (`src/tutor/`) sont rangés dans les leçons par
   `src/cours/exercices.js` (BY_LESSON : chaque exercice une seule fois, test unitaire), avec les exercices notés
-  (`x-atelier`, `x-brassage`, `x-reseau`, `x-match`). Le panneau du chef (`src/ui/tutor_ui.js`, touche J) ne
-  propose que les exercices du poste où l'on est ; en fin d'exercice, « Revenir à la leçon ». La **visite
-  guidée** (mode de Jouer) : le tour du car, puis la présentation de chaque poste (« Poste suivant »).
+  (`x-atelier`, `x-brassage`, `x-reseau`, `x-match`, `x-camera`). Le panneau du chef (`src/ui/tutor_ui.js`,
+  touche J) ne propose que les exercices du poste où l'on est ; en fin d'exercice, « Revenir à la leçon ». La
+  **visite guidée** (mode de Jouer) : le tour du car, puis la présentation de chaque poste (« Poste suivant »).
 - **Livret de compétences** : référentiel TIEE dans `src/content/referentiel.js` (RATTACHEMENT : parcours,
-  missions, phases, réseau, exercices, cours), calcul pur dans `src/livret.js`, affichage `src/ui/livret.js`.
-  Toute nouvelle activité notée, toute nouvelle leçon se rattache à des compétences.
+  missions, phases, réseau, exercices, cours, camera), calcul pur dans `src/livret.js`, affichage
+  `src/ui/livret.js`. Toute nouvelle activité notée, toute nouvelle leçon se rattache à des compétences.
 - Les fiches « ? » (`src/content/netterms.js` + `terms_*.js`, figures `src/ui/figs_*.js`) restent la source
   des définitions courtes ; une leçon les cite dans `terms`.
 

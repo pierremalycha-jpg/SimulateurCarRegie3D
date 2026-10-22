@@ -394,6 +394,55 @@ Tests :
   « Emmène-moi / Montre-moi » doit mettre en évidence un élément réel de la page, et « Fais-le pour moi » doit faire
   valider l'étape.
 
+## v19.1 : la caméra en 3D, terminée
+
+**Les 51 notions sont écrites.** Le module « La caméra en 3D » (Cours, chapitre La caméra) a maintenant toutes
+ses fiches, au moule du lot 1 : l'essentiel, un schéma, une manipulation qui calcule avec deux ou trois défis,
+« Comprendre », « Sur la vraie caméra », « Pour aller plus loin », « Dans le car », trois questions d'Olivier
+(chaque mauvaise réponse expliquée), les notions liées, la référence et les compétences TIEE. Les neuf
+chapitres :
+
+- **L'objectif** (13) : lentille frontale, focale, zoom, point, diaphragme, profondeur de champ, ramping,
+  doubleur, macro, tirage optique, défauts optiques, monture B4, objectif en boîte et portable.
+- **Les filtres et le prisme** (4) : ND, CC, prisme, passe-bas optique et filtre infrarouge.
+- **Les capteurs** (5) : capteur, gain, shutter, exposition, formats et cadences.
+- **Le traitement de l'image** (8) : quantification, balances, noir, gamma et black gamma, knee et white
+  clip, détail, matrice, fichiers de scène. Le viseur simulé (`camlab/vf.js`) calcule tout ce traitement,
+  en virgule flottante, dès qu'une manipulation le demande.
+- **Le corps de la caméra** (6) : commandes, menu, connectique, alimentation, tally et intercom, retours.
+- **Le viseur et le cadreur** (2) : viseur et ses aides, poste du cadreur (équilibrage, prompteur).
+- **La voie caméra** (6) : fibre hybride, CCU, RCP, genlock, signal de sortie, line-up.
+- **Jusqu'au moniteur** (4) : forme d'onde, vecteurscope, moniteur de référence, mires.
+- **Pour aller plus loin** (3) : grand capteur, UHD et HDR, super ralenti.
+
+Chaque groupe de chapitres a son registre (`camlab/notions/ch1.js` … `ch89.js`), ses schémas
+(`camlab/figs/ch*.js`, aides communes `camlab/figkit.js`), ses manipulations (`camlab/labs/ch*.js`), ses
+styles (`src/styles/camlab-ch*.css`) et ses tests (`tests/unit/camlab-ch*.test.mjs`). La caméra 3D suit les
+manipulations : bagues, doubleur et macro (le moniteur du plateau aussi), lampe de tally du viseur.
+
+**Le suivi.** Une notion est acquise à 3 / 3 du premier coup, comme une leçon du Cours (`camlab/progress.js`,
+enregistré avec la progression du stagiaire) : coche dans la liste, « n / 51 acquises », compte par chapitre.
+Chaque chapitre finit par un **quiz** de 5 ou 6 questions (`camlab/quiz.js`, 53 en tout) : meilleur score
+gardé, notions des questions ratées proposées à revoir. La **mise en service notée** (`camlab/mes.js`) : la
+caméra sort de son flight-case, sept postes (objectif, fibre, CCU, RCP, caméra et menu, viseur, plateau), dix
+étapes à remettre dans l'ordre, deux éclairages tirés au sort (tungstène, ou plein jour qui demande un ND).
+On part de 100 : −8 par erreur d'ordre (le geste est fait quand même, et ses conséquences suivent : une
+balance des noirs refaite efface celle des blancs), −5 par erreur de geste, −1 par tranche de 30 s au-delà de
+8 minutes (20 points au plus) ; réussie à partir de 60. Le bilan explique chaque erreur et propose les notions
+à revoir. Elle se lance depuis la barre du module ou depuis l'exercice pratique **x-camera** de la leçon
+« La chaîne caméra » (`camera-systeme`), qui affiche le meilleur résultat ; on revient ensuite à la leçon.
+
+**Liens.** Une fiche qui a sa leçon dans le Cours l'ouvre (« La leçon du Cours : … ») ; « Emmène-moi » mène à
+un poste du car. Le livret de compétences compte les notions acquises (sorte « camera » de
+`RATTACHEMENT`) ; la mise en service compte pour 1.4, 2.7, 2.9, 2.10 et 3.9.
+
+**Corrections.** La progression du Cours et du module caméra enregistrée sur le serveur n'est plus écrasée par
+celle, vide, d'un nouvel appareil (`src/shared.js`, `mergeProgress`). Les feuilles de style de base passent
+avant leurs compléments (`camlab.css` avant `camlab-ch1.css`, `tools/build.mjs`).
+
+Suites : `tests/e2e/camera.mjs` ouvre les 51 fiches à 1280 et à 390 px, acquiert une notion, fait un quiz de
+chapitre et joue la mise en service jusqu'au bilan ; tests unitaires `camlab*.test.mjs`.
+
 ## v19 : TIEE Simulator, trois entrées, des exercices pratiques dans le Cours
 
 **Plus simple : Jouer, Cours, Réglages.** L'application s'appelle **TIEE Simulator**, réalisée par le BTS
@@ -970,6 +1019,7 @@ node tools/shots.mjs dossier 1280 800 '["vision","hf"]'   # captures de postes
 | `cours/exercices.js` | Les exercices pratiques de chaque leçon : parcours d'Olivier (chacun dans une seule leçon) et exercices notés (atelier, car vide, formation réseau, jour de match), leur état |
 | `cours/liens.js` | Les liens du Cours avec le reste : terme du glossaire → leçon ou fiche « ? », poste → leçon (bouton « Cours », touche G) |
 | `cours/sdi_falaise.js`, `cours/lab_sdi.js`, `cours/figs_sdi.js` | Leçon « La falaise numérique » : diagramme de l'œil et image qui casse avec la longueur du câble, défis d'Olivier |
+| `camlab/` | Module « La caméra en 3D » : caméra et plateau construits dans le code (`model.js`, `scene.js`), pastilles (`points.js`), 51 notions (`notions/`, une fiche par fichier, registres `ch1.js` … `ch89.js`), schémas (`figs.js`, `figs/`, `figkit.js`), manipulations (`labs.js`, `labs/`, commandes `controls.js`, optique `optics.js`, viseur simulé et traitement de l'image `vf.js`), affichage d'une fiche (`fiche.js`), progression (`progress.js`), quiz de chapitre (`quiz.js`), mise en service notée (`mes.js`) |
 | `ui/cours_ui.js` | L'espace Cours : un seul sommaire, page « Mon suivi » (progression, à faire ensuite, livret), leçons (quiz, exercices pratiques, article de référence), glossaire, postes, matériel |
 | `app/nav.js` | Navigation entre les trois entrées : menu du car (Échap), aiguillage des boutons « Aller au poste », « Commencer » (car lancé si besoin), changement de vacation |
 | `ui/layer.js` | Espace plein écran (le Cours) : plaque, onglets, Fermer (Échap), ligne d'état |

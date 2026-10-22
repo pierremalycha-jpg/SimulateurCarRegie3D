@@ -3,6 +3,7 @@
 // le simulateur reste en pause pendant ce temps, Échap ramène dans le Cours sur le même chapitre.
 // Le suivi : une notion acquise se coche, le quiz d'un chapitre, le lien d'une fiche vers sa leçon
 // du Cours, et la mise en service notée lancée depuis la leçon camera-systeme, jouée jusqu'au bilan.
+// Les 51 fiches s'ouvrent une à une, à 1280 px puis à 390 px.
 // node tests/e2e/camera.mjs [dossier]
 import { launch, openPage, outDir, until, reporter } from './harness.mjs';
 const OUT = outDir('camera');
@@ -24,7 +25,7 @@ await A.waitForTimeout(1500);
 T.check('le module s\'ouvre plein écran, l\'espace Cours s\'est refermé, le titre est caché', await ev(() => !document.getElementById('layer') && document.getElementById('title').hidden && document.body.classList.contains('camlab-on')));
 const pins = await ev(() => document.querySelectorAll('.camlab .cl-pin').length);
 T.check('les pastilles de la caméra (23)', pins === 23, String(pins));
-T.check('la liste des notions : 9 chapitres, 51 notions, 12 écrites', await ev(() => document.querySelectorAll('.camlab .cl-ch').length === 9 && document.querySelectorAll('.camlab .cl-ni').length === 51 && document.querySelectorAll('.camlab .cl-ni:not(.prevu)').length === 12));
+T.check('la liste des notions : 9 chapitres, 51 notions, toutes écrites', await ev(() => document.querySelectorAll('.camlab .cl-ch').length === 9 && document.querySelectorAll('.camlab .cl-ni').length === 51 && document.querySelectorAll('.camlab .cl-ni.prevu').length === 0));
 await A.screenshot({ path: `${OUT}/02-camera.png` });
 
 // ---------------- une fiche écrite : schéma, manipulation, textes, questions ----------------
@@ -38,9 +39,20 @@ for (const id of ['iris', 'menu', 'connectique']) {
   T.check(`fiche ${id} : la réponse choisie est expliquée`, await ev(() => { const w = document.querySelector('.camlab .cl-side .cl-why'); return !!w && w.textContent.length > 20 && !!document.querySelector('.camlab .cl-side .cl-opt.chosen'); }));
   const side = await A.$('.camlab .cl-side'); if (side) await side.screenshot({ path: `${OUT}/10-${id}.png` }).catch(() => {});
 }
-// une fiche en préparation : l'annonce, pas de manipulation
-await ev(() => document.querySelector('.cl-ni[data-n="gain"]').click()); await A.waitForTimeout(600);
-T.check('fiche en préparation : l\'annonce du lot, pas de manipulation', await ev(() => !!document.querySelector('.camlab .cl-side .cl-todo') && !document.querySelector('.camlab .cl-side .cl-lab')));
+// les 51 fiches, une à une : schéma, manipulation à défis, sections, trois questions, ni texte cassé ni
+// débordement horizontal du panneau (les erreurs de page sont relevées par le harnais)
+const ids = await ev(() => Object.keys(window.__dbg.camlab().data.NOTIONS));
+const fautes = [];
+for (const id of ids) {
+  await ev((id) => /** @type {HTMLElement} */ (document.querySelector(`.cl-ni[data-n="${id}"]`)).click(), id);
+  await A.waitForTimeout(250);
+  const st = await ev(() => {
+    const side = document.querySelector('.camlab .cl-side'); const txt = side?.textContent || '';
+    return { fig: !!side?.querySelector('.cl-fig svg'), lab: side?.querySelectorAll('.cl-lab *').length || 0, defis: side?.querySelectorAll('.cl-defis li').length || 0, sec: side?.querySelectorAll('.cl-sec').length || 0, q: side?.querySelectorAll('.cl-q').length || 0, todo: !!side?.querySelector('.cl-todo'), bad: /undefined|NaN|\[object|\bnull\b/.test(txt), over: side ? side.scrollWidth > side.clientWidth + 1 : true };
+  });
+  if (!(st.fig && st.lab > 10 && st.defis >= 2 && st.sec >= 5 && st.q === 3 && !st.todo && !st.bad && !st.over)) fautes.push(`${id} ${JSON.stringify(st)}`);
+}
+T.check(`les ${ids.length} fiches : schéma, manipulation à défis, sections, trois questions, sans texte cassé ni débordement`, ids.length === 51 && !fautes.length, fautes.join(' | ').slice(0, 900));
 // la manipulation pilote la caméra 3D : la bague de zoom suit le curseur
 await ev(() => document.querySelector('.cl-ni[data-n="focale"]').click()); await A.waitForTimeout(1200);
 const z0 = await ev(() => window.__dbg.camlab().rig.state.zoom);
@@ -170,6 +182,20 @@ const back = await ev(() => {
 });
 T.check('« Revenir à la leçon » : la leçon camera-systeme, l\'exercice montre le meilleur résultat', back.off && back.on && /meilleur résultat \d+ \/ 100/.test(back.exo), JSON.stringify(back).slice(0, 220));
 await A.screenshot({ path: `${OUT}/32-retour-lecon.png` });
+
+// ---------------- au téléphone (390 px) : chaque fiche sans défilement horizontal ----------------
+await A.keyboard.press('Escape'); await A.setViewportSize({ width: 390, height: 844 });
+await ev(() => window.__dbg.emit('camera', {}));
+await until(A, () => document.body.classList.contains('camlab-on') && !document.querySelector('.camlab .cl-loading'), null, 60000);
+const tel = [];
+for (const id of ids) {
+  await ev((id) => /** @type {HTMLElement} */ (document.querySelector(`.cl-ni[data-n="${id}"]`)).click(), id);
+  await A.waitForTimeout(150);
+  const o = await ev(() => { const side = document.querySelector('.camlab .cl-side'); return { page: document.documentElement.scrollWidth > innerWidth + 1, side: !side || side.scrollWidth > side.clientWidth + 1 }; });
+  if (o.page || o.side) tel.push(`${id} ${JSON.stringify(o)}`);
+  if (['gain', 'knee', 'tally', 'fibre', 'vecto'].includes(id)) { const side = await A.$('.camlab .cl-side'); if (side) await side.screenshot({ path: `${OUT}/40-tel-${id}.png` }).catch(() => {}); }
+}
+T.check('téléphone : les 51 fiches sans défilement horizontal', !tel.length, tel.join(' | ').slice(0, 600));
 
 await browser.close();
 await T.finish();
