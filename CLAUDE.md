@@ -47,6 +47,14 @@ Tout est en français (code commenté en français, interface, commits).
 - **Livret de compétences** : référentiel TIEE dans `src/content/referentiel.js` (RATTACHEMENT : parcours,
   missions, phases, réseau, exercices, cours, camera), calcul pur dans `src/livret.js`, affichage
   `src/ui/livret.js`. Toute nouvelle activité notée, toute nouvelle leçon se rattache à des compétences.
+- **La couche jeu (v19.2)**, `src/game/` : l'objectif en cours toujours à l'écran (`quest.js`, `#quest`, repère 3D
+  `#qmark`), le journal des missions (touche L, bouton Missions du HUD et des en-têtes de poste : exercices du poste,
+  toutes les missions par chapitre, badges), XP / niveaux / badges (`xp.js`, calcul pur, barème `BAREME`, badges de
+  compétence pilotés par `src/livret.js`), accroches sur les événements (`progression.js`), effets (`fx.js`) et
+  bruitages WebAudio (`sfx.js`, réglage dans Réglages → Jeu). Toute nouvelle activité notée émet un événement et
+  prend une ligne dans `progression.js`. Le thème visuel est `src/styles/theme-jeu.css` (chargé en dernier : il
+  redéfinit les jetons de couleur et les composants) ; une animation d'entrée n'anime que la position, jamais
+  l'opacité finale. L'ancienne carte `#mission` reste dans le code mais est masquée : l'objectif la remplace.
 - Les fiches « ? » (`src/content/netterms.js` + `terms_*.js`, figures `src/ui/figs_*.js`) restent la source
   des définitions courtes ; une leçon les cite dans `terms`.
 
