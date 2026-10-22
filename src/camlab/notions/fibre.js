@@ -54,6 +54,6 @@ export const FIBRE = {
   ],
   see: ['connectique', 'alimentation', 'ccu', 'menu', 'rcp'],
   ref: 'SMPTE ST 311 (câble hybride : deux fibres monomodes, conducteurs d\'énergie et basse tension) et ST 304 (connecteur, type LEMO 3K.93C) ; fiches Sony HXC-FB80 et HXCU-FB80 : versions L (LEMO) et N (Neutrik, câble CCFN), 600 m au plus en câble hybride alimenté par la CCU (objectif portable), 10 km en fibre monomode LC avec alimentation locale ; inspection des faces : IEC 61300-3-35',
-  competences: ['2.7', '4.2', '4.5'],
+  competences: ['2.7', '4.2', '3.12'],
   cours: 'camera-systeme',
 };

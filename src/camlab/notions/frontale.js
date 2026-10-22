@@ -53,5 +53,5 @@ export const FRONTALE = {
   ],
   see: ['defauts', 'nd', 'iris', 'focale', 'waveform'],
   ref: 'Fresnel (incidence normale) : R = ((n − 1) / (n + 1))² ; fiche Fujinon ZA12x4.5BERD : champ 93,6° × 61,8° à 4,5 mm, filetage de filtre sur le pare-soleil ; dimensions du pare-soleil : caméra 3D du module',
-  competences: ['4.5', '2.7'],
+  competences: ['3.12', '2.7'],
 };

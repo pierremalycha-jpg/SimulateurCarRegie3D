@@ -50,5 +50,5 @@ export const FICHIERS = {
   ],
   see: ['menu', 'lineup', 'rcp', 'gamma', 'knee', 'matrice'],
   ref: 'Mode d\'emploi HXC-FB80 : menu FILE, pages F01 OPERATOR FILE (menu OPERATION et menu USER), F02 SCENE FILE (fichiers 1 à 5 : STORE puis le numéro ; le numéro seul rappelle), F03 REFERENCE (STORE FILE, ALL PRESET), F04 LENS FILE, F05 FILE CLEAR',
-  competences: ['2.9', '4.5'],
+  competences: ['2.9', '3.12'],
 };
