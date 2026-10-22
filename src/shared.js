@@ -3,6 +3,7 @@ import { S, emit, on } from './state.js';
 import { EQUIP } from './equip.js';
 import { setSoundPlan, applyAudioPatch } from './audio.js';
 import { applyOverrides } from './params.js';
+import { mergeGame } from './game/xp.js';
 
 // ----------------------------------------------------------------------------------
 // Données partagées de la page publiée (capacités db / user / assets / downloads),
@@ -142,6 +143,8 @@ export function mergeProgress(d) {
     const C = PROG.cours = PROG.cours || {};
     for (const [id, p] of Object.entries(d.cours)) { if (!p) continue; const m = C[id] || (C[id] = { seen: false, quiz: null }); m.seen = m.seen || !!p.seen; m.quiz = best(m.quiz, p.quiz); }
   }
+  // progression du jeu (XP, badges) : une récompense obtenue sur l'un des appareils l'est pour de bon
+  if (d.game) { const G = /** @type {any} */ (PROG); G.game = mergeGame(G.game, d.game); }
   // module caméra : notions, quiz de chapitre, mise en service (meilleur résultat et derniers essais)
   if (d.camera) {
     const K = /** @type {any} */ (PROG.camera = PROG.camera || {});
