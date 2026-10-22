@@ -10,6 +10,7 @@ export const $$ = (s, r = document) => [...r.querySelectorAll(s)];
 export function toast(msg, kind = '', ms = 3200) {
   const t = $('#toast'); if (!t) return;
   t.textContent = msg; t.className = kind; t.hidden = false;
+  emit('toast', kind);
   clearTimeout(toastT); toastT = setTimeout(() => { t.hidden = true; }, ms);
 }
 
@@ -67,6 +68,7 @@ export const modal = {
     S.modalOpen = true;
     modal._onClose = opts.onClose || null;
     if (document.pointerLockElement) document.exitPointerLock();
+    emit('modalopen', title);
     return sheet;
   },
   close() { const m = $('#modal'); m.hidden = true; m.innerHTML = ''; S.modalOpen = false; const f = modal._onClose; modal._onClose = null; if (f) { try { f(); } catch (e) { console.error(e); } } emit('modalclose'); },

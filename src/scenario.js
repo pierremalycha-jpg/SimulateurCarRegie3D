@@ -1,5 +1,5 @@
 // @ts-check
-import { S, on } from './state.js';
+import { S, on, emit } from './state.js';
 import { el, mmss, randPick } from './util.js';
 import { $, toast, intercom, modal } from './ui/common.js';
 import { MIX, meSource, EVS, resolve, feedOf } from './pipeline.js';
@@ -92,6 +92,7 @@ function finish() {
   const score = max ? Math.round(pts / max * 100) : 0;
   const result = { score, phases: SC.phases, duration: Math.round(S.time - SC.t0), car: CFG.car.name || '' };
   addScenarioResult(result);
+  emit('scenarioDone', result);
   log(`Fin du scénario : ${score} %.`);
   const box = $('#scenario'); if (box) box.hidden = true;
   const advice = [];

@@ -1,5 +1,6 @@
 // @ts-check
 import { PROG, saveProgressSoon } from '../shared.js';
+import { emit } from '../state.js';
 
 // ----------------------------------------------------------------------------------
 // Les cours : des chapitres (le signal vidéo, le SDI, le réseau, la HF…) faits de leçons, une par
@@ -61,7 +62,7 @@ export function coursProgress(id) {
   return P[id] || (P[id] = { seen: false, quiz: /** @type {{ score: number, total: number } | null} */ (null) });
 }
 export function markSeen(id) { const p = coursProgress(id); if (!p.seen) { p.seen = true; PROG.updatedAt = Date.now(); saveProgressSoon(); } }
-export function recordQuiz(id, score, total) { const p = coursProgress(id); if (!p.quiz || score >= p.quiz.score) p.quiz = { score, total }; PROG.updatedAt = Date.now(); saveProgressSoon(); }
+export function recordQuiz(id, score, total) { const p = coursProgress(id); if (!p.quiz || score >= p.quiz.score) p.quiz = { score, total }; PROG.updatedAt = Date.now(); saveProgressSoon(); emit('quiz', { id, score, total }); }
 /** leçon acquise : quiz réussi en entier */
 export const lessonDone = (id) => { const q = coursProgress(id).quiz; return !!q && q.score === q.total; };
 export const chapterDone = (ch) => ch.lessons.filter((l) => lessonDone(l.id)).length;

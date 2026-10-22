@@ -1,6 +1,6 @@
 // @ts-check
 import { el } from '../util.js';
-import { S } from '../state.js';
+import { S, emit } from '../state.js';
 import { icon } from './icons.js';
 
 // ----------------------------------------------------------------------------------
@@ -42,6 +42,7 @@ export function openLayer(o) {
     el('p', { class: 'ly-msg', role: 'status', hidden: true }));
   document.body.append(root); document.body.classList.add('layer-on');
   LY.root = root;
+  emit('layeropen', o.kind);
   showTab(o.tab || (o.tabs && o.tabs[0] ? o.tabs[0][0] : ''));
   const t = /** @type {HTMLElement | null} */ (root.querySelector('.tab.on') || root.querySelector('.ly-close'));
   if (t && !matchMedia('(pointer: coarse)').matches) t.focus({ preventScroll: true });
@@ -68,6 +69,7 @@ export function closeLayer(restore = true) {
   clearTimeout(LY.msgT);
   if (restore && LY.prev && LY.prev.isConnected && S.mode !== 'fps') LY.prev.focus({ preventScroll: true });
   LY.prev = null;
+  emit('layerclose');
 }
 /** message dans la ligne d'état de l'espace (quelques secondes) */
 export function layerSay(text, ms = 5000) {

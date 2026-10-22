@@ -78,7 +78,7 @@ export function injectFault(id, hidden = false) {
   ACTIVE.push(entry);
   toast(hidden ? 'Une panne a été injectée. À vous de la trouver !' : `Panne injectée : ${f.label}`, 'bad');
   if (hidden) intercom('CHAÎNE', 'Problème signalé côté antenne ou régie, pouvez-vous vérifier ?', 'bad');
-  emit('fault');
+  emit('fault'); emit('faultNew', entry);
   return entry;
 }
 export function activeFaults() { return ACTIVE.filter((a) => !a.done); }
@@ -89,7 +89,7 @@ export function updateFaults() {
       a.done = true; a.dt = S.time - a.t0; S.faultsSolved++;
       if (a.f.id === 'jam') { /* le brouilleur reste sur sa fréquence */ }
       toast(`Panne résolue en ${Math.round(a.dt)} s : ${a.f.label}`, 'good', 5000);
-      emit('fault');
+      emit('fault'); emit('faultSolved', a);
     }
   }
 }
