@@ -155,14 +155,16 @@ export function evaluate(B) {
     return null;
   };
   // on itère : l'énergie se propage de proche en proche (mur → bandeau → bloc 12 V → appareil…)
-  /** @type {Record<string, number>} */
+  /** @type {Record<string, number>} puissance PoE+ débitée par switch (comptée une fois, à la dernière passe) */
   const poeUsed = {};
+  /** @type {Record<string, ReturnType<typeof fedBy>>} par quoi chaque appareil est alimenté */
+  const alimPar = {};
   for (let pass = 0; pass < 8; pass++) {
     for (const k of Object.keys(poeUsed)) poeUsed[k] = 0;
     for (const a of B.appareils) {
       const m = M(a); if (!m) continue;
       if (m.pose === 'mur') { E.power[a.uid] = { on: true, source: 'réseau électrique', why: '', watts: 0 }; continue; }
-      const f = fedBy(a);
+      const f = fedBy(a); alimPar[a.uid] = f;
       const sw = (a.cfg && a.cfg.interrupteur === false) || a.on === false;
       const needs = m.ports.some((p) => (p.sig === 'secteur' || p.sig === 'dc12' || (p.sig === 'ip' && p.poe)) && (p.dir === 'in' || p.dir === 'io'));
       if (!needs) { E.power[a.uid] = { on: true, source: 'sans alimentation', why: '', watts: 0 }; continue; }
@@ -173,6 +175,15 @@ export function evaluate(B) {
       if (!sw) for (const p of m.ports) if ((p.sig === 'secteur' || p.sig === 'dc12') && p.dir === 'out') secteur.add(key(a.uid, p.id));
     }
   }
+  // ce qu'un switch débite en PoE+ et un bloc en 12 V passe par leur prise secteur : on le replie dans leurs watts
+  for (let pass = 0; pass < 2; pass++) {
+    /** @type {Record<string, number>} */ const fournit = {};
+    for (const a of B.appareils) { const f = alimPar[a.uid]; if (!f || !on(a.uid) || (f.source !== 'PoE+' && f.source !== '12 V')) continue; fournit[f.via] = (fournit[f.via] || 0) + (f.source === 'PoE+' ? (f.watts || (M(a) && M(a).watts) || 0) : ((M(a) && M(a).watts) || 0)); }
+    for (const [uid, w] of Object.entries(fournit)) if (E.power[uid]) E.power[uid].watts = ((M(byUid.get(uid)) || {}).watts || 0) + w;
+  }
+  /** charge secteur en aval d'un appareil qui distribue le secteur (bandeau) : ses appareils, et les bandeaux qu'il alimente */
+  const charge = (/** @type {string} */ uid, depth = 0) => { let w = 0; if (depth > 6) return 0; for (const a of B.appareils) { const f = alimPar[a.uid]; if (f && f.source === 'secteur' && f.via === uid && on(a.uid)) w += E.power[a.uid].watts + charge(a.uid, depth + 1); } return w; };
+  for (const a of B.appareils) { const m = M(a); if (!m || m.pose === 'mur' || !on(a.uid) || !m.ports.some((p) => p.sig === 'secteur' && p.dir === 'out')) continue; const w = charge(a.uid); if (w > BANDEAU_W) alerte(a.uid, 'erreur', `${w} W sur un bandeau de 10 A (${BANDEAU_W} W) : son fusible saute.`); }
   // budget PoE des switchs
   for (const a of B.appareils) {
     const m = M(a); if (!m || !m.ports.some((p) => p.poe && p.sig === 'ip' && m.famille === 'reseau')) continue;
@@ -192,7 +203,8 @@ export function evaluate(B) {
   const parent = new Map();
   const find = (x) => { while (parent.has(x) && parent.get(x) !== x) x = parent.get(x); return x; };
   const union = (x, y) => { const a = find(x), b = find(y); if (!parent.has(a)) parent.set(a, a); if (!parent.has(b)) parent.set(b, b); if (a !== b) parent.set(b, a); };
-  const vlanDe = (/** @type {Appareil} */ sw, /** @type {string} */ port) => { const p = sw.cfg.ports[switchPortNum(port)]; return p && p.vlan != null ? Number(p.vlan) : 1; };
+  /** VLAN d'un port de switch (cfg.ports[n].vlan, 1 par défaut) ; 0 : port non commuté (hors de cfg.ports, comme OOB) */
+  const vlanDe = (/** @type {Appareil} */ sw, /** @type {string} */ port) => { const p = sw.cfg.ports[switchPortNum(port)]; if (!p) return 0; return p.vlan != null ? Number(p.vlan) : 1; };
   for (const c of B.cables) {
     if (c.sig !== 'ip' || !E.cables[c.uid] || !E.cables[c.uid].ok) continue;
     if (!on(c.a.dev) || !on(c.b.dev)) continue;
@@ -201,7 +213,7 @@ export function evaluate(B) {
   for (const a of B.appareils) {
     const m = M(a); if (!m || !on(a.uid)) continue;
     const ipPorts = m.ports.filter((p) => p.sig === 'ip');
-    if (isSwitch(m, a.cfg)) { const first = {}; for (const p of ipPorts) { const v = vlanDe(a, p.id); if (first[v]) union(key(a.uid, first[v]), key(a.uid, p.id)); else first[v] = p.id; } } else if (isRouteur(m, a.cfg)) { const lan = ipPorts.filter((p) => !/^wan/.test(p.id)); for (let i = 1; i < lan.length; i++) union(key(a.uid, lan[0].id), key(a.uid, lan[i].id)); } else if (ipPorts.length > 1) { for (let i = 1; i < ipPorts.length; i++) union(key(a.uid, ipPorts[0].id), key(a.uid, ipPorts[i].id)); }
+    if (isSwitch(m, a.cfg)) { const first = {}; for (const p of ipPorts) { const v = vlanDe(a, p.id); if (!v) continue; if (first[v]) union(key(a.uid, first[v]), key(a.uid, p.id)); else first[v] = p.id; } } else if (isRouteur(m, a.cfg)) { const lan = ipPorts.filter((p) => !/^wan/.test(p.id)); for (let i = 1; i < lan.length; i++) union(key(a.uid, lan[0].id), key(a.uid, lan[i].id)); } else if (ipPorts.length > 1) { for (let i = 1; i < ipPorts.length; i++) union(key(a.uid, ipPorts[0].id), key(a.uid, ipPorts[i].id)); }
   }
   /** interface réseau de chaque appareil : le port qui la porte, l'adresse voulue */
   /** @type {Record<string, { port: string, dhcp: boolean, ip: string, mask: string, gw: string, lie: boolean, dom: string, ipN: number | null, pfx: number | null }>} */
@@ -218,7 +230,7 @@ export function evaluate(B) {
       port = (lan.find((p) => liePort(a, p.id)) || lan[0] || { id: '' }).id;
       cfgIp = { dhcp: false, ip: String(a.cfg.lan.ip || ''), mask: String(a.cfg.lan.mask || '255.255.255.0'), gw: '' };
     } else {
-      if (isSwitch(m, a.cfg) || ipPorts.length > 1) { const lies = ipPorts.filter((p) => liePort(a, p.id)); const v1 = isSwitch(m, a.cfg) ? lies.filter((p) => vlanDe(a, p.id) === 1) : lies; port = (v1[0] || lies[0] || ipPorts.find((p) => p.nic) || ipPorts[0] || { id: '' }).id; } else port = (ipPorts.find((p) => p.nic) || ipPorts[0] || { id: '' }).id;
+      if (isSwitch(m, a.cfg) || ipPorts.length > 1) { const lies = ipPorts.filter((p) => liePort(a, p.id)); const v1 = isSwitch(m, a.cfg) ? lies.filter((p) => vlanDe(a, p.id) === 1) : lies; const comm = isSwitch(m, a.cfg) ? lies.filter((p) => vlanDe(a, p.id) > 0) : lies; port = (v1[0] || comm[0] || lies[0] || ipPorts.find((p) => p.nic) || ipPorts[0] || { id: '' }).id; } else port = (ipPorts.find((p) => p.nic) || ipPorts[0] || { id: '' }).id;
       cfgIp = { dhcp: !!(r && r.dhcp), ip: String((r && r.ip) || ''), mask: String((r && r.mask) || ''), gw: String((r && r.gw) || '') };
     }
     const lie = port ? (isSwitch(m, a.cfg) || isRouteur(m, a.cfg) || ipPorts.length > 1 ? ipPorts.some((p) => liePort(a, p.id)) : liePort(a, port)) : false;
@@ -251,7 +263,7 @@ export function evaluate(B) {
   const domNom = {};
   for (const a of B.appareils) {
     const m = M(a); if (!m || !on(a.uid)) continue;
-    if (isSwitch(m, a.cfg)) for (const p of m.ports) { if (p.sig !== 'ip') continue; const d = find(key(a.uid, p.id)); if (!domNom[d]) domNom[d] = `${a.nom} · VLAN ${vlanDe(a, p.id)}`; }
+    if (isSwitch(m, a.cfg)) for (const p of m.ports) { if (p.sig !== 'ip') continue; const v = vlanDe(a, p.id); const d = find(key(a.uid, p.id)); if (!domNom[d]) domNom[d] = v ? `${a.nom} · VLAN ${v}` : `${a.nom} · ${p.label} (hors commutation)`; }
   }
   for (const a of B.appareils) { const m = M(a); const n = net[a.uid]; if (!m || !n || !n.dom || domNom[n.dom]) continue; domNom[n.dom] = isRouteur(m, a.cfg) ? `${a.nom} · LAN` : m.ports.filter((p) => p.sig === 'ip').length > 1 ? `${a.nom} · switch interne` : ''; }
   const membres = {}; for (const [uid, n] of Object.entries(net)) if (n.dom) (membres[n.dom] = membres[n.dom] || []).push(uid);
@@ -315,7 +327,7 @@ export function evaluate(B) {
   /** source audio d'un Teranex embedder selon cfg.entree */
   const entreeAudio = (/** @type {Appareil} */ a, /** @type {Modele} */ m) => {
     const e = a.cfg.entree || 'xlr';
-    return m.ports.filter((p) => p.dir === 'in' && (e === 'aes' ? p.sig === 'aes' : p.sig === 'audio' && (e === 'xlr' ? /xlr/.test(p.kind) : e === 'rca' ? p.kind === 'rca' : e === 'optique' ? p.kind === 'toslink' : true)));
+    return m.ports.filter((p) => p.dir === 'in' && (p.sig === 'audio' || p.sig === 'aes') && (e === 'optique' ? p.kind === 'toslink' : e === 'aes' ? p.sig === 'aes' && p.kind !== 'toslink' : e === 'rca' ? p.kind === 'rca' : /xlr/.test(p.kind)));
   };
   for (let pass = 0; pass < 10; pass++) {
     let changed = false;
@@ -396,7 +408,7 @@ export function evaluate(B) {
           const mic = microSur(a, entreeAudio(a, m));
           const paire = Number(cfg.paire) || 1;
           for (const p of vout) {
-            if (thruTargets.has(p.id)) continue;
+            // la sortie SDI de l'embedder est déclarée comme boucle de l'entrée : elle recopie l'image, avec la paire remplacée
             if (!f) { set(key(a.uid, p.id), null); continue; }
             const g = via(f, a.uid);
             if (mic) { g.audio = g.audio.filter((x) => x.ch !== paire * 2 - 1 && x.ch !== paire * 2); g.audio.push({ ch: paire * 2 - 1, from: mic.uid }, { ch: paire * 2, from: mic.uid }); g.audio.sort((x, y) => x.ch - y.ch); }
@@ -627,7 +639,7 @@ export function evaluate(B) {
       if (m.ports.some((p) => (p.sig === 'tally' || p.sig === 'gpio') && p.dir !== 'in')) {
         const rps = pupitresDepuis(a); const map = cfg.tally && typeof cfg.tally === 'object' ? cfg.tally : null;
         for (const { rp, relais, port } of rps) {
-          for (let s = 1; s <= 10; s++) {
+          for (let s = 1; s <= 16; s++) {
             const entree = map ? Number(map[s]) : s; if (!entree) continue;
             if (entree === pgm) allume([{ rp, relais, port }], s, 'pgm', `${a.nom} (TALLY ${s})`);
             if (pvw && entree === pvw) allume([{ rp, relais, port }], s, 'pvw', `${a.nom} (TALLY ${s})`);
