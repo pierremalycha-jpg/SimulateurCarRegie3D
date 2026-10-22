@@ -17,6 +17,7 @@ import { AIM, act } from './interact.js';
 import { openPupitre } from '../ui/pupitre.js';
 import { titleOpen, titleKey } from './title.js';
 import { camlabOpen } from '../camlab/index.js';
+import { entrepotOpen } from '../entrepot/index.js';
 
 // ----------------------------------------------------------------------------------
 // Entrées : clavier, souris (regard verrouillé ou glissé), molette, écran tactile.
@@ -25,7 +26,7 @@ const isTyping = (e) => e.target && ['INPUT', 'SELECT', 'TEXTAREA'].includes(e.t
 
 function onKeyDown(e) {
   // module « La caméra » : il a ses propres touches
-  if (camlabOpen()) return;
+  if (camlabOpen() || entrepotOpen()) return;
   // confirmation dans la page : Échap = annuler, Entrée = bouton qui a le focus ; rien d'autre
   if (askOpen()) { if (e.code === 'Escape') { closeAsk(false); e.preventDefault(); } return; }
   // fenêtre explicative « ? » : Échap la ferme (sans fermer le poste) ; les autres touches ne pilotent rien

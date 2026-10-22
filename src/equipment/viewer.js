@@ -328,6 +328,25 @@ const CONTROL_HINT = {
   'mixpanel:xpt': 'Dans le simulateur : rangées de boutons du poste Truquiste.', 'mixpanel:trans': 'Dans le simulateur : module de transition du poste Truquiste (MIX, WIPE, DME, CLIP, CUT, AUTO, levier).', 'mixpanel:snap': 'Dans le simulateur : boutons SNAPSHOT du poste Truquiste.',
 };
 
+/**
+ * Dessine une face (le format de devices.js : body, group, text, port, led, btn, lcd, knob, sw…) dans
+ * un conteneur, pour un autre module que la visionneuse (l'entrepôt). st : état en direct (voyants,
+ * afficheurs) ; conns : par port, { ok, color } pour l'anneau de couleur ; onPick(id) au clic.
+ * @param {HTMLElement} host @param {{ w: number, h: number, items: any[] }} v
+ * @param {Partial<ReturnType<typeof liveState>>} [st] @param {Record<string, { ok: boolean, color: string }>} [conns] @param {(id: string) => void} [onPick]
+ */
+export function drawFace(host, v, st = {}, conns = {}, onPick = () => {}, label = '') {
+  host.innerHTML = '';
+  const svg = E('svg', { viewBox: `0 0 ${v.w} ${v.h}`, width: '100%', role: 'img', 'aria-label': label || 'Face de l\'appareil' }, host);
+  svg.style.display = 'block';
+  const defs = E('defs', {}, svg);
+  const lg = E('linearGradient', { id: 'metal', x1: 0, y1: 0, x2: 0, y2: 1 }, defs); E('stop', { offset: '0', 'stop-color': '#343a41' }, lg); E('stop', { offset: '1', 'stop-color': '#262b30' }, lg);
+  const f = E('filter', { id: 'glow', x: '-50%', y: '-50%', width: '200%', height: '200%' }, defs); E('feGaussianBlur', { stdDeviation: 3, result: 'b' }, f); const mg = E('feMerge', {}, f); E('feMergeNode', { in: 'b' }, mg); E('feMergeNode', { in: 'SourceGraphic' }, mg);
+  const full = { led: {}, btn: {}, lcd: {}, knob: {}, bar: {}, label: {}, joy: null, lever: null, screen: null, ...st };
+  for (const it of v.items) drawItem(svg, it, full, null, conns, onPick);
+  return svg;
+}
+
 export function openDevice(key, n = 1, opts = {}) {
   let def = deviceDef(key);
   const inst = instances(key);

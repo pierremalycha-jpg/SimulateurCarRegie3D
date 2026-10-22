@@ -19,7 +19,7 @@
 .jo-step h2 { display: flex; align-items: center; gap: 10px; margin: 0; font: 700 17px var(--f-disp); }
 .jo-n { display: inline-grid; place-items: center; width: 24px; height: 24px; border-radius: 3px; background: var(--glass); border: 1px solid #070a0c; color: var(--amber); font: 700 13px var(--f-mono); }
 /* le lieu : deux écrans de multiview, le car en service, la salle de concert en préparation */
-.jo-lieux { grid-template-columns: repeat(2, minmax(0, 1fr)); max-width: 640px; }
+.jo-lieux { grid-template-columns: repeat(3, minmax(0, 1fr)); max-width: 900px; }
 .jo-lieux .lx-sil .ico { width: 36px; height: 36px; }
 /* le mode : trois touches larges, une seule allumée */
 .jo-modes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }

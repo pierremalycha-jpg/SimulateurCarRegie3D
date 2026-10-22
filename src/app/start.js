@@ -23,6 +23,8 @@ import { buildToolbar } from './hud.js';
 import { setupTouch } from './input.js';
 import { icon } from '../ui/icons.js';
 import { LIEUX } from '../content/lieux.js';
+import { MISSIONS } from '../entrepot/missions.js';
+import { montageEnregistre } from '../entrepot/build.js';
 import { showTitle } from './title.js';
 
 // ----------------------------------------------------------------------------------
@@ -71,11 +73,12 @@ export function buildStart() {
   const snd = selector('stsnd', 'Son', [['1', 'Ambiance et commentaires'], ['0', 'Coupé']], '1', () => updSum());
   updFmt();
   // le choix : le lieu, le mode, seul ou en coopération
-  const PICK = { mode: 'installe', team: 'solo' };
+  const PICK = { lieu: 'car', mode: 'installe', team: 'solo', ep: MISSIONS.length ? MISSIONS[0].id : '' };
   // premier lancement dans ce navigateur : la visite guidée est proposée d'office
   try { if (localStorage.getItem('carregie.chefIntro') !== '1') PICK.mode = 'visite'; } catch (e) { /* stockage indisponible */ }
   const run = (preset) => start(preset, light.value, qual.value, snd.value === '1', fmt.value, infra.value === 'ip');
   const go = () => {
+    if (PICK.lieu === 'entrepot') { emit('entrepot', { mission: PICK.ep === 'reprendre' ? '' : PICK.ep, reprendre: PICK.ep === 'reprendre' }); return; }
     const M = MODES.find((m) => m.id === PICK.mode) || MODES[0];
     if (PICK.team === 'coop') { openSessionPanel(); return; }
     S.chefTour = M.id === 'visite'; S.visite = M.id === 'visite';
@@ -109,7 +112,7 @@ export function buildStart() {
   };
   const concert = LIEUX.find((L) => L.id === 'concert');
   const lieu = (id, nom, cadre, live, icons, onclick) => el('li', {},
-    el('button', { type: 'button', class: 'lx' + (live ? ' on' : ''), 'data-lieu': id, 'aria-pressed': live ? 'true' : 'false', onclick },
+    el('button', { type: 'button', class: 'lx' + (live && PICK.lieu === id ? ' on' : ''), 'data-lieu': id, 'aria-pressed': live && PICK.lieu === id ? 'true' : 'false', onclick },
       el('span', { class: 'lx-scr ' + (live ? 'live' : 'bars'), 'aria-hidden': 'true' },
         el('span', { class: 'lx-sil' }, ...icons.map((n) => icon(n))),
         el('span', { class: 'lx-sig' }, live ? 'En service' : 'En préparation')),
@@ -124,7 +127,23 @@ export function buildStart() {
   const teamSeg = el('div', { class: 'seg jo-team-seg', role: 'group', 'aria-label': 'Seul ou en équipe' });
   const teamNote = el('p', { class: 'note' });
   const lan = lanAvailable();
+  // les « modes » de l'entrepôt : les cahiers des charges, le bac à sable, et le montage enregistré
+  const epModes = () => [
+    ...MISSIONS.map((x) => ({ id: x.id, ico: 'materiel', title: x.titre, desc: `${x.client}. ${x.brief}`, lamp: 'Mission', go: 'Entrer dans l\'entrepôt' })),
+    { id: '', ico: 'processeur', title: 'Bac à sable', desc: 'Pas de commande : sortez le matériel que vous voulez, câblez, configurez, et regardez ce qui marche.', lamp: 'Libre', go: 'Entrer dans l\'entrepôt' },
+    ...(montageEnregistre() ? [{ id: 'reprendre', ico: 'plan', title: 'Reprendre le montage', desc: 'Votre dernier montage, tel que vous l\'avez laissé.', lamp: 'Reprise', go: 'Reprendre' }] : []),
+  ];
   const draw = () => {
+    for (const b of lieuxWall.querySelectorAll('.lx')) { const on = /** @type {HTMLElement} */ (b).dataset.lieu === PICK.lieu; b.classList.toggle('on', on); b.setAttribute('aria-pressed', String(on)); }
+    if (PICK.lieu === 'entrepot') {
+      const L = epModes(); if (!L.some((m) => m.id === PICK.ep)) PICK.ep = L[0].id;
+      modes.replaceChildren(...L.map((m) => el('button', { type: 'button', class: 'jo-mode', 'data-mode': 'ep:' + (m.id || 'libre'), 'aria-pressed': String(m.id === PICK.ep), onclick: () => { PICK.ep = m.id; draw(); } }, icon(m.ico), el('b', {}, m.title), el('span', {}, m.desc))));
+      teamSeg.replaceChildren(el('button', { type: 'button', 'data-v': 'solo', 'aria-pressed': 'true' }, 'Solo'), el('button', { type: 'button', 'data-v': 'coop', 'aria-pressed': 'false', disabled: '' }, 'Coopération'));
+      teamNote.textContent = 'L\'entrepôt se monte seul : le matériel, le câblage et la configuration sont à vous.';
+      const N = L.find((m) => m.id === PICK.ep) || L[0];
+      lamp.textContent = N.lamp; goTitle.textContent = N.go; goDesc.textContent = N.id === 'reprendre' ? N.desc : 'Sortir le matériel du stock, le poser, le câbler et le configurer jusqu\'à ce que le cahier des charges soit rempli.';
+      return;
+    }
     const M = MODES.find((m) => m.id === PICK.mode) || MODES[0];
     // la coopération se joue avec le car installé : les autres modes se font seul
     if (PICK.team === 'coop' && M.id !== 'installe') PICK.mode = 'installe';
@@ -139,6 +158,11 @@ export function buildStart() {
     goTitle.textContent = PICK.team === 'coop' ? 'Ouvrir le salon' : N.go;
     goDesc.textContent = PICK.team === 'coop' ? 'Créez la partie ou rejoignez celle d\'un collègue, choisissez votre rôle, puis entrez dans le car ensemble.' : N.desc;
   };
+  const entrepot = LIEUX.find((L) => L.id === 'entrepot');
+  const lieuxWall = el('ul', { class: 'lx-wall jo-lieux' },
+    lieu('car', 'Car régie', 'Captation sportive au stade', true, ['car', 'terrain'], () => { PICK.lieu = 'car'; draw(); modes.querySelector('[aria-pressed="true"]')?.focus(); }),
+    entrepot ? lieu('entrepot', entrepot.nom, entrepot.cadre, true, entrepot.icons, () => { PICK.lieu = 'entrepot'; draw(); modes.querySelector('[aria-pressed="true"]')?.focus(); }) : null,
+    concert ? lieu('concert', 'Salle de concert', concert.cadre, false, concert.icons, () => teaser(concert)) : null);
   draw();
   const step = (n, title, ...kids) => el('section', { class: 'jo-step', 'aria-label': title }, el('h2', {}, el('span', { class: 'jo-n' }, String(n)), title), ...kids);
   s.append(el('div', { class: 'jouer' },
@@ -156,9 +180,7 @@ export function buildStart() {
         el('span', {}, el('em', {}, 'Antenne '), '20:45   ', el('em', {}, 'Coup d\'envoi '), '21:00'),
         truckLine)),
     el('div', { class: 'jo-steps' },
-      step(1, 'Le lieu', el('ul', { class: 'lx-wall jo-lieux' },
-        lieu('car', 'Car régie', 'Captation sportive au stade', true, ['car', 'terrain'], () => modes.querySelector('[aria-pressed="true"]')?.focus()),
-        concert ? lieu('concert', 'Salle de concert', concert.cadre, false, concert.icons, () => teaser(concert)) : null)),
+      step(1, 'Le lieu', lieuxWall),
       step(2, 'Le mode', modes),
       step(3, 'En équipe', el('div', { class: 'jo-team' }, teamSeg, teamNote),
         lan ? el('p', { class: 'note cs-lan' }, el('b', {}, 'Réseau local'), ` : ce simulateur est servi par l'ordinateur de l'hôte (${location.host}).`) : null)),
