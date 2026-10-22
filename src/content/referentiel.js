@@ -186,6 +186,9 @@ export const RATTACHEMENT = {
     atelier: ['2.7', '4.2'],
     quiz2110: ['3.6'],
     examenReseau: ['2.13', '3.6'],
+    // l'entrepôt : une régie mobile montée de A à Z d'après un cahier des charges (traduire la commande,
+    // mettre en place et rendre opérant, interconnecter, tester)
+    entrepot: ['1.1', '2.1', '2.10', '3.9'],
   },
   cours: {
     'signal-422': ['1.4', '2.2'], 'signal-bits': ['1.4', '2.2'], 'signal-niveaux': ['1.4', '2.2'], 'signal-formats': ['1.4', '2.10'], 'signal-couleur': ['1.4', '2.2'],
@@ -199,7 +202,7 @@ export const RATTACHEMENT = {
     'ralentis-evs': ['2.12', '2.9', '2.7'], 'ralentis-clips': ['2.5', '2.12', '3.7', '3.14'],
     'son-tranche': ['1.4', '2.9'], 'son-n1': ['1.4', '2.2', '2.11'],
     'expl-lineup': ['1.4', '2.2', '3.9'], 'expl-depannage': ['2.13', '3.10', '3.12'], 'expl-intercom': ['4.1', '2.8', '2.10'],
-    'expl-transmission': ['2.11', '3.12', '4.4'], 'expl-match': ['2.1', '2.8', '4.1'],
+    'expl-transmission': ['2.11', '3.12', '4.4'], 'expl-regie-mobile': ['1.1', '2.1', '2.10', '3.9'], 'expl-match': ['2.1', '2.8', '4.1'],
   },
   camera: {
     // la mise en service : rendre opérant (2.7), exploiter (2.9) et tester (3.9) la caméra ; interconnecter

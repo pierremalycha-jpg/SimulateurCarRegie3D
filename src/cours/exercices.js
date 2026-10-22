@@ -25,8 +25,11 @@ export const SPECIAL = {
   'x-brassage': { title: 'Le car vide : tout brasser, noté', summary: 'Rien n\'est brassé : reliez chaque liaison au bon endroit en suivant la liste de câblage, jusqu\'à ce que le multiview soit complet.', duration: '20 min', level: 'intermédiaire', go: { preset: 'brassage', label: 'Lancer le car vide' } },
   'x-reseau': { title: 'Formation réseau ST 2110 : 14 missions, quiz, examen', summary: 'Dans le poste Réseau IP : de la lecture de la topologie au dépannage, puis un quiz et un examen de trois pannes cachées.', duration: '2 h', level: 'avancé', go: { station: 'reseau', tab: 'learn', ip: true, label: 'Ouvrir la formation' } },
   'x-camera': { title: 'Mise en service de la caméra de plateau, notée', summary: 'Dans le module « La caméra en 3D » : de l\'objectif démonté au fichier de scène, avec la fibre, la CCU, le RCP, le viseur, le tirage, les balances et l\'exposition. L\'ordre, chaque geste et le temps sont notés sur 100.', duration: '10 min', level: 'intermédiaire', go: { camera: 'mes', label: 'Ouvrir la mise en service' } },
+  'x-entrepot': { title: 'L\'entrepôt : monter la régie de la cérémonie, notée', summary: 'Dans l\'entrepôt : trois caméras PTZ, un pupitre, un mélangeur, un enregistreur, un embedder pour le micro de la salle. Sortir le matériel, le poser, le câbler, le configurer (adresses, formats, tally) jusqu\'à remplir le cahier des charges.', duration: '30 min', level: 'intermédiaire', go: { entrepot: 'conference', label: 'Entrer dans l\'entrepôt' } },
   'x-match': { title: 'Jour de match : line-up, test de ligne, direct avec pannes', summary: 'De 17 h 30 à l\'antenne : line-up des caméras, test de ligne avec la chaîne, puis le direct, avec des pannes à résoudre. Chronométré et noté.', duration: '30 min', level: 'avancé', go: { preset: 'scenario', label: 'Lancer le jour de match' } },
 };
+/** meilleur score d'une mission de l'entrepôt (PROG.entrepot.missions[id].best), ou null */
+export const entrepotBest = (P, id) => { const m = P && P.entrepot && P.entrepot.missions ? P.entrepot.missions[id] : null; return m && m.best != null ? Number(m.best.score ?? m.best) : null; };
 const best = (a) => (a && a.length ? Math.max(...a.map((x) => x.score || 0)) : null);
 /** résultat d'un exercice noté : { done, text } */
 export function specialState(id) {
@@ -35,6 +38,7 @@ export function specialState(id) {
   if (id === 'x-brassage') return P.patchBest ? { done: P.patchBest >= 100, text: `brassage réussi à ${P.patchBest} %` } : { done: false, text: 'pas encore fait' };
   if (id === 'x-reseau') { const n = NET_MISSIONS.filter((m) => (N.missions || {})[m.id]).length; const e = best(N.exams); return { done: n === NET_MISSIONS.length && e != null && e >= 60, text: n || e != null ? `${n} / ${NET_MISSIONS.length} missions${e != null ? ` · examen ${e} %` : ''}` : 'pas encore commencé' }; }
   if (id === 'x-camera') { const b = mesBest(P); return b ? { done: b.score >= MES_SEUIL, text: `meilleur résultat ${b.score} / 100, ${b.errs} erreur${b.errs > 1 ? 's' : ''}, ${Math.floor(b.sec / 60)} min ${String(b.sec % 60).padStart(2, '0')} s` } : { done: false, text: 'pas encore faite' }; }
+  if (id === 'x-entrepot') { const b = entrepotBest(P, 'conference'); return b != null ? { done: b >= 60, text: `meilleur résultat ${b} / 100` } : { done: false, text: 'pas encore faite' }; }
   if (id === 'x-match') { const b = best(P.scenarios); return b != null ? { done: b >= 60, text: `meilleur score ${b} %` } : { done: false, text: 'pas encore joué' }; }
   return { done: false, text: '' };
 }

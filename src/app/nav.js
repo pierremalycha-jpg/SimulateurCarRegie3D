@@ -36,12 +36,15 @@ const NEXT_KEY = 'carregie.next';
  * @property {string} [preset] vacation à lancer
  * @property {boolean} [ip] demande le car IP
  * @property {string} [camera] le module « La caméra en 3D » ('mes' : sur l'exercice Mise en service)
+ * @property {string} [entrepot] le module L'entrepôt, sur cette mission ('' : bac à sable)
  */
 /** @param {Target} g */
 async function go(g) {
   if (!g) return;
   if (g.preset) { await play(g.preset); return; }
   // le module caméra s'ouvre par-dessus tout, sans le car ; en sortant, retour à la leçon d'où l'on vient
+  // l'entrepôt aussi : un mode à part, sans le car
+  if (g.entrepot !== undefined) { closeLayer(false); S.coursBack = null; emit('entrepot', { mission: g.entrepot || '' }); return; }
   if (g.camera) { closeLayer(false); const lesson = S.coursBack || undefined; S.coursBack = null; emit('camera', { from: 'cours', mes: g.camera === 'mes', lesson }); return; }
   if (!leaveTitle()) return;
   if (g.lesson) { closeLayer(false); await beginLesson(g.lesson); return; }
