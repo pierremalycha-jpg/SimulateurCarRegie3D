@@ -23,7 +23,7 @@ import { slider, seg, toggle, btnRow, linkBtn, lensRings, lensState, shell, scop
 const send = (ctx, s) => { if (ctx && ctx.lens) ctx.lens(s); };
 const readout = () => el('p', { class: 'cl-read' });
 const pc = (v, d = 1) => fr(v * 100, d) + ' %';
-const sgn = (v, d = 1) => (v > 0 ? '+' : v < 0 ? '−' : '') + fr(Math.abs(v), d);
+const sgn = (v, d = 1) => { const r = Math.round(v * 10 ** d) / 10 ** d; return (r > 0 ? '+' : r < 0 ? '−' : '') + fr(Math.abs(r), d); };
 const luma = (v) => Y709[0] * v[0] + Y709[1] * v[1] + Y709[2] * v[2];
 /** valeur de l'image (0 à 255) d'un pavé de l'échelle de gris de la mire (0 = noir, 10 = blanc) */
 const greyStep = (i) => Math.round(255 * Math.pow(i / 10, 1 / 1.1));
@@ -49,7 +49,11 @@ function plot(cv, o) {
   g.font = '600 9px "B612 Mono", monospace'; g.lineWidth = 1;
   for (const b of o.bands || []) { g.fillStyle = b.c; if (b.y) g.fillRect(L, Y(b.y[1]), w - L - R, Y(b.y[0]) - Y(b.y[1])); else g.fillRect(X(b.x[0]), T, X(b.x[1]) - X(b.x[0]), h - B - T); }
   for (const [v, t] of o.yt) { const y = Math.round(Y(v)) + 0.5; g.strokeStyle = INK.grid; g.beginPath(); g.moveTo(L, y); g.lineTo(w - R, y); g.stroke(); g.fillStyle = INK.txt; g.textAlign = 'right'; g.fillText(t, L - 4, y + 3); }
-  for (const [v, t] of o.xt) { const x = Math.round(X(v)) + 0.5; g.strokeStyle = INK.grid; g.beginPath(); g.moveTo(x, T); g.lineTo(x, h - B); g.stroke(); g.fillStyle = INK.txt; g.textAlign = 'center'; g.fillText(t, x, h - B + 11); }
+  for (const [v, t] of o.xt) {
+    const x = Math.round(X(v)) + 0.5, tw = g.measureText(t).width;
+    g.strokeStyle = INK.grid; g.beginPath(); g.moveTo(x, T); g.lineTo(x, h - B); g.stroke();
+    g.fillStyle = INK.txt; g.textAlign = 'center'; g.fillText(t, Math.max(tw / 2 + 2, Math.min(w - tw / 2 - 2, x)), h - B + 11);
+  }
   g.fillStyle = INK.txt;
   if (o.xl) { g.textAlign = 'right'; g.fillText(o.xl, w - R, h - 2); }
   if (o.yl) { g.textAlign = 'left'; g.fillText(o.yl, L + 4, T + 8); }
@@ -238,7 +242,7 @@ export const LABS_CH4 = {
         xl: 'lumière (% du blanc)', yl: 'signal (%)',
         bands: [{ y: [0, 0.3], c: st.bg ? 'rgba(76,195,230,0.10)' : 'rgba(0,0,0,0)' }],
         curves: [{ f: (x) => oetf(x), c: INK.ref, dash: [4, 3], w: 1.2 }, { f: (x) => x, c: 'rgba(205,210,215,0.25)', w: 1 }, { f: V, c: INK.cur, w: 2 }],
-        pts: [{ x: 0.18, y: v18, t: pc(v18, 0), c: INK.cur }, { x: 0.02, y: v02, t: pc(v02, 0), c: INK.pt, dy: -8 }],
+        pts: [{ x: 0.18, y: v18, t: pc(v18, 0), c: INK.cur, dy: 15 }, { x: 0.02, y: v02, t: pc(v02, 0), c: INK.pt, dy: -8 }],
       });
       sh.done(defis); sh.say(olivier(v18, v02));
       vf.draw({ f: o.f, dF: o.dF, N: o.N, light: 0.5, scene: 'portrait', gamma: g(), blackGamma: st.bg / 99 });
@@ -316,7 +320,7 @@ export const LABS_CH4 = {
   // =================================================================================
   /** le détail : le liseré au bord de la mire, CRISP contre le bruit, SKIN DTL sur le visage */
   detail(ctx) {
-    const st = { z: zoomPos(24), s: pointPos(MIRE_D), n: irisPos(5.6), nd: 1, on: false, level: 0.5, crisp: 0, skinOn: false, skin: 50, gain: 0, mag: false };
+    const st = { z: zoomPos(24), s: pointPos(MIRE_D), n: irisPos(5.6), nd: 1, on: false, level: 0.2, crisp: 0, skinOn: false, skin: 50, gain: 0, mag: false };
     const defis = [false, false, false];
     const W = 640, H = 360;
     const vf = makeViewfinder(W, H);
@@ -391,7 +395,7 @@ export const LABS_CH4 = {
       vf.draw({ f: o.f, dF: o.dF, N: o.N, light, gain: st.gain, noise: st.gain ? 0.006 : 0.0008, scene: 'portrait', clip: VMAX, detail, mag: st.mag });
       send(ctx, lensState(st, o, { light, gain: st.gain }));
     }
-    sh.node.append(btnRow(linkBtn('Recommencer', () => { Object.assign(st, { on: false, level: 0.5, crisp: 0, skinOn: false, skin: 50, gain: 0, mag: false }); on.mark(false); lv.set(0.5); cr.set(0); sk.mark(false); skl.set(50); mag.set(false); skinBox.hidden = true; defis.fill(false); up(); })));
+    sh.node.append(btnRow(linkBtn('Recommencer', () => { Object.assign(st, { on: false, level: 0.2, crisp: 0, skinOn: false, skin: 50, gain: 0, mag: false }); on.mark(false); lv.set(0.2); cr.set(0); sk.mark(false); skl.set(50); mag.set(false); skinBox.hidden = true; defis.fill(false); up(); })));
     up();
     return { node: sh.node, dispose: () => vf.dispose() };
   },

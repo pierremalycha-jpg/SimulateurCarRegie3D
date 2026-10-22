@@ -99,6 +99,9 @@ function drawPresenter(g, cx, cy, ppm) {
   // les cheveux, derrière le visage jusqu'aux épaules
   g.fillStyle = '#2b1d14'; g.beginPath(); g.ellipse(cx, cy - m(0.012), m(0.104), m(0.132), 0, 0, Math.PI * 2); g.fill();
   g.fillRect(cx - m(0.104), cy - m(0.012), m(0.208), m(0.19));
+  // des mèches plus claires (le visage passe ensuite par-dessus)
+  const r2 = lcg(5); g.strokeStyle = 'rgba(96,70,50,0.55)'; g.lineWidth = Math.max(1, m(0.0015));
+  for (let i = 0; i < 26; i++) { const x0 = (r2() - 0.5) * 0.19, side = x0 < 0 ? -1 : 1; g.beginPath(); g.moveTo(cx + m(x0 * 0.5), cy - m(0.13)); g.quadraticCurveTo(cx + m(x0 + side * 0.03), cy - m(0.05), cx + m(x0 * 1.05), cy + m(0.17)); g.stroke(); }
   g.fillStyle = '#bf8a6d'; g.fillRect(cx - m(0.04), cy + m(0.06), m(0.08), m(0.1));
   g.beginPath(); g.moveTo(cx - m(0.04), cy + m(0.15)); g.lineTo(cx + m(0.04), cy + m(0.15)); g.lineTo(cx, cy + m(0.21)); g.closePath(); g.fill();
   // le visage, son grain, les joues
@@ -120,9 +123,6 @@ function drawPresenter(g, cx, cy, ppm) {
   }
   g.strokeStyle = 'rgba(122,70,50,0.45)'; g.lineWidth = Math.max(1, m(0.0025)); g.beginPath(); g.moveTo(cx + m(0.002), cy + m(0.002)); g.lineTo(cx + m(0.008), cy + m(0.034)); g.lineTo(cx - m(0.006), cy + m(0.036)); g.stroke();
   g.fillStyle = '#a4505a'; g.beginPath(); g.ellipse(cx, cy + m(0.06), m(0.022), m(0.0075), 0, 0, Math.PI * 2); g.fill();
-  // des mèches plus claires
-  const r2 = lcg(5); g.strokeStyle = 'rgba(96,70,50,0.55)'; g.lineWidth = Math.max(1, m(0.0015));
-  for (let i = 0; i < 26; i++) { const x0 = (r2() - 0.5) * 0.19, side = x0 < 0 ? -1 : 1; g.beginPath(); g.moveTo(cx + m(x0 * 0.5), cy - m(0.13)); g.quadraticCurveTo(cx + m(x0 + side * 0.03), cy - m(0.05), cx + m(x0 * 1.05), cy + m(0.17)); g.stroke(); }
 }
 /** le vitrage de la fenêtre, en pixels, sur un calque à ppm pixels par mètre */
 function windowRect(W, H, ppm) {

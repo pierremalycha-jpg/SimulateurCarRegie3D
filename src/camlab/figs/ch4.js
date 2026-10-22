@@ -43,7 +43,7 @@ export const FIGS_CH4 = {
       return `${tx(x0 + 63, 54, title, 'cf-bb mid')}${tx(x0 + 63, 68, sub)}
         <rect class="cf-vf" x="${x0}" y="76" width="126" height="100" rx="3"/>
         ${[0, 0.1, 0.2, 0.3].map((v) => `<line class="c4-grid" x1="${x0 + 4}" y1="${n1(Y(v))}" x2="${x0 + 122}" y2="${n1(Y(v))}"/>`).join('')}
-        ${tx(x0 + 120, n1(Y(0) - 3), '0 %', 'cf-tick c4-r')}${tx(x0 + 120, n1(Y(0.3) - 3), '30 %', 'cf-tick c4-r')}${trace}${strip}`;
+        ${tx(x0 + 120, n1(Y(0) - 3), '0 %', 'cf-tick c4-r')}${tx(x0 + 6, n1(Y(0.3) - 3), '30 %', 'cf-tick l')}${trace}${strip}`;
     };
     return svg(236, 'Schéma : trois réglages du master black. Délavé, à +5 %, le noir et les ombres montent, un voile gris. Juste, entre 0 et 2 %. Bouché, à −7 %, le noir, l\'étoile et le premier pavé se confondent. En dessous, les mêmes gris : noir, étoile, pavés 1 à 3 de la mire.', `
       ${head('Le noir, trois réglages', 'Le bas de la forme d\'onde (0 à 40 %) et les gris sombres de la mire.')}
@@ -64,11 +64,11 @@ export const FIGS_CH4 = {
       <rect class="c4-band" x="44" y="${n1(Y(0.3))}" width="180" height="${n1(Y(0) - Y(0.3))}"/>
       ${path((x) => oetf(x), 0, 1, X, Y, 'c4-cur')}${path((x) => Math.pow(x, 2.4), 0, 1, X, Y, 'c4-disp')}${path((x) => Math.pow(oetf(x), 2.4), 0, 1, X, Y, 'c4-sys')}
       <line class="cf-dash" x1="${n1(X(0.18))}" y1="226" x2="${n1(X(0.18))}" y2="${n1(Y(v18))}"/><line class="cf-dash" x1="44" y1="${n1(Y(v18))}" x2="${n1(X(0.18))}" y2="${n1(Y(v18))}"/>
-      <circle class="c4-dot" cx="${n1(X(0.18))}" cy="${n1(Y(v18))}" r="3.5"/>${tx(n1(X(0.18) + 6), n1(Y(v18) - 6), '41 %', 'cf-lbl l')}
+      <circle class="c4-dot" cx="${n1(X(0.18))}" cy="${n1(Y(v18))}" r="3.5"/>${tx(n1(X(0.18) + 8), n1(Y(v18) + 16), '41 %', 'cf-lbl l')}
       ${tx(40, n1(Y(v18) + 4), '41', 'cf-tick c4-r')}${tx(40, n1(Y(1) + 4), '100', 'cf-tick c4-r')}${ticks}
-      ${tx(134, 258, 'lumière de la scène (% du blanc)')}${tx(50, 64, 'black gamma : le bas seul', 'cf-s l')}
-      ${box(50, 'La caméra', 'BT.709 : V = 1,099 L^0,45 − 0,099', `18 % de lumière → ${Math.round(v18 * 100)} % de signal`, 'c4-cur')}
-      ${box(112, 'L\'écran', 'BT.1886 : luminance = V^2,4', `${Math.round(v18 * 100)} % de signal → ${Math.round(l18 * 100)} % de luminance`, 'c4-disp')}
+      ${tx(134, 258, 'lumière de la scène (% du blanc)')}${tx(220, n1(Y(0.3) + 13), 'black gamma : le bas seul', 'cf-s r')}
+      ${box(50, 'La caméra (BT.709)', 'V = 1,099 L^0,45 − 0,099', `18 % de lumière → ${Math.round(v18 * 100)} % de signal`, 'c4-cur')}
+      ${box(112, 'L\'écran (BT.1886)', 'luminance = V^2,4', `${Math.round(v18 * 100)} % de signal → ${Math.round(l18 * 100)} % de luminance`, 'c4-disp')}
       ${box(174, 'Les deux', 'un gamma d\'environ 1,2 :', 'un peu plus de contraste qu\'en vrai', 'c4-sys')}`);
   },
 
@@ -80,11 +80,11 @@ export const FIGS_CH4 = {
     return svg(250, 'Schéma : sans knee, le signal monte jusqu\'au plafond de 109 % et tout ce qui dépasse devient un aplat ; avec un knee à 90 %, au-dessus du point la pente est dix fois plus faible et une fenêtre à 140 à 190 % reste sous le plafond, avec son détail. Le white clip, ici à 103 %, coupe tout ce qui dépasse.', `
       ${head('Le knee et le white clip', 'Comprimer les hautes lumières, puis plafonner.')}
       <rect class="cf-vf" x="40" y="44" width="390" height="170"/>
-      <rect class="c4-band" x="${X(1.4)}" y="44" width="${X(1.9) - X(1.4)}" height="170"/>${tx(n1(X(1.65)), 58, 'la fenêtre', 'cf-s')}
+      <rect class="c4-band" x="${X(1.4)}" y="44" width="${X(1.9) - X(1.4)}" height="170"/>${tx(n1(X(1.65)), 206, 'la fenêtre', 'cf-s')}
       <line class="c4-grid" x1="40" y1="${n1(Y(1))}" x2="430" y2="${n1(Y(1))}"/><line class="c4-clip" x1="40" y1="${n1(Y(WC))}" x2="430" y2="${n1(Y(WC))}"/><line class="c4-grid" x1="40" y1="${n1(Y(1.09))}" x2="430" y2="${n1(Y(1.09))}"/>
       ${path((v) => Math.min(1.09, v), 0, 2.6, X, Y, 'c4-ref')}${path((v) => Math.min(WC, kneeCurve(v, P, S)), 0, 2.6, X, Y, 'c4-cur', 120)}
-      <circle class="c4-dot" cx="${n1(X(P))}" cy="${n1(Y(P))}" r="4"/>${tx(n1(X(P) + 8), n1(Y(P) + 16), 'knee point 90 %', 'cf-lbl l')}
-      ${tx(n1(X(1.3)), n1(Y(kneeCurve(1.3, P, S)) + 18), 'pente (slope) : 1 pour 10', 'cf-s l')}
+      <circle class="c4-dot" cx="${n1(X(P))}" cy="${n1(Y(P))}" r="4"/>${tx(n1(X(P) - 8), n1(Y(P) - 6), 'knee point 90 %', 'cf-lbl c4-r')}
+      ${tx(n1(X(1.05)), n1(Y(kneeCurve(1.3, P, S)) + 34), 'pente (slope) : 1 pour 10', 'cf-s l')}
       ${tx(426, n1(Y(WC) + 13), 'white clip 103 %', 'cf-s r')}${tx(n1(X(0.55)), n1(Y(1.09) - 4), 'sans knee : aplat au plafond', 'cf-s l')}
       ${xt}${yt}${tx(235, 246, 'signal avant le knee', 'cf-s')}`);
   },
@@ -102,7 +102,7 @@ export const FIGS_CH4 = {
       ${tx(16, 126, '2. Le contour seul (et le seuil CRISP)', 'cf-bb')}<rect class="cf-vf" x="30" y="130" width="220" height="50" rx="2"/>
       <rect class="c4-band" x="30" y="${155 - 4}" width="220" height="8"/>${path(hp, -0.5, 0.5, X, (v) => 155 - v * 110, 'c4-disp', 120)}
       ${row(202, '3. L\'image + le contour', out, 'c4-cur')}
-      ${tx(n1(X(0.12)), 214, 'liseré clair', 'cf-s l')}${tx(n1(X(-0.12)), 244, 'liseré sombre', 'cf-s r')}
+      ${tx(n1(X(0.16)), 224, 'liseré clair', 'cf-s l')}${tx(n1(X(-0.16)), 232, 'liseré sombre', 'cf-s r')}
       ${box(50, 'LEVEL', 'la quantité de contour', 'ajoutée à l\'image')}
       ${box(112, 'CRISP', 'sous ce seuil, pas de contour :', 'le bruit n\'est pas accentué')}
       ${box(174, 'SKIN DETAIL', 'moins de contour sur la teinte', 'de la peau, et là seulement')}`);
@@ -120,7 +120,7 @@ export const FIGS_CH4 = {
       <circle class="cf-vf" cx="${cx}" cy="${cy}" r="100"/>
       ${[0.1, 0.2, 0.3, 0.4].map((r) => `<circle class="c4-ring" cx="${cx}" cy="${cy}" r="${n1(r * k)}"/>`).join('')}
       <line class="c4-grid" x1="${cx - 100}" y1="${cy}" x2="${cx + 100}" y2="${cy}"/><line class="c4-grid" x1="${cx}" y1="${cy - 100}" x2="${cx}" y2="${cy + 100}"/>
-      <line class="c4-skin" x1="${cx}" y1="${cy}" x2="${n1(cx + Math.cos(a) * 98)}" y2="${n1(cy - Math.sin(a) * 98)}"/>${tx(n1(cx + Math.cos(a) * 66 - 4), n1(cy - Math.sin(a) * 66 - 10), 'chairs', 'cf-s r')}
+      <line class="c4-skin" x1="${cx}" y1="${cy}" x2="${n1(cx + Math.cos(a) * 98)}" y2="${n1(cy - Math.sin(a) * 98)}"/>${tx(n1(cx + Math.cos(a) * 100 - 4), n1(cy - Math.sin(a) * 100 + 2), 'chairs', 'cf-s r')}
       ${tg}<circle class="c4-dot" cx="${n1(ox)}" cy="${n1(oy)}" r="4"/><line class="c4-move" x1="${n1(ox)}" y1="${n1(oy)}" x2="${n1(rx + 2)}" y2="${n1(ry + 5)}" marker-end="url(#cf-a)"/>
       ${tx(n1(ox + 8), n1(oy + 14), 'CAM 2', 'cf-s l')}
       <g transform="translate(232 50)"><rect class="cf-box" x="0" y="0" width="202" height="122" rx="3"/>
@@ -134,14 +134,14 @@ export const FIGS_CH4 = {
 
   /** les fichiers de réglage : la référence, cinq fichiers de scène, l'objectif, l'opérateur */
   fichiers: () => {
-    const scene = [1, 2, 3, 4, 5].map((i) => `<rect class="c4-mem" x="${168 + (i - 1) * 52}" y="66" width="46" height="40" rx="3"/>${tx(191 + (i - 1) * 52, 91, String(i), 'cf-in')}`).join('');
+    const scene = [1, 2, 3, 4, 5].map((i) => `<rect class="c4-mem" x="${178 + (i - 1) * 51}" y="66" width="44" height="40" rx="3"/>${tx(200 + (i - 1) * 51, 91, String(i), 'cf-in')}`).join('');
     const mem = (x, y, w, t, a, b, cls = 'c4-mem') => `<rect class="${cls}" x="${x}" y="${y}" width="${w}" height="46" rx="3"/>${tx(x + 8, y + 17, t, 'cf-bb')}${tx(x + 8, y + 31, a, 'cf-s l')}${tx(x + 8, y + 43, b, 'cf-s l')}`;
     return svg(256, 'Schéma : la mémoire de la caméra. Le réglage en cours s\'enregistre par STORE dans un des cinq fichiers de scène, qu\'un numéro rappelle. Le fichier de référence est la base de la caméra, réglée par la maintenance ; le fichier d\'objectif garde les corrections propres à chaque objectif ; le fichier opérateur, le viseur du cadreur. FILE CLEAR revient aux valeurs d\'usine.', `
       ${head('Les fichiers de la caméra', 'Le menu FILE : F01 à F05.')}
-      <rect class="cf-box" x="16" y="62" width="128" height="74" rx="3"/>${tx(80, 84, 'le réglage', 'cf-bb mid')}${tx(80, 98, 'en cours')}${tx(80, 114, 'gamma, knee,')}${tx(80, 126, 'détail, couleurs…')}
-      <line class="c4-move" x1="146" y1="78" x2="164" y2="78" marker-end="url(#cf-a)"/>${tx(155, 72, 'STORE', 'cf-tick')}
-      <line class="c4-move" x1="164" y1="104" x2="146" y2="104" marker-end="url(#cf-a)"/>${tx(155, 120, 'n°', 'cf-tick')}
-      ${tx(296, 60, 'F02 SCENE FILE : 5 fichiers, une situation chacun', 'cf-s')}${scene}
+      <rect class="cf-box" x="16" y="62" width="120" height="74" rx="3"/>${tx(76, 84, 'le réglage', 'cf-bb mid')}${tx(76, 98, 'en cours')}${tx(76, 114, 'gamma, knee,')}${tx(76, 126, 'détail, couleurs…')}
+      <line class="c4-move" x1="140" y1="80" x2="172" y2="80" marker-end="url(#cf-a)"/>${tx(157, 74, 'STORE', 'cf-tick')}
+      <line class="c4-move" x1="172" y1="100" x2="140" y2="100" marker-end="url(#cf-a)"/>${tx(157, 116, 'n°', 'cf-tick')}
+      ${tx(301, 60, 'F02 SCENE FILE : 5 fichiers, une situation chacun', 'cf-s')}${scene}
       ${mem(16, 150, 200, 'F03 REFERENCE', 'la base de la caméra,', 'réglée par la maintenance', 'c4-mem ref')}
       ${mem(228, 150, 206, 'F04 LENS FILE', 'un fichier par objectif :', 'ses corrections propres')}
       ${mem(16, 204, 200, 'F01 OPERATOR FILE', 'le viseur du cadreur : zebra,', 'marqueurs, menu USER')}
