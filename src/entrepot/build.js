@@ -17,7 +17,7 @@ import { CATALOGUE, portOf, compatibles } from './catalogue/index.js';
 /** @typedef {import('./types.js').Bout} Bout */
 
 /** la baie : 12 U ; la table : 8 emplacements ; le plateau : 4 emplacements (pieds) ; le mur : 1 (les prises) */
-export const ZONES = { rack: { nom: 'Baie 19"', slots: 12 }, table: { nom: 'Table de régie', slots: 8 }, plateau: { nom: 'Plateau', slots: 4 }, mur: { nom: 'Mur', slots: 1 } };
+export const ZONES = { rack: { nom: 'Baie 19"', slots: 12 }, table: { nom: 'Table de régie', slots: 8 }, plateau: { nom: 'Plateau', slots: 8 }, mur: { nom: 'Mur', slots: 1 } };
 
 /** @type {Build & { ver: number }} */
 export const B = { appareils: [], cables: [], mission: '', ver: 0 };
