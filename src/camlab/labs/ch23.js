@@ -271,18 +271,20 @@ export const LABS_CH23 = {
       const v = visC.getContext('2d'), r = irC.getContext('2d');
       const L = (a, b, c) => `rgb(${enc8(a)},${enc8(b)},${enc8(c)})`, I = (a) => L(a, a, a);
       const both = (fv, fi, draw) => { v.fillStyle = fv; draw(v); r.fillStyle = fi; draw(r); };
-      both(L(0.16, 0.15, 0.14), I(0.32), (c) => c.fillRect(0, 0, W, H));
-      both(L(0.05, 0.045, 0.04), I(0.2), (c) => c.fillRect(0, H * 0.78, W, H * 0.22));
+      // réflectance visible (R, V, B) et infrarouge de chaque matière : des ordres de grandeur
+      both(L(0.16, 0.15, 0.14), I(0.12), (c) => c.fillRect(0, 0, W, H));
+      both(L(0.05, 0.045, 0.04), I(0.15), (c) => c.fillRect(0, H * 0.78, W, H * 0.22));
       // la carte blanche
       both(L(0.85, 0.85, 0.85), I(0.8), (c) => c.fillRect(470, 70, 120, 150));
       // le tissu noir synthétique (une veste sur un buste)
-      both(L(0.03, 0.03, 0.035), I(0.5), (c) => { c.beginPath(); c.moveTo(130, 70); c.quadraticCurveTo(190, 50, 250, 70); c.lineTo(300, 120); c.lineTo(285, 290); c.lineTo(95, 290); c.lineTo(80, 120); c.closePath(); c.fill(); });
+      both(L(0.03, 0.03, 0.035), I(0.6), (c) => { c.beginPath(); c.moveTo(130, 70); c.quadraticCurveTo(190, 50, 250, 70); c.lineTo(300, 120); c.lineTo(285, 290); c.lineTo(95, 290); c.lineTo(80, 120); c.closePath(); c.fill(); });
       // la plante et son pot
-      both(L(0.3, 0.12, 0.06), I(0.4), (c) => { c.beginPath(); c.moveTo(340, 300); c.lineTo(430, 300); c.lineTo(420, 250); c.lineTo(350, 250); c.closePath(); c.fill(); });
+      both(L(0.3, 0.12, 0.06), I(0.35), (c) => { c.beginPath(); c.moveTo(340, 300); c.lineTo(430, 300); c.lineTo(420, 250); c.lineTo(350, 250); c.closePath(); c.fill(); });
       both(L(0.05, 0.19, 0.045), I(0.6), (c) => { for (const [x, y, a] of [[385, 200, 0.2], [355, 215, -0.7], [415, 215, 0.7], [370, 180, -0.3], [400, 180, 0.3]]) { c.beginPath(); c.ellipse(x, y, 16, 40, a, 0, Math.PI * 2); c.fill(); } });
       // la télécommande, tenue devant
       both(L(0.04, 0.04, 0.045), I(0.06), (c) => { c.save(); c.translate(520, 280); c.rotate(-0.5); c.fillRect(-14, -50, 28, 100); c.restore(); });
-      v.fillStyle = '#e8e8e2'; v.font = '600 14px "Archivo", sans-serif'; v.textAlign = 'center'; v.fillText('carte blanche', 530, 238);
+      v.fillStyle = '#3a0c0c'; v.beginPath(); v.arc(520 - Math.sin(0.5) * 46, 280 - Math.cos(0.5) * 46, 4, 0, Math.PI * 2); v.fill();
+      v.fillStyle = '#e8e8e2'; v.font = '600 14px "Archivo", sans-serif'; v.textAlign = 'center'; v.fillText('carte blanche', 530, 60);
     }
     paintScenes();
     const visD = visC.getContext('2d').getImageData(0, 0, W, H).data, irD = irC.getContext('2d').getImageData(0, 0, W, H).data;

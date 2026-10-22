@@ -28,19 +28,21 @@ export const FIGS_CH23 = {
     const marks = [[1800, 'bougie'], [3200, 'tungstène'], [5600, 'jour'], [10000, 'ciel bleu']];
     const top = marks.map(([T, l]) => {
       const x = n1(X(T)), edge = T === 1800 ? ' l' : T === 10000 ? ' c23-r' : '', xl = T === 1800 ? x0 : T === 10000 ? x0 + w : x;
-      return `<line class="cf-axis" x1="${x}" y1="66" x2="${x}" y2="72"/>${tx(xl, 60, String(l), 'cf-lbl' + edge)}${tx(xl, 108, String(T) + ' K', 'cf-tick' + edge)}${tx(xl, 121, frn(mired(+T)) + ' mired', 'cf-tick' + edge)}`;
+      // le ciel bleu sans valeur : c'est un ordre de grandeur, et la place manque à côté du jour
+      const vals = T === 10000 ? '' : `${tx(xl, 108, String(T) + ' K', 'cf-tick' + edge)}${tx(xl, 121, frn(mired(+T)) + ' mired', 'cf-tick' + edge)}`;
+      return `<line class="cf-axis" x1="${x}" y1="66" x2="${x}" y2="72"/>${tx(xl, 60, String(l), 'cf-lbl' + edge)}${vals}`;
     }).join('');
-    const cc = [[3200, 'A', 0], [4300, 'B', 0], [5600, 'C', 0], [6300, 'D', 1]].map(([T, l, low]) => { const x = n1(X(T)); return `<path class="c23-flag" d="M${x} 146 l-6 -10 h12 z"/><line class="cf-axis" x1="${x}" y1="146" x2="${x}" y2="${low ? 176 : 156}"/>${tx(x, low ? 188 : 168, `${l} · ${T}K`, 'cf-lbl')}`; }).join('');
-    return svg(244, 'Schéma : l\'échelle des températures de couleur, de la bougie (1800 K) au ciel bleu (10 000 K), régulière en mireds ; les quatre positions du CC électronique de la caméra, A 3200 K, B 4300 K, C 5600 K et D 6300 K ; de 3200 à 5600 K il y a 134 mired, de 5600 à 6300 K seulement 20.', `
+    const cc = [[3200, 'A', 0], [4300, 'B', 1], [5600, 'C', 0], [6300, 'D', 1]].map(([T, l, low]) => { const x = n1(X(T)); return `<path class="c23-flag" d="M${x} 158 l-6 -10 h12 z"/><line class="cf-axis" x1="${x}" y1="158" x2="${x}" y2="${low ? 186 : 168}"/>${tx(x, low ? 198 : 180, `${l} · ${T}K`, 'cf-lbl')}`; }).join('');
+    return svg(262, 'Schéma : l\'échelle des températures de couleur, de la bougie (1800 K) au ciel bleu, régulière en mireds ; les quatre positions du CC électronique de la caméra, A 3200 K, B 4300 K, C 5600 K et D 6300 K ; de 3200 à 5600 K il y a 134 mired, de 5600 à 6300 K seulement 20.', `
       <defs><linearGradient id="c23-kgrad" x1="0" x2="1" y1="0" y2="0">${stops}</linearGradient></defs>
       ${head('La couleur de la lumière', 'Une échelle régulière en mireds (un million ÷ T) : en kelvins, elle se tasse vers le bleu.')}
       <rect x="${x0}" y="72" width="${w}" height="22" rx="3" fill="url(#c23-kgrad)" class="c23-kbar"/>
       ${top}
-      ${tx(16, 140, 'COLOR TEMP. : le CC électronique de la FB80', 'cf-bt')}
-      <line class="cf-axis" x1="${x0}" y1="146" x2="${x0 + w}" y2="146"/>${cc}
-      ${dim(n1(X(3200)), 204, n1(X(5600)), 204)}${tx(n1((X(3200) + X(5600)) / 2), 218, '134 mired', 'cf-lbl')}
-      ${dim(n1(X(5600)), 204, n1(X(6300)), 204)}${tx(n1(X(6300) + 8), 208, '20 mired', 'cf-lbl l')}
-      ${tx(16, 238, 'De 5600 à 6300 K, sept fois moins d\'écart que de 3200 à 5600 K.', 'cf-sub')}`);
+      ${tx(16, 142, 'COLOR TEMP. : le CC électronique de la FB80', 'cf-bt')}
+      <line class="cf-axis" x1="${x0}" y1="158" x2="${x0 + w}" y2="158"/>${cc}
+      ${dim(n1(X(3200)), 220, n1(X(5600)), 220)}${tx(n1((X(3200) + X(5600)) / 2), 234, '134 mired', 'cf-lbl')}
+      ${dim(n1(X(5600)), 220, n1(X(6300)), 220)}${tx(n1(X(6300) + 8), 224, '20 mired', 'cf-lbl l')}
+      ${tx(16, 256,'De 5600 à 6300 K, sept fois moins d\'écart que de 3200 à 5600 K.', 'cf-sub')}`);
   },
 
   /** le trajet de la lumière devant les capteurs (passe-bas, infrarouge), et le spectre */
@@ -53,7 +55,7 @@ export const FIGS_CH23 = {
     const irf = path((nm) => (nm < 640 ? 1 : nm > 720 ? 0 : 0.5 * (1 + Math.cos(Math.PI * (nm - 640) / 80))));
     const ticks = [400, 500, 600, 700, 800, 900, 1000, 1100].map((nm) => `<line class="cf-axis" x1="${n1(X(nm))}" y1="${base}" x2="${n1(X(nm))}" y2="${base + 4}"/>${tx(n1(X(nm)), base + 15, String(nm), 'cf-tick')}`).join('');
     const cells = [0, 1].map((r) => [0, 1].map((c) => `<rect class="cf-cell" x="${366 + c * 26}" y="${cy - 26 + r * 26}" width="24" height="24" rx="2"/><circle class="cf-dot" cx="${378 + c * 26}" cy="${cy - 14 + r * 26}" r="3.2"/>`).join('')).join('');
-    return svg(270, 'Schéma : devant les capteurs, deux lames de quartz font d\'un point lumineux quatre points écartés d\'un photosite (5 µm), puis un filtre arrête l\'infrarouge. En bas, le spectre : la lumière visible de 400 à 700 nm, le silicium qui voit jusque vers 1100 nm, le filtre qui coupe vers 700 nm, la télécommande à 940 nm.', `
+    return svg(274, 'Schéma : devant les capteurs, deux lames de quartz font d\'un point lumineux quatre points écartés d\'un photosite (5 µm), puis un filtre arrête l\'infrarouge. En bas, le spectre : la lumière visible de 400 à 700 nm, le silicium qui voit jusque vers 1100 nm, le filtre qui coupe vers 700 nm, la télécommande à 940 nm.', `
       ${head('Devant les capteurs, deux filtres', 'Ils ne se règlent pas : ils sont collés dans le bloc optique.')}
       <line class="cf-ray" x1="14" y1="${cy}" x2="120" y2="${cy}"/>
       <rect class="c23-quartz" x="120" y="${cy - 30}" width="30" height="60" rx="2"/>${tx(135, cy + 44, 'passe-bas', 'cf-lbl')}${tx(135, cy + 57, '(quartz)', 'cf-s')}
@@ -64,16 +66,18 @@ export const FIGS_CH23 = {
       <line class="cf-sensor" x1="330" y1="${cy - 24}" x2="330" y2="${cy + 24}"/>${tx(330, cy + 44, 'capteur', 'cf-lbl')}
       <line class="cf-ray" x1="314" y1="${cy - 6}" x2="330" y2="${cy - 6}"/><line class="cf-ray" x1="314" y1="${cy + 6}" x2="330" y2="${cy + 6}"/>
       <line class="cf-dash" x1="332" y1="${cy - 8}" x2="364" y2="${cy - 26}"/><line class="cf-dash" x1="332" y1="${cy + 8}" x2="364" y2="${cy + 26}"/>
-      ${cells}${tx(391, cy + 44, 'un point → quatre', 'cf-lbl')}${tx(391, cy + 57, 'à 5 µm d\'écart', 'cf-s')}
-      ${tx(16, 172, 'Le spectre : ce que voit l\'œil, ce que voit le capteur', 'cf-bt')}
+      ${cells}${tx(391, cy - 34, '1 point → 4', 'cf-lbl')}${tx(392, cy + 44, 'à 5 µm d\'écart', 'cf-s')}
+      ${tx(16, 166, 'Le spectre : ce que voit l\'œil, ce que voit le capteur', 'cf-bt')}
       <defs><linearGradient id="c23-vis" x1="0" x2="1">${vis}</linearGradient></defs>
       <rect x="${n1(X(400))}" y="${base - 2}" width="${n1(X(700) - X(400))}" height="6" fill="url(#c23-vis)"/>
       <rect class="c23-irband" x="${n1(X(700))}" y="${base - 2}" width="${n1(X(1100) - X(700))}" height="6"/>
       <line class="cf-axis" x1="${X(350)}" y1="${base}" x2="${X(1150)}" y2="${base}"/>${ticks}${tx(X(1150), base + 15, 'nm', 'cf-tick')}
       <path class="c23-si" d="${si}"/><path class="c23-irc" d="${irf}"/>
       <line class="c23-led" x1="${n1(X(940))}" y1="${base - hh}" x2="${n1(X(940))}" y2="${base}"/>
-      ${tx(n1(X(550)), 186, 'visible', 'cf-lbl')}${tx(n1(X(900)), 186, 'infrarouge', 'cf-lbl')}
-      ${tx(n1(X(645)), base - hh - 4, 'filtre IR', 'c23-lbl-ir')}${tx(n1(X(1040)), base - hh + 18, 'silicium', 'c23-lbl-si')}${tx(n1(X(940)), base - hh - 4, 'télécommande 940 nm', 'c23-lbl-led')}`);
+      ${tx(n1(X(550)), base + 28, 'visible', 'cf-lbl')}${tx(n1(X(900)), base + 28, 'infrarouge', 'cf-lbl')}
+      <line class="c23-irc" x1="16" y1="182" x2="34" y2="182"/>${tx(40, 186, 'filtre IR', 'c23-lbl-ir l')}
+      <line class="c23-si" x1="112" y1="182" x2="130" y2="182"/>${tx(136, 186, 'silicium (ordre de grandeur)', 'c23-lbl-si l')}
+      <line class="c23-led" x1="300" y1="176" x2="300" y2="188"/>${tx(306, 186, 'télécommande 940 nm', 'c23-lbl-led l')}`);
   },
 
   /** le gain par pas de 3 dB : amplification, diaphragmes, rapport signal sur bruit, lumière nécessaire */
