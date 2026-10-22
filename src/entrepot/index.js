@@ -10,7 +10,7 @@ import { evaluate } from './engine.js';
 import { CATALOGUE } from './catalogue/index.js';
 import { MISSIONS, missionById, noter } from './missions.js';
 import { renderStock } from './ui/stock.js';
-import { renderAppareil } from './ui/appareil.js';
+import { renderAppareil, PENDING } from './ui/appareil.js';
 import { renderSynoptique } from './ui/synoptique.js';
 import { renderReseau } from './ui/reseau.js';
 import { renderMission } from './ui/mission.js';
@@ -96,6 +96,8 @@ function onKey(/** @type {KeyboardEvent} */ e) {
   if (e.key === 'Escape') {
     const t = /** @type {HTMLElement | null} */ (e.target);
     if (t && (t.tagName === 'INPUT' || t.tagName === 'SELECT' || t.tagName === 'TEXTAREA')) { t.blur(); return; }
+    // un câble en main : Échap le lâche d'abord
+    if (PENDING.a) { PENDING.a = null; refreshPanel(); toast('Câble lâché.', '', 1800); return; }
     if (R.panel) { panel(''); return; }
     closeEntrepot();
   }
@@ -198,7 +200,7 @@ export async function openEntrepot(o = {}) {
 }
 export function closeEntrepot() {
   if (!EP.open) return;
-  EP.open = false; cancelAnimationFrame(raf);
+  EP.open = false; cancelAnimationFrame(raf); PENDING.a = null;
   if (R) { R.root.hidden = true; R.panel = ''; R.side.hidden = true; }
   document.body.classList.remove('entrepot-on');
   const title = document.getElementById('title');

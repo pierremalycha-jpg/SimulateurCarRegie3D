@@ -36,7 +36,7 @@ export function menuEnregistreur(a, m, ctx) {
       srcs.length > 1 ? choix(a.uid, 'source', c.source || 'sdi', srcs, 'Source enregistrée') : el('p', { class: 'ep-cf-fixe' }, el('b', {}, 'Source'), ' : SDI (seule entrée vidéo)'),
       etat(f ? true : false, f ? `Reçoit ${f.label} (${formatLabel(f.format)}) sur ${pin ? pin.label : 'l\'entrée'}.` : `Rien n'arrive sur ${pin ? pin.label : 'l\'entrée'}.`),
       choix(a.uid, 'codec', c.codec || 'H.264', CODECS, 'Codec'),
-      String(c.codec || 'H.264') === 'H.264' ? choix(a.uid, 'qualite', c.qualite || 'High', [['High', 'High'], ['Medium', 'Medium'], ['Low', 'Low']], 'Qualité H.264') : null),
+      String(c.codec || 'H.264') === 'H.264' ? choix(a.uid, 'qualite', c.qualite || 'High', [['High', 'High'], ['Medium', 'Medium'], ['Low', 'Low']], 'Qualité H.264', { aide: 'Le débit, donc la taille des fichiers ; sans effet sur la note de la mission.' }) : null),
     section('Support',
       note('Une carte SD dans SD 1 ou SD 2, ou un disque sur USB-C : le support choisi doit être présent (sortez une carte SD ou un disque du stock et branchez-le).'),
       choix(a.uid, 'media', c.media || 'sd1', supports, 'Enregistrer sur')),

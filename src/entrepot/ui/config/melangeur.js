@@ -61,7 +61,12 @@ export function menuMelangeur(a, m, ctx) {
   const vout = m.ports.filter((p) => (p.sig === 'sdi' || p.sig === 'hdmi') && p.dir === 'out');
   const roles = /** @type {Array<[any, string]>} */ ([['pgm', 'Programme'], ['pvw', 'Prévisualisation'], ['mv', 'Multiview'], ...ins.map(({ n }) => /** @type {[number, string]} */ ([n, `Entrée ${n} · ${nomEntree(n)}`]))]);
   const sorties = [];
+  // un mélangeur qui a des AUX (l'ATEM) : ses autres sorties OUT n sont des retours programme fixes ; sans AUX (le Carbonite), elles s'affectent
+  const affectables = !vout.some((p) => /aux-?\d/.test(p.id));
+  const retours = vout.filter((p) => !affectables && /sdi-out-\d+$/.test(p.id));
+  if (retours.length) sorties.push(el('p', { class: 'ep-cf-fixe' }, el('b', {}, `${retours[0].label} à ${retours[retours.length - 1].label}`), ' : retours programme vers les caméras (fixes).'));
   for (const p of vout) {
+    if (retours.includes(p)) continue;
     const aux = p.id.match(/aux-?(\d+)/);
     if (aux) { const k = +aux[1]; sorties.push(choix(a.uid, `aux.${k}`, c.aux && c.aux[k] != null && c.aux[k] !== '' ? c.aux[k] : 'pgm', roles, `${p.label}`)); continue; }
     if (/pgm|mv|multiview|pvw|preview/.test(p.id)) { sorties.push(el('p', { class: 'ep-cf-fixe' }, el('b', {}, p.label), ` : ${/mv|multiview/.test(p.id) ? 'multiview' : /pvw|preview/.test(p.id) ? 'prévisualisation' : 'programme'} (fixe)`)); continue; }
