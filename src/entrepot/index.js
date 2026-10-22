@@ -48,10 +48,10 @@ async function build() {
   const pins = el('div', { class: 'ep-pins' });
   const side = el('aside', { class: 'ep-side', hidden: true, 'aria-label': 'Panneau' });
   const btn = (label, title, onclick, cls = '') => el('button', { type: 'button', class: 'btn small ' + cls, title, onclick }, label);
-  const bStock = btn('Stock', 'Les rayons : sortir du matériel', () => panel('stock'), 'ep-b-stock');
-  const bSyno = btn('Synoptique', 'Tout le câblage, en 2D', () => panel('synoptique'), 'ep-b-syno');
-  const bNet = btn('Réseau', 'Les adresses IP, qui joint qui, le ping', () => panel('reseau'), 'ep-b-reseau');
-  const bMission = btn('Cahier des charges', 'Ce que demande le client, et la note', () => panel('mission'), 'ep-b-mission');
+  const bStock = btn('Stock', 'Les rayons : sortir du matériel', () => panel('stock', true), 'ep-b-stock');
+  const bSyno = btn('Synoptique', 'Tout le câblage, en 2D', () => panel('synoptique', true), 'ep-b-syno');
+  const bNet = btn('Réseau', 'Les adresses IP, qui joint qui, le ping', () => panel('reseau', true), 'ep-b-reseau');
+  const bMission = btn('Cahier des charges', 'Ce que demande le client, et la note', () => panel('mission', true), 'ep-b-mission');
   const bQuit = btn('Quitter', 'Revenir à l\'écran Jouer (Échap)', () => closeEntrepot(), 'ep-quit');
   bQuit.append(' ', el('kbd', {}, 'Échap'));
   const zones = el('div', { class: 'ep-zones', role: 'toolbar', 'aria-label': 'Aller à' },
@@ -135,10 +135,10 @@ function placePins() {
 function goZone(zone) { const l = R.hall.lookAt(zone); R.orbit.flyTo(l.target, l.dir, l.dist); }
 
 // ---------------- panneaux ----------------
-/** ouvre un panneau ('' le referme) */
-export function panel(name) {
+/** ouvre un panneau ('' le referme) ; toggle : un second appui sur le même bouton de la barre le referme */
+export function panel(name, toggle = false) {
   if (!R) return;
-  R.panel = name === R.panel && name !== 'appareil' ? '' : name;
+  R.panel = toggle && name === R.panel && name !== 'appareil' ? '' : name;
   if (R.panel !== 'appareil') R.dev = '';
   R.side.hidden = !R.panel; R.root.classList.toggle('side-open', !!R.panel);
   for (const b of R.bar.querySelectorAll('.ep-views .btn')) b.classList.toggle('on', b.classList.contains('ep-b-' + (R.panel === 'synoptique' ? 'syno' : R.panel)));
@@ -146,7 +146,9 @@ export function panel(name) {
 }
 export function openAppareil(uid) { if (!appareil(uid)) return; R.dev = uid; R.panel = 'appareil'; R.side.hidden = false; R.root.classList.add('side-open'); for (const b of R.bar.querySelectorAll('.ep-views .btn')) b.classList.remove('on'); refreshPanel(); const a = appareil(uid); if (a) goZone(a.place.zone); }
 function refreshPanel() {
-  if (!R || !R.panel) return;
+  if (!R) return;
+  const M = missionById(B.mission); R.bar.querySelector('.ep-mission-name').textContent = M ? M.titre : 'Bac à sable : montez ce que vous voulez';
+  if (!R.panel) return;
   const E = evalCourant();
   const ctx = { B, E, open: openAppareil, panel, close: () => panel(''), say: (/** @type {string} */ t) => toast(t, '', 3500) };
   const body = R.panel === 'stock' ? renderStock(ctx)
