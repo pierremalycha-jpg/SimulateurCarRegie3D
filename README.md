@@ -394,6 +394,75 @@ Tests :
   « Emmène-moi / Montre-moi » doit mettre en évidence un élément réel de la page, et « Fais-le pour moi » doit faire
   valider l'étape.
 
+## v19.2 : l'entrepôt, une régie mobile à monter de A à Z
+
+**Le lieu « L'entrepôt »** est une tuile de l'écran Jouer, à côté du car régie (`src/entrepot/`). On y monte une
+régie mobile d'après le cahier des charges d'un client : sortir le matériel du stock, le poser dans la baie 19"
+(12 U), sur la table ou sur le plateau, le brancher au secteur, le câbler, le configurer, jusqu'à ce que tout
+marche. Ses « modes » : trois missions notées, le bac à sable, la reprise du dernier montage.
+
+- **Les missions** (`missions.js`) : *Conférence à trois caméras PTZ* (le lycée, budget 25 000 € ; c'est
+  l'exercice noté `x-entrepot` de la leçon « Monter une régie mobile », chapitre L'exploitation), *Plateau TV deux
+  caméras, ISO et streaming* (ATEM HD8 ISO, disque USB-C, box Internet), *Régie vMix : NDI, SDI, HyperDeck,
+  Teranex* (PC de régie et carte DeckLink). Chaque exigence est constatée par le moteur et expliquée
+  (« Pas de tally sur CAM 2 (entrée 2) : TALLY IP est sur OFF dans le menu SYSTEM de RP150 ») ; le budget
+  compte.
+- **Le catalogue** (`catalogue/`, un fichier par groupe) : 21 modèles réels, avec leurs connecteurs
+  sérigraphiés, leurs faces, leurs adresses d'usine et leur consommation : caméras Panasonic AW-HE130 et AW-HE20,
+  pupitre AW-RP150, ATEM Television Studio HD8 ISO, Ross Carbonite Black Solo 13, HyperDeck Studio HD Plus et HD
+  Mini, Teranex Mini SDI to Audio et Audio to SDI, GPI and Tally Interface, switch NETGEAR M4250 PoE+, box
+  d'accès Internet, PC de régie (vMix, DeckLink Duo 2), prises murales, bandeau 19", bloc 12 V, moniteur, micro,
+  disque, carte SD, pied. Prix et consommations sont des ordres de grandeur ; 66 points que la documentation n'a
+  pas permis de confirmer sont listés dans la fiche de chaque appareil (« Points à faire vérifier »).
+- **Le moteur** (`engine.js`), pur et seul juge : énergie (mur 16 A, bandeau 10 A, bloc 12 V, budget PoE+ du
+  switch), câbles (signal, sens, connecteurs), IP (domaines de niveau 2 et VLAN, DHCP de la box, lien local,
+  conflits, qui joint qui), vidéo (formats, boucles, embedder, mélangeurs, vMix et NDI|HX), services (pilotage
+  des caméras, HyperDeck en TCP 9993, ATEM en TCP 9910, streaming), tally (ATEM → GPI & Tally → RP150 → caméras
+  en IP ; Carbonite → RP150 ; vMix) et alertes en français. Nouveau : les sorties affectables d'un mélangeur
+  (`cfg.sorties`, Carbonite).
+
+**Les panneaux** (`ui/`), à droite de la 3D :
+- **Le stock** : recherche, familles, prix, consommation, fiche dépliable (connecteurs par signal,
+  caractéristiques), budget de la mission, ce qui est déjà sorti.
+- **Un appareil** : nom, place (rangée de U dans la baie), interrupteur, alertes, et quatre onglets. *Faces* :
+  les faces dessinées ; un clic sur un connecteur prend un câble, un clic sur un autre le pose ; l'anneau dit la
+  liaison (couleur du signal, rouge pointillé si elle est fausse, orange quand le connecteur accepte le câble en
+  main ; Échap lâche le câble). *Câblage* : la même chose en liste, au clavier, avec ce qui arrive sur chaque
+  entrée. *Réglages* : le menu de l'appareil, comme sur le vrai (`ui/config/`, un fichier par famille : caméra,
+  pupitre avec la recherche des caméras sur le réseau, mélangeur avec ses bus PGM/PVW et la coupe, HyperDeck
+  avec REC et STOP, Teranex, GPI & Tally, switch avec VLAN et PoE+ par port, box avec son DHCP, PC avec la
+  DeckLink et vMix, énergie avec la puissance appelée sur le disjoncteur et le bandeau). *Fiche* : rôle,
+  caractéristiques, source, points à vérifier.
+- **Le synoptique** : tout le câblage en SVG, en colonnes dans le sens du signal (sources, traitement, mélange,
+  enregistrement, réseau, énergie), par calques ; exports du dessin (SVG) et de la liste de câblage (CSV).
+- **Le réseau** : les domaines de niveau 2 et leurs sous-réseaux (une adresse hors du sous-réseau principal est
+  signalée), un **ping** comme dans l'invite de commandes, qui dit pourquoi il répond ou non, et le tableau
+  « qui joint qui ».
+- **Le cahier des charges** : exigences, budget, note ; **« Rendre le montage »** enregistre l'essai
+  (`suivi.js`, `PROG.entrepot.missions`) : le meilleur résultat valide l'exercice noté `x-entrepot` (60 / 100)
+  et le livret ; le **compte rendu** (HTML à imprimer) reprend la note, le matériel, la liste de câblage et le
+  plan d'adressage. Lancé depuis la leçon du Cours, l'entrepôt y ramène en sortant. La progression de
+  l'entrepôt se fusionne entre deux appareils.
+
+**La 3D** (`scene.js`, `scene/` : `hall.js`, `devices.js`, `cables.js`, `kit.js`) : le hall (sol béton, bardage,
+charpente, rayonnages du stock avec cartons et flight cases instanciés), la baie 19" mobile de 12 U (montants
+percés, U numérotés, roulettes ; un appareil d'un demi ou d'un tiers de largeur sur une tablette 1 U), la table de
+régie et sa goulotte, le plateau en arc devant une estrade, le tableau électrique. Chaque appareil a ses
+dimensions et ses faces avant et arrière dessinées en texture ; les voyants POWER s'allument, le tally rouge ou
+vert suit le mélangeur, l'écran du moniteur montre ce qu'il reçoit (multiview, programme, caméra, « pas de
+signal »). Les câbles partent du vrai connecteur et suivent un chemin de technicien (arrière de la table, flanc de
+la baie, colonne, sol), couleur du signal, rouge si la liaison est fausse. L'appareil ouvert est entouré ; les
+étiquettes proches (la baie) s'écartent. Mesuré en rendu logiciel : environ 160 appels de dessin pour une régie de
+20 appareils et 30 câbles ; à vérifier sur le PC le plus faible de l'établissement.
+
+Tests : `tests/unit/entrepot*.test.mjs` (catalogue, montage, moteur sur les vrais modèles, missions, sorties
+affectables, suivi et fusion) ; suite de bout en bout `node tools/e2e.mjs entrepot` (Jouer, stock, câble posé
+en deux clics sur les faces, la régie de la conférence à 100 / 100, les menus de chaque famille, la coupe et le
+tally, le résultat rendu, le compte rendu, le synoptique et ses exports, le ping, le retour à Jouer,
+l'exercice noté dans le Cours, le panneau à 390 px). À faire relire par un professionnel : les menus et les
+chiffres du catalogue. La préparation logistique (flight cases, phases électriques, camion, ce qui part sur le
+car) reste au programme de la v21 (`ROADMAP.md`).
+
 ## v19.1 : la caméra en 3D, terminée
 
 **Les 51 notions sont écrites.** Le module « La caméra en 3D » (Cours, chapitre La caméra) a maintenant toutes
@@ -1018,10 +1087,11 @@ node tools/shots.mjs dossier 1280 800 '["vision","hf"]'   # captures de postes
 | `ui/settings.js` | Réglages : une seule fenêtre (ordinateur, partie en cours, profil, espace formateur, aide, à propos) |
 | `app/profile.js` | Profil Étudiant / Formateur, mémorisé ; classe `role-formateur` sur `body`, éléments `.role-only` |
 | `cours/index.js`, `cours/kit.js`, `cours/all.js`, un fichier par chapitre (`signal.js`, `sdi.js`, `synchro.js`, `camera.js`, `realisation.js`, `ralentis.js`, `son.js`, `reseau.js`, `hf.js`, `exploitation.js`) | La section Cours : dix chapitres et leurs leçons, ordre d'apprentissage, progression, kit des schémas et manipulations |
-| `cours/exercices.js` | Les exercices pratiques de chaque leçon : parcours d'Olivier (chacun dans une seule leçon) et exercices notés (atelier, car vide, formation réseau, jour de match), leur état |
+| `cours/exercices.js` | Les exercices pratiques de chaque leçon : parcours d'Olivier (chacun dans une seule leçon) et exercices notés (atelier, car vide, formation réseau, jour de match, mise en service de la caméra, régie de l'entrepôt), leur état |
 | `cours/liens.js` | Les liens du Cours avec le reste : terme du glossaire → leçon ou fiche « ? », poste → leçon (bouton « Cours », touche G) |
 | `cours/sdi_falaise.js`, `cours/lab_sdi.js`, `cours/figs_sdi.js` | Leçon « La falaise numérique » : diagramme de l'œil et image qui casse avec la longueur du câble, défis d'Olivier |
 | `camlab/` | Module « La caméra en 3D » : caméra et plateau construits dans le code (`model.js`, `scene.js`), pastilles (`points.js`), 51 notions (`notions/`, une fiche par fichier, registres `ch1.js` … `ch89.js`), schémas (`figs.js`, `figs/`, `figkit.js`), manipulations (`labs.js`, `labs/`, commandes `controls.js`, optique `optics.js`, viseur simulé et traitement de l'image `vf.js`), affichage d'une fiche (`fiche.js`), progression (`progress.js`), quiz de chapitre (`quiz.js`), mise en service notée (`mes.js`) |
+| `entrepot/` | Module « L'entrepôt » (tuile de Jouer) : monter une régie mobile d'après un cahier des charges. Types (`types.js`), catalogue de matériel réel (`catalogue/`, un fichier par groupe : `blackmagic.js`, `panasonic.js`, `ross.js`, `reseau.js`, `divers.js`), montage (`build.js`), moteur (`engine.js`), missions notées (`missions.js`), résultat rendu (`suivi.js`), 3D (`scene.js`, vue en orbite `orbit.js`), panneaux (`ui/` : `stock.js`, `appareil.js`, menus de configuration `ui/config/` un fichier par famille, `synoptique.js`, `reseau.js`, `mission.js`), ouverture et boucle (`index.js`) |
 | `ui/cours_ui.js` | L'espace Cours : un seul sommaire, page « Mon suivi » (progression, à faire ensuite, livret), leçons (quiz, exercices pratiques, article de référence), glossaire, postes, matériel |
 | `app/nav.js` | Navigation entre les trois entrées : menu du car (Échap), aiguillage des boutons « Aller au poste », « Commencer » (car lancé si besoin), changement de vacation |
 | `ui/layer.js` | Espace plein écran (le Cours) : plaque, onglets, Fermer (Échap), ligne d'état |
