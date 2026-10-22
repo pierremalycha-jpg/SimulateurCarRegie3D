@@ -45,6 +45,7 @@ function onKeyDown(e) {
   if (S.mode === 'station') {
     if (e.code === 'Escape') { closeStation(); e.preventDefault(); return; }
     if (stationKey(e)) { e.preventDefault(); return; }
+    if (e.code === 'KeyL' && !e.ctrlKey && !e.metaKey && !e.altKey) { emit('journal'); return; }
     // G : le Cours sur la fiche du poste, si le poste ne se sert pas de la touche
     if (e.code === 'KeyG' && !e.ctrlKey && !e.metaKey && !e.altKey) emit('cours', { poste: S.station });
     return;
@@ -68,6 +69,7 @@ function onKeyDown(e) {
   if (e.code === 'KeyT') { if (document.pointerLockElement) document.exitPointerLock(); openPupitre(); }
   if (e.code === 'KeyG') { if (document.pointerLockElement) document.exitPointerLock(); emit('cours'); }
   if (e.code === 'KeyH') openCommandes();
+  if (e.code === 'KeyL') { if (document.pointerLockElement) document.exitPointerLock(); emit('journal'); }
   // Échap : la souris est déjà libérée (le navigateur le fait au premier appui) : le menu du car
   if (e.code === 'Escape' && !document.pointerLockElement) { emit('menu'); e.preventDefault(); }
   if (e.code === 'KeyK') { if (target && target.kind === 'station' && target.device) openDevice(target.device, 1); else openEquipmentIndex(); }

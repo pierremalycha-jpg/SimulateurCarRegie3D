@@ -10,6 +10,7 @@ export const CONTROLS_HELP = [
   ['P', 'Plan des caméras (vue de dessus)'],
   ['Tab ou T', 'Le pupitre : aller à un poste ou un endroit (car, terrain, passerelle…), et tous les outils'],
   ['G', 'Cours : les notions techniques (schémas, manipulations), les chapitres, le glossaire, les postes'],
+  ['L', 'Journal des missions : l\'objectif en cours, les exercices du poste, toutes les missions, les badges'],
   ['J', 'Chef de car : explications du poste et parcours guidés pas à pas'],
   ['M', 'Moniteur retour PGM (coin de l\'écran)'],
   ['1 à 9 · 0', 'Commuter le mélangeur partout (mode DIRECT : à l\'antenne ; mode PRESET : au bus B, puis Entrée = CUT) · B : changer de mode'],
@@ -21,5 +22,5 @@ export const CONTROLS_HELP = [
 ];
 
 // premiers gestes, rappelés au premier lancement (encart « Prise en main » ou chef de car)
-export const FIRST_STEPS = [['Z Q S D', 'se déplacer (flèches aussi)'], ['Souris', 'regarder : cliquez d\'abord dans la vue'], ['E', 'utiliser ce que vous visez'], ['Tab', 'le pupitre : aller à un poste, tous les outils'], ['1 – 9', 'commuter une caméra à l\'antenne'], ['G', 'le Cours : notions, schémas, glossaire'], ['Échap', 'le menu']];
+export const FIRST_STEPS = [['Z Q S D', 'se déplacer (flèches aussi)'], ['Souris', 'regarder : cliquez d\'abord dans la vue'], ['E', 'utiliser ce que vous visez'], ['Tab', 'le pupitre : aller à un poste, tous les outils'], ['1 – 9', 'commuter une caméra à l\'antenne'], ['L', 'les missions : objectif, exercices, badges'], ['Échap', 'le menu']];
 export const FIRST_STEPS_TOUCH = [['Pouce gauche', 'se déplacer'], ['Glisser', 'regarder'], ['Bouton action', 'utiliser ce que vous visez'], ['Aller à', 'se téléporter devant un poste']];

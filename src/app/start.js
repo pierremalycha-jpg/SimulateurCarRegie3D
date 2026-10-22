@@ -26,6 +26,7 @@ import { LIEUX } from '../content/lieux.js';
 import { MISSIONS } from '../entrepot/missions.js';
 import { montageEnregistre } from '../entrepot/build.js';
 import { showTitle } from './title.js';
+import { livePlayerCard } from '../game/quest.js';
 
 // ----------------------------------------------------------------------------------
 // L'écran Jouer (lieu, mode, solo ou coopération, conditions de captation) et le lancement d'une partie.
@@ -186,6 +187,7 @@ export function buildStart() {
         lan ? el('p', { class: 'note cs-lan' }, el('b', {}, 'Réseau local'), ` : ce simulateur est servi par l'ordinateur de l'hôte (${location.host}).`) : null)),
     // à droite : ce qui lance la partie, et les conditions de captation repliées dessous
     el('aside', { class: 'jo-side', 'aria-label': 'Lancer la partie' },
+      livePlayerCard(true),
       el('section', { class: 'onair jo-go', 'aria-label': 'Lancer' },
         el('button', { id: 'st-antenne', class: 'onair-key', onclick: () => go() }, lamp, goTitle, goDesc)),
       el('details', { class: 'jo-capt plate' },

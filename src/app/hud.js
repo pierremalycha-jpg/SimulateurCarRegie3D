@@ -26,6 +26,7 @@ export function buildToolbar() {
   tb.append(
     b('Pupitre', 'Tab', 'pupitre', () => openPupitre(), 'tb-pupitre', 'Aller à un poste ou un endroit, et tous les outils (Tab ou T)'),
     chefBtn(b('Chef de car', 'J', 'chef', () => emit('chef'), 'tb-chef', 'Le chef de car vous explique le poste et vous guide pas à pas (J)')),
+    b('Missions', 'L', 'missions', () => emit('journal'), 'tb-missions', 'Le journal des missions : ce qu\'il y a à faire ici, toutes les missions, tes badges (L)'),
     b('Cours', 'G', 'cours', () => emit('cours'), 'tb-cours', 'Les leçons et leurs exercices pratiques, le glossaire (G)'),
     b(soundLabel(), null, AU.muted ? 'muet' : 'son', () => { startAudio(); AU.muted = !AU.muted; applyFaders(); emit('soundToggle'); }, 'tb-son', 'Couper ou rétablir le son'),
     b('Menu', 'Échap', 'menu', () => emit('menu'), 'tb-menu', 'Cours, réglages, équipe, retour à l\'accueil (Échap)'));
