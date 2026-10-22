@@ -701,7 +701,7 @@ export function buildRig() {
       L.rings.iris.userData.set(state.iris >= 99 ? 1.13 : L.rings.iris.userData.p(state.iris));
       L.rings.ff.userData.set(state.ff);
       L.rings.ext.userData.set(state.ext);
-      L.rings.macro.rotation.x = state.macro ? -0.35 : 0;
+      L.rings.macro.rotation.x = -0.35 * Math.min(1, Math.max(0, Number(state.macro) || 0));
       if (L.irisDisc.userData.n !== state.iris) {
         L.irisDisc.userData.n = state.iris; L.irisDisc.geometry.dispose();
         const hole = state.iris >= 99 ? 0.0004 : 0.0125 * 1.8 / state.iris;

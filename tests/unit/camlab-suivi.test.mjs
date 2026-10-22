@@ -48,7 +48,7 @@ const { lessonById } = await import('../../src/cours/index.js');
 const { RATTACHEMENT, COMPETENCES } = await import('../../src/content/referentiel.js');
 const { livret, activityState, codesOf } = await import('../../src/livret.js');
 const { on } = await import('../../src/state.js');
-const { PROG } = await import('../../src/shared.js');
+const { PROG, mergeProgress } = await import('../../src/shared.js');
 
 const bad = (t) => !t || /undefined|NaN|\[object|null\b/.test(t);
 
@@ -354,4 +354,26 @@ test('fiche : la consigne de la manipulation (hint), sinon celle des bagues pour
     assert.deepEqual(hints(7, '__avec'), ['Branche la fibre, puis lis le niveau optique à la CCU.']);
     assert.deepEqual(hints(1, '__avec'), ['Branche la fibre, puis lis le niveau optique à la CCU.']);
   } finally { delete LABS.__sans; delete LABS.__avec; }
+});
+
+// ---------------- progression d'un autre appareil ----------------
+test('progression du serveur : Cours et module caméra fusionnés, le meilleur des deux gardé', () => {
+  const save = structuredClone({ cours: PROG.cours, camera: PROG.camera });
+  PROG.cours = { 'signal-bits': { seen: true, quiz: { score: 1, total: 3 } } };
+  PROG.camera = { notions: { iris: { score: 3, total: 3, at: 5 } }, quiz: {}, mes: { best: { score: 70, sec: 400, errs: 3, at: 10 }, runs: [{ score: 70, sec: 400, errs: 3, at: 10 }] } };
+  mergeProgress({
+    missions: {}, visited: {}, scenarios: [], reports: [],
+    cours: { 'signal-bits': { seen: false, quiz: { score: 3, total: 3 } }, 'sdi-oeil': { seen: true, quiz: null } },
+    camera: { notions: { iris: { score: 1, total: 3, at: 1 }, focale: { score: 3, total: 3, at: 2 } }, quiz: { 1: { score: 5, total: 6 } }, mes: { best: { score: 88, sec: 500, errs: 1, at: 3 }, runs: [{ score: 88, sec: 500, errs: 1, at: 3 }] } },
+  });
+  assert.deepEqual(PROG.cours['signal-bits'], { seen: true, quiz: { score: 3, total: 3 } });
+  assert.equal(PROG.cours['sdi-oeil'].seen, true);
+  assert.equal(PROG.camera.notions.iris.score, 3); assert.equal(PROG.camera.notions.focale.score, 3);
+  assert.equal(PROG.camera.quiz[1].score, 5);
+  assert.equal(PROG.camera.mes.best.score, 88); assert.deepEqual(PROG.camera.mes.runs.map((r) => r.at), [3, 10]);
+  Object.assign(PROG, save);
+});
+
+test('chaque lien « cours » d\'une fiche mène à une leçon qui existe', () => {
+  for (const id of ORDRE) if (NOTIONS[id].cours) assert.ok(lessonById(NOTIONS[id].cours), `${id} : leçon ${NOTIONS[id].cours}`);
 });

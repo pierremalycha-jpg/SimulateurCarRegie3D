@@ -115,7 +115,8 @@ export function watchSessionReports(cb) {
 }
 
 // ---------------- progression du stagiaire ----------------
-function mergeProgress(d) {
+/** fusionne la progression enregistrée sur le serveur (document progress/<id>) avec celle de ce navigateur */
+export function mergeProgress(d) {
   if (!d) return;
   PROG.missions = { ...(d.missions || {}), ...PROG.missions };
   PROG.visited = { ...(d.visited || {}), ...PROG.visited };
@@ -132,6 +133,23 @@ function mergeProgress(d) {
     const n = PROG.net = PROG.net || { missions: {}, quiz: [], exams: [] };
     n.missions = { ...(d.net.missions || {}), ...n.missions };
     for (const k of ['quiz', 'exams']) { const seen = new Set((n[k] || []).map((x) => x.at)); n[k] = n[k] || []; for (const x of d.net[k] || []) if (!seen.has(x.at)) n[k].push(x); }
+  }
+  // meilleur score de chaque série : le meilleur des deux appareils
+  const best = (a, b) => (!a ? b : !b ? a : b.score > a.score ? b : a);
+  const bestOf = (mine, theirs) => { for (const [k, v] of Object.entries(theirs || {})) mine[k] = best(mine[k], v); return mine; };
+  // Cours : leçon vue ici ou ailleurs, meilleur quiz
+  if (d.cours) {
+    const C = PROG.cours = PROG.cours || {};
+    for (const [id, p] of Object.entries(d.cours)) { if (!p) continue; const m = C[id] || (C[id] = { seen: false, quiz: null }); m.seen = m.seen || !!p.seen; m.quiz = best(m.quiz, p.quiz); }
+  }
+  // module caméra : notions, quiz de chapitre, mise en service (meilleur résultat et derniers essais)
+  if (d.camera) {
+    const K = /** @type {any} */ (PROG.camera = PROG.camera || {});
+    K.notions = bestOf(K.notions || {}, d.camera.notions); K.quiz = bestOf(K.quiz || {}, d.camera.quiz);
+    const m = K.mes = K.mes || { best: null, runs: [] }, r = d.camera.mes || {}; m.runs = m.runs || [];
+    const seenM = new Set(m.runs.map((x) => x.at)); for (const x of r.runs || []) if (!seenM.has(x.at)) m.runs.push(x);
+    m.runs = m.runs.sort((a, b) => (a.at || 0) - (b.at || 0)).slice(-10);
+    if (r.best && (!m.best || r.best.score > m.best.score || (r.best.score === m.best.score && r.best.sec < m.best.sec))) m.best = r.best;
   }
 }
 function restoreProgress() {

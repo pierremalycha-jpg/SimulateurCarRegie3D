@@ -411,12 +411,15 @@ function updateList() {
 // ---------------- la caméra pilotée par une manipulation ----------------
 // st : bagues et filtre (zoom, focus, iris, ff, nd, ext, macro), et l'image : light (lumière du
 // plateau, 1 par défaut), gain (dB), wb (dominante R, V, B), bars, chan (VF OUT), zebra ([bas,
-// haut] en %), mireD (distance de la mire, m). Une manipulation n'envoie que ce qu'elle règle.
+// haut] en %), mireD (distance de la mire, m), tally (lampe du viseur : 'pgm', 'pvw' ou 'off'). Une
+// manipulation n'envoie que ce qu'elle règle.
 const RIG_KEYS = ['zoom', 'focus', 'iris', 'ff', 'nd', 'ext', 'macro'];
+const TALLY = ['pgm', 'pvw', 'off'];
 const CHANS = ['COLOR', 'Y', 'R', 'G', 'B'];
 function lensFromLab(st) {
   R.lens = st;
   const o = {}; for (const k of RIG_KEYS) if (st[k] != null && st[k] >= 0) o[k] = st[k];
+  if (TALLY.includes(st.tally)) o.tally = st.tally;
   if (Object.keys(o).length) R.rig.set(o);
   setMire(st.mireD || MIRE_D);
   const vfm = R.studio.vfMat.uniforms, mon = R.studio.monMat.uniforms;
@@ -433,7 +436,7 @@ function setMire(D) {
   R.studio.mire.position.x = x; R.studio.dirty = true; R.renderer.shadowMap.needsUpdate = true;
 }
 /** fiche refermée : l'image redevient celle de la caméra seule */
-function resetImage() { lensFromLab({}); R.rig.set({ ext: 0, macro: 0 }); R.lens = null; }
+function resetImage() { lensFromLab({}); R.rig.set({ ext: 0, macro: 0, tally: 'off' }); R.lens = null; }
 /** l'image de la caméra : focale, flou de mise au point, lumière reçue */
 function cameraImage(dt) {
   const s = R.rig.state, L = R.lens || {};

@@ -391,7 +391,8 @@ function macro(ctx) {
     sh.done(defis); sh.say(olivier(o, b));
     const scene = st.phase === 0 ? { scene: /** @type {'pdc'} */ ('pdc'), cards: [{ D: CARD, ang: 0 }] } : { D };
     vf.draw({ f: o.f, dF: o.dF, delta: d, N, light: LIGHT, ...scene });
-    send(ctx, { ...lensState(st, o, { light: LIGHT }), macro: st.free || st.m > 0 ? 1 : 0 });
+    // la bague macro en proportion : le moniteur 3D décale l'image d'autant (MACRO_MAX à fond)
+    send(ctx, { ...lensState(st, o, { light: LIGHT }), macro: st.m });
   }
   sh.node.append(btnRow(linkBtn('Recommencer', () => { Object.assign(st, start()); ring.set(0); defis.fill(false); ref = null; sweep = null; msg = ''; rings.sync(); up(); })));
   up();

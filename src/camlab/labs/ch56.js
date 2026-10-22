@@ -517,7 +517,8 @@ export const LABS_CH56 = {
         osd: [`Z ${fr(o.f, 0)} mm`, `F${fr(o.N, 1)}`], osdR: ['CAM 2'],
         overlay: (g) => { if (lamps.r || lamps.g) { g.fillStyle = lamps.r ? '#ff2a1a' : '#22d65a'; g.fillRect(W / 2 - 34, 8, 68, 14); g.fillStyle = '#05070a'; g.font = '700 11px "B612 Mono", monospace'; g.textAlign = 'center'; g.fillText(lamps.r ? 'TALLY' : 'PVW', W / 2, 19); } },
       });
-      send(ctx, lensState(st, o, { light: 0.5 }));
+      // la lampe du viseur, vue du plateau : rouge à l'antenne ou au CALL, éteinte si TALLY est sur OFF
+      send(ctx, { ...lensState(st, o, { light: 0.5 }), tally: lamps.front ? 'pgm' : 'off' });
     }
     sh.node.classList.add('c56-lab');
     sh.node.append(btnRow(linkBtn('Recommencer', () => { Object.assign(st, init()); note = ''; pgm.mark(1); pvw.mark(3); rear.mark('ON'); vfSw.mark('HIGH'); mic.mark('OFF'); call.set(false); rcall.set(false); defis.fill(false); up(); })));

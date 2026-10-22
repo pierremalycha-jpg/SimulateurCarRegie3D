@@ -227,5 +227,5 @@ function exerciseCard(x, L) {
   return el('div', { class: 'co-exo' + (done ? ' done' : ''), 'data-exercise': x.id },
     el('i', { class: 'co-led' + (done ? ' green' : ''), 'aria-hidden': 'true' }),
     el('div', { class: 'co-exo-t' }, el('b', {}, I.title), el('small', {}, `${I.duration} · ${I.level} · ${st}`), el('p', {}, x.intro || I.summary)),
-    el('button', { type: 'button', class: 'btn small' + (done ? '' : ' primary'), onclick: () => { S.coursBack = L.id; emit('go', { ...I.go, label: I.title }); } }, done ? 'Refaire' : S.mode === 'start' ? 'Commencer (lance le car)' : 'Commencer'));
+    el('button', { type: 'button', class: 'btn small' + (done ? '' : ' primary'), onclick: () => { S.coursBack = L.id; emit('go', { ...I.go, label: I.title }); } }, done ? 'Refaire' : S.mode === 'start' && !I.go.camera ? 'Commencer (lance le car)' : 'Commencer'));
 }
