@@ -182,8 +182,10 @@ function buildPins() {
     }
     R.anchors.set(p.id, a);
     const n = notionsAt(p.id).length;
-    const b = el('button', { type: 'button', class: 'cl-pin', 'data-id': p.id, 'aria-label': `${p.nom} (${n} notion${n > 1 ? 's' : ''})`, onclick: () => openPoint(p.id) },
-      el('i', { 'aria-hidden': 'true' }, String(i + 1)), el('span', {}, p.nom));
+    // le nom lu par un lecteur d'écran est le texte du bouton (classe sr) : la bulle visible au survol
+    // reprend le même nom, sans écart entre ce qu'on voit et ce qu'on entend
+    const b = el('button', { type: 'button', class: 'cl-pin', 'data-id': p.id, onclick: () => openPoint(p.id) },
+      el('i', { 'aria-hidden': 'true' }, String(i + 1)), el('span', { 'aria-hidden': 'true' }, p.nom), el('b', { class: 'sr' }, `${p.nom} (${n} notion${n > 1 ? 's' : ''})`));
     b.dataset.occ = '0';
     pins.append(b); R.pinEls.set(p.id, b);
   });

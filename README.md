@@ -438,7 +438,9 @@ un poste du car. Le livret de compétences compte les notions acquises (sorte «
 
 **Corrections.** La progression du Cours et du module caméra enregistrée sur le serveur n'est plus écrasée par
 celle, vide, d'un nouvel appareil (`src/shared.js`, `mergeProgress`). Les feuilles de style de base passent
-avant leurs compléments (`camlab.css` avant `camlab-ch1.css`, `tools/build.mjs`).
+avant leurs compléments (`camlab.css` avant `camlab-ch1.css`, `tools/build.mjs`). Accessibilité : les pastilles
+de la caméra 3D et les prises de la manipulation « connectique » annoncent le nom qu'elles affichent ; la suite
+`accessibilite` passe aussi sur le module caméra (liste, six fiches, un quiz, la mise en service).
 
 Suites : `tests/e2e/camera.mjs` ouvre les 51 fiches à 1280 et à 390 px, acquiert une notion, fait un quiz de
 chapitre et joue la mise en service jusqu'au bilan ; tests unitaires `camlab*.test.mjs`.

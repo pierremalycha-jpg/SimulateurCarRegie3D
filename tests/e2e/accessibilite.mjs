@@ -1,5 +1,5 @@
 // Accessibilité : le moteur axe-core (Deque) passe sur les écrans principaux — feuille de service,
-// chef de car, barre d'outils, pupitre, postes, guide, diagnostic — selon WCAG 2.2 A et AA.
+// chef de car, barre d'outils, pupitre, postes, guide, diagnostic, module caméra — selon WCAG 2.2 A et AA.
 // Le canvas 3D est exclu (il n'a pas de texte). Le bilan liste chaque règle en défaut avec ses
 // éléments ; le test échoue sur les défauts graves (impact « critical » ou « serious »).
 // node tests/e2e/accessibilite.mjs [dossier]   (AXE_JSON=1 : écrit aussi le détail en JSON)
@@ -16,13 +16,14 @@ const browser = await launch();
 const page = await openPage(browser, { errors: T.errors, fresh: true, title: true, before: (pg) => pg.emulateMedia({ reducedMotion: 'reduce' }) });
 const ev = (f, a) => page.evaluate(f, a);
 const all = {};
-async function scan(name, include) {
+async function scan(name, include, off = []) {
   if (!(await ev(() => !!window.axe))) await page.addScriptTag({ content: AXE });
-  const r = await ev(async ({ tags, include }) => {
+  const r = await ev(async ({ tags, include, off }) => {
     const ctx = { include: include ? [[include]] : [['body']], exclude: [['canvas'], ['#minimon canvas']] };
-    const res = await window.axe.run(ctx, { runOnly: { type: 'tag', values: tags }, resultTypes: ['violations'] });
+    const rules = Object.fromEntries(off.map((id) => [id, { enabled: false }]));
+    const res = await window.axe.run(ctx, { runOnly: { type: 'tag', values: tags }, rules, resultTypes: ['violations'] });
     return res.violations.map((v) => ({ id: v.id, impact: v.impact, help: v.help, n: v.nodes.length, nodes: v.nodes.slice(0, 6).map((n) => ({ t: n.target.join(' '), s: (n.failureSummary || '').split('\n').slice(1, 3).join(' ').slice(0, 220), h: n.html.slice(0, 140) })) }));
-  }, { tags: TAGS, include });
+  }, { tags: TAGS, include, off });
   all[name] = r;
   const grave = r.filter((v) => v.impact === 'critical' || v.impact === 'serious');
   T.check(`${name} : aucun défaut grave`, !grave.length, grave.map((v) => `${v.id} ×${v.n}`).join(', '));
@@ -107,6 +108,23 @@ await scan('equipe', '#modal');
 await ev(() => document.querySelector('#modal .x')?.click());
 await ev(() => window.__dbg.diag.openDiag());
 await scan('diagnostic', '#modal');
+await ev(() => document.querySelector('#modal .x')?.click());
+
+// la caméra en 3D : la liste, une fiche par groupe de chapitres, un quiz, la mise en service. Les
+// pastilles suivent la caméra : deux peuvent se chevaucher selon l'angle de vue, d'où target-size écarté.
+await ev(() => window.__dbg.emit('camera', {}));
+await until(page, () => document.body.classList.contains('camlab-on') && !document.querySelector('.camlab .cl-loading'), null, 120000);
+await scan('camera', '.camlab', ['target-size']);
+for (const id of ['frontale', 'gain', 'knee', 'tally', 'fibre', 'vecto']) {
+  await ev((id) => /** @type {HTMLElement} */ (document.querySelector(`.cl-ni[data-n="${id}"]`)).click(), id);
+  await page.waitForTimeout(300);
+  await scan('camera-' + id, '.camlab', ['target-size']);
+}
+await ev(() => /** @type {HTMLElement} */ (document.querySelector('.cs-qbtn[data-quiz="4"]')).click());
+await scan('camera-quiz', '.camlab', ['target-size']);
+await ev(() => /** @type {HTMLElement} */ (document.querySelector('.camlab .cl-bar .cs-mesbtn')).click());
+await page.waitForTimeout(600);
+await scan('camera-mise-en-service', '.camlab', ['target-size']);
 
 if (process.env.AXE_JSON) fs.writeFileSync(path.join(OUT, 'axe.json'), JSON.stringify(all, null, 1));
 await T.finish();

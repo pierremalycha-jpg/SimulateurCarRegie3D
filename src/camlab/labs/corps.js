@@ -230,7 +230,9 @@ export const CORPS = {
       if (p.kind === 'bnc') { mk('circle', { cx: p.x, cy: p.y, r: p.r * 0.55, class: 'cl-jk-pin' }, g); mk('circle', { cx: p.x, cy: p.y, r: 2, class: 'cl-jk-ring' }, g); }
       if (p.kind === 'jack') mk('circle', { cx: p.x, cy: p.y, r: 3.4, class: 'cl-jk-pin' }, g);
       if (p.kind === 'multi') for (let i = 0; i < p.pins; i++) { const a = i / p.pins * Math.PI * 2; mk('circle', { cx: p.x + Math.cos(a) * p.r * 0.55, cy: p.y + Math.sin(a) * p.r * 0.55, r: 1.6, class: 'cl-jk-pin' }, g); }
-      p.nom.split('/').forEach((line, i, all) => { mk('text', { x: p.x, y: p.y + p.r + 16 + i * 11, class: 'cl-jk-lbl' }, g).textContent = all.length > 1 ? line : p.nom; });
+      // un nom long se coupe après sa barre (PROMPTER/ GENLOCK) ; la barre reste écrite, pour que le texte lu
+      // à l'écran soit celui du nom du bouton
+      (p.nom.length > 10 ? p.nom.replace('/', '/\n') : p.nom).split('\n').forEach((line, i) => { mk('text', { x: p.x, y: p.y + p.r + 16 + i * 11, class: 'cl-jk-lbl' }, g).textContent = line; });
       const choose = () => plug(p.id);
       g.addEventListener('click', choose); g.addEventListener('keydown', (e) => { if (/** @type {KeyboardEvent} */ (e).key === 'Enter' || /** @type {KeyboardEvent} */ (e).key === ' ') { e.preventDefault(); choose(); } });
       holes.set(p.id, g);
