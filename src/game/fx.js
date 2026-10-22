@@ -21,7 +21,8 @@ function build() {
     el('span', { class: 'xp-lvl' }, el('small', {}, 'NIV'), el('b', {}, '1')), el('span', { class: 'xp-track' }, el('i')), el('span', { class: 'xp-txt' }, ''), el('span', { class: 'xp-floats' }));
   F.xp.addEventListener('click', () => { if (S.mode !== 'start') emit('journal'); });
   F.xp.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); F.xp.click(); } });
-  const tb = $('#hud .topbar'); if (tb) tb.append(F.xp); else hud.append(F.xp);
+  const tb = $('#toolbar'); if (tb) tb.prepend(F.xp); else hud.append(F.xp);
+  on('toolbar', (t) => { if (F.xp && t) t.prepend(F.xp); renderXp(); });
   F.banner = el('div', { id: 'banner', hidden: true, role: 'status', 'aria-live': 'polite' });
   F.card = el('div', { id: 'titlecard', hidden: true, 'aria-hidden': 'true' });
   hud.append(F.banner, F.card);

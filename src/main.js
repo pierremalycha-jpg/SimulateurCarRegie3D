@@ -58,7 +58,7 @@ import * as CTRL from './net/ctrlnet.js';
 import { installPerfTest, watchFps } from './app/perf.js';
 import { openMenu, restart, resumeAfterReload } from './app/nav.js';
 import { toggleChef } from './ui/tutor_ui.js';
-import { installSfx, sfx, JEU } from './game/sfx.js';
+import { installSfx, sfx, JEU, applyJeu } from './game/sfx.js';
 import { installProgression } from './game/progression.js';
 import { installFx } from './game/fx.js';
 import { renderQuest, updateQuestMarker, openJournal, currentGoal } from './game/quest.js';
@@ -218,7 +218,7 @@ loadStep('Préparation des matériaux', 90); await tick();
 try { renderer.compile(W.scene, pcam); renderer.compile(T.scene, pcam); } catch (e) { report(e, 'préparation des matériaux'); }
 initTruckMap((st) => goToStation(st), () => PL);
 installInput();
-installSfx(); installProgression(); installFx();
+installSfx(); applyJeu(); installProgression(); installFx();
 installPerfTest();
 initShared();
 // la configuration du car peut arriver après le démarrage : on recalcule la répartition EVS

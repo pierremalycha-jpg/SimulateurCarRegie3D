@@ -23,16 +23,18 @@ export function buildToolbar() {
   // le pupitre (aller quelque part, tous les outils), le chef de car (pendant un exercice ou la visite
   // guidée : ui/tutor_ui.js l'affiche), le Cours, le son, le menu (tout le reste)
   const b = (label, key, ico, fn, id, title) => el('button', { class: 'tbtn', id, title: title || label + (key ? ' (' + key + ')' : ''), onclick: fn }, icon(ico), el('span', { class: 'tl' }, label), key ? el('kbd', {}, key) : null);
+  // épuré : le niveau (game/fx.js), le pupitre, les missions, le chef pendant un exercice, le menu ;
+  // le Cours et le son sont dans le menu, le pupitre et les réglages
   tb.append(
     b('Pupitre', 'Tab', 'pupitre', () => openPupitre(), 'tb-pupitre', 'Aller à un poste ou un endroit, et tous les outils (Tab ou T)'),
     chefBtn(b('Chef de car', 'J', 'chef', () => emit('chef'), 'tb-chef', 'Le chef de car vous explique le poste et vous guide pas à pas (J)')),
     b('Missions', 'L', 'missions', () => emit('journal'), 'tb-missions', 'Le journal des missions : ce qu\'il y a à faire ici, toutes les missions, tes badges (L)'),
-    b('Cours', 'G', 'cours', () => emit('cours'), 'tb-cours', 'Les leçons et leurs exercices pratiques, le glossaire (G)'),
-    b(soundLabel(), null, AU.muted ? 'muet' : 'son', () => { startAudio(); AU.muted = !AU.muted; applyFaders(); emit('soundToggle'); }, 'tb-son', 'Couper ou rétablir le son'),
-    b('Menu', 'Échap', 'menu', () => emit('menu'), 'tb-menu', 'Cours, réglages, équipe, retour à l\'accueil (Échap)'));
-  const son = $('#tb-son'); if (son) son.classList.toggle('muted', AU.muted);
+    b('Menu', 'Échap', 'menu', () => emit('menu'), 'tb-menu', 'Cours, réglages, son, équipe, retour à l\'accueil (Échap)'));
+  emit('toolbar', tb);
 }
+export const soundToggle = () => { startAudio(); AU.muted = !AU.muted; applyFaders(); emit('soundToggle'); };
 on('soundToggle', () => { const son = $('#tb-son'); if (son) { son.querySelector('.tl').textContent = soundLabel(); son.querySelector('.ico')?.replaceWith(icon(AU.muted ? 'muet' : 'son')); son.classList.toggle('muted', AU.muted); } });
+export { soundLabel };
 
 // images par seconde affichées (mesurées en temps réel sur une demi-seconde)
 export const FPS = { shown: 0 };
@@ -44,14 +46,14 @@ function buildStatus() {
   const sb = $('#statusbar'); sb.innerHTML = '';
   const b = () => el('b');
   SB = { tc: b(), score: document.createTextNode(''), clock: b(), pgm: b(), pvw: b(), alarms: b(), fps: b(), alarmChip: null };
-  SB.alarmChip = el('span', { class: 'chip', title: 'Liaisons caméras ou synchro en défaut, enregistrement EVS arrêté, transmission coupée' }, icon('alarme'), 'Alarmes', SB.alarms);
+  SB.alarmChip = el('span', { class: 'chip', hidden: true, title: 'Liaisons caméras ou synchro en défaut, enregistrement EVS arrêté, transmission coupée' }, icon('alarme'), 'Alarmes', SB.alarms);
+  // épuré : le timecode, le match, l'antenne ; les alarmes seulement s'il y en a ; le PVW et les images par
+  // seconde ne sont plus affichés (le PVW se lit au multiview, les i/s dans Réglages → Diagnostic)
   sb.append(
     el('span', { class: 'chip tc' }, 'TC', SB.tc),
     el('span', { class: 'chip' }, SB.score, SB.clock),
     el('span', { class: 'chip red' }, el('span', { class: 'dot red' }), 'PGM', SB.pgm),
-    el('span', { class: 'chip green' }, el('span', { class: 'dot green' }), 'PVW', SB.pvw),
-    SB.alarmChip,
-    el('span', { class: 'chip fps', title: 'Images par seconde du rendu' }, SB.fps));
+    SB.alarmChip);
 }
 export function updateStatus(dt) {
   fpsAcc += dt; fpsN++;
@@ -65,11 +67,11 @@ export function updateStatus(dt) {
   setText(SB.clock, mmss(M.clock));
   setText(SB.pgm, pgm);
   setText(SB.pvw, sourceLabel(meSource(MIX.pst)));
-  setText(SB.alarms, String(alarms)); SB.alarmChip.classList.toggle('alarm', alarms > 0);
-  setText(SB.fps, FPS.shown + ' i/s');
+  setText(SB.alarms, String(alarms)); SB.alarmChip.classList.toggle('alarm', alarms > 0); if (SB.alarmChip.hidden !== !alarms) SB.alarmChip.hidden = !alarms;
   setText($('#minimon .lab'), 'PGM · ' + pgm);
   const zone = whereAmI();
   setText($('#where'), zone[0]); setText($('#where2'), zone[1]);
+  const qw = $('#quest .q-where'); if (qw) setText(qw, zone[0]);
 }
 export function whereAmI() {
   const p = PL.pos;

@@ -7,7 +7,7 @@ import { icon } from '../ui/icons.js';
 import { TUTOR, step, isAction, lessonsFor, lessonBlocked, lessonById as tutorLesson } from '../tutor/engine.js';
 import { beginLesson } from '../ui/tutor_ui.js';
 import { MISSIONS, currentMission } from '../ui/guide.js';
-import { SC, PHASES } from '../scenario.js';
+import { SC, PHASES, stopScenario, scenarioNext } from '../scenario.js';
 import { STATION_INFO } from '../content/stations.js';
 import { allExercises, exerciseInfo, exerciseDone, SPECIAL } from '../cours/exercices.js';
 import { T } from '../truck.js';
@@ -89,14 +89,19 @@ export function renderQuest(force = false) {
   if (!force && key === Q.key && !r.hidden) return;
   Q.key = key; r.hidden = false;
   r.classList.toggle('idle', g.kind === 'idle');
+  const whereNow = /** @type {HTMLElement | null} */ ($('#where'));
   r.replaceChildren(...[
+    el('div', { class: 'q-where' }, whereNow ? whereNow.textContent : ''),
     el('div', { class: 'q-head' }, icon(g.kind === 'match' ? 'antenne' : g.kind === 'mission' ? 'plan' : g.kind === 'fini' ? 'trophee' : g.kind === 'idle' ? 'missions' : 'objectif'), el('span', { class: 'q-tag' }, g.tag), g.sub ? el('span', { class: 'q-sub' }, g.sub) : null,
       el('button', { type: 'button', class: 'q-btn', title: 'Journal des missions (L)', 'aria-label': 'L : journal des missions', onclick: () => openJournal() }, icon('missions'), el('kbd', {}, 'L'))),
     el('h3', { class: 'q-title' }, g.title),
     g.text ? el('p', { class: 'q-text' + (g.todo ? ' todo' : '') }, g.todo && g.kind === 'exercice' ? el('i', { class: 'q-dot' }) : null, g.text) : null,
     g.goals ? el('ul', { class: 'q-goals' }, ...g.goals.map(([t, ok]) => el('li', { class: ok ? 'ok' : '' }, icon(ok ? 'fait' : 'suivant'), t))) : null,
     g.prog != null ? el('div', { class: 'q-prog', role: 'progressbar', 'aria-valuemin': '0', 'aria-valuemax': '100', 'aria-valuenow': String(Math.round(g.prog * 100)) }, el('i', { style: { width: `${Math.round(g.prog * 100)}%` } })) : null,
-    g.kind === 'exercice' && g.todo ? el('div', { class: 'q-hint' }, el('kbd', {}, 'J'), ' Olivier : indice, « Emmène-moi », « Fais-le pour moi »') : null].filter(Boolean));
+    g.kind === 'exercice' && g.todo ? el('div', { class: 'q-hint' }, el('kbd', {}, 'J'), ' Olivier : indice, « Emmène-moi », « Fais-le pour moi »') : null,
+    g.kind === 'match' ? el('div', { class: 'q-acts' },
+      PHASES[SC.phase] && PHASES[SC.phase].id !== 'air' ? el('button', { type: 'button', class: 'btn small primary', onclick: () => { scenarioNext(); renderQuest(true); } }, PHASES[SC.phase].done() ? 'Phase suivante' : 'Terminer la phase') : el('span', { class: 'note' }, 'Fin automatique après 5 min d\'antenne'),
+      el('button', { type: 'button', class: 'btn small', onclick: () => { stopScenario(); renderQuest(true); } }, 'Abandonner')) : null].filter(Boolean));
 }
 /** l'objectif clignote en vert : une mission ou une étape vient d'être réussie */
 function flash(kind = 'ok') {

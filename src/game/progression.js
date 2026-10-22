@@ -49,7 +49,8 @@ export function installProgression() {
       award({ key: 'entrepot:' + BUILD.mission, pts: BAREME.entrepot, label: 'Mission de l\'entrepôt réussie : ' + title(/** @type {any} */ (EP_MISSIONS).map((x) => ({ id: x.id, title: x.titre })), BUILD.mission) });
     }
   });
-  on('station', (id) => award({ key: 'poste:' + id, pts: BAREME.poste, label: 'Poste découvert : ' + (STATION_INFO[id] ? STATION_INFO[id].title : id) }));
+  // le poste compte tout de suite pour les badges (la progression n'est copiée qu'à l'enregistrement)
+  on('station', (id) => { PROG.visited[id] = true; award({ key: 'poste:' + id, pts: BAREME.poste, label: 'Poste découvert : ' + (STATION_INFO[id] ? STATION_INFO[id].title : id) }); });
   on('teleport', (i) => { const d = DESTS[i]; if (d && !d[4]) award({ key: 'lieu:' + i, pts: BAREME.lieu, label: 'Endroit découvert : ' + d[0] }); });
   // un état qui change sans événement (missions réussies, visites) : les badges sont revérifiés de temps en temps
   setInterval(() => { if (S.mode !== 'start') checkBadges(); }, 4000);

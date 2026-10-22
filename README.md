@@ -407,6 +407,15 @@ d'installation, toutes les missions par chapitre du Cours avec l'XP qu'elles rap
 d'Olivier démarre, ou la vacation notée se lance), « Leçon », et la vitrine des badges. Aux postes qui se servent de
 L (mélangeur : volet logo ; EVS : LIVE), le bouton Missions de l'en-tête reste.
 
+**Un HUD épuré : trois blocs.** À l'arrivée dans le car régie, l'écran ne montre plus que l'objectif en haut à
+gauche (sa première ligne est le lieu : compound, car régie · production…), la barre d'outils en haut à droite
+(le niveau et sa barre d'XP, Pupitre, Missions, Menu ; le chef de car pendant un exercice) et la bande d'état en
+bas à gauche (timecode, match, antenne ; les alarmes seulement s'il y en a), plus le retour PGM. Le bandeau de lieu,
+le PVW et les images par seconde de la bande, les boutons Cours et Son de la barre (dans le menu, le pupitre et les
+réglages), le mini-plan du car (le pupitre a le plan ; Réglages → Jeu le remet), le panneau du jour de match (ses
+objectifs et ses boutons Phase suivante / Abandonner sont dans l'objectif) et les messages d'arrivée ont disparu.
+La prise en main tient sur une ligne en bas, une fois, et s'efface d'elle-même (40 s, ou E, Tab, L).
+
 **XP, niveaux, badges** (`src/game/xp.js`, calcul pur, testé par `tests/unit/xp.test.mjs` ; accroches dans
 `src/game/progression.js`). Barème (`BAREME`) : mission d'installation 25, exercice d'Olivier 60 moins l'aide
 (« Fais-le pour moi » −8, indice −3, plancher 20 ; refait 15), présentation d'un poste 20, quiz d'une leçon 30,

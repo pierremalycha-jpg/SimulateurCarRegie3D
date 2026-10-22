@@ -15,10 +15,12 @@ import { on } from '../state.js';
 // bruitages ont leur propre réglage (Réglages → Jeu), indépendant du son d'ambiance du car.
 // ----------------------------------------------------------------------------------
 const KEY = 'carregie.jeu';
-/** @type {{ sfx: boolean, volume: number, quest: boolean, marker: boolean }} */
-export const JEU = { sfx: true, volume: 0.6, quest: true, marker: true };
+/** @type {{ sfx: boolean, volume: number, quest: boolean, marker: boolean, minimap: boolean }} */
+export const JEU = { sfx: true, volume: 0.6, quest: true, marker: true, minimap: false };
 try { Object.assign(JEU, JSON.parse(localStorage.getItem(KEY) || '{}')); } catch (e) { /* stockage indisponible */ }
-export function saveJeu() { try { localStorage.setItem(KEY, JSON.stringify(JEU)); } catch (e) { /* stockage indisponible */ } }
+export function saveJeu() { try { localStorage.setItem(KEY, JSON.stringify(JEU)); } catch (e) { /* stockage indisponible */ } applyJeu(); }
+/** classes du document pilotées par les réglages du jeu (le mini-plan du car dans le HUD) */
+export function applyJeu() { document.body.classList.toggle('hud-map', !!JEU.minimap); }
 
 const FX = { ctx: /** @type {AudioContext | null} */ (null), master: /** @type {GainNode | null} */ (null), last: {}, noise: /** @type {AudioBuffer | null} */ (null) };
 function ctxNow() {

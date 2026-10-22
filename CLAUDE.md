@@ -51,7 +51,9 @@ Tout est en français (code commenté en français, interface, commits).
   `#qmark`), le journal des missions (touche L, bouton Missions du HUD et des en-têtes de poste : exercices du poste,
   toutes les missions par chapitre, badges), XP / niveaux / badges (`xp.js`, calcul pur, barème `BAREME`, badges de
   compétence pilotés par `src/livret.js`), accroches sur les événements (`progression.js`), effets (`fx.js`) et
-  bruitages WebAudio (`sfx.js`, réglage dans Réglages → Jeu). Toute nouvelle activité notée émet un événement et
+  bruitages WebAudio (`sfx.js`, réglage dans Réglages → Jeu). Le HUD est épuré : trois blocs (objectif avec le lieu,
+  barre d'outils avec le niveau : Pupitre, Missions, Menu, chef pendant un exercice ; bande d'état TC · match ·
+  PGM · alarmes) et le retour PGM ; le mini-plan et le panneau du jour de match sont masqués (réglage, objectif). Toute nouvelle activité notée émet un événement et
   prend une ligne dans `progression.js`. Le thème visuel est `src/styles/theme-jeu.css` (chargé en dernier : il
   redéfinit les jetons de couleur et les composants) ; une animation d'entrée n'anime que la position, jamais
   l'opacité finale. L'ancienne carte `#mission` reste dans le code mais est masquée : l'objectif la remplace.

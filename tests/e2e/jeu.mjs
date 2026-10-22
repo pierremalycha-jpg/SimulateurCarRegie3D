@@ -27,6 +27,9 @@ T.check('l\'ancienne carte de mission est masquée', await ev(() => { const m = 
 T.check('barre d\'XP : niveau 1, 0 XP', await ev(() => document.querySelector('#xpbar .xp-lvl b')?.textContent === '1' && /0 \/ 120 XP/.test(document.querySelector('#xpbar .xp-txt')?.textContent || '')));
 T.check('repère 3D sur le pied de car, avec sa distance', await until(page, () => { const m = document.getElementById('qmark'); return !!m && !m.hidden && /compound/i.test(m.textContent) && /\d+ m/.test(m.textContent); }, null, 8000));
 T.check('barre d\'outils : la touche Missions (L)', await ev(() => !!document.querySelector('#toolbar #tb-missions') && document.querySelector('#toolbar #tb-missions kbd')?.textContent === 'L'));
+T.check('HUD épuré à l\'arrivée : objectif (avec le lieu), barre d\'outils (niveau compris), bande d\'état à trois cases, retour PGM, prise en main sur une ligne ; ni bandeau de lieu, ni PVW, ni i/s, ni toast, ni mini-plan', await ev(() => {
+  const vis = (s) => { const e = document.querySelector(s); return !!e && !e.hidden && e.offsetParent !== null; };
+  return vis('#quest') && /Compound/i.test(document.querySelector('#quest .q-where')?.textContent || '') && vis('#toolbar') && vis('#toolbar #xpbar') && document.querySelectorAll('#statusbar .chip:not([hidden])').length === 3 && !document.querySelector('#statusbar .chip.fps') && vis('#minimon') && vis('#onboard') && document.querySelectorAll('#onboard li').length >= 5 && !vis('.brand') && !vis('#toast') && !vis('#truckmap') && !document.querySelector('#statusbar .chip.green'); }));
 await shot('03-objectif');
 
 // ---------------- le journal des missions (L) ----------------

@@ -113,6 +113,8 @@ function reportHTML(r) {
 <table><tr><th>Phase</th><th>Points</th><th>Durée</th></tr>${r.phases.map((p) => `<tr><td>${esc(p.title)}</td><td>${p.pts} / ${p.max}</td><td>${mmss(p.dur)}</td></tr>`).join('')}</table>
 <h2>Journal</h2><ul>${SC.log.map((l) => `<li>${mmss(l.t)} · ${esc(l.text)}</li>`).join('')}</ul></body></html>`;
 }
+/** passer à la phase suivante (bouton de l'objectif à l'écran) */
+export function scenarioNext() { if (!SC.on) return; SC.autoT = 0; nextPhase(); }
 export function stopScenario() { if (!SC.on) return; SC.on = false; for (const t of SC.timers || []) clearTimeout(t); const b = $('#scenario'); if (b) b.hidden = true; toast('Scénario abandonné'); }
 
 // ---------------- suivi en direct ----------------
