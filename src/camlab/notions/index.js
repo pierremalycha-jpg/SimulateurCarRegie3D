@@ -101,9 +101,9 @@ const ANNONCE = {
   gain: prevu('Sensibilité, gain et bruit', 3, 2, 'commandes', 'Le gain amplifie le signal du capteur : +6 dB vaut un diaphragme de plus, mais aussi plus de bruit. La FB80 donne f/13 à 2000 lux en 50 Hz.'),
   shutter: prevu('L\'obturateur électronique', 3, 2, 'menu', 'La durée d\'exposition de chaque image. 1/50 s par défaut ; plus court, le mouvement devient saccadé. Le clear scan supprime le scintillement d\'un écran LED.'),
   exposition: prevu('L\'exposition : qui fait quoi', 3, 2, 'iris', 'Iris, ND, gain et shutter changent tous la luminosité, mais chacun a un prix : profondeur de champ, bruit ou mouvement. L\'ordre des réglages compte.'),
-  formats: prevu('Formats et cadences', 3, 3, 'menu', '1080i50, 1080p50, 720p50 : nombre de lignes, images par seconde, entrelacé ou progressif.', { cours: 'formats' }),
+  formats: prevu('Formats et cadences', 3, 3, 'menu', '1080i50, 1080p50, 720p50 : nombre de lignes, images par seconde, entrelacé ou progressif.', { cours: 'signal-formats' }),
   // ---- 4. Le traitement de l'image ----
-  quantif: prevu('Conversion et quantification', 4, 3, 'bloc', 'Le signal du capteur devient des nombres. 10 bits en sortie : 64 pour le noir, 940 pour le blanc.', { cours: 'quantification' }),
+  quantif: prevu('Conversion et quantification', 4, 3, 'bloc', 'Le signal du capteur devient des nombres. 10 bits en sortie : 64 pour le noir, 940 pour le blanc.', { cours: 'signal-bits' }),
   balance: BALANCE,
   noir: prevu('Le niveau du noir', 4, 3, 'rcp', 'Le master black règle le noir de l\'image. Trop haut, l\'image se délave ; trop bas, les ombres se bouchent.'),
   gamma: prevu('Gamma et black gamma', 4, 3, 'menu', 'La courbe qui répartit les tons entre le noir et le blanc, et le réglage qui ouvre ou referme les ombres.'),
@@ -119,14 +119,14 @@ const ANNONCE = {
   tally: prevu('Tally, call et intercom', 5, 2, 'intercom', 'Le rouge dit « tu es à l\'antenne », le vert « tu es prêt ». CALL appelle la vision ; l\'intercom PROD ou ENG relie le cadreur à la régie.'),
   retours: prevu('Retours vidéo et prompteur', 5, 2, 'intercom', 'RET 1 et RET 2 SEL montrent au cadreur le programme ou une autre source dans le viseur ; la prise PROMPTER envoie le texte au prompteur.'),
   // ---- 6. Le viseur et le cadreur ----
-  viseur: prevu('Le viseur et ses aides', 6, 2, 'viseur', 'Le viseur 7" : luminosité et contraste du viseur (qui ne changent pas l\'image), peaking pour le point, zebra pour l\'exposition, MAG pour grossir le centre.'),
+  viseur: prevu('Le viseur et ses aides', 6, 2, 'viseur', 'Le viseur 7" : luminosité et contraste du viseur (qui ne changent pas l\'image), peaking pour le point, zebra pour l\'exposition, extender numérique pour grossir le centre.'),
   cadreur: prevu('Le poste du cadreur', 6, 3, 'manches', 'Les manches de la tête fluide, la commande de zoom sous le pouce, la commande de point sous l\'autre main, et l\'équilibrage de la caméra sur la tête.'),
   // ---- 7. La voie caméra ----
-  fibre: prevu('La fibre hybride et ses connecteurs', 7, 2, 'fibre', 'Un câble qui porte l\'image, les retours, l\'intercom, le tally et l\'alimentation ; un connecteur à nettoyer avant chaque branchement.', { cours: 'fibre-smpte' }),
+  fibre: prevu('La fibre hybride et ses connecteurs', 7, 2, 'fibre', 'Un câble qui porte l\'image, les retours, l\'intercom, le tally et l\'alimentation ; un connecteur à nettoyer avant chaque branchement.', { cours: 'camera-systeme' }),
   ccu: prevu('La CCU', 7, 2, 'ccu', 'La voie caméra du car ou de la régie : elle alimente la caméra, reçoit son image et la sort en SDI, calée sur la référence.'),
   rcp: prevu('Le RCP et l\'ingénieur de la vision', 7, 2, 'rcp', 'Le pupitre de la vision : iris et noir au manche, balance, gain, filtres et menus de peinture, à distance de la caméra.'),
-  genlock: prevu('Genlock et référence', 7, 3, 'ccu', 'La CCU reçoit la référence de la régie (tri-level ou black burst) pour que l\'image de la caméra commence en même temps que les autres.', { cours: 'genlock' }),
-  sortie: prevu('Le signal de sortie', 7, 3, 'ccu', 'HD-SDI ou 3G-SDI, en Y\'CbCr 4:2:2 sur 10 bits : ce que la CCU envoie à la grille et au mélangeur.', { cours: 'sdi' }),
+  genlock: prevu('Genlock et référence', 7, 3, 'ccu', 'La CCU reçoit la référence de la régie (tri-level ou black burst) pour que l\'image de la caméra commence en même temps que les autres.', { cours: 'synchro-genlock' }),
+  sortie: prevu('Le signal de sortie', 7, 3, 'ccu', 'HD-SDI ou 3G-SDI, en Y\'CbCr 4:2:2 sur 10 bits : ce que la CCU envoie à la grille et au mélangeur.', { cours: 'sdi-cest-quoi' }),
   lineup: prevu('Le line-up', 7, 3, 'rcp', 'Régler toutes les caméras pour qu\'elles se raccordent entre elles : même noir, même blanc, mêmes couleurs.'),
   // ---- 8. Jusqu'au moniteur ----
   waveform: prevu('Le moniteur forme d\'onde', 8, 2, 'mesure', 'Lire une exposition en pourcentage : le noir à 0 %, les visages vers 60 à 70 %, le blanc à 100 %, rien au-dessus de 103 %.'),

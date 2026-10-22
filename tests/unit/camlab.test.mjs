@@ -6,8 +6,10 @@ import { NOTIONS, CHAPITRES, ORDRE, notionsDu } from '../../src/camlab/notions/i
 import { PASTILLES, notionsAt } from '../../src/camlab/points.js';
 import { FIGS } from '../../src/camlab/figs.js';
 import { LABS } from '../../src/camlab/labs.js';
+import { COMPETENCES } from '../../src/content/referentiel.js';
 import { LENS, COC, MIRE_D, ND, defocus, sharp, focusDist, focusPos, zoomFocal, zoomPos, maxAperture, effAperture, exposureOf, vfov } from '../../src/camlab/optics.js';
 
+const CODES = new Set(COMPETENCES.map((c) => c.code));
 const bad = (t) => !t || /undefined|NaN|\[object|null\b/.test(t);
 
 test('les 51 notions, rangées en 9 chapitres, 12 dans le premier lot', () => {
@@ -55,7 +57,7 @@ test('une fiche écrite suit le moule : schéma, manipulation, textes, trois que
     // des bonnes réponses qui ne sont pas toujours à la même place
     if (f.quiz.length > 2) assert.ok(new Set(f.quiz.map((q) => q.ok)).size > 1, `${id} : bonnes réponses variées`);
     for (const s of f.see || []) assert.ok(NOTIONS[s] && s !== id, `${id} : voir aussi ${s}`);
-    for (const c of f.competences || []) assert.match(c, /^[1-4]\.\d$/);
+    for (const c of f.competences || []) assert.ok(CODES.has(c), `${id} : compétence ${c} absente du référentiel`);
   }
 });
 
