@@ -44,8 +44,8 @@ await page.keyboard.press('ArrowDown'); await page.keyboard.press('ArrowUp'); aw
 T.check('clavier : flèches puis Entrée sur « Jouer »', await until(page, () => document.getElementById('title').hidden, null, 8000));
 T.check('version affichée sur la feuille de service', (await ev(() => document.getElementById('stversion')?.textContent || '')).includes(VERSION));
 
-// le lieu : le car en service, la salle de concert en préparation (fiche « Ce qui se prépare »)
-T.check('lieux : 2 écrans, le car en service', await ev(() => document.querySelectorAll('.jo-lieux .lx').length === 2 && document.querySelector('.lx.on')?.dataset.lieu === 'car'));
+// le lieu : le car en service, l'entrepôt, la salle de concert en préparation (fiche « Ce qui se prépare »)
+T.check('lieux : 3 écrans (car, entrepôt, concert), le car en service', await ev(() => [...document.querySelectorAll('.jo-lieux .lx')].map((b) => b.dataset.lieu).join(',') === 'car,entrepot,concert' && document.querySelector('.lx.on')?.dataset.lieu === 'car'));
 await page.locator('.lx[data-lieu="concert"]').click();
 T.check('écran « Salle de concert » : fiche « Ce qui se prépare »', await until(page, () => /Ce qui se prépare : Salle de concert/.test(document.querySelector('#modal h2')?.textContent || '') && !!document.querySelector('#modal .lx-teaser li'), null, 8000));
 await ev(() => document.querySelector('#modal .x')?.click());

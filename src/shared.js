@@ -145,6 +145,18 @@ export function mergeProgress(d) {
   }
   // progression du jeu (XP, badges) : une récompense obtenue sur l'un des appareils l'est pour de bon
   if (d.game) { const G = /** @type {any} */ (PROG); G.game = mergeGame(G.game, d.game); }
+  // l'entrepôt : meilleur résultat de chaque mission, derniers essais, et le montage le plus récent
+  if (d.entrepot) {
+    const N = /** @type {any} */ (PROG).entrepot = /** @type {any} */ (PROG).entrepot || {};
+    const M = N.missions = N.missions || {};
+    for (const [id, r] of Object.entries(d.entrepot.missions || {})) {
+      if (!r) continue; const m = M[id] = M[id] || { best: null, runs: [] }; m.runs = m.runs || [];
+      const seenE = new Set(m.runs.map((x) => x.at)); for (const x of r.runs || []) if (!seenE.has(x.at)) m.runs.push(x);
+      m.runs = m.runs.sort((a, b) => (a.at || 0) - (b.at || 0)).slice(-10);
+      m.best = best(m.best, r.best);
+    }
+    if (d.entrepot.build && (!N.build || (d.entrepot.build.at || 0) > (N.build.at || 0))) N.build = d.entrepot.build;
+  }
   // module caméra : notions, quiz de chapitre, mise en service (meilleur résultat et derniers essais)
   if (d.camera) {
     const K = /** @type {any} */ (PROG.camera = PROG.camera || {});

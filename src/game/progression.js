@@ -9,8 +9,6 @@ import { STATION_INFO } from '../content/stations.js';
 import { DESTS } from '../app/teleport.js';
 import { lessonById as coursLesson } from '../cours/index.js';
 import { NOTIONS } from '../camlab/notions/index.js';
-import { noteCourante } from '../entrepot/index.js';
-import { B as BUILD } from '../entrepot/build.js';
 import { MISSIONS as EP_MISSIONS } from '../entrepot/missions.js';
 
 // ----------------------------------------------------------------------------------
@@ -40,14 +38,11 @@ export function installProgression() {
   on('scenarioDone', (r) => { if (r) award({ pts: r.score, label: 'Jour de match terminé : ' + r.score + ' %' }); });
   on('atelier', (e) => { if (!e || e.type !== 'done') return; if (!award({ key: 'atelier', pts: BAREME.atelier, label: 'Caméra montée à l\'atelier' })) award({ pts: BAREME.atelierRefait, label: 'Montage refait à l\'atelier' }); });
   on('patchDone', () => award({ key: 'brassage', pts: BAREME.brassage, label: 'Car vide brassé à 100 %' }));
-  on('entrepot', (e) => {
-    if (!e || e.type !== 'change' || !BUILD.mission) return;
-    let n; try { n = noteCourante(); } catch (err) { n = null; }
-    if (n && n.score >= 60) {
-      const P = /** @type {any} */ (PROG); P.entrepot = P.entrepot || {}; P.entrepot.missions = P.entrepot.missions || {};
-      const m = P.entrepot.missions[BUILD.mission] || (P.entrepot.missions[BUILD.mission] = {}); if (!m.best || n.score > (m.best.score ?? m.best)) m.best = { score: n.score, at: Date.now() };
-      award({ key: 'entrepot:' + BUILD.mission, pts: BAREME.entrepot, label: 'Mission de l\'entrepôt réussie : ' + title(/** @type {any} */ (EP_MISSIONS).map((x) => ({ id: x.id, title: x.titre })), BUILD.mission) });
-    }
+  // l'entrepôt : un montage rendu à 60/100 au moins (entrepot/suivi.js) ; refait : 25
+  on('entrepotRendu', (e) => {
+    if (!e || e.score < 60) return;
+    const name = title(/** @type {any} */ (EP_MISSIONS).map((x) => ({ id: x.id, title: x.titre })), e.id);
+    if (!award({ key: 'entrepot:' + e.id, pts: BAREME.entrepot, label: 'Mission de l\'entrepôt réussie : ' + name })) award({ pts: BAREME.entrepotRefait, label: 'Montage rendu de nouveau : ' + name + ' (' + e.score + '/100)' });
   });
   // le poste compte tout de suite pour les badges (la progression n'est copiée qu'à l'enregistrement)
   on('station', (id) => { PROG.visited[id] = true; award({ key: 'poste:' + id, pts: BAREME.poste, label: 'Poste découvert : ' + (STATION_INFO[id] ? STATION_INFO[id].title : id) }); });

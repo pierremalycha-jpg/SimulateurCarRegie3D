@@ -49,6 +49,7 @@ export const BAREME = {
   atelierRefait: 25,
   brassage: 80,         // car vide brassé à 100 %
   entrepot: 100,        // mission de l'entrepôt réussie (≥ 60/100)
+  entrepotRefait: 25,
   poste: 5,             // un poste découvert
   lieu: 5,              // un endroit du stade découvert
   visite: 60,           // la visite guidée terminée
