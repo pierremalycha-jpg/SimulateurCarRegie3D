@@ -7,6 +7,7 @@
 // La couverture est le constat du 21 octobre 2026 sur le car régie (v18.2) ; « prevu » renvoie
 // aux modules qui combleront une compétence absente ou incomplète (ROADMAP.md).
 // ----------------------------------------------------------------------------------
+import { NOTIONS, ORDRE } from '../camlab/notions/index.js';
 
 export const FICHE = {
   code: 'RNCP37022',
@@ -105,6 +106,20 @@ export const blocOf = (code) => BLOCS[Number(code.split('.')[0]) - 1];
 //   reseau    : missions du parcours réseau ST 2110 (net/course.js)
 //   exercices : brassage complet, montage caméra à l'atelier, quiz ST 2110 et examen réseau (60 %)
 //   cours     : leçons de la section Cours (src/cours), acquises quand le quiz est réussi en entier
+//   camera    : module « La caméra en 3D » (src/camlab) : la mise en service notée (« mes », réussie à
+//               60 sur 100) et chaque notion écrite, acquise quand ses trois questions sont réussies du
+//               premier coup ; une notion compte pour les compétences de sa fiche (champ competences)
+/** les notions écrites du module caméra et leurs compétences (codes inconnus ignorés) */
+function cameraNotions() {
+  const codes = new Set(COMPETENCES.map((c) => c.code));
+  /** @type {Record<string, string[]>} */ const t = {};
+  for (const id of ORDRE) {
+    const f = NOTIONS[id]; if (f.prevu || !(f.quiz || []).length) continue;
+    const list = [...new Set((f.competences || []).filter((c) => codes.has(c)))];
+    if (list.length) t[id] = list;
+  }
+  return t;
+}
 export const RATTACHEMENT = {
   parcours: {
     'prise-en-main': ['2.1'],
@@ -185,5 +200,12 @@ export const RATTACHEMENT = {
     'son-tranche': ['1.4', '2.9'], 'son-n1': ['1.4', '2.2', '2.11'],
     'expl-lineup': ['1.4', '2.2', '3.9'], 'expl-depannage': ['2.13', '3.10', '3.12'], 'expl-intercom': ['4.1', '2.8', '2.10'],
     'expl-transmission': ['2.11', '3.12', '4.4'], 'expl-match': ['2.1', '2.8', '4.1'],
+  },
+  camera: {
+    // la mise en service : rendre opérant (2.7), exploiter (2.9) et tester (3.9) la caméra ; interconnecter
+    // caméra et CCU par la fibre et vérifier la liaison (2.10) ; mettre son signal en conformité : noirs,
+    // blancs, exposition sous 100 % à la forme d'onde (1.4)
+    mes: ['2.7', '2.9', '3.9', '2.10', '1.4'],
+    ...cameraNotions(),
   },
 };

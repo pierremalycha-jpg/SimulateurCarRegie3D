@@ -1,6 +1,8 @@
 // La caméra de plateau en 3D (v18.5) : le chapitre « La caméra » du Cours ouvre le module, les
 // pastilles et la liste des notions ouvrent une fiche (schéma, manipulation, questions d'Olivier),
 // le simulateur reste en pause pendant ce temps, Échap ramène dans le Cours sur le même chapitre.
+// Le suivi : une notion acquise se coche, le quiz d'un chapitre, le lien d'une fiche vers sa leçon
+// du Cours, et la mise en service notée lancée depuis la leçon camera-systeme, jouée jusqu'au bilan.
 // node tests/e2e/camera.mjs [dossier]
 import { launch, openPage, outDir, until, reporter } from './harness.mjs';
 const OUT = outDir('camera');
@@ -55,6 +57,119 @@ T.check('Échap : retour dans le Cours, chapitre La caméra, écran titre visibl
 await A.screenshot({ path: `${OUT}/03-retour.png` });
 await A.keyboard.press('Escape'); await A.waitForTimeout(300);
 T.check('fermeture du Cours : le titre reprend le focus', await ev(() => !document.getElementById('layer') && document.activeElement?.id === 'ti-cours'));
+
+// ---------------- le suivi : une notion acquise, le quiz d'un chapitre ----------------
+// (les gestes sont groupés : fiche, quiz, leçon et exercice s'ouvrent sans attendre, et le rendu
+// logiciel de la caméra 3D rend chaque aller-retour avec la page coûteux)
+await ev(() => window.__dbg.emit('camera', { from: 'cours' }));
+await until(A, () => document.body.classList.contains('camlab-on'), null, 60000);
+const acq = await ev(() => {
+  const q = (s) => document.querySelector(s);
+  const bar = /Mise en service/.test(q('.camlab .cl-bar .cs-mesbtn')?.textContent || '');
+  /** @type {HTMLElement} */ (q('.cl-ni[data-n="iris"]')).click();
+  // les trois questions d'Olivier, justes du premier coup (bonnes réponses lues dans les données du module)
+  const f = window.__dbg.camlab().data.NOTIONS.iris;
+  document.querySelectorAll('.camlab .cl-side .cl-quiz > li').forEach((li, i) => /** @type {HTMLElement} */ (li.querySelectorAll('.cl-opt')[f.quiz[i].ok]).click());
+  return { bar, li: !!q('.camlab .cl-ni[data-n="iris"].cs-acq'), head: q('.camlab .cs-acqn')?.textContent, badge: !q('.camlab .cl-side .cs-badge')?.hidden, prog: window.__dbg.PROG.camera?.notions?.iris, ch: q('.camlab .cl-ch .cs-chn')?.textContent };
+});
+T.check('la barre du module : le bouton « Mise en service »', acq.bar);
+T.check('une notion acquise (3 / 3 du premier coup) se coche dans la liste, compte dans « n / 51 acquises » et dans son chapitre', acq.li && /^1 \/ 51 acquises/.test(acq.head || '') && acq.badge && acq.prog && acq.prog.score === 3 && acq.ch === '1 / 13', JSON.stringify(acq));
+await A.screenshot({ path: `${OUT}/20-notion-acquise.png` });
+// le quiz du chapitre 1 : la première question ratée exprès, puis la bonne réponse ; les autres justes
+const qz = await ev(() => {
+  /** @type {HTMLElement} */ (document.querySelector('.cs-qbtn[data-quiz="1"]')).click();
+  const Q = window.__dbg.camlab().data.QUIZ[1];
+  const lis = document.querySelectorAll('.camlab .cs-cquiz .cl-quiz > li');
+  lis.forEach((li, i) => {
+    const opts = li.querySelectorAll('.cl-opt');
+    if (i === 0) /** @type {HTMLElement} */ (opts[(Q[0].ok + 1) % opts.length]).click();
+    /** @type {HTMLElement} */ (opts[Q[i].ok]).click();
+  });
+  return { n: lis.length, score: document.querySelector('.camlab .cs-cquiz .cs-score')?.textContent, revoir: !!document.querySelector('.camlab .cs-cquiz .cs-result .cl-chip'), best: window.__dbg.PROG.camera?.quiz?.[1], item: document.querySelector('.cs-qbtn[data-quiz="1"] small')?.textContent };
+});
+T.check('quiz du chapitre 1 : six questions, la première réponse compte (5 / 6), la notion à revoir proposée, le meilleur score enregistré et affiché dans la liste', qz.n === 6 && /^5 \/ 6/.test(qz.score || '') && qz.revoir && qz.best && qz.best.score === 5 && qz.item === '5 / 6', JSON.stringify(qz));
+
+// ---------------- le lien vers une leçon du Cours (champs cours et go d'une fiche, posés ici pour l'essai) ----------------
+const ln = await ev(() => {
+  const F = window.__dbg.camlab().data.NOTIONS.focale; F.cours = 'camera-systeme'; F.go = [{ label: 'La baie CCU', station: 'ccu' }];
+  /** @type {HTMLElement} */ (document.querySelector('.cl-ni[data-n="focale"]')).click();
+  const r = { cours: document.querySelector('.camlab .cl-side .cs-cours')?.textContent, go: document.querySelector('.camlab .cl-side .cs-go')?.textContent };
+  /** @type {HTMLElement} */ (document.querySelector('.camlab .cl-side .cs-cours')).click();
+  delete F.cours; delete F.go;
+  return { ...r, closed: !document.body.classList.contains('camlab-on'), lesson: !!document.querySelector('#layer.ly-cours .co-les.on[data-lesson="camera-systeme"]') };
+});
+T.check('la fiche montre « La leçon du Cours : … » et « Emmène-moi : … »', /La leçon du Cours : La chaîne caméra/.test(ln.cours || '') && /Emmène-moi : La baie CCU/.test(ln.go || ''), JSON.stringify(ln));
+T.check('le bouton ferme le module et ouvre la leçon dans le Cours', ln.closed && ln.lesson);
+
+// ---------------- la mise en service, depuis l'exercice pratique de la leçon ----------------
+const go = await ev(() => {
+  const card = document.querySelector('#layer .co-exo[data-exercise="x-camera"]'); const before = card?.textContent || '';
+  /** @type {HTMLElement} */ (card.querySelector('button')).click();
+  return { before, closed: !document.getElementById('layer'), mes: /Mise en service/.test(document.querySelector('.camlab .cm-mes h2')?.textContent || '') };
+});
+T.check('leçon camera-systeme : l\'exercice noté « Mise en service » (pas encore faite)', /Mise en service de la caméra de plateau/.test(go.before) && /pas encore faite/.test(go.before), go.before.slice(0, 140));
+T.check('« Commencer » (go { camera: \'mes\' }) ouvre le module sur la mise en service, le Cours refermé', go.closed && go.mes, JSON.stringify(go).slice(0, 200));
+const M = 'window.__dbg.camlab().fiche.engine';
+await ev(() => {
+  // un geste de l'interface : un bouton, une touche d'une rangée (data-v) ou un curseur ; les onglets des postes
+  window.__g = (g, v) => {
+    const els = [...document.querySelectorAll(`.camlab .cm-mes [data-g="${g}"]`)];
+    if (!els.length) throw new Error('geste introuvable : ' + g);
+    const e0 = /** @type {HTMLInputElement} */ (els[0]);
+    if (e0.tagName === 'INPUT') { e0.value = String(v); e0.dispatchEvent(new Event('input', { bubbles: true })); return; }
+    if (e0.dataset.v != null) { /** @type {HTMLElement} */ (els.find((b) => /** @type {HTMLElement} */ (b).dataset.v === String(v))).click(); return; }
+    e0.click();
+  };
+  window.__tab = (id) => /** @type {HTMLElement} */ (document.querySelector(`.camlab .cm-tab[data-tab="${id}"]`)).click();
+  window.__irisPos = (N) => Math.log(N / 1.8) / Math.log(16 / 1.8) * 0.96;
+  window.__g('commencer');
+  window.__tab('objectif'); window.__g('monter'); window.__g('cable');
+  window.__tab('fibre'); window.__g('nettoyer-cam'); window.__g('nettoyer-ccu'); window.__g('brancher');
+  window.__tab('ccu'); window.__g('ccu-power'); window.__tab('rcp'); window.__g('cam-pw');
+});
+await until(A, `${M}.ready()`, null, 30000);
+// la liaison, le viseur sur les barres, puis le tirage : iris ouvert, ND pour la lumière en trop ; point en serré, tirage en large
+const tir = await ev(() => {
+  const E = window.__dbg.camlab().fiche.engine; const jour = E.V.id === 'jour';
+  window.__tab('ccu'); window.__g('liaison'); window.__tab('rcp'); window.__g('bars');
+  window.__tab('viseur'); window.__g('bright', -3); window.__g('contrast', 5); window.__g('vf-ok'); window.__tab('rcp'); window.__g('bars');
+  window.__tab('camera'); window.__g('nd', jour ? 1 / 64 : 1 / 16); window.__tab('rcp'); window.__g('iris', window.__irisPos(jour ? 2.8 : 1.8));
+  window.__tab('objectif'); window.__g('vis');
+  let pass = 0;
+  for (; pass < 8 && !E.tirageOk(); pass++) {
+    window.__g('zoom', 1);
+    const dF = 1 / (1000 * (1 / 3000 + E.st.delta / 2916)); window.__g('point', Math.pow(Math.min(1, 0.3 / dF), 0.45));
+    window.__g('zoom', 0);
+    window.__g('ff', -(4.5 ** 2) * (1 / 3000 - 1 / (E.dF() * 1000)));
+  }
+  window.__g('vis');
+  // erreur volontaire : la balance des blancs avant celle des noirs
+  window.__tab('camera'); window.__g('nd', E.V.nd); window.__g('wbsw', 'A'); window.__tab('plateau'); window.__g('card', 1);
+  window.__tab('rcp'); window.__g('iris', window.__irisPos(jour ? 11 : 8)); window.__g('awb');
+  return { pass, steps: ['ccu', 'viseur', 'tirage'].filter((id) => E.done(id)).length, errs: E.errors.map((e) => e.t), say: document.querySelector('.camlab .cm-mes .cl-say')?.textContent };
+});
+T.check('mise en service : liaison, viseur, puis le tirage en deux passages au moins', tir.steps === 3 && tir.pass >= 2, JSON.stringify(tir).slice(0, 200));
+T.check('erreur volontaire comptée et expliquée : balance des blancs avant les noirs', tir.errs.length === 1 && /avant celle des noirs/.test(tir.errs[0]) && /zéro des trois voies/.test(tir.say || ''), JSON.stringify(tir.errs));
+await until(A, `${M}.st.awbOk`, null, 30000);
+await A.screenshot({ path: `${OUT}/30-mes-erreur.png` });
+await ev(() => window.__g('abb'));
+await until(A, `${M}.st.abbOk`, null, 30000);
+T.check('la balance des noirs refaite ensuite efface la balance des blancs', await ev(() => !window.__dbg.camlab().fiche.engine.st.awbOk));
+await ev(() => window.__g('awb'));
+await until(A, `${M}.st.awbOk`, null, 30000);
+const bil = await ev(() => {
+  window.__tab('plateau'); window.__g('card', 0); window.__tab('rcp'); window.__g('iris', window.__irisPos(5.6)); window.__g('expo');
+  window.__tab('camera'); window.__g('zebra1'); window.__g('zebra-level', 70); window.__g('store');
+  return { score: Number(/** @type {HTMLElement} */ (document.querySelector('.camlab .cm-bilan'))?.dataset.score), errs: document.querySelectorAll('.camlab .cm-errs-full li').length, revoir: [...document.querySelectorAll('.camlab .cm-mes .cl-see .cl-chip')].map((b) => /** @type {HTMLElement} */ (b).dataset.n), order: document.querySelectorAll('.camlab .cm-order li').length, best: window.__dbg.PROG.camera?.mes?.best };
+});
+T.check('le bilan : note sur 100 (une erreur d\'ordre, −8), l\'erreur expliquée, les notions à revoir, l\'ordre des dix étapes, le meilleur résultat enregistré', bil.score <= 92 && bil.score >= 72 && bil.errs === 1 && bil.revoir.includes('balance') && bil.order === 10 && bil.best && bil.best.score === bil.score, JSON.stringify(bil));
+await A.screenshot({ path: `${OUT}/31-mes-bilan.png` });
+const back = await ev(() => {
+  /** @type {HTMLElement} */ ([...document.querySelectorAll('.camlab .cm-mes .cs-row .btn')].find((b) => /Revenir à la leçon/.test(b.textContent))).click();
+  return { off: !document.body.classList.contains('camlab-on'), on: !!document.querySelector('#layer.ly-cours .co-les.on[data-lesson="camera-systeme"]'), exo: document.querySelector('#layer.ly-cours .co-exo[data-exercise="x-camera"]')?.textContent || '' };
+});
+T.check('« Revenir à la leçon » : la leçon camera-systeme, l\'exercice montre le meilleur résultat', back.off && back.on && /meilleur résultat \d+ \/ 100/.test(back.exo), JSON.stringify(back).slice(0, 220));
+await A.screenshot({ path: `${OUT}/32-retour-lecon.png` });
 
 await browser.close();
 await T.finish();

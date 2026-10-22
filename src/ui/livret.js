@@ -11,6 +11,7 @@ import { PHASES } from '../scenario.js';
 import { FICHE, MODULES } from '../content/referentiel.js';
 import { livret, NIVEAUX, CONSOLIDE } from '../livret.js';
 import { lessonById as coursLesson } from '../cours/index.js';
+import { NOTIONS } from '../camlab/notions/index.js';
 
 // ----------------------------------------------------------------------------------
 // Le livret de compétences à l'écran : un résumé par bloc (épreuve, barre des niveaux), puis
@@ -22,7 +23,7 @@ import { lessonById as coursLesson } from '../cours/index.js';
 /** progression de ce navigateur, avec les missions réussies depuis le dernier enregistrement */
 export const liveProg = () => ({ ...PROG, missions: { ...PROG.missions, ...S.missionsDone } });
 
-const KIND = { parcours: 'Parcours', mission: 'Mission', phase: 'Jour de match', reseau: 'Réseau ST 2110', exercice: 'Exercice', cours: 'Cours' };
+const KIND = { parcours: 'Parcours', mission: 'Mission', phase: 'Jour de match', reseau: 'Réseau ST 2110', exercice: 'Exercice', cours: 'Cours', camera: 'Caméra 3D' };
 const EXO = { brassage: 'Brassage complet du car', atelier: 'Monter une caméra à l\'atelier', quiz2110: 'Quiz ST 2110 réussi', examenReseau: 'Examen réseau réussi' };
 const ORDER = /** @type {const} */ (['consolidee', 'travaillee', 'a_faire', 'absent']);
 const PILL = { consolidee: 'pill ok', travaillee: 'pill warn', a_faire: 'pill', absent: 'pill lv-off' };
@@ -36,6 +37,7 @@ export function activityLabel(a) {
     case 'phase': return find(PHASES);
     case 'reseau': return find(NET_MISSIONS);
     case 'cours': { const f = coursLesson(a.ref); return f ? f.lesson.title : a.ref; }
+    case 'camera': return a.ref === 'mes' ? 'Mise en service de la caméra de plateau (notée)' : NOTIONS[a.ref] ? `Notion « ${NOTIONS[a.ref].t} »` : a.ref;
     default: return EXO[a.ref] || a.ref;
   }
 }
@@ -55,10 +57,17 @@ function compRow(c) {
   const main = el('div', { class: 'lv-main' }, el('div', { class: 'lv-t' }, c.titre, c.taches ? el('small', {}, ' · ' + c.taches) : null));
   if (!c.total) main.append(el('p', { class: 'lv-later' }, 'Pas encore dans le simulateur.' + (c.prevu.length ? ` Prévu avec ${c.prevu.length > 1 ? 'les modules' : 'le module'} ${modules(c.prevu)}.` : '')));
   else {
-    main.append(el('ul', { class: 'lv-acts' }, ...c.acts.map((a) => el('li', { class: 'lv-act' + (a.done ? ' done' : '') },
+    // les notions du module caméra tiennent sur une ligne : combien sont acquises, et lesquelles
+    const notions = c.acts.filter((a) => a.kind === 'camera' && a.ref !== 'mes');
+    const nd = notions.filter((a) => a.done);
+    const camLine = notions.length ? el('li', { class: 'lv-act' + (nd.length === notions.length ? ' done' : '') },
+      nd.length === notions.length ? icon('fait') : el('span', { class: 'lv-dot', 'aria-hidden': 'true' }),
+      el('span', { class: 'sr' }, nd.length === notions.length ? 'réussi : ' : 'en cours : '),
+      el('span', {}, el('em', {}, KIND.camera), ` Notions acquises : ${nd.length} / ${notions.length}`, nd.length ? el('small', {}, ' (' + nd.map((a) => NOTIONS[a.ref] ? NOTIONS[a.ref].t : a.ref).join(', ') + ')') : null)) : null;
+    main.append(el('ul', { class: 'lv-acts' }, ...c.acts.filter((a) => !notions.includes(a)).map((a) => el('li', { class: 'lv-act' + (a.done ? ' done' : '') },
       a.done ? icon('fait') : el('span', { class: 'lv-dot', 'aria-hidden': 'true' }),
       el('span', { class: 'sr' }, a.done ? 'réussi : ' : 'à faire : '),
-      el('span', {}, el('em', {}, KIND[a.kind]), ' ', activityLabel(a), a.aided ? el('small', {}, ' (aidé)') : null)))));
+      el('span', {}, el('em', {}, KIND[a.kind]), ' ', activityLabel(a), a.aided ? el('small', {}, ' (aidé)') : null))), camLine));
     if (c.couverture === 'partie') main.append(el('p', { class: 'lv-later' }, 'Le simulateur n\'en couvre qu\'une partie' + (c.prevu.length ? ` ; ${c.prevu.length > 1 ? 'les modules' : 'le module'} ${modules(c.prevu)} la complèteront.` : '.')));
   }
   return el('li', { class: 'lv-comp lv-' + c.niveau },

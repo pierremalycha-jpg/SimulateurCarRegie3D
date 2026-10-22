@@ -3,13 +3,15 @@ import { PROG } from '../shared.js';
 import { lessonById as tutorLesson, progressOf } from '../tutor/engine.js';
 import { NET_MISSIONS } from '../net/course.js';
 import { allLessons } from './index.js';
+import { mesBest, MES_SEUIL } from '../camlab/progress.js';
 
 // ----------------------------------------------------------------------------------
 // Les exercices pratiques du Cours. Deux sortes :
 //   - les parcours guidés d'Olivier, le chef de car (src/tutor/lessons) : on les fait dans le car,
 //     il explique, on agit, il vérifie ; « Commencer » lance le car si besoin et ouvre le poste ;
 //   - les exercices notés (« x-… ») : une vacation à part (atelier, car vide, jour de match) ou la
-//     formation réseau, avec un résultat enregistré.
+//     formation réseau, avec un résultat enregistré ; ou la mise en service de la caméra de
+//     plateau, dans le module « La caméra en 3D » (x-camera, src/camlab/mes.js).
 // Chaque exercice est rangé dans une leçon : soit dans la leçon elle-même (champ exercises des
 // chapitres écrits dans cours/*.js), soit ici, pour les leçons écrites avant les exercices (BY_LESSON).
 // Un exercice n'est rangé qu'une fois. Les présentations de postes (« Présente-moi ») et la prise
@@ -22,6 +24,7 @@ export const SPECIAL = {
   'x-atelier': { title: 'Atelier : monter une caméra seul, chronométré', summary: 'Monter une caméra de stade pièce par pièce, du pied jusqu\'à la fibre, puis la régler. Le temps et les erreurs sont notés.', duration: '15 min', level: 'intermédiaire', go: { preset: 'atelier', label: 'Lancer l\'atelier' } },
   'x-brassage': { title: 'Le car vide : tout brasser, noté', summary: 'Rien n\'est brassé : reliez chaque liaison au bon endroit en suivant la liste de câblage, jusqu\'à ce que le multiview soit complet.', duration: '20 min', level: 'intermédiaire', go: { preset: 'brassage', label: 'Lancer le car vide' } },
   'x-reseau': { title: 'Formation réseau ST 2110 : 14 missions, quiz, examen', summary: 'Dans le poste Réseau IP : de la lecture de la topologie au dépannage, puis un quiz et un examen de trois pannes cachées.', duration: '2 h', level: 'avancé', go: { station: 'reseau', tab: 'learn', ip: true, label: 'Ouvrir la formation' } },
+  'x-camera': { title: 'Mise en service de la caméra de plateau, notée', summary: 'Dans le module « La caméra en 3D » : de l\'objectif démonté au fichier de scène, avec la fibre, la CCU, le RCP, le viseur, le tirage, les balances et l\'exposition. L\'ordre, chaque geste et le temps sont notés sur 100.', duration: '10 min', level: 'intermédiaire', go: { camera: 'mes', label: 'Ouvrir la mise en service' } },
   'x-match': { title: 'Jour de match : line-up, test de ligne, direct avec pannes', summary: 'De 17 h 30 à l\'antenne : line-up des caméras, test de ligne avec la chaîne, puis le direct, avec des pannes à résoudre. Chronométré et noté.', duration: '30 min', level: 'avancé', go: { preset: 'scenario', label: 'Lancer le jour de match' } },
 };
 const best = (a) => (a && a.length ? Math.max(...a.map((x) => x.score || 0)) : null);
@@ -31,6 +34,7 @@ export function specialState(id) {
   if (id === 'x-atelier') { const r = (P.rigs || []).slice().sort((a, b) => a.errs - b.errs || a.sec - b.sec)[0]; return r ? { done: true, text: `meilleur montage : ${r.errs} erreur${r.errs > 1 ? 's' : ''}, ${Math.floor(r.sec / 60)} min` } : { done: false, text: 'pas encore fait' }; }
   if (id === 'x-brassage') return P.patchBest ? { done: P.patchBest >= 100, text: `brassage réussi à ${P.patchBest} %` } : { done: false, text: 'pas encore fait' };
   if (id === 'x-reseau') { const n = NET_MISSIONS.filter((m) => (N.missions || {})[m.id]).length; const e = best(N.exams); return { done: n === NET_MISSIONS.length && e != null && e >= 60, text: n || e != null ? `${n} / ${NET_MISSIONS.length} missions${e != null ? ` · examen ${e} %` : ''}` : 'pas encore commencé' }; }
+  if (id === 'x-camera') { const b = mesBest(P); return b ? { done: b.score >= MES_SEUIL, text: `meilleur résultat ${b.score} / 100, ${b.errs} erreur${b.errs > 1 ? 's' : ''}, ${Math.floor(b.sec / 60)} min ${String(b.sec % 60).padStart(2, '0')} s` } : { done: false, text: 'pas encore faite' }; }
   if (id === 'x-match') { const b = best(P.scenarios); return b != null ? { done: b >= 60, text: `meilleur score ${b} %` } : { done: false, text: 'pas encore joué' }; }
   return { done: false, text: '' };
 }
@@ -38,6 +42,10 @@ export function specialState(id) {
 /** exercices des leçons écrites avant les exercices : leçon → exercices et leur présentation */
 /** @type {Record<string, Array<{ id: string, intro: string }>>} */
 export const BY_LESSON = {
+  // la mise en service : la chaîne caméra entière (tête, objectif, fibre, CCU, RCP) que la leçon décrit
+  'camera-systeme': [
+    { id: 'x-camera', intro: 'Exercice noté, dans le module « La caméra en 3D » : la caméra du plateau sort de son flight-case et vous la mettez en service seul, de l\'objectif au fichier de scène. Vous y retrouvez la leçon : la fibre nettoyée et branchée avant d\'alimenter, le niveau optique lu à la CCU, puis tout ce que la vision règle au RCP. Chaque erreur d\'ordre ou de geste est expliquée dans le bilan.' },
+  ],
   'signal-niveaux': [
     { id: 'vision-exposition', intro: 'Au poste vision, une caméra a l\'iris fermé : vous déverrouillez son RCP (PANEL ACTIVE), puis vous rouvrez l\'iris au joystick, cran par cran. Réglez en regardant le waveform plutôt que le moniteur : la moyenne de l\'image doit remonter entre 35 et 55 %, et les blancs rester sous la ligne des 100 %.' },
     { id: 'prism-waveform', intro: 'Au poste vision, vous mettez une tuile du PRISM en waveform et vous lisez les niveaux au curseur, en mV et en % (700 mV = 100 % = code 940). La parade RVB montre ensuite un noir qui tire au rouge : vous le corrigez au RCP, jusqu\'à ce que les trois traces repartent du même niveau en bas de l\'échelle.' },
