@@ -56,7 +56,7 @@ await ev(() => { window.__dbg.stopChefLesson(); window.__dbg.toggleChef(false); 
 
 // ---------------- dans le car ----------------
 await page.waitForTimeout(600);
-T.check('barre d\'outils : Pupitre, Cours, Son, Menu (le chef seulement pendant un exercice)', await ev(() => [...document.querySelectorAll('#toolbar .tbtn')].filter((b) => !b.hidden).map((b) => b.id).join(',') === 'tb-pupitre,tb-cours,tb-son,tb-menu'));
+T.check('barre d\'outils : Pupitre, Missions, Cours, Son, Menu (le chef seulement pendant un exercice)', await ev(() => [...document.querySelectorAll('#toolbar .tbtn')].filter((b) => !b.hidden).map((b) => b.id).join(',') === 'tb-pupitre,tb-missions,tb-cours,tb-son,tb-menu'));
 await page.keyboard.press('Escape');
 T.check('Échap : le menu du car, quatre touches', await until(page, () => !!document.querySelector('#modal .mn') && [...document.querySelectorAll('#modal .mn-key')].map((b) => b.id).join(',') === 'mn-resume,mn-cours,mn-reglages,mn-home', null, 4000));
 await shot('04-menu');
@@ -99,7 +99,7 @@ await page.reload();
 await page.waitForFunction('!!window.__dbg', null, { timeout: 180000, polling: 200 });
 await until(page, () => document.getElementById('title').classList.contains('ready'), null, 60000);
 await page.locator('#ti-play').click();
-T.check('Jouer : deux lieux, trois modes, solo ou coopération, conditions repliées', await ev(() => document.querySelectorAll('#start .jo-lieux .lx').length === 2 && [...document.querySelectorAll('#start .jo-mode')].map((b) => b.dataset.mode).join(',') === 'installe,zero,visite' && document.querySelectorAll('#start .jo-team-seg button').length === 2 && !document.querySelector('#start details.jo-capt').open));
+T.check('Jouer : trois lieux (car, entrepôt, concert), trois modes, solo ou coopération, conditions repliées', await ev(() => document.querySelectorAll('#start .jo-lieux .lx').length === 3 && [...document.querySelectorAll('#start .jo-mode')].map((b) => b.dataset.mode).join(',') === 'installe,zero,visite' && document.querySelectorAll('#start .jo-team-seg button').length === 2 && !document.querySelector('#start details.jo-capt').open));
 T.check('Jouer : liens Menu principal, Cours, Réglages', await ev(() => ['st-menu', 'st-cours', 'st-reglages'].every((id) => document.getElementById(id)?.offsetParent)));
 await page.locator('.jo-team-seg button[data-v="coop"]').click();
 T.check('coopération : car installé seulement', await ev(() => document.querySelector('.jo-mode[data-mode="zero"]').disabled && document.querySelector('.jo-mode[data-mode="installe"]').getAttribute('aria-pressed') === 'true'));
