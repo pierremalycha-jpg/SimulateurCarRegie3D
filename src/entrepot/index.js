@@ -5,7 +5,7 @@ import { on, emit } from '../state.js';
 import { toast } from '../ui/common.js';
 import { makeOrbit } from './orbit.js';
 import { buildHall } from './scene.js';
-import { B, vider, charger, montageEnregistre, appareil } from './build.js';
+import { B, vider, charger, montageEnregistre, appareil, sortir, relier, regler, poser, allumer, ranger } from './build.js';
 import { evaluate } from './engine.js';
 import { CATALOGUE } from './catalogue/index.js';
 import { MISSIONS, missionById, noter } from './missions.js';
@@ -26,13 +26,13 @@ import { renderMission } from './ui/mission.js';
 // configuration), le synoptique (tout le câblage en 2D), le réseau (adresses, qui joint qui, ping),
 // la mission (le cahier des charges et la note). Tous lisent B (build.js) et E (engine.js).
 // ----------------------------------------------------------------------------------
-export const EP = { open: false, built: false };
+export const EP = { open: false, built: false, lesson: '' };
 /** @type {any} */
 let R = null;
 let titleWasOpen = false, raf = 0, last = 0;
 
 export const entrepotOpen = () => EP.open;
-/** l'événement « entrepot » ouvre le module : { mission: 'conference' | '' } */
+/** l'événement « entrepot » ouvre le module : { mission: 'conference' | '', lesson : la leçon du Cours où revenir en sortant } */
 export function initEntrepot() { on('entrepot', (o) => { if (o && o.type) return; openEntrepot(o || {}); }); }
 
 const quality = () => { try { return localStorage.getItem('carregie.quality') || 'moyenne'; } catch (e) { return 'moyenne'; } };
@@ -140,17 +140,25 @@ export function panel(name, toggle = false) {
   if (!R) return;
   R.panel = toggle && name === R.panel && name !== 'appareil' ? '' : name;
   if (R.panel !== 'appareil') R.dev = '';
-  R.side.hidden = !R.panel; R.root.classList.toggle('side-open', !!R.panel);
+  R.side.hidden = !R.panel; R.root.classList.toggle('side-open', !!R.panel); R.root.classList.toggle('side-wide', R.panel === 'synoptique');
   for (const b of R.bar.querySelectorAll('.ep-views .btn')) b.classList.toggle('on', b.classList.contains('ep-b-' + (R.panel === 'synoptique' ? 'syno' : R.panel)));
   refreshPanel();
 }
-export function openAppareil(uid) { if (!appareil(uid)) return; R.dev = uid; R.panel = 'appareil'; R.side.hidden = false; R.root.classList.add('side-open'); for (const b of R.bar.querySelectorAll('.ep-views .btn')) b.classList.remove('on'); refreshPanel(); const a = appareil(uid); if (a) goZone(a.place.zone); }
+export function openAppareil(uid) {
+  if (!appareil(uid)) return;
+  // la vue ne vole vers l'appareil que quand on en change (un réglage redessine le panneau sans bouger la caméra)
+  const autre = R.dev !== uid || R.panel !== 'appareil';
+  R.dev = uid; R.panel = 'appareil'; R.side.hidden = false; R.root.classList.add('side-open'); R.root.classList.remove('side-wide');
+  for (const b of R.bar.querySelectorAll('.ep-views .btn')) b.classList.remove('on');
+  refreshPanel();
+  const a = appareil(uid); if (a && autre) goZone(a.place.zone);
+}
 function refreshPanel() {
   if (!R) return;
   const M = missionById(B.mission); R.bar.querySelector('.ep-mission-name').textContent = M ? M.titre : 'Bac à sable : montez ce que vous voulez';
   if (!R.panel) return;
   const E = evalCourant();
-  const ctx = { B, E, open: openAppareil, panel, close: () => panel(''), say: (/** @type {string} */ t) => toast(t, '', 3500) };
+  const ctx = { B, E, open: openAppareil, panel, close: () => panel(''), say: (/** @type {string} */ t) => toast(t, '', 3500), lecon: EP.lesson, quitter: () => closeEntrepot() };
   const body = R.panel === 'stock' ? renderStock(ctx)
     : R.panel === 'appareil' ? (appareil(R.dev) ? renderAppareil(R.dev, ctx) : (R.panel = '', null))
       : R.panel === 'synoptique' ? renderSynoptique(ctx)
@@ -158,14 +166,23 @@ function refreshPanel() {
           : R.panel === 'mission' ? renderMission(missionById(B.mission), ctx) : null;
   if (!body) { R.side.hidden = true; R.root.classList.remove('side-open'); return; }
   const titles = { stock: 'Le stock', appareil: appareil(R.dev) ? appareil(R.dev).nom : 'Appareil', synoptique: 'Synoptique', reseau: 'Le réseau', mission: 'Le cahier des charges' };
-  R.side.replaceChildren(el('header', { class: 'ep-sh' }, el('h2', {}, titles[R.panel] || ''), el('button', { type: 'button', class: 'linkbtn', onclick: () => panel('') }, 'Fermer')), el('div', { class: 'ep-sbody' }, body));
+  // le panneau est redessiné à chaque changement du montage : on garde sa position de lecture
+  // (même panneau, même appareil) et le contrôle qui avait le focus (data-k)
+  const vue = `${R.panel}:${R.dev}`; const old = R.side.querySelector('.ep-sbody');
+  const scroll = old && R.sideVue === vue ? old.scrollTop : 0;
+  const act = /** @type {HTMLElement | null} */ (document.activeElement); const k = act && R.side.contains(act) ? act.getAttribute('data-k') : null;
+  const sbody = el('div', { class: 'ep-sbody' }, body);
+  R.side.replaceChildren(el('header', { class: 'ep-sh' }, el('h2', {}, titles[R.panel] || ''), el('button', { type: 'button', class: 'linkbtn', onclick: () => panel('') }, 'Fermer')), sbody);
+  sbody.scrollTop = scroll; R.sideVue = vue;
+  if (k) { const n = /** @type {HTMLElement | null} */ (R.side.querySelector(`[data-k="${CSS.escape(k)}"]`)); if (n) n.focus({ preventScroll: true }); }
+  if (R.hall.select) R.hall.select(R.panel === 'appareil' ? R.dev : '');
 }
 
 // ---------------- ouverture et fermeture ----------------
-/** @param {{ mission?: string, reprendre?: boolean }} o */
+/** @param {{ mission?: string, reprendre?: boolean, lesson?: string }} o */
 export async function openEntrepot(o = {}) {
   if (EP.open) return;
-  EP.open = true;
+  EP.open = true; EP.lesson = o.lesson || '';
   const title = document.getElementById('title');
   titleWasOpen = !!title && !title.hidden; if (title) title.hidden = true;
   if (!EP.built) { try { await build(); } catch (e) { EP.open = false; if (title && titleWasOpen) title.hidden = false; throw e; } }
@@ -187,8 +204,11 @@ export function closeEntrepot() {
   const title = document.getElementById('title');
   if (title && titleWasOpen) { title.hidden = false; const b = document.getElementById('ti-play'); if (b) b.focus({ preventScroll: true }); }
   emit('entrepot', { type: 'close' });
+  // venu d'une leçon du Cours (exercice x-entrepot) : on y revient
+  const lesson = EP.lesson; EP.lesson = '';
+  if (lesson) emit('cours', { lesson });
 }
 /** la note de la mission en cours (null en bac à sable) */
 export function noteCourante() { const m = missionById(B.mission); return m ? noter(m, B, evalCourant(), CATALOGUE) : null; }
 /** accès de débogage et de test */
-export const entrepotDebug = () => ({ R, B, E: evalCourant(), CATALOGUE, MISSIONS, note: noteCourante, panel, openAppareil });
+export const entrepotDebug = () => ({ R, B, E: evalCourant(), CATALOGUE, MISSIONS, note: noteCourante, panel, openAppareil, act: { sortir, relier, regler, poser, allumer, ranger, vider } });

@@ -25,7 +25,7 @@ import { parseIp, ipStr, parseMask, netOf, sameNet } from '../net/ctrlnet.js';
 //      RP150 TALLY/GPIO 1 → TALLY IP → caméras ; Carbonite TALLY → RP150 ; vMix → caméras en IP) ;
 //   7. les alertes (par appareil) : ce qui manque, en français, pour le panneau et le tuteur.
 //
-// Les clés de configuration lues ici sont celles du brief (cfg.reseau, format, pgm, aux, audio,
+// Les clés de configuration lues ici sont celles du brief (cfg.reseau, format, pgm, aux, sorties, audio,
 // cameras, tallyIp, tallyIn, atemIp, hyperdecks, source, media, distant, enregistre, paire,
 // entree, ports[n].vlan / poe, lan.dhcp, wan, logiciel, decklink, vmix…). Les identifiants de
 // ports attendus : sdi-in-N, sdi-out-pgm, sdi-out-aux-N, sdi-out-mv, hdmi-out, lan / lan-N,
@@ -88,6 +88,9 @@ const formatDe = (/** @type {Appareil} */ a, /** @type {Modele} */ m) => (a.cfg 
 /** rôle d'une sortie de mélangeur : 'pgm', 'pvw', 'mv' ou un numéro d'entrée */
 function roleSortie(/** @type {Port} */ p, /** @type {any} */ cfg, /** @type {Modele} */ m) {
   const id = p.id;
+  // une sortie affectable (Carbonite : OUT n, HDMI OUT) : cfg.sorties[port] = 'pgm' | 'pvw' | 'mv' | n
+  const choisi = cfg && cfg.sorties && typeof cfg.sorties === 'object' ? cfg.sorties[id] : undefined;
+  if (choisi != null && choisi !== '') return /^\d+$/.test(String(choisi)) ? +choisi : String(choisi);
   if (/mv|multiview/.test(id)) return 'mv';
   if (/pvw|preview/.test(id)) return 'pvw';
   const aux = id.match(/aux-?(\d+)/);
