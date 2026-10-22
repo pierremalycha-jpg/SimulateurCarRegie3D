@@ -20,7 +20,9 @@ const fontCss = FONTS.flatMap(([family, pkg, weights]) => weights.map((w) => {
 const raw = fs.readFileSync('src/index.template.html', 'utf8');
 for (const m of ['<!--BOOT-->', '<!--FONTS-->', '/*STYLES*/']) if (!raw.includes(m)) throw new Error(`src/index.template.html : marqueur ${m} introuvable`);
 // styles propres à une fonction (menu, PRISM, Videohub, réseau du car…) : src/styles/*.css, par ordre alphabétique
-const styles = fs.readdirSync('src/styles').filter((f) => f.endsWith('.css')).sort().map((f) => `/* ${f} */\n` + fs.readFileSync('src/styles/' + f, 'utf8')).join('\n');
+// du nom sans « .css », pour qu'une feuille de base passe avant ses compléments (camlab.css, puis camlab-ch1.css…)
+const stem = (f) => f.slice(0, -4);
+const styles = fs.readdirSync('src/styles').filter((f) => f.endsWith('.css')).sort((a, b) => (stem(a) < stem(b) ? -1 : stem(a) > stem(b) ? 1 : 0)).map((f) => `/* ${f} */\n` + fs.readFileSync('src/styles/' + f, 'utf8')).join('\n');
 const tpl = raw.replace('<!--BOOT-->', () => `<script>${boot}</script>`).replace('<!--FONTS-->', () => `<style>${fontCss}</style>`).replace('/*STYLES*/', () => styles);
 const bundle = async (external) => {
   const r = await esbuild.build({
