@@ -74,6 +74,13 @@ await ev(() => {
 await A.waitForTimeout(800);
 T.check('la régie montée : 100 / 100, sans erreur du moteur', await ev(() => { const d = window.__dbg.entrepot(); return d.note().score === 100 && !d.E.alertes.some((a) => a.level === 'erreur'); }), JSON.stringify(await ev(() => window.__dbg.entrepot().note().items.filter((i) => !i.ok).map((i) => i.id + ' : ' + i.why))));
 
+// la 3D : la baie et la table, avec les appareils et les câbles
+await ev(() => window.__dbg.entrepot().panel('')); await A.waitForTimeout(300);
+await A.click('.ep-zones [data-zone="rack"]'); await A.waitForTimeout(2500);
+T.check('3D : chaque appareil sorti a sa pastille, la sélection est surlignée', await ev(() => { const d = window.__dbg.entrepot(); return document.querySelectorAll('.ep-pins .ep-pin').length === d.B.appareils.filter((a) => a.place.zone !== 'mur').length && typeof d.R.hall.select === 'function'; }));
+await shot('03b-baie');
+await A.click('.ep-zones [data-zone="table"]'); await A.waitForTimeout(2500);
+await shot('03c-table');
 // les menus de chaque famille
 for (const [modele, attendu] of [['rp150', /CAMERA SELECT/], ['atem-hd8-iso', /Programme \(PGM\)/], ['hyperdeck-hd-plus', /REMOTE/], ['switch-m4250', /PoE\+/], ['gpi-tally', /Adresse de l'ATEM/], ['teranex-audio-sdi', /Embarquer le son/], ['he20', /Format de sortie/], ['mur', /Puissance appelée/]]) {
   await ev((m) => { const d = window.__dbg.entrepot(); d.openAppareil(d.B.appareils.find((a) => a.modele === m).uid); }, modele);

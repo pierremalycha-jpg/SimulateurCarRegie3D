@@ -126,12 +126,19 @@ function refreshPins() {
 }
 function placePins() {
   const r = R.canvas.getBoundingClientRect(); const v = new THREE.Vector3();
+  /** @type {Array<{ b: HTMLElement, x: number, y: number }>} */ const vus = [];
   for (const [uid, b] of R.pinEls) {
     const p = R.hall.anchor(uid); if (!p) { b.hidden = true; continue; }
     v.copy(p).project(R.camera);
     const behind = v.z > 1; b.hidden = behind;
-    if (!behind) b.style.transform = `translate(${((v.x + 1) / 2) * r.width}px, ${((1 - v.y) / 2) * r.height}px)`;
+    if (!behind) vus.push({ b, x: ((v.x + 1) / 2) * r.width, y: ((1 - v.y) / 2) * r.height });
     b.classList.toggle('cur', uid === R.dev);
+  }
+  // les étiquettes proches (les appareils de la baie, 4,4 cm l'un au-dessus de l'autre) s'écartent vers le bas
+  vus.sort((p, q) => p.y - q.y);
+  for (let i = 0; i < vus.length; i++) {
+    for (let j = 0; j < i; j++) if (Math.abs(vus[i].x - vus[j].x) < 120 && vus[i].y - vus[j].y < 21) vus[i].y = vus[j].y + 21;
+    vus[i].b.style.transform = `translate(${vus[i].x}px, ${vus[i].y}px)`;
   }
 }
 function goZone(zone) { const l = R.hall.lookAt(zone); R.orbit.flyTo(l.target, l.dir, l.dist); }

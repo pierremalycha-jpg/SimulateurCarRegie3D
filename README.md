@@ -444,6 +444,17 @@ marche. Ses « modes » : trois missions notées, le bac à sable, la reprise du
   plan d'adressage. Lancé depuis la leçon du Cours, l'entrepôt y ramène en sortant. La progression de
   l'entrepôt se fusionne entre deux appareils.
 
+**La 3D** (`scene.js`, `scene/` : `hall.js`, `devices.js`, `cables.js`, `kit.js`) : le hall (sol béton, bardage,
+charpente, rayonnages du stock avec cartons et flight cases instanciés), la baie 19" mobile de 12 U (montants
+percés, U numérotés, roulettes ; un appareil d'un demi ou d'un tiers de largeur sur une tablette 1 U), la table de
+régie et sa goulotte, le plateau en arc devant une estrade, le tableau électrique. Chaque appareil a ses
+dimensions et ses faces avant et arrière dessinées en texture ; les voyants POWER s'allument, le tally rouge ou
+vert suit le mélangeur, l'écran du moniteur montre ce qu'il reçoit (multiview, programme, caméra, « pas de
+signal »). Les câbles partent du vrai connecteur et suivent un chemin de technicien (arrière de la table, flanc de
+la baie, colonne, sol), couleur du signal, rouge si la liaison est fausse. L'appareil ouvert est entouré ; les
+étiquettes proches (la baie) s'écartent. Mesuré en rendu logiciel : environ 160 appels de dessin pour une régie de
+20 appareils et 30 câbles ; à vérifier sur le PC le plus faible de l'établissement.
+
 Tests : `tests/unit/entrepot*.test.mjs` (catalogue, montage, moteur sur les vrais modèles, missions, sorties
 affectables, suivi et fusion) ; suite de bout en bout `node tools/e2e.mjs entrepot` (Jouer, stock, câble posé
 en deux clics sur les faces, la régie de la conférence à 100 / 100, les menus de chaque famille, la coupe et le

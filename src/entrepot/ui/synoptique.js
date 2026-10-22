@@ -36,13 +36,15 @@ const VUE = { calques: new Set(['video', 'commande', 'ip']) };
 /** la colonne d'un appareil, dans le sens du signal */
 const COL = { camera: 0, son: 0, convertisseur: 1, pupitre: 1, melangeur: 2, ordinateur: 2, enregistreur: 3, moniteur: 3, accessoire: 3, reseau: 4, alimentation: 5 };
 const COLS = ['Sources', 'Traitement et commande', 'Mélange', 'Enregistrement et contrôle', 'Réseau', 'Énergie'];
-const W = 150, GAP_X = 70, X0 = 20, Y0 = 46, LINE = 14;
+const W = 150, GAP_X = 70, X0 = 20, Y0 = 46, LINE = 14, HAUT = 40;
 
 /** le dessin du synoptique (SVG), d'après le montage et le moteur */
 export function dessin(/** @type {Ctx} */ ctx, /** @type {Set<string>} */ calques, /** @type {(uid: string) => void} */ onOpen) {
   const sigs = new Set(CALQUES.filter(([id]) => calques.has(id)).flatMap(([, , l]) => l));
   const cables = ctx.B.cables.filter((c) => sigs.has(c.sig));
-  const devs = ctx.B.appareils.filter((a) => a.modele !== 'mur' || calques.has('energie') || cables.some((c) => c.a.dev === 'mur' || c.b.dev === 'mur'));
+  // l'énergie (mur, bandeau, bloc 12 V) n'apparaît qu'avec son calque, ou si un câble visible y mène
+  const energie = (/** @type {import('../types.js').Appareil} */ a) => (CATALOGUE[a.modele] || { famille: '' }).famille === 'alimentation';
+  const devs = ctx.B.appareils.filter((a) => !energie(a) || calques.has('energie') || cables.some((c) => c.a.dev === a.uid || c.b.dev === a.uid));
   const col = (/** @type {import('../types.js').Appareil} */ a) => COL[(CATALOGUE[a.modele] || { famille: 'accessoire' }).famille] ?? 3;
   const used = [...new Set(devs.map(col))].sort((x, y) => x - y);
   const cx = (/** @type {number} */ c) => X0 + used.indexOf(c) * (W + GAP_X);
@@ -65,7 +67,7 @@ export function dessin(/** @type {Ctx} */ ctx, /** @type {Set<string>} */ calque
   for (const c of used) {
     let y = Y0;
     for (const a of devs.filter((d) => col(d) === c).sort((x, y2) => x.nom.localeCompare(y2.nom, 'fr', { numeric: true }))) {
-      const t = att.get(a.uid); const h = 34 + LINE * Math.max(1, t.left.length, t.right.length);
+      const t = att.get(a.uid); const h = HAUT + 4 + LINE * Math.max(1, t.left.length, t.right.length);
       pos.set(a.uid, { x: cx(c), y, h }); y += h + 16;
     }
     H = Math.max(H, y);
@@ -75,7 +77,7 @@ export function dessin(/** @type {Ctx} */ ctx, /** @type {Set<string>} */ calque
   /** la position d'un bout de câble (end : 'a' ou 'b') sur le bord de sa boîte */
   const anchor = (/** @type {Cable} */ c, /** @type {'a' | 'b'} */ end) => {
     const uid = c[end].dev; const t = att.get(uid); const p = pos.get(uid);
-    for (const side of /** @type {const} */ (['left', 'right'])) { const i = t[side].findIndex((x) => x.c === c && x.end === end); if (i >= 0) return { x: side === 'left' ? p.x : p.x + W, y: p.y + 30 + i * LINE, side }; }
+    for (const side of /** @type {const} */ (['left', 'right'])) { const i = t[side].findIndex((x) => x.c === c && x.end === end); if (i >= 0) return { x: side === 'left' ? p.x : p.x + W, y: p.y + HAUT + i * LINE, side }; }
     return { x: p.x + W, y: p.y + 20, side: 'right' };
   };
   const width = Math.max(W + 2 * X0, X0 * 2 + used.length * W + (used.length - 1) * GAP_X);
@@ -104,7 +106,7 @@ export function dessin(/** @type {Ctx} */ ctx, /** @type {Set<string>} */ calque
     S('text', { x: p.x + 8, y: p.y + 27, fill: '#93a0ab', 'font-size': 10, 'font-family': 'Archivo Narrow, Arial Narrow, sans-serif' }, g, (m ? m.court : a.modele) + (off ? ' · éteint' : ''));
     const t = att.get(a.uid);
     for (const side of ['left', 'right']) t[side].forEach((x, i) => {
-      const yy = p.y + 30 + i * LINE; const xx = side === 'left' ? p.x : p.x + W;
+      const yy = p.y + HAUT + i * LINE; const xx = side === 'left' ? p.x : p.x + W;
       const po = portOf(a.modele, x.port);
       S('circle', { cx: xx, cy: yy, r: 3, fill: SIGNAUX[x.c.sig].couleur }, g);
       S('text', { x: side === 'left' ? xx + 6 : xx - 6, y: yy + 3.5, fill: '#c5ced6', 'font-size': 9.5, 'text-anchor': side === 'left' ? 'start' : 'end', 'font-family': 'B612 Mono, monospace' }, g, (po ? po.label : x.port).slice(0, 16));
