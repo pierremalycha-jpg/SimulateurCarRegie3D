@@ -48,6 +48,7 @@ const SUITES = [
   ['cours', 'cours', [], 20],
   ['camera', 'camera', [], 25],
   ['entrepot', 'entrepot', [], 25],
+  ['carriere', 'carriere', [], 25],
   ['chef-postes', 'chef-postes', [], 60],
   ['jeu', 'jeu', [], 20],
   ['progression', 'progression', [], 15],
