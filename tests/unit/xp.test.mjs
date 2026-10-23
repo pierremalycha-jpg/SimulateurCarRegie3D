@@ -3,6 +3,9 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { LEVELS, levelOf, award, xpOf, game, checkBadges, BADGES, mergeGame, BAREME } from '../../src/game/xp.js';
 import { COMPETENCES } from '../../src/content/referentiel.js';
+import '../helpers/scene.mjs';
+import '../../src/cours/all.js';
+import { allLessons } from '../../src/cours/index.js';
 
 const fresh = () => ({ missions: {}, visited: {}, scenarios: [], reports: [], tutor: {}, cours: {} });
 
@@ -63,4 +66,20 @@ test('fusion : une récompense obtenue sur l\'un des appareils reste acquise', (
   assert.equal(g.badges['premier-pas'], 1);
   assert.equal(g.count.panne, 3);
   assert.equal(xpOf({ game: g }), 80);
+});
+
+test('Érudit : toutes les leçons du Cours acquises (et pas une de moins)', () => {
+  const ids = allLessons().map((x) => x.lesson.id);
+  assert.ok(ids.length >= 30, 'les chapitres du Cours sont chargés');
+  const P = fresh();
+  for (const id of ids.slice(1)) P.cours[id] = { seen: true, quiz: { score: 3, total: 3 } };
+  P.cours[ids[0]] = { seen: true, quiz: { score: 2, total: 3 } };
+  assert.ok(!checkBadges(P).some((b) => b.id === 'erudit'), 'une leçon ratée');
+  P.cours[ids[0]].quiz = { score: 3, total: 3 };
+  assert.ok(checkBadges(P).some((b) => b.id === 'erudit'));
+});
+
+test('barème : une panne déjà résolue rapporte peu, plus d\'XP fantôme pour la visite', () => {
+  assert.ok(BAREME.panneRefaite > 0 && BAREME.panneRefaite < BAREME.panne);
+  assert.ok(!('visite' in BAREME));
 });

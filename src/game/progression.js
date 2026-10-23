@@ -24,7 +24,8 @@ export function installProgression() {
     bump('exercice');
     if (e.id.startsWith('poste-')) { award({ key: 'tutor:' + e.id, pts: BAREME.presentation, label: 'Poste présenté : ' + name }); return; }
     const first = award({ key: 'tutor:' + e.id, pts: Math.max(BAREME.exerciceMin, BAREME.exercice - BAREME.aide * (p.aided || 0) - BAREME.indice * (p.hints || 0)), label: 'Exercice terminé : ' + name });
-    if (!first) award({ pts: BAREME.exerciceRefait, label: 'Exercice refait : ' + name });
+    // refait : seulement sans « Fais-le pour moi » (refaire un exercice que le chef fait à notre place ne rapporte rien)
+    if (!first && !p.aided) award({ pts: BAREME.exerciceRefait, label: 'Exercice refait seul : ' + name });
   });
   on('quiz', (e) => { if (!e || e.score !== e.total) return; const L = coursLesson(e.id); award({ key: 'quiz:' + e.id, pts: BAREME.quiz, label: 'Leçon acquise : ' + (L ? L.lesson.title : e.id) }); });
   on('camlab', (e) => {
@@ -34,7 +35,14 @@ export function installProgression() {
     if (e.type === 'mes' && e.score >= 60) { if (!award({ key: 'mes', pts: BAREME.mes, label: 'Caméra mise en service : ' + e.score + '/100' })) award({ pts: BAREME.mesRefaite, label: 'Mise en service refaite : ' + e.score + '/100' }); }
   });
   on('netMission', (e) => { if (e) award({ key: 'net:' + e.id, pts: e.aided ? BAREME.reseauAidee : BAREME.reseau, label: 'Mission réseau : ' + title(NET_MISSIONS, e.id) }); });
-  on('faultSolved', (a) => { if (!a) return; const fast = a.dt < 60; bump('panne'); if (fast) bump('panneRapide'); award({ pts: fast ? BAREME.panneRapide : BAREME.panne, label: (fast ? 'Panne résolue en moins d\'une minute : ' : 'Panne résolue : ') + a.f.label }); });
+  // seules les pannes cachées comptent (jour de match, examen, formateur, exercices) : une panne injectée depuis le
+  // catalogue affiche son poste et son remède. Chaque panne rapporte ses points la première fois, peu ensuite.
+  on('faultSolved', (a) => {
+    if (!a || !a.hidden) return;
+    const fast = a.dt < 60; if (fast) bump('panneRapide');
+    if (award({ key: 'panne:' + a.f.id, pts: fast ? BAREME.panneRapide : BAREME.panne, label: (fast ? 'Panne résolue en moins d\'une minute : ' : 'Panne résolue : ') + a.f.label })) bump('panne');
+    else award({ pts: BAREME.panneRefaite, label: 'Panne déjà rencontrée, résolue de nouveau : ' + a.f.label });
+  });
   on('scenarioDone', (r) => { if (r) award({ pts: r.score, label: 'Jour de match terminé : ' + r.score + ' %' }); });
   on('atelier', (e) => { if (!e || e.type !== 'done') return; if (!award({ key: 'atelier', pts: BAREME.atelier, label: 'Caméra montée à l\'atelier' })) award({ pts: BAREME.atelierRefait, label: 'Montage refait à l\'atelier' }); });
   on('patchDone', () => award({ key: 'brassage', pts: BAREME.brassage, label: 'Car vide brassé à 100 %' }));

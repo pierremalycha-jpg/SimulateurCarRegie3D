@@ -3,6 +3,7 @@ import { PROG, saveProgressSoon } from '../shared.js';
 import { emit } from '../state.js';
 import { livret } from '../livret.js';
 import { COMPETENCES, blocOf } from '../content/referentiel.js';
+import { allLessons } from '../cours/index.js';
 
 // ----------------------------------------------------------------------------------
 // La progression du joueur : des points d'expérience (XP) pour chaque activité réussie, des
@@ -43,8 +44,9 @@ export const BAREME = {
   mesRefaite: 25,
   reseau: 40,           // mission de la formation réseau ST 2110
   reseauAidee: 25,
-  panne: 20,            // panne résolue
+  panne: 20,            // panne cachée résolue, la première fois pour cette panne
   panneRapide: 35,      // en moins d'une minute
+  panneRefaite: 5,      // une panne déjà résolue, de nouveau
   atelier: 80,          // montage à l'atelier terminé
   atelierRefait: 25,
   brassage: 80,         // car vide brassé à 100 %
@@ -52,7 +54,6 @@ export const BAREME = {
   entrepotRefait: 25,
   poste: 5,             // un poste découvert
   lieu: 5,              // un endroit du stade découvert
-  visite: 60,           // la visite guidée terminée
 };
 
 /** le niveau atteint pour un total d'XP */
@@ -108,8 +109,8 @@ export const BADGES = [
   { id: 'cinq-exercices', title: 'Entraîné', desc: 'Cinq exercices différents terminés.', ico: 'medaille', tier: 'argent', test: ({ P }) => doneTutor(P, (id) => !id.startsWith('poste-')).length >= 5 },
   { id: 'quinze-exercices', title: 'Polyvalent', desc: 'Quinze exercices différents terminés.', ico: 'trophee', tier: 'or', test: ({ P }) => doneTutor(P, (id) => !id.startsWith('poste-')).length >= 15 },
   { id: 'installateur', title: 'Installateur', desc: 'Toutes les missions du mode « Tout à faire » réussies.', ico: 'plan', tier: 'or', test: ({ P }) => Object.keys(P.missions || {}).length >= 22 },
-  { id: 'sang-froid', title: 'Sang-froid', desc: 'Une panne résolue en moins d\'une minute.', ico: 'eclair', tier: 'argent', test: ({ g }) => (g.count.panneRapide || 0) >= 1 },
-  { id: 'depanneur', title: 'Dépanneur', desc: 'Cinq pannes résolues.', ico: 'alarme', tier: 'or', test: ({ g }) => (g.count.panne || 0) >= 5 },
+  { id: 'sang-froid', title: 'Sang-froid', desc: 'Une panne cachée résolue en moins d\'une minute.', ico: 'eclair', tier: 'argent', test: ({ g }) => (g.count.panneRapide || 0) >= 1 },
+  { id: 'depanneur', title: 'Dépanneur', desc: 'Cinq pannes cachées différentes résolues.', ico: 'alarme', tier: 'or', test: ({ g }) => (g.count.panne || 0) >= 5 },
   { id: 'brasseur', title: 'Brasseur', desc: 'Le car vide brassé à 100 %.', ico: 'brassage', tier: 'argent', test: ({ P }) => (P.patchBest || 0) >= 100 },
   { id: 'monteur', title: 'Monteur', desc: 'Une caméra montée à l\'atelier.', ico: 'ccu', tier: 'bronze', test: ({ P }) => (P.rigs || []).length >= 1 },
   { id: 'jour-de-match', title: 'Jour de match', desc: 'Un jour de match joué à 60 % au moins.', ico: 'antenne', tier: 'or', test: ({ P }) => (P.scenarios || []).some((s) => (s.score || 0) >= 60) },
@@ -117,7 +118,7 @@ export const BADGES = [
   { id: 'cameraman', title: 'Mise en service', desc: 'La caméra de plateau mise en service (60/100 au moins).', ico: 'vision', tier: 'argent', test: ({ P }) => !!(P.camera && P.camera.mes && P.camera.mes.best && P.camera.mes.best.score >= 60) },
   { id: 'entrepot', title: 'Régie mobile', desc: 'Une mission de l\'entrepôt réussie.', ico: 'materiel', tier: 'or', test: ({ P }) => Object.values((P.entrepot || {}).missions || {}).some((m) => m && m.best && (m.best.score ?? m.best) >= 60) },
   { id: 'curieux', title: 'Curieux', desc: 'Dix leçons du Cours acquises (quiz 3/3).', ico: 'cours', tier: 'bronze', test: ({ P }) => Object.values(P.cours || {}).filter((c) => c && c.quiz && c.quiz.total && c.quiz.score === c.quiz.total).length >= 10 },
-  { id: 'erudit', title: 'Érudit', desc: 'Quarante leçons du Cours acquises.', ico: 'livret', tier: 'or', test: ({ P }) => Object.values(P.cours || {}).filter((c) => c && c.quiz && c.quiz.total && c.quiz.score === c.quiz.total).length >= 40 },
+  { id: 'erudit', title: 'Érudit', desc: 'Toutes les leçons du Cours acquises.', ico: 'livret', tier: 'or', test: ({ P }) => { const ids = allLessons().map((x) => x.lesson.id); const C = P.cours || {}; return ids.length > 0 && ids.every((id) => C[id] && C[id].quiz && C[id].quiz.total && C[id].quiz.score === C[id].quiz.total); } },
   { id: 'opticien', title: 'Opticien', desc: 'Vingt notions de la caméra en 3D acquises.', ico: 'ccu', tier: 'argent', test: ({ P }) => Object.values(((P.camera || {}).notions) || {}).filter((n) => n && n.total && n.score === n.total).length >= 20 },
   // une compétence du référentiel travaillée (bronze), consolidée (or) : le livret décide
   ...COMPETENCES.flatMap((c) => /** @type {Badge[]} */ ([
