@@ -394,6 +394,62 @@ Tests :
   « Emmène-moi / Montre-moi » doit mettre en évidence un élément réel de la page, et « Fais-le pour moi » doit faire
   valider l'étape.
 
+## v19.5 : la Carrière, un mode scénarisé : le bureau de l'entrepôt et ses mails
+
+**Pourquoi.** Les activités du simulateur étaient rangées côte à côte (les exercices dans les leçons du Cours,
+les modes du car et les missions de l'entrepôt dans Jouer) sans fil qui les relie. La Carrière leur donne un
+ordre et une raison d'être, comme dans un jeu de gestion à la première personne : on arrive au bureau de
+l'entrepôt, un ordinateur reçoit des mails qui proposent un poste sur une prestation, on accepte, on réussit la
+mission, la suivante arrive. Le mode libre reste ce qu'il était (le bac à sable de l'entrepôt, le car installé).
+Ce premier lot pose la boucle de bout en bout avec deux missions ; la marche à la première personne dans
+l'entrepôt et la saison complète viennent ensuite (`ROADMAP.md`).
+
+**Jouer → L'entrepôt → Carrière** (premier mode du lieu, choisi d'office ; `src/app/start.js`). La touche dit où
+l'on en est (« 2 mails non lus au bureau. Mission en cours : … ») et le bouton passe de « Commencer ma
+carrière » à « Retourner au bureau ».
+
+**Le bureau** (`src/entrepot/scene/bureau.js`), à l'avant gauche du hall : une table, un fauteuil, l'unité
+centrale, le clavier et l'écran, qui montre la messagerie et ses mails non lus (texture redessinée quand ils
+changent ; hors Carrière, « Session verrouillée »). En Carrière, l'entrepôt s'ouvre assis devant l'écran, sur la
+messagerie ; elle se rouvre d'un clic sur l'écran ou l'unité centrale dans la 3D, par la pastille
+« Messagerie · n » ou par la touche **Messagerie** de la barre (avec le nombre de mails non lus) ; la zone
+**Bureau** rejoint Baie, Table, Plateau et Mur.
+
+**La messagerie** (`src/carriere/ui.js`) : la boîte de réception du plus récent au plus ancien (expéditeur,
+objet, date, état de la mission), puis le mail ouvert (lu dès qu'on l'ouvre). Une proposition porte son **ordre
+de mission** : le poste, le lieu, la mission, la durée, ce qu'on attend (coché d'après la progression) et le
+bouton qui y emmène. Les textes expliquent chaque mot du métier à sa première apparition (car régie, compound,
+caméra PTZ, tally, N-1…). La société est celle que règle le formateur (Réglages → espace formateur → Le car,
+« Société / service »), sinon un nom fictif, **TIEE Prestations**.
+
+**La saison 1** (`src/carriere/mails.js`) :
+1. **Stagiaire** : Nadia, chargée de planning, envoie au stade. Le car se lance en **visite guidée réduite** au
+   tour du car et à six postes (réalisateur, truquiste, ingé vision, opérateur ralenti, ingé son, chef de car) ;
+   ce qui est déjà vu est coché, la visite reprend au premier arrêt qui reste. À la fin, Olivier dit « Mission
+   accomplie » et propose **Retourner à l'entrepôt** (le simulateur se recharge sur le bureau : `app/nav.js`).
+   Le mail de retour d'Olivier résume qui fait quoi.
+2. **Assistant technique** : la remise des diplômes du lycée, c'est-à-dire la mission « Conférence à trois
+   caméras PTZ » de l'entrepôt. « Commencer le montage » ouvre son cahier des charges (le montage déjà commencé
+   est repris) ; rendue à 60 / 100 au moins, Nadia répond avec la note.
+
+**Rien ne se compte deux fois** (`src/carriere/index.js`, calcul pur). Une mission est réussie quand l'activité
+qu'elle reprend l'est : les parcours « prise-en-main » et « poste-* » terminés (`PROG.tutor`), le meilleur
+résultat de la mission de l'entrepôt (`PROG.entrepot`). Ce qui est acquis ailleurs l'est ici ; le livret et l'XP
+ne voient que ces activités (aucune XP de plus, aucun rattachement nouveau). Seul un badge s'ajoute :
+**Embauché**, la mission de stagiaire réussie en Carrière. Un mail arrive quand son épisode s'ouvre (ses requis
+réussis), son retour quand sa mission est réussie, avec une notification (au car : « Il t'attend au bureau de
+l'entrepôt »).
+
+**Progression v3** (`src/shared.js`). `PROG.carriere` ne garde que la date de réception et de lecture de chaque
+mail ; `PROG_VERSION` passe à 3 (une Carrière abîmée est remise en forme), deux appareils fusionnent en gardant
+la date la plus ancienne, l'import accepte une progression qui n'a que la Carrière.
+
+Tests : unitaire `carriere` (le moule des épisodes, l'ordre d'arrivée des mails, la visite et la mission de
+l'entrepôt lues dans la progression, la lecture, la fusion, la mise à niveau v2 → v3, le badge) ; suite de bout en
+bout `carriere` (Jouer, le bureau et son écran cliqué dans la 3D, le premier mail, le car en visite de stagiaire,
+« Mission accomplie », le rechargement sur le bureau, la conférence montée et rendue, le mail de retour, Jouer qui
+résume, la messagerie à 390 px).
+
 ## v19.4 : consolider le car régie : des preuves d'apprentissage fiables, une progression sûre
 
 **Pourquoi.** Le constat du 23 octobre 2026 l'a montré : le livret pouvait dire « consolidée » sans que
@@ -1189,7 +1245,7 @@ npm run lint         # ESLint
 npm run typecheck    # TypeScript (navigateur + Node)
 npm test             # tests unitaires (node:test, ≈ 10 s)
 npm run check        # les quatre à la suite (ce que fait l'intégration continue)
-npm run test:e2e     # tests de bout en bout (Playwright, rendu logiciel : 35 suites, plusieurs heures)
+npm run test:e2e     # tests de bout en bout (Playwright, rendu logiciel : 36 suites, plusieurs heures)
 npm run serve:lan    # serveur réseau local (après la construction) : http://localhost:8080
 ```
 
@@ -1217,7 +1273,7 @@ node tools/shots.mjs dossier 1280 800 '["vision","hf"]'   # captures de postes
 | `diag.js` | Journal des erreurs (partagé avec `boot.js`) : erreurs non rattrapées, écouteurs d'événement, boucle de rendu, `console.error` ; version de l'application |
 | `ui/diag_ui.js` | Bandeau « Un problème est survenu » et fenêtre « Diagnostic technique » (texte à copier) |
 | `game/xp.js`, `game/progression.js` | Progression du joueur : XP (barème par activité), niveaux de technicien, badges (dont un par compétence du livret), fusion entre appareils ; accroches sur les événements du simulateur |
-| `game/quest.js` | L'objectif à l'écran (exercice, mission d'installation, phase du jour de match, visite, missions du poste), le repère 3D, le journal des missions (touche L), la carte joueur |
+| `game/quest.js` | L'objectif à l'écran (exercice, mission d'installation, phase du jour de match, visite, mission de la Carrière, missions du poste), le repère 3D, le journal des missions (touche L), la carte joueur |
 | `game/fx.js`, `game/sfx.js` | Effets de jeu (barre d'XP, bannières de niveau et de badge, carte-titre, vignette, flash tally, alerte de panne) et bruitages synthétisés en WebAudio avec leur réglage |
 | `styles/theme-jeu.css` | Le thème « jeu vidéo » : jetons de couleur, composants communs, HUD, écran titre, Jouer, menu, journal, badges |
 | `ui/pupitre.js` | Le pupitre (Tab ou T) : plan du car, touches des postes par zone, endroits du stade, équipiers, outils |
@@ -1230,9 +1286,10 @@ node tools/shots.mjs dossier 1280 800 '["vision","hf"]'   # captures de postes
 | `cours/liens.js` | Les liens du Cours avec le reste : terme du glossaire → leçon ou fiche « ? », poste → leçon (bouton « Cours », touche G) |
 | `cours/sdi_falaise.js`, `cours/lab_sdi.js`, `cours/figs_sdi.js` | Leçon « La falaise numérique » : diagramme de l'œil et image qui casse avec la longueur du câble, défis d'Olivier |
 | `camlab/` | Module « La caméra en 3D » : caméra et plateau construits dans le code (`model.js`, `scene.js`), pastilles (`points.js`), 51 notions (`notions/`, une fiche par fichier, registres `ch1.js` … `ch89.js`), schémas (`figs.js`, `figs/`, `figkit.js`), manipulations (`labs.js`, `labs/`, commandes `controls.js`, optique `optics.js`, viseur simulé et traitement de l'image `vf.js`), affichage d'une fiche (`fiche.js`), progression (`progress.js`), quiz de chapitre (`quiz.js`), mise en service notée (`mes.js`) |
-| `entrepot/` | Module « L'entrepôt » (tuile de Jouer) : monter une régie mobile d'après un cahier des charges. Types (`types.js`), catalogue de matériel réel (`catalogue/`, un fichier par groupe : `blackmagic.js`, `panasonic.js`, `ross.js`, `reseau.js`, `divers.js`), montage (`build.js`), moteur (`engine.js`), missions notées (`missions.js`), résultat rendu (`suivi.js`), 3D (`scene.js`, vue en orbite `orbit.js`), panneaux (`ui/` : `stock.js`, `appareil.js`, menus de configuration `ui/config/` un fichier par famille, `synoptique.js`, `reseau.js`, `mission.js`), ouverture et boucle (`index.js`) |
+| `entrepot/` | Module « L'entrepôt » (tuile de Jouer) : monter une régie mobile d'après un cahier des charges. Types (`types.js`), catalogue de matériel réel (`catalogue/`, un fichier par groupe : `blackmagic.js`, `panasonic.js`, `ross.js`, `reseau.js`, `divers.js`), montage (`build.js`), moteur (`engine.js`), missions notées (`missions.js`), résultat rendu (`suivi.js`), 3D (`scene.js` ; `scene/` : hall, appareils, câbles, bureau et ordinateur de la Carrière `bureau.js` ; vue en orbite `orbit.js`), panneaux (`ui/` : `stock.js`, `appareil.js`, menus de configuration `ui/config/` un fichier par famille, `synoptique.js`, `reseau.js`, `mission.js`), ouverture, boucle et mode Carrière (`index.js`) |
+| `carriere/` | La Carrière (mode de l'entrepôt) : les épisodes et leurs mails (`mails.js`), la boîte de réception et les missions lues dans la progression, calcul pur (`index.js`), la messagerie du bureau (`ui.js`), les mails qui arrivent et le lancement des missions au car (`installer.js`) |
 | `ui/cours_ui.js` | L'espace Cours : un seul sommaire, page « Mon suivi » (progression, à faire ensuite, livret), leçons (quiz, exercices pratiques, article de référence), glossaire, postes, matériel |
-| `app/nav.js` | Navigation entre les trois entrées : menu du car (Échap), aiguillage des boutons « Aller au poste », « Commencer » (car lancé si besoin), changement de vacation |
+| `app/nav.js` | Navigation entre les trois entrées : menu du car (Échap), aiguillage des boutons « Aller au poste », « Commencer » (car lancé si besoin), changement de vacation, retour au bureau de l'entrepôt (Carrière) |
 | `ui/layer.js` | Espace plein écran (le Cours) : plaque, onglets, Fermer (Échap), ligne d'état |
 | `ui/guide.js` | Missions d'installation (liste des tâches), articles de référence des leçons, glossaire, postes, matériel, procédures maison, commandes |
 | `content/referentiel.js` | Référentiel du BTS MAV option TIEE (fiche RNCP37022) : 4 blocs, 39 compétences numérotées 1.1 à 4.5, couverture par le car et modules qui la complèteront ; rattachement des parcours, missions, phases du jour de match, missions réseau, exercices et leçons |
@@ -1247,7 +1304,7 @@ node tools/shots.mjs dossier 1280 800 '["vision","hf"]'   # captures de postes
 | `content/lieux.js` | Les lieux de l'écran Jouer : le car régie, la salle de concert en préparation (fiche « Ce qui se prépare ») |
 | `ui/icons.js` | Icônes Phosphor intégrées au build (`icon(nom)`), toujours à côté d'un libellé |
 | `tutor/` | Chef de car : moteur des parcours (`engine.js`), lecture du réseau pour expliquer et vérifier (`net_helpers.js`), parcours réseau ST 2110 (`lessons/reseau.js`, `lessons/reseau_leaf.js`, `lessons/reseau_ops.js`), parcours des postes, compétences et matériel (`lessons/realisation.js`, `image.js`, `ralentis.js`, `son.js`, `liaisons.js`, `exploitation.js`, `materiel.js`, outils communs `kit.js`), présentation de chaque poste (`lessons/postes.js`) |
-| `ui/tutor_ui.js` | Panneau du chef de car : exercices du poste où l'on est, visite guidée (tour du car puis chaque poste), retour à la leçon du Cours, étapes, mise en évidence, gestes « Fais-le pour moi » hors des postes (caméra, visionneuse, atelier), commandes vers le terminal, voix |
+| `ui/tutor_ui.js` | Panneau du chef de car : exercices du poste où l'on est, visite guidée (tour du car puis chaque poste ; réduite aux postes d'une mission de la Carrière), retour à la leçon du Cours, étapes, mise en évidence, gestes « Fais-le pour moi » hors des postes (caméra, visionneuse, atelier), commandes vers le terminal, voix |
 | `app/` | Application : vue et qualité graphique (`view.js`), joueur et déplacements (`player.js`), visée et interactions (`interact.js`), cadreur (`camop.js`), téléportation et postes (`teleport.js`), barre d'outils et d'état (`hud.js`), clavier / souris / tactile (`input.js`), écran Jouer, modes et lancement (`start.js`), diagnostic de performance (`perf.js`), profileur `?perf` (`profiler.js`) |
 | `data/` | Catalogues techniques : caméras, objectifs, liaisons, formats (`cameras.js`) ; positions et antennes du stade (`stadium.js`) ; HF COFDM (`rf.js`) ; exposition et lumières (`exposure.js`) ; équipes (`match.js`) |
 | `content/` | Contenus pédagogiques : fiches de poste (`stations.js`), glossaire (`glossary.js`), fiches des termes réseau et ST 2110 (`netterms.js`), chapitres du guide (`guide.js`), commandes (`controls.js`) |
@@ -1276,7 +1333,7 @@ node tools/shots.mjs dossier 1280 800 '["vision","hf"]'   # captures de postes
 | `commentary.js` | Commentaires du match (commentateur, consultant, bord terrain, plateau) par synthèse vocale, volume suivant la console |
 | `audiodesk.js` | Console son en 3D dans la cabine (faders motorisés, FaderGlow, écrans Vistonics animés) |
 | `scenario.js` | Scénario « jour de match » chronométré et noté |
-| `shared.js` | Données partagées de la page publiée (configuration, progression) avec repli local ; progression numérotée (`PROG_VERSION`, `migrateProgress`), fusionnée avec le serveur avant chaque écriture, état de l'enregistrement (`SAVE`), export, import et effacement |
+| `shared.js` | Données partagées de la page publiée (configuration, progression) avec repli local ; progression numérotée (`PROG_VERSION`, `migrateProgress` ; v3 : la Carrière), fusionnée avec le serveur avant chaque écriture, état de l'enregistrement (`SAVE`), export, import et effacement |
 | `review.js` | Points techniques à faire relire par le formateur |
 | `gfx.js` | Habillage (score, bandeaux, statistiques) |
 | `atelier.js` | Atelier de montage de la CAM 1 : pièces, ordre des opérations et prérequis, visée, fantômes, gestes maintenus, réglages à la molette, mise en service, rapport |

@@ -18,8 +18,8 @@ Tout est en français (code commenté en français, interface, commits).
   Cours, Réglages, Équipe en coopération, Retour à l'accueil), pupitre (`src/ui/pupitre.js` : outils du car,
   Cours, Réglages). Pas de quatrième entrée : un nouvel écran se range dans l'une des trois.
 - **Jouer** : le lieu (car régie ; l'entrepôt ; salle de concert en préparation, `src/content/lieux.js`), le
-  mode (car installé, tout à faire, visite guidée ; pour l'entrepôt : ses missions, le bac à sable, la reprise du
-  montage), solo ou coopération (salon `src/ui/session_ui.js`), conditions de captation repliées. Pas de liste
+  mode (car installé, tout à faire, visite guidée ; pour l'entrepôt : la Carrière, ses missions, le bac à sable, la
+  reprise du montage), solo ou coopération (salon `src/ui/session_ui.js`), conditions de captation repliées. Pas de liste
   de scénarios : les exercices notés (car vide, atelier, jour de match, formation réseau, mise en service de la
   caméra, régie de l'entrepôt) se lancent depuis leur leçon du Cours.
 - **Réglages** : une seule fenêtre (`src/ui/settings.js`), avec le profil Étudiant / Formateur
@@ -43,6 +43,14 @@ Tout est en français (code commenté en français, interface, commits).
   les clés que lit le moteur (un réglage sans effet le dit) ; une nouvelle mission se rattache à des compétences. Tests
   `tests/unit/entrepot*.test.mjs`, suite `node tools/e2e.mjs entrepot`. La préparation logistique (flight cases,
   phases électriques, camion, lien avec le car) reste à faire (ROADMAP.md, v21).
+- **La Carrière** (`src/carriere/`, premier mode de l'entrepôt, décidé le 23 octobre 2026) : le mode scénarisé (le
+  mode libre est le bac à sable). Au bureau du hall (`entrepot/scene/bureau.js`), l'ordinateur reçoit des mails
+  qui proposent un poste sur une prestation (`mails.js` : un épisode = l'offre, son ordre de mission, le mail de
+  retour ; `requis` pour l'ordre). Une mission reprend une activité qui existe (visite guidée réduite, mission de
+  l'entrepôt…) et n'est réussie que si elle l'est (`index.js`, calcul pur, lu dans la progression) : pas d'XP ni de
+  livret en double. `PROG.carriere` ne garde que les dates de réception et de lecture. Depuis le car, retour au
+  bureau par `restart('carriere')`. Ne pas l'appeler « Scénario » (c'est le jour de match). Tests
+  `tests/unit/carriere.test.mjs`, suite `node tools/e2e.mjs carriere`.
 - **La caméra en 3D** (`src/camlab/`, ouverte depuis le chapitre La caméra du Cours) : 51 notions écrites, une
   fiche par fichier (`notions/<id>.js`) rangée dans le registre de son groupe (`notions/ch1.js` … `ch89.js`),
   schéma dans `figs/`, manipulation dans `labs/` (elle pilote la 3D par `ctx.lens`, clés listées dans
