@@ -178,8 +178,13 @@ export function buildStart() {
     entrepot ? lieu('entrepot', entrepot.nom, entrepot.cadre, true, entrepot.icons, () => { PICK.lieu = 'entrepot'; draw(); modes.querySelector('[aria-pressed="true"]')?.focus(); }) : null,
     concert ? lieu('concert', 'Salle de concert', concert.cadre, false, concert.icons, () => teaser(concert)) : null);
   draw();
-  // la Carrière avance (mails reçus, progression lue sur le serveur) : sa touche le dit en revenant à Jouer
-  on('entrepot', (e) => { if (e && e.type === 'close') draw(); });
+  // la Carrière ouverte d'ailleurs (retour au bureau après le rechargement) : en quittant le bureau, on la retrouve
+  // dans Jouer ; elle avance (mails reçus, progression lue sur le serveur) : sa touche le dit
+  on('entrepot', (e) => {
+    if (!e) return;
+    if (e.type === 'open' && e.carriere) { PICK.lieu = 'entrepot'; PICK.ep = 'carriere'; draw(); }
+    if (e.type === 'close') draw();
+  });
   on('shared', () => draw());
   const step = (n, title, ...kids) => el('section', { class: 'jo-step', 'aria-label': title }, el('h2', {}, el('span', { class: 'jo-n' }, String(n)), title), ...kids);
   s.append(el('div', { class: 'jouer' },
