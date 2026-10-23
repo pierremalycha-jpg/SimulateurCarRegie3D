@@ -1,5 +1,6 @@
 // @ts-check
 import { PROG, saveProgressSoon } from '../shared.js';
+import { emit } from '../state.js';
 
 // ----------------------------------------------------------------------------------
 // Le suivi de l'entrepôt : le résultat d'une mission rendue est enregistré avec la progression
@@ -38,5 +39,6 @@ export function rendre(id, N, at = Date.now()) {
   const nouveau = essai.score > ancien;
   if (nouveau) r.best = { score: essai.score, at };
   PROG.updatedAt = Date.now(); saveProgressSoon();
+  emit('entrepotRendu', { id, score: essai.score, nouveau });
   return { ...r, nouveau };
 }

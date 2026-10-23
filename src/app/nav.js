@@ -16,6 +16,7 @@ import { resetFabric } from '../net/fabric.js';
 import { releaseCamera } from './camop.js';
 import { TITLE, titleOpen, enterFrom } from './title.js';
 import { launch } from './start.js';
+import { livePlayerCard } from '../game/quest.js';
 
 // ----------------------------------------------------------------------------------
 // La navigation entre les trois entrées, les mêmes depuis l'écran titre et dans le car : Jouer
@@ -122,6 +123,7 @@ export function openMenu() {
   const key = (id, ico, label, sub, fn, o = {}) => el('button', { type: 'button', class: 'ti-key mn-key' + (o.primary ? ' primary' : ''), id, onclick: fn },
     icon(ico), el('b', {}, label), el('small', {}, sub), o.kbd ? el('kbd', {}, o.kbd) : null);
   const body = el('div', { class: 'mn' },
+    livePlayerCard(),
     key('mn-resume', 'reprendre', 'Reprendre', 'Revenir au car', () => modal.close(), { primary: true, kbd: 'Échap' }),
     key('mn-cours', 'cours', 'Cours', 'Les leçons et leurs exercices pratiques, le glossaire, les postes, le matériel', then(() => openCours()), { kbd: 'G' }),
     key('mn-reglages', 'reglages', 'Réglages', 'Qualité, son, lumière, profil, touches, diagnostic', then(() => emit('settings'))),

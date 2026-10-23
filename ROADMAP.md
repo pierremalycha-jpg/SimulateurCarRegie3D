@@ -24,6 +24,7 @@ Calendrier indicatif, calé sur l'année scolaire (les épreuves ont lieu en mai
 
 | Version | Période | Contenu |
 |---|---|---|
+| v19.3 | oct. 2026 (fait) | L'interface jeu : objectif toujours à l'écran (exercice, mission, phase du jour de match) avec repère 3D, journal des missions (L), XP et sept niveaux de technicien, badges (dont un par compétence du livret), bruitages WebAudio, nouvelle identité visuelle « jeu vidéo » (écran titre cinématique, menu de pause, HUD, notifications), rubrique Jeu des réglages |
 | v19.2 | oct. 2026 (fait) | L'entrepôt, tuile de Jouer : monter une régie mobile de A à Z (caméras PTZ Panasonic, pupitre AW-RP150, ATEM HD8 ISO ou Carbonite, HyperDeck, Teranex, switch PoE+, box, PC vMix) d'après un cahier des charges noté ; catalogue de 21 modèles réels, moteur (énergie, câbles, IP, vidéo, tally), hall en 3D, faces cliquables, menus de configuration de chaque appareil, synoptique et liste de câblage, réseau avec ping, trois missions, compte rendu, exercice noté x-entrepot et livret ; chiffres et menus à faire relire par un professionnel |
 | v19.1 | oct. 2026 (fait) | La caméra en 3D terminée : les 51 notions écrites (lots 2 et 3 : filtres et prisme, capteurs, traitement de l'image, corps, viseur et cadreur, voie caméra, mesure, grand capteur, HDR, super ralenti), notions acquises et quiz des neuf chapitres, exercice noté « Mise en service » (x-camera, leçon La chaîne caméra), liens vers le Cours, livret ; chiffres à faire relire par un professionnel de la caméra |
 | v19 | oct. 2026 (fait) | TIEE Simulator : trois entrées (Jouer, Cours, Réglages) ; Jouer = le lieu (car régie, salle de concert en préparation), le mode (car installé, tout à faire, visite guidée), solo ou coopération (salon) ; le chef de car devient les exercices pratiques des leçons du Cours ; Cours à un seul sommaire avec page de suivi, dix chapitres |
@@ -51,6 +52,10 @@ et 30 images par seconde sur le PC le plus faible de l'établissement.
   route ; l'entrepôt devient un mode à part. Le chef de car n'est plus une entrée : ses parcours sont les
   exercices pratiques des leçons du Cours, et sa présentation du car devient le mode « Visite guidée ».
 
+- 22 octobre 2026 (v19.3) : le simulateur se présente comme un jeu : l'objectif en cours est toujours à l'écran,
+  les missions se choisissent dans le journal (L) sans passer par Échap, la progression se mesure en XP, niveaux et
+  badges rattachés aux compétences du livret, les bruitages sont synthétisés (aucun fichier), le rendu 3D n'est pas
+  touché (30 i/s sur le PC le plus faible). Nouvelle identité visuelle « jeu vidéo » sur toutes les interfaces.
 - 22 octobre 2026 (v19.2) : l'entrepôt reste une tuile de l'écran Jouer, à côté du car régie ; on y monte une
   régie mobile (caméras PTZ, mélangeur, enregistreur, réseau) d'après un cahier des charges. Le lien avec le car
   (ce qu'on prépare part sur le lieu) viendra avec la préparation logistique, en v21.

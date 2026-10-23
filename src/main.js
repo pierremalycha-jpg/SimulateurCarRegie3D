@@ -58,6 +58,11 @@ import * as CTRL from './net/ctrlnet.js';
 import { installPerfTest, watchFps } from './app/perf.js';
 import { openMenu, restart, resumeAfterReload } from './app/nav.js';
 import { toggleChef } from './ui/tutor_ui.js';
+import { installSfx, sfx, JEU, applyJeu } from './game/sfx.js';
+import { installProgression } from './game/progression.js';
+import { installFx } from './game/fx.js';
+import { renderQuest, updateQuestMarker, openJournal, currentGoal } from './game/quest.js';
+import * as XP from './game/xp.js';
 import { report, ERRS } from './diag.js';
 import { initDiagUI, setDiagInfo, diagText, openDiag } from './ui/diag_ui.js';
 import { TUTOR, startLesson as startChefLesson, doForMe as chefDoForMe, next as chefNext, stopLesson as stopChefLesson } from './tutor/engine.js';
@@ -154,7 +159,7 @@ function step(now) {
   if (S.mode === 'fps') updatePlayer(dt);
   t = pe('joueur', t);
   updateGfx(dt); { const pgm = meSource(MIX.pgm); updateAudio(dt, { pgmSrc: pgm, replayA: EVS.ch[0].playing, replayB: EVS.ch[1] && EVS.ch[1].playing, studioOnAir: pgm === 'STUDIO' }); updateCommentary(dt, { pgmSrc: pgm, replay: (pgm === 'EVSA' || pgm === 'EVSB') && EVS.ch[pgm === 'EVSA' ? 0 : 1].playing, studioOnAir: pgm === 'STUDIO' }); } updateTruck(S.time); updateExercises(dt); updateScenario(dt); updateNet(dt, ROUTER.map, ROUTER.phase); updateCourse(dt); updateSession(dt); trackMix(); if (S.frame % 10 === 0) updateSessionHud();
-  slowAcc += dt; if (slowAcc > 0.5) { watchFps(slowAcc); slowAcc = 0; checkMissions(); updateFaults(); if (S.mode === 'fps') drawMissionCard(); }
+  slowAcc += dt; if (slowAcc > 0.5) { watchFps(slowAcc); slowAcc = 0; checkMissions(); updateFaults(); if (S.mode === 'fps') drawMissionCard(); renderQuest(); }
   t = pe('simulation', t);
 
   // matériaux ajoutés en cours de route (caméras posées, appareils) : conversion physique
@@ -186,7 +191,7 @@ function step(now) {
     renderEye(renderer, S.inTruck ? T.scene : W.scene, pcam, S.inTruck ? (RENDER.pbr ? 1.2 : 1.0) : S.eyeExposure, S.inTruck);
     if (S.mode === 'fps' && !$('#minimon').hidden) drawSlots(renderer, [$('#minimon')]);
     t = pe('vue', t);
-    updatePrompt();
+    updatePrompt(); updateQuestMarker();
     if (S.inTruck && PL.pos.x - TRUCK.cx < -3) updateAudioDesk(AU, dt, faderLin);
     if (S.inTruck) { pcam.getWorldDirection(DIR); updateTruckView(eyePos(EYE), DIR, AIM.target && AIM.target.kind === 'station' ? AIM.target.id : null, S.time); }
     updateTruckMap(PL);
@@ -213,6 +218,7 @@ loadStep('Préparation des matériaux', 90); await tick();
 try { renderer.compile(W.scene, pcam); renderer.compile(T.scene, pcam); } catch (e) { report(e, 'préparation des matériaux'); }
 initTruckMap((st) => goToStation(st), () => PL);
 installInput();
+installSfx(); applyJeu(); installProgression(); installFx();
 installPerfTest();
 initShared();
 // la configuration du car peut arriver après le démarrage : on recalcule la répartition EVS
@@ -236,6 +242,7 @@ window.__dbg.nav = { openMenu, restart };
 window.__dbg.openCours = openCours; window.__dbg.PROFILE = PROFILE; window.__dbg.setRole = setRole; window.__dbg.camlab = camlabDebug; window.__dbg.entrepot = entrepotDebug;
 window.__dbg.COURS = { CHAPTERS: COURS_CHAPTERS, allLessons, lessonById: coursLessonById, lessonDone: coursLessonDone };
 window.__dbg.CTRL = CTRL;
+window.__dbg.jeu = { XP, sfx, JEU, openJournal, currentGoal, renderQuest };
 // le programme a démarré : le filet du chargement (boot.js) n'a plus à intervenir
 window.__carReady = true;
 initDiagUI();

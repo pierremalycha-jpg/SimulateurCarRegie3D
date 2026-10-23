@@ -1,5 +1,5 @@
 // @ts-check
-import { S, on } from './state.js';
+import { S, on, emit } from './state.js';
 import { el, mmss, randPick } from './util.js';
 import { $, toast, intercom, modal } from './ui/common.js';
 import { MIX, meSource, EVS, resolve, feedOf } from './pipeline.js';
@@ -92,6 +92,7 @@ function finish() {
   const score = max ? Math.round(pts / max * 100) : 0;
   const result = { score, phases: SC.phases, duration: Math.round(S.time - SC.t0), car: CFG.car.name || '' };
   addScenarioResult(result);
+  emit('scenarioDone', result);
   log(`Fin du scénario : ${score} %.`);
   const box = $('#scenario'); if (box) box.hidden = true;
   const advice = [];
@@ -112,6 +113,8 @@ function reportHTML(r) {
 <table><tr><th>Phase</th><th>Points</th><th>Durée</th></tr>${r.phases.map((p) => `<tr><td>${esc(p.title)}</td><td>${p.pts} / ${p.max}</td><td>${mmss(p.dur)}</td></tr>`).join('')}</table>
 <h2>Journal</h2><ul>${SC.log.map((l) => `<li>${mmss(l.t)} · ${esc(l.text)}</li>`).join('')}</ul></body></html>`;
 }
+/** passer à la phase suivante (bouton de l'objectif à l'écran) */
+export function scenarioNext() { if (!SC.on) return; SC.autoT = 0; nextPhase(); }
 export function stopScenario() { if (!SC.on) return; SC.on = false; for (const t of SC.timers || []) clearTimeout(t); const b = $('#scenario'); if (b) b.hidden = true; toast('Scénario abandonné'); }
 
 // ---------------- suivi en direct ----------------

@@ -49,6 +49,7 @@ const SUITES = [
   ['camera', 'camera', [], 25],
   ['entrepot', 'entrepot', [], 25],
   ['chef-postes', 'chef-postes', [], 60],
+  ['jeu', 'jeu', [], 20],
 ];
 
 const args = process.argv.slice(2);

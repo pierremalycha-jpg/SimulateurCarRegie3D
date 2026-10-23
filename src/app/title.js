@@ -2,6 +2,7 @@
 import { $, modal } from '../ui/common.js';
 import { APP_VERSION } from '../diag.js';
 import { emit } from '../state.js';
+import { livePlayerCard } from '../game/quest.js';
 
 // ----------------------------------------------------------------------------------
 // Écran titre de TIEE Simulator (réalisé par le BTS Audiovisuel de Saint-Quentin) : écrit dans la
@@ -43,6 +44,7 @@ function rotate() { clearInterval(tipTimer); tipTimer = window.setInterval(() =>
 export function initTitle() {
   const t = $('#title'); if (!t) return;
   const ver = $('#ti-ver'); if (ver) ver.textContent = 'v' + APP_VERSION;
+  const pc = $('#ti-player'); if (pc) pc.replaceChildren(livePlayerCard(true));
   const next = /** @type {HTMLButtonElement | null} */ ($('#ti-next'));
   if (next) { next.hidden = false; next.onclick = () => { setTip(tipI + 1); rotate(); }; }
   rotate();

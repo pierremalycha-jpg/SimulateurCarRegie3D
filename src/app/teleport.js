@@ -1,5 +1,5 @@
 // @ts-check
-import { S } from '../state.js';
+import { S, emit } from '../state.js';
 import { TRUCK } from '../world.js';
 import { truckBlocked, truckFloorAt, T } from '../truck.js';
 import { AT, ATELIER_DECK } from '../atelier.js';
@@ -37,6 +37,7 @@ export function teleport(i) {
   // retour à l'atelier : à pied sur la passerelle
   if (AT.active && fly) { PL.fly = false; if (onDeck()) { PL.pos.y = ATELIER_DECK.y; PL.y = PL.pos.y + 1.7; } else PL.fly = true; }
   updToolbar();
+  emit('teleport', i);
 }
 // se placer au poste (debout devant, tourné vers le pupitre) puis l'ouvrir
 export function goToStation(s, open = true) {

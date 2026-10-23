@@ -256,6 +256,7 @@ export function updateCourse(dt = 0.1) {
       P().missions[m.id] = { at: Date.now(), pts: Math.max(pts, prev ? prev.pts : 0), hints: NC.hints[m.id] || 0, aided: !!NC.aided[m.id], dur: Math.round(S.time - NC.t0) };
       saveProgressSoon();
       toast(`Mission réseau réussie : ${m.title} (${pts}/10)`, 'good', 5000);
+      emit('netMission', { id: m.id, pts, aided: !!NC.aided[m.id] });
       NC.done = { id: m.id, pts };
       NC.active = null; NC.entry = null;
       emit('netcourse', { type: 'done', id: m.id, pts });

@@ -72,6 +72,21 @@ import iList from '@phosphor-icons/core/bold/list-bold.svg';
 import iHouse from '@phosphor-icons/core/bold/house-bold.svg';
 import iPlay from '@phosphor-icons/core/bold/play-bold.svg';
 import iCube from '@phosphor-icons/core/bold/cube-bold.svg';
+import iListChecks from '@phosphor-icons/core/bold/list-checks-bold.svg';
+import iCrosshair from '@phosphor-icons/core/bold/crosshair-bold.svg';
+import iLightning from '@phosphor-icons/core/bold/lightning-bold.svg';
+import iMedal from '@phosphor-icons/core/bold/medal-bold.svg';
+import iTrophy from '@phosphor-icons/core/bold/trophy-bold.svg';
+import iShieldCheck from '@phosphor-icons/core/bold/shield-check-bold.svg';
+import iFlagCheckered from '@phosphor-icons/core/bold/flag-checkered-bold.svg';
+import iCompassRose from '@phosphor-icons/core/bold/compass-rose-bold.svg';
+import iMapPin from '@phosphor-icons/core/bold/map-pin-bold.svg';
+import iCrownSimple from '@phosphor-icons/core/bold/crown-simple-bold.svg';
+import iConfetti from '@phosphor-icons/core/bold/confetti-bold.svg';
+import iGameController from '@phosphor-icons/core/bold/game-controller-bold.svg';
+import iSparkle from '@phosphor-icons/core/bold/sparkle-bold.svg';
+import iRanking from '@phosphor-icons/core/bold/ranking-bold.svg';
+import iCaretRight from '@phosphor-icons/core/bold/caret-right-bold.svg';
 
 /** nom dans l'application -> dessin SVG @type {Record<string, string>} */
 const SVG = {
@@ -96,6 +111,10 @@ const SVG = {
   cours: iGraduationCap, lexique: iBookBookmark, formateur: iUserGear, relecture: iSealCheck, commandes: iKeyboard, livret: iNotebook,
   // le menu du car (app/nav.js) et l'espace du chef de car (ui/entrainement.js)
   entrainement: iTarget, menu: iList, accueil: iHouse, reprendre: iPlay, cube: iCube,
+  // le jeu (game/) : objectif, missions, XP, niveaux, badges
+  missions: iListChecks, objectif: iCrosshair, eclair: iLightning, medaille: iMedal, trophee: iTrophy, bouclier: iShieldCheck,
+  drapeau: iFlagCheckered, boussole: iCompassRose, repere: iMapPin, couronne: iCrownSimple, confetti: iConfetti, jeu: iGameController,
+  etoile: iSparkle, classement: iRanking, suivant: iCaretRight, porte: iDoorOpen,
 };
 export const ICON_NAMES = Object.keys(SVG);
 /**

@@ -12,6 +12,8 @@ import { openTrainer } from './config.js';
 import { openReview } from './review_ui.js';
 import { openDiag } from './diag_ui.js';
 import { openReport } from './report.js';
+import { JEU, saveJeu, setSfxVolume, sfx } from '../game/sfx.js';
+import { setQuestVisible } from '../game/quest.js';
 
 // ----------------------------------------------------------------------------------
 // Réglages : une seule fenêtre, la même depuis l'écran titre, l'écran Jouer et le menu du car.
@@ -46,6 +48,13 @@ export function openSettings() {
         if (inGame) { startAudio(); AU.muted = v !== '1'; applyFaders(); emit('soundToggle'); } else setStart('stsnd', v);
       })),
       el('p', { class: 'note' }, 'Basse convient aux ordinateurs portables ; Haute demande une carte graphique dédiée.')),
+    section('Jeu',
+      row('Bruitages', seg('Bruitages', [['1', 'Activés'], ['0', 'Coupés']], JEU.sfx ? '1' : '0', (v) => { JEU.sfx = v === '1'; saveJeu(); if (JEU.sfx) sfx('confirm'); })),
+      row('Volume des bruitages', (() => { const r = el('input', { type: 'range', min: '0', max: '1', step: '0.05', value: String(JEU.volume), 'aria-label': 'Volume des bruitages' }); r.addEventListener('input', () => setSfxVolume(+r.value)); r.addEventListener('change', () => sfx('confirm')); return r; })()),
+      row('Objectif à l\'écran', seg('Objectif à l\'écran', [['1', 'Affiché'], ['0', 'Masqué']], JEU.quest ? '1' : '0', (v) => { setQuestVisible(v === '1'); saveJeu(); })),
+      row('Repère 3D de l\'objectif', seg('Repère 3D', [['1', 'Affiché'], ['0', 'Masqué']], JEU.marker ? '1' : '0', (v) => { JEU.marker = v === '1'; saveJeu(); })),
+      row('Mini-plan du car', seg('Mini-plan du car', [['0', 'Masqué'], ['1', 'Affiché']], JEU.minimap ? '1' : '0', (v) => { JEU.minimap = v === '1'; saveJeu(); })),
+      el('p', { class: 'note' }, 'Les bruitages de l\'interface sont indépendants du son du car (ambiance, commentaires). L\'objectif en cours s\'affiche en haut à gauche ; le journal des missions s\'ouvre avec L. Le mini-plan du car est masqué par défaut : le pupitre (Tab) a le plan complet.')),
     inGame ? section('La partie en cours',
       el('div', { class: 'grid2' },
         field('Lumière', selectEl(Object.entries(LIGHTING).map(([k, v]) => [k, v.label]), S.lighting, (v) => emit('setLighting', v))),

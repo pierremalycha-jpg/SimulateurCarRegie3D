@@ -1,7 +1,7 @@
 // @ts-check
 import { S, emit, on } from '../state.js';
 import { el } from '../util.js';
-import { FIRST_STEPS, FIRST_STEPS_TOUCH } from '../content/controls.js';
+import { FIRST_STEPS_SHORT, FIRST_STEPS_TOUCH_SHORT } from '../content/controls.js';
 import { LIGHTING } from '../data/exposure.js';
 import { FORMATS } from '../data/cameras.js';
 import { applyLighting, paintTruckSign } from '../world.js';
@@ -26,6 +26,7 @@ import { LIEUX } from '../content/lieux.js';
 import { MISSIONS } from '../entrepot/missions.js';
 import { montageEnregistre } from '../entrepot/build.js';
 import { showTitle } from './title.js';
+import { livePlayerCard } from '../game/quest.js';
 
 // ----------------------------------------------------------------------------------
 // L'écran Jouer (lieu, mode, solo ou coopération, conditions de captation) et le lancement d'une partie.
@@ -186,6 +187,7 @@ export function buildStart() {
         lan ? el('p', { class: 'note cs-lan' }, el('b', {}, 'Réseau local'), ` : ce simulateur est servi par l'ordinateur de l'hôte (${location.host}).`) : null)),
     // à droite : ce qui lance la partie, et les conditions de captation repliées dessous
     el('aside', { class: 'jo-side', 'aria-label': 'Lancer la partie' },
+      livePlayerCard(true),
       el('section', { class: 'onair jo-go', 'aria-label': 'Lancer' },
         el('button', { id: 'st-antenne', class: 'onair-key', onclick: () => go() }, lamp, goTitle, goDesc)),
       el('details', { class: 'jo-capt plate' },
@@ -226,23 +228,24 @@ export function start(preset, light, quality, sound, format = S.format, ip = fal
   if (preset === 'brassage') { emit('openStationNow', { id: 'brassage' }); toast('Car vide : brassez chaque liaison en suivant la liste de câblage. Le multiview montre le résultat.', '', 7000); }
   else if (preset === 'scenario') emit('startScenario');
   else if (preset === 'atelier') emit('startAtelier');
-  else if (preset === 'vierge' || preset === 'zero') toast('Tout est à faire : suivez la tâche en haut à gauche. Commencez par le compound, puis le plan des caméras (P).', '', 7000);
-  else toast('Vous êtes dans le compound, devant le car régie. Cliquez dans la vue pour regarder, avancez avec Z Q S D.', '', 6000);
   if (matchMedia('(pointer: coarse)').matches) setupTouch();
   showOnboarding();
   emit('started', { preset });
 }
 
-// première prise en main : les six gestes de base, affichés une fois (mémorisé dans ce navigateur)
+// première prise en main : les gestes de base sur une seule ligne, affichée une fois (mémorisé dans ce
+// navigateur) ; elle s'efface d'elle-même au bout de 40 s, ou à la première touche E, Tab ou L
 function showOnboarding() {
   let seen = false; try { seen = localStorage.getItem('carregie.onboard') === '1'; } catch (e) { /* stockage indisponible */ }
   if (seen || $('#onboard')) return;
   const touch = matchMedia('(pointer: coarse)').matches;
-  const rows = touch ? FIRST_STEPS_TOUCH : FIRST_STEPS;
-  const close = () => { box.remove(); try { localStorage.setItem('carregie.onboard', '1'); } catch (e) { /* stockage indisponible */ } };
-  const box = el('div', { id: 'onboard', role: 'dialog', 'aria-label': 'Prise en main' },
-    el('span', { class: 'tape' }, 'Prise en main'),
+  const rows = touch ? FIRST_STEPS_TOUCH_SHORT : FIRST_STEPS_SHORT;
+  const close = () => { box.remove(); window.removeEventListener('keydown', onKey); try { localStorage.setItem('carregie.onboard', '1'); } catch (e) { /* stockage indisponible */ } };
+  const onKey = (e) => { if (['KeyE', 'Tab', 'KeyL'].includes(e.code)) close(); };
+  const box = el('div', { id: 'onboard', role: 'note', 'aria-label': 'Prise en main' },
     el('ul', {}, ...rows.map(([k, d]) => el('li', {}, el('kbd', {}, k), el('span', {}, d)))),
-    el('button', { class: 'btn small primary', onclick: close }, 'Compris'));
+    el('button', { class: 'ob-x', 'aria-label': 'Fermer la prise en main', title: 'Compris', onclick: close }, '×'));
   $('#hud').appendChild(box);
+  window.addEventListener('keydown', onKey);
+  setTimeout(() => { if (box.isConnected) close(); }, 40000);
 }

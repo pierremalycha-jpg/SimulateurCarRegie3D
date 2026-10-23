@@ -1,5 +1,6 @@
 // @ts-check
 import { PROG, saveProgressSoon } from '../shared.js';
+import { emit } from '../state.js';
 
 // ----------------------------------------------------------------------------------
 // La progression du module « La caméra en 3D », enregistrée avec celle du stagiaire (PROG.camera,
@@ -42,6 +43,7 @@ export function recordNotion(id, score, total, P = PROG) {
   const N = camProg(P).notions;
   if (better(N[id], score)) N[id] = { score, total, at: Date.now() };
   touch(P);
+  if (P === PROG) emit('camlab', { type: 'notion', id, score, total });
   return notionAcquise(id, P);
 }
 /** notion acquise : une série réussie en entier du premier coup */
@@ -54,6 +56,7 @@ export function recordChapterQuiz(n, score, total, P = PROG) {
   const Q = camProg(P).quiz;
   if (better(Q[n], score)) Q[n] = { score, total, at: Date.now() };
   touch(P);
+  if (P === PROG) emit('camlab', { type: 'quiz', n, score, total });
 }
 /** meilleur score du quiz du chapitre n, ou null */
 export const chapterQuizBest = (n, P = PROG) => (read(P).quiz || {})[n] || null;
@@ -66,6 +69,7 @@ export function recordMes(r, P = PROG) {
   const best = !M.best || r.score > M.best.score || (r.score === M.best.score && r.sec < M.best.sec);
   if (best) M.best = run;
   touch(P);
+  if (P === PROG) emit('camlab', { type: 'mes', score: r.score, best });
   return best;
 }
 /** meilleur résultat de la mise en service, ou null */

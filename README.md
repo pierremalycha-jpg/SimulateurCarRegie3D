@@ -394,6 +394,68 @@ Tests :
   « Emmène-moi / Montre-moi » doit mettre en évidence un élément réel de la page, et « Fais-le pour moi » doit faire
   valider l'étape.
 
+## v19.3 : l'interface jeu : objectif à l'écran, XP, badges, bruitages
+
+**Un vrai HUD de jeu.** L'objectif en cours est toujours en haut à gauche (`src/game/quest.js`, `#quest`) : l'étape
+de l'exercice d'Olivier (titre, étape n / N, barre, « à toi »), la mission du mode « Tout à faire » (n / 22, +25 XP),
+la phase du jour de match avec ses objectifs cochés, la visite guidée, ou, sans rien en cours, les missions
+disponibles au poste. Plus besoin d'aller les chercher avec Échap. Un **repère 3D** (`#qmark`) suit l'endroit où
+aller (pied de car, porte du car, poste) avec la distance ; quand le but est dans le car et que l'on est dehors, il
+montre la porte. La **touche L** et le bouton **Missions** (barre d'outils, en-tête des postes) ouvrent le **journal
+des missions** : carte joueur, objectif en cours, exercices du poste où l'on est (« Ici, au poste »), missions
+d'installation, toutes les missions par chapitre du Cours avec l'XP qu'elles rapportent, « Commencer » (l'exercice
+d'Olivier démarre, ou la vacation notée se lance), « Leçon », et la vitrine des badges. Aux postes qui se servent de
+L (mélangeur : volet logo ; EVS : LIVE), le bouton Missions de l'en-tête reste.
+
+**Un HUD épuré : trois blocs.** À l'arrivée dans le car régie, l'écran ne montre plus que l'objectif en haut à
+gauche (sa première ligne est le lieu : compound, car régie · production…), la barre d'outils en haut à droite
+(le niveau et sa barre d'XP, Pupitre, Missions, Menu ; le chef de car pendant un exercice) et la bande d'état en
+bas à gauche (timecode, match, antenne ; les alarmes seulement s'il y en a), plus le retour PGM. Le bandeau de lieu,
+le PVW et les images par seconde de la bande, les boutons Cours et Son de la barre (dans le menu, le pupitre et les
+réglages), le mini-plan du car (le pupitre a le plan ; Réglages → Jeu le remet), le panneau du jour de match (ses
+objectifs et ses boutons Phase suivante / Abandonner sont dans l'objectif) et les messages d'arrivée ont disparu.
+La prise en main tient sur une ligne en bas, une fois, et s'efface d'elle-même (40 s, ou E, Tab, L).
+
+**XP, niveaux, badges** (`src/game/xp.js`, calcul pur, testé par `tests/unit/xp.test.mjs` ; accroches dans
+`src/game/progression.js`). Barème (`BAREME`) : mission d'installation 25, exercice d'Olivier 60 moins l'aide
+(« Fais-le pour moi » −8, indice −3, plancher 20 ; refait 15), présentation d'un poste 20, quiz d'une leçon 30,
+notion de la caméra en 3D 15, quiz de chapitre 40, mise en service 100, mission réseau 40 (25 aidée), panne résolue
+20 (35 en moins d'une minute), jour de match = son score, atelier 80, car vide brassé 80, mission de l'entrepôt 100,
+poste découvert 5, endroit du stade 5. Sept niveaux de technicien : Stagiaire (0), Assistant technique (120),
+Technicien (320), Technicien confirmé (650), Ingénieur d'exploitation (1 100), Chef de car (1 700), Directeur
+technique (2 500). Badges : 19 badges du simulateur (Premiers pas, Explorateur, Le tour du car, Sans filet,
+Sang-froid, Dépanneur, Brasseur, Monteur, Jour de match, Ingénieur réseau, Mise en service, Régie mobile, Curieux,
+Érudit, Opticien…) et **un badge par compétence du référentiel**, bronze quand le livret la dit travaillée, or quand
+elle est consolidée (`src/livret.js` décide, rien de nouveau à rattacher). Tout est enregistré avec la progression
+(`PROG.game`, fusionné entre appareils par `mergeProgress`). Une récompense à clé n'est donnée qu'une fois ; les
+pannes, scénarios et exercices refaits rapportent à chaque fois.
+
+**Ce qui se voit** (`src/game/fx.js`) : barre d'XP en haut à droite (niveau, barre, « +25 XP » qui monte, clic =
+journal), bannière de niveau et bannière de badge (une à la fois), carte-titre à l'entrée dans un lieu (compound,
+car régie), vignette, flash rouge du tally à chaque commutation, alerte rouge à l'injection d'une panne. La carte
+joueur (niveau, XP, badges) est sur l'écran titre, l'écran Jouer, le menu du car (Échap) et le journal.
+
+**Bruitages** (`src/game/sfx.js`), synthétisés en WebAudio, aucun fichier : clic de touche, survol du menu,
+ouverture et fermeture d'une fenêtre ou d'un poste, validation et refus, étape validée, mission réussie, XP, fanfare
+de niveau, badge, alarme de panne, relais de tally à la commutation, bip d'intercom, souffle de téléportation,
+bonne réponse de quiz. Réglages → **Jeu** : bruitages activés ou coupés, volume, objectif à l'écran, repère 3D ;
+indépendant du son du car. Les événements nouveaux du bus : `modalopen`, `toast`, `layeropen` / `layerclose`,
+`faultNew` / `faultSolved`, `teleport`, `quiz`, `camlab`, `netMission`, `scenarioDone`, `entrepotRendu`, `xp`, `badge`, `journal`.
+
+**Nouvelle identité visuelle « jeu vidéo »** (`src/styles/theme-jeu.css`, chargée après les autres feuilles) : fond
+nuit, panneaux de verre fumé à coins coupés, un trait néon cyan pour l'ordre et la sélection, rouge tally pour
+l'antenne, vert pour le prêt, ambre et or pour l'expérience ; titres en capitales espacées. L'écran titre devient
+cinématique (scanlines, balayage lumineux, touches qui glissent au survol, aide clavier, carte joueur), l'écran Jouer
+a ses cartes et sa grande touche rouge qui pulse, le menu Échap est un menu de pause, les notifications glissent en
+haut à droite. Les postes, le Cours et les fenêtres gardent leur organisation et prennent le thème. Les animations
+d'entrée ne jouent que sur la position : un navigateur sans compositeur (tests en rendu logiciel) ou en « réduire
+les animations » voit tout de suite l'état final. Le contraste des textes secondaires est relevé (suite
+`accessibilite`).
+
+Suites : `tests/e2e/jeu.mjs` (titre et Jouer avec la carte joueur, objectif et repère en « Tout à faire »,
+journal par L et par le bouton, XP et bannière de niveau, badge « Premiers pas », « Commencer » depuis le journal,
+menu, rubrique Jeu des réglages, progression enregistrée, téléphone) ; `navigation` mise à jour (touche Missions,
+trois lieux).
 ## v19.2 : l'entrepôt, une régie mobile à monter de A à Z
 
 **Le lieu « L'entrepôt »** est une tuile de l'écran Jouer, à côté du car régie (`src/entrepot/`). On y monte une
@@ -1082,6 +1144,10 @@ node tools/shots.mjs dossier 1280 800 '["vision","hf"]'   # captures de postes
 | `boot.js` | Filet de sécurité du chargement, script classique placé avant le programme : note les premières erreurs, écran de secours avec diagnostic si le programme ne démarre pas |
 | `diag.js` | Journal des erreurs (partagé avec `boot.js`) : erreurs non rattrapées, écouteurs d'événement, boucle de rendu, `console.error` ; version de l'application |
 | `ui/diag_ui.js` | Bandeau « Un problème est survenu » et fenêtre « Diagnostic technique » (texte à copier) |
+| `game/xp.js`, `game/progression.js` | Progression du joueur : XP (barème par activité), niveaux de technicien, badges (dont un par compétence du livret), fusion entre appareils ; accroches sur les événements du simulateur |
+| `game/quest.js` | L'objectif à l'écran (exercice, mission d'installation, phase du jour de match, visite, missions du poste), le repère 3D, le journal des missions (touche L), la carte joueur |
+| `game/fx.js`, `game/sfx.js` | Effets de jeu (barre d'XP, bannières de niveau et de badge, carte-titre, vignette, flash tally, alerte de panne) et bruitages synthétisés en WebAudio avec leur réglage |
+| `styles/theme-jeu.css` | Le thème « jeu vidéo » : jetons de couleur, composants communs, HUD, écran titre, Jouer, menu, journal, badges |
 | `ui/pupitre.js` | Le pupitre (Tab ou T) : plan du car, touches des postes par zone, endroits du stade, équipiers, outils |
 | `app/title.js` | Écran titre TIEE Simulator : logo du BTS, trois entrées (Jouer, Cours, Réglages), progression du chargement, conseils d'Olivier, mentions |
 | `ui/settings.js` | Réglages : une seule fenêtre (ordinateur, partie en cours, profil, espace formateur, aide, à propos) |

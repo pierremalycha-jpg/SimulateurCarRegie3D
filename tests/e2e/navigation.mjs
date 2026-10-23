@@ -56,7 +56,7 @@ await ev(() => { window.__dbg.stopChefLesson(); window.__dbg.toggleChef(false); 
 
 // ---------------- dans le car ----------------
 await page.waitForTimeout(600);
-T.check('barre d\'outils : Pupitre, Cours, Son, Menu (le chef seulement pendant un exercice)', await ev(() => [...document.querySelectorAll('#toolbar .tbtn')].filter((b) => !b.hidden).map((b) => b.id).join(',') === 'tb-pupitre,tb-cours,tb-son,tb-menu'));
+T.check('barre d\'outils épurée : niveau, Pupitre, Missions, Menu (le chef seulement pendant un exercice)', await ev(() => [...document.querySelectorAll('#toolbar .tbtn')].filter((b) => !b.hidden).map((b) => b.id).join(',') === 'tb-pupitre,tb-missions,tb-menu' && !!document.querySelector('#toolbar #xpbar')));
 await page.keyboard.press('Escape');
 T.check('Échap : le menu du car, quatre touches', await until(page, () => !!document.querySelector('#modal .mn') && [...document.querySelectorAll('#modal .mn-key')].map((b) => b.id).join(',') === 'mn-resume,mn-cours,mn-reglages,mn-home', null, 4000));
 await shot('04-menu');
