@@ -27,7 +27,7 @@ export const CANON_POS = [[-56, 0], [-30, -37], [0, -37.5], [30, -37], [56, 0], 
 const CANON_NAMES = ['derrière le but Trannin', 'bord terrain Lepagnot, côté Trannin', 'bord terrain Lepagnot, centre', 'bord terrain Lepagnot, côté Marek', 'derrière le but Marek', 'bord terrain Delacourt, centre'];
 
 // ce qui est branché sur chaque entrée physique de la console (face arrière et cartes D21m)
-// cond : micro statique (a besoin du 48 V) · voice : voix dite par la synthèse vocale
+// cond : micro statique (a besoin du 48 V) · voice : voix d'un intervenant (fil des commentaires : niveau simulé, sans voix de synthèse)
 export const PLUG = {
   'MIC 1': { what: 'Couple ORTF Lepagnot · gauche', cond: true }, 'MIC 2': { what: 'Couple ORTF Lepagnot · droite', cond: true },
   'MIC 3': { what: 'Couple XY kop Marek · gauche', cond: true }, 'MIC 4': { what: 'Couple XY kop Marek · droite', cond: true },
@@ -253,8 +253,17 @@ export function startAudio() {
   B.monIn.connect(B.st); B.monIn.connect(B.monoSum); B.monoSum.connect(B.monoG);
   B.dim = gain(1); B.st.connect(B.dim); B.monoG.connect(B.dim);
   const delay = ctx.createDelay(2.0); AU.delay = delay; B.dim.connect(delay);
-  const out = gain(1); AU.out = out; delay.connect(out); out.connect(ctx.destination);
+  const out = gain(1); AU.out = out; delay.connect(out);
   AU.monSrc = B.out;
+  // ---- ce que le joueur entend, selon l'endroit (ecoute) : l'écoute de la console, la foule sur place ----
+  const ear = gain(0); AU.ear = ear; ear.connect(ctx.destination); AU.t0 = ctx.currentTime;
+  AU.anOut = an(2048); ear.connect(AU.anOut);
+  AU.monG = gain(0); AU.monLp = filt('lowpass', 20000); out.connect(AU.monG); AU.monG.connect(AU.monLp); AU.monLp.connect(ear);
+  // la foule entendue sur place : les couples d'ambiance (avant la console) et les sons du jeu selon la distance
+  const room = ctx.createChannelMerger(2);
+  for (const [p, side] of [['MIC 1', 0], ['MIC 3', 0], ['MIC 2', 1], ['MIC 4', 1]]) P[p].connect(room, 0, side);
+  AU.earFx = gain(0); AU.fxBus.connect(AU.earFx); AU.earFx.connect(room, 0, 0); AU.earFx.connect(room, 0, 1);
+  AU.stadeG = gain(0); AU.stadeLp = filt('lowpass', 20000); room.connect(AU.stadeG); AU.stadeG.connect(AU.stadeLp); AU.stadeLp.connect(ear);
 
   // ---- tranches ----
   for (const k of AU.order) buildStrip(AU.ch[k]);
@@ -367,7 +376,8 @@ export function applyBuses() {
   routeMonitor();
   B.dim.gain.setTargetAtTime(AU.dim ? dbToLin(-20) : 1, t, 0.03);
   B.st.gain.setTargetAtTime(AU.mono ? 0 : 1, t, 0.02); B.monoG.gain.setTargetAtTime(AU.mono ? 1 : 0, t, 0.02);
-  AU.out.gain.setTargetAtTime(AU.muted ? 0 : 1, t, 0.03);
+  // volume général : montée douce à l'entrée dans la partie (environ 2 s), puis réponse rapide (son coupé, volume)
+  AU.ear.gain.setTargetAtTime(AU.muted ? 0 : volumeLin(), t, AU.muted ? 0.03 : t < AU.t0 + 3 ? 0.7 : 0.08);
 }
 export function applyAll() { if (!AU.ctx) return; for (const k of AU.order) applyStrip(AU.ch[k]); applyBuses(); }
 // compatibilité : ancien nom
@@ -412,9 +422,10 @@ export function videoLatencyMs(pgmSrc) {
 // positif : le son arrive après l'image ; négatif : le son est en avance
 export function avOffsetMs(pgmSrc = AU.pgmSrc) { return (AU.lineDelay + (AU.follow ? videoLatencyMs(pgmSrc) : 0)) - videoLatencyMs(pgmSrc); }
 
-// ---------------- voix (synthèse vocale) : volume suivant la console ----------------
-// La synthèse vocale du navigateur ne passe pas par WebAudio : on calcule son volume à partir de
-// la console (patch, gain, fader, VCA, mutes, départs vers le bus écouté, master, dim, écoute coupée).
+// ---------------- voix des intervenants : volume suivant la console ----------------
+// Les commentaires ne sont pas dits (pas de voix de synthèse) : leur fil s'affiche au poste son et leur
+// niveau est simulé. On calcule ce qu'on en entendrait à partir de la console (patch, gain, fader, VCA,
+// mutes, départs vers le bus écouté, master, dim, écoute coupée) : vumètres, loudness, lampe rouge.
 export function voiceGain(v) {
   if (!AU.ctx || AU.muted) return 0;
   const mon = effMonitor(); let best = 0;
@@ -440,6 +451,53 @@ export function voiceOnAir(v) {
 // niveaux simulés des voix (dBFS au niveau nominal), fournis par le moteur de commentaires
 export function setVoiceLevel(v, db) { AU.voiceLvl[v] = db; }
 
+// ---------------- ce que le joueur entend, selon l'endroit ----------------
+// L'écoute n'est pas la même partout. Au poste son : l'écoute de la console, ce que mixe l'ingénieur du son
+// (bus écouté, PFL, dim, mono, retard de ligne). Dans la cabine son du car : les mêmes haut-parleurs, de plus
+// loin. Ailleurs dans le car : presque rien (la cloison, l'isolation du car). Dehors : la foule telle qu'elle
+// sonne sur place, entière sur la pelouse et dans les gradins, masquée derrière les tribunes (le car est garé
+// derrière la tribune Lepagnot). Vumètres, loudness et départs ne changent pas : seule l'écoute suit le joueur.
+// Niveaux de référence (dB, avant le volume des Réglages) : l'écoute de la console sort 9 dB sous le PGM (≈ −23 LUFS).
+// Mesuré à la sortie (dBFS RMS, ordre de grandeur) : poste son ≈ −39, pelouse ≈ −36, devant le car ≈ −51 (avant : −28 partout).
+export const EAR = { mon: -9, stade: -9, off: -120 };
+/**
+ * Gains (dB) et filtres (Hz) de l'écoute du joueur. Fonction pure (testée).
+ * @param {{ mode?: string, station?: string | null, inTruck?: boolean, cabin?: boolean, o?: number }} [w]
+ *   o : décalage (m) depuis le bord intérieur des tribunes (négatif sur la pelouse), cabin : cabine son du car
+ */
+export function ecoute(w = {}) {
+  const { mode = 'fps', station = null, inTruck = false, cabin = false, o = 0 } = w;
+  const off = EAR.off;
+  if (mode === 'start') return { mon: off, monHz: 20000, stade: off, stadeHz: 20000 };
+  if (mode === 'station' && station === 'son') return { mon: EAR.mon, monHz: 20000, stade: off, stadeHz: 20000 };
+  if (inTruck) return cabin ? { mon: EAR.mon - 12, monHz: 6000, stade: off, stadeHz: 20000 } : { mon: EAR.mon - 30, monHz: 700, stade: EAR.stade - 40, stadeHz: 250 };
+  // dehors : la foule à découvert jusqu'en haut des gradins (≈ 35 m), masquée au-delà (−12 dB, aigus coupés), puis la distance
+  const k = clamp((o - 32) / 16, 0, 1);
+  return { mon: off, monHz: 20000, stade: EAR.stade - k * 12 - Math.max(0, o - 48) * 0.15, stadeHz: Math.round(16000 * Math.pow(700 / 16000, k)) };
+}
+// volume du son du car (Réglages) : 0 à 1, 0,7 = niveaux de référence ; 30 dB de course, 0 = silence
+let VOL = 0.7;
+try { const v = parseFloat(localStorage.getItem('carregie.volume') || ''); if (v >= 0 && v <= 1) VOL = v; } catch (e) { /* stockage indisponible */ }
+export const volume = () => VOL;
+export function volumeLin(v = VOL) { return v < 0.01 ? 0 : dbToLin(30 * (v - 0.7)); }
+export function setVolume(v) {
+  VOL = clamp(+v || 0, 0, 1);
+  try { localStorage.setItem('carregie.volume', String(VOL)); } catch (e) { /* stockage indisponible */ }
+  if (AU.ctx) applyBuses();
+}
+let earKey = '';
+// applique l'écoute du joueur (appelé à chaque image ; les gains ne bougent que si l'endroit change)
+export function setEar(w) {
+  if (!AU.ctx || !AU.monG) return;
+  const e = ecoute(w);
+  AU.earPos = w && w.x != null ? { x: w.x, z: w.z } : null;
+  const key = [e.mon, e.monHz, e.stade, e.stadeHz].map((v) => Math.round(v)).join(' ');
+  if (key === earKey) return; earKey = key;
+  const t = AU.ctx.currentTime, tc = 0.25;
+  AU.monG.gain.setTargetAtTime(e.mon <= EAR.off ? 0 : dbToLin(e.mon), t, tc); AU.monLp.frequency.setTargetAtTime(e.monHz, t, tc);
+  AU.stadeG.gain.setTargetAtTime(e.stade <= EAR.off ? 0 : dbToLin(e.stade), t, tc); AU.stadeLp.frequency.setTargetAtTime(e.stadeHz, t, tc);
+}
+
 // ---------------- sons du jeu ----------------
 function playFx(build, x, z, opts = {}) {
   const ctx = AU.ctx; if (!ctx) return;
@@ -452,6 +510,8 @@ function playFx(build, x, z, opts = {}) {
   }
   const hf = S.cams.find((c) => c.rf);
   if (hf) { const d = Math.hypot(x - hf.cam.position.x, z - hf.cam.position.z); AU.hfFx.gain.setValueAtTime(clamp(6 / (4 + d), 0.02, 1), t); }
+  // le joueur, s'il est dans le stade, entend le jeu avec la distance
+  if (AU.earFx) { const ep = AU.earPos; AU.earFx.gain.setValueAtTime(ep ? clamp(8 / (8 + Math.hypot(x - ep.x, z - ep.z)), 0.02, 0.5) : 0, t); }
   build(ctx, t, AU.fxBus);
 }
 function kickSound(power = 15, x = 0, z = 0) {
@@ -543,6 +603,7 @@ export function updateAudio(dt, ctxState = {}) {
   AU.redLight = voiceOnAir('comm1') || voiceOnAir('comm2');
   if (!AU.ctx) return;
   if (chg) applyAll();
+  setEar(ctxState.ear || { mode: S.mode, station: S.station, inTruck: S.inTruck });
   const t = AU.ctx.currentTime;
   const ex = M.excite[0] + M.excite[1];
   // la foule monte d'environ 8 dB entre un temps faible et un but (le limiteur du PGM garde la marge)

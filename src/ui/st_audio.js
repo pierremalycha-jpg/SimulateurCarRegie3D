@@ -490,16 +490,16 @@ export function buildAudio(body, arg, ctx) {
 
   // ---------- commentaires ----------
   function tabComm() {
-    const tog = hwBtn('COMMENTAIRES', { sub: 'synthèse vocale', onclick: () => { setCommentary(!CMT.on); explain(CMT.on ? 'Commentaires en direct activés : le commentateur et le consultant parlent pendant le match.' : 'Commentaires coupés (côté simulateur : les commentateurs se taisent).', 'son:cmt'); } });
+    const tog = hwBtn('COMMENTAIRES', { sub: 'fil écrit', onclick: () => { setCommentary(!CMT.on); explain(CMT.on ? 'Fil des commentaires activé : les interventions du commentateur, du consultant, du bord terrain et du plateau s\'affichent ici pendant le match.' : 'Fil des commentaires coupé (côté simulateur : les commentateurs se taisent, leurs vumètres aussi).', 'son:cmt'); } });
     const feed = el('div', { class: 'vx-feed' });
     let n = -1;
     const kv = el('div', { class: 'kv' });
     pane.append(el('div', { class: 'panelgrid' },
-      el('div', { class: 'hwpanel' }, el('h3', {}, 'En direct de la cabine commentateurs'), el('div', { class: 'hwrow' }, tog, el('span', { class: 'note' }, CMT.tts ? 'Voix françaises du navigateur détectées.' : 'Pas de voix française détectée dans ce navigateur : le fil s\'affiche ci-dessous.')), feed),
+      el('div', { class: 'hwpanel' }, el('h3', {}, 'En direct de la cabine commentateurs'), el('div', { class: 'hwrow' }, tog, el('span', { class: 'note' }, 'Les interventions s\'affichent ici en texte, sans voix ; leurs niveaux sont simulés sur les tranches.')), feed),
       el('div', { class: 'hwpanel prose' }, el('h3', {}, 'Comment les voix passent par la console'), kv,
         el('p', {}, `${SPK.comm1.name} (commentateur) arrive sur MADI 1, ${SPK.comm2.name} (consultant) sur MADI 2, par l'unité de commentaire de la cabine. ${SPK.bt.name}, au bord du terrain, parle dans un micro HF dont le récepteur entre en MIC 11. Le plateau revient par la transmission (AES 3).`),
-        el('p', {}, 'Le volume de chaque voix suit vraiment la console : patch, gain, fader, VCA, mute, assignation au bus écouté, master, DIM. Fermez COMM 1 et le commentateur disparaît ; écoutez le N-1 COMM : vous n\'y entendez pas les commentateurs (normal). Le retard de ligne retarde aussi les voix.'),
-        el('p', { class: 'note' }, 'Limite du simulateur : la synthèse vocale du navigateur ne passe pas par le moteur audio. L\'égaliseur et la dynamique agissent sur les vumètres et la « repisse » de foule dans les micros, pas sur le timbre des voix.'),
+        el('p', {}, 'Ce qu\'on entendrait de chaque voix suit vraiment la console : patch, gain, fader, VCA, mute, assignation au bus écouté, master, DIM. Fermez COMM 1 : les phrases du commentateur passent en « non entendu » et son vumètre tombe ; écoutez le N-1 COMM : les commentateurs n\'y sont pas (normal).'),
+        el('p', { class: 'note' }, 'Limite du simulateur : les voix ne sont pas dites (la synthèse vocale du navigateur sonnait trop robotique). Leur niveau est simulé : il fait bouger les vumètres, la loudness et la lampe rouge de la cabine ; l\'égaliseur et la dynamique agissent sur les vumètres et sur la « repisse » de foule dans les micros.'),
         el('p', {}, 'Quand le commentateur « lance » le bord terrain, ouvrez la tranche BORD T. : sinon personne ne l\'entend à l\'antenne.'))));
     return {
       update() {

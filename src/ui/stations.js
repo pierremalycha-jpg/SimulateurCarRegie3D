@@ -120,7 +120,7 @@ const STATION_HELLO = {
   intercom: 'Chaque touche du pupitre a TALK et LISTEN. Essayez-les : le type de liaison (conférence, point à point, IFB, 4 fils) est expliqué ici.',
   melangeur: 'Le multiview ci-dessus reste visible : chaque commutation s\'y voit (tally rouge = PGM, vert = PVW).',
   grille: 'Choisissez une destination, une source, puis TAKE. Le multiview montre le résultat de vos prises.',
-  son: 'Console inspirée de la Studer Vista 1 : deux écrans Vistonics de 10 tranches (molettes sur l\'écran : rouge = égaliseur, vert = dynamique, jaune = panoramique), FaderGlow le long des faders, Control Bay avec vumètres et écoutes. Les commentateurs parlent pendant le match : leur volume suit vos faders.',
+  son: 'Console inspirée de la Studer Vista 1 : deux écrans Vistonics de 10 tranches (molettes sur l\'écran : rouge = égaliseur, vert = dynamique, jaune = panoramique), FaderGlow le long des faders, Control Bay avec vumètres et écoutes. Les commentateurs interviennent pendant le match (fil écrit, onglet Commentaires) : leurs vumètres suivent vos faders. Ici, vous entendez l\'écoute de la console ; ailleurs dans le car, presque rien.',
   hf: 'Le spectre et l\'image reçue restent affichés : changez fréquence, modulation ou antennes et regardez la marge.',
   ccu: 'Le multiview reste visible : une voie en défaut y apparaît immédiatement (PAS DE SIGNAL, image qui roule).',
   synchro: 'Le multiview reste visible : une caméra mal synchronisée y « roule » à la commutation.',
