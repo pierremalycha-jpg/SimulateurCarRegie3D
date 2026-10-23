@@ -24,6 +24,8 @@ T.check('occlusion ambiante cuite : la couleur par sommet du sol est assombrie p
 T.check('pénombre : au moins 9 spots au-dessus des postes, la lueur des murs d\'écrans, une hémisphère réduite', await ev(() => { let spots = 0, pts = 0, hemi = 0; window.__dbg.T.scene.traverse((o) => { if (o.isSpotLight) spots++; else if (o.isPointLight) pts++; else if (o.isHemisphereLight) hemi = o.intensity; }); return spots >= 9 && pts >= 3 && hemi < 1.6; }));
 T.check('SSAO : la pré-passe normales + profondeur existe après un rendu dans le car (qualité Haute)', await until(page, () => { const P = window.__dbg.RENDER.post; return !!P && !!P.gbuf && !!P.gbuf.depthTexture && !!P.aoBlurRT; }, null, 8000));
 T.check('accessoires : chaises à cinq branches, casques, extincteur, câbles au plafond (la pièce plastique dépasse 3 000 triangles)', await ev(() => { let tris = 0; window.__dbg.T.scene.traverse((o) => { if (o.isMesh && o.name === 'car-plastique') tris = o.geometry.attributes.position.count / 3; }); return tris > 3000; }));
+T.check('afficheurs de timecode dans les murs d\'écrans, à l\'heure du car ; conducteurs sur les bureaux', await ev(() => { const d = window.__dbg.T.tcDisplays; let docs = 0; window.__dbg.T.scene.traverse((o) => { if (o.isMesh && o.geometry && o.geometry.parameters && o.geometry.parameters.width === 0.21 && o.geometry.parameters.height === 0.297) docs++; }); return !!d && d.length === 2 && /^\d\d:\d\d:\d\d:\d\d$/.test(d[0].last) && docs >= 5; }));
+T.check('rien ne dépasse du plafond : écrans et murs d\'écrans sous F + 2,25', await ev(() => { const T = window.__dbg.T, top = window.__dbg.TRUCK.ceil - 0.02; let ok = true; T.scene.traverse((o) => { if (o.isMesh && o.geometry && o.geometry.parameters && o.geometry.parameters.height && o.geometry.type === 'PlaneGeometry' && Math.abs(o.position.z - (window.__dbg.TRUCK.cz - 2.7 + 0.19)) < 0.01) ok = ok && o.position.y + o.geometry.parameters.height / 2 <= top + 0.001; }); return ok; }));
 await ev(() => window.__dbg.teleport(3)); await shot('02-car-technique', 2500);
 await ev(() => window.__dbg.teleport(4)); await shot('03-car-son', 2500);
 await ev(() => { window.__dbg.teleport(2); const P = window.__dbg.PL; P.yaw = P.cyaw = 2.3; }); await shot('04-car-allee', 2500);
@@ -43,5 +45,18 @@ T.check('tribunes : béton en matière, pylônes en acier', await ev(() => { con
 await ev(() => { window.__dbg.teleport(0); const P = window.__dbg.PL; P.yaw = P.cyaw = -0.9; }); await shot('07-compound-rampes', 2500);
 await ev(() => window.__dbg.teleport(11)); await shot('08-stade-angle', 2500);
 await ev(() => window.__dbg.teleport(13)); await shot('09-aerien', 3000);
+
+// ---------------- l'entrepôt ----------------
+await page.close(); // une seule page à la fois : le rendu logiciel est lent
+{
+  const B = await openPage(browser, { errors: T.errors, viewport: { width: 1280, height: 720 }, before: async (p) => p.addInitScript(() => { try { localStorage.setItem('carregie.quality', 'haute'); } catch (e) { /* stockage indisponible */ } }) });
+  await B.click('[data-lieu="entrepot"]'); await B.waitForTimeout(300);
+  await B.click('.jo-mode[data-mode="ep:conference"]'); await B.click('#st-antenne');
+  await until(B, () => window.__dbg.entrepot().R && !document.getElementById('entrepot').hidden && !document.querySelector('#entrepot .ep-loading'), null, 120000);
+  T.check('entrepôt : béton, bardage, acier, baie, table, moquette, cartons et flight cases en matières ; environnement du hall', await B.evaluate(() => { const R = window.__dbg.entrepot().R; const names = new Set(); R.hall.scene.traverse((o) => { const m = o.material; if (m && m.name) names.add(m.name); }); return ['ep-beton', 'ep-bardage', 'ep-acier', 'ep-baie', 'ep-table', 'ep-nez', 'ep-moquette', 'ep-carton', 'ep-flightcase'].every((n) => names.has(n)) && !!R.hall.scene.environment; }));
+  await B.evaluate(() => { const d = window.__dbg.entrepot(); d.act.sortir('he20'); d.act.sortir('atem-hd8-iso'); document.querySelector('.ep-zones [data-zone="table"]').click(); });
+  await B.waitForTimeout(2500); await B.screenshot({ path: `${OUT}/10-entrepot.png` });
+  await B.close();
+}
 
 await T.finish();

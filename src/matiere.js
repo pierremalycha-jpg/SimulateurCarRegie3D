@@ -67,7 +67,7 @@ export function normalsFromHeight(h, n, k) {
 function dataTex(data, n, srgb = false) {
   const t = new THREE.DataTexture(data, n, n, THREE.RGBAFormat, THREE.UnsignedByteType);
   t.wrapS = t.wrapT = THREE.RepeatWrapping; t.minFilter = THREE.LinearMipmapLinearFilter; t.magFilter = THREE.LinearFilter;
-  t.generateMipmaps = true; t.anisotropy = 4; if (srgb) t.colorSpace = THREE.SRGBColorSpace;
+  t.generateMipmaps = true; t.anisotropy = 8; if (srgb) t.colorSpace = THREE.SRGBColorSpace;
   t.needsUpdate = true;
   return t;
 }
@@ -84,25 +84,25 @@ export const RECETTES = {
   // tôle nervurée (flancs de caisse) : nervures verticales adoucies + peau d'orange
   nervure: (s) => ({ k: 1.1, scale: 1.0, rough: 0.45, h: (u, v) => { const t = Math.abs(((u * 8) % 1) - 0.5) * 2; return Math.pow(Math.min(1, Math.max(0, (t - 0.8) / 0.2)), 1.4) * 1.6 + fbm(u, v, 48, 2, s) * 0.3; } }),
   // aluminium brossé : stries fines dans un sens
-  alu: (s) => ({ k: 1.2, scale: 0.4, rough: 0.42, metal: 0.9, h: (u, v) => noise(u * 4, v * 240, 4, s, 240) * 0.6 + noise(u * 16, v * 480, 16, s + 3, 480) * 0.4, r: (u, v) => 0.5 + (noise(u * 6, v * 180, 6, s + 7, 180) - 0.5) * 0.35 }),
+  alu: (s) => ({ k: 0.8, scale: 0.4, rough: 0.42, metal: 0.9, h: (u, v) => noise(u * 3, v * 64, 3, s, 64) * 0.6 + noise(u * 8, v * 96, 8, s + 3, 96) * 0.4, r: (u, v) => 0.5 + (noise(u * 4, v * 48, 4, s + 7, 48) - 0.5) * 0.3 }),
   // plastique grainé : façades d'appareils, boîtiers
-  plastique: (s) => ({ k: 1.1, scale: 0.25, rough: 0.6, h: (u, v) => fbm(u, v, 64, 3, s, 0.55), r: (u, v) => 0.5 + (fbm(u, v, 16, 2, s + 4) - 0.5) * 0.2 }),
+  plastique: (s) => ({ k: 0.9, scale: 0.25, rough: 0.6, h: (u, v) => fbm(u, v, 40, 3, s, 0.55), r: (u, v) => 0.5 + (fbm(u, v, 16, 2, s + 4) - 0.5) * 0.2 }),
   // stratifié de bureau : grain très fin, micro-rayures
-  stratifie: (s) => ({ k: 0.7, scale: 0.8, rough: 0.5, h: (u, v) => fbm(u, v, 128, 2, s, 0.5) * 0.6 + noise(u * 300, v * 6, 300, s + 2, 6) * 0.2, r: (u, v) => 0.5 + (fbm(u, v, 5, 3, s + 11) - 0.5) * 0.3, a: (u, v) => 0.5 + (fbm(u, v, 3, 3, s + 5) - 0.5) * 0.06 }),
+  stratifie: (s) => ({ k: 0.6, scale: 0.8, rough: 0.5, h: (u, v) => fbm(u, v, 48, 2, s, 0.5) * 0.6 + noise(u * 96, v * 5, 96, s + 2, 5) * 0.2, r: (u, v) => 0.5 + (fbm(u, v, 5, 3, s + 11) - 0.5) * 0.3, a: (u, v) => 0.5 + (fbm(u, v, 3, 3, s + 5) - 0.5) * 0.06 }),
   // caoutchouc à pastilles (sol du car)
-  caoutchouc: (s) => ({ k: 1.4, scale: 0.35, rough: 0.78, h: (u, v) => { const r = 2 / 7; const cx = ((u * 7) % 1) - 0.5, cy = ((v * 7 + Math.floor(u * 7) * 0.5) % 1) - 0.5; const d = Math.hypot(cx, cy) / r; return (d < 1 ? Math.sqrt(1 - d * d) * 1.2 : 0) + fbm(u, v, 96, 2, s) * 0.25; }, r: (u, v) => 0.5 + (fbm(u, v, 4, 3, s + 1) - 0.5) * 0.2 }),
+  caoutchouc: (s) => ({ k: 1.2, scale: 0.35, rough: 0.78, h: (u, v) => { const r = 2 / 7; const cx = ((u * 7) % 1) - 0.5, cy = ((v * 7 + Math.floor(u * 7) * 0.5) % 1) - 0.5; const d = Math.hypot(cx, cy) / r; return (d < 1 ? Math.sqrt(1 - d * d) * 1.2 : 0) + fbm(u, v, 48, 2, s) * 0.25; }, r: (u, v) => 0.5 + (fbm(u, v, 4, 3, s + 1) - 0.5) * 0.2 }),
   // moquette : bouclette dense, aucun reflet
-  moquette: (s) => ({ k: 1.3, scale: 0.3, rough: 0.96, h: (u, v) => fbm(u, v, 96, 3, s, 0.6), a: (u, v) => 0.5 + (fbm(u, v, 4, 3, s + 8) - 0.5) * 0.12 }),
+  moquette: (s) => ({ k: 1.1, scale: 0.3, rough: 0.96, h: (u, v) => fbm(u, v, 48, 3, s, 0.6), a: (u, v) => 0.5 + (fbm(u, v, 4, 3, s + 8) - 0.5) * 0.12 }),
   // bitume : gravillons et plaques d'usure
-  bitume: (s) => ({ k: 1.5, scale: 1.6, rough: 0.9, h: (u, v) => fbm(u, v, 160, 3, s, 0.55) * 0.7 + fbm(u, v, 12, 3, s + 2) * 0.3, r: (u, v) => 0.5 + (fbm(u, v, 3, 4, s + 6) - 0.5) * 0.28, a: (u, v) => 0.5 + (fbm(u, v, 2, 4, s + 9) - 0.5) * 0.3 }),
+  bitume: (s) => ({ k: 1.4, scale: 1.6, rough: 0.9, h: (u, v) => fbm(u, v, 96, 3, s, 0.55) * 0.7 + fbm(u, v, 12, 3, s + 2) * 0.3, r: (u, v) => 0.5 + (fbm(u, v, 3, 4, s + 6) - 0.5) * 0.28, a: (u, v) => 0.5 + (fbm(u, v, 2, 4, s + 9) - 0.5) * 0.3 }),
   // béton : grain, pores, légères traces de coffrage
-  beton: (s) => ({ k: 1.2, scale: 1.2, rough: 0.85, h: (u, v) => fbm(u, v, 80, 3, s) * 0.5 + Math.pow(Math.max(0, fbm(u, v, 40, 2, s + 3) - 0.62), 1.0) * -3, a: (u, v) => 0.5 + (fbm(u, v, 3, 4, s + 4) - 0.5) * 0.2 }),
+  beton: (s) => ({ k: 1.1, scale: 1.2, rough: 0.85, h: (u, v) => fbm(u, v, 48, 3, s) * 0.5 + Math.pow(Math.max(0, fbm(u, v, 40, 2, s + 3) - 0.62), 1.0) * -3, a: (u, v) => 0.5 + (fbm(u, v, 3, 4, s + 4) - 0.5) * 0.2 }),
   // mousse acoustique : pyramides
   mousse: (s) => ({ k: 3.2, scale: 0.25, rough: 0.95, h: (u, v) => 2 * Math.min(1 - Math.abs(((u * 6) % 1) * 2 - 1), 1 - Math.abs(((v * 6) % 1) * 2 - 1)) + fbm(u, v, 64, 2, s) * 0.15 }),
   // tissu de siège : tissage fin
-  tissu: (s) => ({ k: 1.0, scale: 0.2, rough: 0.9, h: (u, v) => 0.5 + 0.25 * Math.sin(u * 2 * Math.PI * 120) + 0.25 * Math.sin(v * 2 * Math.PI * 120) + fbm(u, v, 32, 2, s) * 0.3, a: (u, v) => 0.5 + (fbm(u, v, 6, 3, s + 3) - 0.5) * 0.08 }),
+  tissu: (s) => ({ k: 0.8, scale: 0.2, rough: 0.9, h: (u, v) => 0.5 + 0.25 * Math.sin(u * 2 * Math.PI * 40) + 0.25 * Math.sin(v * 2 * Math.PI * 40) + fbm(u, v, 24, 2, s) * 0.3, a: (u, v) => 0.5 + (fbm(u, v, 6, 3, s + 3) - 0.5) * 0.08 }),
   // acier thermolaqué (baies) : grain mat
-  laque: (s) => ({ k: 0.9, scale: 0.4, rough: 0.55, metal: 0.15, h: (u, v) => fbm(u, v, 96, 3, s, 0.5), r: (u, v) => 0.5 + (fbm(u, v, 8, 2, s + 2) - 0.5) * 0.15 }),
+  laque: (s) => ({ k: 0.8, scale: 0.4, rough: 0.55, metal: 0.15, h: (u, v) => fbm(u, v, 48, 3, s, 0.5), r: (u, v) => 0.5 + (fbm(u, v, 8, 2, s + 2) - 0.5) * 0.15 }),
   // tôle larmée (marches, seuils)
   larme: (s) => ({ k: 2.6, scale: 0.3, rough: 0.5, metal: 0.8, h: (u, v) => { let m = 0; for (let i = 0; i < 2; i++) { const a = i ? 0.25 : 0; const x = ((u * 5 + a) % 1), y = ((v * 5 + a + (i ? 0.5 : 0)) % 1); const d = Math.hypot((x - 0.5) * 1.6, (y - 0.5) * 0.45); m = Math.max(m, d < 0.22 ? 1 - d / 0.22 : 0); } return m * 1.5 + fbm(u, v, 64, 2, s) * 0.2; } }),
   // sièges de tribune (mode UV : 4 rangs par tuile, 8 sièges par rang, comme la texture des sièges) :
@@ -118,7 +118,7 @@ export const RECETTES = {
   // gradins en béton de la tribune debout : marches (nez arrondi) et barrières
   gradins: (s) => ({ k: 2.0, scale: 1, rough: 0.85, h: (u, v) => { const row = (((1 - v) * 4) % 1 + 1) % 1; const step = row > 0.69 ? -1.0 : 0; const nez = row > 0.62 && row <= 0.69 ? -(row - 0.62) / 0.07 : 0; return step + nez + fbm(u, v, 80, 3, s) * 0.3; } }),
   // herbe tondue (relief fin seulement)
-  herbe: (s) => ({ k: 1.0, scale: 0.5, rough: 0.9, h: (u, v) => fbm(u, v, 128, 3, s, 0.6), a: (u, v) => 0.5 + (fbm(u, v, 6, 3, s + 1) - 0.5) * 0.14 }),
+  herbe: (s) => ({ k: 1.0, scale: 0.5, rough: 0.9, h: (u, v) => fbm(u, v, 64, 3, s, 0.6), a: (u, v) => 0.5 + (fbm(u, v, 6, 3, s + 1) - 0.5) * 0.14 }),
 };
 
 /** génère (ou retrouve) les cartes d'une recette */
@@ -189,6 +189,8 @@ export function matiere(key, o = {}) {
     polygonOffset: !!o.polygonOffset, polygonOffsetFactor: -(o.polygonOffset || 0), polygonOffsetUnits: -(o.polygonOffset || 0),
   });
   m.name = o.name || key;
+  // un matériau libéré (bac de l'entrepôt, scène refermée) sort de la liste des matières
+  const dispose0 = m.dispose.bind(m); m.dispose = () => { MATIERE.all.delete(m); dispose0(); };
   if (S.lite) return m; // mode allégé : uni, et jamais de relief
   if (o.uv) {
     // mode UV : la carte de normales suit les UV du maillage (alignée sur sa texture de teinte)

@@ -3,7 +3,7 @@ import * as THREE from 'three';
 import { Builder, screenMaterial } from './geo.js';
 import { matiere } from './matiere.js';
 import { TRUCK } from './world.js';
-import { makeCanvas } from './util.js';
+import { makeCanvas, tc } from './util.js';
 import { S } from './state.js';
 import { EQUIP } from './equip.js';
 import { buildAudioDesk } from './audiodesk.js';
@@ -297,6 +297,46 @@ function buildRack({ Br, Bm, Bp }, key, lx, side) {
   return { lx, lz: side < 0 ? IN.z0 + depth : IN.z1 - depth, faceZ: zf };
 }
 
+// ---------------- afficheur de timecode et documents ----------------
+/** un afficheur LED rouge (HH:MM:SS:FF) encastré dans un mur d'écrans ; T.tcDisplays est mis à jour chaque seconde */
+function tcDisplay(lx, y) {
+  const { g, tex } = canvasTex(512, 128);
+  const draw = (txt) => {
+    g.fillStyle = '#07080a'; g.fillRect(0, 0, 512, 128);
+    g.font = '700 86px "B612 Mono", "JetBrains Mono", monospace'; g.textAlign = 'center'; g.textBaseline = 'middle';
+    g.fillStyle = '#3a0a08'; g.fillText('88:88:88:88', 256, 66);
+    g.fillStyle = '#ff3b2a'; g.fillText(txt, 256, 66);
+    tex.needsUpdate = true;
+  };
+  draw('--:--:--:--');
+  const m = new THREE.Mesh(new THREE.PlaneGeometry(0.42, 0.105), new THREE.MeshBasicMaterial({ map: tex, toneMapped: false }));
+  m.position.set(X(lx), F + y, Z(IN.z0 + 0.191)); T.scene.add(m);
+  const frame = new THREE.Mesh(new THREE.BoxGeometry(0.46, 0.14, 0.03), new THREE.MeshStandardMaterial({ color: 0x15171a, roughness: 0.6 }));
+  frame.position.copy(m.position); frame.translateZ(-0.018); T.scene.add(frame);
+  (T.tcDisplays = T.tcDisplays || []).push({ draw, last: '' });
+}
+let DOC_TEX = null;
+/** une feuille A4 : conducteur d'émission (titre, colonnes, lignes), partagée par tous les documents */
+function docTexture() {
+  if (DOC_TEX) return DOC_TEX;
+  const { g, tex } = canvasTex(256, 362);
+  g.fillStyle = '#f4f2ec'; g.fillRect(0, 0, 256, 362);
+  g.fillStyle = '#1b2230'; g.fillRect(14, 14, 228, 26);
+  txt(g, 'CONDUCTEUR · RCL – RIV', 128, 27, 15, '#f2f5f7', 'center', 700);
+  txt(g, 'Séq.   TC          Source      Durée', 20, 58, 10, '#4a4f55', 'left', 600);
+  for (let i = 0; i < 16; i++) {
+    const y = 76 + i * 17; g.fillStyle = i % 2 ? '#e9e6de' : '#f4f2ec'; g.fillRect(14, y - 7, 228, 16);
+    txt(g, `${String(i + 1).padStart(2, '0')}    ${String(19 + Math.floor(i / 4)).padStart(2, '0')}:${String((i * 7) % 60).padStart(2, '0')}:00    ${['CAM 1', 'EVS A', 'CAM 4', 'GFX', 'STU', 'CAM 2'][i % 6]}       ${['0:30', '1:10', '0:45', '0:20'][i % 4]}`, 20, y, 9, '#2a2d31', 'left', 500);
+  }
+  g.strokeStyle = '#c8d0d8'; g.lineWidth = 1; g.strokeRect(14, 14, 228, 334);
+  tex.needsUpdate = true; DOC_TEX = tex; return tex;
+}
+/** une feuille posée sur un bureau (légèrement tournée), avec un stylo */
+function document(lx, lz, y, rot) {
+  const m = new THREE.Mesh(new THREE.PlaneGeometry(0.21, 0.297), new THREE.MeshStandardMaterial({ map: docTexture(), roughness: 0.9 }));
+  m.rotation.order = 'YXZ'; m.rotation.y = rot; m.rotation.x = -Math.PI / 2; m.position.set(X(lx), F + y, Z(lz)); T.scene.add(m);
+}
+
 // ---------------- signalétique ----------------
 function hangingSign(text, lx, lz, w = 1.6, rotY = 0, color = '#e0b030') {
   const { g, tex } = canvasTex(1024, 192);
@@ -355,10 +395,10 @@ export function buildTruck() {
   const MT = {
     tole: matiere('tole', { seed: 2, scale: 0.55, strength: 0.3, roughness: 0.78, name: 'car-tole' }),
     sol: matiere('caoutchouc', { seed: 3, scale: 0.32, name: 'car-sol' }),
-    strat: matiere('stratifie', { seed: 4, scale: 0.9, roughness: 0.58, name: 'car-stratifie' }),
-    alu: matiere('alu', { seed: 5, scale: 0.35, name: 'car-alu' }),
+    strat: matiere('stratifie', { seed: 4, scale: 0.9, roughness: 0.58, strength: 0.7, name: 'car-stratifie' }),
+    alu: matiere('alu', { seed: 5, scale: 0.35, strength: 0.7, name: 'car-alu' }),
     laque: matiere('laque', { seed: 6, scale: 0.45, name: 'car-laque' }),
-    tissu: matiere('tissu', { seed: 7, scale: 0.18, name: 'car-tissu' }),
+    tissu: matiere('tissu', { seed: 7, scale: 0.18, strength: 0.7, name: 'car-tissu' }),
     plast: matiere('plastique', { seed: 8, scale: 0.2, name: 'car-plastique' }),
     mousse: matiere('mousse', { seed: 9, scale: 0.3, name: 'car-mousse' }),
     larme: matiere('larme', { seed: 10, scale: 0.28, name: 'car-larme' }),
@@ -376,7 +416,7 @@ export function buildTruck() {
   B.box(DOOR.x1 - DOOR.x0, H - 2.05, 0.1, X((DOOR.x0 + DOOR.x1) / 2), F + 2.05 + (H - 2.05) / 2, Z(IN.z1), wallC);
   // encadrement de porte, seuil en tôle larmée, poignée
   B.box(0.06, 2.05, 0.14, X(DOOR.x0), F + 1.025, Z(IN.z1), 0xe0b030); B.box(0.06, 2.05, 0.14, X(DOOR.x1), F + 1.025, Z(IN.z1), 0xe0b030);
-  Bl.box(DOOR.x1 - DOOR.x0, 0.012, 0.3, X((DOOR.x0 + DOOR.x1) / 2), F + 0.006, Z(IN.z1 - 0.1), 0x8a9096);
+  Bl.box(DOOR.x1 - DOOR.x0, 0.012, 0.3, X((DOOR.x0 + DOOR.x1) / 2), F + 0.006, Z(IN.z1 - 0.32), 0x8a9096);
   Bm.cyl(0.012, 0.012, 0.16, X(DOOR.x1 + 0.08), F + 1.05, Z(IN.z1 - 0.07), 0xd0d4d8, 8, Math.PI / 2);
   B.box(L - 0.2, 0.06, 0.02, cx, F + 0.1, Z(IN.z1 - 0.06), 0x1a1d21);
   B.box(0.1, H, Wd, X(IN.x0), F + H / 2, cz, wallC); B.box(0.1, H, Wd, X(IN.x1), F + H / 2, cz, wallC);
@@ -417,7 +457,7 @@ export function buildTruck() {
     Bd.box(0.05, top - 0.04, d, X(x0 + 0.03), F + y0 + (top - 0.04) / 2, Z(czl), desk); Bd.box(0.05, top - 0.04, d, X(x1 - 0.03), F + y0 + (top - 0.04) / 2, Z(czl), desk);
     Bd.box(w, top - 0.04, 0.05, X(cxl), F + y0 + (top - 0.04) / 2, Z(z0 + 0.03), 0x1d2025);
     Bd.cbox(w + 0.04, 0.04, d + 0.06, X(cxl), F + y0 + top, Z(czl), deskTop, 0.012);
-    Bm.cbox(w, 0.03, 0.035, X(cxl), F + y0 + top + 0.005, Z(z1 + 0.025), 0x9aa0a8, 0.008); // nez de bureau (alu)
+    Bm.cbox(w, 0.03, 0.035, X(cxl), F + y0 + top + 0.012, Z(z1 + 0.028), 0x9aa0a8, 0.008); // nez de bureau (alu), 7 mm au-dessus du plateau
     // trappe de câbles et passe-fils dans le plateau
     for (let k = 0; k < Math.floor(w / 1.4); k++) Bp.cyl(0.035, 0.035, 0.012, X(x0 + 0.7 + k * 1.4), F + y0 + top + 0.02, Z(z0 + 0.14), 0x101214, 12);
     // éclairage d'appoint sous le plateau (bandeau LED chaud, lumineux)
@@ -433,12 +473,13 @@ export function buildTruck() {
   for (const lx of [-4.3, -2.9, -1.75]) chairAt(CH, lx, 0.95, EST.h);
   // mur d'écrans production (cadre + console de moniteurs)
   const monWall = (x0, x1, lxC) => {
-    B.box(x1 - x0, 1.6, 0.1, X(lxC), F + 1.6, Z(IN.z0 + 0.12), 0x0b0c0e);
+    // le mur s'arrête sous le plafond (F + 2,25) : console à 0,78, haut à 2,2
+    B.box(x1 - x0, 1.42, 0.1, X(lxC), F + 1.49, Z(IN.z0 + 0.12), 0x0b0c0e);
     // montants et traverses de la structure (alu noir)
-    for (const lx of [x0 + 0.02, x1 - 0.02]) Bm.box(0.03, 1.66, 0.14, X(lx), F + 1.6, Z(IN.z0 + 0.13), 0x2a2d31);
-    Bm.box(x1 - x0, 0.03, 0.14, X(lxC), F + 2.41, Z(IN.z0 + 0.13), 0x2a2d31);
+    for (const lx of [x0 + 0.02, x1 - 0.02]) Bm.box(0.03, 1.46, 0.14, X(lx), F + 1.49, Z(IN.z0 + 0.13), 0x2a2d31);
+    Bm.box(x1 - x0, 0.03, 0.14, X(lxC), F + 2.2, Z(IN.z0 + 0.13), 0x2a2d31);
     // rétroéclairage du mur d'écrans (bias light D65 tamisé, limite la fatigue visuelle)
-    glow.box(x1 - x0 - 0.1, 0.015, 0.02, X(lxC), F + 2.41, Z(IN.z0 + 0.16), 0x9fb8ff); glow.box(x1 - x0 - 0.1, 0.015, 0.02, X(lxC), F + 0.79, Z(IN.z0 + 0.16), 0x9fb8ff);
+    glow.box(x1 - x0 - 0.1, 0.015, 0.02, X(lxC), F + 2.2, Z(IN.z0 + 0.19), 0x9fb8ff); glow.box(x1 - x0 - 0.1, 0.015, 0.02, X(lxC), F + 0.79, Z(IN.z0 + 0.16), 0x9fb8ff);
     Bm.cbox(x1 - x0, 0.06, 0.25, X(lxC), F + 0.8 + 0.03, Z(IN.z0 + 0.25), 0x1b1e22, 0.01);
   };
   monWall(-5.45, -0.15, -2.8);
@@ -451,7 +492,7 @@ export function buildTruck() {
   // ---------------- son ----------------
   Bd.box(0.9, 0.78, 2.9, X(-7.75), F + 0.39, Z(-0.45), desk);
   Bd.cbox(1.0, 0.04, 3.0, X(-7.7), F + 0.8, Z(-0.45), deskTop, 0.012);
-  Bm.cbox(0.035, 0.03, 3.0, X(-7.19), F + 0.805, Z(-0.45), 0x9aa0a8, 0.008);
+  Bm.cbox(0.035, 0.03, 3.0, X(-7.185), F + 0.812, Z(-0.45), 0x9aa0a8, 0.008);
   block(-8.25, -7.2, -1.95, 1.05, 'desk', 'Console son');
   chairAt(CH, -6.75, -0.4, 0, Math.PI / 2);
   // enceintes de proximité (sur pieds) et panneaux de mousse acoustique
@@ -475,7 +516,7 @@ export function buildTruck() {
   for (const [k, lx, side] of rackDefs) LAYOUT.furniture.push({ x0: lx - 0.29, x1: lx + 0.29, z0: side < 0 ? IN.z0 : IN.z1 - 0.85, z1: side < 0 ? IN.z0 + 0.85 : IN.z1, kind: 'rackunit', label: RACKS[k].title });
   // pupitre HF au fond
   Bd.box(0.62, 0.75, 2.2, X(8.45), F + 0.375, Z(-0.45), desk); Bd.cbox(0.66, 0.04, 2.25, X(8.45), F + 0.77, Z(-0.45), deskTop, 0.012);
-  Bm.cbox(0.035, 0.03, 2.25, X(8.11), F + 0.775, Z(-0.45), 0x9aa0a8, 0.008);
+  Bm.cbox(0.035, 0.03, 2.25, X(8.105), F + 0.782, Z(-0.45), 0x9aa0a8, 0.008);
   block(8.14, 8.8, -1.55, 0.65, 'desk', 'Pupitre HF');
   chairAt(CH, 7.75, -0.45, 0, -Math.PI / 2);
   // chemins de câbles au plafond (échelles à câbles) et leurs torons
@@ -487,7 +528,7 @@ export function buildTruck() {
   // bouches de climatisation au plafond (grilles à lames)
   for (const lx of [-6.5, -2.5, 1.5, 6]) {
     B.box(0.5, 0.03, 0.3, X(lx), TRUCK.ceil - 0.02, Z(-0.9), 0xd8dadc);
-    for (let k = 0; k < 7; k++) Bm.box(0.46, 0.01, 0.012, X(lx), TRUCK.ceil - 0.038, Z(-0.9 - 0.12 + k * 0.04), 0x8a9096);
+    for (let k = 0; k < 7; k++) Bm.box(0.46, 0.012, 0.012, X(lx), TRUCK.ceil - 0.046, Z(-0.9 - 0.12 + k * 0.04), 0x8a9096);
   }
   // bandeaux lumineux au plafond (diffus)
   const strips = new Builder();
@@ -508,7 +549,7 @@ export function buildTruck() {
   scene.add(new THREE.Mesh(guide.build(), new THREE.MeshBasicMaterial({ color: 0xffb030, toneMapped: false })));
 
   // pieds des écrans EVS posés sur le bureau
-  for (const lx of [1.5, 3.0]) { Bp.box(0.06, 0.22, 0.06, X(lx), F + 0.9, Z(-0.16), 0x111111); Bp.cbox(0.22, 0.012, 0.16, X(lx), F + 0.785, Z(-0.14), 0x111111, 0.005); }
+  for (const lx of [1.5, 3.0]) { Bp.box(0.06, 0.22, 0.06, X(lx), F + 0.9, Z(-0.16), 0x111111); Bp.cbox(0.22, 0.012, 0.16, X(lx), F + 0.797, Z(-0.14), 0x111111, 0.005); }
   // ---------------- accessoires ----------------
   props({ Bp, Bm, Bt, B });
 
@@ -549,20 +590,24 @@ export function buildTruck() {
   for (const [lx, i] of [[-4.0, 2.6], [-1.6, 2.6], [2.07, 2.4]]) { const p = new THREE.PointLight(0x9fb8ff, i, 3.2, 1.6); p.position.set(X(lx), F + 1.15, Z(IN.z0 + 0.75)); scene.add(p); }
 
   // écrans
-  screen('mv', 2.3, 1.29, -2.85, 1.6, IN.z0 + 0.19, 0, 'MULTIVIEW PRODUCTION');
-  screen('retant', 0.72, 0.405, -4.72, 2.0, IN.z0 + 0.19, 0, 'RETOUR ANTENNE');
+  screen('mv', 2.3, 1.29, -2.85, 1.52, IN.z0 + 0.19, 0, 'MULTIVIEW PRODUCTION');
+  screen('retant', 0.72, 0.405, -4.72, 1.95, IN.z0 + 0.19, 0, 'RETOUR ANTENNE');
   screen('clean', 0.72, 0.405, -4.72, 1.25, IN.z0 + 0.19, 0, 'CLEAN FEED');
-  screen('pgm', 0.72, 0.405, -0.95, 2.0, IN.z0 + 0.19, 0, 'PGM');
+  screen('pgm', 0.72, 0.405, -0.95, 1.95, IN.z0 + 0.19, 0, 'PGM');
   screen('pvw', 0.72, 0.405, -0.95, 1.25, IN.z0 + 0.19, 0, 'PVW');
   screen('mv2', 1.55, 0.87, 1.2, 1.6, IN.z0 + 0.19, 0, 'MULTIVIEW VISION');
   screen('ref', 0.9, 0.506, 2.95, 1.25, IN.z0 + 0.19, 0, 'MONITEUR GRADE 1');
-  screen('scope', 0.9, 0.506, 2.95, 1.97, IN.z0 + 0.19, 0, 'OSCILLOSCOPE');
+  screen('scope', 0.9, 0.506, 2.95, 1.93, IN.z0 + 0.19, 0, 'OSCILLOSCOPE');
   screen('evsA', 0.56, 0.315, 1.5, 1.2, -0.12, 0, 'EVS A');
   screen('evsB', 0.56, 0.315, 3.0, 1.2, -0.12, 0, 'IPDIRECTOR');
   screen('audioMv', 0.95, 0.534, IN.x0 + 0.12, 1.5, -0.45, Math.PI / 2, 'PGM / MULTIVIEW');
   screen('hfmon', 0.75, 0.42, IN.x1 - 0.12, 1.45, -0.9, -Math.PI / 2, 'RÉCEPTION HF');
   screen('hfspec', 0.75, 0.42, IN.x1 - 0.12, 1.45, 0.05, -Math.PI / 2, 'SPECTRE');
 
+  // afficheurs de timecode (LED rouges) dans les murs d'écrans de la production et de la vision
+  tcDisplay(-0.37, 2.02); tcDisplay(2.24, 1.5);
+  // documents de travail : conducteurs et feuilles de poste sur les bureaux
+  for (const [lx, lz, y, rot] of [[-4.75, -1.42, 0.77, 0.15], [-2.4, -1.9, 0.77, -0.2], [-1.3, 0.2, 0.77 + EST.h, 0.3], [3.5, -1.9, 0.77, 0.1], [-7.6, -1.7, 0.8, 0.5], [8.45, 0.45, 0.77, 0.2]]) document(lx, lz, y + 0.021, rot);
   // pupitres (textures détaillées)
   deskPanel('mixer', 1.6, 0.55, -1.25, -1.6, drawICP);
   deskPanel('director', 0.9, 0.3, -2.9, -1.55, drawIntercom);
@@ -661,8 +706,9 @@ function headset(Bp, Bm, lx, y, lz, rot) {
 }
 /** gobelet, bloc-notes et stylo, boîtier d'intercom : la table de travail d'un technicien */
 function deskStuff(Bp, Bm, Bt, lx, y, lz, kind) {
+  y += 0.02; // y : centre du plateau → surface
   if (kind.includes('cup')) { Bp.cyl(0.04, 0.034, 0.1, X(lx), F + y + 0.05, Z(lz), 0xe8e4dc, 14); Bp.cyl(0.036, 0.03, 0.006, X(lx), F + y + 0.098, Z(lz), 0x3a2a1a, 12); }
-  if (kind.includes('pad')) { Bp.cbox(0.21, 0.012, 0.29, X(lx), F + y + 0.006, Z(lz), 0xf0ece4, 0.003, 0.15); Bp.cyl(0.004, 0.004, 0.14, X(lx) + 0.08, F + y + 0.016, Z(lz), 0x202428, 6, 0, Math.PI / 2, 0.6); }
+  if (kind.includes('pad')) Bp.cyl(0.004, 0.004, 0.14, X(lx) + 0.1, F + y + 0.004, Z(lz) + 0.05, 0x202428, 6, 0, Math.PI / 2, 0.6); // le stylo (la feuille est un document)
   if (kind.includes('beltpack')) { Bp.cbox(0.1, 0.03, 0.14, X(lx), F + y + 0.015, Z(lz), 0x1a1d21, 0.006); for (let k = 0; k < 3; k++) Bp.box(0.02, 0.012, 0.02, X(lx) - 0.03 + k * 0.03, F + y + 0.035, Z(lz) - 0.03, [0xe03030, 0x30c060, 0xe0b030][k]); }
   if (kind.includes('headset')) headset(Bp, Bm, lx, y, lz, 0.4);
   if (kind.includes('phone')) Bp.cbox(0.07, 0.008, 0.15, X(lx), F + y + 0.004, Z(lz), 0x0c0d0f, 0.004, -0.3);
@@ -720,6 +766,8 @@ function chairAt({ Bt, Bp, Bm }, lx, lz, y0 = 0, rot = 0) {
 
 // ---------------- mise à jour : LED, étiquettes et repères ----------------
 export function updateTruck(t) {
+  // les afficheurs de timecode suivent l'horloge du car (une fois par image)
+  if (T.tcDisplays) { const s = tc(S.tcOffset + S.simTime); for (const d of T.tcDisplays) if (d.last !== s) { d.last = s; d.draw(s); } }
   if (!T.leds || (Math.floor(t * 4) % 2)) return;
   const col = new THREE.Color();
   const n = T.leds.count;

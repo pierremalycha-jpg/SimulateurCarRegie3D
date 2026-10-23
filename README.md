@@ -439,6 +439,17 @@ sont des plans croisés à découpe alpha (feuillage peint en code, écorce, omb
 Le stade : béton des tribunes et du parvis en relief, pylônes en acier, **sièges et gradins en relief** (mode UV de
 `matiere` : la carte de normales suit la texture des sièges, coques arrondies, dossiers, contremarches).
 
+**L'entrepôt** (`src/entrepot/scene/hall.js`, `scene.js`) : béton du sol en relief, bardage en tôle, baie thermolaquée, plateau de
+table en stratifié à nez d'aluminium, moquette de l'estrade, cartons et flight cases grainés ; une carte d'environnement du hall
+(lanterneaux, murs, sol) donne des reflets aux métaux et aux façades. Les matières libérées avec le bac sortent de la liste.
+
+**Second passage du car (19.5.1)** : deux afficheurs de timecode à LED rouges dans les murs d'écrans (production, vision), à
+l'heure du car ; conducteurs d'émission sur les bureaux ; murs d'écrans ramenés sous le plafond. Et les défauts signalés en
+classe : le **moiré** venait de motifs trop fins (tissage à 1,5 mm, stries de brossage, micro-rayures) : les recettes ont des
+périodes d'au moins 4 mm et une anisotropie de 8 ; les surfaces qui **sautaient** étaient des faces coplanaires (nez de bureau
+sur le plateau, socle des écrans EVS, lames des bouches de climatisation, seuil sous le balisage) et le bruit du SSAO
+qui changeait à chaque image : tout est décalé ou fixé, et les accessoires sont posés sur la surface des plateaux.
+
 **Vérifier.** `node tools/e2e.mjs rendu` (`tests/e2e/rendu.mjs` : familles de matières, relief actif / coupé selon
 la qualité, occlusion cuite, spots, SSAO, accessoires, extérieur, arbres ; captures à regarder) ;
 `tests/unit/matiere.test.mjs` (bruit tuilable, recettes bornées et tuilables, normales, boîtes arrondies,

@@ -239,7 +239,7 @@ class Post {
     hidden.forEach((o, i) => { o.visible = was[i]; });
     const u = this.mAO.uniforms;
     u.tDepth.value = this.gbuf.depthTexture; u.tNrm.value = this.gbuf.texture; u.uProj.value.copy(camera.projectionMatrix); u.uInvProj.value.copy(camera.projectionMatrixInverse);
-    u.uTexel.value.set(1 / w, 1 / h); u.uRadius.value = ao.radius; u.uBias.value = ao.bias ?? 0.012; u.uTime.value = (S.frame % 8) * 5.588;
+    u.uTexel.value.set(1 / w, 1 / h); u.uRadius.value = ao.radius; u.uBias.value = ao.bias ?? 0.012; u.uTime.value = 0;
     this.pass(this.mAO, this.aoRT);
     const b = this.mAOBlur.uniforms; b.tAO.value = this.aoRT.texture; b.tDepth.value = this.gbuf.depthTexture; b.uTexel.value.set(1 / w, 1 / h); b.uPow.value = ao.power ?? 1.6;
     this.pass(this.mAOBlur, this.aoBlurRT);
