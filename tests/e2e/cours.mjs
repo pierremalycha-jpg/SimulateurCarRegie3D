@@ -31,16 +31,43 @@ T.check('Cours : l\'espace s\'ouvre par-dessus le titre, sur les leçons', await
 const lessons = await ev(() => window.__dbg.COURS.allLessons().map(({ chapter, lesson }) => ({ ch: chapter.id, id: lesson.id, title: lesson.title, n: lesson.quiz.length, demo: !!lesson.demo, fig: !!lesson.figure, terms: (lesson.terms || []).length })));
 T.log('leçons', lessons.length, lessons.map((l) => l.id).join(' '));
 T.check('au moins une leçon par chapitre', ['signal', 'sdi', 'reseau', 'hf'].every((c) => lessons.some((l) => l.ch === c)), JSON.stringify([...new Set(lessons.map((l) => l.ch))]));
+// répondre au quiz affiché : juste partout (ou faux à la question « faux »), puis valider
+const answerQuiz = async (id, faux = -1) => {
+  const qs = await ev(() => [...document.querySelectorAll('#layer .co-q')].map((q) => Number(/** @type {HTMLElement} */ (q).dataset.q)));
+  const bank = await ev((lid) => window.__dbg.COURS.lessonById(lid).lesson.quiz.map((q) => q.answer), id);
+  for (let k = 0; k < qs.length; k++) {
+    const c = k === faux ? (bank[qs[k]] + 1) % 3 : bank[qs[k]];
+    await A.locator(`#layer .co-q[data-q="${qs[k]}"] .co-choice-btn[data-c="${c}"]`).click({ force: true, timeout: 5000 }).catch(() => {}); // force : une manipulation animée retarde le test de stabilité de Playwright
+  }
+  await A.locator('#layer .co-valider').click({ force: true, timeout: 5000 }).catch(() => {});
+  await A.waitForTimeout(150);
+  return qs;
+};
+// le quiz de la première leçon en détail : corrigé caché tant qu'on n'a pas validé, une erreur, puis un nouveau tirage
+{
+  const L = lessons[0];
+  await ev((id) => window.__dbg.openCours(id), L.id); await A.waitForTimeout(400);
+  const avant = await ev(() => ({ q: document.querySelectorAll('#layer .co-q').length, why: document.querySelectorAll('#layer .co-why').length, valider: !!document.querySelector('#layer .co-valider[disabled]'), good: document.querySelectorAll('#layer .co-choice-btn.good').length }));
+  T.check('quiz : 3 questions tirées, ni corrigé ni bonne réponse avant de valider, « Valider » grisé', avant.q === 3 && avant.why === 0 && avant.valider && avant.good === 0, JSON.stringify(avant));
+  const q1 = await answerQuiz(L.id, 1);
+  const apres = await ev((id) => ({ why: document.querySelectorAll('#layer .co-why').length, bad: document.querySelectorAll('#layer .co-choice-btn.bad').length, good: document.querySelectorAll('#layer .co-choice-btn.good').length, score: document.querySelector('#layer .co-score')?.textContent || '', done: window.__dbg.COURS.lessonDone(id) }), L.id);
+  T.check('quiz validé avec une erreur : corrigé de chaque question, 2 / 3, leçon pas encore acquise', apres.why === 3 && apres.bad === 1 && apres.good === 3 && /^2 \/ 3/.test(apres.score) && !apres.done, JSON.stringify(apres));
+  await A.locator('#layer .co-score .btn', { hasText: 'Refaire le quiz' }).click();
+  await A.waitForTimeout(200);
+  const q2 = await ev(() => [...document.querySelectorAll('#layer .co-q')].map((q) => Number(/** @type {HTMLElement} */ (q).dataset.q)));
+  T.check('« Refaire le quiz » : d\'autres questions de la banque', q2.length === 3 && q2.some((i) => !q1.includes(i)), JSON.stringify({ q1, q2 }));
+  // l'ordre des réponses est mélangé : sur quelques tirages, la bonne réponse n'est pas toujours au même rang
+  const rangs = await ev((id) => { const bank = window.__dbg.COURS.lessonById(id).lesson.quiz; return [...document.querySelectorAll('#layer .co-q')].map((q) => [...q.querySelectorAll('.co-choice-btn')].findIndex((b) => Number(/** @type {HTMLElement} */ (b).dataset.c) === bank[Number(/** @type {HTMLElement} */ (q).dataset.q)].answer)); }, L.id);
+  T.log('rang de la bonne réponse', JSON.stringify(rangs));
+}
 let shots = 0;
 for (const L of lessons) {
   await ev((id) => window.__dbg.openCours(id), L.id); await A.waitForTimeout(400);
   const st = await ev(() => ({ h3: document.querySelector('#layer .co-page h2')?.textContent || '', ess: document.querySelectorAll('#layer .co-ess li').length, fig: !!document.querySelector('#layer .co-figbox svg, #layer .co-figbox canvas'), demo: document.querySelectorAll('#layer .co-demo-host *').length, q: document.querySelectorAll('#layer .co-q').length, car: !!document.querySelector('#layer .co-car'), chips: document.querySelectorAll('#layer .co-chip').length }));
-  const ok = st.h3.startsWith(L.title) && st.ess >= 1 && st.ess <= 3 && (!L.fig || st.fig) && (!L.demo || st.demo > 0) && st.q === L.n && L.n === 3 && st.car;
-  T.check(`leçon ${L.id} : essentiel, schéma, manipulation, « dans le car », quiz de 3`, ok, JSON.stringify(st));
+  const ok = st.h3.startsWith(L.title) && st.ess >= 1 && st.ess <= 3 && (!L.fig || st.fig) && (!L.demo || st.demo > 0) && st.q === 3 && L.n >= 5 && st.car;
+  T.check(`leçon ${L.id} : essentiel, schéma, manipulation, « dans le car », quiz de 3 questions tirées d'une banque de 5 au moins`, ok, JSON.stringify(st));
   // quiz : la bonne réponse partout → leçon acquise
-  const ans = await ev((id) => { const f = window.__dbg.COURS.lessonById(id); return f.lesson.quiz.map((q) => q.answer); }, L.id);
-  for (let i = 0; i < ans.length; i++) { const b = A.locator(`#layer .co-q:nth-of-type(${i + 1}) .co-choice-btn`).nth(ans[i]); await b.click({ force: true, timeout: 5000 }).catch(() => {}); } // force : une manipulation animée retarde le test de stabilité de Playwright
-  await A.waitForTimeout(200);
+  await answerQuiz(L.id);
   T.check(`leçon ${L.id} : quiz réussi, leçon acquise`, await ev((id) => window.__dbg.COURS.lessonDone(id) && /leçon acquise/.test(document.querySelector('#layer .co-score')?.textContent || ''), L.id));
   if (shots < 12) { shots++; const p = await A.$('#layer .co-page'); if (p) await p.screenshot({ path: `${OUT}/10-${L.id}.png` }).catch(() => {}); }
 }

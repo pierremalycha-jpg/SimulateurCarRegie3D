@@ -65,6 +65,8 @@
 .co-q { display: grid; gap: 6px; }
 .co-q > p { margin: 0; font-weight: 600; }
 .co-choices { display: flex; flex-wrap: wrap; gap: 6px; }
+.co-quiz-help { margin: 0; font-size: 13px; color: var(--muted); }
+.co-choice-btn.sel { border-color: var(--cyan); box-shadow: 0 0 0 1px var(--cyan); }
 .co-choice-btn.good { border-color: var(--pvw); box-shadow: 0 0 0 1px var(--pvw); }
 .co-choice-btn.bad { border-color: var(--tally); box-shadow: 0 0 0 1px var(--tally); }
 .co-why { margin: 0; font-size: 13.5px; color: var(--muted); max-width: 72ch; }
