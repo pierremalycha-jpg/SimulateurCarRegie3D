@@ -104,7 +104,7 @@ export function refreshEnvironment(key) {
   if (u.uSunI) u.uSunI.value = sun0;
   if (RENDER.envRT) RENDER.envRT.dispose();
   RENDER.envRT = rt; W.scene.environment = rt.texture;
-  RENDER.envI = { jour: 0.15, fin: 0.12, couvert: 0.27, nuit: 0.3 }[key] ?? 0.15;
+  RENDER.envI = { jour: 0.3, fin: 0.16, couvert: 0.3, nuit: 0.3 }[key] ?? 0.3;
   RENDER.bloom = { jour: 0.045, fin: 0.06, couvert: 0.04, nuit: 0.22 }[key] ?? 0.05;
   setEnvIntensity();
 }

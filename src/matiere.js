@@ -82,7 +82,7 @@ export const RECETTES = {
   // tôle peinte (peau d'orange légère) : parois, caisse du car, mobilier métallique
   tole: (s) => ({ k: 1.6, scale: 0.6, rough: 0.5, h: (u, v) => fbm(u, v, 24, 3, s) * 0.5 + fbm(u, v, 96, 2, s + 9) * 0.25, r: (u, v) => 0.5 + (fbm(u, v, 6, 3, s + 20) - 0.5) * 0.08 }),
   // tôle nervurée (flancs de caisse) : nervures verticales adoucies + peau d'orange
-  nervure: (s) => ({ k: 2.2, scale: 1.0, rough: 0.45, h: (u, v) => { const t = Math.abs(((u * 8) % 1) - 0.5) * 2; return Math.pow(Math.min(1, Math.max(0, (t - 0.72) / 0.28)), 1.4) * 2.2 + fbm(u, v, 48, 2, s) * 0.3; } }),
+  nervure: (s) => ({ k: 1.1, scale: 1.0, rough: 0.45, h: (u, v) => { const t = Math.abs(((u * 8) % 1) - 0.5) * 2; return Math.pow(Math.min(1, Math.max(0, (t - 0.8) / 0.2)), 1.4) * 1.6 + fbm(u, v, 48, 2, s) * 0.3; } }),
   // aluminium brossé : stries fines dans un sens
   alu: (s) => ({ k: 1.2, scale: 0.4, rough: 0.42, metal: 0.9, h: (u, v) => noise(u * 4, v * 240, 4, s, 240) * 0.6 + noise(u * 16, v * 480, 16, s + 3, 480) * 0.4, r: (u, v) => 0.5 + (noise(u * 6, v * 180, 6, s + 7, 180) - 0.5) * 0.35 }),
   // plastique grainé : façades d'appareils, boîtiers
@@ -166,14 +166,15 @@ const FRAG_NORMAL = `
 /**
  * Un matériau physique habillé d'une recette.
  * @param {string} key recette (RECETTES)
- * @param {{ color?: number | THREE.Color, roughness?: number, metalness?: number, scale?: number, strength?: number, seed?: number, vertexColors?: boolean, side?: THREE.Side, emissive?: number, emissiveIntensity?: number, transparent?: boolean, opacity?: number, name?: string, rough?: number, tint?: number, n?: number }} [o]
+ * @param {{ color?: number | THREE.Color, roughness?: number, metalness?: number, scale?: number, strength?: number, seed?: number, vertexColors?: boolean, side?: THREE.Side, emissive?: number, emissiveIntensity?: number, transparent?: boolean, opacity?: number, name?: string, rough?: number, tint?: number, n?: number, map?: THREE.Texture | null, polygonOffset?: number, alphaTest?: number }} [o]
  */
 export function matiere(key, o = {}) {
   const R = RECETTES[key](o.seed ?? 1);
   const m = new THREE.MeshStandardMaterial({
     color: o.color ?? 0xffffff, roughness: o.roughness ?? R.rough ?? 0.6, metalness: o.metalness ?? R.metal ?? 0,
     vertexColors: o.vertexColors ?? true, side: o.side ?? THREE.FrontSide, emissive: o.emissive ?? 0x000000, emissiveIntensity: o.emissiveIntensity ?? 1,
-    transparent: !!o.transparent, opacity: o.opacity ?? 1,
+    transparent: !!o.transparent, opacity: o.opacity ?? 1, map: o.map || null, alphaTest: o.alphaTest ?? 0,
+    polygonOffset: !!o.polygonOffset, polygonOffsetFactor: -(o.polygonOffset || 0), polygonOffsetUnits: -(o.polygonOffset || 0),
   });
   m.name = o.name || key;
   if (S.lite) return m; // mode allégé : uni, et jamais de relief

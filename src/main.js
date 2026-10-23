@@ -243,7 +243,7 @@ window.__dbg.title = { enter: enterFrom, show: showTitle };
 window.__dbg.nav = { openMenu, restart };
 window.__dbg.openCours = openCours; window.__dbg.PROFILE = PROFILE; window.__dbg.setRole = setRole; window.__dbg.camlab = camlabDebug; window.__dbg.entrepot = entrepotDebug;
 window.__dbg.COURS = { CHAPTERS: COURS_CHAPTERS, allLessons, lessonById: coursLessonById, lessonDone: coursLessonDone };
-window.__dbg.CTRL = CTRL;
+window.__dbg.CTRL = CTRL; window.__dbg.MATIERE = MATIERE;
 window.__dbg.jeu = { XP, sfx, JEU, openJournal, currentGoal, renderQuest };
 // le programme a démarré : le filet du chargement (boot.js) n'a plus à intervenir
 window.__carReady = true;

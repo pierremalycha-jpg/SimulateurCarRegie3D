@@ -73,6 +73,10 @@ Tout est en français (code commenté en français, interface, commits).
   prend une ligne dans `progression.js`. Le thème visuel est `src/styles/theme-jeu.css` (chargé en dernier : il
   redéfinit les jetons de couleur et les composants) ; une animation d'entrée n'anime que la position, jamais
   l'opacité finale. L'ancienne carte `#mission` reste dans le code mais est masquée : l'objectif la remplace.
+- **Rendu (v19.5)** : toute nouvelle géométrie passe par `matiere()` (`src/matiere.js`, recettes de relief
+  procédurales, triplanaire : pas de texture de fichier) et par un `Builder` en mode `ao` avec `cbox` (arêtes
+  arrondies, occlusion cuite) ; une famille de matière = une pièce fusionnée nommée. Le SSAO ne tourne que dans le
+  car ; la qualité Basse garde le rendu uni. Suite `node tools/e2e.mjs rendu`, test `tests/unit/matiere.test.mjs`.
 - Les fiches « ? » (`src/content/netterms.js` + `terms_*.js`, figures `src/ui/figs_*.js`) restent la source
   des définitions courtes ; une leçon les cite dans `terms`.
 

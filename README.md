@@ -394,6 +394,60 @@ Tests :
   « Emmène-moi / Montre-moi » doit mettre en évidence un élément réel de la page, et « Fais-le pour moi » doit faire
   valider l'étape.
 
+## v19.5 : un rendu de jeu vidéo : matières, relief, lumière, décor
+
+**Pourquoi.** Le simulateur faisait « brut de décoffrage » : des boîtes à arêtes vives en couleurs unies, aucun
+relief de surface, rien qui touche le sol, un car éclairé à plat, un décor vide. Le moteur, lui, était déjà celui
+d'un jeu (matériaux physiques, environnement capturé, courbe ACES, halo, ombres douces) : c'est le contenu que cette
+version refait, sans aucune ressource externe (tout reste généré par le code dans la seule page) et sans toucher à
+la qualité Basse, qui garde le rendu d'avant pour les ordinateurs les plus faibles.
+
+**Des matières procédurales** (`src/matiere.js`). Une recette par surface (tôle peinte, tôle nervurée, aluminium
+brossé, plastique grainé, stratifié, caoutchouc à pastilles, moquette, bitume, béton, mousse acoustique, tissu,
+acier thermolaqué, tôle larmée, herbe) génère en code des cartes tuilables de **normales** (relief), de **rugosité**
+et de **variation de teinte** (bruit de valeur périodique, 256 × 256, mises en cache). `matiere(recette, options)`
+donne un `MeshStandardMaterial` qui les plaque en **triplanaire** (par la position dans le monde, mélange
+« whiteout ») : les géométries fusionnées du `Builder`, sans UV, en profitent telles quelles, et une texture UV
+(livrée du car, enrobé, parvis) s'y ajoute. Le relief se coupe sans recompiler la scène (`MATIERE.setDetail`,
+suivi par Réglages → Qualité) : en Basse et en mode allégé, les matériaux restent unis.
+
+**Des formes et des ombres de contact** (`src/geo.js`). `roundedBox` : une boîte aux arêtes arrondies en three.js
+de base (projection sur la boîte intérieure, normales exactes) ; `Builder.cbox` pour l'utiliser. En mode `ao`, le
+`Builder` subdivise les grandes faces et **cuit l'occlusion ambiante par sommet** à la fusion (rayons hémisphériques
+contre les boîtes de la pièce, partagées entre plusieurs `Builder` par `occluders`) : coins de pièce, dessous de
+bureau, pieds de baie et de chaise s'assombrissent sans coût au rendu ; les pièces menues (gobelets, boutons) en sont
+dispensées. Dans le car, une **occlusion ambiante d'écran** (SSAO, `src/render.js` : pré-passe normales + profondeur
+à demi-résolution, 12 échantillons, flou qui respecte les arêtes) complète la cuisson en Moyenne et Haute ; les
+écrans et les LED y échappent (pondération par la luminance). `?noao` la coupe pour comparer.
+
+**L'intérieur du car** (`src/truck.js`) : une pièce fusionnée par famille de matière (parois en tôle, sol en
+caoutchouc, bureaux en stratifié à nez d'aluminium chanfreiné, baies thermolaquées à rails 19", sièges en tissu
+à cinq branches et accoudoirs, plastiques, mousse acoustique du son, seuil en tôle larmée), **pénombre d'un vrai
+car** : hémisphère réduite, un spot au-dessus de chaque poste, la lueur froide des murs d'écrans sur les pupitres ;
+**accessoires** : échelles à câbles et torons au plafond, descentes derrière les baies et les murs d'écrans,
+jarretières devant la baie de brassage, casques d'intercom, boîtiers, blocs-notes, gobelets, extincteur, trousse de
+secours, tableau électrique, goulotte de prises, bouches de climatisation, horloges, poignée et joints de porte.
+
+**L'extérieur** (`src/vehicles.js`, `src/world.js`, `src/landscape.js`) : caisse et extensions arrondies, livrée
+sur **tôle nervurée**, portes arrière à crémones et charnières, passages de roues, bavettes, feux de gabarit,
+plaque, pare-chocs, auvent du pied de car ; tracteur à **pare-brise courbe**, pare-soleil, calandre à lames,
+rétroviseurs, marchepieds, antibrouillards ; DSNG, groupe (armoire de commande, prises P17) et bungalows (cadres de
+fenêtres, marches) arrondis et en matière. Le compound : **bitume en relief** avec flaques qui reflètent le ciel,
+barrières de chantier grillagées sur plots, cônes, rampes de câbles à cinq voies, bobines, flight cases à cornières
+et roulettes, palette, poubelle, lampadaires, câbles d'énergie au sol et câbles vers le pied de car. Les **arbres**
+sont des plans croisés à découpe alpha (feuillage peint en code, écorce, ombre découpée) à la place des sphères.
+Le stade : béton des tribunes et du parvis en relief, pylônes en acier.
+
+**Vérifier.** `node tools/e2e.mjs rendu` (`tests/e2e/rendu.mjs` : familles de matières, relief actif / coupé selon
+la qualité, occlusion cuite, spots, SSAO, accessoires, extérieur, arbres ; captures à regarder) ;
+`tests/unit/matiere.test.mjs` (bruit tuilable, recettes bornées et tuilables, normales, boîtes arrondies,
+occlusion cuite, `Builder` en mode ao).
+
+**Performances.** Les matières coûtent six lectures de texture par pixel (relief et surface sur trois
+projections) ; le SSAO, une passe de géométrie à demi-résolution dans le car seulement. Le car reste en quelques
+appels de rendu par famille (82 000 triangles). À mesurer sur le PC le plus faible : si Moyenne tombe sous
+30 i/s, le diagnostic de performance (Réglages) recommande Basse, où tout cela est désactivé.
+
 ## v19.4 : consolider le car régie : des preuves d'apprentissage fiables, une progression sûre
 
 **Pourquoi.** Le constat du 23 octobre 2026 l'a montré : le livret pouvait dire « consolidée » sans que
@@ -1252,13 +1306,14 @@ node tools/shots.mjs dossier 1280 800 '["vision","hf"]'   # captures de postes
 | `data/` | Catalogues techniques : caméras, objectifs, liaisons, formats (`cameras.js`) ; positions et antennes du stade (`stadium.js`) ; HF COFDM (`rf.js`) ; exposition et lumières (`exposure.js`) ; équipes (`match.js`) |
 | `content/` | Contenus pédagogiques : fiches de poste (`stations.js`), glossaire (`glossary.js`), fiches des termes réseau et ST 2110 (`netterms.js`), chapitres du guide (`guide.js`), commandes (`controls.js`) |
 | `state.js` | État partagé de la simulation (`S`) et bus d'événements (`on` / `emit`) |
-| `truck.js` | Intérieur du car : plan, postes, écrans, baies et pupitres détaillés, collisions |
+| `truck.js` | Intérieur du car : plan, postes, écrans, baies et pupitres détaillés, collisions ; matières par famille, pénombre à spots, accessoires |
 | `equip.js` | Profil matériel (XVS-6000, XT4K, LSM, IPDirector) et répartition des canaux EVS |
 | `world.js` | Stade, éclairage, public, compound et extérieur du car |
-| `render.js` | Rendu physique : conversion des matériaux, environnement (ciel capturé, studio du car), post-traitement de la vue « œil » |
+| `render.js` | Rendu physique : conversion des matériaux, environnement (ciel capturé, studio du car), post-traitement de la vue « œil » (halo, ACES, SSAO dans le car) |
+| `matiere.js` | Matières procédurales : recettes de relief, rugosité et teinte (cartes tuilables générées en code), matériau physique plaqué en triplanaire, relief coupé en qualité Basse |
 | `people.js` | Joueurs et arbitres articulés : géométries, tenues (nom et numéro), visage, animation de course |
-| `landscape.js` | Sol jusqu'à l'horizon (carte des parcelles), arbres instanciés, terrils |
-| `vehicles.js` | Semi-remorque régie, tracteur, camion satellite, groupe électrogène, bungalows, enrobé |
+| `landscape.js` | Sol jusqu'à l'horizon (carte des parcelles), arbres instanciés en plans alpha, terrils |
+| `vehicles.js` | Semi-remorque régie (caisse arrondie, livrée nervurée, portes, feux), tracteur à pare-brise courbe, camion satellite, groupe électrogène, bungalows, enrobé |
 | `params.js` | Registre des valeurs chiffrées relisibles (objectifs, liaisons, C/N, latences, line-up) et corrections appliquées |
 | `multi/` | Jeu à plusieurs : session, rôles, hôte du match, pseudos (`session.js`), tranches d'état partagées (`slices.js`), client du serveur réseau local (`lan.js`), avatars des joueurs (`avatars.js`), fiches de rôle et objectifs (`roles.js`) |
 | `lan/` | Serveur réseau local sans dépendance (HTTP + WebSocket, parties, comptes rendus ; origine vérifiée, tailles, connexions, parties et comptes rendus plafonnés), lanceurs Windows / macOS / Linux, mode d'emploi |
