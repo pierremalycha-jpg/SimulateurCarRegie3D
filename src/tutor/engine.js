@@ -154,7 +154,8 @@ export function stopLesson(finished = false, cleanup = false) {
   if (!finished && cleanup && l.cleanup) { try { l.cleanup(ctx()); } catch (e) { console.error(e); } }
   if (finished) {
     const p = progressOf(l.id);
-    Object.assign(p, { done: true, at: Date.now(), aided: TUTOR.stats.aided, hints: TUTOR.stats.hints, wrong: TUTOR.stats.wrong, steps: l.steps.length });
+    // clean : terminé une fois au moins sans « Fais-le pour moi » (le livret ne compte que cela) ; ça reste acquis
+    Object.assign(p, { done: true, at: Date.now(), aided: TUTOR.stats.aided, hints: TUTOR.stats.hints, wrong: TUTOR.stats.wrong, steps: l.steps.length, clean: !!p.clean || !TUTOR.stats.aided });
     saveProgressSoon();
   }
   if (l.after) { try { l.after(ctx()); } catch (e) { console.error(e); } }

@@ -253,7 +253,8 @@ export function updateCourse(dt = 0.1) {
     if (objs.every((o) => o.ok) && qs) {
       const pts = missionScore(m.id);
       const prev = P().missions[m.id];
-      P().missions[m.id] = { at: Date.now(), pts: Math.max(pts, prev ? prev.pts : 0), hints: NC.hints[m.id] || 0, aided: !!NC.aided[m.id], dur: Math.round(S.time - NC.t0) };
+      // clean : réussie une fois au moins sans la configuration de référence (le livret ne compte que cela)
+      P().missions[m.id] = { at: Date.now(), pts: Math.max(pts, prev ? prev.pts : 0), hints: NC.hints[m.id] || 0, aided: !!NC.aided[m.id], dur: Math.round(S.time - NC.t0), clean: !!(prev && prev.clean) || !NC.aided[m.id] };
       saveProgressSoon();
       toast(`Mission réseau réussie : ${m.title} (${pts}/10)`, 'good', 5000);
       emit('netMission', { id: m.id, pts, aided: !!NC.aided[m.id] });
