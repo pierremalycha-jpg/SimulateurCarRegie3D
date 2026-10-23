@@ -394,6 +394,78 @@ Tests :
   « Emmène-moi / Montre-moi » doit mettre en évidence un élément réel de la page, et « Fais-le pour moi » doit faire
   valider l'étape.
 
+## v19.4 : consolider le car régie : des preuves d'apprentissage fiables, une progression sûre
+
+**Pourquoi.** Le constat du 23 octobre 2026 l'a montré : le livret pouvait dire « consolidée » sans que
+l'étudiant sache faire seul. Dans les 111 questions des leçons, la bonne réponse n'était en troisième position
+que 4 fois ; elle s'affichait dès la première erreur, et « Refaire le quiz » reposait les mêmes questions. Un
+exercice fait entièrement par « Fais-le pour moi » comptait comme réussi, une panne qu'on s'injecte avec son
+remède sous les yeux rapportait de l'XP sans limite. La progression, enfin, pouvait se perdre sans un mot. Cette
+version consolide le car régie avant tout nouveau lieu ; l'entrepôt n'est pas touché.
+
+**Le quiz d'une leçon vérifie vraiment** (`src/ui/cours_ui.js`, `src/cours/index.js` : `drawQuiz`, `QUIZ_N`). Chaque
+leçon a une **banque de cinq questions** (185 en tout, dont 74 nouvelles : des situations du car et des calculs,
+chaque choix faux avec son explication), et chaque essai en **tire trois** ; « Refaire le quiz » pose d'abord celles
+qui n'avaient pas été posées. Les **réponses sont mélangées** à chaque tirage. On choisit ses réponses (on peut
+changer d'avis), puis « Valider mes réponses » donne le score et **le corrigé de chaque question** : pourquoi la bonne
+réponse est juste, pourquoi le choix fait est faux. Le focus clavier suit (choix, score). Le module **caméra en 3D**
+mélange aussi les réponses à chaque série, et les questions des quiz de chapitre (`src/camlab/quiz.js`) ; la question
+sur le gain est corrigée (le rapport signal sur bruit se mesure au niveau nominal de sortie : +6 dB de gain doublent
+le bruit sans changer ce niveau). Vérifié et laissé : « le BT.2020 couvre les deux tiers du diagramme xy » est juste
+(le schéma de la leçon le calcule : 64 %).
+
+**Le livret ne compte que ce qui est réussi seul** (`src/livret.js`). Un parcours d'Olivier terminé avec « Fais-le
+pour moi », une mission réseau sauvée par la configuration de référence ne comptent qu'une fois refaits seuls (une
+réussite seule reste acquise : `clean`, enregistré par `tutor/engine.js` et `net/course.js`, gardé par la fusion
+entre appareils) ; un montage d'atelier « à retravailler » (plus de deux erreurs) ne compte pas. Une compétence est
+**consolidée** avec trois réussites dont **un exercice pratique** (`estPratique` : tout sauf les leçons et les
+notions de la caméra) : trois quiz ne suffisent plus. Le livret le dit, compétence par compétence (« Pour la
+consolider : réussir seul un de ses exercices pratiques ») et marque « terminé avec de l'aide : à refaire seul ».
+
+**L'XP récompense la maîtrise** (`src/game/progression.js`, `src/game/xp.js`). Seules les **pannes cachées** rapportent
+(jour de match, examen, formateur, exercices) : celle qu'on s'injecte depuis le catalogue, avec son poste et son
+remède affichés, ne rapporte rien. Chaque panne rapporte ses points la première fois (20, ou 35 en moins d'une
+minute), puis 5 ; « Dépanneur » demande cinq pannes cachées **différentes**. Un exercice refait ne rapporte que s'il
+est fait sans aide. « Érudit » demande toutes les leçons du Cours (il en demandait 40, il y en a 37). Le barème
+« visite », jamais utilisé, est retiré.
+
+**La progression ne se perd plus sans qu'on le sache** (`src/shared.js`). Elle porte un **numéro de version**
+(`PROG.v`, `PROG_VERSION` = 2) et toute progression lue (navigateur, serveur, fichier) passe par `migrateProgress`, qui
+la remet à la forme actuelle sans perdre les champs d'une version plus récente. Sur la page publiée, chaque
+enregistrement **relit et fusionne la copie du serveur avant d'écrire** : deux ordinateurs ne s'écrasent plus. Un
+**échec d'enregistrement** (stockage du navigateur plein, serveur injoignable) est dit tout de suite par une
+notification (événement `progressSave`, état `SAVE`). **Réglages → Ma progression** (`src/ui/ma_progression.js`) :
+où elle est enregistrée et la dernière fois, un résumé, **Exporter dans un fichier**
+(`tiee-progression-AAAA-MM-JJ.json`, format `tiee-simulator/progression`), **Importer un fichier** (fusion : rien
+n'est effacé, chaque réussite et le meilleur score sont gardés ; un fichier qui n'est pas une progression est refusé
+avec la raison), **Effacer ma progression** (confirmation dans la page ; ce navigateur et la copie du serveur, puis
+rechargement), et **Vos données personnelles** : ce qui est enregistré, où, ce qui n'est pas fait, vos droits.
+
+**Plus de Google Fonts.** Les polices des textures du monde 3D (Barlow, Barlow Condensed, Barlow Semi Condensed,
+JetBrains Mono) sont intégrées à la page comme celles de l'interface (paquets Fontsource, licence OFL,
+`tools/build.mjs`) : plus aucune requête vers un service de polices (l'adresse IP des élèves n'y part plus), même
+rendu hors ligne ; environ 200 Ko de plus.
+
+**Mémoire 3D.** Une caméra du stade retirée (relance de la vacation, plan caméras, atelier, coopération) libère
+maintenant ses géométries fusionnées, ses matières, la texture de son étiquette, ses câbles, son bras de grue et ses
+filins (`src/bcam.js`, `ownedResources` et `releaseOverlay` de `src/world.js`). Mesuré en rendu logiciel, douze
+caméras : 129 géométries au démarrage, 169 après quatre relances, sans plus monter (avant : 123, puis 283).
+
+**Serveur réseau local durci** (`lan/serveur.mjs`). Une autre page web ouverte sur le réseau ne peut plus rejoindre
+les parties ni écrire de compte rendu : l'origine est vérifiée (WebSocket et `/api/rapport`, qui exige aussi du
+JSON). Les fragments d'un message comptent ensemble (4 Mo au plus), une présence est limitée (64 Ko, 60 clés ; les
+clés `__proto__` et voisines sont ignorées), les connexions (300, dont 20 par adresse, sauf la machine de l'hôte), les
+parties (50) et les comptes rendus (6 par minute et par adresse, 500 dans le dossier) sont plafonnés. En coopération,
+une panne forcée n'est acceptée que de l'hôte ou du formateur (`src/multi/session.js`) ; le rôle de formateur se
+choisit encore librement dans le salon (`ROADMAP.md`).
+
+Tests : unitaires `cours` (banque, tirage, mélange), `camlab-suivi` (réponses et questions mélangées), `livret`
+(aide, atelier, exercice pratique), `xp` (Érudit, barème), `progression` (nouveau : mise à niveau, fusion, export,
+import, refus), `bcam-memoire` (nouveau : chaque ressource d'une caméra libérée), `lan` (origine, fragments,
+présence piégée ou trop grosse, comptes rendus) ; suite de bout en bout `progression` (nouvelle : la section,
+export, import, refus, stockage plein signalé, effacement, aucune requête de polices), `cours` (corrigé caché avant
+de valider, une erreur, nouveau tirage) et `camera` mises à jour.
+
 ## v19.3 : l'interface jeu : objectif à l'écran, XP, badges, bruitages
 
 **Un vrai HUD de jeu.** L'objectif en cours est toujours en haut à gauche (`src/game/quest.js`, `#quest`) : l'étape
@@ -1110,14 +1182,14 @@ l'affichage plus régulier (moins d'à-coups 4 à 8 fois par seconde).
 
 ```
 npm install
-npm run build        # dist/index.html (page publiée), Car-regie-3D.html (à partager), serveur autonome et archive réseau local
-npm run exe          # en plus : Car-regie-3D.exe (Windows, sans installation) et le kit Car-regie-3D-partage.zip
+npm run build        # dist/index.html (page publiée), TIEE-Simulator.html (à partager), serveur autonome et archive réseau local
+npm run exe          # en plus : TIEE-Simulator.exe (Windows, sans installation) et le kit TIEE-Simulator-partage.zip
 npm run build:dev    # même chose sans minification
 npm run lint         # ESLint
 npm run typecheck    # TypeScript (navigateur + Node)
-npm test             # tests unitaires (node:test, ≈ 2 s)
+npm test             # tests unitaires (node:test, ≈ 10 s)
 npm run check        # les quatre à la suite (ce que fait l'intégration continue)
-npm run test:e2e     # tests de bout en bout (Playwright, rendu logiciel : 26 suites, ≈ 90 min)
+npm run test:e2e     # tests de bout en bout (Playwright, rendu logiciel : 35 suites, plusieurs heures)
 npm run serve:lan    # serveur réseau local (après la construction) : http://localhost:8080
 ```
 
@@ -1150,9 +1222,10 @@ node tools/shots.mjs dossier 1280 800 '["vision","hf"]'   # captures de postes
 | `styles/theme-jeu.css` | Le thème « jeu vidéo » : jetons de couleur, composants communs, HUD, écran titre, Jouer, menu, journal, badges |
 | `ui/pupitre.js` | Le pupitre (Tab ou T) : plan du car, touches des postes par zone, endroits du stade, équipiers, outils |
 | `app/title.js` | Écran titre TIEE Simulator : logo du BTS, trois entrées (Jouer, Cours, Réglages), progression du chargement, conseils d'Olivier, mentions |
-| `ui/settings.js` | Réglages : une seule fenêtre (ordinateur, partie en cours, profil, espace formateur, aide, à propos) |
+| `ui/settings.js` | Réglages : une seule fenêtre (ordinateur, partie en cours, ma progression, profil, espace formateur, aide, à propos) |
+| `ui/ma_progression.js` | Réglages → Ma progression : où elle est enregistrée et si ça marche, exporter dans un fichier, importer (fusion), effacer, vos données personnelles ; notification quand un enregistrement échoue |
 | `app/profile.js` | Profil Étudiant / Formateur, mémorisé ; classe `role-formateur` sur `body`, éléments `.role-only` |
-| `cours/index.js`, `cours/kit.js`, `cours/all.js`, un fichier par chapitre (`signal.js`, `sdi.js`, `synchro.js`, `camera.js`, `realisation.js`, `ralentis.js`, `son.js`, `reseau.js`, `hf.js`, `exploitation.js`) | La section Cours : dix chapitres et leurs leçons, ordre d'apprentissage, progression, kit des schémas et manipulations |
+| `cours/index.js`, `cours/kit.js`, `cours/all.js`, un fichier par chapitre (`signal.js`, `sdi.js`, `synchro.js`, `camera.js`, `realisation.js`, `ralentis.js`, `son.js`, `reseau.js`, `hf.js`, `exploitation.js`) | La section Cours : dix chapitres et leurs leçons, ordre d'apprentissage, progression, tirage du quiz dans la banque de chaque leçon (`drawQuiz`, `QUIZ_N`), kit des schémas et manipulations |
 | `cours/exercices.js` | Les exercices pratiques de chaque leçon : parcours d'Olivier (chacun dans une seule leçon) et exercices notés (atelier, car vide, formation réseau, jour de match, mise en service de la caméra, régie de l'entrepôt), leur état |
 | `cours/liens.js` | Les liens du Cours avec le reste : terme du glossaire → leçon ou fiche « ? », poste → leçon (bouton « Cours », touche G) |
 | `cours/sdi_falaise.js`, `cours/lab_sdi.js`, `cours/figs_sdi.js` | Leçon « La falaise numérique » : diagramme de l'œil et image qui casse avec la longueur du câble, défis d'Olivier |
@@ -1163,7 +1236,7 @@ node tools/shots.mjs dossier 1280 800 '["vision","hf"]'   # captures de postes
 | `ui/layer.js` | Espace plein écran (le Cours) : plaque, onglets, Fermer (Échap), ligne d'état |
 | `ui/guide.js` | Missions d'installation (liste des tâches), articles de référence des leçons, glossaire, postes, matériel, procédures maison, commandes |
 | `content/referentiel.js` | Référentiel du BTS MAV option TIEE (fiche RNCP37022) : 4 blocs, 39 compétences numérotées 1.1 à 4.5, couverture par le car et modules qui la complèteront ; rattachement des parcours, missions, phases du jour de match, missions réseau, exercices et leçons |
-| `livret.js`, `ui/livret.js` | Livret de compétences : niveau de chaque compétence calculé d'après la progression (à travailler, travaillée, consolidée, hors simulateur) ; affiché sur la page « Mon suivi » du Cours, depuis le chef de car et pour chaque stagiaire dans l'espace formateur, export CSV |
+| `livret.js`, `ui/livret.js` | Livret de compétences : niveau de chaque compétence calculé d'après la progression (à travailler, travaillée, consolidée, hors simulateur), une activité ne comptant que réussie seule, « consolidée » demandant un exercice pratique (`estPratique`) ; affiché sur la page « Mon suivi » du Cours, depuis le chef de car et pour chaque stagiaire dans l'espace formateur, export CSV |
 | `prism_model.js` | Modèle de la liaison SDI pour le PRISM : normes, points de mesure, œil, gigue, timing, pannes |
 | `videohub.js` | Modèle de la grille Videohub 40 × 40 : plan des ports, étiquettes, verrous, protocole, pannes |
 | `ui/st_videohub.js` | Le poste Grille en car SDI : façade, Videohub Control, monitoring, matrice, Setup |
@@ -1188,7 +1261,7 @@ node tools/shots.mjs dossier 1280 800 '["vision","hf"]'   # captures de postes
 | `vehicles.js` | Semi-remorque régie, tracteur, camion satellite, groupe électrogène, bungalows, enrobé |
 | `params.js` | Registre des valeurs chiffrées relisibles (objectifs, liaisons, C/N, latences, line-up) et corrections appliquées |
 | `multi/` | Jeu à plusieurs : session, rôles, hôte du match, pseudos (`session.js`), tranches d'état partagées (`slices.js`), client du serveur réseau local (`lan.js`), avatars des joueurs (`avatars.js`), fiches de rôle et objectifs (`roles.js`) |
-| `lan/` | Serveur réseau local sans dépendance (HTTP + WebSocket, parties, comptes rendus), lanceurs Windows / macOS / Linux, mode d'emploi |
+| `lan/` | Serveur réseau local sans dépendance (HTTP + WebSocket, parties, comptes rendus ; origine vérifiée, tailles, connexions, parties et comptes rendus plafonnés), lanceurs Windows / macOS / Linux, mode d'emploi |
 | `match.js` | Simulation du match, rendu des joueurs, enregistrement d'état (base des ralentis EVS) |
 | `bcam.js` | Caméras broadcast : optique, cadreurs automatiques, traitement CCU (knee, white clip, HLG), câbles |
 | `rf.js` | Bilan de liaison HF, diversité, brouillage |
@@ -1203,7 +1276,7 @@ node tools/shots.mjs dossier 1280 800 '["vision","hf"]'   # captures de postes
 | `commentary.js` | Commentaires du match (commentateur, consultant, bord terrain, plateau) par synthèse vocale, volume suivant la console |
 | `audiodesk.js` | Console son en 3D dans la cabine (faders motorisés, FaderGlow, écrans Vistonics animés) |
 | `scenario.js` | Scénario « jour de match » chronométré et noté |
-| `shared.js` | Données partagées de la page publiée (configuration, progression) avec repli local |
+| `shared.js` | Données partagées de la page publiée (configuration, progression) avec repli local ; progression numérotée (`PROG_VERSION`, `migrateProgress`), fusionnée avec le serveur avant chaque écriture, état de l'enregistrement (`SAVE`), export, import et effacement |
 | `review.js` | Points techniques à faire relire par le formateur |
 | `gfx.js` | Habillage (score, bandeaux, statistiques) |
 | `atelier.js` | Atelier de montage de la CAM 1 : pièces, ordre des opérations et prérequis, visée, fantômes, gestes maintenus, réglages à la molette, mise en service, rapport |

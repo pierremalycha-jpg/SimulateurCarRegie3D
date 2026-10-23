@@ -24,6 +24,7 @@ Calendrier indicatif, calé sur l'année scolaire (les épreuves ont lieu en mai
 
 | Version | Période | Contenu |
 |---|---|---|
+| v19.4 | oct. 2026 (fait) | Consolider le car régie : quiz des leçons en banque (5 questions par leçon, 3 tirées, réponses mélangées, corrigé à la validation), réponses mélangées dans la caméra en 3D, livret qui ne compte que les réussites seules et demande un exercice pratique pour « consolidée », XP sur les seules pannes cachées, progression numérotée, fusionnée avant écriture, échec signalé, export / import / effacement et données personnelles (Réglages → Ma progression), polices intégrées (plus de Google Fonts), fuite mémoire des caméras corrigée, serveur réseau local durci |
 | v19.3 | oct. 2026 (fait) | L'interface jeu : objectif toujours à l'écran (exercice, mission, phase du jour de match) avec repère 3D, journal des missions (L), XP et sept niveaux de technicien, badges (dont un par compétence du livret), bruitages WebAudio, nouvelle identité visuelle « jeu vidéo » (écran titre cinématique, menu de pause, HUD, notifications), rubrique Jeu des réglages |
 | v19.2 | oct. 2026 (fait) | L'entrepôt, tuile de Jouer : monter une régie mobile de A à Z (caméras PTZ Panasonic, pupitre AW-RP150, ATEM HD8 ISO ou Carbonite, HyperDeck, Teranex, switch PoE+, box, PC vMix) d'après un cahier des charges noté ; catalogue de 21 modèles réels, moteur (énergie, câbles, IP, vidéo, tally), hall en 3D, faces cliquables, menus de configuration de chaque appareil, synoptique et liste de câblage, réseau avec ping, trois missions, compte rendu, exercice noté x-entrepot et livret ; chiffres et menus à faire relire par un professionnel |
 | v19.1 | oct. 2026 (fait) | La caméra en 3D terminée : les 51 notions écrites (lots 2 et 3 : filtres et prisme, capteurs, traitement de l'image, corps, viseur et cadreur, voie caméra, mesure, grand capteur, HDR, super ralenti), notions acquises et quiz des neuf chapitres, exercice noté « Mise en service » (x-camera, leçon La chaîne caméra), liens vers le Cours, livret ; chiffres à faire relire par un professionnel de la caméra |
@@ -52,6 +53,9 @@ et 30 images par seconde sur le PC le plus faible de l'établissement.
   route ; l'entrepôt devient un mode à part. Le chef de car n'est plus une entrée : ses parcours sont les
   exercices pratiques des leçons du Cours, et sa présentation du car devient le mode « Visite guidée ».
 
+- 23 octobre 2026 (v19.4) : on consolide le car régie avant d'étendre l'entrepôt ou d'ouvrir un lieu : d'abord des
+  preuves d'apprentissage fiables (quiz, livret, XP), une progression qui ne se perd pas, un serveur réseau local
+  qu'un élève ne peut pas faire tomber.
 - 22 octobre 2026 (v19.3) : le simulateur se présente comme un jeu : l'objectif en cours est toujours à l'écran,
   les missions se choisissent dans le journal (L) sans passer par Échap, la progression se mesure en XP, niveaux et
   badges rattachés aux compétences du livret, les bruitages sont synthétisés (aucun fichier), le rendu 3D n'est pas
@@ -67,3 +71,6 @@ et 30 images par seconde sur le PC le plus faible de l'établissement.
 - R3 : le public (TIEE seul, ou aussi les options Son et Image) ; le concert sert surtout ces deux options.
 - R4 : brancher le vrai matériel de l'établissement.
 - R5 : les relecteurs professionnels.
+- R6 : protéger le rôle de formateur en coopération : il se choisit librement dans le salon (une panne forcée
+  n'est acceptée que de l'hôte ou du formateur depuis la v19.4) ; un code donné par le formateur, ou le profil
+  Formateur de l'ordinateur qui héberge ?
