@@ -8,7 +8,7 @@ import { TERMS } from '../content/netterms.js';
 import { openLayer, layerOpen, showTab, closeLayer } from './layer.js';
 import { glossarySection, postesSection, materielSection, proceduresSection, openArticle } from './guide.js';
 import { CFG } from '../shared.js';
-import { CHAPTERS, lessonById, allLessons, coursProgress, markSeen, recordQuiz, lessonDone, chapterDone } from '../cours/index.js';
+import { CHAPTERS, lessonById, allLessons, coursProgress, markSeen, recordQuiz, lessonDone, chapterDone, drawQuiz } from '../cours/index.js';
 import { posteCible, estLecon } from '../cours/liens.js';
 import { exercisesOf, exerciseInfo, exerciseDone, specialState, allExercises } from '../cours/exercices.js';
 import { TUTOR } from '../tutor/engine.js';
@@ -24,6 +24,9 @@ import { liveProg, openLivret } from './livret.js';
 // faire, livret de compétences.
 // ----------------------------------------------------------------------------------
 const UI = { lesson: /** @type {string | null} */ (null), chapter: /** @type {string | null} */ (null), demo: /** @type {{ destroy?: () => void } | null | void} */ (null), q: '' };
+/** l'essai de quiz en cours (gardé quand la page se redessine) : questions tirées, réponses choisies, corrigé affiché */
+/** @type {{ id: string, draw: { i: number, order: number[] }[], answers: (number | null)[], checked: boolean } | null} */
+let ESSAI = null;
 const TABS = /** @type {[string, string][]} */ ([['lecons', 'Leçons'], ['glossaire', 'Glossaire'], ['postes', 'Postes'], ['materiel', 'Matériel']]);
 // anciens onglets (chapitres du guide, procédures, caméra) : tout est maintenant dans les leçons
 const OLD_TAB = { chapitres: 'lecons', articles: 'lecons', procedures: 'lecons', camera: 'lecons', notions: 'lecons' };
@@ -159,7 +162,7 @@ function home(page, render) {
     el('section', { class: 'co-livret', 'aria-label': 'Livret de compétences' }, el('h4', {}, 'Mon livret de compétences (BTS MAV, option TIEE)'),
       el('div', { class: 'co-blocs' }, ...L.blocs.map((b) => { const w = b.count.consolidee + b.count.travaillee; const n = b.comps.length - b.count.absent; return el('div', { class: 'co-bloc' }, el('b', {}, b.id), el('span', {}, b.titre), bar(w, n, b.id), el('small', {}, `${w} / ${n} travaillées`)); })),
       el('div', { class: 'hwrow' }, el('button', { type: 'button', class: 'btn small', onclick: () => openLivret() }, 'Ouvrir le livret complet')),
-      el('p', { class: 'note' }, 'Une compétence est travaillée quand une leçon, un exercice ou une tâche qui la font pratiquer est réussi. Le livret dit ce qui a été pratiqué ; la valider reste le rôle du formateur.')));
+      el('p', { class: 'note' }, 'Une compétence est travaillée quand une leçon, un exercice ou une tâche qui la font pratiquer est réussi ; consolidée, avec trois réussites dont un exercice pratique fait seul. Le livret dit ce qui a été pratiqué ; la valider reste le rôle du formateur.')));
 }
 function lessonPage(page, { chapter, lesson, i }, render) {
   markSeen(lesson.id);
@@ -186,34 +189,50 @@ function lessonPage(page, { chapter, lesson, i }, render) {
     ...xs.map((x) => exerciseCard(x, L))));
   const terms = (L.terms || []).filter((id) => TERMS[id]);
   if (terms.length) page.append(el('section', { class: 'co-terms' }, el('h4', {}, 'Fiches « ? »'), el('div', { class: 'co-chips' }, ...terms.map((id) => el('span', { class: 'co-chip' }, TERMS[id].t, q(id))))));
-  page.append(quiz(L, render));
+  page.append(quiz(L));
   const all = allLessons(); const k = all.findIndex((x) => x.lesson.id === L.id);
   const prev = all[k - 1], next = all[k + 1];
   page.append(el('div', { class: 'co-nextprev' },
     prev ? el('button', { class: 'btn small', onclick: () => { UI.lesson = prev.lesson.id; UI.chapter = prev.chapter.id; render(); } }, '◀ ' + prev.lesson.title) : el('span'),
     next ? el('button', { class: 'btn small primary', onclick: () => { UI.lesson = next.lesson.id; UI.chapter = next.chapter.id; render(); } }, next.lesson.title + ' ▶') : el('span')));
 }
-// le quiz : une mauvaise réponse dit pourquoi (par choix quand la leçon le précise), la bonne s'allume
-function quiz(L, render) {
+// le quiz : trois questions tirées dans la banque de la leçon, réponses mélangées. On choisit ses réponses
+// (on peut changer d'avis), puis « Valider » donne le score et le corrigé de chaque question : pourquoi la
+// bonne réponse est juste, pourquoi le choix fait est faux. « Refaire le quiz » tire d'autres questions.
+function quiz(L) {
   const p = coursProgress(L.id);
+  if (!ESSAI || ESSAI.id !== L.id) { const draw = drawQuiz(L.quiz); ESSAI = { id: L.id, draw, answers: draw.map(() => null), checked: false }; }
+  const E = ESSAI;
   const box = el('section', { class: 'co-quiz', 'aria-label': 'Quiz' });
-  box.append(el('h4', {}, 'Quiz', p.quiz ? el('small', {}, ` · meilleur score ${p.quiz.score} / ${p.quiz.total}`) : null));
-  const answers = new Array(L.quiz.length).fill(null);
-  const done = el('p', { class: 'co-score', hidden: true });
-  const items = L.quiz.map((Q, qi) => {
-    const why = el('p', { class: 'co-why', hidden: true });
-    const text = (c) => (Array.isArray(c) ? c[0] : c);
+  // la section est redessinée en place ; le focus clavier revient sur l'élément visé
+  const redraw = (/** @type {string} */ focus) => { const nb = quiz(L); box.replaceWith(nb); const f = /** @type {HTMLElement | null} */ (nb.querySelector(focus)); if (f) f.focus(); };
+  box.append(el('h4', {}, 'Quiz', p.quiz ? el('small', {}, ` · meilleur score ${p.quiz.score} / ${p.quiz.total}`) : null),
+    el('p', { class: 'co-quiz-help' }, `${E.draw.length} questions tirées parmi ${L.quiz.length}. Choisissez vos réponses, puis validez : le corrigé s'affiche à la fin.`));
+  const text = (c) => (Array.isArray(c) ? c[0] : c);
+  const items = E.draw.map(({ i, order }, qi) => {
+    const Q = L.quiz[i];
     const whyOf = (ci) => (Array.isArray(Q.choices[ci]) && Q.choices[ci][1]) || Q.why;
-    const btns = Q.choices.map((c, ci) => el('button', { type: 'button', class: 'btn small co-choice-btn', onclick: () => {
-      if (answers[qi] != null) return;
-      answers[qi] = ci;
-      btns.forEach((b, bi) => { b.disabled = true; b.classList.toggle('good', bi === Q.answer); b.classList.toggle('bad', bi === ci && ci !== Q.answer); });
-      why.hidden = false; why.replaceChildren(rich((ci === Q.answer ? '**Exact.** ' : `**Non, c'est « ${text(Q.choices[Q.answer])} ».** `) + whyOf(ci), 'co-rich'));
-      if (answers.every((a) => a != null)) { const score = answers.filter((a, k) => a === L.quiz[k].answer).length; recordQuiz(L.id, score, L.quiz.length); done.hidden = false; done.replaceChildren(el('b', {}, `${score} / ${L.quiz.length}`), score === L.quiz.length ? ' : leçon acquise.' : ' : relisez l\'essentiel et refaites le quiz.', el('button', { class: 'btn small', onclick: () => render() }, 'Refaire le quiz')); }
-    } }, text(c)));
-    return el('div', { class: 'co-q' }, el('p', {}, `${qi + 1}. ${Q.q}`), el('div', { class: 'co-choices' }, ...btns), why);
+    const btns = order.map((ci) => el('button', {
+      type: 'button', class: 'btn small co-choice-btn' + (E.checked && ci === Q.answer ? ' good' : '') + (E.checked && ci === E.answers[qi] && ci !== Q.answer ? ' bad' : '') + (E.answers[qi] === ci ? ' sel' : ''),
+      'data-c': String(ci), 'aria-pressed': E.answers[qi] === ci ? 'true' : 'false', disabled: E.checked,
+      onclick: () => { if (E.checked) return; E.answers[qi] = ci; redraw(`.co-q[data-q="${i}"] [data-c="${ci}"]`); },
+    }, text(Q.choices[ci])));
+    const a = E.answers[qi];
+    const why = E.checked && a != null ? el('div', { class: 'co-why' }, rich((a === Q.answer ? '**Exact.** ' + Q.why : `**Non, c'est « ${text(Q.choices[Q.answer])} ».** ${whyOf(a)}` + (whyOf(a) !== Q.why ? ' ' + Q.why : '')), 'co-rich')) : null;
+    return el('div', { class: 'co-q', 'data-q': String(i) }, el('p', {}, `${qi + 1}. ${Q.q}`), el('div', { class: 'co-choices', role: 'group', 'aria-label': `Question ${qi + 1}` }, ...btns), why);
   });
-  box.append(...items, done);
+  box.append(...items);
+  const n = E.draw.length, score = E.draw.filter(({ i }, qi) => E.answers[qi] === L.quiz[i].answer).length;
+  const all = E.answers.every((x) => x != null);
+  if (!E.checked) {
+    box.append(el('div', { class: 'co-score' }, el('button', {
+      type: 'button', class: 'btn small primary co-valider', disabled: !all,
+      onclick: () => { if (!E.answers.every((x) => x != null)) return; E.checked = true; recordQuiz(L.id, score, n); redraw('.co-score'); },
+    }, 'Valider mes réponses'), all ? null : el('small', {}, `${E.answers.filter((x) => x != null).length} / ${n} répondues`)));
+  } else {
+    box.append(el('p', { class: 'co-score', tabindex: '-1', role: 'status' }, el('b', {}, `${score} / ${n}`), score === n ? ' : leçon acquise.' : ' : relisez l\'essentiel et refaites le quiz (d\'autres questions seront tirées).',
+      el('button', { type: 'button', class: 'btn small', onclick: () => { const prev = E.draw.map((d) => d.i); const draw = drawQuiz(L.quiz, prev); ESSAI = { id: L.id, draw, answers: draw.map(() => null), checked: false }; redraw('.co-choice-btn'); } }, 'Refaire le quiz')));
+  }
   return box;
 }
 /** ferme l'espace Cours s'il est ouvert (depuis « Aller au poste », par exemple) */

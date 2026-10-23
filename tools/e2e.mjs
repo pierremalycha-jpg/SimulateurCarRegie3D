@@ -50,6 +50,7 @@ const SUITES = [
   ['entrepot', 'entrepot', [], 25],
   ['chef-postes', 'chef-postes', [], 60],
   ['jeu', 'jeu', [], 20],
+  ['progression', 'progression', [], 15],
 ];
 
 const args = process.argv.slice(2);
@@ -58,7 +59,7 @@ const want = args.filter((a) => !a.startsWith('--'));
 const todo = SUITES.filter(([n]) => !want.length || want.some((w) => n.startsWith(w)));
 if (!todo.length) { console.error('Aucune suite ne correspond à : ' + want.join(', ')); process.exit(2); }
 
-if (args.includes('--build') || !fs.existsSync(path.join(ROOT, 'dist/index.html')) || !fs.existsSync(path.join(ROOT, 'dist/car-regie-serveur-lan.mjs')) || !fs.existsSync(path.join(ROOT, 'dist/Car-regie-3D.html'))) {
+if (args.includes('--build') || !fs.existsSync(path.join(ROOT, 'dist/index.html')) || !fs.existsSync(path.join(ROOT, 'dist/car-regie-serveur-lan.mjs')) || !fs.existsSync(path.join(ROOT, 'dist/TIEE-Simulator.html'))) {
   console.log('Construction de la page…');
   execFileSync(process.execPath, ['tools/build.mjs'], { cwd: ROOT, stdio: 'inherit' });
 }

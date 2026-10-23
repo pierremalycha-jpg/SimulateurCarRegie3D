@@ -1,6 +1,7 @@
 // @ts-check
 import { PROG, saveProgressSoon } from '../shared.js';
 import { emit } from '../state.js';
+import { shuffled } from '../util.js';
 
 // ----------------------------------------------------------------------------------
 // Les cours : des chapitres (le signal vidéo, le SDI, le réseau, la HF…) faits de leçons, une par
@@ -27,8 +28,10 @@ import { emit } from '../state.js';
  *   (identifiant de src/tutor/lessons) ou un exercice noté (« x-atelier », « x-brassage », « x-reseau », « x-match », voir
  *   cours/exercices.js) ; intro : deux ou trois phrases qui relient la leçon au geste à faire dans le car
  * @property {string} [article] article de référence du guide (content/guide.js), proposé en « Pour aller plus loin »
- * @property {Array<{ q: string, choices: Array<string | [string, string]>, answer: number, why: string }>} quiz trois questions ; un choix peut porter sa propre explication [texte, pourquoi]
+ * @property {QuizQuestion[]} quiz la banque de questions (cinq au moins) : chaque essai en tire QUIZ_N, réponses mélangées ;
+ *   un choix peut porter sa propre explication [texte, pourquoi]
  */
+/** @typedef {{ q: string, choices: Array<string | [string, string]>, answer: number, why: string }} QuizQuestion */
 /**
  * @typedef {object} Chapter
  * @property {string} id
@@ -61,6 +64,23 @@ export function coursProgress(id) {
   const P = PROG.cours = PROG.cours || {};
   return P[id] || (P[id] = { seen: false, quiz: /** @type {{ score: number, total: number } | null} */ (null) });
 }
+// ---------------- le quiz d'une leçon : un tirage dans la banque ----------------
+/** questions posées à chaque essai */
+export const QUIZ_N = 3;
+/**
+ * Tire QUIZ_N questions de la banque, en commençant par celles qui n'étaient pas dans l'essai précédent
+ * (refaire le quiz pose d'autres questions), et mélange l'ordre des réponses de chacune.
+ * @param {QuizQuestion[]} bank
+ * @param {number[]} [prev] questions (indices dans la banque) de l'essai précédent
+ * @returns {{ i: number, order: number[] }[]} i : question de la banque ; order[k] : choix de la banque affiché en k
+ */
+export function drawQuiz(bank, prev = [], rnd = Math.random) {
+  const all = bank.map((_, i) => i);
+  const fresh = shuffled(all.filter((i) => !prev.includes(i)), rnd), old = shuffled(all.filter((i) => prev.includes(i)), rnd);
+  const picked = [...fresh, ...old].slice(0, Math.min(QUIZ_N, bank.length));
+  return shuffled(picked, rnd).map((i) => ({ i, order: shuffled(bank[i].choices.map((_, k) => k), rnd) }));
+}
+
 export function markSeen(id) { const p = coursProgress(id); if (!p.seen) { p.seen = true; PROG.updatedAt = Date.now(); saveProgressSoon(); } }
 export function recordQuiz(id, score, total) { const p = coursProgress(id); if (!p.quiz || score >= p.quiz.score) p.quiz = { score, total }; PROG.updatedAt = Date.now(); saveProgressSoon(); emit('quiz', { id, score, total }); }
 /** leçon acquise : quiz réussi en entier */

@@ -10,9 +10,12 @@ const TARGET = ['chrome100', 'edge100', 'firefox100', 'safari15'];
 const define = { __APP_VERSION__: JSON.stringify(pkg.version) };
 // filet de sécurité du chargement (src/boot.js) : script classique placé avant le programme
 const boot = esbuild.transformSync(fs.readFileSync('src/boot.js', 'utf8'), { minify, target: 'es2015', define, legalComments: 'none', charset: 'utf8' }).code;
-// polices de l'interface intégrées à la page (paquets Fontsource, licence OFL) : même rendu en ligne, en
-// fichier hors ligne et dans tous les navigateurs ; alphabet latin (accents français compris)
-const FONTS = [['Archivo', 'archivo', [400, 500, 600, 700]], ['Archivo Narrow', 'archivo-narrow', [500, 600, 700]], ['B612 Mono', 'b612-mono', [400, 700]]];
+// polices intégrées à la page (paquets Fontsource, licence OFL) : même rendu en ligne, en fichier hors ligne
+// et dans tous les navigateurs ; alphabet latin (accents français compris). Archivo et B612 Mono pour
+// l'interface ; Barlow et JetBrains Mono pour les textures du monde 3D (étiquettes, panneaux, moniteurs),
+// qui venaient de Google Fonts avant la v19.4 : plus aucune requête vers un service de polices
+const FONTS = [['Archivo', 'archivo', [400, 500, 600, 700]], ['Archivo Narrow', 'archivo-narrow', [500, 600, 700]], ['B612 Mono', 'b612-mono', [400, 700]],
+  ['Barlow', 'barlow', [500]], ['Barlow Condensed', 'barlow-condensed', [500, 600, 700]], ['Barlow Semi Condensed', 'barlow-semi-condensed', [600]], ['JetBrains Mono', 'jetbrains-mono', [400, 600]]];
 const fontCss = FONTS.flatMap(([family, pkg, weights]) => weights.map((w) => {
   const b64 = fs.readFileSync(`node_modules/@fontsource/${pkg}/files/${pkg}-latin-${w}-normal.woff2`).toString('base64');
   return `@font-face{font-family:"${family}";font-style:normal;font-weight:${w};font-display:swap;src:url(data:font/woff2;base64,${b64}) format("woff2")}`;

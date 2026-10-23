@@ -5,7 +5,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import '../helpers/scene.mjs';
 import { BLOCS, COMPETENCES, MODULES, RATTACHEMENT, blocOf } from '../../src/content/referentiel.js';
-import { livret, niveauOf, activityState, codesOf, ACTIVITES } from '../../src/livret.js';
+import { livret, niveauOf, activityState, codesOf, ACTIVITES, estPratique } from '../../src/livret.js';
 import { ALL_STATION_LESSONS } from '../../src/tutor/lessons/index.js';
 import { NET_LESSONS } from '../../src/tutor/lessons/reseau.js';
 import { NET_MISSIONS } from '../../src/net/course.js';
@@ -56,13 +56,37 @@ test('rattachement : exactement les 9 compétences absentes du car sont sans act
   assert.deepEqual(sans, ['3.1', '3.2', '3.3', '3.5', '3.13', '3.15', '3.16', '4.3', '4.5']);
 });
 
-test('niveaux : à travailler, travaillée, consolidée (3 activités, ou toutes)', () => {
+test('niveaux : à travailler, travaillée, consolidée (3 activités, ou toutes, dont un exercice pratique)', () => {
   assert.equal(niveauOf(0, 0), 'absent');
   assert.equal(niveauOf(5, 0), 'a_faire');
   assert.equal(niveauOf(5, 2), 'travaillee');
   assert.equal(niveauOf(5, 3), 'consolidee');
   assert.equal(niveauOf(2, 2), 'consolidee');
   assert.equal(niveauOf(1, 1), 'consolidee');
+  // trois quiz réussis, aucun des exercices pratiques : travaillée seulement
+  assert.equal(niveauOf(5, 3, { total: 2, done: 0 }), 'travaillee');
+  assert.equal(niveauOf(5, 3, { total: 2, done: 1 }), 'consolidee');
+  assert.equal(niveauOf(3, 3, { total: 0, done: 0 }), 'consolidee', 'sans exercice pratique rattaché, les quiz suffisent');
+  assert.ok(estPratique('parcours', 'x') && estPratique('camera', 'mes') && !estPratique('cours', 'signal-422') && !estPratique('camera', 'iris'));
+});
+
+test('livret : l\'aide ne compte pas, une réussite seule reste acquise, un atelier à retravailler non plus', () => {
+  // parcours terminé avec « Fais-le pour moi » : pas réussi ; refait seul (clean) : réussi, même refait ensuite avec aide
+  assert.deepEqual(activityState({ tutor: { a: { done: true, aided: 2 } } }, 'parcours', 'a'), { done: false, aided: true });
+  assert.deepEqual(activityState({ tutor: { a: { done: true, aided: 2, clean: true } } }, 'parcours', 'a'), { done: true, aided: false });
+  assert.deepEqual(activityState({ tutor: { a: { done: true, aided: 0 } } }, 'parcours', 'a'), { done: true, aided: false });
+  // mission réseau sauvée par la configuration de référence
+  assert.deepEqual(activityState({ net: { missions: { n1: { pts: 5, aided: true } } } }, 'reseau', 'n1'), { done: false, aided: true });
+  assert.deepEqual(activityState({ net: { missions: { n1: { pts: 5, aided: true, clean: true } } } }, 'reseau', 'n1'), { done: true, aided: false });
+  // atelier : 2 erreurs au plus
+  assert.equal(activityState({ rigs: [{ errs: 5 }] }, 'exercice', 'atelier').done, false, 'montage à retravailler');
+  assert.equal(activityState({ rigs: [{ errs: 5 }, { errs: 2 }] }, 'exercice', 'atelier').done, true);
+  // 1.4 consolidée par des quiz seuls ? non : il faut un de ses exercices pratiques
+  const cours = Object.fromEntries(Object.entries(RATTACHEMENT.cours).filter(([, c]) => c.includes('1.4')).map(([id]) => [id, { seen: true, quiz: { score: 3, total: 3 } }]));
+  const c14 = (p) => livret(p).comps.find((x) => x.code === '1.4');
+  assert.equal(c14({ cours }).niveau, 'travaillee');
+  assert.equal(c14({ cours, tutor: { 'vision-exposition': { done: true, aided: 1 } } }).niveau, 'travaillee', 'fait avec aide : ne consolide pas');
+  assert.equal(c14({ cours, tutor: { 'vision-exposition': { done: true, aided: 0 } } }).niveau, 'consolidee');
 });
 
 test('livret vide : rien de travaillé, 30 compétences à travailler, 9 hors simulateur', () => {
@@ -84,11 +108,11 @@ test('livret : chaque source de progression compte (parcours, missions, jour de 
   };
   assert.equal(activityState(prog, 'cours', 'signal-422').done, true, 'leçon acquise : quiz réussi en entier');
   assert.equal(activityState(prog, 'cours', 'sdi-oeil').done, false, 'quiz raté : leçon non acquise');
-  assert.deepEqual(activityState(prog, 'parcours', 'chef-depannage'), { done: true, aided: true });
+  assert.deepEqual(activityState(prog, 'parcours', 'chef-depannage'), { done: false, aided: true }, 'terminé avec « Fais-le pour moi » : à refaire seul');
   assert.equal(activityState(prog, 'parcours', 'reseau-depannage').done, false);
   assert.equal(activityState(prog, 'phase', 'air').done, true);
   assert.equal(activityState(prog, 'phase', 'line').done, false, 'phase sous 60 %');
-  assert.deepEqual(activityState(prog, 'reseau', 'n9'), { done: true, aided: true });
+  assert.deepEqual(activityState(prog, 'reseau', 'n9'), { done: false, aided: true }, 'configuration de référence chargée');
   assert.equal(activityState(prog, 'exercice', 'quiz2110').done, false);
   assert.equal(activityState(prog, 'exercice', 'examenReseau').done, true);
   assert.equal(activityState(prog, 'exercice', 'brassage').done, true);
@@ -96,11 +120,11 @@ test('livret : chaque source de progression compte (parcours, missions, jour de 
 
   const L = livret(prog);
   const c = (code) => L.comps.find((x) => x.code === code);
-  // 2.13 dépannage : chef-depannage, ccu-depannage, m16, air, n9, examen réseau
+  // 2.13 dépannage : ccu-depannage, m16, air, examen réseau (chef-depannage et n9 aidés ne comptent pas)
   assert.equal(c('2.13').niveau, 'consolidee');
-  assert.equal(c('2.13').done, 6);
-  // 3.10 : chef-depannage, ccu-depannage, air
-  assert.equal(c('3.10').niveau, 'consolidee');
+  assert.equal(c('2.13').done, 4);
+  // 3.10 : ccu-depannage, air (chef-depannage aidé) : 2 sur 5
+  assert.equal(c('3.10').niveau, 'travaillee');
   // 2.10 : brassage seul parmi ses activités
   assert.equal(c('2.10').niveau, 'travaillee');
   assert.equal(c('3.6').niveau, 'travaillee', 'examen réseau');

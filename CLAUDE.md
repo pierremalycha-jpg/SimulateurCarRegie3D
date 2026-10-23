@@ -30,8 +30,9 @@ Tout est en français (code commenté en français, interface, commits).
   dans `ORDER`, liens avec le glossaire et les postes dans `liens.js`). L'affichage est `src/ui/cours_ui.js`
   dans l'espace plein écran `src/ui/layer.js` : barre Leçons · Glossaire · Postes · Matériel, un seul sommaire
   (à gauche), la page « Mon suivi » (progression, à faire ensuite, livret). Une leçon = l'essentiel (3 lignes),
-  un schéma, une manipulation qui calcule vraiment, l'explication, « dans le car », fiches « ? », quiz de
-  3 questions (chaque mauvaise réponse expliquée), ses **exercices pratiques** et son article de référence.
+  un schéma, une manipulation qui calcule vraiment, l'explication, « dans le car », fiches « ? », un quiz
+  (banque d'au moins 5 questions à 3 choix, chaque choix faux expliqué ; chaque essai en tire 3, réponses
+  mélangées, corrigé à la validation : `drawQuiz`), ses **exercices pratiques** et son article de référence.
   Ne pas recréer `src/content/cours/` ni `src/ui/cours/`, ni d'onglet Chapitres ou Procédures.
 - **L'entrepôt** (`src/entrepot/`, tuile « L'entrepôt » de Jouer, décidé le 22 octobre 2026) : monter une
   régie mobile de A à Z d'après un cahier des charges. Catalogue de matériel réel (`catalogue/`, un fichier par
@@ -55,7 +56,13 @@ Tout est en français (code commenté en français, interface, commits).
   **visite guidée** (mode de Jouer) : le tour du car, puis la présentation de chaque poste (« Poste suivant »).
 - **Livret de compétences** : référentiel TIEE dans `src/content/referentiel.js` (RATTACHEMENT : parcours,
   missions, phases, réseau, exercices, cours, camera), calcul pur dans `src/livret.js`, affichage
-  `src/ui/livret.js`. Toute nouvelle activité notée, toute nouvelle leçon se rattache à des compétences.
+  `src/ui/livret.js`. Toute nouvelle activité notée, toute nouvelle leçon se rattache à des compétences. Une
+  activité ne compte que réussie seule (sans « Fais-le pour moi ») ; « consolidée » demande un exercice
+  pratique (`estPratique`), pas seulement des quiz. L'XP suit la même règle (pannes cachées seulement).
+- **Progression** (`src/shared.js`) : `PROG.v` et `migrateProgress` (monter `PROG_VERSION` et ajouter l'étape quand
+  la forme change), fusion `mergeProgress` (rien ne se perd entre deux appareils), Réglages → Ma progression
+  (`src/ui/ma_progression.js` : export, import, effacement, données personnelles). Aucune ressource externe nouvelle
+  (polices intégrées par `tools/build.mjs`).
 - **La couche jeu (v19.3)**, `src/game/` : l'objectif en cours toujours à l'écran (`quest.js`, `#quest`, repère 3D
   `#qmark`), le journal des missions (touche L, bouton Missions du HUD et des en-têtes de poste : exercices du poste,
   toutes les missions par chapitre, badges), XP / niveaux / badges (`xp.js`, calcul pur, barème `BAREME`, badges de

@@ -50,7 +50,7 @@ function bar(count) {
 }
 function legend() {
   return el('div', { class: 'lv-legend' }, ...ORDER.map((k) => el('span', {}, el('i', { class: 'lv-' + k }), NIVEAUX[k])),
-    el('small', {}, `Travaillée : au moins une activité réussie. Consolidée : ${CONSOLIDE} activités différentes réussies, ou toutes s'il y en a moins.`));
+    el('small', {}, `Travaillée : au moins une activité réussie. Consolidée : ${CONSOLIDE} activités différentes réussies (ou toutes s'il y en a moins), dont un exercice pratique. Un exercice terminé avec « Fais-le pour moi » ne compte qu'une fois refait seul.`));
 }
 
 function compRow(c) {
@@ -67,7 +67,8 @@ function compRow(c) {
     main.append(el('ul', { class: 'lv-acts' }, ...c.acts.filter((a) => !notions.includes(a)).map((a) => el('li', { class: 'lv-act' + (a.done ? ' done' : '') },
       a.done ? icon('fait') : el('span', { class: 'lv-dot', 'aria-hidden': 'true' }),
       el('span', { class: 'sr' }, a.done ? 'réussi : ' : 'à faire : '),
-      el('span', {}, el('em', {}, KIND[a.kind]), ' ', activityLabel(a), a.aided ? el('small', {}, ' (aidé)') : null))), camLine));
+      el('span', {}, el('em', {}, KIND[a.kind]), ' ', activityLabel(a), a.aided ? el('small', {}, ' (terminé avec de l\'aide : à refaire seul pour qu\'il compte)') : null))), camLine));
+    if (c.niveau === 'travaillee' && c.pratique.total && !c.pratique.done && c.done >= Math.min(CONSOLIDE, c.total)) main.append(el('p', { class: 'lv-later' }, 'Pour la consolider : réussir seul un de ses exercices pratiques (les quiz seuls ne suffisent pas).'));
     if (c.couverture === 'partie') main.append(el('p', { class: 'lv-later' }, 'Le simulateur n\'en couvre qu\'une partie' + (c.prevu.length ? ` ; ${c.prevu.length > 1 ? 'les modules' : 'le module'} ${modules(c.prevu)} la complèteront.` : '.')));
   }
   return el('li', { class: 'lv-comp lv-' + c.niveau },

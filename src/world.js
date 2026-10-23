@@ -347,6 +347,18 @@ function boardsTexture() {
 // sinon de nuit (exposition × 24) ils deviendraient des néons
 const OVERLAYS = new Set();
 export function overlayMat(m) { m.userData.base = m.color.clone(); OVERLAYS.add(m); m.color.copy(m.userData.base).multiplyScalar(W.overlayK ?? 1); return m; }
+/** un tracé retiré (câble d'une caméra démontée) : sa matière quitte la liste et la carte graphique */
+export function releaseOverlay(m) { if (!m) return; OVERLAYS.delete(m); m.dispose(); }
+/** géométries, matières et textures d'un objet et de ses enfants (à libérer quand il disparaît) */
+export function ownedResources(root) {
+  const out = new Set();
+  root.traverse((o) => {
+    const x = /** @type {any} */ (o);
+    if (x.geometry) out.add(x.geometry);
+    for (const m of [].concat(x.material || [])) { out.add(m); for (const k of ['map', 'alphaMap', 'emissiveMap', 'normalMap', 'roughnessMap']) if (m[k]) out.add(m[k]); }
+  });
+  return [...out];
+}
 function updateOverlays() { W.overlayK = Math.min(1, 1.3 / (S.eyeExposure || 1)); for (const m of OVERLAYS) m.color.copy(m.userData.base).multiplyScalar(W.overlayK); }
 export function labelSprite(text, opts = {}) {
   const fs = opts.size || 44;

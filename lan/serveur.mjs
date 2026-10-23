@@ -31,8 +31,18 @@ const ASKED = +(argPort > 0 ? process.argv[argPort + 1] : process.env.PORT) || 0
 let PORT = ASKED || 8080;
 const OPEN = process.argv.includes('--ouvrir'); // ouvrir la page dans le navigateur une fois prêt
 const EXE = process.argv.includes('--exe');     // lancé par TIEE-Simulator.exe (fenêtre de console à part)
-const MAX_MSG = 4 * 1024 * 1024; // un message WebSocket ne dépasse jamais 4 Mo
-const MAX_PEERS = 40;            // par partie
+// limites : le serveur tourne sur le réseau du lycée, ouvert à tous ceux qui y sont branchés ; un
+// client qui se trompe (ou qui s'amuse) ne doit pouvoir ni remplir la mémoire ni le disque de l'hôte
+const MAX_MSG = 4 * 1024 * 1024;  // un message WebSocket (tous ses fragments) ne dépasse jamais 4 Mo
+const MAX_PEERS = 40;             // joueurs par partie
+const MAX_ROOMS = 50;             // parties ouvertes en même temps
+const MAX_CONNS = 300;            // connexions WebSocket en tout
+const MAX_CONNS_IP = 20;          // par adresse (sauf cet ordinateur : la machine de l'hôte et les tests)
+const MAX_PRES = 64 * 1024;       // présence d'un joueur (pseudo, rôle, position, états), en JSON
+const MAX_PRES_KEYS = 60;
+const RAPPORT_MAX = 4 * 1024 * 1024;  // un compte rendu
+const RAPPORTS_MAX = 500;             // comptes rendus gardés dans « rapports » (les plus anciens restent, les suivants sont refusés)
+const RAPPORT_PAR_MIN = 6;            // envois de comptes rendus par minute et par adresse
 
 // ---------------- la page du simulateur ----------------
 let PAGE = null; // version autonome : la page est intégrée ici à la construction (tools/build.mjs)
@@ -73,7 +83,7 @@ function partyList() {
 // ---------------- WebSocket (RFC 6455, sans extension) ----------------
 class Conn {
   constructor(socket) {
-    this.s = socket; this.buf = Buffer.alloc(0); this.frags = []; this.alive = true; this.room = null; this.peer = null;
+    this.s = socket; this.buf = Buffer.alloc(0); this.frags = []; this.fragBytes = 0; this.alive = true; this.room = null; this.peer = null; this.addr = '';
     socket.on('data', (d) => this.onData(d));
     socket.on('close', () => this.onClose());
     socket.on('error', () => this.onClose());
@@ -96,9 +106,12 @@ class Conn {
       if (op === 9) { this.frame(10, payload); continue; }
       if (op === 10) { this.alive = true; continue; }
       if (op === 1 || op === 2 || op === 0) {
+        // les fragments d'un même message comptent ensemble : au-delà de MAX_MSG, la connexion est fermée
+        this.fragBytes += payload.length;
+        if (this.fragBytes > MAX_MSG) { this.close(1009); return; }
         this.frags.push(payload);
         if (!fin) continue;
-        const msg = Buffer.concat(this.frags).toString('utf8'); this.frags = [];
+        const msg = Buffer.concat(this.frags).toString('utf8'); this.frags = []; this.fragBytes = 0;
         this.alive = true;
         let m; try { m = JSON.parse(msg); } catch (e) { continue; }
         try { onMessage(this, m); } catch (e) { console.error('message ignoré :', e.message); }
@@ -116,7 +129,7 @@ class Conn {
   }
   send(obj) { this.frame(1, Buffer.from(JSON.stringify(obj), 'utf8')); }
   close(code = 1000) { const c = Buffer.alloc(2); c.writeUInt16BE(code); this.frame(8, c); this.s.end(); this.onClose(); }
-  onClose() { if (this.closed) return; this.closed = true; leave(this); }
+  onClose() { if (this.closed) return; this.closed = true; this.frags = []; this.buf = Buffer.alloc(0); CONNS.delete(this); leave(this); }
 }
 const CONNS = new Set();
 
@@ -129,9 +142,10 @@ function onMessage(c, m) {
   if (m.t === 'join') {
     if (c.room) leave(c);
     const code = String(m.room || '').toLowerCase().replace(/[^a-z0-9-]/g, '').slice(0, 24) || 'car-local';
+    if (!ROOMS.has(code) && ROOMS.size >= MAX_ROOMS) { c.send({ t: 'error', code: 'rooms', message: 'Trop de parties ouvertes sur ce serveur.' }); return; }
     const room = roomOf(code);
     if (room.peers.size >= MAX_PEERS) { c.send({ t: 'error', code: 'full', message: 'Partie complète.' }); return; }
-    const presence = m.presence && typeof m.presence === 'object' ? m.presence : {};
+    const presence = m.presence && typeof m.presence === 'object' && !Array.isArray(m.presence) && !tooBig(m.presence) ? m.presence : {};
     // le même onglet qui se reconnecte (Wi-Fi qui a décroché) : on retire l'ancienne connexion
     if (m.by) for (const q of [...room.peers.values()]) if (q.by === String(m.by).slice(0, 40)) { q.ws.room = null; q.ws.peer = null; room.peers.delete(q.id); broadcast(room, { t: 'left', peer: q.id }); try { q.ws.s.destroy(); } catch (e) { /* déjà fermée */ } }
     const p = { id: rid(), by: String(m.by || '').slice(0, 40) || null, ws: c, presence: clean(presence), updatedAt: Date.now() };
@@ -142,9 +156,15 @@ function onMessage(c, m) {
     return;
   }
   if (!c.room || !c.peer) return;
-  if (m.t === 'pres' && m.patch && typeof m.patch === 'object') {
+  if (m.t === 'pres' && m.patch && typeof m.patch === 'object' && !Array.isArray(m.patch)) {
     const pr = c.peer.presence;
-    for (const k of Object.keys(m.patch)) { if (m.patch[k] === null) delete pr[k]; else pr[k] = m.patch[k]; }
+    const patch = {};
+    for (const k of Object.keys(m.patch).slice(0, MAX_PRES_KEYS)) if (!BAD_KEY.has(k) && k.length <= 40) patch[k] = m.patch[k];
+    const next = { ...pr }; for (const k of Object.keys(patch)) { if (patch[k] === null) delete next[k]; else next[k] = patch[k]; }
+    if (Object.keys(next).length > MAX_PRES_KEYS || tooBig(next)) { c.send({ t: 'error', code: 'presence', message: 'Présence trop grosse : ignorée.' }); return; }
+    for (const k of Object.keys(pr)) delete pr[k];
+    Object.assign(pr, next);
+    m.patch = patch;
     c.peer.updatedAt = Date.now();
     if (!c.peer.told && pr.name) announced(c.peer, c.room);
     broadcast(c.room, { t: 'pres', peer: c.peer.id, patch: m.patch, at: c.peer.updatedAt }, c);
@@ -158,7 +178,9 @@ function onMessage(c, m) {
 }
 // journal de la console : arrivées (dès que le pseudo est connu), départs
 function announced(p, room) { p.told = true; console.log(`${hhmm()}  + ${p.presence.name} rejoint la partie « ${room.code.replace(/^car-/, '')} » (${room.peers.size} en ligne)`); }
-function clean(o) { const r = {}; for (const k of Object.keys(o)) if (o[k] !== null) r[k] = o[k]; return r; }
+const BAD_KEY = new Set(['__proto__', 'constructor', 'prototype']);
+function clean(o) { const r = {}; for (const k of Object.keys(o).slice(0, MAX_PRES_KEYS)) if (o[k] !== null && !BAD_KEY.has(k) && k.length <= 40) r[k] = o[k]; return r; }
+const tooBig = (o) => { try { return JSON.stringify(o).length > MAX_PRES; } catch (e) { return true; } };
 function leave(c) {
   const room = c.room, p = c.peer; if (!room || !p) return;
   room.peers.delete(p.id); c.room = null; c.peer = null;
@@ -185,6 +207,20 @@ function readBody(req, limit) {
   });
 }
 const RAPPORTS = path.join(process.cwd(), 'rapports');
+const isLoopback = (a) => a === '127.0.0.1' || a === '::1' || a === '::ffff:127.0.0.1';
+// une requête d'un navigateur porte son origine : elle doit être cette page (même hôte). Sans en-tête
+// Origin (outil en ligne de commande, tests), rien à vérifier : ce n'est pas une autre page qui agit.
+function sameOrigin(req) {
+  const o = req.headers.origin; if (!o) return true;
+  try { return new URL(o).host === req.headers.host; } catch (e) { return false; }
+}
+const SENT = new Map(); // adresse -> envois de comptes rendus de la dernière minute
+function allowRapport(addr) {
+  const now = Date.now(), list = (SENT.get(addr) || []).filter((t) => now - t < 60000);
+  if (list.length >= RAPPORT_PAR_MIN) { SENT.set(addr, list); return false; }
+  list.push(now); SENT.set(addr, list); return true;
+}
+function countRapports() { try { return fs.readdirSync(RAPPORTS).filter((f) => f.endsWith('.json')).length; } catch (e) { return 0; } }
 const server = http.createServer(async (req, res) => {
   const url = new URL(req.url, 'http://local');
   const json = (code, obj) => { res.writeHead(code, { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' }); res.end(JSON.stringify(obj)); };
@@ -196,7 +232,13 @@ const server = http.createServer(async (req, res) => {
     }
     if (req.method === 'GET' && url.pathname === '/api/parties') { json(200, { parties: partyList(), server: serverName() }); return; }
     if (req.method === 'POST' && url.pathname === '/api/rapport') {
-      const body = JSON.parse(await readBody(req, 4 * 1024 * 1024));
+      // seulement la page servie ici (une autre page web ouverte sur le réseau ne peut pas écrire sur le disque de l'hôte)
+      if (!sameOrigin(req)) { json(403, { ok: false, message: 'Origine refusée.' }); return; }
+      if (!/^application\/json\b/i.test(String(req.headers['content-type'] || ''))) { json(415, { ok: false, message: 'JSON attendu.' }); return; }
+      if (!allowRapport(req.socket.remoteAddress || '')) { json(429, { ok: false, message: 'Trop de comptes rendus envoyés : réessayez dans une minute.' }); return; }
+      if (countRapports() >= RAPPORTS_MAX) { json(507, { ok: false, message: `Le dossier « rapports » est plein (${RAPPORTS_MAX} comptes rendus) : faites-y de la place.` }); return; }
+      const body = JSON.parse(await readBody(req, RAPPORT_MAX));
+      if (!body || typeof body !== 'object') { json(400, { ok: false, message: 'Compte rendu illisible.' }); return; }
       const id = String(body.id || Date.now()).replace(/[^a-zA-Z0-9-]/g, '').slice(0, 60) || String(Date.now());
       fs.mkdirSync(RAPPORTS, { recursive: true });
       fs.writeFileSync(path.join(RAPPORTS, `session-${id}.json`), JSON.stringify(body.data ?? null, null, 1));
@@ -211,10 +253,18 @@ const server = http.createServer(async (req, res) => {
 server.on('upgrade', (req, socket) => {
   const key = req.headers['sec-websocket-key'];
   if (new URL(req.url, 'http://local').pathname !== '/ws' || !key || String(req.headers.upgrade).toLowerCase() !== 'websocket') { socket.destroy(); return; }
+  // une autre page web ne se branche pas sur les parties ; trop de connexions (en tout, ou d'une même adresse) : refusé
+  const addr = /** @type {import('node:net').Socket} */ (socket).remoteAddress || '';
+  const fromAddr = [...CONNS].filter((c) => c.addr === addr).length;
+  if (!sameOrigin(req) || CONNS.size >= MAX_CONNS || (!isLoopback(addr) && fromAddr >= MAX_CONNS_IP)) {
+    socket.end(`HTTP/1.1 ${sameOrigin(req) ? '503 Service Unavailable' : '403 Forbidden'}\r\nConnection: close\r\nContent-Length: 0\r\n\r\n`);
+    return;
+  }
   const accept = crypto.createHash('sha1').update(key + '258EAFA5-E914-47DA-95CA-C5AB0DC85B11').digest('base64');
   socket.write(`HTTP/1.1 101 Switching Protocols\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Accept: ${accept}\r\n\r\n`);
   /** @type {import('node:net').Socket} */ (socket).setNoDelay(true);
-  CONNS.add(new Conn(socket));
+  const conn = new Conn(socket); conn.addr = addr;
+  CONNS.add(conn);
 });
 
 function lanAddresses() {

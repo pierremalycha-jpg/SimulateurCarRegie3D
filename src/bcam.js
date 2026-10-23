@@ -5,7 +5,7 @@ import { CAMERA_TYPES, LENSES, LINKS, SENSORS, maxAperture } from './data/camera
 import { ND_FILTERS, SHUTTERS, IRIS_STOPS } from './data/exposure.js';
 import { SLOTS } from './data/stadium.js';
 import { Builder, setLayer } from './geo.js';
-import { W, BOWL, TRUCK, standHeightAt, bowlOffset, labelSprite, overlayMat } from './world.js';
+import { W, BOWL, TRUCK, standHeightAt, bowlOffset, labelSprite, overlayMat, releaseOverlay, ownedResources } from './world.js';
 import { M } from './match.js';
 import { refPatched } from './patch.js';
 import { camPtpOk } from './net/fabric.js';
@@ -382,7 +382,9 @@ function buildModel(cam) {
   tally.position.set(0, T.model === 'box' ? 0.49 : 0.14, T.model === 'box' ? 0.06 : 0); tilt.add(tally);
   const lab = labelSprite(`CAM ${cam.id}`, { scale: T.model === 'pov' ? 2.2 : 3.2, border: '#' + LINKS[cam.link].color.toString(16).padStart(6, '0') });
   lab.position.set(0, T.model === 'box' ? 1.0 : 0.9, 0); setLayer(lab, 1); root.add(lab);
-  return { root, pan, tilt, tally, label: lab };
+  // tout ce que le modèle vient de créer (géométries fusionnées, matières, texture de l'étiquette), à
+  // libérer avec la caméra ; ce que d'autres modules lui accrochent ensuite reste à eux
+  return { root, pan, tilt, tally, label: lab, owned: ownedResources(root) };
 }
 
 // ----------------------------------------------------------------------------------
@@ -461,8 +463,9 @@ export class BCam {
 
   dispose() {
     W.scene.remove(this.model.root);
-    if (this.cable) { W.scene.remove(this.cable); this.cable.geometry.dispose(); }
-    if (this.infraLine) { W.scene.remove(this.infraLine); this.infraLine.geometry.dispose(); }
+    for (const r of this.model.owned) r.dispose();
+    if (this.cable) { W.scene.remove(this.cable); this.cable.geometry.dispose(); releaseOverlay(this.cable.material); }
+    if (this.infraLine) { W.scene.remove(this.infraLine); this.infraLine.geometry.dispose(); releaseOverlay(this.infraLine.material); }
     this.rawRT.dispose(); this.outRT.dispose();
   }
 
@@ -706,12 +709,12 @@ export function addCamera(o) {
   if (o.crane !== false && cam.T.model === 'crane') {
     const boom = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.18, 1), new THREE.MeshLambertMaterial({ color: 0x9aa3ad }));
     boom.geometry.translate(0, 0, 0.5); W.scene.add(boom); cam.boom = boom; boom.castShadow = true;
-    const old = cam.dispose.bind(cam); cam.dispose = () => { W.scene.remove(boom); old(); };
+    const old = cam.dispose.bind(cam); cam.dispose = () => { W.scene.remove(boom); boom.geometry.dispose(); boom.material.dispose(); old(); };
   }
   if (cam.T.moving === 'spider') {
     const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(8 * 3), 3));
     const lines = new THREE.LineSegments(g, new THREE.LineBasicMaterial({ color: 0x222222 })); lines.frustumCulled = false; W.scene.add(lines); cam.ropes = lines;
-    const old = cam.dispose.bind(cam); cam.dispose = () => { W.scene.remove(lines); old(); };
+    const old = cam.dispose.bind(cam); cam.dispose = () => { W.scene.remove(lines); g.dispose(); lines.material.dispose(); old(); };
   }
   S.cams.push(cam); S.cams.sort((a, b) => a.id - b.id);
   emit('cams');

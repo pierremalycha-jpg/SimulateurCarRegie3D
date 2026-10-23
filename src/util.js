@@ -40,6 +40,12 @@ export function mulberry32(seed) {
 export const rand = mulberry32(20261015);
 export const randRange = (a, b) => a + (b - a) * rand();
 export const randPick = (arr) => arr[Math.floor(rand() * arr.length)];
+/** une copie mélangée (Fisher-Yates) ; rnd : Math.random par défaut, pas le tirage reproductible de la simulation */
+export function shuffled(arr, rnd = Math.random) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
+  return a;
+}
 export function gauss() { let u = 0, v = 0; while (u === 0) u = rand(); while (v === 0) v = rand(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v); }
 
 // Timecode 25 i/s (Europe, 50 Hz)

@@ -1,11 +1,12 @@
-// Section Cours : les chapitres et leurs leçons (forme d'une leçon, quiz de trois questions), les
+// Section Cours : les chapitres et leurs leçons (forme d'une leçon, banque de questions du quiz et tirage), les
 // liens avec le reste (glossaire → leçon ou fiche « ? », poste → leçon) et le rattachement des
 // leçons aux compétences du référentiel.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import '../helpers/scene.mjs';
 import '../../src/cours/all.js';
-import { CHAPTERS, allLessons, lessonById } from '../../src/cours/index.js';
+import { CHAPTERS, allLessons, lessonById, drawQuiz, QUIZ_N } from '../../src/cours/index.js';
+import { mulberry32 } from '../../src/util.js';
 import { GLOSSAIRE, POSTES, premiere, cibleDuTerme, posteCible, titreDe, estLecon } from '../../src/cours/liens.js';
 import { TERMS } from '../../src/content/netterms.js';
 import { GLOSSARY } from '../../src/content/glossary.js';
@@ -25,13 +26,36 @@ test('chapitres dans l\'ordre pédagogique ; chaque leçon a sa forme', () => {
     assert.ok(!ids.has(lesson.id), `${lesson.id} : identifiant en double`); ids.add(lesson.id);
     assert.ok(lesson.id.startsWith((PREFIX[chapter.id] || chapter.id) + '-'), `${lesson.id} : préfixe du chapitre ${chapter.id}`);
     assert.ok(lesson.title && lesson.body && lesson.essentials.length >= 1 && lesson.essentials.length <= 3, `${lesson.id} : titre, explication, essentiel en 3 lignes`);
-    assert.equal(lesson.quiz.length, 3, `${lesson.id} : trois questions`);
+    // une banque d'au moins cinq questions : le quiz en tire trois à chaque essai (QUIZ_N)
+    assert.ok(lesson.quiz.length >= 5, `${lesson.id} : au moins cinq questions dans la banque`);
+    assert.equal(new Set(lesson.quiz.map((q) => q.q)).size, lesson.quiz.length, `${lesson.id} : questions en double`);
     for (const q of lesson.quiz) {
-      assert.ok(q.choices.length >= 2 && q.answer >= 0 && q.answer < q.choices.length && q.q && q.why, `${lesson.id} : question « ${q.q} »`);
+      assert.ok(q.choices.length === 3 && q.answer >= 0 && q.answer < q.choices.length && q.q && q.why, `${lesson.id} : question « ${q.q} »`);
+      const texts = q.choices.map((c) => (Array.isArray(c) ? c[0] : c));
+      assert.equal(new Set(texts).size, texts.length, `${lesson.id} : choix en double dans « ${q.q} »`);
     }
     for (const t of lesson.terms || []) assert.ok(TERMS[t], `${lesson.id} : fiche « ? » inconnue ${t}`);
     assert.ok(typeof lesson.figure === 'function' || typeof lesson.demo === 'function', `${lesson.id} : un schéma ou une manipulation`);
   }
+});
+
+test('quiz : trois questions tirées, d\'autres au nouvel essai, réponses mélangées', () => {
+  const bank = allLessons()[0].lesson.quiz;
+  const rnd = mulberry32(7);
+  const d1 = drawQuiz(bank, [], rnd);
+  assert.equal(d1.length, QUIZ_N);
+  assert.equal(new Set(d1.map((d) => d.i)).size, QUIZ_N, 'pas deux fois la même question');
+  for (const d of d1) assert.deepEqual([...d.order].sort(), bank[d.i].choices.map((_, k) => k), 'l\'ordre des réponses est une permutation');
+  // refaire : les questions pas encore posées passent d'abord
+  const prev = d1.map((d) => d.i), d2 = drawQuiz(bank, prev, rnd);
+  const fresh = bank.map((_, i) => i).filter((i) => !prev.includes(i));
+  for (const i of fresh.slice(0, QUIZ_N)) assert.ok(d2.some((d) => d.i === i), `question ${i} pas encore posée`);
+  // sur de nombreux tirages, la bonne réponse occupe chacun des trois rangs
+  const rangs = new Set();
+  for (let k = 0; k < 60; k++) for (const d of drawQuiz(bank, [], rnd)) rangs.add(d.order.indexOf(bank[d.i].answer));
+  assert.deepEqual([...rangs].sort(), [0, 1, 2]);
+  // une banque plus courte que QUIZ_N : toutes ses questions
+  assert.equal(drawQuiz(bank.slice(0, 2), [], rnd).length, 2);
 });
 
 test('liens : glossaire → leçon ou fiche, poste → leçon, cibles existantes', () => {

@@ -28,7 +28,15 @@ export const SH = { db: null, user: null, assets: null, downloads: null, uid: nu
 export const CFG = { car: {}, cabling: null, photos: { list: [] }, review: { items: {}, overrides: {} } };
 // ma relecture (expert) : enregistrée dans review/<mon id>
 export const MYREV = { domains: [], items: {}, params: {}, extra: [], updatedAt: 0 };
-export const PROG = { missions: {}, visited: {}, scenarios: [], reports: [], perf: null, patchBest: 0, updatedAt: 0 };
+/**
+ * Version du format de la progression (PROG.v). À monter quand sa forme change, avec l'étape qui convient
+ * dans migrateProgress. 1 : sans numéro (jusqu'à la v19.3) ; 2 : numérotée, réussites « seul » (clean) des
+ * parcours et des missions réseau (v19.4).
+ */
+export const PROG_VERSION = 2;
+export const PROG = { v: PROG_VERSION, missions: {}, visited: {}, scenarios: [], reports: [], perf: null, patchBest: 0, updatedAt: 0 };
+/** état du dernier enregistrement de la progression : sur cet ordinateur (local), sur le serveur de la page (remote) */
+export const SAVE = { local: /** @type {boolean | null} */ (null), remote: /** @type {boolean | null} */ (null), at: 0, error: '' };
 
 const LS = {
   get(k, d) { try { const v = localStorage.getItem('carregie.' + k); return v ? JSON.parse(v) : d; } catch (e) { return d; } },
@@ -39,7 +47,7 @@ const withTimeout = (p, ms) => Promise.race([p, new Promise((r) => setTimeout(()
 export async function initShared() {
   // valeurs locales d'abord (fonctionne hors de claude.ai)
   for (const k of ['car', 'cabling', 'photos', 'review']) { const v = LS.get('config.' + k, null); if (v) CFG[k] = v; }
-  Object.assign(PROG, LS.get('progress', {}));
+  Object.assign(PROG, migrateProgress(LS.get('progress', {})) || {});
   Object.assign(MYREV, LS.get('review.me', {}));
   applyConfig();
   restoreProgress();
@@ -116,9 +124,36 @@ export function watchSessionReports(cb) {
 }
 
 // ---------------- progression du stagiaire ----------------
-/** fusionne la progression enregistrée sur le serveur (document progress/<id>) avec celle de ce navigateur */
+const isObj = (x) => !!x && typeof x === 'object' && !Array.isArray(x);
+/**
+ * Remet une progression lue (ce navigateur, le serveur, un fichier importé) à la forme actuelle : copie,
+ * champs absents ou mal formés remis à vide, numéro de version. Pure : ne touche pas à PROG. Une
+ * progression écrite par une version plus récente garde son numéro et ses champs inconnus.
+ * @returns {any} null si ce n'est pas une progression
+ */
+export function migrateProgress(d) {
+  if (!isObj(d)) return null;
+  const p = JSON.parse(JSON.stringify(d));
+  const v = Number.isFinite(p.v) ? p.v : 1;
+  // v1 → v2 : le numéro de version ; les réussites « seul » (clean) se déduisent de l'aide enregistrée (livret.js)
+  for (const k of ['missions', 'visited', 'tutor', 'cours']) if (k in p && !isObj(p[k])) p[k] = {};
+  for (const k of ['missions', 'visited']) if (!isObj(p[k])) p[k] = {};
+  for (const k of ['scenarios', 'reports']) if (!Array.isArray(p[k])) p[k] = [];
+  if ('rigs' in p && !Array.isArray(p.rigs)) p.rigs = [];
+  p.patchBest = Number(p.patchBest) || 0;
+  if ('net' in p) {
+    if (!isObj(p.net)) p.net = {};
+    if (!isObj(p.net.missions)) p.net.missions = {};
+    for (const k of ['quiz', 'exams']) if (!Array.isArray(p.net[k])) p.net[k] = [];
+  }
+  p.v = Math.max(v, PROG_VERSION);
+  return p;
+}
+/** fusionne une autre progression (document progress/<id> du serveur, fichier importé) avec celle de ce navigateur ; rien ne se perd */
 export function mergeProgress(d) {
+  d = migrateProgress(d);
   if (!d) return;
+  PROG.v = Math.max(PROG.v || 1, d.v);
   PROG.missions = { ...(d.missions || {}), ...PROG.missions };
   PROG.visited = { ...(d.visited || {}), ...PROG.visited };
   const seen = new Set(PROG.scenarios.map((s) => s.at));
@@ -129,10 +164,23 @@ export function mergeProgress(d) {
   PROG.patchBest = Math.max(PROG.patchBest || 0, d.patchBest || 0);
   { const seenA = new Set((PROG.rigs || []).map((x) => x.at)); PROG.rigs = PROG.rigs || []; for (const x of d.rigs || []) if (!seenA.has(x.at)) PROG.rigs.push(x); }
   // parcours du chef de car : un parcours réussi ailleurs le reste ici
-  if (d.tutor) { const T = PROG.tutor = PROG.tutor || {}; for (const [id, p] of Object.entries(d.tutor)) if (p && (!T[id] || (p.done && !T[id].done))) T[id] = p; }
+  // (réussi seul ici ou là-bas : ça reste acquis)
+  if (d.tutor) {
+    const T = PROG.tutor = PROG.tutor || {};
+    for (const [id, p] of Object.entries(d.tutor)) {
+      if (!p) continue;
+      if (!T[id] || (p.done && !T[id].done)) T[id] = { ...p, clean: !!(p.clean || (T[id] && T[id].clean)) };
+      else if (p.clean && T[id].done) T[id].clean = true;
+    }
+  }
   if (d.net) {
     const n = PROG.net = PROG.net || { missions: {}, quiz: [], exams: [] };
-    n.missions = { ...(d.net.missions || {}), ...n.missions };
+    n.missions = n.missions || {};
+    for (const [id, r] of Object.entries(d.net.missions || {})) {
+      const m = n.missions[id];
+      if (!r) continue;
+      if (!m) n.missions[id] = r; else { m.pts = Math.max(m.pts || 0, r.pts || 0); if (r.clean) m.clean = true; }
+    }
     for (const k of ['quiz', 'exams']) { const seen = new Set((n[k] || []).map((x) => x.at)); n[k] = n[k] || []; for (const x of d.net[k] || []) if (!seen.has(x.at)) n[k].push(x); }
   }
   // meilleur score de chaque série : le meilleur des deux appareils
@@ -174,17 +222,81 @@ function restoreProgress() {
 /** @type {ReturnType<typeof setTimeout> | undefined} */ let saveT;
 let saving = false, again = false;
 export function saveProgressSoon() { clearTimeout(saveT); saveT = setTimeout(saveProgress, 2500); }
+/** l'état d'un enregistrement ; prévient l'interface (« progressSave ») quand il change (ui/ma_progression.js) */
+function noteSave(/** @type {'local' | 'remote'} */ where, /** @type {boolean} */ ok, /** @type {any} */ err) {
+  const before = SAVE[where];
+  SAVE[where] = ok; if (ok) SAVE.at = Date.now(); else SAVE.error = String((err && (err.message || err.code)) || err || '').slice(0, 200);
+  if (before !== ok) emit('progressSave', { where, ok, error: SAVE.error });
+}
 async function saveProgress() {
   if (saving) { again = true; return; }
-  PROG.missions = { ...S.missionsDone }; PROG.visited = { ...S.visited }; PROG.updatedAt = Date.now();
+  PROG.missions = { ...S.missionsDone }; PROG.visited = { ...S.visited }; PROG.updatedAt = Date.now(); PROG.v = Math.max(PROG.v || 1, PROG_VERSION);
   PROG.scenarios = PROG.scenarios.slice(-20); PROG.reports = PROG.reports.slice(-50); if (PROG.rigs) PROG.rigs = PROG.rigs.slice(-20);
-  LS.set('progress', PROG);
+  // stockage du navigateur plein (photos du formateur, autres pages) ou désactivé : on le dit, la progression reste en mémoire
+  noteSave('local', LS.set('progress', PROG), 'stockage du navigateur plein ou désactivé');
   if (!SH.db || !SH.uid || SH.readOnly) return;
   saving = true;
-  try { await SH.db.doc('progress/' + SH.uid).set(JSON.parse(JSON.stringify(PROG))); }
-  catch (e) { if (e && e.code === 'invalid_argument') SH.readOnly = true; }
+  try {
+    // fusion avant écriture : ce qu'un autre appareil a enregistré entre-temps sur le serveur n'est pas écrasé
+    try {
+      const snap = await SH.db.doc('progress/' + SH.uid).get();
+      if (snap.exists) { mergeProgress(snap.data()); restoreProgress(); LS.set('progress', PROG); }
+    } catch (e) { /* lecture impossible : on écrit ce qu'on a */ }
+    await SH.db.doc('progress/' + SH.uid).set(JSON.parse(JSON.stringify(PROG)));
+    noteSave('remote', true);
+  } catch (e) {
+    // invalid_argument : la page n'accepte pas d'écriture (lecture seule) ; on garde la copie de ce navigateur sans insister
+    if (e && e.code === 'invalid_argument') SH.readOnly = true; else noteSave('remote', false, e);
+  }
   saving = false;
   if (again) { again = false; saveProgressSoon(); }
+}
+/** enregistre tout de suite (après un import, avant de quitter) */
+export function saveProgressNow() { clearTimeout(saveT); return saveProgress(); }
+
+// ---------------- exporter, importer, effacer ----------------
+export const EXPORT_FORMAT = 'tiee-simulator/progression';
+/** la progression de ce navigateur dans un fichier JSON (à garder, à changer d'ordinateur, à remettre au formateur) */
+export function exportProgress(app = '') {
+  PROG.missions = { ...S.missionsDone }; PROG.visited = { ...S.visited };
+  return JSON.stringify({ format: EXPORT_FORMAT, v: PROG_VERSION, app, exportedAt: new Date().toISOString(), progression: PROG });
+}
+/** taille maximale d'un fichier importé (une progression pèse quelques dizaines de kilo-octets) */
+export const IMPORT_MAX = 5 * 1024 * 1024;
+/**
+ * Lit un fichier exporté (ou une progression brute) et le fusionne avec la progression de ce navigateur :
+ * rien n'est effacé, chaque réussite des deux côtés est gardée, le meilleur score aussi.
+ * @param {string} text
+ * @returns {{ ok: boolean, error?: string, from?: string, at?: string }}
+ */
+export function importProgress(text) {
+  if (typeof text !== 'string' || !text.trim()) return { ok: false, error: 'Le fichier est vide.' };
+  if (text.length > IMPORT_MAX) return { ok: false, error: 'Le fichier est trop gros pour une progression (5 Mo au plus).' };
+  let d;
+  try { d = JSON.parse(text); } catch (e) { return { ok: false, error: 'Ce n\'est pas un fichier de progression (JSON illisible).' }; }
+  const wrapped = isObj(d) && d.format === EXPORT_FORMAT;
+  const p = wrapped ? d.progression : d;
+  // une progression brute a au moins l'un de ses champs habituels
+  if (!isObj(p) || (!wrapped && !['missions', 'visited', 'cours', 'tutor', 'game', 'camera', 'net'].some((k) => k in p))) return { ok: false, error: 'Ce fichier ne contient pas de progression du TIEE Simulator.' };
+  mergeProgress(p);
+  restoreProgress();
+  saveProgressSoon();
+  emit('progressImport');
+  return { ok: true, from: wrapped ? String(d.app || '') : '', at: wrapped ? String(d.exportedAt || '') : '' };
+}
+/** efface la progression : ce navigateur et, sur la page publiée, sa copie sur le serveur. La page se recharge ensuite. */
+export async function eraseProgress() {
+  clearTimeout(saveT);
+  const empty = { v: PROG_VERSION, missions: {}, visited: {}, scenarios: [], reports: [], perf: null, patchBest: 0, updatedAt: Date.now() };
+  for (const k of Object.keys(PROG)) delete /** @type {any} */ (PROG)[k];
+  Object.assign(PROG, empty);
+  for (const k of Object.keys(S.missionsDone)) delete S.missionsDone[k];
+  for (const k of Object.keys(S.visited)) delete S.visited[k];
+  try { localStorage.removeItem('carregie.progress'); } catch (e) { /* stockage indisponible */ }
+  if (SH.db && SH.uid && !SH.readOnly) {
+    try { await SH.db.doc('progress/' + SH.uid).set(JSON.parse(JSON.stringify(PROG))); } catch (e) { return { ok: false, error: 'La copie du serveur n\'a pas pu être effacée : demandez-le au formateur.' }; }
+  }
+  return { ok: true };
 }
 export function addReport(where, text) {
   PROG.reports.push({ at: Date.now(), where: String(where).slice(0, 120), text: String(text).slice(0, 1000) });

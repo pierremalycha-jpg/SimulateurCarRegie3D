@@ -196,14 +196,20 @@ async function resolveNames() {
 }
 
 // ---------------- messages ----------------
+/** l'hôte de la partie ou le formateur : eux seuls injectent une panne (force) ou attribuent un rôle */
+function mayDirect(peerId) {
+  const from = SES.peers.find((p) => p.peer === peerId);
+  return !!from && ((!!SES.hostPeer && from.peer === SES.hostPeer.peer) || (!!from.presence && from.presence.role === 'formateur'));
+}
 function onMsg(topic, m) {
   if (m.sameTab) return;
   const d = m.data || {};
   if (topic === 'hello') { SES.sentKeys = {}; SES.presSent = {}; return; }
   if (topic === 'sx' || topic === 'force') {
     const s = SLICES[d.s]; if (!s) return;
-    // une tranche n'est acceptée que de son titulaire (ou du formateur, pour une panne)
+    // une tranche n'est acceptée que de son titulaire ; une panne forcée, que de l'hôte ou du formateur
     if (topic === 'sx' && SES.owners[d.s] !== m.peer) return;
+    if (topic === 'force' && !mayDirect(m.peer)) return;
     try { if (s.multi) s.applyPart(d.p, d.v); else s.apply(d.v); } catch (e) { console.error(e); }
     const k = s.multi ? d.s + '/' + d.p : d.s;
     SES.sentKeys[k] = JSON.stringify(d.v);
@@ -218,7 +224,7 @@ function onMsg(topic, m) {
     // l'hôte (ou le formateur) attribue un rôle à un joueur
     if (d.type === 'assign' && SES.me && d.to === SES.me.peer && ROLES_S[d.role]) {
       const from = SES.peers.find((p) => p.peer === m.peer);
-      if (from && ((SES.hostPeer && from.peer === SES.hostPeer.peer) || (from.presence && from.presence.role === 'formateur'))) {
+      if (from && mayDirect(m.peer)) {
         setRole(d.role, d.role === 'cadreur' ? (d.cam || 1) : null);
         log(`${pseudoOf(from)} vous confie le rôle ${ROLES_S[d.role].label}${d.role === 'cadreur' ? ' (CAM ' + (d.cam || 1) + ')' : ''}.`, 'warn');
         emit('session', { type: 'assigned', role: d.role, by: pseudoOf(from) });

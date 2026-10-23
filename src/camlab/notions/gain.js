@@ -36,9 +36,9 @@ export const GAIN = {
     {
       q: 'La FB80 annonce 60 dB de rapport signal sur bruit à 0 dB. À +6 dB, il est d\'environ…',
       a: [
-        ['54 dB : le bruit est amplifié autant que le signal.', 'Exact : 6 dB de gain, 6 dB de rapport signal sur bruit en moins.'],
-        ['66 dB : plus de signal, donc un meilleur rapport.', 'Le gain amplifie aussi le bruit ; le rapport ne peut que baisser.'],
-        ['60 dB : le gain ne change rien au bruit.', 'Il le multiplie par deux, comme le signal.'],
+        ['54 dB : le gain double le bruit, le niveau nominal de sortie ne change pas.', 'Exact : le rapport se mesure entre le niveau nominal de sortie et le bruit, objectif fermé. +6 dB double le bruit sans changer ce niveau : 6 dB de rapport en moins. À l\'image, ce niveau est atteint avec deux fois moins de lumière.'],
+        ['66 dB : plus de signal, donc un meilleur rapport.', 'Le gain n\'ajoute aucune lumière : il amplifie aussi le bruit du capteur. Le rapport ne peut que baisser.'],
+        ['60 dB : signal et bruit sont amplifiés autant.', 'Le bruit est bien doublé, mais le signal de référence reste le niveau nominal de sortie : à +6 dB, on l\'atteint avec deux fois moins de lumière. Le rapport perd 6 dB.'],
       ],
       ok: 0,
     },

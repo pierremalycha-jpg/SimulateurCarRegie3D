@@ -74,6 +74,13 @@ body.ti-on #modal.overlay { z-index: 41; }
 .rg-sec h3 { margin: 0; font: 600 15px var(--f-disp); }
 .rg-sec .note { margin: 0; }
 .rg-sec p { margin: 0; line-height: 1.5; }
+/* Réglages → Ma progression (ui/ma_progression.js) */
+.mp-state { display: flex; gap: 8px; align-items: flex-start; font-size: 13.5px; }
+.mp-state .ico { flex: none; margin-top: 2px; }
+.mp-state.ok .ico { color: var(--pvw); } .mp-state.err { color: #ffb4ae; } .mp-state.err .ico { color: var(--tally); }
+.mp-msg:empty { display: none; }
+.mp-rgpd summary { cursor: pointer; font-size: 13.5px; }
+.mp-rgpd p { font-size: 13px; color: var(--muted); margin: 6px 0 0; max-width: 78ch; }
 .rg-row { display: grid; grid-template-columns: minmax(130px, max-content) minmax(0, 1fr); gap: 8px 14px; align-items: center; }
 .rg-row > span { font-size: 13.5px; color: var(--muted); }
 .rg-keys summary { cursor: pointer; font-weight: 600; }

@@ -8,15 +8,23 @@ import { BLOCS, COMPETENCES, RATTACHEMENT } from './content/referentiel.js';
 //   absent      : aucune activité du simulateur ne la travaille (encore)
 //   a_faire     : des activités existent, aucune n'est réussie
 //   travaillee  : au moins une activité réussie
-//   consolidee  : au moins trois activités différentes réussies (toutes, s'il y en a moins)
-// Le livret dit ce qui a été pratiqué ; la validation d'une compétence reste au formateur.
+//   consolidee  : au moins trois activités différentes réussies (toutes, s'il y en a moins), dont au
+//                 moins un exercice pratique (pas seulement des quiz) quand la compétence en a un
+// Une activité n'est réussie que faite seul : un parcours terminé par « Fais-le pour moi » ou une
+// mission réseau sauvée par la configuration de référence ne comptent pas (aided : à refaire seul),
+// un montage d'atelier « à retravailler » non plus. Le livret dit ce qui a été pratiqué ; la validation
+// d'une compétence reste au formateur.
 // ----------------------------------------------------------------------------------
 
 /** @typedef {'parcours' | 'mission' | 'phase' | 'reseau' | 'exercice' | 'cours' | 'camera'} Kind */
 /** @typedef {'absent' | 'a_faire' | 'travaillee' | 'consolidee'} Niveau */
-/** @typedef {{ kind: Kind, ref: string, done: boolean, aided: boolean }} Activite */
+/** @typedef {{ kind: Kind, ref: string, done: boolean, aided: boolean, pratique: boolean }} Activite */
 
 export const SEUIL_PHASE = 0.6, SEUIL_SCORE = 60, CONSOLIDE = 3;
+/** un montage à l'atelier réussi : deux erreurs au plus (« Montage correct, quelques reprises », atelier.js) */
+export const ATELIER_ERREURS = 2;
+/** une activité pratique (un geste dans le car, à l'atelier, au réseau) ; les leçons du Cours et les notions de la caméra sont des quiz */
+export const estPratique = (/** @type {Kind} */ kind, /** @type {string} */ ref) => kind !== 'cours' && !(kind === 'camera' && ref !== 'mes');
 /** @type {Record<Niveau, string>} */
 export const NIVEAUX = { consolidee: 'Consolidée', travaillee: 'Travaillée', a_faire: 'À travailler', absent: 'Hors simulateur' };
 
@@ -38,7 +46,8 @@ const best = (a) => (a || []).reduce((m, x) => Math.max(m, x.score || 0), 0);
 export function activityState(prog, /** @type {Kind} */ kind, /** @type {string} */ ref) {
   const P = prog || {}; const N = P.net || {};
   switch (kind) {
-    case 'parcours': { const t = (P.tutor || {})[ref]; return { done: !!(t && t.done), aided: !!(t && t.done && t.aided) }; }
+    // réussi seul une fois au moins (clean), ou terminé sans « Fais-le pour moi » (progression d'avant la v19.4)
+    case 'parcours': { const t = (P.tutor || {})[ref]; const fini = !!(t && t.done), seul = fini && !!(t.clean || !t.aided); return { done: seul, aided: fini && !seul }; }
     case 'mission': return { done: !!(P.missions || {})[ref], aided: false };
     case 'cours': { const c = (P.cours || {})[ref]; return { done: !!(c && c.quiz && c.quiz.total && c.quiz.score === c.quiz.total), aided: false }; }
     // module caméra (même règle que camlab/progress.js) : la mise en service à 60 sur 100, une notion à 3 sur 3
@@ -48,9 +57,9 @@ export function activityState(prog, /** @type {Kind} */ kind, /** @type {string}
       const n = (C.notions || {})[ref]; return { done: !!(n && n.total && n.score === n.total), aided: false };
     }
     case 'phase': return { done: (P.scenarios || []).some((s) => (s.phases || []).some((p) => p.id === ref && p.max > 0 && p.pts / p.max >= SEUIL_PHASE)), aided: false };
-    case 'reseau': { const r = (N.missions || {})[ref]; return { done: !!r, aided: !!(r && r.aided) }; }
+    case 'reseau': { const r = (N.missions || {})[ref]; const seul = !!r && !!(r.clean || !r.aided); return { done: seul, aided: !!r && !seul }; }
     case 'exercice': return {
-      done: ref === 'brassage' ? (P.patchBest || 0) >= 100 : ref === 'atelier' ? (P.rigs || []).length > 0
+      done: ref === 'brassage' ? (P.patchBest || 0) >= 100 : ref === 'atelier' ? (P.rigs || []).some((r) => r && (r.errs ?? 0) <= ATELIER_ERREURS)
         : ref === 'quiz2110' ? best(N.quiz) >= SEUIL_SCORE : ref === 'examenReseau' ? best(N.exams) >= SEUIL_SCORE
           : ref === 'entrepot' ? Object.values((P.entrepot || {}).missions || {}).some((m) => m && m.best && (m.best.score ?? m.best) >= SEUIL_SCORE) : false,
       aided: false,
@@ -59,11 +68,17 @@ export function activityState(prog, /** @type {Kind} */ kind, /** @type {string}
   return { done: false, aided: false };
 }
 
-/** @returns {Niveau} */
-export function niveauOf(total, done) {
+/**
+ * @param {number} total activités rattachées
+ * @param {number} done activités réussies
+ * @param {{ total: number, done: number }} [pratique] dont activités pratiques : consolidée demande d'en avoir réussi une
+ * @returns {Niveau}
+ */
+export function niveauOf(total, done, pratique) {
   if (!total) return 'absent';
   if (!done) return 'a_faire';
-  return done >= Math.min(CONSOLIDE, total) ? 'consolidee' : 'travaillee';
+  const geste = !pratique || !pratique.total || pratique.done > 0;
+  return done >= Math.min(CONSOLIDE, total) && geste ? 'consolidee' : 'travaillee';
 }
 const zero = () => ({ consolidee: 0, travaillee: 0, a_faire: 0, absent: 0 });
 
@@ -71,9 +86,10 @@ const zero = () => ({ consolidee: 0, travaillee: 0, a_faire: 0, absent: 0 });
 export function livret(prog) {
   const comps = COMPETENCES.map((c) => {
     /** @type {Activite[]} */
-    const acts = ACTIVITES[c.code].map((a) => ({ ...a, ...activityState(prog, a.kind, a.ref) }));
+    const acts = ACTIVITES[c.code].map((a) => ({ ...a, ...activityState(prog, a.kind, a.ref), pratique: estPratique(a.kind, a.ref) }));
     const done = acts.filter((a) => a.done).length;
-    return { ...c, acts, done, total: acts.length, niveau: niveauOf(acts.length, done) };
+    const pratique = { total: acts.filter((a) => a.pratique).length, done: acts.filter((a) => a.pratique && a.done).length };
+    return { ...c, acts, done, total: acts.length, pratique, niveau: niveauOf(acts.length, done, pratique) };
   });
   const count = zero();
   const blocs = BLOCS.map((b) => {
