@@ -156,7 +156,7 @@ export const GUIDE = [
 <li>Commentaires au-dessus de l'ambiance, jamais dans l'international ; quand le commentateur « lance » le bord terrain, ouvrez sa tranche.</li>
 <li>Contrôles : loudness intégrée −23 LUFS, corrélateur positif, plan de son conforme, synchro labiale.</li>
 </ol>
-<p class="note">Limite du simulateur : les voix sont dites par la synthèse vocale du navigateur, qui ne passe pas par le moteur audio. Leur volume suit fidèlement la console (patch, gain, fader, VCA, mute, bus écouté, master, DIM, retard de ligne), mais l'égaliseur et la dynamique n'en changent pas le timbre.</p>`},
+<p class="note">Limite du simulateur : les voix des commentateurs ne sont pas dites ; leurs phrases s'affichent en fil écrit au poste son (onglet Commentaires) et leur niveau est simulé. Ce qu'on en entendrait suit fidèlement la console (patch, gain, fader, VCA, mute, bus écouté, master, DIM) : vumètres, loudness, lampe rouge de la cabine. Ce que vous entendez vous-même dépend de l'endroit : l'écoute de la console au poste son, la foule dans le stade, presque rien ailleurs dans le car.</p>`},
   {
     id: 'car', title: 'Le car régie', html: `
 <p>Un car régie est en général un semi-remorque d'environ 13,5 à 14,5 m (16,50 m au maximum avec le tracteur en Europe pour un ensemble articulé), souvent avec une ou deux extensions latérales qui doublent la largeur une fois déployées. Il est climatisé, isolé, et contient :</p>

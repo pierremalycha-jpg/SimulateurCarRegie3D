@@ -449,6 +449,36 @@ l'entrepôt lues dans la progression, la lecture, la fusion, la mise à niveau v
 bout `carriere` (Jouer, le bureau et son écran cliqué dans la 3D, le premier mail, le car en visite de stagiaire,
 « Mission accomplie », le rechargement sur le bureau, la conférence montée et rendue, le mail de retour, Jouer qui
 résume, la messagerie à 390 px).
+## v19.4.1 : un son supportable, à sa place
+
+**Pourquoi.** Retour du 23 octobre 2026 : le bruit de foule était insupportable, violent dès le lancement de la
+partie, et les commentaires dits par la synthèse vocale sonnaient trop robotiques. Mesuré : on entendait partout
+(devant le car, dans le car, à n'importe quel poste) le PGM de la console à son niveau de diffusion, environ
+−24 LUFS de foule continue dès la première image.
+
+**Le son suit le joueur** (`src/audio.js` : `ecoute`, `setEar`, appelés par `src/main.js` avec `earState`). La console
+ne change pas (vumètres, loudness, départs, exercices) : seule l'écoute du joueur dépend de l'endroit. Au **poste
+son**, l'écoute de la console (bus écouté, PFL, DIM, mono, retard de ligne), 9 dB sous le niveau de diffusion ; dans
+la **cabine son**, debout, les mêmes haut-parleurs de plus loin ; **ailleurs dans le car**, presque rien (la cloison,
+l'isolation). **Dehors**, la foule telle qu'elle sonne sur place (les couples d'ambiance avant la console, les frappes
+et le sifflet selon la distance) : entière sur la pelouse et dans les gradins, masquée derrière les tribunes (une
+rumeur grave) devant le car, où commence la partie, plus faible encore au loin. Le cadreur écoute depuis sa caméra ;
+l'écran d'accueil, l'entrepôt et la caméra en 3D sont silencieux. Le son monte en douceur au lancement. Mesures à
+la sortie, en dBFS RMS (rendu logiciel) : devant le car −51, pelouse et gradins −36, poste son −39, cabine son −51,
+autre poste du car −70 ; avant : −28 partout.
+
+**Un volume du son** dans Réglages → Sur cet ordinateur (`carregie.volume` ; 0,7 = niveaux de référence, 30 dB de
+course, 0 = silence) ; l'option Son devient « Activé / Coupé » (Réglages et écran Jouer).
+
+**Les commentaires ne sont plus dits** (`src/commentary.js`) : plus de synthèse vocale. Le fil écrit reste au poste son
+(onglet Commentaires) avec leurs niveaux simulés (vumètres des tranches COMM, loudness, lampe rouge de la cabine) et la
+mention « non entendu » quand la console les ferme : les exercices du poste son (lancer le bord terrain, N-1,
+international) marchent comme avant. La voix du chef de car et celle du réalisateur virtuel restent au choix (coupées
+par défaut).
+
+Tests : unitaire `ecoute` (nouveau : chaque endroit, pas de saut en sortant des gradins, volume) ; suite de bout en
+bout `ecoute` (nouvelle : niveaux mesurés par endroit, aucune voix de synthèse, fil écrit, volume dans les Réglages) ;
+`direct-son` et `jeu` repassées.
 
 ## v19.4 : consolider le car régie : des preuves d'apprentissage fiables, une progression sûre
 
@@ -1245,7 +1275,7 @@ npm run lint         # ESLint
 npm run typecheck    # TypeScript (navigateur + Node)
 npm test             # tests unitaires (node:test, ≈ 10 s)
 npm run check        # les quatre à la suite (ce que fait l'intégration continue)
-npm run test:e2e     # tests de bout en bout (Playwright, rendu logiciel : 36 suites, plusieurs heures)
+npm run test:e2e     # tests de bout en bout (Playwright, rendu logiciel : 37 suites, plusieurs heures)
 npm run serve:lan    # serveur réseau local (après la construction) : http://localhost:8080
 ```
 
@@ -1329,8 +1359,8 @@ node tools/shots.mjs dossier 1280 800 '["vision","hf"]'   # captures de postes
 | `net/cli.js` | Ligne de commande des commutateurs (syntaxe de type EOS / NX-OS) |
 | `net/analyzer.js` | Instruments : analyseur de flux ST 2110-21 / 2022-7, suivi PTP, capture de paquets décodée |
 | `net/course.js` | Parcours de formation réseau : missions vérifiées, quiz, examen noté |
-| `audio.js` | Console son (inspiration Vista 1) : sources synthétisées, patch, chaîne DSP par tranche, bus et N-x, VCA, écoutes, snapshots, retard de ligne, embedder, loudness, corrélation, pannes son |
-| `commentary.js` | Commentaires du match (commentateur, consultant, bord terrain, plateau) par synthèse vocale, volume suivant la console |
+| `audio.js` | Console son (inspiration Vista 1) : sources synthétisées, patch, chaîne DSP par tranche, bus et N-x, VCA, écoutes, snapshots, retard de ligne, embedder, loudness, corrélation, pannes son ; ce que le joueur entend selon l'endroit (`ecoute`, `setEar`) et le volume du son |
+| `commentary.js` | Commentaires du match (commentateur, consultant, bord terrain, plateau) en fil écrit, sans voix : niveaux simulés suivant la console |
 | `audiodesk.js` | Console son en 3D dans la cabine (faders motorisés, FaderGlow, écrans Vistonics animés) |
 | `scenario.js` | Scénario « jour de match » chronométré et noté |
 | `shared.js` | Données partagées de la page publiée (configuration, progression) avec repli local ; progression numérotée (`PROG_VERSION`, `migrateProgress` ; v3 : la Carrière), fusionnée avec le serveur avant chaque écriture, état de l'enregistrement (`SAVE`), export, import et effacement |

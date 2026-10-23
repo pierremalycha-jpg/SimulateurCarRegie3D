@@ -21,6 +21,7 @@ const SUITES = [
   ['direct-son', 'direct', ['audio'], 20],
   ['direct-relecture', 'direct', ['review'], 20],
   ['direct-mobile', 'direct', ['mobile'], 20],
+  ['ecoute', 'ecoute', [], 15],
   ['direct-images', 'direct', ['visual'], 25],
   ['session', 'session', [], 25],
   ['reseau-local', 'reseau-local', [], 30],

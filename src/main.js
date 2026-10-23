@@ -4,7 +4,7 @@ import { S, emit, on } from './state.js';
 import { clamp, el } from './util.js';
 import { LIGHTING } from './data/exposure.js';
 import { TEAMS } from './data/match.js';
-import { buildWorld, applyLighting, updateWorld, paintTruckSign, W, TRUCK } from './world.js';
+import { buildWorld, applyLighting, updateWorld, paintTruckSign, W, TRUCK, bowlOffset } from './world.js';
 import { buildTruck, truckBlocked, truckFloorAt, updateTruck, updateTruckView, T } from './truck.js';
 import { initTruckMap, updateTruckMap } from './ui/truckmap.js';
 import { openSynoptics } from './ui/synoptics.js';
@@ -18,7 +18,7 @@ import { openSessionPanel, updateSessionHud, trackMix, setRolePostHandler } from
 import { updateRF } from './rf.js';
 import { initGfx, updateGfx } from './gfx.js';
 import { initPipeline, renderPipeline, drawSlots, MIX, meSource, defaultRouting, EVS, P, ROUTER } from './pipeline.js';
-import { AU, updateAudio, applyAll, voiceGain, setMonitor, stripRms, corrNow, faderLin, avOk } from './audio.js';
+import { AU, updateAudio, applyAll, voiceGain, setMonitor, stripRms, corrNow, faderLin, avOk, setEar, ecoute } from './audio.js';
 import { updateCommentary, CMT } from './commentary.js';
 import { updateAudioDesk } from './audiodesk.js';
 import { $, $$, toast, intercom } from './ui/common.js';
@@ -137,6 +137,12 @@ on('match', (e) => { if (e.type === 'goal') toast(`BUT ! ${TEAMS[e.team].name} �
 let last = performance.now();
 let rfAcc = 0, slowAcc = 0;
 const EYE = new THREE.Vector3(), DIR = new THREE.Vector3();
+// où est le joueur, pour ce qu'il entend (audio.js, ecoute) : le cadreur écoute depuis sa caméra
+function earState() {
+  const cam = S.mode === 'camop' && S.camop ? S.camop.cam.position : null;
+  const x = cam ? cam.x : PL.pos.x, z = cam ? cam.z : PL.pos.z, inTruck = !cam && S.inTruck;
+  return { mode: S.mode, station: S.station, inTruck, cabin: inTruck && x - TRUCK.cx < -3, o: bowlOffset(x, z), x, z };
+}
 function frame(now) {
   requestAnimationFrame(frame);
   // une image qui plante n'arrête pas le simulateur : l'erreur est notée (une fois, avec son
@@ -145,7 +151,7 @@ function frame(now) {
 }
 function step(now) {
   // module « La caméra » ouvert : le simulateur attend, sans rien calculer ni dessiner
-  if (camlabOpen() || entrepotOpen()) { last = now; return; }
+  if (camlabOpen() || entrepotOpen()) { last = now; setEar({ mode: 'start' }); return; }
   let dt = (now - last) / 1000; last = now;
   const realDt = Math.max(0.001, dt); // le compteur d'images par seconde mesure le temps réel, pas le pas de simulation borné
   dt = clamp(dt, 0.001, 0.05);
@@ -161,7 +167,7 @@ function step(now) {
   t = pe('caméras', t);
   if (S.mode === 'fps') updatePlayer(dt);
   t = pe('joueur', t);
-  updateGfx(dt); { const pgm = meSource(MIX.pgm); updateAudio(dt, { pgmSrc: pgm, replayA: EVS.ch[0].playing, replayB: EVS.ch[1] && EVS.ch[1].playing, studioOnAir: pgm === 'STUDIO' }); updateCommentary(dt, { pgmSrc: pgm, replay: (pgm === 'EVSA' || pgm === 'EVSB') && EVS.ch[pgm === 'EVSA' ? 0 : 1].playing, studioOnAir: pgm === 'STUDIO' }); } updateTruck(S.time); updateExercises(dt); updateScenario(dt); updateNet(dt, ROUTER.map, ROUTER.phase); updateCourse(dt); updateSession(dt); trackMix(); if (S.frame % 10 === 0) updateSessionHud();
+  updateGfx(dt); { const pgm = meSource(MIX.pgm); updateAudio(dt, { pgmSrc: pgm, replayA: EVS.ch[0].playing, replayB: EVS.ch[1] && EVS.ch[1].playing, studioOnAir: pgm === 'STUDIO', ear: earState() }); updateCommentary(dt, { pgmSrc: pgm, replay: (pgm === 'EVSA' || pgm === 'EVSB') && EVS.ch[pgm === 'EVSA' ? 0 : 1].playing, studioOnAir: pgm === 'STUDIO' }); } updateTruck(S.time); updateExercises(dt); updateScenario(dt); updateNet(dt, ROUTER.map, ROUTER.phase); updateCourse(dt); updateSession(dt); trackMix(); if (S.frame % 10 === 0) updateSessionHud();
   slowAcc += dt; if (slowAcc > 0.5) { watchFps(slowAcc); slowAcc = 0; checkMissions(); updateFaults(); if (S.mode === 'fps') drawMissionCard(); renderQuest(); }
   t = pe('simulation', t);
 
@@ -238,7 +244,7 @@ setDiagInfo(() => {
   const mem = renderer.info.memory;
   return { gl: `${gl.getParameter(gl.VERSION)} · ${name} · texture max ${gl.getParameter(gl.MAX_TEXTURE_SIZE)} · ${mem.geometries} géométries, ${mem.textures} textures`, fps: `${FPS.shown} i/s` };
 });
-window.__dbg = { RENDER, openReview, openSessionPanel, SES, S, M, MIX, EVS, ROUTER, P, W, T, PL, pcam, COMMUT, CMT, applyAudio: applyAll, voiceGain, setMonitor, stripRms, corrNow, EX, teleport, openStation, closeStation, openPlan, closePlan, takeCamera, releaseCamera, start, openGuide, renderer, applyLighting, openDevice, openEquipmentIndex, openTrainer, CFG, SH, AU, SC, NET, FAB, NC, AN, emit, injectFault, clearFaults, ACTIVE, FAULTS, truckBlocked, truckFloorAt, goToStation, TRUCK, AT, atelierDebug, beginAtelier, endAtelier, avOk, AVATARS, avatarPositions, profSnapshot, profReset, TUTOR, toggleChef, startChefLesson, chefDoForMe, chefNext, stopChefLesson, PROG };
+window.__dbg = { RENDER, openReview, openSessionPanel, SES, S, M, MIX, EVS, ROUTER, P, W, T, PL, pcam, COMMUT, CMT, applyAudio: applyAll, voiceGain, ecoute, earState, setMonitor, stripRms, corrNow, EX, teleport, openStation, closeStation, openPlan, closePlan, takeCamera, releaseCamera, start, openGuide, renderer, applyLighting, openDevice, openEquipmentIndex, openTrainer, CFG, SH, AU, SC, NET, FAB, NC, AN, emit, injectFault, clearFaults, ACTIVE, FAULTS, truckBlocked, truckFloorAt, goToStation, TRUCK, AT, atelierDebug, beginAtelier, endAtelier, avOk, AVATARS, avatarPositions, profSnapshot, profReset, TUTOR, toggleChef, startChefLesson, chefDoForMe, chefNext, stopChefLesson, PROG };
 window.__dbg.diag = { ERRS, report, diagText, openDiag, el }; window.__dbg.on = on;
 window.__dbg.title = { enter: enterFrom, show: showTitle };
 window.__dbg.nav = { openMenu, restart };

@@ -81,6 +81,10 @@ Tout est en français (code commenté en français, interface, commits).
   prend une ligne dans `progression.js`. Le thème visuel est `src/styles/theme-jeu.css` (chargé en dernier : il
   redéfinit les jetons de couleur et les composants) ; une animation d'entrée n'anime que la position, jamais
   l'opacité finale. L'ancienne carte `#mission` reste dans le code mais est masquée : l'objectif la remplace.
+- **Le son (v19.4.1)** : ce que le joueur entend dépend de l'endroit (`src/audio.js` : `ecoute`, `setEar`) : la foule
+  dans le stade (rumeur lointaine derrière les tribunes, devant le car), l'écoute de la console au poste son, presque
+  rien ailleurs dans le car, silence à l'accueil ; volume dans Réglages. La console (vumètres, loudness, départs) n'en
+  dépend pas. Les commentaires ne sont pas dits (pas de synthèse vocale, jugée trop robotique) : fil écrit au poste son.
 - Les fiches « ? » (`src/content/netterms.js` + `terms_*.js`, figures `src/ui/figs_*.js`) restent la source
   des définitions courtes ; une leçon les cite dans `terms`.
 

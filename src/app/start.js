@@ -75,7 +75,7 @@ export function buildStart() {
   // qualité : celle choisie dans les réglages, s'il y en a une (sauf en mode allégé)
   let q0 = S.quality; try { if (!S.lite) q0 = localStorage.getItem('carregie.quality') || q0; } catch (e) { /* stockage indisponible */ }
   const qual = selector('stqual', 'Qualité graphique', [['basse', 'Basse', 'Basse : ordinateur portable'], ['moyenne', 'Moyenne'], ['haute', 'Haute', 'Haute : carte graphique dédiée']], q0, () => updSum());
-  const snd = selector('stsnd', 'Son', [['1', 'Ambiance et commentaires'], ['0', 'Coupé']], '1', () => updSum());
+  const snd = selector('stsnd', 'Son', [['1', 'Activé'], ['0', 'Coupé']], '1', () => updSum());
   updFmt();
   // le choix : le lieu, le mode, seul ou en coopération
   const PICK = { lieu: 'car', mode: 'installe', team: 'solo', ep: 'carriere' };
