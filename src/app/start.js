@@ -25,6 +25,8 @@ import { icon } from '../ui/icons.js';
 import { LIEUX } from '../content/lieux.js';
 import { MISSIONS } from '../entrepot/missions.js';
 import { montageEnregistre } from '../entrepot/build.js';
+import { PROG } from '../shared.js';
+import { commencee, nonLus, enCours } from '../carriere/index.js';
 import { showTitle } from './title.js';
 import { livePlayerCard } from '../game/quest.js';
 
@@ -42,12 +44,14 @@ function selector(id, label, options, value, onChange) {
   return /** @type {HTMLElement & { value: string }} */ (box);
 }
 
-const SHEET = { go: /** @type {((preset: string, o?: { ip?: boolean }) => void) | null} */ (null) };
+/** @typedef {{ ip?: boolean, visite?: boolean, carriere?: { id: string, tour: boolean, postes: string[] } }} LaunchOpts */
+const SHEET = { go: /** @type {((preset: string, o?: LaunchOpts) => void) | null} */ (null) };
 /**
  * Lance une vacation depuis la feuille de service (car prêt à l'antenne, installation, atelier…),
  * avec ses conditions de captation. Rien ne se passe si la partie est déjà commencée.
  * @param {string} preset standard, vierge, atelier, brassage, scenario, grand
- * @param {{ ip?: boolean }} [o] ip : car IP (ST 2110)
+ * @param {LaunchOpts} [o] ip : car IP (ST 2110) ; visite : la visite guidée d'Olivier ; carriere : la mission de
+ *   la Carrière qui l'a lancée (son tour du car et ses postes : src/carriere/)
  */
 export function launch(preset, o = {}) { if (S.mode === 'start' && SHEET.go) SHEET.go(preset, o); }
 
@@ -74,26 +78,27 @@ export function buildStart() {
   const snd = selector('stsnd', 'Son', [['1', 'Ambiance et commentaires'], ['0', 'Coupé']], '1', () => updSum());
   updFmt();
   // le choix : le lieu, le mode, seul ou en coopération
-  const PICK = { lieu: 'car', mode: 'installe', team: 'solo', ep: MISSIONS.length ? MISSIONS[0].id : '' };
+  const PICK = { lieu: 'car', mode: 'installe', team: 'solo', ep: 'carriere' };
   // premier lancement dans ce navigateur : la visite guidée est proposée d'office
   try { if (localStorage.getItem('carregie.chefIntro') !== '1') PICK.mode = 'visite'; } catch (e) { /* stockage indisponible */ }
   const run = (preset) => start(preset, light.value, qual.value, snd.value === '1', fmt.value, infra.value === 'ip');
   const go = () => {
-    if (PICK.lieu === 'entrepot') { emit('entrepot', { mission: PICK.ep === 'reprendre' ? '' : PICK.ep, reprendre: PICK.ep === 'reprendre' }); return; }
+    if (PICK.lieu === 'entrepot') { emit('entrepot', PICK.ep === 'carriere' ? { carriere: true } : { mission: PICK.ep === 'reprendre' ? '' : PICK.ep, reprendre: PICK.ep === 'reprendre' }); return; }
     const M = MODES.find((m) => m.id === PICK.mode) || MODES[0];
     if (PICK.team === 'coop') { openSessionPanel(); return; }
-    S.chefTour = M.id === 'visite'; S.visite = M.id === 'visite';
+    S.chefTour = M.id === 'visite'; S.visite = M.id === 'visite'; S.carriere = null;
     run(M.preset);
   };
   // depuis le Cours (exercices pratiques) : la vacation demandée, avec les conditions de captation choisies ici
-  SHEET.go = (preset, o = {}) => { if (o.ip) infra.value = 'ip'; S.chefTour = false; S.visite = false; run(preset); };
+  // depuis la Carrière : la visite guidée réduite au tour du car et aux postes de la mission
+  SHEET.go = (preset, o = {}) => { if (o.ip) infra.value = 'ip'; S.chefTour = !!o.visite; S.visite = !!o.visite; S.carriere = o.carriere || null; run(preset); };
   // coopération : le car installé, avec les réglages de l'hôte s'il y en a déjà un
   setSessionStarter({
     cfg: () => ({ fmt: fmt.value, ip: infra.value === 'ip', light: light.value }),
     start: async () => {
       for (let i = 0; i < 25 && !(SES.hostPeer && !SES.hostPeer.sameTab && SES.hostPeer.presence.cfg); i++) await new Promise((r) => setTimeout(r, 120));
       const h = SES.hostPeer && !SES.hostPeer.sameTab && SES.hostPeer.presence.cfg;
-      S.chefTour = false; S.visite = false;
+      S.chefTour = false; S.visite = false; S.carriere = null;
       start('standard', h ? h.light : light.value, qual.value, snd.value === '1', h ? h.fmt : fmt.value, h ? !!h.ip : infra.value === 'ip');
     },
   });
@@ -128,8 +133,15 @@ export function buildStart() {
   const teamSeg = el('div', { class: 'seg jo-team-seg', role: 'group', 'aria-label': 'Seul ou en équipe' });
   const teamNote = el('p', { class: 'note' });
   const lan = lanAvailable();
-  // les « modes » de l'entrepôt : les cahiers des charges, le bac à sable, et le montage enregistré
+  // les « modes » de l'entrepôt : la Carrière (le mode scénarisé : des mails proposent les missions), les
+  // cahiers des charges, le bac à sable (le mode libre), et le montage enregistré
+  const carriereDesc = () => {
+    if (!commencee(PROG)) return 'Tu commences stagiaire. Au bureau de l\'entrepôt, des mails te proposent un poste sur une prestation : accepte la mission, réussis-la, la suivante arrive.';
+    const n = nonLus(PROG), ep = enCours(PROG);
+    return [n ? `${n} mail${n > 1 ? 's' : ''} non lu${n > 1 ? 's' : ''} au bureau.` : 'Ta boîte de réception est à jour.', ep ? `Mission en cours : ${ep.mission.titre}.` : 'Pas de mission en cours.'].join(' ');
+  };
   const epModes = () => [
+    { id: 'carriere', ico: 'chef', title: 'Carrière', desc: carriereDesc(), lamp: 'Carrière', go: commencee(PROG) ? 'Retourner au bureau' : 'Commencer ma carrière' },
     ...MISSIONS.map((x) => ({ id: x.id, ico: 'materiel', title: x.titre, desc: `${x.client}. ${x.brief}`, lamp: 'Mission', go: 'Entrer dans l\'entrepôt' })),
     { id: '', ico: 'processeur', title: 'Bac à sable', desc: 'Pas de commande : sortez le matériel que vous voulez, câblez, configurez, et regardez ce qui marche.', lamp: 'Libre', go: 'Entrer dans l\'entrepôt' },
     ...(montageEnregistre() ? [{ id: 'reprendre', ico: 'plan', title: 'Reprendre le montage', desc: 'Votre dernier montage, tel que vous l\'avez laissé.', lamp: 'Reprise', go: 'Reprendre' }] : []),
@@ -142,7 +154,8 @@ export function buildStart() {
       teamSeg.replaceChildren(el('button', { type: 'button', 'data-v': 'solo', 'aria-pressed': 'true' }, 'Solo'), el('button', { type: 'button', 'data-v': 'coop', 'aria-pressed': 'false', disabled: '' }, 'Coopération'));
       teamNote.textContent = 'L\'entrepôt se monte seul : le matériel, le câblage et la configuration sont à vous.';
       const N = L.find((m) => m.id === PICK.ep) || L[0];
-      lamp.textContent = N.lamp; goTitle.textContent = N.go; goDesc.textContent = N.id === 'reprendre' ? N.desc : 'Sortir le matériel du stock, le poser, le câbler et le configurer jusqu\'à ce que le cahier des charges soit rempli.';
+      lamp.textContent = N.lamp; goTitle.textContent = N.go;
+      goDesc.textContent = N.id === 'reprendre' ? N.desc : N.id === 'carriere' ? 'Lire tes mails à l\'ordinateur du bureau, accepter une mission (à l\'entrepôt ou au car régie), la réussir : la suivante arrive.' : 'Sortir le matériel du stock, le poser, le câbler et le configurer jusqu\'à ce que le cahier des charges soit rempli.';
       return;
     }
     const M = MODES.find((m) => m.id === PICK.mode) || MODES[0];
@@ -165,6 +178,9 @@ export function buildStart() {
     entrepot ? lieu('entrepot', entrepot.nom, entrepot.cadre, true, entrepot.icons, () => { PICK.lieu = 'entrepot'; draw(); modes.querySelector('[aria-pressed="true"]')?.focus(); }) : null,
     concert ? lieu('concert', 'Salle de concert', concert.cadre, false, concert.icons, () => teaser(concert)) : null);
   draw();
+  // la Carrière avance (mails reçus, progression lue sur le serveur) : sa touche le dit en revenant à Jouer
+  on('entrepot', (e) => { if (e && e.type === 'close') draw(); });
+  on('shared', () => draw());
   const step = (n, title, ...kids) => el('section', { class: 'jo-step', 'aria-label': title }, el('h2', {}, el('span', { class: 'jo-n' }, String(n)), title), ...kids);
   s.append(el('div', { class: 'jouer' },
     el('header', { class: 'jo-head' },

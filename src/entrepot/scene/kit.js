@@ -24,6 +24,8 @@ export const WALL_Z = -5.2;
 export const MUR = { x: -2.7, y: 1.25, z: WALL_Z };
 /** le hall : murs et sol */
 export const HALL = { x0: -7.5, x1: 7.5, z0: WALL_Z, z1: 6.2, h: 6 };
+/** le bureau du planning, à l'avant gauche du hall (Carrière) : centre du plateau, étendue, hauteur ; on s'y assoit côté +z */
+export const BUREAU = { x: -3.6, z: 4.3, w: 1.4, d: 0.7, top: 0.75 };
 
 /**
  * Le bac : tout objet libérable créé par la scène y est inscrit, puis libéré d'un coup.

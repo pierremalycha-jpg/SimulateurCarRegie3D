@@ -26,6 +26,8 @@ import { livePlayerCard } from '../game/quest.js';
 // lancé s'il ne l'est pas encore, puis on va à l'exercice, au poste ou à la vacation demandés.
 // ----------------------------------------------------------------------------------
 const PRESET_NAME = { standard: 'le car prêt à l\'antenne', vierge: 'l\'installation du car', atelier: 'l\'atelier de montage', brassage: 'le car vide', scenario: 'le jour de match', grand: 'le grand dispositif' };
+/** après le rechargement : le bureau de l'entrepôt en mode Carrière (src/carriere/) */
+const CARRIERE = 'carriere';
 const NEXT_KEY = 'carregie.next';
 
 /**
@@ -89,13 +91,15 @@ async function play(preset) {
 
 /**
  * Quitte la partie : le simulateur se recharge sur l'écran titre, ou lance directement la vacation
- * demandée. La progression est enregistrée avant (enregistrement différé de 2,5 s).
+ * demandée (ou le bureau de l'entrepôt de la Carrière : 'carriere'). La progression est enregistrée
+ * avant (enregistrement différé de 2,5 s).
  * @param {string} [preset]
  */
 export async function restart(preset = '') {
-  const what = preset ? `Lancer ${PRESET_NAME[preset] || preset} ?` : 'Revenir à l\'accueil ?';
+  const back = preset === CARRIERE;
+  const what = back ? 'Retourner au bureau de l\'entrepôt ?' : preset ? `Lancer ${PRESET_NAME[preset] || preset} ?` : 'Revenir à l\'accueil ?';
   const ok = await ask(`${what}\n\nLa partie en cours s'arrête et le simulateur se recharge, le temps de reconstruire le stade. Ta progression est enregistrée.${SES.active ? '\n\nTu quittes aussi la partie à plusieurs.' : ''}`,
-    { title: preset ? 'Changer de vacation' : 'Retour à l\'accueil', ok: preset ? 'Relancer le simulateur' : 'Revenir à l\'accueil', cancel: 'Continuer la partie' });
+    { title: back ? 'Retour à l\'entrepôt' : preset ? 'Changer de vacation' : 'Retour à l\'accueil', ok: back ? 'Retourner à l\'entrepôt' : preset ? 'Relancer le simulateur' : 'Revenir à l\'accueil', cancel: 'Continuer la partie' });
   if (!ok) return;
   closeLayer(false); if (modal.isOpen) modal.close();
   saveProgressSoon();
@@ -106,11 +110,12 @@ export async function restart(preset = '') {
   // rechargement refusé (page intégrée) : on le dit
   setTimeout(() => { msg.textContent = 'Le simulateur n\'a pas pu se recharger tout seul : rechargez la page (touche F5).'; }, 9000);
 }
-/** après un « Changer de vacation » : la vacation demandée se lance dès que le car est prêt */
+/** après un « Changer de vacation » : la vacation demandée se lance dès que le car est prêt (ou le bureau de la Carrière) */
 export function resumeAfterReload() {
   let preset = ''; try { preset = sessionStorage.getItem(NEXT_KEY) || ''; sessionStorage.removeItem(NEXT_KEY); } catch (e) { /* rien à reprendre */ }
-  if (!preset || !PRESET_NAME[preset] || !TITLE.ready) return;
+  if (!preset || !(PRESET_NAME[preset] || preset === CARRIERE) || !TITLE.ready) return;
   enterFrom('start');
+  if (preset === CARRIERE) { emit('entrepot', { carriere: true }); return; }
   launch(preset);
 }
 

@@ -30,7 +30,9 @@ import { lessonById as coursLesson } from '../cours/index.js';
 // exercices du poste où l'on se trouve (tous les autres sont rangés dans les leçons du Cours),
 // déroule les étapes, met en évidence l'élément à utiliser, emmène au bon poste et au bon
 // onglet, tape les commandes si on le lui demande. En visite guidée (Jouer, mode « Visite
-// guidée »), il fait le tour du car puis présente les postes l'un après l'autre.
+// guidée »), il fait le tour du car puis présente les postes l'un après l'autre. Lancée par une
+// mission de la Carrière (S.carriere), la visite se limite à ses postes ; ce qui est déjà vu
+// (progression) est coché, et la fin ramène au bureau de l'entrepôt.
 // ----------------------------------------------------------------------------------
 const CHEF = { name: 'Olivier', role: 'chef de car' };
 const UI = { root: /** @type {HTMLElement | null} */ (null), openDom: '', placed: false, min: false, said: '', lastKey: '', voice: false, notes: /** @type {string[]} */ ([]), feedback: '', spotUntil: 0, intro: false };
@@ -279,10 +281,12 @@ function renderFinish(l) {
   if (S.visite) {
     // visite guidée : le poste suivant, ou la fin de la visite
     const nx = visitNext(), stops = visitStops();
-    if (nx) nav.append(el('button', { class: 'btn small primary', onclick: () => visitGo(nx) }, `Poste suivant : ${STATION_INFO[nx].title}`));
+    if (nx) nav.append(el('button', { class: 'btn small primary', onclick: () => visitGo(nx) }, nx === '*tour' ? 'Le tour du car' : `Poste suivant : ${STATION_INFO[nx].title}`));
+    else if (S.carriere) body.append(el('div', { class: 'chef-ok' }, rich(`**Mission accomplie.** Tu as fait le tour du car et vu les ${stops.length} postes. Nadia t'a écrit : ton prochain mail t'attend au bureau de l'entrepôt.`)));
     else body.append(el('div', { class: 'chef-ok' }, rich(`**La visite est terminée.** Tu as vu les ${stops.length} postes du car. Les exercices pratiques de chaque poste t'attendent dans le **Cours**, rangés avec les leçons.`)));
     nav.append(el('button', { class: 'btn small', onclick: () => { lastDone = null; render(true); } }, 'Plan de la visite'));
-    if (!nx) nav.append(el('button', { class: 'btn small primary', onclick: () => { lastDone = null; S.visite = false; toggleChef(false); emit('cours'); } }, 'Ouvrir le Cours'));
+    if (!nx && S.carriere) nav.append(el('button', { class: 'btn small primary', 'data-k': 'carriere:retour', onclick: () => emit('carriere', { type: 'retour' }) }, 'Retourner à l\'entrepôt'));
+    if (!nx) nav.append(el('button', { class: 'btn small' + (S.carriere ? '' : ' primary'), onclick: () => { lastDone = null; S.visite = false; toggleChef(false); emit('cours'); } }, 'Ouvrir le Cours'));
   } else {
     // exercice lancé depuis une leçon du Cours : on y revient
     const back = S.coursBack ? coursLesson(S.coursBack) : null;
@@ -295,21 +299,27 @@ function renderFinish(l) {
 
 // ---------------- visite guidée ----------------
 // les postes du car, dans l'ordre des fiches (production, image, ralentis, son, technique) ;
-// ceux qu'on a vus pendant cette visite sont cochés
+// ceux qu'on a vus pendant cette visite sont cochés. Pour une mission de la Carrière : ses postes,
+// dans son ordre, et ce qui est déjà fait dans la progression compte (c'est ce qu'elle vérifie)
 const VISIT = { tour: false, done: /** @type {Set<string>} */ (new Set()) };
-const visitStops = () => stationIds().filter((id) => hasStation(id) && lessonById('poste-' + id));
-const visitNext = () => visitStops().find((id) => !VISIT.done.has(id)) || null;
+const visitStops = () => (S.carriere ? S.carriere.postes : stationIds()).filter((id) => hasStation(id) && lessonById('poste-' + id));
+const tourSeen = () => VISIT.tour || (!!S.carriere && !!progressOf('prise-en-main').done);
+const stopSeen = (/** @type {string} */ id) => VISIT.done.has(id) || (!!S.carriere && !!progressOf('poste-' + id).done);
+/** le prochain arrêt : le tour du car d'abord pour une mission de la Carrière, puis le premier poste pas encore vu */
+const visitNext = () => (S.carriere && S.carriere.tour && !tourSeen() ? '*tour' : visitStops().find((id) => !stopSeen(id)) || null);
 function visitGo(id) { lastDone = null; if (TUTOR.lesson) stopLesson(false, false); startLesson(id === '*tour' ? 'prise-en-main' : 'poste-' + id); onStep(); }
 function visitPlan(body) {
-  const stops = visitStops(), seen = stops.filter((id) => VISIT.done.has(id)).length, nx = visitNext();
+  const stops = visitStops(), seen = stops.filter((id) => stopSeen(id)).length, nx = visitNext();
+  if (S.carriere) body.append(rich(nx ? 'Ta mission de stagiaire : le tour du car, puis la présentation de ces postes. Ce que tu as déjà vu est coché.' : '**Mission accomplie.** Ton prochain mail t\'attend au bureau de l\'entrepôt.'));
   body.append(el('h4', {}, `Visite guidée · ${seen} / ${stops.length} postes`),
     el('div', { class: 'chef-prog', role: 'progressbar', 'aria-label': 'Avancement de la visite', 'aria-valuemin': '0', 'aria-valuemax': String(stops.length), 'aria-valuenow': String(seen) }, el('i', { style: { width: `${(seen / Math.max(1, stops.length)) * 100}%` } })));
-  const step = (id, label, done) => el('li', { class: 'chef-visit' + (done ? ' done' : '') + (id === (VISIT.tour ? nx : '*tour') ? ' next' : '') },
+  const step = (id, label, done) => el('li', { class: 'chef-visit' + (done ? ' done' : '') + (id === (tourSeen() ? nx : '*tour') ? ' next' : '') },
     el('button', { type: 'button', class: 'linkish', onclick: () => visitGo(id) }, done ? icon('fait') : el('i', { class: 'chef-dot', 'aria-hidden': 'true' }), el('span', {}, label), done ? el('span', { class: 'sr' }, ' (vu)') : null));
-  body.append(el('ol', { class: 'chef-visit-list' }, step('*tour', 'Le tour du car', VISIT.tour), ...stops.map((id) => step(id, STATION_INFO[id].title, VISIT.done.has(id)))));
-  const go = !VISIT.tour ? ['*tour', 'Commencer : le tour du car'] : nx ? [nx, `Continuer : ${STATION_INFO[nx].title}`] : null;
+  body.append(el('ol', { class: 'chef-visit-list' }, step('*tour', 'Le tour du car', tourSeen()), ...stops.map((id) => step(id, STATION_INFO[id].title, stopSeen(id)))));
+  const go = !tourSeen() ? ['*tour', 'Commencer : le tour du car'] : nx ? [nx, `Continuer : ${STATION_INFO[nx].title}`] : null;
   body.append(el('div', { class: 'chef-acts' },
     go ? el('button', { class: 'btn small primary', onclick: () => visitGo(go[0]) }, go[1]) : null,
+    !nx && S.carriere ? el('button', { class: 'btn small primary', 'data-k': 'carriere:retour', onclick: () => emit('carriere', { type: 'retour' }) }, 'Retourner à l\'entrepôt') : null,
     el('button', { class: 'btn small', onclick: () => { S.visite = false; render(true); } }, 'Arrêter la visite')));
 }
 
@@ -492,7 +502,13 @@ on('chef', () => toggleChef());
 on('started', ({ preset }) => {
   let seen; try { seen = localStorage.getItem('carregie.chefIntro') === '1'; localStorage.setItem('carregie.chefIntro', '1'); } catch (e) { seen = true; }
   // feuille de service, touche « Visite guidée » allumée : le tour du car commence tout de suite
-  if (S.chefTour && !TUTOR.lesson) { UI.intro = false; VISIT.tour = false; VISIT.done.clear(); lastDone = null; toggleChef(true); startLesson('prise-en-main'); onStep(); dropOnboard(); return; }
+  // (une mission de la Carrière reprend au premier arrêt qui reste : le tour du car est peut-être déjà fait)
+  if (S.chefTour && !TUTOR.lesson) {
+    UI.intro = false; VISIT.tour = false; VISIT.done.clear(); lastDone = null; toggleChef(true); dropOnboard();
+    const nx = S.carriere ? visitNext() : '*tour';
+    if (nx) visitGo(nx); else render(true);
+    return;
+  }
   if (S.chefTour === false && preset === 'standard') return;
   if (seen || TUTOR.open || !(preset === 'standard' || preset === 'grand')) return;
   UI.intro = true; UI.openDom = 'Prise en main';

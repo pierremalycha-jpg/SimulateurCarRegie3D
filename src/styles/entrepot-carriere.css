@@ -1,0 +1,43 @@
+/* la Carrière dans l'entrepôt (src/carriere/ui.js) : la touche Messagerie et son compteur, la pastille de
+   l'ordinateur du bureau, la boîte de réception, le mail ouvert et son ordre de mission */
+.ep-badge { display: inline-block; min-width: 18px; margin-left: 6px; padding: 0 5px; border-radius: 9px; font: 700 12px/18px var(--f-mono); text-align: center; background: var(--tally, #ff3b30); color: #fff; }
+.ep-pin.pc i { background: radial-gradient(circle at 40% 35%, #a6e8ff, var(--cyan, #19d3ff) 60%, #0a7fa8); box-shadow: 0 0 0 2px rgba(7,9,12,.8), 0 0 10px rgba(25,211,255,.5); }
+.ep-pin.pc span { border-left-color: var(--cyan, #19d3ff); }
+.ep-pin.pc.new i { animation: cr-ping 1.6s ease-in-out infinite; }
+@keyframes cr-ping { 50% { box-shadow: 0 0 0 2px rgba(7,9,12,.8), 0 0 0 7px rgba(25,211,255,.25), 0 0 16px rgba(25,211,255,.7); } }
+@media (prefers-reduced-motion: reduce) { .ep-pin.pc.new i { animation: none; } }
+
+/* la boîte de réception */
+.cr-who { margin: 4px 0 0; font-size: 13px; } .cr-who b { font: 700 15px var(--f-disp); } .cr-who small { color: var(--muted); }
+.cr-list { list-style: none; margin: 10px 0 0; padding: 0; display: grid; gap: 4px; }
+.cr-row { width: 100%; display: grid; grid-template-columns: 10px minmax(0, 1fr) auto; gap: 4px 10px; align-items: start; padding: 9px 10px; text-align: left; font: inherit; color: var(--fg);
+  border: 0; border-left: 3px solid transparent; border-radius: 3px; background: var(--well); cursor: pointer; }
+.cr-row:hover { background: rgba(255,255,255,.06); }
+.cr-row:focus-visible { outline: none; box-shadow: inset 0 0 0 2px var(--accent); }
+.cr-row.unread { border-left-color: var(--accent); background: rgba(255,176,32,.09); }
+.cr-dot { width: 8px; height: 8px; margin-top: 6px; border-radius: 50%; }
+.cr-row.unread .cr-dot { background: var(--accent); }
+.cr-row-t { display: grid; gap: 2px; min-width: 0; }
+.cr-row-t b { font: 600 14px var(--f-disp); } .cr-row-t b small { font: 400 12.5px var(--f-body); color: var(--muted); }
+.cr-obj { font-size: 13.5px; } .cr-row.unread .cr-obj { font-weight: 700; }
+.cr-tag { font: 12px var(--f-mono); color: var(--muted); } .cr-tag.ok { color: var(--pvw); }
+.cr-date { font: 12px var(--f-mono); color: var(--muted); white-space: nowrap; }
+
+/* le mail ouvert */
+.cr-back { margin: 2px 0 6px; }
+.ep-sbody h3.cr-objet { margin: 4px 0 8px; font: 700 19px var(--f-disp); color: var(--fg); letter-spacing: 0; text-transform: none; }
+.cr-meta { display: grid; gap: 2px; margin: 0 0 12px; padding: 8px 10px; font-size: 12.5px; color: var(--muted); background: var(--well); border-radius: 3px; }
+.cr-meta b { color: var(--fg); font-weight: 600; }
+.cr-body { font-size: 14px; line-height: 1.55; }
+.cr-body p { margin: 0 0 10px; } .cr-body ul, .cr-body ol { margin: 0 0 10px; padding-left: 20px; } .cr-body li { margin: 2px 0; }
+.cr-ordre { margin: 14px 0 0; padding: 10px 12px; border: 1px solid var(--line); border-left: 3px solid var(--accent); border-radius: 3px; background: rgba(255,176,32,.06); }
+.cr-ordre.ok { border-left-color: var(--pvw); background: rgba(55,242,139,.06); }
+.cr-ordre h4 { display: flex; align-items: center; gap: 8px; margin: 0 0 8px; font: 700 13px var(--f-disp); letter-spacing: .06em; text-transform: uppercase; }
+.cr-ordre dl { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 3px 12px; margin: 0 0 8px; font-size: 13px; }
+.cr-ordre dt { color: var(--muted); } .cr-ordre dd { margin: 0; }
+.cr-att { margin: 8px 0 4px; font-size: 13px; } .cr-att small { color: var(--muted); }
+.cr-points { list-style: none; margin: 0; padding: 0; display: grid; gap: 3px; font-size: 13px; }
+.cr-points li { display: flex; gap: 6px; align-items: center; color: var(--muted); }
+.cr-points li.ok { color: var(--fg); } .cr-points li.ok .ico { color: var(--pvw); }
+.cr-done { margin: 10px 0 0; font-weight: 600; color: var(--pvw); } .cr-done small { font-weight: 400; color: var(--muted); }
+.cr-acts { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }

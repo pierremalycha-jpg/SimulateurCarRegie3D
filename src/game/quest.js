@@ -17,11 +17,14 @@ import { pcam } from '../app/view.js';
 import { JEU } from './sfx.js';
 import { BAREME, LEVELS, xpOf, levelOf, badgesWon, BADGES, game, badgeBloc } from './xp.js';
 import { BLOCS } from '../content/referentiel.js';
+import { PROG } from '../shared.js';
+import { avancement } from '../carriere/index.js';
+import { episodeById } from '../carriere/mails.js';
 
 // ----------------------------------------------------------------------------------
 // L'objectif à l'écran, comme dans un jeu : en haut à gauche, ce qu'il y a à faire maintenant
 // (l'étape de l'exercice d'Olivier, la mission d'installation, la phase du jour de match, le
-// poste suivant de la visite guidée) ; dans la 3D, un repère sur l'endroit où aller. Le journal
+// poste suivant de la visite guidée, la mission de la Carrière) ; dans la 3D, un repère sur l'endroit où aller. Le journal
 // des missions (touche L, bouton Missions) liste ce qu'on peut faire ici et toutes les missions
 // du Cours, avec l'XP qu'elles rapportent, et les badges.
 // ----------------------------------------------------------------------------------
@@ -47,7 +50,7 @@ export function currentGoal() {
   if (l && s) {
     const go = /** @type {any} */ (s.go); const g = go ? (typeof go === 'function' ? safe(() => go(ctxLite())) : go) : null;
     const todo = isAction(s) && !TUTOR.done;
-    return { kind: 'exercice', tag: S.visite ? 'Visite guidée' : 'Exercice', title: l.title, sub: `Étape ${TUTOR.i + 1} / ${l.steps.length}`, text: s.title, prog: (TUTOR.i + (TUTOR.done ? 1 : 0)) / l.steps.length, todo,
+    return { kind: 'exercice', tag: S.carriere ? 'Carrière' : S.visite ? 'Visite guidée' : 'Exercice', title: l.title, sub: `Étape ${TUTOR.i + 1} / ${l.steps.length}`, text: s.title, prog: (TUTOR.i + (TUTOR.done ? 1 : 0)) / l.steps.length, todo,
       station: g && g.station ? g.station : undefined, target: g && g.station ? () => stationPos(g.station) : undefined, key: `x:${l.id}:${TUTOR.i}:${TUTOR.done}` };
   }
   if (SC.on && SC.phase >= 0) {
@@ -59,6 +62,13 @@ export function currentGoal() {
     if (!m) return { kind: 'fini', tag: 'Installation', title: 'Installation terminée', text: 'Toutes les missions sont réussies. Les exercices d\'Olivier t\'attendent dans le journal (L).', prog: 1, key: 'z:done' };
     const done = MISSIONS.filter((x) => S.missionsDone[x.id]).length;
     return { kind: 'mission', tag: 'Installation du car', title: m.title, sub: `Mission ${MISSIONS.indexOf(m) + 1} / ${MISSIONS.length} · +${BAREME.mission} XP`, text: m.text, prog: done / MISSIONS.length, todo: true, target: MISSION_WHERE[m.id], key: `z:${m.id}` };
+  }
+  // une mission de la Carrière (src/carriere/) : où on en est, et le retour au bureau quand elle est réussie
+  const ep = S.carriere ? episodeById(S.carriere.id) : null;
+  if (ep) {
+    const A = avancement(ep, PROG); const reste = A.points.find((p) => !p.ok);
+    return { kind: A.fait ? 'fini' : 'visite', tag: 'Carrière', title: ep.mission.titre, sub: `${ep.poste} · ${A.n} / ${A.total}`, prog: A.n / A.total,
+      text: A.fait ? 'Mission accomplie : retourne au bureau de l\'entrepôt, un mail t\'attend (Olivier, touche J).' : `À voir : ${reste ? reste.label : ''}. Olivier t'y emmène (touche J).`, key: `c:${ep.id}:${A.n}` };
   }
   if (S.visite) return { kind: 'visite', tag: 'Visite guidée', title: 'Continuer la visite', text: 'Olivier t\'attend : ouvre son panneau (J) pour le poste suivant.', key: 'v' };
   // rien en cours : ce qu'on peut faire ici, et la touche du journal

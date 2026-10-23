@@ -50,6 +50,8 @@ import { initTitle, loadStep, tick, titleReady, enterFrom, showTitle } from './a
 import './ui/settings.js';
 import { initCamLab, camlabOpen, camlabDebug } from './camlab/index.js';
 import { initEntrepot, entrepotOpen, entrepotDebug } from './entrepot/index.js';
+import { installCarriere } from './carriere/installer.js';
+import * as CARRIERE from './carriere/index.js';
 import { applyRole, PROFILE, setRole } from './app/profile.js';
 import { openCours } from './ui/cours_ui.js';
 import { CHAPTERS as COURS_CHAPTERS, allLessons, lessonById as coursLessonById, lessonDone as coursLessonDone } from './cours/index.js';
@@ -82,6 +84,7 @@ applyRole();
 initTitle();
 initCamLab();
 initEntrepot();
+installCarriere();
 loadStep('Chargement des polices', 6); await tick();
 // charge les polices avant de dessiner les textures (étiquettes, panneaux), sans bloquer plus de 2,5 s
 try {
@@ -243,6 +246,7 @@ window.__dbg.openCours = openCours; window.__dbg.PROFILE = PROFILE; window.__dbg
 window.__dbg.COURS = { CHAPTERS: COURS_CHAPTERS, allLessons, lessonById: coursLessonById, lessonDone: coursLessonDone };
 window.__dbg.CTRL = CTRL;
 window.__dbg.jeu = { XP, sfx, JEU, openJournal, currentGoal, renderQuest };
+window.__dbg.carriere = CARRIERE;
 // le programme a démarré : le filet du chargement (boot.js) n'a plus à intervenir
 window.__carReady = true;
 initDiagUI();
