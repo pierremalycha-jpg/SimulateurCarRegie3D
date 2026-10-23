@@ -14,11 +14,13 @@ import { openDiag } from './diag_ui.js';
 import { openReport } from './report.js';
 import { JEU, saveJeu, setSfxVolume, sfx } from '../game/sfx.js';
 import { setQuestVisible } from '../game/quest.js';
+import { progressionSection } from './ma_progression.js';
 
 // ----------------------------------------------------------------------------------
 // Réglages : une seule fenêtre, la même depuis l'écran titre, l'écran Jouer et le menu du car.
-// Sur cet ordinateur (qualité, son), la partie en cours (lumière, affichage…), le profil, l'espace
-// formateur (profil Formateur), l'aide (commandes, diagnostic) et « À propos ».
+// Sur cet ordinateur (qualité, son), la partie en cours (lumière, affichage…), ma progression
+// (enregistrement, export, import, effacement, données personnelles), le profil, l'espace formateur
+// (profil Formateur), l'aide (commandes, diagnostic) et « À propos ».
 // ----------------------------------------------------------------------------------
 // une rangée de touches à bascule (une seule allumée)
 function seg(label, options, value, onChange) {
@@ -62,6 +64,7 @@ export function openSettings() {
         field('Voix du réalisateur virtuel', selectEl([['0', 'Texte seulement'], ['1', 'Synthèse vocale']], S.directorVoice ? '1' : '0', (v) => { S.directorVoice = v === '1'; })),
         field('Étiquettes et câbles dans le stade', selectEl([['1', 'Afficher'], ['0', 'Masquer']], S.showLabels ? '1' : '0', (v) => emit('setLabels', v === '1')))),
       el('p', { class: 'note' }, (LIGHTING[S.lighting] || {}).desc || '')) : null,
+    progressionSection(),
     section('Profil',
       row('Je suis', seg('Profil', [['etudiant', 'Étudiant'], ['formateur', 'Formateur', 'Ajoute l\'espace formateur à ces réglages']], PROFILE.role, (v) => setRole(v))),
       el('p', { class: 'note' }, 'Le profil Formateur ajoute ci-dessous l\'espace formateur : configuration du car, suivi des stagiaires, relecture technique.')),
@@ -80,7 +83,7 @@ export function openSettings() {
         el('button', { type: 'button', class: 'btn', onclick: () => openReport('Simulateur (général)') }, 'Signaler une erreur'))),
     section('À propos',
       el('p', {}, el('b', {}, 'TIEE Simulator'), ` version ${APP_VERSION}. Réalisé par le BTS Audiovisuel de Saint-Quentin (lycée Henri-Martin), pour l'option Techniques d'ingénierie et exploitation des équipements. Développé par Pierre MALYCHA.`),
-      el('p', { class: 'note' }, 'Moteur 3D : three.js (licence MIT). Polices : Archivo, Archivo Narrow, B612 Mono, Barlow Condensed, JetBrains Mono (licence SIL OFL). Icônes : Phosphor (licence MIT).'),
+      el('p', { class: 'note' }, 'Moteur 3D : three.js (licence MIT). Polices : Archivo, Archivo Narrow, B612 Mono, Barlow, JetBrains Mono, intégrées à la page (licence SIL OFL). Icônes : Phosphor (licence MIT).'),
       el('p', { class: 'note' }, 'Simulation non officielle, sans lien avec le club ni avec les constructeurs cités. Les caractéristiques techniques sont des ordres de grandeur réalistes, donnés à titre pédagogique.')));
   modal.open('Réglages', body, { width: 820 });
 }
