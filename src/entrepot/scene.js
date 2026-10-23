@@ -138,13 +138,15 @@ export function buildHall(renderer, quality) {
       }
       return pc ? PC_UID : null;
     },
-    /** un point de vue par zone : la cible, la direction d'où l'on regarde, la distance */
-    lookAt(/** @type {string} */ zone) {
+    /** un point de vue par zone : la cible, la direction d'où l'on regarde, la distance (étroit : le panneau est en bas de l'écran) */
+    lookAt(/** @type {string} */ zone, o = { etroit: false }) {
       if (zone === 'rack') return { target: new THREE.Vector3(RACK.x, 0.42, RACK.z + 0.1), dir: new THREE.Vector3(0.5, 0.32, 1), dist: 1.9 };
       if (zone === 'plateau') return { target: new THREE.Vector3(STAGE.x, 1.05, STAGE.z + 1.6), dir: new THREE.Vector3(0.12, 0.72, 1), dist: 4.6 };
       if (zone === 'mur') return { target: new THREE.Vector3(MUR.x, MUR.y, MUR.z + 0.1), dir: new THREE.Vector3(0.35, 0.1, 1), dist: 1.35 };
-      // le bureau : derrière le fauteuil, l'écran à gauche de l'image (la messagerie s'ouvre à droite), le hall derrière
-      if (zone === 'bureau') return { target: new THREE.Vector3(BUREAU.x + 0.5, BUREAU.top + 0.32, BUREAU.z - 0.2), dir: new THREE.Vector3(0.12, 0.34, 1), dist: 2.2 };
+      // le bureau : derrière le fauteuil, l'écran à gauche de l'image (la messagerie s'ouvre à droite), le hall derrière ;
+      // sur un écran étroit, l'écran en haut de l'image (la messagerie s'ouvre en bas)
+      if (zone === 'bureau') return o.etroit ? { target: new THREE.Vector3(BUREAU.x, BUREAU.top - 0.02, BUREAU.z - 0.16), dir: new THREE.Vector3(0.05, 0.4, 1), dist: 2.3 }
+        : { target: new THREE.Vector3(BUREAU.x + 0.5, BUREAU.top + 0.32, BUREAU.z - 0.2), dir: new THREE.Vector3(0.12, 0.34, 1), dist: 2.2 };
       return { target: new THREE.Vector3((TABLE.x0 + TABLE.x1) / 2, 0.88, 0), dir: new THREE.Vector3(0.12, 0.62, 1), dist: 2.9 };
     },
     /** la pastille de l'ordinateur du bureau */

@@ -115,7 +115,7 @@ Nadia`,
 
 Le lycée a validé ta régie${c.score != null ? ` : **${c.score} / 100**` : ''}. Bravo, c'est ta première prestation montée de A à Z.
 
-Ton compte rendu est dans le cahier des charges (bouton « Compte rendu ») : garde-le, c'est ce qu'on remet au client avec la liste de câblage et le plan d'adressage.
+Télécharge ton compte rendu depuis le cahier des charges (bouton « Compte rendu (HTML) ») : c'est ce qu'on remet au client, avec la note, le matériel, la liste de câblage et le plan d'adressage.
 
 Je reviens vers toi dès qu'une nouvelle prestation se présente. En attendant, le Cours t'attend : chaque leçon a ses exercices pratiques.
 

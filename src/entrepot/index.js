@@ -162,7 +162,9 @@ function placePins() {
     vus[i].b.style.transform = `translate(${vus[i].x}px, ${vus[i].y}px)`;
   }
 }
-function goZone(zone) { const l = R.hall.lookAt(zone); R.orbit.flyTo(l.target, l.dir, l.dist); }
+// un écran étroit (moins de 900 px : styles/entrepot.css) a le panneau en bas, et ses propres points de vue
+const etroit = () => window.innerWidth < 900;
+function goZone(zone) { const l = R.hall.lookAt(zone, { etroit: etroit() }); R.orbit.flyTo(l.target, l.dir, l.dist); }
 
 // ---------------- panneaux ----------------
 /** ouvre un panneau ('' le referme) ; toggle : un second appui sur le même bouton de la barre le referme */
@@ -272,7 +274,7 @@ export async function openEntrepot(o = {}) {
   R.root.hidden = false; document.body.classList.add('entrepot-on');
   resize(); last = 0; R.syncVer = -1; raf = requestAnimationFrame(loop);
   syncPc();
-  if (EP.carriere) { const l = R.hall.lookAt('bureau'); R.orbit.target.copy(l.target); R.orbit.sph.setFromVector3(l.dir.clone().normalize().multiplyScalar(l.dist)); R.orbit.apply(); }
+  if (EP.carriere) { const l = R.hall.lookAt('bureau', { etroit: etroit() }); R.orbit.target.copy(l.target); R.orbit.sph.setFromVector3(l.dir.clone().normalize().multiplyScalar(l.dist)); R.orbit.apply(); }
   panel(EP.carriere ? 'messagerie' : m ? 'mission' : 'stock');
   const first = /** @type {HTMLElement | null} */ (R.bar.querySelector('button')); if (first) first.focus({ preventScroll: true });
   emit('entrepot', { type: 'open', mission: B.mission, carriere: EP.carriere });
