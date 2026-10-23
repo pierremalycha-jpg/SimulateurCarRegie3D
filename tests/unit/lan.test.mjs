@@ -1,7 +1,8 @@
 // Réseau local : le vrai serveur (lan/serveur.mjs) lancé dans un dossier temporaire, et le client
 // du jeu (src/multi/lan.js) branché dessus avec le WebSocket de Node. Vérifie le relais de la
-// présence et des messages, les départs, la reconnexion d'un onglet, la liste des parties et
-// l'enregistrement des comptes rendus.
+// présence et des messages, les départs, la reconnexion d'un onglet, la liste des parties,
+// l'enregistrement des comptes rendus, et ce que le serveur refuse (v19.4) : une autre page web,
+// un message fragmenté trop gros, une présence trop grosse ou piégée, trop de comptes rendus.
 import { test, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
@@ -10,6 +11,8 @@ import os from 'node:os';
 import path from 'node:path';
 import net from 'node:net';
 import zlib from 'node:zlib';
+import http from 'node:http';
+import crypto from 'node:crypto';
 import { lanRoom } from '../../src/multi/lan.js';
 
 const ROOT = path.resolve(import.meta.dirname, '../..');
@@ -154,4 +157,74 @@ test('sans port imposé : premier port libre à partir de 8080, et un second lan
     assert.equal(code, 0);
     assert.match(b.out, new RegExp(`tourne déjà sur cet ordinateur : http://localhost:${port}`));
   } finally { a.p.kill(); }
+});
+
+// ---------------- ce que le serveur refuse ----------------
+// une connexion WebSocket écrite à la main (en-têtes au choix, trames brutes)
+function rawUpgrade(headers = {}) {
+  return new Promise((res, rej) => {
+    const sock = net.connect(port, '127.0.0.1');
+    const extra = Object.entries(headers).map(([k, v]) => `${k}: ${v}\r\n`).join('');
+    sock.on('connect', () => sock.write(`GET /ws HTTP/1.1\r\nHost: 127.0.0.1:${port}\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Key: ${crypto.randomBytes(16).toString('base64')}\r\nSec-WebSocket-Version: 13\r\n${extra}\r\n`));
+    sock.once('data', (d) => res({ sock, status: Number(String(d).split(' ')[1]) }));
+    sock.on('error', rej);
+  });
+}
+// trame d'un client (masque nul : les données passent telles quelles)
+function frame(op, data, fin = true) {
+  const n = data.length; let h;
+  if (n < 126) { h = Buffer.alloc(2); h[1] = 0x80 | n; } else if (n < 65536) { h = Buffer.alloc(4); h[1] = 0x80 | 126; h.writeUInt16BE(n, 2); } else { h = Buffer.alloc(10); h[1] = 0x80 | 127; h.writeBigUInt64BE(BigInt(n), 2); }
+  h[0] = (fin ? 0x80 : 0) | op;
+  return Buffer.concat([h, Buffer.alloc(4), data]);
+}
+const closed = (sock) => new Promise((r) => { if (sock.destroyed) r(true); sock.on('close', () => r(true)); setTimeout(() => r(false), 4000); });
+function post(pathname, body, headers) {
+  return new Promise((res, rej) => {
+    const rq = http.request({ host: '127.0.0.1', port, path: pathname, method: 'POST', headers }, (rs) => { let b = ''; rs.on('data', (d) => { b += d; }); rs.on('end', () => res({ status: rs.statusCode, body: b })); });
+    rq.on('error', rej); rq.end(body);
+  });
+}
+
+test('une autre page web ne se branche pas sur les parties ; la page du serveur, si', async () => {
+  const bad = await rawUpgrade({ Origin: 'http://site-quelconque.example' });
+  assert.equal(bad.status, 403); bad.sock.destroy();
+  const ok = await rawUpgrade({ Origin: `http://127.0.0.1:${port}` });
+  assert.equal(ok.status, 101); ok.sock.destroy();
+});
+
+test('un message fragmenté qui dépasse 4 Mo au total ferme la connexion, le serveur reste debout', async () => {
+  const { sock, status } = await rawUpgrade();
+  assert.equal(status, 101);
+  const mo = Buffer.alloc(1024 * 1024, 0x20);
+  sock.write(frame(1, mo, false));
+  for (let i = 0; i < 4; i++) sock.write(frame(0, mo, false));
+  assert.ok(await closed(sock), 'connexion fermée');
+  assert.equal((await fetch(base + '/api/parties')).status, 200, 'le serveur répond toujours');
+});
+
+test('présence : une clé piégée est ignorée, une présence trop grosse n\'est pas relayée', async () => {
+  const watcher = await join('car-garde', { name: 'Garde', role: 'son', since: 9 });
+  const { sock } = await rawUpgrade();
+  sock.write(frame(1, Buffer.from(JSON.stringify({ t: 'join', room: 'car-garde', by: 'brut', presence: { name: 'Brut', since: 10 } }))));
+  await until(() => presenceOf(watcher, 'Brut'), 'Brut arrive');
+  sock.write(frame(1, Buffer.from('{"t":"pres","patch":{"__proto__":{"pollue":1},"cam":4}}')));
+  await until(() => presenceOf(watcher, 'Brut').presence.cam === 4, 'patch relayé');
+  assert.ok(!Object.prototype.hasOwnProperty.call(presenceOf(watcher, 'Brut').presence, '__proto__'));
+  assert.equal(/** @type {any} */ ({}).pollue, undefined);
+  sock.write(frame(1, Buffer.from(JSON.stringify({ t: 'pres', patch: { gros: 'x'.repeat(70 * 1024) } }))));
+  sock.write(frame(1, Buffer.from(JSON.stringify({ t: 'pres', patch: { cam: 5 } }))));
+  await until(() => presenceOf(watcher, 'Brut').presence.cam === 5, 'patch suivant relayé');
+  assert.ok(!('gros' in presenceOf(watcher, 'Brut').presence), 'la présence trop grosse n\'est pas passée');
+  sock.destroy();
+  await watcher.r.leave();
+});
+
+test('comptes rendus : même origine, JSON, et pas plus de quelques envois par minute', async () => {
+  const body = JSON.stringify({ id: 'quota', data: { ok: 1 } });
+  assert.equal((await post('/api/rapport', body, { 'content-type': 'application/json', origin: 'http://site-quelconque.example' })).status, 403, 'autre origine');
+  assert.equal((await post('/api/rapport', body, { 'content-type': 'text/plain' })).status, 415, 'pas du JSON (formulaire d\'une autre page)');
+  const codes = [];
+  for (let i = 0; i < 8; i++) codes.push((await post('/api/rapport', body, { 'content-type': 'application/json', origin: `http://127.0.0.1:${port}` })).status);
+  assert.ok(codes.includes(200), codes.join(','));
+  assert.equal(codes.at(-1), 429, 'trop d\'envois : refusé, ' + codes.join(','));
 });
