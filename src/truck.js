@@ -1,7 +1,7 @@
 // @ts-check
 import * as THREE from 'three';
-import { pbr } from './render.js';
 import { Builder, screenMaterial } from './geo.js';
+import { matiere } from './matiere.js';
 import { TRUCK } from './world.js';
 import { makeCanvas } from './util.js';
 import { S } from './state.js';
@@ -271,12 +271,16 @@ function drawRackFace(key, g, W, H) {
   return spots;
 }
 
-function buildRack(B, key, lx, side) {
+function buildRack({ Br, Bm, Bp }, key, lx, side) {
   // caisson 600 × 900 mm, façade texturée ; side −1 : contre le mur d'écrans, +1 : côté porte
   const depth = 0.85, w = 0.58, h = 2.05;
   const lz = side < 0 ? IN.z0 + depth / 2 : IN.z1 - depth / 2;
-  B.box(w, h, depth, X(lx), F + h / 2, Z(lz), 0x14161a);
-  B.box(w + 0.02, 0.04, depth + 0.02, X(lx), F + h + 0.02, Z(lz), 0x22262c);
+  Br.cbox(w, h, depth, X(lx), F + h / 2, Z(lz), 0x14161a, 0.012);
+  Br.cbox(w + 0.02, 0.04, depth + 0.02, X(lx), F + h + 0.02, Z(lz), 0x22262c, 0.008);
+  // rails 19" (alu) de part et d'autre de la façade, poignées de flanc, pieds réglables
+  const zr = Z(lz) + (side < 0 ? depth / 2 - 0.02 : -depth / 2 + 0.02);
+  for (const dx of [-0.25, 0.25]) Bm.box(0.02, h - 0.1, 0.03, X(lx) + dx, F + h / 2, zr, 0x8a9096);
+  for (const dx of [-0.26, 0.26]) Bp.cyl(0.02, 0.02, 0.04, X(lx) + dx, F + 0.02, Z(lz), 0x111214, 8);
   const { c, g, tex } = canvasTex(526, 2048);
   const spots = drawRackFace(key, g, c.width, c.height);
   tex.needsUpdate = true;
@@ -334,32 +338,65 @@ export function buildTruck() {
   const scene = new THREE.Scene();
   T.scene = scene;
   scene.background = new THREE.Color(0x07080a);
-  const B = new Builder();
-  const wallC = 0x3d444d, floorC = 0x24282e, desk = 0x2f343b, deskTop = 0x454b53, ceil = 0x2a2f36, part = 0x363c44;
+  // ---------------- matières ----------------
+  // une famille de surfaces par Builder (un appel de rendu chacune) ; toutes partagent la liste des
+  // occulteurs : l'occlusion ambiante cuite à la fusion voit les murs, les bureaux et les baies
+  const occ = [];
+  const mk = () => new Builder({ ao: 0.3, occluders: occ, aoOpts: { dist: 1.0, strength: 1.15, floor: 0.22 } });
+  const B = mk(); // tôle peinte : parois, plafond, cloisons, caissons
+  const Bf = mk(); // sol en caoutchouc à pastilles
+  const Bd = mk(); // stratifié des bureaux
+  const Bm = mk(); // aluminium brossé : nez de bureau, chemins de câbles, rails, pieds
+  const Br = mk(); // acier thermolaqué des baies
+  const Bt = mk(); // tissu des sièges
+  const Bp = mk(); // plastique : accessoires, câbles, boîtiers
+  const Bs = mk(); // mousse acoustique
+  const Bl = mk(); // tôle larmée : seuils, marches
+  const MT = {
+    tole: matiere('tole', { seed: 2, scale: 0.55, strength: 0.3, roughness: 0.78, name: 'car-tole' }),
+    sol: matiere('caoutchouc', { seed: 3, scale: 0.32, name: 'car-sol' }),
+    strat: matiere('stratifie', { seed: 4, scale: 0.9, roughness: 0.58, name: 'car-stratifie' }),
+    alu: matiere('alu', { seed: 5, scale: 0.35, name: 'car-alu' }),
+    laque: matiere('laque', { seed: 6, scale: 0.45, name: 'car-laque' }),
+    tissu: matiere('tissu', { seed: 7, scale: 0.18, name: 'car-tissu' }),
+    plast: matiere('plastique', { seed: 8, scale: 0.2, name: 'car-plastique' }),
+    mousse: matiere('mousse', { seed: 9, scale: 0.3, name: 'car-mousse' }),
+    larme: matiere('larme', { seed: 10, scale: 0.28, name: 'car-larme' }),
+  };
+  const wallC = 0x565e68, floorC = 0x31363c, desk = 0x3c424a, deskTop = 0x5a6168, ceil = 0x3c424a, part = 0x47505a;
   const cx = TRUCK.cx, cz = TRUCK.cz;
   const L = IN.x1 - IN.x0, Wd = IN.z1 - IN.z0, H = TRUCK.ceil - F;
   // sol (allée plus claire), plafond, murs
-  B.box(L, 0.05, Wd, cx, F - 0.025, cz, floorC);
-  B.box(L - 0.4, 0.006, 1.25, cx, F + 0.004, Z(2.05), 0x2f3540);
+  Bf.box(L, 0.05, Wd, cx, F - 0.025, cz, floorC);
+  Bf.box(L - 0.4, 0.006, 1.25, cx, F + 0.004, Z(2.05), 0x2a2f38);
   B.box(L, 0.05, Wd, cx, TRUCK.ceil, cz, ceil);
   B.box(L, H, 0.1, cx, F + H / 2, Z(IN.z0), wallC);
   B.box(DOOR.x0 - IN.x0, H, 0.1, X((IN.x0 + DOOR.x0) / 2), F + H / 2, Z(IN.z1), wallC);
   B.box(IN.x1 - DOOR.x1, H, 0.1, X((IN.x1 + DOOR.x1) / 2), F + H / 2, Z(IN.z1), wallC);
   B.box(DOOR.x1 - DOOR.x0, H - 2.05, 0.1, X((DOOR.x0 + DOOR.x1) / 2), F + 2.05 + (H - 2.05) / 2, Z(IN.z1), wallC);
-  // encadrement de porte
+  // encadrement de porte, seuil en tôle larmée, poignée
   B.box(0.06, 2.05, 0.14, X(DOOR.x0), F + 1.025, Z(IN.z1), 0xe0b030); B.box(0.06, 2.05, 0.14, X(DOOR.x1), F + 1.025, Z(IN.z1), 0xe0b030);
+  Bl.box(DOOR.x1 - DOOR.x0, 0.012, 0.3, X((DOOR.x0 + DOOR.x1) / 2), F + 0.006, Z(IN.z1 - 0.1), 0x8a9096);
+  Bm.cyl(0.012, 0.012, 0.16, X(DOOR.x1 + 0.08), F + 1.05, Z(IN.z1 - 0.07), 0xd0d4d8, 8, Math.PI / 2);
   B.box(L - 0.2, 0.06, 0.02, cx, F + 0.1, Z(IN.z1 - 0.06), 0x1a1d21);
   B.box(0.1, H, Wd, X(IN.x0), F + H / 2, cz, wallC); B.box(0.1, H, Wd, X(IN.x1), F + H / 2, cz, wallC);
   wall(IN.x0, IN.x0 + 0.2, IN.z0, IN.z1); wall(IN.x1 - 0.2, IN.x1, IN.z0, IN.z1);
+  // plinthes et lisse en aluminium à hauteur de bureau (passage des câbles et prises)
+  for (const lz of [IN.z0 + 0.06, IN.z1 - 0.06]) Bm.box(L - 0.2, 0.08, 0.02, cx, F + 0.04, Z(lz), 0x6d737a);
+  for (const lx of [IN.x0 + 0.06, IN.x1 - 0.06]) Bm.box(0.02, 0.08, Wd - 0.2, X(lx), F + 0.04, cz, 0x6d737a);
+  // goulotte électrique (prises) le long du mur d'écrans
+  B.box(L - 0.6, 0.09, 0.05, cx, F + 0.68, Z(IN.z0 + 0.13), 0xb0b4b8);
+  for (let lx = -8; lx <= 8; lx += 0.9) { Bp.box(0.06, 0.05, 0.012, X(lx), F + 0.68, Z(IN.z0 + 0.16), 0x151719); Bp.box(0.06, 0.05, 0.012, X(lx + 0.09), F + 0.68, Z(IN.z0 + 0.16), 0x151719); }
 
   // cloison son / production : allège, vitre, imposte ; porte côté allée (lz 1.1 → 2.7)
   const sonDoor = 1.1;
   B.box(0.1, 1.0, sonDoor - IN.z0, X(PS), F + 0.5, Z((IN.z0 + sonDoor) / 2), part);
   B.box(0.1, H - 1.95, sonDoor - IN.z0, X(PS), F + 1.95 + (H - 1.95) / 2, Z((IN.z0 + sonDoor) / 2), part);
   B.box(0.1, 0.95, 0.12, X(PS), F + 1.475, Z(IN.z0 + 0.06), part); B.box(0.1, 0.95, 0.12, X(PS), F + 1.475, Z(sonDoor - 0.06), part);
+  Bm.box(0.12, 0.03, sonDoor - IN.z0, X(PS), F + 1.0, Z((IN.z0 + sonDoor) / 2), 0x8a9096); Bm.box(0.12, 0.03, sonDoor - IN.z0, X(PS), F + 1.95, Z((IN.z0 + sonDoor) / 2), 0x8a9096);
   B.box(0.1, H - 2.05, IN.z1 - sonDoor, X(PS), F + 2.05 + (H - 2.05) / 2, Z((sonDoor + IN.z1) / 2), part);
   {
-    const glass = new THREE.Mesh(new THREE.PlaneGeometry(sonDoor - IN.z0 - 0.24, 0.95), new THREE.MeshLambertMaterial({ color: 0x5a7a9a, transparent: true, opacity: 0.18, side: THREE.DoubleSide, depthWrite: false }));
+    const glass = new THREE.Mesh(new THREE.PlaneGeometry(sonDoor - IN.z0 - 0.24, 0.95), new THREE.MeshPhysicalMaterial({ color: 0x8aa0b4, transparent: true, opacity: 0.16, roughness: 0.05, metalness: 0, side: THREE.DoubleSide, depthWrite: false, envMapIntensity: 1.2 }));
     glass.position.set(X(PS), F + 1.475, Z((IN.z0 + sonDoor) / 2)); glass.rotation.y = Math.PI / 2; scene.add(glass);
   }
   wall(PS - 0.08, PS + 0.08, IN.z0, sonDoor);
@@ -376,62 +413,86 @@ export function buildTruck() {
   // ---------------- production ----------------
   const deskRow = (x0, x1, z0, z1, y0 = 0, top = 0.77) => {
     const cxl = (x0 + x1) / 2, czl = (z0 + z1) / 2, w = x1 - x0, d = z1 - z0;
-    B.box(w, top - 0.04, 0.05, X(cxl), F + y0 + (top - 0.04) / 2, Z(z1 - 0.03), desk); // façade
-    B.box(0.05, top - 0.04, d, X(x0 + 0.03), F + y0 + (top - 0.04) / 2, Z(czl), desk); B.box(0.05, top - 0.04, d, X(x1 - 0.03), F + y0 + (top - 0.04) / 2, Z(czl), desk);
-    B.box(w, top - 0.04, 0.05, X(cxl), F + y0 + (top - 0.04) / 2, Z(z0 + 0.03), 0x1d2025);
-    B.box(w + 0.04, 0.04, d + 0.06, X(cxl), F + y0 + top, Z(czl), deskTop);
-    B.box(w, 0.02, 0.03, X(cxl), F + y0 + top + 0.01, Z(z1 + 0.02), 0x8a9098); // nez de bureau
+    Bd.box(w, top - 0.04, 0.05, X(cxl), F + y0 + (top - 0.04) / 2, Z(z1 - 0.03), desk); // façade
+    Bd.box(0.05, top - 0.04, d, X(x0 + 0.03), F + y0 + (top - 0.04) / 2, Z(czl), desk); Bd.box(0.05, top - 0.04, d, X(x1 - 0.03), F + y0 + (top - 0.04) / 2, Z(czl), desk);
+    Bd.box(w, top - 0.04, 0.05, X(cxl), F + y0 + (top - 0.04) / 2, Z(z0 + 0.03), 0x1d2025);
+    Bd.cbox(w + 0.04, 0.04, d + 0.06, X(cxl), F + y0 + top, Z(czl), deskTop, 0.012);
+    Bm.cbox(w, 0.03, 0.035, X(cxl), F + y0 + top + 0.005, Z(z1 + 0.025), 0x9aa0a8, 0.008); // nez de bureau (alu)
+    // trappe de câbles et passe-fils dans le plateau
+    for (let k = 0; k < Math.floor(w / 1.4); k++) Bp.cyl(0.035, 0.035, 0.012, X(x0 + 0.7 + k * 1.4), F + y0 + top + 0.02, Z(z0 + 0.14), 0x101214, 12);
     // éclairage d'appoint sous le plateau (bandeau LED chaud, lumineux)
     glow.box(w - 0.2, 0.012, 0.025, X(cxl), F + y0 + top - 0.05, Z(z1 - 0.06), 0xffa040);
   };
   deskRow(-5.2, -0.4, -2.05, -1.2); block(-5.2, -0.4, -2.05, -1.2, 'desk', 'Réal · truquiste');
-  B.box(EST.x1 - EST.x0, EST.h, EST.z1 - EST.z0, X((EST.x0 + EST.x1) / 2), F + EST.h / 2, Z((EST.z0 + EST.z1) / 2), 0x23272d);
+  Bl.box(EST.x1 - EST.x0, EST.h, EST.z1 - EST.z0, X((EST.x0 + EST.x1) / 2), F + EST.h / 2, Z((EST.z0 + EST.z1) / 2), 0x3a3e44);
   B.box(EST.x1 - EST.x0, 0.01, 0.03, X((EST.x0 + EST.x1) / 2), F + EST.h + 0.005, Z(EST.z1 - 0.02), 0xe0b030);
   LAYOUT.furniture.push({ x0: EST.x0, x1: EST.x1, z0: EST.z0, z1: EST.z1, kind: 'platform', label: 'Estrade' });
   deskRow(-5.2, -1.15, -0.32, 0.35, EST.h); block(-5.2, -1.15, -0.32, 0.35, 'desk', 'Production');
-  for (const lx of [-4.3, -2.9, -1.3]) chairAt(B, lx, -0.75, 0);
-  for (const lx of [-4.3, -2.9, -1.75]) chairAt(B, lx, 0.95, EST.h);
+  const CH = { Bt, Bp, Bm };
+  for (const lx of [-4.3, -2.9, -1.3]) chairAt(CH, lx, -0.75, 0);
+  for (const lx of [-4.3, -2.9, -1.75]) chairAt(CH, lx, 0.95, EST.h);
   // mur d'écrans production (cadre + console de moniteurs)
-  B.box(5.3, 1.6, 0.1, X(-2.8), F + 1.6, Z(IN.z0 + 0.12), 0x0b0c0e);
-  // rétroéclairage du mur d'écrans (bias light D65 tamisé, limite la fatigue visuelle)
-  glow.box(5.2, 0.015, 0.02, X(-2.8), F + 2.41, Z(IN.z0 + 0.16), 0x9fb8ff); glow.box(5.2, 0.015, 0.02, X(-2.8), F + 0.79, Z(IN.z0 + 0.16), 0x9fb8ff);
-  B.box(5.3, 0.06, 0.25, X(-2.8), F + 0.8 + 0.03, Z(IN.z0 + 0.25), 0x1b1e22);
+  const monWall = (x0, x1, lxC) => {
+    B.box(x1 - x0, 1.6, 0.1, X(lxC), F + 1.6, Z(IN.z0 + 0.12), 0x0b0c0e);
+    // montants et traverses de la structure (alu noir)
+    for (const lx of [x0 + 0.02, x1 - 0.02]) Bm.box(0.03, 1.66, 0.14, X(lx), F + 1.6, Z(IN.z0 + 0.13), 0x2a2d31);
+    Bm.box(x1 - x0, 0.03, 0.14, X(lxC), F + 2.41, Z(IN.z0 + 0.13), 0x2a2d31);
+    // rétroéclairage du mur d'écrans (bias light D65 tamisé, limite la fatigue visuelle)
+    glow.box(x1 - x0 - 0.1, 0.015, 0.02, X(lxC), F + 2.41, Z(IN.z0 + 0.16), 0x9fb8ff); glow.box(x1 - x0 - 0.1, 0.015, 0.02, X(lxC), F + 0.79, Z(IN.z0 + 0.16), 0x9fb8ff);
+    Bm.cbox(x1 - x0, 0.06, 0.25, X(lxC), F + 0.8 + 0.03, Z(IN.z0 + 0.25), 0x1b1e22, 0.01);
+  };
+  monWall(-5.45, -0.15, -2.8);
   // ---------------- vision et ralentis ----------------
   deskRow(0.4, 3.75, -2.05, -1.2); block(0.4, 3.75, -2.05, -1.2, 'desk', 'Vision (RCP)');
   deskRow(0.75, 3.75, -0.32, 0.35); block(0.75, 3.75, -0.32, 0.35, 'desk', 'EVS · IPDirector');
-  for (const lx of [1.1, 2.8]) chairAt(B, lx, -0.75, 0);
-  for (const lx of [1.5, 3.0]) chairAt(B, lx, 0.95, 0);
-  B.box(3.4, 1.6, 0.1, X(2.07), F + 1.6, Z(IN.z0 + 0.12), 0x0b0c0e);
-  glow.box(3.3, 0.015, 0.02, X(2.07), F + 2.41, Z(IN.z0 + 0.16), 0x9fb8ff); glow.box(3.3, 0.015, 0.02, X(2.07), F + 0.79, Z(IN.z0 + 0.16), 0x9fb8ff);
+  for (const lx of [1.1, 2.8]) chairAt(CH, lx, -0.75, 0);
+  for (const lx of [1.5, 3.0]) chairAt(CH, lx, 0.95, 0);
+  monWall(0.37, 3.77, 2.07);
   // ---------------- son ----------------
-  B.box(0.9, 0.78, 2.9, X(-7.75), F + 0.39, Z(-0.45), desk);
-  B.box(1.0, 0.04, 3.0, X(-7.7), F + 0.8, Z(-0.45), deskTop);
+  Bd.box(0.9, 0.78, 2.9, X(-7.75), F + 0.39, Z(-0.45), desk);
+  Bd.cbox(1.0, 0.04, 3.0, X(-7.7), F + 0.8, Z(-0.45), deskTop, 0.012);
+  Bm.cbox(0.035, 0.03, 3.0, X(-7.19), F + 0.805, Z(-0.45), 0x9aa0a8, 0.008);
   block(-8.25, -7.2, -1.95, 1.05, 'desk', 'Console son');
-  chairAt(B, -6.75, -0.4, 0, Math.PI / 2);
-  // enceintes de proximité et panneaux acoustiques
-  for (const lz of [-1.6, 0.8]) { B.box(0.28, 0.42, 0.24, X(-8.05), F + 1.05, Z(lz), 0x111214, 0.5 * Math.sign(lz)); B.cyl(0.08, 0.08, 0.02, X(-7.9), F + 1.0, Z(lz), 0x2a2d31, 12, 0, Math.PI / 2); }
-  for (let i = 0; i < 5; i++) B.box(0.05, 1.3, 0.5, X(-8.72), F + 1.45, Z(-2.3 + i * 0.95), 0x4a505a);
-  for (let i = 0; i < 3; i++) B.box(0.8, 1.3, 0.05, X(-8.2 + i * 0.95), F + 1.45, Z(IN.z0 + 0.06), 0x4a505a);
+  chairAt(CH, -6.75, -0.4, 0, Math.PI / 2);
+  // enceintes de proximité (sur pieds) et panneaux de mousse acoustique
+  for (const lz of [-1.6, 0.8]) {
+    Bp.cbox(0.28, 0.42, 0.24, X(-8.05), F + 1.05, Z(lz), 0x111214, 0.012, 0.5 * Math.sign(lz));
+    Bp.cyl(0.08, 0.08, 0.02, X(-7.9), F + 1.0, Z(lz), 0x2a2d31, 16, 0, Math.PI / 2); Bp.cyl(0.03, 0.03, 0.02, X(-7.9), F + 1.16, Z(lz), 0x2a2d31, 12, 0, Math.PI / 2);
+    Bm.cyl(0.02, 0.02, 0.2, X(-8.05), F + 0.94, Z(lz), 0x3a3e44, 8);
+  }
+  for (let i = 0; i < 5; i++) Bs.box(0.05, 1.3, 0.5, X(-8.72), F + 1.45, Z(-2.3 + i * 0.95), 0x3a3f46);
+  for (let i = 0; i < 3; i++) Bs.box(0.8, 1.3, 0.05, X(-8.2 + i * 0.95), F + 1.45, Z(IN.z0 + 0.06), 0x3a3f46);
+  for (let i = 0; i < 2; i++) Bs.box(0.8, 1.0, 0.05, X(-7.2 + i * 0.95), F + 1.5, Z(IN.z1 - 0.06), 0x3a3f46);
 
   // ---------------- zone technique : baies ----------------
   const rackDefs = [];
   RACK_ROWS.mur.forEach((k, i) => rackDefs.push([k, 4.25 + i * 0.6, -1]));
   RACK_ROWS.porte.forEach((k, i) => rackDefs.push([k, 5.1 + i * 0.6, 1]));
   const rackPos = {};
-  for (const [k, lx, side] of rackDefs) rackPos[k] = buildRack(B, k, lx, side);
+  for (const [k, lx, side] of rackDefs) rackPos[k] = buildRack({ Br, Bm, Bp }, k, lx, side);
   block(3.95, 8.15, IN.z0, IN.z0 + 0.85, 'rack', 'Baies');
   block(4.8, 8.4, IN.z1 - 0.85, IN.z1, 'rack', 'Baies');
   for (const [k, lx, side] of rackDefs) LAYOUT.furniture.push({ x0: lx - 0.29, x1: lx + 0.29, z0: side < 0 ? IN.z0 : IN.z1 - 0.85, z1: side < 0 ? IN.z0 + 0.85 : IN.z1, kind: 'rackunit', label: RACKS[k].title });
   // pupitre HF au fond
-  B.box(0.62, 0.75, 2.2, X(8.45), F + 0.375, Z(-0.45), desk); B.box(0.66, 0.04, 2.25, X(8.45), F + 0.77, Z(-0.45), deskTop);
+  Bd.box(0.62, 0.75, 2.2, X(8.45), F + 0.375, Z(-0.45), desk); Bd.cbox(0.66, 0.04, 2.25, X(8.45), F + 0.77, Z(-0.45), deskTop, 0.012);
+  Bm.cbox(0.035, 0.03, 2.25, X(8.11), F + 0.775, Z(-0.45), 0x9aa0a8, 0.008);
   block(8.14, 8.8, -1.55, 0.65, 'desk', 'Pupitre HF');
-  chairAt(B, 7.75, -0.45, 0, -Math.PI / 2);
-  // chemins de câbles au plafond
-  for (const lz of [-1.6, 1.6]) B.box(L - 0.6, 0.05, 0.3, cx, TRUCK.ceil - 0.12, Z(lz), 0x50565e);
+  chairAt(CH, 7.75, -0.45, 0, -Math.PI / 2);
+  // chemins de câbles au plafond (échelles à câbles) et leurs torons
+  for (const lz of [-1.6, 1.6]) {
+    for (const dz of [-0.14, 0.14]) Bm.box(L - 0.6, 0.05, 0.02, cx, TRUCK.ceil - 0.12, Z(lz + dz), 0x50565e);
+    for (let lx = -8.4; lx <= 8.4; lx += 0.3) Bm.box(0.02, 0.04, 0.28, X(lx), TRUCK.ceil - 0.12, Z(lz), 0x50565e);
+  }
+  cableBundles(Bp, L, cx);
+  // bouches de climatisation au plafond (grilles à lames)
+  for (const lx of [-6.5, -2.5, 1.5, 6]) {
+    B.box(0.5, 0.03, 0.3, X(lx), TRUCK.ceil - 0.02, Z(-0.9), 0xd8dadc);
+    for (let k = 0; k < 7; k++) Bm.box(0.46, 0.01, 0.012, X(lx), TRUCK.ceil - 0.038, Z(-0.9 - 0.12 + k * 0.04), 0x8a9096);
+  }
   // bandeaux lumineux au plafond (diffus)
   const strips = new Builder();
-  for (const lx of [-7, -4, -1.5, 1.2, 3, 5.5, 7.5]) strips.box(1.2, 0.02, 0.18, X(lx), TRUCK.ceil - 0.03, Z(0.4), 0xffffff);
-  scene.add(new THREE.Mesh(strips.build(), new THREE.MeshBasicMaterial({ color: new THREE.Color(0xc8d2e0).multiplyScalar(2.6) })));
+  for (const lx of [-7, -4, -1.5, 1.2, 3, 5.5, 7.5]) { strips.box(1.2, 0.02, 0.18, X(lx), TRUCK.ceil - 0.03, Z(0.4), 0xffffff); Bm.box(1.26, 0.02, 0.24, X(lx), TRUCK.ceil - 0.02, Z(0.4), 0x8a9096); }
+  scene.add(new THREE.Mesh(strips.build(), new THREE.MeshBasicMaterial({ color: new THREE.Color(0xc8d2e0).multiplyScalar(2.2) })));
   scene.add(new THREE.Mesh(glow.build(), new THREE.MeshBasicMaterial({ vertexColors: true, color: new THREE.Color(2.4, 2.4, 2.4) })));
   // dans l'encadrement de porte : la lumière du compound
   {
@@ -439,7 +500,7 @@ export function buildTruck() {
     const gr = g.createLinearGradient(0, 0, 0, 256); gr.addColorStop(0, '#bcd4ee'); gr.addColorStop(0.55, '#e8eef4'); gr.addColorStop(0.6, '#5a5e62'); gr.addColorStop(1, '#3b3e40');
     g.fillStyle = gr; g.fillRect(0, 0, 128, 256); tex.needsUpdate = true;
     const out = new THREE.Mesh(new THREE.PlaneGeometry(DOOR.x1 - DOOR.x0 + 0.4, 2.6), new THREE.MeshBasicMaterial({ map: tex, toneMapped: false }));
-    out.position.set(X((DOOR.x0 + DOOR.x1) / 2), F + 0.9, Z(IN.z1 + 0.6)); out.rotation.y = Math.PI; scene.add(out);
+    out.position.set(X((DOOR.x0 + DOOR.x1) / 2), F + 0.9, Z(IN.z1 + 0.6)); out.rotation.y = Math.PI; out.userData.noAO = true; scene.add(out);
   }
   // balisage au sol de l'allée (LED ambre)
   const guide = new Builder();
@@ -447,9 +508,13 @@ export function buildTruck() {
   scene.add(new THREE.Mesh(guide.build(), new THREE.MeshBasicMaterial({ color: 0xffb030, toneMapped: false })));
 
   // pieds des écrans EVS posés sur le bureau
-  for (const lx of [1.5, 3.0]) B.box(0.06, 0.22, 0.06, X(lx), F + 0.9, Z(-0.16), 0x111111);
-  const mesh = B.mesh(pbr(new THREE.MeshLambertMaterial({ vertexColors: true }), 0.62, 0.08));
-  scene.add(mesh);
+  for (const lx of [1.5, 3.0]) { Bp.box(0.06, 0.22, 0.06, X(lx), F + 0.9, Z(-0.16), 0x111111); Bp.cbox(0.22, 0.012, 0.16, X(lx), F + 0.785, Z(-0.14), 0x111111, 0.005); }
+  // ---------------- accessoires ----------------
+  props({ Bp, Bm, Bt, B });
+
+  // fusion : une pièce par matière
+  const parts = [[B, MT.tole], [Bf, MT.sol], [Bd, MT.strat], [Bm, MT.alu], [Br, MT.laque], [Bt, MT.tissu], [Bp, MT.plast], [Bs, MT.mousse], [Bl, MT.larme]];
+  for (const [b, m] of parts) { if (!b.parts.length) continue; const mesh = b.mesh(m); mesh.name = m.name; scene.add(mesh); }
 
   // LED des baies (clignotement)
   {
@@ -463,15 +528,25 @@ export function buildTruck() {
       col.setHex(h < 0.75 ? 0x30ff60 : h < 0.9 ? 0x40a0ff : 0xffb020);
       leds.setColorAt(i, col); T.ledColors.push(col.getHex());
     });
+    leds.userData.noAO = true;
     scene.add(leds); T.leds = leds;
   }
 
-  // lumières : ambiance plus claire, appoints au-dessus des rangées
-  scene.add(new THREE.HemisphereLight(0xdfe4ec, 0x3a3836, 1.55));
-  for (const [lx, lz, i] of [[-7, 0, 3], [-3.6, -1.0, 4], [-2, 1.6, 3.5], [1.2, -1.0, 4], [2.6, 1.6, 3.5], [5.2, 0, 4], [7.6, 0, 3.5]]) {
-    const p = new THREE.PointLight(0xe6ecf5, i, 6, 1.2);
-    p.position.set(X(lx), TRUCK.ceil - 0.3, Z(lz)); scene.add(p);
-  }
+  // lumières : pénombre d'un vrai car (un spot au-dessus de chaque poste, la lueur des écrans sur les pupitres)
+  scene.add(new THREE.HemisphereLight(0xcfd6e2, 0x2a2826, 1.5));
+  const spot = (lx, lz, i = 50, col = 0xf2eee4, ang = 0.62) => {
+    const s = new THREE.SpotLight(col, i, 7, ang, 0.7, 1.4);
+    s.position.set(X(lx), TRUCK.ceil - 0.04, Z(lz)); s.target.position.set(X(lx), F, Z(lz));
+    scene.add(s); scene.add(s.target); return s;
+  };
+  spot(-7.4, -0.4, 48); // son
+  spot(-3.9, -1.2, 56); spot(-1.6, -1.2, 56); // production, 1re rangée
+  spot(-3.2, 0.3, 50); // production, estrade
+  spot(2.0, -1.2, 56); spot(2.2, 0.3, 50); // vision, EVS
+  spot(5.0, 0.3, 48, 0xe8ecf4, 0.85); spot(7.2, 0.3, 48, 0xe8ecf4, 0.85); // technique
+  spot(8.0, -0.45, 42); // HF
+  // lueur froide des murs d'écrans sur les pupitres
+  for (const [lx, i] of [[-4.0, 2.6], [-1.6, 2.6], [2.07, 2.4]]) { const p = new THREE.PointLight(0x9fb8ff, i, 3.2, 1.6); p.position.set(X(lx), F + 1.15, Z(IN.z0 + 0.75)); scene.add(p); }
 
   // écrans
   screen('mv', 2.3, 1.29, -2.85, 1.6, IN.z0 + 0.19, 0, 'MULTIVIEW PRODUCTION');
@@ -550,15 +625,97 @@ export function buildTruck() {
   return scene;
 }
 
-function chairAt(B, lx, lz, y0 = 0, rot = 0) {
+// ---------------- accessoires : ce qui traîne dans un vrai car ----------------
+/** un tube le long d'une courbe (câble, toron) ajouté à un Builder */
+function cable(Bc, pts, r, color, seg = 24) {
+  const curve = new THREE.CatmullRomCurve3(pts.map((p) => new THREE.Vector3(X(p[0]), F + p[1], Z(p[2]))), false, 'catmullrom', 0.6);
+  Bc.add(new THREE.TubeGeometry(curve, seg, r, 6, false), null, color);
+}
+// torons dans les échelles à câbles, descentes derrière les baies et les murs d'écrans
+function cableBundles(Bp, L, cx) {
+  const cols = [0x111214, 0x1d2a44, 0x3a1e1e, 0x111214, 0x24321c, 0x111214];
+  for (const lz of [-1.6, 1.6]) {
+    cols.forEach((c, i) => {
+      const off = (i - 2.5) * 0.035, sag = 0.012 * (i % 3);
+      const pts = []; for (let lx = -8.3; lx <= 8.3; lx += 2.1) pts.push([lx, TRUCK.ceil - F - 0.16 - sag * Math.abs(Math.sin(lx)), lz + off]);
+      cable(Bp, pts, 0.008 + 0.002 * (i % 2), c, 40);
+    });
+  }
+  // descentes derrière les baies (côté mur et côté porte) et derrière les murs d'écrans
+  for (const lx of [4.6, 6.4, 7.9]) cable(Bp, [[lx, 2.25 - 0.16, -1.6], [lx + 0.05, 1.9, -2.2], [lx, 1.4, -2.55], [lx, 0.4, -2.58]], 0.012, 0x111214, 10);
+  for (const lx of [5.4, 7.0]) cable(Bp, [[lx, 2.25 - 0.16, 1.6], [lx + 0.05, 1.9, 2.2], [lx, 1.4, 2.55], [lx, 0.4, 2.58]], 0.012, 0x111214, 10);
+  for (const lx of [-4.4, -2.0, 1.0, 2.9]) cable(Bp, [[lx, 2.25 - 0.16, -1.6], [lx + 0.08, 2.0, -2.3], [lx, 1.2, -2.5], [lx + 0.1, 0.85, -2.3]], 0.01, 0x1a1c20, 10);
+  // jarretières de brassage devant la baie de patch (boucles courtes)
+  for (let k = 0; k < 9; k++) {
+    const x0 = 6.3 - 0.2 + (k % 5) * 0.1, y0 = 1.25 + Math.floor(k / 5) * 0.3 - 0.1, z = 2.7 - 0.85 - 0.02;
+    const col = [0xe8c020, 0x2060d0, 0xd03030, 0x30a050][k % 4];
+    cable(Bp, [[x0, y0, z], [x0 + 0.05, y0 - 0.08 - 0.03 * (k % 3), z - 0.04], [x0 + 0.1 + 0.02 * k, y0 - 0.02, z]], 0.004, col, 10);
+  }
+}
+/** casque d'intercom posé sur le bureau */
+function headset(Bp, Bm, lx, y, lz, rot) {
+  const m = new THREE.Matrix4().compose(new THREE.Vector3(X(lx), F + y + 0.06, Z(lz)), new THREE.Quaternion().setFromEuler(new THREE.Euler(0, rot, Math.PI / 2)), new THREE.Vector3(1, 1, 1));
+  Bp.add(new THREE.TorusGeometry(0.085, 0.009, 6, 14, Math.PI), m, 0x151719);
+  for (const s of [-1, 1]) Bp.cyl(0.036, 0.036, 0.028, X(lx) + Math.cos(rot) * 0.085 * s, F + y + 0.036, Z(lz) - Math.sin(rot) * 0.085 * s, 0x1b1e22, 12, 0, Math.PI / 2, rot);
+  Bm.rod([X(lx) + Math.cos(rot) * 0.085, F + y + 0.03, Z(lz) - Math.sin(rot) * 0.085], [X(lx) + Math.cos(rot) * 0.02, F + y + 0.012, Z(lz) - Math.sin(rot) * 0.1 + 0.08], 0.003, 0x8a9096, 5);
+}
+/** gobelet, bloc-notes et stylo, boîtier d'intercom : la table de travail d'un technicien */
+function deskStuff(Bp, Bm, Bt, lx, y, lz, kind) {
+  if (kind.includes('cup')) { Bp.cyl(0.04, 0.034, 0.1, X(lx), F + y + 0.05, Z(lz), 0xe8e4dc, 14); Bp.cyl(0.036, 0.03, 0.006, X(lx), F + y + 0.098, Z(lz), 0x3a2a1a, 12); }
+  if (kind.includes('pad')) { Bp.cbox(0.21, 0.012, 0.29, X(lx), F + y + 0.006, Z(lz), 0xf0ece4, 0.003, 0.15); Bp.cyl(0.004, 0.004, 0.14, X(lx) + 0.08, F + y + 0.016, Z(lz), 0x202428, 6, 0, Math.PI / 2, 0.6); }
+  if (kind.includes('beltpack')) { Bp.cbox(0.1, 0.03, 0.14, X(lx), F + y + 0.015, Z(lz), 0x1a1d21, 0.006); for (let k = 0; k < 3; k++) Bp.box(0.02, 0.012, 0.02, X(lx) - 0.03 + k * 0.03, F + y + 0.035, Z(lz) - 0.03, [0xe03030, 0x30c060, 0xe0b030][k]); }
+  if (kind.includes('headset')) headset(Bp, Bm, lx, y, lz, 0.4);
+  if (kind.includes('phone')) Bp.cbox(0.07, 0.008, 0.15, X(lx), F + y + 0.004, Z(lz), 0x0c0d0f, 0.004, -0.3);
+}
+function props({ Bp, Bm, Bt, B }) {
+  // extincteur et trousse de secours près de la porte, panneau électrique
+  const ex = [DOOR.x1 + 0.45, IN.z1 - 0.2];
+  Bp.cyl(0.075, 0.075, 0.46, X(ex[0]), F + 0.33, Z(ex[1]), 0xc8201c, 16); Bp.cyl(0.03, 0.045, 0.07, X(ex[0]), F + 0.59, Z(ex[1]), 0x1a1c1e, 10);
+  Bm.cyl(0.012, 0.012, 0.06, X(ex[0]), F + 0.66, Z(ex[1]), 0x9aa0a8, 8); Bp.box(0.02, 0.18, 0.06, X(ex[0]) + 0.08, F + 0.6, Z(ex[1]), 0x1a1c1e);
+  Bp.box(0.18, 0.012, 0.02, X(ex[0]), F + 0.1, Z(ex[1]) + 0.02, 0xe8e4dc);
+  Bp.cbox(0.3, 0.22, 0.1, X(DOOR.x1 + 0.9), F + 1.6, Z(IN.z1 - 0.07), 0xb4b8bc, 0.01); Bp.box(0.14, 0.04, 0.012, X(DOOR.x1 + 0.9), F + 1.6, Z(IN.z1 - 0.125), 0x30a050); Bp.box(0.04, 0.14, 0.012, X(DOOR.x1 + 0.9), F + 1.6, Z(IN.z1 - 0.125), 0x30a050);
+  B.cbox(0.45, 0.6, 0.1, X(DOOR.x0 - 0.5), F + 1.55, Z(IN.z1 - 0.07), 0xa8acb0, 0.01); Bp.box(0.3, 0.06, 0.01, X(DOOR.x0 - 0.5), F + 1.78, Z(IN.z1 - 0.125), 0xe0b030);
+  // production : casques, blocs, gobelets, boîtiers d'intercom
+  deskStuff(Bp, Bm, Bt, -4.75, 0.77, -1.4, ['pad', 'cup']);
+  deskStuff(Bp, Bm, Bt, -3.35, 0.77, -1.35, ['headset']);
+  deskStuff(Bp, Bm, Bt, -2.35, 0.77, -1.9, ['cup']);
+  deskStuff(Bp, Bm, Bt, -0.75, 0.77, -1.4, ['beltpack', 'phone']);
+  deskStuff(Bp, Bm, Bt, -4.85, 0.77 + EST.h, 0.15, ['cup', 'pad']);
+  deskStuff(Bp, Bm, Bt, -2.3, 0.77 + EST.h, 0.15, ['headset']);
+  deskStuff(Bp, Bm, Bt, -1.3, 0.77 + EST.h, 0.2, ['beltpack']);
+  // vision : casque, gobelet, bloc
+  deskStuff(Bp, Bm, Bt, 0.65, 0.77, -1.45, ['headset']);
+  deskStuff(Bp, Bm, Bt, 3.5, 0.77, -1.9, ['cup', 'pad']);
+  deskStuff(Bp, Bm, Bt, 2.3, 0.77, 0.25, ['beltpack', 'cup']);
+  // son : casque de l'ingénieur du son, bloc
+  deskStuff(Bp, Bm, Bt, -7.65, 0.8, 0.9, ['headset']); deskStuff(Bp, Bm, Bt, -7.6, 0.8, -1.7, ['pad', 'cup']);
+  // HF : gobelet, bloc
+  deskStuff(Bp, Bm, Bt, 8.45, 0.77, 0.45, ['cup', 'pad']);
+  // technique : lampe de baie et tabouret
+  Bm.cyl(0.015, 0.015, 0.5, X(6.6), F + 0.25, Z(0.0), 0x8a9096, 8); Bm.cyl(0.14, 0.14, 0.02, X(6.6), F + 0.01, Z(0.0), 0x6a7078, 16); Bt.cyl(0.16, 0.16, 0.05, X(6.6), F + 0.52, Z(0.0), 0x1b1d21, 16);
+  // horloge au mur de la production et de la vision
+  for (const lx of [-2.8, 2.07]) { Bp.cyl(0.11, 0.11, 0.02, X(lx), F + 2.9, Z(IN.z0 + 0.06), 0x1a1c1e, 24, Math.PI / 2); Bp.cyl(0.095, 0.095, 0.006, X(lx), F + 2.9, Z(IN.z0 + 0.075), 0xe8e8e8, 24, Math.PI / 2); }
+}
+
+function chairAt({ Bt, Bp, Bm }, lx, lz, y0 = 0, rot = 0) {
   const x = X(lx), z = Z(lz);
   (T.chairs = T.chairs || []).push({ x, z, y: F + y0 + 0.52, rot }); // assises (avatars des joueurs en réseau)
-  B.box(0.5, 0.08, 0.5, x, F + y0 + 0.48, z, 0x1b1d21, rot);
+  // siège de régie : assise et dossier en tissu, accoudoirs, vérin et piètement à cinq branches
+  Bt.cbox(0.5, 0.09, 0.5, x, F + y0 + 0.48, z, 0x1b1d21, 0.035, rot);
   const bx = Math.sin(rot) * 0.22, bz = Math.cos(rot) * 0.22;
-  B.box(0.48, 0.55, 0.06, x + bx, F + y0 + 0.8, z + bz, 0x1b1d21, rot);
-  for (const s of [-1, 1]) { const ax = Math.cos(rot) * 0.26 * s, az = -Math.sin(rot) * 0.26 * s; B.box(0.05, 0.04, 0.32, x + ax, F + y0 + 0.66, z + az, 0x2c2f34, rot); }
-  B.cyl(0.03, 0.03, 0.42, x, F + y0 + 0.24, z, 0x50555c, 6);
-  for (let k = 0; k < 5; k++) { const a = rot + k * 1.2566; B.box(0.04, 0.03, 0.3, x + Math.sin(a) * 0.15, F + y0 + 0.04, z + Math.cos(a) * 0.15, 0x2a2d31, a); }
+  Bt.cbox(0.48, 0.58, 0.07, x + bx, F + y0 + 0.82, z + bz, 0x1b1d21, 0.035, rot, -0.08);
+  Bp.box(0.46, 0.06, 0.06, x + bx * 0.9, F + y0 + 0.53, z + bz * 0.9, 0x111214, rot);
+  for (const s of [-1, 1]) {
+    const ax = Math.cos(rot) * 0.27 * s, az = -Math.sin(rot) * 0.27 * s;
+    Bp.cbox(0.05, 0.03, 0.3, x + ax, F + y0 + 0.69, z + az, 0x2c2f34, 0.012, rot);
+    Bp.box(0.03, 0.16, 0.03, x + ax, F + y0 + 0.6, z + az, 0x2c2f34, rot);
+  }
+  Bm.cyl(0.028, 0.028, 0.3, x, F + y0 + 0.3, z, 0x9aa0a8, 10); Bp.cyl(0.04, 0.04, 0.14, x, F + y0 + 0.12, z, 0x111214, 10);
+  for (let k = 0; k < 5; k++) {
+    const a = rot + k * 1.2566;
+    Bp.cbox(0.04, 0.03, 0.3, x + Math.sin(a) * 0.15, F + y0 + 0.04, z + Math.cos(a) * 0.15, 0x2a2d31, 0.01, a);
+    Bp.cyl(0.025, 0.025, 0.02, x + Math.sin(a) * 0.29, F + y0 + 0.025, z + Math.cos(a) * 0.29, 0x111214, 8, 0, Math.PI / 2, a);
+  }
 }
 
 // ---------------- mise à jour : LED, étiquettes et repères ----------------

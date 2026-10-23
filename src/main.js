@@ -39,6 +39,7 @@ import { COMMUT } from './ui/commut.js';
 import { AT, beginAtelier, updateAtelier, endAtelier, atelierDebug } from './atelier.js';
 import { pt, pe, profFrame, profSnapshot, profReset } from './app/profiler.js';
 import { createRenderer, pcam, setQuality, updateNear } from './app/view.js';
+import { MATIERE, detailOk } from './matiere.js';
 import { PL, onDeck, eyePos, updatePlayer, updToolbar } from './app/player.js';
 import { takeCamera, releaseCamera, updateCamop } from './app/camop.js';
 import { AIM, updatePrompt } from './app/interact.js';
@@ -93,6 +94,7 @@ try {
 
 loadStep('Construction du stade', 12); await tick();
 const renderer = createRenderer();
+MATIERE.detail = detailOk();
 buildWorld(renderer);
 loadStep('Le match et les joueurs', 42); await tick();
 initMatch(); buildPlayers(W.scene); initRecorder();
