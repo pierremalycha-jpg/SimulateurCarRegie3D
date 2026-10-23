@@ -1,5 +1,5 @@
 // @ts-check
-import { el } from '../util.js';
+import { el, shuffled } from '../util.js';
 import { NOTIONS, CHAPITRES, notionsDu } from './notions/index.js';
 import { recordChapterQuiz, chapterQuizBest, acquises } from './progress.js';
 
@@ -532,17 +532,20 @@ export const QUIZ = {
  * erreur, mais seule la première réponse de chaque question compte. Quand chaque question a reçu
  * sa première réponse, onDone(score, total, premières réponses justes).
  * open(id) : une question qui porte n propose, après une erreur, la fiche à revoir.
+ * Les réponses sont mélangées à chaque série (la bonne n'a pas de place fixe) ; mix : les questions aussi.
  * @param {QuestionChap[]} questions
- * @param {{ onDone?: (score: number, total: number, firsts: boolean[]) => void, open?: (id: string) => void, label?: string }} [o]
+ * @param {{ onDone?: (score: number, total: number, firsts: boolean[]) => void, open?: (id: string) => void, label?: string, mix?: boolean }} [o]
  */
 export function questionList(questions, o = {}) {
   const firsts = /** @type {(boolean | null)[]} */ (questions.map(() => null));
   const box = el('ol', { class: 'cl-quiz' });
-  questions.forEach((q, qi) => {
+  const ordre = questions.map((_, i) => i);
+  (o.mix ? shuffled(ordre) : ordre).forEach((qi, rang) => {
+    const q = questions[qi];
     const why = el('p', { class: 'cl-why', 'aria-live': 'polite' });
-    const opts = el('div', { class: 'cl-opts', role: 'group', 'aria-label': `${o.label || 'Question'} ${qi + 1}` });
-    q.a.forEach(([text, expl], i) => opts.append(el('button', {
-      type: 'button', class: 'cl-opt',
+    const opts = el('div', { class: 'cl-opts', role: 'group', 'aria-label': `${o.label || 'Question'} ${rang + 1}` });
+    shuffled(q.a.map((_, i) => i)).forEach((i) => { const [text, expl] = q.a[i]; opts.append(el('button', {
+      type: 'button', class: 'cl-opt', 'data-c': String(i),
       onclick: (e) => {
         const b = /** @type {HTMLElement} */ (e.currentTarget);
         const right = i === q.ok;
@@ -558,7 +561,7 @@ export function questionList(questions, o = {}) {
           if (firsts.every((x) => x != null) && o.onDone) o.onDone(firsts.filter(Boolean).length, questions.length, /** @type {boolean[]} */ (firsts));
         }
       },
-    }, text)));
+    }, text)); });
     box.append(el('li', { 'data-q': String(qi) }, el('p', { class: 'cl-q' }, q.q), opts, why));
   });
   return box;
@@ -585,7 +588,7 @@ export function renderChapterQuiz(n, ctx) {
   const start = () => {
     result.replaceChildren();
     hold.replaceChildren(questionList(qs, {
-      label: 'Question',
+      label: 'Question', mix: true,
       open: ctx.open,
       onDone(score, total, firsts) {
         recordChapterQuiz(n, score, total); showBest(); if (ctx.progress) ctx.progress();

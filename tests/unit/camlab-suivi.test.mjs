@@ -34,6 +34,8 @@ globalThis.document = { createElement: (t) => new El(t), createElementNS: (_n, t
 /** les éléments d'un arbre qui vérifient f */
 const all = (n, f, out = []) => { if (n instanceof El) { if (f(n)) out.push(n); for (const c of n.children) all(c, f, out); } return out; };
 const byClass = (n, c) => all(n, (e) => e.classList.contains(c));
+// un choix d'une question par son rang dans les données (les réponses sont mélangées à l'affichage)
+const opt = (li, c) => byClass(li, 'cl-opt').find((b) => b.dataset.c === String(c));
 
 await import('../helpers/scene.mjs');
 await import('../../src/cours/all.js');
@@ -77,17 +79,35 @@ test('quiz de chapitre : 5 à 6 questions par chapitre, chaque réponse expliqu�
   assert.equal(places.size, 3, 'les trois places sont utilisées');
 });
 
+test('le moule des questions : réponses mélangées à chaque série, questions aussi pour un quiz de chapitre', () => {
+  const qs = QUIZ[1];
+  const rangs = new Set(), premieres = new Set();
+  for (let k = 0; k < 40; k++) {
+    const box = questionList(qs, { mix: true });
+    premieres.add(box.children[0].dataset.q);
+    for (const li of box.children) {
+      const q = qs[Number(li.dataset.q)], b = byClass(li, 'cl-opt');
+      assert.deepEqual(b.map((x) => x.dataset.c).sort(), q.a.map((_, i) => String(i)), 'chaque réponse une fois');
+      rangs.add(b.findIndex((x) => x.dataset.c === String(q.ok)));
+    }
+  }
+  assert.deepEqual([...rangs].sort(), [0, 1, 2], 'la bonne réponse change de place');
+  assert.ok(premieres.size > 1, 'l\'ordre des questions change');
+  // sans mix (les trois questions d'une fiche) : les questions gardent leur ordre
+  assert.deepEqual(questionList(qs).children.map((li) => li.dataset.q), qs.map((_, i) => String(i)));
+});
+
 test('le moule des questions : seule la première réponse compte, on peut réessayer', () => {
   let res = null;
   const qs = QUIZ[1].slice(0, 2);
   const box = questionList(qs, { onDone: (score, total, firsts) => { res = { score, total, firsts }; } });
   const lis = box.children;
   const opts = (i) => byClass(lis[i], 'cl-opt');
-  opts(0)[(qs[0].ok + 1) % 3].click(); // faux d'abord
+  opt(lis[0], (qs[0].ok + 1) % 3).click(); // faux d'abord
   assert.equal(res, null);
-  opts(0)[qs[0].ok].click(); // puis juste : la question est finie, mais elle reste ratée
+  opt(lis[0], qs[0].ok).click(); // puis juste : la question est finie, mais elle reste ratée
   assert.ok(opts(0).every((b) => b.disabled));
-  opts(1)[qs[1].ok].click();
+  opt(lis[1], qs[1].ok).click();
   assert.deepEqual(res, { score: 1, total: 2, firsts: [false, true] });
 });
 
@@ -300,12 +320,12 @@ test('fiche : les questions d\'Olivier sont enregistrées ; trois justes du prem
     const f = renderFiche('__quiz', ctx);
     const qs = () => all(f.node, (e) => e.classList.contains('cl-quiz'))[0].children;
     // une première série ratée à la deuxième question (puis corrigée) : 2 / 3, pas acquise
-    NOTIONS.iris.quiz.forEach((q, i) => { if (i === 1) byClass(qs()[i], 'cl-opt')[(q.ok + 1) % 3].click(); byClass(qs()[i], 'cl-opt')[q.ok].click(); });
+    NOTIONS.iris.quiz.forEach((q, i) => { if (i === 1) opt(qs()[i], (q.ok + 1) % 3).click(); opt(qs()[i], q.ok).click(); });
     assert.equal(PROG.camera.notions.__quiz.score, 2);
     assert.ok(!P.notionAcquise('__quiz') && byClass(f.node, 'cs-badge')[0].hidden);
     // « Refaire les questions », trois justes du premier coup
     all(f.node, (e) => e.tagName === 'BUTTON' && e.textContent === 'Refaire les questions')[0].click();
-    NOTIONS.iris.quiz.forEach((q, i) => byClass(qs()[i], 'cl-opt')[q.ok].click());
+    NOTIONS.iris.quiz.forEach((q, i) => opt(qs()[i], q.ok).click());
     assert.equal(PROG.camera.notions.__quiz.score, 3);
     assert.ok(P.notionAcquise('__quiz'));
     assert.ok(!byClass(f.node, 'cs-badge')[0].hidden, 'le badge « Notion acquise » paraît');

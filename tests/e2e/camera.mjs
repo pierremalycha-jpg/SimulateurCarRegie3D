@@ -81,7 +81,8 @@ const acq = await ev(() => {
   /** @type {HTMLElement} */ (q('.cl-ni[data-n="iris"]')).click();
   // les trois questions d'Olivier, justes du premier coup (bonnes réponses lues dans les données du module)
   const f = window.__dbg.camlab().data.NOTIONS.iris;
-  document.querySelectorAll('.camlab .cl-side .cl-quiz > li').forEach((li, i) => /** @type {HTMLElement} */ (li.querySelectorAll('.cl-opt')[f.quiz[i].ok]).click());
+  // (les réponses sont mélangées : chaque bouton porte son rang dans les données, data-c)
+  document.querySelectorAll('.camlab .cl-side .cl-quiz > li').forEach((li) => /** @type {HTMLElement} */ (li.querySelector(`.cl-opt[data-c="${f.quiz[Number(/** @type {HTMLElement} */ (li).dataset.q)].ok}"]`)).click());
   return { bar, li: !!q('.camlab .cl-ni[data-n="iris"].cs-acq'), head: q('.camlab .cs-acqn')?.textContent, badge: !q('.camlab .cl-side .cs-badge')?.hidden, prog: window.__dbg.PROG.camera?.notions?.iris, ch: q('.camlab .cl-ch .cs-chn')?.textContent };
 });
 T.check('la barre du module : le bouton « Mise en service »', acq.bar);
@@ -92,10 +93,11 @@ const qz = await ev(() => {
   /** @type {HTMLElement} */ (document.querySelector('.cs-qbtn[data-quiz="1"]')).click();
   const Q = window.__dbg.camlab().data.QUIZ[1];
   const lis = document.querySelectorAll('.camlab .cs-cquiz .cl-quiz > li');
-  lis.forEach((li, i) => {
-    const opts = li.querySelectorAll('.cl-opt');
-    if (i === 0) /** @type {HTMLElement} */ (opts[(Q[0].ok + 1) % opts.length]).click();
-    /** @type {HTMLElement} */ (opts[Q[i].ok]).click();
+  // questions et réponses mélangées : data-q est la question, data-c la réponse dans les données
+  lis.forEach((li, rang) => {
+    const q = Q[Number(/** @type {HTMLElement} */ (li).dataset.q)], n = li.querySelectorAll('.cl-opt').length;
+    if (rang === 0) /** @type {HTMLElement} */ (li.querySelector(`.cl-opt[data-c="${(q.ok + 1) % n}"]`)).click();
+    /** @type {HTMLElement} */ (li.querySelector(`.cl-opt[data-c="${q.ok}"]`)).click();
   });
   return { n: lis.length, score: document.querySelector('.camlab .cs-cquiz .cs-score')?.textContent, revoir: !!document.querySelector('.camlab .cs-cquiz .cs-result .cl-chip'), best: window.__dbg.PROG.camera?.quiz?.[1], item: document.querySelector('.cs-qbtn[data-quiz="1"] small')?.textContent };
 });
