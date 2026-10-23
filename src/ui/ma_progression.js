@@ -25,6 +25,8 @@ function resume(P) {
 /** où la progression est enregistrée, en une phrase */
 function etat() {
   const remote = !!(SH.db && SH.uid && !SH.readOnly);
+  // ce navigateur refuse d'enregistrer (navigation privée, stockage plein) : le serveur de la page suffit, s'il répond
+  if (SAVE.local === false && remote && SAVE.remote !== false) return { ok: true, text: 'Enregistrée sur le serveur de la page (votre compte), pas dans ce navigateur, qui refuse d\'enregistrer (navigation privée ou stockage plein).' };
   if (SAVE.local === false) return { ok: false, text: 'La progression n\'a pas pu être enregistrée dans ce navigateur (stockage plein ou désactivé). Exportez-la dans un fichier pour ne rien perdre.' };
   if (remote && SAVE.remote === false) return { ok: false, text: 'Enregistrée dans ce navigateur, mais pas sur le serveur de la page (connexion perdue ?) : un nouvel essai a lieu au prochain enregistrement.' };
   const quand = SAVE.at ? ` Dernier enregistrement à ${new Date(SAVE.at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}.` : '';
@@ -82,6 +84,8 @@ export function progressionSection() {
 // un échec d'enregistrement se dit tout de suite, une seule fois (et le retour à la normale aussi)
 on('progressSave', (/** @type {{ where: string, ok: boolean }} */ e) => {
   if (!e) return;
-  if (!e.ok) toast(e.where === 'local' ? 'La progression ne s\'enregistre plus dans ce navigateur (stockage plein ou désactivé) : exportez-la depuis Réglages → Ma progression.' : 'La progression n\'a pas pu être envoyée au serveur de la page : elle reste dans ce navigateur, nouvel essai au prochain enregistrement.', 'bad', 8000);
+  const remote = !!(SH.db && SH.uid && !SH.readOnly);
+  if (!e.ok && e.where === 'local' && remote) toast('Ce navigateur n\'enregistre pas la progression (navigation privée ou stockage plein) : elle est gardée sur le serveur de la page.', '', 6000);
+  else if (!e.ok) toast(e.where === 'local' ? 'La progression ne s\'enregistre plus dans ce navigateur (stockage plein ou désactivé) : exportez-la depuis Réglages → Ma progression.' : 'La progression n\'a pas pu être envoyée au serveur de la page : elle reste dans ce navigateur, nouvel essai au prochain enregistrement.', 'bad', 8000);
   else if (e.where === 'remote' && SAVE.local !== false) toast('La progression est de nouveau enregistrée sur le serveur.', 'good');
 });
