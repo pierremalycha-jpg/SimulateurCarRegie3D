@@ -436,7 +436,8 @@ fenêtres, marches) arrondis et en matière. Le compound : **bitume en relief** 
 barrières de chantier grillagées sur plots, cônes, rampes de câbles à cinq voies, bobines, flight cases à cornières
 et roulettes, palette, poubelle, lampadaires, câbles d'énergie au sol et câbles vers le pied de car. Les **arbres**
 sont des plans croisés à découpe alpha (feuillage peint en code, écorce, ombre découpée) à la place des sphères.
-Le stade : béton des tribunes et du parvis en relief, pylônes en acier.
+Le stade : béton des tribunes et du parvis en relief, pylônes en acier, **sièges et gradins en relief** (mode UV de
+`matiere` : la carte de normales suit la texture des sièges, coques arrondies, dossiers, contremarches).
 
 **Vérifier.** `node tools/e2e.mjs rendu` (`tests/e2e/rendu.mjs` : familles de matières, relief actif / coupé selon
 la qualité, occlusion cuite, spots, SSAO, accessoires, extérieur, arbres ; captures à regarder) ;

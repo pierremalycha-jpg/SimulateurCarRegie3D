@@ -20,7 +20,7 @@ export const MATIERE = {
   cache: new Map(),
   setDetail(on) {
     MATIERE.detail = !!on;
-    for (const m of MATIERE.all) { m.userData.detailOn = MATIERE.detail; m.needsUpdate = true; }
+    for (const m of MATIERE.all) { m.userData.detailOn = MATIERE.detail; if (m.userData.apply) m.userData.apply(); else m.needsUpdate = true; }
   },
 };
 
@@ -105,6 +105,18 @@ export const RECETTES = {
   laque: (s) => ({ k: 0.9, scale: 0.4, rough: 0.55, metal: 0.15, h: (u, v) => fbm(u, v, 96, 3, s, 0.5), r: (u, v) => 0.5 + (fbm(u, v, 8, 2, s + 2) - 0.5) * 0.15 }),
   // tôle larmée (marches, seuils)
   larme: (s) => ({ k: 2.6, scale: 0.3, rough: 0.5, metal: 0.8, h: (u, v) => { let m = 0; for (let i = 0; i < 2; i++) { const a = i ? 0.25 : 0; const x = ((u * 5 + a) % 1), y = ((v * 5 + a + (i ? 0.5 : 0)) % 1); const d = Math.hypot((x - 0.5) * 1.6, (y - 0.5) * 0.45); m = Math.max(m, d < 0.22 ? 1 - d / 0.22 : 0); } return m * 1.5 + fbm(u, v, 64, 2, s) * 0.2; } }),
+  // sièges de tribune (mode UV : 4 rangs par tuile, 8 sièges par rang, comme la texture des sièges) :
+  // coque relevée aux bords arrondis, dossier plus haut, contremarche en creux
+  sieges: (s) => ({ k: 2.4, scale: 1, rough: 0.6, h: (u, v) => {
+    const row = (((1 - v) * 4) % 1 + 1) % 1, seat = ((u * 8) % 1 + 1) % 1; // row : 0 en haut de la rangée (dossier), 1 en bas (marche)
+    const inX = seat > 0.1 && seat < 0.9 ? Math.min(1, Math.min(seat - 0.1, 0.9 - seat) / 0.08) : 0;
+    const inY = row > 0.28 && row < 0.56 ? Math.min(1, Math.min(row - 0.28, 0.56 - row) / 0.06) : 0;
+    const back = row > 0.28 && row < 0.36 ? 1 : 0;
+    const tread = row > 0.69 ? -0.8 : 0;
+    return inX * inY * (1.2 + back * 0.8) + tread + fbm(u, v, 64, 2, s) * 0.12;
+  } }),
+  // gradins en béton de la tribune debout : marches (nez arrondi) et barrières
+  gradins: (s) => ({ k: 2.0, scale: 1, rough: 0.85, h: (u, v) => { const row = (((1 - v) * 4) % 1 + 1) % 1; const step = row > 0.69 ? -1.0 : 0; const nez = row > 0.62 && row <= 0.69 ? -(row - 0.62) / 0.07 : 0; return step + nez + fbm(u, v, 80, 3, s) * 0.3; } }),
   // herbe tondue (relief fin seulement)
   herbe: (s) => ({ k: 1.0, scale: 0.5, rough: 0.9, h: (u, v) => fbm(u, v, 128, 3, s, 0.6), a: (u, v) => 0.5 + (fbm(u, v, 6, 3, s + 1) - 0.5) * 0.14 }),
 };
@@ -166,7 +178,7 @@ const FRAG_NORMAL = `
 /**
  * Un matériau physique habillé d'une recette.
  * @param {string} key recette (RECETTES)
- * @param {{ color?: number | THREE.Color, roughness?: number, metalness?: number, scale?: number, strength?: number, seed?: number, vertexColors?: boolean, side?: THREE.Side, emissive?: number, emissiveIntensity?: number, transparent?: boolean, opacity?: number, name?: string, rough?: number, tint?: number, n?: number, map?: THREE.Texture | null, polygonOffset?: number, alphaTest?: number }} [o]
+ * @param {{ color?: number | THREE.Color, roughness?: number, metalness?: number, scale?: number, strength?: number, seed?: number, vertexColors?: boolean, side?: THREE.Side, emissive?: number, emissiveIntensity?: number, transparent?: boolean, opacity?: number, name?: string, rough?: number, tint?: number, n?: number, map?: THREE.Texture | null, polygonOffset?: number, alphaTest?: number, uv?: boolean, repeat?: number[] }} [o]
  */
 export function matiere(key, o = {}) {
   const R = RECETTES[key](o.seed ?? 1);
@@ -178,6 +190,18 @@ export function matiere(key, o = {}) {
   });
   m.name = o.name || key;
   if (S.lite) return m; // mode allégé : uni, et jamais de relief
+  if (o.uv) {
+    // mode UV : la carte de normales suit les UV du maillage (alignée sur sa texture de teinte)
+    const c = cartes(key, o.seed ?? 1, o.n);
+    const nrm = c.nrm.clone(); nrm.needsUpdate = true;
+    if (o.repeat) nrm.repeat.set(o.repeat[0], o.repeat[1]); else if (o.map) nrm.repeat.copy(o.map.repeat);
+    const k = o.strength ?? 1;
+    m.userData.recette = key; m.userData.uvNormal = nrm; m.userData.uvScale = k; m.userData.detailOn = MATIERE.detail;
+    const apply = () => { m.normalMap = m.userData.detailOn ? nrm : null; m.normalScale.set(k, k); m.needsUpdate = true; };
+    m.userData.apply = apply; apply();
+    MATIERE.all.add(m);
+    return m;
+  }
   const u = { tNrm: { value: null }, tSrf: { value: null }, uTri: { value: new THREE.Vector4(1 / (o.scale ?? R.scale), o.strength ?? 1, o.rough ?? 1, o.tint ?? 1) } };
   m.userData.detailOn = MATIERE.detail; m.userData.tri = u; m.userData.recette = key;
   m.onBeforeCompile = (sh) => {

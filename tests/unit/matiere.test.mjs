@@ -52,6 +52,17 @@ test('matiere() : matériau physique à couleurs par sommet, relief débrayable 
   assert.notEqual(matiere('tole').customProgramCacheKey(), undefined);
 });
 
+test('matiere() en mode UV : carte de normales three.js alignée sur la texture, coupée en Basse', () => {
+  const tex = new THREE.DataTexture(new Uint8Array(4), 1, 1); tex.repeat.set(3, 5);
+  const m = matiere('sieges', { uv: true, map: tex, vertexColors: false });
+  assert.ok(m.normalMap && m.normalMap.repeat.x === 3 && m.normalMap.repeat.y === 5);
+  MATIERE.setDetail(false); assert.equal(m.normalMap, null);
+  MATIERE.setDetail(true); assert.ok(m.normalMap);
+  const R = RECETTES.sieges(1);
+  // une coque de siège est plus haute que la contremarche
+  assert.ok(R.h(0.5 / 8, 1 - 0.42 / 4) > R.h(0.5 / 8, 1 - 0.8 / 4) + 1);
+});
+
 test('roundedBox : dimensions respectées, arêtes creusées, normales unitaires', () => {
   const g = roundedBox(1, 0.5, 0.3, 0.05, 4);
   g.computeBoundingBox();

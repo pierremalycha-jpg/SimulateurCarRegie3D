@@ -484,8 +484,8 @@ function backBandGeo(st, u0, u1, o, y0, y1, repU = 1, repV = 1) {
 
 function buildStands(scene) {
   const B = new Builder();
-  const seatMat = new THREE.MeshLambertMaterial({ map: seatTexture() });
-  const terraceMat = new THREE.MeshLambertMaterial({ map: terraceTexture() });
+  const seatMat = matiere('sieges', { uv: true, map: seatTexture(), vertexColors: false, roughness: 0.62, strength: 1.0, name: 'tribunes-sieges' });
+  const terraceMat = matiere('gradins', { uv: true, map: terraceTexture(), vertexColors: false, roughness: 0.88, strength: 1.0, name: 'tribunes-gradins' });
   const seats = [], terrace = [];
   for (const st of STANDS) {
     const h = st.half;
