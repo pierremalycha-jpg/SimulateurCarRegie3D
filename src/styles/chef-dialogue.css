@@ -26,7 +26,7 @@
 /* la boîte de dialogue ne cache pas la prise en main, ni le retour PGM */
 .chef-open #onboard { display: none; }
 @media (max-width: 720px) {
-  .chef.dlg { left: 0 !important; right: 0; transform: none; width: auto; max-height: 52vh; }
+  .chef.dlg { left: 0 !important; right: 0; bottom: 0; transform: none; width: auto; max-height: 52vh; }
   .chef.dlg.haut { top: auto !important; bottom: 0; }
   .chef.dlg .chef-head { padding-left: 64px; } .chef.dlg .chef-avatar { left: 8px; top: -14px; width: 48px; height: 48px; font-size: 24px; line-height: 48px; }
   .chef.dlg .chef-body, .chef.dlg .chef-foot { padding-left: 14px; padding-right: 14px; }
