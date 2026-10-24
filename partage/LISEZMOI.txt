@@ -38,6 +38,50 @@ fonctionnent pas bien ouverts directement depuis le .zip.
      à côté de l'exécutable.
 
 
+JOUER PAR INTERNET (AVEC QUELQU'UN QUI EST CHEZ LUI)
+----------------------------------------------------
+Celui qui héberge (sous Windows) :
+   1. Double-cliquez TIEE-Simulator.exe. Dans le simulateur : Jouer, « Coopération »,
+      « Ouvrir le salon ».
+   2. Choisissez votre pseudo et votre poste, « Créer la partie » si vous voulez la
+      préparer tout de suite, puis, dans le bloc « Inviter quelqu'un par Internet »,
+      cliquez « Inviter par Internet ».
+      Le simulateur analyse votre réseau (adresse de l'ordinateur, box, adresse publique)
+      et demande lui-même à la box d'ouvrir le port (UPnP). Si c'est possible, il affiche
+      le lien à envoyer, du genre http://86.x.x.x:8080/?cle=abcd2345efgh.
+   3. Si la box refuse, ou si votre opérateur partage votre adresse (fréquent en fibre ou
+      en 4G/5G), cliquez « Créer un lien par tunnel » : le lien passe par Cloudflare
+      (service gratuit, sans compte), du genre https://mots-au-hasard.trycloudflare.com/?cle=…
+      Rien à régler sur la box. La première fois, le programme cloudflared (environ
+      40 Mo) est téléchargé depuis sa page officielle. L'adresse change à chaque lancement.
+   4. Copiez le lien (bouton « Copier ») et envoyez-le par message.
+   Gardez la fenêtre noire et le simulateur ouverts pendant la partie.
+   « Fermer l'accès par Internet » referme la box et le tunnel (la fermeture de la
+   fenêtre noire aussi).
+
+Celui qui rejoint :
+   - Le plus simple : ouvrez le lien reçu dans votre navigateur (Chrome, Edge, Firefox).
+     Rien à installer. Puis Jouer, « Coopération », « Ouvrir le salon », votre pseudo,
+     votre poste, « Rejoindre la partie ».
+   - Avec le kit (TIEE-Simulator.exe ou TIEE-Simulator.html) : Jouer, « Coopération »,
+     « Ouvrir le salon », onglet « Rejoindre une partie », collez le lien dans
+     « Vous avez reçu un lien de l'hôte ? », puis « Rejoindre ».
+
+Chacun voit l'autre dans le stade et dans le car : un technicien avec la tenue de la
+couleur de son poste, son pseudo et son poste au-dessus de la tête.
+
+Sécurité : le lien contient une clé (?cle=…). Sans elle, quelqu'un qui tomberait sur votre
+adresse ne voit qu'une page « Lien incomplet ». Ne publiez pas le lien ; donnez-le aux
+seules personnes invitées. La clé est gardée dans « cle-internet.txt », à côté de
+l'exécutable : effacez ce fichier (serveur arrêté) pour que les anciens liens ne marchent plus.
+
+Si la personne n'arrive pas à se connecter avec le lien direct (http://…) : créez plutôt
+un lien par tunnel. Le bloc « Analyse du réseau » du salon dit ce que le simulateur a
+trouvé et comment ouvrir la box à la main si vous préférez (redirection du port TCP 8080
+vers l'adresse de l'ordinateur). Si Windows signale un réseau « public », passez-le en
+« privé » (Paramètres > Réseau et Internet), sinon le pare-feu bloque le lien direct.
+
+
 POUR BIEN DÉMARRER
 ------------------
    - Trois entrées : Jouer, Cours, Réglages. Pour découvrir, Jouer > mode « Visite guidée » :
