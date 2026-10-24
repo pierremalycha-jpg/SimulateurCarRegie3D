@@ -86,41 +86,71 @@ export function buildGround(scene, detailTex) {
 }
 
 // ------------------------------- arbres -------------------------------
-// un arbre = tronc + couronne en 3 masses irrégulières ; couleurs par sommet (ombre en bas de la couronne)
+// un arbre = tronc (cylindre, écorce) + couronne en plans croisés à découpe alpha (feuillage peint
+// en code : amas de feuilles, lumière en haut, ombre en bas) ; couleurs par sommet pour le dégradé
+let ATLAS = null;
+function treeAtlas() {
+  if (ATLAS) return ATLAS;
+  const W = 512, H = 256, c = makeCanvas(W, H), g = c.getContext('2d'), r = mulberry32(5);
+  g.clearRect(0, 0, W, H);
+  // couronne d'un feuillu (0..256) et d'un peuplier (256..384) : des touffes de feuilles de plus en plus claires vers le haut
+  const crown = (x0, w, h, n, ry, hueA, hueB) => {
+    const cx = x0 + w / 2, cy = H / 2;
+    for (let i = 0; i < n; i++) {
+      const a = r() * Math.PI * 2, d = Math.sqrt(r()) * 0.92;
+      const x = cx + Math.cos(a) * d * w * 0.46, y = cy - Math.sin(a) * d * h * 0.46 * ry;
+      const t = 1 - (y - (cy - h / 2)) / h; // 1 en haut
+      const rad = 6 + r() * 9;
+      const l = 34 + t * 30 + (r() - 0.5) * 14;
+      g.fillStyle = `hsla(${hueA + (hueB - hueA) * r()}, ${40 + r() * 20}%, ${l}%, ${0.75 + r() * 0.25})`;
+      g.beginPath(); for (let k = 0; k < 5; k++) { const aa = a + k * 1.26, rr = rad * (0.7 + r() * 0.5); g.lineTo(x + Math.cos(aa) * rr, y + Math.sin(aa) * rr); } g.closePath(); g.fill();
+    }
+  };
+  crown(0, 256, 256, 520, 0.92, 78, 112);
+  crown(256, 128, 256, 300, 1.0, 70, 100);
+  // écorce (384..512) : stries verticales
+  g.fillStyle = '#4a3b2d'; g.fillRect(384, 0, 128, 256);
+  for (let i = 0; i < 400; i++) { const v = 30 + r() * 40; g.fillStyle = `rgba(${v},${v * 0.8},${v * 0.6},0.6)`; g.fillRect(384 + r() * 128, r() * 256, 1 + r() * 3, 6 + r() * 30); }
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4; t.generateMipmaps = true; t.minFilter = THREE.LinearMipmapLinearFilter;
+  ATLAS = t; return t;
+}
 function treeGeometry(kind = 0, lod = 0) {
-  const parts = [];
-  const nz = noise2(91 + kind);
-  const trunk = new THREE.CylinderGeometry(0.16, 0.26, 3.2, lod ? 4 : 6, 1, lod > 0); trunk.translate(0, 1.6, 0);
-  parts.push([trunk, new THREE.Color(0x4a3b2d), new THREE.Color(0x2f251c)]);
-  // lod 1 (arbres lointains) : une seule masse, ~90 triangles
-  const blobs = kind === 1 ? [[0, 6.2, 0, 1.6, 3.2]] : lod ? [[0, 5.0, 0, 2.7, 2.4]] : [[0, 4.6, 0, 2.5, 2.2], [0.9, 5.6, 0.4, 1.9, 1.8], [-0.8, 5.4, -0.6, 1.8, 1.7]];
-  for (const [x, y, z, rad, ry] of blobs) {
-    const g = new THREE.IcosahedronGeometry(rad, 1);
-    const p = g.attributes.position;
-    for (let i = 0; i < p.count; i++) {
-      const vx = p.getX(i), vy = p.getY(i), vz = p.getZ(i);
-      const k = 0.82 + 0.36 * nz(vx * 1.3 + 7, vz * 1.3 + vy * 0.7);
-      p.setXYZ(i, vx * k, vy * k * (ry / rad), vz * k);
-    }
-    g.translate(x, y, z);
-    parts.push([g, new THREE.Color(0x5a8a45), new THREE.Color(0x2d4a24)]);
+  const pos = [], nor = [], col = [], uv = [];
+  const c = new THREE.Color();
+  // tronc
+  const trunk = new THREE.CylinderGeometry(0.16, 0.26, 3.2, lod ? 4 : 6, 1, true); trunk.translate(0, 1.6, 0);
+  const tg = trunk.toNonIndexed(); const tp = tg.attributes.position, tn = tg.attributes.normal, tu = tg.attributes.uv;
+  const bark0 = new THREE.Color(0x3a2d22), bark1 = new THREE.Color(0x5a4a3a);
+  for (let i = 0; i < tp.count; i++) {
+    pos.push(tp.getX(i), tp.getY(i), tp.getZ(i)); nor.push(tn.getX(i), tn.getY(i), tn.getZ(i));
+    uv.push(0.75 + tu.getX(i) * 0.25, tu.getY(i)); c.copy(bark0).lerp(bark1, tp.getY(i) / 3.2); col.push(c.r, c.g, c.b);
   }
-  // fusion avec couleurs (dégradé vertical : bas de couronne plus sombre)
-  const pos = [], nor = [], col = [];
-  for (const [g0, top, bot] of parts) {
-    const g = g0.index ? g0.toNonIndexed() : g0; // normales d'origine : couronnes arrondies
-    const p = g.attributes.position, n = g.attributes.normal;
-    g.computeBoundingBox(); const y0 = g.boundingBox.min.y, y1 = g.boundingBox.max.y;
-    const c = new THREE.Color();
-    for (let i = 0; i < p.count; i++) {
-      pos.push(p.getX(i), p.getY(i), p.getZ(i)); nor.push(n.getX(i), n.getY(i), n.getZ(i));
-      c.copy(bot).lerp(top, (p.getY(i) - y0) / Math.max(0.01, y1 - y0)); col.push(c.r, c.g, c.b);
+  // couronne : plans verticaux croisés (+ un plan horizontal pour la vue d'avion), découpe alpha
+  const poplar = kind === 1;
+  const w = poplar ? 2.6 : 6.0, h = poplar ? 7.0 : 5.4, y0 = poplar ? 2.0 : 2.6;
+  const u0 = poplar ? 0.5 : 0, u1 = poplar ? 0.75 : 0.5;
+  const top = new THREE.Color(0x9ccb7a), bot = new THREE.Color(0x46703a);
+  const quad = (pts, uvs) => {
+    const idx = [0, 1, 2, 0, 2, 3];
+    for (const k of idx) {
+      const [x, y, z] = pts[k]; pos.push(x, y, z); nor.push(0, 1, 0); uv.push(uvs[k][0], uvs[k][1]);
+      c.copy(bot).lerp(top, (y - y0) / h); col.push(c.r, c.g, c.b);
     }
+  };
+  const nv = lod ? 2 : 3;
+  for (let k = 0; k < nv; k++) {
+    const a = (k / nv) * Math.PI, cx = Math.cos(a) * w / 2, cz = Math.sin(a) * w / 2;
+    quad([[-cx, y0, -cz], [cx, y0, cz], [cx, y0 + h, cz], [-cx, y0 + h, -cz]], [[u0, 0], [u1, 0], [u1, 1], [u0, 1]]);
+  }
+  if (!lod && !poplar) {
+    const yh = y0 + h * 0.55, hw = w * 0.42;
+    quad([[-hw, yh, hw], [hw, yh, hw], [hw, yh, -hw], [-hw, yh, -hw]], [[u0, 0.08], [u1, 0.08], [u1, 0.92], [u0, 0.92]]);
   }
   const geo = new THREE.BufferGeometry();
   geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
   geo.setAttribute('normal', new THREE.Float32BufferAttribute(nor, 3));
   geo.setAttribute('color', new THREE.Float32BufferAttribute(col, 3));
+  geo.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
   return geo;
 }
 
@@ -128,7 +158,9 @@ function treeGeometry(kind = 0, lod = 0) {
 // n'envoient au GPU que ce qu'elles voient
 export function buildTrees(scene, pts, { shadows = false, sectors = 8, lod = 0, layer = 0 } = {}) {
   const geos = [treeGeometry(0, lod), treeGeometry(1, lod)];
-  const mat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.92, metalness: 0 });
+  const atlas = treeAtlas();
+  const mat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.92, metalness: 0, map: atlas, alphaTest: 0.45, side: THREE.DoubleSide });
+  const depthMat = new THREE.MeshDepthMaterial({ depthPacking: THREE.RGBADepthPacking, map: atlas, alphaTest: 0.45 });
   const r = mulberry32(17);
   const groups = new Map();
   for (const p of pts) {
@@ -150,6 +182,7 @@ export function buildTrees(scene, pts, { shadows = false, sectors = 8, lod = 0, 
       mesh.setColorAt(i, c.setHex(tints[Math.floor(r() * tints.length)]));
     });
     mesh.castShadow = shadows; mesh.receiveShadow = shadows;
+    if (shadows) mesh.customDepthMaterial = depthMat;
     mesh.computeBoundingSphere();
     if (layer) mesh.layers.set(layer); // calque 2 : vue « œil » seulement, les caméras du stade ne les calculent pas
     scene.add(mesh); out.push(mesh);

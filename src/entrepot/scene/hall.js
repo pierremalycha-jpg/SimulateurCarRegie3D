@@ -1,6 +1,7 @@
 // @ts-check
 import * as THREE from 'three';
 import { U, RAIL_X, RACK, TABLE, STAGE, WALL_Z, MUR, HALL, canvasTex, put, rng, FONT } from './kit.js';
+import { matiere } from '../../matiere.js';
 
 // ----------------------------------------------------------------------------------
 // Le hall de l'entrepôt, tout ce qui ne bouge pas : le sol en béton et ses marquages, les murs en
@@ -11,6 +12,8 @@ import { U, RAIL_X, RACK, TABLE, STAGE, WALL_Z, MUR, HALL, canvasTex, put, rng, 
 // ----------------------------------------------------------------------------------
 
 const std = (bin, color, roughness = 0.8, metalness = 0, o = {}) => bin.add(new THREE.MeshStandardMaterial({ color, roughness, metalness, ...o }));
+/** une matière à relief (src/matiere.js) inscrite au bac : couleur unie ou texture de teinte */
+const mat = (bin, recette, color, o = {}) => bin.add(matiere(recette, { color, vertexColors: false, ...o }));
 const geo = (bin, g) => bin.add(g);
 
 /**
@@ -103,14 +106,14 @@ export function buildStatic(scene, bin, quality) {
   // ---- le sol ----
   const W = HALL.x1 - HALL.x0, D = HALL.z1 - HALL.z0;
   const floorT = bin.add(canvasTex(low ? 256 : 512, low ? 256 : 512, concrete, { repeat: [W / 3, D / 3], aniso: 8 }));
-  const floor = new THREE.Mesh(geo(bin, new THREE.PlaneGeometry(W, D)), std(bin, '#ffffff', 0.92, 0, { map: floorT }));
+  const floor = new THREE.Mesh(geo(bin, new THREE.PlaneGeometry(W, D)), mat(bin, 'beton', '#ffffff', { map: floorT, roughness: 0.9, scale: 1.5, strength: 0.6, name: 'ep-beton' }));
   floor.rotation.x = -Math.PI / 2; floor.position.set((HALL.x0 + HALL.x1) / 2, 0, (HALL.z0 + HALL.z1) / 2); floor.receiveShadow = true; scene.add(floor);
   // les allées (lignes jaunes) le long des rayonnages
   const lane = std(bin, '#d9a900', 0.7);
   for (const x of [HALL.x0 + 1.55, HALL.x1 - 1.55]) { const l = new THREE.Mesh(geo(bin, new THREE.PlaneGeometry(0.08, D - 0.6)), lane); l.rotation.x = -Math.PI / 2; l.position.set(x, 0.002, (HALL.z0 + HALL.z1) / 2 + 0.3); l.receiveShadow = true; scene.add(l); }
 
   // ---- les murs (fond, gauche, droite) ----
-  const wallMat = (len) => std(bin, '#ffffff', 0.85, 0.05, { map: bin.add(canvasTex(512, 512, cladding, { repeat: [len / 3, 1] })) });
+  const wallMat = (len) => mat(bin, 'tole', '#ffffff', { map: bin.add(canvasTex(512, 512, cladding, { repeat: [len / 3, 1] })), roughness: 0.78, metalness: 0.08, scale: 0.7, strength: 0.5, name: 'ep-bardage' });
   const wall = (len, x, z, ry) => { const m = new THREE.Mesh(geo(bin, new THREE.PlaneGeometry(len, HALL.h)), wallMat(len)); m.position.set(x, HALL.h / 2, z); m.rotation.y = ry; m.receiveShadow = true; scene.add(m); };
   wall(W, (HALL.x0 + HALL.x1) / 2, WALL_Z, 0);
   wall(D, HALL.x0, (HALL.z0 + HALL.z1) / 2, Math.PI / 2);
@@ -123,7 +126,7 @@ export function buildStatic(scene, bin, quality) {
   exit.position.set(HALL.x0 + 0.03, 2.55, 4.8); exit.rotation.y = Math.PI / 2; scene.add(exit);
 
   // ---- la charpente et les suspensions ----
-  const steel = std(bin, '#3a4048', 0.6, 0.4);
+  const steel = mat(bin, 'laque', '#3a4048', { roughness: 0.6, metalness: 0.4, scale: 0.5, name: 'ep-acier' });
   const beams = []; for (let z = HALL.z0 + 1.6; z < HALL.z1; z += 3.2) beams.push({ p: [0, HALL.h - 0.2, z], s: [W, 0.35, 0.18] });
   boxes(bin, scene, steel, beams);
   const lamps = []; for (const x of [-4.8, -1.6, 1.6, 4.8]) for (const z of [-3.4, 0.3, 3.8]) lamps.push([x, z]);
@@ -170,8 +173,8 @@ export function buildStatic(scene, bin, quality) {
   boxes(bin, scene, std(bin, '#2357a8', 0.55, 0.35), uprights);
   boxes(bin, scene, std(bin, '#e0661a', 0.5, 0.3), lisses);
   boxes(bin, scene, std(bin, '#8f979e', 0.7, 0.3), decks);
-  boxes(bin, scene, std(bin, '#ffffff', 0.95), cartons.map((c) => ({ ...c, c: c.c || '#a37a4c' })));
-  const caseMat = std(bin, '#ffffff', 0.55, 0.15, { map: bin.add(canvasTex(128, 128, flightCase)) });
+  boxes(bin, scene, mat(bin, 'plastique', '#ffffff', { roughness: 0.95, scale: 0.5, strength: 0.5, name: 'ep-carton' }), cartons.map((c) => ({ ...c, c: c.c || '#a37a4c' })));
+  const caseMat = mat(bin, 'plastique', '#ffffff', { map: bin.add(canvasTex(128, 128, flightCase)), roughness: 0.55, metalness: 0.15, scale: 0.3, strength: 0.6, name: 'ep-flightcase' });
   boxes(bin, scene, caseMat, cases);
   // les panneaux des rayons (le stock est rangé par famille)
   const rayons = [['Caméras', -4.0], ['Mélangeurs', -1.3], ['Réseau · énergie', 1.9]];
@@ -195,7 +198,7 @@ export function buildStatic(scene, bin, quality) {
 
   // ---- la baie 19" mobile de 12 U ----
   const rack = new THREE.Group(); rack.position.set(RACK.x, 0, RACK.z); scene.add(rack);
-  const rackMat = std(bin, '#3a4047', 0.5, 0.45), railMat = std(bin, '#ffffff', 0.45, 0.6, { map: bin.add(canvasTex(64, 768, (g, w, h) => railTex(g, w, h, 12))) });
+  const rackMat = mat(bin, 'laque', '#3a4047', { roughness: 0.5, metalness: 0.45, scale: 0.4, name: 'ep-baie' }), railMat = std(bin, '#ffffff', 0.45, 0.6, { map: bin.add(canvasTex(64, 768, (g, w, h) => railTex(g, w, h, 12))) });
   const H12 = 12 * U, top = RACK.y0 + H12;
   put(new THREE.Mesh(geo(bin, new THREE.BoxGeometry(RACK.w, 0.05, RACK.d)), rackMat), [0, RACK.y0 - 0.03, 0], null, rack);
   put(new THREE.Mesh(geo(bin, new THREE.BoxGeometry(RACK.w, 0.02, RACK.d)), rackMat), [0, top + 0.012, 0], null, rack);
@@ -220,7 +223,7 @@ export function buildStatic(scene, bin, quality) {
   // ---- la table de régie ----
   const table = new THREE.Group(); scene.add(table);
   const tw = TABLE.x1 - TABLE.x0, td = TABLE.z1 - TABLE.z0;
-  const topMat = std(bin, '#4a4f55', 0.65, 0.05), edge = std(bin, '#1d2024', 0.5, 0.2);
+  const topMat = mat(bin, 'stratifie', '#4a4f55', { roughness: 0.62, metalness: 0.05, scale: 0.8, strength: 0.7, name: 'ep-table' }), edge = mat(bin, 'alu', '#9aa0a6', { roughness: 0.45, metalness: 0.8, scale: 0.3, strength: 0.6, name: 'ep-nez' });
   put(new THREE.Mesh(geo(bin, new THREE.BoxGeometry(tw, 0.035, td)), topMat), [(TABLE.x0 + TABLE.x1) / 2, TABLE.top - 0.0175, (TABLE.z0 + TABLE.z1) / 2], null, table);
   put(new THREE.Mesh(geo(bin, new THREE.BoxGeometry(tw + 0.01, 0.04, 0.012)), edge), [(TABLE.x0 + TABLE.x1) / 2, TABLE.top - 0.02, TABLE.z1], null, table);
   for (const x of [TABLE.x0 + 0.06, TABLE.x1 - 0.06]) put(new THREE.Mesh(geo(bin, new THREE.BoxGeometry(0.06, TABLE.top - 0.035, td - 0.12)), steel), [x, (TABLE.top - 0.035) / 2, (TABLE.z0 + TABLE.z1) / 2], null, table);
@@ -232,7 +235,7 @@ export function buildStatic(scene, bin, quality) {
   // ---- le plateau : estrade, fond, pupitre de conférence, une plante ----
   const stage = new THREE.Group(); scene.add(stage);
   put(new THREE.Mesh(geo(bin, new THREE.BoxGeometry(3.4, 0.22, 1.35)), std(bin, '#26292d', 0.85)), [STAGE.x, 0.11, WALL_Z + 0.75], null, stage);
-  put(new THREE.Mesh(geo(bin, new THREE.BoxGeometry(3.4, 0.006, 1.35)), std(bin, '#3b3f45', 0.95)), [STAGE.x, 0.223, WALL_Z + 0.75], null, stage);
+  put(new THREE.Mesh(geo(bin, new THREE.BoxGeometry(3.4, 0.006, 1.35)), mat(bin, 'moquette', '#3b3f45', { roughness: 0.96, scale: 0.3, name: 'ep-moquette' })), [STAGE.x, 0.223, WALL_Z + 0.75], null, stage);
   const backT = bin.add(canvasTex(512, 384, (g, w, h) => {
     const gr = g.createLinearGradient(0, 0, w, h); gr.addColorStop(0, '#14294d'); gr.addColorStop(1, '#0a1630'); g.fillStyle = gr; g.fillRect(0, 0, w, h);
     g.globalAlpha = 0.16; g.fillStyle = '#7fb4ff'; for (let i = 0; i < 4; i++) { g.beginPath(); g.moveTo(w * (0.15 + i * 0.2), h); g.lineTo(w * (0.3 + i * 0.2), 0); g.lineTo(w * (0.36 + i * 0.2), 0); g.lineTo(w * (0.21 + i * 0.2), h); g.fill(); }

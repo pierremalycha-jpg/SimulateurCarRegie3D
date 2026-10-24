@@ -47,6 +47,19 @@ export function buildHall(renderer, quality) {
   const bin = makeBin();
   buildStatic(scene, bin, quality);
   const BU = buildBureau(scene, bin, quality);
+  // carte d'environnement du hall (lanterneaux clairs, murs gris, sol sombre) : les métaux et les
+  // façades des appareils reflètent quelque chose, comme dans le car
+  if (quality !== 'basse') {
+    const pmrem = new THREE.PMREMGenerator(renderer);
+    const sc = new THREE.Scene();
+    sc.add(new THREE.Mesh(new THREE.BoxGeometry(15, 6, 11), new THREE.MeshBasicMaterial({ color: 0x4a4f55, side: THREE.BackSide })));
+    const sky = new THREE.MeshBasicMaterial({ color: new THREE.Color(2.6, 2.7, 2.9) });
+    for (const x of [-4.8, -1.6, 1.6, 4.8]) for (const z of [-3.4, 0.3, 3.8]) { const m = new THREE.Mesh(new THREE.PlaneGeometry(1.2, 0.8), sky); m.rotation.x = Math.PI / 2; m.position.set(x, 2.95, z); sc.add(m); }
+    const fl = new THREE.Mesh(new THREE.PlaneGeometry(15, 11), new THREE.MeshBasicMaterial({ color: 0x2a2d31 })); fl.rotation.x = -Math.PI / 2; fl.position.y = -2.95; sc.add(fl);
+    const rt = pmrem.fromScene(sc, 0.04, 0.1, 40); bin.add(rt); pmrem.dispose();
+    scene.environment = rt.texture;
+    scene.traverse((o) => { const m = /** @type {any} */ (o).material; if (m && m.isMeshStandardMaterial) m.envMapIntensity = 0.5; });
+  }
   const DV = makeDevices(bin, quality);
   const CB = makeCables(bin, quality);
   const devs = new THREE.Group(); devs.name = 'appareils'; scene.add(devs);

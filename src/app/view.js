@@ -1,5 +1,6 @@
 // @ts-check
 import * as THREE from 'three';
+import { MATIERE, detailOk } from '../matiere.js';
 import { S } from '../state.js';
 import { el, clamp } from '../util.js';
 import { setCloudQuality, W } from '../world.js';
@@ -40,7 +41,7 @@ export function createRenderer() {
 }
 
 export function setQuality(v) {
-  S.quality = v; setCloudQuality(v);
+  S.quality = v; setCloudQuality(v); MATIERE.setDetail(detailOk());
   try { localStorage.setItem('carregie.quality', v); } catch (e) { /* stockage indisponible */ }
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, v === 'basse' ? 1 : 1.5));
   renderer.setSize(window.innerWidth, window.innerHeight, false);

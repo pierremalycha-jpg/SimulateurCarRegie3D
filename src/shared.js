@@ -32,7 +32,7 @@ export const MYREV = { domains: [], items: {}, params: {}, extra: [], updatedAt:
 /**
  * Version du format de la progression (PROG.v). À monter quand sa forme change, avec l'étape qui convient
  * dans migrateProgress. 1 : sans numéro (jusqu'à la v19.3) ; 2 : numérotée, réussites « seul » (clean) des
- * parcours et des missions réseau (v19.4) ; 3 : la Carrière, dates de réception et de lecture des mails (v19.5).
+ * parcours et des missions réseau (v19.4) ; 3 : la Carrière, dates de réception et de lecture des mails (v19.6).
  */
 export const PROG_VERSION = 3;
 export const PROG = { v: PROG_VERSION, missions: {}, visited: {}, scenarios: [], reports: [], perf: null, patchBest: 0, updatedAt: 0 };

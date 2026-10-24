@@ -94,6 +94,10 @@ Tout est en français (code commenté en français, interface, commits).
   dans le stade (rumeur lointaine derrière les tribunes, devant le car), l'écoute de la console au poste son, presque
   rien ailleurs dans le car, silence à l'accueil ; volume dans Réglages. La console (vumètres, loudness, départs) n'en
   dépend pas. Les commentaires ne sont pas dits (pas de synthèse vocale, jugée trop robotique) : fil écrit au poste son.
+- **Rendu (v19.5)** : toute nouvelle géométrie passe par `matiere()` (`src/matiere.js`, recettes de relief
+  procédurales, triplanaire : pas de texture de fichier) et par un `Builder` en mode `ao` avec `cbox` (arêtes
+  arrondies, occlusion cuite) ; une famille de matière = une pièce fusionnée nommée. Le SSAO ne tourne que dans le
+  car ; la qualité Basse garde le rendu uni. Suite `node tools/e2e.mjs rendu`, test `tests/unit/matiere.test.mjs`.
 - Les fiches « ? » (`src/content/netterms.js` + `terms_*.js`, figures `src/ui/figs_*.js`) restent la source
   des définitions courtes ; une leçon les cite dans `terms`.
 
