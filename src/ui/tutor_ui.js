@@ -416,7 +416,15 @@ function renderHome() {
     UI.root.append(body);
     return;
   }
-  if (S.modeCar === 'mission' && S.mission && !S.visite) {
+  // mission spécifique, assis à un poste : un rappel de la mission, puis les exercices du poste (plus bas)
+  const aUnPoste = S.mode === 'station';
+  if (S.modeCar === 'mission' && S.mission && !S.visite && aUnPoste) {
+    body.append(el('div', { class: 'chef-note' }, rich(S.mission.fini ? `**Mission réussie** : ${S.mission.titre}. Tu enchaînes sur une autre, ou tu t'arrêtes là ?` : `Ta mission : **${S.mission.titre}**.`),
+      S.mission.fini ? el('div', { class: 'chef-acts' },
+        el('button', { class: 'btn small primary', 'data-k': 'mission:suivante', onclick: () => { toggleChef(false); emit('missionCar', { type: 'suivante' }); } }, 'Mission suivante'),
+        el('button', { class: 'btn small', 'data-k': 'mission:arreter', onclick: () => emit('missionCar', { type: 'arreter' }) }, 'Arrêter')) : null));
+  }
+  if (S.modeCar === 'mission' && S.mission && !S.visite && !aUnPoste) {
     // mission spécifique sans parcours (installation, épreuve) : la mission, la tâche en cours, et l'aide
     const t = S.mission.tache;
     body.append(rich(`Ta mission : **${S.mission.titre}**. ${S.mission.resume}`));
