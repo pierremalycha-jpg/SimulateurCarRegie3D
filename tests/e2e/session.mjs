@@ -12,13 +12,14 @@ function deliver(page, fn, arg) { return page.evaluate(([f, a]) => window.__mock
 async function broadcastPeers(name) {
   const R = rooms[name]; if (!R) return;
   const list = [...R.entries()].map(([peer, v]) => ({ peer, by: v.uid, kind: 'viewer', guest: false, presence: v.presence, updatedAt: Date.now() }));
-  for (const [peer, v] of R) await deliver(v.page, 'peers', { name, list, me: peer });
+  // aux pages en parallèle, comme un vrai serveur (une page lente ne retarde pas l'autre)
+  await Promise.all([...R].map(([peer, v]) => deliver(v.page, 'peers', { name, list, me: peer })));
 }
 async function setup(page, id) {
   await page.exposeFunction('__srv', async (op, a) => {
     if (op === 'join') { (rooms[a.name] = rooms[a.name] || new Map()).set(id, { presence: {}, page, uid: 'u-' + id }); await broadcastPeers(a.name); return id; }
     if (op === 'presence') { const R = rooms[a.name]; const v = R && R.get(id); if (v) { v.presence = { ...v.presence, ...a.patch }; for (const k in a.patch) if (a.patch[k] === null) delete v.presence[k]; await broadcastPeers(a.name); } return true; }
-    if (op === 'emit') { const R = rooms[a.name]; if (R) for (const [peer, v] of R) await deliver(v.page, 'msg', { name: a.name, topic: a.topic, data: a.data, peer: id, sameTab: peer === id }); return true; }
+    if (op === 'emit') { const R = rooms[a.name]; if (R) await Promise.all([...R].map(([peer, v]) => deliver(v.page, 'msg', { name: a.name, topic: a.topic, data: a.data, peer: id, sameTab: peer === id }))); return true; }
     if (op === 'leave') { const R = rooms[a.name]; if (R) { R.delete(id); await broadcastPeers(a.name); } return true; }
   });
   await page.addInitScript(() => {
@@ -75,10 +76,13 @@ log('B', JSON.stringify(st));
 check('B suit le match de A', st.fol && st.buf > 0 && st.peers === 2);
 check('pseudos échangés', (await evA(() => window.__dbg.SES.peers.map((p) => p.presence && p.presence.name).sort().join(','))) === 'Alice,Bruno');
 // même match : position du ballon proche (B a 0,3 s de retard)
-const bA = await evA(() => [window.__dbg.M.ball.x, window.__dbg.M.ball.z, window.__dbg.S.simTime]);
-const bB = await evB(() => [window.__dbg.M.ball.x, window.__dbg.M.ball.z, window.__dbg.S.simTime]);
-log('ballon A', bA.map((v) => v.toFixed(2)).join(' '), ' B', bB.map((v) => v.toFixed(2)).join(' '));
-check('temps de match aligné (écart < 3 s)', Math.abs(bA[2] - bB[2]) < 3, (bA[2] - bB[2]).toFixed(2));
+// les deux pages lues en même temps : en rendu logiciel, une page peut attendre la fin d'une image (plusieurs
+// secondes) avant de répondre ; on relit jusqu'à deux lectures à moins d'une seconde l'une de l'autre
+const lire = () => [window.__dbg.M.ball.x, window.__dbg.M.ball.z, window.__dbg.S.simTime, Date.now()];
+let bA, bB;
+for (let i = 0; i < 8; i++) { [bA, bB] = await Promise.all([evA(lire), evB(lire)]); if (Math.abs(bB[3] - bA[3]) < 1000) break; await A.waitForTimeout(500); }
+log('ballon A', bA.slice(0, 3).map((v) => v.toFixed(2)).join(' '), ' B', bB.slice(0, 3).map((v) => v.toFixed(2)).join(' '), ' lectures à', bB[3] - bA[3], 'ms d\'écart');
+check('temps de match aligné (écart < 3 s)', Math.abs(bB[3] - bA[3]) < 1000 && Math.abs(bA[2] - bB[2]) < 3, (bA[2] - bB[2]).toFixed(2));
 // B commute : A voit le mélangeur bouger
 await evB(() => window.__dbg.openStation('melangeur'));
 await B.waitForTimeout(800);
