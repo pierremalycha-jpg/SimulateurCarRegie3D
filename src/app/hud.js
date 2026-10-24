@@ -30,6 +30,8 @@ export function buildToolbar() {
     chefBtn(b('Chef de car', 'J', 'chef', () => emit('chef'), 'tb-chef', 'Le chef de car vous explique le poste et vous guide pas à pas (J)')),
     b('Missions', 'L', 'missions', () => emit('journal'), 'tb-missions', 'Le journal des missions : ce qu\'il y a à faire ici, toutes les missions, tes badges (L)'),
     b('Menu', 'Échap', 'menu', () => emit('menu'), 'tb-menu', 'Cours, réglages, son, équipe, retour à l\'accueil (Échap)'));
+  // le car pré-installé : jeu libre, ni missions ni chef de car
+  const mi = /** @type {HTMLElement | null} */ (tb.querySelector('#tb-missions')); if (mi) mi.hidden = S.modeCar === 'libre';
   emit('toolbar', tb);
 }
 export const soundToggle = () => { startAudio(); AU.muted = !AU.muted; applyFaders(); emit('soundToggle'); };

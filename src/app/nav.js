@@ -28,6 +28,8 @@ import { livePlayerCard } from '../game/quest.js';
 const PRESET_NAME = { standard: 'le car prêt à l\'antenne', vierge: 'l\'installation du car', atelier: 'l\'atelier de montage', brassage: 'le car vide', scenario: 'le jour de match', grand: 'le grand dispositif' };
 /** après le rechargement : le bureau de l'entrepôt en mode Carrière (src/carriere/) */
 const CARRIERE = 'carriere';
+/** après le rechargement : une mission spécifique (« mission:<id> », game/mission_run.js) */
+const MISSION = 'mission:';
 const NEXT_KEY = 'carregie.next';
 
 /**
@@ -91,15 +93,16 @@ async function play(preset) {
 
 /**
  * Quitte la partie : le simulateur se recharge sur l'écran titre, ou lance directement la vacation
- * demandée (ou le bureau de l'entrepôt de la Carrière : 'carriere'). La progression est enregistrée
- * avant (enregistrement différé de 2,5 s).
+ * demandée (ou le bureau de l'entrepôt de la Carrière : 'carriere' ; une mission spécifique :
+ * 'mission:<id>'). La progression est enregistrée avant (enregistrement différé de 2,5 s).
  * @param {string} [preset]
+ * @param {string} [label] le nom de la mission spécifique
  */
-export async function restart(preset = '') {
+export async function restart(preset = '', label = '') {
   const back = preset === CARRIERE;
-  const what = back ? 'Retourner au bureau de l\'entrepôt ?' : preset ? `Lancer ${PRESET_NAME[preset] || preset} ?` : 'Revenir à l\'accueil ?';
+  const what = back ? 'Retourner au bureau de l\'entrepôt ?' : preset.startsWith(MISSION) ? `Lancer la mission « ${label || preset.slice(MISSION.length)} » ?` : preset ? `Lancer ${PRESET_NAME[preset] || preset} ?` : 'Revenir à l\'accueil ?';
   const ok = await ask(`${what}\n\nLa partie en cours s'arrête et le simulateur se recharge, le temps de reconstruire le stade. Ta progression est enregistrée.${SES.active ? '\n\nTu quittes aussi la partie à plusieurs.' : ''}`,
-    { title: back ? 'Retour à l\'entrepôt' : preset ? 'Changer de vacation' : 'Retour à l\'accueil', ok: back ? 'Retourner à l\'entrepôt' : preset ? 'Relancer le simulateur' : 'Revenir à l\'accueil', cancel: 'Continuer la partie' });
+    { title: back ? 'Retour à l\'entrepôt' : preset.startsWith(MISSION) ? 'Mission suivante' : preset ? 'Changer de vacation' : 'Retour à l\'accueil', ok: back ? 'Retourner à l\'entrepôt' : preset.startsWith(MISSION) ? 'Lancer la mission' : preset ? 'Relancer le simulateur' : 'Revenir à l\'accueil', cancel: 'Continuer la partie' });
   if (!ok) return;
   closeLayer(false); if (modal.isOpen) modal.close();
   saveProgressSoon();
@@ -113,9 +116,10 @@ export async function restart(preset = '') {
 /** après un « Changer de vacation » : la vacation demandée se lance dès que le car est prêt (ou le bureau de la Carrière) */
 export function resumeAfterReload() {
   let preset = ''; try { preset = sessionStorage.getItem(NEXT_KEY) || ''; sessionStorage.removeItem(NEXT_KEY); } catch (e) { /* rien à reprendre */ }
-  if (!preset || !(PRESET_NAME[preset] || preset === CARRIERE) || !TITLE.ready) return;
+  if (!preset || !(PRESET_NAME[preset] || preset === CARRIERE || preset.startsWith(MISSION)) || !TITLE.ready) return;
   enterFrom('start');
   if (preset === CARRIERE) { emit('entrepot', { carriere: true }); return; }
+  if (preset.startsWith(MISSION)) { emit('missionCar', { type: 'lancer', id: preset.slice(MISSION.length) }); return; }
   launch(preset);
 }
 
