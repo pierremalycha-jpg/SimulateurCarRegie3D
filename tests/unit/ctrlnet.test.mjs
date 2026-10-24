@@ -260,3 +260,16 @@ for (const l of CTRLNET_LESSONS) {
     fresh();
   });
 }
+
+test('car vide, réseau de contrôle : en sortie d\'usine le RCP joint sa CCU, mais la tâche demande l\'adresse du plan', () => {
+  N.factoryCtrlNet();
+  assert.equal(N.ctrlCam(1).ok, true, 'RCP et CCU d\'usine : même sous-réseau 192.168.0.x');
+  assert.equal(N.camAuPlan(1), false, 'mais pas à l\'adresse du plan du car');
+  Object.assign(N.CN.m.rcp1, N.planOf('rcp1'));
+  assert.equal(N.camAuPlan(1), false, 'la CCU aussi');
+  Object.assign(N.CN.m.ccu1, N.planOf('ccu1'));
+  assert.equal(N.camAuPlan(1), true);
+  assert.equal(N.camAuPlan(13), true, 'caméras 13 à 16 : non simulées');
+  N.resetCtrlNet();
+  assert.equal(N.camAuPlan(5), true);
+});
