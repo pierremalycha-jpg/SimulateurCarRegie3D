@@ -159,6 +159,10 @@ if (process.argv.includes('--verifier')) {
     const parties = await (await fetch(`http://127.0.0.1:${port}/api/parties`)).json();
     ok.push(['liste des parties', Array.isArray(parties.parties)]);
     ok.push(['options du double-clic actives', log.includes('Fermez cette fenêtre')]);
+    // jouer par Internet (lan/internet.mjs, regroupé dans l'exécutable) : état lisible par l'hôte, clé créée
+    const net0 = await (await fetch(`http://127.0.0.1:${port}/api/internet`)).json();
+    ok.push(['jouer par Internet : module présent, clé créée', net0.direct && net0.direct.etat === 'non' && /^[a-z2-9]{12}$/.test(net0.cle) && fs.existsSync(path.join(work, 'cle-internet.txt'))]);
+    ok.push(['jouer par Internet : ping', (await (await fetch(`http://127.0.0.1:${port}/api/ping`)).json()).ok === true]);
   } finally { p.kill(); fs.rmSync(work, { recursive: true, force: true }); }
   for (const [n, v] of ok) console.log(v ? 'OK  ' : 'FAIL', n);
   if (ok.some(([, v]) => !v)) { console.error(log); process.exit(1); }

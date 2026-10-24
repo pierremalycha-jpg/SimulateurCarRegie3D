@@ -3,7 +3,7 @@ import { S, on } from '../state.js';
 import { el } from '../util.js';
 import { $, modal, toast, intercom, selectEl } from './common.js';
 import { SES, ROLES_S, getRoom, joinSession, leaveSession, setRole, isHost, holderOf, canControl, nameOf, pseudoOf, roleLabel, sendOrder, chat, announce, forceChangedSlices, randomCode, transportKind, getPseudo, setPseudo, assignRole } from '../multi/session.js';
-import { lanParties, lanSaveReport } from '../multi/lan.js';
+import { lanParties, lanSaveReport, internetKey, onHostMachine, internetStatus, internetAction } from '../multi/lan.js';
 import { downloadLanKit } from '../multi/lankit.js';
 import { ROLE_COLORS } from '../multi/avatars.js';
 import { ROLE_BRIEF, objectives, trackRoleStats, resetRoleStats, orderStats } from '../multi/roles.js';
@@ -39,6 +39,7 @@ export async function openSessionPanel() {
       fileMode()
         ? el('p', { class: 'note' }, 'Cette copie est un fichier ouvert directement dans le navigateur : tout fonctionne en solo, sans Internet, et la progression reste dans ce navigateur. Pour jouer à plusieurs, l\'hôte lance TIEE-Simulator.exe ou le serveur réseau local (car-regie-reseau-local.zip), fournis avec ce fichier.')
         : el('p', { class: 'note' }, 'Ici, aucune connexion temps réel n\'est disponible (page ouverte hors du serveur réseau local et hors de claude.ai, ou accès en lecture seule).'),
+      linkJoin(),
       ...(fileMode() ? [] : [lanKitRow()]));
     return;
   }
@@ -46,6 +47,87 @@ export async function openSessionPanel() {
 }
 
 const fileMode = () => location.protocol === 'file:';
+// copier un texte (adresse, code, lien)
+const copyBtn = (txt, what) => el('button', { type: 'button', class: 'btn small', onclick: async () => { try { await navigator.clipboard.writeText(txt()); toast(what + ' copié' + (/^(Adresse|Clé)/.test(what) ? 'e' : '') + '.', 'good'); } catch (e) { toast('Copie impossible ici : sélectionnez le texte et copiez-le à la main.', 'bad'); } } }, 'Copier');
+
+// ---------------- jouer par Internet ----------------
+// l'invité a reçu un lien (http://86.x.x.x:8080/?cle=… ou https://….trycloudflare.com/?cle=…) : on l'ouvre
+export function openInviteLink(v) {
+  let s = String(v || '').trim();
+  if (!s) return 'vide';
+  if (!/^https?:\/\//i.test(s)) s = 'http://' + s;
+  let u; try { u = new URL(s); } catch (e) { return 'illisible'; }
+  if (!/^https?:$/.test(u.protocol) || !u.hostname) return 'illisible';
+  location.href = u.href;
+  return 'ok';
+}
+function linkJoin() {
+  const inp = el('input', { type: 'text', class: 'ses-link', placeholder: 'http://… ?cle=…', 'aria-label': 'Lien reçu de l\'hôte', autocomplete: 'off', spellcheck: 'false' });
+  const go = () => { const r = openInviteLink(inp.value); if (r !== 'ok') { inp.focus(); toast(r === 'vide' ? 'Collez d\'abord le lien que l\'hôte vous a envoyé.' : 'Ce lien n\'est pas lisible : recopiez-le en entier (il se termine par ?cle= et douze caractères).', 'bad', 6000); } };
+  inp.addEventListener('keydown', (e) => { e.stopPropagation(); if (e.key === 'Enter') go(); });
+  return el('div', { class: 'ses-linkjoin' },
+    el('label', { class: 'sl-k' }, 'Vous avez reçu un lien de l\'hôte ?'),
+    el('div', { class: 'hwrow' }, inp, el('button', { type: 'button', class: 'btn small primary', onclick: go }, 'Rejoindre')),
+    el('p', { class: 'note' }, 'Collez-le ici (ou ouvrez-le directement dans votre navigateur) : la partie de l\'hôte s\'ouvre, par Internet, sans rien installer.'));
+}
+// bloc de l'hôte : analyse du réseau, ouverture de la box, lien par tunnel ; l'état vient du serveur
+function internetBox() {
+  const box = el('div', { class: 'ses-net', 'aria-live': 'polite' });
+  let last = '', timer = 0, st = null;
+  const act = async (a) => { const r = await internetAction(a); if (r) { st = r; draw(); } else toast('Le serveur ne répond pas : la fenêtre noire de TIEE Simulator est-elle toujours ouverte ?', 'bad', 6000); };
+  const line = (k, v) => el('div', { class: 'sn-row' }, el('span', { class: 'sl-k' }, k), el('span', {}, v));
+  function draw() {
+    if (!st) return;
+    const k = JSON.stringify(st); if (k === last) return; last = k;
+    const D = st.direct, T = st.tunnel;
+    const parts = [el('b', { class: 'sn-title' }, 'Inviter quelqu\'un par Internet')];
+    if (st.lien) {
+      parts.push(el('div', { class: 'sl-info sn-link' }, el('span', { class: 'sl-k' }, 'Lien à lui envoyer'), el('code', { class: 'sn-url' }, st.lien), copyBtn(() => st.lien, 'Lien'),
+        el('p', { class: 'note' }, 'Envoyez-le par message. La personne l\'ouvre dans son navigateur (Chrome, Edge, Firefox), sans rien installer, puis « Rejoindre une partie ». Gardez cette fenêtre et la fenêtre noire ouvertes pendant la partie.')));
+    }
+    if (D.etat === 'non' && T.etat === 'non') {
+      parts.push(el('p', { class: 'note' }, 'Pour une personne qui n\'est pas sur votre réseau. Le simulateur analyse votre réseau, ouvre le port de votre box tout seul (UPnP) et vous donne le lien à lui envoyer.'),
+        el('button', { type: 'button', class: 'btn primary sn-go', onclick: () => act('direct') }, 'Inviter par Internet'));
+    } else if (D.etat === 'recherche') parts.push(el('p', { class: 'note sn-wait' }, 'Analyse du réseau et ouverture de la box…'));
+    else if (D.etat === 'ouvert') {
+      if (D.partagee) parts.push(el('p', { class: 'note is-bad' }, `La box a ouvert le port, mais elle n'a pas d'adresse publique à elle (adresse de la box : ${D.wan || '?'}, vue d'Internet : ${D.publique || '?'}). Votre opérateur partage l'adresse entre plusieurs abonnés, ou deux box sont en cascade : un lien direct ne peut pas marcher. Créez un lien par tunnel.`));
+      else if (D.verifie === true) parts.push(el('p', { class: 'note is-ok' }, 'Lien direct vérifié : il répond depuis Internet.'));
+      else if (D.verifie === false) parts.push(el('p', { class: 'note' }, 'Lien direct créé, mais pas vérifiable depuis cet ordinateur (certaines box ne le permettent pas). Faites l\'essai avec la personne ; si la page ne s\'ouvre pas chez elle, créez plutôt un lien par tunnel.'));
+      else parts.push(el('p', { class: 'note sn-wait' }, 'Vérification du lien…'));
+    } else if (D.etat === 'echec' && T.etat !== 'pret') parts.push(el('p', { class: 'note is-bad' }, `La box n'a pas été ouverte : ${D.why}. Le plus simple : un lien par tunnel, qui marche sans toucher à la box.`));
+    if (T.etat === 'pret' && st.lien === T.lien) parts.push(el('p', { class: 'note is-ok' }, 'Lien par tunnel prêt : il passe par Cloudflare, sans toucher à la box.'));
+    if (st.profil && /Public/i.test(st.profil) && D.etat === 'ouvert' && !D.partagee) parts.push(el('p', { class: 'note is-bad' }, 'Windows considère votre réseau comme « public » : le pare-feu y bloque les connexions qui arrivent. Paramètres > Réseau et Internet > votre Wi-Fi ou Ethernet > Type de profil réseau : Privé. Le lien par tunnel, lui, n\'est pas concerné.'));
+    // le tunnel : proposé dès que le lien direct n'est pas sûr
+    const tunnelUseful = D.etat === 'echec' || (D.etat === 'ouvert' && (D.partagee || D.verifie !== true));
+    if (T.etat === 'non' && tunnelUseful) {
+      parts.push(el('button', { type: 'button', class: 'btn sn-go' + (D.etat === 'echec' || D.partagee ? ' primary' : ''), onclick: () => act('tunnel') }, 'Créer un lien par tunnel'),
+        el('p', { class: 'note' }, 'Passe par Cloudflare (gratuit, sans compte) : marche avec toutes les box, sans réglage ni pare-feu. La première fois, le programme cloudflared (environ 40 Mo) est téléchargé depuis sa page officielle sur GitHub. L\'adresse change à chaque lancement.'));
+    } else if (T.etat === 'telechargement') parts.push(el('p', { class: 'note sn-wait' }, `Téléchargement de cloudflared… ${T.pct || 0} %`));
+    else if (T.etat === 'demarrage') parts.push(el('p', { class: 'note sn-wait' }, 'Ouverture du tunnel chez Cloudflare…'));
+    else if (T.etat === 'echec') parts.push(el('p', { class: 'note is-bad' }, 'Le tunnel n\'a pas pu s\'ouvrir : ' + T.why + '.'), el('button', { type: 'button', class: 'btn small', onclick: () => act('tunnel') }, 'Réessayer le tunnel'));
+    // ce que le simulateur a trouvé, et la marche à suivre à la main
+    if (D.etat !== 'non' || T.etat !== 'non') {
+      const ip = (st.cartes || []).map((c) => `${c.address} (${c.name})`).join(', ') || 'aucune';
+      const local = D.local || ((st.cartes || [])[0] || {}).address || '192.168.x.x';
+      parts.push(el('details', { class: 'sn-detail' }, el('summary', {}, 'Analyse du réseau'),
+        line('Cet ordinateur', ip),
+        line('Box', D.box || (D.etat === 'echec' ? 'pas de réponse UPnP' : '…')),
+        line('Adresse publique', D.publique || D.wan || '…'),
+        line('Port', D.extPort ? `${D.extPort} (TCP) ouvert vers ${D.local}:${D.port}` : `${st.port} (TCP), non ouvert`),
+        line('Tunnel', T.etat === 'pret' ? T.url : T.etat === 'non' ? 'non utilisé' : T.etat),
+        el('p', { class: 'note' }, `Ouvrir la box à la main : dans l'interface de la box (souvent http://192.168.1.1, ou mafreebox.freebox.fr), créez une redirection de port TCP ${st.port} vers ${local}, port ${st.port}. Le lien est alors http://<adresse publique>:${st.port}/?cle=${st.cle}`)),
+      el('button', { type: 'button', class: 'linkbtn', onclick: () => act('fermer') }, 'Fermer l\'accès par Internet'));
+    }
+    box.replaceChildren(...parts);
+  }
+  async function poll() {
+    if (!box.isConnected && timer) { clearInterval(timer); return; }
+    const r = await internetStatus(); if (!r) return;
+    st = r; draw();
+  }
+  poll(); timer = setInterval(poll, 1500);
+  return box;
+}
 // archive du serveur réseau local (assemblée par lankit.js)
 async function lanKit() {
   const r = await downloadLanKit();
@@ -118,11 +200,18 @@ function drawJoin(body) {
   const srvName = el('span', { class: 'note' });
   const tabs = el('div', { class: 'tabs sl-tabs' });
   const pane = el('div', { class: 'list' });
-  // ce qu'il faut donner aux autres pour se connecter
-  const copy = (txt, what) => el('button', { type: 'button', class: 'btn small', onclick: async () => { try { await navigator.clipboard.writeText(txt()); toast(what + ' copiée.', 'good'); } catch (e) { toast('Copie impossible ici : notez-la à la main.', 'bad'); } } }, 'Copier');
-  const addr = `http://${location.host}`;
-  const info = lan
-    ? el('div', { class: 'sl-info lan' }, el('span', { class: 'sl-k' }, 'Adresse du salon'), el('code', { class: 'sl-addr' }, addr), copy(() => addr, 'Adresse'),
+  // ce qu'il faut donner aux autres pour se connecter : sur l'ordinateur de l'hôte, l'adresse de sa carte
+  // réseau (pas « localhost », qui ne mène qu'à soi-même) ; par Internet, rien à redonner
+  const copy = copyBtn;
+  const viaNet = !!internetKey(), host = onHostMachine();
+  let addr = `http://${location.host}`;
+  const addrEl = el('code', { class: 'sl-addr' }, addr);
+  if (lan && host) internetStatus().then((st) => { const c = st && (st.cartes || [])[0]; if (c) { addr = `http://${c.address}:${st.port}`; addrEl.textContent = addr; } });
+  const info = lan && viaNet
+    ? el('div', { class: 'sl-info lan' }, el('span', { class: 'sl-k' }, 'Par Internet'),
+      el('p', { class: 'note' }, 'Vous êtes sur la partie de l\'hôte, ouverte par son lien. Choisissez votre pseudo et votre poste, puis « Rejoindre la partie ».'))
+    : lan
+    ? el('div', { class: 'sl-info lan' }, el('span', { class: 'sl-k' }, 'Adresse du salon (même réseau)'), addrEl, copy(() => addr, 'Adresse'),
       el('p', { class: 'note' }, 'Les autres joueurs, sur le même réseau (Wi-Fi ou câble), ouvrent cette adresse dans leur navigateur. Rien à installer.'))
     : el('div', { class: 'sl-info' }, el('span', { class: 'sl-k' }, 'Code du salon'), code, copy(() => code.value, 'Code'),
       el('p', { class: 'note' }, 'Tout le monde ouvre la même page publiée sur claude.ai et entre ce code : même code, même car.'));
@@ -131,7 +220,7 @@ function drawJoin(body) {
     pane.innerHTML = '';
     if (m === 'host') pane.append(el('p', { class: 'note' }, lan ? 'Votre ordinateur fait tourner le match pour tout le monde. Les autres verront votre partie dans « Rejoindre une partie ».' : 'Vous faites tourner le match. Donnez le code ci-dessus aux autres joueurs.'),
       ...(lan ? [] : [el('button', { type: 'button', class: 'linkbtn', onclick: () => { code.value = randomCode(); } }, 'Tirer un nouveau code')]));
-    else if (lan) pane.append(el('div', { class: 'hwrow' }, el('b', {}, 'Parties sur ce réseau'), srvName), list);
+    else if (lan) pane.append(el('div', { class: 'hwrow' }, el('b', {}, viaNet ? 'Parties de l\'hôte' : 'Parties sur ce réseau'), srvName), list, ...(viaNet ? [] : [linkJoin()]));
     else pane.append(el('p', { class: 'note' }, 'Entrez ci-dessus le code que l\'hôte vous a donné.'));
     goBtn.textContent = m === 'host' ? 'Créer la partie' : 'Rejoindre la partie';
     draw();
@@ -152,14 +241,15 @@ function drawJoin(body) {
     clearInterval(timer); resetRoleStats();
     modal.close();
     if (S.mode === 'start' && startCb) await startCb.start();
-    toast(mode === 'host' ? (lan ? `Partie créée. Les autres la rejoignent depuis ${addr}, « Rejoindre une partie ».` : `Partie ${r.code} créée : donnez ce code aux autres joueurs.`) : `Vous êtes ${ROLES_S[role].label}${role === 'cadreur' ? ' (CAM ' + camSel.value + ')' : ''}.`, 'good', 7000);
+    toast(mode === 'host' ? (lan ? `Partie créée. Les autres la rejoignent depuis ${addr} (ou par le lien Internet), « Rejoindre une partie ».` : `Partie ${r.code} créée : donnez ce code aux autres joueurs.`) : `Vous êtes ${ROLES_S[role].label}${role === 'cadreur' ? ' (CAM ' + camSel.value + ')' : ''}.`, 'good', 7000);
   };
   body.append(el('div', { class: 'salon' },
     el('section', { class: 'sl-conn', 'aria-label': 'Connexion' },
-      el('div', { class: 'ses-banner' + (lan ? ' lan' : '') }, el('b', {}, lan ? 'Réseau local' : 'En ligne'), el('span', {}, lan ? 'Servi par l\'ordinateur de l\'hôte' : 'Page publiée sur claude.ai')),
+      el('div', { class: 'ses-banner' + (lan ? ' lan' : '') }, el('b', {}, lan ? (viaNet ? 'Par Internet' : 'Réseau local') : 'En ligne'), el('span', {}, lan ? 'Servi par l\'ordinateur de l\'hôte' : 'Page publiée sur claude.ai')),
       info,
       el('label', { class: 'sl-k', for: 'ses-pseudo' }, 'Votre pseudo'), pseudo,
-      tabs, pane, goBtn),
+      tabs, pane, goBtn,
+      ...(lan && host ? [internetBox()] : [])),
     el('section', { class: 'sl-room', 'aria-label': 'Les postes' },
       el('div', { class: 'sl-head' }, el('h3', {}, 'Les postes de la prestation'), count),
       cards, camRow,
@@ -176,7 +266,7 @@ function drawActive(body) {
   let cur = 'peers';
   const show = (k) => { cur = k; content.innerHTML = ''; [...tabs.children].forEach((b) => b.classList.toggle('on', b.dataset.k === k)); ({ peers: tabPeers, orders: tabOrders, trainer: tabTrainer })[k](content); };
   for (const [k, l] of T) tabs.append(el('button', { class: 'tab', 'data-k': k, onclick: () => show(k) }, l));
-  const title = SES.transport === 'lan' ? `Partie de ${SES.hostPeer ? pseudoOf(SES.hostPeer) : '…'} · réseau local` : 'Partie ' + SES.code;
+  const title = SES.transport === 'lan' ? `Partie de ${SES.hostPeer ? pseudoOf(SES.hostPeer) : '…'} · ${internetKey() ? 'par Internet' : 'réseau local'}` : 'Partie ' + SES.code;
   body.append(el('div', { class: 'hwrow' }, el('span', { class: 'pill ' + (SES.connected ? 'ok' : 'warn') }, SES.connected ? 'connecté' : 'reconnexion…'), el('b', { style: { fontFamily: 'var(--f-disp)', fontSize: '19px' } }, title), el('span', { class: 'note' }, `Vous : ${pseudoOf(SES.me)} · ${ROLES_S[SES.role].label}${isHost() ? ' · vous faites tourner le match (hôte)' : ''}`),
     el('button', { class: 'btn small', onclick: async () => { await finishIfTrainer(); await leaveSession(); modal.close(); toast('Vous avez quitté la partie.'); } }, 'Quitter la partie')), tabs, content);
   show(cur);
@@ -209,6 +299,7 @@ const canAssign = () => isHost() || SES.role === 'formateur';
 const PENDING = new Map();
 function tabPeers(box) {
   box.append(roleBrief());
+  if (SES.transport === 'lan' && onHostMachine()) box.append(el('div', { class: 'ses-net-wrap' }, internetBox()));
   const tb = el('tbody');
   for (const p of SES.peers) {
     const r = (p.presence && p.presence.role) || 'observateur';
@@ -341,7 +432,7 @@ export function updateSessionHud() {
   if (!chip) { chip = el('button', { id: 'ses-chip', onclick: () => openSessionPanel() }); document.body.appendChild(chip); }
   chip.hidden = S.mode === 'start';
   const host = SES.hostPeer ? nameOf(SES.hostPeer) : '—';
-  const txt = `● ${SES.transport === 'lan' ? 'Réseau local' : 'Session ' + SES.code} · ${ROLES_S[SES.role].label}${SES.role === 'cadreur' && SES.cam ? ' CAM ' + SES.cam : ''} · ${SES.peers.length} en ligne · hôte : ${host}`;
+  const txt = `● ${SES.transport === 'lan' ? (internetKey() ? 'Par Internet' : 'Réseau local') : 'Session ' + SES.code} · ${ROLES_S[SES.role].label}${SES.role === 'cadreur' && SES.cam ? ' CAM ' + SES.cam : ''} · ${SES.peers.length} en ligne · hôte : ${host}`;
   if (chip.textContent !== txt) chip.textContent = txt;
   chip.classList.toggle('off', !SES.connected);
   chip.classList.toggle('st', S.mode === 'station');

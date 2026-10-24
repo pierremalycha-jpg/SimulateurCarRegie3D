@@ -38,8 +38,13 @@ before(async () => {
   const page = '<!doctype html><html><body><!--LAN--><p>car régie</p></body></html>';
   const code = fs.readFileSync(path.join(ROOT, 'lan/serveur.mjs'), 'utf8').replace('let PAGE = null;', () => `let PAGE = ${JSON.stringify(page)};`);
   fs.writeFileSync(path.join(dir, 'serveur.mjs'), code);
+  fs.copyFileSync(path.join(ROOT, 'lan/internet.mjs'), path.join(dir, 'internet.mjs'));
   port = await freePort(); base = `http://127.0.0.1:${port}`;
-  srv = spawn(process.execPath, ['serveur.mjs', '--port', String(port)], { cwd: dir, stdio: ['ignore', 'pipe', 'pipe'] });
+  // faux cloudflared : note la porte du tunnel qu'on lui donne, annonce une adresse, reste en vie
+  fs.writeFileSync(path.join(dir, 'faux-cloudflared'), `#!${process.execPath}\nrequire('fs').writeFileSync(${JSON.stringify(path.join(dir, 'cf-args.json'))}, JSON.stringify(process.argv.slice(2)));\nconsole.error('INF |  https://essai-tiee.trycloudflare.com  |');\nsetInterval(() => {}, 1000);\n`);
+  fs.chmodSync(path.join(dir, 'faux-cloudflared'), 0o755);
+  fs.writeFileSync(path.join(dir, 'package.json'), '{"type":"commonjs"}');
+  srv = spawn(process.execPath, ['serveur.mjs', '--port', String(port)], { cwd: dir, stdio: ['ignore', 'pipe', 'pipe'], env: { ...process.env, TIEE_CLOUDFLARED: path.join(dir, 'faux-cloudflared') } });
   let out = ''; srv.stdout.on('data', (d) => { out += d; }); srv.stderr.on('data', (d) => { out += d; });
   await until(() => out.includes(`localhost:${port}`), 'démarrage du serveur\n' + out);
   globalThis.location = /** @type {any} */ ({ protocol: 'http:', host: `127.0.0.1:${port}` });
@@ -227,4 +232,74 @@ test('comptes rendus : même origine, JSON, et pas plus de quelques envois par m
   for (let i = 0; i < 8; i++) codes.push((await post('/api/rapport', body, { 'content-type': 'application/json', origin: `http://127.0.0.1:${port}` })).status);
   assert.ok(codes.includes(200), codes.join(','));
   assert.equal(codes.at(-1), 429, 'trop d\'envois : refusé, ' + codes.join(','));
+});
+
+// ---------------- par Internet (v19.7) ----------------
+function get(p0, pathname, headers = {}) {
+  return new Promise((res, rej) => {
+    http.get({ host: '127.0.0.1', port: p0, path: pathname, headers }, (rs) => { let b = ''; rs.on('data', (d) => { b += d; }); rs.on('end', () => res({ status: rs.statusCode, headers: rs.headers, body: b })); }).on('error', rej);
+  });
+}
+function upgradeOn(p0, pathname, headers = {}) {
+  return new Promise((res, rej) => {
+    const sock = net.connect(p0, '127.0.0.1');
+    const extra = Object.entries(headers).map(([k, v]) => `${k}: ${v}\r\n`).join('');
+    sock.on('connect', () => sock.write(`GET ${pathname} HTTP/1.1\r\nHost: 127.0.0.1:${p0}\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Key: ${crypto.randomBytes(16).toString('base64')}\r\nSec-WebSocket-Version: 13\r\n${extra}\r\n`));
+    sock.once('data', (d) => { res(Number(String(d).split(' ')[1])); sock.destroy(); });
+    sock.on('error', rej);
+  });
+}
+const KEY = () => fs.readFileSync(path.join(dir, 'cle-internet.txt'), 'utf8').trim();
+
+test('par Internet : la clé est gardée à côté du serveur ; l\'état n\'est lisible que par l\'hôte', async () => {
+  assert.match(KEY(), /^[a-z2-9]{12}$/);
+  const st = await get(port, '/api/internet', { host: `localhost:${port}` });
+  assert.equal(st.status, 200);
+  const j = JSON.parse(st.body);
+  assert.equal(j.cle, KEY()); assert.equal(j.direct.etat, 'non'); assert.equal(j.tunnel.etat, 'non'); assert.equal(j.lien, null);
+  // un nom de domaine qui pointerait vers cet ordinateur (« DNS rebinding ») ne lit pas la clé
+  assert.equal((await get(port, '/api/internet', { host: 'site-quelconque.example' })).status, 403);
+  assert.equal((await post('/api/internet/tunnel', '', { origin: 'http://site-quelconque.example' })).status, 405, 'une autre page ne lance pas le tunnel');
+  // depuis le réseau local, pas de clé à donner (comme avant)
+  assert.equal((await get(port, '/')).status, 200);
+});
+
+test('par Internet : tunnel lancé par l\'hôte, et rien sans la clé', async () => {
+  const r = await post('/api/internet/tunnel', '', { origin: `http://127.0.0.1:${port}` });
+  assert.equal(r.status, 200);
+  let st;
+  for (let i = 0; i < 100; i++) { st = JSON.parse((await get(port, '/api/internet')).body); if (st.tunnel.etat === 'pret') break; await new Promise((x) => setTimeout(x, 50)); }
+  assert.equal(st.tunnel.etat, 'pret', JSON.stringify(st.tunnel));
+  assert.equal(st.lien, `https://essai-tiee.trycloudflare.com/?cle=${KEY()}`);
+  const args = JSON.parse(fs.readFileSync(path.join(dir, 'cf-args.json'), 'utf8'));
+  assert.deepEqual(args.slice(0, 3), ['tunnel', '--no-autoupdate', '--url']);
+  const tport = +new URL(args[3]).port;
+  assert.ok(tport > 0 && tport !== port, 'le tunnel arrive par une porte à part');
+  // tout ce qui arrive par le tunnel vient d'Internet
+  const no = await get(tport, '/');
+  assert.equal(no.status, 403); assert.match(no.body, /Lien incomplet/); assert.ok(!no.body.includes('CARREGIE_LAN'));
+  assert.equal((await get(tport, '/?cle=faussecle123')).status, 403);
+  assert.equal((await get(tport, '/api/parties')).status, 403);
+  assert.equal(await upgradeOn(tport, '/ws'), 403, 'WebSocket sans clé');
+  const yes = await get(tport, `/?lite&cle=${KEY()}`);
+  assert.equal(yes.status, 200); assert.match(yes.body, /CARREGIE_LAN/);
+  const cookie = String(yes.headers['set-cookie']).split(';')[0];
+  assert.equal(cookie, `tiee_cle=${KEY()}`);
+  assert.equal((await get(tport, '/api/parties', { cookie })).status, 200, 'la clé suit dans le cookie');
+  assert.equal(await upgradeOn(tport, '/ws', { cookie }), 101);
+  assert.equal(await upgradeOn(tport, `/ws?cle=${KEY()}`), 101, 'ou dans l\'adresse du WebSocket');
+  assert.equal((await get(tport, '/api/internet', { cookie })).status, 403, 'l\'état et les commandes restent à l\'hôte');
+  assert.equal(JSON.parse((await get(tport, '/api/ping')).body).ok, true);
+  // le client du jeu, ouvert par le lien : il passe la clé au WebSocket
+  const loc = globalThis.location;
+  globalThis.location = /** @type {any} */ ({ protocol: 'http:', host: `127.0.0.1:${tport}`, search: `?lite&cle=${KEY()}` });
+  try {
+    const a = await join('car-internet', { name: 'Invitée' });
+    globalThis.location = loc;
+    const b = await join('car-internet', { name: 'Hôte' });
+    await until(() => presenceOf(a, 'Hôte') && presenceOf(b, 'Invitée'), 'chacun voit l\'autre, par Internet et sur place');
+  } finally { globalThis.location = loc; }
+  // l'hôte referme : le tunnel s'arrête
+  const f = JSON.parse((await post('/api/internet/fermer', '', { origin: `http://127.0.0.1:${port}` })).body);
+  assert.equal(f.tunnel.etat, 'non');
 });

@@ -1,4 +1,4 @@
-// Les trois modes du car régie (Jouer → Car régie, v19.7) : la mission spécifique (la liste par famille,
+// Les trois modes du car régie (Jouer → Car régie, v19.8) : la mission spécifique (la liste par famille,
 // le car préparé, le suivi des tâches sur le côté, « Mission réussie », enchaîner avec rechargement puis sans,
 // Olivier en boîte de dialogue en bas d'écran), le car pré-installé (ni chef de car ni missions) et le car vide
 // (Olivier propose d'abord la visite ; les tâches de l'installation par groupe). Puis la boîte de dialogue à 390 px.

@@ -394,7 +394,7 @@ Tests :
   « Emmène-moi / Montre-moi » doit mettre en évidence un élément réel de la page, et « Fais-le pour moi » doit faire
   valider l'étape.
 
-## v19.7 : trois façons de jouer au car régie, le suivi des tâches sur le côté, Olivier en boîte de dialogue
+## v19.8 : trois façons de jouer au car régie, le suivi des tâches sur le côté, Olivier en boîte de dialogue
 
 **Pourquoi.** Retour du 24 octobre 2026 : les modes du car mélangeaient les phases (un car « installé » où le chef de
 car et les missions restaient partout, une « visite guidée » à part, des exercices notés rangés seulement dans le
@@ -445,6 +445,60 @@ qui est déjà fait, quand enchaîner sans recharger) et `ctrlnet` (l'adresse du
 `modes-car` (nouvelle : les trois modes, la liste par famille, le car préparé, le suivi, la mission réussie,
 enchaîner avec puis sans rechargement, la boîte de dialogue, le car pré-installé sans chef ni missions, le car vide et
 sa visite, le téléphone) ; `fichier`, `navigateurs`, `navigation` mises à jour.
+
+## v19.7 : jouer par Internet, avec quelqu'un qui est chez lui
+
+**Pourquoi.** Demande du 24 octobre 2026 : partager le simulateur avec une personne qui joue depuis chez elle,
+l'ordinateur de l'hôte faisant serveur, le plus simplement possible, et voir son avatar. Le jeu à plusieurs ne
+marchait que sur un même réseau local : depuis Internet, on ne voit que la box de l'hôte, qui ne sait pas à quel
+ordinateur passer les connexions.
+
+**Pour l'hôte : un bouton** (`src/ui/session_ui.js`, bloc « Inviter quelqu'un par Internet » du salon et de l'onglet
+Participants, sur l'ordinateur qui fait tourner le serveur seulement). Le serveur (`lan/internet.mjs`) :
+
+1. **analyse le réseau** : cartes de l'ordinateur, box (nom et modèle lus dans sa description UPnP), adresse
+   publique de la box et adresse vue d'Internet (api.ipify.org), profil du réseau sous Windows (« public » : le
+   pare-feu bloque les connexions entrantes) ;
+2. **ouvre la box tout seul** (UPnP IGD : recherche SSDP sur chaque carte, `AddPortMapping` sur WANIPConnection ou
+   WANPPPConnection, port suivant si le 8080 extérieur est pris par un autre appareil, durée de 1 h renouvelée toutes
+   les 20 min et retirée à l'arrêt, durée nulle si la box n'accepte que des redirections permanentes) ;
+3. **dit si le lien direct peut marcher** : une box sans adresse publique à elle (adresse privée, CGNAT 100.64.0.0/10,
+   ou différente de celle que voit Internet : opérateur qui partage l'adresse, deux box en cascade) ne peut pas
+   recevoir de connexion ; sinon, le serveur s'appelle lui-même par l'adresse publique pour vérifier (beaucoup de
+   box le permettent, pas toutes : un échec n'est pas une preuve) ;
+4. sinon, propose **un lien par tunnel** (Cloudflare « quick tunnel », gratuit, sans compte) : le programme
+   `cloudflared` est téléchargé une seule fois depuis sa page officielle sur GitHub (dans `%LOCALAPPDATA%\TIEE-Simulator`
+   sous Windows), ouvre une connexion sortante et donne une adresse `https://….trycloudflare.com`. Rien à régler sur
+   la box ni sur le pare-feu ; l'adresse change à chaque lancement.
+
+Le lien à envoyer s'affiche avec « Copier », et aussi dans la fenêtre du serveur. « Analyse du réseau » (dépliable)
+résume ce qui a été trouvé et la marche à suivre pour ouvrir la box à la main. « Fermer l'accès par Internet » referme
+la box et le tunnel, comme la fermeture de la fenêtre noire (SIGHUP sous Windows). `--internet` ouvre la box dès le
+lancement. L'adresse du salon montrée à l'hôte est désormais celle de sa carte réseau, plus `localhost`.
+
+**Pour l'invité : un lien.** Il l'ouvre dans son navigateur, sans rien installer (bandeau « Par Internet »), puis
+rejoint la partie comme sur un réseau local. Avec le kit (exécutable ou fichier HTML), il colle le lien dans le salon
+(« Vous avez reçu un lien de l'hôte ? », onglet Rejoindre une partie). Les avatars (technicien à la couleur du poste,
+pseudo et poste au-dessus de la tête, assis au pupitre, étiquette sur la caméra du cadreur) passent par le même relais
+qu'en réseau local : chacun voit l'autre.
+
+**Sécurité.** Ce qui vient d'Internet doit porter la clé du lien (`?cle=` + 12 caractères, 60 bits) : sans elle, une
+page « Lien incomplet » et des refus (page, API, WebSocket). Avec elle, la clé est gardée dans un cookie `HttpOnly` et
+accompagne aussi le WebSocket (cookies bloqués). Le réseau local reste sans clé, comme avant. Le tunnel arrive par une
+seconde porte, sur `127.0.0.1` seulement, où tout est traité comme venant d'Internet. L'état et les commandes
+(`/api/internet`) ne répondent qu'à l'hôte, sur cet ordinateur, par `localhost` (pas par le tunnel, pas par un nom de
+domaine qui pointerait ici). La clé est gardée dans `cle-internet.txt` à côté du serveur (un lien direct reste valable
+d'un lancement à l'autre ; effacer le fichier les annule tous).
+
+**Pas encore essayé en vrai** : une box réelle (le protocole est vérifié face à une fausse box) et le tunnel chez
+Cloudflare (un faux `cloudflared` remplace le programme dans les tests). À essayer avec un invité.
+
+Tests : unitaire `internet` (nouveau : adresses, SSDP, description de box, SOAP, fausse box UPnP : ouverture,
+renouvellement, fermeture, port pris, redirections permanentes, refus, box sans adresse publique) ; `lan` complété
+(clé, commandes réservées à l'hôte, tunnel, refus sans clé, client du jeu par le tunnel) ; suite de bout en bout
+`internet` (nouvelle : hôte sans box, lien par tunnel, invité sans clé puis avec, partie rejointe, avatars des deux
+côtés, lien collé dans le salon d'un autre ordinateur, fermeture) ; `reseau-local`, `session` et `fichier` repassées ;
+`node tools/exe.mjs --verifier` contrôle aussi le module Internet.
 
 ## v19.6 : la Carrière, un mode scénarisé : le bureau de l'entrepôt et ses mails
 
@@ -1393,7 +1447,7 @@ npm run lint         # ESLint
 npm run typecheck    # TypeScript (navigateur + Node)
 npm test             # tests unitaires (node:test, ≈ 10 s)
 npm run check        # les quatre à la suite (ce que fait l'intégration continue)
-npm run test:e2e     # tests de bout en bout (Playwright, rendu logiciel : 39 suites, plusieurs heures)
+npm run test:e2e     # tests de bout en bout (Playwright, rendu logiciel : 40 suites, plusieurs heures)
 npm run serve:lan    # serveur réseau local (après la construction) : http://localhost:8080
 ```
 
@@ -1467,8 +1521,8 @@ node tools/shots.mjs dossier 1280 800 '["vision","hf"]'   # captures de postes
 | `landscape.js` | Sol jusqu'à l'horizon (carte des parcelles), arbres instanciés en plans alpha, terrils |
 | `vehicles.js` | Semi-remorque régie (caisse arrondie, livrée nervurée, portes, feux), tracteur à pare-brise courbe, camion satellite, groupe électrogène, bungalows, enrobé |
 | `params.js` | Registre des valeurs chiffrées relisibles (objectifs, liaisons, C/N, latences, line-up) et corrections appliquées |
-| `multi/` | Jeu à plusieurs : session, rôles, hôte du match, pseudos (`session.js`), tranches d'état partagées (`slices.js`), client du serveur réseau local (`lan.js`), avatars des joueurs (`avatars.js`), fiches de rôle et objectifs (`roles.js`) |
-| `lan/` | Serveur réseau local sans dépendance (HTTP + WebSocket, parties, comptes rendus ; origine vérifiée, tailles, connexions, parties et comptes rendus plafonnés), lanceurs Windows / macOS / Linux, mode d'emploi |
+| `multi/` | Jeu à plusieurs : session, rôles, hôte du match, pseudos (`session.js`), tranches d'état partagées (`slices.js`), client du serveur réseau local et du jeu par Internet (`lan.js`), avatars des joueurs (`avatars.js`), fiches de rôle et objectifs (`roles.js`) |
+| `lan/` | Serveur réseau local sans dépendance (`serveur.mjs` : HTTP + WebSocket, parties, comptes rendus ; origine vérifiée, tailles, connexions, parties et comptes rendus plafonnés ; clé exigée de ce qui vient d'Internet), jeu par Internet (`internet.mjs` : analyse du réseau, ouverture de la box par UPnP, adresse publique, tunnel Cloudflare), lanceurs Windows / macOS / Linux, mode d'emploi |
 | `match.js` | Simulation du match, rendu des joueurs, enregistrement d'état (base des ralentis EVS) |
 | `bcam.js` | Caméras broadcast : optique, cadreurs automatiques, traitement CCU (knee, white clip, HLG), câbles |
 | `rf.js` | Bilan de liaison HF, diversité, brouillage |

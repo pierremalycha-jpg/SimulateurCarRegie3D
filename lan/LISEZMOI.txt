@@ -35,5 +35,14 @@ Les autres n'installent rien : ils ouvrent une adresse dans leur navigateur.
    Le formateur enregistre le compte rendu de session : il est écrit sur l'ordinateur
    de l'hôte, dans le dossier « rapports » à côté du serveur (HTML et JSON).
 
-Le serveur n'a besoin d'aucune connexion Internet : la page du simulateur est incluse.
+5. PAR INTERNET (avec quelqu'un qui est chez lui)
+   Dans le salon de l'hôte, sur l'ordinateur qui fait tourner le serveur :
+   « Inviter par Internet ». Le serveur demande à la box d'ouvrir son port (UPnP) et
+   affiche le lien à envoyer (http://<adresse publique>:8080/?cle=…). Si la box refuse ou
+   si l'adresse est partagée par l'opérateur : « Créer un lien par tunnel » (Cloudflare,
+   gratuit, sans compte ; cloudflared est téléchargé la première fois). La personne invitée
+   ouvre le lien dans son navigateur. Sans la clé du lien, rien n'est servi depuis Internet.
+   En ligne de commande : --internet ouvre la box dès le lancement.
+
+Le serveur n'a besoin d'aucune connexion Internet pour jouer en réseau local : la page du simulateur est incluse.
 Ctrl+C dans la fenêtre du serveur pour l'arrêter.
