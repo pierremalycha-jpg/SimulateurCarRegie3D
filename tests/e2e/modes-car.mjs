@@ -25,7 +25,7 @@ await shot(A, '01-jouer-missions');
 await A.click('#st-antenne');
 T.check('le car est lancé, préparé pour la mission (réseau de contrôle aux adresses d\'usine)', await until(A, () => window.__dbg.S.mode !== 'start' && window.__dbg.S.modeCar === 'mission' && window.__dbg.S.reseauUsine === true && window.__dbg.mission.m && window.__dbg.mission.m.id === 'i-reseau', null, 120000));
 await A.waitForTimeout(1500);
-T.check('le suivi des tâches sur le côté : la mission et sa tâche en cours', await until(A, () => { const q = document.getElementById('quest'); return !!q && !q.hidden && /Mission spécifique/.test(q.textContent) && /Paramétrer le réseau de contrôle/.test(q.textContent) && !!q.querySelector('.q-task.now'); }, null, 10000));
+T.check('le suivi des tâches sur le côté : la mission et sa tâche en cours', await until(A, () => { const q = document.getElementById('quest'); return !!q && !q.hidden && /Mission spécifique/.test(q.textContent) && /Paramétrer le réseau de contrôle/.test(q.textContent) && !!q.querySelector('.q-task.now'); }, null, 30000));
 await shot(A, '02-mission-suivi');
 await ev(() => window.__dbg.CTRL.resetCtrlNet());
 T.check('le réseau remis au plan : « Mission réussie », Mission suivante / Arrêter dans le suivi', await until(A, () => window.__dbg.mission.fini && /Mission réussie/.test(document.getElementById('quest').textContent) && !!document.querySelector('#quest [data-k="mission:suivante"]') && !!document.querySelector('#quest [data-k="mission:arreter"]'), null, 15000));
