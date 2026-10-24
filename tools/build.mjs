@@ -53,10 +53,14 @@ console.log('dist/index-lan.html', (lan.length / 1024).toFixed(0) + ' KB');
 const solo = lan.replace('<!--LAN-->', '');
 fs.writeFileSync('dist/TIEE-Simulator.html', solo);
 console.log('dist/TIEE-Simulator.html', (solo.length / 1024).toFixed(0) + ' KB');
-// serveur autonome : un seul fichier à copier sur l'ordinateur qui héberge (node car-regie-serveur-lan.mjs)
+// serveur autonome : un seul fichier à copier sur l'ordinateur qui héberge (node car-regie-serveur-lan.mjs) :
+// lan/serveur.mjs et lan/internet.mjs regroupés, la page intégrée
 const srv = fs.readFileSync('lan/serveur.mjs', 'utf8');
 if (!srv.includes('let PAGE = null;')) throw new Error('lan/serveur.mjs : marqueur PAGE introuvable');
-const server = srv.replace('let PAGE = null;', () => `let PAGE = ${JSON.stringify(lan)};`);
+const server = (await esbuild.build({
+  stdin: { contents: srv.replace('let PAGE = null;', () => `let PAGE = ${JSON.stringify(lan)};`), resolveDir: 'lan', sourcefile: 'serveur.mjs', loader: 'js' },
+  bundle: true, platform: 'node', format: 'esm', target: 'node18', write: false, legalComments: 'none', charset: 'utf8', logLevel: 'warning',
+})).outputFiles[0].text;
 fs.writeFileSync('dist/car-regie-serveur-lan.mjs', server);
 console.log('dist/car-regie-serveur-lan.mjs', (server.length / 1024).toFixed(0) + ' KB');
 // archive « réseau local » à donner à la personne qui héberge (proposée au téléchargement dans la page publiée)
