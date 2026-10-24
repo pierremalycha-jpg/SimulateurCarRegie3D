@@ -24,6 +24,7 @@ Calendrier indicatif, calé sur l'année scolaire (les épreuves ont lieu en mai
 
 | Version | Période | Contenu |
 |---|---|---|
+| v19.4.1 | oct. 2026 (fait) | Un son supportable, à sa place : l'écoute suit le joueur (la foule dans le stade, rumeur lointaine derrière les tribunes et devant le car, l'écoute de la console au poste son, presque rien ailleurs dans le car, silence à l'accueil), montée douce au lancement, volume du son dans les Réglages ; commentaires sans voix de synthèse (fil écrit au poste son) |
 | v19.4 | oct. 2026 (fait) | Consolider le car régie : quiz des leçons en banque (5 questions par leçon, 3 tirées, réponses mélangées, corrigé à la validation), réponses mélangées dans la caméra en 3D, livret qui ne compte que les réussites seules et demande un exercice pratique pour « consolidée », XP sur les seules pannes cachées, progression numérotée, fusionnée avant écriture, échec signalé, export / import / effacement et données personnelles (Réglages → Ma progression), polices intégrées (plus de Google Fonts), fuite mémoire des caméras corrigée, serveur réseau local durci |
 | v19.3 | oct. 2026 (fait) | L'interface jeu : objectif toujours à l'écran (exercice, mission, phase du jour de match) avec repère 3D, journal des missions (L), XP et sept niveaux de technicien, badges (dont un par compétence du livret), bruitages WebAudio, nouvelle identité visuelle « jeu vidéo » (écran titre cinématique, menu de pause, HUD, notifications), rubrique Jeu des réglages |
 | v19.2 | oct. 2026 (fait) | L'entrepôt, tuile de Jouer : monter une régie mobile de A à Z (caméras PTZ Panasonic, pupitre AW-RP150, ATEM HD8 ISO ou Carbonite, HyperDeck, Teranex, switch PoE+, box, PC vMix) d'après un cahier des charges noté ; catalogue de 21 modèles réels, moteur (énergie, câbles, IP, vidéo, tally), hall en 3D, faces cliquables, menus de configuration de chaque appareil, synoptique et liste de câblage, réseau avec ping, trois missions, compte rendu, exercice noté x-entrepot et livret ; chiffres et menus à faire relire par un professionnel |
@@ -53,6 +54,9 @@ et 30 images par seconde sur le PC le plus faible de l'établissement.
   route ; l'entrepôt devient un mode à part. Le chef de car n'est plus une entrée : ses parcours sont les
   exercices pratiques des leçons du Cours, et sa présentation du car devient le mode « Visite guidée ».
 
+- 23 octobre 2026 (v19.4.1) : le son n'est plus partout le même : on entend la foule dans le stade, l'écoute de la
+  console au poste son, presque rien ailleurs dans le car ; les commentaires ne sont plus dits par la synthèse vocale
+  (trop robotique), leur fil reste écrit au poste son.
 - 23 octobre 2026 (v19.4) : on consolide le car régie avant d'étendre l'entrepôt ou d'ouvrir un lieu : d'abord des
   preuves d'apprentissage fiables (quiz, livret, XP), une progression qui ne se perd pas, un serveur réseau local
   qu'un élève ne peut pas faire tomber.

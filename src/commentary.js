@@ -2,15 +2,14 @@
 import { S, on, emit } from './state.js';
 import { M, playerName, teamOf } from './match.js';
 import { TEAMS } from './data/match.js';
-import { clamp } from './util.js';
 import { AU, voiceGain, setVoiceLevel } from './audio.js';
 
 // ----------------------------------------------------------------------------------
 // Commentaires du match : un commentateur (le « play-by-play »), un consultant (l'analyse),
 // le journaliste bord terrain et le plateau (duplex). Les textes naissent des événements du match
-// et sont dits par la synthèse vocale du navigateur, avec un volume calculé par la console son :
-// patch, gain, fader, VCA, mute, départ vers le bus écouté, master, dim. Le retard de ligne
-// s'applique aussi (synchro labiale). Sans synthèse vocale, le fil s'affiche au poste son.
+// et s'affichent en fil écrit au poste son : ils ne sont pas dits (la synthèse vocale du navigateur
+// sonnait trop robotique). Leur niveau est simulé (vumètres des tranches COMM, loudness, lampe rouge)
+// et la console décide s'ils seraient entendus : patch, gain, fader, VCA, mute, bus écouté, master, dim.
 // ----------------------------------------------------------------------------------
 export const SPK = {
   comm1: { name: 'Julien', role: 'Commentateur', rate: 1.13, pitch: 1.0 },
@@ -18,28 +17,13 @@ export const SPK = {
   bt: { name: 'Sophie', role: 'Bord terrain', rate: 1.08, pitch: 1.18 },
   duplex: { name: 'Plateau', role: 'Studio (duplex)', rate: 1.04, pitch: 1.08 },
 };
-export const CMT = { on: true, log: [], queue: [], cur: null, idleT: 0, lastPass: 0, btT: 70, tts: false, voices: {}, studio: false, replay: false, lastShot: null };
+export const CMT = { on: true, log: [], queue: [], cur: null, idleT: 0, lastPass: 0, btT: 70, studio: false, replay: false, lastShot: null };
 
 const rnd = () => Math.random();
 const pick = (a) => a[Math.floor(rnd() * a.length)];
 const surname = (i) => { const n = playerName(i); return n.includes('. ') ? n.split('. ').slice(1).join(' ') : n; };
 const teamSay = (t) => { const n = TEAMS[t].name.replace(/^(RC|AS|FC|OGC|SC)\s+/i, ''); return n.charAt(0) + n.slice(1).toLowerCase(); };
 const scoreSay = () => `${teamSay(0)} ${M.score[0]}, ${teamSay(1)} ${M.score[1]}`;
-
-// ---- voix de synthèse : une voix française différente par intervenant si possible ----
-function pickVoices() {
-  const ss = window.speechSynthesis; if (!ss) return;
-  const all = ss.getVoices().filter((v) => /^fr/i.test(v.lang));
-  if (!all.length) return;
-  const male = all.filter((v) => /thomas|henri|paul|claude|mathieu|nicolas|daniel|guillaume|yves/i.test(v.name));
-  const fem = all.filter((v) => /amélie|amelie|audrey|aurélie|julie|denise|hortense|marie|céline|celine|virginie|google/i.test(v.name));
-  CMT.voices.comm1 = male[0] || all[0];
-  CMT.voices.comm2 = male[1] || all.find((v) => v !== CMT.voices.comm1) || all[0];
-  CMT.voices.bt = fem[0] || all[all.length - 1];
-  CMT.voices.duplex = fem[1] || all.find((v) => v !== CMT.voices.bt && v !== CMT.voices.comm1) || all[0];
-  CMT.tts = true;
-}
-if (typeof window !== 'undefined' && window.speechSynthesis) { pickVoices(); try { window.speechSynthesis.addEventListener('voiceschanged', pickVoices); } catch (e) { /* ancien navigateur */ } }
 
 // ---- file d'attente : priorité (5 = but … 1 = description), péremption ----
 function add(spk, text, prio = 1, maxAge = 3, opts = {}) {
@@ -49,8 +33,7 @@ function add(spk, text, prio = 1, maxAge = 3, opts = {}) {
   CMT.queue = CMT.queue.filter((q) => q.prio >= prio - 1 || now - q.t < 0.5);
   CMT.queue.push({ spk, text, prio, t: now, maxAge, delay: opts.delay || 0, rate: opts.rate, pitch: opts.pitch });
 }
-const ttsBusy = () => { try { return CMT.tts && window.speechSynthesis && (window.speechSynthesis.speaking || window.speechSynthesis.pending); } catch (e) { return false; } };
-function interrupt() { if (window.speechSynthesis && CMT.tts && !S.chefSpeaking) { try { window.speechSynthesis.cancel(); } catch (e) { /* rien */ } } if (CMT.cur) { setVoiceLevel(CMT.cur.spk, -90); CMT.cur = null; } }
+function interrupt() { if (CMT.cur) { setVoiceLevel(CMT.cur.spk, -90); CMT.cur = null; } }
 function duration(text, rate) { return 0.45 + text.split(/\s+/).length * 0.34 / (rate || 1); }
 function sayNow(q) {
   const sp = SPK[q.spk]; const rate = q.rate || sp.rate;
@@ -59,17 +42,6 @@ function sayNow(q) {
   CMT.cur = { ...q, start: S.time, until: S.time + dur, vol };
   CMT.log.push({ t: S.time, clock: M.clock, spk: q.spk, text: q.text, heard: vol > 0.02 && !AU.muted, prio: q.prio, rate: q.rate, pitch: q.pitch, remote: !!q.remote }); if (CMT.log.length > 40) CMT.log.shift();
   emit('commentary', CMT.log[CMT.log.length - 1]);
-  // pendant que le chef de car parle, les commentaires restent en texte (une seule synthèse vocale à la fois)
-  if (!(window.speechSynthesis && window.SpeechSynthesisUtterance) || vol <= 0.02 || S.chefSpeaking) return;
-  const go = () => {
-    try {
-      const u = new SpeechSynthesisUtterance(q.text); u.lang = 'fr-FR'; u.rate = rate; u.pitch = q.pitch || sp.pitch; u.volume = clamp(vol, 0, 1);
-      if (CMT.voices[q.spk]) u.voice = CMT.voices[q.spk];
-      window.speechSynthesis.speak(u);
-    } catch (e) { /* synthèse vocale indisponible */ }
-  };
-  // le retard de ligne (synchro labiale) s'applique aussi aux voix
-  if (AU.effDelay > 0) setTimeout(go, AU.effDelay); else go();
 }
 
 // session à plusieurs : les lignes viennent de l'hôte
@@ -139,10 +111,9 @@ export function updateCommentary(dt, ctx = {}) {
   // fin de la phrase en cours
   if (CMT.cur && now >= CMT.cur.until) { setVoiceLevel(CMT.cur.spk, -90); CMT.cur = null; CMT.idleT = 0; }
   if (CMT.cur) {
-    // niveau simulé (syllabes) pour les vumètres et la loudness ; la phrase est coupée si on ferme la voix
+    // niveau simulé (syllabes) pour les vumètres et la loudness
     const k = CMT.cur.spk; const s = (now - CMT.cur.start) * (4 + Math.sin(now * 1.3) * 1.5);
     setVoiceLevel(k, -18 + 6 * Math.abs(Math.sin(s * Math.PI)) - (rnd() < 0.1 ? 14 : 0) + (CMT.cur.prio >= 4 ? 4 : 0));
-    if (CMT.cur.vol > 0.02 && voiceGain(k) <= 0.01 && window.speechSynthesis && CMT.tts) { try { window.speechSynthesis.cancel(); } catch (e) { /* rien */ } CMT.cur.vol = 0; }
     return;
   }
   if (!CMT.on || S.mode === 'start') return;
@@ -161,8 +132,6 @@ export function updateCommentary(dt, ctx = {}) {
   if (ready.length) {
     ready.sort((a, b) => b.prio - a.prio || a.t - b.t);
     const q = ready[0];
-    // la voix réelle peut être plus lente que l'estimation : on n'empile pas, sauf pour un temps fort
-    if (ttsBusy()) { if (q.prio < 4) return; interrupt(); }
     CMT.queue.splice(CMT.queue.indexOf(q), 1);
     sayNow(q);
     return;
