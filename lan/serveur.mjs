@@ -6,6 +6,7 @@
 //   node lan/serveur.mjs              (port 8080, ou le suivant s'il est pris)
 //   node lan/serveur.mjs --port 9000  (port imposé)
 //   node lan/serveur.mjs --ouvrir     (ouvre aussi la page dans le navigateur)
+//   node lan/serveur.mjs --internet   (ouvre aussi la box pour jouer par Internet, voir plus bas)
 //
 // TIEE-Simulator.exe (tools/exe.mjs) est ce même serveur dans un exécutable Windows, lancé avec
 // --ouvrir --exe : rien à installer, et un second double-clic rouvre simplement la page.
@@ -16,6 +17,12 @@
 // · relaie en temps réel les parties : présence de chaque joueur (pseudo, rôle, position,
 //   états des postes) et messages (ordres, faits de jeu, commentaires) ;
 // · enregistre les comptes rendus de session dans le dossier « rapports » à côté du serveur.
+//
+// Par Internet (lan/internet.mjs) : depuis le salon, l'hôte demande un lien. Le serveur ouvre la box
+// (UPnP) ou passe par un tunnel Cloudflare. Une connexion venue d'Internet doit porter la clé du lien
+// (?cle=…, gardée ensuite dans un cookie) : sans elle, rien n'est servi. La clé est gardée dans
+// « cle-internet.txt » à côté du serveur (un lien reste valable d'un lancement à l'autre ; effacer le
+// fichier rend les anciens liens inutilisables).
 // ----------------------------------------------------------------------------------
 import http from 'node:http';
 import crypto from 'node:crypto';
@@ -25,12 +32,14 @@ import path from 'node:path';
 import zlib from 'node:zlib';
 import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import { createInternet, isPrivateAddr, lanAddresses } from './internet.mjs';
 
 const argPort = process.argv.indexOf('--port');
 const ASKED = +(argPort > 0 ? process.argv[argPort + 1] : process.env.PORT) || 0; // port imposé
 let PORT = ASKED || 8080;
 const OPEN = process.argv.includes('--ouvrir'); // ouvrir la page dans le navigateur une fois prêt
 const EXE = process.argv.includes('--exe');     // lancé par TIEE-Simulator.exe (fenêtre de console à part)
+const NET_AT_START = process.argv.includes('--internet'); // ouvrir la box dès le lancement
 // limites : le serveur tourne sur le réseau du lycée, ouvert à tous ceux qui y sont branchés ; un
 // client qui se trompe (ou qui s'amuse) ne doit pouvoir ni remplir la mémoire ni le disque de l'hôte
 const MAX_MSG = 4 * 1024 * 1024;  // un message WebSocket (tous ses fragments) ne dépasse jamais 4 Mo
@@ -55,6 +64,33 @@ function loadPage() {
 const html = loadPage().replace('<!--LAN-->', '<script>window.CARREGIE_LAN = { version: 1 };</script>');
 const htmlBuf = Buffer.from(html, 'utf8');
 const htmlGz = zlib.gzipSync(htmlBuf, { level: 9 });
+
+// ---------------- clé des liens Internet ----------------
+const INSTANCE = crypto.randomBytes(8).toString('hex'); // reconnaître ce serveur quand il s'appelle lui-même par Internet
+const KEY_FILE = path.join(process.cwd(), 'cle-internet.txt');
+const KEY = (() => {
+  try { const k = fs.readFileSync(KEY_FILE, 'utf8').trim(); if (/^[a-z0-9]{10,40}$/.test(k)) return k; } catch (e) { /* pas encore de clé */ }
+  // 12 caractères tirés parmi 32 : 60 bits, impossibles à deviner en essayant
+  const A = 'abcdefghjkmnpqrstuvwxyz23456789'; const b = crypto.randomBytes(12); let k = '';
+  for (const x of b) k += A[x % A.length];
+  try { fs.writeFileSync(KEY_FILE, k + '\n'); } catch (e) { /* dossier en lecture seule : clé valable pour ce lancement */ }
+  return k;
+})();
+const cookieOf = (req, name) => { const m = new RegExp('(?:^|;\\s*)' + name + '=([^;]*)').exec(String(req.headers.cookie || '')); return m ? decodeURIComponent(m[1]) : null; };
+const sameKey = (k) => typeof k === 'string' && k.length === KEY.length && crypto.timingSafeEqual(Buffer.from(k), Buffer.from(KEY));
+// d'où vient la requête : du réseau local (accès libre, comme avant), ou d'Internet (clé exigée).
+// ext : requête arrivée par le tunnel (elle vient de cloudflared, sur cet ordinateur, mais d'Internet)
+const fromInternet = (req, ext) => ext || !isPrivateAddr(req.socket.remoteAddress);
+const keyOf = (req, url) => url.searchParams.get('cle') || cookieOf(req, 'tiee_cle');
+const allowed = (req, url, ext) => !fromInternet(req, ext) || sameKey(keyOf(req, url));
+// commandes réservées à l'hôte : sur cet ordinateur, par son adresse locale (pas par le tunnel, pas
+// par un nom de domaine qui pointerait ici)
+const hostOnly = (req, ext) => !ext && ['127.0.0.1', '::1', '::ffff:127.0.0.1'].includes(req.socket.remoteAddress || '') && /^(localhost|127\.0\.0\.1|\[::1\])(:\d+)?$/.test(String(req.headers.host || ''));
+const NO_KEY_PAGE = Buffer.from(`<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>TIEE Simulator</title></head>
+<body style="font:16px/1.5 system-ui,sans-serif;max-width:560px;margin:12vh auto;padding:0 16px;color:#222">
+<h1 style="font-size:22px">Lien incomplet</h1>
+<p>Cette partie de TIEE Simulator se rejoint avec le lien complet donné par l'hôte : il se termine par <code>?cle=</code> suivi de douze caractères.</p>
+<p>Demandez-lui de vous le renvoyer (bouton « Copier » du salon, « Inviter par Internet »).</p></body></html>`, 'utf8');
 
 // ---------------- parties ----------------
 // partie = { code, created, peers: Map(id -> { id, by, ws, presence, updatedAt }) }
@@ -221,13 +257,22 @@ function allowRapport(addr) {
   list.push(now); SENT.set(addr, list); return true;
 }
 function countRapports() { try { return fs.readdirSync(RAPPORTS).filter((f) => f.endsWith('.json')).length; } catch (e) { return 0; } }
-const server = http.createServer(async (req, res) => {
+const onRequest = (ext) => async (req, res) => {
   const url = new URL(req.url, 'http://local');
   const json = (code, obj) => { res.writeHead(code, { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' }); res.end(JSON.stringify(obj)); };
   try {
+    // ce serveur répond-il à cette adresse ? (essai du lien direct par l'hôte lui-même)
+    if (req.method === 'GET' && url.pathname === '/api/ping') { json(200, { ok: true, id: INSTANCE }); return; }
+    if (url.pathname.startsWith('/api/internet')) { await internetApi(req, url, ext, json); return; }
+    if (!allowed(req, url, ext)) {
+      if (req.method === 'GET' && (url.pathname === '/' || url.pathname === '/index.html')) { res.writeHead(403, { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store' }); res.end(NO_KEY_PAGE); return; }
+      json(403, { ok: false, message: 'Clé de la partie absente ou fausse.' }); return;
+    }
     if (req.method === 'GET' && (url.pathname === '/' || url.pathname === '/index.html')) {
       const gz = /\bgzip\b/.test(req.headers['accept-encoding'] || '');
-      res.writeHead(200, { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-cache', ...(gz ? { 'content-encoding': 'gzip' } : {}) });
+      // venu d'Internet avec la clé : elle est gardée dans un cookie (rechargement, WebSocket)
+      const cookie = fromInternet(req, ext) ? { 'set-cookie': `tiee_cle=${KEY}; Path=/; Max-Age=2592000; HttpOnly; SameSite=Lax` } : {};
+      res.writeHead(200, { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-cache', ...cookie, ...(gz ? { 'content-encoding': 'gzip' } : {}) });
       res.end(gz ? htmlGz : htmlBuf); return;
     }
     if (req.method === 'GET' && url.pathname === '/api/parties') { json(200, { parties: partyList(), server: serverName() }); return; }
@@ -249,15 +294,18 @@ const server = http.createServer(async (req, res) => {
     if (req.method === 'GET' && url.pathname === '/favicon.ico') { res.writeHead(204); res.end(); return; }
     res.writeHead(404, { 'content-type': 'text/plain; charset=utf-8' }); res.end('Introuvable');
   } catch (e) { json(400, { ok: false, message: e.message }); }
-});
-server.on('upgrade', (req, socket) => {
+};
+const onUpgrade = (ext) => (req, socket) => {
   const key = req.headers['sec-websocket-key'];
-  if (new URL(req.url, 'http://local').pathname !== '/ws' || !key || String(req.headers.upgrade).toLowerCase() !== 'websocket') { socket.destroy(); return; }
-  // une autre page web ne se branche pas sur les parties ; trop de connexions (en tout, ou d'une même adresse) : refusé
+  const url = new URL(req.url, 'http://local');
+  if (url.pathname !== '/ws' || !key || String(req.headers.upgrade).toLowerCase() !== 'websocket') { socket.destroy(); return; }
+  // une autre page web ne se branche pas sur les parties ; venu d'Internet sans la clé, non plus ;
+  // trop de connexions (en tout, ou d'une même adresse) : refusé
   const addr = /** @type {import('node:net').Socket} */ (socket).remoteAddress || '';
   const fromAddr = [...CONNS].filter((c) => c.addr === addr).length;
-  if (!sameOrigin(req) || CONNS.size >= MAX_CONNS || (!isLoopback(addr) && fromAddr >= MAX_CONNS_IP)) {
-    socket.end(`HTTP/1.1 ${sameOrigin(req) ? '503 Service Unavailable' : '403 Forbidden'}\r\nConnection: close\r\nContent-Length: 0\r\n\r\n`);
+  const ok = sameOrigin(req) && allowed(req, url, ext);
+  if (!ok || CONNS.size >= MAX_CONNS || (!isLoopback(addr) && fromAddr >= MAX_CONNS_IP)) {
+    socket.end(`HTTP/1.1 ${ok ? '503 Service Unavailable' : '403 Forbidden'}\r\nConnection: close\r\nContent-Length: 0\r\n\r\n`);
     return;
   }
   const accept = crypto.createHash('sha1').update(key + '258EAFA5-E914-47DA-95CA-C5AB0DC85B11').digest('base64');
@@ -265,13 +313,39 @@ server.on('upgrade', (req, socket) => {
   /** @type {import('node:net').Socket} */ (socket).setNoDelay(true);
   const conn = new Conn(socket); conn.addr = addr;
   CONNS.add(conn);
-});
+};
+const server = http.createServer(onRequest(false));
+server.on('upgrade', onUpgrade(false));
 
-function lanAddresses() {
-  const out = [];
-  for (const [name, list] of Object.entries(os.networkInterfaces())) for (const a of list || []) if (a.family === 'IPv4' && !a.internal) out.push({ name, address: a.address });
-  return out;
+// ---------------- par Internet ----------------
+// porte du tunnel : un second serveur, sur cet ordinateur seulement, où tout ce qui arrive vient d'Internet
+let tunnelServer = null;
+const tunnelPort = () => new Promise((res, rej) => {
+  if (tunnelServer) { res(/** @type {import('node:net').AddressInfo} */ (tunnelServer.address()).port); return; }
+  const s = http.createServer(onRequest(true)); s.on('upgrade', onUpgrade(true));
+  s.once('error', rej);
+  s.listen(0, '127.0.0.1', () => { tunnelServer = s; res(/** @type {import('node:net').AddressInfo} */ (s.address()).port); });
+});
+let INTERNET = null; // créé une fois le port connu
+async function internetApi(req, url, ext, json) {
+  if (!hostOnly(req, ext)) { json(403, { ok: false, message: 'Réservé à l\'ordinateur de l\'hôte.' }); return; }
+  if (req.method === 'GET' && url.pathname === '/api/internet') { json(200, INTERNET.status()); return; }
+  if (req.method !== 'POST' || !sameOrigin(req)) { json(405, { ok: false }); return; }
+  const act = url.pathname.slice('/api/internet/'.length);
+  if (act === 'direct') INTERNET.openDirect().catch((e) => console.error(e));
+  else if (act === 'tunnel') INTERNET.openTunnel().catch((e) => console.error(e));
+  else if (act === 'fermer') await INTERNET.close();
+  else { json(404, { ok: false }); return; }
+  json(200, INTERNET.status());
 }
+// à l'arrêt (Ctrl+C, fenêtre fermée sous Windows : SIGHUP), on referme la box et le tunnel
+let stopping = false;
+for (const sig of ['SIGINT', 'SIGTERM', 'SIGHUP']) process.on(sig, () => {
+  if (stopping) process.exit(0);
+  stopping = true;
+  const done = () => process.exit(0);
+  if (!INTERNET) done(); else { INTERNET.close().then(done, done); setTimeout(done, 3000).unref(); }
+});
 const serverName = () => os.hostname();
 const hhmm = () => new Date().toLocaleTimeString('fr-FR');
 
@@ -321,5 +395,9 @@ server.listen(PORT, '0.0.0.0', () => {
   else console.log('  Aucune carte réseau trouvée : branchez-vous au réseau local (câble ou Wi-Fi).');
   console.log('\n  Tout le monde doit être sur le même réseau. Si personne ne peut se connecter, autorisez');
   console.log(`  ${EXE ? 'TIEE Simulator' : 'Node.js'} dans le pare-feu (réseau privé). ${EXE ? 'Fermez cette fenêtre' : 'Ctrl+C'} pour arrêter.\n`);
+  console.log('  Pour jouer avec quelqu\'un qui est chez lui : dans le simulateur, Jouer > Coopération >');
+  console.log('  Ouvrir le salon > « Inviter par Internet ». Le lien à lui envoyer s\'affiche ici et dans le salon.\n');
+  INTERNET = createInternet({ port: PORT, tunnelPort, key: KEY, id: INSTANCE, log: (t) => console.log(`${hhmm()}${t}`) });
+  if (NET_AT_START) INTERNET.openDirect();
   if (OPEN) openBrowser(`http://localhost:${PORT}`);
 });

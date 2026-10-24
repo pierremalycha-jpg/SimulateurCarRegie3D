@@ -7,7 +7,11 @@
 // partie avec la même présence.
 // ----------------------------------------------------------------------------------
 export const lanAvailable = () => typeof window !== 'undefined' && !!window.CARREGIE_LAN;
-const wsUrl = () => `${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}/ws`;
+// page ouverte par un lien Internet (?cle=…) : la clé accompagne aussi le WebSocket et les appels au
+// serveur (le cookie posé par le serveur suffit d'ordinaire ; l'adresse sert si les cookies sont bloqués)
+export const internetKey = () => { try { return new URLSearchParams(location.search || '').get('cle') || ''; } catch (e) { return ''; } };
+const withKey = (u) => (internetKey() ? `${u}${u.includes('?') ? '&' : '?'}cle=${encodeURIComponent(internetKey())}` : u);
+const wsUrl = () => withKey(`${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}/ws`);
 
 // identifiant stable de ce navigateur (pour reconnaître un joueur qui se reconnecte)
 export function browserId() {
@@ -26,11 +30,19 @@ function tabId() {
   return id;
 }
 export async function lanParties() {
-  try { const r = await fetch('/api/parties', { cache: 'no-store' }); if (!r.ok) return null; return await r.json(); } catch (e) { return null; }
+  try { const r = await fetch(withKey('/api/parties'), { cache: 'no-store' }); if (!r.ok) return null; return await r.json(); } catch (e) { return null; }
+}
+// jouer par Internet : état et commandes, sur l'ordinateur de l'hôte seulement (lan/internet.mjs)
+export const onHostMachine = () => typeof location !== 'undefined' && /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname) && !internetKey();
+export async function internetStatus() {
+  try { const r = await fetch('/api/internet', { cache: 'no-store' }); if (!r.ok) return null; return await r.json(); } catch (e) { return null; }
+}
+export async function internetAction(act) {
+  try { const r = await fetch('/api/internet/' + act, { method: 'POST' }); if (!r.ok) return null; return await r.json(); } catch (e) { return null; }
 }
 export async function lanSaveReport(id, data, html) {
   try {
-    const r = await fetch('/api/rapport', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ id, data, html }) });
+    const r = await fetch(withKey('/api/rapport'), { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ id, data, html }) });
     return await r.json();
   } catch (e) { return { ok: false, message: e.message }; }
 }
