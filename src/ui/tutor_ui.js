@@ -359,15 +359,15 @@ function comps(l) {
 }
 // depuis la feuille de service : le chef lance le car prêt à l'antenne (en IP si le parcours le
 // demande) puis commence le parcours
+// (le car est lancé par l'écran Jouer, app/start.js, qui fournit setLanceur : sans passer par le mode qu'il
+// affiche, qui pourrait être le car pré-installé, sans chef de car)
+const LANCEUR = { fn: /** @type {((o: { ip?: boolean, sdi?: boolean }) => void) | null} */ (null) };
+export function setLanceur(/** @type {(o: { ip?: boolean, sdi?: boolean }) => void} */ fn) { LANCEUR.fn = fn; }
 function launchWith(id) {
-  const l = lessonById(id); if (!l) return;
-  const infra = /** @type {HTMLSelectElement | null} */ (document.getElementById('stinfra'));
-  if (infra && l.needs && l.needs.ip) infra.value = 'ip';
-  const b = /** @type {HTMLButtonElement | null} */ (document.getElementById('st-antenne'));
-  if (!b) return;
+  const l = lessonById(id); if (!l || !LANCEUR.fn) return;
   UI.intro = false; UI.openDom = l.domain;
   S.chefTour = false; S.visite = false;
-  b.click();
+  LANCEUR.fn({ ip: !!(l.needs && l.needs.ip), sdi: !!(l.needs && l.needs.sdi) });
   if (S.mode === 'start') return;
   startLesson(id); onStep();
   if (id === 'prise-en-main') dropOnboard();

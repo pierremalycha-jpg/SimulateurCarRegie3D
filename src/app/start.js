@@ -28,6 +28,7 @@ import { montageEnregistre } from '../entrepot/build.js';
 import { PROG } from '../shared.js';
 import { commencee, nonLus, enCours } from '../carriere/index.js';
 import { missionPicker } from '../ui/missions_ui.js';
+import { setLanceur } from '../ui/tutor_ui.js';
 import { missionById, premiereAFaire } from '../game/missions.js';
 import { showTitle } from './title.js';
 import { livePlayerCard } from '../game/quest.js';
@@ -110,6 +111,8 @@ export function buildStart() {
     S.chefTour = !!o.visite; S.visite = !!o.visite; S.carriere = o.carriere || null; S.modeCar = o.modeCar || null;
     run(preset, o.prepa);
   };
+  // un exercice d'Olivier lancé d'ailleurs (Cours, journal) : le car prêt à l'antenne, avec le chef de car
+  setLanceur((o) => SHEET.go && SHEET.go('standard', { ip: o.ip, sdi: o.sdi }));
   // coopération : le car installé, avec les réglages de l'hôte s'il y en a déjà un
   setSessionStarter({
     cfg: () => ({ fmt: fmt.value, ip: infra.value === 'ip', light: light.value }),
