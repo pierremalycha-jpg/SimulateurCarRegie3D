@@ -54,12 +54,14 @@ T.check('écran « Car régie » : le choix du mode prend le focus', await until
 
 // chef de car : touche J sur l'écran Jouer, puis la visite guidée
 await page.keyboard.press('KeyJ');
-T.check('touche J sur l\'écran Jouer', await chefOpen() && /Visite guidée/.test(await chefText()));
+T.check('touche J sur l\'écran Jouer', await chefOpen() && /visite guidée/i.test(await chefText()));
 await page.keyboard.press('KeyJ');
 T.check('touche J referme le chef', await chefClosed());
-await page.locator('.jo-mode[data-mode="visite"]').click();
+await page.locator('.jo-mode[data-mode="zero"]').click();
 await page.locator('#st-antenne').click();
-T.check('« Visite guidée » : car lancé, tour du car', await until(page, () => window.__dbg.S.mode === 'fps' && window.__dbg.TUTOR.lesson?.id === 'prise-en-main', null, 90000));
+await until(page, () => window.__dbg.S.mode === 'fps' && !!document.querySelector('#chef [data-k="vide:visite"]'), null, 90000);
+await page.locator('#chef [data-k="vide:visite"]').click();
+T.check('« Car vide » puis le tour du car : car lancé, tour du car', await until(page, () => window.__dbg.S.mode === 'fps' && window.__dbg.TUTOR.lesson?.id === 'prise-en-main', null, 30000));
 const f0 = await ev(() => window.__dbg.S.frame);
 T.check('le rendu tourne', await until(page, (f) => window.__dbg.S.frame > f + 5, f0, 60000));
 await shot('01-partie');

@@ -50,6 +50,7 @@ const SUITES = [
   ['camera', 'camera', [], 25],
   ['entrepot', 'entrepot', [], 25],
   ['carriere', 'carriere', [], 25],
+  ['modes-car', 'modes-car', [], 30],
   ['chef-postes', 'chef-postes', [], 60],
   ['jeu', 'jeu', [], 20],
   ['progression', 'progression', [], 15],

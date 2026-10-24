@@ -28,16 +28,18 @@ const chefText = () => ev(() => document.querySelector('#chef')?.textContent || 
 // écran Jouer : le chef répond à la touche J avant toute vacation, et renvoie à la visite guidée
 await page.keyboard.press('KeyJ');
 T.check('touche J sur l\'écran Jouer : le chef s\'ouvre', await chefOpen());
-T.check('il propose la visite guidée et le Cours', /Visite guidée/.test(await chefText()) && await ev(() => [...document.querySelectorAll('#chef button')].some((b) => /Ouvrir le Cours/.test(b.textContent))));
+T.check('il propose la visite guidée et le Cours', /visite guidée/i.test(await chefText()) && await ev(() => [...document.querySelectorAll('#chef button')].some((b) => /Ouvrir le Cours/.test(b.textContent))));
 await shot('00-accueil-chef');
 await page.keyboard.press('KeyJ');
 T.check('touche J : le chef se referme', await until(page, () => document.querySelector('#chef').hidden, null, 5000));
 
-// premier lancement, comme un stagiaire : le mode « Visite guidée » est choisi d'office ; le tour du car commence
-T.check('visite guidée proposée d\'office au premier lancement', await ev(() => document.querySelector('.jo-mode[data-mode="visite"]')?.getAttribute('aria-pressed') === 'true'));
+// premier lancement, comme un stagiaire : le car vide est choisi d'office ; Olivier propose d'abord le tour du car
+T.check('car vide proposé d\'office au premier lancement', await ev(() => document.querySelector('.jo-mode[data-mode="zero"]')?.getAttribute('aria-pressed') === 'true'));
 await page.locator('#st-antenne').click();
 T.check('partie lancée', await until(page, () => window.__dbg.S.mode === 'fps'));
-T.check('premier lancement : le chef ouvre le tour du car', await chefOpen() && await until(page, () => window.__dbg.TUTOR.lesson?.id === 'prise-en-main', null, 5000));
+T.check('premier lancement : Olivier propose le tour du car', await chefOpen() && await until(page, () => !!document.querySelector('#chef [data-k="vide:visite"]'), null, 8000));
+await page.locator('#chef [data-k="vide:visite"]').click();
+T.check('« Le tour du car et les postes » : le tour du car commence', await until(page, () => window.__dbg.TUTOR.lesson?.id === 'prise-en-main', null, 5000));
 T.check('pas d\'encart des premiers gestes en double', await ev(() => !document.getElementById('onboard')));
 const f0 = await ev(() => window.__dbg.S.frame);
 T.check('le rendu tourne', await until(page, (f) => window.__dbg.S.frame > f + 5, f0), String(f0));
@@ -73,9 +75,11 @@ T.check('pas de bouton de téléchargement du serveur', await ev(() => ![...docu
 await shot('03-plusieurs');
 await page.keyboard.press('Escape');
 await page.locator('.jo-team-seg button[data-v="solo"]').click();
-await page.locator('.jo-mode[data-mode="visite"]').click();
+await page.locator('.jo-mode[data-mode="zero"]').click();
 await page.locator('#st-antenne').click();
-T.check('« Visite guidée » : car lancé, tour du car commencé', await until(page, () => window.__dbg.S.mode === 'fps' && window.__dbg.TUTOR.lesson?.id === 'prise-en-main' && !document.querySelector('#chef').hidden, null, 60000));
+await until(page, () => window.__dbg.S.mode === 'fps' && !!document.querySelector('#chef [data-k="vide:visite"]'), null, 60000);
+await page.locator('#chef [data-k="vide:visite"]').click();
+T.check('« Car vide » puis le tour du car : car lancé, tour du car commencé', await until(page, () => window.__dbg.S.mode === 'fps' && window.__dbg.TUTOR.lesson?.id === 'prise-en-main' && !document.querySelector('#chef').hidden, null, 60000));
 await shot('04-avec-le-chef');
 
 T.check('aucune requête réseau hors polices', net.length === 0, net.slice(0, 5).join(' '));
