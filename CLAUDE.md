@@ -18,10 +18,15 @@ Tout est en français (code commenté en français, interface, commits).
   Cours, Réglages, Équipe en coopération, Retour à l'accueil), pupitre (`src/ui/pupitre.js` : outils du car,
   Cours, Réglages). Pas de quatrième entrée : un nouvel écran se range dans l'une des trois.
 - **Jouer** : le lieu (car régie ; l'entrepôt ; salle de concert en préparation, `src/content/lieux.js`), le
-  mode (car installé, tout à faire, visite guidée ; pour l'entrepôt : la Carrière, ses missions, le bac à sable, la
-  reprise du montage), solo ou coopération (salon `src/ui/session_ui.js`), conditions de captation repliées. Pas de liste
-  de scénarios : les exercices notés (car vide, atelier, jour de match, formation réseau, mise en service de la
-  caméra, régie de l'entrepôt) se lancent depuis leur leçon du Cours.
+  mode, solo ou coopération (salon `src/ui/session_ui.js`), conditions de captation repliées. Les modes du car
+  (décidés le 24 octobre 2026) : **Car vide** (tout à faire ; Olivier propose d'abord la visite guidée, puis aide sur
+  demande), **Car pré-installé** (jeu libre : ni chef de car, ni missions, ni objectif ; la coopération se joue ici),
+  **Mission spécifique** (une tâche choisie dans `src/game/missions.js`, rangée par famille : installer le car, aux
+  postes avec Olivier, épreuves notées ; le car est préparé pour elle (`prepa`) ; à la fin, « Mission suivante »
+  (sans recharger si le car convient, `memeCar`) ou « Arrêter » ; déroulement `src/game/mission_run.js`, liste
+  `src/ui/missions_ui.js`). Pour l'entrepôt : la Carrière, ses missions, le bac à sable, la reprise du montage. Les
+  exercices restent rangés dans leur leçon du Cours ; la Mission spécifique propose les mêmes (mêmes identifiants,
+  rien ne compte deux fois).
 - **Réglages** : une seule fenêtre (`src/ui/settings.js`), avec le profil Étudiant / Formateur
   (`src/app/profile.js`) ; l'espace formateur (configuration, suivi, relecture) n'y apparaît qu'au profil
   Formateur (classe `role-only`).
@@ -59,9 +64,12 @@ Tout est en français (code commenté en français, interface, commits).
   exercice noté « Mise en service » : `mes.js` (exercice pratique `x-camera` de la leçon `camera-systeme`).
 - **Exercices pratiques** : les parcours d'Olivier (`src/tutor/`) sont rangés dans les leçons par
   `src/cours/exercices.js` (BY_LESSON : chaque exercice une seule fois, test unitaire), avec les exercices notés
-  (`x-atelier`, `x-brassage`, `x-reseau`, `x-match`, `x-camera`). Le panneau du chef (`src/ui/tutor_ui.js`,
-  touche J) ne propose que les exercices du poste où l'on est ; en fin d'exercice, « Revenir à la leçon ». La
-  **visite guidée** (mode de Jouer) : le tour du car, puis la présentation de chaque poste (« Poste suivant »).
+  (`x-atelier`, `x-brassage`, `x-reseau`, `x-match`, `x-camera`). Le chef (`src/ui/tutor_ui.js`, touche J) est une
+  **boîte de dialogue en bas de l'écran** (`#chef.dlg` : portrait, nom, texte, gestes ; elle passe en haut si
+  l'élément montré est dessous, se réduit en une ligne ; pas de petite fenêtre déplaçable) ; il ne propose que les
+  exercices du poste où l'on est ; en fin d'exercice, « Revenir à la leçon » (ou « Mission suivante »). La **visite
+  guidée** : proposée par Olivier au début du car vide (et la mission de stagiaire de la Carrière) : le tour du car,
+  puis la présentation de chaque poste ; son plan est dans le suivi des tâches.
 - **Livret de compétences** : référentiel TIEE dans `src/content/referentiel.js` (RATTACHEMENT : parcours,
   missions, phases, réseau, exercices, cours, camera), calcul pur dans `src/livret.js`, affichage
   `src/ui/livret.js`. Toute nouvelle activité notée, toute nouvelle leçon se rattache à des compétences. Une
@@ -71,7 +79,8 @@ Tout est en français (code commenté en français, interface, commits).
   la forme change), fusion `mergeProgress` (rien ne se perd entre deux appareils), Réglages → Ma progression
   (`src/ui/ma_progression.js` : export, import, effacement, données personnelles). Aucune ressource externe nouvelle
   (polices intégrées par `tools/build.mjs`).
-- **La couche jeu (v19.3)**, `src/game/` : l'objectif en cours toujours à l'écran (`quest.js`, `#quest`, repère 3D
+- **La couche jeu (v19.3)**, `src/game/` : le **suivi des tâches sur le côté** (`quest.js`, `#quest` : la mission en
+  cours et ses tâches cochées, groupées en car vide, les étapes d'un exercice, le plan de la visite ; repère 3D
   `#qmark`), le journal des missions (touche L, bouton Missions du HUD et des en-têtes de poste : exercices du poste,
   toutes les missions par chapitre, badges), XP / niveaux / badges (`xp.js`, calcul pur, barème `BAREME`, badges de
   compétence pilotés par `src/livret.js`), accroches sur les événements (`progression.js`), effets (`fx.js`) et

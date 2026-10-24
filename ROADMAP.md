@@ -24,6 +24,7 @@ Calendrier indicatif, calé sur l'année scolaire (les épreuves ont lieu en mai
 
 | Version | Période | Contenu |
 |---|---|---|
+| v19.6 | oct. 2026 (fait) | Trois façons de jouer au car régie : car vide (Olivier propose d'abord la visite), car pré-installé (jeu libre, sans chef ni missions), mission spécifique (une tâche choisie par famille, le car préparé pour elle, enchaîner ou arrêter) ; le suivi des tâches sur le côté ; Olivier en boîte de dialogue en bas de l'écran ; la tâche « réseau de contrôle » du car vide vérifie enfin l'adresse du plan |
 | v19.5 | oct. 2026 (fait) | La Carrière, mode scénarisé de l'entrepôt (lot 1) : le bureau et son ordinateur dans le hall, une messagerie où des mails proposent un poste sur une prestation, l'ordre de mission, deux épisodes (stagiaire : visite du car réduite à six postes ; assistant technique : la conférence montée à l'entrepôt), retour au bureau depuis le car, badge « Embauché », progression v3 |
 | Carrière, lots 2 et 3 | à planifier (R7) | Lot 2 : marcher dans l'entrepôt à la première personne (déplacement, E pour l'ordinateur, les rayonnages et la baie ; la vue en orbite reste pour câbler et sur tablette). Lot 3 : la saison complète (environ huit mails : car vide, atelier, mise en service de la caméra, formation réseau, plateau TV, vMix, jour de match), avec le compte rendu dans le mail de retour |
 | v19.4.1 | oct. 2026 (fait) | Un son supportable, à sa place : l'écoute suit le joueur (la foule dans le stade, rumeur lointaine derrière les tribunes et devant le car, l'écoute de la console au poste son, presque rien ailleurs dans le car, silence à l'accueil), montée douce au lancement, volume du son dans les Réglages ; commentaires sans voix de synthèse (fil écrit au poste son) |
@@ -56,6 +57,12 @@ et 30 images par seconde sur le PC le plus faible de l'établissement.
   route ; l'entrepôt devient un mode à part. Le chef de car n'est plus une entrée : ses parcours sont les
   exercices pratiques des leçons du Cours, et sa présentation du car devient le mode « Visite guidée ».
 
+- 24 octobre 2026 (v19.6) : le car régie se joue de trois façons, chacune à sa phase : **car vide** (tout à faire,
+  Olivier propose d'abord la visite guidée), **car pré-installé** (jeu libre, ni chef de car ni missions) et **mission
+  spécifique** (une tâche précise, le car préparé pour elle ; ensuite on enchaîne ou l'on s'arrête). La visite guidée
+  n'est plus un mode : Olivier la propose au début du car vide. Jouer propose donc une liste de missions : elle
+  reprend les exercices rangés dans les leçons du Cours (mêmes identifiants), qui restent la référence. Le chef de
+  car parle dans une boîte de dialogue en bas de l'écran, les tâches sont sur le côté.
 - 23 octobre 2026 (v19.5) : un mode scénarisé, la **Carrière**, à côté du mode libre (bac à sable de l'entrepôt,
   car installé). Il s'appelle Carrière, pas Scénario (le mot désigne déjà le jour de match dans le code). C'est le
   premier mode du lieu « L'entrepôt » : pas de quatrième entrée. Sa messagerie est une deuxième porte vers les

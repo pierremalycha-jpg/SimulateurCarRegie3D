@@ -394,6 +394,58 @@ Tests :
   « Emmène-moi / Montre-moi » doit mettre en évidence un élément réel de la page, et « Fais-le pour moi » doit faire
   valider l'étape.
 
+## v19.6 : trois façons de jouer au car régie, le suivi des tâches sur le côté, Olivier en boîte de dialogue
+
+**Pourquoi.** Retour du 24 octobre 2026 : les modes du car mélangeaient les phases (un car « installé » où le chef de
+car et les missions restaient partout, une « visite guidée » à part, des exercices notés rangés seulement dans le
+Cours) ; l'objectif tenait sur une carte, et le chef de car flottait dans une petite fenêtre qui chargeait l'image.
+Cette version sépare les phases en trois modes, montre les tâches sur le côté comme le journal de quêtes d'un jeu
+et fait parler Olivier dans une boîte de dialogue.
+
+**Jouer → Car régie : trois modes** (`src/app/start.js`).
+- **Car vide** : tout est à faire (stade vide, car non brassé, caméras non réglées, réseau de contrôle aux adresses
+  d'usine). Olivier se présente et propose d'abord **le tour du car et les postes** (la visite guidée) ou
+  **directement l'installation** ; ensuite il aide quand on l'appelle (J). C'est le mode proposé d'office au premier
+  lancement.
+- **Car pré-installé** : tout est en place, le match en direct, **jeu libre** : ni chef de car (J), ni journal des
+  missions (L), ni objectif ; un message le dit. La coopération se joue dans ce mode.
+- **Mission spécifique** : une tâche précise choisie dans une liste rangée par famille (`src/game/missions.js`,
+  `src/ui/missions_ui.js`) : **Installer le car** (installer et câbler les caméras, brasser le car (noté), paramétrer
+  le réseau de contrôle, le line-up, prendre l'antenne, la zone technique), **Aux postes, avec Olivier** (les 40
+  exercices pratiques des leçons, par chapitre du Cours), **Épreuves notées** (jour de match, atelier, formation
+  réseau ST 2110). Le car est **préparé pour la tâche** (`prepa` : stade sans caméra, caméras non réglées, réseau
+  d'usine, car IP ou SDI, vacation à part). Une fois terminée : bannière « Mission réussie », puis **Mission
+  suivante** (la liste ; si le car convient, elle commence tout de suite, sinon le simulateur se recharge avec le car
+  préparé : `memeCar`, `restart('mission:<id>')`) ou **Arrêter**. Une étape de l'installation n'est réussie que si
+  ses tâches le sont pendant la partie (les postes ouverts comptent depuis le lancement). Les exercices restent
+  rangés dans leur leçon du Cours : ce sont les mêmes, ils comptent une fois.
+
+**Le suivi des tâches sur le côté** (`src/game/quest.js`, `src/styles/suivi.css`). L'objectif devient une liste :
+la mission en cours, sa barre, ses tâches cochées au fur et à mesure (en cours mise en avant, les autres grisées) et
+ses boutons. Car vide : les 22 tâches de l'installation en quatre groupes (les caméras, le car, prendre l'antenne, la
+zone technique), le groupe en cours ouvert ; exercice d'Olivier : ses étapes (les longues listes montrent celles
+autour de l'étape en cours) ; visite guidée : le tour du car et les postes (un clic emmène au poste) ; jour de match :
+ses objectifs ; mission terminée : « Mission suivante » et « Arrêter ». À un poste, le panneau du poste occupe
+l'écran : l'étape en cours est dans la boîte de dialogue d'Olivier.
+
+**Olivier en boîte de dialogue** (`src/ui/tutor_ui.js`, `src/styles/chef-dialogue.css`) : en bas de l'écran, comme
+dans un jeu de rôle, le portrait qui déborde du cadre, son nom sur le bandeau, ce qu'il dit, puis les gestes
+(Montre-moi, un indice, Fais-le pour moi, Suivant). Plus de petite fenêtre à déplacer : la boîte passe d'elle-même en
+haut de l'écran quand l'élément à utiliser est dessous (ou d'un clic, ▲ ▼), se réduit en une ligne, et occupe le
+bas de l'écran sur un téléphone. Le plan de la visite est dans le suivi (et, replié, dans la boîte : « Choisir un
+poste »).
+
+**Corrigé au passage.** La tâche « Le réseau de contrôle » du car vide se cochait toute seule : en sortie d'usine, le
+RCP et la CCU sont dans le même sous-réseau (192.168.0.x) et se joignent déjà. Elle demande maintenant ce que dit la
+consigne : l'adresse du plan (adresse, masque, passerelle) sur le RCP et la CCU de chaque caméra installée
+(`camAuPlan`, `src/net/ctrlnet.js`).
+
+Tests : unitaires `missions` (nouveau : le catalogue, chaque tâche et chaque exercice qui existent, la préparation, ce
+qui est déjà fait, quand enchaîner sans recharger) et `ctrlnet` (l'adresse du plan) ; suite de bout en bout
+`modes-car` (nouvelle : les trois modes, la liste par famille, le car préparé, le suivi, la mission réussie,
+enchaîner avec puis sans rechargement, la boîte de dialogue, le car pré-installé sans chef ni missions, le car vide et
+sa visite, le téléphone) ; `fichier`, `navigateurs`, `navigation` mises à jour.
+
 ## v19.5 : la Carrière, un mode scénarisé : le bureau de l'entrepôt et ses mails
 
 **Pourquoi.** Les activités du simulateur étaient rangées côte à côte (les exercices dans les leçons du Cours,
@@ -1275,7 +1327,7 @@ npm run lint         # ESLint
 npm run typecheck    # TypeScript (navigateur + Node)
 npm test             # tests unitaires (node:test, ≈ 10 s)
 npm run check        # les quatre à la suite (ce que fait l'intégration continue)
-npm run test:e2e     # tests de bout en bout (Playwright, rendu logiciel : 37 suites, plusieurs heures)
+npm run test:e2e     # tests de bout en bout (Playwright, rendu logiciel : 38 suites, plusieurs heures)
 npm run serve:lan    # serveur réseau local (après la construction) : http://localhost:8080
 ```
 
@@ -1303,7 +1355,8 @@ node tools/shots.mjs dossier 1280 800 '["vision","hf"]'   # captures de postes
 | `diag.js` | Journal des erreurs (partagé avec `boot.js`) : erreurs non rattrapées, écouteurs d'événement, boucle de rendu, `console.error` ; version de l'application |
 | `ui/diag_ui.js` | Bandeau « Un problème est survenu » et fenêtre « Diagnostic technique » (texte à copier) |
 | `game/xp.js`, `game/progression.js` | Progression du joueur : XP (barème par activité), niveaux de technicien, badges (dont un par compétence du livret), fusion entre appareils ; accroches sur les événements du simulateur |
-| `game/quest.js` | L'objectif à l'écran (exercice, mission d'installation, phase du jour de match, visite, mission de la Carrière, missions du poste), le repère 3D, le journal des missions (touche L), la carte joueur |
+| `game/quest.js` | Le suivi des tâches sur le côté (la mission en cours et ses tâches : car vide par groupe, étapes d'un exercice, plan de la visite, mission spécifique, jour de match, Carrière), le repère 3D, le journal des missions (touche L), la carte joueur |
+| `game/missions.js`, `game/mission_run.js`, `ui/missions_ui.js` | La mission spécifique (Jouer → Car régie) : le catalogue par famille et la préparation du car (calcul pur), le déroulement (lancer, constater la fin, enchaîner ou arrêter), la liste à choisir |
 | `game/fx.js`, `game/sfx.js` | Effets de jeu (barre d'XP, bannières de niveau et de badge, carte-titre, vignette, flash tally, alerte de panne) et bruitages synthétisés en WebAudio avec leur réglage |
 | `styles/theme-jeu.css` | Le thème « jeu vidéo » : jetons de couleur, composants communs, HUD, écran titre, Jouer, menu, journal, badges |
 | `ui/pupitre.js` | Le pupitre (Tab ou T) : plan du car, touches des postes par zone, endroits du stade, équipiers, outils |
@@ -1334,8 +1387,8 @@ node tools/shots.mjs dossier 1280 800 '["vision","hf"]'   # captures de postes
 | `content/lieux.js` | Les lieux de l'écran Jouer : le car régie, la salle de concert en préparation (fiche « Ce qui se prépare ») |
 | `ui/icons.js` | Icônes Phosphor intégrées au build (`icon(nom)`), toujours à côté d'un libellé |
 | `tutor/` | Chef de car : moteur des parcours (`engine.js`), lecture du réseau pour expliquer et vérifier (`net_helpers.js`), parcours réseau ST 2110 (`lessons/reseau.js`, `lessons/reseau_leaf.js`, `lessons/reseau_ops.js`), parcours des postes, compétences et matériel (`lessons/realisation.js`, `image.js`, `ralentis.js`, `son.js`, `liaisons.js`, `exploitation.js`, `materiel.js`, outils communs `kit.js`), présentation de chaque poste (`lessons/postes.js`) |
-| `ui/tutor_ui.js` | Panneau du chef de car : exercices du poste où l'on est, visite guidée (tour du car puis chaque poste ; réduite aux postes d'une mission de la Carrière), retour à la leçon du Cours, étapes, mise en évidence, gestes « Fais-le pour moi » hors des postes (caméra, visionneuse, atelier), commandes vers le terminal, voix |
-| `app/` | Application : vue et qualité graphique (`view.js`), joueur et déplacements (`player.js`), visée et interactions (`interact.js`), cadreur (`camop.js`), téléportation et postes (`teleport.js`), barre d'outils et d'état (`hud.js`), clavier / souris / tactile (`input.js`), écran Jouer, modes et lancement (`start.js`), diagnostic de performance (`perf.js`), profileur `?perf` (`profiler.js`) |
+| `ui/tutor_ui.js` | Le chef de car en boîte de dialogue en bas de l'écran : accueil du car vide, exercices du poste où l'on est, visite guidée (tour du car puis chaque poste ; réduite aux postes d'une mission de la Carrière), retour à la leçon du Cours, étapes, mise en évidence, gestes « Fais-le pour moi » hors des postes (caméra, visionneuse, atelier), commandes vers le terminal, voix |
+| `app/` | Application : vue et qualité graphique (`view.js`), joueur et déplacements (`player.js`), visée et interactions (`interact.js`), cadreur (`camop.js`), téléportation et postes (`teleport.js`), barre d'outils et d'état (`hud.js`), clavier / souris / tactile (`input.js`), écran Jouer, modes du car (car vide, pré-installé, mission spécifique) et lancement avec le car préparé (`start.js`), diagnostic de performance (`perf.js`), profileur `?perf` (`profiler.js`) |
 | `data/` | Catalogues techniques : caméras, objectifs, liaisons, formats (`cameras.js`) ; positions et antennes du stade (`stadium.js`) ; HF COFDM (`rf.js`) ; exposition et lumières (`exposure.js`) ; équipes (`match.js`) |
 | `content/` | Contenus pédagogiques : fiches de poste (`stations.js`), glossaire (`glossary.js`), fiches des termes réseau et ST 2110 (`netterms.js`), chapitres du guide (`guide.js`), commandes (`controls.js`) |
 | `state.js` | État partagé de la simulation (`S`) et bus d'événements (`on` / `emit`) |
