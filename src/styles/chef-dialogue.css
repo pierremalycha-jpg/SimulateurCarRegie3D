@@ -1,0 +1,34 @@
+/* Olivier, le chef de car, en boîte de dialogue (src/ui/tutor_ui.js) : en bas de l'écran comme dans un jeu de rôle,
+   le portrait à gauche, son nom sur un bandeau, ce qu'il dit, puis les gestes ; en haut de l'écran quand
+   l'élément à utiliser est dessous (.haut) ; réduite en une ligne (.min). Les étapes et le plan de la visite sont
+   dans le suivi des tâches, sur le côté (src/game/quest.js). */
+.chef.dlg { left: 50%; right: auto; top: auto; bottom: calc(14px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%);
+  width: min(780px, calc(100vw - 32px)); max-height: min(40vh, 400px); padding-left: 0; overflow: visible; clip-path: none; }
+.chef.dlg.haut { top: calc(64px + env(safe-area-inset-top, 0px)); bottom: auto; }
+.chef.dlg .chef-head { cursor: default; padding: 6px 8px 6px 96px; background: linear-gradient(90deg, rgba(25,211,255,.16), transparent 55%), #0f161e; min-height: 34px; position: relative; }
+.chef.dlg .chef-avatar { position: absolute; left: 14px; top: -22px; width: 70px; height: 70px; font: 700 34px/70px var(--f-disp); border: 3px solid #0a1016;
+  box-shadow: 0 0 0 2px var(--neon, #19d3ff), 0 0 22px rgba(25,211,255,.45); }
+.chef.dlg .chef-who { flex-direction: row; align-items: baseline; gap: 10px; }
+.chef.dlg .chef-who b { font: 700 15px var(--f-disp); letter-spacing: .08em; text-transform: uppercase; color: var(--neon, #19d3ff); }
+.chef.dlg .chef-body { padding: 10px 18px 10px 96px; font-size: 15px; line-height: 1.5; min-height: 64px; }
+.chef.dlg .chef-step { font-size: 17px; }
+.chef.dlg .chef-foot { padding: 8px 12px 8px 96px; }
+.chef.dlg .chef-nav .btn.primary { min-width: 120px; }
+.chef.dlg .chef-move span { font-size: 11px; }
+.chef.dlg.min { width: min(620px, calc(100vw - 32px)); }
+.chef.dlg.min .chef-avatar { top: -8px; width: 46px; height: 46px; font-size: 22px; line-height: 46px; }
+.chef.dlg.min .chef-head { padding-left: 72px; }
+.chef.dlg .chef-mini { padding: 4px 12px 8px 72px; }
+.banner.mission { border-color: var(--pvw, #37f28b); box-shadow: 0 0 0 1px rgba(55,242,139,.3), 0 0 40px rgba(55,242,139,.25); }
+.banner.mission > .ico, .banner.mission small { color: var(--pvw, #37f28b); }
+.chef-visit-more summary { cursor: pointer; font-size: 13px; color: var(--muted); padding: 2px 0; }
+.chef-visit-more[open] summary { color: var(--fg); }
+/* la boîte de dialogue ne cache pas la prise en main, ni le retour PGM */
+.chef-open #onboard { display: none; }
+@media (max-width: 720px) {
+  .chef.dlg { left: 0 !important; right: 0; transform: none; width: auto; max-height: 52vh; }
+  .chef.dlg.haut { top: auto !important; bottom: 0; }
+  .chef.dlg .chef-head { padding-left: 64px; } .chef.dlg .chef-avatar { left: 8px; top: -14px; width: 48px; height: 48px; font-size: 24px; line-height: 48px; }
+  .chef.dlg .chef-body, .chef.dlg .chef-foot { padding-left: 14px; padding-right: 14px; }
+  .chef.dlg .chef-move { display: none; }
+}

@@ -25,8 +25,11 @@ import { openLivret } from './livret.js';
 import { lessonById as coursLesson } from '../cours/index.js';
 
 // ----------------------------------------------------------------------------------
-// Le chef de car à l'écran : un panneau qui ne bloque pas le poste (on lit et on agit en
-// même temps), appelé à tout moment (bouton « Chef de car », touche J). Il propose les
+// Le chef de car à l'écran : une boîte de dialogue en bas de l'écran, comme dans un jeu (portrait,
+// nom, ce qu'il dit, les gestes), qui ne bloque pas le poste (on lit et on agit en même temps) ;
+// elle passe en haut quand l'élément à utiliser est dessous, et se réduit en une ligne. Le suivi
+// des tâches, sur le côté (game/quest.js), montre les étapes et le plan de la visite. Appelé à tout
+// moment (bouton « Chef de car », touche J). Il propose les
 // exercices du poste où l'on se trouve (tous les autres sont rangés dans les leçons du Cours),
 // déroule les étapes, met en évidence l'élément à utiliser, emmène au bon poste et au bon
 // onglet, tape les commandes si on le lui demande. En visite guidée (Jouer, mode « Visite
@@ -35,7 +38,7 @@ import { lessonById as coursLesson } from '../cours/index.js';
 // (progression) est coché, et la fin ramène au bureau de l'entrepôt.
 // ----------------------------------------------------------------------------------
 const CHEF = { name: 'Olivier', role: 'chef de car' };
-const UI = { root: /** @type {HTMLElement | null} */ (null), openDom: '', placed: false, min: false, said: '', lastKey: '', voice: false, notes: /** @type {string[]} */ ([]), feedback: '', spotUntil: 0, intro: false };
+const UI = { root: /** @type {HTMLElement | null} */ (null), openDom: '', placed: false, min: false, said: '', lastKey: '', voice: false, notes: /** @type {string[]} */ ([]), feedback: '', spotUntil: 0, intro: false, accueilVide: false };
 try { UI.voice = localStorage.getItem('carregie.chefVoice') === '1'; } catch (e) { /* stockage indisponible */ }
 
 // ---------------- entrées / sorties pour le moteur ----------------
@@ -147,6 +150,8 @@ function hush() { try { if (S.chefSpeaking && window.speechSynthesis) window.spe
 // ---------------- panneau ----------------
 export function toggleChef(force) {
   const open = force ?? !TUTOR.open;
+  // le car pré-installé : jeu libre, sans chef de car
+  if (open && S.modeCar === 'libre') { toast('Car pré-installé : jeu libre, sans chef de car ni missions. Pour être guidé : Jouer → Car régie → Car vide ou Mission spécifique.', '', 6000); return; }
   TUTOR.open = open;
   document.body.classList.toggle('chef-open', open);
   if (!open) { hush(); UI.intro = false; if (UI.root) UI.root.hidden = true; spot(null); return; }
@@ -155,19 +160,14 @@ export function toggleChef(force) {
   render(true);
 }
 function build() {
-  UI.root = el('aside', { id: 'chef', class: 'chef', role: 'dialog', 'aria-label': 'Chef de car', hidden: true });
+  UI.root = el('aside', { id: 'chef', class: 'chef dlg', role: 'dialog', 'aria-label': 'Chef de car', hidden: true });
   document.body.append(UI.root, el('div', { id: 'chef-spot', hidden: true }, el('span', { class: 'chef-spot-lab' })));
-  // le panneau se déplace en le prenant par son en-tête (position mémorisée)
-  try { const p = JSON.parse(localStorage.getItem('carregie.chefPos') || 'null'); if (p && window.innerWidth > 720) { Object.assign(UI.root.style, { left: p.x + 'px', top: p.y + 'px', right: 'auto', bottom: 'auto' }); UI.placed = true; } } catch (e) { /* position par défaut */ }
 }
-function drag(head) {
-  head.addEventListener('pointerdown', (e) => {
-    if (window.innerWidth <= 720 || /** @type {HTMLElement} */ (e.target).closest('button')) return;
-    const r = UI.root.getBoundingClientRect(); const dx = e.clientX - r.left, dy = e.clientY - r.top;
-    const mv = (ev) => { const x = Math.max(4, Math.min(window.innerWidth - 120, ev.clientX - dx)), y = Math.max(4, Math.min(window.innerHeight - 60, ev.clientY - dy)); Object.assign(UI.root.style, { left: x + 'px', top: y + 'px', right: 'auto', bottom: 'auto' }); };
-    const up = () => { window.removeEventListener('pointermove', mv); window.removeEventListener('pointerup', up); UI.placed = true; const r2 = UI.root.getBoundingClientRect(); try { localStorage.setItem('carregie.chefPos', JSON.stringify({ x: Math.round(r2.left), y: Math.round(r2.top) })); } catch (er) { /* rien */ } };
-    window.addEventListener('pointermove', mv); window.addEventListener('pointerup', up);
-  });
+/** la boîte de dialogue en haut ou en bas de l'écran (UI.placed : c'est le stagiaire qui l'a placée) */
+function placer(/** @type {boolean} */ haut, parLeStagiaire = false) {
+  if (!UI.root) return;
+  UI.root.classList.toggle('haut', haut);
+  if (parLeStagiaire) UI.placed = true;
 }
 function header(sub) {
   const voice = el('button', { class: 'chef-ico' + (UI.voice ? ' on' : ''), title: UI.voice ? 'Couper la voix du chef' : 'Faire parler le chef (synthèse vocale)', 'aria-pressed': String(UI.voice), onclick: () => { UI.voice = !UI.voice; try { localStorage.setItem('carregie.chefVoice', UI.voice ? '1' : '0'); } catch (e) { /* rien */ } if (!UI.voice) hush(); else { UI.said = ''; } render(true); } }, icon(UI.voice ? 'son' : 'muet'), UI.voice ? 'Voix' : 'Muet');
@@ -175,9 +175,9 @@ function header(sub) {
     el('div', { class: 'chef-avatar', 'aria-hidden': 'true' }, 'O'),
     el('div', { class: 'chef-who' }, el('b', {}, `${CHEF.name}, ${CHEF.role}`), el('small', {}, sub || '')),
     voice,
+    el('button', { class: 'chef-ico chef-move', title: UI.root && UI.root.classList.contains('haut') ? 'Mettre la boîte de dialogue en bas de l\'écran' : 'Mettre la boîte de dialogue en haut de l\'écran', 'aria-label': 'Déplacer la boîte de dialogue en haut ou en bas', onclick: () => { placer(!UI.root.classList.contains('haut'), true); render(true); } }, el('span', { 'aria-hidden': 'true' }, UI.root && UI.root.classList.contains('haut') ? '▼' : '▲')),
     el('button', { class: 'chef-ico', title: UI.min ? 'Agrandir' : 'Réduire', 'aria-label': UI.min ? 'Agrandir le chef de car' : 'Réduire le chef de car', onclick: () => { UI.min = !UI.min; UI.root.classList.toggle('min', UI.min); render(true); } }, icon(UI.min ? 'agrandir' : 'reduire')),
     el('button', { class: 'chef-ico', title: 'Fermer (J)', 'aria-label': 'Fermer le chef de car', onclick: () => toggleChef(false) }, icon('fermer')));
-  drag(h);
   return h;
 }
 function where() {
@@ -191,7 +191,8 @@ function where() {
 export function render(force = false) {
   if (!UI.root || UI.root.hidden) return;
   const l = TUTOR.lesson, s = step();
-  const key = [l ? l.id : '', TUTOR.i, TUTOR.done, TUTOR.answer, TUTOR.hint, UI.min, S.mode, S.station, S.ipMode, UI.feedback, lastDone ? lastDone.id : ''].join('|');
+  const mi = S.mission ? `${S.mission.id}:${S.mission.tache ? S.mission.tache.title : ''}:${S.mission.fini}` : '';
+  const key = [l ? l.id : '', TUTOR.i, TUTOR.done, TUTOR.answer, TUTOR.hint, UI.min, S.mode, S.station, S.ipMode, UI.feedback, lastDone ? lastDone.id : '', UI.accueilVide, S.visite, mi].join('|');
   if (!force && key === UI.lastKey) return;
   UI.lastKey = key;
   UI.root.innerHTML = '';
@@ -283,10 +284,17 @@ function renderFinish(l) {
     const nx = visitNext(), stops = visitStops();
     if (nx) nav.append(el('button', { class: 'btn small primary', onclick: () => visitGo(nx) }, nx === '*tour' ? 'Le tour du car' : `Poste suivant : ${STATION_INFO[nx].title}`));
     else if (S.carriere) body.append(el('div', { class: 'chef-ok' }, rich(`**Mission accomplie.** Tu as fait le tour du car et vu les ${stops.length} postes. Nadia t'a écrit : ton prochain mail t'attend au bureau de l'entrepôt.`)));
+    else if (S.modeCar === 'vide') body.append(el('div', { class: 'chef-ok' }, rich('**La visite est terminée.** Maintenant, on installe le car : les tâches sont à gauche, elles se cochent toutes seules. Appelle-moi (J) si tu bloques.')));
     else body.append(el('div', { class: 'chef-ok' }, rich(`**La visite est terminée.** Tu as vu les ${stops.length} postes du car. Les exercices pratiques de chaque poste t'attendent dans le **Cours**, rangés avec les leçons.`)));
     nav.append(el('button', { class: 'btn small', onclick: () => { lastDone = null; render(true); } }, 'Plan de la visite'));
     if (!nx && S.carriere) nav.append(el('button', { class: 'btn small primary', 'data-k': 'carriere:retour', onclick: () => emit('carriere', { type: 'retour' }) }, 'Retourner à l\'entrepôt'));
-    if (!nx) nav.append(el('button', { class: 'btn small' + (S.carriere ? '' : ' primary'), onclick: () => { lastDone = null; S.visite = false; toggleChef(false); emit('cours'); } }, 'Ouvrir le Cours'));
+    if (!nx && S.modeCar === 'vide') nav.append(el('button', { class: 'btn small primary', 'data-k': 'vide:installer', onclick: () => { lastDone = null; S.visite = false; toggleChef(false); } }, 'À l\'installation'));
+    else if (!nx) nav.append(el('button', { class: 'btn small' + (S.carriere ? '' : ' primary'), onclick: () => { lastDone = null; S.visite = false; toggleChef(false); emit('cours'); } }, 'Ouvrir le Cours'));
+  } else if (S.modeCar === 'mission') {
+    // mission spécifique : on enchaîne sur une autre, ou l'on s'arrête (game/mission_run.js)
+    body.append(el('div', { class: 'chef-ok' }, rich('**Mission réussie.** Tu enchaînes sur une autre, ou tu t\'arrêtes là ?')));
+    nav.append(el('button', { class: 'btn small primary', 'data-k': 'mission:suivante', onclick: () => { lastDone = null; toggleChef(false); emit('missionCar', { type: 'suivante' }); } }, 'Mission suivante'),
+      el('button', { class: 'btn small', 'data-k': 'mission:arreter', onclick: () => emit('missionCar', { type: 'arreter' }) }, 'Arrêter'));
   } else {
     // exercice lancé depuis une leçon du Cours : on y revient
     const back = S.coursBack ? coursLesson(S.coursBack) : null;
@@ -307,7 +315,14 @@ const tourSeen = () => VISIT.tour || (!!S.carriere && !!progressOf('prise-en-mai
 const stopSeen = (/** @type {string} */ id) => VISIT.done.has(id) || (!!S.carriere && !!progressOf('poste-' + id).done);
 /** le prochain arrêt : le tour du car d'abord pour une mission de la Carrière, puis le premier poste pas encore vu */
 const visitNext = () => (S.carriere && S.carriere.tour && !tourSeen() ? '*tour' : visitStops().find((id) => !stopSeen(id)) || null);
-function visitGo(id) { lastDone = null; if (TUTOR.lesson) stopLesson(false, false); startLesson(id === '*tour' ? 'prise-en-main' : 'poste-' + id); onStep(); }
+function visitGo(id) { lastDone = null; if (TUTOR.lesson) stopLesson(false, false); if (!TUTOR.open) toggleChef(true); startLesson(id === '*tour' ? 'prise-en-main' : 'poste-' + id); onStep(); }
+/** le plan de la visite, pour le suivi des tâches (game/quest.js) : le tour du car puis les postes, vus ou non, le prochain */
+export function visitPlanTasks() {
+  const nx = tourSeen() ? visitNext() : '*tour';
+  const cur = TUTOR.lesson ? (TUTOR.lesson.id === 'prise-en-main' ? '*tour' : TUTOR.lesson.id.startsWith('poste-') ? TUTOR.lesson.id.slice(6) : '') : '';
+  return [{ id: '*tour', label: 'Le tour du car', done: tourSeen() }, ...visitStops().map((id) => ({ id, label: STATION_INFO[id].title, done: stopSeen(id) }))]
+    .map((x) => ({ ...x, now: cur ? x.id === cur : x.id === nx, go: () => visitGo(x.id) }));
+}
 function visitPlan(body) {
   const stops = visitStops(), seen = stops.filter((id) => stopSeen(id)).length, nx = visitNext();
   if (S.carriere) body.append(rich(nx ? 'Ta mission de stagiaire : le tour du car, puis la présentation de ces postes. Ce que tu as déjà vu est coché.' : '**Mission accomplie.** Ton prochain mail t\'attend au bureau de l\'entrepôt.'));
@@ -315,7 +330,8 @@ function visitPlan(body) {
     el('div', { class: 'chef-prog', role: 'progressbar', 'aria-label': 'Avancement de la visite', 'aria-valuemin': '0', 'aria-valuemax': String(stops.length), 'aria-valuenow': String(seen) }, el('i', { style: { width: `${(seen / Math.max(1, stops.length)) * 100}%` } })));
   const step = (id, label, done) => el('li', { class: 'chef-visit' + (done ? ' done' : '') + (id === (tourSeen() ? nx : '*tour') ? ' next' : '') },
     el('button', { type: 'button', class: 'linkish', onclick: () => visitGo(id) }, done ? icon('fait') : el('i', { class: 'chef-dot', 'aria-hidden': 'true' }), el('span', {}, label), done ? el('span', { class: 'sr' }, ' (vu)') : null));
-  body.append(el('ol', { class: 'chef-visit-list' }, step('*tour', 'Le tour du car', tourSeen()), ...stops.map((id) => step(id, STATION_INFO[id].title, stopSeen(id)))));
+  // la liste des postes est sur le côté (le suivi des tâches) ; ici, repliée, pour qui veut choisir son poste
+  body.append(el('details', { class: 'chef-visit-more' }, el('summary', {}, 'Choisir un poste'), el('ol', { class: 'chef-visit-list' }, step('*tour', 'Le tour du car', tourSeen()), ...stops.map((id) => step(id, STATION_INFO[id].title, stopSeen(id))))));
   const go = !tourSeen() ? ['*tour', 'Commencer : le tour du car'] : nx ? [nx, `Continuer : ${STATION_INFO[nx].title}`] : null;
   body.append(el('div', { class: 'chef-acts' },
     go ? el('button', { class: 'btn small primary', onclick: () => visitGo(go[0]) }, go[1]) : null,
@@ -378,7 +394,7 @@ export async function beginLesson(id) {
 function renderHome() {
   if (lastDone) { renderFinish(lastDone); return; }
   const atStart = S.mode === 'start';
-  UI.root.append(header(atStart ? 'avant la vacation' : S.visite ? 'visite guidée' : UI.intro ? 'bienvenue dans le car' : 'à ton écoute'));
+  UI.root.append(header(atStart ? 'avant la vacation' : UI.accueilVide ? 'bienvenue au compound' : S.visite ? 'visite guidée' : UI.intro ? 'bienvenue dans le car' : S.modeCar === 'mission' ? 'mission spécifique' : 'à ton écoute'));
   if (UI.min) { UI.root.append(el('div', { class: 'chef-mini' }, 'Besoin d\'aide ? Agrandis-moi.')); return; }
   const body = el('div', { class: 'chef-body' });
   const st = S.mode === 'station' ? S.station : null;
@@ -386,8 +402,29 @@ function renderHome() {
   const toCours = (label = 'Tous les exercices : le Cours') => el('button', { class: 'btn small', onclick: () => { UI.min = true; UI.root.classList.add('min'); render(true); emit('cours'); } }, icon('cours'), label);
   if (atStart) {
     // feuille de service : la visite se choisit dans Jouer, les exercices dans le Cours
-    body.append(rich(`Salut, moi c'est ${CHEF.name}, le chef de car. ${where()} Si tu découvres le car, choisis le mode **Visite guidée** : je te fais le tour du car, puis je te présente chaque poste. Les exercices pratiques sont dans le **Cours**, chacun dans la leçon qui l'explique.`),
+    body.append(rich(`Salut, moi c'est ${CHEF.name}, le chef de car. ${where()} Si tu découvres le car, choisis le **Car vide** : je te propose d'abord la visite guidée, le tour du car puis chaque poste, avant l'installation. Pour une tâche précise, choisis **Mission spécifique**. Les exercices pratiques sont aussi dans le **Cours**, chacun dans la leçon qui l'explique.`),
       el('div', { class: 'chef-acts' }, toCours('Ouvrir le Cours')));
+    UI.root.append(body);
+    return;
+  }
+  if (UI.accueilVide) {
+    // le car vide : Olivier propose d'abord le tour du car et la présentation des postes, avant l'installation
+    body.append(rich(`Bienvenue au compound ! Moi c'est ${CHEF.name}, le chef de car. Aujourd'hui **tout est à faire** : le stade est vide, le car n'est pas brassé, les caméras ne sont pas réglées. Les tâches de l'installation sont à gauche ; elles se cochent toutes seules quand c'est fait.\n\nAvant de t'y mettre, je te fais faire le tour du car et je te présente les postes ? Compte 5 minutes pour le tour, 3 par poste ; tu peux t'arrêter quand tu veux.`),
+      el('div', { class: 'chef-acts' },
+        el('button', { class: 'btn small primary', 'data-k': 'vide:visite', onclick: () => { UI.accueilVide = false; S.visite = true; VISIT.tour = false; VISIT.done.clear(); visitGo('*tour'); } }, 'Le tour du car et les postes'),
+        el('button', { class: 'btn small', 'data-k': 'vide:installer', onclick: () => { UI.accueilVide = false; toggleChef(false); toast('Les tâches de l\'installation sont à gauche. Olivier reste là : touche J.', '', 5000); } }, 'Directement l\'installation')));
+    UI.root.append(body);
+    return;
+  }
+  if (S.modeCar === 'mission' && S.mission && !S.visite) {
+    // mission spécifique sans parcours (installation, épreuve) : la mission, la tâche en cours, et l'aide
+    const t = S.mission.tache;
+    body.append(rich(`Ta mission : **${S.mission.titre}**. ${S.mission.resume}`));
+    if (S.mission.lecon && !S.mission.fini) body.append(el('div', { class: 'chef-acts' }, el('button', { class: 'btn small primary', onclick: () => { startLesson(S.mission.lecon); onStep(); } }, 'Reprendre l\'exercice')));
+    if (t) body.append(el('div', { class: 'chef-do' }, tag('a_toi', 'À toi'), el('b', {}, t.title), rich(t.text)));
+    body.append(rich(S.mission.fini ? '**Mission réussie.** Tu enchaînes sur une autre, ou tu t\'arrêtes là ?' : 'Les tâches sont à gauche ; elles se cochent toutes seules. Je regarde ce que tu fais.'));
+    body.append(el('div', { class: 'chef-acts' }, S.mission.fini ? el('button', { class: 'btn small primary', 'data-k': 'mission:suivante', onclick: () => { toggleChef(false); emit('missionCar', { type: 'suivante' }); } }, 'Mission suivante') : null,
+      S.mission.fini ? el('button', { class: 'btn small', 'data-k': 'mission:arreter', onclick: () => emit('missionCar', { type: 'arreter' }) }, 'Arrêter') : null, toCours()));
     UI.root.append(body);
     return;
   }
@@ -469,15 +506,13 @@ function spot(list, scroll = false) {
   sp.classList.toggle('flash', performance.now() < UI.spotUntil);
   dodge(r);
 }
-// l'élément à utiliser est sous le panneau : le panneau passe de l'autre côté de l'écran
-// (sauf si le stagiaire l'a placé lui-même)
+// l'élément à utiliser est sous la boîte de dialogue : elle passe en haut de l'écran (ou en bas, s'il est en
+// haut), sauf si le stagiaire l'a placée lui-même
 function dodge(r) {
   if (!UI.root || UI.root.hidden || UI.placed || window.innerWidth <= 720) return;
   const p = UI.root.getBoundingClientRect();
   if (!(r.left < p.right && r.right > p.left && r.top < p.bottom && r.bottom > p.top)) return;
-  const onRight = p.left > window.innerWidth / 2;
-  if (onRight && r.left > p.width + 32) Object.assign(UI.root.style, { left: 'var(--gut-l)', right: 'auto' });
-  else if (!onRight && r.right < window.innerWidth - p.width - 32) Object.assign(UI.root.style, { left: 'auto', right: 'var(--gut-r)' });
+  placer(r.top + r.height / 2 > window.innerHeight / 2);
 }
 
 // ---------------- boucle : vérifier l'étape, suivre l'élément à montrer ----------------
@@ -501,7 +536,7 @@ on('chef', () => toggleChef());
 // (car prêt à l'antenne ou grand dispositif ; les autres vacations ont leur propre consigne)
 on('started', ({ preset }) => {
   let seen; try { seen = localStorage.getItem('carregie.chefIntro') === '1'; localStorage.setItem('carregie.chefIntro', '1'); } catch (e) { seen = true; }
-  // feuille de service, touche « Visite guidée » allumée : le tour du car commence tout de suite
+  // visite guidée demandée au lancement (la Carrière) : le tour du car commence tout de suite
   // (une mission de la Carrière reprend au premier arrêt qui reste : le tour du car est peut-être déjà fait)
   if (S.chefTour && !TUTOR.lesson) {
     UI.intro = false; VISIT.tour = false; VISIT.done.clear(); lastDone = null; toggleChef(true); dropOnboard();
@@ -509,6 +544,8 @@ on('started', ({ preset }) => {
     if (nx) visitGo(nx); else render(true);
     return;
   }
+  // le car vide : Olivier se présente et propose d'abord le tour du car
+  if (S.modeCar === 'vide' && preset === 'zero' && !TUTOR.lesson) { UI.intro = false; UI.accueilVide = true; lastDone = null; toggleChef(true); dropOnboard(); return; }
   if (S.chefTour === false && preset === 'standard') return;
   if (seen || TUTOR.open || !(preset === 'standard' || preset === 'grand')) return;
   UI.intro = true; UI.openDom = 'Prise en main';

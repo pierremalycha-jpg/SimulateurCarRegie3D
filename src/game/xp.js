@@ -32,7 +32,7 @@ export const LEVELS = [
 ];
 /** barème (points) : ce que rapporte chaque activité réussie */
 export const BAREME = {
-  mission: 25,          // une mission du mode « Tout à faire »
+  mission: 25,          // une tâche du car vide (Jouer → Car régie → Car vide)
   exercice: 60,         // un exercice d'Olivier terminé (première fois), moins l'aide demandée
   exerciceRefait: 15,
   aide: 8,              // retenue par « Fais-le pour moi »
@@ -110,7 +110,7 @@ export const BADGES = [
   { id: 'sans-aide', title: 'Sans filet', desc: 'Un exercice terminé sans indice ni « Fais-le pour moi ».', ico: 'bouclier', tier: 'argent', test: ({ P }) => doneTutor(P, (id) => !id.startsWith('poste-')).some(([, p]) => !p.aided && !p.hints) },
   { id: 'cinq-exercices', title: 'Entraîné', desc: 'Cinq exercices différents terminés.', ico: 'medaille', tier: 'argent', test: ({ P }) => doneTutor(P, (id) => !id.startsWith('poste-')).length >= 5 },
   { id: 'quinze-exercices', title: 'Polyvalent', desc: 'Quinze exercices différents terminés.', ico: 'trophee', tier: 'or', test: ({ P }) => doneTutor(P, (id) => !id.startsWith('poste-')).length >= 15 },
-  { id: 'installateur', title: 'Installateur', desc: 'Toutes les missions du mode « Tout à faire » réussies.', ico: 'plan', tier: 'or', test: ({ P }) => Object.keys(P.missions || {}).length >= 22 },
+  { id: 'installateur', title: 'Installateur', desc: 'Toutes les tâches du car vide réussies.', ico: 'plan', tier: 'or', test: ({ P }) => Object.keys(P.missions || {}).length >= 22 },
   { id: 'sang-froid', title: 'Sang-froid', desc: 'Une panne cachée résolue en moins d\'une minute.', ico: 'eclair', tier: 'argent', test: ({ g }) => (g.count.panneRapide || 0) >= 1 },
   { id: 'depanneur', title: 'Dépanneur', desc: 'Cinq pannes cachées différentes résolues.', ico: 'alarme', tier: 'or', test: ({ g }) => (g.count.panne || 0) >= 5 },
   { id: 'brasseur', title: 'Brasseur', desc: 'Le car vide brassé à 100 %.', ico: 'brassage', tier: 'argent', test: ({ P }) => (P.patchBest || 0) >= 100 },
