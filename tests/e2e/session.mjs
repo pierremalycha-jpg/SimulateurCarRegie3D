@@ -67,7 +67,9 @@ await B.locator('#modal .tab', { hasText: 'Rejoindre une partie' }).click();
 await B.locator('.ses-role', { has: B.locator('b', { hasText: /^Truquiste$/ }) }).click();
 await B.locator('input[aria-label="Code de la partie"]').fill('test1');
 await B.locator('#modal button.primary', { hasText: /^Rejoindre la partie$/ }).click();
-await B.waitForTimeout(9000);
+// B charge le car puis rattrape le match de A : on attend la condition (rendu logiciel lent, deux pages) plutôt qu'un délai fixe
+await B.waitForFunction(() => window.__dbg && window.__dbg.SES.follower && window.__dbg.SES.buf.length > 0 && window.__dbg.SES.peers.length === 2, null, { timeout: 120000, polling: 500 }).catch(() => {});
+await B.waitForTimeout(3000);
 const st = await evB(() => ({ act: window.__dbg.SES.active, fol: window.__dbg.SES.follower, peers: window.__dbg.SES.peers.length, buf: window.__dbg.SES.buf.length, mode: window.__dbg.S.mode }));
 log('B', JSON.stringify(st));
 check('B suit le match de A', st.fol && st.buf > 0 && st.peers === 2);
