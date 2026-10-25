@@ -16,6 +16,7 @@ import { matiere } from '../matiere.js';
 // ----------------------------------------------------------------------------------
 const BW = 0.0744, BH = 0.1544, BD = 0.0083; // boîtier (m)
 const SW = 0.068, SH = 0.148; // écran (m)
+const ZG = BD / 2 + 0.0002; // plan de la vitre, devant le centre du boîtier
 /** taille de l'écran HTML en pixels CSS, au repos sur un grand écran (échelle 1) */
 export const SCREEN_PX = { w: 340, h: 740 };
 const FOV = 28;
@@ -113,11 +114,13 @@ export function createPhone3D(host, screen) {
     // hauteur de l'écran à l'écran, bornée par la hauteur et la largeur de la fenêtre
     const hpx = Math.min(SCREEN_PX.h, (h - 2 * m) * SH / BH, (w - 2 * m) * SH / BW);
     R.k = hpx / SCREEN_PX.h;
-    R.dist = SH * R.f / hpx;
+    // la vitre est à cette distance de l'œil (le centre du boîtier, un demi-boîtier plus loin)
+    const dz = SH * R.f / hpx;
+    R.dist = dz + ZG;
     const bw = hpx * BW / SH, bh = hpx * BH / SH;
     // à droite sur un écran large (comme dans un jeu), au centre sinon ; posé en bas
     const cx = w >= 820 ? w - m - 28 - bw / 2 : w / 2, cy = h - m - bh / 2;
-    R.rest.set((cx - w / 2) * R.dist / R.f, -(cy - h / 2) * R.dist / R.f, -R.dist);
+    R.rest.set((cx - w / 2) * dz / R.f, -(cy - h / 2) * dz / R.f, -R.dist);
     if (gl) { gl.setPixelRatio(Math.min(2, window.devicePixelRatio || 1)); gl.setSize(w, h, false); }
   }
   const P = new THREE.Vector3(), E = new THREE.Euler();
@@ -129,7 +132,7 @@ export function createPhone3D(host, screen) {
     for (const o of [holder, phone]) { if (!o) continue; o.position.copy(P); o.rotation.copy(E); }
   }
   // coins de la vitre (repère du téléphone) et leur image à l'écran, en pixels
-  const C = [[-SW / 2, SH / 2], [SW / 2, SH / 2], [-SW / 2, -SH / 2], [SW / 2, -SH / 2]].map(([x, y]) => new THREE.Vector3(x, y, BD / 2 + 0.0002));
+  const C = [[-SW / 2, SH / 2], [SW / 2, SH / 2], [-SW / 2, -SH / 2], [SW / 2, -SH / 2]].map(([x, y]) => new THREE.Vector3(x, y, ZG));
   const V = new THREE.Vector3();
   function placeScreen() {
     holder.updateMatrixWorld(true); camera.updateMatrixWorld(true);
