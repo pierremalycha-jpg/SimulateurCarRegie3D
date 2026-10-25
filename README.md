@@ -394,6 +394,55 @@ Tests :
   « Emmène-moi / Montre-moi » doit mettre en évidence un élément réel de la page, et « Fais-le pour moi » doit faire
   valider l'étape.
 
+## v19.9 : le stade fini : textes entiers, locaux fermés, bord terrain habité, un vrai plateau des commentateurs
+
+**Pourquoi.** Au stade, des textes sortaient de leur cadre (bandeaux de tribune, banderoles, panneaux LED,
+enseigne du car), certains murs ne se rejoignaient pas (un trou à l'angle, les gradins qui traversaient les
+locaux), les angles du stade s'ouvraient sur le vide, personne n'occupait le bord terrain et les commentateurs
+étaient deux images plates. Cette version referme et habite le stade, toujours sans ressource externe.
+
+**Des textes qui tiennent dans leur cadre** (`src/textfit.js`) : `fitSize` réduit la police jusqu'à ce que le texte
+tienne dans la largeur voulue, `fillFit` l'écrit (avec contour au besoin), `fillLines` répartit plusieurs lignes dans
+une hauteur. Ils servent aux bandeaux des tribunes (les noms de tribune posés à leur place, dans le bon sens, sur une
+texture à 48 px/m qui n'est plus étirée), aux banderoles, aux panneaux du parvis, aux panneaux LED du bord terrain
+(un nombre entier de publicités par segment : plus de logo coupé à la jointure), à l'enseigne et aux étiquettes du car,
+à la livrée des véhicules et aux habillages (bas de titre, compositions, titres).
+
+**Les locaux sous la tribune** (`src/stade_locaux.js`) : l'embouchure du tunnel, le couloir des joueurs, les deux
+vestiaires et le local technique TV sont des pièces closes : murs qui se recouvrent aux angles, plafond, portes avec
+encadrement, linteau et battant ouvert, plaques de porte ; carrelage, banc et patères dans les vestiaires, tableau
+tactique, baie de pré-câblage et bureau dans le local TV. Les matières y sont éclairées « de l'intérieur » (option
+`selfLit` de `matiere`, aucune lumière ponctuelle). On y circule par les portes seulement (`blockedOutside`).
+
+**Le bord terrain** (`src/bordterrain.js`, `src/staff.js`) : deux abris de touche (coque, toit en plexiglas, douze
+sièges baquets aux couleurs du club), la zone technique, la table du 4e arbitre avec son panneau des changements, le
+tunnel télescopique, les tabourets des photographes. Et 61 personnes articulées, instanciées comme les joueurs : les
+deux entraîneurs qui arpentent leur zone technique, leurs adjoints bras croisés, 12 remplaçants et 8 membres du staff
+assis (dont les médecins), six remplaçants à l'échauffement le long de la touche, le 4e arbitre, 12 photographes à genou ou
+sur tabouret derrière les buts, 8 ramasseurs de balles, 10 stadiers face au public. Ils regardent le jeu.
+
+**Le plateau des commentateurs** (`src/plateau.js`) : sur la terrasse de la tribune Lepagnot, une plateforme sur
+échafaudage, un pupitre à façade LED, un fond de décor, le journaliste et le consultant assis avec leur casque-micro,
+**deux caméras sur trépied** (un plan à deux, un plan serré qui passe d'un commentateur à l'autre) et **deux panneaux
+LED sur pied** qui les éclairent. Ces caméras alimentent pour de bon l'entrée **STUDIO** du mélangeur : le plateau est
+rendu en 480 × 270, une image sur quatre, puis passe par le même traitement que les caméras du stade (matériau CCU de
+`bcam.js`). En mode allégé, l'ancienne image fixe reste. Le public laisse la place du plateau (`PLATEAU_ZONE`).
+
+**Les angles du stade** (`src/stade_angles.js`) : un mur d'enceinte en béton (soubassement, contreforts, chaperon,
+barreaudage d'acier jusqu'à 4 m) relie le dos des deux tribunes de chaque angle ; un portail ouvert au milieu, avec
+ses piles, son linteau et la plaque « PORTE 1 · TRANNIN-LEPAGNOT »… sur les deux faces ; une buvette par angle. Les
+joues des tribunes reçoivent des pilastres tous les 5 m et un soubassement sombre. Le mur arrête le joueur, le
+portail le laisse passer ; aucun arbre n'est planté dans le mur ni devant le portail.
+
+**Vérifier.** `node tools/e2e.mjs stade` (`tests/e2e/stade.mjs` : matières des locaux et circulation par les portes,
+abris et tunnel, personnes par rôle, entraîneur qui bouge, plateau complet, source STUDIO rendue (ni noire ni
+uniforme), mur et portail des angles ; captures du bord terrain, du plateau, du multiviewer et des angles à regarder) ;
+`tests/unit/textfit.test.mjs` (réduction de la police, plancher, lignes).
+
+**Performances.** Le personnel du bord terrain coûte un appel de rendu par pièce du corps (instances) ; le plateau, un
+rendu de la scène en 480 × 270 toutes les quatre images, coupé en mode allégé ; les locaux et les angles sont fusionnés
+par matière.
+
 ## v19.8 : trois façons de jouer au car régie, le suivi des tâches sur le côté, Olivier en boîte de dialogue
 
 **Pourquoi.** Retour du 24 octobre 2026 : les modes du car mélangeaient les phases (un car « installé » où le chef de
@@ -1517,6 +1566,12 @@ node tools/shots.mjs dossier 1280 800 '["vision","hf"]'   # captures de postes
 | `world.js` | Stade, éclairage, public, compound et extérieur du car |
 | `render.js` | Rendu physique : conversion des matériaux, environnement (ciel capturé, studio du car), post-traitement de la vue « œil » (halo, ACES, SSAO dans le car) |
 | `matiere.js` | Matières procédurales : recettes de relief, rugosité et teinte (cartes tuilables générées en code), matériau physique plaqué en triplanaire, relief coupé en qualité Basse |
+| `textfit.js` | Textes dans les textures : police réduite jusqu'à tenir dans la largeur, écriture sur une ou plusieurs lignes |
+| `stade_locaux.js` | Locaux sous la tribune principale : tunnel, couloir, vestiaires, local technique TV, pièces closes et meublées |
+| `bordterrain.js` | Bord terrain : abris de touche, zone technique, table du 4e arbitre, tunnel télescopique, tabourets des photographes |
+| `staff.js` | Personnes du bord terrain et du plateau (entraîneurs, remplaçants, staff, 4e arbitre, photographes, stadiers, ramasseurs, commentateurs) : instances articulées, poses, animations |
+| `plateau.js` | Mini plateau des commentateurs : plateforme, pupitre, décor, deux caméras, deux panneaux LED ; rendu de la source STUDIO |
+| `stade_angles.js` | Angles du stade : mur d'enceinte, portails numérotés, buvettes, joues des tribunes |
 | `people.js` | Joueurs et arbitres articulés : géométries, tenues (nom et numéro), visage, animation de course |
 | `landscape.js` | Sol jusqu'à l'horizon (carte des parcelles), arbres instanciés en plans alpha, terrils |
 | `vehicles.js` | Semi-remorque régie (caisse arrondie, livrée nervurée, portes, feux), tracteur à pare-brise courbe, camion satellite, groupe électrogène, bungalows, enrobé |

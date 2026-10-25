@@ -98,6 +98,11 @@ Tout est en français (code commenté en français, interface, commits).
   procédurales, triplanaire : pas de texture de fichier) et par un `Builder` en mode `ao` avec `cbox` (arêtes
   arrondies, occlusion cuite) ; une famille de matière = une pièce fusionnée nommée. Le SSAO ne tourne que dans le
   car ; la qualité Basse garde le rendu uni. Suite `node tools/e2e.mjs rendu`, test `tests/unit/matiere.test.mjs`.
+- **Le stade (v19.9)** : tout texte dessiné dans une texture passe par `src/textfit.js` (`fillFit`, `fillLines` : la
+  police se réduit, rien ne sort du cadre). Locaux sous la tribune `src/stade_locaux.js` (pièces closes, à garder
+  cohérentes avec `WALK_ZONES` et `blockedOutside` de `world.js`), bord terrain `src/bordterrain.js`, personnes
+  `src/staff.js` (instances articulées de `people.js`), plateau des commentateurs `src/plateau.js` (source STUDIO
+  rendue), angles `src/stade_angles.js`. Suite `node tools/e2e.mjs stade`.
 - Les fiches « ? » (`src/content/netterms.js` + `terms_*.js`, figures `src/ui/figs_*.js`) restent la source
   des définitions courtes ; une leçon les cite dans `terms`.
 
