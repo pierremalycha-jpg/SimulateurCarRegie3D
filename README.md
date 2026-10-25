@@ -394,6 +394,17 @@ Tests :
   « Emmène-moi / Montre-moi » doit mettre en évidence un élément réel de la page, et « Fais-le pour moi » doit faire
   valider l'étape.
 
+## v19.11.1 : correctif, le panneau des écrans qui descendait sans fin
+
+Retour du 25 octobre 2026 : au poste vision en 3D, sur les RCP, la fenêtre de droite descendait à l'infini. Les
+écrans du panneau (Grade 1, multiview, programme du son) sont une copie du rendu WebGL dans un petit canevas
+(`mirrorSlots`, `src/poste3d/index.js`) dont la taille est en pixels réels de l'écran. Sur un écran à forte densité
+(Retina, HiDPI : 2 pixels réels par pixel CSS), ce canevas restait dans le flux de la page, agrandissait le moniteur,
+qui demandait alors une copie plus grande à l'image suivante, et ainsi de suite. La copie est désormais posée
+par-dessus le moniteur (position absolue, 100 %) dans tout le poste 3D, pas seulement dans le tiroir
+(`src/styles/poste3d.css`). Les tests tournaient en densité 1 : `tests/e2e/poste3d-vision.mjs` vérifie maintenant,
+en densité 2, que les écrans des postes vision et son gardent leur taille.
+
 ## v19.11 : l'écran partagé, le pupitre en 3D et les écrans du poste en 2D
 
 **Pourquoi.** Retour du 25 octobre 2026 sur la v19.10 : au poste vision, la vue 3D regardait les RCP et l'on ne voyait

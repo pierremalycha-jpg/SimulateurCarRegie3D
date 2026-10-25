@@ -82,4 +82,20 @@ await page.click('#station .st-vue');
 await until(page, () => window.__dbg.poste3d.P3D.active, null, 8000);
 await ev(() => window.__dbg.closeStation());
 T.check('en quittant le poste, la caméra de la marche retrouve son cadrage', await until(page, () => window.__dbg.S.mode === 'fps' && (!window.__dbg.pcam.view || !window.__dbg.pcam.view.enabled), null, 5000));
+
+// ---------------- écran à forte densité (Retina, HiDPI) : les écrans recopiés ne grandissent pas ----------------
+// la copie WebGL a la taille en pixels réels (× 2 ici) : dans le flux, elle agrandissait le moniteur à chaque image
+const hd = await openPage(browser, { errors: T.errors, dpr: 2, query: 'full', viewport: { width: 1280, height: 760 }, before: (p) => p.addInitScript(() => { try { localStorage.setItem('carregie.poste3d', '3d'); } catch (e) { /* stockage indisponible */ } }) });
+await hd.evaluate(() => window.__dbg.start('standard', 'jour', 'basse', false));
+await until(hd, () => window.__dbg.S.mode === 'fps', null, 30000);
+const hauteurs = () => hd.evaluate(() => { const m = document.querySelector('.p3d-mons'); return m ? [m.scrollHeight, ...[...m.querySelectorAll('[data-gl]')].map((x) => Math.round(x.getBoundingClientRect().height))] : []; });
+for (const id of ['vision1', 'son']) {
+  await hd.evaluate((id) => { const d = window.__dbg; d.closeStation?.(); d.goToStation(d.T.stations.find((x) => x.id === id), true); }, id);
+  await until(hd, () => window.__dbg.poste3d.P3D.active && !!document.querySelector('.p3d-mons canvas.p3d-mirror'), null, 90000);
+  await hd.waitForTimeout(1500);
+  const h0 = await hauteurs(); await hd.waitForTimeout(6000); const h1 = await hauteurs();
+  T.check(`densité 2, poste ${id} : les écrans du panneau gardent leur taille (le panneau ne descend pas sans fin)`, h0.length > 1 && JSON.stringify(h0) === JSON.stringify(h1), JSON.stringify([h0, h1]));
+}
+await hd.screenshot({ path: `${OUT}/07-densite-2.png` });
+await hd.close();
 await T.finish();

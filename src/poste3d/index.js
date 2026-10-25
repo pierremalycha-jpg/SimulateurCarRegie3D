@@ -405,7 +405,7 @@ export function mirrorSlots(renderer) {
     if (m.offsetParent === null) continue;
     const r = m.getBoundingClientRect(); if (r.width < 4 || r.height < 4) continue;
     let cv = /** @type {HTMLCanvasElement | null} */ (m.querySelector(':scope > canvas.p3d-mirror'));
-    if (!cv) { cv = el('canvas', { class: 'p3d-mirror' }); m.append(cv); }
+    if (!cv) { cv = el('canvas', { class: 'p3d-mirror', style: { position: 'absolute', inset: '0', width: '100%', height: '100%', pointerEvents: 'none' } }); m.append(cv); }
     const w = Math.round(r.width * pr), h = Math.round(r.height * pr);
     if (cv.width !== w || cv.height !== h) { cv.width = w; cv.height = h; }
     const g = cv.getContext('2d'); if (g) g.drawImage(src, r.left * pr, r.top * pr, r.width * pr, r.height * pr, 0, 0, w, h);

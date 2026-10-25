@@ -90,7 +90,8 @@
 @media (max-width: 760px) {
   .p3d-drawer { right: 8px; left: 8px; bottom: calc(46vh + 8px); top: 96px; }
 }
-/* écran recopié du canevas WebGL dans un moniteur du tiroir */
-.p3d-drawer [data-gl] { position: relative; }
-.p3d-drawer canvas.p3d-mirror { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+/* écran recopié du canevas WebGL (panneau et tiroir) : hors du flux, sinon sa taille en pixels réels (× densité de
+   l'écran) agrandit le moniteur à chaque image et le panneau descend sans fin */
+.p3d-body [data-gl] { position: relative; overflow: hidden; }
+.p3d-body canvas.p3d-mirror { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
 .p3d-rcp-ecran .rcp-encs { display: flex; flex-wrap: wrap; gap: 8px; }
