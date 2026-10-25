@@ -97,7 +97,7 @@ export function openStation(id, arg) {
   root.classList.toggle('p3d-on', in3d);
   root.append(head, main);
   const ctx = { dock, explainBox: explainBox(), explain };
-  const inst = (in3d ? mountPoste3D(id, body, ctx) : def.build(body, arg, ctx)) || {};
+  const inst = (in3d ? mountPoste3D(id, body, ctx, arg) : def.build(body, arg, ctx)) || {};
   // les postes qui n'ont pas placé le fil d'explications le reçoivent en fin de dock
   if (in3d) dock.remove();
   else if (def.layout !== 'none' && !ctx.explainBox.isConnected) dock.appendChild(ctx.explainBox);

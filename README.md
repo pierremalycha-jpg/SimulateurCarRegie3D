@@ -394,6 +394,40 @@ Tests :
   « Emmène-moi / Montre-moi » doit mettre en évidence un élément réel de la page, et « Fais-le pour moi » doit faire
   valider l'étape.
 
+## v19.10 : la vision et le son en 3D, le tiroir « Tous les réglages »
+
+**Pourquoi.** Suite du prototype v19.9 (lot 2 de la feuille de route) : les deux postes où l'on règle le plus de
+matériel à la main, l'ingénieur vision et la régie son.
+
+**Le moteur des postes en 3D** (`src/poste3d/index.js`) sait maintenant :
+- des **molettes** (glisser vers le haut ou le bas, molette de la souris, flèches, double-clic pour revenir à la valeur
+  nominale), des **glissières** le long d'une course 3D (barre T, faders, joystick), des **touches maintenues**
+  (talkback) ;
+- des commandes qui **changent avec l'état** (le RCP qui a la main) et des vues calculées (le siège, le RCP choisi) ;
+- des zones cliquables **découpées à la forme** de la commande projetée : en vue de biais, deux faders voisins ne se
+  recouvrent plus ;
+- **« Tous les réglages »** : un tiroir qui contient l'interface 2D complète du poste, pour ce que le matériel 3D ne
+  porte pas (pages, matrices, instruments). Ses moniteurs vidéo sont recopiés du rendu WebGL. Quand l'élément
+  qu'Olivier veut montrer est dans le tiroir refermé, son repère montre le bouton qui l'ouvre (`ui/tutor_ui.js`).
+
+**Le poste vision** (`src/poste3d/rcp.js`, `src/poste3d/vision.js`). La rangée de RCP du bureau vision est construite
+en 3D : un RCP par caméra (CAM 1 à 6 devant la vision 1, CAM 7 à 16 devant la vision 2) et le MSU au milieu, avec ses
+voyants TALLY et CALL, son écran (diaphragme, gain, ND, ON AIR / PVW), ses touches, ses molettes WHITE et BLACK et son
+joystick (le manche suit l'iris, la bague le master black). Un clic sur un RCP lui donne la main (moniteur de
+référence, PRISM) ; sur ce RCP, chaque commande agit comme en 2D, dont le verrou PANEL ACTIVE ; l'écran tactile ouvre
+ses pages (PAINT, GAMMA / KNEE, GAIN / ND / SHUTTER, SCÈNES) sur la fiche. Le tiroir contient le RCP complet, le PRISM
+interactif et le tableau de matching. Les gestes sont mis en commun (`RCPACT`, `lcdPage` dans `ui/st_vision.js`).
+
+**Le poste son** (`src/poste3d/son.js`) sur la console de la cabine (`audiodesk.js`, qui expose sa géométrie) :
+faders des 20 tranches, master PGM et VCA des commentaires, SEL / PFL / MUTE, sur l'écran Vistonics la molette GAIN
+(en bas) et la molette PAN (en haut), et la Control Bay (écoutes, DIM, MONO, talkback maintenu, suivi du jeu,
+limiteur). Le tiroir contient la console à plat (couches, égaliseur, dynamique, E/S et patch, bus et N-1, snapshots,
+commentaires). Les gestes sont mis en commun (`AUACT` dans `ui/st_audio.js`).
+
+Tests : `node tools/e2e.mjs poste3d-vision` et `poste3d-son` (matériel construit, commandes, verrou, joystick,
+molettes, faders, talkback, tiroir et moniteurs recopiés, parcours « Exposer une caméra au RCP » et « Corriger une
+tranche » suivis en 3D).
+
 ## v19.9 : le poste du truquiste en 3D, devant le vrai pupitre (prototype)
 
 **Pourquoi.** Retour du 25 octobre 2026 : aux postes, l'interface 2D en plein écran fait perdre le matériel de vue.
@@ -1570,7 +1604,7 @@ node tools/shots.mjs dossier 1280 800 '["vision","hf"]'   # captures de postes
 | `audio.js` | Console son (inspiration Vista 1) : sources synthétisées, patch, chaîne DSP par tranche, bus et N-x, VCA, écoutes, snapshots, retard de ligne, embedder, loudness, corrélation, pannes son ; ce que le joueur entend selon l'endroit (`ecoute`, `setEar`) et le volume du son |
 | `commentary.js` | Commentaires du match (commentateur, consultant, bord terrain, plateau) en fil écrit, sans voix : niveaux simulés suivant la console |
 | `audiodesk.js` | Console son en 3D dans la cabine (faders motorisés, FaderGlow, écrans Vistonics animés) |
-| `poste3d/` | Les postes en 3D : moteur de la vue du poste (`index.js` : vues, zones cliquables recalées sur la 3D, bulles, étiquettes, fiche, barre T), outils des pupitres (`kit.js` : touches instanciées à légende, surfaces dessinées), pupitre ICP-X7000 du truquiste (`icp.js`, matériel seul) et sa définition de poste (`melangeur.js`) |
+| `poste3d/` | Les postes en 3D : moteur de la vue du poste (`index.js` : vues, zones cliquables recalées et découpées sur la 3D, touches, molettes, glissières, touches maintenues, bulles, étiquettes, fiche, tiroir « Tous les réglages » avec l'interface 2D et ses moniteurs recopiés), outils des pupitres (`kit.js` : touches instanciées à légende, surfaces dessinées) ; le matériel : pupitre ICP-X7000 (`icp.js`), rangée de RCP (`rcp.js`) ; les définitions de poste : mélangeur (`melangeur.js`), vision (`vision.js`), son (`son.js`, sur la console d'`audiodesk.js`) |
 | `scenario.js` | Scénario « jour de match » chronométré et noté |
 | `shared.js` | Données partagées de la page publiée (configuration, progression) avec repli local ; progression numérotée (`PROG_VERSION`, `migrateProgress` ; v3 : la Carrière), fusionnée avec le serveur avant chaque écriture, état de l'enregistrement (`SAVE`), export, import et effacement |
 | `review.js` | Points techniques à faire relire par le formateur |

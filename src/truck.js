@@ -8,6 +8,7 @@ import { S } from './state.js';
 import { EQUIP } from './equip.js';
 import { buildAudioDesk } from './audiodesk.js';
 import { buildMelangeur3D } from './poste3d/icp.js';
+import { buildRcp3D } from './poste3d/rcp.js';
 
 // ----------------------------------------------------------------------------------
 // Intérieur du car régie (scène séparée : on ne voit pas l'extérieur).
@@ -92,23 +93,6 @@ function deskPanel(name, w, d, lx, lz, draw, y = 0.79, tilt = 0.18, rotY = 0) {
 const rr = (g, x, y, w, h, r, fill, stroke) => { g.beginPath(); g.roundRect ? g.roundRect(x, y, w, h, r) : g.rect(x, y, w, h); if (fill) { g.fillStyle = fill; g.fill(); } if (stroke) { g.strokeStyle = stroke; g.lineWidth = 2; g.stroke(); } };
 const txt = (g, s, x, y, size = 14, color = '#c9d1d9', align = 'center', weight = 600) => { g.font = `${weight} ${size}px "Barlow Condensed", "Arial Narrow", sans-serif`; g.fillStyle = color; g.textAlign = align; g.textBaseline = 'middle'; g.fillText(s, x, y); };
 
-function drawRCPRow(g, W, H) {
-  // rangée de RCP-3500 (un par caméra) avec un MSU au milieu
-  g.fillStyle = '#1b1e22'; g.fillRect(0, 0, W, H);
-  const n = 12, uw = 66, gap = 8; const mid = 6;
-  let x = 10;
-  for (let i = 0; i < n; i++) {
-    if (i === mid) { rr(g, x, 6, 120, H - 12, 6, '#262b31'); txt(g, 'MSU', x + 60, 20, 14, '#8b949e'); for (let k = 0; k < 12; k++) rr(g, x + 8 + (k % 4) * 27, 36 + Math.floor(k / 4) * 26, 22, 18, 3, k === 0 ? '#e0b030' : '#3a4047'); x += 128; }
-    rr(g, x, 6, uw, H - 12, 6, '#2b3036');
-    rr(g, x + 6, 12, uw - 12, 34, 3, '#0d2338'); txt(g, 'CAM ' + (i + 1), x + uw / 2, 24, 12, '#9ed0ff'); txt(g, 'F5.6  0dB', x + uw / 2, 38, 10, '#6fa8dc', 'center', 500);
-    rr(g, x + 8, 52, 12, 8, 2, i === 0 ? '#ff3030' : '#3a1515'); rr(g, x + uw - 20, 52, 12, 8, 2, i === 1 ? '#30d060' : '#153a20');
-    ['#d04040', '#40b050', '#4070d0'].forEach((c, k) => { g.beginPath(); g.arc(x + 15 + k * 18, 76, 7, 0, Math.PI * 2); g.fillStyle = '#111'; g.fill(); g.lineWidth = 3; g.strokeStyle = c; g.stroke(); });
-    for (let k = 0; k < 6; k++) rr(g, x + 7 + (k % 3) * 18, 92 + Math.floor(k / 3) * 14, 15, 10, 2, '#4a5058');
-    g.beginPath(); g.arc(x + uw / 2, H - 34, 18, 0, Math.PI * 2); g.fillStyle = '#0c0d0f'; g.fill();
-    g.beginPath(); g.arc(x + uw / 2, H - 34, 8, 0, Math.PI * 2); g.fillStyle = '#c8a040'; g.fill();
-    x += uw + gap;
-  }
-}
 function drawLSM(g, W, H) {
   // télécommande LSM (Multicam) + clavier et souris IPDirector
   g.fillStyle = '#1e2125'; g.fillRect(0, 0, W, H);
@@ -584,7 +568,8 @@ export function buildTruck() {
   buildMelangeur3D(T.scene, new THREE.Vector3(X(-1.25), F + 0.79, Z(-1.6)));
   deskPanel('director', 0.9, 0.3, -2.9, -1.55, drawIntercom);
   deskPanel('scripte', 0.9, 0.3, -4.3, -1.55, drawScripte);
-  deskPanel('rcp', 3.0, 0.42, 2.07, -1.6, drawRCPRow);
+  // rangée de RCP en 3D, un par caméra (poste3d/rcp.js) : le poste vision s'y installe (poste3d/vision.js)
+  buildRcp3D(T.scene, new THREE.Vector3(X(2.07), F + 0.79, Z(-1.6)));
   deskPanel('lsm', 2.6, 0.4, 2.25, 0.0, drawLSM, 0.79, 0.16);
   // console son en 3D (inspiration Studer Vista 1, 22 faders) posée sur le bureau, face à l'opérateur
   buildAudioDesk(T.scene, new THREE.Vector3(X(-7.22), F + 0.82, Z(-0.45)), Math.PI / 2);

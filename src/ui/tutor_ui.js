@@ -4,6 +4,7 @@ import { el } from '../util.js';
 import { resetFabric } from '../net/fabric.js';
 import { toast, ask, modal } from './common.js';
 import { hasStation, closeStation } from './stations.js';
+import { drawerButtonFor, revealFor } from '../poste3d/index.js';
 import { openPlan, closePlan } from './plan.js';
 import { openDevice, viewerState } from '../equipment/viewer.js';
 import { teleport } from '../app/teleport.js';
@@ -38,7 +39,7 @@ import { lessonById as coursLesson } from '../cours/index.js';
 // (progression) est coché, et la fin ramène au bureau de l'entrepôt.
 // ----------------------------------------------------------------------------------
 const CHEF = { name: 'Olivier', role: 'chef de car' };
-const UI = { root: /** @type {HTMLElement | null} */ (null), openDom: '', placed: false, min: false, said: '', lastKey: '', voice: false, notes: /** @type {string[]} */ ([]), feedback: '', spotUntil: 0, intro: false, accueilVide: false };
+const UI = { root: /** @type {HTMLElement | null} */ (null), openDom: '', placed: false, min: false, said: '', lastKey: '', voice: false, notes: /** @type {string[]} */ ([]), feedback: '', spotUntil: 0, intro: false, accueilVide: false, scrolled: /** @type {Element | null} */ (null) };
 try { UI.voice = localStorage.getItem('carregie.chefVoice') === '1'; } catch (e) { /* stockage indisponible */ }
 
 // ---------------- entrées / sorties pour le moteur ----------------
@@ -493,6 +494,10 @@ function findTarget(list) {
       return { n, r, t };
     }
   }
+  // poste en 3D : la commande est hors du cadre de la vue → la vue s'en approche (on la retrouvera au tour suivant) ;
+  // la cible est dans le tiroir « Tous les réglages » refermé → montrer le bouton qui l'ouvre
+  for (const t of list || []) if (revealFor(t.sel, t.text)) return null;
+  for (const t of list || []) { const b = drawerButtonFor(t.sel, t.text); if (b) return { n: b, r: b.getBoundingClientRect(), t: { sel: '', label: 'ouvrir : ' + (t.label || 'tous les réglages') } }; }
   // poste Réseau IP : la cible est dans l'autre onglet (Technique / Exploitation) → montrer cet onglet
   const other = /** @type {HTMLElement | null} */ (document.querySelector('#station .net-mode:not(.on)'));
   if (other && (list || []).length) {
@@ -505,6 +510,9 @@ function spot(list, scroll = false) {
   const sp = document.getElementById('chef-spot'); if (!sp) return;
   const f = list ? findTarget(list) : null;
   if (!f) { sp.hidden = true; return; }
+  // dans le tiroir « Tous les réglages » d'un poste en 3D, la cible peut être hors de sa zone visible : on l'y
+  // amène une fois (sans lutter ensuite contre le défilement de l'utilisateur)
+  if (!scroll && UI.scrolled !== f.n && f.n.closest && f.n.closest('.p3d-drawer')) { scroll = true; UI.scrolled = f.n; }
   if (scroll) { try { f.n.scrollIntoView({ block: 'nearest', inline: 'nearest' }); } catch (e) { /* rien */ } }
   const r = f.n.getBoundingClientRect();
   if (r.bottom < 0 || r.top > window.innerHeight) { sp.hidden = true; return; }

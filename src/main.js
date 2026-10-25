@@ -20,10 +20,10 @@ import { initGfx, updateGfx } from './gfx.js';
 import { initPipeline, renderPipeline, drawSlots, MIX, meSource, defaultRouting, EVS, P, ROUTER } from './pipeline.js';
 import { AU, updateAudio, applyAll, voiceGain, setMonitor, stripRms, corrNow, faderLin, avOk, setEar, ecoute } from './audio.js';
 import { updateCommentary, CMT } from './commentary.js';
-import { updateAudioDesk } from './audiodesk.js';
+import { updateAudioDesk, DESK } from './audiodesk.js';
 import { $, $$, toast, intercom } from './ui/common.js';
 import { openStation, closeStation, updateStation, ST } from './ui/stations.js';
-import { P3D, renderPoste3D, poste3dVoulu } from './poste3d/index.js';
+import { P3D, renderPoste3D, poste3dVoulu, mirrorSlots } from './poste3d/index.js';
 import { updateMelangeur3D, PUP } from './poste3d/icp.js';
 import { initPlan, openPlan, closePlan, renderPlan } from './ui/plan.js';
 import { openGuide, checkMissions, drawMissionCard } from './ui/guide.js';
@@ -218,6 +218,7 @@ function step(now) {
     // poste en 3D : la vue de l'opérateur devant son pupitre, puis les écrans 2D éventuels (moniteur flottant)
     renderPoste3D(renderer, pcam, dt);
     drawSlots(renderer, $$('#station [data-gl], #floatmon [data-gl]'));
+    mirrorSlots(renderer);
     t = pe('vue', t);
   } else {
     renderer.setClearColor(0x000000, 0); renderer.clear();
@@ -265,7 +266,7 @@ window.__dbg.COURS = { CHAPTERS: COURS_CHAPTERS, allLessons, lessonById: coursLe
 window.__dbg.CTRL = CTRL; window.__dbg.MATIERE = MATIERE;
 window.__dbg.jeu = { XP, sfx, JEU, openJournal, currentGoal, renderQuest };
 window.__dbg.carriere = CARRIERE; window.__dbg.mission = MISSION_RUN;
-window.__dbg.poste3d = { P3D, PUP, voulu: poste3dVoulu };
+window.__dbg.poste3d = { P3D, PUP, DESK, voulu: poste3dVoulu };
 // le programme a démarré : le filet du chargement (boot.js) n'a plus à intervenir
 window.__carReady = true;
 initDiagUI();

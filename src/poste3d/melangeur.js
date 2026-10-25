@@ -89,7 +89,7 @@ export const POSTE_MELANGEUR = {
       corners: () => { const y = 0.0125, x0 = -0.77, x1 = -0.52, z0 = -0.235, z1 = -0.065; return [[x0, y, z0], [x1, y, z0], [x1, y, z1], [x0, y, z1]]; } });
     return list.concat(keys);
   },
-  hover(i) { if (!PUP.keys) return; const F = PUP.keys; const old = F.hot; F.hot = i ?? -1; for (const k of [old, F.hot]) if (k >= 0) { const c = PUP.ctrls[k]; F.set(k, -1); const l = lit(c); F.set(k, l < 0 ? 0 : l); } F.flush(); },
+  hover(c) { if (!PUP.keys) return; const F = PUP.keys; const old = F.hot; F.hot = c && c.i != null ? c.i : -1; for (const k of [old, F.hot]) if (k >= 0) { const c = PUP.ctrls[k]; F.set(k, -1); const l = lit(c); F.set(k, l < 0 ? 0 : l); } F.flush(); },
   /** réglages de l'écran du menu, en 2D sur la fiche */
   panels: { menu: menuPanel },
   key: MIXACT.key,

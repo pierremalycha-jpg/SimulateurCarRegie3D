@@ -57,6 +57,8 @@ const SUITES = [
   ['progression', 'progression', [], 15],
   ['rendu', 'rendu', [], 25],
   ['poste3d', 'poste3d', [], 25],
+  ['poste3d-vision', 'poste3d-vision', [], 25],
+  ['poste3d-son', 'poste3d-son', [], 25],
 ];
 
 const args = process.argv.slice(2);

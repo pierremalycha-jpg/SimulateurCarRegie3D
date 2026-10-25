@@ -12,10 +12,123 @@ import { PRISM, pointById, setInput } from '../prism_model.js';
 import { ctrlCam } from '../net/ctrlnet.js';
 
 const IR_MIN = 1.4, IR_MAX = 22;
-const irisToPos = (n) => 1 - Math.log(n / IR_MIN) / Math.log(IR_MAX / IR_MIN);
-const posToIris = (p) => IR_MIN * Math.pow(IR_MAX / IR_MIN, 1 - p);
+export const irisToPos = (n) => 1 - Math.log(n / IR_MIN) / Math.log(IR_MAX / IR_MIN);
+export const posToIris = (p) => IR_MIN * Math.pow(IR_MAX / IR_MIN, 1 - p);
 const stopsTxt = (s) => `${s > 0 ? '+' : ''}${fmt(s, 1)} diaphragme${Math.abs(s) >= 2 ? 's' : ''}`;
-const SCENES = {};
+export const SCENES = {};
+
+// ----------------------------------------------------------------------------------
+// Les gestes du RCP, communs à la vue 2D (ci-dessous) et à la rangée de RCP en 3D (poste3d/vision.js) :
+// chaque geste agit sur la caméra et s'explique dans le fil « Ce qui se passe ». rcpOk() dit si le RCP
+// a la main (réseau de contrôle du car SDI, PANEL ACTIVE) ; CAM PW et PANEL ACTIVE passent toujours.
+// ----------------------------------------------------------------------------------
+/** touches assignables : libellé, propriété allumée, maillon de la chaîne, nom */
+export const ASSIGN = [['DETAIL', 'detailOn', 'detail', 'Détail'], ['KNEE', 'kneeOn', 'knee', 'Knee'], ['GAMMA', 'gammaOn', 'gamma', 'Gamma'], ['MATRIX', 'matrixOn', 'matrice', 'Matrice / saturation'], ['BLK GAM', null, 'gamma', 'Black gamma'], ['SKIN DTL', null, 'detail', 'Détail de peau'], ['ND ▲', null, 'optique', ''], ['ND ▼', null, 'optique', ''], ['ZEBRA', null, 'sortie', '']];
+/** pages de l'écran tactile : paramètres réglés aux molettes (clé, libellé, min, max, maillon) */
+export const RCP_PAGES = {
+  paint: { l: 'PAINT', params: [['detail', 'DETAIL', 0, 100, 'detail'], ['sat', 'SATURATION', 40, 160, 'matrice'], ['blackGamma', 'BLACK GAMMA', -99, 99, 'gamma']] },
+  gamma: { l: 'GAMMA / KNEE', params: [['gamma', 'MASTER GAMMA', -99, 99, 'gamma'], ['knee', 'KNEE POINT', 80, 109, 'knee'], ['wclip', 'WHITE CLIP', 95, 109, 'knee'], ['mblack', 'MASTER BLACK', -99, 99, 'noir']] },
+  expo: { l: 'GAIN / ND / SHUTTER', params: [] },
+  scene: { l: 'SCÈNES', params: [] },
+};
+export function rcpOk(c) {
+  if (!c) return false;
+  if (!S.ipMode) { const k = ctrlCam(c.id); if (!k.ok) { toast(`CCU ${c.id} injoignable par le réseau de contrôle.`, 'bad'); explain(`Réglage refusé : le RCP ne joint plus la CCU ${c.id} par le réseau de contrôle du car (${k.why}). L'image passe toujours en SDI, mais plus aucune commande : voyez le poste Réseau.`, 'warn:ctrl'); return false; } }
+  if (c.panelActive === false) { toast('PANEL ACTIVE éteint : rallumez-le pour régler la caméra.', 'bad'); explain('Réglage refusé : PANEL ACTIVE est éteint. On l\'éteint pour verrouiller une caméra réglée ; rallumez-le pour reprendre la main.', 'warn:locked'); return false; }
+  return true;
+}
+let irisSeq = null;
+export const RCPACT = {
+  /** le RCP prend la caméra id : moniteur de référence, PRISM et sortie AUX de la grille */
+  select(id) {
+    S.selCam = id; SCOPE.src = 'CAM' + id; SCOPE.active = true;
+    ROUTER.map.AUX_VISION = 'CAM' + id; emit('router', {});
+    const c = camById(id); if (c) explain(`RCP affecté à la CAM ${id} (${c.T.label}, ${c.L.name}). Son image est sur le moniteur de référence et le PRISM.`);
+  },
+  param(c, key, v) {
+    c.paint[key] = v;
+    const t = {
+      detail: `Détail ${v} : accentuation des contours. Trop fort, l'image devient « électronique » (liserés blancs autour des joueurs) ; trop faible, elle paraît floue sur les écrans.`,
+      sat: `Saturation ${v} % : intensité des couleurs. Au vecteurscope, le nuage s'éloigne (plus saturé) ou se rapproche (moins saturé) du centre.`,
+      blackGamma: `Black gamma ${v} : ${v > 0 ? 'relève' : v < 0 ? 'écrase' : 'laisse'} les basses lumières sans toucher au noir ni au blanc. Utile pour déboucher les ombres d'une tribune.`,
+      gamma: `Master gamma ${v} : courbe de transfert. Vers le +, les tons moyens montent (image plus claire, moins contrastée) ; vers le −, ils descendent.`,
+      knee: `Knee point ${v} % : au-dessus de ce niveau, les hautes lumières sont compressées pour garder du détail dans les maillots blancs et le ciel.`,
+      wclip: `White clip ${v} % : aucun signal ne dépasse ce niveau (écrêteur). Beaucoup de diffuseurs exigent des blancs ≤ 103 % (ancienne tolérance en luminance de l'EBU R103-2000 ; la version actuelle de R103 admet jusqu'à 105 %) ; au-delà, l'image peut être refusée au contrôle qualité.`,
+      mblack: `Master black ${v} : niveau du noir pour les trois couleurs (pedestal), soit environ ${fmt(v * 0.132, 1)} % au waveform.`,
+    }[key];
+    if (t) explain(t, 'rcp:' + key);
+  },
+  gain(c, v) { const p = c.paint; const d = v - p.gain; p.gain = v; explain(`Gain ${v > 0 ? '+' : ''}${v} dB : ${d >= 0 ? '+' : ''}${d} dB = ×${fmt(Math.pow(10, d / 20), 2)} sur le signal (${stopsTxt(d / 6)}). Le bruit augmente dans la même proportion : on préfère ouvrir l'iris tant que c'est possible.`, 'rcp:gain'); },
+  nd(c, v) { const p = c.paint; const before = ND_FILTERS[p.nd].f, after = ND_FILTERS[v].f; p.nd = v; explain(`Filtre ND ${ND_FILTERS[v].label} : ${stopsTxt(Math.log2(after / before))}. Le ND retire de la lumière sans changer les couleurs, pour pouvoir garder un iris de travail (f/4 à f/8) en plein soleil.`, 'rcp:nd'); },
+  shutter(c, v) { c.paint.shutter = v; const te = c.exposureTime(); explain(`Shutter ${SHUTTERS[v].label} : temps de pose ${fmt(te * 1000, 1)} ms (au lieu de ${fmt(1000 / c.fps, 1)} ms à ${c.fps} i/s), soit ${stopsTxt(Math.log2(te * c.fps))}. Les mouvements sont plus nets (ralentis), mais l'image s'assombrit et les éclairages 100 Hz peuvent scintiller.`, 'rcp:shut'); },
+  sceneStore(c, i) { SCENES[c.id + ':' + i] = { ...c.paint }; explain(`Fichier de scène ${i} mémorisé pour la CAM ${c.id} : tous les réglages de rendu (noirs, gamma, knee, détail, couleurs). On en prépare un par situation (soleil, ombre, nuit).`); },
+  sceneRecall(c, i) { const s = SCENES[c.id + ':' + i]; if (!s) { toast('Fichier de scène vide : mémorisez-le d\'abord avec STORE.'); return false; } Object.assign(c.paint, s); explain(`Fichier de scène ${i} rappelé : la caméra reprend instantanément tous ces réglages.`); return true; },
+  /** touche assignable (ASSIGN) */
+  assign(c, l) {
+    const a = ASSIGN.find((x) => x[0] === l); if (!a) return; const [, prop, , name] = a;
+    if (prop) { c.paint[prop] = !c.paint[prop]; explain(`${name} ${c.paint[prop] ? 'activé' : 'désactivé'}. ${prop === 'gammaOn' && !c.paint[prop] ? 'Sans gamma, l\'image est linéaire : très contrastée et sombre, c\'est pour cela qu\'on applique toujours une courbe (BT.709 ou HLG).' : prop === 'kneeOn' && !c.paint[prop] ? 'Sans knee, les hautes lumières ne sont plus compressées : elles écrêtent net au niveau du white clip (103 % par défaut ici) et perdent leur détail ; regardez le haut du waveform.' : prop === 'detailOn' && !c.paint[prop] ? 'Sans détail, l\'image paraît plus douce.' : ''}`); }
+    else if (l === 'ND ▲') { if (c.paint.nd < 4) { c.paint.nd++; explain(`ND ${ND_FILTERS[c.paint.nd].label} (−1 ou −2 diaph selon le cran).`); } }
+    else if (l === 'ND ▼') { if (c.paint.nd > 0) { c.paint.nd--; explain(`ND ${ND_FILTERS[c.paint.nd].label} (+1 ou +2 diaph selon le cran).`); } }
+    else if (l === 'BLK GAM') { c.paint.blackGamma = c.paint.blackGamma ? 0 : 30; explain(`Black gamma ${c.paint.blackGamma ? '+30 : ombres débouchées' : 'remis à 0'}.`); }
+    else if (l === 'SKIN DTL') explain('Skin detail : réduit le détail sur les tons chair pour adoucir les visages (non simulé ici).');
+    else if (l === 'ZEBRA') explain('Zébra : hachures dans le viseur sur les zones au-dessus d\'un niveau (ex. 95 %) pour aider le cadreur (non simulé ici).');
+  },
+  /** la touche assignable est-elle allumée ? */
+  assignOn(c, l) { const i = ASSIGN.findIndex((x) => x[0] === l); const prop = i >= 0 ? ASSIGN[i][1] : null; return prop ? !!c.paint[prop] : (l === 'BLK GAM' ? c.paint.blackGamma !== 0 : false); },
+  white(c, i, v) { c.paint[['wbR', 'wbG', 'wbB'][i]] = v; explain(i === 1 ? `Gain vert ${v} : le vert sert en général de référence, on règle plutôt le rouge et le bleu.` : `Gain ${i ? 'bleu' : 'rouge'} ${v > 0 ? '+' : ''}${v} (${v > 0 ? '+' : ''}${fmt(v * 0.25, 1)} %) : l'image ${i ? (v > 0 ? 'refroidit (bleutée)' : 'se réchauffe') : (v > 0 ? 'se réchauffe (rougeâtre)' : 'refroidit')}. Au vecteurscope, le gris de la pelouse ombragée et les maillots blancs se décalent vers ${i ? (v > 0 ? 'B' : 'Yl') : (v > 0 ? 'R' : 'Cy')}.`, 'rcp:w' + i); },
+  /** potentiomètre BLACK (ou FLARE quand la touche FLARE est allumée) */
+  blackGet(c, i) { return S.rcpFlare ? c.paint['flare' + 'RGB'[i]] : c.paint[['blackR', 'blackG', 'blackB'][i]]; },
+  black(c, i, v) { const p = c.paint; if (S.rcpFlare) { p['flare' + 'RGB'[i]] = v; explain(`Flare ${'RGB'[i]} ${v} : compense le voile lumineux de l'optique dans les noirs de cette couleur.`, 'rcp:f' + i); } else { p[['blackR', 'blackG', 'blackB'][i]] = v; explain(`Noir ${['rouge', 'vert', 'bleu'][i]} ${v > 0 ? '+' : ''}${v} : les ombres virent ${v > 0 ? 'vers le ' + ['rouge', 'vert', 'bleu'][i] : 'à l\'opposé'}. Regardez le bas des traces en parade RVB : les trois doivent être alignées.`, 'rcp:b' + i); } },
+  awb(c) { c.autoWhite(); explain(`AWB : balance des blancs automatique à ${S.sceneCCT} K. La caméra mesure un blanc de référence et calcule ses gains rouge et bleu. Dans un vrai stade, le cadreur cadre une charte ou une surface blanche pendant le réglage.`); },
+  abb(c) { c.autoBlack(); explain('ABB : balance des noirs automatique. L\'iris se ferme, la caméra mesure son noir et égalise les trois couleurs.'); },
+  flare() { S.rcpFlare = !S.rcpFlare; explain(S.rcpFlare ? 'FLARE allumé : les potentiomètres BLACK règlent maintenant la compensation de flare.' : 'FLARE éteint : les potentiomètres règlent la balance des noirs.'); },
+  call(c) { c.paint.call = S.time; intercom('VISION', `Appel CAM ${c.id} : le tally du cadreur clignote, il répond à l'intercom.`); explain('CALL : appel du cadreur (tally qui clignote). Utile pour attirer son attention sans parler sur l\'ordre général.'); },
+  bars(c) { c.paint.bars = !c.paint.bars; if (!c.paint.bars) (S.flags ||= {}).barsCycle = true; explain(c.paint.bars ? 'BARS : la caméra envoie ses barres de couleur. Au line-up, on vérifie ainsi la liaison, le nom de la source au multiview et les niveaux.' : 'BARS coupées : retour de l\'image.'); },
+  campw(c) { c.powerOn = c.powerOn === false; c.checkLink(); explain(c.powerOn ? 'CAM PW : la CCU alimente de nouveau la tête par la fibre hybride. Il faut quelques secondes avant l\'image.' : 'CAM PW coupé : plus d\'alimentation sur la fibre, la caméra s\'éteint (PAS DE SIGNAL au multiview). On coupe toujours avant de débrancher un câble caméra.'); },
+  active(c) { c.panelActive = c.panelActive === false; explain(c.panelActive ? 'PANEL ACTIVE : le RCP a la main sur la caméra.' : 'PANEL ACTIVE éteint : réglages verrouillés (les potentiomètres ne font plus rien).'); },
+  preview(c) { ROUTER.map.AUX_VISION = 'CAM' + c.id; emit('router', {}); explain('PREVIEW : la caméra est envoyée sur le moniteur de référence de la vision (sortie AUX de la grille).'); },
+  autoIris(c) { c.paint.autoIris = !c.paint.autoIris; explain(c.paint.autoIris ? 'Iris automatique : la caméra vise un niveau moyen fixe. Pratique en dépannage, mais il « pompe » quand un maillot blanc ou une ombre traverse l\'image.' : 'Iris repassé en manuel.'); },
+  close(c) { c.paint.irisClose = !c.paint.irisClose; explain(c.paint.irisClose ? 'Iris fermé (CLOSE) : image noire. Sert à la balance des noirs et à protéger les capteurs.' : 'Iris rouvert.'); },
+  /** joystick : position 0 (fermé, F22) à 1 (ouvert, F1,4) */
+  iris(c, pos) {
+    const before = c.paint.iris;
+    if (!irisSeq || performance.now() - irisSeq.t > 2500) irisSeq = { from: before, mean: c.meter.mean };
+    irisSeq.t = performance.now();
+    c.paint.iris = posToIris(pos); c.paint.autoIris = false; c.paint.irisClose = false;
+    const st = 2 * Math.log2(irisSeq.from / c.paint.iris);
+    const lensMax = maxAperture(c.L, c.focal / (c.ext ? 2 : 1), c.ext);
+    const est = clamp(irisSeq.mean * Math.pow(Math.pow(2, st), 0.45), 0, 1.1);
+    explain(`Iris F${fmt(irisSeq.from, 1)} → F${fmt(c.paint.iris, 1)} : ${stopsTxt(st)}, la lumière est multipliée par ${fmt(Math.pow(2, st), 2)}. Niveau moyen attendu ≈ ${Math.round(est * 100)} % (était ${Math.round(irisSeq.mean * 100)} %).${c.paint.iris < lensMax - 0.05 ? ` Attention : à ${Math.round(c.focal)} mm l'objectif ne s'ouvre pas au-delà de F${fmt(lensMax, 1)} (ramping), l'iris demandé n'est pas atteint.` : ''}`, 'rcp:iris');
+  },
+  /** bague du joystick */
+  mblack(c, v) { c.paint.mblack = v; explain(`Master black ${v} : niveau du noir des trois couleurs, ≈ ${fmt(v * 0.132, 1)} % au waveform. Repère : noirs posés entre 0 et 2 %.`, 'rcp:mb'); },
+};
+
+/**
+ * contenu d'une page de l'écran tactile du RCP : afficheur (lcd) et molettes (encs) ou touches tactiles
+ * @param {any} c caméra @param {string} page @param {HTMLElement} lcd @param {HTMLElement} encs
+ * @param {(stage: string, fn: Function) => Function} touch garde (RCP qui a la main) @param {() => void} redraw @param {() => void} rebuild
+ */
+export function lcdPage(c, page, lcd, encs, touch, redraw, rebuild) {
+  const p = c.paint;
+  if (RCP_PAGES[page].params.length) {
+    for (const [k, l, mn, mx, stage] of RCP_PAGES[page].params) {
+      lcd.append(el('div', { class: 'rcp-lcd-row' }, el('span', {}, l), el('b', { 'data-lcd': k }, String(p[k]))));
+      encs.append(rotary(l, () => p[k], touch(stage, (cc, v) => { RCPACT.param(cc, k, v); const b = lcd.querySelector(`[data-lcd="${k}"]`); if (b) b.textContent = String(v); }), { min: mn, max: mx, size: 40, wheel: 1 }));
+    }
+  } else if (page === 'expo') {
+    const mk = (label, arr, cur, onp) => el('div', { class: 'rcp-lcd-row wrap' }, el('span', {}, label), ...arr.map(([v, l]) => el('button', { class: 'rcp-touch' + (cur() === v ? ' on' : ''), onclick: () => { onp(v); redraw(); } }, l)));
+    lcd.append(
+      mk('GAIN', GAINS.map((g) => [g, (g > 0 ? '+' : '') + g]), () => p.gain, touch('gain', (cc, v) => RCPACT.gain(cc, v))),
+      mk('ND', ND_FILTERS.map((n, i) => [i, n.label.split(' ')[0]]), () => p.nd, touch('optique', (cc, v) => RCPACT.nd(cc, v))),
+      mk('SHUTTER', SHUTTERS.map((s, i) => [i, s.label]), () => p.shutter, touch('capteur', (cc, v) => RCPACT.shutter(cc, v))));
+    lcd.append(el('div', { class: 'rcp-lcd-row' }, el('span', {}, 'TEMPS DE POSE'), el('b', {}, `1/${Math.round(1 / c.exposureTime())} s${c.hfr > 1 ? ' · HFR ' + c.hfr + 'x' : ''}`)));
+  } else if (page === 'scene') {
+    for (let i = 1; i <= 5; i++) lcd.append(el('div', { class: 'rcp-lcd-row' }, el('span', {}, `SCÈNE ${i}${SCENES[c.id + ':' + i] ? ' ●' : ''}`),
+      el('button', { class: 'rcp-touch', onclick: () => { RCPACT.sceneStore(c, i); redraw(); } }, 'STORE'),
+      el('button', { class: 'rcp-touch', onclick: touch('sortie', (cc) => { if (RCPACT.sceneRecall(cc, i)) rebuild(); }) }, 'RECALL')));
+  }
+}
 
 // Poste ingénieur vision : RCP (type RCP-3500) + moniteur de référence + instrument de mesure (type PRISM)
 /** @param {HTMLElement} body @param {any} [arg] caméra demandée ({ cam }) ou rang du pupitre @param {any} [ctx] */
@@ -74,15 +187,10 @@ export function buildVision(body, arg = 0, ctx) {
     el('div', { class: 'hwrow', style: { alignItems: 'flex-start', gap: '14px' } }, panelHost, overview));
 
   let W = {};
-  const touch = (stage, fn) => (...a) => { const c = cam(); if (!c) return;
-    if (!S.ipMode) { const k = ctrlCam(c.id); if (!k.ok) { toast(`CCU ${c.id} injoignable par le réseau de contrôle.`, 'bad'); explain(`Réglage refusé : le RCP ne joint plus la CCU ${c.id} par le réseau de contrôle du car (${k.why}). L'image passe toujours en SDI, mais plus aucune commande : voyez le poste Réseau.`, 'warn:ctrl'); return; } }
-    if (c.panelActive === false) { toast('PANEL ACTIVE éteint : rallumez-le pour régler la caméra.', 'bad'); explain('Réglage refusé : PANEL ACTIVE est éteint. On l\'éteint pour verrouiller une caméra réglée ; rallumez-le pour reprendre la main.', 'warn:locked'); return; } fn(c, ...a); chain.update(c, stage); };
-  let irisSeq = null;
+  const touch = (stage, fn) => (...a) => { const c = cam(); if (!rcpOk(c)) return; fn(c, ...a); chain.update(c, stage); };
   function select(id) {
-    sel = id; S.selCam = id; SCOPE.src = 'CAM' + id; SCOPE.active = true;
-    ROUTER.map.AUX_VISION = 'CAM' + id; emit('router', {});
+    sel = id; RCPACT.select(id);
     buildPanel();
-    const c = cam(); if (c) explain(`RCP affecté à la CAM ${id} (${c.T.label}, ${c.L.name}). Son image est sur le moniteur de référence et le PRISM.`);
   }
 
   function buildPanel() {
@@ -94,91 +202,40 @@ export function buildVision(body, arg = 0, ctx) {
     const lcd = el('div', { class: 'rcp-lcd' });
     const tabs = el('div', { class: 'rcp-tabs' });
     const encs = el('div', { class: 'rcp-encs' });
-    const PAGES = {
-      paint: { l: 'PAINT', params: [['detail', 'DETAIL', 0, 100, 'detail'], ['sat', 'SATURATION', 40, 160, 'matrice'], ['blackGamma', 'BLACK GAMMA', -99, 99, 'gamma']] },
-      gamma: { l: 'GAMMA / KNEE', params: [['gamma', 'MASTER GAMMA', -99, 99, 'gamma'], ['knee', 'KNEE POINT', 80, 109, 'knee'], ['wclip', 'WHITE CLIP', 95, 109, 'knee'], ['mblack', 'MASTER BLACK', -99, 99, 'noir']] },
-      expo: { l: 'GAIN / ND / SHUTTER', params: [] },
-      scene: { l: 'SCÈNES', params: [] },
-    };
-    const explainParam = (key, v, c2) => {
-      const t = {
-        detail: `Détail ${v} : accentuation des contours. Trop fort, l'image devient « électronique » (liserés blancs autour des joueurs) ; trop faible, elle paraît floue sur les écrans.`,
-        sat: `Saturation ${v} % : intensité des couleurs. Au vecteurscope, le nuage s'éloigne (plus saturé) ou se rapproche (moins saturé) du centre.`,
-        blackGamma: `Black gamma ${v} : ${v > 0 ? 'relève' : v < 0 ? 'écrase' : 'laisse'} les basses lumières sans toucher au noir ni au blanc. Utile pour déboucher les ombres d'une tribune.`,
-        gamma: `Master gamma ${v} : courbe de transfert. Vers le +, les tons moyens montent (image plus claire, moins contrastée) ; vers le −, ils descendent.`,
-        knee: `Knee point ${v} % : au-dessus de ce niveau, les hautes lumières sont compressées pour garder du détail dans les maillots blancs et le ciel.`,
-        wclip: `White clip ${v} % : aucun signal ne dépasse ce niveau (écrêteur). Beaucoup de diffuseurs exigent des blancs ≤ 103 % (ancienne tolérance en luminance de l'EBU R103-2000 ; la version actuelle de R103 admet jusqu'à 105 %) ; au-delà, l'image peut être refusée au contrôle qualité.`,
-        mblack: `Master black ${v} : niveau du noir pour les trois couleurs (pedestal), soit environ ${fmt(v * 0.132, 1)} % au waveform.`,
-      }[key];
-      if (t) explain(t, 'rcp:' + key);
-    };
+    const PAGES = RCP_PAGES;
     const drawLcd = () => {
       tabs.innerHTML = '';
       for (const k in PAGES) tabs.appendChild(el('button', { class: 'rcp-tab' + (k === page ? ' on' : ''), onclick: () => { page = k; drawLcd(); } }, PAGES[k].l));
       lcd.innerHTML = ''; encs.innerHTML = '';
       const t = tallyOf('CAM' + c.id);
       lcd.append(el('div', { class: 'rcp-lcd-top' }, el('b', {}, `CAM ${c.id}`), el('span', {}, c.T.short), el('span', { class: t === 2 ? 'onair' : t === 1 ? 'pvw' : '' }, t === 2 ? 'ON AIR' : t === 1 ? 'PVW' : '')));
-      if (PAGES[page].params.length) {
-        for (const [k, l, mn, mx, stage] of PAGES[page].params) {
-          lcd.append(el('div', { class: 'rcp-lcd-row' }, el('span', {}, l), el('b', { id: 'lcd-' + k }, String(p[k]))));
-          encs.append(rotary(l, () => p[k], touch(stage, (cc, v) => { p[k] = v; const b = document.getElementById('lcd-' + k); if (b) b.textContent = String(v); explainParam(k, v, cc); }), { min: mn, max: mx, size: 40, wheel: 1 }));
-        }
-      } else if (page === 'expo') {
-        const mk = (label, arr, cur, onp) => el('div', { class: 'rcp-lcd-row wrap' }, el('span', {}, label), ...arr.map(([v, l]) => el('button', { class: 'rcp-touch' + (cur() === v ? ' on' : ''), onclick: (e) => { onp(v); drawLcd(); } }, l)));
-        lcd.append(
-          mk('GAIN', GAINS.map((g) => [g, (g > 0 ? '+' : '') + g]), () => p.gain, touch('gain', (cc, v) => { const d = v - p.gain; p.gain = v; explain(`Gain ${v > 0 ? '+' : ''}${v} dB : ${d >= 0 ? '+' : ''}${d} dB = ×${fmt(Math.pow(10, d / 20), 2)} sur le signal (${stopsTxt(d / 6)}). Le bruit augmente dans la même proportion : on préfère ouvrir l'iris tant que c'est possible.`, 'rcp:gain'); })),
-          mk('ND', ND_FILTERS.map((n, i) => [i, n.label.split(' ')[0]]), () => p.nd, touch('optique', (cc, v) => { const before = ND_FILTERS[p.nd].f, after = ND_FILTERS[v].f; p.nd = v; explain(`Filtre ND ${ND_FILTERS[v].label} : ${stopsTxt(Math.log2(after / before))}. Le ND retire de la lumière sans changer les couleurs, pour pouvoir garder un iris de travail (f/4 à f/8) en plein soleil.`, 'rcp:nd'); })),
-          mk('SHUTTER', SHUTTERS.map((s, i) => [i, s.label]), () => p.shutter, touch('capteur', (cc, v) => { p.shutter = v; const te = cc.exposureTime(); explain(`Shutter ${SHUTTERS[v].label} : temps de pose ${fmt(te * 1000, 1)} ms (au lieu de ${fmt(1000 / cc.fps, 1)} ms à ${cc.fps} i/s), soit ${stopsTxt(Math.log2(te * cc.fps))}. Les mouvements sont plus nets (ralentis), mais l'image s'assombrit et les éclairages 100 Hz peuvent scintiller.`, 'rcp:shut'); })));
-        lcd.append(el('div', { class: 'rcp-lcd-row' }, el('span', {}, 'TEMPS DE POSE'), el('b', {}, `1/${Math.round(1 / c.exposureTime())} s${c.hfr > 1 ? ' · HFR ' + c.hfr + 'x' : ''}`)));
-      } else if (page === 'scene') {
-        for (let i = 1; i <= 5; i++) lcd.append(el('div', { class: 'rcp-lcd-row' }, el('span', {}, `SCÈNE ${i}${SCENES[c.id + ':' + i] ? ' ●' : ''}`),
-          el('button', { class: 'rcp-touch', onclick: () => { SCENES[c.id + ':' + i] = { ...p }; explain(`Fichier de scène ${i} mémorisé pour la CAM ${c.id} : tous les réglages de rendu (noirs, gamma, knee, détail, couleurs). On en prépare un par situation (soleil, ombre, nuit).`); drawLcd(); } }, 'STORE'),
-          el('button', { class: 'rcp-touch', onclick: touch('sortie', (cc) => { const s = SCENES[cc.id + ':' + i]; if (!s) { toast('Fichier de scène vide : mémorisez-le d\'abord avec STORE.'); return; } Object.assign(cc.paint, s); explain(`Fichier de scène ${i} rappelé : la caméra reprend instantanément tous ces réglages.`); buildPanel(); }) }, 'RECALL')));
-      }
+      lcdPage(c, page, lcd, encs, touch, drawLcd, buildPanel);
     };
     drawLcd();
     // ---- touches assignables ----
-    const ASSIGN = [['DETAIL', 'detailOn', 'detail', 'Détail'], ['KNEE', 'kneeOn', 'knee', 'Knee'], ['GAMMA', 'gammaOn', 'gamma', 'Gamma'], ['MATRIX', 'matrixOn', 'matrice', 'Matrice / saturation'], ['BLK GAM', null, 'gamma', 'Black gamma'], ['SKIN DTL', null, 'detail', 'Détail de peau'], ['ND ▲', null, 'optique', ''], ['ND ▼', null, 'optique', ''], ['ZEBRA', null, 'sortie', '']];
     const keys = el('div', { class: 'rcp-keys' });
-    const keyBtns = ASSIGN.map(([l, prop, stage, name], i) => {
-      const b = el('button', { class: 'rcp-key', onclick: touch(stage, (cc) => {
-        if (prop) { cc.paint[prop] = !cc.paint[prop]; explain(`${name} ${cc.paint[prop] ? 'activé' : 'désactivé'}. ${prop === 'gammaOn' && !cc.paint[prop] ? 'Sans gamma, l\'image est linéaire : très contrastée et sombre, c\'est pour cela qu\'on applique toujours une courbe (BT.709 ou HLG).' : prop === 'kneeOn' && !cc.paint[prop] ? 'Sans knee, les hautes lumières ne sont plus compressées : elles écrêtent net au niveau du white clip (103 % par défaut ici) et perdent leur détail ; regardez le haut du waveform.' : prop === 'detailOn' && !cc.paint[prop] ? 'Sans détail, l\'image paraît plus douce.' : ''}`); }
-        else if (l === 'ND ▲') { if (cc.paint.nd < 4) { cc.paint.nd++; explain(`ND ${ND_FILTERS[cc.paint.nd].label} (−1 ou −2 diaph selon le cran).`); } }
-        else if (l === 'ND ▼') { if (cc.paint.nd > 0) { cc.paint.nd--; explain(`ND ${ND_FILTERS[cc.paint.nd].label} (+1 ou +2 diaph selon le cran).`); } }
-        else if (l === 'BLK GAM') { cc.paint.blackGamma = cc.paint.blackGamma ? 0 : 30; explain(`Black gamma ${cc.paint.blackGamma ? '+30 : ombres débouchées' : 'remis à 0'}.`); }
-        else if (l === 'SKIN DTL') explain('Skin detail : réduit le détail sur les tons chair pour adoucir les visages (non simulé ici).');
-        else if (l === 'ZEBRA') explain('Zébra : hachures dans le viseur sur les zones au-dessus d\'un niveau (ex. 95 %) pour aider le cadreur (non simulé ici).');
-        refresh();
-      }) }, l);
-      keys.appendChild(b); return [b, prop];
+    const keyBtns = ASSIGN.map(([l, , stage]) => {
+      const b = el('button', { class: 'rcp-key', onclick: touch(stage, (cc) => { RCPACT.assign(cc, l); refresh(); }) }, l);
+      keys.appendChild(b); return [b, l];
     });
     // ---- WHITE / BLACK ----
-    const wh = ['wbR', 'wbG', 'wbB'].map((k, i) => rotary('RGB'[i], () => p[k], touch('blanc', (cc, v) => { p[k] = v; explain(i === 1 ? `Gain vert ${v} : le vert sert en général de référence, on règle plutôt le rouge et le bleu.` : `Gain ${i ? 'bleu' : 'rouge'} ${v > 0 ? '+' : ''}${v} (${v > 0 ? '+' : ''}${fmt(v * 0.25, 1)} %) : l'image ${i ? (v > 0 ? 'refroidit (bleutée)' : 'se réchauffe') : (v > 0 ? 'se réchauffe (rougeâtre)' : 'refroidit')}. Au vecteurscope, le gris de la pelouse ombragée et les maillots blancs se décalent vers ${i ? (v > 0 ? 'B' : 'Yl') : (v > 0 ? 'R' : 'Cy')}.`, 'rcp:w' + i); }), { color: ['red', 'green', 'blue'][i] }));
-    const bl = ['blackR', 'blackG', 'blackB'].map((k, i) => rotary('RGB'[i], () => (S.rcpFlare ? p['flare' + 'RGB'[i]] : p[k]), touch('noir', (cc, v) => { if (S.rcpFlare) { p['flare' + 'RGB'[i]] = v; explain(`Flare ${'RGB'[i]} ${v} : compense le voile lumineux de l'optique dans les noirs de cette couleur.`, 'rcp:f' + i); } else { p[k] = v; explain(`Noir ${['rouge', 'vert', 'bleu'][i]} ${v > 0 ? '+' : ''}${v} : les ombres virent ${v > 0 ? 'vers le ' + ['rouge', 'vert', 'bleu'][i] : 'à l\'opposé'}. Regardez le bas des traces en parade RVB : les trois doivent être alignées.`, 'rcp:b' + i); } }), { color: ['red', 'green', 'blue'][i] }));
-    const awb = el('button', { class: 'rcp-btn', onclick: touch('blanc', (cc) => { cc.autoWhite(); explain(`AWB : balance des blancs automatique à ${S.sceneCCT} K. La caméra mesure un blanc de référence et calcule ses gains rouge et bleu. Dans un vrai stade, le cadreur cadre une charte ou une surface blanche pendant le réglage.`); refresh(); }) }, 'AWB');
-    const abb = el('button', { class: 'rcp-btn', onclick: touch('noir', (cc) => { cc.autoBlack(); explain('ABB : balance des noirs automatique. L\'iris se ferme, la caméra mesure son noir et égalise les trois couleurs.'); refresh(); }) }, 'ABB');
-    const flare = el('button', { class: 'rcp-btn', onclick: () => { S.rcpFlare = !S.rcpFlare; explain(S.rcpFlare ? 'FLARE allumé : les potentiomètres BLACK règlent maintenant la compensation de flare.' : 'FLARE éteint : les potentiomètres règlent la balance des noirs.'); buildPanel(); } }, 'FLARE');
+    const wh = ['wbR', 'wbG', 'wbB'].map((k, i) => rotary('RGB'[i], () => p[k], touch('blanc', (cc, v) => RCPACT.white(cc, i, v)), { color: ['red', 'green', 'blue'][i] }));
+    const bl = [0, 1, 2].map((i) => rotary('RGB'[i], () => RCPACT.blackGet(c, i), touch('noir', (cc, v) => RCPACT.black(cc, i, v)), { color: ['red', 'green', 'blue'][i] }));
+    const awb = el('button', { class: 'rcp-btn', onclick: touch('blanc', (cc) => { RCPACT.awb(cc); refresh(); }) }, 'AWB');
+    const abb = el('button', { class: 'rcp-btn', onclick: touch('noir', (cc) => { RCPACT.abb(cc); refresh(); }) }, 'ABB');
+    const flare = el('button', { class: 'rcp-btn', onclick: () => { RCPACT.flare(); buildPanel(); } }, 'FLARE');
     // ---- boutons ----
     const btn = (l, fn, cls = '') => el('button', { class: 'rcp-btn ' + cls, onclick: fn }, l);
-    W.call = btn('CALL', () => { c.paint.call = S.time; intercom('VISION', `Appel CAM ${c.id} : le tally du cadreur clignote, il répond à l'intercom.`); explain('CALL : appel du cadreur (tally qui clignote). Utile pour attirer son attention sans parler sur l\'ordre général.'); });
-    W.bars = btn('BARS', touch('sortie', (cc) => { cc.paint.bars = !cc.paint.bars; if (!cc.paint.bars) (S.flags ||= {}).barsCycle = true; explain(cc.paint.bars ? 'BARS : la caméra envoie ses barres de couleur. Au line-up, on vérifie ainsi la liaison, le nom de la source au multiview et les niveaux.' : 'BARS coupées : retour de l\'image.'); refresh(); }));
-    W.campw = btn('CAM PW', () => { c.powerOn = c.powerOn === false; c.checkLink(); explain(c.powerOn ? 'CAM PW : la CCU alimente de nouveau la tête par la fibre hybride. Il faut quelques secondes avant l\'image.' : 'CAM PW coupé : plus d\'alimentation sur la fibre, la caméra s\'éteint (PAS DE SIGNAL au multiview). On coupe toujours avant de débrancher un câble caméra.'); refresh(); });
-    W.active = btn('PANEL ACTIVE', () => { c.panelActive = c.panelActive === false; explain(c.panelActive ? 'PANEL ACTIVE : le RCP a la main sur la caméra.' : 'PANEL ACTIVE éteint : réglages verrouillés (les potentiomètres ne font plus rien).'); refresh(); });
-    W.preview = btn('PREVIEW', () => { ROUTER.map.AUX_VISION = 'CAM' + c.id; emit('router', {}); explain('PREVIEW : la caméra est envoyée sur le moniteur de référence de la vision (sortie AUX de la grille).'); });
-    W.auto = btn('AUTO IRIS', touch('optique', (cc) => { cc.paint.autoIris = !cc.paint.autoIris; explain(cc.paint.autoIris ? 'Iris automatique : la caméra vise un niveau moyen fixe. Pratique en dépannage, mais il « pompe » quand un maillot blanc ou une ombre traverse l\'image.' : 'Iris repassé en manuel.'); refresh(); }));
-    W.close = btn('CLOSE', touch('optique', (cc) => { cc.paint.irisClose = !cc.paint.irisClose; explain(cc.paint.irisClose ? 'Iris fermé (CLOSE) : image noire. Sert à la balance des noirs et à protéger les capteurs.' : 'Iris rouvert.'); refresh(); }));
+    W.call = btn('CALL', () => RCPACT.call(c));
+    W.bars = btn('BARS', touch('sortie', (cc) => { RCPACT.bars(cc); refresh(); }));
+    W.campw = btn('CAM PW', () => { RCPACT.campw(c); refresh(); });
+    W.active = btn('PANEL ACTIVE', () => { RCPACT.active(c); refresh(); });
+    W.preview = btn('PREVIEW', () => RCPACT.preview(c));
+    W.auto = btn('AUTO IRIS', touch('optique', (cc) => { RCPACT.autoIris(cc); refresh(); }));
+    W.close = btn('CLOSE', touch('optique', (cc) => { RCPACT.close(cc); refresh(); }));
     // ---- joystick ----
     const irisLcd = el('div', { class: 'rcp-iris' });
-    const joy = joystick(() => irisToPos(c.paint.iris), touch('optique', (cc, pos) => {
-      const before = cc.paint.iris;
-      if (!irisSeq || performance.now() - irisSeq.t > 2500) irisSeq = { from: before, mean: cc.meter.mean };
-      irisSeq.t = performance.now();
-      cc.paint.iris = posToIris(pos); cc.paint.autoIris = false; cc.paint.irisClose = false;
-      const st = 2 * Math.log2(irisSeq.from / cc.paint.iris);
-      const lensMax = maxAperture(cc.L, cc.focal / (cc.ext ? 2 : 1), cc.ext);
-      const est = clamp(irisSeq.mean * Math.pow(Math.pow(2, st), 0.45), 0, 1.1);
-      explain(`Iris F${fmt(irisSeq.from, 1)} → F${fmt(cc.paint.iris, 1)} : ${stopsTxt(st)}, la lumière est multipliée par ${fmt(Math.pow(2, st), 2)}. Niveau moyen attendu ≈ ${Math.round(est * 100)} % (était ${Math.round(irisSeq.mean * 100)} %).${cc.paint.iris < lensMax - 0.05 ? ` Attention : à ${Math.round(cc.focal)} mm l'objectif ne s'ouvre pas au-delà de F${fmt(lensMax, 1)} (ramping), l'iris demandé n'est pas atteint.` : ''}`, 'rcp:iris');
-    }), () => c.paint.mblack, touch('noir', (cc, v) => { cc.paint.mblack = v; explain(`Master black ${v} : niveau du noir des trois couleurs, ≈ ${fmt(v * 0.132, 1)} % au waveform. Repère : noirs posés entre 0 et 2 %.`, 'rcp:mb'); }));
+    const joy = joystick(() => irisToPos(c.paint.iris), touch('optique', (cc, pos) => RCPACT.iris(cc, pos)), () => c.paint.mblack, touch('noir', (cc, v) => RCPACT.mblack(cc, v)));
     // deux colonnes à l'écran ; la disposition réelle (en long) est dans la visionneuse de matériel
     const panel = el('div', { class: 'rcp' },
       el('div', { class: 'rcp-col' },
@@ -199,7 +256,7 @@ export function buildVision(body, arg = 0, ctx) {
   function refresh() {
     const c = cam(); if (!c || !W.joy) return;
     const p = c.paint;
-    W.keyBtns.forEach(([b, prop], i) => b.classList.toggle('on', prop ? !!p[prop] : (i === 4 ? p.blackGamma !== 0 : false)));
+    W.keyBtns.forEach(([b, l]) => b.classList.toggle('on', RCPACT.assignOn(c, l)));
     for (const r of [...W.wh, ...W.bl]) r.refresh();
     W.joy.refresh();
     W.bars.classList.toggle('on', p.bars); W.campw.classList.toggle('on', c.powerOn !== false); W.active.classList.toggle('on', c.panelActive !== false);
@@ -215,6 +272,8 @@ export function buildVision(body, arg = 0, ctx) {
     update() {
       const ck = S.cams.map((c) => c.id).join();
       if (ck !== lastCams) { lastCams = ck; rebuildSel(); if (!camById(sel) && S.cams.length) select(S.cams[0].id); }
+      // poste en 3D : le RCP qui a la main a pu changer depuis la rangée en 3D
+      if (S.selCam != null && S.selCam !== sel && camById(S.selCam)) { sel = S.selCam; buildPanel(); }
       for (const c of S.cams) { const b = camBtns[c.id]; if (!b) continue; const t = tallyOf('CAM' + c.id); b.className = 'hw' + (t === 2 ? ' pgm' : t === 1 ? ' pst' : '') + (c.id === sel ? ' selcam' : ''); }
       prism.update();
       const c = cam(); if (!c) return;
