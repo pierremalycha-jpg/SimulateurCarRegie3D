@@ -1,10 +1,10 @@
-/* ---------- Postes en 3D (src/poste3d/) : la vue de l'opérateur, une couche d'interface légère par-dessus ---------- */
+/* ---------- Postes en 3D (src/poste3d/) : écran partagé, le pupitre en 3D à gauche (couche d'interface légère par-dessus),
+   le panneau 2D à droite (écrans du poste en direct, fiche, fil « Ce qui se passe ») ; --p3d-w : largeur du panneau ---------- */
 /* au-dessus du canevas WebGL (#gl, z 2, qui rend ici la vue 3D) ; le moniteur flottant (z 6) reste au-dessus */
 #station.p3d-on { background: transparent; pointer-events: none; z-index: 3; }
-body:has(#floatmon) #station.p3d-on .p3d-side { bottom: 330px; }
 #station.p3d-on .st-head { pointer-events: auto; }
 #station .st-main.p3d { display: block; position: relative; flex: 1; min-height: 0; }
-#station .st-main.p3d .st-body.p3d-body { position: absolute; inset: 0; padding: 0; overflow: hidden; display: block; pointer-events: none; }
+#station .st-main.p3d .st-body.p3d-body { position: absolute; inset: 0; padding: 0; overflow: hidden; display: block; pointer-events: none; --p3d-w: clamp(420px, 46vw, 780px); }
 .p3d-stage { position: absolute; inset: 0; pointer-events: auto; cursor: grab; touch-action: none; }
 .p3d-stage:active { cursor: grabbing; }
 .p3d-hits, .p3d-tags { position: fixed; inset: 0; pointer-events: none; }
@@ -21,12 +21,39 @@ body:has(#floatmon) #station.p3d-on .p3d-side { bottom: 330px; }
 .p3d-tag i { width: 8px; height: 8px; border-radius: 50%; background: var(--neon, #19d3ff); box-shadow: 0 0 8px var(--neon, #19d3ff); }
 .p3d-tag:hover, .p3d-tag:focus-visible { border-color: var(--neon, #19d3ff); background: rgba(12, 30, 42, .92); outline: none; }
 /* vues prédéfinies */
-.p3d-views { position: absolute; top: 10px; left: var(--gut-l, 12px); display: flex; gap: 4px; flex-wrap: wrap; pointer-events: auto; max-width: calc(100% - 380px); }
+.p3d-views { position: absolute; top: 10px; left: var(--gut-l, 12px); display: flex; gap: 4px; flex-wrap: wrap; pointer-events: auto; max-width: calc(100% - var(--p3d-w) - 40px); }
 .p3d-views .btn { background: rgba(11, 17, 24, .85); }
 .p3d-views .btn.on { border-color: var(--neon, #19d3ff); color: #fff; box-shadow: inset 0 -2px 0 var(--neon, #19d3ff); }
-/* colonne de droite : fiche de la zone, réglages, fil « Ce qui se passe » */
-.p3d-side { position: absolute; top: 10px; right: var(--gut-r, 12px); bottom: 12px; width: 330px; display: flex; flex-direction: column; gap: 10px; pointer-events: auto; }
-.p3d-fiche { background: rgba(11, 17, 24, .9); border: 1px solid #22303f; border-left: 3px solid var(--neon, #19d3ff); padding: 10px 14px 12px; max-height: 55%; overflow: auto; flex: none; box-shadow: 0 10px 30px rgba(0, 0, 0, .45); }
+/* panneau de droite : les écrans du poste, puis les onglets Fiche et « Ce qui se passe » */
+.p3d-side { position: absolute; top: 0; right: 0; bottom: 0; width: var(--p3d-w); display: flex; flex-direction: column; gap: 8px; padding: 10px var(--gut-r, 12px) 12px 12px; box-sizing: border-box; overflow: hidden; pointer-events: auto; background: #0a0f15; border-left: 1px solid #22303f; box-shadow: -10px 0 30px rgba(0, 0, 0, .45); }
+.p3d-mons { display: flex; flex-direction: column; gap: 8px; flex: 1 1 auto; min-height: 0; overflow-y: auto; }
+.p3d-mons[hidden] { display: none; }
+.p3d-mons > * { flex-shrink: 0; }
+.p3d-mon { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.p3d-mon > .lab, .p3d-mons .lab { font: 600 12px/1.2 "Barlow Condensed", "Arial Narrow", sans-serif; letter-spacing: .04em; text-transform: uppercase; color: #8fa3b5; display: flex; align-items: center; gap: 6px; }
+.p3d-mons .mon.fill { width: 100%; height: auto; aspect-ratio: 16 / 9; background: #000; border: 1px solid #1c2a38; }
+.p3d-monrow { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.p3d-mon.pgm .mon.fill { border-color: #b02a20; } .p3d-mon.pvw .mon.fill { border-color: #1e8a3a; }
+/* écrans de la vision (visionMonitors : la même mise en page que le dock du poste 2D, en grille) */
+.p3d-mons .dockrow { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; min-height: 0; }
+.p3d-mons .monwrap { min-height: 0; display: flex; flex-direction: column; gap: 4px; flex: none !important; }
+.p3d-mons .refpair { display: flex; gap: 4px; }
+.p3d-mons .refpair > .mon { flex: 1; }
+.p3d-mons .vision-prism .prism { font-size: 12px; }
+.p3d-mons .p3d-meters { width: 100%; height: auto; background: #05080a; border: 1px solid #1c2a38; }
+.p3d-tabs { display: flex; gap: 4px; flex: none; border-bottom: 1px solid #22303f; }
+.p3d-tab { all: unset; cursor: pointer; padding: 6px 12px; font: 600 13px/1.2 "Barlow Condensed", "Arial Narrow", sans-serif; letter-spacing: .03em; color: #8fa3b5; border-bottom: 2px solid transparent; position: relative; }
+.p3d-tab.on { color: #fff; border-bottom-color: var(--neon, #19d3ff); }
+.p3d-tab.new::after { content: ''; position: absolute; top: 5px; right: 2px; width: 7px; height: 7px; border-radius: 50%; background: var(--amber, #ffb020); box-shadow: 0 0 6px var(--amber, #ffb020); }
+.p3d-tab:focus-visible { outline: 2px solid var(--neon, #19d3ff); }
+.p3d-sp { flex: 1; }
+.p3d-fold { all: unset; cursor: pointer; padding: 2px 10px; color: #8fa3b5; font-size: 14px; }
+.p3d-fold:hover, .p3d-fold:focus-visible { color: #fff; outline: none; }
+.p3d-side.p3d-folded .p3d-tabbody, .p3d-side.p3d-folded .p3d-legend { display: none; }
+.p3d-tabbody { flex: 0 0 clamp(150px, 27%, 300px); min-height: 0; display: flex; flex-direction: column; }
+.p3d-mons[hidden] ~ .p3d-tabbody { flex: 1 1 auto; }
+.p3d-tabbody > [hidden] { display: none !important; }
+.p3d-fiche { background: rgba(11, 17, 24, .9); border: 1px solid #22303f; border-left: 3px solid var(--neon, #19d3ff); padding: 10px 14px 12px; overflow: auto; flex: 1 1 auto; }
 .p3d-fiche h3 { margin: 0 0 6px; font-size: 16px; }
 .p3d-txt p { margin: 0 0 8px; font-size: 13.5px; line-height: 1.45; color: #c9d6e2; }
 .p3d-txt b { color: #fff; }
@@ -35,15 +62,14 @@ body:has(#floatmon) #station.p3d-on .p3d-side { bottom: 330px; }
 .p3d-form input[type=number] { width: 80px; }
 .p3d-form input[type=range] { flex: 1; max-width: 150px; }
 .p3d-form .btn.on { border-color: var(--neon, #19d3ff); }
-.p3d-side > .explain { flex: 1 1 auto; min-height: 120px; background: rgba(8, 12, 16, .88); }
-.p3d-side > .explain .ex-list { max-height: none; }
-.p3d-legend { margin: 0; padding: 6px 10px; font-size: 12px; background: rgba(8, 12, 16, .8); border: 1px solid #1c2a38; flex: none; }
+.p3d-tabbody > .explain { flex: 1 1 auto; min-height: 120px; background: rgba(8, 12, 16, .88); }
+.p3d-tabbody > .explain .ex-list { max-height: none; }
+.p3d-legend { margin: 0; padding: 4px 8px; font-size: 11.5px; background: rgba(8, 12, 16, .8); border: 1px solid #1c2a38; flex: none; }
 /* bulle d'explication au survol d'une commande */
 .p3d-tip { position: fixed; z-index: 2; max-width: 300px; display: flex; flex-direction: column; gap: 3px; padding: 8px 11px; font-size: 13px; line-height: 1.4; color: #d7e3ee; background: rgba(6, 10, 15, .95); border: 1px solid #2a3b4e; border-left: 3px solid var(--neon, #19d3ff); box-shadow: 0 10px 28px rgba(0, 0, 0, .6); pointer-events: none; }
 .p3d-tip b { color: #fff; font-size: 14px; letter-spacing: .02em; }
 @media (max-width: 760px) {
-  .p3d-side { top: auto; left: 8px; right: 8px; width: auto; height: 36vh; }
-  .p3d-fiche { max-height: 50%; }
+  .p3d-side { top: auto; left: 0; right: 0; width: auto; height: 46vh; border-left: 0; border-top: 1px solid #22303f; }
   .p3d-views { max-width: none; right: 8px; }
 }
 /* glissières et molettes : curseur adapté, repère allumé quand la commande est active */
@@ -53,7 +79,7 @@ body:has(#floatmon) #station.p3d-on .p3d-side { bottom: 330px; }
 /* « Tous les réglages » : l'interface 2D complète du poste, dans un tiroir à gauche de la colonne */
 .p3d-views .p3d-drawer-btn { margin-left: 8px; border-color: #2c4a5e; }
 .p3d-views .p3d-drawer-btn.on { border-color: var(--neon, #19d3ff); color: #fff; }
-.p3d-drawer { position: absolute; left: var(--gut-l, 12px); right: calc(var(--gut-r, 12px) + 344px); bottom: 12px; top: 52px; display: flex; flex-direction: column; gap: 10px; padding: 10px 12px 14px; overflow: auto; pointer-events: auto; background: rgba(9, 14, 20, .96); border: 1px solid #22303f; border-top: 3px solid var(--neon, #19d3ff); box-shadow: 0 18px 50px rgba(0, 0, 0, .6); }
+.p3d-drawer { position: absolute; left: var(--gut-l, 12px); right: calc(var(--p3d-w) + 12px); bottom: 12px; top: 52px; display: flex; flex-direction: column; gap: 10px; padding: 10px 12px 14px; overflow: auto; pointer-events: auto; background: rgba(9, 14, 20, .96); border: 1px solid #22303f; border-top: 3px solid var(--neon, #19d3ff); box-shadow: 0 18px 50px rgba(0, 0, 0, .6); }
 .p3d-drawer[hidden] { display: none; }
 .p3d-drawer-head { display: flex; align-items: center; gap: 12px; position: sticky; top: -10px; z-index: 1; margin: -10px -12px 0; padding: 8px 12px; background: #0b1118; border-bottom: 1px solid #22303f; }
 .p3d-drawer-head .note { flex: 1; }
@@ -62,10 +88,9 @@ body:has(#floatmon) #station.p3d-on .p3d-side { bottom: 330px; }
 .p3d-dock .monwrap { min-height: 200px; }
 .p3d-drawer-body { display: flex; flex-direction: column; gap: 12px; }
 @media (max-width: 760px) {
-  .p3d-drawer { right: 8px; left: 8px; bottom: calc(36vh + 16px); top: 96px; }
+  .p3d-drawer { right: 8px; left: 8px; bottom: calc(46vh + 8px); top: 96px; }
 }
 /* écran recopié du canevas WebGL dans un moniteur du tiroir */
 .p3d-drawer [data-gl] { position: relative; }
 .p3d-drawer canvas.p3d-mirror { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
-.p3d-fiche:has(.p3d-form) { max-height: 72%; }
 .p3d-rcp-ecran .rcp-encs { display: flex; flex-wrap: wrap; gap: 8px; }

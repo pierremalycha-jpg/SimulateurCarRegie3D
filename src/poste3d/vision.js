@@ -2,7 +2,7 @@
 import { S, camById } from '../state.js';
 import { el } from '../util.js';
 import { SCOPE } from '../pipeline.js';
-import { RCPACT, RCP_PAGES, rcpOk, lcdPage, buildVision } from '../ui/st_vision.js';
+import { RCPACT, RCP_PAGES, rcpOk, lcdPage, buildVision, visionMonitors } from '../ui/st_vision.js';
 import { RCPS, RCP_KEYS, N_RCP, RCPW, RCPD, KNOB_Z, JOY, LCD, unitX, camOfUnit, irisPos, updateRcp3D, hoverRcpKey } from './rcp.js';
 
 // ----------------------------------------------------------------------------------
@@ -111,7 +111,7 @@ function rcpPanel() {
 }
 
 const VIEWS = [
-  { id: 'poste', label: 'Le poste', eye: () => [seatX(), 0.62, 0.62], look: () => [seatX() + 0.15, 0.18, -0.5], fov: 62 },
+  { id: 'poste', label: 'Le poste', eye: () => [seatX() + 0.05, 0.6, 0.55], look: () => [seatX() + 0.05, 0.0, -0.08], fov: 55 },
   { id: 'rcp', label: 'Le RCP', eye: () => [unitX(Math.max(0, selUnit())), 0.52, 0.34], look: () => [unitX(Math.max(0, selUnit())), 0.02, -0.01], fov: 42 },
   { id: 'rangee', label: 'La rangée', eye: () => [seatX(), 0.85, 0.95], look: () => [seatX(), 0.0, -0.1], fov: 58 },
   { id: 'ecrans', label: 'Écrans', eye: () => [seatX() * 0.4, 0.6, 0.95], look: () => [0.3, 0.78, -0.9], fov: 66 },
@@ -124,7 +124,7 @@ const ZONES = [
   { id: 'rangee', at: () => [seatX(), 0.08, -0.2], view: 'rangee', title: 'La rangée de RCP',
     text: ['Un RCP par caméra : CAM 1 à 6 devant vous en vision 1, CAM 7 à 16 en vision 2 ; au milieu, le **MSU** (pupitre maître) qui peut régler toutes les caméras.', 'Le voyant rouge **TALLY** s\'allume quand la caméra est à l\'antenne ; l\'écran affiche ON AIR ou PVW. Un clic sur un RCP lui donne la main.'] },
 ];
-const INTRO = { title: 'Le poste de l\'ingénieur vision', text: ['Une rangée de **RCP** (un par caméra) pilote les caméras par leurs CCU. Devant vous, le multiview de la vision, le moniteur de référence et l\'oscilloscope.', 'Cliquez un RCP pour lui donner la main, puis survolez ses commandes : leur nom et leur rôle s\'affichent. Glisser pour regarder autour, molette pour zoomer.', '« Tous les réglages » ouvre le poste à plat : le RCP complet, le PRISM, le tableau de matching.'] };
+const INTRO = { title: 'Le poste de l\'ingénieur vision', text: ['Une rangée de **RCP** (un par caméra) pilote les caméras par leurs CCU. Devant vous, le multiview de la vision, le moniteur de référence et l\'oscilloscope.', 'Cliquez un RCP pour lui donner la main, puis survolez ses commandes : leur nom et leur rôle s\'affichent. Glissez pour tourner autour du pupitre, clic droit (ou Maj + glisser) pour le déplacer, molette pour vous approcher ; double-clic pour revenir à la vue.', 'À droite, en direct : le moniteur de référence, le multiview et le PRISM (waveform, vecteurscope) de la caméra au RCP : chaque réglage s\'y voit.', '« Tous les réglages » ouvre le poste à plat : le RCP complet et le tableau de matching.'] };
 
 export const POSTE_VISION = {
   id: 'vision',
@@ -142,7 +142,9 @@ export const POSTE_VISION = {
   controls, controlsSig: () => [S.selCam, S.rcpFlare ? 1 : 0, ...S.cams.map((c) => c.id)].join(','),
   hover(c) { hoverRcpKey(c && c.i != null ? c.i : -1); },
   panels: { rcp: rcpPanel },
-  drawer: { label: 'Tous les réglages', note: 'Le poste à plat : RCP complet, PRISM, matching des caméras', build: (host, arg, ctx) => buildVision(host, arg, ctx) },
+  /** les écrans de l'ingénieur vision, en direct dans le panneau de droite : Grade 1, multiview, PRISM */
+  monitors(host) { const m = visionMonitors(() => S.selCam); host.append(...m.nodes); return m; },
+  drawer: { label: 'Tous les réglages', note: 'Le poste à plat : RCP complet, matching des caméras', build: (host, arg, ctx) => buildVision(host, arg, { ...ctx, noMonitors: true }) },
   legend: () => 'Joystick : glisser vers le haut = ouvrir l\'iris · bague : glisser = master black · molettes : glisser ou molette de la souris, double-clic = 0.',
   update(dt) { updateRcp3D(dt); },
 };

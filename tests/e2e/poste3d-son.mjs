@@ -18,6 +18,7 @@ await ev(() => window.__dbg.start('standard', 'jour', 'basse', false));
 await until(page, () => window.__dbg.S.mode === 'fps', null, 30000);
 await ev(() => { const d = window.__dbg; d.goToStation(d.T.stations.find((x) => x.id === 'son'), true); });
 T.check('poste son ouvert en vue 3D devant la console', await until(page, () => window.__dbg.poste3d.P3D.active && document.getElementById('station').classList.contains('p3d-on'), null, 90000));
+T.check('écran partagé : à droite, l\'image du programme (recopiée du rendu WebGL), les vumètres et la loudness', await until(page, () => { const m = document.querySelector('.p3d-side .p3d-mons'); return !!m && !!m.querySelector('[data-gl="PGM"] canvas.p3d-mirror') && !!m.querySelector('canvas.p3d-meters') && !!m.querySelector('.vx-lufs'); }, null, 60000));
 const n = await ev(() => window.__dbg.AU.order.length);
 T.check('pour chaque tranche : un fader, SEL, PFL, MUTE et deux molettes ; deux masters ; les touches de la Control Bay', await ev((n) => document.querySelectorAll('.p3d-hit.p3d-fader').length === Math.min(n, 20) && document.querySelectorAll('.p3d-hit.vx-mute').length === Math.min(n, 20) && document.querySelectorAll('.p3d-hit.p3d-knob').length === 2 * Math.min(n, 20) && !!document.querySelector('.p3d-hit[aria-label="Fader Master PGM"]') && document.querySelectorAll('.p3d-hit.hw').length === 12, n));
 await shot('01-poste');

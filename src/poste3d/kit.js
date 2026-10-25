@@ -1,6 +1,6 @@
 // @ts-check
 import * as THREE from 'three';
-import { makeCanvas } from '../util.js';
+import { makeCanvas, el } from '../util.js';
 import { matiere } from '../matiere.js';
 
 // ----------------------------------------------------------------------------------
@@ -10,6 +10,9 @@ import { matiere } from '../matiere.js';
 // cliquables de l'interface par-dessus la 3D. Repère du plateau : x vers la droite de
 // l'opérateur, z vers lui, y vers le haut ; la surface du plateau est à y = 0.
 // ----------------------------------------------------------------------------------
+
+/** un écran du panneau de droite : son nom, puis l'image en direct (dessinée par le rendu WebGL et recopiée) */
+export const monFrame = (src, label, cls = '') => el('div', { class: 'p3d-mon ' + cls }, el('div', { class: 'lab' }, label), el('div', { class: 'mon fill', 'data-gl': src }));
 
 export const FONT = '"Barlow Condensed", "Arial Narrow", sans-serif';
 

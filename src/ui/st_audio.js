@@ -173,6 +173,44 @@ export const AUACT = {
   lim() { AU.master.lim = !AU.master.lim; applyBuses(); explain(AU.master.lim ? 'Limiteur de sortie du PGM actif (−2 dBFS) : il protège la ligne contre les crêtes (un but, une frappe près d\'un canon). Il ne remplace pas un bon mixage : s\'il travaille en permanence, baissez le master.' : 'Limiteur du PGM contourné : une crête peut maintenant saturer le départ.', AU.master.lim ? 'son:lim' : 'warn'); },
 };
 
+/** vumètres de la Control Bay : PGM G/D, international, N-1, corrélation, loudness court terme, limiteur, écoute */
+export function drawMeters(bridge) {
+  const g = bridge.getContext('2d'); const W = bridge.width, H = bridge.height;
+  g.fillStyle = '#05080a'; g.fillRect(0, 0, W, H);
+  g.font = '600 12px system-ui'; g.textBaseline = 'middle';
+  const bars = [['G', AU.master.peakL, '#22c55e'], ['D', AU.master.peakR, '#22c55e'], ['INT', AU.bus.intl.peak], ['N1C', AU.bus.n1.peak], ['N1S', AU.bus.nxs.peak], ['N1B', AU.bus.nxb.peak]];
+  const bx = 6, bw = 22, bh = H - 24;
+  bars.forEach(([l, dbv], i) => {
+    const db = Number(dbv);
+    const x = bx + i * (bw + 7) + (i >= 2 ? 8 : 0);
+    g.fillStyle = '#10161b'; g.fillRect(x, 6, bw, bh);
+    const lv = clamp((db + 60) / 60, 0, 1) * bh;
+    const gr = g.createLinearGradient(0, 6 + bh, 0, 6); gr.addColorStop(0, '#16a34a'); gr.addColorStop(0.7, '#facc15'); gr.addColorStop(0.95, '#ff3b30');
+    g.fillStyle = gr; g.fillRect(x + 2, 6 + bh - lv, bw - 4, lv);
+    g.fillStyle = 'rgba(255,255,255,.6)'; g.fillRect(x, 6 + bh - (42 / 60) * bh, bw, 1);
+    g.fillStyle = (i < 2 ? '#e5e7eb' : '#9fb0bf'); g.textAlign = 'center'; g.fillText(l, x + bw / 2, H - 8);
+  });
+  g.textAlign = 'left';
+  // corrélateur
+  const cx = 196, cw = W - cx - 10;
+  g.fillStyle = '#9fb0bf'; g.fillText('CORRÉLATION G/D', cx, 12);
+  g.fillStyle = '#10161b'; g.fillRect(cx, 20, cw, 14);
+  const pos = cx + (AU.corr + 1) / 2 * cw;
+  g.fillStyle = AU.corr < 0 ? '#ff3b30' : AU.corr < 0.3 ? '#facc15' : '#22c55e'; g.fillRect(Math.min(pos, cx + cw / 2), 22, Math.abs(pos - (cx + cw / 2)), 10);
+  g.fillStyle = '#fff'; g.fillRect(cx + cw / 2, 18, 1, 18);
+  g.fillStyle = '#7b8792'; g.fillText('−1', cx, 42); g.fillText('0', cx + cw / 2 - 3, 42); g.fillText('+1', cx + cw - 14, 42);
+  // loudness court terme vs cible
+  g.fillStyle = '#9fb0bf'; g.fillText('LOUDNESS S (cible −23)', cx, 60);
+  g.fillStyle = '#10161b'; g.fillRect(cx, 68, cw, 14);
+  const lx = (v) => cx + clamp((v + 40) / 30, 0, 1) * cw;
+  g.fillStyle = Math.abs(AU.lufs.s + 23) < 2 ? '#22c55e' : AU.lufs.s > -21 ? '#ff3b30' : '#38bdf8'; g.fillRect(cx, 70, lx(AU.lufs.s) - cx, 10);
+  g.fillStyle = '#fff'; g.fillRect(lx(-23), 66, 2, 18);
+  // limiteur et écoute
+  g.fillStyle = '#9fb0bf'; g.fillText(`LIMITEUR ${AU.master.lim ? '−' + fmt(AU.master.gr, 1) + ' dB' : 'OFF'}`, cx, 102);
+  g.fillText(`ÉCOUTE ${AU.pflActive ? 'PFL' : (MONITORS.find((m) => m[0] === AU.monitor) || [0, AU.monitor])[1]}${AU.mono ? ' · MONO' : ''}${AU.dim ? ' · DIM' : ''}`, cx, 124);
+  g.fillStyle = AU.redLight ? '#ff3b30' : '#3a2222'; g.beginPath(); g.arc(W - 14, 102, 7, 0, Math.PI * 2); g.fill();
+}
+
 export function buildAudio(body, arg, ctx) {
   const ui = { view: 'in', band: 2, layer: 'A', tab: 'console', strips: [], knobs: [], cvs: [] };
   AU.sel = AU.sel || 'amb1';
@@ -578,42 +616,8 @@ export function buildAudio(body, arg, ctx) {
     },
   };
 
-  function drawBridge() {
-    const g = bridge.getContext('2d'); const W = bridge.width, H = bridge.height;
-    g.fillStyle = '#05080a'; g.fillRect(0, 0, W, H);
-    g.font = '600 12px system-ui'; g.textBaseline = 'middle';
-    const bars = [['G', AU.master.peakL, '#22c55e'], ['D', AU.master.peakR, '#22c55e'], ['INT', AU.bus.intl.peak], ['N1C', AU.bus.n1.peak], ['N1S', AU.bus.nxs.peak], ['N1B', AU.bus.nxb.peak]];
-    const bx = 6, bw = 22, bh = H - 24;
-    bars.forEach(([l, dbv], i) => {
-      const db = Number(dbv);
-      const x = bx + i * (bw + 7) + (i >= 2 ? 8 : 0);
-      g.fillStyle = '#10161b'; g.fillRect(x, 6, bw, bh);
-      const lv = clamp((db + 60) / 60, 0, 1) * bh;
-      const gr = g.createLinearGradient(0, 6 + bh, 0, 6); gr.addColorStop(0, '#16a34a'); gr.addColorStop(0.7, '#facc15'); gr.addColorStop(0.95, '#ff3b30');
-      g.fillStyle = gr; g.fillRect(x + 2, 6 + bh - lv, bw - 4, lv);
-      g.fillStyle = 'rgba(255,255,255,.6)'; g.fillRect(x, 6 + bh - (42 / 60) * bh, bw, 1);
-      g.fillStyle = (i < 2 ? '#e5e7eb' : '#9fb0bf'); g.textAlign = 'center'; g.fillText(l, x + bw / 2, H - 8);
-    });
-    g.textAlign = 'left';
-    // corrélateur
-    const cx = 196, cw = W - cx - 10;
-    g.fillStyle = '#9fb0bf'; g.fillText('CORRÉLATION G/D', cx, 12);
-    g.fillStyle = '#10161b'; g.fillRect(cx, 20, cw, 14);
-    const pos = cx + (AU.corr + 1) / 2 * cw;
-    g.fillStyle = AU.corr < 0 ? '#ff3b30' : AU.corr < 0.3 ? '#facc15' : '#22c55e'; g.fillRect(Math.min(pos, cx + cw / 2), 22, Math.abs(pos - (cx + cw / 2)), 10);
-    g.fillStyle = '#fff'; g.fillRect(cx + cw / 2, 18, 1, 18);
-    g.fillStyle = '#7b8792'; g.fillText('−1', cx, 42); g.fillText('0', cx + cw / 2 - 3, 42); g.fillText('+1', cx + cw - 14, 42);
-    // loudness court terme vs cible
-    g.fillStyle = '#9fb0bf'; g.fillText('LOUDNESS S (cible −23)', cx, 60);
-    g.fillStyle = '#10161b'; g.fillRect(cx, 68, cw, 14);
-    const lx = (v) => cx + clamp((v + 40) / 30, 0, 1) * cw;
-    g.fillStyle = Math.abs(AU.lufs.s + 23) < 2 ? '#22c55e' : AU.lufs.s > -21 ? '#ff3b30' : '#38bdf8'; g.fillRect(cx, 70, lx(AU.lufs.s) - cx, 10);
-    g.fillStyle = '#fff'; g.fillRect(lx(-23), 66, 2, 18);
-    // limiteur et écoute
-    g.fillStyle = '#9fb0bf'; g.fillText(`LIMITEUR ${AU.master.lim ? '−' + fmt(AU.master.gr, 1) + ' dB' : 'OFF'}`, cx, 102);
-    g.fillText(`ÉCOUTE ${AU.pflActive ? 'PFL' : (MONITORS.find((m) => m[0] === AU.monitor) || [0, AU.monitor])[1]}${AU.mono ? ' · MONO' : ''}${AU.dim ? ' · DIM' : ''}`, cx, 124);
-    g.fillStyle = AU.redLight ? '#ff3b30' : '#3a2222'; g.beginPath(); g.arc(W - 14, 102, 7, 0, Math.PI * 2); g.fill();
-  }
+  function drawBridge() { drawMeters(bridge); }
+
 }
 // relance du bord terrain : prévenir l'ingénieur du son (au poste) ou par l'intercom
 on('audio', (e) => {

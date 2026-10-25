@@ -1,8 +1,10 @@
 // @ts-check
 import { clamp, fmt } from '../util.js';
-import { AU, faderLin } from '../audio.js';
+import { AU, faderLin, startAudio } from '../audio.js';
 import { DESK, DESK_GEO, updateAudioDesk } from '../audiodesk.js';
-import { AUACT, buildAudio } from '../ui/st_audio.js';
+import { AUACT, buildAudio, drawMeters } from '../ui/st_audio.js';
+import { el } from '../util.js';
+import { monFrame } from './kit.js';
 
 // ----------------------------------------------------------------------------------
 // Le poste son en vue 3D (poste3d/index.js) devant la console de la cabine (inspiration Studer Vista 1,
@@ -58,7 +60,7 @@ function controls() {
 
 // vues : œil et point visé dans le repère de la console (x : largeur, z : vers l'opérateur)
 const VIEWS = [
-  { id: 'poste', label: 'Le poste', eye: [0.0, 0.6, 0.55], look: [-0.02, 0.32, -0.7], fov: 64 },
+  { id: 'poste', label: 'Le poste', eye: [0.0, 0.72, 0.5], look: [0.0, 0.04, -0.24], fov: 55 },
   { id: 'faders', label: 'Faders', eye: [0.0, 0.72, 0.3], look: [0.0, 0.03, -0.22], fov: 58 },
   { id: 'ecrans', label: 'Écrans Vistonics', eye: [-0.1, 0.56, 0.3], look: [-0.1, 0.17, -0.42], fov: 56 },
   { id: 'cbay', label: 'Control Bay', eye: [0.42, 0.4, 0.2], look: [0.42, 0.1, -0.3], fov: 46 },
@@ -71,7 +73,7 @@ const ZONES = [
   { id: 'cbay', at: [0.42, 0.22, -0.3], view: 'cbay', title: 'La Control Bay',
     text: ['L\'écran de la tranche sélectionnée (SEL), la loudness intégrée (cible −23 LUFS, EBU R128) et les vumètres du PGM.', 'Les touches : l\'**écoute** (PGM, international, N-1), **DIM**, **MONO**, le **talkback** maintenu vers un N-1, le **suivi du jeu** des canons et le **limiteur** du PGM.'] },
 ];
-const INTRO = { title: 'La console de la régie son', text: ['Une console inspirée de la **Studer Vista 1** : deux baies Vistonics de dix tranches, la Control Bay à droite, le pont de vumètres au fond.', 'Survolez une commande : son nom et son rôle s\'affichent. Faders : tirer vers le haut ou le bas ; molettes : glisser ou molette de la souris, double-clic pour revenir à la valeur nominale.', '« Tous les réglages » ouvre la console à plat : couches, égaliseur, dynamique, patch, bus et N-1, snapshots, commentaires.'] };
+const INTRO = { title: 'La console de la régie son', text: ['Une console inspirée de la **Studer Vista 1** : deux baies Vistonics de dix tranches, la Control Bay à droite, le pont de vumètres au fond.', 'Survolez une commande : son nom et son rôle s\'affichent. Faders : tirer vers le haut ou le bas ; molettes : glisser ou molette de la souris, double-clic pour revenir à la valeur nominale. Glissez pour tourner autour du pupitre, clic droit (ou Maj + glisser) pour le déplacer, molette pour vous approcher ; double-clic pour revenir à la vue.', 'À droite, en direct : l\'image du programme, les vumètres, la corrélation et la loudness.', '« Tous les réglages » ouvre la console à plat : couches, égaliseur, dynamique, patch, bus et N-1, snapshots, commentaires.'] };
 
 export const POSTE_SON = {
   id: 'son',
@@ -80,6 +82,15 @@ export const POSTE_SON = {
   views: VIEWS, zones: ZONES, intro: INTRO, detailView: 'faders',
   controls, controlsSig: () => AU.order.join(','),
   hover() {},
+  /** les écrans de la régie son, en direct dans le panneau de droite : l'image du programme, les vumètres et la loudness */
+  monitors(host) {
+    const cv = el('canvas', { width: 440, height: 150, class: 'vx-bridge p3d-meters', 'aria-label': 'Vumètres du programme, des départs, corrélation et loudness' });
+    const lufs = el('div', { class: 'lcd amber vx-lufs' });
+    const start = el('button', { class: 'btn primary small', type: 'button', 'data-ro-ok': '', onclick: () => startAudio() }, 'Activer le son');
+    host.append(monFrame('PGM', 'Programme (image à l\'antenne)', 'big'), el('div', { class: 'p3d-mon' }, el('div', { class: 'lab' }, 'Vumètres et loudness (Control Bay)'), cv, el('div', { class: 'hwrow' }, lufs, start)));
+    let t = 0;
+    return { frame(dt) { t += dt || 0.016; if (t < 0.033) return; t = 0; drawMeters(cv); }, update() { const L = AU.lufs; start.hidden = !!AU.ctx; lufs.textContent = AU.ctx ? `M ${fmt(L.m, 1)} · S ${fmt(L.s, 1)} · I ${fmt(L.i, 1)} LUFS` : 'Son désactivé'; } };
+  },
   drawer: { label: 'Tous les réglages', note: 'La console à plat : couches, égaliseur, dynamique, patch, bus et N-1, snapshots, commentaires', build: (host, arg, ctx) => buildAudio(host, arg, ctx) },
   legend: () => 'Faders : tirer · molettes : glisser ou molette de la souris, double-clic = valeur nominale · talkback : maintenir.',
   update(dt) { updateAudioDesk(AU, dt, faderLin); },

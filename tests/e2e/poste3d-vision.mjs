@@ -26,6 +26,7 @@ T.check('la rangée de RCP est en 3D sur le bureau vision : boîtiers en matièr
 
 await ev(() => { const d = window.__dbg; d.goToStation(d.T.stations.find((x) => x.id === 'vision1'), true); });
 T.check('poste vision 1 ouvert en vue 3D : le RCP de la CAM 1 a la main', await until(page, () => window.__dbg.poste3d.P3D.active && window.__dbg.S.selCam === 1 && document.getElementById('station').classList.contains('p3d-on'), null, 90000));
+T.check('écran partagé : à droite, le Grade 1, le multiview et le PRISM (waveform, vecteurscope) en direct, recopiés du rendu WebGL', await until(page, () => { const m = document.querySelector('.p3d-side .p3d-mons'); return !!m && !!m.querySelector('[data-gl="AUX_VISION"]') && !!m.querySelector('[data-gl="mv"]') && !!m.querySelector('.vision-prism .prism') && [...m.querySelectorAll('canvas.p3d-mirror')].filter((c) => c.width > 50).length >= 2; }, null, 60000));
 T.check('une zone pour chaque autre RCP équipé (11 caméras) et, sur le RCP choisi, 10 touches de fonction, 9 touches assignables, 6 molettes, le joystick et sa bague', await ev(() => document.querySelectorAll('.p3d-rcpunit').length === 11 && document.querySelectorAll('.p3d-hit.rcp-btn').length === 10 && document.querySelectorAll('.p3d-hit.rcp-key').length === 9 && document.querySelectorAll('.p3d-hit.p3d-knob').length === 7 && !!document.querySelector('.p3d-hit.rjoy .rjoy-handle')));
 await shot('01-poste');
 
@@ -54,8 +55,7 @@ T.check('écran tactile : ses pages en 2D sur la fiche (PAINT, GAMMA / KNEE…) 
 await shot('03-ecran-tactile', 1200);
 
 await page.click('.p3d-drawer-btn');
-T.check('« Tous les réglages » : le poste à plat (RCP de la CAM 2, PRISM, matching) dans le tiroir', await until(page, () => { const d = document.querySelector('.p3d-drawer'); return d && !d.hidden && !!d.querySelector('.rcp') && /RCP 2/.test(d.textContent) && !!d.querySelector('.vision-prism'); }, null, 8000));
-T.check('les moniteurs du tiroir (Grade 1, multiview) sont recopiés du rendu WebGL', await until(page, () => [...document.querySelectorAll('.p3d-drawer canvas.p3d-mirror')].filter((c) => c.width > 50).length >= 2, null, 40000));
+T.check('« Tous les réglages » : le poste à plat (RCP de la CAM 2, matching) dans le tiroir ; les écrans restent dans le panneau', await until(page, () => { const d = document.querySelector('.p3d-drawer'); return d && !d.hidden && !!d.querySelector('.rcp') && /RCP 2/.test(d.textContent) && /matching/.test(d.textContent) && !d.querySelector('.vision-prism'); }, null, 8000));
 await shot('04-tiroir', 2000);
 await page.click('.p3d-drawer-btn');
 

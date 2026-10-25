@@ -35,8 +35,24 @@ T.check('le pupitre du truquiste est en 3D dans le car : châssis en matière pl
 await ev(() => { const d = window.__dbg; d.goToStation(d.T.stations.find((x) => x.id === 'melangeur'), true); });
 T.check('poste Mélangeur ouvert en vue 3D : couche transparente, en-tête, bouton « Vue 2D »', await until(page, () => document.getElementById('station').classList.contains('p3d-on') && window.__dbg.poste3d.P3D.active && /Vue 2D/.test(document.querySelector('#station .st-vue')?.textContent || ''), null, 90000));
 T.check('une zone cliquable par commande, chacune nommée (texte lisible par un lecteur d\'écran) ; 22 touches par rangée de croisement', await ev(() => { const h = [...document.querySelectorAll('#station .p3d-hit')]; return h.length > 100 && h.every((x) => (x.textContent || '').trim().length > 1) && document.querySelectorAll('#station .p3d-hit.xpt.pst').length === 22; }));
-T.check('les zones suivent les touches à l\'écran : la zone de B · PST 3 a la taille d\'une touche vue d\'en face (entre 12 et 80 px)', await until(page, () => { const b = document.querySelector('#station .xpt.pst[aria-label="B · PST entrée 3"]'); if (!b) return false; const r = b.getBoundingClientRect(); return r.width > 12 && r.width < 80 && r.height > 8 && r.top > 300; }, null, 8000));
+T.check('les zones suivent les touches à l\'écran : la zone de B · PST 3 a la taille d\'une touche vue d\'en face (entre 9 et 80 px), dans la moitié 3D', await until(page, () => { const b = document.querySelector('#station .xpt.pst[aria-label="B · PST entrée 3"]'); if (!b) return false; const r = b.getBoundingClientRect(), s = document.querySelector('.p3d-side').getBoundingClientRect(); return r.width > 9 && r.width < 80 && r.height > 6 && r.top > 200 && r.right < s.left; }, null, 8000), await ev(() => { const r = document.querySelector('#station .xpt.pst[aria-label="B · PST entrée 3"]')?.getBoundingClientRect(); return r ? JSON.stringify([r.left, r.top, r.width, r.height].map(Math.round)) : ''; }));
 T.check('étiquettes des zones du pupitre et fiche d\'accueil à droite, fil « Ce qui se passe »', await ev(() => document.querySelectorAll('#station .p3d-tag:not([hidden])').length >= 4 && /Le pupitre du truquiste/.test(document.querySelector('.p3d-fiche')?.textContent || '') && !!document.querySelector('.p3d-side .explain')));
+T.check('écran partagé : à droite, le multiview, le PGM et le PVW en direct (recopiés du rendu WebGL)', await until(page, () => ['mv', 'PGM', 'PVW'].every((k) => { const c = document.querySelector(`.p3d-side .p3d-mons [data-gl="${k}"] canvas.p3d-mirror`); return c && c.width > 50; }), null, 60000));
+// orbite autour du pupitre : glisser tourne, la molette rapproche, double-clic revient à la vue
+const camPos = () => ev(() => { const p = window.__dbg.pcam.position; return [p.x, p.y, p.z]; });
+const orb = () => ev(() => ({ ...window.__dbg.poste3d.P3D.orb, t: null }));
+const p0 = await camPos(), o0 = await orb();
+await page.mouse.move(300, 200); await page.mouse.down(); await page.mouse.move(420, 170, { steps: 6 }); await page.mouse.up();
+T.check('glisser sur la scène : la caméra tourne autour du pupitre (orbite)', await until(page, (p0) => { const p = window.__dbg.pcam.position; return Math.hypot(p.x - p0[0], p.y - p0[1], p.z - p0[2]) > 0.05; }, p0, 10000) && Math.abs((await orb()).theta - o0.theta) > 0.1);
+await page.mouse.move(300, 200); await page.mouse.wheel(0, -400);
+T.check('molette : la caméra s\'approche de la cible', await until(page, (r0) => window.__dbg.poste3d.P3D.orb.r < r0 * 0.8, o0.r, 8000));
+await page.mouse.dblclick(300, 200);
+T.check('double-clic : retour à la vue du poste', await until(page, (r0) => !window.__dbg.poste3d.P3D.fly && Math.abs(window.__dbg.poste3d.P3D.orb.r - r0) < 0.01, o0.r, 10000));
+await page.click('.p3d-fold');
+T.check('« replier » : la fiche se range, les écrans prennent toute la hauteur', await until(page, () => document.querySelector('.p3d-side').classList.contains('p3d-folded') && getComputedStyle(document.querySelector('.p3d-tabbody')).display === 'none', null, 5000));
+await shot('01b-ecrans-pleine-hauteur', 1500);
+await page.click('.p3d-tab >> nth=1');
+T.check('un onglet rouvre le bas du panneau : le fil « Ce qui se passe »', await until(page, () => !document.querySelector('.p3d-side').classList.contains('p3d-folded') && !document.querySelector('.p3d-tabbody > .explain').hidden, null, 5000));
 await shot('01-poste');
 
 await view('xpt');

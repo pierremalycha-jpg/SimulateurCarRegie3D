@@ -1,7 +1,7 @@
 // @ts-check
 import * as THREE from 'three';
 import { S } from '../state.js';
-import { el, clamp, lerp } from '../util.js';
+import { el, clamp, lerp, wrapAngle } from '../util.js';
 import { T } from '../truck.js';
 import { renderEye, RENDER } from '../render.js';
 import { rich } from '../ui/rich.js';
@@ -11,28 +11,30 @@ import { POSTE_SON } from './son.js';
 
 // ----------------------------------------------------------------------------------
 // Les postes en 3D : au lieu d'une interface plate en plein écran, on s'assoit devant le vrai
-// matériel du car. La vue est celle de l'opérateur (le car est rendu comme en marchant) ; par-dessus,
-// une couche d'interface 2D légère :
+// matériel du car. L'écran est partagé : à gauche, le pupitre en 3D (le car est rendu comme en marchant), qu'on
+// observe en tournant autour (orbite, comme la caméra du Cours : glisser pour tourner, clic droit ou Maj pour
+// déplacer, molette pour s'approcher) ; à droite, un panneau 2D : les écrans du poste en direct (multiview,
+// moniteur de référence, PRISM, vumètres… : on voit l'effet de chaque geste), puis la fiche et le fil
+// « Ce qui se passe ». Sur le pupitre, une couche d'interface 2D légère :
 //  · une zone cliquable transparente sur chaque commande (élément du DOM recalé à chaque image sur la
 //    projection de la commande 3D) : clic, clavier (Tab, flèches), lecteurs d'écran, et les parcours du chef
 //    de car qui visent les mêmes sélecteurs qu'en 2D (#station .xpt.pst[aria-label=…], .rcp-btn…) ;
 //    une commande est une touche (clic), une touche maintenue (talkback), une glissière le long d'une
 //    course 3D (barre T, fader, joystick) ou une molette (glisser vers le haut ou le bas, molette, flèches) ;
 //  · une bulle au survol (nom et rôle de la commande), des étiquettes sur les zones du pupitre ;
-//  · une colonne à droite : la fiche de la zone (et ses réglages en 2D), puis le fil « Ce qui se passe » ;
-//  · des vues prédéfinies (le poste, puis chaque zone en gros plan), glisser pour regarder autour,
-//    molette pour zoomer, double-clic pour revenir ;
+//  · des vues prédéfinies (le poste, puis chaque zone en gros plan), double-clic pour revenir à la vue ;
 //  · « Tous les réglages » : un tiroir qui contient l'interface 2D complète du poste (ce que le matériel 3D ne
 //    porte pas : pages, matrices, instruments). Le chef de car y renvoie quand l'élément à montrer y est.
 // La vue 2D reste disponible (bouton « Vue 2D » de l'en-tête, choix mémorisé) : mode allégé, petit écran,
 // ou simple préférence. Un poste s'ajoute ici par sa définition (voir POSTE_MELANGEUR) :
-//  ready, root, deck, views, zones, intro, controls, controlsSig?, hover, panels?, drawer?, key?, legend?, update.
+//  ready, root, deck, views, zones, intro, controls, controlsSig?, hover, monitors?, panels?, drawer?, key?, legend?,
+//  update ; et, pour l'orbite : rMin / rMax (distance à la cible), eyeBox (où l'œil peut aller, repère du pupitre).
 // ----------------------------------------------------------------------------------
 const DEFS = { melangeur: POSTE_MELANGEUR, vision: POSTE_VISION, son: POSTE_SON };
 const PREF = 'carregie.poste3d';
 
 /** @type {any} */
-export const P3D = { active: false, def: null, arg: null, view: 'poste', cam: null, fly: null, off: { yaw: 0, pitch: 0 }, zoom: 1, hits: [], tags: [], ui: null, hot: null, sel: null, panel: null, drawer: null, sig: '' };
+export const P3D = { active: false, def: null, arg: null, view: 'poste', orb: null, fly: null, hits: [], tags: [], ui: null, hot: null, sel: null, panel: null, drawer: null, mons: null, sig: '' };
 
 /** ce poste existe-t-il en 3D (et son matériel est-il construit) ? */
 export const poste3dDispo = (id) => !!(DEFS[id] && DEFS[id].ready());
@@ -43,7 +45,7 @@ export function poste3dVoulu() {
 }
 export function setPoste3dVoulu(on) { try { localStorage.setItem(PREF, on ? '3d' : '2d'); } catch (e) { /* stockage indisponible */ } }
 
-const V = new THREE.Vector3(), W3 = new THREE.Vector3(), LK = new THREE.Vector3(), UP = new THREE.Vector3(0, 1, 0);
+const V = new THREE.Vector3(), W3 = new THREE.Vector3(), UP = new THREE.Vector3(0, 1, 0), SPH = new THREE.Spherical();
 /** @type {any} */
 let CAM = null; // caméra de la vue (pour projeter la course des glissières)
 const ease = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
@@ -61,23 +63,13 @@ function viewOf(id) {
 export function mountPoste3D(id, body, ctx, arg) {
   const def = DEFS[id]; P3D.def = def; P3D.active = true; P3D.arg = arg;
   if (def.enter) def.enter(arg);
-  P3D.view = 'poste'; P3D.cam = viewOf('poste'); P3D.fly = null; P3D.off = { yaw: 0, pitch: 0 }; P3D.zoom = 1; P3D.hot = null; P3D.sel = null; P3D.panel = null;
+  P3D.view = 'poste'; P3D.orb = orbOf(viewOf('poste')); P3D.fly = null; P3D.hot = null; P3D.sel = null; P3D.panel = null;
   body.classList.add('p3d-body');
-  // la scène : glisser pour regarder, molette pour zoomer, double-clic pour revenir
+  // la scène : orbite autour du pupitre (glisser), déplacement (clic droit, Maj + glisser), molette (s'approcher),
+  // pincement au doigt, double-clic pour revenir à la vue
   // data-ro-ok : regarder, changer de vue et lire les fiches restent permis quand le poste est en lecture seule (session)
   const stage = el('div', { class: 'p3d-stage', 'aria-hidden': 'true', 'data-ro-ok': '' });
-  let drag = null;
-  stage.addEventListener('pointerdown', (e) => { drag = { x: e.clientX, y: e.clientY }; try { stage.setPointerCapture(e.pointerId); } catch (err) { /* sans capture */ } });
-  stage.addEventListener('pointermove', (e) => {
-    if (!drag) return;
-    const k = 0.0032 * P3D.zoom;
-    P3D.off.yaw = clamp(P3D.off.yaw + (e.clientX - drag.x) * k, -0.75, 0.75); P3D.off.pitch = clamp(P3D.off.pitch + (e.clientY - drag.y) * k, -0.45, 0.45);
-    drag = { x: e.clientX, y: e.clientY };
-  });
-  const end = () => { drag = null; };
-  stage.addEventListener('pointerup', end); stage.addEventListener('pointercancel', end);
-  stage.addEventListener('wheel', (e) => { e.preventDefault(); P3D.zoom = clamp(P3D.zoom * Math.exp(e.deltaY * 0.0012), 0.45, 1.25); }, { passive: false });
-  stage.addEventListener('dblclick', () => goView(P3D.view));
+  orbitInput(stage);
   // zones cliquables des commandes (reconstruites quand la définition le demande : autre caméra, autre couche…)
   const hitsBox = el('div', { class: 'p3d-hits' });
   // étiquettes des zones (vue d'ensemble)
@@ -90,17 +82,29 @@ export function mountPoste3D(id, body, ctx, arg) {
   });
   // vues prédéfinies, puis le tiroir « Tous les réglages »
   const views = el('div', { class: 'p3d-views', role: 'toolbar', 'aria-label': 'Vues du poste', 'data-ro-ok': '' }, ...def.views.map((v) => el('button', { class: 'btn small', type: 'button', 'data-view': v.id, onclick: () => { goView(v.id); const z = def.zones.find((x) => x.view === v.id); showFiche(z || null); } }, v.label)));
-  // colonne : fiche de la zone, réglages, fil « Ce qui se passe »
-  const fiche = el('div', { class: 'p3d-fiche' });
+  // panneau de droite : les écrans du poste (en direct), puis deux onglets, la fiche (zone, réglages en 2D) et le fil
+  // « Ce qui se passe » (un point signale une nouvelle explication quand on lit la fiche)
+  const mons = el('div', { class: 'p3d-mons', role: 'region', 'aria-label': 'Écrans du poste' });
+  const fiche = el('div', { class: 'p3d-fiche', role: 'tabpanel' });
+  const tabF = el('button', { class: 'p3d-tab on', type: 'button', role: 'tab', 'aria-selected': 'true', 'data-ro-ok': '', onclick: () => setTab('fiche') }, 'Fiche');
+  const tabE = el('button', { class: 'p3d-tab', type: 'button', role: 'tab', 'aria-selected': 'false', 'data-ro-ok': '', onclick: () => setTab('fil') }, 'Ce qui se passe');
+  // replier la fiche et le fil : toute la hauteur pour les écrans (un clic sur un onglet les rouvre)
+  const fold = el('button', { class: 'p3d-fold', type: 'button', 'data-ro-ok': '', 'aria-expanded': 'true', title: 'Replier la fiche : toute la hauteur pour les écrans', onclick: () => setFold(!P3D.ui.folded) }, '▾');
   const legend = el('p', { class: 'p3d-legend note' });
-  const side = el('div', { class: 'p3d-side' }, fiche, ctx.explainBox, legend);
+  const side = el('div', { class: 'p3d-side' }, mons, el('div', { class: 'p3d-tabs', role: 'tablist' }, tabF, tabE, el('span', { class: 'p3d-sp' }), fold), el('div', { class: 'p3d-tabbody' }, fiche, ctx.explainBox), legend);
   const tip = el('div', { class: 'p3d-tip', role: 'status', hidden: true });
   const drawer = def.drawer ? makeDrawer(def.drawer, views, ctx, arg) : null;
   body.append(stage, hitsBox, tagsBox, views, ...(drawer ? [drawer.box] : []), side, tip);
-  P3D.ui = { body, stage, hitsBox, tagsBox, views, side, fiche, legend, tip };
+  P3D.ui = { body, stage, hitsBox, tagsBox, views, side, mons, fiche, legend, tip, tabF, tabE, fold, feed: ctx.explainBox, tab: 'fiche', folded: false };
   P3D.drawer = drawer;
+  P3D.mons = def.monitors ? def.monitors(mons, ctx) || {} : null;
+  mons.hidden = !def.monitors;
+  // une explication arrive pendant qu'on lit la fiche : le point sur l'onglet du fil
+  const list = ctx.explainBox.querySelector('.ex-list');
+  if (list && typeof MutationObserver !== 'undefined') new MutationObserver(() => { if (P3D.ui && P3D.ui.tab !== 'fil') tabE.classList.add('new'); }).observe(list, { childList: true, characterData: true, subtree: true });
   buildHits();
   showFiche(null);
+  setTab('fiche');
   return {
     update(dt) {
       if (def.controlsSig && def.controlsSig() !== P3D.sig) { buildHits(); if (def.onControls) def.onControls(); }
@@ -115,8 +119,9 @@ export function mountPoste3D(id, body, ctx, arg) {
       if (P3D.hot) refreshTip();
       for (const t of P3D.tags) { const s = val(t.z.title); if (t.lab.textContent !== s) t.lab.textContent = s; }
       if (drawer && drawer.open && drawer.inst.update) drawer.inst.update(dt);
+      if (P3D.mons && P3D.mons.update) P3D.mons.update(dt);
     },
-    frame(dt) { if (drawer && drawer.open && drawer.inst.frame) drawer.inst.frame(dt); },
+    frame(dt) { if (drawer && drawer.open && drawer.inst.frame) drawer.inst.frame(dt); if (P3D.mons && P3D.mons.frame) P3D.mons.frame(dt); },
     key(e) {
       const H = P3D.hot;
       if (H && (H.c.slider || H.c.knob) && document.activeElement === H.h) {
@@ -127,7 +132,7 @@ export function mountPoste3D(id, body, ctx, arg) {
       if (drawer && drawer.open && drawer.inst.key && drawer.inst.key(e)) return true;
       return def.key ? def.key(e) : false;
     },
-    close() { if (drawer && drawer.inst.close) drawer.inst.close(); unmount(); },
+    close() { if (drawer && drawer.inst.close) drawer.inst.close(); if (P3D.mons && P3D.mons.close) P3D.mons.close(); unmount(); },
   };
 }
 function unmount() {
@@ -136,7 +141,7 @@ function unmount() {
   if (CAM) { CAM.clearViewOffset(); CAM.near = 0.1; CAM.updateProjectionMatrix(); }
   if (P3D.def && P3D.def.hover) P3D.def.hover(null);
   if (P3D.def && P3D.def.leave) P3D.def.leave();
-  P3D.active = false; P3D.ui = null; P3D.hits = []; P3D.tags = []; P3D.panel = null; P3D.drawer = null;
+  P3D.active = false; P3D.ui = null; P3D.hits = []; P3D.tags = []; P3D.panel = null; P3D.drawer = null; P3D.mons = null;
 }
 const later = (fn) => setTimeout(fn, 30);
 
@@ -162,29 +167,87 @@ function buildHits() {
   });
 }
 
-// ---------------- vues et caméra ----------------
+// ---------------- vues et caméra : orbite autour d'une cible (comme la caméra du Cours) ----------------
+// orb : cible t (monde), distance r, angles theta (autour de la verticale) et phi (depuis la verticale), ouverture ;
+// theta0 : l'angle de la vue d'origine (on ne tourne pas derrière le pupitre, dans le mur d'écrans)
+function orbOf(v) {
+  SPH.setFromVector3(V.copy(v.eye).sub(v.look));
+  return { id: v.id, t: v.look.clone(), r: SPH.radius, theta: SPH.theta, phi: SPH.phi, fov: v.fov, theta0: SPH.theta };
+}
 export function goView(id) {
   if (!P3D.active) return;
-  const to = viewOf(id);
-  P3D.fly = { from: { eye: P3D.cam.eye.clone(), look: P3D.cam.look.clone(), fov: P3D.cam.fov }, to, k: 0 };
-  P3D.view = to.id; P3D.off = { yaw: 0, pitch: 0 }; P3D.zoom = 1;
+  const to = orbOf(viewOf(id));
+  P3D.fly = { from: { ...P3D.orb, t: P3D.orb.t.clone() }, to, t0: null };
+  P3D.view = to.id;
+}
+const PHI = [0.1, 1.45];
+function orbitInput(stage) {
+  const ptrs = new Map(); let pinch = null;
+  const pan = (dx, dy) => {
+    // déplacement de la cible dans le plan de l'écran, proportionnel à la distance
+    if (!CAM) return; const O = P3D.orb; const k = O.r * 0.0016;
+    const right = new THREE.Vector3().setFromMatrixColumn(CAM.matrixWorld, 0), up = new THREE.Vector3().setFromMatrixColumn(CAM.matrixWorld, 1);
+    O.t.addScaledVector(right, -dx * k).addScaledVector(up, dy * k);
+    clampTarget();
+  };
+  stage.addEventListener('contextmenu', (e) => e.preventDefault());
+  stage.addEventListener('pointerdown', (e) => {
+    ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY, pan: e.button === 2 || e.shiftKey });
+    try { stage.setPointerCapture(e.pointerId); } catch (err) { /* sans capture */ }
+    P3D.fly = null;
+    if (ptrs.size === 2) { const [a, b] = [...ptrs.values()]; pinch = { d: Math.hypot(a.x - b.x, a.y - b.y), r: P3D.orb.r }; }
+  });
+  stage.addEventListener('pointermove', (e) => {
+    const p = ptrs.get(e.pointerId); if (!p) return;
+    const dx = e.clientX - p.x, dy = e.clientY - p.y; p.x = e.clientX; p.y = e.clientY;
+    if (ptrs.size === 2 && pinch) { const [a, b] = [...ptrs.values()]; P3D.orb.r = clampR(pinch.r * pinch.d / Math.max(20, Math.hypot(a.x - b.x, a.y - b.y))); return; }
+    if (p.pan) { pan(dx, dy); return; }
+    const O = P3D.orb, span = P3D.def.thetaSpan ?? 1.25;
+    O.theta = O.theta0 + clamp(wrapAngle(O.theta - dx * 0.006 - O.theta0), -span, span);
+    O.phi = clamp(O.phi - dy * 0.006, PHI[0], P3D.def.phiMax ?? PHI[1]);
+  });
+  const end = (e) => { ptrs.delete(e.pointerId); if (ptrs.size < 2) pinch = null; };
+  stage.addEventListener('pointerup', end); stage.addEventListener('pointercancel', end);
+  stage.addEventListener('wheel', (e) => { e.preventDefault(); P3D.fly = null; P3D.orb.r = clampR(P3D.orb.r * Math.exp(e.deltaY * 0.0012)); }, { passive: false });
+  stage.addEventListener('dblclick', () => goView(P3D.view));
+}
+const clampR = (r) => clamp(r, P3D.def.rMin ?? 0.2, P3D.def.rMax ?? 1.8);
+// la cible reste près du pupitre (repère du pupitre : ±1,6 m de côté, du bureau au haut des écrans)
+function clampTarget() {
+  const R = P3D.def.root(); R.updateMatrixWorld(true);
+  const loc = R.worldToLocal(P3D.orb.t.clone());
+  loc.set(clamp(loc.x, -1.6, 1.6), clamp(loc.y, -0.1, 1.4), clamp(loc.z, -1.0, 0.8));
+  P3D.orb.t.copy(R.localToWorld(loc));
+}
+// l'œil reste dans le car : s'il sort de la boîte permise (repère du pupitre), il se rapproche de la cible
+// les vues sont réglées pour une zone 3D au format 16/10 ; plus étroite (le panneau de droite), l'œil recule d'autant
+// (jusqu'à 1,5 fois) pour garder le même cadrage en largeur
+let NARROW = 1;
+function eyeOf(O, out) {
+  const R = P3D.def.root(), B = P3D.def.eyeBox || { x: [-2.5, 2.5], y: [0.12, 1.6], z: [-0.9, 1.3] };
+  let r = O.r * NARROW;
+  for (let k = 0; k < 12; k++) {
+    out.setFromSpherical(SPH.set(r, O.phi, O.theta)).add(O.t);
+    const l = R.worldToLocal(V.copy(out));
+    if (l.x >= B.x[0] && l.x <= B.x[1] && l.y >= B.y[0] && l.y <= B.y[1] && l.z >= B.z[0] && l.z <= B.z[1]) break;
+    r *= 0.85;
+  }
+  return out;
 }
 function camStep(cam, W, H, sideW) {
   if (P3D.fly) {
     // temps réel (le pas de la simulation est borné : sur une machine lente, le vol traînerait)
-    const F = P3D.fly; const now = performance.now(); F.t0 ??= now; F.k = Math.min(1, (now - F.t0) / 750); const e = ease(F.k);
-    P3D.cam = { id: F.to.id, eye: F.from.eye.clone().lerp(F.to.eye, e), look: F.from.look.clone().lerp(F.to.look, e), fov: lerp(F.from.fov, F.to.fov, e) };
-    if (F.k >= 1) { P3D.cam = F.to; P3D.fly = null; }
+    const F = P3D.fly; const now = performance.now(); F.t0 ??= now; const k = Math.min(1, (now - F.t0) / 750); const e = ease(k);
+    const a = F.from, b = F.to;
+    P3D.orb = { id: b.id, t: a.t.clone().lerp(b.t, e), r: Math.exp(lerp(Math.log(a.r), Math.log(b.r), e)), theta: a.theta + wrapAngle(b.theta - a.theta) * e, phi: lerp(a.phi, b.phi, e), fov: lerp(a.fov, b.fov, e), theta0: b.theta0 };
+    if (k >= 1) { P3D.orb = { ...b, t: b.t.clone() }; P3D.fly = null; }
   }
-  const C = P3D.cam;
-  cam.position.copy(C.eye);
-  // regard décalé (glisser) autour de la direction de la vue
-  V.copy(C.look).sub(C.eye); const r = V.length();
-  const sph = new THREE.Spherical().setFromVector3(V); sph.theta -= P3D.off.yaw; sph.phi = clamp(sph.phi + P3D.off.pitch, 0.2, Math.PI - 0.2);
-  LK.setFromSpherical(sph).setLength(r).add(C.eye);
-  cam.up.copy(UP); cam.lookAt(LK);
-  // la scène se centre dans la partie libre de l'écran, à gauche de la colonne : décalage du centre optique
-  const fov = C.fov * P3D.zoom, s = Math.round(sideW / 2), v = cam.view;
+  const O = P3D.orb;
+  NARROW = clamp(1.6 / Math.max(0.3, (W - sideW) / Math.max(1, H)), 1, 1.5);
+  eyeOf(O, cam.position);
+  cam.up.copy(UP); cam.lookAt(O.t);
+  // la scène se centre dans la partie libre de l'écran, à gauche du panneau : décalage du centre optique
+  const fov = O.fov, s = Math.round(sideW / 2), v = cam.view;
   if (Math.abs(cam.fov - fov) > 0.01 || cam.near !== 0.02 || !v || !v.enabled || v.offsetX !== s || v.fullWidth !== W || v.fullHeight !== H) {
     cam.fov = fov; cam.near = 0.02;
     cam.setViewOffset(W, H, s, 0, W, H);
@@ -332,13 +395,13 @@ function makeDrawer(spec, views, ctx, arg) {
   return D;
 }
 /**
- * moniteurs du tiroir : en vue 3D, l'interface passe au-dessus du canevas WebGL, qui dessine pourtant les écrans
- * des postes (drawSlots) ; juste après, on recopie chaque écran du tiroir dans un canevas posé dans son cadre.
+ * écrans du panneau et du tiroir : en vue 3D, l'interface passe au-dessus du canevas WebGL, qui dessine pourtant les
+ * écrans des postes (drawSlots) ; juste après, on recopie chaque écran dans un canevas posé dans son cadre.
  */
 export function mirrorSlots(renderer) {
-  const D = P3D.drawer; if (!P3D.active || !D || !D.open) return;
+  if (!P3D.active || !P3D.ui) return;
   const src = renderer.domElement, pr = renderer.getPixelRatio();
-  for (const m of /** @type {NodeListOf<HTMLElement>} */ (D.box.querySelectorAll('[data-gl]'))) {
+  for (const m of /** @type {NodeListOf<HTMLElement>} */ (P3D.ui.body.querySelectorAll('[data-gl]'))) {
     if (m.offsetParent === null) continue;
     const r = m.getBoundingClientRect(); if (r.width < 4 || r.height < 4) continue;
     let cv = /** @type {HTMLCanvasElement | null} */ (m.querySelector(':scope > canvas.p3d-mirror'));
@@ -369,9 +432,23 @@ export function drawerButtonFor(sel, text) {
 export function openDrawer(on = true) { if (P3D.drawer) P3D.drawer.toggle(on); }
 
 // ---------------- la fiche (colonne de droite) ----------------
+function setFold(on) {
+  const ui = P3D.ui; if (!ui) return;
+  ui.folded = on; ui.side.classList.toggle('p3d-folded', on); ui.fold.textContent = on ? '▴' : '▾';
+  ui.fold.setAttribute('aria-expanded', String(!on)); ui.fold.title = on ? 'Rouvrir la fiche et le fil' : 'Replier la fiche : toute la hauteur pour les écrans';
+}
+function setTab(t) {
+  const ui = P3D.ui; if (!ui) return;
+  if (ui.folded) setFold(false);
+  ui.tab = t; ui.fiche.hidden = t !== 'fiche'; ui.feed.hidden = t !== 'fil';
+  ui.tabF.classList.toggle('on', t === 'fiche'); ui.tabF.setAttribute('aria-selected', String(t === 'fiche'));
+  ui.tabE.classList.toggle('on', t === 'fil'); ui.tabE.setAttribute('aria-selected', String(t === 'fil'));
+  if (t === 'fil') ui.tabE.classList.remove('new');
+}
 function showFiche(z) {
   const ui = P3D.ui; if (!ui) return;
   P3D.sel = z; P3D.panel = null;
+  if (z) setTab('fiche');
   const d = z || P3D.def.intro;
   const kids = [el('h3', {}, val(d.title)), rich(val(d.text).join('\n\n'), 'p3d-txt')];
   if (z) kids.push(el('button', { class: 'btn small', type: 'button', 'data-ro-ok': '', onclick: () => { goView('poste'); showFiche(null); } }, 'Revenir au poste'));

@@ -394,6 +394,32 @@ Tests :
   « Emmène-moi / Montre-moi » doit mettre en évidence un élément réel de la page, et « Fais-le pour moi » doit faire
   valider l'étape.
 
+## v19.11 : l'écran partagé, le pupitre en 3D et les écrans du poste en 2D
+
+**Pourquoi.** Retour du 25 octobre 2026 sur la v19.10 : au poste vision, la vue 3D regardait les RCP et l'on ne voyait
+plus le multiview ni l'oscilloscope, donc plus l'effet de ses réglages. Il faut pouvoir tourner autour du matériel et
+garder les écrans du poste sous les yeux, à chaque poste.
+
+**L'écran partagé** (`src/poste3d/index.js`, `src/styles/poste3d.css`). À gauche, le pupitre en 3D ; à droite, un
+panneau 2D (46 % de la largeur) :
+- en haut, **les écrans du poste en direct** (chaque définition de poste les fournit, `monitors`) : au mélangeur le
+  multiview, le PGM et le PVW ; à la vision le moniteur de référence Grade 1 (SDR, HDR HLG ou les deux), le multiview et
+  le PRISM interactif (waveform, parade, vecteurscope, gamut) de la caméra au RCP ; au son l'image du programme, les
+  vumètres, la corrélation et la loudness. Les images vidéo sont recopiées du rendu WebGL à chaque image ;
+- en bas, deux onglets : **Fiche** (la zone, les réglages en 2D) et **Ce qui se passe** (un point signale une nouvelle
+  explication) ; « ▾ » replie le bas du panneau pour donner toute la hauteur aux écrans.
+
+**La caméra tourne autour du pupitre**, comme celle du Cours : glisser pour tourner (sans passer derrière le pupitre),
+clic droit ou Maj + glisser pour déplacer, molette ou pincement pour s'approcher, double-clic pour revenir à la vue ;
+l'œil reste dans le car. Les vues prédéfinies y volent en douceur ; la vue d'ensemble de chaque poste cadre maintenant
+le pupitre (les écrans sont dans le panneau), et la caméra recule d'elle-même quand la zone 3D est étroite.
+
+Au passage : `visionMonitors` (`ui/st_vision.js`) et `drawMeters` (`ui/st_audio.js`) sont partagés entre le poste 2D et
+le panneau ; le tiroir « Tous les réglages » de la vision ne refait plus les écrans (`noMonitors`).
+
+Tests : les suites `poste3d`, `poste3d-vision` et `poste3d-son` vérifient les écrans du panneau ; `poste3d` vérifie
+l'orbite, le rapprochement, le retour à la vue et le repli de la fiche.
+
 ## v19.10 : la vision et le son en 3D, le tiroir « Tous les réglages »
 
 **Pourquoi.** Suite du prototype v19.9 (lot 2 de la feuille de route) : les deux postes où l'on règle le plus de
@@ -1604,7 +1630,7 @@ node tools/shots.mjs dossier 1280 800 '["vision","hf"]'   # captures de postes
 | `audio.js` | Console son (inspiration Vista 1) : sources synthétisées, patch, chaîne DSP par tranche, bus et N-x, VCA, écoutes, snapshots, retard de ligne, embedder, loudness, corrélation, pannes son ; ce que le joueur entend selon l'endroit (`ecoute`, `setEar`) et le volume du son |
 | `commentary.js` | Commentaires du match (commentateur, consultant, bord terrain, plateau) en fil écrit, sans voix : niveaux simulés suivant la console |
 | `audiodesk.js` | Console son en 3D dans la cabine (faders motorisés, FaderGlow, écrans Vistonics animés) |
-| `poste3d/` | Les postes en 3D : moteur de la vue du poste (`index.js` : vues, zones cliquables recalées et découpées sur la 3D, touches, molettes, glissières, touches maintenues, bulles, étiquettes, fiche, tiroir « Tous les réglages » avec l'interface 2D et ses moniteurs recopiés), outils des pupitres (`kit.js` : touches instanciées à légende, surfaces dessinées) ; le matériel : pupitre ICP-X7000 (`icp.js`), rangée de RCP (`rcp.js`) ; les définitions de poste : mélangeur (`melangeur.js`), vision (`vision.js`), son (`son.js`, sur la console d'`audiodesk.js`) |
+| `poste3d/` | Les postes en 3D : moteur de la vue du poste (`index.js` : écran partagé avec les écrans du poste en direct, caméra en orbite, vues, zones cliquables recalées et découpées sur la 3D, touches, molettes, glissières, touches maintenues, bulles, étiquettes, fiche, tiroir « Tous les réglages » avec l'interface 2D et ses moniteurs recopiés), outils des pupitres (`kit.js` : touches instanciées à légende, surfaces dessinées) ; le matériel : pupitre ICP-X7000 (`icp.js`), rangée de RCP (`rcp.js`) ; les définitions de poste : mélangeur (`melangeur.js`), vision (`vision.js`), son (`son.js`, sur la console d'`audiodesk.js`) |
 | `scenario.js` | Scénario « jour de match » chronométré et noté |
 | `shared.js` | Données partagées de la page publiée (configuration, progression) avec repli local ; progression numérotée (`PROG_VERSION`, `migrateProgress` ; v3 : la Carrière), fusionnée avec le serveur avant chaque écriture, état de l'enregistrement (`SAVE`), export, import et effacement |
 | `review.js` | Points techniques à faire relire par le formateur |

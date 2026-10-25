@@ -130,13 +130,12 @@ export function lcdPage(c, page, lcd, encs, touch, redraw, rebuild) {
   }
 }
 
-// Poste ingénieur vision : RCP (type RCP-3500) + moniteur de référence + instrument de mesure (type PRISM)
-/** @param {HTMLElement} body @param {any} [arg] caméra demandée ({ cam }) ou rang du pupitre @param {any} [ctx] */
-export function buildVision(body, arg = 0, ctx) {
-  let sel = S.cams.length ? (arg === 1 ? (S.cams.find((c) => c.id > 6) || S.cams[0]).id : S.cams[0].id) : null;
-  if (arg && typeof arg === 'object' && camById(arg.cam)) sel = arg.cam;
-  const cam = () => camById(sel);
-  // ---------------- dock : moniteurs toujours visibles ----------------
+/**
+ * les écrans de l'ingénieur vision : moniteur de référence Grade 1 (SDR, HDR HLG ou les deux), multiview, instrument
+ * de mesure type PRISM sur la caméra du RCP ; dans le dock du poste 2D, ou dans le panneau de droite du poste en 3D
+ * @param {() => any} getSel la caméra au RCP
+ */
+export function visionMonitors(getSel) {
   // sortie SDR (BT.709) et sortie HDR (HLG) de la même CCU
   const monSDR = el('div', { class: 'mon fill', 'data-gl': 'AUX_VISION', title: 'Sortie SDR BT.709' });
   const monHDR = el('div', { class: 'mon fill', 'data-gl': 'HDR', title: 'Sortie HDR HLG (simulation d\'un moniteur HDR sur votre écran)', hidden: true });
@@ -155,21 +154,40 @@ export function buildVision(body, arg = 0, ctx) {
   prism = prismInstrument({
     key: 'vision',
     inputs: () => [{ id: 'sdr', label: 'Sortie SDR (BT.709) de la CCU', short: 'SDR BT.709' }, { id: 'hlg', label: 'Sortie HDR (HLG) de la CCU', short: 'HDR HLG' }],
-    route: (id) => ({ src: 'CAM' + sel, hdr: id === 'hlg' && S.hdrView, point: pointById('auxv'), label: `CAM ${sel} · ${id === 'hlg' ? 'HDR HLG' : 'SDR'}` }),
+    route: (id) => ({ src: 'CAM' + getSel(), hdr: id === 'hlg' && S.hdrView, point: pointById('auxv'), label: `CAM ${getSel()} · ${id === 'hlg' ? 'HDR HLG' : 'SDR'}` }),
     onInput: (id) => {
       if (id === 'hlg' && !S.hdrView) setHdr('both');
       explain(id === 'hlg' ? 'PRISM sur la sortie HLG : le blanc de référence (une feuille blanche, un maillot blanc à l\'ombre) doit tomber vers 75 %, un gris à 18 % vers 38 % ; au-dessus de 75 %, la marge pour les hautes lumières. Le diagramme CIE (préréglage HDR) place les couleurs de la scène face aux triangles BT.709 et BT.2020.' : 'PRISM sur la sortie SDR (BT.709) : le blanc nominal est à 100 % (700 mV).', 'rcp:scope');
     },
   });
   const meterTxt = el('span', { class: 'meter' });
-  const chain = chainBox();
-  ctx.dock.append(
+  const nodes = [
     el('div', { class: 'dockrow' },
       el('div', { class: 'monwrap grow', style: { flex: '1.6 1 0' } }, el('div', { class: 'lab labrow' }, el('span', {}, 'Moniteur de référence Grade 1'), hdrBtns.sdr, hdrBtns.hlg, hdrBtns.both), el('div', { class: 'refpair' }, monSDR, monHDR)),
       el('div', { class: 'monwrap grow' }, el('div', { class: 'lab labrow' }, el('span', {}, 'Multiview'), meterTxt), el('div', { class: 'mon fill', 'data-gl': 'mv' }))),
-    el('div', { class: 'monwrap vision-prism' }, el('div', { class: 'lab' }, 'Moniteur de mesure (type PRISM) : waveform, vecteurscope, gamut'), prism.el),
-    ctx.explainBox);
+    el('div', { class: 'monwrap vision-prism' }, el('div', { class: 'lab' }, 'Moniteur de mesure (type PRISM) : waveform, vecteurscope, gamut'), prism.el)];
   for (const k in hdrBtns) hdrBtns[k].classList.toggle('on', k === 'sdr');
+  return {
+    nodes,
+    update() {
+      prism.update();
+      const c = camById(getSel());
+      meterTxt.textContent = c ? `CAM ${c.id} · moyen ${Math.round(c.meter.mean * 100)} % · crêtes ${Math.round(c.meter.peak * 100)} %` : '';
+    },
+    close() { prism.close(); S.hdrView = false; SCOPE.hdr = false; },
+  };
+}
+
+// Poste ingénieur vision : RCP (type RCP-3500) + moniteur de référence + instrument de mesure (type PRISM)
+/** @param {HTMLElement} body @param {any} [arg] caméra demandée ({ cam }) ou rang du pupitre @param {any} [ctx] */
+export function buildVision(body, arg = 0, ctx) {
+  let sel = S.cams.length ? (arg === 1 ? (S.cams.find((c) => c.id > 6) || S.cams[0]).id : S.cams[0].id) : null;
+  if (arg && typeof arg === 'object' && camById(arg.cam)) sel = arg.cam;
+  const cam = () => camById(sel);
+  // ---------------- dock : moniteurs toujours visibles (en 3D, ils sont dans le panneau de droite : noMonitors) ----------------
+  const mon = ctx.noMonitors ? null : visionMonitors(() => sel);
+  if (mon) ctx.dock.append(...mon.nodes, ctx.explainBox);
+  const chain = chainBox();
   // ---------------- sélection de la caméra ----------------
   const selRow = el('div', { class: 'hwrow' });
   const camBtns = {};
@@ -275,16 +293,15 @@ export function buildVision(body, arg = 0, ctx) {
       // poste en 3D : le RCP qui a la main a pu changer depuis la rangée en 3D
       if (S.selCam != null && S.selCam !== sel && camById(S.selCam)) { sel = S.selCam; buildPanel(); }
       for (const c of S.cams) { const b = camBtns[c.id]; if (!b) continue; const t = tallyOf('CAM' + c.id); b.className = 'hw' + (t === 2 ? ' pgm' : t === 1 ? ' pst' : '') + (c.id === sel ? ' selcam' : ''); }
-      prism.update();
+      if (mon) mon.update();
       const c = cam(); if (!c) return;
-      meterTxt.textContent = `CAM ${c.id} · moyen ${Math.round(c.meter.mean * 100)} % · crêtes ${Math.round(c.meter.peak * 100)} %`;
       const t = tallyOf('CAM' + c.id);
       const tl = document.getElementById('rcp-tally'); if (tl) tl.classList.toggle('lit', t === 2);
       const cl = document.getElementById('rcp-call'); if (cl) cl.classList.toggle('lit', S.time - (c.paint.call || -99) < 3);
       refresh();
       if (performance.now() - lastOv > 500) { lastOv = performance.now(); drawOverview(); }
     },
-    close() { prism.close(); SCOPE.active = false; S.hdrView = false; SCOPE.hdr = false; },
+    close() { if (mon) mon.close(); SCOPE.active = false; },
   };
   function drawOverview() {
     overview.innerHTML = '';
