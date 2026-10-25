@@ -24,7 +24,7 @@ Tout est en français (code commenté en français, interface, commits).
   Équipe ; Cours, Glossaire, Les postes, Progression ; Réglages, Commandes ; interrupteurs son, vol libre, retour PGM.
   Une application s'affiche sur l'écran (`view`) ou range le téléphone et ouvre sa fenêtre (`open`). Boîtier 3D
   (`modele.js` : `Builder` + `matiere()`, son propre petit rendu WebGL par-dessus tout), écran HTML posé sur la vitre
-  par `CSS3DRenderer` (à l'échelle 1 au repos). Un nouvel outil devient une application, pas un bouton du HUD ; les
+  par une transformation projective (`cssProjection`, à l'échelle 1 au repos ; pas de `CSS3DRenderer` : clics perdus). Un nouvel outil devient une application, pas un bouton du HUD ; les
   touches historiques (P, Y, K, G, L, J, H, M, V) restent des raccourcis. L'entrepôt n'a pas encore son téléphone.
   Suite `node tools/e2e.mjs telephone`.
 - **Jouer** : le lieu (car régie ; l'entrepôt ; salle de concert en préparation, `src/content/lieux.js`), le

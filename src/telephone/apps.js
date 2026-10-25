@@ -21,6 +21,7 @@ import { openCours } from '../ui/cours_ui.js';
 import { openLivret } from '../ui/livret.js';
 import { closeStation } from '../ui/stations.js';
 import { currentGoal, playerCard } from '../game/quest.js';
+import { xpOf, levelOf, badgesWon } from '../game/xp.js';
 import { TUTOR, lessonsFor, lessonBlocked } from '../tutor/engine.js';
 import { closeTelephone } from './index.js';
 
@@ -90,12 +91,17 @@ export function homeView(launch) {
   box.append(el('div', { class: 'tel-where' }, icon('repere'), el('span', {}, zone)));
   const g = currentGoal();
   if (g) {
-    box.append(el('button', { type: 'button', class: 'tel-widget tel-goal', title: 'Ouvrir le journal des missions', onclick: () => launch(g.kind === 'exercice' || g.kind === 'visite' ? 'olivier' : 'missions') },
+    const chef = g.kind === 'exercice' || g.kind === 'visite';
+    box.append(el('button', { type: 'button', class: 'tel-widget tel-goal', title: chef ? 'Olivier, le chef de car' : 'Le journal des missions', onclick: () => launch(chef ? 'olivier' : 'missions') },
       el('small', {}, icon('objectif'), g.tag || 'Objectif'), el('b', {}, g.title), g.text ? el('span', {}, g.text) : null,
       typeof g.prog === 'number' ? el('i', { class: 'tel-prog' }, el('i', { style: { width: `${Math.round(g.prog * 100)}%` } })) : null));
   }
-  const card = el('button', { type: 'button', class: 'tel-widget tel-lvl', title: 'Ma progression', onclick: () => launch('progression') }, playerCard(true));
-  box.append(card);
+  // le niveau sur une ligne (la carte complète est dans l'application Progression)
+  const xp = xpOf(), L = levelOf(xp), won = badgesWon().length;
+  box.append(el('button', { type: 'button', class: 'tel-widget tel-lvl', title: 'Ma progression', onclick: () => launch('progression') },
+    el('b', { class: 'tel-lvl-n' }, String(L.n)), el('span', { class: 'tel-lvl-t' }, el('b', {}, L.title), el('small', {}, `${xp} XP`)),
+    el('i', { class: 'tel-prog' }, el('i', { style: { width: `${Math.round(L.pct * 100)}%` } })),
+    el('span', { class: 'tel-lvl-b' }, icon('medaille'), String(won))));
   for (const [fam, title] of FAMS) {
     const list = APPS.filter((a) => a.fam === fam && (!a.show || a.show()));
     box.append(el('section', { class: 'tel-fam', 'aria-label': title }, el('h3', {}, title), el('div', { class: 'tel-grid' }, ...list.map((a) => appTile(a, launch)))));

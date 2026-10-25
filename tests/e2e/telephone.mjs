@@ -27,10 +27,11 @@ await shot('01-hud');
 // ---------------- lever le téléphone ----------------
 await page.keyboard.press('Tab');
 T.check('Tab lève le téléphone (boîtier en 3D, écran à l\'échelle 1)', await levé() && (await st()).webgl && (await st()).scale === 1);
-T.check('l\'écran est posé sur le boîtier, à droite, dans la fenêtre', await ev(() => { const r = document.querySelector('#telephone .tel-screen').getBoundingClientRect(); return r.left > 720 && r.right <= 1440 && r.top >= 0 && r.bottom <= 900 && Math.abs(r.height - 740) < 2; }));
+const rect = await ev(() => { const r = document.querySelector('#telephone .tel-screen').getBoundingClientRect(); return [r.left, r.top, r.right, r.bottom].map(Math.round); });
+T.check('l\'écran est posé sur le boîtier, à droite, dans la fenêtre, à l\'échelle 1', rect[0] > 720 && rect[2] <= 1440 && rect[1] >= 0 && rect[3] <= 900 && Math.abs(rect[3] - rect[1] - 740) <= 2, rect.join(', '));
 T.check('accueil : les trois familles Le car, Cours, Réglages', await ev(() => [...document.querySelectorAll('#telephone .tel-fam h3')].map((h) => h.textContent).join(',') === 'Le car,Cours,Réglages'));
 T.check('applications : aller à, missions, Olivier, plan, synoptiques, matériel, Cours, progression, réglages', await ev(() => ['aller', 'missions', 'olivier', 'plan', 'synoptiques', 'materiel', 'cours', 'glossaire', 'postes', 'progression', 'reglages', 'commandes'].every((a) => window.__dbg.tel.state().apps.includes(a))));
-T.check('accueil : l\'objectif en cours et le niveau', await ev(() => !!document.querySelector('#telephone .tel-goal b')?.textContent && !!document.querySelector('#telephone .tel-lvl .pcard')));
+T.check('accueil : l\'objectif en cours et le niveau', await ev(() => !!document.querySelector('#telephone .tel-goal b')?.textContent && !!document.querySelector('#telephone .tel-lvl .tel-lvl-n')));
 T.check('barre d\'état : l\'heure du car', await ev(() => /^\d\d:\d\d$/.test(document.querySelector('#telephone .tel-time')?.textContent || '')));
 T.check('le focus est sur la première application, les flèches le déplacent', await ev(() => document.activeElement?.dataset.app === 'aller') && (await page.keyboard.press('ArrowRight'), await ev(() => document.activeElement?.dataset.app === 'missions')));
 await shot('02-accueil');
@@ -73,17 +74,17 @@ await page.keyboard.press('Tab');
 T.check('Tab range le téléphone, le poste reste ouvert', await rangé() && await ev(() => window.__dbg.S.mode === 'station'));
 await page.keyboard.press('Escape');
 
-// ---------------- car pré-installé : jeu libre ----------------
-const libre = await openPage(browser, { errors: T.errors, viewport: { width: 1280, height: 800 } });
-await libre.evaluate(() => window.__dbg.start('installe', 'jour', 'basse', false));
-await until(libre, () => window.__dbg.S.mode === 'fps', null, 60000);
-await libre.evaluate(() => { window.__dbg.S.modeCar = 'libre'; window.__dbg.tel.open(); });
-T.check('car pré-installé : ni Missions ni Olivier dans le téléphone', await levé(libre) && await libre.evaluate(() => { const a = window.__dbg.tel.state().apps; return !a.includes('missions') && !a.includes('olivier') && a.includes('aller'); }));
-await libre.close();
+// ---------------- car pré-installé : jeu libre (le mode est posé à la main : modes-car.mjs passe par l'écran Jouer) ----------------
+await ev(() => { window.__dbg.S.modeCar = 'libre'; window.__dbg.tel.open(); });
+const apps = await ev(() => window.__dbg.tel.state().apps);
+T.check('car pré-installé : ni Missions ni Olivier dans le téléphone', !apps.includes('missions') && !apps.includes('olivier') && apps.includes('aller'), apps.join(','));
+await ev(() => { window.__dbg.tel.close(); window.__dbg.S.modeCar = 'vide'; });
+// une page à la fois : le rendu logiciel de deux stades ralentirait trop la suivante
+await page.close();
 
 // ---------------- petit écran tactile ----------------
 const m = await openPage(browser, { viewport: { width: 400, height: 760 }, query: 'lite&nopost', errors: T.errors, mobile: true });
-await m.evaluate(() => window.__dbg.start('installe', 'jour', 'basse', false));
+await m.evaluate(() => window.__dbg.start('standard', 'jour', 'basse', false));
 await until(m, () => window.__dbg.S.mode === 'fps', null, 60000);
 await m.locator('#tb-tel').tap();
 T.check('mobile : le bouton Téléphone le lève, il tient dans la fenêtre', await levé(m) && await m.evaluate(() => { const r = document.querySelector('#telephone .tel-screen').getBoundingClientRect(); return r.left >= 0 && r.right <= 400 && r.top >= 0 && r.bottom <= 760 && document.documentElement.scrollWidth <= 400; }));

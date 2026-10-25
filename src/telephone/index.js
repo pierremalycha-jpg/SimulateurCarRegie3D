@@ -50,7 +50,8 @@ function show(app) {
 }
 function focusFirst() {
   if (matchMedia('(pointer: coarse)').matches) return;
-  const f = /** @type {HTMLElement | null} */ (view.querySelector('.tel-app, .tel-row, .tel-back, button'));
+  // la première application (accueil), sinon le premier choix de l'application ouverte
+  const f = /** @type {HTMLElement | null} */ (view.querySelector('.tel-app') || view.querySelector('.tel-row') || view.querySelector('button'));
   if (f) f.focus({ preventScroll: true });
 }
 /** lancer une application : sur l'écran, ou ranger le téléphone et ouvrir sa fenêtre */
@@ -87,7 +88,7 @@ export function openTelephone(app = '') {
   if (document.pointerLockElement) document.exitPointerLock();
   const was = TEL.open;
   TEL.open = true; S.telephone = true;
-  root.hidden = false;
+  root.hidden = false; root.classList.remove('tel-off');
   if (!was) { TEL.p3d.resize(); TEL.p3d.pose(ease(TEL.t)); sfx('open'); }
   show(app);
   updClock(); clearInterval(TEL.clock); TEL.clock = setInterval(updClock, 1000);
@@ -100,6 +101,8 @@ export function closeTelephone(vite = false) {
   TEL.open = false; S.telephone = false;
   clearInterval(TEL.clock);
   if (!vite) sfx('close');
+  // pendant qu'il descend, le téléphone ne prend plus les clics (la fenêtre ouverte par l'application les reçoit)
+  root.classList.add('tel-off');
   if (screen && screen.contains(document.activeElement)) /** @type {HTMLElement} */ (document.activeElement).blur();
   animate(-1);
   emit('telephone:close');

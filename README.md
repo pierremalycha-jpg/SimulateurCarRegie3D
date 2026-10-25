@@ -422,12 +422,13 @@ textes d'Olivier, les conseils et la liste des commandes parlent du téléphone.
 
 **Le rendu.** Le boîtier (aluminium, vitre, boutons, module photo, port USB-C) est construit par un `Builder` en
 mode `ao` et habillé par `matiere()`, éclairé par une pièce procédurale (`RoomEnvironment`, aucun fichier), dans son
-propre petit rendu WebGL posé par-dessus tout (il marche aussi par-dessus un poste ou le plan) ; l'écran est placé
-sur la vitre par `CSS3DRenderer` avec la même caméra, si bien qu'il suit le téléphone quand il monte ou qu'il se
-range. Au repos, l'écran est à l'échelle 1 (340 × 740 px) dès que la fenêtre le permet. Le rendu ne tourne que
+propre petit rendu WebGL posé par-dessus tout (il marche aussi par-dessus un poste ou le plan) ; les quatre coins
+de la vitre sont projetés avec la même caméra et une transformation projective CSS (`matrix3d`, `cssProjection`) y
+amène l'écran, si bien qu'il suit le téléphone quand il monte ou qu'il se range (un calque `CSS3DRenderer` a été
+écarté : Chrome n'y fait pas arriver les clics). Au repos, l'écran est à l'échelle 1 (340 × 740 px) dès que la fenêtre le permet. Le rendu ne tourne que
 pendant l'animation (environ 0,3 s) ; sans WebGL, l'écran s'affiche seul, avec un cadre dessiné.
 
-Tests : `node tools/e2e.mjs telephone` (HUD réduit, lever et ranger, familles et applications, Aller à jusqu'au
+Tests : `tests/unit/telephone.test.mjs` (la projection de l'écran), `node tools/e2e.mjs telephone` (HUD réduit, lever et ranger, familles et applications, Aller à jusqu'au
 poste, téléphone par-dessus un poste, raccourci P, jeu libre, petit écran tactile).
 
 ## v19.8 : trois façons de jouer au car régie, le suivi des tâches sur le côté, Olivier en boîte de dialogue
@@ -1515,7 +1516,7 @@ node tools/shots.mjs dossier 1280 800 '["vision","hf"]'   # captures de postes
 | `game/missions.js`, `game/mission_run.js`, `ui/missions_ui.js` | La mission spécifique (Jouer → Car régie) : le catalogue par famille et la préparation du car (calcul pur), le déroulement (lancer, constater la fin, enchaîner ou arrêter), la liste à choisir |
 | `game/fx.js`, `game/sfx.js` | Effets de jeu (barre d'XP, bannières de niveau et de badge, carte-titre, vignette, flash tally, alerte de panne) et bruitages synthétisés en WebAudio avec leur réglage |
 | `styles/theme-jeu.css` | Le thème « jeu vidéo » : jetons de couleur, composants communs, HUD, écran titre, Jouer, menu, journal, badges |
-| `telephone/index.js`, `telephone/apps.js`, `telephone/modele.js`, `styles/telephone.css` | Le téléphone (Tab ou T) : lever et ranger, touches, accueil (objectif, niveau), applications par famille (Aller à, Missions, Olivier, outils du car, Cours, Progression, Réglages), boîtier 3D et écran HTML posé dessus (CSS3DRenderer) |
+| `telephone/index.js`, `telephone/apps.js`, `telephone/modele.js`, `styles/telephone.css` | Le téléphone (Tab ou T) : lever et ranger, touches, accueil (objectif, niveau), applications par famille (Aller à, Missions, Olivier, outils du car, Cours, Progression, Réglages), boîtier 3D et écran HTML posé dessus (transformation projective `cssProjection`) |
 | `app/title.js` | Écran titre TIEE Simulator : logo du BTS, trois entrées (Jouer, Cours, Réglages), progression du chargement, conseils d'Olivier, mentions |
 | `ui/settings.js` | Réglages : une seule fenêtre (ordinateur, partie en cours, ma progression, profil, espace formateur, aide, à propos) |
 | `ui/ma_progression.js` | Réglages → Ma progression : où elle est enregistrée et si ça marche, exporter dans un fichier, importer (fusion), effacer, vos données personnelles ; notification quand un enregistrement échoue |

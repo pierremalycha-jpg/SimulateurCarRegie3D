@@ -1,16 +1,17 @@
 // @ts-check
 import * as THREE from 'three';
-import { CSS3DRenderer, CSS3DObject } from 'three/addons/renderers/CSS3DRenderer.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { Builder } from '../geo.js';
 import { matiere } from '../matiere.js';
 
 // ----------------------------------------------------------------------------------
 // Le téléphone en 3D : un smartphone tenu devant soi, dessiné par son propre petit rendu (un
-// canevas posé par-dessus tout, même un poste ou le plan) ; son écran est une vraie page HTML
-// (CSS3DRenderer), placée sur la vitre par la même caméra : elle suit le téléphone quand on le
-// lève ou qu'on le range. Au repos, le téléphone fait face à l'œil et l'écran est à l'échelle 1
-// (texte net). Sans WebGL, l'écran seul s'affiche, avec un cadre dessiné en CSS.
+// canevas posé par-dessus tout, même un poste ou le plan) ; son écran est une vraie page HTML,
+// placée sur la vitre par la même caméra : les quatre coins de la vitre sont projetés à l'écran et
+// une transformation projective CSS (matrix3d) y amène l'élément, si bien qu'il suit le téléphone
+// quand on le lève ou qu'on le range. Au repos, le téléphone fait face à l'œil : la transformation
+// n'est plus qu'un déplacement (et une échelle 1 si la fenêtre le permet), le texte est net et les
+// clics arrivent normalement. Sans WebGL, l'écran seul s'affiche, avec un cadre dessiné en CSS.
 // Dimensions d'un smartphone courant (ordre de grandeur) : 74 × 154 × 8 mm, écran 68 × 148 mm.
 // ----------------------------------------------------------------------------------
 const BW = 0.0744, BH = 0.1544, BD = 0.0083; // boîtier (m)
@@ -18,6 +19,22 @@ const SW = 0.068, SH = 0.148; // écran (m)
 /** taille de l'écran HTML en pixels CSS, au repos sur un grand écran (échelle 1) */
 export const SCREEN_PX = { w: 340, h: 740 };
 const FOV = 28;
+
+/**
+ * La transformation projective CSS qui amène le rectangle (0, 0, w, h) sur quatre points
+ * (haut gauche, haut droit, bas gauche, bas droit), avec transform-origin 0 0.
+ * @param {number} w @param {number} h @param {number[][]} q
+ */
+export function cssProjection(w, h, q) {
+  const adj = (m) => [m[4] * m[8] - m[5] * m[7], m[2] * m[7] - m[1] * m[8], m[1] * m[5] - m[2] * m[4], m[5] * m[6] - m[3] * m[8], m[0] * m[8] - m[2] * m[6], m[2] * m[3] - m[0] * m[5], m[3] * m[7] - m[4] * m[6], m[1] * m[6] - m[0] * m[7], m[0] * m[4] - m[1] * m[3]];
+  const mul = (a, b) => { const c = []; for (let i = 0; i < 3; i++) for (let j = 0; j < 3; j++) { let s = 0; for (let k = 0; k < 3; k++) s += a[3 * i + k] * b[3 * k + j]; c[3 * i + j] = s; } return c; };
+  const mulv = (m, v) => [m[0] * v[0] + m[1] * v[1] + m[2] * v[2], m[3] * v[0] + m[4] * v[1] + m[5] * v[2], m[6] * v[0] + m[7] * v[1] + m[8] * v[2]];
+  const basis = (p) => { const m = [p[0][0], p[1][0], p[2][0], p[0][1], p[1][1], p[2][1], 1, 1, 1]; const v = mulv(adj(m), [p[3][0], p[3][1], 1]); return mul(m, [v[0], 0, 0, 0, v[1], 0, 0, 0, v[2]]); };
+  const t = mul(basis(q), adj(basis([[0, 0], [w, 0], [0, h], [w, h]])));
+  const n = t.map((x) => x / t[8]);
+  const r = (x) => +x.toFixed(9);
+  return `matrix3d(${[n[0], n[3], 0, n[6], n[1], n[4], 0, n[7], 0, 0, 1, 0, n[2], n[5], 0, n[8]].map(r).join(',')})`;
+}
 
 /** contour arrondi (rayon r) d'un rectangle centré */
 function rounded(w, h, r) {
@@ -69,11 +86,8 @@ function buildPhone() {
  */
 export function createPhone3D(host, screen) {
   const camera = new THREE.PerspectiveCamera(FOV, 1, 0.01, 5);
-  const css = new CSS3DRenderer(); css.domElement.classList.add('tel-css');
-  const cssScene = new THREE.Scene();
-  const obj = new CSS3DObject(screen);
-  obj.scale.setScalar(SW / SCREEN_PX.w);
-  const holder = new THREE.Group(); cssScene.add(holder); holder.add(obj);
+  const holder = new THREE.Group();
+  screen.classList.add('tel-proj');
   /** @type {THREE.WebGLRenderer | null} */
   let gl = null; let scene = null, phone = null;
   try {
@@ -88,7 +102,7 @@ export function createPhone3D(host, screen) {
     phone = buildPhone(); scene.add(phone);
     host.append(gl.domElement);
   } catch (e) { gl = null; host.classList.add('tel-2d'); }
-  host.append(css.domElement);
+  host.append(screen);
 
   const R = { w: 1, h: 1, f: 1, rest: new THREE.Vector3(), dist: 0.5, k: 1 };
   /** recalcule la place du téléphone au repos : écran à l'échelle 1 si la fenêtre le permet */
@@ -105,7 +119,6 @@ export function createPhone3D(host, screen) {
     const cx = w >= 820 ? w - m - 28 - bw / 2 : w / 2, cy = h - m - bh / 2;
     R.rest.set((cx - w / 2) * R.dist / R.f, -(cy - h / 2) * R.dist / R.f, -R.dist);
     if (gl) { gl.setPixelRatio(Math.min(2, window.devicePixelRatio || 1)); gl.setSize(w, h, false); }
-    css.setSize(w, h);
   }
   const P = new THREE.Vector3(), E = new THREE.Euler();
   /** @param {number} t 0 = rangé, 1 = en main */
@@ -114,12 +127,18 @@ export function createPhone3D(host, screen) {
     P.copy(R.rest); P.y -= u * BH * 1.25; P.x += u * BW * 0.35;
     E.set(-0.95 * u, -0.25 * u, 0.22 * u);
     for (const o of [holder, phone]) { if (!o) continue; o.position.copy(P); o.rotation.copy(E); }
-    // l'écran HTML, juste devant la vitre
-    obj.position.set(0, 0, BD / 2 + 0.0002);
+  }
+  // coins de la vitre (repère du téléphone) et leur image à l'écran, en pixels
+  const C = [[-SW / 2, SH / 2], [SW / 2, SH / 2], [-SW / 2, -SH / 2], [SW / 2, -SH / 2]].map(([x, y]) => new THREE.Vector3(x, y, BD / 2 + 0.0002));
+  const V = new THREE.Vector3();
+  function placeScreen() {
+    holder.updateMatrixWorld(true); camera.updateMatrixWorld(true);
+    const dst = C.map((c) => { V.copy(c).applyMatrix4(holder.matrixWorld).project(camera); return [(V.x + 1) / 2 * R.w, (1 - V.y) / 2 * R.h]; });
+    screen.style.transform = cssProjection(SCREEN_PX.w, SCREEN_PX.h, dst);
   }
   function render() {
     if (gl && scene) gl.render(scene, camera);
-    css.render(cssScene, camera);
+    placeScreen();
   }
   resize();
   return { resize, pose, render, get scale() { return R.k; }, get webgl() { return !!gl; } };
