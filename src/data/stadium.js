@@ -27,7 +27,7 @@ export const SLOTS = [
   { id: 'crane_l', label: 'Grue – angle gauche', zone: 'Bord terrain', pos: [-60, 3.5, -38.4], types: ['grue'], role: 'grue', precab: false, desc: 'Grue télescopique dans l\'angle : plans d\'ambiance et de célébrations.' },
   { id: 'beauty', label: 'Toit Marek-Xercès – plan beauté', zone: 'Toit', pos: [0, 34.6, 47], types: ['ptz', 'plateau'], role: 'beaute', precab: false, desc: 'Vue générale du stade, pour l\'ouverture et les retours de pub.' },
   { id: 'tunnel', label: 'Sortie du tunnel des joueurs', zone: 'Tunnel', pos: [3.4, 1.7, -42.5], types: ['portable', 'steadicam', 'ptz'], role: 'tunnel', precab: true, desc: 'Entrée des joueurs et sortie à la mi-temps.' },
-  { id: 'comm', label: 'Positions commentateurs', zone: 'Tribune Lepagnot', pos: [11.5, 12.9, -62.6], types: ['ptz'], role: 'comm', precab: true, desc: 'Plan des commentateurs.' },
+  { id: 'comm', label: 'Plateau des commentateurs', zone: 'Tribune Lepagnot', pos: [10.0, 12.35, -60.55], types: ['ptz'], role: 'comm', precab: true, desc: 'Plan des commentateurs.' },
   { id: 'drone', label: 'Drone – zone de vol derrière Marek-Xercès', zone: 'Extérieur', pos: [-40, 58, 75], types: ['drone'], role: 'beaute', precab: false, desc: 'Vol autorisé uniquement hors du public, avec télépilote certifié.' },
 ];
 

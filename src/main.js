@@ -4,7 +4,7 @@ import { S, emit, on } from './state.js';
 import { clamp, el } from './util.js';
 import { LIGHTING } from './data/exposure.js';
 import { TEAMS } from './data/match.js';
-import { buildWorld, applyLighting, updateWorld, paintTruckSign, W, TRUCK, bowlOffset } from './world.js';
+import { buildWorld, applyLighting, updateWorld, paintTruckSign, W, TRUCK, bowlOffset, blockedOutside } from './world.js';
 import { buildTruck, truckBlocked, truckFloorAt, updateTruck, updateTruckView, T } from './truck.js';
 import { initTruckMap, updateTruckMap } from './ui/truckmap.js';
 import { openSynoptics } from './ui/synoptics.js';
@@ -40,6 +40,8 @@ import { AT, beginAtelier, updateAtelier, endAtelier, atelierDebug } from './ate
 import { pt, pe, profFrame, profSnapshot, profReset } from './app/profiler.js';
 import { createRenderer, pcam, setQuality, updateNear } from './app/view.js';
 import { MATIERE, detailOk } from './matiere.js';
+import { buildPlateau, PLATEAU } from './plateau.js';
+import { buildStaff, staffBordTerrain, STAFF } from './staff.js';
 import { PL, onDeck, eyePos, updatePlayer, updToolbar } from './app/player.js';
 import { takeCamera, releaseCamera, updateCamop } from './app/camop.js';
 import { AIM, updatePrompt } from './app/interact.js';
@@ -103,6 +105,8 @@ MATIERE.detail = detailOk();
 buildWorld(renderer);
 loadStep('Le match et les joueurs', 42); await tick();
 initMatch(); buildPlayers(W.scene); initRecorder();
+// le plateau des commentateurs, puis tout le bord terrain qui ne joue pas (entraîneurs, staff, photographes…)
+{ const comms = buildPlateau(W.scene); buildStaff(W.scene, [...staffBordTerrain(), ...comms]); }
 loadStep('Le car régie et ses postes', 52); await tick();
 buildTruck();
 loadStep('Habillage et rendu', 70); await tick();
@@ -254,7 +258,7 @@ window.__dbg.title = { enter: enterFrom, show: showTitle };
 window.__dbg.nav = { openMenu, restart };
 window.__dbg.openCours = openCours; window.__dbg.PROFILE = PROFILE; window.__dbg.setRole = setRole; window.__dbg.camlab = camlabDebug; window.__dbg.entrepot = entrepotDebug;
 window.__dbg.COURS = { CHAPTERS: COURS_CHAPTERS, allLessons, lessonById: coursLessonById, lessonDone: coursLessonDone };
-window.__dbg.CTRL = CTRL; window.__dbg.MATIERE = MATIERE;
+window.__dbg.CTRL = CTRL; window.__dbg.MATIERE = MATIERE; window.__dbg.PLATEAU = PLATEAU; window.__dbg.STAFF = STAFF; window.__dbg.blockedOutside = blockedOutside;
 window.__dbg.jeu = { XP, sfx, JEU, openJournal, currentGoal, renderQuest };
 window.__dbg.carriere = CARRIERE; window.__dbg.mission = MISSION_RUN;
 // le programme a démarré : le filet du chargement (boot.js) n'a plus à intervenir

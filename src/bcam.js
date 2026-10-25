@@ -633,7 +633,7 @@ export class BCam {
         P = this.aiTarget; Wd = 12; omega = 2; break;
       }
       case 'tunnel': P = new THREE.Vector3(b.x * 0.4, 1.2, Math.max(-30, b.z)); Wd = 14; omega = 2; break;
-      case 'comm': P = new THREE.Vector3(11.55, TIERS_Y + 1.32, -(BOWL.hz + 23.7)); Wd = 1.9; omega = 2; break;
+      case 'comm': P = new THREE.Vector3(11.8, TIERS_Y + 1.35, -(BOWL.hz + 23.15)); Wd = 2.2; omega = 2; break; // les deux commentateurs du plateau (plateau.js)
       case 'grue': P = new THREE.Vector3(b.x * 0.8, 0.8, b.z * 0.6); Wd = 24; omega = 2; break;
       case 'suivi': P = new THREE.Vector3(b.x + b.vx * 0.3, Math.max(0.8, b.y * 0.5), b.z + b.vz * 0.2); Wd = T.moving === 'spider' ? 18 : T.moving === 'drone' ? 80 : 10; omega = 3; break;
       case 'beaute': P = new THREE.Vector3(0, 0, 0); Wd = 400; omega = 1; break;

@@ -5,6 +5,11 @@ import { buildGround, buildTrees, forestPoints, terrilGeometry } from './landsca
 import { buildOBTruck, buildDSNG, buildGenerator, buildBungalows, tarmacTexture } from './vehicles.js';
 import { Builder, mergeNonIndexed, setLayer, screenMaterial } from './geo.js';
 import { matiere } from './matiere.js';
+import { fillFit, fitSize, fillLines } from './textfit.js';
+import { buildLocaux } from './stade_locaux.js';
+import { buildBordTerrain, TABLE4 } from './bordterrain.js';
+import { updateStaff } from './staff.js';
+import { buildAngles, nearCornerWall } from './stade_angles.js';
 import { makeCanvas, mulberry32, kelvinRGBNorm } from './util.js';
 import { S } from './state.js';
 import { TEAMS } from './data/match.js';
@@ -27,6 +32,8 @@ export const STANDS = [
   { id: 'delacourt', name: 'Tribune Delacourt', axis: 'x', sgn: 1, half: 37, lo: [0, 22, 1.2, 11], up: [25, 41, 13.5, 26], back: 42.5, roof: 31.5 },
 ];
 // compatibilité : tribune principale
+/** emprise de la plateforme du plateau des commentateurs (plateau.js), tribune Lepagnot */
+export const PLATEAU_ZONE = { u0: 7.6, u1: 16, o0: 18.9 };
 export const TIERS = { lower: { o1: 0, o2: 22, y1: 1.5, y2: 11 }, upper: { o1: 29.4, o2: 44, y1: 18.2, y2: 30 } };
 export const OUTER = { hx: BOWL.hx + 52, hz: BOWL.hz + 52 };
 // pylônes d'angle (≈ 72 m) qui portent l'anneau de poutres du toit
@@ -69,7 +76,8 @@ export function bowlOffset(x, z) { return Math.max(Math.abs(x) - BOWL.hx, Math.a
 const WALK_ZONES = [
   { x0: -5, x1: 5, z0: -47.5, z1: -40.5 }, // embouchure du tunnel
   { x0: -3, x1: 3, z0: -93.5, z1: -47 }, // couloir
-  { x0: 3, x1: 16, z0: -84, z1: -72 }, // vestiaire
+  { x0: 3, x1: 16, z0: -84, z1: -72 }, // vestiaire du club recevant
+  { x0: -16, x1: -3, z0: -80, z1: -66 }, // vestiaire des visiteurs
   { x0: -16, x1: -3, z0: -91, z1: -82 }, // local technique TV
 ];
 export function inWalkZone(x, z) { for (const w of WALK_ZONES) if (x > w.x0 && x < w.x1 && z > w.z0 && z < w.z1) return true; return false; }
@@ -80,6 +88,7 @@ export function blockedOutside(x, z) {
   // murs internes vestiaire / local (portes)
   if (x > 3 && x < 3.3 && z > -84 && z < -72 && !(z > -79.5 && z < -77.5)) return true;
   if (x < -3 && x > -3.3 && z > -91 && z < -82 && !(z > -87.5 && z < -85.5)) return true;
+  if (x < -3 && x > -3.3 && z > -80 && z < -66 && !(z > -73.5 && z < -71.5)) return true;
   for (const o of W.obstacles) if (x > o.x0 && x < o.x1 && z > o.z0 && z < o.z1) return true;
   return false;
 }
@@ -226,8 +235,29 @@ function terraceTexture() {
 function textBand(text, w, h, bg, fg, size, reps = 3) {
   const c = makeCanvas(w, h); const g = c.getContext('2d');
   g.fillStyle = bg; g.fillRect(0, 0, w, h);
-  g.fillStyle = fg; g.font = `700 ${size}px "Barlow Condensed", "Arial Narrow", sans-serif`; g.textAlign = 'center'; g.textBaseline = 'middle';
-  for (let i = 0; i < reps; i++) g.fillText(text, w * (i + 0.5) / reps, h / 2 + 2);
+  g.fillStyle = fg; g.textAlign = 'center'; g.textBaseline = 'middle';
+  for (let i = 0; i < reps; i++) fillFit(g, text, w * (i + 0.5) / reps, h / 2 + 2, w / reps * 0.9, size);
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8;
+  return t;
+}
+/**
+ * Bandeau au nom d'une tribune, à l'échelle de sa longueur (48 px par mètre) : le nom est écrit aux
+ * positions `us` (en mètres le long de la tribune), chacun ajusté à la place qu'on lui laisse (`room`),
+ * jamais coupé par le bout de la tribune ni caché par une banderole. À poser avec bandGeo(rep = 1).
+ */
+function nameBandTex(st, u0, u1, y0, y1, text, us, room, bg, fg) {
+  const ppm = 48, w = Math.min(8192, Math.round((u1 - u0) * ppm)), h = Math.max(32, Math.round((y1 - y0) * ppm));
+  const c = makeCanvas(w, h); const g = c.getContext('2d');
+  g.fillStyle = bg; g.fillRect(0, 0, w, h);
+  // liserés haut et bas (comme une tôle sérigraphiée)
+  g.fillStyle = 'rgba(255,255,255,0.10)'; g.fillRect(0, 2, w, 2); g.fillRect(0, h - 4, w, 2);
+  const flip = st.axis === 'z' ? st.sgn > 0 : st.sgn < 0;
+  g.fillStyle = fg; g.textAlign = 'center'; g.textBaseline = 'middle';
+  const k = w / (u1 - u0);
+  for (const u of us) {
+    const x = (flip ? u1 - u : u - u0) * k;
+    fillFit(g, text, x, h / 2 + h * 0.03, room * k, h * 0.62);
+  }
   const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8;
   return t;
 }
@@ -346,11 +376,11 @@ function boardsTexture() {
   const wSeg = 2048 / 8;
   ads.forEach((a, i) => {
     g.fillStyle = a[0]; g.fillRect(i * wSeg, 0, wSeg, 64);
-    g.fillStyle = a[1]; g.font = 'bold 34px "Barlow Condensed", "Arial Narrow", sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
-    g.fillText(a[2], i * wSeg + wSeg / 2, 33);
+    g.fillStyle = a[1]; g.textAlign = 'center'; g.textBaseline = 'middle';
+    fillFit(g, a[2], i * wSeg + wSeg / 2, 33, wSeg - 24, 34);
   });
   const t = new THREE.CanvasTexture(c); t.wrapS = THREE.RepeatWrapping; t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8;
-  return { tex: t, canvas: c, redraw: () => { ads.forEach((a, i) => { g.fillStyle = a[0]; g.fillRect(i * wSeg, 0, wSeg, 64); g.fillStyle = a[1]; g.font = 'bold 34px "Barlow Condensed", "Arial Narrow", sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(a[2], i * wSeg + wSeg / 2, 33); }); t.needsUpdate = true; } };
+  return { tex: t, canvas: c, redraw: () => { ads.forEach((a, i) => { g.fillStyle = a[0]; g.fillRect(i * wSeg, 0, wSeg, 64); g.fillStyle = a[1]; g.textAlign = 'center'; g.textBaseline = 'middle'; fillFit(g, a[2], i * wSeg + wSeg / 2, 33, wSeg - 24, 34); }); t.needsUpdate = true; } };
 }
 
 // tracés pédagogiques non éclairés (câbles caméra) : leur luminosité suit l'exposition de l'œil,
@@ -373,12 +403,12 @@ function updateOverlays() { W.overlayK = Math.min(1, 1.3 / (S.eyeExposure || 1))
 export function labelSprite(text, opts = {}) {
   const fs = opts.size || 44;
   const c = makeCanvas(512, 96); const g = c.getContext('2d');
-  g.font = `600 ${fs}px "Barlow Condensed", "Arial Narrow", sans-serif`;
+  fitSize(g, text, 464, fs, 600);
   const w = Math.min(500, g.measureText(text).width + 36);
   g.fillStyle = opts.bg || 'rgba(10,14,18,0.82)';
   g.beginPath(); g.roundRect ? g.roundRect((512 - w) / 2, 14, w, 68, 12) : g.rect((512 - w) / 2, 14, w, 68); g.fill();
   g.strokeStyle = opts.border || 'rgba(255,176,32,0.9)'; g.lineWidth = 3; g.stroke();
-  g.fillStyle = opts.color || '#f2f5f7'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(text, 256, 49);
+  g.fillStyle = opts.color || '#f2f5f7'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(text, 256, 49, 464);
   const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace;
   const m = new THREE.SpriteMaterial({ map: t, depthTest: opts.depthTest ?? true, transparent: true, toneMapped: false, sizeAttenuation: opts.fixed ? false : true });
   const s = new THREE.Sprite(m);
@@ -503,18 +533,24 @@ function buildStands(scene) {
     }
     seats.push(slopeGeo(st, -h, h, c1, d1, c2, d2));
     // bandeau au nom de la tribune (front de la tribune haute)
-    const nameTex = textBand(st.name.toUpperCase(), 4096, 96, '#141a22', '#f2f4f6', 62, st.axis === 'z' ? 4 : 2);
-    if (!st.main) scene.add(new THREE.Mesh(bandGeo(st, -h, h, c1 - 0.03, b2 + 0.2, d1 - 0.1), new THREE.MeshLambertMaterial({ map: nameTex })));
-    else {
+    // le nom est placé là où rien ne le cache : entre les banderoles du Marek (u = ±36, 0), loin des bouts
+    const NAME = st.name.toUpperCase();
+    const us = st.id === 'marek' ? [-18, 18, -50, 50] : st.axis === 'z' ? [-36, -12, 12, 36] : [-18, 18];
+    const room = st.id === 'marek' ? 15 : st.axis === 'z' ? 20 : 26;
+    if (!st.main) {
+      const y0 = b2 + 0.2, y1 = d1 - 0.1;
+      scene.add(new THREE.Mesh(bandGeo(st, -h, h, c1 - 0.03, y0, y1), new THREE.MeshLambertMaterial({ map: nameBandTex(st, -h, h, y0, y1, NAME, us, room, '#141a22', '#f2f4f6') })));
+    } else {
       const gt = glassTexture(); gt.repeat.set(1, 1);
       scene.add(new THREE.Mesh(bandGeo(st, -h, h, 24.47, b2, 17.0, h / 8), new THREE.MeshLambertMaterial({ map: gt, emissive: 0x223344, emissiveMap: gt, emissiveIntensity: 0.6 })));
-      scene.add(new THREE.Mesh(bandGeo(st, -h, h, c1 - 0.03, 17.05, d1 - 0.05), new THREE.MeshLambertMaterial({ map: nameTex })));
+      const y0 = 17.05, y1 = d1 - 0.05;
+      scene.add(new THREE.Mesh(bandGeo(st, -h, h, c1 - 0.03, y0, y1), new THREE.MeshLambertMaterial({ map: nameBandTex(st, -h, h, y0, y1, NAME, us, room, '#141a22', '#f2f4f6') })));
     }
     // façade arrière : maille blanche et nom de la tribune
     const mt = meshTexture();
     const meshMat = new THREE.MeshLambertMaterial({ map: mt });
     scene.add(new THREE.Mesh(backBandGeo(st, -h, h, st.back + 0.35, 4.5, d2 + 1.3, h / 1.5, (d2 - 3.2) / 3), meshMat));
-    const sign = textBand(st.name.toUpperCase(), 2048, 256, '#e9ecef', '#1b2230', 170, 1);
+    const sign = textBand(st.name.toUpperCase(), 2048, 256, '#e9ecef', '#1b2230', 150, 1);
     scene.add(new THREE.Mesh(backBandGeo(st, -20, 20, st.back + 0.5, d2 - 7, d2 - 2), new THREE.MeshLambertMaterial({ map: sign })));
   }
   // le corps des tribunes est légèrement repoussé en profondeur : les gradins, sièges et bandeaux posés
@@ -545,8 +581,8 @@ function bannerTexture(text, bg, fg, stripes) {
   const c = makeCanvas(1024, 192); const g = c.getContext('2d');
   g.fillStyle = bg; g.fillRect(0, 0, 1024, 192);
   if (stripes) for (let x = 0; x < 1024; x += 128) { g.fillStyle = stripes; g.fillRect(x, 0, 64, 192); }
-  g.fillStyle = fg; g.font = '800 120px "Barlow Condensed", "Arial Narrow", sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
-  g.lineWidth = 10; g.strokeStyle = 'rgba(0,0,0,0.35)'; g.strokeText(text, 512, 102); g.fillText(text, 512, 102);
+  g.fillStyle = fg; g.textAlign = 'center'; g.textBaseline = 'middle';
+  g.lineWidth = 10; g.strokeStyle = 'rgba(0,0,0,0.35)'; fillFit(g, text, 512, 102, 960, 120, { weight: 800, stroke: true });
   const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4; return t;
 }
 // bande rectangulaire posée sur une pente avec des coordonnées de texture propres (largeur → u, longueur → v)
@@ -769,47 +805,19 @@ export function buildWorld(renderer) {
   buildStands(scene);
   buildStandDetails(scene);
   buildRoofs(scene);
+  buildAngles(scene); // angles fermés, joues des tribunes (stade_angles.js)
 
   // --- éléments intérieurs de la tribune principale (fusionnés) ---
   const B = new Builder();
-  const darkC = 0x55595e;
-  // tunnel : murs et plafond
-  const ty = 4.6;
-  B.box(0.4, ty, 6.5, -5, ty / 2, -44.25, darkC); B.box(0.4, ty, 6.5, 5, ty / 2, -44.25, darkC);
-  B.box(10.4, 0.4, 19, 0, ty + 0.2, -56.5, darkC); B.box(10.4, 0.3, 6.5, 0, ty - 0.15, -44.25, darkC);
-  B.box(0.4, ty, 19, -5, ty / 2, -56.5, darkC); B.box(0.4, ty, 19, 5, ty / 2, -56.5, darkC);
-  // auvent rétractable du tunnel (sang et or)
-  B.box(9.6, 0.12, 4.2, 0, 2.9, -39.2, 0xc8102e, 0, -0.18); B.box(9.6, 0.4, 0.12, 0, 2.6, -37.1, 0xf5c400);
-  // couloir intérieur sous la tribune
-  B.box(0.3, 4, 26.5, -3.1, 2, -79.75, 0x9a9488); B.box(0.3, 4, 26.5, 3.1, 2, -79.75, 0x9a9488);
-  B.box(6.5, 0.3, 46, 0, 4.15, -70, 0x6d6a64);
-  // vestiaire
-  B.box(13, 0.3, 12, 9.5, 3.4, -78, 0x6d6a64); B.box(13, 3.4, 0.3, 9.5, 1.7, -84, 0xc9c2b3); B.box(13, 3.4, 0.3, 9.5, 1.7, -72, 0xc9c2b3); B.box(0.3, 3.4, 12, 16, 1.7, -78, 0xc9c2b3);
-  for (let i = 0; i < 6; i++) B.box(1.6, 0.45, 0.5, 6 + i * 1.8, 0.45, -83.4, 0x6b4a2b);
-  for (let i = 0; i < 6; i++) B.box(1.4, 2, 0.4, 6 + i * 1.8, 1.4, -83.75, TEAMS[0].shirt);
-  // local technique TV
-  B.box(13, 0.3, 9, -9.5, 3.4, -86.5, 0x6d6a64); B.box(13, 3.4, 0.3, -9.5, 1.7, -91, 0xb8bcc0); B.box(13, 3.4, 0.3, -9.5, 1.7, -82, 0xb8bcc0); B.box(0.3, 3.4, 9, -16, 1.7, -86.5, 0xb8bcc0);
-  for (let i = 0; i < 5; i++) { B.box(0.6, 2.1, 0.8, -14.5 + i * 1.1, 1.05, -90.3, 0x22262b); }
+  // tunnel, couloir, vestiaires et local technique TV : pièces closes (stade_locaux.js)
+  buildLocaux(scene);
   // passerelle caméras : sur le toit des loges, sous le front de la tribune haute (Lepagnot)
   B.box(82, 0.25, 3.2, 0, 17.1, -(BOWL.hz + 27.8), 0x3c4148);
   for (let x = -40; x <= 40; x += 2) B.box(0.05, 0.5, 0.05, x, 17.45, -(BOWL.hz + 26.25), 0xbfc4c9);
   B.box(82, 0.05, 0.05, 0, 17.7, -(BOWL.hz + 26.25), 0xbfc4c9);
   B.box(82, 0.12, 0.25, 0, 17.0, -(BOWL.hz + 26.2), 0xe0b030); // nez de passerelle
-  // positions commentateurs (terrasse des loges de presse)
-  for (let i = 0; i < 4; i++) {
-    const x = 9 + i * 3;
-    B.box(2.6, 0.9, 0.7, x, TIERS.lower.y2 + 0.45, -(BOWL.hz + 23.0), 0x30353b);
-    B.box(2.6, 0.04, 0.9, x, TIERS.lower.y2 + 0.92, -(BOWL.hz + 23.1), 0x4a5058);
-  }
-  // bancs de touche
-  for (const s of [-1, 1]) {
-    const x = s * 10;
-    B.box(8, 0.12, 1.6, x, 2.2, -38.6, 0x9fb3c8); B.box(8, 2.2, 0.08, x, 1.1, -39.4, 0x9fb3c8);
-    B.box(0.08, 2.2, 1.6, x - 4, 1.1, -38.6, 0x9fb3c8); B.box(0.08, 2.2, 1.6, x + 4, 1.1, -38.6, 0x9fb3c8);
-    B.box(7.6, 0.45, 0.5, x, 0.45, -39.0, 0x1b1f24);
-  }
-  // table du 4e arbitre
-  B.box(2.2, 0.8, 0.8, 0, 0.4, -37.6, 0xeeeeee);
+  // bancs de touche, table du 4e arbitre, tunnel télescopique, tabourets des photographes (bordterrain.js)
+  buildBordTerrain(scene);
   // drapeaux de coin
   for (const sx of [-1, 1]) for (const sz of [-1, 1]) { B.cyl(0.02, 0.02, 1.5, sx * PITCH.hl, 0.75, sz * PITCH.hw, 0xffee55, 6); B.box(0.02, 0.3, 0.4, sx * PITCH.hl, 1.35, sz * PITCH.hw + 0.2 * -sz, 0xff3355); }
   // buts
@@ -856,7 +864,9 @@ export function buildWorld(renderer) {
     const addBoard = (x0, z0, x1, z1) => {
       const len = Math.hypot(x1 - x0, z1 - z0);
       const g = new THREE.PlaneGeometry(len, 0.9);
-      const uv = g.attributes.uv; for (let i = 0; i < uv.count; i++) uv.setX(i, uv.getX(i) * len / 48);
+      // un nombre entier de publicités (≈ 6 m chacune) : aucune n'est coupée au bout du segment
+      const nAds = Math.max(1, Math.round(len / 6)), start = (segs.length * 3) % 8;
+      const uv = g.attributes.uv; for (let i = 0; i < uv.count; i++) uv.setX(i, (start + uv.getX(i) * nAds) / 8);
       const m = new THREE.Matrix4();
       const mx = (x0 + x1) / 2, mz = (z0 + z1) / 2;
       const ang = Math.abs(mz) > Math.abs(mx) ? (mz > 0 ? Math.PI : 0) : (mx > 0 ? -Math.PI / 2 : Math.PI / 2);
@@ -926,35 +936,22 @@ export function buildWorld(renderer) {
   {
     const sign = (text, w, h, x, y, z, rotY, bg = '#13294b', fg = '#ffffff', fs = 64) => {
       const c = makeCanvas(1024, Math.round(1024 * h / w)); const g = c.getContext('2d');
-      g.fillStyle = bg; g.fillRect(0, 0, c.width, c.height); g.fillStyle = fg; g.font = `700 ${fs}px "Barlow Condensed", "Arial Narrow", sans-serif`; g.textAlign = 'center'; g.textBaseline = 'middle';
-      text.split('\n').forEach((l, i, a) => g.fillText(l, 512, c.height / 2 + (i - (a.length - 1) / 2) * fs * 1.1));
+      g.fillStyle = bg; g.fillRect(0, 0, c.width, c.height); g.fillStyle = fg; g.textAlign = 'center'; g.textBaseline = 'middle';
+      fillLines(g, text.split('\n'), 512, c.height / 2, 960, c.height * 0.86, fs);
       const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8;
       const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshLambertMaterial({ map: t }));
       m.position.set(x, y, z); m.rotation.y = rotY; scene.add(m); return m;
     };
     const fz = -(BOWL.hz + STANDS[0].back) - 0.6;
     sign('ACCÈS TERRAIN · TUNNEL · LOCAL TECHNIQUE TV', 12, 1.4, 0, 5.2, fz, Math.PI, '#ffb020', '#15100a', 70);
-    sign('STADE BOLLAERT-DELELIS', 64, 6, -40, 24.5, fz - 0.2, Math.PI, '#e9ecef', '#c8102e', 150);
-    sign('VESTIAIRE · ' + TEAMS[0].name, 5, 0.8, 3.0, 2.9, -78.5, -Math.PI / 2, TEAMS[0].color, '#c8102e', 80);
-    sign('LOCAL TECHNIQUE TV\nPRÉ-CÂBLAGE', 5, 1.2, -2.95, 2.8, -86.5, Math.PI / 2, '#ffd23f', '#15100a', 70);
+    sign('STADE BOLLAERT-DELELIS', 64, 6, -40, 24.5, fz - 0.2, Math.PI, '#e9ecef', '#c8102e', 80);
     sign('COMPOUND TV · CARS RÉGIE', 10, 1.2, -18, 3.4, -96.6, Math.PI, '#ffb020', '#15100a', 70);
   }
 
   // points d'intérêt du stade
   W.interactables.push({ id: 'localtv', pos: new THREE.Vector3(-9.5, 1.5, -86.5), r: 5, label: 'Local technique TV', info: 'localtv' });
-  W.interactables.push({ id: 'comm', pos: new THREE.Vector3(12, 12.4, -64.2), r: 5, label: 'Positions commentateurs (tribune Lepagnot)', info: 'commentateurs' });
-  W.interactables.push({ id: 'var', pos: new THREE.Vector3(0, 1.4, -37.6), r: 2.5, label: 'Table du 4e arbitre / VAR', info: 'var' });
-
-  // commentateurs (statiques)
-  {
-    const Bc = new Builder();
-    for (let i = 0; i < 2; i++) {
-      const x = 11 + i * 1.1, z = -(BOWL.hz + 23.7), y = TIERS.lower.y2;
-      Bc.box(0.45, 0.7, 0.3, x, y + 0.9, z, 0x2b3a55); Bc.sphere(0.13, x, y + 1.42, z, 0xd9a07a); Bc.box(0.3, 0.06, 0.06, x, y + 1.42, z + 0.13, 0x111111);
-      Bc.box(0.5, 0.45, 0.5, x, y + 0.23, z - 0.05, 0x111111);
-    }
-    const cm = Bc.mesh(new THREE.MeshLambertMaterial({ vertexColors: true })); scene.add(cm);
-  }
+  W.interactables.push({ id: 'comm', pos: new THREE.Vector3(11.8, 12.4, -63.6), r: 5, label: 'Plateau des commentateurs (tribune Lepagnot)', info: 'commentateurs' });
+  W.interactables.push({ id: 'var', pos: new THREE.Vector3(TABLE4.x, 1.4, TABLE4.z), r: 2.5, label: 'Table du 4e arbitre / VAR', info: 'var' });
 
   return scene;
 }
@@ -1024,6 +1021,7 @@ varying vec2 vCUv; varying vec3 vShirt; varying vec3 vAcc; varying float vSeed; 
           if (r() > (kop ? 0.97 : 0.86) * density) continue;
           if (Math.abs(((u % 22) + 22) % 22 - 11) < 0.9 && !kop) continue; // escaliers
           if (st.main && Math.abs(u) < 5.5 && o < 8) continue; // tunnel
+          if (st.main && u > PLATEAU_ZONE.u0 && u < PLATEAU_ZONE.u1 && o > PLATEAU_ZONE.o0) continue; // sous la plateforme du plateau
           const m22 = ((u % 22) + 22) % 22;
           if (tier === 'lo' && o > 8.2 && o < 12.8 && (m22 < 1.7 || m22 > 20.3) && !(st.main && Math.abs(u) < 16)) continue; // vomitoires
           const [x, , z] = SP(st, u, o, y);
@@ -1143,7 +1141,7 @@ function buildCompound(scene) {
   lg.fillStyle = 'rgba(0,0,0,0)'; lg.clearRect(0, 0, 1024, 160);
   const lt = new THREE.CanvasTexture(lab); lt.colorSpace = THREE.SRGBColorSpace;
   const signMat = new THREE.MeshLambertMaterial({ map: lt, transparent: true, polygonOffset: true, polygonOffsetFactor: -4, polygonOffsetUnits: -4 });
-  const sign = new THREE.Mesh(new THREE.PlaneGeometry(9, 1.4), signMat); sign.position.set(T.cx - 3, T.floor + 1.85, T.z1 + 0.03); g.add(sign);
+  const sign = new THREE.Mesh(new THREE.PlaneGeometry(9, 1.4), signMat); sign.position.set(T.cx - 1.4, T.floor + 1.85, T.z1 + 0.03); g.add(sign); // posée sur l'extension (de T.cx − 6,25 à T.cx + 7,25)
   W.truckSign = { canvas: lab, tex: lt };
   paintTruckSign();
   setLayer(g, 2);
@@ -1198,7 +1196,7 @@ function buildSurroundings(scene) {
   // --- arbres du parvis (instanciés) ---
   {
     const pts = [];
-    const add = (x, z) => { if (standAt(x, z, 2) || (x > -80 && x < 70 && z < -94) || x < -104) return; pts.push([x, z]); };
+    const add = (x, z) => { if (standAt(x, z, 2) || nearCornerWall(x, z, 5) || (x > -80 && x < 70 && z < -94) || x < -104) return; pts.push([x, z]); };
     for (let x = -96; x <= 118; x += 11) add(x, 97);
     for (let z = -88; z <= 95; z += 11) add(116, z);
     for (let x = 70; x <= 118; x += 11) add(x, -100);
@@ -1356,6 +1354,7 @@ export function updateWorld(t) {
   if (W.boardsMat) W.boardsMat.uniforms.uOff.value = Math.floor(t / 8) * (1 / 8) + (t % 8 < 0.4 ? (t % 8) / 0.4 * 0.0 : 0);
   if (W.crowdMat) W.crowdMat.uniforms.uTime.value = t;
   if (W.sky) W.sky.material.uniforms.uTime.value = t;
+  updateStaff(t);
 }
 
 // inscription sur le flanc du car : nom donné par le formateur (sinon « Car régie ») et format
@@ -1364,8 +1363,7 @@ export function paintTruckSign(name) {
   const { canvas, tex } = W.truckSign; const g = canvas.getContext('2d');
   g.clearRect(0, 0, 1024, 160);
   const txt = ((name || 'Car régie') + ' · ' + (S.format === 'UHD' ? 'UHD' : 'HD')).toUpperCase().slice(0, 32);
-  let size = 96; g.font = `700 ${size}px "Barlow Condensed", "Arial Narrow", sans-serif`;
-  while (g.measureText(txt).width > 990 && size > 40) { size -= 4; g.font = `700 ${size}px "Barlow Condensed", "Arial Narrow", sans-serif`; }
-  g.fillStyle = '#1c2733'; g.fillText(txt, 20, 110);
+  g.fillStyle = '#1c2733'; g.textAlign = 'left'; g.textBaseline = 'alphabetic';
+  fillFit(g, txt, 20, 110, 984, 96, { min: 30 });
   tex.needsUpdate = true;
 }

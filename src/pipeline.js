@@ -7,6 +7,7 @@ import { W } from './world.js';
 import { T as TR } from './truck.js';
 import { SNAP, LIVE, sampleRec, applySnapshot, captureLive, recRange } from './match.js';
 import { GFX, stingerLogo } from './gfx.js';
+import { renderStudio, studioTexture } from './plateau.js';
 import { rtSize, lineupStep } from './bcam.js';
 import { makeCanvas, tc, clamp, roundRect } from './util.js';
 import { EQUIP, mixInputs, evsLayout } from './equip.js';
@@ -501,7 +502,8 @@ export function resolve(id, depth = 0, direct = false, dest = null) {
     }
     case 'GFX': return { tex: P.rts.gfx.texture, scale: 1 };
     case 'GFXK': return { tex: noSignalTex('GFX KEY', 'Signal de découpe de l\'habillage'), scale: SC };
-    case 'STUDIO': return { tex: TEX.studio, scale: SC };
+    // le plateau des commentateurs, filmé par ses deux caméras (plateau.js) ; image fixe en mode allégé
+    case 'STUDIO': return S.lite ? { tex: TEX.studio, scale: SC } : { tex: studioTexture(), scale: 1 };
     case 'BARS': return { tex: TEX.bars, scale: SC, alarm: 'MIRE' };
     case 'BLACK': return { tex: TEX.black, scale: SC };
     case 'PGM': return { tex: P.rts.pgm.texture, scale: 1, out: true };
@@ -831,6 +833,7 @@ export function renderPipeline(renderer, dt) {
     if (c.rf) { if (c.rf.state === 'lost') continue; delayed.push(c); continue; }
     c.render(renderer, scene);
   }
+  if (!S.lite) renderStudio(renderer, scene); // entrée STUDIO : les caméras du plateau
   let restored = true;
   for (const c of delayed) {
     // latence de la liaison HF : l'image affichée a quelques images de retard

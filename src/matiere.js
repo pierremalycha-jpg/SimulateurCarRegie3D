@@ -118,6 +118,10 @@ export const RECETTES = {
   // gradins en béton de la tribune debout : marches (nez arrondi) et barrières
   gradins: (s) => ({ k: 2.0, scale: 1, rough: 0.85, h: (u, v) => { const row = (((1 - v) * 4) % 1 + 1) % 1; const step = row > 0.69 ? -1.0 : 0; const nez = row > 0.62 && row <= 0.69 ? -(row - 0.62) / 0.07 : 0; return step + nez + fbm(u, v, 80, 3, s) * 0.3; } }),
   // herbe tondue (relief fin seulement)
+  // carrelage (vestiaires, couloir) : carreaux de 20 cm, joints en creux, émail légèrement ondulé
+  carrelage: (s) => ({ k: 2.2, scale: 0.6, rough: 0.35, h: (u, v) => { const j = (t) => { const f = ((t * 3) % 1 + 1) % 1; return Math.min(f, 1 - f); }; const gr = Math.min(j(u), j(v)); return (gr < 0.025 ? -1.2 : 0) + fbm(u, v, 24, 2, s) * 0.15; }, r: (u, v) => { const j = (t) => { const f = ((t * 3) % 1 + 1) % 1; return Math.min(f, 1 - f); }; return Math.min(j(u), j(v)) < 0.025 ? 0.95 : 0.45; } }),
+  // peinture de sol (résine) : légère peau d'orange, plus mate dans les zones de passage
+  resine: (s) => ({ k: 0.6, scale: 1.0, rough: 0.4, h: (u, v) => fbm(u, v, 32, 3, s) * 0.4, r: (u, v) => 0.5 + (fbm(u, v, 3, 3, s + 4) - 0.5) * 0.4 }),
   herbe: (s) => ({ k: 1.0, scale: 0.5, rough: 0.9, h: (u, v) => fbm(u, v, 64, 3, s, 0.6), a: (u, v) => 0.5 + (fbm(u, v, 6, 3, s + 1) - 0.5) * 0.14 }),
 };
 
@@ -178,7 +182,7 @@ const FRAG_NORMAL = `
 /**
  * Un matériau physique habillé d'une recette.
  * @param {string} key recette (RECETTES)
- * @param {{ color?: number | THREE.Color, roughness?: number, metalness?: number, scale?: number, strength?: number, seed?: number, vertexColors?: boolean, side?: THREE.Side, emissive?: number, emissiveIntensity?: number, transparent?: boolean, opacity?: number, name?: string, rough?: number, tint?: number, n?: number, map?: THREE.Texture | null, polygonOffset?: number, alphaTest?: number, uv?: boolean, repeat?: number[] }} [o]
+ * @param {{ color?: number | THREE.Color, roughness?: number, metalness?: number, scale?: number, strength?: number, seed?: number, vertexColors?: boolean, side?: THREE.Side, emissive?: number, emissiveIntensity?: number, transparent?: boolean, opacity?: number, name?: string, rough?: number, tint?: number, n?: number, map?: THREE.Texture | null, polygonOffset?: number, alphaTest?: number, uv?: boolean, repeat?: number[], selfLit?: number }} [o]
  */
 export function matiere(key, o = {}) {
   const R = RECETTES[key](o.seed ?? 1);
@@ -204,9 +208,17 @@ export function matiere(key, o = {}) {
     MATIERE.all.add(m);
     return m;
   }
-  const u = { tNrm: { value: null }, tSrf: { value: null }, uTri: { value: new THREE.Vector4(1 / (o.scale ?? R.scale), o.strength ?? 1, o.rough ?? 1, o.tint ?? 1) } };
+  const u = { tNrm: { value: null }, tSrf: { value: null }, uTri: { value: new THREE.Vector4(1 / (o.scale ?? R.scale), o.strength ?? 1, o.rough ?? 1, o.tint ?? 1) }, uSelf: { value: o.selfLit ?? 0 } };
   m.userData.detailOn = MATIERE.detail; m.userData.tri = u; m.userData.recette = key;
+  const self = (o.selfLit ?? 0) > 0;
   m.onBeforeCompile = (sh) => {
+    // éclairage d'intérieur (locaux sous les tribunes) : une part de la couleur propre est ajoutée
+    // en émission, comme sous des plafonniers, sans lumière ponctuelle qui coûterait à tout le stade
+    if (self) {
+      sh.uniforms.uSelf = u.uSelf;
+      sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nuniform float uSelf;')
+        .replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\ntotalEmissiveRadiance += diffuseColor.rgb * uSelf;');
+    }
     if (!m.userData.detailOn) return;
     if (!u.tNrm.value) { const c = cartes(key, o.seed ?? 1, o.n); u.tNrm.value = c.nrm; u.tSrf.value = c.srf; }
     Object.assign(sh.uniforms, u);
@@ -219,7 +231,7 @@ export function matiere(key, o = {}) {
       .replace('#include <roughnessmap_fragment>', FRAG_ROUGH)
       .replace('#include <normal_fragment_maps>', FRAG_NORMAL);
   };
-  m.customProgramCacheKey = () => `matiere-${m.userData.detailOn ? 1 : 0}`;
+  m.customProgramCacheKey = () => `matiere-${m.userData.detailOn ? 1 : 0}-${self ? 1 : 0}`;
   MATIERE.all.add(m);
   return m;
 }

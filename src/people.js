@@ -186,7 +186,7 @@ function mergeIndexed(list) {
 
 // ------------------------------- matériaux -------------------------------
 // deux couleurs par instance : instanceColor (principale) et aCol2 (secondaire), mélangées par le masque
-function kitMaterial(kind, opts = {}) {
+export function kitMaterial(kind, opts = {}) {
   const m = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: opts.rough ?? 0.8, metalness: 0, side: opts.side || THREE.FrontSide });
   const num = kind === 'torso', face = kind === 'head';
   m.onBeforeCompile = (sh) => {
@@ -254,7 +254,7 @@ function numberAtlas() {
 // ------------------------------- construction -------------------------------
 export const PEOPLE = { parts: {}, n: 0, ball: new THREE.Vector3(), time: 0, atlas: null };
 /** @type {Array<[string, string, number, number]>} : nom, géométrie, nombre par personne, rugosité */
-const PARTS = [
+export const PARTS = [
   // nom, géométrie, nombre par personne, rugosité
   ['torso', 'torso', 1, 0.82], ['pelvis', 'pelvis', 1, 0.85], ['head', 'head', 1, 0.6],
   ['thigh', 'thigh', 2, 0.75], ['shin', 'shin', 2, 0.85], ['boot', 'boot', 2, 0.45],

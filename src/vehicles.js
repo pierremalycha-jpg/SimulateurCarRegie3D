@@ -35,7 +35,10 @@ function liveryTexture(L, H, opts = {}) {
   for (let i = 0; i < 60; i++) { g.fillStyle = `rgba(80,70,55,${0.03 + r() * 0.05})`; g.fillRect(r() * W, yb - 30 + r() * 20, 10 + r() * 60, 6 + r() * 20); }
   // étiquettes
   g.fillStyle = '#ffd23f'; g.font = '700 14px "Barlow Condensed", "Arial Narrow", sans-serif';
-  for (const [fx, t] of opts.labels || []) { g.fillStyle = '#ffd23f'; g.fillRect(fx * W - 4, Hp * 0.66, g.measureText(t).width + 8, 18); g.fillStyle = '#15100a'; g.fillText(t, fx * W, Hp * 0.66 + 14); }
+  for (const [fx, t] of opts.labels || []) {
+    const x = Math.min(fx * W, W - 12 - g.measureText(t).width); // l'étiquette reste sur le flanc
+    g.fillStyle = '#ffd23f'; g.fillRect(x - 4, Hp * 0.66, g.measureText(t).width + 8, 18); g.fillStyle = '#15100a'; g.fillText(t, x, Hp * 0.66 + 14, W - x - 8);
+  }
   return tex(c);
 }
 // plan texturé collé sur une face (léger décalage + polygonOffset pour éviter le scintillement)

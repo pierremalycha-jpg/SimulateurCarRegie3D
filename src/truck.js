@@ -2,6 +2,7 @@
 import * as THREE from 'three';
 import { Builder, screenMaterial } from './geo.js';
 import { matiere } from './matiere.js';
+import { fillFit, fitSize } from './textfit.js';
 import { TRUCK } from './world.js';
 import { makeCanvas, tc } from './util.js';
 import { S } from './state.js';
@@ -65,7 +66,7 @@ function screen(name, w, h, lx, y, lz, rotY = 0, label) {
     // étiquette sous l'écran (UMD) : texture nette, dans le plan de l'écran
     const c = makeCanvas(512, 64); const g = c.getContext('2d');
     g.fillStyle = '#050607'; g.fillRect(0, 0, 512, 64);
-    g.fillStyle = '#e8f0e0'; g.font = '600 36px "Barlow Condensed", "Arial Narrow", sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(label, 256, 34);
+    g.fillStyle = '#e8f0e0'; g.textAlign = 'center'; g.textBaseline = 'middle'; fillFit(g, label, 256, 34, 480, 36, { weight: 600 });
     const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4;
     const umd = new THREE.Mesh(new THREE.PlaneGeometry(Math.min(w, 0.9), Math.min(w, 0.9) / 8), new THREE.MeshBasicMaterial({ map: t, toneMapped: false }));
     umd.position.copy(m.position); umd.rotation.y = rotY; umd.translateY(-h / 2 - 0.07); umd.translateZ(0.002);
@@ -341,7 +342,7 @@ function document(lx, lz, y, rot) {
 function hangingSign(text, lx, lz, w = 1.6, rotY = 0, color = '#e0b030') {
   const { g, tex } = canvasTex(1024, 192);
   g.fillStyle = '#0b0d10'; g.fillRect(0, 0, 1024, 192); g.fillStyle = color; g.fillRect(0, 0, 1024, 10); g.fillRect(0, 182, 1024, 10);
-  txt(g, text, 512, 100, 92, '#f2f5f7', 'center', 700);
+  g.fillStyle = '#f2f5f7'; g.textAlign = 'center'; g.textBaseline = 'middle'; fillFit(g, text, 512, 100, 960, 92);
   tex.needsUpdate = true;
   const mat = new THREE.MeshBasicMaterial({ map: tex, toneMapped: false });
   const m = new THREE.Mesh(new THREE.PlaneGeometry(w, w * 192 / 1024), mat);
@@ -361,10 +362,11 @@ function stationLabel(label) {
     const text = typeof label === 'function' ? label() : label;
     s.userData.txt = text;
     g.clearRect(0, 0, 1024, 160);
-    g.font = '700 74px "Barlow Condensed", "Arial Narrow", sans-serif';
+    // le libellé tient toujours dans l'étiquette : la police est réduite si besoin (« Réseau de contrôle · switchs et multiview »)
+    const size = fitSize(g, text, 920, 74);
     const w = Math.min(1000, g.measureText(text).width + 80);
     rr(g, (1024 - w) / 2, 18, w, 124, 22, hot ? 'rgba(255,176,32,0.95)' : 'rgba(10,14,18,0.86)', hot ? '#ffd27a' : 'rgba(255,176,32,0.8)');
-    txt(g, text, 512, 82, 74, hot ? '#15100a' : '#f2f5f7', 'center', 700);
+    g.fillStyle = hot ? '#15100a' : '#f2f5f7'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.font = `700 ${size}px "Barlow Condensed", "Arial Narrow", sans-serif`; g.fillText(text, 512, 82, 920);
     t.needsUpdate = true;
   };
   const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace;
