@@ -46,8 +46,9 @@ await page.mouse.move(300, 200); await page.mouse.down(); await page.mouse.move(
 T.check('glisser sur la scène : la caméra tourne autour du pupitre (orbite)', await until(page, (p0) => { const p = window.__dbg.pcam.position; return Math.hypot(p.x - p0[0], p.y - p0[1], p.z - p0[2]) > 0.05; }, p0, 10000) && Math.abs((await orb()).theta - o0.theta) > 0.1);
 await page.mouse.move(300, 200); await page.mouse.wheel(0, -400);
 T.check('molette : la caméra s\'approche de la cible', await until(page, (r0) => window.__dbg.poste3d.P3D.orb.r < r0 * 0.8, o0.r, 8000));
+// le retour dure 750 ms de temps réel, mais en rendu logiciel chargé une image peut prendre plusieurs secondes
 await page.mouse.dblclick(300, 200);
-T.check('double-clic : retour à la vue du poste', await until(page, (r0) => !window.__dbg.poste3d.P3D.fly && Math.abs(window.__dbg.poste3d.P3D.orb.r - r0) < 0.01, o0.r, 10000), JSON.stringify(await ev((r0) => { const e = document.elementFromPoint(300, 200); return { r0, r: window.__dbg.poste3d.P3D.orb.r, fly: !!window.__dbg.poste3d.P3D.fly, sous: e && (e.className || e.tagName) }; }, o0.r)));
+T.check('double-clic : retour à la vue du poste', await until(page, (r0) => !window.__dbg.poste3d.P3D.fly && Math.abs(window.__dbg.poste3d.P3D.orb.r - r0) < 0.01, o0.r, 30000), JSON.stringify(await ev((r0) => { const e = document.elementFromPoint(300, 200); return { r0, r: window.__dbg.poste3d.P3D.orb.r, fly: !!window.__dbg.poste3d.P3D.fly, sous: e && (e.className || e.tagName) }; }, o0.r)));
 await page.click('.p3d-fold');
 T.check('« replier » : la fiche se range, les écrans prennent toute la hauteur', await until(page, () => document.querySelector('.p3d-side').classList.contains('p3d-folded') && getComputedStyle(document.querySelector('.p3d-tabbody')).display === 'none', null, 5000));
 await shot('01b-ecrans-pleine-hauteur', 1500);
