@@ -24,7 +24,7 @@
 .sl-who.free::before { background: transparent; box-shadow: inset 0 0 0 1px #4a5560; }
 .sl-slot:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 @media (max-width: 760px) { .salon { grid-template-columns: minmax(0, 1fr); } }
-/* jouer par Internet (v19.5) : le bloc de l'hôte (analyse, lien à envoyer, tunnel) et, chez l'invité,
+/* jouer par Internet (v19.7) : le bloc de l'hôte (analyse, lien à envoyer, tunnel) et, chez l'invité,
    le champ où coller le lien reçu */
 .ses-net { display: grid; gap: 8px; padding: 10px 12px; background: var(--glass); border: 1px solid #070a0c; border-radius: 3px; }
 .ses-net .note { margin: 0; }

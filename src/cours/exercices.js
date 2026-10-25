@@ -15,7 +15,8 @@ import { mesBest, MES_SEUIL } from '../camlab/progress.js';
 // Chaque exercice est rangé dans une leçon : soit dans la leçon elle-même (champ exercises des
 // chapitres écrits dans cours/*.js), soit ici, pour les leçons écrites avant les exercices (BY_LESSON).
 // Un exercice n'est rangé qu'une fois. Les présentations de postes (« Présente-moi ») et la prise
-// en main forment le mode Visite guidée (écran Jouer), pas des exercices.
+// en main forment la visite guidée (proposée par Olivier au début du car vide), pas des exercices.
+// Les exercices se lancent aussi depuis Jouer → Car régie → Mission spécifique (game/missions.js).
 // ----------------------------------------------------------------------------------
 /** @typedef {{ id: string, title: string, summary: string, duration: string, level: string, go: any, special?: boolean }} ExerciseInfo */
 

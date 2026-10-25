@@ -4,6 +4,7 @@ import { RENDER, refreshEnvironment, pbr } from './render.js';
 import { buildGround, buildTrees, forestPoints, terrilGeometry } from './landscape.js';
 import { buildOBTruck, buildDSNG, buildGenerator, buildBungalows, tarmacTexture } from './vehicles.js';
 import { Builder, mergeNonIndexed, setLayer, screenMaterial } from './geo.js';
+import { matiere } from './matiere.js';
 import { makeCanvas, mulberry32, kelvinRGBNorm } from './util.js';
 import { S } from './state.js';
 import { TEAMS } from './data/match.js';
@@ -237,6 +238,15 @@ function glassTexture() {
   for (let i = 0; i < 16; i++) { const lit = (i * 7) % 5 < 3; g.fillStyle = lit ? '#6c8aa6' : '#2b3e52'; g.fillRect(i * 32 + 3, 10, 26, 108); g.fillStyle = 'rgba(255,255,255,0.18)'; g.fillRect(i * 32 + 3, 10, 26, 18); }
   g.fillStyle = '#cfd5db'; g.fillRect(0, 0, 512, 6); g.fillRect(0, 122, 512, 6);
   const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.wrapS = THREE.RepeatWrapping; t.anisotropy = 8;
+  return t;
+}
+// grillage de barrière de chantier : fils fins (alpha), motif tuilable
+function fenceTexture() {
+  const c = makeCanvas(128, 128); const g = c.getContext('2d');
+  g.clearRect(0, 0, 128, 128); g.strokeStyle = '#d0d4d8'; g.lineWidth = 2.5;
+  for (let x = 0; x <= 128; x += 32) { g.beginPath(); g.moveTo(x, 0); g.lineTo(x, 128); g.stroke(); }
+  for (let y = 0; y <= 128; y += 16) { g.beginPath(); g.moveTo(0, y); g.lineTo(128, y); g.stroke(); }
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = 8; t.repeat.set(12, 6);
   return t;
 }
 function meshTexture() {
@@ -474,8 +484,8 @@ function backBandGeo(st, u0, u1, o, y0, y1, repU = 1, repV = 1) {
 
 function buildStands(scene) {
   const B = new Builder();
-  const seatMat = new THREE.MeshLambertMaterial({ map: seatTexture() });
-  const terraceMat = new THREE.MeshLambertMaterial({ map: terraceTexture() });
+  const seatMat = matiere('sieges', { uv: true, map: seatTexture(), vertexColors: false, roughness: 0.62, strength: 0.7, name: 'tribunes-sieges' });
+  const terraceMat = matiere('gradins', { uv: true, map: terraceTexture(), vertexColors: false, roughness: 0.88, strength: 1.0, name: 'tribunes-gradins' });
   const seats = [], terrace = [];
   for (const st of STANDS) {
     const h = st.half;
@@ -509,7 +519,7 @@ function buildStands(scene) {
   }
   // le corps des tribunes est légèrement repoussé en profondeur : les gradins, sièges et bandeaux posés
   // à quelques centimètres devant lui ne « clignotent » plus (z-fighting) quand on les regarde de loin
-  const body = B.mesh(new THREE.MeshLambertMaterial({ vertexColors: true, polygonOffset: true, polygonOffsetFactor: 1, polygonOffsetUnits: 2 }));
+  const body = B.mesh(matiere('beton', { seed: 51, scale: 1.4, strength: 0.7, roughness: 0.88, name: 'tribunes-beton' })); body.material.polygonOffset = true; body.material.polygonOffsetFactor = 1; body.material.polygonOffsetUnits = 2;
   body.castShadow = true; body.receiveShadow = true; scene.add(body);
   for (const [list, mat] of [[seats, seatMat], [terrace, terraceMat]]) {
     if (!list.length) continue;
@@ -577,7 +587,7 @@ function buildStandDetails(scene) {
     B.rod(SP(st, -h, 0.25, b1 + 0.95), SP(st, h, 0.25, b1 + 0.95), 0.035, 0xb9bec4, 5); // main courante du premier rang
     if (st.main) vip.push(stripGeo(st, -14, 14, 8, loY(8), 15, loY(15), 3.2, 0.07));
   }
-  const det = B.mesh(new THREE.MeshLambertMaterial({ vertexColors: true, side: THREE.DoubleSide })); det.castShadow = true; scene.add(det);
+  const det = B.mesh(matiere('tole', { seed: 52, scale: 0.6, strength: 0.4, roughness: 0.55, metalness: 0.2, side: THREE.DoubleSide, name: 'tribunes-details' })); det.castShadow = true; scene.add(det);
   const sm = new THREE.Mesh(mergeNonIndexed(stairs), new THREE.MeshLambertMaterial({ map: stairTexture() })); sm.receiveShadow = true; scene.add(sm);
   const vm = new THREE.Mesh(mergeNonIndexed(vip), new THREE.MeshLambertMaterial({ map: (() => { const t = vipTexture(); return t; })() })); vm.receiveShadow = true; scene.add(vm);
   scene.add(new THREE.Mesh(mergeNonIndexed(voids), new THREE.MeshBasicMaterial({ color: 0x07080a })));
@@ -625,7 +635,7 @@ function buildStandDetails(scene) {
     const flag = new THREE.Mesh(fg, flagMat(i % 3));
     flag.position.set(x, y + 3.0, z); flag.userData.ph = r() * 6.28; flag.userData.base = r() * 6.28; scene.add(flag); W.flags.push(flag);
   }
-  scene.add(Pb.mesh(new THREE.MeshLambertMaterial({ vertexColors: true })));
+  scene.add(Pb.mesh(matiere('laque', { seed: 53, scale: 0.5, roughness: 0.45, metalness: 0.5, name: 'pylones' })));
 }
 
 // toits suspendus à un anneau de poutres porté par quatre pylônes d'angle
@@ -1057,26 +1067,75 @@ varying vec2 vCUv; varying vec3 vShirt; varying vec3 vAcc; varying float vSeed; 
 
 function buildCompound(scene) {
   const g = new THREE.Group();
-  const B = new Builder();
-  // marquages au sol du compound
+  const B = new Builder({ ao: 0.4, aoOpts: { dist: 1.2, strength: 1.0, floor: 0.3 } });
+  // enrobé : texture de teinte + relief de gravillons et plaques d'usure (matière bitume)
   const tarmac = tarmacTexture(); tarmac.repeat.set(130 / 9, 80 / 9);
-  const asphalt = new THREE.Mesh(new THREE.PlaneGeometry(130, 80), pbr(new THREE.MeshLambertMaterial({ map: tarmac }), 0.82));
+  const asphalt = new THREE.Mesh(new THREE.PlaneGeometry(130, 80), matiere('bitume', { map: tarmac, vertexColors: false, roughness: 0.88, scale: 1.8, name: 'compound-bitume' }));
   asphalt.rotation.x = -Math.PI / 2; asphalt.position.set(-5, 0.0, -135); asphalt.receiveShadow = true; g.add(asphalt);
+  // flaques (après la pluie du matin) : disques sombres et lisses qui reflètent le ciel
+  const puddle = new THREE.MeshStandardMaterial({ color: 0x0e1114, roughness: 0.03, metalness: 0, transparent: true, opacity: 0.82, polygonOffset: true, polygonOffsetFactor: -3, polygonOffsetUnits: -3 });
+  const rp = mulberry32(44);
+  for (let i = 0; i < 9; i++) {
+    const m = new THREE.Mesh(new THREE.CircleGeometry(1, 18), puddle);
+    m.rotation.x = -Math.PI / 2; m.position.set(-55 + rp() * 95, 0.006, -158 + rp() * 48); m.scale.set(1.2 + rp() * 2.8, 0.7 + rp() * 1.6, 1); m.rotation.z = rp() * 3;
+    m.userData.noAO = true; g.add(m);
+  }
   for (let x = -60; x <= 50; x += 10) B.box(0.15, 0.02, 5, x, 0.02, -100, 0xd9d9d9);
-  // barrières
-  for (let x = -68; x <= 58; x += 2.5) B.box(2.4, 1.1, 0.05, x, 0.55, -96, 0x9aa0a6);
+  // barrières de chantier (grillage sur plots béton) et accessoires de compound
+  const Bm = new Builder({ ao: 0.4 }), Bp = new Builder({ ao: 0.4 }), Bw = new Builder({ ao: 0.4 });
+  const fenceTex = fenceTexture();
+  const fenceMat = new THREE.MeshStandardMaterial({ map: fenceTex, alphaTest: 0.45, side: THREE.DoubleSide, roughness: 0.6, metalness: 0.5, color: 0xb8bec4 });
+  const fences = [];
+  for (let x = -68; x <= 58; x += 3.5) {
+    for (const dx of [-1.7, 1.7]) Bm.cyl(0.021, 0.021, 2.0, x + dx, 1.0, -96, 0xa0a6ac, 8);
+    Bm.cyl(0.021, 0.021, 3.4, x, 1.98, -96, 0xa0a6ac, 8, 0, Math.PI / 2); Bm.cyl(0.021, 0.021, 3.4, x, 0.06, -96, 0xa0a6ac, 8, 0, Math.PI / 2);
+    Bp.cbox(0.6, 0.15, 0.22, x + 1.75, 0.075, -96, 0x8f9296, 0.02);
+    const f = new THREE.Mesh(new THREE.PlaneGeometry(3.35, 1.88), fenceMat); f.position.set(x, 1.02, -96); fences.push(f);
+  }
+  for (const f of fences) g.add(f);
+  // cônes et balises autour des rampes de câbles, plots devant la porte du car
+  const T = TRUCK;
+  const cone = (x, z) => { Bp.cyl(0.03, 0.14, 0.5, x, 0.27, z, 0xff6a1a, 10); Bp.cyl(0.075, 0.095, 0.08, x, 0.3, z, 0xf4f4f0, 10); Bp.cbox(0.34, 0.04, 0.34, x, 0.02, z, 0x1a1c1e, 0.01); };
+  for (const [x, z] of [[2.9, -112], [2.9, -118], [1.1, -112], [-10, -114.2], [-13, -115.8], [-4, -114.2], [1.3, -100.5], [2.8, -100.5]]) cone(x, z);
+  // rampes de câbles à 5 voies (noir, couvercle jaune), bobines, flight cases et palettes près de la porte
+  const ramp = (x, z, L, alongX) => {
+    const w = alongX ? L : 0.9, d = alongX ? 0.9 : L;
+    Bp.cbox(w, 0.06, d, x, 0.03, z, 0x1a1c1e, 0.02); Bp.cbox(alongX ? L : 0.5, 0.025, alongX ? 0.5 : L, x, 0.07, z, 0xf2c200, 0.01);
+  };
+  ramp(2.0, -105.5, 20, false); ramp(-6, -115, 16, true);
+  for (const [x, z, h] of [[-7, -112.6, 0.5], [-7.9, -112.6, 0.5], [-7.45, -112.6, 1.06]]) { Bp.cyl(0.42, 0.42, 0.08, x, h - 0.04, z, 0x6b5a3e, 16); Bp.cyl(0.42, 0.42, 0.08, x, h + 0.44, z, 0x6b5a3e, 16); Bp.cyl(0.18, 0.18, 0.4, x, h + 0.2, z, 0x1a1c1e, 12); }
+  const fcase = (x, z, w, h, d, rot = 0) => {
+    Bp.cbox(w, h, d, x, h / 2 + 0.08, z, 0x16181b, 0.02, rot);
+    for (const sy of [-1, 1]) for (const sz of [-1, 1]) Bm.cbox(w + 0.02, 0.03, 0.03, x, h / 2 + 0.08 + sy * (h / 2), z + sz * (d / 2), 0x9aa0a6, 0.01, rot);
+    for (const sx of [-1, 1]) for (const sz of [-1, 1]) Bm.cbox(0.03, h + 0.02, 0.03, x + sx * (w / 2), h / 2 + 0.08, z + sz * (d / 2), 0x9aa0a6, 0.01, rot);
+    for (const sx of [-1, 1]) for (const sz of [-1, 1]) Bp.cyl(0.04, 0.04, 0.04, x + sx * (w / 2 - 0.1), 0.04, z + sz * (d / 2 - 0.1), 0x111214, 8);
+    for (const sx of [-1, 1]) Bm.cbox(0.16, 0.05, 0.03, x + sx * (w / 2 - 0.2), h * 0.75, z + d / 2 + 0.01, 0x9aa0a6, 0.01, rot);
+  };
+  fcase(-12.2, -114.9, 1.2, 0.8, 0.6); fcase(-12.2, -114.9 + 0.0, 1.2, 0.5, 0.6); fcase(-14.0, -115.2, 0.8, 1.1, 0.6, 0.2);
+  // palette avec caisses
+  const pallet = (x, z) => { for (let k = 0; k < 5; k++) Bw.box(1.2, 0.022, 0.1, x, 0.12, z - 0.4 + k * 0.2, 0xb08a56); for (const dx of [-0.5, 0, 0.5]) Bw.box(0.1, 0.1, 0.8, x + dx, 0.05, z, 0x9a7646); };
+  pallet(-24, -114.5); Bp.cbox(1.0, 0.6, 0.7, -24, 0.43, -114.5, 0x2b3b52, 0.02); Bp.cbox(0.6, 0.4, 0.5, -24.1, 0.93, -114.4, 0x2b3b52, 0.02);
+  // poubelle, groupe de prises, lampadaires du parking
+  Bp.cyl(0.3, 0.26, 0.9, 6.5, 0.45, -112, 0x2f3338, 14); Bp.cyl(0.32, 0.32, 0.04, 6.5, 0.92, -112, 0x1a1c1e, 14);
+  for (const [x, z] of [[-40, -158], [20, -158], [-40, -98.5], [40, -98.5]]) { Bm.cyl(0.08, 0.12, 8, x, 4, z, 0x7a8086, 10); Bm.cyl(0.07, 0.07, 1.4, x + 0.7, 8.0, z, 0x7a8086, 8, 0, Math.PI / 2); Bp.cbox(0.7, 0.14, 0.3, x + 1.4, 8.0, z, 0x3a3f45, 0.02); }
+  for (const [b, m] of [[Bm, matiere('alu', { seed: 41, scale: 0.4, roughness: 0.5, metalness: 0.8, name: 'compound-metal' })], [Bp, matiere('plastique', { seed: 42, scale: 0.25, roughness: 0.55, name: 'compound-plastique' })], [Bw, matiere('stratifie', { seed: 43, scale: 0.4, roughness: 0.9, name: 'compound-bois' })]]) {
+    const mesh = b.mesh(m); mesh.castShadow = true; mesh.receiveShadow = true; g.add(mesh);
+  }
 
   // --- car régie (extérieur), tracteur, camion satellite, groupe, bungalows ---
-  const T = TRUCK;
   g.add(buildOBTruck(T));
   g.add(buildGenerator(18, -125));
   g.add(buildDSNG(-48, -128));
   g.add(buildBungalows(22, -150));
-  // câbles d'énergie au sol
-  B.box(26, 0.06, 0.15, 3.5, 0.03, -121, 0x111111);
-  // chemin de câbles (passe-câbles) vers la façade
-  B.box(0.6, 0.06, 20, 2.0, 0.03, -105.5, 0x6b5a1e);
-  B.box(16, 0.06, 0.6, -6, 0.03, -115, 0x6b5a1e);
+  // câbles d'énergie au sol (toron souple) et câbles vers le pied de car
+  {
+    const Bc = new Builder();
+    const run = (pts, r, col) => Bc.add(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts.map((p) => new THREE.Vector3(...p)), false, 'catmullrom', 0.5), 48, r, 7, false), null, col);
+    run([[13.4, 0.05, -122], [10, 0.04, -121.3], [6, 0.05, -121.2], [2.5, 0.04, -120.5], [-1.5, 0.05, -120.0], [-5, 0.04, -119.4], [-8, 0.05, -118.4]], 0.035, 0x111214);
+    run([[13.4, 0.05, -121.6], [9, 0.04, -121.0], [5, 0.05, -120.7], [1, 0.04, -120.1], [-3, 0.05, -119.4], [-7, 0.04, -118.6], [-8.4, 0.05, -118.0]], 0.035, 0x111214);
+    for (let k = 0; k < 4; k++) run([[2.2 + k * 0.08, 0.1, -96.2], [2.2 + k * 0.08, 0.1, -100], [2.1 + k * 0.08, 0.1, -108], [2.0 + k * 0.08, 0.1, -115], [-2 + k * 0.1, 0.1, -115.1], [-6, 0.1, -115.1 + k * 0.08], [-10.5, 0.4, -116.4 + k * 0.06], [T.x1 - 3.6 + k * 0.34, 1.0, T.z1 + 0.2]], 0.014, [0x1d2a44, 0x111214, 0x3a1e1e, 0x111214][k]);
+    const cm = Bc.mesh(matiere('plastique', { seed: 45, scale: 0.15, roughness: 0.6, name: 'compound-cables' })); cm.castShadow = true; g.add(cm);
+  }
   const mesh = B.mesh(new THREE.MeshLambertMaterial({ vertexColors: true }));
   mesh.castShadow = true; mesh.receiveShadow = true; g.add(mesh);
   // inscription du car
@@ -1135,7 +1194,7 @@ function buildSurroundings(scene) {
   const B = new Builder(); const r = mulberry32(62);
   const foot = []; // emprises des maisons (pour ne pas planter d'arbres dedans) : [x, z, rayon]
   // --- parvis piéton autour des tribunes (dalles claires) ---
-  { const pv = new THREE.Mesh(new THREE.PlaneGeometry(250, 200), new THREE.MeshLambertMaterial({ map: pavingTexture(), polygonOffset: true, polygonOffsetFactor: 3, polygonOffsetUnits: 6 })); pv.rotation.x = -Math.PI / 2; pv.position.set(0, -0.03, 5); pv.receiveShadow = true; scene.add(pv); }
+  { const pv = new THREE.Mesh(new THREE.PlaneGeometry(250, 200), matiere('beton', { seed: 54, map: pavingTexture(), vertexColors: false, scale: 1.6, strength: 0.6, roughness: 0.85, name: 'parvis' })); pv.material.polygonOffset = true; pv.material.polygonOffsetFactor = 3; pv.material.polygonOffsetUnits = 6; pv.rotation.x = -Math.PI / 2; pv.position.set(0, -0.03, 5); pv.receiveShadow = true; scene.add(pv); }
   // --- arbres du parvis (instanciés) ---
   {
     const pts = [];
@@ -1278,7 +1337,7 @@ export function applyLighting(key) {
   sky.uSunDir.value.copy(sun.position).normalize(); sky.uSunCol.value.copy(sun.color);
   sky.uSunI.value = { jour: 1.0, fin: 0.8, couvert: 0, nuit: 0 }[key] ?? 0;
   // éclairage physique : l'environnement (ciel capturé) remplace la majeure partie de la lumière hémisphérique
-  if (RENDER.pbr) { hemi.intensity *= 0.3; refreshEnvironment(key); }
+  if (RENDER.pbr) { hemi.intensity *= key === 'jour' ? 0.45 : 0.3; refreshEnvironment(key); }
   // les haubans (non éclairés) suivent la lumière ambiante
   if (W.cableMat) W.cableMat.color.setHex({ jour: 0xd8dde2, fin: 0x9a8f88, couvert: 0x8a8f94 }[key] ?? 0x0a0b0c);
   if (W.roofMat) W.roofMat.emissive.setHex({ jour: 0x5a5f66, fin: 0x34363a, couvert: 0x3c3f43 }[key] ?? 0x030304);

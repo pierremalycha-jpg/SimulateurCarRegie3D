@@ -39,6 +39,7 @@ import { COMMUT } from './ui/commut.js';
 import { AT, beginAtelier, updateAtelier, endAtelier, atelierDebug } from './atelier.js';
 import { pt, pe, profFrame, profSnapshot, profReset } from './app/profiler.js';
 import { createRenderer, pcam, setQuality, updateNear } from './app/view.js';
+import { MATIERE, detailOk } from './matiere.js';
 import { PL, onDeck, eyePos, updatePlayer, updToolbar } from './app/player.js';
 import { takeCamera, releaseCamera, updateCamop } from './app/camop.js';
 import { AIM, updatePrompt } from './app/interact.js';
@@ -50,6 +51,9 @@ import { initTitle, loadStep, tick, titleReady, enterFrom, showTitle } from './a
 import './ui/settings.js';
 import { initCamLab, camlabOpen, camlabDebug } from './camlab/index.js';
 import { initEntrepot, entrepotOpen, entrepotDebug } from './entrepot/index.js';
+import { installCarriere } from './carriere/installer.js';
+import { installMissionRun, RUN as MISSION_RUN } from './game/mission_run.js';
+import * as CARRIERE from './carriere/index.js';
 import { applyRole, PROFILE, setRole } from './app/profile.js';
 import { openCours } from './ui/cours_ui.js';
 import { CHAPTERS as COURS_CHAPTERS, allLessons, lessonById as coursLessonById, lessonDone as coursLessonDone } from './cours/index.js';
@@ -82,6 +86,8 @@ applyRole();
 initTitle();
 initCamLab();
 initEntrepot();
+installCarriere();
+installMissionRun();
 loadStep('Chargement des polices', 6); await tick();
 // charge les polices avant de dessiner les textures (étiquettes, panneaux), sans bloquer plus de 2,5 s
 try {
@@ -93,6 +99,7 @@ try {
 
 loadStep('Construction du stade', 12); await tick();
 const renderer = createRenderer();
+MATIERE.detail = detailOk();
 buildWorld(renderer);
 loadStep('Le match et les joueurs', 42); await tick();
 initMatch(); buildPlayers(W.scene); initRecorder();
@@ -247,8 +254,9 @@ window.__dbg.title = { enter: enterFrom, show: showTitle };
 window.__dbg.nav = { openMenu, restart };
 window.__dbg.openCours = openCours; window.__dbg.PROFILE = PROFILE; window.__dbg.setRole = setRole; window.__dbg.camlab = camlabDebug; window.__dbg.entrepot = entrepotDebug;
 window.__dbg.COURS = { CHAPTERS: COURS_CHAPTERS, allLessons, lessonById: coursLessonById, lessonDone: coursLessonDone };
-window.__dbg.CTRL = CTRL;
+window.__dbg.CTRL = CTRL; window.__dbg.MATIERE = MATIERE;
 window.__dbg.jeu = { XP, sfx, JEU, openJournal, currentGoal, renderQuest };
+window.__dbg.carriere = CARRIERE; window.__dbg.mission = MISSION_RUN;
 // le programme a démarré : le filet du chargement (boot.js) n'a plus à intervenir
 window.__carReady = true;
 initDiagUI();

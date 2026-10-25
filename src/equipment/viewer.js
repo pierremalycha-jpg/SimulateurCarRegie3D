@@ -372,7 +372,7 @@ export function openDevice(key, n = 1, opts = {}) {
   renderSvg(); renderInfo();
   emit('device', { type: 'open', key, n });
   clearInterval(VIEW.timer);
-  VIEW.timer = setInterval(() => { if (!modal.isOpen || !VIEW.svgHost.isConnected) { clearInterval(VIEW.timer); return; } if (['ccu', 'rcp', 'lsm', 'cam', 'mixpanel'].includes(key)) { renderSvg(); } }, 700);
+  VIEW.timer = window.setInterval(() => { if (!modal.isOpen || !VIEW.svgHost.isConnected) { clearInterval(VIEW.timer); return; } if (['ccu', 'rcp', 'lsm', 'cam', 'mixpanel'].includes(key)) { renderSvg(); } }, 700);
 }
 
 export function openEquipmentIndex() {

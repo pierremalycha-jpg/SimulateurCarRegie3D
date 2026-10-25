@@ -394,7 +394,59 @@ Tests :
   « Emmène-moi / Montre-moi » doit mettre en évidence un élément réel de la page, et « Fais-le pour moi » doit faire
   valider l'étape.
 
-## v19.5 : jouer par Internet, avec quelqu'un qui est chez lui
+## v19.8 : trois façons de jouer au car régie, le suivi des tâches sur le côté, Olivier en boîte de dialogue
+
+**Pourquoi.** Retour du 24 octobre 2026 : les modes du car mélangeaient les phases (un car « installé » où le chef de
+car et les missions restaient partout, une « visite guidée » à part, des exercices notés rangés seulement dans le
+Cours) ; l'objectif tenait sur une carte, et le chef de car flottait dans une petite fenêtre qui chargeait l'image.
+Cette version sépare les phases en trois modes, montre les tâches sur le côté comme le journal de quêtes d'un jeu
+et fait parler Olivier dans une boîte de dialogue.
+
+**Jouer → Car régie : trois modes** (`src/app/start.js`).
+- **Car vide** : tout est à faire (stade vide, car non brassé, caméras non réglées, réseau de contrôle aux adresses
+  d'usine). Olivier se présente et propose d'abord **le tour du car et les postes** (la visite guidée) ou
+  **directement l'installation** ; ensuite il aide quand on l'appelle (J). C'est le mode proposé d'office au premier
+  lancement.
+- **Car pré-installé** : tout est en place, le match en direct, **jeu libre** : ni chef de car (J), ni journal des
+  missions (L), ni objectif ; un message le dit. La coopération se joue dans ce mode.
+- **Mission spécifique** : une tâche précise choisie dans une liste rangée par famille (`src/game/missions.js`,
+  `src/ui/missions_ui.js`) : **Installer le car** (installer et câbler les caméras, brasser le car (noté), paramétrer
+  le réseau de contrôle, le line-up, prendre l'antenne, la zone technique), **Aux postes, avec Olivier** (les 40
+  exercices pratiques des leçons, par chapitre du Cours), **Épreuves notées** (jour de match, atelier, formation
+  réseau ST 2110). Le car est **préparé pour la tâche** (`prepa` : stade sans caméra, caméras non réglées, réseau
+  d'usine, car IP ou SDI, vacation à part). Une fois terminée : bannière « Mission réussie », puis **Mission
+  suivante** (la liste ; si le car convient, elle commence tout de suite, sinon le simulateur se recharge avec le car
+  préparé : `memeCar`, `restart('mission:<id>')`) ou **Arrêter**. Une étape de l'installation n'est réussie que si
+  ses tâches le sont pendant la partie (les postes ouverts comptent depuis le lancement). Les exercices restent
+  rangés dans leur leçon du Cours : ce sont les mêmes, ils comptent une fois.
+
+**Le suivi des tâches sur le côté** (`src/game/quest.js`, `src/styles/suivi.css`). L'objectif devient une liste :
+la mission en cours, sa barre, ses tâches cochées au fur et à mesure (en cours mise en avant, les autres grisées) et
+ses boutons. Car vide : les 22 tâches de l'installation en quatre groupes (les caméras, le car, prendre l'antenne, la
+zone technique), le groupe en cours ouvert ; exercice d'Olivier : ses étapes (les longues listes montrent celles
+autour de l'étape en cours) ; visite guidée : le tour du car et les postes (un clic emmène au poste) ; jour de match :
+ses objectifs ; mission terminée : « Mission suivante » et « Arrêter ». À un poste, le panneau du poste occupe
+l'écran : l'étape en cours est dans la boîte de dialogue d'Olivier.
+
+**Olivier en boîte de dialogue** (`src/ui/tutor_ui.js`, `src/styles/chef-dialogue.css`) : en bas de l'écran, comme
+dans un jeu de rôle, le portrait qui déborde du cadre, son nom sur le bandeau, ce qu'il dit, puis les gestes
+(Montre-moi, un indice, Fais-le pour moi, Suivant). Plus de petite fenêtre à déplacer : la boîte passe d'elle-même en
+haut de l'écran quand l'élément à utiliser est dessous (ou d'un clic, ▲ ▼), se réduit en une ligne, et occupe le
+bas de l'écran sur un téléphone. Le plan de la visite est dans le suivi (et, replié, dans la boîte : « Choisir un
+poste »).
+
+**Corrigé au passage.** La tâche « Le réseau de contrôle » du car vide se cochait toute seule : en sortie d'usine, le
+RCP et la CCU sont dans le même sous-réseau (192.168.0.x) et se joignent déjà. Elle demande maintenant ce que dit la
+consigne : l'adresse du plan (adresse, masque, passerelle) sur le RCP et la CCU de chaque caméra installée
+(`camAuPlan`, `src/net/ctrlnet.js`).
+
+Tests : unitaires `missions` (nouveau : le catalogue, chaque tâche et chaque exercice qui existent, la préparation, ce
+qui est déjà fait, quand enchaîner sans recharger) et `ctrlnet` (l'adresse du plan) ; suite de bout en bout
+`modes-car` (nouvelle : les trois modes, la liste par famille, le car préparé, le suivi, la mission réussie,
+enchaîner avec puis sans rechargement, la boîte de dialogue, le car pré-installé sans chef ni missions, le car vide et
+sa visite, le téléphone) ; `fichier`, `navigateurs`, `navigation` mises à jour.
+
+## v19.7 : jouer par Internet, avec quelqu'un qui est chez lui
 
 **Pourquoi.** Demande du 24 octobre 2026 : partager le simulateur avec une personne qui joue depuis chez elle,
 l'ordinateur de l'hôte faisant serveur, le plus simplement possible, et voir son avatar. Le jeu à plusieurs ne
@@ -447,6 +499,127 @@ renouvellement, fermeture, port pris, redirections permanentes, refus, box sans 
 `internet` (nouvelle : hôte sans box, lien par tunnel, invité sans clé puis avec, partie rejointe, avatars des deux
 côtés, lien collé dans le salon d'un autre ordinateur, fermeture) ; `reseau-local`, `session` et `fichier` repassées ;
 `node tools/exe.mjs --verifier` contrôle aussi le module Internet.
+
+## v19.6 : la Carrière, un mode scénarisé : le bureau de l'entrepôt et ses mails
+
+**Pourquoi.** Les activités du simulateur étaient rangées côte à côte (les exercices dans les leçons du Cours,
+les modes du car et les missions de l'entrepôt dans Jouer) sans fil qui les relie. La Carrière leur donne un
+ordre et une raison d'être, comme dans un jeu de gestion à la première personne : on arrive au bureau de
+l'entrepôt, un ordinateur reçoit des mails qui proposent un poste sur une prestation, on accepte, on réussit la
+mission, la suivante arrive. Le mode libre reste ce qu'il était (le bac à sable de l'entrepôt, le car installé).
+Ce premier lot pose la boucle de bout en bout avec deux missions ; la marche à la première personne dans
+l'entrepôt et la saison complète viennent ensuite (`ROADMAP.md`).
+
+**Jouer → L'entrepôt → Carrière** (premier mode du lieu, choisi d'office ; `src/app/start.js`). La touche dit où
+l'on en est (« 2 mails non lus au bureau. Mission en cours : … ») et le bouton passe de « Commencer ma
+carrière » à « Retourner au bureau ».
+
+**Le bureau** (`src/entrepot/scene/bureau.js`), à l'avant gauche du hall : une table, un fauteuil, l'unité
+centrale, le clavier et l'écran, qui montre la messagerie et ses mails non lus (texture redessinée quand ils
+changent ; hors Carrière, « Session verrouillée »). En Carrière, l'entrepôt s'ouvre assis devant l'écran, sur la
+messagerie ; elle se rouvre d'un clic sur l'écran ou l'unité centrale dans la 3D, par la pastille
+« Messagerie · n » ou par la touche **Messagerie** de la barre (avec le nombre de mails non lus) ; la zone
+**Bureau** rejoint Baie, Table, Plateau et Mur.
+
+**La messagerie** (`src/carriere/ui.js`) : la boîte de réception du plus récent au plus ancien (expéditeur,
+objet, date, état de la mission), puis le mail ouvert (lu dès qu'on l'ouvre). Une proposition porte son **ordre
+de mission** : le poste, le lieu, la mission, la durée, ce qu'on attend (coché d'après la progression) et le
+bouton qui y emmène. Les textes expliquent chaque mot du métier à sa première apparition (car régie, compound,
+caméra PTZ, tally, N-1…). La société est celle que règle le formateur (Réglages → espace formateur → Le car,
+« Société / service »), sinon un nom fictif, **TIEE Prestations**.
+
+**La saison 1** (`src/carriere/mails.js`) :
+1. **Stagiaire** : Nadia, chargée de planning, envoie au stade. Le car se lance en **visite guidée réduite** au
+   tour du car et à six postes (réalisateur, truquiste, ingé vision, opérateur ralenti, ingé son, chef de car) ;
+   ce qui est déjà vu est coché, la visite reprend au premier arrêt qui reste. À la fin, Olivier dit « Mission
+   accomplie » et propose **Retourner à l'entrepôt** (le simulateur se recharge sur le bureau : `app/nav.js`).
+   Le mail de retour d'Olivier résume qui fait quoi.
+2. **Assistant technique** : la remise des diplômes du lycée, c'est-à-dire la mission « Conférence à trois
+   caméras PTZ » de l'entrepôt. « Commencer le montage » ouvre son cahier des charges (le montage déjà commencé
+   est repris) ; rendue à 60 / 100 au moins, Nadia répond avec la note.
+
+**Rien ne se compte deux fois** (`src/carriere/index.js`, calcul pur). Une mission est réussie quand l'activité
+qu'elle reprend l'est : les parcours « prise-en-main » et « poste-* » terminés (`PROG.tutor`), le meilleur
+résultat de la mission de l'entrepôt (`PROG.entrepot`). Ce qui est acquis ailleurs l'est ici ; le livret et l'XP
+ne voient que ces activités (aucune XP de plus, aucun rattachement nouveau). Seul un badge s'ajoute :
+**Embauché**, la mission de stagiaire réussie en Carrière. Un mail arrive quand son épisode s'ouvre (ses requis
+réussis), son retour quand sa mission est réussie, avec une notification (au car : « Il t'attend au bureau de
+l'entrepôt »).
+
+**Progression v3** (`src/shared.js`). `PROG.carriere` ne garde que la date de réception et de lecture de chaque
+mail ; `PROG_VERSION` passe à 3 (une Carrière abîmée est remise en forme), deux appareils fusionnent en gardant
+la date la plus ancienne, l'import accepte une progression qui n'a que la Carrière.
+
+Tests : unitaire `carriere` (le moule des épisodes, l'ordre d'arrivée des mails, la visite et la mission de
+l'entrepôt lues dans la progression, la lecture, la fusion, la mise à niveau v2 → v3, le badge) ; suite de bout en
+bout `carriere` (Jouer, le bureau et son écran cliqué dans la 3D, le premier mail, le car en visite de stagiaire,
+« Mission accomplie », le rechargement sur le bureau, la conférence montée et rendue, le mail de retour, Jouer qui
+résume, la messagerie à 390 px).
+## v19.5 : un rendu de jeu vidéo : matières, relief, lumière, décor
+
+**Pourquoi.** Le simulateur faisait « brut de décoffrage » : des boîtes à arêtes vives en couleurs unies, aucun
+relief de surface, rien qui touche le sol, un car éclairé à plat, un décor vide. Le moteur, lui, était déjà celui
+d'un jeu (matériaux physiques, environnement capturé, courbe ACES, halo, ombres douces) : c'est le contenu que cette
+version refait, sans aucune ressource externe (tout reste généré par le code dans la seule page) et sans toucher à
+la qualité Basse, qui garde le rendu d'avant pour les ordinateurs les plus faibles.
+
+**Des matières procédurales** (`src/matiere.js`). Une recette par surface (tôle peinte, tôle nervurée, aluminium
+brossé, plastique grainé, stratifié, caoutchouc à pastilles, moquette, bitume, béton, mousse acoustique, tissu,
+acier thermolaqué, tôle larmée, herbe) génère en code des cartes tuilables de **normales** (relief), de **rugosité**
+et de **variation de teinte** (bruit de valeur périodique, 256 × 256, mises en cache). `matiere(recette, options)`
+donne un `MeshStandardMaterial` qui les plaque en **triplanaire** (par la position dans le monde, mélange
+« whiteout ») : les géométries fusionnées du `Builder`, sans UV, en profitent telles quelles, et une texture UV
+(livrée du car, enrobé, parvis) s'y ajoute. Le relief se coupe sans recompiler la scène (`MATIERE.setDetail`,
+suivi par Réglages → Qualité) : en Basse et en mode allégé, les matériaux restent unis.
+
+**Des formes et des ombres de contact** (`src/geo.js`). `roundedBox` : une boîte aux arêtes arrondies en three.js
+de base (projection sur la boîte intérieure, normales exactes) ; `Builder.cbox` pour l'utiliser. En mode `ao`, le
+`Builder` subdivise les grandes faces et **cuit l'occlusion ambiante par sommet** à la fusion (rayons hémisphériques
+contre les boîtes de la pièce, partagées entre plusieurs `Builder` par `occluders`) : coins de pièce, dessous de
+bureau, pieds de baie et de chaise s'assombrissent sans coût au rendu ; les pièces menues (gobelets, boutons) en sont
+dispensées. Dans le car, une **occlusion ambiante d'écran** (SSAO, `src/render.js` : pré-passe normales + profondeur
+à demi-résolution, 12 échantillons, flou qui respecte les arêtes) complète la cuisson en Moyenne et Haute ; les
+écrans et les LED y échappent (pondération par la luminance). `?noao` la coupe pour comparer.
+
+**L'intérieur du car** (`src/truck.js`) : une pièce fusionnée par famille de matière (parois en tôle, sol en
+caoutchouc, bureaux en stratifié à nez d'aluminium chanfreiné, baies thermolaquées à rails 19", sièges en tissu
+à cinq branches et accoudoirs, plastiques, mousse acoustique du son, seuil en tôle larmée), **pénombre d'un vrai
+car** : hémisphère réduite, un spot au-dessus de chaque poste, la lueur froide des murs d'écrans sur les pupitres ;
+**accessoires** : échelles à câbles et torons au plafond, descentes derrière les baies et les murs d'écrans,
+jarretières devant la baie de brassage, casques d'intercom, boîtiers, blocs-notes, gobelets, extincteur, trousse de
+secours, tableau électrique, goulotte de prises, bouches de climatisation, horloges, poignée et joints de porte.
+
+**L'extérieur** (`src/vehicles.js`, `src/world.js`, `src/landscape.js`) : caisse et extensions arrondies, livrée
+sur **tôle nervurée**, portes arrière à crémones et charnières, passages de roues, bavettes, feux de gabarit,
+plaque, pare-chocs, auvent du pied de car ; tracteur à **pare-brise courbe**, pare-soleil, calandre à lames,
+rétroviseurs, marchepieds, antibrouillards ; DSNG, groupe (armoire de commande, prises P17) et bungalows (cadres de
+fenêtres, marches) arrondis et en matière. Le compound : **bitume en relief** avec flaques qui reflètent le ciel,
+barrières de chantier grillagées sur plots, cônes, rampes de câbles à cinq voies, bobines, flight cases à cornières
+et roulettes, palette, poubelle, lampadaires, câbles d'énergie au sol et câbles vers le pied de car. Les **arbres**
+sont des plans croisés à découpe alpha (feuillage peint en code, écorce, ombre découpée) à la place des sphères.
+Le stade : béton des tribunes et du parvis en relief, pylônes en acier, **sièges et gradins en relief** (mode UV de
+`matiere` : la carte de normales suit la texture des sièges, coques arrondies, dossiers, contremarches).
+
+**L'entrepôt** (`src/entrepot/scene/hall.js`, `scene.js`) : béton du sol en relief, bardage en tôle, baie thermolaquée, plateau de
+table en stratifié à nez d'aluminium, moquette de l'estrade, cartons et flight cases grainés ; une carte d'environnement du hall
+(lanterneaux, murs, sol) donne des reflets aux métaux et aux façades. Les matières libérées avec le bac sortent de la liste.
+
+**Second passage du car (19.5.1)** : deux afficheurs de timecode à LED rouges dans les murs d'écrans (production, vision), à
+l'heure du car ; conducteurs d'émission sur les bureaux ; murs d'écrans ramenés sous le plafond. Et les défauts signalés en
+classe : le **moiré** venait de motifs trop fins (tissage à 1,5 mm, stries de brossage, micro-rayures) : les recettes ont des
+périodes d'au moins 4 mm et une anisotropie de 8 ; les surfaces qui **sautaient** étaient des faces coplanaires (nez de bureau
+sur le plateau, socle des écrans EVS, lames des bouches de climatisation, seuil sous le balisage) et le bruit du SSAO
+qui changeait à chaque image : tout est décalé ou fixé, et les accessoires sont posés sur la surface des plateaux.
+
+**Vérifier.** `node tools/e2e.mjs rendu` (`tests/e2e/rendu.mjs` : familles de matières, relief actif / coupé selon
+la qualité, occlusion cuite, spots, SSAO, accessoires, extérieur, arbres ; captures à regarder) ;
+`tests/unit/matiere.test.mjs` (bruit tuilable, recettes bornées et tuilables, normales, boîtes arrondies,
+occlusion cuite, `Builder` en mode ao).
+
+**Performances.** Les matières coûtent six lectures de texture par pixel (relief et surface sur trois
+projections) ; le SSAO, une passe de géométrie à demi-résolution dans le car seulement. Le car reste en quelques
+appels de rendu par famille (82 000 triangles). À mesurer sur le PC le plus faible : si Moyenne tombe sous
+30 i/s, le diagnostic de performance (Réglages) recommande Basse, où tout cela est désactivé.
 
 ## v19.4.1 : un son supportable, à sa place
 
@@ -1274,7 +1447,7 @@ npm run lint         # ESLint
 npm run typecheck    # TypeScript (navigateur + Node)
 npm test             # tests unitaires (node:test, ≈ 10 s)
 npm run check        # les quatre à la suite (ce que fait l'intégration continue)
-npm run test:e2e     # tests de bout en bout (Playwright, rendu logiciel : 36 suites, plusieurs heures)
+npm run test:e2e     # tests de bout en bout (Playwright, rendu logiciel : 40 suites, plusieurs heures)
 npm run serve:lan    # serveur réseau local (après la construction) : http://localhost:8080
 ```
 
@@ -1302,7 +1475,8 @@ node tools/shots.mjs dossier 1280 800 '["vision","hf"]'   # captures de postes
 | `diag.js` | Journal des erreurs (partagé avec `boot.js`) : erreurs non rattrapées, écouteurs d'événement, boucle de rendu, `console.error` ; version de l'application |
 | `ui/diag_ui.js` | Bandeau « Un problème est survenu » et fenêtre « Diagnostic technique » (texte à copier) |
 | `game/xp.js`, `game/progression.js` | Progression du joueur : XP (barème par activité), niveaux de technicien, badges (dont un par compétence du livret), fusion entre appareils ; accroches sur les événements du simulateur |
-| `game/quest.js` | L'objectif à l'écran (exercice, mission d'installation, phase du jour de match, visite, missions du poste), le repère 3D, le journal des missions (touche L), la carte joueur |
+| `game/quest.js` | Le suivi des tâches sur le côté (la mission en cours et ses tâches : car vide par groupe, étapes d'un exercice, plan de la visite, mission spécifique, jour de match, Carrière), le repère 3D, le journal des missions (touche L), la carte joueur |
+| `game/missions.js`, `game/mission_run.js`, `ui/missions_ui.js` | La mission spécifique (Jouer → Car régie) : le catalogue par famille et la préparation du car (calcul pur), le déroulement (lancer, constater la fin, enchaîner ou arrêter), la liste à choisir |
 | `game/fx.js`, `game/sfx.js` | Effets de jeu (barre d'XP, bannières de niveau et de badge, carte-titre, vignette, flash tally, alerte de panne) et bruitages synthétisés en WebAudio avec leur réglage |
 | `styles/theme-jeu.css` | Le thème « jeu vidéo » : jetons de couleur, composants communs, HUD, écran titre, Jouer, menu, journal, badges |
 | `ui/pupitre.js` | Le pupitre (Tab ou T) : plan du car, touches des postes par zone, endroits du stade, équipiers, outils |
@@ -1315,9 +1489,10 @@ node tools/shots.mjs dossier 1280 800 '["vision","hf"]'   # captures de postes
 | `cours/liens.js` | Les liens du Cours avec le reste : terme du glossaire → leçon ou fiche « ? », poste → leçon (bouton « Cours », touche G) |
 | `cours/sdi_falaise.js`, `cours/lab_sdi.js`, `cours/figs_sdi.js` | Leçon « La falaise numérique » : diagramme de l'œil et image qui casse avec la longueur du câble, défis d'Olivier |
 | `camlab/` | Module « La caméra en 3D » : caméra et plateau construits dans le code (`model.js`, `scene.js`), pastilles (`points.js`), 51 notions (`notions/`, une fiche par fichier, registres `ch1.js` … `ch89.js`), schémas (`figs.js`, `figs/`, `figkit.js`), manipulations (`labs.js`, `labs/`, commandes `controls.js`, optique `optics.js`, viseur simulé et traitement de l'image `vf.js`), affichage d'une fiche (`fiche.js`), progression (`progress.js`), quiz de chapitre (`quiz.js`), mise en service notée (`mes.js`) |
-| `entrepot/` | Module « L'entrepôt » (tuile de Jouer) : monter une régie mobile d'après un cahier des charges. Types (`types.js`), catalogue de matériel réel (`catalogue/`, un fichier par groupe : `blackmagic.js`, `panasonic.js`, `ross.js`, `reseau.js`, `divers.js`), montage (`build.js`), moteur (`engine.js`), missions notées (`missions.js`), résultat rendu (`suivi.js`), 3D (`scene.js`, vue en orbite `orbit.js`), panneaux (`ui/` : `stock.js`, `appareil.js`, menus de configuration `ui/config/` un fichier par famille, `synoptique.js`, `reseau.js`, `mission.js`), ouverture et boucle (`index.js`) |
+| `entrepot/` | Module « L'entrepôt » (tuile de Jouer) : monter une régie mobile d'après un cahier des charges. Types (`types.js`), catalogue de matériel réel (`catalogue/`, un fichier par groupe : `blackmagic.js`, `panasonic.js`, `ross.js`, `reseau.js`, `divers.js`), montage (`build.js`), moteur (`engine.js`), missions notées (`missions.js`), résultat rendu (`suivi.js`), 3D (`scene.js` ; `scene/` : hall, appareils, câbles, bureau et ordinateur de la Carrière `bureau.js` ; vue en orbite `orbit.js`), panneaux (`ui/` : `stock.js`, `appareil.js`, menus de configuration `ui/config/` un fichier par famille, `synoptique.js`, `reseau.js`, `mission.js`), ouverture, boucle et mode Carrière (`index.js`) |
+| `carriere/` | La Carrière (mode de l'entrepôt) : les épisodes et leurs mails (`mails.js`), la boîte de réception et les missions lues dans la progression, calcul pur (`index.js`), la messagerie du bureau (`ui.js`), les mails qui arrivent et le lancement des missions au car (`installer.js`) |
 | `ui/cours_ui.js` | L'espace Cours : un seul sommaire, page « Mon suivi » (progression, à faire ensuite, livret), leçons (quiz, exercices pratiques, article de référence), glossaire, postes, matériel |
-| `app/nav.js` | Navigation entre les trois entrées : menu du car (Échap), aiguillage des boutons « Aller au poste », « Commencer » (car lancé si besoin), changement de vacation |
+| `app/nav.js` | Navigation entre les trois entrées : menu du car (Échap), aiguillage des boutons « Aller au poste », « Commencer » (car lancé si besoin), changement de vacation, retour au bureau de l'entrepôt (Carrière) |
 | `ui/layer.js` | Espace plein écran (le Cours) : plaque, onglets, Fermer (Échap), ligne d'état |
 | `ui/guide.js` | Missions d'installation (liste des tâches), articles de référence des leçons, glossaire, postes, matériel, procédures maison, commandes |
 | `content/referentiel.js` | Référentiel du BTS MAV option TIEE (fiche RNCP37022) : 4 blocs, 39 compétences numérotées 1.1 à 4.5, couverture par le car et modules qui la complèteront ; rattachement des parcours, missions, phases du jour de match, missions réseau, exercices et leçons |
@@ -1332,18 +1507,19 @@ node tools/shots.mjs dossier 1280 800 '["vision","hf"]'   # captures de postes
 | `content/lieux.js` | Les lieux de l'écran Jouer : le car régie, la salle de concert en préparation (fiche « Ce qui se prépare ») |
 | `ui/icons.js` | Icônes Phosphor intégrées au build (`icon(nom)`), toujours à côté d'un libellé |
 | `tutor/` | Chef de car : moteur des parcours (`engine.js`), lecture du réseau pour expliquer et vérifier (`net_helpers.js`), parcours réseau ST 2110 (`lessons/reseau.js`, `lessons/reseau_leaf.js`, `lessons/reseau_ops.js`), parcours des postes, compétences et matériel (`lessons/realisation.js`, `image.js`, `ralentis.js`, `son.js`, `liaisons.js`, `exploitation.js`, `materiel.js`, outils communs `kit.js`), présentation de chaque poste (`lessons/postes.js`) |
-| `ui/tutor_ui.js` | Panneau du chef de car : exercices du poste où l'on est, visite guidée (tour du car puis chaque poste), retour à la leçon du Cours, étapes, mise en évidence, gestes « Fais-le pour moi » hors des postes (caméra, visionneuse, atelier), commandes vers le terminal, voix |
-| `app/` | Application : vue et qualité graphique (`view.js`), joueur et déplacements (`player.js`), visée et interactions (`interact.js`), cadreur (`camop.js`), téléportation et postes (`teleport.js`), barre d'outils et d'état (`hud.js`), clavier / souris / tactile (`input.js`), écran Jouer, modes et lancement (`start.js`), diagnostic de performance (`perf.js`), profileur `?perf` (`profiler.js`) |
+| `ui/tutor_ui.js` | Le chef de car en boîte de dialogue en bas de l'écran : accueil du car vide, exercices du poste où l'on est, visite guidée (tour du car puis chaque poste ; réduite aux postes d'une mission de la Carrière), retour à la leçon du Cours, étapes, mise en évidence, gestes « Fais-le pour moi » hors des postes (caméra, visionneuse, atelier), commandes vers le terminal, voix |
+| `app/` | Application : vue et qualité graphique (`view.js`), joueur et déplacements (`player.js`), visée et interactions (`interact.js`), cadreur (`camop.js`), téléportation et postes (`teleport.js`), barre d'outils et d'état (`hud.js`), clavier / souris / tactile (`input.js`), écran Jouer, modes du car (car vide, pré-installé, mission spécifique) et lancement avec le car préparé (`start.js`), diagnostic de performance (`perf.js`), profileur `?perf` (`profiler.js`) |
 | `data/` | Catalogues techniques : caméras, objectifs, liaisons, formats (`cameras.js`) ; positions et antennes du stade (`stadium.js`) ; HF COFDM (`rf.js`) ; exposition et lumières (`exposure.js`) ; équipes (`match.js`) |
 | `content/` | Contenus pédagogiques : fiches de poste (`stations.js`), glossaire (`glossary.js`), fiches des termes réseau et ST 2110 (`netterms.js`), chapitres du guide (`guide.js`), commandes (`controls.js`) |
 | `state.js` | État partagé de la simulation (`S`) et bus d'événements (`on` / `emit`) |
-| `truck.js` | Intérieur du car : plan, postes, écrans, baies et pupitres détaillés, collisions |
+| `truck.js` | Intérieur du car : plan, postes, écrans, baies et pupitres détaillés, collisions ; matières par famille, pénombre à spots, accessoires |
 | `equip.js` | Profil matériel (XVS-6000, XT4K, LSM, IPDirector) et répartition des canaux EVS |
 | `world.js` | Stade, éclairage, public, compound et extérieur du car |
-| `render.js` | Rendu physique : conversion des matériaux, environnement (ciel capturé, studio du car), post-traitement de la vue « œil » |
+| `render.js` | Rendu physique : conversion des matériaux, environnement (ciel capturé, studio du car), post-traitement de la vue « œil » (halo, ACES, SSAO dans le car) |
+| `matiere.js` | Matières procédurales : recettes de relief, rugosité et teinte (cartes tuilables générées en code), matériau physique plaqué en triplanaire, relief coupé en qualité Basse |
 | `people.js` | Joueurs et arbitres articulés : géométries, tenues (nom et numéro), visage, animation de course |
-| `landscape.js` | Sol jusqu'à l'horizon (carte des parcelles), arbres instanciés, terrils |
-| `vehicles.js` | Semi-remorque régie, tracteur, camion satellite, groupe électrogène, bungalows, enrobé |
+| `landscape.js` | Sol jusqu'à l'horizon (carte des parcelles), arbres instanciés en plans alpha, terrils |
+| `vehicles.js` | Semi-remorque régie (caisse arrondie, livrée nervurée, portes, feux), tracteur à pare-brise courbe, camion satellite, groupe électrogène, bungalows, enrobé |
 | `params.js` | Registre des valeurs chiffrées relisibles (objectifs, liaisons, C/N, latences, line-up) et corrections appliquées |
 | `multi/` | Jeu à plusieurs : session, rôles, hôte du match, pseudos (`session.js`), tranches d'état partagées (`slices.js`), client du serveur réseau local et du jeu par Internet (`lan.js`), avatars des joueurs (`avatars.js`), fiches de rôle et objectifs (`roles.js`) |
 | `lan/` | Serveur réseau local sans dépendance (`serveur.mjs` : HTTP + WebSocket, parties, comptes rendus ; origine vérifiée, tailles, connexions, parties et comptes rendus plafonnés ; clé exigée de ce qui vient d'Internet), jeu par Internet (`internet.mjs` : analyse du réseau, ouverture de la box par UPnP, adresse publique, tunnel Cloudflare), lanceurs Windows / macOS / Linux, mode d'emploi |
@@ -1361,7 +1537,7 @@ node tools/shots.mjs dossier 1280 800 '["vision","hf"]'   # captures de postes
 | `commentary.js` | Commentaires du match (commentateur, consultant, bord terrain, plateau) en fil écrit, sans voix : niveaux simulés suivant la console |
 | `audiodesk.js` | Console son en 3D dans la cabine (faders motorisés, FaderGlow, écrans Vistonics animés) |
 | `scenario.js` | Scénario « jour de match » chronométré et noté |
-| `shared.js` | Données partagées de la page publiée (configuration, progression) avec repli local ; progression numérotée (`PROG_VERSION`, `migrateProgress`), fusionnée avec le serveur avant chaque écriture, état de l'enregistrement (`SAVE`), export, import et effacement |
+| `shared.js` | Données partagées de la page publiée (configuration, progression) avec repli local ; progression numérotée (`PROG_VERSION`, `migrateProgress` ; v3 : la Carrière), fusionnée avec le serveur avant chaque écriture, état de l'enregistrement (`SAVE`), export, import et effacement |
 | `review.js` | Points techniques à faire relire par le formateur |
 | `gfx.js` | Habillage (score, bandeaux, statistiques) |
 | `atelier.js` | Atelier de montage de la CAM 1 : pièces, ordre des opérations et prérequis, visée, fantômes, gestes maintenus, réglages à la molette, mise en service, rapport |

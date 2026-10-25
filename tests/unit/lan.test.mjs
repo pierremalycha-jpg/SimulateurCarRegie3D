@@ -234,7 +234,7 @@ test('comptes rendus : même origine, JSON, et pas plus de quelques envois par m
   assert.equal(codes.at(-1), 429, 'trop d\'envois : refusé, ' + codes.join(','));
 });
 
-// ---------------- par Internet (v19.5) ----------------
+// ---------------- par Internet (v19.7) ----------------
 function get(p0, pathname, headers = {}) {
   return new Promise((res, rej) => {
     http.get({ host: '127.0.0.1', port: p0, path: pathname, headers }, (rs) => { let b = ''; rs.on('data', (d) => { b += d; }); rs.on('end', () => res({ status: rs.statusCode, headers: rs.headers, body: b })); }).on('error', rej);

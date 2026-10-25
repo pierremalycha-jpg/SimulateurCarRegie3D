@@ -1,4 +1,4 @@
-// Jouer par Internet (v19.5) : vrai serveur (dist/car-regie-serveur-lan.mjs) et deux navigateurs.
+// Jouer par Internet (v19.7) : vrai serveur (dist/car-regie-serveur-lan.mjs) et deux navigateurs.
 // Alice héberge sur son ordinateur ; elle demande un lien (pas de box UPnP ici : échec expliqué, puis
 // lien par tunnel). Le tunnel est un faux cloudflared : il annonce une adresse trycloudflare et note
 // la porte du tunnel, par laquelle Bruno arrive exactement comme depuis Internet (clé exigée).

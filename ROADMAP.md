@@ -24,7 +24,11 @@ Calendrier indicatif, calé sur l'année scolaire (les épreuves ont lieu en mai
 
 | Version | Période | Contenu |
 |---|---|---|
-| v19.5 | oct. 2026 (fait) | Jouer par Internet : depuis le salon, l'hôte obtient un lien en un clic (analyse du réseau, ouverture de la box par UPnP, adresse publique vérifiée, sinon tunnel Cloudflare gratuit et sans compte) ; l'invité ouvre le lien dans son navigateur ou le colle dans son salon, et chacun voit l'avatar de l'autre ; ce qui vient d'Internet doit porter la clé du lien. À essayer avec une vraie box et un vrai invité |
+| v19.8 | oct. 2026 (fait) | Trois façons de jouer au car régie : car vide (Olivier propose d'abord la visite), car pré-installé (jeu libre, sans chef ni missions), mission spécifique (une tâche choisie par famille, le car préparé pour elle, enchaîner ou arrêter) ; le suivi des tâches sur le côté ; Olivier en boîte de dialogue en bas de l'écran ; la tâche « réseau de contrôle » du car vide vérifie enfin l'adresse du plan |
+| v19.7 | oct. 2026 (fait) | Jouer par Internet : depuis le salon, l'hôte obtient un lien en un clic (analyse du réseau, ouverture de la box par UPnP, adresse publique vérifiée, sinon tunnel Cloudflare gratuit et sans compte) ; l'invité ouvre le lien dans son navigateur ou le colle dans son salon, et chacun voit l'avatar de l'autre ; ce qui vient d'Internet doit porter la clé du lien. À essayer avec une vraie box et un vrai invité |
+| v19.6 | oct. 2026 (fait) | La Carrière, mode scénarisé de l'entrepôt (lot 1) : le bureau et son ordinateur dans le hall, une messagerie où des mails proposent un poste sur une prestation, l'ordre de mission, deux épisodes (stagiaire : visite du car réduite à six postes ; assistant technique : la conférence montée à l'entrepôt), retour au bureau depuis le car, badge « Embauché », progression v3 |
+| Carrière, lots 2 et 3 | à planifier (R7) | Lot 2 : marcher dans l'entrepôt à la première personne (déplacement, E pour l'ordinateur, les rayonnages et la baie ; la vue en orbite reste pour câbler et sur tablette). Lot 3 : la saison complète (environ huit mails : car vide, atelier, mise en service de la caméra, formation réseau, plateau TV, vMix, jour de match), avec le compte rendu dans le mail de retour |
+| v19.5 | oct. 2026 (fait) | Un rendu de jeu vidéo sans ressource externe : matières procédurales (relief, rugosité, teinte) plaquées en triplanaire, boîtes chanfreinées, occlusion ambiante cuite par sommet, SSAO dans le car, intérieur du car en pénombre avec spots et accessoires, car régie et tracteur retravaillés, compound habillé, arbres en plans alpha, béton des tribunes ; qualité Basse inchangée. 19.5.1 : moiré et faces qui sautent corrigés, entrepôt en matières avec environnement, afficheurs de timecode et conducteurs dans le car |
 | v19.4.1 | oct. 2026 (fait) | Un son supportable, à sa place : l'écoute suit le joueur (la foule dans le stade, rumeur lointaine derrière les tribunes et devant le car, l'écoute de la console au poste son, presque rien ailleurs dans le car, silence à l'accueil), montée douce au lancement, volume du son dans les Réglages ; commentaires sans voix de synthèse (fil écrit au poste son) |
 | v19.4 | oct. 2026 (fait) | Consolider le car régie : quiz des leçons en banque (5 questions par leçon, 3 tirées, réponses mélangées, corrigé à la validation), réponses mélangées dans la caméra en 3D, livret qui ne compte que les réussites seules et demande un exercice pratique pour « consolidée », XP sur les seules pannes cachées, progression numérotée, fusionnée avant écriture, échec signalé, export / import / effacement et données personnelles (Réglages → Ma progression), polices intégrées (plus de Google Fonts), fuite mémoire des caméras corrigée, serveur réseau local durci |
 | v19.3 | oct. 2026 (fait) | L'interface jeu : objectif toujours à l'écran (exercice, mission, phase du jour de match) avec repère 3D, journal des missions (L), XP et sept niveaux de technicien, badges (dont un par compétence du livret), bruitages WebAudio, nouvelle identité visuelle « jeu vidéo » (écran titre cinématique, menu de pause, HUD, notifications), rubrique Jeu des réglages |
@@ -55,6 +59,22 @@ et 30 images par seconde sur le PC le plus faible de l'établissement.
   route ; l'entrepôt devient un mode à part. Le chef de car n'est plus une entrée : ses parcours sont les
   exercices pratiques des leçons du Cours, et sa présentation du car devient le mode « Visite guidée ».
 
+- 24 octobre 2026 (v19.8) : le car régie se joue de trois façons, chacune à sa phase : **car vide** (tout à faire,
+  Olivier propose d'abord la visite guidée), **car pré-installé** (jeu libre, ni chef de car ni missions) et **mission
+  spécifique** (une tâche précise, le car préparé pour elle ; ensuite on enchaîne ou l'on s'arrête). La visite guidée
+  n'est plus un mode : Olivier la propose au début du car vide. Jouer propose donc une liste de missions : elle
+  reprend les exercices rangés dans les leçons du Cours (mêmes identifiants), qui restent la référence. Le chef de
+  car parle dans une boîte de dialogue en bas de l'écran, les tâches sont sur le côté.
+- 23 octobre 2026 (v19.6) : un mode scénarisé, la **Carrière**, à côté du mode libre (bac à sable de l'entrepôt,
+  car installé). Il s'appelle Carrière, pas Scénario (le mot désigne déjà le jour de match dans le code). C'est le
+  premier mode du lieu « L'entrepôt » : pas de quatrième entrée. Sa messagerie est une deuxième porte vers les
+  mêmes activités, jamais une copie : une mission est réussie quand l'activité qu'elle reprend l'est, sans XP ni
+  rattachement de plus ; les exercices notés restent rangés dans leur leçon du Cours, qui reste la référence. La
+  société des mails est celle du formateur, sinon un nom fictif.
+- 23 octobre 2026 (v19.5) : l'aspect visuel est traité comme un chantier à part entière, dans l'ordre intérieur du car,
+  extérieur, stade ; tout reste procédural (une seule page, aucun fichier), le détail n'apparaît qu'en qualité Moyenne et
+  Haute (portables à GPU intégré visés), et le car est en pénombre réaliste. Reste à mesurer sur le PC le plus faible,
+  puis à poursuivre : joueurs, sièges en relief, entrepôt.
 - 23 octobre 2026 (v19.4.1) : le son n'est plus partout le même : on entend la foule dans le stade, l'écoute de la
   console au poste son, presque rien ailleurs dans le car ; les commentaires ne sont plus dits par la synthèse vocale
   (trop robotique), leur fil reste écrit au poste son.
@@ -76,6 +96,9 @@ et 30 images par seconde sur le PC le plus faible de l'établissement.
 - R3 : le public (TIEE seul, ou aussi les options Son et Image) ; le concert sert surtout ces deux options.
 - R4 : brancher le vrai matériel de l'établissement.
 - R5 : les relecteurs professionnels.
+- R7 : la suite de la Carrière (marche à la première personne dans l'entrepôt, saison complète) avant, pendant ou
+  après les quatre modules du car ; ses épisodes peuvent porter les modules (M2, la commande du diffuseur, par un
+  mail de client).
 - R6 : protéger le rôle de formateur en coopération : il se choisit librement dans le salon (une panne forcée
   n'est acceptée que de l'hôte ou du formateur depuis la v19.4) ; un code donné par le formateur, ou le profil
   Formateur de l'ordinateur qui héberge ?

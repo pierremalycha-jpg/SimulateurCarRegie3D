@@ -25,6 +25,11 @@ import { icon } from '../ui/icons.js';
 import { LIEUX } from '../content/lieux.js';
 import { MISSIONS } from '../entrepot/missions.js';
 import { montageEnregistre } from '../entrepot/build.js';
+import { PROG } from '../shared.js';
+import { commencee, nonLus, enCours } from '../carriere/index.js';
+import { missionPicker } from '../ui/missions_ui.js';
+import { setLanceur } from '../ui/tutor_ui.js';
+import { missionById, premiereAFaire } from '../game/missions.js';
 import { showTitle } from './title.js';
 import { livePlayerCard } from '../game/quest.js';
 
@@ -42,20 +47,31 @@ function selector(id, label, options, value, onChange) {
   return /** @type {HTMLElement & { value: string }} */ (box);
 }
 
-const SHEET = { go: /** @type {((preset: string, o?: { ip?: boolean }) => void) | null} */ (null) };
+/**
+ * @typedef {object} LaunchOpts
+ * @property {boolean} [ip] car IP (ST 2110)
+ * @property {boolean} [sdi] car SDI exigé
+ * @property {boolean} [visite] la visite guidée d'Olivier
+ * @property {{ id: string, tour: boolean, postes: string[] }} [carriere] la mission de la Carrière qui l'a lancée
+ * @property {'vide' | 'libre' | 'mission'} [modeCar] le mode du car (car vide, pré-installé, mission spécifique)
+ * @property {import('../game/missions.js').Prepa} [prepa] le car préparé pour une mission spécifique
+ */
+const SHEET = { go: /** @type {((preset: string, o?: LaunchOpts) => void) | null} */ (null) };
 /**
  * Lance une vacation depuis la feuille de service (car prêt à l'antenne, installation, atelier…),
  * avec ses conditions de captation. Rien ne se passe si la partie est déjà commencée.
  * @param {string} preset standard, vierge, atelier, brassage, scenario, grand
- * @param {{ ip?: boolean }} [o] ip : car IP (ST 2110)
+ * @param {LaunchOpts} [o]
  */
 export function launch(preset, o = {}) { if (S.mode === 'start' && SHEET.go) SHEET.go(preset, o); }
 
-// les modes du car régie : tout installé, tout à faire, visite guidée par Olivier
+// les modes du car régie (décidés le 24 octobre 2026) : le car vide (tout à faire, avec Olivier qui propose d'abord
+// la visite), le car pré-installé (jeu libre : ni missions ni chef de car), la mission spécifique (une tâche
+// choisie dans game/missions.js, le car préparé pour elle ; ensuite on enchaîne ou l'on s'arrête)
 const MODES = [
-  { id: 'installe', preset: 'standard', ico: 'antenne', title: 'Car installé', desc: 'Tout est prêt : 12 caméras installées et réglées, le car brassé, le réseau en service. Vous entrez dans le car et vous prenez l\'antenne.', lamp: 'Antenne', go: 'Entrer dans le car' },
-  { id: 'zero', preset: 'zero', ico: 'plan', title: 'Tout à faire', desc: 'Stade vide, car non brassé, caméras non réglées, réseau à configurer. Une liste de tâches vous guide et se coche toute seule.', lamp: 'Installer', go: 'Commencer l\'installation' },
-  { id: 'visite', preset: 'standard', ico: 'chef', title: 'Visite guidée', desc: 'Olivier, le chef de car, vous fait le tour du car poste par poste : à quoi sert chaque poste, ce qu\'on y regarde, les gestes de base.', lamp: 'Visite', go: 'Commencer la visite' },
+  { id: 'zero', preset: 'zero', modeCar: 'vide', ico: 'plan', title: 'Car vide', desc: 'Tout est à faire : stade vide, car non brassé, caméras non réglées, réseau à configurer. Les tâches s\'affichent sur le côté et se cochent toutes seules. Olivier, le chef de car, te propose d\'abord le tour du car, puis t\'aide quand tu l\'appelles (J).', lamp: 'Installer', go: 'Commencer l\'installation' },
+  { id: 'installe', preset: 'standard', modeCar: 'libre', ico: 'antenne', title: 'Car pré-installé', desc: 'Tout est en place : 12 caméras installées et réglées, le car brassé, le réseau en service, le match en direct. Jeu libre : ni missions ni chef de car.', lamp: 'Antenne', go: 'Entrer dans le car' },
+  { id: 'mission', preset: 'standard', modeCar: 'mission', ico: 'missions', title: 'Mission spécifique', desc: 'Une tâche précise : le paramétrage du réseau, le line-up, un exercice à un poste, une épreuve notée. Le car est préparé pour elle ; une fois terminée, tu enchaînes sur une autre ou tu t\'arrêtes.', lamp: 'Mission', go: 'Lancer la mission' },
 ];
 export function buildStart() {
   const s = $('#start');
@@ -74,26 +90,36 @@ export function buildStart() {
   const snd = selector('stsnd', 'Son', [['1', 'Activé'], ['0', 'Coupé']], '1', () => updSum());
   updFmt();
   // le choix : le lieu, le mode, seul ou en coopération
-  const PICK = { lieu: 'car', mode: 'installe', team: 'solo', ep: MISSIONS.length ? MISSIONS[0].id : '' };
-  // premier lancement dans ce navigateur : la visite guidée est proposée d'office
-  try { if (localStorage.getItem('carregie.chefIntro') !== '1') PICK.mode = 'visite'; } catch (e) { /* stockage indisponible */ }
-  const run = (preset) => start(preset, light.value, qual.value, snd.value === '1', fmt.value, infra.value === 'ip');
+  const PICK = { lieu: 'car', mode: 'installe', team: 'solo', ep: 'carriere', mission: premiereAFaire(PROG) };
+  // premier lancement dans ce navigateur : le car vide, où Olivier propose d'abord le tour du car
+  try { if (localStorage.getItem('carregie.chefIntro') !== '1') PICK.mode = 'zero'; } catch (e) { /* stockage indisponible */ }
+  const run = (preset, prepa) => start(preset, light.value, qual.value, snd.value === '1', fmt.value, infra.value === 'ip', prepa);
   const go = () => {
-    if (PICK.lieu === 'entrepot') { emit('entrepot', { mission: PICK.ep === 'reprendre' ? '' : PICK.ep, reprendre: PICK.ep === 'reprendre' }); return; }
+    if (PICK.lieu === 'entrepot') { emit('entrepot', PICK.ep === 'carriere' ? { carriere: true } : { mission: PICK.ep === 'reprendre' ? '' : PICK.ep, reprendre: PICK.ep === 'reprendre' }); return; }
     const M = MODES.find((m) => m.id === PICK.mode) || MODES[0];
     if (PICK.team === 'coop') { openSessionPanel(); return; }
-    S.chefTour = M.id === 'visite'; S.visite = M.id === 'visite';
+    // la mission spécifique : game/mission_run.js prépare le car et lance la tâche
+    if (M.id === 'mission') { emit('missionCar', { type: 'lancer', id: PICK.mission }); return; }
+    S.chefTour = false; S.visite = false; S.carriere = null; S.modeCar = /** @type {any} */ (M.modeCar);
     run(M.preset);
   };
-  // depuis le Cours (exercices pratiques) : la vacation demandée, avec les conditions de captation choisies ici
-  SHEET.go = (preset, o = {}) => { if (o.ip) infra.value = 'ip'; S.chefTour = false; S.visite = false; run(preset); };
+  // depuis le Cours (exercices pratiques) : la vacation demandée, avec les conditions de captation choisies ici ;
+  // depuis la Carrière : la visite guidée réduite au tour du car et aux postes de la mission ; une mission
+  // spécifique : le car préparé pour elle (son infrastructure l'emporte sur le choix de l'écran)
+  SHEET.go = (preset, o = {}) => {
+    if (o.ip) infra.value = 'ip'; else if (o.sdi) infra.value = 'sdi';
+    S.chefTour = !!o.visite; S.visite = !!o.visite; S.carriere = o.carriere || null; S.modeCar = o.modeCar || null;
+    run(preset, o.prepa);
+  };
+  // un exercice d'Olivier lancé d'ailleurs (Cours, journal) : le car prêt à l'antenne, avec le chef de car
+  setLanceur((o) => SHEET.go && SHEET.go('standard', { ip: o.ip, sdi: o.sdi }));
   // coopération : le car installé, avec les réglages de l'hôte s'il y en a déjà un
   setSessionStarter({
     cfg: () => ({ fmt: fmt.value, ip: infra.value === 'ip', light: light.value }),
     start: async () => {
       for (let i = 0; i < 25 && !(SES.hostPeer && !SES.hostPeer.sameTab && SES.hostPeer.presence.cfg); i++) await new Promise((r) => setTimeout(r, 120));
       const h = SES.hostPeer && !SES.hostPeer.sameTab && SES.hostPeer.presence.cfg;
-      S.chefTour = false; S.visite = false;
+      S.chefTour = false; S.visite = false; S.carriere = null; S.modeCar = 'libre';
       start('standard', h ? h.light : light.value, qual.value, snd.value === '1', h ? h.fmt : fmt.value, h ? !!h.ip : infra.value === 'ip');
     },
   });
@@ -125,11 +151,20 @@ export function buildStart() {
   const goTitle = el('b');
   const goDesc = el('span');
   const modes = el('div', { class: 'jo-modes', role: 'group', 'aria-label': 'Le mode' });
+  // la mission spécifique : la liste des missions, rangée par famille (ui/missions_ui.js)
+  const pickBox = el('div', { class: 'jo-missions', hidden: true });
   const teamSeg = el('div', { class: 'seg jo-team-seg', role: 'group', 'aria-label': 'Seul ou en équipe' });
   const teamNote = el('p', { class: 'note' });
   const lan = lanAvailable();
-  // les « modes » de l'entrepôt : les cahiers des charges, le bac à sable, et le montage enregistré
+  // les « modes » de l'entrepôt : la Carrière (le mode scénarisé : des mails proposent les missions), les
+  // cahiers des charges, le bac à sable (le mode libre), et le montage enregistré
+  const carriereDesc = () => {
+    if (!commencee(PROG)) return 'Tu commences stagiaire. Au bureau de l\'entrepôt, des mails te proposent un poste sur une prestation : accepte la mission, réussis-la, la suivante arrive.';
+    const n = nonLus(PROG), ep = enCours(PROG);
+    return [n ? `${n} mail${n > 1 ? 's' : ''} non lu${n > 1 ? 's' : ''} au bureau.` : 'Ta boîte de réception est à jour.', ep ? `Mission en cours : ${ep.mission.titre}.` : 'Pas de mission en cours.'].join(' ');
+  };
   const epModes = () => [
+    { id: 'carriere', ico: 'chef', title: 'Carrière', desc: carriereDesc(), lamp: 'Carrière', go: commencee(PROG) ? 'Retourner au bureau' : 'Commencer ma carrière' },
     ...MISSIONS.map((x) => ({ id: x.id, ico: 'materiel', title: x.titre, desc: `${x.client}. ${x.brief}`, lamp: 'Mission', go: 'Entrer dans l\'entrepôt' })),
     { id: '', ico: 'processeur', title: 'Bac à sable', desc: 'Pas de commande : sortez le matériel que vous voulez, câblez, configurez, et regardez ce qui marche.', lamp: 'Libre', go: 'Entrer dans l\'entrepôt' },
     ...(montageEnregistre() ? [{ id: 'reprendre', ico: 'plan', title: 'Reprendre le montage', desc: 'Votre dernier montage, tel que vous l\'avez laissé.', lamp: 'Reprise', go: 'Reprendre' }] : []),
@@ -142,22 +177,33 @@ export function buildStart() {
       teamSeg.replaceChildren(el('button', { type: 'button', 'data-v': 'solo', 'aria-pressed': 'true' }, 'Solo'), el('button', { type: 'button', 'data-v': 'coop', 'aria-pressed': 'false', disabled: '' }, 'Coopération'));
       teamNote.textContent = 'L\'entrepôt se monte seul : le matériel, le câblage et la configuration sont à vous.';
       const N = L.find((m) => m.id === PICK.ep) || L[0];
-      lamp.textContent = N.lamp; goTitle.textContent = N.go; goDesc.textContent = N.id === 'reprendre' ? N.desc : 'Sortir le matériel du stock, le poser, le câbler et le configurer jusqu\'à ce que le cahier des charges soit rempli.';
+      lamp.textContent = N.lamp; goTitle.textContent = N.go;
+      goDesc.textContent = N.id === 'reprendre' ? N.desc : N.id === 'carriere' ? 'Lire tes mails à l\'ordinateur du bureau, accepter une mission (à l\'entrepôt ou au car régie), la réussir : la suivante arrive.' : 'Sortir le matériel du stock, le poser, le câbler et le configurer jusqu\'à ce que le cahier des charges soit rempli.';
       return;
     }
     const M = MODES.find((m) => m.id === PICK.mode) || MODES[0];
-    // la coopération se joue avec le car installé : les autres modes se font seul
+    // la coopération se joue avec le car pré-installé : les autres modes se font seul
     if (PICK.team === 'coop' && M.id !== 'installe') PICK.mode = 'installe';
     modes.replaceChildren(...MODES.map((m) => el('button', { type: 'button', class: 'jo-mode', 'data-mode': m.id, 'aria-pressed': String(m.id === PICK.mode), disabled: PICK.team === 'coop' && m.id !== 'installe' ? '' : null, onclick: () => { PICK.mode = m.id; draw(); } },
       icon(m.ico), el('b', {}, m.title), el('span', {}, m.desc))));
     teamSeg.replaceChildren(...[['solo', 'Solo'], ['coop', 'Coopération']].map(([v, t]) => el('button', { type: 'button', 'data-v': v, 'aria-pressed': String(v === PICK.team), onclick: () => { PICK.team = v; draw(); } }, t)));
     teamNote.textContent = PICK.team === 'coop'
-      ? (lan ? 'Réseau local : l\'hôte crée le salon, les autres le rejoignent ; chacun choisit un pseudo et un rôle dans la prestation. La coopération se joue avec le car installé.' : 'En ligne : l\'hôte crée le salon et donne son code ; chacun choisit un pseudo et un rôle dans la prestation. La coopération se joue avec le car installé.')
+      ? (lan ? 'Réseau local : l\'hôte crée le salon, les autres le rejoignent ; chacun choisit un pseudo et un rôle dans la prestation. La coopération se joue avec le car pré-installé.' : 'En ligne : l\'hôte crée le salon et donne son code ; chacun choisit un pseudo et un rôle dans la prestation. La coopération se joue avec le car pré-installé.')
       : 'Vous êtes seul dans le car : vous passez d\'un poste à l\'autre (touche Tab).';
     const N = MODES.find((m) => m.id === PICK.mode) || MODES[0];
     lamp.textContent = PICK.team === 'coop' ? 'Salon' : N.lamp;
     goTitle.textContent = PICK.team === 'coop' ? 'Ouvrir le salon' : N.go;
     goDesc.textContent = PICK.team === 'coop' ? 'Créez la partie ou rejoignez celle d\'un collègue, choisissez votre rôle, puis entrez dans le car ensemble.' : N.desc;
+    const avecListe = PICK.team !== 'coop' && N.id === 'mission';
+    pickBox.hidden = !avecListe;
+    if (avecListe) { pickBox.replaceChildren(missionPicker(PICK.mission, choisir)); choisir(PICK.mission); }
+  };
+  // une mission choisie dans la liste : la touche de lancement la nomme (sans redessiner la liste, qui garde sa place)
+  const choisir = (/** @type {string} */ id) => {
+    const m = missionById(id); if (!m) return;
+    PICK.mission = id;
+    for (const b of pickBox.querySelectorAll('.mc-item')) b.setAttribute('aria-pressed', String(/** @type {HTMLElement} */ (b).dataset.mission === id));
+    goTitle.textContent = 'Lancer la mission'; goDesc.textContent = `${m.titre} · ${m.duree}. ${m.resume}`;
   };
   const entrepot = LIEUX.find((L) => L.id === 'entrepot');
   const lieuxWall = el('ul', { class: 'lx-wall jo-lieux' },
@@ -165,6 +211,14 @@ export function buildStart() {
     entrepot ? lieu('entrepot', entrepot.nom, entrepot.cadre, true, entrepot.icons, () => { PICK.lieu = 'entrepot'; draw(); modes.querySelector('[aria-pressed="true"]')?.focus(); }) : null,
     concert ? lieu('concert', 'Salle de concert', concert.cadre, false, concert.icons, () => teaser(concert)) : null);
   draw();
+  // la Carrière ouverte d'ailleurs (retour au bureau après le rechargement) : en quittant le bureau, on la retrouve
+  // dans Jouer ; elle avance (mails reçus, progression lue sur le serveur) : sa touche le dit
+  on('entrepot', (e) => {
+    if (!e) return;
+    if (e.type === 'open' && e.carriere) { PICK.lieu = 'entrepot'; PICK.ep = 'carriere'; draw(); }
+    if (e.type === 'close') draw();
+  });
+  on('shared', () => draw());
   const step = (n, title, ...kids) => el('section', { class: 'jo-step', 'aria-label': title }, el('h2', {}, el('span', { class: 'jo-n' }, String(n)), title), ...kids);
   s.append(el('div', { class: 'jouer' },
     el('header', { class: 'jo-head' },
@@ -182,7 +236,7 @@ export function buildStart() {
         truckLine)),
     el('div', { class: 'jo-steps' },
       step(1, 'Le lieu', lieuxWall),
-      step(2, 'Le mode', modes),
+      step(2, 'Le mode', modes, pickBox),
       step(3, 'En équipe', el('div', { class: 'jo-team' }, teamSeg, teamNote),
         lan ? el('p', { class: 'note cs-lan' }, el('b', {}, 'Réseau local'), ` : ce simulateur est servi par l'ordinateur de l'hôte (${location.host}).`) : null)),
     // à droite : ce qui lance la partie, et les conditions de captation repliées dessous
@@ -205,7 +259,8 @@ export function buildStart() {
       el('p', { class: 'note cs-foot' }, 'Simulation non officielle, sans lien avec le club ni avec les constructeurs cités. Les caractéristiques techniques (objectifs, portées de câbles, seuils HF, niveaux vidéo et audio) sont des ordres de grandeur réalistes, donnés à titre pédagogique ; les noms d\'équipements sont des exemples de matériel courant.'))));
 }
 
-export function start(preset, light, quality, sound, format = S.format, ip = false) {
+/** @param {import('../game/missions.js').Prepa} [prepa] mission spécifique : le car préparé pour elle */
+export function start(preset, light, quality, sound, format = S.format, ip = false, prepa = undefined) {
   if (quality !== S.quality) setQuality(quality);
   S.format = format; S.ipMode = !!ip; S.preset = preset; paintTruckSign(CFG.car.name);
   applyLighting(light);
@@ -215,9 +270,14 @@ export function start(preset, light, quality, sound, format = S.format, ip = fal
   else if (preset === 'atelier') { loadPreset('standard', true); S.showMission = false; }
   else if (preset === 'standard' && Array.isArray(CFG.car.camPreset) && CFG.car.camPreset.length) { PRESETS.car = CFG.car.camPreset; loadPreset('car', true); S.showMission = false; }
   else { loadPreset(preset, true); S.showMission = false; }
+  // mission spécifique : le stade sans caméra (les installer), ou les caméras posées mais pas réglées (le line-up)
+  if (prepa && prepa.cams === 'none') loadPreset('none');
+  else if (prepa && prepa.lineup === false) loadPreset(Array.isArray(CFG.car.camPreset) && CFG.car.camPreset.length ? 'car' : 'standard', false);
   defaultRouting(true);
   if (preset === 'brassage' || preset === 'scenario' || preset === 'zero') { S.patch.on = true; patchEmpty(); }
   if (preset === 'zero' && !S.ipMode) factoryCtrlNet();
+  // mission spécifique : le réseau de contrôle aux adresses d'usine (ui/guide.js, mission mz-net)
+  S.reseauUsine = !!(prepa && prepa.reseauUsine && !S.ipMode); if (S.reseauUsine) factoryCtrlNet();
   MIX.pgm = 1; MIX.pst = 2;
   if (preset === 'atelier') { MIX.pgm = 2; MIX.pst = 3; } // la 1 est démontée : l'antenne reste sur la 2
   if (preset !== 'vierge' && preset !== 'zero') { MIX.dsk1.on = true; MIX.dsk1.level = 1; }

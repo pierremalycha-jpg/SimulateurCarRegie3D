@@ -18,9 +18,12 @@ import { MIX, meSource, EVS } from '../pipeline.js';
 import { GFX } from '../gfx.js';
 import { RF } from '../rf.js';
 import { patchScore } from '../patch.js';
-import { ctrlCam } from '../net/ctrlnet.js';
+import { ctrlCam, camAuPlan } from '../net/ctrlnet.js';
 
 const cam = (slot) => S.cams.find((c) => c.slotId === slot);
+// « ce poste a été ouvert » : depuis toujours (progression) pour le car vide ; une mission spécifique
+// (game/mission_run.js) passe sa propre mémoire, celle de la partie en cours
+const VU = (/** @type {string} */ id) => !!S.visited[id];
 export const MISSIONS = [
   { id: 'm1', title: 'Le compound', text: 'Approchez-vous du pied de car (le panneau de raccordement à l\'arrière droit du car régie) et appuyez sur E pour le découvrir.', check: () => S.openedInfo.pieddecar },
   { id: 'm2', title: 'Le plan de caméras', text: 'Ouvrez le plan (touche P). Installez une caméra tribune sur « Passerelle centrale – position 1 » avec la consigne « Plan large ».', check: () => { const c = cam('g_c1'); return c && c.role === 'large'; } },
@@ -30,18 +33,18 @@ export const MISSIONS = [
   { id: 'm5', title: 'Une caméra HF', text: 'Installez une Steadicam HF au bord du terrain et allumez au moins deux antennes de réception. Objectif : une marge HF supérieure à 3 dB.', check: () => S.cams.some((c) => c.rf && c.rf.margin > 3) && RF.antennas.filter((a) => a.on).length >= 2 },
   { id: 'm6', title: 'Entrer dans le car', text: 'Rejoignez le car régie (Tab, le pupitre, puis « Devant le car ») et entrez par les marches de la porte.', check: () => S.inTruck },
   { id: 'mz-patch', title: 'Brasser le car', text: 'Le car n\'est pas brassé : au poste « Baie de brassage » (zone technique), reliez chaque liaison en suivant la liste de câblage (sources vers la grille, sorties vers l\'EVS et les départs, référence vers les CCU). Objectif : 100 %.', check: () => S.preset === 'zero' && S.patch.on && patchScore().pct >= 100 },
-  { id: 'mz-net', title: 'Le réseau de contrôle', text: 'Les RCP et les CCU sortent du carton avec leur adresse d\'usine (192.168.0.x). Au poste « Réseau de contrôle », donnez à ceux des caméras installées l\'adresse du plan (10.1.20.x/24, passerelle 10.1.20.1) : chaque RCP doit reprendre la main sur sa caméra.', check: () => S.preset === 'zero' && S.cams.length > 0 && S.cams.every((c) => ctrlCam(c.id).ok) },
-  { id: 'm7', title: 'Le multiview', text: 'Asseyez-vous au poste « Truquiste · XVS-6000 » (E). Repérez le PGM (cadre rouge, à droite) et le PVW (cadre vert, à gauche).', check: () => S.visited.melangeur },
+  { id: 'mz-net', title: 'Le réseau de contrôle', text: 'Les RCP et les CCU sortent du carton avec leur adresse d\'usine (192.168.0.x). Au poste « Réseau de contrôle », donnez à ceux des caméras installées l\'adresse du plan (10.1.20.x/24, passerelle 10.1.20.1) : chaque RCP doit reprendre la main sur sa caméra.', check: () => (S.preset === 'zero' || S.reseauUsine) && S.cams.length > 0 && S.cams.every((c) => ctrlCam(c.id).ok && camAuPlan(c.id)) },
+  { id: 'm7', title: 'Le multiview', text: 'Asseyez-vous au poste « Truquiste · XVS-6000 » (E). Repérez le PGM (cadre rouge, à droite) et le PVW (cadre vert, à gauche).', check: (vu = VU) => vu('melangeur') },
   { id: 'm8', title: 'Premier enchaîné', text: 'Au mélangeur : plan large au PGM, serré en preset (rangée B · PST, tuile PVW), choisissez MIX puis AUTO TRANS (ou Entrée du pavé numérique).', check: () => S.stats.mixes >= 1 },
-  { id: 'm9', title: 'Exposition', text: 'Au poste Ingé vision, réglez l\'iris de la CAM 1 pour un niveau moyen entre 35 et 55 % (lisez le waveform).', check: () => { const c = camById(1); return S.visited.vision && c && c.meter.mean > 0.35 && c.meter.mean < 0.55; } },
-  { id: 'm10', title: 'Le matching', text: 'Toujours en vision : égalisez la colorimétrie des CAM 1 et 2 (écarts rouge et bleu inférieurs à 2 %, voir sous les gains). AUTO WHITE ou réglage fin des gains R/B.', check: () => { const a = camById(1), b = camById(2); if (!a || !b || !S.visited.vision) return false; const ea = a.colorError(), eb = b.colorError(); return Math.abs(ea.r) < 0.02 && Math.abs(ea.b) < 0.02 && Math.abs(eb.r) < 0.02 && Math.abs(eb.b) < 0.02; } },
+  { id: 'm9', title: 'Exposition', text: 'Au poste Ingé vision, réglez l\'iris de la CAM 1 pour un niveau moyen entre 35 et 55 % (lisez le waveform).', check: (vu = VU) => { const c = camById(1); return vu('vision') && c && c.meter.mean > 0.35 && c.meter.mean < 0.55; } },
+  { id: 'm10', title: 'Le matching', text: 'Toujours en vision : égalisez la colorimétrie des CAM 1 et 2 (écarts rouge et bleu inférieurs à 2 %, voir sous les gains). AUTO WHITE ou réglage fin des gains R/B.', check: (vu = VU) => { const a = camById(1), b = camById(2); if (!a || !b || !vu('vision')) return false; const ea = a.colorError(), eb = b.colorError(); return Math.abs(ea.r) < 0.02 && Math.abs(ea.b) < 0.02 && Math.abs(eb.r) < 0.02 && Math.abs(eb.b) < 0.02; } },
   { id: 'm10b', title: 'Les barres au line-up', text: 'Au poste Ingé vision, envoyez les barres d\'une caméra (touche BARS du RCP), retrouvez-les sur le multiview, puis revenez à l\'image.', check: () => S.flags && S.flags.barsCycle },
   { id: 'm11', title: 'Habillage', text: 'Mettez le score à l\'antenne (DSK 1 au mélangeur), puis jouez un bandeau joueur depuis le poste Habillage avec le DSK 2 à l\'antenne.', check: () => MIX.dsk1.on && MIX.dsk2.on && GFX.template === 'lower' && GFX.anim > 0.5 },
   { id: 'm12', title: 'Le ralenti', text: 'Au poste EVS : après une action, DERNIÈRE ACTION (ou jog + MARK IN), puis passez l\'EVS A au PGM et lancez la lecture au levier à 60 % maximum.', check: () => meSource(MIX.pgm) === 'EVSA' && EVS.ch[0].playing && EVS.ch[0].speed <= 0.6 },
   { id: 'm13', title: 'Le volet logo', text: 'Au mélangeur, entrez ou sortez d\'un ralenti avec le volet logo (transition CLIP de la frame memory).', check: () => S.stats.stingers >= 1 },
   { id: 'm13b', title: 'Clips et playlist', text: 'Au poste EVS : créez deux clips (IN, OUT puis F1 ; IN, OUT puis F2), ajoutez-les à la playlist (PLST puis F1 et F2) et lancez PLST PLAY.', check: () => EVS.playlist.length >= 2 && EVS.ch.some((c) => c.pl) },
-  { id: 'm14', title: 'La synchro', text: 'Dans la zone technique (au fond du car), ouvrez le poste Synchro (SPG).', check: () => S.visited.synchro },
-  { id: 'm15', title: 'Retour antenne', text: 'Au poste Transmission, comparez le départ et le retour antenne : repérez le délai.', check: () => S.visited.transmission },
+  { id: 'm14', title: 'La synchro', text: 'Dans la zone technique (au fond du car), ouvrez le poste Synchro (SPG).', check: (vu = VU) => vu('synchro') },
+  { id: 'm15', title: 'Retour antenne', text: 'Au poste Transmission, comparez le départ et le retour antenne : repérez le délai.', check: (vu = VU) => vu('transmission') },
   { id: 'm16', title: 'Dépannage', text: 'Au poste Chef de car, onglet « Simulateur de pannes » : lancez le mode examen et trouvez la panne.', check: () => S.faultsSolved >= 1 },
   { id: 'm17', title: 'Suivre un câble', text: 'Poste Chef de car, onglet « Liste de câblage » : ouvrez un appareil en cliquant sur une extrémité de câble, puis « Suivre » jusqu\'à l\'autre bout.', check: () => S.flags && S.flags.followed },
 ];

@@ -15,3 +15,5 @@ captures-v18/
 
 # copies de travail des agents
 .claude/worktrees/
+# marqueurs de travail des outils de débogage 3D (greffon Parallax)
+.parallax/

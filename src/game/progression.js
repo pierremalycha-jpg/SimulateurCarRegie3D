@@ -52,6 +52,9 @@ export function installProgression() {
     const name = title(/** @type {any} */ (EP_MISSIONS).map((x) => ({ id: x.id, title: x.titre })), e.id);
     if (!award({ key: 'entrepot:' + e.id, pts: BAREME.entrepot, label: 'Mission de l\'entrepôt réussie : ' + name })) award({ pts: BAREME.entrepotRefait, label: 'Montage rendu de nouveau : ' + name + ' (' + e.score + '/100)' });
   });
+  // la Carrière (src/carriere/) : une mission réussie ne rapporte pas d'XP de plus (l'activité qu'elle reprend
+  // a déjà rapporté les siens) ; elle compte pour son badge
+  on('carriere', (e) => { if (e && e.type === 'fait') checkBadges(); });
   // le poste compte tout de suite pour les badges (la progression n'est copiée qu'à l'enregistrement)
   on('station', (id) => { PROG.visited[id] = true; award({ key: 'poste:' + id, pts: BAREME.poste, label: 'Poste découvert : ' + (STATION_INFO[id] ? STATION_INFO[id].title : id) }); });
   on('teleport', (i) => { const d = DESTS[i]; if (d && !d[4]) award({ key: 'lieu:' + i, pts: BAREME.lieu, label: 'Endroit découvert : ' + d[0] }); });

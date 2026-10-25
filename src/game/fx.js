@@ -67,6 +67,8 @@ export function installFx() {
   build();
   on('xp', (r) => { if (!r) return; renderXp(); floatXp(r.pts); if (r.leveled) banner('level', [icon('couronne'), el('small', {}, 'Niveau ' + r.level.n), el('b', {}, r.level.title), el('span', {}, 'Tu progresses : continue, le car compte sur toi.')]); });
   on('badge', (b) => { if (!b) return; banner('badge ' + b.tier, [icon(b.ico), el('small', {}, 'Badge ' + ({ bronze: 'bronze', argent: 'argent', or: 'or' })[b.tier]), el('b', {}, b.title), el('span', {}, b.desc)]); });
+  // une mission spécifique terminée (game/mission_run.js)
+  on('missionCar', (e) => { if (e && e.type === 'fini') banner('mission', [icon('trophee'), el('small', {}, 'Mission réussie'), el('b', {}, e.titre), el('span', {}, e.resultat || 'Enchaîne sur une autre, ou arrête-toi là.')]); });
   on('shared', renderXp);
   on('mixer', (e) => { if (e && (e.type === 'cut' || e.type === 'transition') && S.mode !== 'start') pulse('tally-flash', 450); });
   on('faultNew', () => pulse('alarm-flash', 1600));

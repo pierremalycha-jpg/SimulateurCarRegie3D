@@ -829,6 +829,12 @@ export function ctrlFunc(key) {
   const s = evaluate().funcs[key];
   return { ok: s.ok, state: s.state, why: s.why, label: f.label, loss: s.loss };
 }
+/**
+ * le RCP n et la CCU n ont-ils l'adresse du plan (adresse, masque, passerelle) ? C'est ce que demande la tâche
+ * « Le réseau de contrôle » du car vide : en sortie d'usine, ils se joignent déjà (même sous-réseau
+ * 192.168.0.x), mais hors du plan du car. Caméras 13 à 16 : non simulées, toujours oui.
+ */
+export const camAuPlan = (n) => n < 1 || n > 12 || ['rcp' + n, 'ccu' + n].every((id) => { const m = CN.m[id], p = planOf(id); return !!m && !!p && m.ip === p.ip && m.prefix === p.prefix && (m.gw || '') === (p.gw || ''); });
 /** le RCP n a-t-il la main sur la CCU n ? (caméras 13 à 16 du grand dispositif : non simulées, toujours oui) */
 export const ctrlCam = (n) => (n >= 1 && n <= 12 ? ctrlFunc('cam' + n) : { ok: true, state: 'ok', why: '', label: `Caméra ${n}` });
 

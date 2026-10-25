@@ -4,6 +4,7 @@ import { EQUIP } from './equip.js';
 import { setSoundPlan, applyAudioPatch } from './audio.js';
 import { applyOverrides } from './params.js';
 import { mergeGame } from './game/xp.js';
+import { normaliser as carriereNette, mergeCarriere } from './carriere/index.js';
 
 // ----------------------------------------------------------------------------------
 // Données partagées de la page publiée (capacités db / user / assets / downloads),
@@ -31,9 +32,9 @@ export const MYREV = { domains: [], items: {}, params: {}, extra: [], updatedAt:
 /**
  * Version du format de la progression (PROG.v). À monter quand sa forme change, avec l'étape qui convient
  * dans migrateProgress. 1 : sans numéro (jusqu'à la v19.3) ; 2 : numérotée, réussites « seul » (clean) des
- * parcours et des missions réseau (v19.4).
+ * parcours et des missions réseau (v19.4) ; 3 : la Carrière, dates de réception et de lecture des mails (v19.6).
  */
-export const PROG_VERSION = 2;
+export const PROG_VERSION = 3;
 export const PROG = { v: PROG_VERSION, missions: {}, visited: {}, scenarios: [], reports: [], perf: null, patchBest: 0, updatedAt: 0 };
 /** état du dernier enregistrement de la progression : sur cet ordinateur (local), sur le serveur de la page (remote) */
 export const SAVE = { local: /** @type {boolean | null} */ (null), remote: /** @type {boolean | null} */ (null), at: 0, error: '' };
@@ -146,6 +147,8 @@ export function migrateProgress(d) {
     if (!isObj(p.net.missions)) p.net.missions = {};
     for (const k of ['quiz', 'exams']) if (!Array.isArray(p.net[k])) p.net[k] = [];
   }
+  // v2 → v3 : la Carrière (absente tant qu'elle n'est pas commencée) ; mal formée, elle est remise en forme
+  if ('carriere' in p) p.carriere = carriereNette(p.carriere);
   p.v = Math.max(v, PROG_VERSION);
   return p;
 }
@@ -205,6 +208,8 @@ export function mergeProgress(d) {
     }
     if (d.entrepot.build && (!N.build || (d.entrepot.build.at || 0) > (N.build.at || 0))) N.build = d.entrepot.build;
   }
+  // la Carrière : un mail reçu ou lu sur l'un des appareils l'est pour de bon (la date la plus ancienne)
+  if (d.carriere) { const P = /** @type {any} */ (PROG); P.carriere = mergeCarriere(P.carriere, d.carriere); }
   // module caméra : notions, quiz de chapitre, mise en service (meilleur résultat et derniers essais)
   if (d.camera) {
     const K = /** @type {any} */ (PROG.camera = PROG.camera || {});
@@ -277,7 +282,7 @@ export function importProgress(text) {
   const wrapped = isObj(d) && d.format === EXPORT_FORMAT;
   const p = wrapped ? d.progression : d;
   // une progression brute a au moins l'un de ses champs habituels
-  if (!isObj(p) || (!wrapped && !['missions', 'visited', 'cours', 'tutor', 'game', 'camera', 'net'].some((k) => k in p))) return { ok: false, error: 'Ce fichier ne contient pas de progression du TIEE Simulator.' };
+  if (!isObj(p) || (!wrapped && !['missions', 'visited', 'cours', 'tutor', 'game', 'camera', 'net', 'carriere'].some((k) => k in p))) return { ok: false, error: 'Ce fichier ne contient pas de progression du TIEE Simulator.' };
   mergeProgress(p);
   restoreProgress();
   saveProgressSoon();

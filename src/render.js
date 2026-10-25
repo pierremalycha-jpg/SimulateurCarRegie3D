@@ -104,7 +104,7 @@ export function refreshEnvironment(key) {
   if (u.uSunI) u.uSunI.value = sun0;
   if (RENDER.envRT) RENDER.envRT.dispose();
   RENDER.envRT = rt; W.scene.environment = rt.texture;
-  RENDER.envI = { jour: 0.15, fin: 0.12, couvert: 0.27, nuit: 0.3 }[key] ?? 0.15;
+  RENDER.envI = { jour: 0.3, fin: 0.16, couvert: 0.3, nuit: 0.3 }[key] ?? 0.3;
   RENDER.bloom = { jour: 0.045, fin: 0.06, couvert: 0.04, nuit: 0.22 }[key] ?? 0.05;
   setEnvIntensity();
 }
@@ -145,7 +145,7 @@ class Post {
         c += texture2D(tSrc, vUv - t).rgb + texture2D(tSrc, vUv + t).rgb + texture2D(tSrc, vUv + vec2(-t.x, t.y)).rgb + texture2D(tSrc, vUv + vec2(t.x, -t.y)).rgb;
         gl_FragColor = vec4(texture2D(tBase, vUv).rgb + c / 16.0 * uMix, 1.0); }`, { tSrc: { value: null }, tBase: { value: null }, uTexel: { value: new THREE.Vector2() }, uMix: { value: 1 } });
     // composition : exposition, halo, ACES (même courbe que three.js), étalonnage, vignettage, tramage, sRGB
-    this.mComp = sh(`uniform sampler2D tSrc, tBloom; uniform float uExp, uBloom, uVig, uSat, uCon, uTime; uniform vec3 uLift; varying vec2 vUv;
+    this.mComp = sh(`uniform sampler2D tSrc, tBloom, tAO; uniform float uExp, uBloom, uVig, uSat, uCon, uTime, uAO; uniform vec3 uLift; varying vec2 vUv;
       vec3 RRTAndODTFit(vec3 v){ vec3 a = v * (v + 0.0245786) - 0.000090537; vec3 b = v * (0.983729 * v + 0.4329510) + 0.238081; return a / b; }
       vec3 aces(vec3 color){
         const mat3 I = mat3(vec3(0.59719, 0.07600, 0.02840), vec3(0.35458, 0.90834, 0.13383), vec3(0.04823, 0.01566, 0.83777));
@@ -155,6 +155,9 @@ class Post {
       float h12(vec2 p){ return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453); }
       void main(){
         vec3 c = texture2D(tSrc, vUv).rgb * uExp + texture2D(tBloom, vUv).rgb * uBloom;
+        // occlusion ambiante (écran) : les surfaces lumineuses (écrans, LED) y échappent
+        float ao = mix(texture2D(tAO, vUv).r, 1.0, smoothstep(0.9, 2.4, max(c.r, max(c.g, c.b)) * 0.6));
+        c *= mix(1.0, ao, uAO);
         c = aces(c);
         float l = dot(c, vec3(0.2126, 0.7152, 0.0722));
         c = max(mix(vec3(l), c, uSat), 0.0);
@@ -163,7 +166,84 @@ class Post {
         c = srgb(c);
         c = clamp((c - 0.5) * uCon + 0.5 + uLift * (1.0 - c), 0.0, 1.0);
         c += (h12(gl_FragCoord.xy + uTime) - 0.5) / 255.0;
-        gl_FragColor = vec4(c, 1.0); }`, { tSrc: { value: null }, tBloom: { value: null }, uExp: { value: 1 }, uBloom: { value: 0.05 }, uVig: { value: 0.22 }, uSat: { value: 1.06 }, uCon: { value: 1.03 }, uLift: { value: new THREE.Vector3(0.012, 0.014, 0.02) }, uTime: { value: 0 } });
+        gl_FragColor = vec4(c, 1.0); }`, { tSrc: { value: null }, tBloom: { value: null }, tAO: { value: null }, uAO: { value: 0 }, uExp: { value: 1 }, uBloom: { value: 0.05 }, uVig: { value: 0.22 }, uSat: { value: 1.06 }, uCon: { value: 1.03 }, uLift: { value: new THREE.Vector3(0.012, 0.014, 0.02) }, uTime: { value: 0 } });
+    // ------------- occlusion ambiante (SSAO) : pré-passe normales + profondeur à demi-résolution -------------
+    this.gbuf = null; this.aoRT = null; this.aoBlurRT = null;
+    this.normalMat = new THREE.MeshNormalMaterial();
+    this.white = new THREE.DataTexture(new Uint8Array([255, 255, 255, 255]), 1, 1); this.white.needsUpdate = true;
+    // noyau : 12 directions dans l'hémisphère, plus denses près de l'origine
+    const kern = [];
+    for (let i = 0; i < 12; i++) {
+      const a = i * 2.39996, z = 0.15 + 0.85 * ((i + 0.5) / 12), r = Math.sqrt(1 - z * z);
+      let sc = (i + 1) / 12; sc = 0.1 + 0.9 * sc * sc;
+      kern.push(new THREE.Vector3(Math.cos(a) * r * sc, Math.sin(a) * r * sc, z * sc));
+    }
+    this.mAO = sh(`uniform sampler2D tDepth, tNrm; uniform mat4 uProj, uInvProj; uniform vec2 uTexel; uniform vec3 uKern[12]; uniform float uRadius, uBias, uTime; varying vec2 vUv;
+      vec3 viewPos(vec2 uv){ float d = texture2D(tDepth, uv).x; vec4 c = uInvProj * vec4(uv * 2.0 - 1.0, d * 2.0 - 1.0, 1.0); return c.xyz / c.w; }
+      float ign(vec2 p){ return fract(52.9829189 * fract(0.06711056 * p.x + 0.00583715 * p.y)); }
+      void main(){
+        float d0 = texture2D(tDepth, vUv).x;
+        if (d0 >= 0.9999) { gl_FragColor = vec4(1.0); return; }
+        vec3 p = viewPos(vUv);
+        vec3 n = normalize(texture2D(tNrm, vUv).xyz * 2.0 - 1.0);
+        float a = ign(gl_FragCoord.xy + uTime) * 6.2831853;
+        vec3 rv = vec3(cos(a), sin(a), 0.0);
+        vec3 t = normalize(rv - n * dot(rv, n)); vec3 b = cross(n, t); mat3 tbn = mat3(t, b, n);
+        float occ = 0.0;
+        for (int i = 0; i < 12; i++) {
+          vec3 s = p + tbn * uKern[i] * uRadius;
+          vec4 q = uProj * vec4(s, 1.0); vec2 uq = q.xy / q.w * 0.5 + 0.5;
+          if (uq.x < 0.0 || uq.x > 1.0 || uq.y < 0.0 || uq.y > 1.0) continue;
+          float zs = viewPos(uq).z;
+          float rc = smoothstep(0.0, 1.0, uRadius / max(abs(p.z - zs), 1e-4));
+          occ += (zs >= s.z + uBias ? 1.0 : 0.0) * rc;
+        }
+        gl_FragColor = vec4(vec3(1.0 - occ / 12.0), 1.0); }`,
+    { tDepth: { value: null }, tNrm: { value: null }, uProj: { value: new THREE.Matrix4() }, uInvProj: { value: new THREE.Matrix4() }, uTexel: { value: new THREE.Vector2() }, uKern: { value: kern }, uRadius: { value: 0.4 }, uBias: { value: 0.015 }, uTime: { value: 0 } });
+    // flou 4 × 4 respectant la profondeur (pas de bavure sur les arêtes), puis courbe de force
+    this.mAOBlur = sh(`uniform sampler2D tAO, tDepth; uniform vec2 uTexel; uniform float uPow; varying vec2 vUv;
+      void main(){ float d0 = texture2D(tDepth, vUv).x; float s = 0.0, w = 0.0;
+        for (int x = -2; x < 2; x++) for (int y = -2; y < 2; y++) { vec2 uv = vUv + (vec2(float(x), float(y)) + 0.5) * uTexel;
+          float d = texture2D(tDepth, uv).x; float k = 1.0 / (1.0 + abs(d - d0) * 4000.0); s += texture2D(tAO, uv).x * k; w += k; }
+        gl_FragColor = vec4(vec3(pow(clamp(s / w, 0.0, 1.0), uPow)), 1.0); }`,
+    { tAO: { value: null }, tDepth: { value: null }, uTexel: { value: new THREE.Vector2() }, uPow: { value: 1.6 } });
+  }
+  // la pré-passe ne doit voir que les surfaces opaques : étiquettes, verre, anneaux au sol sont cachés
+  aoHidden(scene) {
+    const cache = scene.userData.aoHide || (scene.userData.aoHide = { t: -1, list: [] });
+    if (S.frame - cache.t > 120) {
+      cache.t = S.frame; cache.list = [];
+      scene.traverse((o) => {
+        if (o.isLight || o.isScene) return;
+        const m = o.material;
+        if (o.isSprite || o.isLine || o.userData.noAO || (m && !Array.isArray(m) && (m.transparent || m.depthWrite === false))) cache.list.push(o);
+      });
+    }
+    return cache.list;
+  }
+  renderAO(scene, camera, ao) {
+    const r = this.r;
+    const w = Math.max(1, this.w >> 1), h = Math.max(1, this.h >> 1);
+    if (!this.gbuf || this.gbuf.width !== w || this.gbuf.height !== h) {
+      if (this.gbuf) { this.gbuf.dispose(); this.aoRT.dispose(); this.aoBlurRT.dispose(); }
+      const dt = new THREE.DepthTexture(w, h); dt.type = THREE.UnsignedIntType;
+      this.gbuf = new THREE.WebGLRenderTarget(w, h, { depthTexture: dt, depthBuffer: true, minFilter: THREE.NearestFilter, magFilter: THREE.NearestFilter });
+      this.aoRT = new THREE.WebGLRenderTarget(w, h, rtOpts); this.aoBlurRT = new THREE.WebGLRenderTarget(w, h, rtOpts);
+    }
+    const hidden = this.aoHidden(scene); const was = hidden.map((o) => o.visible);
+    for (const o of hidden) o.visible = false;
+    const bg = scene.background; scene.background = null;
+    const over = scene.overrideMaterial; scene.overrideMaterial = this.normalMat;
+    r.setRenderTarget(this.gbuf); r.setClearColor(0x000000, 1); r.clear(); r.render(scene, camera);
+    scene.overrideMaterial = over; scene.background = bg;
+    hidden.forEach((o, i) => { o.visible = was[i]; });
+    const u = this.mAO.uniforms;
+    u.tDepth.value = this.gbuf.depthTexture; u.tNrm.value = this.gbuf.texture; u.uProj.value.copy(camera.projectionMatrix); u.uInvProj.value.copy(camera.projectionMatrixInverse);
+    u.uTexel.value.set(1 / w, 1 / h); u.uRadius.value = ao.radius; u.uBias.value = ao.bias ?? 0.012; u.uTime.value = 0;
+    this.pass(this.mAO, this.aoRT);
+    const b = this.mAOBlur.uniforms; b.tAO.value = this.aoRT.texture; b.tDepth.value = this.gbuf.depthTexture; b.uTexel.value.set(1 / w, 1 / h); b.uPow.value = ao.power ?? 1.6;
+    this.pass(this.mAOBlur, this.aoBlurRT);
+    return this.aoBlurRT.texture;
   }
   setSize(w, h) {
     if (w === this.w && h === this.h) return;
@@ -173,12 +253,13 @@ class Post {
     for (let i = 0; i < 5; i++) { dw = Math.max(1, dw >> 1); dh = Math.max(1, dh >> 1); this.down[i].setSize(dw, dh); if (i < 4) this.up[i].setSize(dw, dh); }
   }
   pass(mat, target) { this.quad.material = mat; this.r.setRenderTarget(target); this.r.render(this.scene, this.cam); }
-  render(scene, camera, exposure, bloom) {
+  render(scene, camera, exposure, bloom, ao = null) {
     const r = this.r;
     const v = r.getDrawingBufferSize(new THREE.Vector2());
     this.setSize(v.x, v.y);
     const tm = r.toneMapping;
-    r.setRenderTarget(this.rt); r.clear(); r.render(scene, camera);
+    const aoTex = ao ? this.renderAO(scene, camera, ao) : this.white;
+    r.setRenderTarget(this.rt); r.setClearColor(0x000000, 1); r.clear(); r.render(scene, camera);
     // halo
     const p = this.mPre.uniforms; p.tSrc.value = this.rt.texture; p.uTexel.value.set(1 / this.w, 1 / this.h); p.uExp.value = exposure;
     this.pass(this.mPre, this.down[0]);
@@ -188,12 +269,15 @@ class Post {
       u.tSrc.value = src.texture; u.tBase.value = this.down[i].texture; u.uTexel.value.set(1 / src.width, 1 / src.height); u.uMix.value = 1;
       this.pass(this.mUp, this.up[i]);
     }
-    const c = this.mComp.uniforms; c.tSrc.value = this.rt.texture; c.tBloom.value = this.up[0].texture; c.uExp.value = exposure; c.uBloom.value = bloom; c.uTime.value = (S.frame % 64) * 1.7;
+    const c = this.mComp.uniforms; c.tSrc.value = this.rt.texture; c.tBloom.value = this.up[0].texture; c.tAO.value = aoTex; c.uAO.value = ao ? (ao.strength ?? 1) : 0; c.uExp.value = exposure; c.uBloom.value = bloom; c.uTime.value = (S.frame % 64) * 1.7;
     this.pass(this.mComp, null);
     r.toneMapping = tm;
   }
 }
 export function postEnabled() { return RENDER.pbr && S.quality !== 'basse' && !/[?&]nopost\b/.test(location.search); }
+// occlusion ambiante d'écran : dans le car (petite scène, surfaces opaques) en qualité Moyenne et Haute
+export const AO_TRUCK = { radius: 0.45, strength: 1, power: 1.3, bias: 0.012 };
+export function aoEnabled(inTruck) { return inTruck && postEnabled() && !/[?&]noao\b/.test(location.search); }
 // vue « œil » : rendu avec post-traitement si la qualité le permet, sinon rendu direct
 export function renderEye(renderer, scene, camera, exposure, inTruck) {
   if (postEnabled()) {
@@ -202,7 +286,7 @@ export function renderEye(renderer, scene, camera, exposure, inTruck) {
     const scr = inTruck ? Object.values(RENDER.T.screens) : RENDER.W.screens;
     for (const m of scr) if (m.uniforms && m.uniforms.uLin) m.uniforms.uLin.value = 2;
     VIEW_INV.exp.value = exposure;
-    RENDER.post.render(scene, camera, exposure, inTruck ? RENDER.truckBloom : RENDER.bloom);
+    RENDER.post.render(scene, camera, exposure, inTruck ? RENDER.truckBloom : RENDER.bloom, aoEnabled(inTruck) ? AO_TRUCK : null);
     for (const m of scr) if (m.uniforms && m.uniforms.uLin) m.uniforms.uLin.value = 0;
   } else {
     renderer.toneMappingExposure = exposure;

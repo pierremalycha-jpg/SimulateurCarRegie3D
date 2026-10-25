@@ -1,0 +1,32 @@
+/* le suivi des tâches sur le côté (src/game/quest.js) : l'objectif en cours et ses tâches, cochées au fur et à
+   mesure, comme le journal de quêtes d'un jeu ; la liste des missions spécifiques (src/ui/missions_ui.js) */
+.quest { max-height: calc(100vh - 150px); overflow: auto; overscroll-behavior: contain; scrollbar-width: thin; }
+.q-tasks { list-style: none; margin: 2px 0 0; padding: 0; display: grid; gap: 1px; font-size: 12.5px; }
+.q-task .q-go { all: unset; box-sizing: border-box; width: 100%; display: flex; gap: 7px; align-items: flex-start; padding: 3px 4px; border-radius: 2px; color: #8796a6; line-height: 1.3; }
+button.q-go { cursor: pointer; } button.q-go:hover { background: rgba(25,211,255,.08); color: #e6edf4; }
+button.q-go:focus-visible { outline: 2px solid var(--neon, #19d3ff); outline-offset: 1px; }
+.q-task .ico { flex: none; margin-top: 1px; color: #3f5163; }
+.q-task.done .q-go { color: #9fb2c4; } .q-task.done .ico { color: var(--pvw, #37f28b); }
+.q-task.now .q-go { color: #fff; background: linear-gradient(90deg, rgba(25,211,255,.16), transparent); box-shadow: inset 2px 0 0 var(--neon, #19d3ff); font-weight: 600; }
+.q-task.now .ico { color: var(--neon, #19d3ff); }
+.q-grp { display: flex; justify-content: space-between; gap: 8px; margin-top: 4px; padding: 2px 4px; font: 700 11px var(--f-disp); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); border-bottom: 1px solid #1a2631; }
+.q-grp.done { color: var(--pvw, #37f28b); } .q-grp small { font: 11px var(--f-mono); letter-spacing: 0; }
+.q-more { padding: 1px 4px 1px 27px; font-size: 11px; color: var(--dim); }
+@media (max-width: 700px), (pointer: coarse) { .q-task.done, .q-more { display: none; } .quest { max-height: 40vh; } }
+
+/* la liste des missions spécifiques : par famille, les exercices d'Olivier par chapitre */
+.jo-missions { margin-top: 12px; max-height: 46vh; overflow: auto; padding-right: 4px; scrollbar-width: thin; }
+.mc-pick { display: grid; gap: 14px; }
+.mc-fam h3 { display: flex; align-items: center; gap: 8px; margin: 0 0 2px; font: 700 14px var(--f-disp); letter-spacing: .08em; text-transform: uppercase; color: var(--neon, #19d3ff); }
+.mc-fam h3 small { margin-left: auto; font: 12px var(--f-mono); letter-spacing: 0; color: var(--muted); }
+.mc-fam-sum { margin: 0 0 6px; font-size: 12.5px; color: var(--muted); }
+.mc-items { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 4px; }
+.mc-item { display: flex; gap: 8px; align-items: flex-start; width: 100%; padding: 7px 9px; text-align: left; font: inherit; color: var(--fg); background: rgba(10,16,22,.7); border: 1px solid #1d2a37; border-left: 3px solid #2a3b4e; border-radius: 3px; cursor: pointer; }
+.mc-item:hover { border-color: #2f4558; background: rgba(25,211,255,.06); }
+.mc-item:focus-visible { outline: 2px solid var(--neon, #19d3ff); outline-offset: 1px; }
+.mc-item[aria-pressed="true"] { border-color: var(--neon, #19d3ff); border-left-color: var(--neon, #19d3ff); background: rgba(25,211,255,.12); box-shadow: 0 0 0 1px rgba(25,211,255,.25); }
+.mc-item .ico { flex: none; margin-top: 2px; color: var(--muted); } .mc-item.done .ico { color: var(--pvw, #37f28b); }
+.mc-t { display: grid; gap: 1px; min-width: 0; } .mc-t b { font: 600 13.5px/1.25 var(--f-disp); } .mc-t small { font-size: 11.5px; color: var(--muted); }
+.mc-grp { margin: 4px 0; } .mc-grp summary { display: flex; gap: 8px; align-items: baseline; padding: 4px 2px; cursor: pointer; font: 600 13px var(--f-disp); color: var(--fg); }
+.mc-grp summary small { font: 11.5px var(--f-mono); color: var(--muted); } .mc-grp .mc-items { margin: 2px 0 6px; }
+.mc-next .mc-pick { max-height: 52vh; overflow: auto; padding-right: 4px; } .mc-next-acts { margin-top: 12px; display: flex; gap: 8px; flex-wrap: wrap; }

@@ -4,6 +4,8 @@ import { emit } from '../state.js';
 import { livret } from '../livret.js';
 import { COMPETENCES, blocOf } from '../content/referentiel.js';
 import { allLessons } from '../cours/index.js';
+import { fait as carriereFaite } from '../carriere/index.js';
+import { episodeById } from '../carriere/mails.js';
 
 // ----------------------------------------------------------------------------------
 // La progression du joueur : des points d'expérience (XP) pour chaque activité réussie, des
@@ -30,7 +32,7 @@ export const LEVELS = [
 ];
 /** barème (points) : ce que rapporte chaque activité réussie */
 export const BAREME = {
-  mission: 25,          // une mission du mode « Tout à faire »
+  mission: 25,          // une tâche du car vide (Jouer → Car régie → Car vide)
   exercice: 60,         // un exercice d'Olivier terminé (première fois), moins l'aide demandée
   exerciceRefait: 15,
   aide: 8,              // retenue par « Fais-le pour moi »
@@ -108,7 +110,7 @@ export const BADGES = [
   { id: 'sans-aide', title: 'Sans filet', desc: 'Un exercice terminé sans indice ni « Fais-le pour moi ».', ico: 'bouclier', tier: 'argent', test: ({ P }) => doneTutor(P, (id) => !id.startsWith('poste-')).some(([, p]) => !p.aided && !p.hints) },
   { id: 'cinq-exercices', title: 'Entraîné', desc: 'Cinq exercices différents terminés.', ico: 'medaille', tier: 'argent', test: ({ P }) => doneTutor(P, (id) => !id.startsWith('poste-')).length >= 5 },
   { id: 'quinze-exercices', title: 'Polyvalent', desc: 'Quinze exercices différents terminés.', ico: 'trophee', tier: 'or', test: ({ P }) => doneTutor(P, (id) => !id.startsWith('poste-')).length >= 15 },
-  { id: 'installateur', title: 'Installateur', desc: 'Toutes les missions du mode « Tout à faire » réussies.', ico: 'plan', tier: 'or', test: ({ P }) => Object.keys(P.missions || {}).length >= 22 },
+  { id: 'installateur', title: 'Installateur', desc: 'Toutes les tâches du car vide réussies.', ico: 'plan', tier: 'or', test: ({ P }) => Object.keys(P.missions || {}).length >= 22 },
   { id: 'sang-froid', title: 'Sang-froid', desc: 'Une panne cachée résolue en moins d\'une minute.', ico: 'eclair', tier: 'argent', test: ({ g }) => (g.count.panneRapide || 0) >= 1 },
   { id: 'depanneur', title: 'Dépanneur', desc: 'Cinq pannes cachées différentes résolues.', ico: 'alarme', tier: 'or', test: ({ g }) => (g.count.panne || 0) >= 5 },
   { id: 'brasseur', title: 'Brasseur', desc: 'Le car vide brassé à 100 %.', ico: 'brassage', tier: 'argent', test: ({ P }) => (P.patchBest || 0) >= 100 },
@@ -117,6 +119,7 @@ export const BADGES = [
   { id: 'reseau', title: 'Ingénieur réseau', desc: 'Les 14 missions de la formation ST 2110 réussies.', ico: 'reseau', tier: 'or', test: ({ P }) => Object.keys((P.net || {}).missions || {}).length >= 14 },
   { id: 'cameraman', title: 'Mise en service', desc: 'La caméra de plateau mise en service (60/100 au moins).', ico: 'vision', tier: 'argent', test: ({ P }) => !!(P.camera && P.camera.mes && P.camera.mes.best && P.camera.mes.best.score >= 60) },
   { id: 'entrepot', title: 'Régie mobile', desc: 'Une mission de l\'entrepôt réussie.', ico: 'materiel', tier: 'or', test: ({ P }) => Object.values((P.entrepot || {}).missions || {}).some((m) => m && m.best && (m.best.score ?? m.best) >= 60) },
+  { id: 'embauche', title: 'Embauché', desc: 'La mission de stagiaire de la Carrière réussie : le tour du car et ses six postes.', ico: 'chef', tier: 'bronze', test: ({ P }) => { const ep = episodeById('stagiaire'); return !!ep && !!P.carriere && carriereFaite(ep, P); } },
   { id: 'curieux', title: 'Curieux', desc: 'Dix leçons du Cours acquises (quiz 3/3).', ico: 'cours', tier: 'bronze', test: ({ P }) => Object.values(P.cours || {}).filter((c) => c && c.quiz && c.quiz.total && c.quiz.score === c.quiz.total).length >= 10 },
   { id: 'erudit', title: 'Érudit', desc: 'Toutes les leçons du Cours acquises.', ico: 'livret', tier: 'or', test: ({ P }) => { const ids = allLessons().map((x) => x.lesson.id); const C = P.cours || {}; return ids.length > 0 && ids.every((id) => C[id] && C[id].quiz && C[id].quiz.total && C[id].quiz.score === C[id].quiz.total); } },
   { id: 'opticien', title: 'Opticien', desc: 'Vingt notions de la caméra en 3D acquises.', ico: 'ccu', tier: 'argent', test: ({ P }) => Object.values(((P.camera || {}).notions) || {}).filter((n) => n && n.total && n.score === n.total).length >= 20 },
