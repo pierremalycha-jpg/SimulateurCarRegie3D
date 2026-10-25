@@ -189,7 +189,7 @@ export function buildStart() {
     teamSeg.replaceChildren(...[['solo', 'Solo'], ['coop', 'Coopération']].map(([v, t]) => el('button', { type: 'button', 'data-v': v, 'aria-pressed': String(v === PICK.team), onclick: () => { PICK.team = v; draw(); } }, t)));
     teamNote.textContent = PICK.team === 'coop'
       ? (lan ? 'Réseau local : l\'hôte crée le salon, les autres le rejoignent ; chacun choisit un pseudo et un rôle dans la prestation. La coopération se joue avec le car pré-installé.' : 'En ligne : l\'hôte crée le salon et donne son code ; chacun choisit un pseudo et un rôle dans la prestation. La coopération se joue avec le car pré-installé.')
-      : 'Vous êtes seul dans le car : vous passez d\'un poste à l\'autre (touche Tab).';
+      : 'Vous êtes seul dans le car : vous passez d\'un poste à l\'autre avec le téléphone (touche Tab).';
     const N = MODES.find((m) => m.id === PICK.mode) || MODES[0];
     lamp.textContent = PICK.team === 'coop' ? 'Salon' : N.lamp;
     goTitle.textContent = PICK.team === 'coop' ? 'Ouvrir le salon' : N.go;

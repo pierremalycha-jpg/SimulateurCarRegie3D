@@ -66,13 +66,6 @@ kbd, .key { background: #0b1118; color: var(--neon); border: 1px solid #1f3140; 
 .choice:hover { border-color: var(--neon); box-shadow: var(--glow-c); }
 select, input[type=text], input[type=number], input[type=search], textarea { background: #05090d; border-color: #1f3140; box-shadow: inset 0 1px 3px rgba(0,0,0,.6); }
 .pill { background: #0a1016; border-color: #22303f; }
-.dkey { background: linear-gradient(#1a2531, #121b25); border: 1px solid #2c3d50; border-radius: 3px; box-shadow: none; clip-path: var(--notch-s); }
-.dkey .dwin { background: #05090d; border-color: #142130; color: #bfefff; text-shadow: 0 0 5px rgba(25,211,255,.25); }
-.dkey:hover { background: linear-gradient(#22303f, #182230); border-color: var(--neon); box-shadow: var(--glow-c); }
-.dkey.on .dwin { color: var(--gold); text-shadow: 0 0 6px rgba(255,209,102,.45); }
-.dkey.on::before { background: var(--gold); box-shadow: 0 0 6px var(--gold); }
-.pp-bank { background: #0a1016; border-color: #142130; }
-.pp-here b { color: var(--neon); text-shadow: 0 0 8px rgba(25,211,255,.4); }
 #station .st-head, .ly-head { background: linear-gradient(90deg, rgba(25,211,255,.08), transparent 50%), #0b1118; border-bottom: 1px solid #22303f; box-shadow: inset 0 -1px 0 rgba(25,211,255,.2), 0 2px 10px rgba(0,0,0,.5); }
 #station .st-head .st-quit { background: linear-gradient(#4a1a18, #35110f); border-color: #8a2a24; }
 #layer { background: var(--bg); }

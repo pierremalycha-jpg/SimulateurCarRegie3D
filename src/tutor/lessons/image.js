@@ -40,7 +40,7 @@ const EXPO = {
     goStation('vision', 'On va au poste vision, en régie vision et ralentis.', 'À gauche, l\'image de la caméra et son waveform ; à droite, le RCP.', {
       go: (c) => ({ station: 'vision', cam: c.mem.cam }), done: atVision, skip: atVision,
       do: (c) => `Ouvre le poste vision sur la CAM ${c.mem.cam}.`,
-      hints: ['Le poste vision est dans la zone « Vision et ralentis » du pupitre (Tab) : touche Ingé vision 1 ou 2.', 'Au poste, une rangée de touches numérotées choisit la caméra que le RCP commande : prends celle que je t\'ai donnée.'],
+      hints: ['Le poste vision est dans la zone « Vision et ralentis » du téléphone (Tab, application Aller à) : Ingé vision 1 ou 2.', 'Au poste, une rangée de touches numérotées choisit la caméra que le RCP commande : prends celle que je t\'ai donnée.'],
       auto: (c) => c.io.go({ station: 'vision', cam: c.mem.cam }),
     }),
     {
@@ -97,7 +97,7 @@ const WB = {
     goStation('vision', 'On retourne au poste vision.', 'Repère les molettes WHITE R, G, B et la touche AWB.', {
       go: (c) => ({ station: 'vision', cam: c.mem.cam }), done: atVision, skip: atVision,
       do: (c) => `Ouvre le poste vision sur la CAM ${c.mem.cam}.`,
-      hints: ['Le poste vision est dans la zone « Vision et ralentis » du pupitre (Tab) : touche Ingé vision 1 ou 2.', 'Au poste, une rangée de touches numérotées choisit la caméra que le RCP commande : prends celle que je t\'ai donnée.'],
+      hints: ['Le poste vision est dans la zone « Vision et ralentis » du téléphone (Tab, application Aller à) : Ingé vision 1 ou 2.', 'Au poste, une rangée de touches numérotées choisit la caméra que le RCP commande : prends celle que je t\'ai donnée.'],
       auto: (c) => c.io.go({ station: 'vision', cam: c.mem.cam }),
     }),
     {

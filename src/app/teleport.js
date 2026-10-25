@@ -10,7 +10,7 @@ import { PL, onDeck, updToolbar } from './player.js';
 import { takeCamera } from './camop.js';
 
 // ----------------------------------------------------------------------------------
-// Se rendre quelque part : destinations du pupitre (ui/pupitre.js), postes du car, équipiers
+// Se rendre quelque part : destinations du téléphone (telephone/apps.js), postes du car, équipiers
 // d'une session, poste attribué par la fiche de rôle.
 // ----------------------------------------------------------------------------------
 /** @type {Array<[string, number[], number, boolean, boolean?]>} : nom, position, cap, vol libre, dans le car */

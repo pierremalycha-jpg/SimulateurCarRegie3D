@@ -40,7 +40,6 @@ button { cursor: pointer; }
 /* texte réservé aux lecteurs d'écran */
 .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; }
 .btn > .ico, .linkbtn > .ico, .chef-tag > .ico, .chef-check > .ico { margin-right: .35em; }
-.dkey .dk-ico { width: 18px; height: 18px; color: #c4cdd3; } .dkey.on .dk-ico { color: var(--amber); }
 .chef-ico { display: inline-flex; align-items: center; justify-content: center; gap: 5px; }
 .chef-more summary .ico { flex: none; color: var(--muted); }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; } }
@@ -407,39 +406,6 @@ select:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px
 }
 @media (max-width: 520px) { .dk-strips { grid-template-columns: minmax(0, 1fr); } .onair-key { grid-template-columns: minmax(0, 1fr); } .onair-lamp { grid-row: auto; justify-self: start; min-height: 34px; } .dk-capt { grid-template-columns: minmax(0, 1fr); } }
 @media (pointer: coarse) { #st-chef kbd { display: none; } }
-
-/* ---------- Pupitre (Tab) : panneau de commande de grille ----------
-   Le plan du car en haut ; dessous, une rangée de touches par zone, chaque rangée sous sa zone du plan ;
-   puis les endroits hors du car et les outils. Touche à afficheur : la légende dans une fenêtre de verre,
-   une LED (ambre : là où l'on est, outil en service). */
-.pupitre { display: grid; gap: 14px; }
-.pupitre h2 { font: 700 15.5px var(--f-disp); margin: 0 0 7px; color: var(--fg); }
-.pp-car, .pp-out, .pp-toolbar { min-width: 0; }
-.pp-top { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr); gap: 10px; margin-bottom: 8px; }
-.pp-plan { padding: 6px 8px 4px; display: flex; align-items: center; }
-.pp-here { display: grid; align-content: center; gap: 4px; padding: 10px 14px; font-size: 13px; line-height: 1.4; }
-.pp-here b { font-family: var(--f-disp); font-weight: 600; font-size: 17px; color: #ffd38a; text-shadow: 0 0 6px rgba(255,176,32,.35); }
-.pp-here span { color: #86a596; font-family: var(--f-body); }
-.pp-banks { display: grid; grid-template-columns: var(--cols, repeat(4, minmax(0, 1fr))); gap: 6px; }
-.pp-bank { min-width: 0; background: var(--well); border: 1px solid #0f1316; border-top: 3px solid var(--zc, var(--line2)); border-radius: 3px; padding: 6px; box-shadow: inset 0 1px 3px rgba(0,0,0,.45); }
-.pp-bank h3 { font: 600 13px var(--f-disp); color: var(--muted); margin: 0 0 6px 2px; }
-.pp-keys { display: flex; flex-wrap: wrap; gap: 5px; }
-.dkey { position: relative; display: inline-flex; align-items: center; gap: 6px; padding: 4px 4px 4px 14px; min-height: 34px; max-width: 100%; color: var(--fg);
-  background: linear-gradient(#4a545e, #3b444d 58%, #343c44); border: 1px solid #161b1f; border-radius: 4px; box-shadow: inset 0 1px 0 rgba(255,255,255,.15), 0 2px 3px rgba(0,0,0,.35); }
-.dkey::before { content: ""; position: absolute; left: 5px; top: 50%; width: 5px; height: 5px; margin-top: -2.5px; border-radius: 50%; background: #1b2024; box-shadow: inset 0 0 0 1px rgba(0,0,0,.5); }
-.dkey .dwin { display: block; min-width: 0; overflow: hidden; text-overflow: ellipsis; padding: 4px 8px 3px; background: var(--glass); border: 1px solid #070a0c; border-radius: 2px; box-shadow: inset 0 1px 3px rgba(0,0,0,.7);
-  font: 600 13.5px/1.15 var(--f-disp); color: #d3f3df; text-shadow: 0 0 5px rgba(160,240,190,.2); white-space: nowrap; }
-.dkey kbd { order: -1; }
-.dkey:hover { background: linear-gradient(#56616c, #46505a 58%, #3d464f); }
-.dkey:active { transform: translateY(1px); box-shadow: inset 0 1px 3px rgba(0,0,0,.45); }
-.dkey.on::before { background: var(--amber); box-shadow: 0 0 6px var(--amber); }
-.dkey.on .dwin { color: #ffd38a; text-shadow: 0 0 6px rgba(255,176,32,.45); }
-.dkey.mate .dwin { box-shadow: inset 3px 0 0 var(--mate), inset 0 1px 3px rgba(0,0,0,.7); }
-.pp-tools { display: flex; flex-wrap: wrap; gap: 6px; }
-.pp-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 18px; }
-@media (max-width: 900px) { .pp-row { grid-template-columns: minmax(0, 1fr); } }
-.dkey.tool { padding-left: 14px; }
-@media (max-width: 900px) { .pp-banks { grid-template-columns: repeat(2, minmax(0, 1fr)); } .pp-top { grid-template-columns: minmax(0, 1fr); } .pp-plan { display: none; } }
 
 /* ---------- Postes (stations) ---------- */
 #station { position: fixed; inset: 0; z-index: 1; background: var(--bg); display: flex; flex-direction: column; }

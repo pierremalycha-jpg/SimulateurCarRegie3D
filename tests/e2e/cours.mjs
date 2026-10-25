@@ -1,6 +1,6 @@
 // Section Cours (v19) : l'écran titre à trois entrées et le profil dans les Réglages, le Cours
 // depuis le titre (un seul sommaire ; chaque leçon : essentiel, schéma, manipulation, quiz,
-// exercices pratiques, article de référence ; le suivi), le pupitre, la touche G, le lien
+// exercices pratiques, article de référence ; le suivi), le téléphone, la touche G, le lien
 // fiche « ? » → leçon, le menu du car et le livret du stagiaire.
 // node tests/e2e/cours.mjs [dossier]
 import { launch, openPage, outDir, until, reporter } from './harness.mjs';
@@ -101,18 +101,19 @@ await A.click('#ti-play'); await A.waitForTimeout(400);
 T.check('écran Jouer : liens Cours et Réglages, ni espace formateur ni relecture', await ev(() => !!document.getElementById('st-cours') && !!document.getElementById('st-reglages') && ![...document.querySelectorAll('#start button')].some((b) => b.offsetParent && /formateur|Relecture/i.test(b.textContent))));
 await A.close();
 
-// ---------------- dans le car : pupitre par famille, fenêtres regroupées, G, fiche → leçon, livret ----------------
+// ---------------- dans le car : téléphone par famille, fenêtres regroupées, G, fiche → leçon, livret ----------------
 const B = await openPage(browser, { errors: T.errors });
 const eb = (f, a) => B.evaluate(f, a);
 await eb(() => window.__dbg.start('vierge'));
 await until(B, () => window.__dbg.S.mode !== 'start', null, 60000); await B.waitForTimeout(1000);
 await B.keyboard.press('Tab'); await B.waitForTimeout(500);
-const fams = () => eb(() => [...document.querySelectorAll('#modal .pp-fam')].filter((f) => f.offsetParent).map((f) => f.querySelector('h3').textContent));
-T.check('pupitre : outils du car, Cours, Réglages', JSON.stringify(await fams()) === JSON.stringify(['Dans le car', 'Cours', 'Réglages']), String(await fams()));
-T.check('pupitre : au moins 12 touches d\'outil', await eb(() => document.querySelectorAll('#modal .dkey.tool').length >= 12));
-await B.screenshot({ path: `${OUT}/20-pupitre.png` });
-await B.click('#modal .dkey.tool:has-text("Cours")'); await B.waitForTimeout(400);
-T.check('touche Cours du pupitre : l\'espace Cours', await eb(() => !!document.querySelector('#layer.ly-cours')));
+const fams = () => eb(() => [...document.querySelectorAll('#telephone .tel-fam')].map((f) => f.querySelector('h3').textContent));
+T.check('téléphone : applications du car, Cours, Réglages', JSON.stringify(await fams()) === JSON.stringify(['Le car', 'Cours', 'Réglages']), String(await fams()));
+T.check('téléphone : au moins 12 applications', await eb(() => document.querySelectorAll('#telephone .tel-app').length >= 12));
+await until(B, () => window.__dbg.tel.state().t >= 1, null, 8000);
+await B.screenshot({ path: `${OUT}/20-telephone.png` });
+await B.click('#telephone .tel-app[data-app="cours"]'); await B.waitForTimeout(400);
+T.check('application Cours du téléphone : l\'espace Cours', await eb(() => !!document.querySelector('#layer.ly-cours')));
 await B.keyboard.press('Escape'); await B.waitForTimeout(300);
 await B.keyboard.press('KeyG'); await B.waitForTimeout(400);
 T.check('touche G : les leçons', await eb(() => !!document.querySelector('#layer .ly-tabs .tab.on[data-k="lecons"]')));
