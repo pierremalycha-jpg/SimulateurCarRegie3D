@@ -1,0 +1,47 @@
+/* ---------- Postes en 3D (src/poste3d/) : la vue de l'opérateur, une couche d'interface légère par-dessus ---------- */
+/* au-dessus du canevas WebGL (#gl, z 2, qui rend ici la vue 3D) ; le moniteur flottant (z 6) reste au-dessus */
+#station.p3d-on { background: transparent; pointer-events: none; z-index: 3; }
+body:has(#floatmon) #station.p3d-on .p3d-side { bottom: 330px; }
+#station.p3d-on .st-head { pointer-events: auto; }
+#station .st-main.p3d { display: block; position: relative; flex: 1; min-height: 0; }
+#station .st-main.p3d .st-body.p3d-body { position: absolute; inset: 0; padding: 0; overflow: hidden; display: block; pointer-events: none; }
+.p3d-stage { position: absolute; inset: 0; pointer-events: auto; cursor: grab; touch-action: none; }
+.p3d-stage:active { cursor: grabbing; }
+.p3d-hits, .p3d-tags { position: fixed; inset: 0; pointer-events: none; }
+/* zone cliquable d'une commande : transparente, posée exactement sur la touche 3D */
+#station .p3d-hit { all: unset; position: absolute; box-sizing: border-box; pointer-events: auto; cursor: pointer; border-radius: 4px; transition: box-shadow .12s; }
+#station .p3d-hit:hover { box-shadow: 0 0 0 2px rgba(25, 211, 255, .6), 0 0 14px rgba(25, 211, 255, .35); }
+#station .p3d-hit:focus-visible { outline: 2px solid var(--neon, #19d3ff); outline-offset: 2px; }
+#station .p3d-hit.dead { cursor: not-allowed; }
+#station .p3d-hit.p3d-tbar { cursor: ns-resize; border-radius: 10px; }
+.p3d-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; }
+/* étiquettes des zones du pupitre (vue d'ensemble) */
+.p3d-tag { position: absolute; transform: translate(-50%, -100%); pointer-events: auto; display: flex; align-items: center; gap: 6px; padding: 4px 10px 4px 8px; font: 600 13px/1.2 "Barlow Condensed", "Arial Narrow", sans-serif; letter-spacing: .02em; color: #e6f6ff; background: rgba(8, 14, 20, .82); border: 1px solid #2a4458; border-radius: 14px; cursor: pointer; white-space: nowrap; box-shadow: 0 4px 14px rgba(0, 0, 0, .5); }
+.p3d-tag i { width: 8px; height: 8px; border-radius: 50%; background: var(--neon, #19d3ff); box-shadow: 0 0 8px var(--neon, #19d3ff); }
+.p3d-tag:hover, .p3d-tag:focus-visible { border-color: var(--neon, #19d3ff); background: rgba(12, 30, 42, .92); outline: none; }
+/* vues prédéfinies */
+.p3d-views { position: absolute; top: 10px; left: var(--gut-l, 12px); display: flex; gap: 4px; flex-wrap: wrap; pointer-events: auto; max-width: calc(100% - 380px); }
+.p3d-views .btn { background: rgba(11, 17, 24, .85); }
+.p3d-views .btn.on { border-color: var(--neon, #19d3ff); color: #fff; box-shadow: inset 0 -2px 0 var(--neon, #19d3ff); }
+/* colonne de droite : fiche de la zone, réglages, fil « Ce qui se passe » */
+.p3d-side { position: absolute; top: 10px; right: var(--gut-r, 12px); bottom: 12px; width: 330px; display: flex; flex-direction: column; gap: 10px; pointer-events: auto; }
+.p3d-fiche { background: rgba(11, 17, 24, .9); border: 1px solid #22303f; border-left: 3px solid var(--neon, #19d3ff); padding: 10px 14px 12px; max-height: 55%; overflow: auto; flex: none; box-shadow: 0 10px 30px rgba(0, 0, 0, .45); }
+.p3d-fiche h3 { margin: 0 0 6px; font-size: 16px; }
+.p3d-txt p { margin: 0 0 8px; font-size: 13.5px; line-height: 1.45; color: #c9d6e2; }
+.p3d-txt b { color: #fff; }
+.p3d-form { display: flex; flex-direction: column; gap: 8px; margin: 4px 0 10px; padding: 8px 10px; background: rgba(0, 0, 0, .3); border: 1px solid #1c2a38; }
+.p3d-form label { display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: 13px; color: #c9d6e2; }
+.p3d-form input[type=number] { width: 80px; }
+.p3d-form input[type=range] { flex: 1; max-width: 150px; }
+.p3d-form .btn.on { border-color: var(--neon, #19d3ff); }
+.p3d-side > .explain { flex: 1 1 auto; min-height: 120px; background: rgba(8, 12, 16, .88); }
+.p3d-side > .explain .ex-list { max-height: none; }
+.p3d-legend { margin: 0; padding: 6px 10px; font-size: 12px; background: rgba(8, 12, 16, .8); border: 1px solid #1c2a38; flex: none; }
+/* bulle d'explication au survol d'une commande */
+.p3d-tip { position: fixed; z-index: 2; max-width: 300px; display: flex; flex-direction: column; gap: 3px; padding: 8px 11px; font-size: 13px; line-height: 1.4; color: #d7e3ee; background: rgba(6, 10, 15, .95); border: 1px solid #2a3b4e; border-left: 3px solid var(--neon, #19d3ff); box-shadow: 0 10px 28px rgba(0, 0, 0, .6); pointer-events: none; }
+.p3d-tip b { color: #fff; font-size: 14px; letter-spacing: .02em; }
+@media (max-width: 760px) {
+  .p3d-side { top: auto; left: 8px; right: 8px; width: auto; height: 36vh; }
+  .p3d-fiche { max-height: 50%; }
+  .p3d-views { max-width: none; right: 8px; }
+}

@@ -36,6 +36,7 @@ import { CFG, offerDownload } from '../shared.js';
 import { checklistItems, cablingCSV, generatedRows } from './config.js';
 import { buildVideohub } from './st_videohub.js';
 import { buildPrismStation } from './prism_station.js';
+import { poste3dDispo, poste3dVoulu, setPoste3dVoulu, mountPoste3D } from '../poste3d/index.js';
 
 export const ST = { cur: null, lastUpd: 0 };
 
@@ -77,11 +78,14 @@ export function openStation(id, arg) {
   const devBtn = el('button', { class: 'btn small', title: 'Faces avant et arrière, connecteurs et raccordements', onclick: () => (def.dev ? openDevice(def.dev, S.selCam || 1) : openEquipmentIndex()) }, 'Matériel');
   const fmBtn = el('button', { class: 'btn small', title: 'Un écran déplaçable, au choix, par-dessus le poste', onclick: () => toggleFloatMon(document.getElementById('floatmon') ? null : 'PGM') }, 'Moniteur flottant');
   const role = info.role ? info.role.split('. ')[0] + '.' : '';
+  // poste en 3D (poste3d/) : on s'assoit devant le vrai pupitre ; la vue 2D reste au choix (mémorisé)
+  const has3d = poste3dDispo(id), in3d = has3d && poste3dVoulu();
+  const vueBtn = has3d ? el('button', { class: 'btn small st-vue', title: in3d ? 'Revenir à l\'interface 2D du poste (tous les réglages à plat, en plein écran)' : 'S\'asseoir devant le vrai pupitre, en 3D, avec les explications par-dessus', onclick: () => { setPoste3dVoulu(!in3d); openStation(id, arg); } }, in3d ? 'Vue 2D' : 'Vue 3D') : null;
   const head = el('div', { class: 'st-head' },
     // plaque du poste : son nom, puis le métier en plus petit (« Mélangeur — truquiste »)
     el('h2', { class: 'tape' }, ...(S.ipMode && def.ipTitle ? def.ipTitle : def.title).split(' — ').map((t, i) => (i ? el('small', {}, t) : t))),
     el('div', { class: 'role', title: info.role || '' }, role),
-    el('div', { class: 'st-tools' }, devBtn, fmBtn,
+    el('div', { class: 'st-tools' }, vueBtn, devBtn, fmBtn,
       el('button', { class: 'btn small st-missions', title: 'Le journal des missions : les exercices de ce poste, toutes les missions, tes badges (L, sauf si le poste se sert de la touche)', onclick: () => emit('journal') }, 'Missions'),
       el('button', { class: 'btn small chef-btn', title: 'Le chef de car vous explique ce poste et vous guide pas à pas (J)', onclick: () => emit('chef') }, 'Chef de car'),
       el('button', { class: 'btn small', title: 'Rôle, matériel, déroulé et pièges du poste', onclick: () => openInfo(id) }, 'Fiche du poste'),
@@ -89,12 +93,14 @@ export function openStation(id, arg) {
     el('button', { class: 'btn small st-quit', onclick: () => closeStation() }, el('kbd', {}, 'Échap'), 'Quitter le poste'));
   const dock = el('div', { class: 'st-dock' });
   const body = el('div', { class: 'st-body' });
-  const main = el('div', { class: 'st-main ' + def.layout }, dock, body);
+  const main = el('div', { class: 'st-main ' + (in3d ? 'p3d' : def.layout) }, dock, body);
+  root.classList.toggle('p3d-on', in3d);
   root.append(head, main);
   const ctx = { dock, explainBox: explainBox(), explain };
-  const inst = def.build(body, arg, ctx) || {};
+  const inst = (in3d ? mountPoste3D(id, body, ctx) : def.build(body, arg, ctx)) || {};
   // les postes qui n'ont pas placé le fil d'explications le reçoivent en fin de dock
-  if (def.layout !== 'none' && !ctx.explainBox.isConnected) dock.appendChild(ctx.explainBox);
+  if (in3d) dock.remove();
+  else if (def.layout !== 'none' && !ctx.explainBox.isConnected) dock.appendChild(ctx.explainBox);
   if (def.layout === 'none') { dock.remove(); if (!ctx.explainBox.isConnected) body.prepend(ctx.explainBox); }
   ST.cur = { id, inst, arg };
   S.visited[id] = true;
@@ -109,7 +115,7 @@ export function closeStation(silent) {
   const c = ST.cur; ST.cur = null;
   if (c.inst.close) c.inst.close();
   const fm = document.getElementById('floatmon'); if (fm) fm.remove();
-  $('#station').hidden = true; $('#station').innerHTML = '';
+  $('#station').hidden = true; $('#station').innerHTML = ''; $('#station').classList.remove('p3d-on');
   S.mode = 'fps'; S.station = null; S.selCam = null; SCOPE.active = false;
   $('#hud').hidden = false;
   if (!silent) emit('stationClose', c.id);

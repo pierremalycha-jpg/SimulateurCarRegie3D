@@ -394,6 +394,40 @@ Tests :
   « Emmène-moi / Montre-moi » doit mettre en évidence un élément réel de la page, et « Fais-le pour moi » doit faire
   valider l'étape.
 
+## v19.9 : le poste du truquiste en 3D, devant le vrai pupitre (prototype)
+
+**Pourquoi.** Retour du 25 octobre 2026 : aux postes, l'interface 2D en plein écran fait perdre le matériel de vue.
+On voulait s'asseoir devant le pupitre en 3D, avec les explications par-dessus. Le poste Mélangeur sert de prototype
+au modèle qui servira aux autres postes.
+
+**Le pupitre en 3D** (`src/poste3d/icp.js`). Le panneau de commande type ICP-X7000 est construit touche par touche
+sur le bureau de la régie de production (il remplace l'image plate) : trois rangées de croisement de 22 touches avec
+leur OLED (le nom de la source suit la grille), clé 1 (coin, taille), DSK 1 et 2, FTB, mémoires (STORE, SNAP 1 à 8),
+module de transition (NEXT TRANS, motifs, types, durée sur un afficheur, CUT, AUTO TRANS) et une barre T dont la
+poignée bouge, écran du menu qui résume la M/E. Les touches s'allument comme sur le vrai pupitre (rouge à l'antenne,
+vert en preset, jaune pour la clé), en marchant dans le car comme au poste. Châssis et habillage en matières
+(`matiere()`, `Builder` en mode `ao`), touches en deux maillages instanciés (corps, dessus lumineux avec sa légende).
+La disposition est celle d'un pupitre de cette classe, simplifiée : à faire relire.
+
+**Le poste en vue 3D** (`src/poste3d/index.js`, `src/poste3d/melangeur.js`, `src/styles/poste3d.css`). On prend le
+poste comme avant (E, pupitre, chef de car) ; la vue est celle de l'opérateur, et une couche d'interface légère se
+pose par-dessus :
+- une **zone cliquable** transparente sur chaque commande, recalée à chaque image sur la touche 3D : clic, Tab et
+  lecteur d'écran, et les parcours d'Olivier visent les mêmes sélecteurs qu'en 2D (son repère encadre la touche 3D) ;
+- une **bulle** au survol : le nom de la commande, son rôle, la source qu'elle porte, son raccourci clavier ;
+- des **étiquettes** sur les zones du pupitre et des **vues** (le poste, croisements, transition, clé et DSK, menu
+  et mémoires, écrans) ; glisser pour regarder autour, molette pour zoomer, double-clic pour revenir ;
+- à droite, la **fiche** de la zone (et les réglages de l'écran du menu en 2D : durée, taille de la clé, mode du
+  clavier), puis le fil **« Ce qui se passe »**. La scène se recentre dans la partie libre de l'écran.
+- La **barre T** se tire à la souris ou au doigt (ou aux flèches) ; la poignée et l'afficheur suivent.
+
+Les gestes sont ceux de la vue 2D (`MIXACT` dans `src/ui/st_mixer.js`, mis en commun). Le bouton **Vue 2D / Vue 3D**
+de l'en-tête bascule, le choix est mémorisé ; la vue 2D reste le défaut en mode allégé et en qualité Basse.
+
+Tests : `node tools/e2e.mjs poste3d` (pupitre dans le car, zones cliquables nommées, survol, gestes, barre T, réglages
+du menu, repère du chef de car sur la touche 3D, parcours « Préparer, couper et enchaîner » jusqu'au bout, bascule
+2D / 3D, caméra rendue à la marche).
+
 ## v19.8 : trois façons de jouer au car régie, le suivi des tâches sur le côté, Olivier en boîte de dialogue
 
 **Pourquoi.** Retour du 24 octobre 2026 : les modes du car mélangeaient les phases (un car « installé » où le chef de
@@ -1536,6 +1570,7 @@ node tools/shots.mjs dossier 1280 800 '["vision","hf"]'   # captures de postes
 | `audio.js` | Console son (inspiration Vista 1) : sources synthétisées, patch, chaîne DSP par tranche, bus et N-x, VCA, écoutes, snapshots, retard de ligne, embedder, loudness, corrélation, pannes son ; ce que le joueur entend selon l'endroit (`ecoute`, `setEar`) et le volume du son |
 | `commentary.js` | Commentaires du match (commentateur, consultant, bord terrain, plateau) en fil écrit, sans voix : niveaux simulés suivant la console |
 | `audiodesk.js` | Console son en 3D dans la cabine (faders motorisés, FaderGlow, écrans Vistonics animés) |
+| `poste3d/` | Les postes en 3D : moteur de la vue du poste (`index.js` : vues, zones cliquables recalées sur la 3D, bulles, étiquettes, fiche, barre T), outils des pupitres (`kit.js` : touches instanciées à légende, surfaces dessinées), pupitre ICP-X7000 du truquiste (`icp.js`, matériel seul) et sa définition de poste (`melangeur.js`) |
 | `scenario.js` | Scénario « jour de match » chronométré et noté |
 | `shared.js` | Données partagées de la page publiée (configuration, progression) avec repli local ; progression numérotée (`PROG_VERSION`, `migrateProgress` ; v3 : la Carrière), fusionnée avec le serveur avant chaque écriture, état de l'enregistrement (`SAVE`), export, import et effacement |
 | `review.js` | Points techniques à faire relire par le formateur |

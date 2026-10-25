@@ -7,6 +7,7 @@ import { makeCanvas, tc } from './util.js';
 import { S } from './state.js';
 import { EQUIP } from './equip.js';
 import { buildAudioDesk } from './audiodesk.js';
+import { buildMelangeur3D } from './poste3d/icp.js';
 
 // ----------------------------------------------------------------------------------
 // Intérieur du car régie (scène séparée : on ne voit pas l'extérieur).
@@ -91,36 +92,6 @@ function deskPanel(name, w, d, lx, lz, draw, y = 0.79, tilt = 0.18, rotY = 0) {
 const rr = (g, x, y, w, h, r, fill, stroke) => { g.beginPath(); g.roundRect ? g.roundRect(x, y, w, h, r) : g.rect(x, y, w, h); if (fill) { g.fillStyle = fill; g.fill(); } if (stroke) { g.strokeStyle = stroke; g.lineWidth = 2; g.stroke(); } };
 const txt = (g, s, x, y, size = 14, color = '#c9d1d9', align = 'center', weight = 600) => { g.font = `${weight} ${size}px "Barlow Condensed", "Arial Narrow", sans-serif`; g.fillStyle = color; g.textAlign = align; g.textBaseline = 'middle'; g.fillText(s, x, y); };
 
-function drawICP(g, W, H) {
-  // pupitre ICP-X7000 : rangées de croisements (OLED + touches RVB), zone de transition, menu
-  g.fillStyle = '#23272c'; g.fillRect(0, 0, W, H);
-  rr(g, 8, 8, 170, H - 16, 8, '#15191d');
-  rr(g, 18, 18, 150, 110, 6, '#0d2a4a'); txt(g, 'MENU', 93, 40, 18, '#9ed0ff'); for (let i = 0; i < 4; i++) rr(g, 28 + i * 36, 70, 30, 44, 4, '#174a7a');
-  for (let i = 0; i < 6; i++) rr(g, 22 + (i % 3) * 48, 145 + Math.floor(i / 3) * 40, 40, 30, 4, '#3b4148');
-  txt(g, 'ICP-X7000', 93, H - 30, 18, '#8b949e');
-  const rows = [['KEY1', '#e0b030'], ['AUX', '#3aa0e0'], ['PGM A', '#e04040'], ['PST B', '#30c060']];
-  const x0 = 200, bw = 26, gap = 4;
-  rows.forEach(([lab, col], r) => {
-    const y = 18 + r * 64;
-    txt(g, lab, x0 - 6, y + 34, 13, '#8b949e', 'right');
-    for (let i = 0; i < 20; i++) {
-      const x = x0 + i * (bw + gap);
-      rr(g, x, y, bw, 14, 2, '#0a0c0e'); txt(g, i < 12 ? 'CAM' + (i + 1) : ['EVS A', 'EVS B', 'GFX', 'STU', 'BARS', 'BLK', 'CLN', 'MV'][i - 12], x + bw / 2, y + 7, 9, '#cfe8ff', 'center', 500);
-      const on = (r === 2 && i === 0) || (r === 3 && i === 1) || (r === 1 && i === 5);
-      rr(g, x, y + 18, bw, 26, 4, on ? col : '#3a4047');
-      if (!on) { g.fillStyle = col; g.globalAlpha = 0.35; g.fillRect(x + 3, y + 21, bw - 6, 3); g.globalAlpha = 1; }
-    }
-  });
-  // zone de transition
-  const tx = x0 + 20 * (bw + gap) + 16;
-  rr(g, tx, 14, W - tx - 12, H - 28, 8, '#191d21');
-  for (let i = 0; i < 6; i++) rr(g, tx + 12 + (i % 3) * 46, 26 + Math.floor(i / 3) * 40, 40, 30, 4, ['#e0b030', '#3a4047', '#3a4047', '#e04040', '#3a4047', '#3a4047'][i]);
-  txt(g, 'MIX WIPE DME CLIP', tx + 80, 112, 12, '#8b949e');
-  rr(g, tx + 14, 128, 70, 34, 5, '#5a6068'); txt(g, 'CUT', tx + 49, 145, 16, '#f0f0f0');
-  rr(g, tx + 92, 128, 70, 34, 5, '#c03030'); txt(g, 'AUTO', tx + 127, 145, 16, '#fff');
-  rr(g, tx + 175, 22, 26, H - 50, 8, '#0b0d0f'); rr(g, tx + 165, 70, 46, 22, 4, '#c8ccd0');
-  rr(g, tx + 14, 180, 148, 40, 5, '#3a4047'); txt(g, 'DSK1  DSK2  FTB', tx + 88, 200, 14, '#e0b030');
-}
 function drawRCPRow(g, W, H) {
   // rangée de RCP-3500 (un par caméra) avec un MSU au milieu
   g.fillStyle = '#1b1e22'; g.fillRect(0, 0, W, H);
@@ -609,7 +580,8 @@ export function buildTruck() {
   // documents de travail : conducteurs et feuilles de poste sur les bureaux
   for (const [lx, lz, y, rot] of [[-4.75, -1.42, 0.77, 0.15], [-2.4, -1.9, 0.77, -0.2], [-1.3, 0.2, 0.77 + EST.h, 0.3], [3.5, -1.9, 0.77, 0.1], [-7.6, -1.7, 0.8, 0.5], [8.45, 0.45, 0.77, 0.2]]) document(lx, lz, y + 0.021, rot);
   // pupitres (textures détaillées)
-  deskPanel('mixer', 1.6, 0.55, -1.25, -1.6, drawICP);
+  // pupitre du truquiste en 3D, touche par touche (poste3d/icp.js) : le poste Mélangeur s'y installe (poste3d/melangeur.js)
+  buildMelangeur3D(T.scene, new THREE.Vector3(X(-1.25), F + 0.79, Z(-1.6)));
   deskPanel('director', 0.9, 0.3, -2.9, -1.55, drawIntercom);
   deskPanel('scripte', 0.9, 0.3, -4.3, -1.55, drawScripte);
   deskPanel('rcp', 3.0, 0.42, 2.07, -1.6, drawRCPRow);
@@ -725,7 +697,7 @@ function props({ Bp, Bm, Bt, B }) {
   deskStuff(Bp, Bm, Bt, -4.75, 0.77, -1.4, ['pad', 'cup']);
   deskStuff(Bp, Bm, Bt, -3.35, 0.77, -1.35, ['headset']);
   deskStuff(Bp, Bm, Bt, -2.35, 0.77, -1.9, ['cup']);
-  deskStuff(Bp, Bm, Bt, -0.75, 0.77, -1.4, ['beltpack', 'phone']);
+  deskStuff(Bp, Bm, Bt, -2.27, 0.77, -1.42, ['beltpack', 'phone']); // à gauche du pupitre du truquiste
   deskStuff(Bp, Bm, Bt, -4.85, 0.77 + EST.h, 0.15, ['cup', 'pad']);
   deskStuff(Bp, Bm, Bt, -2.3, 0.77 + EST.h, 0.15, ['headset']);
   deskStuff(Bp, Bm, Bt, -1.3, 0.77 + EST.h, 0.2, ['beltpack']);

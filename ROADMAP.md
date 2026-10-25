@@ -24,6 +24,8 @@ Calendrier indicatif, calé sur l'année scolaire (les épreuves ont lieu en mai
 
 | Version | Période | Contenu |
 |---|---|---|
+| v19.9 | oct. 2026 (prototype) | Le poste du truquiste en 3D : le pupitre ICP-X7000 construit touche par touche sur le bureau (tallys, OLED, barre T), la vue de l'opérateur avec une zone cliquable par touche, une bulle d'explication, des étiquettes, des vues par zone, la fiche et le fil « Ce qui se passe » à droite ; vue 2D au choix (défaut en mode allégé et qualité Basse) |
+| Postes en 3D, lots 2 à 5 | nov. 2026 – janv. 2027 (proposé) | Lot 2 : son (la console 3D existe) et vision (RCP, moniteur grade 1, oscilloscope). Lot 3 : EVS / LSM (levier, molette) et intercom. Lot 4 : les baies (CCU, grille, synchro, brassage avec cordons tirés en 3D, mesure, HF, transmission), face avant puis face arrière. Lot 5 : les postes « à écran » (réalisateur, scripte, habillage, production, chef de car, IPDirector, réseau) : la vue assise, l'interface 2D dans l'écran de l'ordinateur |
 | v19.8 | oct. 2026 (fait) | Trois façons de jouer au car régie : car vide (Olivier propose d'abord la visite), car pré-installé (jeu libre, sans chef ni missions), mission spécifique (une tâche choisie par famille, le car préparé pour elle, enchaîner ou arrêter) ; le suivi des tâches sur le côté ; Olivier en boîte de dialogue en bas de l'écran ; la tâche « réseau de contrôle » du car vide vérifie enfin l'adresse du plan |
 | v19.7 | oct. 2026 (fait) | Jouer par Internet : depuis le salon, l'hôte obtient un lien en un clic (analyse du réseau, ouverture de la box par UPnP, adresse publique vérifiée, sinon tunnel Cloudflare gratuit et sans compte) ; l'invité ouvre le lien dans son navigateur ou le colle dans son salon, et chacun voit l'avatar de l'autre ; ce qui vient d'Internet doit porter la clé du lien. À essayer avec une vraie box et un vrai invité |
 | v19.6 | oct. 2026 (fait) | La Carrière, mode scénarisé de l'entrepôt (lot 1) : le bureau et son ordinateur dans le hall, une messagerie où des mails proposent un poste sur une prestation, l'ordre de mission, deux épisodes (stagiaire : visite du car réduite à six postes ; assistant technique : la conférence montée à l'entrepôt), retour au bureau depuis le car, badge « Embauché », progression v3 |
@@ -90,6 +92,10 @@ et 30 images par seconde sur le PC le plus faible de l'établissement.
   (ce qu'on prépare part sur le lieu) viendra avec la préparation logistique, en v21.
 
 **Décisions ouvertes.**
+
+- R8 (25 octobre 2026) : les postes en 3D. Vue 3D par défaut (2D en mode allégé et en qualité Basse), ou 2D par
+  défaut et 3D au choix ? Mesurer d'abord sur le PC le plus faible : au poste en 3D, le car est rendu comme en
+  marchant. Faire relire la disposition des pupitres (photos du vrai matériel de l'établissement, R4).
 
 - R1 : la place d'un lieu « Nodal et régie finale » (technicien de trafic, technicien de régie finale,
   responsable nodal), proposé par le rattachement, avant ou à la place de la salle de concert.
