@@ -394,6 +394,52 @@ Tests :
   « Emmène-moi / Montre-moi » doit mettre en évidence un élément réel de la page, et « Fais-le pour moi » doit faire
   valider l'étape.
 
+## v19.17 : le réseau, des bases à l'antenne (neuf leçons de plus)
+
+**Pourquoi.** Le chapitre Le réseau partait de l'adresse IP et filait vers le car IP (ST 2110, PTP, NMOS). Il
+manquait les bases qu'un technicien doit maîtriser avant : les couches, l'adresse du réseau et de diffusion, le
+découpage en sous-réseaux, TCP et UDP, le streaming, LAN / MAN / WAN, la QoS (demande du 26 octobre 2026). Le
+chapitre passe de 12 à 21 leçons, dans l'ordre où on les apprend.
+
+**Les neuf leçons** (chacune : l'essentiel, un schéma, une manipulation qui calcule, l'explication, « dans le car »,
+fiches « ? », banque de 6 ou 7 questions dont chaque choix faux est expliqué) :
+- **Les couches du réseau : modèle OSI et modèle TCP/IP** (`reseau-modeles`) : les sept et les quatre couches, les
+  appareils de chaque couche, l'encapsulation ; on règle la taille des données, UDP ou TCP, RTP, l'étiquette VLAN, et on
+  voit chaque en-tête, la trame, la MTU et la part du câble qui reste aux données ;
+- **LAN, MAN, WAN : de la régie à l'antenne** (`reseau-lan-wan`) : du pupitre à la baie, du stade au nodal, vers Paris,
+  par Internet, par satellite, par sac 4G/5G : propagation (5 µs/km de fibre, 239 ms au moins par satellite
+  géostationnaire), sérialisation, équipements, aller-retour, en échelle logarithmique ;
+- **Câbles et débits : cuivre, fibre, modules SFP** (`reseau-cables`) : débit voulu et distance → les liens IEEE 802.3
+  qui tiennent (1000BASE-T à 100GBASE-LR4), le plus simple d'abord ;
+- **Adresse du réseau, adresse de diffusion et sous-réseaux** (`reseau-adressage`) : quatre outils. Calculer (les
+  32 bits de l'adresse, du masque, du réseau, de la diffusion ; nature : privée, publique, CGNAT, 169.254…),
+  découper un réseau en n sous-réseaux, faire le plan d'adressage du car à la demande (VLSM), et s'entraîner sur des
+  adresses tirées au hasard (réseau, diffusion, nombre de machines, corrigé) ;
+- **Unicast, diffusion, multicast** (`reseau-diffusion`) : un commutateur de 24 ports, un flux (programme, audio,
+  vidéo HD non compressée) et n destinataires : charge du lien de la source, qui reçoit sans l'avoir demandé ;
+- **Les services du réseau : DHCP, DNS et NAT** (`reseau-services`) : la table NAT de la box quand des machines sortent,
+  une connexion entrante refusée, permise par une redirection de port, impossible derrière une adresse partagée
+  (CGNAT) : exactement ce que fait « Inviter par Internet » du salon ;
+- **TCP et UDP : la fiabilité ou la ponctualité** (`reseau-tcp-udp`) : ports, poignée de main, accusés et renvois ; le
+  débit que TCP peut tenir selon l'aller-retour et les pertes (formule de Mathis, courbe), et ce que devient le même
+  flux en UDP ;
+- **Le streaming : RTP, SRT, RTMP, HLS** (`reseau-streaming`) : contribution et diffusion ; latence et comportement face
+  aux pertes de chaque protocole, latence SRT à régler (repères du guide de déploiement SRT), segments HLS ;
+- **La qualité de service (QoS)** (`reseau-qos`) : débit, latence, gigue, pertes ; DSCP (EF 46, AF41 34), CoS, files
+  d'attente ; une rafale de fichiers sur un port, avec une seule file ou en priorité stricte : l'attente de PTP, de
+  l'audio, des fichiers, et l'erreur d'horloge qu'une attente d'un seul côté donne à PTP.
+
+**Les calculs** sont dans `src/cours/reseau_calc.js` (purs, testés par `tests/unit/reseau-cours.test.mjs`) : aucune
+valeur des manipulations ni des quiz n'est écrite à la main. Les leçons sont dans `src/cours/reseau_bases.js`,
+`reseau_adresses.js` et `reseau_transport.js`. Seize fiches « ? » nouvelles (`src/content/terms_transport.js` :
+modèle OSI, encapsulation, LAN / MAN / WAN, module SFP, préfixe et découpage, adresses privées, diffusion, DNS, NAT,
+port, TCP, DSCP, SRT, RTMP, HLS) et un thème « Réseau : les bases » dans le glossaire, relié aux leçons. Chaque leçon
+est rattachée aux compétences du référentiel (3.6 administrer le réseau, 2.10, 2.11, 2.3, 1.2, 3.12…).
+
+Tests : `tests/unit/reseau-cours.test.mjs` (adresses, découpage, VLSM, encapsulation, latences, liens, TCP, SRT, QoS),
+`tests/unit/cours.test.mjs` (forme des leçons, quiz, liens, référentiel), suite `node tools/e2e.mjs reseau-bases`
+(chaque manipulation répond et calcule juste, captures).
+
 ## v19.16 : le Cours en 3D (SDI, réseau, ST 2110, synchro, fibre, HF) et dix leçons de plus
 
 **Pourquoi.** Comme la caméra de la v18.5, les notions techniques les plus abstraites se comprennent mieux quand on
@@ -1860,6 +1906,8 @@ node tools/shots.mjs dossier 1280 800 '["vision","hf"]'   # captures de postes
 | `cours/liens.js` | Les liens du Cours avec le reste : terme du glossaire → leçon ou fiche « ? », poste → leçon (bouton « Cours », touche G) |
 | `cours/sdi_falaise.js`, `cours/lab_sdi.js`, `cours/figs_sdi.js` | Leçon « La falaise numérique » : diagramme de l'œil et image qui casse avec la longueur du câble, défis d'Olivier |
 | `cours/sdi_mots.js`, `cours/sdi_bits.js` | Les mots d'une ligne SDI (EAV/SAV, XYZ, LN, CRC-18, paquets audio ST 299-1, vidéo active), embrouillage et NRZI (calcul pur) ; la leçon « Du mot au bit » |
+| `cours/reseau_calc.js` | Les calculs des bases du réseau (adresses, découpage, VLSM, encapsulation, latences, liens Ethernet, TCP, SRT, QoS) |
+| `cours/reseau_bases.js`, `cours/reseau_adresses.js`, `cours/reseau_transport.js` | Les neuf leçons des bases du réseau (couches, LAN et WAN, câbles ; adressage, modes d'envoi, DHCP / DNS / NAT ; TCP et UDP, streaming, QoS) |
 | `cours/reseau_routage.js` | La décision de routage (même réseau, passerelle, pannes) et la leçon « La passerelle » |
 | `cours/st2110_calc.js`, `cours/reseau_st2110.js` | Les calculs ST 2110 (paquets, débits, modèle -21, tampon du récepteur, 2022-7, spine-leaf) et les six leçons du car IP |
 | `cours/camera_fibre.js`, `content/terms_fibre.js` | Le bilan optique et la leçon « La fibre de la caméra » ; les fiches « ? » des liaisons optiques |

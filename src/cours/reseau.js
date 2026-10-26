@@ -2,12 +2,16 @@
 import { el } from '../util.js';
 import { ROUTAGE } from './reseau_routage.js';
 import { ST2110_LESSONS } from './reseau_st2110.js';
+import { MODELES, ECHELLES_LECON, CABLES } from './reseau_bases.js';
+import { ADRESSAGE, DIFFUSION, SERVICES } from './reseau_adresses.js';
+import { TCP_UDP, STREAMING, QOS } from './reseau_transport.js';
 import { registerChapter } from './index.js';
 import { figure, sv, canvas, slider, choice, readout, fmtNum } from './kit.js';
 
 // ----------------------------------------------------------------------------------
-// Chapitre « Le réseau » : adresse IP et masque, VLAN et commutateur, table MAC, multicast et
-// IGMP, PTP. Le plan d'adressage reprend celui du réseau de contrôle du car (net/ctrlnet.js) :
+// Chapitre « Le réseau » : les bases (reseau_bases.js : couches, LAN et WAN, câbles ; reseau_adresses.js :
+// adressage, modes d'envoi, DHCP, DNS, NAT ; reseau_transport.js : TCP et UDP, streaming, QoS), puis ici
+// adresse IP et masque, VLAN et commutateur, table MAC, multicast et IGMP, PTP. Le plan d'adressage reprend celui du réseau de contrôle du car (net/ctrlnet.js) :
 // 10.1.<VLAN>.x/24, passerelle en .1, CCU en .11 à .22, RCP en .31 à .42. Toutes les
 // manipulations calculent vraiment (masques en bits, inondation, charge des liens, offset PTP)
 // et se passent de la scène 3D.
@@ -432,8 +436,9 @@ function demoPtp(host) {
 // ======================================================================================
 registerChapter({
   id: 'reseau', title: 'Le réseau', icon: 'reseau',
-  intro: 'Adresses, masques, VLAN, commutateurs, passerelle, multicast, PTP, puis le car IP : les flux ST 2110, leurs paquets et leur rythme, les réseaux rouge et bleu, le spine-leaf et NMOS.',
+  intro: 'Les bases (couches OSI et TCP/IP, LAN et WAN, câbles et fibres), l\'adressage (adresse du réseau, diffusion, sous-réseaux), unicast, diffusion et multicast, VLAN, commutateur, passerelle, DHCP, DNS et NAT, TCP et UDP, le streaming (SRT, HLS), la QoS et PTP, puis le car IP : les flux ST 2110, leurs paquets et leur rythme, les réseaux rouge et bleu, le spine-leaf et NMOS.',
   lessons: [
+    MODELES, ECHELLES_LECON, CABLES,
     {
       id: 'reseau-ip', title: 'Adresse IP et masque de sous-réseau', minutes: '7 min',
       essentials: [
@@ -467,6 +472,7 @@ Deux machines avec la **même adresse** se perturbent toutes les deux : la table
         { q: 'Le réseau de contrôle du car IP est 10.20.0.0/22. Quelle est la plus haute adresse que l\'on peut donner à un appareil ?', choices: [['10.20.0.254', 'C\'est le calcul d\'un /24. En /22, il reste 10 bits d\'appareil : le réseau s\'étend sur quatre valeurs du troisième nombre, de 10.20.0 à 10.20.3.'], ['10.20.3.255', 'Bonne fin de réseau, mais tous les bits d\'appareil y sont à 1 : c\'est l\'adresse de diffusion, qui ne se donne à aucun appareil.'], '10.20.3.254'], answer: 2, why: '/22 laisse 32 − 22 = 10 bits d\'appareil : les 2 derniers bits du troisième nombre et les 8 du quatrième, soit 1 024 adresses, de 10.20.0.0 à 10.20.3.255. La dernière est l\'adresse de diffusion : la plus haute adresse d\'appareil est 10.20.3.254, et il y en a 1 022 en tout.' },
       ],
     },
+    ADRESSAGE, DIFFUSION,
     {
       id: 'reseau-vlan', title: 'VLAN et commutateur', minutes: '7 min',
       essentials: [
@@ -532,6 +538,7 @@ Ce que l'on en voit en exploitation :
       ],
     },
     ROUTAGE,
+    SERVICES, TCP_UDP, STREAMING, QOS,
     {
       id: 'reseau-multicast', title: 'Multicast et IGMP (car IP, ST 2110)', minutes: '8 min',
       essentials: [
