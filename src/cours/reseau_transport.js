@@ -22,18 +22,19 @@ function figTcp() {
     f.append(sv('line', { x1: xa, y1: y, x2: xe, y2: ye, stroke: col, strokeWidth: 1.6 }));
     if (perdu) f.append(sv('text', { x: xe, y: ye + 4, textAnchor: 'middle', class: 'co-t', fill: '#ff8a80' }, '✕'));
     else f.append(sv('circle', { cx: xe, cy: ye, r: 2.4, fill: col }));
-    f.append(sv('text', { x: (xa + xe) / 2, y: (y + ye) / 2 - 2, textAnchor: 'middle', class: 'co-s', fill: col }, t));
+    // l'étiquette au-dessus du trait, détourée pour rester lisible sur les autres flèches
+    f.append(sv('text', { x: (xa + xe) / 2, y: Math.min(y, ye) - 3, textAnchor: 'middle', class: 'co-s', fill: col, stroke: '#0b0f13', 'stroke-width': 3, 'paint-order': 'stroke' }, t));
   };
-  lane(22, 190, 'émetteur', 'récepteur');
+  lane(26, 190, 'émetteur', 'récepteur');
   const B = '#7fd3f3', A = '#ffd38a';
   fl(22, 190, 28, 'SYN', B); fl(190, 22, 46, 'SYN-ACK', A); fl(22, 190, 64, 'ACK', B);
   fl(22, 190, 88, 'segment 1', B); fl(22, 190, 104, 'segment 2', B, true); fl(22, 190, 120, 'segment 3', B);
   fl(190, 22, 136, 'accusé : j\'attends 2', A); fl(190, 22, 152, 'encore : j\'attends 2', A);
   fl(22, 190, 172, 'segment 2 renvoyé', '#ff9a8a'); fl(190, 22, 192, 'accusé : j\'attends 4', A);
   f.append(sv('text', { x: 106, y: 222, textAnchor: 'middle', class: 'co-s' }, 'tout arrive, dans l\'ordre, en retard'));
-  lane(250, 418, 'émetteur', 'récepteur');
-  for (let k = 1; k <= 7; k++) fl(250, 418, 16 + k * 24, `datagramme ${k}`, '#7fd1a0', k === 3, 12);
-  f.append(sv('text', { x: 334, y: 222, textAnchor: 'middle', class: 'co-s' }, 'le 3 manque pour toujours ; rien n\'attend'));
+  lane(250, 404, 'émetteur', 'récepteur');
+  for (let k = 1; k <= 7; k++) fl(250, 404, 16 + k * 24, `datagramme ${k}`, '#7fd1a0', k === 3, 12);
+  f.append(sv('text', { x: 327, y: 222, textAnchor: 'middle', class: 'co-s' }, 'le 3 manque pour toujours ; rien n\'attend'));
   return f;
 }
 function demoTcp(host) {

@@ -128,21 +128,21 @@ Le **ping** mesure l'aller-retour (RTT) ; la latence dans un sens en est à peu 
 // La qualité de service
 // ======================================================================================
 function figQos() {
-  const f = figure(440, 200, 'Un port de sortie engorgé : les paquets arrivent marqués (DSCP), le commutateur les range dans une file par classe ; l\'ordonnanceur sert d\'abord la file prioritaire (PTP), puis les médias, puis les commandes, puis le reste. Quand une file déborde, ses paquets sont jetés.');
+  const f = figure(440, 214, 'Un port de sortie engorgé : les paquets arrivent marqués (DSCP), le commutateur les range dans une file par classe ; l\'ordonnanceur sert d\'abord la file prioritaire (PTP), puis les médias, puis les commandes, puis le reste. Quand une file déborde, ses paquets sont jetés.');
   const Q = [['PTP · EF 46', '#ff9a8a', 2], ['Médias · AF41 34', '#7fd3f3', 5], ['Commandes · CS4 32', '#7fd1a0', 3], ['Au mieux · DF 0', '#9aa4ad', 8]];
   f.append(sv('text', { x: 10, y: 16, class: 'co-t' }, 'Arrivées marquées'), sv('text', { x: 180, y: 16, class: 'co-t' }, 'Files du port de sortie'), sv('text', { x: 360, y: 16, class: 'co-t' }, 'Lien'));
   for (const [i, [n, c, k]] of /** @type {[string, string, number][]} */ (Q).entries()) {
-    const y = 30 + i * 40;
+    const y = 28 + i * 44;
     for (let j = 0; j < 3; j++) f.append(sv('rect', { x: 14 + j * 18, y: y + 6, width: 13, height: 13, rx: 2, fill: c }));
     f.append(sv('line', { x1: 70, y1: y + 12, x2: 150, y2: y + 12, stroke: c, strokeWidth: 1.5 }));
     f.append(sv('rect', { x: 152, y, width: 150, height: 26, rx: 3, fill: '#141b20', stroke: c }));
     for (let j = 0; j < Math.min(k, 8); j++) f.append(sv('rect', { x: 296 - (j + 1) * 17, y: y + 5, width: 14, height: 16, rx: 2, fill: c, opacity: 0.85 }));
-    f.append(sv('text', { x: 158, y: y + 38, class: 'co-s' }, n));
+    f.append(sv('text', { x: 158, y: y + 37, class: 'co-s' }, n));
     if (k >= 8) f.append(sv('text', { x: 140, y: y + 20, textAnchor: 'end', class: 'co-t', fill: '#ff8a80' }, '✕'));
   }
-  f.append(sv('line', { x1: 302, y1: 43, x2: 340, y2: 100, stroke: '#ff9a8a', strokeWidth: 2.5 }), sv('line', { x1: 302, y1: 83, x2: 340, y2: 100, stroke: '#7fd3f3', strokeWidth: 1.5 }), sv('line', { x1: 302, y1: 123, x2: 340, y2: 100, stroke: '#7fd1a0', strokeWidth: 1 }), sv('line', { x1: 302, y1: 163, x2: 340, y2: 100, stroke: '#9aa4ad', strokeWidth: 0.6, 'stroke-dasharray': '3 3' }));
-  f.append(sv('circle', { cx: 346, cy: 100, r: 9, fill: '#1a2229', stroke: '#ffd38a' }), sv('line', { x1: 355, y1: 100, x2: 432, y2: 100, stroke: '#ffd38a', strokeWidth: 3 }), sv('text', { x: 392, y: 92, textAnchor: 'middle', class: 'co-s' }, '1 Gb/s'));
-  f.append(sv('text', { x: 392, y: 124, textAnchor: 'middle', class: 'co-s' }, 'priorité'), sv('text', { x: 392, y: 138, textAnchor: 'middle', class: 'co-s' }, 'stricte'), sv('text', { x: 140, y: 196, textAnchor: 'middle', class: 'co-s' }, 'la file « au mieux » déborde : ses paquets sont jetés'));
+  f.append(sv('line', { x1: 302, y1: 41, x2: 340, y2: 106, stroke: '#ff9a8a', strokeWidth: 2.5 }), sv('line', { x1: 302, y1: 85, x2: 340, y2: 106, stroke: '#7fd3f3', strokeWidth: 1.5 }), sv('line', { x1: 302, y1: 129, x2: 340, y2: 106, stroke: '#7fd1a0', strokeWidth: 1 }), sv('line', { x1: 302, y1: 173, x2: 340, y2: 106, stroke: '#9aa4ad', strokeWidth: 0.6, 'stroke-dasharray': '3 3' }));
+  f.append(sv('circle', { cx: 346, cy: 106, r: 9, fill: '#1a2229', stroke: '#ffd38a' }), sv('line', { x1: 355, y1: 106, x2: 432, y2: 106, stroke: '#ffd38a', strokeWidth: 3 }), sv('text', { x: 392, y: 98, textAnchor: 'middle', class: 'co-s' }, '1 Gb/s'));
+  f.append(sv('text', { x: 392, y: 130, textAnchor: 'middle', class: 'co-s' }, 'priorité'), sv('text', { x: 392, y: 144, textAnchor: 'middle', class: 'co-s' }, 'stricte'), sv('text', { x: 140, y: 210, textAnchor: 'middle', class: 'co-s' }, 'la file « au mieux » déborde : ses paquets sont jetés'));
   return f;
 }
 function demoQos(host) {

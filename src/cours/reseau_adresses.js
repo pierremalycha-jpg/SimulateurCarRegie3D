@@ -29,7 +29,7 @@ function rangee(label, n, p, valeur) {
 function figAdresses() {
   const f = figure(440, 176, 'L\'adresse 10.1.20.31 et le masque /24 en binaire : les 24 premiers bits (en jaune) forment la partie réseau, les 8 derniers (en bleu) la partie appareil. Un ET logique avec le masque donne l\'adresse réseau 10.1.20.0 ; tous les bits d\'appareil à 1 donnent l\'adresse de diffusion 10.1.20.255.');
   const rows = [['adresse', parseIp('10.1.20.31'), '10.1.20.31'], ['masque /24', parseIp('255.255.255.0'), '255.255.255.0'], ['réseau (ET)', parseIp('10.1.20.0'), '10.1.20.0'], ['diffusion', parseIp('10.1.20.255'), '10.1.20.255']];
-  const x0 = 70, cw = 9.2, gap = 5;
+  const x0 = 64, cw = 8.2, gap = 4;
   f.append(sv('text', { x: x0, y: 12, class: 'co-s' }, 'partie réseau (24 bits)'), sv('text', { x: x0 + 24 * cw + 3 * gap, y: 12, class: 'co-s' }, 'appareil (8)'));
   rows.forEach(([lab, n, txt], r) => {
     const y = 20 + r * 38, bits = bits32(/** @type {number} */ (n)).replace(/\./g, '');
