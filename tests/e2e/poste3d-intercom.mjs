@@ -43,7 +43,7 @@ await shot('02-touches', 1200);
 await page.click('.p3d-drawer-btn');
 T.check('« Tous les réglages » : le pupitre à plat suit le même état (TALK CAMÉRAS allumé), avec le trajet d\'un ordre', await until(page, () => { const d = document.querySelector('.p3d-drawer'); return d && !d.hidden && !!d.querySelector('.icp .icp-talk[aria-label="TALK CAMÉRAS"].on') && /trajet d'un ordre/.test(d.textContent); }, null, 8000));
 await page.click('.p3d-drawer .icp-talk[aria-label="TALK CAMÉRAS"]');
-T.check('fermé depuis le tiroir : la touche 3D s\'éteint aussi', await until(page, () => !document.querySelector('.p3d-hits .icp-talk[aria-label="TALK CAMÉRAS"]').classList.contains('on'), null, 5000));
+T.check('fermé depuis le tiroir : la touche 3D s\'éteint aussi', await until(page, () => !document.querySelector('.p3d-hits .icp-talk[aria-label="TALK CAMÉRAS"]').classList.contains('on'), null, 5000), JSON.stringify(await ev(() => ({ hit3d: document.querySelector('.p3d-hits .icp-talk[aria-label="TALK CAMÉRAS"]').className, tiroir: document.querySelector('.p3d-drawer .icp-talk[aria-label="TALK CAMÉRAS"]')?.className, ouvert: !document.querySelector('.p3d-drawer').hidden, fil: (document.querySelector('.p3d-side .explain')?.textContent || '').slice(-160), dessus: document.elementFromPoint(...(() => { const r = document.querySelector('.p3d-drawer .icp-talk[aria-label="TALK CAMÉRAS"]').getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2]; })())?.className }))));
 await shot('03-tiroir', 1200);
 await page.click('.p3d-drawer-btn');
 
