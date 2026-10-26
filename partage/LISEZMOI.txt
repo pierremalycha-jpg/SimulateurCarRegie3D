@@ -22,7 +22,9 @@ TIEE-Simulator.exe, sous Windows 10 ou 11 :
      affiche l'écran « Accès réservé ».
    - Entrez le mot de passe donné par votre formateur, puis « Entrer » : le simulateur
      s'ouvre. Le mot de passe est redemandé à chaque lancement et dans chaque navigateur.
-     Après cinq essais manqués, il faut attendre une minute.
+     Après cinq essais manqués, il faut attendre une minute. « Afficher le mot de passe »
+     permet de vérifier ce qui est tapé. Chaque copie garde le mot de passe en vigueur le jour
+     de sa fabrication (date en bas de l'écran) : s'il a changé, prenez une copie plus récente.
    - Rien à installer, pas besoin d'Internet. La progression est enregistrée dans le navigateur.
    - Un second double-clic rouvre simplement la page.
    - Si le pare-feu demande l'autorisation pour « TIEE Simulator », acceptez pour les réseaux

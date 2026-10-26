@@ -46,7 +46,11 @@ JOUER
      navigateur affiche l'écran « Accès réservé ».
    - Entrez le mot de passe donné par votre formateur, puis « Entrer » : le simulateur
      s'ouvre. Le mot de passe est redemandé à chaque lancement et dans chaque navigateur.
-     Après cinq essais manqués, il faut attendre une minute.
+     Après cinq essais manqués, il faut attendre une minute. « Afficher le mot de passe »
+     permet de vérifier ce qui est tapé (majuscules, accents).
+   - « Mot de passe incorrect » alors qu'il est juste ? Regardez la date en bas de l'écran
+     (« fabriquée le … ») : chaque copie garde le mot de passe en vigueur le jour de sa
+     fabrication. Si le mot de passe a changé depuis, téléchargez une copie plus récente.
    - Navigateur conseillé : Safari, Chrome, Edge ou Firefox, à jour.
    - Rien d'autre à installer, pas besoin d'Internet. La progression est enregistrée dans le
      navigateur.

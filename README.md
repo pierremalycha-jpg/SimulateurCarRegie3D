@@ -430,6 +430,16 @@ l'image disque et leurs empreintes SHA-256 dans la même *Release*. « Run workf
 la case **essai** construit et vérifie tout avec un mot de passe jetable, sans rien garder (contrôler la
 construction sans toucher au vrai mot de passe).
 
+**Le mot de passe.** Un secret `TIEE_MDP` collé avec un espace ou un retour à la ligne à la fin rendait le mot de
+passe impossible à taper : les espaces et retours à la ligne du début et de la fin ne comptent plus, ni à la
+construction ni dans la page (`mdpNormal`, `lan/coffre.mjs`) ; les majuscules et les espaces du milieu comptent
+toujours. Le mot de passe est enfermé dans la copie au moment de sa fabrication : changer le secret demande une
+nouvelle fabrication, et les anciennes copies gardent l'ancien. Pour s'y retrouver, l'écran « Accès réservé » et
+la fenêtre du serveur disent de quand date la copie (« version 19.15.0, fabriquée le … », `fabrique()` de
+`tools/protege.mjs`, aussi dans `/api/ping`) ; une case « Afficher le mot de passe » aide à voir une faute de
+frappe ; et si une autre version tourne encore sur l'ordinateur, la nouvelle le dit (« fermez sa fenêtre, puis
+relancez ») au lieu d'ouvrir la page de l'ancienne.
+
 Tests : `tests/unit/mac.test.mjs` (Info.plist, icône, lanceur, dossier de travail, « rien en clair »),
 `node tools/mac.mjs --verifier` sur un Mac (hors macOS, le script s'arrête après l'injection : contrôle seulement),
 `node tools/exe.mjs --verifier` (inchangé, sur les pièces communes de `tools/sea.mjs`).
