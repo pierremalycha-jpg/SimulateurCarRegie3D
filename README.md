@@ -394,6 +394,90 @@ Tests :
   « Emmène-moi / Montre-moi » doit mettre en évidence un élément réel de la page, et « Fais-le pour moi » doit faire
   valider l'étape.
 
+## v19.16 : le Cours en 3D (SDI, réseau, ST 2110, synchro, fibre, HF) et dix leçons de plus
+
+**Pourquoi.** Comme la caméra de la v18.5, les notions techniques les plus abstraites se comprennent mieux quand on
+les voit : un coaxial coupé en deux où défilent les mots de la ligne SDI, des machines rangées par VLAN, une
+passerelle qui fait le pont entre deux réseaux, un paquet ST 2110 ouvert couche par couche. L'écrit reste à côté :
+chaque vue a son panneau d'explications à droite, comme aux postes 3D.
+
+**Où les trouver.** Dans le Cours, le sommaire de chaque chapitre concerné a une entrée **« … en 3D »** (Le SDI en
+3D, La synchro en 3D, La fibre en 3D, Le réseau en 3D, La HF en 3D) qui ouvre la première vue avec la liste de
+toutes les vues ; chaque leçon illustrée a une section **« Voir en 3D »** qui ouvre sa vue à l'étape tirée de cette
+leçon. Le téléphone (application Cours) et l'exécutable / l'application macOS y mènent comme au reste du Cours.
+
+**Une vue 3D** (`src/vues3d/`) : une scène construite dans le code (`matiere()`, `Builder` avec arêtes arrondies et
+occlusion cuite, aucune image de fichier), qu'on fait tourner (glisser), approcher (molette, pincer) et déplacer
+(clic droit ou Maj) ; un clic sur un objet le décrit. La barre du haut : Les vues 3D (liste par chapitre),
+Étiquettes, Pause (barre d'espace), Recentrer (double-clic), Quitter (Échap : retour sur la leçon ou le chapitre
+d'où l'on venait). Le panneau a deux onglets : **En 3D** (le résumé, les étapes à suivre avec Suivante / flèches,
+« À vous » : les commandes qui changent la scène, « Ce que mesure la scène » : des lectures chiffrées calculées par
+les mêmes modèles que les leçons, « Ce qui se passe », l'objet choisi) et **La leçon** (l'essentiel, le schéma et
+l'explication de la leçon, un lien vers la leçon complète avec sa manipulation et son quiz). Le simulateur est en
+pause pendant ce temps ; sous 900 px, le panneau passe sous la scène.
+
+**Les quatorze vues** (90 étapes) :
+
+| Chapitre | Vue | Ce qu'on y voit |
+| --- | --- | --- |
+| Le SDI | Le coaxial et la trame SDI | Un 1694A ouvert (âme, diélectrique, tresse, gaine) où défile la ligne : EAV, LN, CRC, paquets audio dans la HANC, SAV, Cb Y Cr Y ; en ligne, en mots ou en bits ; une loupe arrête le mot choisi (valeur, rôle) ; du mot au bit : embrouillage, NRZI (leçons `sdi-cest-quoi`, `sdi-embedded`, `sdi-bits`) |
+| Le SDI | Le câble s'allonge : affaiblissement et œil | Cinq points de mesure le long du câble, l'œil et l'image à chacun ; la falaise ; un DA qui remet le compteur à zéro |
+| Le SDI | BNC, 75 Ω et baie de brassage | Un BNC éclaté, l'écho d'une pièce 50 Ω, la baie normalée sans cordon puis avec cordon |
+| La synchro | Le genlock : toutes les images en même temps | SPG calé sur le GPS, DA en étoile, la phase de chaque source face à la fenêtre du mélangeur (± ½ ligne), une coupe propre ou qui saute, une source libre qui dérive, le synchroniseur, le holdover |
+| La caméra | La fibre de la caméra : câble hybride et lumière | Le câble ST 311 ouvert (énergie dans le cuivre, lumière dans les deux fibres), une fibre agrandie 8 000 fois (réflexion totale, multimode et monomode), la face du connecteur au microscope, le niveau reçu à la CCU |
+| Le réseau | Le commutateur apprend : la table MAC | ARP en diffusion, réponse sur un seul port, la table qui se remplit, l'inondation d'une adresse inconnue |
+| Le réseau | VLAN : des réseaux dans le réseau | Deux commutateurs, dix machines regroupées par VLAN (zones colorées), la diffusion qui reste dans son VLAN, le trunk et son étiquette 802.1Q, deux pannes |
+| Le réseau | La passerelle : un pont entre deux réseaux | Deux îlots, la passerelle-pont et le routeur : en direct ou par la passerelle, l'enveloppe Ethernet refaite, pas de passerelle, un masque trop large, traceroute |
+| Le réseau | Multicast et IGMP | Un flux recopié par le commutateur vers les seuls abonnés, le rapport IGMP, l'unicast, l'inondation sans snooping (jauges de débit des liens) |
+| Le réseau (et La synchro) | PTP : l'heure du car IP | t1 à t4, le calcul du décalage, la file d'attente d'un commutateur ordinaire, l'horloge frontière, l'asymétrie, le BMCA |
+| Le réseau | Du SDI au réseau : les essences séparées | Le train SDI, la passerelle qui sépare vidéo, audio et données, les abonnements, l'horodatage qui réaligne |
+| Le réseau | Un paquet ST 2110 en poupées russes | Une ligne en quatre paquets, puis les couches (pixels, RFC 4175, RTP, UDP, IP, Ethernet) ; le rythme -21 et le tampon du récepteur qui déborde |
+| Le réseau | Rouge et bleu : deux réseaux spine-leaf | Spines et leaves, ECMP, chaque paquet deux fois (2022-7), une spine puis un réseau entier qui tombe, NMOS qui connecte le multiview |
+| La HF | La caméra HF dans le stade | Le stade au 1/10, la caméra qui longe la touche, deux antennes, les rayons direct, sol et tribune colorés selon la marge, l'historique du niveau, la diversité, les antennes directives, l'intervalle de garde COFDM, l'obstacle |
+
+**Les nouvelles leçons** (46 en tout), chacune avec schéma, manipulation, quiz de six questions et rattachement au
+référentiel : `sdi-bits` (du mot au bit : embrouillage x⁹ + x⁴ + 1, NRZI, horloge retrouvée), `reseau-routage` (la
+passerelle), et tout le car IP rangé dans **Le réseau** : `reseau-st2110` (essences séparées), `reseau-paquet` (le
+paquet ST 2110-20 couche par couche), `reseau-rythme` (ST 2110-21), `reseau-2022-7` (rouge et bleu),
+`reseau-spine-leaf`, `reseau-nmos` (IS-04, IS-05) ; dans La caméra, `camera-fibre` (câble hybride, bilan optique,
+propreté). Quatre fiches « ? » (`content/terms_fibre.js`, famille « Liaisons optiques ») : fibre monomode, câble
+hybride SMPTE, niveau optique, nettoyer et inspecter un connecteur. Trois parcours d'Olivier changent de leçon
+(`cours/exercices.js`) : « Visiter le réseau du car IP et suivre un flux » va avec `reseau-st2110`, « Mettre en
+service une leaf neuve » avec `reseau-spine-leaf`, « Mettre en service une passerelle IP vers SDI » avec
+`reseau-nmos`.
+
+**Des calculs vrais.** Les vues lisent les mêmes modèles que les leçons, testés à part : `cours/sdi_mots.js` (les
+5 280 mots d'une ligne 1080p50, XYZ, LN, CRC-18 dont le reste est nul au contrôle, paquets ST 299-1 avec parité et
+somme de contrôle, embrouillage et désembrouillage), `cours/st2110_calc.js` (4 320 paquets par image, 216 000 par
+seconde, ≈ 2,2 Gb/s ; CMAX et VRX du modèle -21 ; tampon du récepteur), `vues3d/l2.js` (apprentissage, inondation,
+VLAN, trunk), `cours/reseau_routage.js` (décision de routage), `cours/camera_fibre.js` (bilan optique),
+`cours/hf.js` (espace libre, gain d'antenne).
+
+**La 3D, notion par notion : quand elle aide, quand le 2D suffit.**
+
+| Notion | 3D ? | Pourquoi |
+| --- | --- | --- |
+| Trame SDI (EAV/SAV, HANC, audio, vidéo, LN, CRC) | Oui | Voir les mots défiler dans le câble, dans l'ordre et en proportion, est ce qui manquait au schéma |
+| Affaiblissement, œil, falaise | Oui | La longueur se parcourt ; l'œil se mesure à chaque point |
+| BNC, 75 Ω, brassage | Oui | Pièces à démonter, normalisation qu'on ne voit pas sur un schéma |
+| Grille, matrice | Non | Le poste de la grille et le synoptique le montrent mieux qu'une scène |
+| Genlock, phase, holdover | Oui | Plusieurs appareils et des règles de phase côte à côte |
+| Timecode, LTC/VITC | Non | Un format de données : le schéma et la manipulation suffisent |
+| Fibre, câble hybride SMPTE | Oui | Coupe et agrandissement, la lumière dans le cœur |
+| Table MAC, VLAN, passerelle, multicast | Oui | Des machines, des câbles, des regroupements : la demande de départ |
+| PTP | Oui | Les quatre messages et le temps de séjour se voient en mouvement |
+| Adressage IP, masque | Non | Du calcul : la manipulation 2D reste la meilleure |
+| ST 2110 : essences, paquet, rythme, 2022-7, spine-leaf, NMOS | Oui | Couches emboîtées, flux, deux réseaux, pannes |
+| HF : bilan, échos, diversité, COFDM | Oui | Un lieu, des distances et des rayons |
+| Signal (4:2:2, niveaux, gamma, HDR), son, réalisation, ralentis, exploitation | Non | Courbes, mesures, gestes de poste : les figures, manipulations et postes existants le font déjà |
+
+Tests : `tests/unit/vues3d.test.mjs` (catalogue, étapes, modèles SDI, ST 2110, niveau 2, routage, fibre, HF, fiches
+optiques), suite `node tools/e2e.mjs vues3d` (entrée du chapitre, liste, Pause, Étiquettes, onglet « La leçon »,
+chaque vue et chaque étape sans erreur, « Voir en 3D » d'une leçon, Échap, 390 px). La suite `camera` vise
+désormais l'entrée de la caméra dans le chapitre ouvert (le premier « … en 3D » du sommaire est celui du SDI).
+
+**Version publiée** : 19.16.0, exécutable Windows et application macOS dans la Release `v19.16.0`.
+
 ## v19.15 : l'application macOS, et où télécharger le simulateur
 
 **Pourquoi.** Le bouton *Code → Download ZIP* de GitHub donne le **code source**, pas le simulateur : il faudrait
@@ -1775,6 +1859,12 @@ node tools/shots.mjs dossier 1280 800 '["vision","hf"]'   # captures de postes
 | `cours/exercices.js` | Les exercices pratiques de chaque leçon : parcours d'Olivier (chacun dans une seule leçon) et exercices notés (atelier, car vide, formation réseau, jour de match, mise en service de la caméra, régie de l'entrepôt), leur état |
 | `cours/liens.js` | Les liens du Cours avec le reste : terme du glossaire → leçon ou fiche « ? », poste → leçon (bouton « Cours », touche G) |
 | `cours/sdi_falaise.js`, `cours/lab_sdi.js`, `cours/figs_sdi.js` | Leçon « La falaise numérique » : diagramme de l'œil et image qui casse avec la longueur du câble, défis d'Olivier |
+| `cours/sdi_mots.js`, `cours/sdi_bits.js` | Les mots d'une ligne SDI (EAV/SAV, XYZ, LN, CRC-18, paquets audio ST 299-1, vidéo active), embrouillage et NRZI (calcul pur) ; la leçon « Du mot au bit » |
+| `cours/reseau_routage.js` | La décision de routage (même réseau, passerelle, pannes) et la leçon « La passerelle » |
+| `cours/st2110_calc.js`, `cours/reseau_st2110.js` | Les calculs ST 2110 (paquets, débits, modèle -21, tampon du récepteur, 2022-7, spine-leaf) et les six leçons du car IP |
+| `cours/camera_fibre.js`, `content/terms_fibre.js` | Le bilan optique et la leçon « La fibre de la caméra » ; les fiches « ? » des liaisons optiques |
+| `vues3d/index.js`, `vues3d/orbite.js`, `vues3d/kit.js`, `vues3d/materiel.js`, `styles/vues3d.css` | Le moteur des vues 3D du Cours : second contexte WebGL, orbite, étiquettes, clic sur un objet, panneau (En 3D, La leçon), liste ; matières et pièces, flux animés, appareils et câbles réseau |
+| `vues3d/catalogue.js`, `vues3d/vues/`, `vues3d/l2.js`, `vues3d/l2anim.js` | Les quatorze vues (une par fichier : étapes, commandes, scène) rattachées aux chapitres et aux leçons ; le petit réseau de niveau 2 (table MAC, VLAN, trunk) et son animation |
 | `camlab/` | Module « La caméra en 3D » : caméra et plateau construits dans le code (`model.js`, `scene.js`), pastilles (`points.js`), 51 notions (`notions/`, une fiche par fichier, registres `ch1.js` … `ch89.js`), schémas (`figs.js`, `figs/`, `figkit.js`), manipulations (`labs.js`, `labs/`, commandes `controls.js`, optique `optics.js`, viseur simulé et traitement de l'image `vf.js`), affichage d'une fiche (`fiche.js`), progression (`progress.js`), quiz de chapitre (`quiz.js`), mise en service notée (`mes.js`) |
 | `entrepot/` | Module « L'entrepôt » (tuile de Jouer) : monter une régie mobile d'après un cahier des charges. Types (`types.js`), catalogue de matériel réel (`catalogue/`, un fichier par groupe : `blackmagic.js`, `panasonic.js`, `ross.js`, `reseau.js`, `divers.js`), montage (`build.js`), moteur (`engine.js`), missions notées (`missions.js`), résultat rendu (`suivi.js`), 3D (`scene.js` ; `scene/` : hall, appareils, câbles, bureau et ordinateur de la Carrière `bureau.js` ; vue en orbite `orbit.js`), panneaux (`ui/` : `stock.js`, `appareil.js`, menus de configuration `ui/config/` un fichier par famille, `synoptique.js`, `reseau.js`, `mission.js`), ouverture, boucle et mode Carrière (`index.js`) |
 | `carriere/` | La Carrière (mode de l'entrepôt) : les épisodes et leurs mails (`mails.js`), la boîte de réception et les missions lues dans la progression, calcul pur (`index.js`), la messagerie du bureau (`ui.js`), les mails qui arrivent et le lancement des missions au car (`installer.js`) |

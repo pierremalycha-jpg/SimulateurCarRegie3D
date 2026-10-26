@@ -1,5 +1,6 @@
 // @ts-check
 import { el } from '../util.js';
+import { CAMERA_FIBRE } from './camera_fibre.js';
 import { registerChapter } from './index.js';
 import { figure, sv, slider, choice, readout, fmtNum } from './kit.js';
 
@@ -399,6 +400,7 @@ Qui règle quoi. L'**ingénieur vision** règle l'image au RCP : l'**iris** (joy
           answer: 1, why: 'La CCU reçoit la référence du générateur de synchro, par un distributeur, et cale la tête dessus : c\'est le genlock, qui fait sortir toutes les caméras au même instant. Sans lui, cette caméra n\'est plus en phase avec les autres, et le mélangeur ne coupe plus proprement. On vérifie l\'arrivée de la référence à la CCU.' },
       ],
     },
+    CAMERA_FIBRE,
     {
       id: 'camera-montage', title: 'Monter une caméra de stade', minutes: '9 min',
       essentials: [

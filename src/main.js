@@ -56,6 +56,7 @@ import { initTitle, loadStep, tick, titleReady, enterFrom, showTitle } from './a
 import './ui/settings.js';
 import { initCamLab, camlabOpen, camlabDebug } from './camlab/index.js';
 import { initEntrepot, entrepotOpen, entrepotDebug } from './entrepot/index.js';
+import { initVues3d, vues3dOpen, vues3dDebug } from './vues3d/index.js';
 import { installCarriere } from './carriere/installer.js';
 import { installMissionRun, RUN as MISSION_RUN } from './game/mission_run.js';
 import * as CARRIERE from './carriere/index.js';
@@ -90,6 +91,7 @@ if (/[?&]lite/.test(location.search)) { S.lite = true; S.quality = 'basse'; }
 applyRole();
 initTitle();
 initCamLab();
+initVues3d();
 initEntrepot();
 installCarriere();
 installMissionRun();
@@ -159,8 +161,8 @@ function frame(now) {
   try { step(now); } catch (e) { const r = report(e, 'boucle de rendu'); if (r && r.n === 1) console.error(e); }
 }
 function step(now) {
-  // module « La caméra » ouvert : le simulateur attend, sans rien calculer ni dessiner
-  if (camlabOpen() || entrepotOpen()) { last = now; setEar({ mode: 'start' }); return; }
+  // module « La caméra » ou vue 3D du Cours ouverts : le simulateur attend, sans rien calculer ni dessiner
+  if (camlabOpen() || entrepotOpen() || vues3dOpen()) { last = now; setEar({ mode: 'start' }); return; }
   let dt = (now - last) / 1000; last = now;
   const realDt = Math.max(0.001, dt); // le compteur d'images par seconde mesure le temps réel, pas le pas de simulation borné
   dt = clamp(dt, 0.001, 0.05);
@@ -264,7 +266,7 @@ window.__dbg = { RENDER, openReview, openSessionPanel, SES, S, M, MIX, EVS, ROUT
 window.__dbg.diag = { ERRS, report, diagText, openDiag, el }; window.__dbg.on = on;
 window.__dbg.title = { enter: enterFrom, show: showTitle };
 window.__dbg.nav = { openMenu, restart };
-window.__dbg.openCours = openCours; window.__dbg.PROFILE = PROFILE; window.__dbg.setRole = setRole; window.__dbg.camlab = camlabDebug; window.__dbg.entrepot = entrepotDebug;
+window.__dbg.openCours = openCours; window.__dbg.PROFILE = PROFILE; window.__dbg.setRole = setRole; window.__dbg.camlab = camlabDebug; window.__dbg.vues3d = vues3dDebug; window.__dbg.entrepot = entrepotDebug;
 window.__dbg.COURS = { CHAPTERS: COURS_CHAPTERS, allLessons, lessonById: coursLessonById, lessonDone: coursLessonDone };
 window.__dbg.CTRL = CTRL; window.__dbg.MATIERE = MATIERE;
 window.__dbg.jeu = { XP, sfx, JEU, openJournal, currentGoal, renderQuest };

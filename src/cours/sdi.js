@@ -3,6 +3,7 @@ import { el } from '../util.js';
 import { registerChapter } from './index.js';
 import { FALAISE } from './sdi_falaise.js';
 import { GRILLE_LESSONS } from './sdi_grille.js';
+import { SDI_BITS } from './sdi_bits.js';
 import { figure, sv, canvas, slider, choice, readout, fmtNum } from './kit.js';
 
 // ----------------------------------------------------------------------------------
@@ -14,18 +15,18 @@ import { figure, sv, canvas, slider, choice, readout, fmtNum } from './kit.js';
 // en 6G et 12G) et ordre de grandeur des égaliseurs courants (≈ 36 dB en HD et 3G, ≈ 42 dB en 12G, ce qui
 // redonne les ≈ 200 m / 140 m / 70 m de 1694A annoncés par les constructeurs). Ce sont des ordres de grandeur.
 // ----------------------------------------------------------------------------------
-const FMT = {
+export const FMT = {
   HD: { name: 'HD-SDI', gbps: 1.485, nyq: 742.5, norme: 'ST 292-1', ui: 673.4, fs: 74.25 },
   '3G': { name: '3G-SDI', gbps: 2.97, nyq: 1485, norme: 'ST 424', ui: 336.7, fs: 148.5 },
   '12G': { name: '12G-SDI', gbps: 11.88, nyq: 5940, norme: 'ST 2082-1', ui: 84.2, fs: 594 },
 };
-const CABLES = {
+export const CABLES = {
   '1694A': { name: 'Belden 1694A (type RG6, Ø 6,9 mm)', short: '1694A · RG6', att: { HD: 17.7, '3G': 25.6, '12G': 58 } },
   '4794R': { name: 'Belden 4794R (prévu 12G, Ø 7,2 mm)', short: '4794R · 12G', att: { HD: 15, '3G': 22, '12G': 47 } },
   '1505A': { name: 'Belden 1505A (type RG59, Ø 5,9 mm)', short: '1505A · RG59', att: { HD: 23, '3G': 33, '12G': 70 } },
   '1855A': { name: 'Belden 1855A (mini RG59, Ø 4 mm)', short: '1855A · mini', att: { HD: 35, '3G': 49, '12G': 107 } },
 };
-const BUDGET = { HD: { norme: 20, typ: 36 }, '3G': { norme: 20, typ: 36 }, '12G': { norme: 40, typ: 42 } };
+export const BUDGET = { HD: { norme: 20, typ: 36 }, '3G': { norme: 20, typ: 36 }, '12G': { norme: 40, typ: 42 } };
 const RACCORD_DB = 0.5; // par passage en brassage ou raccord : ordre de grandeur
 const gauss = () => (Math.random() + Math.random() + Math.random() + Math.random() - 2) * 1.732; // ≈ loi normale (0, 1)
 const fmtDb = (v) => fmtNum(v, 1) + ' dB';
@@ -113,8 +114,8 @@ function figTrame() {
 // Le canal est modélisé au premier ordre : l'affaiblissement à la demi-fréquence d'horloge donne une constante de temps
 // (en UI) qui arrondit les fronts et referme l'œil brut. L'égaliseur du récepteur compense jusqu'à son budget, au prix
 // d'un bruit et d'une gigue qui montent vite près de la limite : au-delà, plus de verrouillage (effet de falaise).
-const tauOf = (attDb) => Math.sqrt(Math.max(0, Math.pow(10, attDb / 10) - 1)) / Math.PI;
-function drawEye(g, W, H, o) {
+export const tauOf = (attDb) => Math.sqrt(Math.max(0, Math.pow(10, attDb / 10) - 1)) / Math.PI;
+export function drawEye(g, W, H, o) {
   g.fillStyle = '#0b1013'; g.fillRect(0, 0, W, H);
   const mid = H / 2, A = H * 0.3, X = (t) => t / 2 * W;
   g.strokeStyle = '#424c56'; g.lineWidth = 1; g.setLineDash([3, 3]);
@@ -140,7 +141,7 @@ function drawEye(g, W, H, o) {
   }
   if (o.dead) { g.fillStyle = '#ff8a80'; g.font = 'bold 12px Arial, sans-serif'; g.fillText('pas de verrouillage', W / 2 - 50, mid + 4); }
 }
-function drawPicture(g, W, H, state, margin) {
+export function drawPicture(g, W, H, state, margin) {
   g.fillStyle = '#5a7fb0'; g.fillRect(0, 0, W, H * 0.45); g.fillStyle = '#2f6b23'; g.fillRect(0, H * 0.45, W, H);
   g.fillStyle = '#e3e7e1'; g.fillRect(W * 0.42, H * 0.5, W * 0.16, H * 0.3); g.fillStyle = '#c8102e'; g.fillRect(W * 0.49, H * 0.5, W * 0.03, H * 0.3);
   g.fillStyle = '#ffd400'; g.font = 'bold 14px Arial, sans-serif'; g.fillText('RC LENS 1-0', 8, 20);
@@ -391,6 +392,7 @@ Le débit se déduit du raster : 2 640 × 1 125 mots × 25 images × 2 flux × 1
           answer: 2, why: 'Le HD-SDI se calcule pour 25 images : 2 640 × 1 125 mots × 25 × 2 flux × 10 bits = 1,485 Gb/s (1080i25, 1080p25, 720p50). À 50 images progressives, le débit double : 2,97 Gb/s, le 3G-SDI (ST 424), que ce moniteur ne sait pas recevoir.' },
       ],
     },
+    SDI_BITS,
     {
       id: 'sdi-oeil', title: 'Longueur de câble et diagramme de l\'œil', minutes: '9 min',
       essentials: [

@@ -17,7 +17,7 @@ const ev = (f, a) => A.evaluate(f, a);
 // ---------------- depuis le titre : Cours, chapitre « La caméra », module 3D ----------------
 await A.click('#ti-cours'); await A.waitForTimeout(500);
 await ev(() => window.__dbg.emit('cours', { chapter: 'camera' })); await A.waitForTimeout(300);
-T.check('Cours, chapitre La caméra : l\'entrée « La caméra en 3D » dans le sommaire', await ev(() => !!document.querySelector('#layer.ly-cours details.co-chap[open] .co-module') && /La caméra en 3D/.test(document.querySelector('#layer .co-module').textContent)));
+T.check('Cours, chapitre La caméra : l\'entrée « La caméra en 3D » dans le sommaire', await ev(() => !!document.querySelector('#layer.ly-cours details.co-chap[open] .co-module') && /La caméra en 3D/.test(document.querySelector('#layer details.co-chap[open] .co-module').textContent)));
 await A.screenshot({ path: `${OUT}/01-onglet.png` });
 await A.click('#layer details.co-chap[open] .co-module');
 await until(A, () => window.__dbg.camlab() && !document.querySelector('.camlab .cl-loading') && !document.querySelector('.camlab').hidden, null, 120000);
