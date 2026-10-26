@@ -5,9 +5,10 @@ dist/index.html
 # réseau local
 dist/index-lan.html
 dist/car-regie-serveur-lan.mjs
-# versions à partager : fichier HTML autonome et exécutable Windows (npm run exe)
+# versions à partager : fichier HTML autonome, exécutable Windows (npm run exe), application macOS (tools/mac.mjs)
 dist/TIEE-Simulator.html
 dist/*.exe
+dist/*.dmg
 .cache/
 # tests de bout en bout : captures et journaux
 test-results/

@@ -394,6 +394,46 @@ Tests :
   « Emmène-moi / Montre-moi » doit mettre en évidence un élément réel de la page, et « Fais-le pour moi » doit faire
   valider l'étape.
 
+## v19.15 : l'application macOS, et où télécharger le simulateur
+
+**Pourquoi.** Le bouton *Code → Download ZIP* de GitHub donne le **code source**, pas le simulateur : il faudrait
+installer Node.js et le construire (et cette page-là n'est pas protégée). La version à jouer se télécharge dans
+les **Releases** du dépôt (colonne de droite de la page GitHub), une fois une version publiée : sous Windows
+`TIEE-Simulator-partage.zip`, sur Mac `TIEE-Simulator-mac.dmg`. Il manquait la version Mac.
+
+**L'application.** `TIEE-Simulator-mac.dmg` contient `TIEE Simulator.app` (Apple silicon et Intel dans un seul
+fichier, macOS 11 ou plus récent), un raccourci vers Applications, `LISEZMOI.txt` (`partage/LISEZMOI-mac.txt`) et
+les licences. Même principe que l'exécutable Windows : le serveur réseau local et la page chiffrée par le mot de
+passe dans un Node.js autonome (blob SEA commun, `tools/sea.mjs`). On glisse l'application dans Applications, on
+l'ouvre : une fenêtre du **Terminal** affiche le serveur (adresse à donner aux autres joueurs ; la fermer arrête le
+simulateur), le navigateur s'ouvre sur « Accès réservé ». Les comptes rendus (`rapports`) et la clé des liens
+Internet sont rangés dans le dossier `~/TIEE Simulator` (l'application, signée, ne doit pas changer).
+
+**Construite sur un Mac de GitHub** (`tools/mac.mjs`, tâche « mac » de `.github/workflows/exe.yml`, machine macOS
+Apple silicon) : node officiel de nodejs.org pour chaque processeur (empreinte SHA-256 vérifiée), signature de
+Node.js retirée, blob injecté (postject, segment `NODE_SEA`), exécutable universel (`lipo`), petit lanceur compilé
+(`clang`) qui passe la main à `Resources/lancer.sh`, icône `lan/car-regie-3d.icns` (`tools/icon.mjs`), signature
+« ad hoc » (`codesign`, obligatoire sur Apple silicon), image disque (`hdiutil`). `--verifier` lance le serveur de
+l'application (Apple silicon, puis Intel par Rosetta s'il est installé) et refait les contrôles de l'exécutable
+Windows (écran d'accès, mauvais et bon mot de passe, page, parties, Internet, dossier de travail), puis contrôle
+la signature, l'icône et l'image disque montée. Le lanceur refuse de démarrer depuis l'image disque ou le dossier
+Téléchargements (macOS y « déplace » l'application en lecture seule) et demande de la glisser dans Applications.
+
+**La première ouverture.** Sans certificat Developer ID ni notarisation par Apple (compte développeur, 99 $ par
+an), macOS bloque la première ouverture : sous macOS 15 et plus récent, Réglages Système → Confidentialité et
+sécurité → « Ouvrir quand même » ; avant, clic droit → Ouvrir. C'est expliqué pas à pas dans le LISEZMOI.
+Notariser plus tard demande un certificat Developer ID et une étape de plus dans la tâche « mac ».
+
+**Le workflow** s'appelle désormais « Versions à partager » : à l'envoi d'une étiquette `v…`, les tâches Windows
+et macOS construisent et vérifient chacune leur version, puis la tâche « publication » met l'exécutable, le kit,
+l'image disque et leurs empreintes SHA-256 dans la même *Release*. « Run workflow » garde les fichiers 30 jours ;
+la case **essai** construit et vérifie tout avec un mot de passe jetable, sans rien garder (contrôler la
+construction sans toucher au vrai mot de passe).
+
+Tests : `tests/unit/mac.test.mjs` (Info.plist, icône, lanceur, dossier de travail, « rien en clair »),
+`node tools/mac.mjs --verifier` sur un Mac (hors macOS, le script s'arrête après l'injection : contrôle seulement),
+`node tools/exe.mjs --verifier` (inchangé, sur les pièces communes de `tools/sea.mjs`).
+
 ## v19.14 : un exécutable protégé par mot de passe et signé, construit par GitHub
 
 **Pourquoi.** Le dépôt est devenu public (26 octobre 2026). La version à partager ne passe plus par un fichier
@@ -1787,8 +1827,8 @@ Hors de `src/` :
 
 | Dossier | Rôle |
 | --- | --- |
-| `lan/` | Serveur réseau local (voir plus haut), icône de l'exécutable Windows |
-| `partage/` | Mode d'emploi du kit de partage (exécutable Windows protégé par mot de passe) |
+| `lan/` | Serveur réseau local (voir plus haut), icônes de l'exécutable Windows (`.ico`) et de l'application macOS (`.icns`) |
+| `partage/` | Modes d'emploi des versions à partager protégées par mot de passe : exécutable Windows (`LISEZMOI.txt`), application macOS (`LISEZMOI-mac.txt`) |
 | `tests/unit/` | Tests unitaires `node:test` ; `tests/helpers/` (DOM minimal, scène vide, réseau de test), `tests/register.mjs` (chargement des fichiers texte comme esbuild) |
 | `tests/e2e/` | Tests de bout en bout Playwright et leur harnais |
-| `tools/` | Construction (`build.mjs`, `zip.mjs`), exécutable Windows et kit de partage (`exe.mjs`, `icon.mjs` ; serveur protégé `protege.mjs`, signature Authenticode `signature.mjs`), lanceur des tests de bout en bout (`e2e.mjs`), mesures et captures |
+| `tools/` | Construction (`build.mjs`, `zip.mjs`), versions à partager : exécutable Windows et kit (`exe.mjs`, signature Authenticode `signature.mjs`), application macOS (`mac.mjs`, pièces `macapp.mjs`), pièces communes (`sea.mjs`, serveur protégé `protege.mjs`), icônes (`icon.mjs`), lanceur des tests de bout en bout (`e2e.mjs`), mesures et captures |
