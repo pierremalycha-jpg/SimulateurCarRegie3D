@@ -56,6 +56,11 @@ const SUITES = [
   ['jeu', 'jeu', [], 20],
   ['progression', 'progression', [], 15],
   ['rendu', 'rendu', [], 25],
+  ['poste3d', 'poste3d', [], 25],
+  ['poste3d-vision', 'poste3d-vision', [], 25],
+  ['poste3d-son', 'poste3d-son', [], 25],
+  ['poste3d-evs', 'poste3d-evs', [], 25],
+  ['poste3d-intercom', 'poste3d-intercom', [], 25],
   ['telephone', 'telephone', [], 20],
 ];
 

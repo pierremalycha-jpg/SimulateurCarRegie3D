@@ -394,6 +394,144 @@ Tests :
   « Emmène-moi / Montre-moi » doit mettre en évidence un élément réel de la page, et « Fais-le pour moi » doit faire
   valider l'étape.
 
+## v19.13 : les ralentis et l'intercom en 3D (lot 3)
+
+**Pourquoi.** Suite des postes en 3D (lot 3 de la feuille de route, validé le 26 octobre 2026 avec l'écran partagé) :
+la télécommande des ralentis, dont le levier et la molette se manient à la main, et le pupitre d'intercom.
+
+**Le poste ralentis** (`src/poste3d/lsm.js`, `src/poste3d/ralentis.js`). La télécommande LSM (type EVS, logiciel
+Multicam) est construite en 3D sur le bureau des ralentis, à la place de la texture plate : l'afficheur (quatre
+lignes : sortie pilotée, angle, timecode et retard sur le direct, IN et OUT, enregistrement), les touches F1 à F10
+(clips de la page), les touches d'angle (CAM A à H, les entrées enregistrées), le bloc opérationnel (IN, OUT, PLST,
+LOOP, RETURN, LIVE, PLAY, FAST JOG, TAKE, PGM/PRV, SHIFT, MENU, CLEAR, PAGE, avec la fonction SHIFT sérigraphiée) et les
+raccourcis du simulateur (DERN. ACTION, REC, opérateur automatique). Le **levier de vitesse** se pousse (loin de soi =
+plus vite ; la bulle dit si le ralenti est fluide ou saccadé selon la cadence de la caméra) ; la **molette jog** se
+tourne en glissant autour d'elle (un tour ≈ 35 images, comme la molette Multicam), à la molette de la souris ou aux
+flèches. À droite : EVS A, EVS B, le programme et l'écran du serveur (trains d'enregistrement, cliquer pour se placer ;
+clips de la page ; playlist). « Tous les réglages » : la télécommande à plat, avec les préréglages du levier. Le clavier
+et la souris d'IPDirector restent dessinés à côté.
+
+**Le poste intercom** (`src/poste3d/icom.js`, `src/poste3d/intercom.js`). Le pupitre du réalisateur, sur le bureau de
+production : deux rangées de neuf modules, chacun avec son afficheur (le canal, son type : conférence, point à point,
+IFB, 4 fils, hybride, relais), TALK et LISTEN ; au fond, le micro col de cygne et le haut-parleur. Cliquer un afficheur
+explique le canal. À droite : le multiview et le programme (ce que regarde le réalisateur), le journal de l'intercom
+(les ordres et les micros ouverts) et l'état du pupitre (micros ouverts, canaux écoutés). « Tous les réglages » : le
+pupitre à plat, le trajet d'un ordre jusqu'au cadreur, le tally.
+
+**Gestes communs.** Comme pour la vision (`RCPACT`), l'état et les gestes sont partagés entre le poste à plat et la
+3D : `LSMACT` (`ui/st_evs.js`, avec l'écran du serveur `evsScreen`) et `ICOMACT` (`ui/st_intercom.js`, sorti de
+`ui/stations.js`). L'état pur (touches allumées, afficheur, canaux) est dans les fichiers du matériel, que `truck.js`
+importe sans dépendre de l'interface. Le moteur sait une nouvelle commande, la **molette sans butée** (`jog`), et des
+attributs libres sur les zones cliquables (`data-id` des touches d'angle, que vise Olivier). Les parcours d'Olivier
+pour l'intercom visent maintenant la touche par son nom (`.icp-talk[aria-label="TALK CAMÉRAS"]`), en 2D comme en 3D.
+
+Tests : suites `poste3d-evs` et `poste3d-intercom` (`node tools/e2e.mjs poste3d-evs`, `… poste3d-intercom`).
+
+## v19.12.1 : correctif, le panneau des écrans qui descendait sans fin
+
+Retour du 25 octobre 2026 : au poste vision en 3D, sur les RCP, la fenêtre de droite descendait à l'infini. Les
+écrans du panneau (Grade 1, multiview, programme du son) sont une copie du rendu WebGL dans un petit canevas
+(`mirrorSlots`, `src/poste3d/index.js`) dont la taille est en pixels réels de l'écran. Sur un écran à forte densité
+(Retina, HiDPI : 2 pixels réels par pixel CSS), ce canevas restait dans le flux de la page, agrandissait le moniteur,
+qui demandait alors une copie plus grande à l'image suivante, et ainsi de suite. La copie est désormais posée
+par-dessus le moniteur (position absolue, 100 %) dans tout le poste 3D, pas seulement dans le tiroir
+(`src/styles/poste3d.css`). Les tests tournaient en densité 1 : `tests/e2e/poste3d-vision.mjs` vérifie maintenant,
+en densité 2, que les écrans des postes vision et son gardent leur taille.
+
+## v19.12 : l'écran partagé, le pupitre en 3D et les écrans du poste en 2D
+
+**Pourquoi.** Retour du 25 octobre 2026 sur la v19.11 : au poste vision, la vue 3D regardait les RCP et l'on ne voyait
+plus le multiview ni l'oscilloscope, donc plus l'effet de ses réglages. Il faut pouvoir tourner autour du matériel et
+garder les écrans du poste sous les yeux, à chaque poste.
+
+**L'écran partagé** (`src/poste3d/index.js`, `src/styles/poste3d.css`). À gauche, le pupitre en 3D ; à droite, un
+panneau 2D (46 % de la largeur) :
+- en haut, **les écrans du poste en direct** (chaque définition de poste les fournit, `monitors`) : au mélangeur le
+  multiview, le PGM et le PVW ; à la vision le moniteur de référence Grade 1 (SDR, HDR HLG ou les deux), le multiview et
+  le PRISM interactif (waveform, parade, vecteurscope, gamut) de la caméra au RCP ; au son l'image du programme, les
+  vumètres, la corrélation et la loudness. Les images vidéo sont recopiées du rendu WebGL à chaque image ;
+- en bas, deux onglets : **Fiche** (la zone, les réglages en 2D) et **Ce qui se passe** (un point signale une nouvelle
+  explication) ; « ▾ » replie le bas du panneau pour donner toute la hauteur aux écrans.
+
+**La caméra tourne autour du pupitre**, comme celle du Cours : glisser pour tourner (sans passer derrière le pupitre),
+clic droit ou Maj + glisser pour déplacer, molette ou pincement pour s'approcher, double-clic pour revenir à la vue ;
+l'œil reste dans le car. Les vues prédéfinies y volent en douceur ; la vue d'ensemble de chaque poste cadre maintenant
+le pupitre (les écrans sont dans le panneau), et la caméra recule d'elle-même quand la zone 3D est étroite.
+
+Au passage : `visionMonitors` (`ui/st_vision.js`) et `drawMeters` (`ui/st_audio.js`) sont partagés entre le poste 2D et
+le panneau ; le tiroir « Tous les réglages » de la vision ne refait plus les écrans (`noMonitors`).
+
+Tests : les suites `poste3d`, `poste3d-vision` et `poste3d-son` vérifient les écrans du panneau ; `poste3d` vérifie
+l'orbite, le rapprochement, le retour à la vue et le repli de la fiche.
+
+## v19.11 : la vision et le son en 3D, le tiroir « Tous les réglages »
+
+**Pourquoi.** Suite du prototype v19.10 (lot 2 de la feuille de route) : les deux postes où l'on règle le plus de
+matériel à la main, l'ingénieur vision et la régie son.
+
+**Le moteur des postes en 3D** (`src/poste3d/index.js`) sait maintenant :
+- des **molettes** (glisser vers le haut ou le bas, molette de la souris, flèches, double-clic pour revenir à la valeur
+  nominale), des **glissières** le long d'une course 3D (barre T, faders, joystick), des **touches maintenues**
+  (talkback) ;
+- des commandes qui **changent avec l'état** (le RCP qui a la main) et des vues calculées (le siège, le RCP choisi) ;
+- des zones cliquables **découpées à la forme** de la commande projetée : en vue de biais, deux faders voisins ne se
+  recouvrent plus ;
+- **« Tous les réglages »** : un tiroir qui contient l'interface 2D complète du poste, pour ce que le matériel 3D ne
+  porte pas (pages, matrices, instruments). Ses moniteurs vidéo sont recopiés du rendu WebGL. Quand l'élément
+  qu'Olivier veut montrer est dans le tiroir refermé, son repère montre le bouton qui l'ouvre (`ui/tutor_ui.js`).
+
+**Le poste vision** (`src/poste3d/rcp.js`, `src/poste3d/vision.js`). La rangée de RCP du bureau vision est construite
+en 3D : un RCP par caméra (CAM 1 à 6 devant la vision 1, CAM 7 à 16 devant la vision 2) et le MSU au milieu, avec ses
+voyants TALLY et CALL, son écran (diaphragme, gain, ND, ON AIR / PVW), ses touches, ses molettes WHITE et BLACK et son
+joystick (le manche suit l'iris, la bague le master black). Un clic sur un RCP lui donne la main (moniteur de
+référence, PRISM) ; sur ce RCP, chaque commande agit comme en 2D, dont le verrou PANEL ACTIVE ; l'écran tactile ouvre
+ses pages (PAINT, GAMMA / KNEE, GAIN / ND / SHUTTER, SCÈNES) sur la fiche. Le tiroir contient le RCP complet, le PRISM
+interactif et le tableau de matching. Les gestes sont mis en commun (`RCPACT`, `lcdPage` dans `ui/st_vision.js`).
+
+**Le poste son** (`src/poste3d/son.js`) sur la console de la cabine (`audiodesk.js`, qui expose sa géométrie) :
+faders des 20 tranches, master PGM et VCA des commentaires, SEL / PFL / MUTE, sur l'écran Vistonics la molette GAIN
+(en bas) et la molette PAN (en haut), et la Control Bay (écoutes, DIM, MONO, talkback maintenu, suivi du jeu,
+limiteur). Le tiroir contient la console à plat (couches, égaliseur, dynamique, E/S et patch, bus et N-1, snapshots,
+commentaires). Les gestes sont mis en commun (`AUACT` dans `ui/st_audio.js`).
+
+Tests : `node tools/e2e.mjs poste3d-vision` et `poste3d-son` (matériel construit, commandes, verrou, joystick,
+molettes, faders, talkback, tiroir et moniteurs recopiés, parcours « Exposer une caméra au RCP » et « Corriger une
+tranche » suivis en 3D).
+
+## v19.10 : le poste du truquiste en 3D, devant le vrai pupitre (prototype)
+
+**Pourquoi.** Retour du 25 octobre 2026 : aux postes, l'interface 2D en plein écran fait perdre le matériel de vue.
+On voulait s'asseoir devant le pupitre en 3D, avec les explications par-dessus. Le poste Mélangeur sert de prototype
+au modèle qui servira aux autres postes.
+
+**Le pupitre en 3D** (`src/poste3d/icp.js`). Le panneau de commande type ICP-X7000 est construit touche par touche
+sur le bureau de la régie de production (il remplace l'image plate) : trois rangées de croisement de 22 touches avec
+leur OLED (le nom de la source suit la grille), clé 1 (coin, taille), DSK 1 et 2, FTB, mémoires (STORE, SNAP 1 à 8),
+module de transition (NEXT TRANS, motifs, types, durée sur un afficheur, CUT, AUTO TRANS) et une barre T dont la
+poignée bouge, écran du menu qui résume la M/E. Les touches s'allument comme sur le vrai pupitre (rouge à l'antenne,
+vert en preset, jaune pour la clé), en marchant dans le car comme au poste. Châssis et habillage en matières
+(`matiere()`, `Builder` en mode `ao`), touches en deux maillages instanciés (corps, dessus lumineux avec sa légende).
+La disposition est celle d'un pupitre de cette classe, simplifiée : à faire relire.
+
+**Le poste en vue 3D** (`src/poste3d/index.js`, `src/poste3d/melangeur.js`, `src/styles/poste3d.css`). On prend le
+poste comme avant (E, pupitre, chef de car) ; la vue est celle de l'opérateur, et une couche d'interface légère se
+pose par-dessus :
+- une **zone cliquable** transparente sur chaque commande, recalée à chaque image sur la touche 3D : clic, Tab et
+  lecteur d'écran, et les parcours d'Olivier visent les mêmes sélecteurs qu'en 2D (son repère encadre la touche 3D) ;
+- une **bulle** au survol : le nom de la commande, son rôle, la source qu'elle porte, son raccourci clavier ;
+- des **étiquettes** sur les zones du pupitre et des **vues** (le poste, croisements, transition, clé et DSK, menu
+  et mémoires, écrans) ; glisser pour regarder autour, molette pour zoomer, double-clic pour revenir ;
+- à droite, la **fiche** de la zone (et les réglages de l'écran du menu en 2D : durée, taille de la clé, mode du
+  clavier), puis le fil **« Ce qui se passe »**. La scène se recentre dans la partie libre de l'écran.
+- La **barre T** se tire à la souris ou au doigt (ou aux flèches) ; la poignée et l'afficheur suivent.
+
+Les gestes sont ceux de la vue 2D (`MIXACT` dans `src/ui/st_mixer.js`, mis en commun). Le bouton **Vue 2D / Vue 3D**
+de l'en-tête bascule, le choix est mémorisé ; la vue 2D reste le défaut en mode allégé et en qualité Basse.
+
+Tests : `node tools/e2e.mjs poste3d` (pupitre dans le car, zones cliquables nommées, survol, gestes, barre T, réglages
+du menu, repère du chef de car sur la touche 3D, parcours « Préparer, couper et enchaîner » jusqu'au bout, bascule
+2D / 3D, caméra rendue à la marche).
+
 ## v19.9 : le téléphone, une seule porte vers tout ce qui n'est pas dans le décor
 
 **Pourquoi.** Retour du 25 octobre 2026 : trop de boutons et de touches à connaître (Pupitre, Missions, Chef de
@@ -1573,6 +1711,7 @@ node tools/shots.mjs dossier 1280 800 '["vision","hf"]'   # captures de postes
 | `audio.js` | Console son (inspiration Vista 1) : sources synthétisées, patch, chaîne DSP par tranche, bus et N-x, VCA, écoutes, snapshots, retard de ligne, embedder, loudness, corrélation, pannes son ; ce que le joueur entend selon l'endroit (`ecoute`, `setEar`) et le volume du son |
 | `commentary.js` | Commentaires du match (commentateur, consultant, bord terrain, plateau) en fil écrit, sans voix : niveaux simulés suivant la console |
 | `audiodesk.js` | Console son en 3D dans la cabine (faders motorisés, FaderGlow, écrans Vistonics animés) |
+| `poste3d/` | Les postes en 3D : moteur de la vue du poste (`index.js` : écran partagé avec les écrans du poste en direct, caméra en orbite, vues, zones cliquables recalées et découpées sur la 3D, touches, molettes, glissières, molette sans butée (jog), touches maintenues, bulles, étiquettes, fiche, tiroir « Tous les réglages » avec l'interface 2D et ses moniteurs recopiés), outils des pupitres (`kit.js` : touches instanciées à légende, surfaces dessinées) ; le matériel : pupitre ICP-X7000 (`icp.js`), rangée de RCP (`rcp.js`), télécommande LSM (`lsm.js`), pupitre d'intercom (`icom.js`) ; les définitions de poste : mélangeur (`melangeur.js`), vision (`vision.js`), son (`son.js`, sur la console d'`audiodesk.js`), ralentis (`ralentis.js`), intercom (`intercom.js`) |
 | `scenario.js` | Scénario « jour de match » chronométré et noté |
 | `shared.js` | Données partagées de la page publiée (configuration, progression) avec repli local ; progression numérotée (`PROG_VERSION`, `migrateProgress` ; v3 : la Carrière), fusionnée avec le serveur avant chaque écriture, état de l'enregistrement (`SAVE`), export, import et effacement |
 | `review.js` | Points techniques à faire relire par le formateur |

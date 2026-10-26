@@ -5,8 +5,11 @@ import { matiere } from './matiere.js';
 import { TRUCK } from './world.js';
 import { makeCanvas, tc } from './util.js';
 import { S } from './state.js';
-import { EQUIP } from './equip.js';
 import { buildAudioDesk } from './audiodesk.js';
+import { buildMelangeur3D } from './poste3d/icp.js';
+import { buildRcp3D } from './poste3d/rcp.js';
+import { buildLsm3D } from './poste3d/lsm.js';
+import { buildIcom3D } from './poste3d/icom.js';
 
 // ----------------------------------------------------------------------------------
 // Intérieur du car régie (scène séparée : on ne voit pas l'extérieur).
@@ -91,69 +94,14 @@ function deskPanel(name, w, d, lx, lz, draw, y = 0.79, tilt = 0.18, rotY = 0) {
 const rr = (g, x, y, w, h, r, fill, stroke) => { g.beginPath(); g.roundRect ? g.roundRect(x, y, w, h, r) : g.rect(x, y, w, h); if (fill) { g.fillStyle = fill; g.fill(); } if (stroke) { g.strokeStyle = stroke; g.lineWidth = 2; g.stroke(); } };
 const txt = (g, s, x, y, size = 14, color = '#c9d1d9', align = 'center', weight = 600) => { g.font = `${weight} ${size}px "Barlow Condensed", "Arial Narrow", sans-serif`; g.fillStyle = color; g.textAlign = align; g.textBaseline = 'middle'; g.fillText(s, x, y); };
 
-function drawICP(g, W, H) {
-  // pupitre ICP-X7000 : rangées de croisements (OLED + touches RVB), zone de transition, menu
-  g.fillStyle = '#23272c'; g.fillRect(0, 0, W, H);
-  rr(g, 8, 8, 170, H - 16, 8, '#15191d');
-  rr(g, 18, 18, 150, 110, 6, '#0d2a4a'); txt(g, 'MENU', 93, 40, 18, '#9ed0ff'); for (let i = 0; i < 4; i++) rr(g, 28 + i * 36, 70, 30, 44, 4, '#174a7a');
-  for (let i = 0; i < 6; i++) rr(g, 22 + (i % 3) * 48, 145 + Math.floor(i / 3) * 40, 40, 30, 4, '#3b4148');
-  txt(g, 'ICP-X7000', 93, H - 30, 18, '#8b949e');
-  const rows = [['KEY1', '#e0b030'], ['AUX', '#3aa0e0'], ['PGM A', '#e04040'], ['PST B', '#30c060']];
-  const x0 = 200, bw = 26, gap = 4;
-  rows.forEach(([lab, col], r) => {
-    const y = 18 + r * 64;
-    txt(g, lab, x0 - 6, y + 34, 13, '#8b949e', 'right');
-    for (let i = 0; i < 20; i++) {
-      const x = x0 + i * (bw + gap);
-      rr(g, x, y, bw, 14, 2, '#0a0c0e'); txt(g, i < 12 ? 'CAM' + (i + 1) : ['EVS A', 'EVS B', 'GFX', 'STU', 'BARS', 'BLK', 'CLN', 'MV'][i - 12], x + bw / 2, y + 7, 9, '#cfe8ff', 'center', 500);
-      const on = (r === 2 && i === 0) || (r === 3 && i === 1) || (r === 1 && i === 5);
-      rr(g, x, y + 18, bw, 26, 4, on ? col : '#3a4047');
-      if (!on) { g.fillStyle = col; g.globalAlpha = 0.35; g.fillRect(x + 3, y + 21, bw - 6, 3); g.globalAlpha = 1; }
-    }
-  });
-  // zone de transition
-  const tx = x0 + 20 * (bw + gap) + 16;
-  rr(g, tx, 14, W - tx - 12, H - 28, 8, '#191d21');
-  for (let i = 0; i < 6; i++) rr(g, tx + 12 + (i % 3) * 46, 26 + Math.floor(i / 3) * 40, 40, 30, 4, ['#e0b030', '#3a4047', '#3a4047', '#e04040', '#3a4047', '#3a4047'][i]);
-  txt(g, 'MIX WIPE DME CLIP', tx + 80, 112, 12, '#8b949e');
-  rr(g, tx + 14, 128, 70, 34, 5, '#5a6068'); txt(g, 'CUT', tx + 49, 145, 16, '#f0f0f0');
-  rr(g, tx + 92, 128, 70, 34, 5, '#c03030'); txt(g, 'AUTO', tx + 127, 145, 16, '#fff');
-  rr(g, tx + 175, 22, 26, H - 50, 8, '#0b0d0f'); rr(g, tx + 165, 70, 46, 22, 4, '#c8ccd0');
-  rr(g, tx + 14, 180, 148, 40, 5, '#3a4047'); txt(g, 'DSK1  DSK2  FTB', tx + 88, 200, 14, '#e0b030');
-}
-function drawRCPRow(g, W, H) {
-  // rangée de RCP-3500 (un par caméra) avec un MSU au milieu
-  g.fillStyle = '#1b1e22'; g.fillRect(0, 0, W, H);
-  const n = 12, uw = 66, gap = 8; const mid = 6;
-  let x = 10;
-  for (let i = 0; i < n; i++) {
-    if (i === mid) { rr(g, x, 6, 120, H - 12, 6, '#262b31'); txt(g, 'MSU', x + 60, 20, 14, '#8b949e'); for (let k = 0; k < 12; k++) rr(g, x + 8 + (k % 4) * 27, 36 + Math.floor(k / 4) * 26, 22, 18, 3, k === 0 ? '#e0b030' : '#3a4047'); x += 128; }
-    rr(g, x, 6, uw, H - 12, 6, '#2b3036');
-    rr(g, x + 6, 12, uw - 12, 34, 3, '#0d2338'); txt(g, 'CAM ' + (i + 1), x + uw / 2, 24, 12, '#9ed0ff'); txt(g, 'F5.6  0dB', x + uw / 2, 38, 10, '#6fa8dc', 'center', 500);
-    rr(g, x + 8, 52, 12, 8, 2, i === 0 ? '#ff3030' : '#3a1515'); rr(g, x + uw - 20, 52, 12, 8, 2, i === 1 ? '#30d060' : '#153a20');
-    ['#d04040', '#40b050', '#4070d0'].forEach((c, k) => { g.beginPath(); g.arc(x + 15 + k * 18, 76, 7, 0, Math.PI * 2); g.fillStyle = '#111'; g.fill(); g.lineWidth = 3; g.strokeStyle = c; g.stroke(); });
-    for (let k = 0; k < 6; k++) rr(g, x + 7 + (k % 3) * 18, 92 + Math.floor(k / 3) * 14, 15, 10, 2, '#4a5058');
-    g.beginPath(); g.arc(x + uw / 2, H - 34, 18, 0, Math.PI * 2); g.fillStyle = '#0c0d0f'; g.fill();
-    g.beginPath(); g.arc(x + uw / 2, H - 34, 8, 0, Math.PI * 2); g.fillStyle = '#c8a040'; g.fill();
-    x += uw + gap;
-  }
-}
-function drawLSM(g, W, H) {
-  // télécommande LSM (Multicam) + clavier et souris IPDirector
+function drawIPD(g, W, H) {
+  // clavier et souris d'IPDirector, conducteur papier (la télécommande LSM est en 3D : poste3d/lsm.js)
   g.fillStyle = '#1e2125'; g.fillRect(0, 0, W, H);
-  rr(g, 10, 8, 420, H - 16, 10, '#2c3036', '#3f454c');
-  rr(g, 22, 16, 230, 34, 4, '#0a1a0c'); txt(g, 'PGM1  CAM A  LIVE', 137, 33, 15, '#8cf0a8', 'center', 500);
-  for (let i = 0; i < 10; i++) rr(g, 22 + i * 23, 58, 19, 16, 3, '#4a5058');
-  for (let r = 0; r < 3; r++) for (let i = 0; i < 5; i++) rr(g, 22 + i * 46, 84 + r * 26, 40, 20, 4, ['#3a4047', '#c08a20', '#30a050', '#3a4047', '#2f6fb0'][(i + r) % 5]);
-  rr(g, 280, 20, 22, H - 44, 8, '#0b0d0f'); rr(g, 270, 60, 42, 18, 4, '#c8ccd0'); txt(g, 'LEVIER', 291, H - 14, 11, '#8b949e');
-  g.beginPath(); g.arc(370, H / 2 + 6, 46, 0, Math.PI * 2); g.fillStyle = '#121416'; g.fill(); g.beginPath(); g.arc(370, H / 2 + 6, 30, 0, Math.PI * 2); g.fillStyle = '#2a2e33'; g.fill(); g.beginPath(); g.arc(385, H / 2 - 6, 5, 0, Math.PI * 2); g.fillStyle = '#e0b030'; g.fill();
-  txt(g, 'LSM · ' + EQUIP.evsModel, 220, H - 14, 12, '#8b949e');
-  // clavier et souris
-  rr(g, 470, 30, 340, 110, 6, '#131517', '#2a2e33');
-  for (let r = 0; r < 5; r++) for (let i = 0; i < 15; i++) rr(g, 478 + i * 22, 38 + r * 20, 19, 16, 2, '#2a2e33');
-  rr(g, 840, 50, 46, 70, 20, '#2a2e33', '#3f454c');
-  txt(g, 'IPDirector', 640, H - 12, 12, '#8b949e');
-  rr(g, 910, 20, 100, H - 40, 4, '#e8e4d8'); for (let i = 0; i < 7; i++) { g.fillStyle = '#9a968c'; g.fillRect(920, 36 + i * 14, 70 - (i % 3) * 12, 2); }
+  rr(g, 40, 50, 400, 130, 6, '#131517', '#2a2e33');
+  for (let r = 0; r < 5; r++) for (let i = 0; i < 16; i++) rr(g, 50 + i * 24, 60 + r * 23, 21, 19, 2, '#2a2e33');
+  rr(g, 480, 80, 52, 80, 22, '#2a2e33', '#3f454c');
+  txt(g, 'IPDirector', 240, H - 26, 16, '#8b949e');
+  rr(g, 640, 30, 150, H - 60, 4, '#e8e4d8'); for (let i = 0; i < 9; i++) { g.fillStyle = '#9a968c'; g.fillRect(655, 50 + i * 18, 110 - (i % 3) * 18, 2); }
 }
 function drawIntercom(g, W, H) {
   g.fillStyle = '#1f2226'; g.fillRect(0, 0, W, H);
@@ -609,11 +557,16 @@ export function buildTruck() {
   // documents de travail : conducteurs et feuilles de poste sur les bureaux
   for (const [lx, lz, y, rot] of [[-4.75, -1.42, 0.77, 0.15], [-2.4, -1.9, 0.77, -0.2], [-1.3, 0.2, 0.77 + EST.h, 0.3], [3.5, -1.9, 0.77, 0.1], [-7.6, -1.7, 0.8, 0.5], [8.45, 0.45, 0.77, 0.2]]) document(lx, lz, y + 0.021, rot);
   // pupitres (textures détaillées)
-  deskPanel('mixer', 1.6, 0.55, -1.25, -1.6, drawICP);
-  deskPanel('director', 0.9, 0.3, -2.9, -1.55, drawIntercom);
+  // pupitre du truquiste en 3D, touche par touche (poste3d/icp.js) : le poste Mélangeur s'y installe (poste3d/melangeur.js)
+  buildMelangeur3D(T.scene, new THREE.Vector3(X(-1.25), F + 0.79, Z(-1.6)));
+  // pupitre d'intercom du réalisateur en 3D (poste3d/icom.js) : le poste intercom s'y installe (poste3d/intercom.js)
+  buildIcom3D(T.scene, new THREE.Vector3(X(-2.9), F + 0.79, Z(-1.5)));
   deskPanel('scripte', 0.9, 0.3, -4.3, -1.55, drawScripte);
-  deskPanel('rcp', 3.0, 0.42, 2.07, -1.6, drawRCPRow);
-  deskPanel('lsm', 2.6, 0.4, 2.25, 0.0, drawLSM, 0.79, 0.16);
+  // rangée de RCP en 3D, un par caméra (poste3d/rcp.js) : le poste vision s'y installe (poste3d/vision.js)
+  buildRcp3D(T.scene, new THREE.Vector3(X(2.07), F + 0.79, Z(-1.6)));
+  // télécommande LSM en 3D (poste3d/lsm.js) : le poste ralentis s'y installe (poste3d/ralentis.js) ; à côté, le clavier d'IPDirector
+  buildLsm3D(T.scene, new THREE.Vector3(X(1.5), F + 0.79, Z(0.05)));
+  deskPanel('ipd', 1.3, 0.4, 2.95, 0.0, drawIPD, 0.79, 0.16);
   // console son en 3D (inspiration Studer Vista 1, 22 faders) posée sur le bureau, face à l'opérateur
   buildAudioDesk(T.scene, new THREE.Vector3(X(-7.22), F + 0.82, Z(-0.45)), Math.PI / 2);
   deskPanel('audioside', 0.9, 0.3, -7.6, 0.75, drawIntercom, 0.83, 0.12, Math.PI / 2);
@@ -725,7 +678,7 @@ function props({ Bp, Bm, Bt, B }) {
   deskStuff(Bp, Bm, Bt, -4.75, 0.77, -1.4, ['pad', 'cup']);
   deskStuff(Bp, Bm, Bt, -3.35, 0.77, -1.35, ['headset']);
   deskStuff(Bp, Bm, Bt, -2.35, 0.77, -1.9, ['cup']);
-  deskStuff(Bp, Bm, Bt, -0.75, 0.77, -1.4, ['beltpack', 'phone']);
+  deskStuff(Bp, Bm, Bt, -2.27, 0.77, -1.42, ['beltpack', 'phone']); // à gauche du pupitre du truquiste
   deskStuff(Bp, Bm, Bt, -4.85, 0.77 + EST.h, 0.15, ['cup', 'pad']);
   deskStuff(Bp, Bm, Bt, -2.3, 0.77 + EST.h, 0.15, ['headset']);
   deskStuff(Bp, Bm, Bt, -1.3, 0.77 + EST.h, 0.2, ['beltpack']);

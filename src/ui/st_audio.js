@@ -147,6 +147,70 @@ const SEND_TXT = {
 const sendBad = (c, b) => (b === 'intl' && c.voice && c.intl) || (b === 'n1' && c.comm && c.n1) || (b === 'nxs' && c.id === 'duplex' && c.nxs) || (b === 'nxb' && c.id === 'bt' && c.nxb);
 
 // ---------------- poste ----------------
+function monTxt(k) { return `Écoute sur ${AU.bus[k].label} : ${{ pgm: 'le programme, ce qui part à l\'antenne.', intl: 'l\'international : ambiance et effets, aucune voix.', n1: 'le N-1 des commentateurs : ce qu\'ils ont dans leur casque. Leurs voix ne doivent pas y être.', nxs: 'le N-1 du studio : ce que le présentateur entend dans son oreillette (tout sauf lui-même).', nxb: 'le N-1 du bord terrain : l\'oreillette de la journaliste.' }[k]}`; }
+
+// ----------------------------------------------------------------------------------
+// Les gestes de la console, communs à la vue 2D (ci-dessous) et à la console en 3D (poste3d/son.js) :
+// chaque geste agit sur le son et s'explique dans le fil « Ce qui se passe ».
+// ----------------------------------------------------------------------------------
+export const AUACT = {
+  fader(c, v) { c.fader = v; if (c.group === 'canon' && AU.autoCanon) { AU.autoCanon = false; explain('Vous avez pris la main sur un canon : l\'assistant de suivi du jeu est coupé.', 'son:auto'); } applyStrip(c); explain(tFader(c), 'son:f' + c.id); },
+  mute(c) { c.mute = !c.mute; applyStrip(c); explain(`${c.short} ${c.mute ? 'coupé (MUTE) : il disparaît du programme et de tous les départs.' : 'rétabli.'}`, 'son:mute'); },
+  pfl(c) { startAudio(); c.pfl = !c.pfl; applyStrip(c); applyBuses(); explain(c.pfl ? `PFL ${c.short} : vous écoutez la tranche seule, avant son fader, sans rien changer à l'antenne. L'écoute bascule sur le bus PFL tant qu'une touche PFL est allumée.` : 'PFL relâché : l\'écoute revient sur le bus choisi.', 'son:pfl'); },
+  sel(c) { AU.sel = c.id; explain(`SEL : ${c.label} s'affiche sur l'écran de la Control Bay, avec toutes ses commandes (patch, égaliseur 4 bandes, dynamique, départs, VCA).`, 'son:sel'); },
+  /** plage du gain d'entrée : préampli micro 0 à +70 dB, sinon ±30 dB autour du gain nominal */
+  gainRange(c) { return c.kind === 'mic' ? [0, 70] : [c.defGain - 30, c.defGain + 30]; },
+  gain(c, v) { c.gain = v; applyStrip(c); explain(tGain(c), 'son:' + c.id + 'in'); },
+  pan(c, v) { c.pan = v; applyStrip(c); explain(tPan(c), 'son:' + c.id + 'pan'); },
+  master(v) { AU.master.fader = v; applyAll(); explain(`Master PGM à ${fdb(v)} dB : il agit sur tout le programme. Surveillez la loudness intégrée (cible −23 LUFS).`, 'son:mpgm'); },
+  vca(k, v) { const o = AU.vca[k]; o.fader = v; applyAll(); explain(`${o.label} à ${fdb(v)} dB : toutes ses tranches bougent ensemble (le VCA agit sur leurs gains, il ne mélange pas le son). Leurs faders ne bougent pas : l'écran montre « V » à côté de leur valeur.`, 'son:m' + k); },
+  monitor(k) { startAudio(); setMonitor(k); explain(monTxt(k), 'son:mon'); },
+  dim() { AU.dim = !AU.dim; applyBuses(); explain(AU.dim ? 'DIM : l\'écoute baisse de 20 dB (pour parler dans la cabine ou répondre à l\'intercom) sans toucher à l\'antenne.' : 'DIM relâché : écoute à niveau normal.', 'son:dim'); },
+  mono() { AU.mono = !AU.mono; applyBuses(); explain(AU.mono ? `Écoute en MONO (G + D) : c'est ainsi que l'entendent les récepteurs mono et beaucoup de smartphones. Une ambiance en opposition de phase y disparaît. Corrélateur actuel : ${fmt(AU.corr, 2)}.` : 'Écoute stéréo rétablie.', 'son:mono'); },
+  /** talkback maintenu vers un N-1 */
+  talkback(k, on) { if (!on) { talkback(k, false); return; } startAudio(); talkback(k, true); explain(`Talkback (maintenu) vers ${AU.bus[k].label} : votre micro d'ordres part dans ce N-1 seulement (${AU.bus[k].dest}). Jamais dans le PGM ni l'international. Écoutez ce N-1 pour entendre le « bip » simulé.`, 'son:tb'); },
+  auto() { AU.autoCanon = !AU.autoCanon; explain(AU.autoCanon ? 'Assistant de suivi du jeu ACTIF (aide du simulateur) : les faders motorisés des six canons suivent le ballon, le plus proche est ouvert. Des automatismes de ce genre existent en production, mais beaucoup d\'ingénieurs du son « suivent le ballon » à la main.' : 'Assistant coupé : à vous de suivre le jeu avec les faders des canons (le canon le plus proche du ballon est indiqué au-dessus de sa tranche).', 'son:auto'); },
+  lim() { AU.master.lim = !AU.master.lim; applyBuses(); explain(AU.master.lim ? 'Limiteur de sortie du PGM actif (−2 dBFS) : il protège la ligne contre les crêtes (un but, une frappe près d\'un canon). Il ne remplace pas un bon mixage : s\'il travaille en permanence, baissez le master.' : 'Limiteur du PGM contourné : une crête peut maintenant saturer le départ.', AU.master.lim ? 'son:lim' : 'warn'); },
+};
+
+/** vumètres de la Control Bay : PGM G/D, international, N-1, corrélation, loudness court terme, limiteur, écoute */
+export function drawMeters(bridge) {
+  const g = bridge.getContext('2d'); const W = bridge.width, H = bridge.height;
+  g.fillStyle = '#05080a'; g.fillRect(0, 0, W, H);
+  g.font = '600 12px system-ui'; g.textBaseline = 'middle';
+  const bars = [['G', AU.master.peakL, '#22c55e'], ['D', AU.master.peakR, '#22c55e'], ['INT', AU.bus.intl.peak], ['N1C', AU.bus.n1.peak], ['N1S', AU.bus.nxs.peak], ['N1B', AU.bus.nxb.peak]];
+  const bx = 6, bw = 22, bh = H - 24;
+  bars.forEach(([l, dbv], i) => {
+    const db = Number(dbv);
+    const x = bx + i * (bw + 7) + (i >= 2 ? 8 : 0);
+    g.fillStyle = '#10161b'; g.fillRect(x, 6, bw, bh);
+    const lv = clamp((db + 60) / 60, 0, 1) * bh;
+    const gr = g.createLinearGradient(0, 6 + bh, 0, 6); gr.addColorStop(0, '#16a34a'); gr.addColorStop(0.7, '#facc15'); gr.addColorStop(0.95, '#ff3b30');
+    g.fillStyle = gr; g.fillRect(x + 2, 6 + bh - lv, bw - 4, lv);
+    g.fillStyle = 'rgba(255,255,255,.6)'; g.fillRect(x, 6 + bh - (42 / 60) * bh, bw, 1);
+    g.fillStyle = (i < 2 ? '#e5e7eb' : '#9fb0bf'); g.textAlign = 'center'; g.fillText(l, x + bw / 2, H - 8);
+  });
+  g.textAlign = 'left';
+  // corrélateur
+  const cx = 196, cw = W - cx - 10;
+  g.fillStyle = '#9fb0bf'; g.fillText('CORRÉLATION G/D', cx, 12);
+  g.fillStyle = '#10161b'; g.fillRect(cx, 20, cw, 14);
+  const pos = cx + (AU.corr + 1) / 2 * cw;
+  g.fillStyle = AU.corr < 0 ? '#ff3b30' : AU.corr < 0.3 ? '#facc15' : '#22c55e'; g.fillRect(Math.min(pos, cx + cw / 2), 22, Math.abs(pos - (cx + cw / 2)), 10);
+  g.fillStyle = '#fff'; g.fillRect(cx + cw / 2, 18, 1, 18);
+  g.fillStyle = '#7b8792'; g.fillText('−1', cx, 42); g.fillText('0', cx + cw / 2 - 3, 42); g.fillText('+1', cx + cw - 14, 42);
+  // loudness court terme vs cible
+  g.fillStyle = '#9fb0bf'; g.fillText('LOUDNESS S (cible −23)', cx, 60);
+  g.fillStyle = '#10161b'; g.fillRect(cx, 68, cw, 14);
+  const lx = (v) => cx + clamp((v + 40) / 30, 0, 1) * cw;
+  g.fillStyle = Math.abs(AU.lufs.s + 23) < 2 ? '#22c55e' : AU.lufs.s > -21 ? '#ff3b30' : '#38bdf8'; g.fillRect(cx, 70, lx(AU.lufs.s) - cx, 10);
+  g.fillStyle = '#fff'; g.fillRect(lx(-23), 66, 2, 18);
+  // limiteur et écoute
+  g.fillStyle = '#9fb0bf'; g.fillText(`LIMITEUR ${AU.master.lim ? '−' + fmt(AU.master.gr, 1) + ' dB' : 'OFF'}`, cx, 102);
+  g.fillText(`ÉCOUTE ${AU.pflActive ? 'PFL' : (MONITORS.find((m) => m[0] === AU.monitor) || [0, AU.monitor])[1]}${AU.mono ? ' · MONO' : ''}${AU.dim ? ' · DIM' : ''}`, cx, 124);
+  g.fillStyle = AU.redLight ? '#ff3b30' : '#3a2222'; g.beginPath(); g.arc(W - 14, 102, 7, 0, Math.PI * 2); g.fill();
+}
+
 export function buildAudio(body, arg, ctx) {
   const ui = { view: 'in', band: 2, layer: 'A', tab: 'console', strips: [], knobs: [], cvs: [] };
   AU.sel = AU.sel || 'amb1';
@@ -155,23 +219,23 @@ export function buildAudio(body, arg, ctx) {
   const bridge = el('canvas', { width: 440, height: 150, class: 'vx-bridge' });
   const monBtns = {};
   const monRow = el('div', { class: 'hwrow' }, el('span', { class: 'rl' }, 'Écoute'));
-  for (const [k, l] of MONITORS) { monBtns[k] = hwBtn(l, { cls: 'small', onclick: () => { startAudio(); setMonitor(k); explain(monTxt(k), 'son:mon'); } }); monRow.appendChild(monBtns[k]); }
-  const dim = hwBtn('DIM', { cls: 'small', onclick: () => { AU.dim = !AU.dim; applyBuses(); explain(AU.dim ? 'DIM : l\'écoute baisse de 20 dB (pour parler dans la cabine ou répondre à l\'intercom) sans toucher à l\'antenne.' : 'DIM relâché : écoute à niveau normal.', 'son:dim'); } });
-  const mono = hwBtn('MONO', { cls: 'small', onclick: () => { AU.mono = !AU.mono; applyBuses(); explain(AU.mono ? `Écoute en MONO (G + D) : c'est ainsi que l'entendent les récepteurs mono et beaucoup de smartphones. Une ambiance en opposition de phase y disparaît. Corrélateur actuel : ${fmt(AU.corr, 2)}.` : 'Écoute stéréo rétablie.', 'son:mono'); } });
+  for (const [k, l] of MONITORS) { monBtns[k] = hwBtn(l, { cls: 'small', onclick: () => AUACT.monitor(k) }); monRow.appendChild(monBtns[k]); }
+  const dim = hwBtn('DIM', { cls: 'small', onclick: () => AUACT.dim() });
+  const mono = hwBtn('MONO', { cls: 'small', onclick: () => AUACT.mono() });
   const pflInd = el('span', { class: 'vx-pfl' }, 'PFL');
   monRow.append(dim, mono, pflInd);
   const tbRow = el('div', { class: 'hwrow' }, el('span', { class: 'rl' }, 'Talkback'));
   const tbBtns = {};
   for (const [k, l] of [['n1', 'TB COMM'], ['nxs', 'TB STUDIO'], ['nxb', 'TB BORD T.']]) {
     const b = hwBtn(l, { cls: 'small' });
-    const down = (e) => { e.preventDefault(); startAudio(); talkback(k, true); explain(`Talkback (maintenu) vers ${AU.bus[k].label} : votre micro d'ordres part dans ce N-1 seulement (${AU.bus[k].dest}). Jamais dans le PGM ni l'international. Écoutez ce N-1 pour entendre le « bip » simulé.`, 'son:tb'); };
-    const up = () => talkback(k, false);
+    const down = (e) => { e.preventDefault(); AUACT.talkback(k, true); };
+    const up = () => AUACT.talkback(k, false);
     b.addEventListener('pointerdown', down); b.addEventListener('pointerup', up); b.addEventListener('pointerleave', up);
     tbBtns[k] = b; tbRow.appendChild(b);
   }
   const red = el('div', { class: 'vx-red', title: 'Lampe rouge de la cabine commentateurs (GPO de la console)' }, 'MICRO OUVERT');
   tbRow.appendChild(red);
-  const auto = hwBtn('SUIVI DU JEU', { cls: 'small', sub: 'canons', onclick: () => { AU.autoCanon = !AU.autoCanon; explain(AU.autoCanon ? 'Assistant de suivi du jeu ACTIF (aide du simulateur) : les faders motorisés des six canons suivent le ballon, le plus proche est ouvert. Des automatismes de ce genre existent en production, mais beaucoup d\'ingénieurs du son « suivent le ballon » à la main.' : 'Assistant coupé : à vous de suivre le jeu avec les faders des canons (le canon le plus proche du ballon est indiqué au-dessus de sa tranche).', 'son:auto'); } });
+  const auto = hwBtn('SUIVI DU JEU', { cls: 'small', sub: 'canons', onclick: () => AUACT.auto() });
   const lufsL = el('div', { class: 'lcd amber vx-lufs' });
   const startBtn = el('button', { class: 'btn primary small', onclick: () => { startAudio(); startBtn.hidden = true; } }, 'Activer le son');
   const cbay = el('div', { class: 'hwpanel vx-cbay' }, el('h3', {}, 'Control Bay · vumètres, écoute, ordres'),
@@ -265,13 +329,13 @@ export function buildAudio(body, arg, ctx) {
         syncs.push(af); sends.appendChild(af);
         scr.append(sends);
       }
-      const sel = vbtn('SEL', '#e5e7eb', () => AU.sel === c.id, () => { AU.sel = c.id; drawDetail(); explain(`SEL : ${c.label} s'affiche sur l'écran de la Control Bay, avec toutes ses commandes (patch, égaliseur 4 bandes, dynamique, départs, VCA).`, 'son:sel'); });
-      const pfl = vbtn('PFL', '#facc15', () => c.pfl, () => { startAudio(); c.pfl = !c.pfl; applyStrip(c); applyBuses(); explain(c.pfl ? `PFL ${c.short} : vous écoutez la tranche seule, avant son fader, sans rien changer à l'antenne. L'écoute bascule sur le bus PFL tant qu'une touche PFL est allumée.` : 'PFL relâché : l\'écoute revient sur le bus choisi.', 'son:pfl'); });
+      const sel = vbtn('SEL', '#e5e7eb', () => AU.sel === c.id, () => { AUACT.sel(c); drawDetail(); });
+      const pfl = vbtn('PFL', '#facc15', () => c.pfl, () => AUACT.pfl(c));
       syncs.push(sel, pfl);
       const meter = el('canvas', { width: 14, height: 150, class: 'vx-meter' });
-      const fd = vfader(() => c.fader, (v) => { c.fader = v; if (c.group === 'canon' && AU.autoCanon) { AU.autoCanon = false; explain('Vous avez pris la main sur un canon : l\'assistant de suivi du jeu est coupé.', 'son:auto'); } applyStrip(c); explain(tFader(c), 'son:f' + c.id); }, col, c.short);
+      const fd = vfader(() => c.fader, (v) => AUACT.fader(c, v), col, c.short);
       const lcd = el('div', { class: 'vx-lcd' });
-      const mute = el('button', { class: 'vx-mute', 'aria-label': 'MUTE ' + c.short, title: 'Couper ' + c.short, onclick: () => { c.mute = !c.mute; applyStrip(c); explain(`${c.short} ${c.mute ? 'coupé (MUTE) : il disparaît du programme et de tous les départs.' : 'rétabli.'}`, 'son:mute'); } }, 'MUTE');
+      const mute = el('button', { class: 'vx-mute', 'aria-label': 'MUTE ' + c.short, title: 'Couper ' + c.short, onclick: () => AUACT.mute(c) }, 'MUTE');
       const s = el('div', { class: 'vx-strip' }, scrib, hint, ico, scr, el('div', { class: 'vx-b2' }, sel, pfl), el('div', { class: 'vx-fsec' }, meter, fd), lcd, mute);
       s.style.setProperty('--g', col);
       s.sync = () => {
@@ -301,7 +365,7 @@ export function buildAudio(body, arg, ctx) {
       const scr = el('div', { class: 'vx-screen master' });
       const syncs = [];
       if (isP) {
-        const lim = vbtn('LIMIT', SEC.dyn, () => AU.master.lim, () => { AU.master.lim = !AU.master.lim; applyBuses(); explain(AU.master.lim ? 'Limiteur de sortie du PGM actif (−2 dBFS) : il protège la ligne contre les crêtes (un but, une frappe près d\'un canon). Il ne remplace pas un bon mixage : s\'il travaille en permanence, baissez le master.' : 'Limiteur du PGM contourné : une crête peut maintenant saturer le départ.', AU.master.lim ? 'son:lim' : 'warn'); });
+        const lim = vbtn('LIMIT', SEC.dyn, () => AU.master.lim, () => AUACT.lim());
         syncs.push(lim);
         scr.append(el('p', {}, 'Bus principal : embedder paire 1-2, loudness.'), lim);
       } else if (isV) {
@@ -552,43 +616,8 @@ export function buildAudio(body, arg, ctx) {
     },
   };
 
-  function drawBridge() {
-    const g = bridge.getContext('2d'); const W = bridge.width, H = bridge.height;
-    g.fillStyle = '#05080a'; g.fillRect(0, 0, W, H);
-    g.font = '600 12px system-ui'; g.textBaseline = 'middle';
-    const bars = [['G', AU.master.peakL, '#22c55e'], ['D', AU.master.peakR, '#22c55e'], ['INT', AU.bus.intl.peak], ['N1C', AU.bus.n1.peak], ['N1S', AU.bus.nxs.peak], ['N1B', AU.bus.nxb.peak]];
-    const bx = 6, bw = 22, bh = H - 24;
-    bars.forEach(([l, dbv], i) => {
-      const db = Number(dbv);
-      const x = bx + i * (bw + 7) + (i >= 2 ? 8 : 0);
-      g.fillStyle = '#10161b'; g.fillRect(x, 6, bw, bh);
-      const lv = clamp((db + 60) / 60, 0, 1) * bh;
-      const gr = g.createLinearGradient(0, 6 + bh, 0, 6); gr.addColorStop(0, '#16a34a'); gr.addColorStop(0.7, '#facc15'); gr.addColorStop(0.95, '#ff3b30');
-      g.fillStyle = gr; g.fillRect(x + 2, 6 + bh - lv, bw - 4, lv);
-      g.fillStyle = 'rgba(255,255,255,.6)'; g.fillRect(x, 6 + bh - (42 / 60) * bh, bw, 1);
-      g.fillStyle = (i < 2 ? '#e5e7eb' : '#9fb0bf'); g.textAlign = 'center'; g.fillText(l, x + bw / 2, H - 8);
-    });
-    g.textAlign = 'left';
-    // corrélateur
-    const cx = 196, cw = W - cx - 10;
-    g.fillStyle = '#9fb0bf'; g.fillText('CORRÉLATION G/D', cx, 12);
-    g.fillStyle = '#10161b'; g.fillRect(cx, 20, cw, 14);
-    const pos = cx + (AU.corr + 1) / 2 * cw;
-    g.fillStyle = AU.corr < 0 ? '#ff3b30' : AU.corr < 0.3 ? '#facc15' : '#22c55e'; g.fillRect(Math.min(pos, cx + cw / 2), 22, Math.abs(pos - (cx + cw / 2)), 10);
-    g.fillStyle = '#fff'; g.fillRect(cx + cw / 2, 18, 1, 18);
-    g.fillStyle = '#7b8792'; g.fillText('−1', cx, 42); g.fillText('0', cx + cw / 2 - 3, 42); g.fillText('+1', cx + cw - 14, 42);
-    // loudness court terme vs cible
-    g.fillStyle = '#9fb0bf'; g.fillText('LOUDNESS S (cible −23)', cx, 60);
-    g.fillStyle = '#10161b'; g.fillRect(cx, 68, cw, 14);
-    const lx = (v) => cx + clamp((v + 40) / 30, 0, 1) * cw;
-    g.fillStyle = Math.abs(AU.lufs.s + 23) < 2 ? '#22c55e' : AU.lufs.s > -21 ? '#ff3b30' : '#38bdf8'; g.fillRect(cx, 70, lx(AU.lufs.s) - cx, 10);
-    g.fillStyle = '#fff'; g.fillRect(lx(-23), 66, 2, 18);
-    // limiteur et écoute
-    g.fillStyle = '#9fb0bf'; g.fillText(`LIMITEUR ${AU.master.lim ? '−' + fmt(AU.master.gr, 1) + ' dB' : 'OFF'}`, cx, 102);
-    g.fillText(`ÉCOUTE ${AU.pflActive ? 'PFL' : (MONITORS.find((m) => m[0] === AU.monitor) || [0, AU.monitor])[1]}${AU.mono ? ' · MONO' : ''}${AU.dim ? ' · DIM' : ''}`, cx, 124);
-    g.fillStyle = AU.redLight ? '#ff3b30' : '#3a2222'; g.beginPath(); g.arc(W - 14, 102, 7, 0, Math.PI * 2); g.fill();
-  }
-  function monTxt(k) { return `Écoute sur ${AU.bus[k].label} : ${{ pgm: 'le programme, ce qui part à l\'antenne.', intl: 'l\'international : ambiance et effets, aucune voix.', n1: 'le N-1 des commentateurs : ce qu\'ils ont dans leur casque. Leurs voix ne doivent pas y être.', nxs: 'le N-1 du studio : ce que le présentateur entend dans son oreillette (tout sauf lui-même).', nxb: 'le N-1 du bord terrain : l\'oreillette de la journaliste.' }[k]}`; }
+  function drawBridge() { drawMeters(bridge); }
+
 }
 // relance du bord terrain : prévenir l'ingénieur du son (au poste) ou par l'intercom
 on('audio', (e) => {
