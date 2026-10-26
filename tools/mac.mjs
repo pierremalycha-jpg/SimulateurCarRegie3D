@@ -116,7 +116,7 @@ if (VERIFIER) {
   if (r.ok.some(([, v]) => !v)) log += r.log;
   const autre = process.arch === 'arm64' ? 'x86_64' : 'arm64';
   if (essaie(() => run('arch', [`-${autre}`, '/usr/bin/true']))) {
-    const r2 = await lanceEtInterroge({ cmd: ['arch', `-${autre}`, serveur], mdp: MDP, cache: CACHE, fenetre: 'Fermez cette fenêtre', dossier: DOSSIER });
+    const r2 = await lanceEtInterroge({ cmd: ['arch', `-${autre}`, serveur], mdp: MDP, cache: CACHE, fenetre: 'Fermez cette fenêtre', dossier: DOSSIER, attente: 180 });
     for (const [n, v] of r2.ok) ok.push([`${autre} : ${n}`, v]);
     if (r2.ok.some(([, v]) => !v)) log += r2.log;
   } else console.log(`—   ${autre} : impossible à lancer sur cette machine (Rosetta absent), vérification sautée`);

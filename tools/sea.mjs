@@ -76,10 +76,11 @@ export async function licences(cache, ou) {
 /**
  * le serveur de l'exécutable lancé pour de vrai (sur cette machine), puis interrogé : écran d'accès,
  * mauvais et bon mot de passe, page, parties, jeu par Internet. Renvoie les contrôles [nom, réussi].
- * @param {{ cmd: string[], mdp: string, cache: string, fenetre: string, dossier?: string }} o
+ * @param {{ cmd: string[], mdp: string, cache: string, fenetre: string, dossier?: string, attente?: number }} o
  *   cmd : l'exécutable (et ce qui le précède, comme arch -x86_64) ; fenetre : ce que le serveur dit
  *   pour s'arrêter (options du double-clic actives) ; dossier : où le serveur doit écrire sa clé, dans
  *   le dossier personnel (HOME, qui pointe ici sur un dossier jetable), sinon dans le dossier courant.
+ *   attente : délai de démarrage en secondes (15 par défaut ; Rosetta traduit d'abord tout l'exécutable).
  * @returns {Promise<{ ok: [string, boolean][], log: string }>}
  */
 export async function lanceEtInterroge(o) {
@@ -93,7 +94,7 @@ export async function lanceEtInterroge(o) {
   const base = `http://127.0.0.1:${port}`;
   const acces = (mdp) => fetch(base + '/api/acces', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ mdp }) });
   try {
-    for (let i = 0; i < 150 && !log.includes('Sur cet ordinateur'); i++) await new Promise((r) => setTimeout(r, 100));
+    for (let i = 0; i < (o.attente || 15) * 10 && !log.includes('Sur cet ordinateur'); i++) await new Promise((r) => setTimeout(r, 100));
     ok.push(['serveur démarré, accès protégé annoncé', log.includes(`http://localhost:${port}`) && log.includes('Accès protégé')]);
     const verrou = await (await fetch(base + '/')).text();
     ok.push(['sans mot de passe : écran « Accès réservé » seulement', verrou.includes('Accès réservé') && !verrou.includes('CARREGIE_LAN') && verrou.length < 1e5]);
