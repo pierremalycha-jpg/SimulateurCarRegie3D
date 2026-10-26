@@ -82,6 +82,8 @@ test('sans mot de passe : écran « Accès réservé », rien d\'autre', async (
   assert.equal(r.status, 200);
   const html = await r.text();
   assert.match(html, /Accès réservé/); assert.match(html, /type="password"/);
+  assert.match(html, /Afficher le mot de passe/);
+  assert.match(html, /version \d+\.\d+\.\d+, fabriquée le \d{1,2} \S+ \d{4} à \d\d:\d\d/, 'l\'écran dit de quand date la copie');
   assert.ok(!html.includes('page secrète') && !html.includes('CARREGIE_LAN'));
   assert.equal((await fetch(base + '/api/parties')).status, 401);
   assert.equal((await fetch(base + '/api/rapport', { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{}' })).status, 401);
@@ -90,6 +92,7 @@ test('sans mot de passe : écran « Accès réservé », rien d\'autre', async (
   assert.equal(await upgrade('Cookie: tiee_acces=0123456789abcdef\r\n'), 403, 'faux jeton refusé');
   const ping = await (await fetch(base + '/api/ping')).json();
   assert.equal(ping.app, 'TIEE Simulator', 'le second double-clic reconnaît le serveur');
+  assert.match(ping.fabrique, /fabriquée le/, 'et sait de quand il date (autre version : ne pas ouvrir sa page)');
 });
 
 test('mauvais mot de passe, autre page web : refusés', async () => {

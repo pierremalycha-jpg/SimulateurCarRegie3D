@@ -63,6 +63,7 @@ const RAPPORT_PAR_MIN = 6;            // envois de comptes rendus par minute et 
 // ---------------- la page du simulateur ----------------
 let PAGE = null; // version autonome : la page est intégrée ici à la construction (tools/build.mjs), chiffrée dans l'exécutable (tools/exe.mjs)
 let LOGO = '';   // logo du BTS (adresse data:) pour l'écran « Accès réservé », intégré par tools/exe.mjs
+let FABRIQUE = ''; // « version …, fabriquée le … » : l'exécutable dit de quand il date (écran d'accès, fenêtre), intégré par tools/protege.mjs
 function loadPage() {
   if (PAGE) return PAGE;
   const f = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'dist', 'index-lan.html');
@@ -137,17 +138,20 @@ label{display:block;font-size:14px;color:var(--muted);margin-bottom:6px}
 input{width:100%;font:inherit;color:var(--fg);background:#04070a;border:1px solid #35485c;padding:10px 12px;outline:none}
 input:focus{border-color:var(--neon);box-shadow:0 0 0 1px rgba(25,211,255,.45),0 0 18px rgba(25,211,255,.2)}
 button{margin-top:14px;width:100%;font:inherit;font-weight:600;color:#001018;background:var(--neon);border:0;padding:11px;cursor:pointer}
+label.voir{display:flex;align-items:center;gap:8px;margin:10px 0 0;cursor:pointer}label.voir input{width:auto;margin:0}
 button:disabled{opacity:.6;cursor:wait}.msg{min-height:1.5em;margin:12px 0 0;color:var(--tally);font-size:14px}
 footer{margin-top:18px;color:var(--muted);font-size:12px;text-align:center}
 </style></head><body><main>
 ${LOGO ? `<img class="logo" src="${LOGO}" alt="BTS Audiovisuel de Saint-Quentin">` : ''}
 <h1>TIEE Simulator</h1><div class="par">BTS Audiovisuel de Saint-Quentin</div>
 <p>Accès réservé. Entrez le mot de passe donné par votre formateur.</p>
-<form id="f"><label for="mdp">Mot de passe</label><input id="mdp" type="password" autocomplete="current-password" required autofocus>
+<form id="f"><label for="mdp">Mot de passe</label><input id="mdp" type="password" autocomplete="current-password" autocapitalize="off" autocorrect="off" spellcheck="false" required autofocus>
+<label class="voir"><input type="checkbox" id="voir"> Afficher le mot de passe</label>
 <button id="ok">Entrer</button><p class="msg" id="msg" role="alert" aria-live="assertive"></p></form>
-<footer>Développé par Pierre MALYCHA · simulation non officielle, sans lien avec le club</footer></main>
+<footer>Développé par Pierre MALYCHA · simulation non officielle, sans lien avec le club${FABRIQUE ? `<br>${FABRIQUE}` : ''}</footer></main>
 <script>
 const f = document.getElementById('f'), m = document.getElementById('mdp'), b = document.getElementById('ok'), msg = document.getElementById('msg');
+document.getElementById('voir').addEventListener('change', (e) => { m.type = e.target.checked ? 'text' : 'password'; m.focus(); });
 f.addEventListener('submit', async (e) => {
   e.preventDefault(); b.disabled = true; msg.textContent = '';
   try {
@@ -347,7 +351,7 @@ const onRequest = (ext) => async (req, res) => {
   const json = (code, obj) => { res.writeHead(code, { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' }); res.end(JSON.stringify(obj)); };
   try {
     // ce serveur répond-il à cette adresse ? (essai du lien direct par l'hôte lui-même)
-    if (req.method === 'GET' && url.pathname === '/api/ping') { json(200, { ok: true, id: INSTANCE, app: 'TIEE Simulator' }); return; }
+    if (req.method === 'GET' && url.pathname === '/api/ping') { json(200, { ok: true, id: INSTANCE, app: 'TIEE Simulator', fabrique: FABRIQUE }); return; }
     if (url.pathname.startsWith('/api/internet')) { await internetApi(req, url, ext, json); return; }
     if (!allowed(req, url, ext)) {
       if (req.method === 'GET' && (url.pathname === '/' || url.pathname === '/index.html')) { res.writeHead(403, { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store' }); res.end(NO_KEY_PAGE); return; }
@@ -454,18 +458,27 @@ function openBrowser(url) {
     c.on('error', () => console.log(`  Ouvrez vous-même ${url} dans votre navigateur.`)); c.unref();
   } catch (e) { console.log(`  Ouvrez vous-même ${url} dans votre navigateur.`); }
 }
-// ce port est-il tenu par un serveur TIEE Simulator déjà lancé (second double-clic) ?
+// ce port est-il tenu par un serveur TIEE Simulator déjà lancé (second double-clic) ? Renvoie sa
+// réponse à /api/ping (dont « fabrique » : de quand il date), ou null
+/** @returns {Promise<{ app: string, fabrique?: string } | null>} */
 const isOurs = (port) => new Promise((res) => {
   const req = http.get({ host: '127.0.0.1', port, path: '/api/ping', timeout: 1500 }, (r) => {
     let b = ''; r.setEncoding('utf8'); r.on('data', (d) => { b += d; });
-    r.on('end', () => { try { res(JSON.parse(b).app === 'TIEE Simulator'); } catch (e) { res(false); } });
+    r.on('end', () => { try { const p = JSON.parse(b); res(p && p.app === 'TIEE Simulator' ? p : null); } catch (e) { res(null); } });
   });
-  req.on('timeout', () => req.destroy()); req.on('error', () => res(false));
+  req.on('timeout', () => req.destroy()); req.on('error', () => res(null));
 });
 let tries = 0;
 server.on('error', async (/** @type {NodeJS.ErrnoException} */ e) => {
   if (e.code === 'EADDRINUSE' && !ASKED) {
-    if (await isOurs(PORT)) {
+    const autre = await isOurs(PORT);
+    // une autre version tourne encore (ancienne copie, autre mot de passe) : ne pas ouvrir sa page
+    if (autre && (autre.fabrique || '') !== FABRIQUE) {
+      console.error(`\n  Une autre version de TIEE Simulator tourne déjà sur cet ordinateur${autre.fabrique ? ` (${autre.fabrique})` : ''}.`);
+      console.error(`  Fermez sa fenêtre${process.platform === 'darwin' ? ' du Terminal' : ''}, puis relancez celle-ci${FABRIQUE ? ` (${FABRIQUE})` : ''}.`);
+      fatal(); return;
+    }
+    if (autre) {
       console.log(`\n  TIEE Simulator tourne déjà sur cet ordinateur : http://localhost:${PORT}`);
       if (OPEN) { console.log('  La page s\'ouvre dans votre navigateur.'); openBrowser(`http://localhost:${PORT}`); }
       setTimeout(() => process.exit(0), EXE ? 4000 : 0);
@@ -489,6 +502,7 @@ server.listen(PORT, '0.0.0.0', () => {
   console.log('  Pour jouer avec quelqu\'un qui est chez lui : dans le simulateur, Jouer > Coopération >');
   console.log('  Ouvrir le salon > « Inviter par Internet ». Le lien à lui envoyer s\'affiche ici et dans le salon.\n');
   if (COFFRE) console.log('  Accès protégé : le mot de passe est demandé dans la page, à chaque navigateur.\n');
+  if (FABRIQUE) console.log(`  TIEE Simulator ${FABRIQUE}.\n`);
   INTERNET = createInternet({ port: PORT, tunnelPort, key: KEY, id: INSTANCE, log: (t) => console.log(`${hhmm()}${t}`) });
   if (NET_AT_START) INTERNET.openDirect();
   if (OPEN) openBrowser(`http://localhost:${PORT}`);
