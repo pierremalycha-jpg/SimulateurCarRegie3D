@@ -152,10 +152,10 @@ function drawNav(nav, /** @type {import('./cours_parcours.js').Go} */ go) {
           ...modulesDe(ch).map((m) => el('li', {}, moduleBtn(m))),
           // les leçons rangées par niveau ; un chapitre en parties (le réseau) garde ses intertitres dans chaque niveau
           ...N.flatMap((n) => [
-            el('li', { class: 'co-niv' + (n.ouvert ? '' : ' ferme') + (n.valide ? ' ok' : ''), role: 'presentation' }, n.ouvert ? (n.valide ? icon('fait') : null) : icon('cadenas'), pastille(n.niveau), el('small', {}, `${n.terminees} / ${n.lecons.length}`)),
+            el('li', { class: 'co-niv' + (n.ouvert ? '' : ' ferme') + (n.valide ? ' ok' : '') }, n.ouvert ? (n.valide ? icon('fait') : null) : icon('cadenas'), pastille(n.niveau), el('small', {}, `${n.terminees} / ${n.lecons.length}`)),
             ...n.lecons.flatMap((id, k) => {
               const L = /** @type {any} */ (lessonById(id)).lesson; const prev = k ? /** @type {any} */ (lessonById(n.lecons[k - 1])).lesson : null;
-              return [L.partie && (!prev || prev.partie !== L.partie) ? el('li', { class: 'co-part', role: 'presentation' }, L.partie) : null, el('li', {}, lesBtn(L, go, o, n.ouvert))].filter(Boolean);
+              return [L.partie && (!prev || prev.partie !== L.partie) ? el('li', { class: 'co-part' }, L.partie) : null, el('li', {}, lesBtn(L, go, o, n.ouvert))].filter(Boolean);
             }),
           ])),
         !ch.lessons.length && !modulesDe(ch).length ? el('p', { class: 'note' }, 'Les leçons arrivent.') : null);
