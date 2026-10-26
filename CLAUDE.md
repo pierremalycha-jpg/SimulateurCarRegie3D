@@ -48,7 +48,9 @@ Tout est en français (code commenté en français, interface, commits).
   un schéma, une manipulation qui calcule vraiment, l'explication, « dans le car », fiches « ? », un quiz
   (banque d'au moins 5 questions à 3 choix, chaque choix faux expliqué ; chaque essai en tire 3, réponses
   mélangées, corrigé à la validation : `drawQuiz`), ses **exercices pratiques** et son article de référence.
-  Ne pas recréer `src/content/cours/` ni `src/ui/cours/`, ni d'onglet Chapitres ou Procédures.
+  Ne pas recréer `src/content/cours/` ni `src/ui/cours/`, ni d'onglet Chapitres ou Procédures. Un long chapitre se
+  range en parties (v19.17 : `PARTIES` de `cours/reseau.js`, champ `partie` des leçons, titres dans le sommaire) ; les
+  calculs des bases du réseau sont dans `cours/ip_calc.js`.
 - **L'entrepôt** (`src/entrepot/`, tuile « L'entrepôt » de Jouer, décidé le 22 octobre 2026) : monter une
   régie mobile de A à Z d'après un cahier des charges. Catalogue de matériel réel (`catalogue/`, un fichier par
   groupe, points non vérifiés dans `averifier`), montage (`build.js`), moteur pur et seul juge de ce qui marche

@@ -394,6 +394,78 @@ Tests :
   « Emmène-moi / Montre-moi » doit mettre en évidence un élément réel de la page, et « Fais-le pour moi » doit faire
   valider l'étape.
 
+## v19.17 : le réseau de A à Z, et en 3D (adresses, diffusion, TCP et UDP, LAN / MAN / WAN, streaming, QoS)
+
+**Pourquoi.** Le chapitre Le réseau partait du car IP (ST 2110) sans poser les bases : l'adresse et le masque,
+l'adresse réseau et la diffusion, TCP et UDP, le streaming, LAN, MAN et WAN, la qualité de service. Les voici, en
+leçons et surtout **en 3D** : chaque notion a une scène où on la voit agir (les bits d'une adresse qui s'allument, une
+diffusion qui inonde son sous-réseau et s'arrête au routeur, un accusé TCP qui revient, un datagramme UDP perdu qui
+laisse un trou, un paquet qui s'enveloppe couche par couche, une file d'attente qui déborde).
+
+**Le chapitre en cinq parties** (23 leçons ; les parties titrent le sommaire et sont rappelées dans le fil d'Ariane,
+`PARTIES` dans `cours/reseau.js`) :
+
+1. **Les bases d'un réseau** : `reseau-modele` (le modèle en couches OSI et TCP/IP, l'encapsulation),
+   `reseau-etendue` (LAN, MAN, WAN, le temps de propagation), `reseau-ethernet` (câbles, débits, SFP, la trame et le
+   MTU), le commutateur, les VLAN ;
+2. **Adresser et acheminer** : l'adresse IP et le masque, `reseau-adresses` (adresse réseau, diffusion, plage,
+   découpage en sous-réseaux, en binaire), `reseau-types` (unicast, diffusion, multicast ; privées, publiques,
+   APIPA, boucle locale, CGNAT, classes historiques, IPv6), `reseau-dhcp-dns`, la passerelle, `reseau-nat` (NAT,
+   ports, pare-feu, redirection) ;
+3. **Transporter : TCP, UDP, streaming** : `reseau-tcp-udp` (ports, poignée de main, accusés, fenêtre,
+   retransmission ; UDP et RTP), `reseau-streaming` (contribution SRT et RIST, RTMP vers une plateforme, HLS et CDN
+   vers le public, NDI), le multicast ;
+4. **Qualité de service et mesures** : `reseau-mesures` (débit, latence, gigue, pertes, budget de retard),
+   `reseau-qos` (DSCP, classes, files, priorité stricte) ;
+5. **Le car IP (ST 2110)** : PTP, essences, paquet, rythme, 2022-7, spine-leaf, NMOS.
+
+Onze leçons nouvelles (57 en tout), chacune avec schéma, manipulation, quiz de six questions (chaque mauvais choix
+expliqué) et rattachement au référentiel ; 23 fiches « ? » (`content/terms_ip.js`, famille « Bases du réseau » et
+nouvelle famille « Streaming et contribution ») ; un thème « Réseau IP : les bases » au glossaire (15 entrées) ; les
+liens leçons ↔ glossaire ↔ postes (réseau, transmission) complétés.
+
+**Six vues 3D de plus** (vingt vues, 132 étapes), dans « Le réseau en 3D » et dans le « Voir en 3D » de chaque leçon
+nouvelle :
+
+| Vue | Ce qu'on y voit |
+| --- | --- |
+| Le modèle en couches : un paquet de bout en bout | Deux piles de quatre couches (noms OSI au choix) ; une image ST 2110, une page web ou un ping descend la pile en s'enveloppant d'en-têtes (RTP, UDP ou TCP, IP, Ethernet), traverse un commutateur qui n'ouvre que la trame, un routeur qui refait la trame, un pare-feu qui lit jusqu'au port, puis remonte ; taille sur le fil et part utile |
+| Adresses, masque et diffusion | Huit machines sur un commutateur ; un écran montre les 32 bits de l'adresse, du masque, de l'adresse réseau (ET logique) et de la diffusion ; le masque (/23 à /27) redécoupe les zones ; une diffusion gardée dans son sous-réseau, ignorée ailleurs, arrêtée par le routeur ; un envoi direct ou par la passerelle ; un portable sans réponse DHCP en 169.254 |
+| Arriver sur le réseau : DHCP et DNS | Un portable qui arrive sans adresse : Discover, Offer, Request, Ack ; le relais DHCP à travers le routeur ; le repli en 169.254 ; une box pirate qui répond plus vite ; le DNS local, puis la chaîne racine → .fr → exemple.fr |
+| TCP et UDP sur un chemin qui perd | Deux voies dans la même zone de pertes : TCP (poignée de main, segments, accusés cumulatifs, fenêtre qui grandit, trois accusés en double et retransmission, délai dépassé) et UDP (le rythme tenu, des trous) ; l'écran de chaque récepteur ; aller-retour et pertes réglables ; le débit de TCP à l'échelle réelle |
+| Du car au monde : LAN, MAN, WAN et streaming | Une carte, pas à l'échelle : le car et le stade (LAN), la boucle de la ville (MAN), la fibre de l'opérateur et le satellite géostationnaire (WAN : ≈ 1,3 ms contre ≈ 240 ms), Internet par la box et sa traduction d'adresses, SRT qui redemande les paquets perdus, RTMP vers une plateforme, HLS et un CDN vers les spectateurs ; le retard au spectateur |
+| La QoS dans un commutateur | Quatre usages (PTP, caméra, intercom, copie de fichiers) vers un même port de sortie, dans un commutateur transparent : une seule file où tout le monde attend et perd, puis une file par classe (DSCP) et la priorité stricte ; marquages, charge, lien 1 ou 10 Gb/s ; pertes et attente par classe, à l'échelle réelle |
+
+**Des calculs vrais.** Les leçons et les vues lisent `cours/ip_calc.js` (pur, testé) : adresse réseau, diffusion,
+plage, découpage, préfixe pour n appareils, type d'adresse (RFC 1918, 3927, 6598, 5771, 4607), portée d'un envoi ;
+encapsulation et taille sur le fil (18 octets d'en-tête et de contrôle Ethernet, 20 de préambule et d'intervalle) ; sérialisation,
+flux par lien ; propagation (5 µs/km dans la fibre), bond géostationnaire ; débit de TCP avec pertes (formule de
+Mathis : ≈ 1,4 Mb/s à 100 ms et 1 % de pertes) et par fenêtre ; pertes UDP ; latence SRT (multiplicateurs de
+l'aller-retour conseillés par Haivision, aller-retour compté à 20 ms au moins) ; files d'attente une file ou
+priorité stricte ; traduction d'adresses et redirection ; gigue RTP (RFC 3550) ; budget de latence. Les chiffres
+qui ne sont que des ordres de grandeur (retard HLS, latence SRT conseillée) le disent.
+
+**La 3D, notion par notion (suite du tableau de la v19.16).** L'adressage passe en 3D : l'écran des bits et la
+diffusion qui reste dans sa zone montrent ce que le calcul seul ne montre pas.
+
+| Notion | 3D ? | Pourquoi |
+| --- | --- | --- |
+| Modèle en couches, encapsulation | Oui | Des enveloppes qui s'emboîtent, des appareils qui n'en ouvrent pas autant |
+| Adresse, masque, adresse réseau, diffusion | Oui (était Non) | Les bits à l'écran, la diffusion qui reste dans son sous-réseau |
+| DHCP, DNS, APIPA | Oui | Des échanges entre machines, la diffusion, le relais |
+| TCP, UDP | Oui | Les accusés qui reviennent, la retransmission, les trous |
+| LAN, MAN, WAN, satellite, Internet, NAT | Oui | Des distances et des chemins |
+| Streaming : SRT, RTMP, HLS, CDN | Oui | Le chemin du car au spectateur, la redemande des pertes |
+| QoS : classes, files, priorité | Oui | Des files d'attente qui se remplissent |
+| Découpage à la main, préfixe pour n appareils | Non | Du calcul : la manipulation de la leçon |
+| Courbe du débit TCP selon les pertes, budget de latence | Non | Courbes et tableaux ; la vue en donne la lecture chiffrée |
+
+Tests : `tests/unit/reseau-bases.test.mjs` (cinq parties, onze leçons et leur vue 3D, fiches, adresses, types,
+encapsulation, propagation, TCP et SRT, QoS, NAT, gigue) ; suites `node tools/e2e.mjs vues3d` (les vingt vues, chaque
+étape) et `cours`.
+
+**Version publiée** : 19.17.0, exécutable Windows et application macOS dans la Release `v19.17.0`.
+
 ## v19.16 : le Cours en 3D (SDI, réseau, ST 2110, synchro, fibre, HF) et dix leçons de plus
 
 **Pourquoi.** Comme la caméra de la v18.5, les notions techniques les plus abstraites se comprennent mieux quand on
@@ -1853,8 +1925,10 @@ node tools/shots.mjs dossier 1280 800 '["vision","hf"]'   # captures de postes
 | `cours/reseau_routage.js` | La décision de routage (même réseau, passerelle, pannes) et la leçon « La passerelle » |
 | `cours/st2110_calc.js`, `cours/reseau_st2110.js` | Les calculs ST 2110 (paquets, débits, modèle -21, tampon du récepteur, 2022-7, spine-leaf) et les six leçons du car IP |
 | `cours/camera_fibre.js`, `content/terms_fibre.js` | Le bilan optique et la leçon « La fibre de la caméra » ; les fiches « ? » des liaisons optiques |
+| `cours/ip_calc.js` | Les calculs des bases du réseau : adresses, diffusion, découpage, types d'adresses, encapsulation, propagation, débit de TCP avec pertes, latence SRT, files de QoS, NAT, gigue, budget de latence |
+| `cours/reseau_bases.js`, `cours/reseau_adresses.js`, `cours/reseau_transport.js`, `cours/reseau_qos.js`, `content/terms_ip.js`, `styles/cours-reseau.css` | Les onze leçons des bases du réseau (couches, LAN / MAN / WAN, Ethernet, adresses, types, DHCP et DNS, NAT, TCP et UDP, streaming, mesures, QoS) rangées par `PARTIES` dans `cours/reseau.js` ; leurs fiches « ? » ; le style des parties du sommaire et des bits |
 | `vues3d/index.js`, `vues3d/orbite.js`, `vues3d/kit.js`, `vues3d/materiel.js`, `styles/vues3d.css` | Le moteur des vues 3D du Cours : second contexte WebGL, orbite, étiquettes, clic sur un objet, panneau (En 3D, La leçon), liste ; matières et pièces, flux animés, appareils et câbles réseau |
-| `vues3d/catalogue.js`, `vues3d/vues/`, `vues3d/l2.js`, `vues3d/l2anim.js` | Les quatorze vues (une par fichier : étapes, commandes, scène) rattachées aux chapitres et aux leçons ; le petit réseau de niveau 2 (table MAC, VLAN, trunk) et son animation |
+| `vues3d/catalogue.js`, `vues3d/vues/`, `vues3d/l2.js`, `vues3d/l2anim.js` | Les vingt vues (une par fichier : étapes, commandes, scène) rattachées aux chapitres et aux leçons ; le petit réseau de niveau 2 (table MAC, VLAN, trunk) et son animation |
 | `camlab/` | Module « La caméra en 3D » : caméra et plateau construits dans le code (`model.js`, `scene.js`), pastilles (`points.js`), 51 notions (`notions/`, une fiche par fichier, registres `ch1.js` … `ch89.js`), schémas (`figs.js`, `figs/`, `figkit.js`), manipulations (`labs.js`, `labs/`, commandes `controls.js`, optique `optics.js`, viseur simulé et traitement de l'image `vf.js`), affichage d'une fiche (`fiche.js`), progression (`progress.js`), quiz de chapitre (`quiz.js`), mise en service notée (`mes.js`) |
 | `entrepot/` | Module « L'entrepôt » (tuile de Jouer) : monter une régie mobile d'après un cahier des charges. Types (`types.js`), catalogue de matériel réel (`catalogue/`, un fichier par groupe : `blackmagic.js`, `panasonic.js`, `ross.js`, `reseau.js`, `divers.js`), montage (`build.js`), moteur (`engine.js`), missions notées (`missions.js`), résultat rendu (`suivi.js`), 3D (`scene.js` ; `scene/` : hall, appareils, câbles, bureau et ordinateur de la Carrière `bureau.js` ; vue en orbite `orbit.js`), panneaux (`ui/` : `stock.js`, `appareil.js`, menus de configuration `ui/config/` un fichier par famille, `synoptique.js`, `reseau.js`, `mission.js`), ouverture, boucle et mode Carrière (`index.js`) |
 | `carriere/` | La Carrière (mode de l'entrepôt) : les épisodes et leurs mails (`mails.js`), la boîte de réception et les missions lues dans la progression, calcul pur (`index.js`), la messagerie du bureau (`ui.js`), les mails qui arrivent et le lancement des missions au car (`installer.js`) |
