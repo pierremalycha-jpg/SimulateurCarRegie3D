@@ -1,0 +1,95 @@
+TIEE SIMULATOR POUR MAC — VERSION À PARTAGER
+============================================
+
+Simulateur 3D de car régie pour la formation des techniciens de captation (BTS Métiers de
+l'audiovisuel, option TIEE), réalisé par le BTS Audiovisuel de Saint-Quentin (lycée
+Henri-Martin), développé par Pierre MALYCHA.
+Simulation non officielle, sans lien avec le club.
+
+Pour macOS 11 (Big Sur) ou plus récent, sur Mac Apple silicon (M1, M2, M3, M4…) comme sur Mac Intel.
+
+
+L'INSTALLER (UNE FOIS)
+----------------------
+   1. Double-cliquez le fichier TIEE-Simulator-mac.dmg : une fenêtre s'ouvre.
+   2. Glissez « TIEE Simulator » sur le dossier « Applications » de cette fenêtre.
+      (Lancée directement depuis la fenêtre du .dmg, l'application vous demande de le faire.)
+   3. Éjectez « TIEE Simulator » dans le Finder (le .dmg ne sert plus).
+
+
+LA PREMIÈRE OUVERTURE
+---------------------
+L'application n'est pas notarisée par Apple : macOS la bloque la première fois. C'est normal.
+
+   macOS 15 (Sequoia) ou plus récent :
+   1. Ouvrez « TIEE Simulator » (dossier Applications). macOS affiche « Apple n'a pas pu
+      confirmer que TIEE Simulator ne contenait pas de logiciel malveillant » : cliquez
+      « Terminé » (surtout pas « Placer dans la corbeille »).
+   2. Menu Pomme > Réglages Système > Confidentialité et sécurité. Tout en bas, à la ligne
+      « TIEE Simulator a été bloqué… », cliquez « Ouvrir quand même », puis donnez le mot de
+      passe de votre session Mac.
+   3. Rouvrez « TIEE Simulator » et cliquez « Ouvrir quand même ».
+
+   macOS 14 (Sonoma) ou plus ancien : clic droit (ou Ctrl + clic) sur « TIEE Simulator »,
+   « Ouvrir », puis « Ouvrir » encore.
+
+Ensuite, l'application s'ouvre d'un double-clic, comme les autres.
+
+En cas de blocage persistant (« l'application est endommagée ») : ouvrez l'application
+Terminal et tapez, puis Entrée :
+      xattr -cr "/Applications/TIEE Simulator.app"
+
+
+JOUER
+-----
+   - Ouvrez « TIEE Simulator » : une fenêtre du Terminal s'ouvre (c'est le serveur), puis le
+     navigateur affiche l'écran « Accès réservé ».
+   - Entrez le mot de passe donné par votre formateur, puis « Entrer » : le simulateur
+     s'ouvre. Le mot de passe est redemandé à chaque lancement et dans chaque navigateur.
+     Après cinq essais manqués, il faut attendre une minute.
+   - Navigateur conseillé : Safari, Chrome, Edge ou Firefox, à jour.
+   - Rien d'autre à installer, pas besoin d'Internet. La progression est enregistrée dans le
+     navigateur.
+   - Laissez la fenêtre du Terminal ouverte pendant que vous jouez. Pour arrêter le simulateur :
+     fermez cette fenêtre (« Terminer » si le Terminal le demande).
+   - Rouvrir l'application pendant qu'elle tourne rouvre simplement la page.
+   - Les comptes rendus de session (dossier « rapports ») et la clé des liens Internet
+     (cle-internet.txt) sont rangés dans le dossier « TIEE Simulator » de votre dossier
+     personnel (Finder > Aller > Départ).
+
+
+JOUER À PLUSIEURS SUR LE RÉSEAU LOCAL
+-------------------------------------
+   - La fenêtre du Terminal affiche l'adresse à donner aux autres joueurs
+     (http://192.168.x.x:8080). Ils l'ouvrent dans leur navigateur (Mac, Windows, Linux,
+     tablette), sans rien installer, sur le même réseau (même box, même Wi-Fi ou même
+     switch), et entrent le mot de passe.
+   - Si le coupe-feu du Mac est activé, il demande s'il faut accepter les connexions entrantes
+     pour « TIEE-Simulator-serveur » : « Autoriser ».
+   - Dans le simulateur : Jouer, En équipe « Coopération », puis « Ouvrir le salon » : créer
+     ou rejoindre une partie, choisir son pseudo et son poste.
+
+
+JOUER PAR INTERNET
+------------------
+Comme sous Windows : dans le salon de l'hôte, « Inviter par Internet ». Le simulateur demande
+à la box d'ouvrir le port (UPnP) ; si elle refuse, « Créer un lien par tunnel » (Cloudflare,
+gratuit, sans compte ; le programme cloudflared est téléchargé la première fois). Envoyez le
+lien affiché (bouton « Copier ») : la personne invitée l'ouvre dans son navigateur et entre le
+mot de passe. Ne publiez pas le lien.
+
+
+POUR BIEN DÉMARRER
+------------------
+   - Trois entrées : Jouer, Cours, Réglages. Pour découvrir : Jouer > le car régie, mode
+     « Car vide » : Olivier, le chef de car, propose la visite guidée. Si l'image saccade,
+     prenez la qualité « Basse » (Réglages). Sur un portable, branchez le secteur.
+   - Clic dans la vue pour diriger le regard à la souris ; Z Q S D pour se déplacer (W A S D
+     sur un clavier QWERTY) ; E pour ouvrir un poste ; Échap pour le refermer.
+   - Tab (ou T) : le téléphone (aller à un poste, missions, cours, tous les outils).
+
+
+CRÉDITS ET LICENCES
+-------------------
+   Ce simulateur utilise three.js (licence MIT). L'application contient Node.js
+   (licence MIT). Textes complets dans LICENCES.txt.

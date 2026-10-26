@@ -1,13 +1,16 @@
 // ----------------------------------------------------------------------------------
-// Icône de l'exécutable Windows (lan/car-regie-3d.ico) : une caméra de plateau or sur fond
-// sombre, bande rouge et tally allumé (sang et or, sans écusson). Dessinée en SVG, rendue par
-// Chromium aux tailles d'une icône Windows, puis assemblée en .ico (images PNG).
-// Le fichier produit est versionné : ne relancer que pour changer le dessin.
+// Icône de l'exécutable Windows (lan/car-regie-3d.ico) et de l'application macOS
+// (lan/car-regie-3d.icns) : une caméra de plateau or sur fond sombre, bande rouge et tally allumé
+// (sang et or, sans écusson). Dessinée en SVG, rendue par Chromium aux tailles de chaque système,
+// puis assemblée en .ico et en .icns (images PNG). Sur macOS, le dessin garde une marge autour
+// (environ 10 % de chaque côté, comme les autres icônes du Dock).
+// Les fichiers produits sont versionnés : ne relancer que pour changer le dessin.
 //   node tools/icon.mjs
 // ----------------------------------------------------------------------------------
 import fs from 'node:fs';
 import path from 'node:path';
 import { playwright } from '../tests/e2e/harness.mjs';
+import { icns, ICNS_TAILLES } from './macapp.mjs';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
 const SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
@@ -28,12 +31,18 @@ const SIZES = [16, 20, 24, 32, 40, 48, 64, 128, 256];
 const { chromium } = await playwright();
 const browser = await chromium.launch();
 const page = await browser.newPage();
-const pngs = [];
-for (const s of SIZES) {
+const rendu = async (svg, s) => {
   await page.setViewportSize({ width: s, height: s });
-  await page.setContent(`<html><body style="margin:0;background:transparent">${SVG.replace('<svg ', `<svg width="${s}" height="${s}" `)}</body></html>`);
-  pngs.push(await page.screenshot({ omitBackground: true, clip: { x: 0, y: 0, width: s, height: s } }));
-}
+  await page.setContent(`<html><body style="margin:0;background:transparent">${svg.replace('<svg ', `<svg width="${s}" height="${s}" `)}</body></html>`);
+  return page.screenshot({ omitBackground: true, clip: { x: 0, y: 0, width: s, height: s } });
+};
+const pngs = [];
+for (const s of SIZES) pngs.push(await rendu(SVG, s));
+// macOS : le dessin (240 sur 256) ramené à 80 % de l'icône
+const SVG_MAC = SVG.replace('viewBox="0 0 256 256"', 'viewBox="-22 -22 300 300"');
+/** @type {Record<number, Buffer>} */
+const mac = {};
+for (const s of ICNS_TAILLES) mac[s] = await rendu(SVG_MAC, s);
 await browser.close();
 
 // format ICO : en-tête, une entrée de 16 octets par image, puis les images PNG
@@ -51,3 +60,7 @@ const ico = Buffer.concat([head, ...pngs]);
 fs.writeFileSync(path.join(ROOT, 'lan/car-regie-3d.ico'), ico);
 fs.writeFileSync(path.join(ROOT, 'test-results/icone-256.png'), pngs[pngs.length - 1]);
 console.log('lan/car-regie-3d.ico', (ico.length / 1024).toFixed(0) + ' KB', SIZES.join(', '));
+const icone = icns(mac);
+fs.writeFileSync(path.join(ROOT, 'lan/car-regie-3d.icns'), icone);
+fs.writeFileSync(path.join(ROOT, 'test-results/icone-mac-512.png'), mac[512]);
+console.log('lan/car-regie-3d.icns', (icone.length / 1024).toFixed(0) + ' KB', ICNS_TAILLES.join(', '));

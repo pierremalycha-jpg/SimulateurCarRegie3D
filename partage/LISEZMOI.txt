@@ -11,6 +11,9 @@ Simulation non officielle, sans lien avec le club.
 
 L'OUVRIR
 --------
+Sur Mac : prenez plutôt TIEE-Simulator-mac.dmg (même page de téléchargement) ; son mode
+d'emploi est dans l'image disque.
+
 D'abord, décompressez l'archive (clic droit > « Extraire tout… ») : le programme ne
 fonctionne pas bien lancé directement depuis le .zip.
 

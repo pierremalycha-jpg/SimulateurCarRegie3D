@@ -1,24 +1,33 @@
-# TIEE-Simulator.exe, construit par GitHub : la page du simulateur chiffrée par le mot de passe
-# (secret TIEE_MDP), l'exécutable signé si un certificat est donné (secrets TIEE_SIGN_CERT,
-# TIEE_SIGN_KEY, et TIEE_SIGN_KEY_MDP si la clé en a un), vérifié (lancé, mot de passe essayé,
-# signature contrôlée par osslsigncode), puis :
-#   · à l'envoi d'une étiquette de version (git tag v19.14.0 && git push origin v19.14.0) :
-#     publié dans les « Releases » du dépôt (exécutable et kit) ;
-#   · lancé à la main (onglet Actions, « Run workflow ») : gardé 30 jours dans les fichiers de l'exécution.
-# Sans le mot de passe, ces fichiers ne donnent rien : l'exécutable ne contient la page que chiffrée.
+# Les versions à partager, construites par GitHub : TIEE-Simulator.exe (Windows, tâche « exe ») et
+# TIEE-Simulator-mac.dmg (macOS, Apple silicon et Intel, tâche « mac »). La page du simulateur y est
+# chiffrée par le mot de passe (secret TIEE_MDP). L'exécutable Windows est signé si un certificat est donné
+# (secrets TIEE_SIGN_CERT, TIEE_SIGN_KEY, et TIEE_SIGN_KEY_MDP si la clé en a un) ; l'application macOS
+# est signée « ad hoc » (sans certificat). Chacun est vérifié (lancé, mot de passe essayé, signature
+# contrôlée), puis :
+#   · à l'envoi d'une étiquette de version (git tag v19.15.0 && git push origin v19.15.0) :
+#     publié dans les « Releases » du dépôt (exécutable, kit, image disque macOS, empreintes) ;
+#   · lancé à la main (onglet Actions, « Run workflow ») : gardé 30 jours dans les fichiers de l'exécution ;
+#     case « essai » cochée : construit et vérifié avec un mot de passe jetable, rien n'est gardé.
+# Sans le mot de passe, ces fichiers ne donnent rien : ils ne contiennent la page que chiffrée.
 # Secrets : Settings → Secrets and variables → Actions → New repository secret (README.md, « Exécutable protégé »).
-name: Exécutable Windows
+name: Versions à partager
 
 on:
   push:
     tags: ['v*']
   workflow_dispatch:
+    inputs:
+      essai:
+        description: 'Essai : mot de passe jetable, rien n’est publié ni gardé (vérifier la construction)'
+        type: boolean
+        default: false
 
 permissions:
   contents: write # publier la version
 
 jobs:
   exe:
+    name: Windows
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -30,35 +39,78 @@ jobs:
       - run: npm ci
       - name: Vérification de la signature (osslsigncode)
         run: sudo apt-get install -y --no-install-recommends osslsigncode
-      - name: Mot de passe présent
+      - name: Mot de passe
         env:
-          TIEE_MDP: ${{ secrets.TIEE_MDP }}
+          MDP: ${{ secrets.TIEE_MDP }}
+          ESSAI: ${{ inputs.essai }}
         run: |
-          if [ -z "$TIEE_MDP" ]; then echo "::error title=Secret manquant::Ajoutez le secret TIEE_MDP (Settings → Secrets and variables → Actions) : l'exécutable chiffre la page avec ce mot de passe."; exit 1; fi
+          if [ "$ESSAI" = "true" ]; then MDP="essai-$(openssl rand -hex 12)"; fi
+          if [ -z "$MDP" ]; then echo "::error title=Secret manquant::Ajoutez le secret TIEE_MDP (Settings → Secrets and variables → Actions) : l'exécutable chiffre la page avec ce mot de passe."; exit 1; fi
+          echo "::add-mask::$MDP"
+          { echo "TIEE_MDP<<FIN_DU_MOT_DE_PASSE"; echo "$MDP"; echo "FIN_DU_MOT_DE_PASSE"; } >> "$GITHUB_ENV"
       - run: npm run build
       - name: Exécutable chiffré, signé, vérifié
         env:
-          TIEE_MDP: ${{ secrets.TIEE_MDP }}
           TIEE_SIGN_CERT: ${{ secrets.TIEE_SIGN_CERT }}
           TIEE_SIGN_KEY: ${{ secrets.TIEE_SIGN_KEY }}
           TIEE_SIGN_KEY_MDP: ${{ secrets.TIEE_SIGN_KEY_MDP }}
         run: node tools/exe.mjs --verifier
-      - name: Empreintes
-        run: cd dist && sha256sum TIEE-Simulator.exe TIEE-Simulator-partage.zip | tee SHA256SUMS.txt
-      - name: Publication de la version
-        if: startsWith(github.ref, 'refs/tags/')
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          gh release create "$GITHUB_REF_NAME" dist/TIEE-Simulator.exe dist/TIEE-Simulator-partage.zip dist/SHA256SUMS.txt \
-            --title "TIEE Simulator $GITHUB_REF_NAME" \
-            --notes "Exécutable Windows protégé par mot de passe (demandez-le à votre formateur). Mode d'emploi : LISEZMOI.txt dans le kit. Empreintes SHA-256 : SHA256SUMS.txt."
-      - if: ${{ !startsWith(github.ref, 'refs/tags/') }}
+      - if: ${{ !inputs.essai }}
         uses: actions/upload-artifact@v4
         with:
-          name: TIEE-Simulator
-          retention-days: 30
+          name: TIEE-Simulator-Windows
+          retention-days: ${{ startsWith(github.ref, 'refs/tags/') && 1 || 30 }} # étiquette : le temps de publier
           path: |
             dist/TIEE-Simulator.exe
             dist/TIEE-Simulator-partage.zip
-            dist/SHA256SUMS.txt
+
+  mac:
+    name: macOS
+    runs-on: macos-15 # Apple silicon ; l'application est universelle (Intel vérifié par Rosetta s'il est là)
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Mot de passe
+        env:
+          MDP: ${{ secrets.TIEE_MDP }}
+          ESSAI: ${{ inputs.essai }}
+        run: |
+          if [ "$ESSAI" = "true" ]; then MDP="essai-$(openssl rand -hex 12)"; fi
+          if [ -z "$MDP" ]; then echo "::error title=Secret manquant::Ajoutez le secret TIEE_MDP (Settings → Secrets and variables → Actions) : l'application chiffre la page avec ce mot de passe."; exit 1; fi
+          echo "::add-mask::$MDP"
+          { echo "TIEE_MDP<<FIN_DU_MOT_DE_PASSE"; echo "$MDP"; echo "FIN_DU_MOT_DE_PASSE"; } >> "$GITHUB_ENV"
+      - run: npm run build
+      - name: Application chiffrée, signée, vérifiée
+        run: node tools/mac.mjs --verifier
+      - if: ${{ !inputs.essai }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: TIEE-Simulator-macOS
+          retention-days: ${{ startsWith(github.ref, 'refs/tags/') && 1 || 30 }} # étiquette : le temps de publier
+          path: dist/TIEE-Simulator-mac.dmg
+
+  publication:
+    if: startsWith(github.ref, 'refs/tags/')
+    needs: [exe, mac]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+      - name: Empreintes
+        run: cd dist && sha256sum TIEE-Simulator.exe TIEE-Simulator-partage.zip TIEE-Simulator-mac.dmg | tee SHA256SUMS.txt
+      - name: Publication de la version
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" dist/TIEE-Simulator.exe dist/TIEE-Simulator-partage.zip dist/TIEE-Simulator-mac.dmg dist/SHA256SUMS.txt \
+            --repo "$GITHUB_REPOSITORY" \
+            --title "TIEE Simulator $GITHUB_REF_NAME" \
+            --notes "Windows : TIEE-Simulator-partage.zip (ou TIEE-Simulator.exe seul). Mac (Apple silicon et Intel, macOS 11 ou plus récent) : TIEE-Simulator-mac.dmg. Protégé par mot de passe (demandez-le à votre formateur). Mode d'emploi : LISEZMOI.txt dans le kit ou l'image disque. Empreintes SHA-256 : SHA256SUMS.txt."

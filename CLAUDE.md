@@ -108,7 +108,8 @@ Tout est en français (code commenté en français, interface, commits).
   arrondies, occlusion cuite) ; une famille de matière = une pièce fusionnée nommée. Le SSAO ne tourne que dans le
   car ; la qualité Basse garde le rendu uni. Suite `node tools/e2e.mjs rendu`, test `tests/unit/matiere.test.mjs`.
 - **Version à partager protégée (v19.14, décidé le 26 octobre 2026, dépôt public)** : seulement
-  `TIEE-Simulator.exe` (`tools/exe.mjs`), plus de fichier HTML dans le kit. La page y est chiffrée par le mot de
+  `TIEE-Simulator.exe` (`tools/exe.mjs`) et, sur Mac (v19.15), `TIEE-Simulator-mac.dmg` (`tools/mac.mjs`, pièces
+  `tools/macapp.mjs`, communes `tools/sea.mjs` ; construit sur un Mac de GitHub), plus de fichier HTML dans le kit. La page y est chiffrée par le mot de
   passe (`lan/coffre.mjs`, serveur protégé `tools/protege.mjs`) : écran « Accès réservé » de `lan/serveur.mjs`, jeton
   par navigateur, rien d'autre servi sans lui. Signature Authenticode par `tools/signature.mjs`. Construction et
   publication par GitHub (`.github/workflows/exe.yml`, secrets `TIEE_MDP`, `TIEE_SIGN_CERT`, `TIEE_SIGN_KEY`). Ne
@@ -136,4 +137,5 @@ Tout est en français (code commenté en français, interface, commits).
   (v19.14 : le dépôt est public, la page construite ne doit pas y être téléchargeable).
 - Livraison : `node tools/build.mjs`, suites E2E touchées, mise à jour de `README.md` (section de version, tableau
   du code) et de `ROADMAP.md`, version dans `package.json`, puis publication de l'artefact et du kit exécutable
-  (`TIEE_MDP=… node tools/exe.mjs --verifier` en local, ou étiquette `v…` poussée : workflow `exe.yml`).
+  (`TIEE_MDP=… node tools/exe.mjs --verifier` en local, `tools/mac.mjs` sur un Mac, ou étiquette `v…` poussée :
+  workflow `exe.yml`, Windows et macOS dans la même Release).
