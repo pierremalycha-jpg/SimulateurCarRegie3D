@@ -54,6 +54,17 @@ test('coffre : le bon mot de passe ouvre, un mauvais ou un coffre modifié non',
   assert.notEqual(c.data, c2.data);
 });
 
+test('coffre : espaces et retour à la ligne aux extrémités ignorés, accents sous toutes leurs formes', async () => {
+  // le secret GitHub collé avec un retour à la ligne : le mot de passe tapé doit quand même ouvrir
+  const c = await chiffrer('bonjour le car', 'régie mobile\n', PETIT);
+  assert.ok(await ouvrir(c, 'régie mobile'));
+  assert.ok(await ouvrir(c, '  régie mobile '));
+  assert.ok(await ouvrir(c, 're\u0301gie mobile'), 'é tapé en deux caractères (e + accent)');
+  assert.equal(await ouvrir(c, 'régiemobile'), null, 'l\'espace du milieu compte');
+  assert.equal(await ouvrir(c, 'Régie mobile'), null, 'les majuscules comptent');
+  assert.ok(mdpRefuse('  ab \n'), 'deux lettres entourées d\'espaces : trop court');
+});
+
 test('mot de passe absent ou trop court refusé à la construction ; court accepté avec un avertissement', () => {
   assert.ok(mdpRefuse('')); assert.ok(mdpRefuse('ab')); assert.ok(mdpRefuse('x'.repeat(300)));
   assert.equal(mdpRefuse('xyz'), ''); assert.ok(mdpFaible('xyz'));

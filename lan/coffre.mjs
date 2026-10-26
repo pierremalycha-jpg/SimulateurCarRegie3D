@@ -20,9 +20,13 @@ const maxmem = (k) => 256 * k.N * k.r + 32 * 1024 * 1024;
 
 /** @typedef {{ v: 1, kdf: 'scrypt', N: number, r: number, p: number, sel: string, iv: string, tag: string, data: string }} Coffre */
 
+/** le mot de passe tel qu'il compte : accents sous une seule forme (NFC), sans espace ni retour à la
+ *  ligne au début ou à la fin (collés par mégarde dans le secret GitHub, ou tapés dans la page) */
+export const mdpNormal = (mdp) => String(mdp).normalize('NFC').trim();
+
 /** clé AES tirée du mot de passe (asynchrone : le serveur continue de répondre pendant le calcul) */
 export function cleDe(mdp, sel, k = KDF) {
-  return new Promise((res, rej) => crypto.scrypt(String(mdp).normalize('NFC'), sel, 32, { N: k.N, r: k.r, p: k.p, maxmem: maxmem(k) }, (e, cle) => (e ? rej(e) : res(cle))));
+  return new Promise((res, rej) => crypto.scrypt(mdpNormal(mdp), sel, 32, { N: k.N, r: k.r, p: k.p, maxmem: maxmem(k) }, (e, cle) => (e ? rej(e) : res(cle))));
 }
 
 /** chiffre un texte (la page) : renvoie le coffre, à intégrer tel quel dans le serveur */
