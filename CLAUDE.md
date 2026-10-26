@@ -72,6 +72,16 @@ Tout est en français (code commenté en français, interface, commits).
   `index.js`), styles `src/styles/camlab-<groupe>.css`. Le moule est vérifié par `tests/unit/camlab.test.mjs`
   (compétences du référentiel, leçon `cours` existante). Notions acquises et quiz : `progress.js`, `quiz.js` ;
   exercice noté « Mise en service » : `mes.js` (exercice pratique `x-camera` de la leçon `camera-systeme`).
+- **Les vues 3D du Cours** (`src/vues3d/`, v19.16, décidé le 26 octobre 2026) : une notion technique qui se
+  comprend mieux en la voyant (câble, appareils, réseau, lieu) a sa vue ; une notion de calcul ou de courbe reste en
+  2D (tableau de pertinence dans le README). Une vue = un fichier de `vues/` (id, chapitre, `lecons`, `etapes` avec
+  `t`, `texte`, `vue`, `reglage`, `lecon` ; `build(ctx)` qui rend `etape`, `update`, `commandes`), inscrite dans
+  `catalogue.js` (`aussi` pour un second chapitre). Elle s'ouvre depuis le sommaire du chapitre (« … en 3D », une
+  seule entrée par chapitre) ou le « Voir en 3D » d'une leçon ; l'écrit reste dans le panneau de droite (onglets En 3D
+  et La leçon). Les lectures chiffrées viennent des modèles purs des leçons (`cours/sdi_mots.js`,
+  `cours/st2110_calc.js`, `vues3d/l2.js`…), pas de valeurs écrites à la main. Matières : `kit.js` (`mat`, `verre`,
+  `eclat` pour ce qui brille ou circule) au-dessus de `matiere()`. Tests `tests/unit/vues3d.test.mjs`, suite
+  `node tools/e2e.mjs vues3d`.
 - **Exercices pratiques** : les parcours d'Olivier (`src/tutor/`) sont rangés dans les leçons par
   `src/cours/exercices.js` (BY_LESSON : chaque exercice une seule fois, test unitaire), avec les exercices notés
   (`x-atelier`, `x-brassage`, `x-reseau`, `x-match`, `x-camera`). Le chef (`src/ui/tutor_ui.js`, touche J) est une
