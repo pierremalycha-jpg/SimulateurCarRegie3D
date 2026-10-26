@@ -338,13 +338,13 @@ function figServices() {
   // DNS
   f.append(rect(250, 40, 210, 150, C.violet), txt(355, 16, 'DNS : un nom → une adresse', 'co-t'));
   f.append(txt(355, 70, 'serveur.chaine.fr ?', 'co-s'), sv('path', { d: 'M355 80 L355 110', stroke: C.violet, strokeWidth: 1.5 }), txt(355, 130, '203.0.113.10', 'co-t'));
-  f.append(txt(355, 160, 'UDP, port 53', 'co-m'), txt(355, 178, 'NMOS : DNS-SD trouve le registre', 'co-m'));
+  f.append(txt(355, 160, 'UDP, port 53', 'co-s'), txt(355, 178, 'NMOS : DNS-SD trouve le registre', 'co-s'));
   // NAT
   f.append(txt(600, 16, 'NAT : sortir sur Internet', 'co-t'));
   f.append(rect(490, 40, 220, 150, C.cyan));
   f.append(txt(600, 64, '192.168.1.20 : 51 000', 'co-s'), txt(600, 84, '192.168.1.21 : 51 000', 'co-s'));
   f.append(sv('path', { d: 'M600 94 L600 118', stroke: C.cyan, strokeWidth: 1.5 }), txt(600, 136, 'box : 86.x.x.x', 'co-t'));
-  f.append(txt(600, 158, 'ports 40 001 et 40 002', 'co-s'), txt(600, 178, 'une adresse publique pour tous', 'co-m'));
+  f.append(txt(600, 158, 'ports 40 001 et 40 002', 'co-s'), txt(600, 178, 'une adresse publique pour tous', 'co-s'));
   return f;
 }
 const MACHINES_NAT = [{ nom: 'PC de la régie', ip: '192.168.1.20' }, { nom: 'Encodeur SRT', ip: '192.168.1.30' }, { nom: 'Téléphone d\'un invité', ip: '192.168.1.57' }];

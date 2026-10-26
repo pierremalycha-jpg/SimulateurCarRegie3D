@@ -46,8 +46,7 @@ await capture('01-modeles');
 
 // ---------------- 2. LAN, MAN, WAN ----------------
 await ouvre('reseau-lan-wan');
-await A.locator('#layer .co-seg[aria-label="Liaison"] button').last().click({ force: true }).catch(() => {});
-await bouton('Liaison', 'Car → satellite'); await A.waitForTimeout(150);
+await bouton('Liaison', 'Satellite'); await A.waitForTimeout(150);
 T.check('satellite : plus de 239 ms d\'aller simple', /^(2[4-9]\d|[3-9]\d\d)/.test((await lecture('Latence aller simple')).replace(/\s/g, '')), await lecture('Latence aller simple'));
 await bouton('Liaison', 'Dans le car'); await A.waitForTimeout(150);
 T.check('dans le car : latence en microsecondes', /µs/.test(await lecture('Latence aller simple')), await lecture('Latence aller simple'));

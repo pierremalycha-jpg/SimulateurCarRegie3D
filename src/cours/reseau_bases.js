@@ -12,7 +12,7 @@ const C = { grey: '#8a949c', amber: '#ffd38a', red: '#ff8a80', green: '#7fd1a0',
 const txt = (x, y, s, cls = 'co-s', anchor = 'middle') => sv('text', { x, y, textAnchor: anchor, class: cls }, s);
 const rect = (x, y, w, h, stroke = C.grey, fill = C.box) => sv('rect', { x, y, width: w, height: h, rx: 3, fill, stroke, strokeWidth: 1.2 });
 const octets = (n) => `${fmtNum(n)} octet${n > 1 ? 's' : ''}`;
-const ms = (v) => (v < 1 ? `${fmtNum(v * 1000, 0)} µs` : v < 10 ? `${fmtNum(v, 2)} ms` : `${fmtNum(v, 0)} ms`);
+const ms = (v) => (v < 1 ? `${fmtNum(v * 1000, v < 0.01 ? 2 : 0)} µs` : v < 10 ? `${fmtNum(v, 2)} ms` : `${fmtNum(v, 0)} ms`);
 const bits = (b) => (b >= 1e9 ? `${fmtNum(b / 1e9, b % 1e9 ? 1 : 0)} Gb/s` : `${fmtNum(b / 1e6, 0)} Mb/s`);
 
 // ======================================================================================
@@ -181,7 +181,7 @@ function demoEchelles(host) {
   const verdict = el('p', { class: 'co-verdict' });
   function update() {
     const e = ECHELLES.find((x) => x.id === sel) || ECHELLES[0], l = latenceEchelle(e);
-    rd.set('Échelle', e.echelle); rd.set('Support', e.support);
+    rd.set('Échelle', `${e.echelle} : ${e.nom}`); rd.set('Support', e.support);
     rd.set('Distance', e.id === 'sat' ? '2 × 35 786 km (montée, descente)' : e.km < 1 ? `${fmtNum(e.km * 1000)} m` : `${fmtNum(e.km)} km`);
     rd.set('Débit (ordre de grandeur)', bits(e.debit)); rd.set('Propagation', ms(l.prop)); rd.set('Sérialisation d\'un paquet de 1 500 octets', ms(l.ser));
     rd.set('Équipements traversés', ms(l.equip)); rd.set('Latence aller simple', ms(l.total)); rd.set('Aller-retour (RTT)', ms(2 * l.total));
@@ -192,7 +192,7 @@ function demoEchelles(host) {
     for (const [v, s] of [[0.01, '10 µs'], [0.1, '100 µs'], [1, '1 ms'], [10, '10 ms'], [100, '100 ms'], [1000, '1 s']]) f.append(sv('line', { x1: lx(v), y1: 6, x2: lx(v), y2: H - 18, stroke: C.line }), txt(lx(v), H - 4, String(s), 'co-m'));
     ECHELLES.forEach((x, i) => {
       const t = latenceEchelle(x).total, y = 10 + i * 26, on = x.id === sel;
-      f.append(txt(x0 - 8, y + 14, `${x.echelle} · ${x.nom.split(' : ')[0].split(' →')[0]}`, on ? 'co-t' : 'co-s', 'end'));
+      f.append(txt(x0 - 8, y + 14, `${x.echelle} · ${x.court}`, on ? 'co-t' : 'co-s', 'end'));
       f.append(sv('rect', { x: x0, y: y + 3, width: Math.max(2, lx(t) - x0), height: 15, rx: 2, fill: on ? C.amber : '#3a4652' }));
     });
     barres.replaceChildren(f);
@@ -202,7 +202,7 @@ function demoEchelles(host) {
       : rtt < 100 ? `Aller-retour de ${ms(rtt)} : la vidéo passe compressée, avec un protocole qui encaisse ce délai (SRT, contribution par l'opérateur). Une intercom se sent un peu.`
         : `Aller-retour de ${ms(rtt)} : on le voit à l'antenne (duplex avec un plateau : questions et réponses se chevauchent). L'intercom et le retour image doivent en tenir compte.`;
   }
-  host.append(el('div', { class: 'co-ctl' }, choice('Liaison', ECHELLES.map((e) => [e.id, e.nom.split(' : ')[0].split(' (')[0], e.nom]), sel, (v) => { sel = v; update(); })), rd.el, barres, verdict);
+  host.append(el('div', { class: 'co-ctl' }, choice('Liaison', ECHELLES.map((e) => [e.id, e.court, e.nom]), sel, (v) => { sel = v; update(); })), rd.el, barres, verdict);
   update();
 }
 

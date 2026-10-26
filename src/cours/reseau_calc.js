@@ -167,13 +167,13 @@ export const bondGeo = () => (2 * ALTITUDE_GEO_KM) / C_KM_S * 1000;
  * installe ; latence : aller simple, propagation et équipements (ordre de grandeur).
  */
 export const ECHELLES = [
-  { id: 'lan', echelle: 'LAN', nom: 'Dans le car : pupitre → baie technique', km: 0.03, support: 'cuivre ou fibre, commutateurs du car', debit: 10e9, equip: 0.01 },
-  { id: 'lan2', echelle: 'LAN', nom: 'Dans le stade : car → caméra, local technique', km: 1, support: 'fibre posée pour le match', debit: 10e9, equip: 0.01 },
-  { id: 'man', echelle: 'MAN', nom: 'Stade → nodal de l\'opérateur, même agglomération', km: 15, support: 'fibre de l\'opérateur', debit: 10e9, equip: 0.1 },
-  { id: 'wan', echelle: 'WAN', nom: 'Lens → régie finale à Paris', km: 250, support: 'fibre de l\'opérateur (le câble suit les routes)', debit: 1e9, equip: 0.5 },
-  { id: 'wan-int', echelle: 'WAN', nom: 'Lens → régie à l\'étranger, par Internet', km: 1500, support: 'Internet (plusieurs opérateurs)', debit: 0.1e9, equip: 5 },
-  { id: 'sat', echelle: 'WAN', nom: 'Car → satellite géostationnaire → téléport', km: 0, support: 'liaison satellite (DSNG)', debit: 0.04e9, equip: 10 },
-  { id: 'cell', echelle: 'WAN', nom: 'Sac à dos 4G/5G (cartes SIM agrégées)', km: 300, support: 'réseau mobile + Internet', debit: 0.02e9, equip: 40 },
+  { id: 'lan', echelle: 'LAN', court: 'Dans le car', nom: 'Dans le car : pupitre → baie technique', km: 0.03, support: 'cuivre ou fibre, commutateurs du car', debit: 10e9, equip: 0.01 },
+  { id: 'lan2', echelle: 'LAN', court: 'Dans le stade', nom: 'Dans le stade : car → caméra, local technique', km: 1, support: 'fibre posée pour le match', debit: 10e9, equip: 0.01 },
+  { id: 'man', echelle: 'MAN', court: 'Stade → nodal', nom: 'Stade → nodal de l\'opérateur, même agglomération', km: 15, support: 'fibre de l\'opérateur', debit: 10e9, equip: 0.1 },
+  { id: 'wan', echelle: 'WAN', court: 'Lens → Paris', nom: 'Lens → régie finale à Paris', km: 250, support: 'fibre de l\'opérateur (le câble suit les routes)', debit: 1e9, equip: 0.5 },
+  { id: 'wan-int', echelle: 'WAN', court: 'Par Internet', nom: 'Lens → régie à l\'étranger, par Internet', km: 1500, support: 'Internet (plusieurs opérateurs)', debit: 0.1e9, equip: 5 },
+  { id: 'sat', echelle: 'WAN', court: 'Satellite', nom: 'Car → satellite géostationnaire → téléport', km: 0, support: 'liaison satellite (DSNG)', debit: 0.04e9, equip: 10 },
+  { id: 'cell', echelle: 'WAN', court: 'Sac 4G/5G', nom: 'Sac à dos 4G/5G (cartes SIM agrégées)', km: 300, support: 'réseau mobile + Internet', debit: 0.02e9, equip: 40 },
 ];
 /** latence aller simple d'une échelle (ms) : propagation + équipements + sérialisation d'un paquet de 1 500 octets */
 export function latenceEchelle(e) {

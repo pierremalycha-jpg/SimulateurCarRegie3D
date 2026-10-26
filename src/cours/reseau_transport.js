@@ -281,7 +281,7 @@ function demoQos(host) {
     r.forEach((c, i) => {
       const y = 8 + i * 30;
       f.append(txt(x0 - 8, y + 16, `${c.nom} (DSCP ${c.dscp})`, 'co-s', 'end'));
-      f.append(sv('rect', { x: x0, y: y + 4, width: Math.max(2, lx(c.attente) - x0), height: 16, rx: 2, fill: c.attente > 100 ? C.red : c.attente > 20 ? C.amber : C.green }), txt(Math.min(x1, lx(c.attente) + 6), y + 16, us(c.attente), 'co-m', 'start'));
+      f.append(sv('rect', { x: x0, y: y + 4, width: Math.max(2, lx(c.attente) - x0), height: 16, rx: 2, fill: c.attente > 100 ? C.red : c.attente > 20 ? C.amber : C.green }), (lx(c.attente) > x1 - 80 ? txt(lx(c.attente) - 6, y + 16, us(c.attente), 'co-bit', 'end') : txt(lx(c.attente) + 6, y + 16, us(c.attente), 'co-m', 'start')));
     });
     f.append(txt(x0, H - 6, 'échelle logarithmique', 'co-m', 'start'));
     fig.replaceChildren(f);
