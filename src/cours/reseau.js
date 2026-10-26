@@ -1,5 +1,6 @@
 // @ts-check
 import { el } from '../util.js';
+import { ROUTAGE } from './reseau_routage.js';
 import { registerChapter } from './index.js';
 import { figure, sv, canvas, slider, choice, readout, fmtNum } from './kit.js';
 
@@ -529,6 +530,7 @@ Ce que l'on en voit en exploitation :
         { q: 'Le RCP 10.1.20.31/24 envoie une commande à une machine 10.1.30.11. Quelle adresse MAC de destination porte la trame qui quitte le RCP ?', choices: [['Celle de la machine 10.1.30.11', 'Elle est dans un autre sous-réseau : le RCP ne la cherche pas par ARP. C\'est son adresse IP qui reste dans le paquet.'], ['FF:FF:FF:FF:FF:FF, l\'adresse de diffusion', 'La diffusion sert à la question ARP ; la commande elle-même part vers une seule machine.'], 'Celle de sa passerelle 10.1.20.1'], answer: 2, why: 'Vu à travers le masque /24, 10.1.30.11 n\'est pas voisine : le RCP remet la trame au routeur. L\'adresse IP de destination reste 10.1.30.11 de bout en bout, mais la MAC de destination est celle de la passerelle ; le routeur refait ensuite une trame vers la machine.' },
       ],
     },
+    ROUTAGE,
     {
       id: 'reseau-multicast', title: 'Multicast et IGMP (car IP, ST 2110)', minutes: '8 min',
       essentials: [

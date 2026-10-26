@@ -102,3 +102,14 @@
   .v3-title { font-size: 15px; }
   .v3-read > div { grid-template-columns: 110px minmax(0, 1fr); }
 }
+
+/* leçons ajoutées avec les vues 3D : trace d'une décision pas à pas, verdict */
+.co-trace { margin: 0; padding-left: 22px; display: grid; gap: 5px; font-size: 14px; line-height: 1.45; max-width: 80ch; }
+.co-verdict { margin: 0; padding: 6px 10px; font: 600 14px var(--f-disp); background: var(--well); border-radius: 3px; border-left: 3px solid var(--line2); }
+.co-verdict.ok { color: #b9f5cf; border-left-color: var(--pvw); } .co-verdict.ko { color: #ffc2bc; border-left-color: var(--tally); }
+.v3-note { margin: 0; font-size: 13px; color: var(--muted); }
+.v3-abos { border-collapse: collapse; font-size: 12.5px; }
+.v3-abos th, .v3-abos td { padding: 3px 6px; text-align: center; border-bottom: 1px solid var(--line); }
+.v3-abos tbody th { text-align: left; font-weight: 600; color: var(--fg); }
+.v3-abos thead th { font: 600 12px var(--f-mono); }
+.v3-abos input { accent-color: var(--accent); width: 16px; height: 16px; }

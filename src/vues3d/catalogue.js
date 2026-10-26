@@ -2,6 +2,11 @@
 import { VUE_SDI_TRAME } from './vues/sdi_trame.js';
 import { VUE_SDI_OEIL } from './vues/sdi_oeil.js';
 import { VUE_SDI_BRASSAGE } from './vues/sdi_brassage.js';
+import { VUE_RESEAU_MAC } from './vues/reseau_mac.js';
+import { VUE_RESEAU_VLAN } from './vues/reseau_vlan.js';
+import { VUE_RESEAU_PASSERELLE } from './vues/reseau_passerelle.js';
+import { VUE_RESEAU_MULTICAST } from './vues/reseau_multicast.js';
+import { VUE_RESEAU_PTP } from './vues/reseau_ptp.js';
 
 // ----------------------------------------------------------------------------------
 // Le catalogue des vues 3D du Cours : chaque vue est un fichier de vues/ (ses étapes, ses commandes,
@@ -32,7 +37,7 @@ import { VUE_SDI_BRASSAGE } from './vues/sdi_brassage.js';
  * @property {(ctx: any) => any} build
  */
 /** @type {Vue3d[]} */
-export const VUES = [VUE_SDI_TRAME, VUE_SDI_OEIL, VUE_SDI_BRASSAGE];
+export const VUES = [VUE_SDI_TRAME, VUE_SDI_OEIL, VUE_SDI_BRASSAGE, VUE_RESEAU_MAC, VUE_RESEAU_VLAN, VUE_RESEAU_PASSERELLE, VUE_RESEAU_MULTICAST, VUE_RESEAU_PTP];
 
 /** nom de l'entrée « … en 3D » de chaque chapitre, dans le sommaire du Cours */
 export const CHAP3D = { sdi: 'Le SDI en 3D', synchro: 'La synchro en 3D', camera: 'La fibre en 3D', reseau: 'Le réseau en 3D', hf: 'La HF en 3D' };
