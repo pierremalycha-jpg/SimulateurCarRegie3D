@@ -99,5 +99,5 @@ T.check('« Vue 2D » : la télécommande à plat revient, avec l\'écran du ser
 await page.click('#station .st-vue');
 await until(page, () => window.__dbg.poste3d.P3D.active, null, 8000);
 await ev(() => window.__dbg.closeStation());
-T.check('en quittant le poste, la caméra de la marche retrouve son cadrage', await until(page, () => window.__dbg.S.mode === 'fps' && (!window.__dbg.pcam.view || !window.__dbg.pcam.view.enabled), null, 5000));
+T.check('en quittant le poste, la caméra de la marche retrouve son cadrage', await until(page, () => window.__dbg.S.mode === 'fps' && (!window.__dbg.pcam.view || !window.__dbg.pcam.view.enabled), null, 5000), JSON.stringify(await ev(() => ({ mode: window.__dbg.S.mode, station: window.__dbg.S.station, view: !!(window.__dbg.pcam.view && window.__dbg.pcam.view.enabled), p3d: window.__dbg.poste3d.P3D.active, lesson: window.__dbg.TUTOR.lesson?.id || null }))));
 await T.finish();
