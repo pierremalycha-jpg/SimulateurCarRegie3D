@@ -20,6 +20,15 @@ const SL = Math.hypot(SLOPE.z1 - SLOPE.z0, SLOPE.y1 - SLOPE.y0), SA = Math.atan2
 const onSlope = (s) => [SLOPE.y0 + (SLOPE.y1 - SLOPE.y0) * s, SLOPE.z0 + (SLOPE.z1 - SLOPE.z0) * s];
 const KNOB_S = [0.36, 0.66]; // position des molettes le long de l'écran (0 = bas, 1 = haut)
 
+/** géométrie de la console dans le repère de DESK.group, pour le poste son en vue 3D (poste3d/son.js) :
+ * tranches, faders, molettes posées sur l'écran (centre du dessus), touches SEL / PFL / MUTE et de la Control Bay */
+export const DESK_GEO = {
+  NS, SX, FADE, masters: [0.42, 0.5],
+  knob(i, j) { const [y, z] = onSlope(KNOB_S[j]); const n = 0.0285; return [SX(i), y + Math.cos(SA) * n, z + Math.sin(SA) * n]; },
+  btn(i, r) { return [SX(i), 0.0855, -0.225 - r * 0.02]; },
+  cb(j) { return [0.29 + (j % 8) * 0.034, 0.0855, -0.225 - Math.floor(j / 8) * 0.026]; },
+};
+
 function tex(w, h) { const c = makeCanvas(w, h); const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8; return { c, g: c.getContext('2d'), t }; }
 
 export function buildAudioDesk(scene, pos, rotY) {

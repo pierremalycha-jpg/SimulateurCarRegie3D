@@ -286,7 +286,7 @@ function updateEVS(dt) {
 // Mélangeur
 // ----------------------------------------------------------------------------------
 export const MIX = {
-  pgm: 1, pst: 2, trans: 'mix', wipe: 0, rate: 20, pos: 0, auto: false, tbar: 0, tbarDir: 1, tbarActive: false,
+  pgm: 1, pst: 2, trans: 'mix', wipe: 0, rate: 20, pos: 0, auto: false, tbar: 0, tbarDir: 1, tbarActive: false, snapStore: false,
   next: { bkgd: true, key1: false },
   key1: { on: false, src: 20, corner: 'tr', size: 0.32 },
   dsk1: { on: false, level: 0, auto: 0, rate: 12 },

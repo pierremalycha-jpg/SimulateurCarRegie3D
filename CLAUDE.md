@@ -107,7 +107,7 @@ Tout est en français (code commenté en français, interface, commits).
   procédurales, triplanaire : pas de texture de fichier) et par un `Builder` en mode `ao` avec `cbox` (arêtes
   arrondies, occlusion cuite) ; une famille de matière = une pièce fusionnée nommée. Le SSAO ne tourne que dans le
   car ; la qualité Basse garde le rendu uni. Suite `node tools/e2e.mjs rendu`, test `tests/unit/matiere.test.mjs`.
-- **Version à partager protégée (v19.10, décidé le 26 octobre 2026, dépôt public)** : seulement
+- **Version à partager protégée (v19.14, décidé le 26 octobre 2026, dépôt public)** : seulement
   `TIEE-Simulator.exe` (`tools/exe.mjs`), plus de fichier HTML dans le kit. La page y est chiffrée par le mot de
   passe (`lan/coffre.mjs`, serveur protégé `tools/protege.mjs`) : écran « Accès réservé » de `lan/serveur.mjs`, jeton
   par navigateur, rien d'autre servi sans lui. Signature Authenticode par `tools/signature.mjs`. Construction et
@@ -133,7 +133,7 @@ Tout est en français (code commenté en français, interface, commits).
 ## Git
 - Auteur des commits : `git -c user.name="Pierre Malycha" -c user.email="pierre.malycha@gmail.com" commit`.
 - Messages en français, sans identifiant de modèle. Commits petits et réguliers ; `dist/` n'est plus versionné
-  (v19.10 : le dépôt est public, la page construite ne doit pas y être téléchargeable).
+  (v19.14 : le dépôt est public, la page construite ne doit pas y être téléchargeable).
 - Livraison : `node tools/build.mjs`, suites E2E touchées, mise à jour de `README.md` (section de version, tableau
   du code) et de `ROADMAP.md`, version dans `package.json`, puis publication de l'artefact et du kit exécutable
   (`TIEE_MDP=… node tools/exe.mjs --verifier` en local, ou étiquette `v…` poussée : workflow `exe.yml`).

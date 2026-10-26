@@ -2,7 +2,7 @@
 # (secret TIEE_MDP), l'exécutable signé si un certificat est donné (secrets TIEE_SIGN_CERT,
 # TIEE_SIGN_KEY, et TIEE_SIGN_KEY_MDP si la clé en a un), vérifié (lancé, mot de passe essayé,
 # signature contrôlée par osslsigncode), puis :
-#   · à l'envoi d'une étiquette de version (git tag v19.10.0 && git push origin v19.10.0) :
+#   · à l'envoi d'une étiquette de version (git tag v19.14.0 && git push origin v19.14.0) :
 #     publié dans les « Releases » du dépôt (exécutable et kit) ;
 #   · lancé à la main (onglet Actions, « Run workflow ») : gardé 30 jours dans les fichiers de l'exécution.
 # Sans le mot de passe, ces fichiers ne donnent rien : l'exécutable ne contient la page que chiffrée.

@@ -20,9 +20,13 @@ import { initGfx, updateGfx } from './gfx.js';
 import { initPipeline, renderPipeline, drawSlots, MIX, meSource, defaultRouting, EVS, P, ROUTER } from './pipeline.js';
 import { AU, updateAudio, applyAll, voiceGain, setMonitor, stripRms, corrNow, faderLin, avOk, setEar, ecoute } from './audio.js';
 import { updateCommentary, CMT } from './commentary.js';
-import { updateAudioDesk } from './audiodesk.js';
+import { updateAudioDesk, DESK } from './audiodesk.js';
 import { $, $$, toast, intercom } from './ui/common.js';
 import { openStation, closeStation, updateStation, ST } from './ui/stations.js';
+import { P3D, renderPoste3D, poste3dVoulu, mirrorSlots } from './poste3d/index.js';
+import { updateMelangeur3D, PUP } from './poste3d/icp.js';
+import { LSMS } from './poste3d/lsm.js';
+import { ICOMS } from './poste3d/icom.js';
 import { initPlan, openPlan, closePlan, renderPlan } from './ui/plan.js';
 import { openGuide, checkMissions, drawMissionCard } from './ui/guide.js';
 import { updateFaults, injectFault, ACTIVE, FAULTS, clearFaults } from './faults.js';
@@ -207,11 +211,18 @@ function step(now) {
     t = pe('vue', t);
     updatePrompt(); updateQuestMarker();
     if (S.inTruck && PL.pos.x - TRUCK.cx < -3) updateAudioDesk(AU, dt, faderLin);
+    if (S.inTruck && Math.abs(PL.pos.x - TRUCK.cx + 1.3) < 4) updateMelangeur3D(dt);
     if (S.inTruck) { pcam.getWorldDirection(DIR); updateTruckView(eyePos(EYE), DIR, AIM.target && AIM.target.kind === 'station' ? AIM.target.id : null, S.time); }
     updateTruckMap(PL);
     t = pe('visée', t);
   } else if (S.mode === 'plan') {
     renderPlan(renderer);
+  } else if (S.mode === 'station' && P3D.active) {
+    // poste en 3D : la vue de l'opérateur devant son pupitre, puis les écrans 2D éventuels (moniteur flottant)
+    renderPoste3D(renderer, pcam, dt);
+    drawSlots(renderer, $$('#station [data-gl], #floatmon [data-gl]'));
+    mirrorSlots(renderer);
+    t = pe('vue', t);
   } else {
     renderer.setClearColor(0x000000, 0); renderer.clear();
     if (S.mode === 'station') drawSlots(renderer, $$('#station [data-gl], #floatmon [data-gl]'));
@@ -259,6 +270,7 @@ window.__dbg.CTRL = CTRL; window.__dbg.MATIERE = MATIERE;
 window.__dbg.jeu = { XP, sfx, JEU, openJournal, currentGoal, renderQuest };
 window.__dbg.tel = { open: openTelephone, close: closeTelephone, state: telDebug };
 window.__dbg.carriere = CARRIERE; window.__dbg.mission = MISSION_RUN;
+window.__dbg.poste3d = { P3D, PUP, DESK, LSMS, ICOMS, voulu: poste3dVoulu };
 // le programme a démarré : le filet du chargement (boot.js) n'a plus à intervenir
 window.__carReady = true;
 initDiagUI();
