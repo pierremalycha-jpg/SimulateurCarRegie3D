@@ -23,6 +23,12 @@
 // (?cle=…, gardée ensuite dans un cookie) : sans elle, rien n'est servi. La clé est gardée dans
 // « cle-internet.txt » à côté du serveur (un lien reste valable d'un lancement à l'autre ; effacer le
 // fichier rend les anciens liens inutilisables).
+//
+// Mot de passe (TIEE-Simulator.exe, lan/coffre.mjs) : dans l'exécutable, la page est chiffrée. Tant
+// qu'un navigateur n'a pas donné le mot de passe, il ne reçoit que l'écran « Accès réservé », et le
+// reste (parties, comptes rendus, WebSocket) lui est refusé. Le premier bon mot de passe ouvre le coffre
+// en mémoire ; chaque navigateur reçoit ensuite un jeton (cookie, perdu à l'arrêt du serveur). Lancé
+// directement (node lan/serveur.mjs, page en clair), le serveur ne demande rien.
 // ----------------------------------------------------------------------------------
 import http from 'node:http';
 import crypto from 'node:crypto';
@@ -33,6 +39,7 @@ import zlib from 'node:zlib';
 import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { createInternet, isPrivateAddr, lanAddresses } from './internet.mjs';
+import { estCoffre, ouvrir, cleDe } from './coffre.mjs';
 
 const argPort = process.argv.indexOf('--port');
 const ASKED = +(argPort > 0 ? process.argv[argPort + 1] : process.env.PORT) || 0; // port imposé
@@ -54,16 +61,22 @@ const RAPPORTS_MAX = 500;             // comptes rendus gardés dans « rapports
 const RAPPORT_PAR_MIN = 6;            // envois de comptes rendus par minute et par adresse
 
 // ---------------- la page du simulateur ----------------
-let PAGE = null; // version autonome : la page est intégrée ici à la construction (tools/build.mjs)
+let PAGE = null; // version autonome : la page est intégrée ici à la construction (tools/build.mjs), chiffrée dans l'exécutable (tools/exe.mjs)
+let LOGO = '';   // logo du BTS (adresse data:) pour l'écran « Accès réservé », intégré par tools/exe.mjs
 function loadPage() {
   if (PAGE) return PAGE;
   const f = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'dist', 'index-lan.html');
   if (!fs.existsSync(f)) { console.error(`Page introuvable : ${f}\nConstruisez-la d'abord : node tools/build.mjs`); process.exit(1); }
   return fs.readFileSync(f, 'utf8');
 }
-const html = loadPage().replace('<!--LAN-->', '<script>window.CARREGIE_LAN = { version: 1 };</script>');
-const htmlBuf = Buffer.from(html, 'utf8');
-const htmlGz = zlib.gzipSync(htmlBuf, { level: 9 });
+const SOURCE = loadPage();
+const COFFRE = estCoffre(SOURCE) ? SOURCE : null; // page chiffrée : mot de passe demandé
+let htmlBuf = null, htmlGz = null; // la page servie (une fois le coffre ouvert, s'il y en a un)
+function setPage(html) {
+  htmlBuf = Buffer.from(String(html).replace('<!--LAN-->', '<script>window.CARREGIE_LAN = { version: 1 };</script>'), 'utf8');
+  htmlGz = zlib.gzipSync(htmlBuf, { level: 9 });
+}
+if (!COFFRE) setPage(SOURCE);
 
 // ---------------- clé des liens Internet ----------------
 const INSTANCE = crypto.randomBytes(8).toString('hex'); // reconnaître ce serveur quand il s'appelle lui-même par Internet
@@ -91,6 +104,78 @@ const NO_KEY_PAGE = Buffer.from(`<!doctype html><html lang="fr"><head><meta char
 <h1 style="font-size:22px">Lien incomplet</h1>
 <p>Cette partie de TIEE Simulator se rejoint avec le lien complet donné par l'hôte : il se termine par <code>?cle=</code> suivi de douze caractères.</p>
 <p>Demandez-lui de vous le renvoyer (bouton « Copier » du salon, « Inviter par Internet »).</p></body></html>`, 'utf8');
+
+// ---------------- mot de passe (page chiffrée) ----------------
+const SESSIONS = new Set();   // jetons des navigateurs qui ont donné le bon mot de passe
+let CLE = null;               // clé du coffre, gardée une fois ouvert pour vérifier les suivants
+const ECHECS = new Map();     // adresse -> essais manqués de la dernière minute
+const ESSAIS_PAR_MIN = 5;
+/** @type {Promise<boolean>} */
+let calcul = Promise.resolve(true); // un seul scrypt à la fois (128 Mo chacun)
+const unlocked = (req) => !COFFRE || SESSIONS.has(cookieOf(req, 'tiee_acces') || '');
+function verifier(mdp) {
+  const run = calcul.then(async () => {
+    if (!CLE) {
+      const o = await ouvrir(COFFRE, mdp); if (!o) return false;
+      CLE = o.cle; setPage(o.html.toString('utf8'));
+      console.log(`${hhmm()}  simulateur déverrouillé`);
+      return true;
+    }
+    return crypto.timingSafeEqual(await cleDe(mdp, Buffer.from(COFFRE.sel, 'base64'), COFFRE), CLE);
+  });
+  calcul = run.catch(() => false);
+  return run;
+}
+const ACCES_PAGE = Buffer.from(`<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>TIEE Simulator · accès réservé</title>
+<style>
+:root{color-scheme:dark;--bg:#070b10;--panel:#0f161e;--line:#22303f;--fg:#eef3f8;--muted:#9fb0c3;--neon:#19d3ff;--tally:#ff3b30}
+*{box-sizing:border-box}body{margin:0;min-height:100vh;display:grid;place-items:center;background:radial-gradient(ellipse at 50% 0,#0d1a26,var(--bg) 70%);color:var(--fg);font:16px/1.5 system-ui,"Segoe UI",sans-serif;padding:16px}
+main{width:100%;max-width:420px;background:var(--panel);border:1px solid var(--line);padding:28px 26px 22px;clip-path:polygon(12px 0,100% 0,100% calc(100% - 12px),calc(100% - 12px) 100%,0 100%,0 12px)}
+.logo{display:block;height:64px;margin:0 auto 14px}h1{margin:0;font-size:26px;letter-spacing:.04em;text-align:center}
+.par{margin:2px 0 20px;text-align:center;color:var(--muted);font-size:14px}p{margin:0 0 14px}
+label{display:block;font-size:14px;color:var(--muted);margin-bottom:6px}
+input{width:100%;font:inherit;color:var(--fg);background:#04070a;border:1px solid #35485c;padding:10px 12px;outline:none}
+input:focus{border-color:var(--neon);box-shadow:0 0 0 1px rgba(25,211,255,.45),0 0 18px rgba(25,211,255,.2)}
+button{margin-top:14px;width:100%;font:inherit;font-weight:600;color:#001018;background:var(--neon);border:0;padding:11px;cursor:pointer}
+button:disabled{opacity:.6;cursor:wait}.msg{min-height:1.5em;margin:12px 0 0;color:var(--tally);font-size:14px}
+footer{margin-top:18px;color:var(--muted);font-size:12px;text-align:center}
+</style></head><body><main>
+${LOGO ? `<img class="logo" src="${LOGO}" alt="BTS Audiovisuel de Saint-Quentin">` : ''}
+<h1>TIEE Simulator</h1><div class="par">BTS Audiovisuel de Saint-Quentin</div>
+<p>Accès réservé. Entrez le mot de passe donné par votre formateur.</p>
+<form id="f"><label for="mdp">Mot de passe</label><input id="mdp" type="password" autocomplete="current-password" required autofocus>
+<button id="ok">Entrer</button><p class="msg" id="msg" role="alert" aria-live="assertive"></p></form>
+<footer>Développé par Pierre MALYCHA · simulation non officielle, sans lien avec le club</footer></main>
+<script>
+const f = document.getElementById('f'), m = document.getElementById('mdp'), b = document.getElementById('ok'), msg = document.getElementById('msg');
+f.addEventListener('submit', async (e) => {
+  e.preventDefault(); b.disabled = true; msg.textContent = '';
+  try {
+    const r = await fetch('api/acces', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ mdp: m.value }) });
+    if (r.ok) { b.textContent = 'Ouverture…'; location.reload(); return; }
+    msg.textContent = (await r.json().catch(() => ({}))).message || 'Accès refusé.';
+  } catch (err) { msg.textContent = 'Le serveur ne répond pas : la fenêtre de TIEE Simulator est-elle encore ouverte ?'; }
+  b.disabled = false; m.select();
+});
+</script></body></html>`, 'utf8');
+async function accesApi(req, res, json) {
+  if (!COFFRE) { json(200, { ok: true }); return; }
+  if (!sameOrigin(req)) { json(403, { ok: false, message: 'Origine refusée.' }); return; }
+  if (!/^application\/json\b/i.test(String(req.headers['content-type'] || ''))) { json(415, { ok: false, message: 'JSON attendu.' }); return; }
+  const addr = req.socket.remoteAddress || '', now = Date.now();
+  const list = (ECHECS.get(addr) || []).filter((t) => now - t < 60000); ECHECS.set(addr, list);
+  if (list.length >= ESSAIS_PAR_MIN) { json(429, { ok: false, message: 'Trop d\'essais manqués : attendez une minute.' }); return; }
+  let mdp = '';
+  try { const b = JSON.parse(await readBody(req, 4096)); if (b && typeof b.mdp === 'string') mdp = b.mdp; } catch (e) { /* illisible : mot de passe vide */ }
+  if (!mdp || mdp.length > 256 || !(await verifier(mdp))) {
+    list.push(now);
+    console.log(`${hhmm()}  mot de passe incorrect (${isLoopback(addr) ? 'cet ordinateur' : addr})`);
+    json(401, { ok: false, message: 'Mot de passe incorrect.' }); return;
+  }
+  const jeton = crypto.randomBytes(24).toString('hex'); SESSIONS.add(jeton);
+  res.writeHead(200, { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store', 'set-cookie': `tiee_acces=${jeton}; Path=/; HttpOnly; SameSite=Lax` });
+  res.end(JSON.stringify({ ok: true }));
+}
 
 // ---------------- parties ----------------
 // partie = { code, created, peers: Map(id -> { id, by, ws, presence, updatedAt }) }
@@ -262,16 +347,22 @@ const onRequest = (ext) => async (req, res) => {
   const json = (code, obj) => { res.writeHead(code, { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' }); res.end(JSON.stringify(obj)); };
   try {
     // ce serveur répond-il à cette adresse ? (essai du lien direct par l'hôte lui-même)
-    if (req.method === 'GET' && url.pathname === '/api/ping') { json(200, { ok: true, id: INSTANCE }); return; }
+    if (req.method === 'GET' && url.pathname === '/api/ping') { json(200, { ok: true, id: INSTANCE, app: 'TIEE Simulator' }); return; }
     if (url.pathname.startsWith('/api/internet')) { await internetApi(req, url, ext, json); return; }
     if (!allowed(req, url, ext)) {
       if (req.method === 'GET' && (url.pathname === '/' || url.pathname === '/index.html')) { res.writeHead(403, { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store' }); res.end(NO_KEY_PAGE); return; }
       json(403, { ok: false, message: 'Clé de la partie absente ou fausse.' }); return;
     }
+    // venu d'Internet avec la clé : elle est gardée dans un cookie (rechargement, mot de passe, WebSocket)
+    const cookie = fromInternet(req, ext) ? { 'set-cookie': `tiee_cle=${KEY}; Path=/; Max-Age=2592000; HttpOnly; SameSite=Lax` } : {};
+    if (req.method === 'POST' && url.pathname === '/api/acces') { await accesApi(req, res, json); return; }
+    if (!unlocked(req)) {
+      if (req.method === 'GET' && (url.pathname === '/' || url.pathname === '/index.html')) { res.writeHead(200, { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store', ...cookie }); res.end(ACCES_PAGE); return; }
+      if (req.method === 'GET' && url.pathname === '/favicon.ico') { res.writeHead(204); res.end(); return; }
+      json(401, { ok: false, message: 'Mot de passe demandé.' }); return;
+    }
     if (req.method === 'GET' && (url.pathname === '/' || url.pathname === '/index.html')) {
       const gz = /\bgzip\b/.test(req.headers['accept-encoding'] || '');
-      // venu d'Internet avec la clé : elle est gardée dans un cookie (rechargement, WebSocket)
-      const cookie = fromInternet(req, ext) ? { 'set-cookie': `tiee_cle=${KEY}; Path=/; Max-Age=2592000; HttpOnly; SameSite=Lax` } : {};
       res.writeHead(200, { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-cache', ...cookie, ...(gz ? { 'content-encoding': 'gzip' } : {}) });
       res.end(gz ? htmlGz : htmlBuf); return;
     }
@@ -303,7 +394,7 @@ const onUpgrade = (ext) => (req, socket) => {
   // trop de connexions (en tout, ou d'une même adresse) : refusé
   const addr = /** @type {import('node:net').Socket} */ (socket).remoteAddress || '';
   const fromAddr = [...CONNS].filter((c) => c.addr === addr).length;
-  const ok = sameOrigin(req) && allowed(req, url, ext);
+  const ok = sameOrigin(req) && allowed(req, url, ext) && unlocked(req);
   if (!ok || CONNS.size >= MAX_CONNS || (!isLoopback(addr) && fromAddr >= MAX_CONNS_IP)) {
     socket.end(`HTTP/1.1 ${ok ? '503 Service Unavailable' : '403 Forbidden'}\r\nConnection: close\r\nContent-Length: 0\r\n\r\n`);
     return;
@@ -328,7 +419,7 @@ const tunnelPort = () => new Promise((res, rej) => {
 });
 let INTERNET = null; // créé une fois le port connu
 async function internetApi(req, url, ext, json) {
-  if (!hostOnly(req, ext)) { json(403, { ok: false, message: 'Réservé à l\'ordinateur de l\'hôte.' }); return; }
+  if (!hostOnly(req, ext) || !unlocked(req)) { json(403, { ok: false, message: 'Réservé à l\'ordinateur de l\'hôte.' }); return; }
   if (req.method === 'GET' && url.pathname === '/api/internet') { json(200, INTERNET.status()); return; }
   if (req.method !== 'POST' || !sameOrigin(req)) { json(405, { ok: false }); return; }
   const act = url.pathname.slice('/api/internet/'.length);
@@ -365,9 +456,9 @@ function openBrowser(url) {
 }
 // ce port est-il tenu par un serveur TIEE Simulator déjà lancé (second double-clic) ?
 const isOurs = (port) => new Promise((res) => {
-  const req = http.get({ host: '127.0.0.1', port, path: '/api/parties', timeout: 1500 }, (r) => {
+  const req = http.get({ host: '127.0.0.1', port, path: '/api/ping', timeout: 1500 }, (r) => {
     let b = ''; r.setEncoding('utf8'); r.on('data', (d) => { b += d; });
-    r.on('end', () => { try { res(Array.isArray(JSON.parse(b).parties)); } catch (e) { res(false); } });
+    r.on('end', () => { try { res(JSON.parse(b).app === 'TIEE Simulator'); } catch (e) { res(false); } });
   });
   req.on('timeout', () => req.destroy()); req.on('error', () => res(false));
 });
@@ -397,6 +488,7 @@ server.listen(PORT, '0.0.0.0', () => {
   console.log(`  ${EXE ? 'TIEE Simulator' : 'Node.js'} dans le pare-feu (réseau privé). ${EXE ? 'Fermez cette fenêtre' : 'Ctrl+C'} pour arrêter.\n`);
   console.log('  Pour jouer avec quelqu\'un qui est chez lui : dans le simulateur, Jouer > Coopération >');
   console.log('  Ouvrir le salon > « Inviter par Internet ». Le lien à lui envoyer s\'affiche ici et dans le salon.\n');
+  if (COFFRE) console.log('  Accès protégé : le mot de passe est demandé dans la page, à chaque navigateur.\n');
   INTERNET = createInternet({ port: PORT, tunnelPort, key: KEY, id: INSTANCE, log: (t) => console.log(`${hhmm()}${t}`) });
   if (NET_AT_START) INTERNET.openDirect();
   if (OPEN) openBrowser(`http://localhost:${PORT}`);

@@ -39,6 +39,7 @@ before(async () => {
   const code = fs.readFileSync(path.join(ROOT, 'lan/serveur.mjs'), 'utf8').replace('let PAGE = null;', () => `let PAGE = ${JSON.stringify(page)};`);
   fs.writeFileSync(path.join(dir, 'serveur.mjs'), code);
   fs.copyFileSync(path.join(ROOT, 'lan/internet.mjs'), path.join(dir, 'internet.mjs'));
+  fs.copyFileSync(path.join(ROOT, 'lan/coffre.mjs'), path.join(dir, 'coffre.mjs'));
   port = await freePort(); base = `http://127.0.0.1:${port}`;
   // faux cloudflared : note la porte du tunnel qu'on lui donne, annonce une adresse, reste en vie
   fs.writeFileSync(path.join(dir, 'faux-cloudflared'), `#!${process.execPath}\nrequire('fs').writeFileSync(${JSON.stringify(path.join(dir, 'cf-args.json'))}, JSON.stringify(process.argv.slice(2)));\nconsole.error('INF |  https://essai-tiee.trycloudflare.com  |');\nsetInterval(() => {}, 1000);\n`);
