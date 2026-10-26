@@ -103,7 +103,7 @@ async function build() {
 
   R = { root, stage, canvas, tags, tip, side, list, bar, sub, title, bList, bTags, bPause, renderer, scene, camera, key, orbit, decor, floor, grid, selBox: box, pm,
     vue: null, inst: null, group: null, etape: 0, labels: [], tagsOn: true, paused: false, sel: null, fluxes: [], tab: 'vue', t: 0,
-    ray: new THREE.Raycaster(), hoverT: 0, panel: null };
+    ray: new THREE.Raycaster(), hoverT: 0, panel: null, /** @type {Record<string, string>} */ lus: {} };
   try { const v = localStorage.getItem(LABEL_KEY); if (v === '0') R.tagsOn = false; } catch (e) { /* stockage indisponible */ }
   setTags(R.tagsOn);
   orbit.onTap = (e) => select(pick(e));
@@ -162,7 +162,7 @@ function makeCtx(group) {
     /** un message dans le panneau (« Ce qui se passe ») */
     say(text) { if (R.panel && R.panel.say) R.panel.say(text); },
     /** une lecture chiffrée du panneau (clé déclarée dans vue.lectures) */
-    read(k, v) { if (R.panel && R.panel.read) R.panel.read(k, v); },
+    read(k, v) { R.lus[k] = v; if (R.panel && R.panel.read) R.panel.read(k, v); },
     /** l'étape en cours, et y aller */
     etape: () => R.etape, goEtape: (i) => goEtape(i),
     /** décrit un objet dans le panneau, comme un clic */
@@ -174,7 +174,7 @@ function disposeVue() {
   try { if (R.inst.dispose) R.inst.dispose(); } catch (e) { console.error(e); }
   R.scene.remove(R.group); libere(R.group);
   for (const L of R.labels) L.el.remove();
-  R.labels = []; R.fluxes = []; R.inst = null; R.group = null; R.vue = null; R.sel = null; R.selBox.visible = false; R.panel = null;
+  R.labels = []; R.fluxes = []; R.inst = null; R.group = null; R.vue = null; R.sel = null; R.selBox.visible = false; R.panel = null; R.lus = {};
 }
 /** ouvre une vue (à l'étape donnée) */
 function showVue(id, etape = 0) {
@@ -226,7 +226,8 @@ function renderSide() {
   const live = el('p', { class: 'v3-live', role: 'status', 'aria-live': 'polite' });
   const reads = vue.lectures && vue.lectures.length ? el('dl', { class: 'v3-read' }) : null;
   const readVals = {};
-  if (reads) for (const k of vue.lectures) { readVals[k] = el('dd', {}, '—'); reads.append(el('div', {}, el('dt', {}, k), readVals[k])); }
+  // les lectures déjà écrites (pendant la construction de la scène, ou avant un changement d'onglet) sont reprises
+  if (reads) for (const k of vue.lectures) { readVals[k] = el('dd', {}, R.lus[k] ?? '—'); reads.append(el('div', {}, el('dt', {}, k), readVals[k])); }
   const selBox = el('section', { class: 'v3-sel', hidden: true, 'aria-label': 'Objet choisi' });
   let cmds = null;
   try { cmds = R.inst.commandes ? R.inst.commandes() : null; } catch (e) { console.error(e); }
