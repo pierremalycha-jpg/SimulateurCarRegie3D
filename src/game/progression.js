@@ -1,5 +1,5 @@
 // @ts-check
-import { S, on } from '../state.js';
+import { S, on, emit } from '../state.js';
 import { PROG } from '../shared.js';
 import { award, bump, BAREME, checkBadges } from './xp.js';
 import { lessonById, progressOf } from '../tutor/engine.js';
@@ -7,7 +7,9 @@ import { MISSIONS } from '../ui/guide.js';
 import { NET_MISSIONS } from '../net/course.js';
 import { STATION_INFO } from '../content/stations.js';
 import { DESTS } from '../app/teleport.js';
-import { lessonById as coursLesson } from '../cours/index.js';
+import { lessonById as coursLesson, CHAPTERS } from '../cours/index.js';
+import { etatNiveaux, testPasse, niveauInfo } from '../cours/parcours.js';
+import { SEUIL_EXO, SEUIL_PARFAIT } from '../cours/exo.js';
 import { NOTIONS } from '../camlab/notions/index.js';
 import { MISSIONS as EP_MISSIONS } from '../entrepot/missions.js';
 
@@ -27,7 +29,20 @@ export function installProgression() {
     // refait : seulement sans « Fais-le pour moi » (refaire un exercice que le chef fait à notre place ne rapporte rien)
     if (!first && !p.aided) award({ pts: BAREME.exerciceRefait, label: 'Exercice refait seul : ' + name });
   });
-  on('quiz', (e) => { if (!e || e.score !== e.total) return; const L = coursLesson(e.id); award({ key: 'quiz:' + e.id, pts: BAREME.quiz, label: 'Leçon acquise : ' + (L ? L.lesson.title : e.id) }); });
+  on('quiz', (e) => { if (!e || e.score !== e.total) return; const L = coursLesson(e.id); award({ key: 'quiz:' + e.id, pts: BAREME.quiz, label: 'Leçon acquise : ' + (L ? L.lesson.title : e.id) }); niveaux(); });
+  // le parcours du Cours : l'exercice en autonomie (réussi, puis à trois étoiles), le test de niveau, le niveau validé
+  on('coursExo', (e) => {
+    if (!e || e.score < SEUIL_EXO) return;
+    const L = coursLesson(e.id); const t = L ? L.lesson.title : e.id;
+    award({ key: 'exo:' + e.id, pts: BAREME.exoCours, label: 'Exercice réussi : ' + t });
+    if (e.score >= SEUIL_PARFAIT && e.seul) award({ key: 'exo3:' + e.id, pts: BAREME.exoParfait, label: 'Trois étoiles : ' + t });
+    niveaux();
+  });
+  on('niveauTest', (e) => {
+    if (!e || !testPasse(e.score, e.total)) return;
+    const ch = CHAPTERS.find((c) => c.id === e.chapitre);
+    award({ key: 'test:' + e.chapitre + ':' + e.niveau, pts: BAREME.testNiveau, label: `Test réussi : niveau ${niveauInfo(e.niveau).titre} ouvert (${ch ? ch.title : e.chapitre})` });
+  });
   on('camlab', (e) => {
     if (!e) return;
     if (e.type === 'notion' && e.score === e.total) award({ key: 'notion:' + e.id, pts: BAREME.notion, label: 'Notion acquise : ' + (NOTIONS[e.id] ? NOTIONS[e.id].t : e.id) });
@@ -58,6 +73,12 @@ export function installProgression() {
   // le poste compte tout de suite pour les badges (la progression n'est copiée qu'à l'enregistrement)
   on('station', (id) => { PROG.visited[id] = true; award({ key: 'poste:' + id, pts: BAREME.poste, label: 'Poste découvert : ' + (STATION_INFO[id] ? STATION_INFO[id].title : id) }); });
   on('teleport', (i) => { const d = DESTS[i]; if (d && !d[4]) award({ key: 'lieu:' + i, pts: BAREME.lieu, label: 'Endroit découvert : ' + d[0] }); });
+  // un niveau validé par ses leçons rapporte ses points une fois (game/xp.js) et prévient le Cours (« niveau »)
+  function niveaux() {
+    for (const ch of CHAPTERS) for (const n of etatNiveaux(ch.id, PROG)) {
+      if (n.ok && award({ key: 'niveau:' + ch.id + ':' + n.niveau.id, pts: BAREME.niveau, label: `Niveau ${n.niveau.titre} validé : ${ch.title}` })) emit('niveau', { chapitre: ch.id, niveau: n.niveau.id });
+    }
+  }
   // un état qui change sans événement (missions réussies, visites) : les badges sont revérifiés de temps en temps
   setInterval(() => { if (S.mode !== 'start') checkBadges(); }, 4000);
 }

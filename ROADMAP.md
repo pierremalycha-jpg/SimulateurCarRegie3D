@@ -27,6 +27,7 @@ Calendrier indicatif, calé sur l'année scolaire (les épreuves ont lieu en mai
 | Postes en 3D, lots 4 et 5 | nov. 2026 – janv. 2027 (proposé) | Lot 4 : les baies (CCU, grille, synchro, brassage avec cordons tirés en 3D, mesure, HF, transmission), face avant puis face arrière. Lot 5 : les postes « à écran » (réalisateur, scripte, habillage, production, chef de car, IPDirector, réseau) : la vue assise, l'interface 2D dans l'écran de l'ordinateur |
 | v19.16 | oct. 2026 (fait) | Le Cours en 3D : quatorze vues (90 étapes) avec leur panneau d'explications (onglets En 3D et La leçon), ouvertes depuis le sommaire d'un chapitre (« … en 3D ») ou le « Voir en 3D » d'une leçon : le SDI (trame dans le coaxial, œil, BNC et brassage), la synchro (genlock), la fibre de la caméra, le réseau (table MAC, VLAN, passerelle, multicast, PTP), le ST 2110 (essences, paquet et rythme, rouge et bleu en spine-leaf), la HF dans le stade ; dix leçons de plus (du mot au bit, la passerelle, six leçons du car IP dans Le réseau, la fibre de la caméra). Reste : d'autres vues si les classes les demandent (grille et matrice, adressage IP restent en 2D, jugés mieux ainsi) |
 | v19.17 | oct. 2026 (fait) | Le réseau de A à Z : le chapitre rangé en cinq parties (bases, adresser et acheminer, transporter, QoS et mesures, car IP), onze leçons de plus (modèle en couches, LAN / MAN / WAN, Ethernet, adresse réseau et diffusion, types d'adresses, DHCP et DNS, NAT, TCP et UDP, streaming SRT / RIST / RTMP / HLS / NDI, mesures, QoS), 23 fiches « ? », calculs purs `cours/ip_calc.js` ; six vues 3D de plus (vingt, 132 étapes) : couches et encapsulation, adresses et diffusion, DHCP et DNS, TCP et UDP, du LAN au WAN et au streaming, QoS. Reste : IPv6 en 3D si les classes le demandent ; un exercice noté de plan d'adressage |
+| v19.18 | oct. 2026 (fait) | Le Cours en parcours, à la façon de Duolingo : chaque chapitre est une catégorie faite de niveaux (Débutant, Intermédiaire, Avancé, Expert ; 57 leçons, 29 niveaux) qui s'ouvrent l'un après l'autre ; chaque leçon se termine par son quiz et un exercice en autonomie (57 exercices, valeurs tirées à chaque essai, deux aides et la solution qui coûtent des points, score sur 100, étoiles) ; un niveau s'ouvre quand ses leçons sont terminées avec une moyenne de 70 sur 100, ou par un test de niveau (80 %) ; « Mon parcours » propose les fondamentaux d'abord ; tout est ouvert au profil Formateur. Reste : relire le rangement par niveau et les seuils avec une classe, faire relire les chiffres signalés (README) |
 | v19.15 | oct. 2026 (fait) | L'application macOS : `TIEE-Simulator-mac.dmg` (Apple silicon et Intel, macOS 11+), même protection par mot de passe que l'exécutable Windows, construite et vérifiée sur un Mac de GitHub, publiée dans la même Release ; case « essai » du workflow (mot de passe jetable). Reste : notariser l'application (certificat Developer ID d'Apple) pour supprimer l'étape « Ouvrir quand même » |
 | v19.14 | oct. 2026 (fait) | Un exécutable protégé, construit par GitHub : la page chiffrée par un mot de passe (scrypt + AES-256-GCM), écran « Accès réservé » à chaque lancement et dans chaque navigateur, signature Authenticode horodatée (certificat de l'établissement ou d'une autorité), publication dans les Releases à chaque étiquette de version ; plus de fichier HTML à partager. Reste : décider si le dépôt redevient privé (le code source public permet de reconstruire sans mot de passe), un certificat reconnu par Windows (SmartScreen) |
 | v19.13 | oct. 2026 (fait) | Postes en 3D, lot 3 : la télécommande LSM des ralentis (touches F, angles, bloc opérationnel, levier de vitesse, molette jog ; à droite EVS A, EVS B, programme et écran du serveur) et le pupitre d'intercom du réalisateur (TALK et LISTEN par canal, afficheurs, micro ; à droite le journal de l'intercom et l'état du pupitre) |
@@ -70,6 +71,11 @@ et 30 images par seconde sur le PC le plus faible de l'établissement.
   route ; l'entrepôt devient un mode à part. Le chef de car n'est plus une entrée : ses parcours sont les
   exercices pratiques des leçons du Cours, et sa présentation du car devient le mode « Visite guidée ».
 
+- 26 octobre 2026 (v19.18) : le Cours se fait en **parcours**, comme Duolingo : par catégorie (le chapitre), des
+  niveaux Débutant, Intermédiaire, Avancé, Expert, ouverts l'un après l'autre ; une leçon se termine par son quiz et un
+  exercice en autonomie où l'aide coûte des points ; le niveau suivant demande les leçons terminées et une moyenne de
+  70 sur 100, ou un test de niveau ; au profil Étudiant, on passe d'abord par les fondamentaux, le profil Formateur
+  voit tout. Les exercices pratiques dans le car restent dans leur leçon, Jouer reste libre.
 - 25 octobre 2026 (v19.9) : tout ce qui n'est pas dans le décor passe par un **téléphone** qu'on lève devant soi,
   comme dans un GTA ou un Schedule 1 : un smartphone en 3D tenu en main, dont les applications ouvrent les outils
   (rangées dans les trois familles : le car, le Cours, les réglages). Il remplace le pupitre et les boutons du HUD :
@@ -110,6 +116,10 @@ et 30 images par seconde sur le PC le plus faible de l'établissement.
 - R8 (25 octobre 2026) : les postes en 3D. Vue 3D par défaut (2D en mode allégé et en qualité Basse), ou 2D par
   défaut et 3D au choix ? Mesurer d'abord sur le PC le plus faible : au poste en 3D, le car est rendu comme en
   marchant. Faire relire la disposition des pupitres (photos du vrai matériel de l'établissement, R4).
+
+- R9 (26 octobre 2026) : le parcours du Cours. Le rangement des 57 leçons par niveau (`cours/parcours.js`) et les seuils
+  (exercice réussi à 60, moyenne de 70 pour ouvrir un niveau, test à 80 %) sont une première proposition : à essayer
+  avec une classe. Faut-il aussi un exercice pratique dans le car pour valider les niveaux Avancé et Expert ?
 
 - R1 : la place d'un lieu « Nodal et régie finale » (technicien de trafic, technicien de régie finale,
   responsable nodal), proposé par le rattachement, avant ou à la place de la salle de concert.

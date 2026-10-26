@@ -68,3 +68,18 @@ test('import : les fichiers qui ne sont pas une progression sont refusés, avec 
     assert.match(r.error, why);
   }
 });
+
+test('v3 → v4 : l\'exercice en autonomie des leçons et les tests de niveau, fusionnés entre deux appareils', () => {
+  assert.equal(PROG_VERSION, 4);
+  const p = migrateProgress({ v: 3, missions: {}, cours: { a: { seen: true, quiz: null, exo: 'abîmé' }, b: { seen: true, quiz: null, exo: { best: 80, seul: true, n: 2 } } }, niveaux: { reseau: { intermediaire: { score: 9, total: 10 }, avance: 'abîmé' }, sdi: 4 } });
+  assert.equal(p.v, 4);
+  assert.equal(p.cours.a.exo, undefined, 'un exercice abîmé est retiré');
+  assert.equal(p.cours.b.exo.best, 80);
+  assert.deepEqual(p.niveaux, { reseau: { intermediaire: { score: 9, total: 10 } } });
+  PROG.cours = { 'signal-422': { seen: true, quiz: null, exo: { best: 70, seul: false, n: 3, at: 5 } } };
+  /** @type {any} */ (PROG).niveaux = { sdi: { avance: { score: 4, total: 6 } } };
+  mergeProgress({ cours: { 'signal-422': { seen: true, quiz: { score: 3, total: 3 }, exo: { best: 55, seul: true, n: 1, at: 9 } }, 'signal-bits': { seen: true, quiz: null, exo: { best: 90, seul: true, n: 1, at: 2 } } }, niveaux: { sdi: { avance: { score: 5, total: 6 } }, reseau: { expert: { score: 10, total: 12 } } } });
+  assert.deepEqual(/** @type {any} */ (PROG.cours['signal-422']).exo, { best: 70, seul: true, n: 3, at: 9 }, 'meilleur score d\'ici, réussi seul là-bas');
+  assert.equal(/** @type {any} */ (PROG.cours['signal-bits']).exo.best, 90);
+  assert.deepEqual(/** @type {any} */ (PROG).niveaux, { sdi: { avance: { score: 5, total: 6 } }, reseau: { expert: { score: 10, total: 12 } } });
+});

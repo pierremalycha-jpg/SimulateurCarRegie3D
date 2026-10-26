@@ -99,9 +99,9 @@ test('fusion et mise en forme : la date la plus ancienne gagne, une Carrière ab
 });
 
 test('progression : v2 → v3, la Carrière se fusionne entre deux appareils, le badge « Embauché »', () => {
-  assert.equal(PROG_VERSION, 3);
+  assert.ok(PROG_VERSION >= 3);
   const p = migrateProgress({ v: 2, missions: {}, carriere: { recus: 'abîmé' } });
-  assert.equal(p.v, 3);
+  assert.equal(p.v, PROG_VERSION);
   assert.deepEqual(p.carriere, { recus: {}, lus: {} });
   assert.equal(migrateProgress({ v: 2, missions: {} }).carriere, undefined, 'pas commencée : rien n\'est ajouté');
   const P = /** @type {any} */ (PROG);

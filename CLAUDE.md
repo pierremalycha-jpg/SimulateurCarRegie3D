@@ -44,11 +44,18 @@ Tout est en français (code commenté en français, interface, commits).
   progression, `kit.js` pour les schémas et manipulations, un fichier par chapitre, liste dans `all.js`, ordre
   dans `ORDER`, liens avec le glossaire et les postes dans `liens.js`). L'affichage est `src/ui/cours_ui.js`
   dans l'espace plein écran `src/ui/layer.js` : barre Leçons · Glossaire · Postes · Matériel, un seul sommaire
-  (à gauche), la page « Mon suivi » (progression, à faire ensuite, livret). Une leçon = l'essentiel (3 lignes),
+  (à gauche), la page « Mon parcours » (la suite, les catégories, livret). Une leçon = l'essentiel (3 lignes),
   un schéma, une manipulation qui calcule vraiment, l'explication, « dans le car », fiches « ? », un quiz
   (banque d'au moins 5 questions à 3 choix, chaque choix faux expliqué ; chaque essai en tire 3, réponses
   mélangées, corrigé à la validation : `drawQuiz`), ses **exercices pratiques** et son article de référence.
-  Ne pas recréer `src/content/cours/` ni `src/ui/cours/`, ni d'onglet Chapitres ou Procédures. Un long chapitre se
+  Ne pas recréer `src/content/cours/` ni `src/ui/cours/`, ni d'onglet Chapitres ou Procédures. **Le parcours** (v19.18,
+  décidé le 26 octobre 2026, façon Duolingo) : chaque chapitre est une catégorie dont les leçons sont rangées en niveaux
+  Débutant, Intermédiaire, Avancé, Expert (`cours/parcours.js`, table `PARCOURS` : toute nouvelle leçon y prend sa
+  place) ; un niveau s'ouvre quand le précédent est validé (leçons terminées, moyenne des exercices ≥ 70) ou par un test
+  de niveau ; une leçon se termine par son quiz puis son **exercice en autonomie** (`cours/exo.js`, un fichier par
+  chapitre dans `cours/exos/` : valeurs tirées, deux aides et la solution qui coûtent des points ; toute nouvelle leçon
+  a le sien, test unitaire) ; « Mon parcours » (`ui/cours_parcours.js`) remplace « Mon suivi » ; au profil Formateur
+  tout est ouvert. Suite `node tools/e2e.mjs parcours`. Un long chapitre se
   range en parties (v19.17 : `PARTIES` de `cours/reseau.js`, champ `partie` des leçons, titres dans le sommaire) ; les
   calculs des bases du réseau sont dans `cours/ip_calc.js`.
 - **L'entrepôt** (`src/entrepot/`, tuile « L'entrepôt » de Jouer, décidé le 22 octobre 2026) : monter une

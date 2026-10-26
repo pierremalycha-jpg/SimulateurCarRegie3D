@@ -394,6 +394,81 @@ Tests :
   « Emmène-moi / Montre-moi » doit mettre en évidence un élément réel de la page, et « Fais-le pour moi » doit faire
   valider l'étape.
 
+## v19.18 : le Cours en parcours, à la façon de Duolingo (niveaux, exercices en autonomie, test de niveau)
+
+**Pourquoi.** Tout le Cours était ouvert d'un coup : un étudiant qui arrivait pouvait commencer par le ST 2110 sans
+savoir ce qu'est une adresse IP. Le Cours devient un **parcours** : chaque catégorie (un chapitre : la vidéo, le SDI,
+le réseau…) se fait par **niveaux**, Débutant, Intermédiaire, Avancé, Expert ; un niveau s'ouvre quand le précédent
+est validé, et chaque leçon se termine par son **quiz** et un **exercice en autonomie** où l'aide se paie en points.
+On commence donc par les fondamentaux, puis on monte.
+
+**Les catégories et leurs niveaux** (`cours/parcours.js`, table `PARCOURS` : c'est là que le formateur change le
+niveau d'une leçon ; 57 leçons, 29 niveaux) :
+
+| Catégorie | Débutant | Intermédiaire | Avancé | Expert |
+| --- | --- | --- | --- | --- |
+| Le signal vidéo numérique | formats et cadences, 8 ou 10 bits, 4:2:2 | niveaux 0–100 % | espaces de couleur, HDR | |
+| Le SDI | le SDI, connecteurs et brassage | grille, audio embarqué | falaise, œil | du mot au bit |
+| La synchro | le timecode | le genlock | | |
+| La caméra | la chaîne caméra | le montage | la fibre | |
+| La réalisation | le mélangeur, le langage du direct | les incrustations | | |
+| Les ralentis | le serveur ralenti | clips et playlists | | |
+| Le son | la tranche | N-1 et synchro labiale | | |
+| Le réseau | couches, LAN / MAN / WAN, Ethernet, commutateur, adresse IP | VLAN, adresses et diffusion, types d'adresses, DHCP et DNS, passerelle, TCP et UDP | NAT, streaming, multicast, mesures, QoS, PTP | ST 2110, paquet, rythme, 2022-7, spine-leaf, NMOS |
+| La HF | fréquences, antennes | bilan de liaison | COFDM | |
+| L'exploitation | l'intercom | line-up, transmission, dépannage | régie mobile | le jour de match |
+
+**Une leçon en trois étapes** (en tête de la leçon, avec ses étoiles) : **Apprendre** (l'essentiel, le schéma, la
+manipulation, l'explication, « dans le car », les fiches « ? »), le **quiz** (3 sur 3, comme avant), puis
+l'**exercice en autonomie** (60 sur 100). Une étoile pour le quiz, une pour l'exercice réussi, la troisième pour
+l'exercice à 90 sur 100 (presque sans aide). Les exercices pratiques dans le car (Olivier) viennent ensuite, pour
+aller plus loin : ils comptent toujours pour « consolidée » au livret.
+
+**L'exercice en autonomie** (`cours/exo.js`, un fichier par chapitre dans `cours/exos/`, affichage
+`ui/cours_exo.js`) : une situation du car, trois à cinq questions posées une à une, avec **des valeurs tirées à chaque
+essai** (refaire, c'est refaire avec d'autres chiffres). Quatre sortes de questions : un nombre à calculer (débit,
+code, affaiblissement, latence…, écrit à la française ou non), un choix dans une situation, une réponse à écrire (une
+adresse, un timecode, un nom), des étapes à remettre dans l'ordre (line-up, DHCP, montage d'une caméra…). Les réponses
+se calculent avec les modèles purs des leçons (`ip_calc.js`, `st2110_calc.js`, `sdi_mots.js`…), pas à la main.
+Chaque question a **deux aides graduées** (un indice, puis la méthode : −25 % de la question chacune) et sa
+**solution** (la question ne rapporte alors rien) ; une erreur coûte 25 % (50 % sur un choix, pour qu'on ne réussisse
+pas en cliquant au hasard), une erreur prévue est expliquée, la même erreur n'est comptée qu'une fois. Le bilan donne
+le score sur 100 et le détail par question.
+
+**Ouvrir le niveau suivant** : toutes les leçons du niveau terminées (quiz et exercice réussis) et une **moyenne des
+exercices d'au moins 70 sur 100** : un niveau fait en demandant toutes les solutions ne passe pas ; on refait alors
+l'exercice le plus faible avec moins d'aide (« Mon parcours » le propose). Le **test de niveau** permet de sauter ce que
+l'on sait déjà : six à douze questions tirées des quiz des leçons sautées, 80 % de bonnes réponses ; les leçons sautées
+restent à faire pour leurs étoiles et le livret. Au profil **Formateur**, tout est ouvert.
+
+**À l'écran** (`ui/cours_parcours.js`, `styles/cours-parcours.css`) :
+
+- **Mon parcours** (l'accueil du Cours) : la leçon à faire ensuite, toujours prise dans le niveau le plus bas de toutes
+  les catégories (tous les Débutant, puis les Intermédiaire…), quatre compteurs (leçons terminées, étoiles, niveaux
+  validés, compétences), une tuile par catégorie (niveau atteint, échelle des quatre niveaux, étoiles), l'exercice
+  pratique à faire dans le car et le livret ;
+- **le chemin d'un chapitre** : niveau par niveau, les leçons en lacets, un disque par leçon (fait, à faire, fermé),
+  ses étoiles, et au bout de chaque niveau ce qu'il faut pour ouvrir le suivant ; un niveau fermé propose son test ;
+- **le sommaire** range chaque chapitre par niveau, avec ses cadenas (le réseau garde les titres de ses parties) ;
+- une leçon d'un niveau fermé (atteinte par une fiche « ? », un poste, la recherche) n'en montre que l'aperçu et le
+  chemin pour l'ouvrir.
+
+**Ce qui change ailleurs.** Progression v4 (`PROG.cours[id].exo` : meilleur score, réussi seul, essais ;
+`PROG.niveaux` : tests de niveau ; fusion entre deux appareils). XP : exercice réussi 30, trois étoiles 15, niveau validé
+60, test réussi 40 ; trois badges (Premier niveau, Les fondamentaux, Expert). Livret : l'exercice en autonomie est une
+activité de la leçon (« Exercice du Cours », mêmes compétences), réussie sans solution demandée ; ce n'est pas un
+exercice pratique. Jouer → Mission spécifique reste libre.
+
+**À faire relire** (chiffres signalés pendant l'écriture des exercices) : les portées SDI du plan caméras (70, 120,
+150 m) données comme ordres de grandeur ; les sensibilités du bilan HF (−96, −87, −82 dBm) ; les deux modèles optiques
+de la caméra (chaque exercice suit sa leçon) ; le nom de clip LSM tiré au sort ; les valeurs simplifiées du BMCA ; le
+rangement des leçons par niveau et les seuils (60, 70, 80 %), à essayer avec une classe.
+
+Tests : `tests/unit/parcours.test.mjs` (rangement, niveaux, conditions, suite conseillée, test de niveau),
+`tests/unit/exos.test.mjs` (une leçon, un exercice ; 40 tirages de chaque exercice bien formés, réponse juste acceptée,
+pièges refusés ; points), `tests/unit/progression.test.mjs` (v3 → v4, fusion) ; suites `node tools/e2e.mjs parcours`
+(nouvelle), `cours`, `vues3d`.
+
 ## v19.17 : le réseau de A à Z, et en 3D (adresses, diffusion, TCP et UDP, LAN / MAN / WAN, streaming, QoS)
 
 **Pourquoi.** Le chapitre Le réseau partait du car IP (ST 2110) sans poser les bases : l'adresse et le masque,
@@ -1918,6 +1993,9 @@ node tools/shots.mjs dossier 1280 800 '["vision","hf"]'   # captures de postes
 | `ui/ma_progression.js` | Réglages → Ma progression : où elle est enregistrée et si ça marche, exporter dans un fichier, importer (fusion), effacer, vos données personnelles ; notification quand un enregistrement échoue |
 | `app/profile.js` | Profil Étudiant / Formateur, mémorisé ; classe `role-formateur` sur `body`, éléments `.role-only` |
 | `cours/index.js`, `cours/kit.js`, `cours/all.js`, un fichier par chapitre (`signal.js`, `sdi.js`, `synchro.js`, `camera.js`, `realisation.js`, `ralentis.js`, `son.js`, `reseau.js`, `hf.js`, `exploitation.js`) | La section Cours : dix chapitres et leurs leçons, ordre d'apprentissage, progression, tirage du quiz dans la banque de chaque leçon (`drawQuiz`, `QUIZ_N`), kit des schémas et manipulations |
+| `cours/parcours.js` | Le parcours du Cours : niveaux de chaque chapitre (`PARCOURS`), état d'une leçon (étoiles, terminée), d'un niveau (conditions, ouvert, validé), suite conseillée (les fondamentaux d'abord), test de niveau (calcul pur) |
+| `cours/exo.js`, `cours/exos/` (un fichier par chapitre, le réseau en deux) | L'exercice en autonomie de chaque leçon : questions (nombre, choix, texte, ordre) tirées à chaque essai, vérification, aides et solution, points et score sur 100 |
+| `ui/cours_parcours.js`, `ui/cours_exo.js`, `styles/cours-parcours.css` | Mon parcours (suite, catégories), chemin d'un chapitre par niveau, aperçu d'une leçon fermée, étapes d'une leçon, test de niveau ; l'exercice une question à la fois et son bilan |
 | `cours/exercices.js` | Les exercices pratiques de chaque leçon : parcours d'Olivier (chacun dans une seule leçon) et exercices notés (atelier, car vide, formation réseau, jour de match, mise en service de la caméra, régie de l'entrepôt), leur état |
 | `cours/liens.js` | Les liens du Cours avec le reste : terme du glossaire → leçon ou fiche « ? », poste → leçon (bouton « Cours », touche G) |
 | `cours/sdi_falaise.js`, `cours/lab_sdi.js`, `cours/figs_sdi.js` | Leçon « La falaise numérique » : diagramme de l'œil et image qui casse avec la longueur du câble, défis d'Olivier |
@@ -1932,7 +2010,7 @@ node tools/shots.mjs dossier 1280 800 '["vision","hf"]'   # captures de postes
 | `camlab/` | Module « La caméra en 3D » : caméra et plateau construits dans le code (`model.js`, `scene.js`), pastilles (`points.js`), 51 notions (`notions/`, une fiche par fichier, registres `ch1.js` … `ch89.js`), schémas (`figs.js`, `figs/`, `figkit.js`), manipulations (`labs.js`, `labs/`, commandes `controls.js`, optique `optics.js`, viseur simulé et traitement de l'image `vf.js`), affichage d'une fiche (`fiche.js`), progression (`progress.js`), quiz de chapitre (`quiz.js`), mise en service notée (`mes.js`) |
 | `entrepot/` | Module « L'entrepôt » (tuile de Jouer) : monter une régie mobile d'après un cahier des charges. Types (`types.js`), catalogue de matériel réel (`catalogue/`, un fichier par groupe : `blackmagic.js`, `panasonic.js`, `ross.js`, `reseau.js`, `divers.js`), montage (`build.js`), moteur (`engine.js`), missions notées (`missions.js`), résultat rendu (`suivi.js`), 3D (`scene.js` ; `scene/` : hall, appareils, câbles, bureau et ordinateur de la Carrière `bureau.js` ; vue en orbite `orbit.js`), panneaux (`ui/` : `stock.js`, `appareil.js`, menus de configuration `ui/config/` un fichier par famille, `synoptique.js`, `reseau.js`, `mission.js`), ouverture, boucle et mode Carrière (`index.js`) |
 | `carriere/` | La Carrière (mode de l'entrepôt) : les épisodes et leurs mails (`mails.js`), la boîte de réception et les missions lues dans la progression, calcul pur (`index.js`), la messagerie du bureau (`ui.js`), les mails qui arrivent et le lancement des missions au car (`installer.js`) |
-| `ui/cours_ui.js` | L'espace Cours : un seul sommaire, page « Mon suivi » (progression, à faire ensuite, livret), leçons (quiz, exercices pratiques, article de référence), glossaire, postes, matériel |
+| `ui/cours_ui.js` | L'espace Cours : un seul sommaire (chapitres rangés par niveau), « Mon parcours », chemin d'un chapitre, leçons (quiz, exercice en autonomie, exercices pratiques, article de référence), glossaire, postes, matériel |
 | `app/nav.js` | Navigation entre les trois entrées : menu du car (Échap), aiguillage des boutons « Aller au poste », « Commencer » (car lancé si besoin), changement de vacation, retour au bureau de l'entrepôt (Carrière) |
 | `ui/layer.js` | Espace plein écran (le Cours) : plaque, onglets, Fermer (Échap), ligne d'état |
 | `ui/guide.js` | Missions d'installation (liste des tâches), articles de référence des leçons, glossaire, postes, matériel, procédures maison, commandes |

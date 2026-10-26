@@ -77,6 +77,12 @@ import iCrosshair from '@phosphor-icons/core/bold/crosshair-bold.svg';
 import iLightning from '@phosphor-icons/core/bold/lightning-bold.svg';
 import iMedal from '@phosphor-icons/core/bold/medal-bold.svg';
 import iTrophy from '@phosphor-icons/core/bold/trophy-bold.svg';
+import iLockSimple from '@phosphor-icons/core/bold/lock-simple-bold.svg';
+import iLockSimpleOpen from '@phosphor-icons/core/bold/lock-simple-open-bold.svg';
+import iPath from '@phosphor-icons/core/bold/path-bold.svg';
+import iArrowUp from '@phosphor-icons/core/bold/arrow-up-bold.svg';
+import iArrowDown from '@phosphor-icons/core/bold/arrow-down-bold.svg';
+import iStarFill from '@phosphor-icons/core/fill/star-fill.svg';
 import iShieldCheck from '@phosphor-icons/core/bold/shield-check-bold.svg';
 import iFlagCheckered from '@phosphor-icons/core/bold/flag-checkered-bold.svg';
 import iCompassRose from '@phosphor-icons/core/bold/compass-rose-bold.svg';
@@ -122,6 +128,8 @@ const SVG = {
   etoile: iSparkle, classement: iRanking, suivant: iCaretRight, porte: iDoorOpen,
   // le téléphone (telephone/) : l'appareil, le retour à l'accueil, la barre d'état
   telephone: iDeviceMobile, retourapp: iCaretLeft, signal: iCellSignalFull, wifi: iWifiHigh, batterie: iBatteryFull,
+  // le parcours du Cours (ui/cours_parcours.js, ui/cours_exo.js) : niveaux fermés et ouverts, étoiles, étapes à ranger
+  cadenas: iLockSimple, ouvert: iLockSimpleOpen, parcours: iPath, monter: iArrowUp, descendre: iArrowDown, etoilePleine: iStarFill,
 };
 export const ICON_NAMES = Object.keys(SVG);
 /**
