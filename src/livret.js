@@ -16,24 +16,26 @@ import { BLOCS, COMPETENCES, RATTACHEMENT } from './content/referentiel.js';
 // d'une compétence reste au formateur.
 // ----------------------------------------------------------------------------------
 
-/** @typedef {'parcours' | 'mission' | 'phase' | 'reseau' | 'exercice' | 'cours' | 'camera'} Kind */
+/** @typedef {'parcours' | 'mission' | 'phase' | 'reseau' | 'exercice' | 'cours' | 'exo' | 'camera'} Kind */
 /** @typedef {'absent' | 'a_faire' | 'travaillee' | 'consolidee'} Niveau */
 /** @typedef {{ kind: Kind, ref: string, done: boolean, aided: boolean, pratique: boolean }} Activite */
 
 export const SEUIL_PHASE = 0.6, SEUIL_SCORE = 60, CONSOLIDE = 3;
 /** un montage à l'atelier réussi : deux erreurs au plus (« Montage correct, quelques reprises », atelier.js) */
 export const ATELIER_ERREURS = 2;
-/** une activité pratique (un geste dans le car, à l'atelier, au réseau) ; les leçons du Cours et les notions de la caméra sont des quiz */
-export const estPratique = (/** @type {Kind} */ kind, /** @type {string} */ ref) => kind !== 'cours' && !(kind === 'camera' && ref !== 'mes');
+/** une activité pratique (un geste dans le car, à l'atelier, au réseau) ; les leçons du Cours, leurs exercices en autonomie (des calculs et
+ * des situations sur le papier) et les notions de la caméra n'en sont pas */
+export const estPratique = (/** @type {Kind} */ kind, /** @type {string} */ ref) => kind !== 'cours' && kind !== 'exo' && !(kind === 'camera' && ref !== 'mes');
 /** @type {Record<Niveau, string>} */
 export const NIVEAUX = { consolidee: 'Consolidée', travaillee: 'Travaillée', a_faire: 'À travailler', absent: 'Hors simulateur' };
 
 /** @type {Record<Kind, Record<string, string[]>>} */
-const TABLES = { parcours: RATTACHEMENT.parcours, mission: RATTACHEMENT.missions, phase: RATTACHEMENT.phases, reseau: RATTACHEMENT.reseau, exercice: RATTACHEMENT.exercices, cours: RATTACHEMENT.cours, camera: RATTACHEMENT.camera };
+// l'exercice en autonomie d'une leçon (v19.18) travaille les compétences de sa leçon
+const TABLES = { parcours: RATTACHEMENT.parcours, mission: RATTACHEMENT.missions, phase: RATTACHEMENT.phases, reseau: RATTACHEMENT.reseau, exercice: RATTACHEMENT.exercices, cours: RATTACHEMENT.cours, exo: RATTACHEMENT.cours, camera: RATTACHEMENT.camera };
 /** compétences travaillées par une activité */
 export const codesOf = (/** @type {Kind} */ kind, /** @type {string} */ ref) => TABLES[kind][ref] || [];
 
-/** activités rattachées à chaque compétence, dans l'ordre parcours, missions, jour de match, réseau, exercices, cours, caméra */
+/** activités rattachées à chaque compétence, dans l'ordre parcours, missions, jour de match, réseau, exercices, cours, exercices du Cours, caméra */
 export const ACTIVITES = (() => {
   /** @type {Record<string, { kind: Kind, ref: string }[]>} */
   const m = Object.fromEntries(COMPETENCES.map((c) => [c.code, []]));
@@ -50,6 +52,8 @@ export function activityState(prog, /** @type {Kind} */ kind, /** @type {string}
     case 'parcours': { const t = (P.tutor || {})[ref]; const fini = !!(t && t.done), seul = fini && !!(t.clean || !t.aided); return { done: seul, aided: fini && !seul }; }
     case 'mission': return { done: !!(P.missions || {})[ref], aided: false };
     case 'cours': { const c = (P.cours || {})[ref]; return { done: !!(c && c.quiz && c.quiz.total && c.quiz.score === c.quiz.total), aided: false }; }
+    // l'exercice en autonomie : réussi (60 sur 100) sans demander de solution ; réussi avec une solution demandée : à refaire seul
+    case 'exo': { const x = ((P.cours || {})[ref] || {}).exo; return { done: !!(x && x.seul), aided: !!(x && !x.seul && x.best >= SEUIL_SCORE) }; }
     // module caméra (même règle que camlab/progress.js) : la mise en service à 60 sur 100, une notion à 3 sur 3
     case 'camera': {
       const C = P.camera || {};

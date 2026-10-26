@@ -3,7 +3,8 @@ import { PROG, saveProgressSoon } from '../shared.js';
 import { emit } from '../state.js';
 import { livret } from '../livret.js';
 import { COMPETENCES, blocOf } from '../content/referentiel.js';
-import { allLessons } from '../cours/index.js';
+import { allLessons, CHAPTERS } from '../cours/index.js';
+import { etatNiveaux } from '../cours/parcours.js';
 import { fait as carriereFaite } from '../carriere/index.js';
 import { episodeById } from '../carriere/mails.js';
 
@@ -40,6 +41,10 @@ export const BAREME = {
   exerciceMin: 20,
   presentation: 20,     // la présentation d'un poste (visite guidée)
   quiz: 30,             // quiz d'une leçon du Cours réussi (3/3)
+  exoCours: 30,         // exercice en autonomie d'une leçon réussi (≥ 60/100), la première fois
+  exoParfait: 15,       // le même à 90/100 au moins, sans solution demandée (trois étoiles)
+  niveau: 60,           // un niveau d'un chapitre du Cours validé (Débutant, Intermédiaire…)
+  testNiveau: 40,       // un test de niveau réussi (un niveau sauté)
   notion: 15,           // notion de la caméra en 3D acquise
   quizChapitre: 40,     // quiz d'un chapitre de la caméra en 3D réussi
   mes: 100,             // mise en service de la caméra réussie (≥ 60/100)
@@ -122,6 +127,10 @@ export const BADGES = [
   { id: 'embauche', title: 'Embauché', desc: 'La mission de stagiaire de la Carrière réussie : le tour du car et ses six postes.', ico: 'chef', tier: 'bronze', test: ({ P }) => { const ep = episodeById('stagiaire'); return !!ep && !!P.carriere && carriereFaite(ep, P); } },
   { id: 'curieux', title: 'Curieux', desc: 'Dix leçons du Cours acquises (quiz 3/3).', ico: 'cours', tier: 'bronze', test: ({ P }) => Object.values(P.cours || {}).filter((c) => c && c.quiz && c.quiz.total && c.quiz.score === c.quiz.total).length >= 10 },
   { id: 'erudit', title: 'Érudit', desc: 'Toutes les leçons du Cours acquises.', ico: 'livret', tier: 'or', test: ({ P }) => { const ids = allLessons().map((x) => x.lesson.id); const C = P.cours || {}; return ids.length > 0 && ids.every((id) => C[id] && C[id].quiz && C[id].quiz.total && C[id].quiz.score === C[id].quiz.total); } },
+  // le parcours du Cours (v19.18) : un niveau validé par ses leçons (pas sauté par un test), les fondamentaux de tous les chapitres, un niveau Expert
+  { id: 'premier-niveau', title: 'Premier niveau', desc: 'Un niveau d\'un chapitre du Cours validé : toutes ses leçons terminées, quiz et exercices.', ico: 'cours', tier: 'bronze', test: ({ P }) => CHAPTERS.some((c) => etatNiveaux(c.id, P).some((n) => n.ok)) },
+  { id: 'fondamentaux', title: 'Les fondamentaux', desc: 'Le niveau Débutant validé dans tous les chapitres du Cours.', ico: 'livret', tier: 'argent', test: ({ P }) => CHAPTERS.length > 0 && CHAPTERS.every((c) => { const n = etatNiveaux(c.id, P)[0]; return !!n && n.ok; }) },
+  { id: 'expert', title: 'Expert', desc: 'Un niveau Expert du Cours validé (le réseau du car IP, le SDI bit à bit, le jour de match).', ico: 'trophee', tier: 'or', test: ({ P }) => CHAPTERS.some((c) => etatNiveaux(c.id, P).some((n) => n.niveau.id === 'expert' && n.ok)) },
   { id: 'opticien', title: 'Opticien', desc: 'Vingt notions de la caméra en 3D acquises.', ico: 'ccu', tier: 'argent', test: ({ P }) => Object.values(((P.camera || {}).notions) || {}).filter((n) => n && n.total && n.score === n.total).length >= 20 },
   // une compétence du référentiel travaillée (bronze), consolidée (or) : le livret décide
   ...COMPETENCES.flatMap((c) => /** @type {Badge[]} */ ([

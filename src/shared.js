@@ -32,9 +32,10 @@ export const MYREV = { domains: [], items: {}, params: {}, extra: [], updatedAt:
 /**
  * Version du format de la progression (PROG.v). À monter quand sa forme change, avec l'étape qui convient
  * dans migrateProgress. 1 : sans numéro (jusqu'à la v19.3) ; 2 : numérotée, réussites « seul » (clean) des
- * parcours et des missions réseau (v19.4) ; 3 : la Carrière, dates de réception et de lecture des mails (v19.6).
+ * parcours et des missions réseau (v19.4) ; 3 : la Carrière, dates de réception et de lecture des mails (v19.6) ;
+ * 4 : le parcours du Cours, exercice en autonomie de chaque leçon (cours[id].exo) et tests de niveau (niveaux) (v19.18).
  */
-export const PROG_VERSION = 3;
+export const PROG_VERSION = 4;
 export const PROG = { v: PROG_VERSION, missions: {}, visited: {}, scenarios: [], reports: [], perf: null, patchBest: 0, updatedAt: 0 };
 /** état du dernier enregistrement de la progression : sur cet ordinateur (local), sur le serveur de la page (remote) */
 export const SAVE = { local: /** @type {boolean | null} */ (null), remote: /** @type {boolean | null} */ (null), at: 0, error: '' };
@@ -149,6 +150,15 @@ export function migrateProgress(d) {
   }
   // v2 → v3 : la Carrière (absente tant qu'elle n'est pas commencée) ; mal formée, elle est remise en forme
   if ('carriere' in p) p.carriere = carriereNette(p.carriere);
+  // v3 → v4 : l'exercice en autonomie d'une leçon ({ best, seul, n }) et les tests de niveau ({ chapitre: { niveau: { score, total } } })
+  if (isObj(p.cours)) for (const [id, c] of Object.entries(p.cours)) if (isObj(c) && 'exo' in c && !(isObj(c.exo) && Number.isFinite(c.exo.best))) delete p.cours[id].exo;
+  if ('niveaux' in p) {
+    if (!isObj(p.niveaux)) p.niveaux = {};
+    for (const [ch, t] of Object.entries(p.niveaux)) {
+      if (!isObj(t)) { delete p.niveaux[ch]; continue; }
+      for (const [n, r] of Object.entries(t)) if (!isObj(r) || !(Number(r.total) > 0)) delete t[n];
+    }
+  }
   p.v = Math.max(v, PROG_VERSION);
   return p;
 }
@@ -192,7 +202,16 @@ export function mergeProgress(d) {
   // Cours : leçon vue ici ou ailleurs, meilleur quiz
   if (d.cours) {
     const C = PROG.cours = PROG.cours || {};
-    for (const [id, p] of Object.entries(d.cours)) { if (!p) continue; const m = C[id] || (C[id] = { seen: false, quiz: null }); m.seen = m.seen || !!p.seen; m.quiz = best(m.quiz, p.quiz); }
+    for (const [id, p] of Object.entries(d.cours)) {
+      if (!p) continue; const m = /** @type {any} */ (C[id] || (C[id] = { seen: false, quiz: null })); m.seen = m.seen || !!p.seen; m.quiz = best(m.quiz, p.quiz);
+      // l'exercice en autonomie : le meilleur score des deux appareils, réussi seul ici ou là-bas, les essais des deux
+      if (p.exo) m.exo = !m.exo ? p.exo : { best: Math.max(m.exo.best, p.exo.best), seul: !!(m.exo.seul || p.exo.seul), n: Math.max(m.exo.n || 0, p.exo.n || 0), at: Math.max(m.exo.at || 0, p.exo.at || 0) };
+    }
+  }
+  // tests de niveau : le meilleur résultat de chaque test (un niveau ouvert sur un appareil l'est sur l'autre)
+  if (d.niveaux) {
+    const P = /** @type {any} */ (PROG); const N = P.niveaux = P.niveaux || {};
+    for (const [ch, t] of Object.entries(d.niveaux)) { const C = N[ch] = N[ch] || {}; for (const [n, r] of Object.entries(t || {})) { const m = C[n]; if (!m || r.score / r.total > m.score / m.total) C[n] = r; } }
   }
   // progression du jeu (XP, badges) : une récompense obtenue sur l'un des appareils l'est pour de bon
   if (d.game) { const G = /** @type {any} */ (PROG); G.game = mergeGame(G.game, d.game); }
@@ -282,7 +301,7 @@ export function importProgress(text) {
   const wrapped = isObj(d) && d.format === EXPORT_FORMAT;
   const p = wrapped ? d.progression : d;
   // une progression brute a au moins l'un de ses champs habituels
-  if (!isObj(p) || (!wrapped && !['missions', 'visited', 'cours', 'tutor', 'game', 'camera', 'net', 'carriere'].some((k) => k in p))) return { ok: false, error: 'Ce fichier ne contient pas de progression du TIEE Simulator.' };
+  if (!isObj(p) || (!wrapped && !['missions', 'visited', 'cours', 'tutor', 'game', 'camera', 'net', 'carriere', 'niveaux'].some((k) => k in p))) return { ok: false, error: 'Ce fichier ne contient pas de progression du TIEE Simulator.' };
   mergeProgress(p);
   restoreProgress();
   saveProgressSoon();
