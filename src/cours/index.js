@@ -15,6 +15,7 @@ import { shuffled } from '../util.js';
  * @property {string} id
  * @property {string} title
  * @property {string} [minutes] durée de lecture, ex. « 6 min »
+ * @property {string} [partie] la partie du chapitre où la leçon se range dans le sommaire (titre), si le chapitre en a
  * @property {string[]} essentials l'essentiel, trois lignes au plus
  * @property {() => Element} [figure] le schéma (SVG ou canvas), construit à l'affichage
  * @property {(host: HTMLElement) => ({ destroy?: () => void } | void)} [demo] la manipulation interactive, montée dans host

@@ -281,6 +281,23 @@ const BY_THEME = {
     ['running / startup-config', 'La configuration active d\'un commutateur et celle qu\'il recharge au démarrage. « write memory » copie la première dans la seconde : sans cela, une correction disparaît au redémarrage.'],
     ['Passerelle IP ↔ SDI', 'Appareil qui convertit des signaux SDI en flux ST 2110, ou l\'inverse, pour les équipements restés en SDI (écrans, serveurs, liaisons).'],
   ],
+  'Réseau IP : les bases': [
+    ['Modèle OSI', 'Le découpage d\'une communication en sept couches (physique, liaison, réseau, transport, session, présentation, application) ; TCP/IP en garde quatre. On dit « niveau 2 » pour un commutateur, « niveau 3 » pour un routeur.'],
+    ['LAN / MAN / WAN', 'Réseau local (le car), métropolitain (la ville : le stade relié au centre technique), étendu (des villes, par des opérateurs, Internet ou satellite). Plus il est étendu, plus la latence monte.'],
+    ['Ethernet', 'Le réseau local de presque tout (IEEE 802.3) : des trames avec adresses MAC, sur cuivre RJ45 (100 m au plus) ou sur fibre avec des modules SFP, de 1 à 100 Gb/s.'],
+    ['Adresse de diffusion (broadcast)', 'La dernière adresse d\'un sous-réseau (tous les bits d\'appareil à 1 : 10.1.20.255 en /24) : un paquet qui lui est envoyé atteint toutes les machines du sous-réseau. Elle ne se donne à aucun appareil.'],
+    ['Adresse privée / publique', '10.0.0.0/8, 172.16.0.0/12 et 192.168.0.0/16 sont privées : réutilisées par tous les réseaux internes, jamais routées sur Internet. Une adresse publique est unique au monde.'],
+    ['DHCP', 'Le service qui donne à une machine son adresse, son masque, sa passerelle et son DNS (Discover, Offer, Request, Ack). Dans un car, les appareils de production ont des adresses fixes ; le DHCP sert aux invités.'],
+    ['DNS', 'L\'annuaire qui traduit un nom en adresse IP. Si le ping répond vers une adresse mais pas vers un nom, c\'est le DNS.'],
+    ['NAT', 'Traduction d\'adresses : la box ou le routeur fait sortir tout un réseau privé sur Internet avec une seule adresse publique. Ce qui arrive sans avoir été demandé est bloqué, sauf redirection de port.'],
+    ['TCP / UDP', 'Les deux transports d\'IP : TCP est fiable (accusés, retransmissions, retard quand le réseau perd) ; UDP ne garantit rien mais garde son rythme : celui du temps réel (RTP, ST 2110, SRT, PTP).'],
+    ['SRT / RIST', 'Protocoles de contribution par Internet : de l\'UDP qui redemande les paquets perdus pendant un tampon de latence, de l\'ordre de 3 à 4 fois l\'aller-retour.'],
+    ['RTMP', 'Le protocole d\'envoi d\'un direct vers une plateforme (YouTube, Twitch) : TCP, port 1935, avec une clé de diffusion. Quelques secondes de retard.'],
+    ['HLS / DASH', 'La distribution au public par Internet : le direct en segments de quelques secondes, servis par HTTP et un CDN ; 10 à 30 s de retard.'],
+    ['NDI', 'Production vidéo sur réseau local (vMix, caméras PTZ), peu compressée : de l\'ordre de 100 à 150 Mb/s en 1080p ; NDI|HX bien moins.'],
+    ['QoS', 'Qualité de service : quand un port déborde, les paquets marqués prioritaires (DSCP 46 pour PTP, 34 pour les médias) passent d\'abord, les autres attendent ou sont jetés.'],
+    ['Gigue', 'La variation du retard d\'un paquet à l\'autre, due surtout aux files d\'attente ; un tampon de réception l\'absorbe, au prix d\'un peu de retard.'],
+  ],
 };
 
 /** Toutes les entrées, triées par ordre alphabétique (sans tenir compte des accents ni de la casse). */

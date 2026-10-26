@@ -2,12 +2,19 @@
 import { el } from '../util.js';
 import { ROUTAGE } from './reseau_routage.js';
 import { ST2110_LESSONS } from './reseau_st2110.js';
+import { MODELE, ETENDUE, ETHERNET } from './reseau_bases.js';
+import { ADRESSES, TYPES, DHCP_DNS, NAT } from './reseau_adresses.js';
+import { TCP_UDP, STREAMING } from './reseau_transport.js';
+import { MESURES, QOS } from './reseau_qos.js';
 import { registerChapter } from './index.js';
 import { figure, sv, canvas, slider, choice, readout, fmtNum } from './kit.js';
 
 // ----------------------------------------------------------------------------------
-// Chapitre « Le réseau » : adresse IP et masque, VLAN et commutateur, table MAC, multicast et
-// IGMP, PTP. Le plan d'adressage reprend celui du réseau de contrôle du car (net/ctrlnet.js) :
+// Chapitre « Le réseau », en cinq parties (le sommaire les affiche) : les bases (couches, LAN / MAN / WAN,
+// Ethernet, commutateur, VLAN), adresser et acheminer (adresse et masque, réseau et diffusion, types d'adresses,
+// DHCP et DNS, passerelle, NAT), transporter (TCP et UDP, streaming, multicast), qualité de service et mesures,
+// le car IP (PTP, ST 2110). Ce fichier écrit adresse IP et masque, VLAN, table MAC, multicast et IGMP, PTP ;
+// les autres leçons viennent de reseau_*.js. Le plan d'adressage reprend celui du réseau de contrôle du car (net/ctrlnet.js) :
 // 10.1.<VLAN>.x/24, passerelle en .1, CCU en .11 à .22, RCP en .31 à .42. Toutes les
 // manipulations calculent vraiment (masques en bits, inondation, charge des liens, offset PTP)
 // et se passent de la scène 3D.
@@ -430,10 +437,29 @@ function demoPtp(host) {
 }
 
 // ======================================================================================
+/** les parties du chapitre, dans l'ordre du sommaire, et leurs leçons dans l'ordre de lecture */
+export const PARTIES = [
+  ['Les bases d\'un réseau', ['reseau-modele', 'reseau-etendue', 'reseau-ethernet', 'reseau-switch', 'reseau-vlan']],
+  ['Adresser et acheminer', ['reseau-ip', 'reseau-adresses', 'reseau-types', 'reseau-dhcp-dns', 'reseau-routage', 'reseau-nat']],
+  ['Transporter : TCP, UDP, streaming', ['reseau-tcp-udp', 'reseau-streaming', 'reseau-multicast']],
+  ['Qualité de service et mesures', ['reseau-mesures', 'reseau-qos']],
+  ['Le car IP (ST 2110)', ['reseau-ptp', 'reseau-st2110', 'reseau-paquet', 'reseau-rythme', 'reseau-2022-7', 'reseau-spine-leaf', 'reseau-nmos']],
+];
+/**
+ * Range les leçons dans l'ordre des parties et note la partie de chacune (une leçon absente du tableau irait à la fin).
+ * @param {import('./index.js').Lesson[]} lecons
+ */
+function ranger(lecons) {
+  /** @type {import('./index.js').Lesson[]} */
+  const out = [];
+  for (const [nom, ids] of /** @type {[string, string[]][]} */ (PARTIES)) for (const id of ids) { const l = lecons.find((x) => x.id === id); if (l) out.push(Object.assign(l, { partie: nom })); }
+  return out.concat(lecons.filter((l) => !out.includes(l)));
+}
 registerChapter({
   id: 'reseau', title: 'Le réseau', icon: 'reseau',
-  intro: 'Adresses, masques, VLAN, commutateurs, passerelle, multicast, PTP, puis le car IP : les flux ST 2110, leurs paquets et leur rythme, les réseaux rouge et bleu, le spine-leaf et NMOS.',
-  lessons: [
+  intro: 'Les bases d\'un réseau (couches, LAN et WAN, Ethernet, commutateur, VLAN), les adresses (masque, réseau et diffusion, privées et publiques, IPv6, DHCP, DNS, passerelle, NAT), le transport (TCP, UDP, protocoles du streaming, multicast), la qualité de service et les mesures, puis le car IP : PTP, flux ST 2110, paquets et rythme, rouge et bleu, spine-leaf, NMOS.',
+  lessons: ranger([
+    MODELE, ETENDUE, ETHERNET, ADRESSES, TYPES, DHCP_DNS, NAT, TCP_UDP, STREAMING, MESURES, QOS,
     {
       id: 'reseau-ip', title: 'Adresse IP et masque de sous-réseau', minutes: '7 min',
       essentials: [
@@ -591,5 +617,5 @@ Ce qu'il faut tenir : un esclave verrouillé à **mieux que la microseconde** (S
       ],
     },
     ...ST2110_LESSONS,
-  ],
+  ]),
 });

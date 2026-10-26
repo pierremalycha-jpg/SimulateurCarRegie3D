@@ -5,6 +5,7 @@ import { TERMS } from '../content/netterms.js';
 import '../content/terms_mesure.js';
 import '../content/terms_ctrlnet.js';
 import '../content/terms_fibre.js';
+import '../content/terms_ip.js';
 import '../content/terms_videohub.js';
 
 // ----------------------------------------------------------------------------------
@@ -31,19 +32,24 @@ export const estLecon = (id) => !!lessonById(id);
 export const GLOSSAIRE = {
   '(S,G)': ['reseau-multicast', 'mroute'], 'AES3 / AES67 / Dante': 'st2110-30', 'Bilan de liaison / marge': ['hf-bilan'], 'Black burst / tri-level': ['synchro-genlock', 'timing-ref'],
   BMCA: ['reseau-ptp', 'bmca'], BNC: ['sdi-cable', 'sdi-cest-quoi'], 'BT.709 / BT.2020': ['signal-couleur', 'cie1931'], 'Caméra HF': ['hf-bilan', 'hf-frequences'], 'CMAX / CINST': 'cmax', 'Codes 64-940': ['signal-niveaux', 'mv-pct'],
-  COFDM: ['hf-cofdm'], 'Contrôleur SDN': 'sdn', 'Diversité': ['hf-antennes'], DSCP: 'qos', 'Écart 2022-7': 'ecart', ECMP: 'ecmp', 'Effet falaise': ['sdi-falaise', 'sdi-oeil', 'effet-falaise'],
-  'Embedder / désembedder': ['sdi-embedded'], FEC: 'fec', 'Fibre hybride SMPTE': ['camera-fibre', 'camera-systeme', 'cable-hybride'], 'Fibre monomode': ['camera-fibre', 'sdi-cable', 'fibre-monomode'],
+  COFDM: ['hf-cofdm'], 'Contrôleur SDN': 'sdn', 'Diversité': ['hf-antennes'], DSCP: ['reseau-qos', 'qos'], 'Écart 2022-7': 'ecart', ECMP: 'ecmp', 'Effet falaise': ['sdi-falaise', 'sdi-oeil', 'effet-falaise'],
+  'Embedder / désembedder': ['sdi-embedded'], FEC: ['reseau-streaming', 'fec'], 'Fibre hybride SMPTE': ['camera-fibre', 'camera-systeme', 'cable-hybride'], 'Fibre monomode': ['camera-fibre', 'sdi-cable', 'fibre-monomode'],
   'Genlock / référence': ['synchro-genlock', 'timing-ref'], 'Grand maître PTP': ['reseau-ptp', 'grand-maitre'], Grille: ['sdi-grille', 'grille'], 'HDR / HLG / SDR': ['signal-couleur', 'hdr-hlg'], Holdover: 'holdover',
-  'Horloge frontière (BC)': ['reseau-ptp', 'bc'], IGMPv3: ['reseau-multicast', 'igmp'], 'JPEG XS': 'st2110-22', Latence: 'latence', 'Leaf / ToR': 'leaf', 'MAC multicast': ['reseau-multicast', 'mac-mcast'],
-  'Mire / barres': ['signal-niveaux', 'mire-75'], MTU: 'mtu', 'N-1 (mix-minus)': ['son-n1', 'sdi-embedded'], 'Niveau optique': ['camera-fibre', 'sdi-cable', 'niveau-optique'], 'NMOS IS-04 / IS-05': ['is-04', 'is-05'],
-  'Numéro de séquence RTP': 'rtp', 'Offset PTP': ['reseau-ptp', 'offset'], OSPF: 'ospf', 'Parade RVB': ['signal-422', 'parade-rvb'], 'Passerelle IP ↔ SDI': 'passerelle-ip',
+  'Horloge frontière (BC)': ['reseau-ptp', 'bc'], IGMPv3: ['reseau-multicast', 'igmp'], 'JPEG XS': 'st2110-22', Latence: ['reseau-mesures', 'latence'], 'Leaf / ToR': 'leaf', 'MAC multicast': ['reseau-multicast', 'mac-mcast'],
+  'Mire / barres': ['signal-niveaux', 'mire-75'], MTU: ['reseau-ethernet', 'mtu'], 'N-1 (mix-minus)': ['son-n1', 'sdi-embedded'], 'Niveau optique': ['camera-fibre', 'sdi-cable', 'niveau-optique'], 'NMOS IS-04 / IS-05': ['is-04', 'is-05'],
+  'Numéro de séquence RTP': ['reseau-tcp-udp', 'rtp'], 'Offset PTP': ['reseau-ptp', 'offset'], OSPF: 'ospf', 'Parade RVB': ['signal-422', 'parade-rvb'], 'Passerelle IP ↔ SDI': 'passerelle-ip',
   'PIM-SSM': ['reseau-multicast', 'ssm', 'pim'], 'Point de croisement': 'point-croisement', PTP: ['reseau-ptp', 'ptp'], 'Quad-link / 2SI': ['signal-formats', '12g-sdi'], 'Querier IGMP': ['reseau-multicast', 'querier'],
   'Réseaux rouge et bleu': 'reseaux-ab', 'RFC 4175': 'st2110-20', RPF: 'rpf', 'running / startup-config': 'config', SDI: ['sdi-cest-quoi'], SDP: 'sdp',
   SPG: ['synchro-genlock', 'timing-ref'], 'SMPTE ST 2110': ['reseau-multicast', 'st2110'], 'Snooping IGMP': ['reseau-multicast', 'snooping'], 'SPAN / port miroir': 'span', 'Spine-leaf': 'spine-leaf',
   'ST 2022-7': 'st2022-7', 'ST 2110-21': 'st2110-21', 'Super-blancs': ['signal-niveaux', 'mv-pct'], SVI: ['reseau-vlan', 'svi'], 'Synchroniseur d\'images (frame sync)': ['synchro-genlock', 'timing-ref'],
   'Timecode (LTC)': ['synchro-timecode'], Tally: ['real-melangeur', 'tsl-umd'], Triax: ['sdi-cable'], 'TSL UMD': 'tsl-umd', 'UHD / HD': ['signal-formats', '12g-sdi'], UMD: 'tsl-umd',
   Vecteurscope: ['signal-couleur', 'vecteurscope'], VLAN: ['reseau-vlan', 'vlan'], VRX_FULL: 'vrx', 'Waveform (oscilloscope)': ['signal-niveaux', 'waveform'],
-  '4:2:2': ['signal-422'], 'Sous-réseau / masque': ['reseau-ip', 'sous-reseau'], 'Adresse IP': ['reseau-ip', 'sous-reseau'], Multicast: ['reseau-multicast', 'groupe'],
+  '4:2:2': ['signal-422'], 'Sous-réseau / masque': ['reseau-ip', 'reseau-adresses', 'sous-reseau'], 'Adresse IP': ['reseau-ip', 'reseau-types', 'sous-reseau'], Multicast: ['reseau-multicast', 'groupe'],
+  'Modèle OSI': ['reseau-modele', 'modele-osi'], 'LAN / MAN / WAN': ['reseau-etendue', 'lan-wan'], Ethernet: ['reseau-ethernet', 'ethernet'],
+  'Adresse de diffusion (broadcast)': ['reseau-adresses', 'broadcast-ip'], 'Adresse privée / publique': ['reseau-types', 'adresses-privees'], DHCP: ['reseau-dhcp-dns', 'dhcp'],
+  DNS: ['reseau-dhcp-dns', 'dns'], NAT: ['reseau-nat', 'nat'], 'TCP / UDP': ['reseau-tcp-udp', 'tcp'], 'SRT / RIST': ['reseau-streaming', 'srt'], RTMP: ['reseau-streaming', 'rtmp'],
+  'HLS / DASH': ['reseau-streaming', 'hls'], NDI: ['reseau-streaming', 'ndi'], QoS: ['reseau-qos', 'qos'], Gigue: ['reseau-mesures', 'gigue'],
+  Contribution: ['expl-transmission', 'reseau-streaming', 'contribution'],
 };
 
 /** poste → leçon(s) ou fiche(s) ouvertes par son bouton « Cours » et la touche G ; selon le car, SDI ou IP */
@@ -53,12 +59,12 @@ export const POSTES = {
   grille: { sdi: ['sdi-grille', 'sdi-cable', 'grille'], ip: ['reseau-multicast', 'is-05', 'nmos'] },
   mesure: ['sdi-oeil', 'sdi-falaise', 'waveform', 'prism'],
   vision: ['signal-422', 'signal-niveaux', 'waveform'],
-  reseau: { sdi: ['reseau-ip', 'reseau-vlan', 'ctrl-sdi'], ip: ['reseau-multicast', 'reseau-ptp', 'st2110'] },
+  reseau: { sdi: ['reseau-ip', 'reseau-vlan', 'reseau-adresses', 'ctrl-sdi'], ip: ['reseau-multicast', 'reseau-ptp', 'reseau-qos', 'st2110'] },
   synchro: { sdi: ['synchro-genlock', 'timing-ref'], ip: ['reseau-ptp', 'ptp'] },
   ccu: ['camera-systeme', 'camera-fibre', 'sdi-cable', 'sdi-cest-quoi'],
   hf: ['hf-bilan', 'hf-frequences', 'hf-antennes'],
   son: ['son-tranche', 'son-n1', 'sdi-embedded'],
-  transmission: ['expl-transmission', 'signal-formats', 'sdi-cest-quoi', '12g-sdi'],
+  transmission: ['expl-transmission', 'reseau-streaming', 'reseau-etendue', 'signal-formats', 'sdi-cest-quoi', '12g-sdi'],
   melangeur: ['real-melangeur', 'signal-422', 'signal-formats'],
   habillage: ['real-incrustations'],
   realisateur: ['real-ordres'],

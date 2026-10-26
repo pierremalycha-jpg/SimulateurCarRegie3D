@@ -119,7 +119,8 @@ function drawNav(nav, render) {
         el('summary', {}, icon(ch.icon), el('span', {}, ch.title), el('small', { title: `${done} leçon(s) acquise(s) sur ${ch.lessons.length}` + (xs.length ? `, ${xd} exercice(s) fait(s) sur ${xs.length}` : '') }, `${done} / ${ch.lessons.length}`)),
         el('ol', {},
           ...modulesDe(ch).map((m) => el('li', {}, el('button', { type: 'button', class: 'co-les co-module', 'data-event': m.event, onclick: () => { closeLayer(false); emit(m.event, m.arg); } }, icon('cube'), el('span', {}, m.label, m.sub ? el('small', {}, m.sub) : null)))),
-          ...ch.lessons.map((l) => el('li', {}, lesBtn(ch, l, render)))),
+          // un chapitre en parties (le réseau) : un intertitre avant la première leçon de chaque partie
+          ...ch.lessons.flatMap((l, k) => [l.partie && l.partie !== ch.lessons[k - 1]?.partie ? el('li', { class: 'co-part', role: 'presentation' }, l.partie) : null, el('li', {}, lesBtn(ch, l, render))].filter(Boolean))),
         !ch.lessons.length && !modulesDe(ch).length ? el('p', { class: 'note' }, 'Les leçons arrivent.') : null);
       det.addEventListener('toggle', () => { if (det.open) UI.chapter = ch.id; });
       list.append(det);
@@ -176,7 +177,7 @@ function home(page, render) {
 function lessonPage(page, { chapter, lesson, i }, render) {
   markSeen(lesson.id);
   const L = lesson;
-  page.append(el('p', { class: 'co-crumb' }, icon(chapter.icon), chapter.title, el('span', {}, ` · leçon ${i + 1} / ${chapter.lessons.length}`)),
+  page.append(el('p', { class: 'co-crumb' }, icon(chapter.icon), chapter.title, el('span', {}, `${L.partie ? ` · ${L.partie}` : ''} · leçon ${i + 1} / ${chapter.lessons.length}`)),
     el('h2', {}, L.title, L.minutes ? el('small', {}, L.minutes) : null),
     el('section', { class: 'co-ess', 'aria-label': 'L\'essentiel' }, el('h4', {}, 'L\'essentiel'), el('ul', {}, ...L.essentials.map((t) => el('li', {}, rich(t, 'co-rich'))))));
   if (L.figure) { try { page.append(el('div', { class: 'co-figbox' }, L.figure())); } catch (e) { console.error(e); } }
