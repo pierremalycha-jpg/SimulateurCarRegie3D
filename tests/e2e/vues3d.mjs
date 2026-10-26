@@ -83,6 +83,8 @@ await A.keyboard.press('Escape'); await A.waitForTimeout(600);
 T.check('Échap : retour dans le Cours, chapitre SDI ouvert, écran titre visible', await ev(() => !document.body.classList.contains('vues3d-on') && document.getElementById('vues3d').hidden && !!document.querySelector('#layer.ly-cours details.co-chap[open]') && !document.getElementById('title').hidden));
 
 // ---------------- depuis une leçon : « Voir en 3D » ----------------
+// reseau-vlan est au niveau Intermédiaire, fermé au profil Étudiant (parcours v19.18) : au profil Formateur, tout est ouvert
+await ev(() => window.__dbg.setRole('formateur'));
 await ev(() => window.__dbg.openCours('reseau-vlan')); await A.waitForTimeout(500);
 const v3 = await ev(() => [...document.querySelectorAll('#layer .co-3d [data-vue]')].map((b) => /** @type {HTMLElement} */ (b).dataset.vue));
 T.check('leçon reseau-vlan : la section « Voir en 3D » propose sa vue', v3.includes('reseau-vlan'), JSON.stringify(v3));

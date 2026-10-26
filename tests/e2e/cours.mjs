@@ -1,6 +1,6 @@
 // Section Cours (v19) : l'écran titre à trois entrées et le profil dans les Réglages, le Cours
-// depuis le titre (un seul sommaire ; chaque leçon : essentiel, schéma, manipulation, quiz,
-// exercices pratiques, article de référence ; le suivi), le téléphone, la touche G, le lien
+// depuis le titre (un seul sommaire ; chaque leçon : essentiel, schéma, manipulation, quiz, exercice en
+// autonomie, exercices pratiques, article de référence ; Mon parcours), le téléphone, la touche G, le lien
 // fiche « ? » → leçon, le menu du car et le livret du stagiaire.
 // node tests/e2e/cours.mjs [dossier]
 import { launch, openPage, outDir, until, reporter } from './harness.mjs';
@@ -60,6 +60,9 @@ const answerQuiz = async (id, faux = -1) => {
   const rangs = await ev((id) => { const bank = window.__dbg.COURS.lessonById(id).lesson.quiz; return [...document.querySelectorAll('#layer .co-q')].map((q) => [...q.querySelectorAll('.co-choice-btn')].findIndex((b) => Number(/** @type {HTMLElement} */ (b).dataset.c) === bank[Number(/** @type {HTMLElement} */ (q).dataset.q)].answer)); }, L.id);
   T.log('rang de la bonne réponse', JSON.stringify(rangs));
 }
+// le parcours (v19.18) ferme au profil Étudiant les niveaux au-delà de Débutant (suite parcours) : ici, chaque
+// leçon est relue en entier, au profil Formateur
+await ev(() => window.__dbg.setRole('formateur')); await A.waitForTimeout(200);
 let shots = 0;
 for (const L of lessons) {
   await ev((id) => window.__dbg.openCours(id), L.id); await A.waitForTimeout(400);
@@ -68,7 +71,7 @@ for (const L of lessons) {
   T.check(`leçon ${L.id} : essentiel, schéma, manipulation, « dans le car », quiz de 3 questions tirées d'une banque de 5 au moins`, ok, JSON.stringify(st));
   // quiz : la bonne réponse partout → leçon acquise
   await answerQuiz(L.id);
-  T.check(`leçon ${L.id} : quiz réussi, leçon acquise`, await ev((id) => window.__dbg.COURS.lessonDone(id) && /leçon acquise/.test(document.querySelector('#layer .co-score')?.textContent || ''), L.id));
+  T.check(`leçon ${L.id} : quiz réussi, leçon acquise ; l'exercice en autonomie suit`, await ev((id) => window.__dbg.COURS.lessonDone(id) && /quiz réussi/.test(document.querySelector('#layer .co-quiz .co-score')?.textContent || '') && !!document.querySelector('#layer .co-quiz + .co-exoauto .pa-exo-go'), L.id));
   if (shots < 12) { shots++; const p = await A.$('#layer .co-page'); if (p) await p.screenshot({ path: `${OUT}/10-${L.id}.png` }).catch(() => {}); }
 }
 T.check('progression enregistrée (PROG.cours)', await ev(() => Object.values(window.__dbg.PROG.cours || {}).filter((p) => p.quiz && p.quiz.score === p.quiz.total).length) === lessons.length);
@@ -91,7 +94,7 @@ T.check('fermeture : l\'écran titre est toujours là, focus rendu à Cours', aw
 // le suivi : chapitres, à faire ensuite, et le livret de compétences complet
 await A.click('#ti-cours'); await A.waitForTimeout(500);
 await ev(() => window.__dbg.emit('cours', { home: true })); await A.waitForTimeout(300); // le Cours rouvre sur la dernière leçon lue
-T.check('Cours : le suivi compte les leçons acquises', await ev((n) => (document.querySelector('#layer .co-kpi b')?.textContent || '').startsWith(n + ' /'), lessons.length));
+T.check('Cours : Mon parcours compte une étoile par quiz réussi', await ev((n) => document.querySelector('#layer .co-page h2')?.textContent === 'Mon parcours' && (document.querySelector('#layer .pa-kpis .co-kpi:nth-child(2) b')?.textContent || '').startsWith(n + ' /'), lessons.length));
 await A.click('#layer .btn:has-text("Ouvrir le livret complet")'); await A.waitForTimeout(400);
 T.check('livret complet : les quatre blocs du référentiel, 39 compétences', await ev(() => document.querySelectorAll('#modal .lv-card').length === 4 && document.querySelectorAll('#modal .lv-comp').length === 39));
 await A.screenshot({ path: `${OUT}/02-livret.png` });

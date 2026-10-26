@@ -21,7 +21,7 @@ await shot('01-titre');
 
 // Cours par-dessus le titre : un seul sommaire (à gauche), le suivi au milieu
 await page.locator('#ti-cours').click();
-T.check('Cours ouvert par-dessus le titre, sur « Mon suivi »', await layer('cours') && await ev(() => !!document.querySelector('#layer .co-kpis') && !document.getElementById('title').hidden));
+T.check('Cours ouvert par-dessus le titre, sur « Mon parcours »', await layer('cours') && await ev(() => !!document.querySelector('#layer .co-kpis') && !document.getElementById('title').hidden));
 T.check('barre du Cours : Leçons, Glossaire, Postes, Matériel', await ev(() => [...document.querySelectorAll('#layer .ly-tabs .tab')].map((t) => t.dataset.k).join(',') === 'lecons,glossaire,postes,materiel'));
 T.check('suivi : chapitres, leçons et exercices, à faire ensuite, livret', await ev(() => document.querySelectorAll('#layer .co-ptab tbody tr').length >= 10 && document.querySelectorAll('#layer .co-next-item').length >= 1 && document.querySelectorAll('#layer .co-bloc').length === 4));
 await shot('02-cours');
