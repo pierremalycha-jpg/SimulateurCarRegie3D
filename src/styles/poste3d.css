@@ -95,3 +95,17 @@
 .p3d-body [data-gl] { position: relative; overflow: hidden; }
 .p3d-body canvas.p3d-mirror { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
 .p3d-rcp-ecran .rcp-encs { display: flex; flex-wrap: wrap; gap: 8px; }
+/* poste ralentis : trois sorties sur une rangée (EVS A, EVS B, programme), puis l'écran du serveur ; la télécommande à plat
+   du tiroir n'a pas l'écran du serveur (il est dans le panneau) */
+.p3d-monrow.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.p3d-mons .lsm-screen { padding: 6px; }
+.p3d-drawer .lsm.noscreen { grid-template-columns: minmax(0, 1fr) auto; }
+#station .p3d-hit.p3d-jog { cursor: grab; border-radius: 50%; }
+#station .p3d-hit.lsm-lever-3d { cursor: ns-resize; }
+/* poste intercom : le journal des messages et l'état du pupitre */
+.p3d-icomlog { list-style: none; margin: 0; padding: 6px 8px; display: flex; flex-direction: column; gap: 4px; background: #070b0e; border: 1px solid #1c2a38; font-size: 13px; color: #c9d6e2; min-height: 60px; }
+.p3d-icomlog li { display: flex; gap: 8px; align-items: baseline; }
+.p3d-icomlog .mono { font-family: var(--f-mono, monospace); color: #6f8293; font-size: 12px; }
+.p3d-icomlog b { color: #9ed0ff; min-width: 70px; }
+.p3d-icomstate { padding: 6px 10px; background: rgba(11, 17, 24, .9); border: 1px solid #1c2a38; font-size: 13px; color: #c9d6e2; }
+.p3d-icomstate p { margin: 2px 0; }

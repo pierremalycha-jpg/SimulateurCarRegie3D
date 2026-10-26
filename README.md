@@ -394,6 +394,39 @@ Tests :
   « Emmène-moi / Montre-moi » doit mettre en évidence un élément réel de la page, et « Fais-le pour moi » doit faire
   valider l'étape.
 
+## v19.12 : les ralentis et l'intercom en 3D (lot 3)
+
+**Pourquoi.** Suite des postes en 3D (lot 3 de la feuille de route, validé le 26 octobre 2026 avec l'écran partagé) :
+la télécommande des ralentis, dont le levier et la molette se manient à la main, et le pupitre d'intercom.
+
+**Le poste ralentis** (`src/poste3d/lsm.js`, `src/poste3d/ralentis.js`). La télécommande LSM (type EVS, logiciel
+Multicam) est construite en 3D sur le bureau des ralentis, à la place de la texture plate : l'afficheur (quatre
+lignes : sortie pilotée, angle, timecode et retard sur le direct, IN et OUT, enregistrement), les touches F1 à F10
+(clips de la page), les touches d'angle (CAM A à H, les entrées enregistrées), le bloc opérationnel (IN, OUT, PLST,
+LOOP, RETURN, LIVE, PLAY, FAST JOG, TAKE, PGM/PRV, SHIFT, MENU, CLEAR, PAGE, avec la fonction SHIFT sérigraphiée) et les
+raccourcis du simulateur (DERN. ACTION, REC, opérateur automatique). Le **levier de vitesse** se pousse (loin de soi =
+plus vite ; la bulle dit si le ralenti est fluide ou saccadé selon la cadence de la caméra) ; la **molette jog** se
+tourne en glissant autour d'elle (un tour ≈ 35 images, comme la molette Multicam), à la molette de la souris ou aux
+flèches. À droite : EVS A, EVS B, le programme et l'écran du serveur (trains d'enregistrement, cliquer pour se placer ;
+clips de la page ; playlist). « Tous les réglages » : la télécommande à plat, avec les préréglages du levier. Le clavier
+et la souris d'IPDirector restent dessinés à côté.
+
+**Le poste intercom** (`src/poste3d/icom.js`, `src/poste3d/intercom.js`). Le pupitre du réalisateur, sur le bureau de
+production : deux rangées de neuf modules, chacun avec son afficheur (le canal, son type : conférence, point à point,
+IFB, 4 fils, hybride, relais), TALK et LISTEN ; au fond, le micro col de cygne et le haut-parleur. Cliquer un afficheur
+explique le canal. À droite : le multiview et le programme (ce que regarde le réalisateur), le journal de l'intercom
+(les ordres et les micros ouverts) et l'état du pupitre (micros ouverts, canaux écoutés). « Tous les réglages » : le
+pupitre à plat, le trajet d'un ordre jusqu'au cadreur, le tally.
+
+**Gestes communs.** Comme pour la vision (`RCPACT`), l'état et les gestes sont partagés entre le poste à plat et la
+3D : `LSMACT` (`ui/st_evs.js`, avec l'écran du serveur `evsScreen`) et `ICOMACT` (`ui/st_intercom.js`, sorti de
+`ui/stations.js`). L'état pur (touches allumées, afficheur, canaux) est dans les fichiers du matériel, que `truck.js`
+importe sans dépendre de l'interface. Le moteur sait une nouvelle commande, la **molette sans butée** (`jog`), et des
+attributs libres sur les zones cliquables (`data-id` des touches d'angle, que vise Olivier). Les parcours d'Olivier
+pour l'intercom visent maintenant la touche par son nom (`.icp-talk[aria-label="TALK CAMÉRAS"]`), en 2D comme en 3D.
+
+Tests : suites `poste3d-evs` et `poste3d-intercom` (`node tools/e2e.mjs poste3d-evs`, `… poste3d-intercom`).
+
 ## v19.11.1 : correctif, le panneau des écrans qui descendait sans fin
 
 Retour du 25 octobre 2026 : au poste vision en 3D, sur les RCP, la fenêtre de droite descendait à l'infini. Les
@@ -1641,7 +1674,7 @@ node tools/shots.mjs dossier 1280 800 '["vision","hf"]'   # captures de postes
 | `audio.js` | Console son (inspiration Vista 1) : sources synthétisées, patch, chaîne DSP par tranche, bus et N-x, VCA, écoutes, snapshots, retard de ligne, embedder, loudness, corrélation, pannes son ; ce que le joueur entend selon l'endroit (`ecoute`, `setEar`) et le volume du son |
 | `commentary.js` | Commentaires du match (commentateur, consultant, bord terrain, plateau) en fil écrit, sans voix : niveaux simulés suivant la console |
 | `audiodesk.js` | Console son en 3D dans la cabine (faders motorisés, FaderGlow, écrans Vistonics animés) |
-| `poste3d/` | Les postes en 3D : moteur de la vue du poste (`index.js` : écran partagé avec les écrans du poste en direct, caméra en orbite, vues, zones cliquables recalées et découpées sur la 3D, touches, molettes, glissières, touches maintenues, bulles, étiquettes, fiche, tiroir « Tous les réglages » avec l'interface 2D et ses moniteurs recopiés), outils des pupitres (`kit.js` : touches instanciées à légende, surfaces dessinées) ; le matériel : pupitre ICP-X7000 (`icp.js`), rangée de RCP (`rcp.js`) ; les définitions de poste : mélangeur (`melangeur.js`), vision (`vision.js`), son (`son.js`, sur la console d'`audiodesk.js`) |
+| `poste3d/` | Les postes en 3D : moteur de la vue du poste (`index.js` : écran partagé avec les écrans du poste en direct, caméra en orbite, vues, zones cliquables recalées et découpées sur la 3D, touches, molettes, glissières, molette sans butée (jog), touches maintenues, bulles, étiquettes, fiche, tiroir « Tous les réglages » avec l'interface 2D et ses moniteurs recopiés), outils des pupitres (`kit.js` : touches instanciées à légende, surfaces dessinées) ; le matériel : pupitre ICP-X7000 (`icp.js`), rangée de RCP (`rcp.js`), télécommande LSM (`lsm.js`), pupitre d'intercom (`icom.js`) ; les définitions de poste : mélangeur (`melangeur.js`), vision (`vision.js`), son (`son.js`, sur la console d'`audiodesk.js`), ralentis (`ralentis.js`), intercom (`intercom.js`) |
 | `scenario.js` | Scénario « jour de match » chronométré et noté |
 | `shared.js` | Données partagées de la page publiée (configuration, progression) avec repli local ; progression numérotée (`PROG_VERSION`, `migrateProgress` ; v3 : la Carrière), fusionnée avec le serveur avant chaque écriture, état de l'enregistrement (`SAVE`), export, import et effacement |
 | `review.js` | Points techniques à faire relire par le formateur |

@@ -326,7 +326,8 @@ const TX = {
 };
 
 // ---------------- intercom ----------------
-const icpTalk = (nth, label) => ({ sel: `#station .icp > .icp-key:${nth} .icp-talk`, label });
+// la touche TALK d'un canal, par son nom : le pupitre à plat et le pupitre en 3D portent le même aria-label
+const icpTalk = (canal) => ({ sel: `#station .icp-talk[aria-label="TALK ${canal}"]`, label: 'TALK ' + canal });
 /** @type {import('../engine.js').Lesson} */
 const ICOM = {
   id: 'intercom-parler', domain: D, stations: ['intercom'],
@@ -344,21 +345,21 @@ const ICOM = {
       id: 'cams', title: 'Parler aux cadreurs',
       say: 'Le canal **CAMÉRAS** est une conférence : tous les cadreurs l\'entendent. C\'est par là que passent les « prépare », les consignes de cadrage, les remarques.',
       do: 'Ouvre le TALK vers CAMÉRAS.',
-      go: { station: 'intercom' }, show: [icpTalk('nth-child(2)', 'TALK CAMÉRAS')],
+      go: { station: 'intercom' }, show: [icpTalk('CAMÉRAS')],
       done: (c) => c.seen('intercom', (e) => /CAMÉRAS/.test(e.msg || '')),
       ok: 'Tous les cadreurs t\'entendent. Referme le TALK dès que tu as fini : un micro resté ouvert couvre les ordres du réalisateur.',
       hints: ['Chaque touche du panneau porte le nom de son canal sur son écran.', 'Sur la touche CAMÉRAS, appuie sur TALK.'],
-      auto: (c) => ui(c, 'click', '#station .icp > .icp-key:nth-child(2) .icp-talk'),
+      auto: (c) => ui(c, 'click', icpTalk('CAMÉRAS').sel),
     },
     {
       id: 'evs', title: 'Un point direct',
       say: 'Pour ne pas encombrer la conférence des cadreurs, on prend une touche plus étroite, vers un seul groupe : ici les opérateurs ralenti (l\'**EVS**, le serveur de ralentis).',
       do: 'Ouvre le TALK vers EVS.',
-      go: { station: 'intercom' }, show: [{ sel: '#station .icp > .icp-key', text: 'EVS', label: 'touche EVS' }],
+      go: { station: 'intercom' }, show: [icpTalk('EVS')],
       done: (c) => c.seen('intercom', (e) => /EVS/.test(e.msg || '')),
       ok: 'Seuls les opérateurs ralenti t\'entendent : les cadreurs gardent leur canal libre pour les ordres du réalisateur.',
       hints: ['Cherche la touche dont l\'écran porte le nom du poste ralenti.', 'Sur la touche EVS, appuie sur TALK.'],
-      auto: (c) => { const keys = typeof document !== 'undefined' ? [...document.querySelectorAll('#station .icp > .icp-key')] : []; const k = keys.find((n) => /EVS/.test(n.textContent || '')); if (k) /** @type {HTMLElement} */ (k.querySelector('.icp-talk')).click(); },
+      auto: (c) => ui(c, 'click', icpTalk('EVS').sel),
     },
     {
       id: 'quiz', title: 'Question',

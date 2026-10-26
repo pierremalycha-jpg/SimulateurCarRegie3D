@@ -25,6 +25,8 @@ import { $, $$, toast, intercom } from './ui/common.js';
 import { openStation, closeStation, updateStation, ST } from './ui/stations.js';
 import { P3D, renderPoste3D, poste3dVoulu, mirrorSlots } from './poste3d/index.js';
 import { updateMelangeur3D, PUP } from './poste3d/icp.js';
+import { LSMS } from './poste3d/lsm.js';
+import { ICOMS } from './poste3d/icom.js';
 import { initPlan, openPlan, closePlan, renderPlan } from './ui/plan.js';
 import { openGuide, checkMissions, drawMissionCard } from './ui/guide.js';
 import { updateFaults, injectFault, ACTIVE, FAULTS, clearFaults } from './faults.js';
@@ -266,7 +268,7 @@ window.__dbg.COURS = { CHAPTERS: COURS_CHAPTERS, allLessons, lessonById: coursLe
 window.__dbg.CTRL = CTRL; window.__dbg.MATIERE = MATIERE;
 window.__dbg.jeu = { XP, sfx, JEU, openJournal, currentGoal, renderQuest };
 window.__dbg.carriere = CARRIERE; window.__dbg.mission = MISSION_RUN;
-window.__dbg.poste3d = { P3D, PUP, DESK, voulu: poste3dVoulu };
+window.__dbg.poste3d = { P3D, PUP, DESK, LSMS, ICOMS, voulu: poste3dVoulu };
 // le programme a démarré : le filet du chargement (boot.js) n'a plus à intervenir
 window.__carReady = true;
 initDiagUI();

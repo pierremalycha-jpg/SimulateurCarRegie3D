@@ -17,6 +17,7 @@ import { EX, startExercise, stopExercise } from '../exercises.js';
 import { explainBox, explain, toggleFloatMon } from './widgets.js';
 import { buildVision } from './st_vision.js';
 import { buildEVS } from './st_evs.js';
+import { buildIntercom } from './st_intercom.js';
 import { buildMixer } from './st_mixer.js';
 import { buildIPD } from './st_ipd.js';
 import { buildPatch } from './st_patch.js';
@@ -713,51 +714,3 @@ function buildTX(body, arg, ctx) {
   };
 }
 
-function buildIntercom(body, arg, ctx) {
-  const TYPES = {
-    conf: ['CONF', 'Conférence (partyline) : tous les membres s\'entendent et peuvent se parler.'],
-    p2p: ['P2P', 'Point à point : une liaison privée entre deux pupitres, les autres n\'entendent pas.'],
-    ifb: ['IFB', 'IFB (interruptible foldback) : le destinataire entend un programme ; quand on parle, ce programme est atténué (dim) et la voix passe par-dessus.'],
-    w4: ['4 FILS', 'Liaison 4 fils : une paire pour parler, une pour écouter, vers un système extérieur (la chaîne, un autre car).'],
-    hyb: ['HYBRIDE', 'Hybride téléphonique / SIP : relie l\'intercom à une ligne téléphonique.'],
-    gpo: ['GPO', 'Sortie relais : la touche ferme un contact (voyant, buzzer, commande d\'un appareil).'],
-  };
-  const keys = [
-    ['ORDRES', 'conf', 'La conférence « Ordres » : le réalisateur parle à tout le car et à tous les cadreurs. Tout le monde écoute, seuls quelques pupitres y parlent.'],
-    ['CAMÉRAS', 'conf', 'Les cadreurs : la voix sort de la matrice sur une carte 4 fils, entre dans chaque CCU par son connecteur INTERCOM/TALLY (D-sub 50, canal PROD), voyage dans la fibre caméra et arrive au casque du cadreur (XLR-5 INTERCOM sur la tête).'],
-    ...S.cams.slice(0, 6).map((c) => [`CAM ${c.id}`, 'p2p', `Point à point avec le cadreur de la CAM ${c.id} (${c.T.short}) : pour lui parler sans déranger les autres.${c.link === 'hf' ? ' Caméra HF : l\'intercom passe par une liaison radio séparée (talkie numérique ou retour HF).' : ''}`]),
-    ['ENG', 'conf', 'Canal ENG (technique) : la vision, le chef de car et les cadreurs parlent des problèmes techniques sans polluer les ordres de la production. Sur les caméras Sony, PROD et ENG sont deux canaux distincts du connecteur intercom.'],
-    ['VISION', 'p2p', 'Ligne directe avec les ingénieurs vision.'],
-    ['EVS', 'conf', 'Les opérateurs ralentis : le réalisateur demande les angles, l\'opérateur annonce « EVS A prêt ».'],
-    ['SON', 'p2p', 'Ligne directe avec l\'ingénieur du son.'],
-    ['TRUQUISTE', 'p2p', 'Le truquiste est souvent à côté du réalisateur, mais garde une touche pour les pupitres déportés.'],
-    ['COMMENT.', 'ifb', 'IFB des commentateurs : ils entendent leur N-1 (le programme sans leur propre voix) ; quand la production leur parle, ce retour baisse.'],
-    ['CHAÎNE', 'w4', 'Coordination avec la régie finale de la chaîne : top départ, compte à rebours, pubs, incidents.'],
-    ['TÉLÉPHONE', 'hyb', 'Pour joindre un intervenant extérieur (le stade, la sécurité, un duplex).'],
-    ['VOYANT', 'gpo', 'Allume le voyant « réalisateur au micro » dans le compound (exemple de sortie relais).'],
-  ];
-  const state = {};
-  const grid = el('div', { class: 'icp' });
-  for (const [l, t, d] of keys) {
-    const st = state[l] = { talk: false, listen: t === 'conf' || t === 'ifb' };
-    const talk = el('button', { class: 'icp-talk', 'aria-label': 'TALK ' + l, title: 'Parler vers ' + l, onclick: () => { st.talk = !st.talk; upd(); if (st.talk) intercom('ORDRES', `Canal ouvert vers : ${l}`); explain(`TALK ${l} ${st.talk ? 'ouvert' : 'fermé'} · ${TYPES[t][1]} ${d}`, 'icom:' + l); } }, 'TALK');
-    const lis = el('button', { class: 'icp-lis', 'aria-label': 'LISTEN ' + l, title: 'Écouter ' + l, onclick: () => { st.listen = !st.listen; upd(); explain(`LISTEN ${l} ${st.listen ? 'activé : vous entendez ce canal' : 'coupé : vous n\'entendez plus ce canal'}. Chaque touche a un volume d'écoute réglable ; on coupe les canaux inutiles pour rester concentré.`, 'icom:l' + l); } }, 'LISTEN');
-    const k = el('div', { class: 'icp-key' }, el('div', { class: 'icp-lcd' }, el('b', {}, l), el('small', {}, TYPES[t][0])), el('div', { class: 'icp-btns' }, talk, lis));
-    const upd = () => { talk.classList.toggle('on', st.talk); lis.classList.toggle('on', st.listen); k.classList.toggle('talking', st.talk); };
-    upd(); grid.appendChild(k);
-  }
-  body.append(el('div', { class: 'hwpanel' }, el('h3', {}, 'Pupitre d\'intercom (poste réalisateur, 16 touches)'), grid,
-      el('p', { class: 'note' }, 'Comme sur les pupitres numériques (Riedel, Clear-Com…) : chaque touche a une fonction TALK (parler, en appui bref = momentané, appui long = verrouillé) et LISTEN (écouter). L\'afficheur indique la destination et son type.'),
-      el('div', { class: 'hwrow' }, el('button', { class: 'btn small', onclick: () => openDevice('icom', 1) }, 'Voir la matrice d\'intercom'), el('button', { class: 'btn small', onclick: () => openDevice('ccu', S.cams[0] ? S.cams[0].id : 1, { focus: 'icom' }) }, 'Voir l\'entrée intercom d\'une CCU'))),
-    el('div', { class: 'panelgrid' },
-      el('div', { class: 'hwpanel prose' }, el('h3', {}, 'Le trajet d\'un ordre jusqu\'au cadreur'), el('ol', { class: 'steps' },
-        el('li', {}, 'Micro col de cygne du pupitre → convertisseur dans le pupitre → liaison numérique (AES3, fibre ou AES67) vers la matrice.'),
-        el('li', {}, 'La matrice route la voix vers la conférence « CAMÉRAS » : sortie sur une carte 4 fils analogique ou numérique.'),
-        el('li', {}, 'Câble multipaire vers la baie CCU : connecteur INTERCOM/TALLY/IO (D-sub 50) de chaque CCU, canaux PROD et ENG.'),
-        el('li', {}, 'La CCU multiplexe l\'audio dans la fibre hybride avec la vidéo retour, le tally et les commandes.'),
-        el('li', {}, 'Sur la caméra : connecteur INTERCOM 1 (XLR-5) → casque du cadreur. Le micro du casque repart dans l\'autre sens.'))),
-      el('div', { class: 'hwpanel prose' }, el('h3', {}, 'Et le tally ?'), el('p', {}, 'Le mélangeur sait quelle source est au PGM (rouge) et en preset (vert). Il l\'envoie à un contrôleur de tally (GPI ou protocole TSL UMD sur IP), qui allume le tally de chaque CCU (contacts R/G/Y du D-sub 50). La CCU transmet l\'information à la caméra : voyant sur la tête, dans le viseur, et indication sur le RCP. Le même système envoie les noms de sources (UMD) au multiview.'),
-        el('p', {}, STATION_INFO.intercom.role))),
-    el('div', { class: 'hwpanel prose' }, el('h3', {}, 'Équipements'), el('ul', { class: 'steps' }, STATION_INFO.intercom.gear.map((g) => el('li', {}, g)))));
-  return {};
-}

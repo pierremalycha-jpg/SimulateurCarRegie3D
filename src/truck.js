@@ -5,10 +5,11 @@ import { matiere } from './matiere.js';
 import { TRUCK } from './world.js';
 import { makeCanvas, tc } from './util.js';
 import { S } from './state.js';
-import { EQUIP } from './equip.js';
 import { buildAudioDesk } from './audiodesk.js';
 import { buildMelangeur3D } from './poste3d/icp.js';
 import { buildRcp3D } from './poste3d/rcp.js';
+import { buildLsm3D } from './poste3d/lsm.js';
+import { buildIcom3D } from './poste3d/icom.js';
 
 // ----------------------------------------------------------------------------------
 // Intérieur du car régie (scène séparée : on ne voit pas l'extérieur).
@@ -93,22 +94,14 @@ function deskPanel(name, w, d, lx, lz, draw, y = 0.79, tilt = 0.18, rotY = 0) {
 const rr = (g, x, y, w, h, r, fill, stroke) => { g.beginPath(); g.roundRect ? g.roundRect(x, y, w, h, r) : g.rect(x, y, w, h); if (fill) { g.fillStyle = fill; g.fill(); } if (stroke) { g.strokeStyle = stroke; g.lineWidth = 2; g.stroke(); } };
 const txt = (g, s, x, y, size = 14, color = '#c9d1d9', align = 'center', weight = 600) => { g.font = `${weight} ${size}px "Barlow Condensed", "Arial Narrow", sans-serif`; g.fillStyle = color; g.textAlign = align; g.textBaseline = 'middle'; g.fillText(s, x, y); };
 
-function drawLSM(g, W, H) {
-  // télécommande LSM (Multicam) + clavier et souris IPDirector
+function drawIPD(g, W, H) {
+  // clavier et souris d'IPDirector, conducteur papier (la télécommande LSM est en 3D : poste3d/lsm.js)
   g.fillStyle = '#1e2125'; g.fillRect(0, 0, W, H);
-  rr(g, 10, 8, 420, H - 16, 10, '#2c3036', '#3f454c');
-  rr(g, 22, 16, 230, 34, 4, '#0a1a0c'); txt(g, 'PGM1  CAM A  LIVE', 137, 33, 15, '#8cf0a8', 'center', 500);
-  for (let i = 0; i < 10; i++) rr(g, 22 + i * 23, 58, 19, 16, 3, '#4a5058');
-  for (let r = 0; r < 3; r++) for (let i = 0; i < 5; i++) rr(g, 22 + i * 46, 84 + r * 26, 40, 20, 4, ['#3a4047', '#c08a20', '#30a050', '#3a4047', '#2f6fb0'][(i + r) % 5]);
-  rr(g, 280, 20, 22, H - 44, 8, '#0b0d0f'); rr(g, 270, 60, 42, 18, 4, '#c8ccd0'); txt(g, 'LEVIER', 291, H - 14, 11, '#8b949e');
-  g.beginPath(); g.arc(370, H / 2 + 6, 46, 0, Math.PI * 2); g.fillStyle = '#121416'; g.fill(); g.beginPath(); g.arc(370, H / 2 + 6, 30, 0, Math.PI * 2); g.fillStyle = '#2a2e33'; g.fill(); g.beginPath(); g.arc(385, H / 2 - 6, 5, 0, Math.PI * 2); g.fillStyle = '#e0b030'; g.fill();
-  txt(g, 'LSM · ' + EQUIP.evsModel, 220, H - 14, 12, '#8b949e');
-  // clavier et souris
-  rr(g, 470, 30, 340, 110, 6, '#131517', '#2a2e33');
-  for (let r = 0; r < 5; r++) for (let i = 0; i < 15; i++) rr(g, 478 + i * 22, 38 + r * 20, 19, 16, 2, '#2a2e33');
-  rr(g, 840, 50, 46, 70, 20, '#2a2e33', '#3f454c');
-  txt(g, 'IPDirector', 640, H - 12, 12, '#8b949e');
-  rr(g, 910, 20, 100, H - 40, 4, '#e8e4d8'); for (let i = 0; i < 7; i++) { g.fillStyle = '#9a968c'; g.fillRect(920, 36 + i * 14, 70 - (i % 3) * 12, 2); }
+  rr(g, 40, 50, 400, 130, 6, '#131517', '#2a2e33');
+  for (let r = 0; r < 5; r++) for (let i = 0; i < 16; i++) rr(g, 50 + i * 24, 60 + r * 23, 21, 19, 2, '#2a2e33');
+  rr(g, 480, 80, 52, 80, 22, '#2a2e33', '#3f454c');
+  txt(g, 'IPDirector', 240, H - 26, 16, '#8b949e');
+  rr(g, 640, 30, 150, H - 60, 4, '#e8e4d8'); for (let i = 0; i < 9; i++) { g.fillStyle = '#9a968c'; g.fillRect(655, 50 + i * 18, 110 - (i % 3) * 18, 2); }
 }
 function drawIntercom(g, W, H) {
   g.fillStyle = '#1f2226'; g.fillRect(0, 0, W, H);
@@ -566,11 +559,14 @@ export function buildTruck() {
   // pupitres (textures détaillées)
   // pupitre du truquiste en 3D, touche par touche (poste3d/icp.js) : le poste Mélangeur s'y installe (poste3d/melangeur.js)
   buildMelangeur3D(T.scene, new THREE.Vector3(X(-1.25), F + 0.79, Z(-1.6)));
-  deskPanel('director', 0.9, 0.3, -2.9, -1.55, drawIntercom);
+  // pupitre d'intercom du réalisateur en 3D (poste3d/icom.js) : le poste intercom s'y installe (poste3d/intercom.js)
+  buildIcom3D(T.scene, new THREE.Vector3(X(-2.9), F + 0.79, Z(-1.5)));
   deskPanel('scripte', 0.9, 0.3, -4.3, -1.55, drawScripte);
   // rangée de RCP en 3D, un par caméra (poste3d/rcp.js) : le poste vision s'y installe (poste3d/vision.js)
   buildRcp3D(T.scene, new THREE.Vector3(X(2.07), F + 0.79, Z(-1.6)));
-  deskPanel('lsm', 2.6, 0.4, 2.25, 0.0, drawLSM, 0.79, 0.16);
+  // télécommande LSM en 3D (poste3d/lsm.js) : le poste ralentis s'y installe (poste3d/ralentis.js) ; à côté, le clavier d'IPDirector
+  buildLsm3D(T.scene, new THREE.Vector3(X(1.5), F + 0.79, Z(0.05)));
+  deskPanel('ipd', 1.3, 0.4, 2.95, 0.0, drawIPD, 0.79, 0.16);
   // console son en 3D (inspiration Studer Vista 1, 22 faders) posée sur le bureau, face à l'opérateur
   buildAudioDesk(T.scene, new THREE.Vector3(X(-7.22), F + 0.82, Z(-0.45)), Math.PI / 2);
   deskPanel('audioside', 0.9, 0.3, -7.6, 0.75, drawIntercom, 0.83, 0.12, Math.PI / 2);

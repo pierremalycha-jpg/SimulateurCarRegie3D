@@ -8,6 +8,8 @@ import { rich } from '../ui/rich.js';
 import { POSTE_MELANGEUR } from './melangeur.js';
 import { POSTE_VISION } from './vision.js';
 import { POSTE_SON } from './son.js';
+import { POSTE_EVS } from './ralentis.js';
+import { POSTE_INTERCOM } from './intercom.js';
 
 // ----------------------------------------------------------------------------------
 // Les postes en 3D : au lieu d'une interface plate en plein écran, on s'assoit devant le vrai
@@ -30,7 +32,7 @@ import { POSTE_SON } from './son.js';
 //  ready, root, deck, views, zones, intro, controls, controlsSig?, hover, monitors?, panels?, drawer?, key?, legend?,
 //  update ; et, pour l'orbite : rMin / rMax (distance à la cible), eyeBox (où l'œil peut aller, repère du pupitre).
 // ----------------------------------------------------------------------------------
-const DEFS = { melangeur: POSTE_MELANGEUR, vision: POSTE_VISION, son: POSTE_SON };
+const DEFS = { melangeur: POSTE_MELANGEUR, vision: POSTE_VISION, son: POSTE_SON, evs: POSTE_EVS, intercom: POSTE_INTERCOM };
 const PREF = 'carregie.poste3d';
 
 /** @type {any} */
@@ -124,6 +126,10 @@ export function mountPoste3D(id, body, ctx, arg) {
     frame(dt) { if (drawer && drawer.open && drawer.inst.frame) drawer.inst.frame(dt); if (P3D.mons && P3D.mons.frame) P3D.mons.frame(dt); },
     key(e) {
       const H = P3D.hot;
+      if (H && H.c.jog && document.activeElement === H.h) {
+        const d = { ArrowUp: 1, ArrowRight: 1, ArrowDown: -1, ArrowLeft: -1 }[e.key];
+        if (d) { H.c.jog(d * (e.shiftKey ? 10 : 1)); refreshTip(); return true; }
+      }
       if (H && (H.c.slider || H.c.knob) && document.activeElement === H.h) {
         const d = { ArrowUp: 1, ArrowRight: 1, ArrowDown: -1, ArrowLeft: -1 }[e.key];
         // la barre T et les glissières tirées vers soi : flèche bas = vers l'opérateur
@@ -152,14 +158,16 @@ function buildHits() {
   if (P3D.hot) { def.hover(null); P3D.hot = null; ui.tip.hidden = true; }
   ui.hitsBox.replaceChildren();
   P3D.hits = def.controls().map((c) => {
-    const range = c.slider || c.knob;
+    const range = c.slider || c.knob || c.jog;
     const tag = range ? 'div' : 'button';
-    const h = el(tag, { class: 'p3d-hit ' + (c.cls || '') + (c.knob ? ' p3d-knob' : '') + (c.slider ? ' p3d-slide' : ''), id: c.id || null, 'aria-label': c.aria || null, ...(range ? { role: 'slider', tabindex: 0, 'aria-valuemin': 0, 'aria-valuemax': 100, 'aria-orientation': 'vertical' } : { type: 'button' }) },
+    const h = el(tag, { class: 'p3d-hit ' + (c.cls || '') + (c.knob ? ' p3d-knob' : '') + (c.slider ? ' p3d-slide' : '') + (c.jog ? ' p3d-jog' : ''), id: c.id || null, 'aria-label': c.aria || null, ...(c.attrs || {}),
+      ...(c.jog ? { role: 'slider', tabindex: 0, 'aria-valuetext': 'molette sans butée' } : range ? { role: 'slider', tabindex: 0, 'aria-valuemin': 0, 'aria-valuemax': 100, 'aria-orientation': 'vertical' } : { type: 'button' }) },
       c.inner ? el('span', { class: 'p3d-inner ' + c.inner }) : null, el('span', { class: 'p3d-sr' }, c.text || val(c.name)));
     const H = { c, h, rect: null, off: false, on: false };
     h.addEventListener('pointerenter', () => hover(H, true)); h.addEventListener('pointerleave', () => hover(H, false));
     h.addEventListener('focus', () => hover(H, true)); h.addEventListener('blur', () => hover(H, false));
-    if (range) dragOf(H);
+    if (c.jog) jogOf(H);
+    else if (range) dragOf(H);
     else if (c.hold) holdOf(H);
     else h.addEventListener('click', () => { if (c.panel) { openPanel(c.panel); return; } c.act(); later(() => refreshTip()); });
     ui.hitsBox.append(h);
@@ -365,6 +373,22 @@ function dragOf(H) {
   h.addEventListener('pointerup', end); h.addEventListener('pointercancel', end);
   h.addEventListener('wheel', (e) => { e.preventDefault(); e.stopPropagation(); c.set(clamp(c.value() - Math.sign(e.deltaY) * (c.step || 0.02) * (e.shiftKey ? 0.25 : 1), 0, 1)); refreshTip(); }, { passive: false });
   if (c.reset) h.addEventListener('dblclick', () => { c.reset(); refreshTip(); });
+}
+// molette sans butée (jog du LSM) : on tourne autour de son centre à l'écran ; un tour = turn crans (35 images par
+// défaut, comme la molette Multicam) ; molette de la souris : 2 crans ; flèches : 1 cran (Maj : 10)
+function jogOf(H) {
+  const h = H.h, c = H.c; let d = null;
+  const ang = (e) => { const r = h.getBoundingClientRect(); return Math.atan2(e.clientY - (r.top + r.height / 2), e.clientX - (r.left + r.width / 2)); };
+  h.addEventListener('pointerdown', (e) => { e.preventDefault(); try { h.setPointerCapture(e.pointerId); } catch (err) { /* sans capture */ } d = { a: ang(e) }; });
+  h.addEventListener('pointermove', (e) => {
+    if (!d) return; const a = ang(e); let da = a - d.a;
+    if (da > Math.PI) da -= 2 * Math.PI; if (da < -Math.PI) da += 2 * Math.PI;
+    const n = Math.round(da / (2 * Math.PI) * (c.turn || 35)); if (!n) return;
+    d.a = a; c.jog(n); refreshTip();
+  });
+  const end = () => { d = null; };
+  h.addEventListener('pointerup', end); h.addEventListener('pointercancel', end);
+  h.addEventListener('wheel', (e) => { e.preventDefault(); e.stopPropagation(); c.jog(e.deltaY > 0 ? 2 : -2); refreshTip(); }, { passive: false });
 }
 // touche maintenue (talkback) : active tant qu'on appuie
 function holdOf(H) {

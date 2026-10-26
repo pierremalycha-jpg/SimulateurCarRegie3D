@@ -1,6 +1,6 @@
 {
   "name": "simulateur-car-regie",
-  "version": "19.11.1",
+  "version": "19.12.0",
   "description": "Simulateur 3D de car régie pour la formation des techniciens",
   "scripts": {
     "build": "node tools/build.mjs",
