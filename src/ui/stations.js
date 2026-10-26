@@ -82,8 +82,7 @@ export function openStation(id, arg) {
     el('h2', { class: 'tape' }, ...(S.ipMode && def.ipTitle ? def.ipTitle : def.title).split(' — ').map((t, i) => (i ? el('small', {}, t) : t))),
     el('div', { class: 'role', title: info.role || '' }, role),
     el('div', { class: 'st-tools' }, devBtn, fmBtn,
-      el('button', { class: 'btn small st-missions', title: 'Le journal des missions : les exercices de ce poste, toutes les missions, tes badges (L, sauf si le poste se sert de la touche)', onclick: () => emit('journal') }, 'Missions'),
-      el('button', { class: 'btn small chef-btn', title: 'Le chef de car vous explique ce poste et vous guide pas à pas (J)', onclick: () => emit('chef') }, 'Chef de car'),
+      el('button', { class: 'btn small st-tel', title: 'Le téléphone : missions de ce poste, Olivier, aller à un autre poste, outils, Cours, réglages (Tab)', onclick: () => emit('telephone') }, 'Téléphone'),
       el('button', { class: 'btn small', title: 'Rôle, matériel, déroulé et pièges du poste', onclick: () => openInfo(id) }, 'Fiche du poste'),
       el('button', { class: 'btn small', title: 'La fiche de cours de ce poste, et toutes les notions techniques (G)', onclick: () => emit('cours', { poste: id }) }, 'Cours')),
     el('button', { class: 'btn small st-quit', onclick: () => closeStation() }, el('kbd', {}, 'Échap'), 'Quitter le poste'));

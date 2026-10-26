@@ -27,9 +27,12 @@ for (const m of ['<!--BOOT-->', '<!--FONTS-->', '/*STYLES*/']) if (!raw.includes
 const stem = (f) => f.slice(0, -4);
 const styles = fs.readdirSync('src/styles').filter((f) => f.endsWith('.css')).sort((a, b) => (stem(a) < stem(b) ? -1 : stem(a) > stem(b) ? 1 : 0)).map((f) => `/* ${f} */\n` + fs.readFileSync('src/styles/' + f, 'utf8')).join('\n');
 const tpl = raw.replace('<!--BOOT-->', () => `<script>${boot}</script>`).replace('<!--FONTS-->', () => `<style>${fontCss}</style>`).replace('/*STYLES*/', () => styles);
+// three.js seul reste dehors (CDN) : ses modules complémentaires (three/addons/…, le téléphone) sont intégrés,
+// et leur « import from 'three' » part vers le même CDN (une option external: ['three'] les laisserait dehors)
+const threeOnly = { name: 'three-cdn', setup(b) { b.onResolve({ filter: /^three$/ }, () => ({ path: 'three', external: true })); } };
 const bundle = async (external) => {
   const r = await esbuild.build({
-    entryPoints: ['src/main.js'], bundle: true, format: 'esm', write: false, external: external ? ['three'] : [],
+    entryPoints: ['src/main.js'], bundle: true, format: 'esm', write: false, plugins: external ? [threeOnly] : [],
     minify, target: TARGET, define, legalComments: 'none', charset: 'utf8',
     loader: { '.txt': 'text', '.bat': 'text', '.command': 'text', '.sh': 'text', '.svg': 'text' }, // mode d'emploi et lanceurs du serveur réseau local, icônes
   });

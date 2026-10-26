@@ -71,7 +71,7 @@ await A.close();
 const B = await openPage(browser, { errors: T.errors });
 await B.click('.jo-mode[data-mode="installe"]'); await B.click('#st-antenne');
 await until(B, () => window.__dbg.S.mode !== 'start', null, 120000); await B.waitForTimeout(1500);
-T.check('car pré-installé : jeu libre, pas de touche Missions, pas d\'objectif', await B.evaluate(() => window.__dbg.S.modeCar === 'libre' && document.getElementById('tb-missions').hidden && (document.getElementById('quest') || { hidden: true }).hidden));
+T.check('car pré-installé : jeu libre, pas de missions dans le téléphone, pas d\'objectif', await B.evaluate(() => window.__dbg.S.modeCar === 'libre' && (window.__dbg.tel.open(), !window.__dbg.tel.state().apps.includes('missions')) && (window.__dbg.tel.close(), true) && (document.getElementById('quest') || { hidden: true }).hidden));
 await B.keyboard.press('KeyJ'); await B.waitForTimeout(300); await B.keyboard.press('KeyL'); await B.waitForTimeout(300);
 T.check('J et L : ni chef de car ni journal, un message le dit', await B.evaluate(() => (!document.getElementById('chef') || document.getElementById('chef').hidden) && document.getElementById('modal').hidden && /Car pré-installé/.test(document.getElementById('toast').textContent)));
 await shot(B, '05-pre-installe');

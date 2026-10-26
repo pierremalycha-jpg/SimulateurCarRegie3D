@@ -1,7 +1,7 @@
 // Navigation entre les trois entrées : écran titre (Jouer, Cours, Réglages), Cours en plein écran
 // par-dessus le titre et dans le car (sommaire unique, suivi, exercices pratiques des leçons),
 // Réglages (profil, espace formateur), « Commencer » un exercice qui lance le car et le chef de car,
-// menu du car (Échap), « Aller au poste » depuis une leçon, touche G dans un poste, pupitre,
+// menu du car (Échap), « Aller au poste » depuis une leçon, touche G dans un poste, téléphone,
 // changement de vacation (le simulateur se recharge et lance la vacation demandée), téléphone.
 // node tests/e2e/navigation.mjs [dossier]
 import { launch, openPage, outDir, until, reporter } from './harness.mjs';
@@ -56,7 +56,7 @@ await ev(() => { window.__dbg.stopChefLesson(); window.__dbg.toggleChef(false); 
 
 // ---------------- dans le car ----------------
 await page.waitForTimeout(600);
-T.check('barre d\'outils épurée : niveau, Pupitre, Missions, Menu (le chef seulement pendant un exercice)', await ev(() => [...document.querySelectorAll('#toolbar .tbtn')].filter((b) => !b.hidden).map((b) => b.id).join(',') === 'tb-pupitre,tb-missions,tb-menu' && !!document.querySelector('#toolbar #xpbar')));
+T.check('barre d\'outils épurée : niveau, Téléphone, Menu', await ev(() => [...document.querySelectorAll('#toolbar .tbtn')].filter((b) => !b.hidden).map((b) => b.id).join(',') === 'tb-tel,tb-menu' && !!document.querySelector('#toolbar #xpbar')));
 await page.keyboard.press('Escape');
 T.check('Échap : le menu du car, quatre touches', await until(page, () => !!document.querySelector('#modal .mn') && [...document.querySelectorAll('#modal .mn-key')].map((b) => b.id).join(',') === 'mn-resume,mn-cours,mn-reglages,mn-home', null, 4000));
 await shot('04-menu');
@@ -81,9 +81,9 @@ T.check('bouton « Cours » du poste', await layer('cours'));
 await page.keyboard.press('Escape'); await page.keyboard.press('Escape');
 await until(page, () => window.__dbg.S.mode === 'fps', null, 8000);
 await page.keyboard.press('Tab');
-T.check('pupitre : trois familles d\'outils (car, Cours, Réglages)', await until(page, () => [...document.querySelectorAll('#modal .pp-fam h3')].map((h) => h.textContent).join(',') === 'Dans le car,Cours,Réglages', null, 6000));
-await page.locator('#modal .dkey.tool', { hasText: 'Glossaire' }).click();
-T.check('pupitre → glossaire du Cours', await layer('cours') && await ev(() => !!document.querySelector('#layer .ly-tabs .tab.on[data-k="glossaire"]')));
+T.check('téléphone : trois familles d\'applications (car, Cours, Réglages)', await until(page, () => [...document.querySelectorAll('#telephone .tel-fam h3')].map((h) => h.textContent).join(',') === 'Le car,Cours,Réglages', null, 6000));
+await page.locator('#telephone .tel-app[data-app="glossaire"]').click();
+T.check('téléphone → glossaire du Cours', await layer('cours') && await ev(() => !!document.querySelector('#layer .ly-tabs .tab.on[data-k="glossaire"]')));
 // changer de vacation en cours de partie : un exercice noté de la leçon, confirmation, rechargement
 await ev(() => window.__dbg.emit('cours', { lesson: 'sdi-cable' }));
 await page.locator('#layer .co-exo[data-exercise="x-brassage"] .btn').click();

@@ -56,6 +56,7 @@ const SUITES = [
   ['jeu', 'jeu', [], 20],
   ['progression', 'progression', [], 15],
   ['rendu', 'rendu', [], 25],
+  ['telephone', 'telephone', [], 20],
 ];
 
 const args = process.argv.slice(2);

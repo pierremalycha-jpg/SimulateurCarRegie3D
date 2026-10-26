@@ -29,7 +29,7 @@ import { lessonById as coursLesson } from '../cours/index.js';
 // nom, ce qu'il dit, les gestes), qui ne bloque pas le poste (on lit et on agit en même temps) ;
 // elle passe en haut quand l'élément à utiliser est dessous, et se réduit en une ligne. Le suivi
 // des tâches, sur le côté (game/quest.js), montre les étapes et le plan de la visite. Appelé à tout
-// moment (bouton « Chef de car », touche J). Il propose les
+// moment (application Olivier du téléphone, touche J). Il propose les
 // exercices du poste où l'on se trouve (tous les autres sont rangés dans les leçons du Cours),
 // déroule les étapes, met en évidence l'élément à utiliser, emmène au bon poste et au bon
 // onglet, tape les commandes si on le lui demande. En visite guidée (Jouer, mode « Visite
@@ -444,7 +444,7 @@ function renderHome() {
       rich('On commence par le tour du car ? Cinq minutes : entrer dans le car, le plan caméras, les synoptiques, aller à un poste.'),
       el('div', { class: 'chef-acts' },
         el('button', { class: 'btn small primary', onclick: () => { UI.intro = false; startLesson('prise-en-main'); onStep(); } }, 'Commencer : se repérer'),
-        el('button', { class: 'btn small', onclick: () => { UI.intro = false; toggleChef(false); toast('Le chef de car reste disponible : bouton « Chef de car » ou touche J.', '', 5000); } }, 'Plus tard')));
+        el('button', { class: 'btn small', onclick: () => { UI.intro = false; toggleChef(false); toast('Le chef de car reste disponible : application Olivier du téléphone (Tab) ou touche J.', '', 5000); } }, 'Plus tard')));
     UI.root.append(body);
     return;
   }
@@ -568,6 +568,6 @@ on('station', () => {
   if (TUTOR.open) { render(true); return; }
   // la première fois qu'on ouvre un poste, le chef se présente (une fois par navigateur)
   let seen; try { seen = localStorage.getItem('carregie.chefHint') === '1'; localStorage.setItem('carregie.chefHint', '1'); } catch (e) { seen = true; }
-  if (!seen) toast('Besoin d\'aide ? Le chef de car (bouton « Chef de car » ou touche J) vous présente ce poste et vous guide pas à pas.', '', 7000);
+  if (!seen) toast('Besoin d\'aide ? Le chef de car (application Olivier du téléphone, ou touche J) vous présente ce poste et vous guide pas à pas.', '', 7000);
 });
 on('stationClose', () => { if (TUTOR.open) render(true); });

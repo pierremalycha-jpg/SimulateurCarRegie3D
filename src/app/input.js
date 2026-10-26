@@ -14,7 +14,7 @@ import { openDevice, openEquipmentIndex } from '../equipment/viewer.js';
 import { PL, KEYS, joy, onDeck, updToolbar } from './player.js';
 import { CAMOP, releaseCamera } from './camop.js';
 import { AIM, act } from './interact.js';
-import { openPupitre } from '../ui/pupitre.js';
+import { telOpen, telKey, toggleTelephone } from '../telephone/index.js';
 import { titleOpen, titleKey } from './title.js';
 import { camlabOpen } from '../camlab/index.js';
 import { entrepotOpen } from '../entrepot/index.js';
@@ -31,6 +31,8 @@ function onKeyDown(e) {
   if (askOpen()) { if (e.code === 'Escape') { closeAsk(false); e.preventDefault(); } return; }
   // fenêtre explicative « ? » : Échap la ferme (sans fermer le poste) ; les autres touches ne pilotent rien
   if (termOpen()) { if (e.code === 'Escape') { closeTerm(); e.preventDefault(); } return; }
+  // le téléphone levé : ses touches (Échap, Tab, flèches) ; un raccourci le range et suit son chemin
+  if (telOpen() && telKey(e)) return;
   if (modal.isOpen) { if (e.code === 'Escape') modal.close(); return; }
   // le Cours (plein écran, par-dessus l'écran titre aussi) : Échap le referme
   if (layerOpen()) { if (e.code === 'Escape') { closeLayer(); e.preventDefault(); } return; }
@@ -45,6 +47,7 @@ function onKeyDown(e) {
   if (S.mode === 'station') {
     if (e.code === 'Escape') { closeStation(); e.preventDefault(); return; }
     if (stationKey(e)) { e.preventDefault(); return; }
+    if (e.code === 'Tab' && !e.ctrlKey && !e.metaKey && !e.altKey) { e.preventDefault(); toggleTelephone(); return; }
     if (e.code === 'KeyL' && !e.ctrlKey && !e.metaKey && !e.altKey) { emit('journal'); return; }
     // G : le Cours sur la fiche du poste, si le poste ne se sert pas de la touche
     if (e.code === 'KeyG' && !e.ctrlKey && !e.metaKey && !e.altKey) emit('cours', { poste: S.station });
@@ -66,14 +69,14 @@ function onKeyDown(e) {
   if (e.code === 'KeyI' && target) { if (target.kind === 'cam') { openDevice('cam', target.cam.id); return; } const id = target.kind === 'station' ? target.station : target.info; if (id) openInfo(id); }
   if (e.code === 'KeyV') { PL.fly = !PL.fly; updToolbar(); toast(PL.fly ? 'Vol libre : Espace pour monter, C pour descendre' : 'Vol libre désactivé'); }
   if (e.code === 'KeyP') openPlan();
-  if (e.code === 'KeyT') { if (document.pointerLockElement) document.exitPointerLock(); openPupitre(); }
+  if (e.code === 'KeyT') toggleTelephone();
   if (e.code === 'KeyG') { if (document.pointerLockElement) document.exitPointerLock(); emit('cours'); }
   if (e.code === 'KeyH') openCommandes();
   if (e.code === 'KeyL') { if (document.pointerLockElement) document.exitPointerLock(); emit('journal'); }
   // Échap : la souris est déjà libérée (le navigateur le fait au premier appui) : le menu du car
   if (e.code === 'Escape' && !document.pointerLockElement) { emit('menu'); e.preventDefault(); }
   if (e.code === 'KeyK') { if (target && target.kind === 'station' && target.device) openDevice(target.device, 1); else openEquipmentIndex(); }
-  if (e.code === 'Tab') { e.preventDefault(); if (document.pointerLockElement) document.exitPointerLock(); openPupitre(); }
+  if (e.code === 'Tab') { e.preventDefault(); toggleTelephone(); }
   if (e.code === 'KeyY') openSynoptics();
   if (e.code === 'KeyM') $('#minimon').hidden = !$('#minimon').hidden;
   if (commutKey(e, 'fps')) e.preventDefault();

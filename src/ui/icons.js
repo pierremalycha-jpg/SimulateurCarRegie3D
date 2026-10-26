@@ -87,6 +87,11 @@ import iGameController from '@phosphor-icons/core/bold/game-controller-bold.svg'
 import iSparkle from '@phosphor-icons/core/bold/sparkle-bold.svg';
 import iRanking from '@phosphor-icons/core/bold/ranking-bold.svg';
 import iCaretRight from '@phosphor-icons/core/bold/caret-right-bold.svg';
+import iCaretLeft from '@phosphor-icons/core/bold/caret-left-bold.svg';
+import iDeviceMobile from '@phosphor-icons/core/bold/device-mobile-bold.svg';
+import iCellSignalFull from '@phosphor-icons/core/bold/cell-signal-full-bold.svg';
+import iWifiHigh from '@phosphor-icons/core/bold/wifi-high-bold.svg';
+import iBatteryFull from '@phosphor-icons/core/bold/battery-full-bold.svg';
 
 /** nom dans l'application -> dessin SVG @type {Record<string, string>} */
 const SVG = {
@@ -107,7 +112,7 @@ const SVG = {
   // les lieux (content/lieux.js)
   hautparleur: iSpeakerHifi, lumiere: iLightbulbFilament,
   mesure: iPulse, // baie de mesure (PRISM)
-  // les cinq familles du menu et leurs outils (app/title.js, ui/pupitre.js, ui/cours_ui.js)
+  // les familles du menu et leurs outils (app/title.js, telephone/apps.js, ui/cours_ui.js)
   cours: iGraduationCap, lexique: iBookBookmark, formateur: iUserGear, relecture: iSealCheck, commandes: iKeyboard, livret: iNotebook,
   // le menu du car (app/nav.js) et l'espace du chef de car (ui/entrainement.js)
   entrainement: iTarget, menu: iList, accueil: iHouse, reprendre: iPlay, cube: iCube,
@@ -115,6 +120,8 @@ const SVG = {
   missions: iListChecks, objectif: iCrosshair, eclair: iLightning, medaille: iMedal, trophee: iTrophy, bouclier: iShieldCheck,
   drapeau: iFlagCheckered, boussole: iCompassRose, repere: iMapPin, couronne: iCrownSimple, confetti: iConfetti, jeu: iGameController,
   etoile: iSparkle, classement: iRanking, suivant: iCaretRight, porte: iDoorOpen,
+  // le téléphone (telephone/) : l'appareil, le retour à l'accueil, la barre d'état
+  telephone: iDeviceMobile, retourapp: iCaretLeft, signal: iCellSignalFull, wifi: iWifiHigh, batterie: iBatteryFull,
 };
 export const ICON_NAMES = Object.keys(SVG);
 /**

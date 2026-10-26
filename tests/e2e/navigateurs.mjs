@@ -67,19 +67,23 @@ const f0 = await ev(() => window.__dbg.S.frame);
 T.check('le rendu tourne', await until(page, (f) => window.__dbg.S.frame > f + 5, f0, 60000));
 await shot('01-partie');
 
-// bouton de la barre d'outils
-await page.locator('#tb-chef').click();
-T.check('bouton « Chef de car » de la barre : ferme', await chefClosed());
-await page.locator('#tb-chef').click();
-T.check('bouton « Chef de car » de la barre : rouvre', await chefOpen());
+// l'application Olivier du téléphone
+await page.locator('#tb-tel').click();
+await page.locator('#telephone .tel-app[data-app="olivier"]').click();
+T.check('application Olivier du téléphone : ferme', await chefClosed());
+await page.locator('#tb-tel').click();
+await page.locator('#telephone .tel-app[data-app="olivier"]').click();
+T.check('application Olivier du téléphone : rouvre', await chefOpen());
 
-// le pupitre (Tab) : les postes rangés par zone du car, les outils ; une touche emmène au poste
+// le téléphone (Tab) : Aller à range les postes par zone du car ; un poste y emmène
 await ev(() => window.__dbg.toggleChef(false));
 await page.keyboard.press('Tab');
-T.check('Tab ouvre le pupitre : zones du car et outils', await until(page, () => /Pupitre/.test(document.querySelector('#modal h2')?.textContent || '') && document.querySelectorAll('#modal .pp-bank').length >= 4 && document.querySelectorAll('#modal .dkey.tool').length >= 10, null, 8000));
-await shot('02-pupitre');
-await page.locator('#modal .dkey', { hasText: 'Truquiste' }).click();
-T.check('touche « Truquiste » du pupitre : poste Mélangeur ouvert', await until(page, () => window.__dbg.S.mode === 'station' && window.__dbg.S.station === 'melangeur', null, 30000));
+T.check('Tab lève le téléphone : applications par famille', await until(page, () => { const s = window.__dbg.tel.state(); return s.open && s.t >= 1 && s.apps.length >= 10; }, null, 8000));
+await page.locator('#telephone .tel-app[data-app="aller"]').click();
+T.check('Aller à : zones du car', await until(page, () => document.querySelectorAll('#telephone .tel-sec').length >= 5, null, 4000));
+await shot('02-telephone');
+await page.locator('#telephone .tel-row', { hasText: 'Truquiste' }).first().click();
+T.check('« Truquiste » dans le téléphone : poste Mélangeur ouvert', await until(page, () => window.__dbg.S.mode === 'station' && window.__dbg.S.station === 'melangeur', null, 30000));
 await ev(() => window.__dbg.closeStation());
 
 // visite arrêtée : à un poste, la touche J ouvre le chef sur les exercices de ce poste

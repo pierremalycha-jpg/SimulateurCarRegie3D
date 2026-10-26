@@ -24,6 +24,7 @@ Calendrier indicatif, calé sur l'année scolaire (les épreuves ont lieu en mai
 
 | Version | Période | Contenu |
 |---|---|---|
+| v19.9 | oct. 2026 (fait) | Le téléphone : un smartphone en 3D levé devant soi (Tab), dont les applications mènent à tout ce qui n'est pas dans le décor (aller à un poste, missions, Olivier, plan caméras, synoptiques, matériel, Cours, progression, réglages) ; il remplace le pupitre et les boutons Pupitre, Missions et Chef de car (HUD : niveau, Téléphone, Menu). Reste : le téléphone à l'entrepôt (cahier des charges, stock, réseau) et la Carrière (les mails sur le téléphone) |
 | v19.8 | oct. 2026 (fait) | Trois façons de jouer au car régie : car vide (Olivier propose d'abord la visite), car pré-installé (jeu libre, sans chef ni missions), mission spécifique (une tâche choisie par famille, le car préparé pour elle, enchaîner ou arrêter) ; le suivi des tâches sur le côté ; Olivier en boîte de dialogue en bas de l'écran ; la tâche « réseau de contrôle » du car vide vérifie enfin l'adresse du plan |
 | v19.7 | oct. 2026 (fait) | Jouer par Internet : depuis le salon, l'hôte obtient un lien en un clic (analyse du réseau, ouverture de la box par UPnP, adresse publique vérifiée, sinon tunnel Cloudflare gratuit et sans compte) ; l'invité ouvre le lien dans son navigateur ou le colle dans son salon, et chacun voit l'avatar de l'autre ; ce qui vient d'Internet doit porter la clé du lien. À essayer avec une vraie box et un vrai invité |
 | v19.6 | oct. 2026 (fait) | La Carrière, mode scénarisé de l'entrepôt (lot 1) : le bureau et son ordinateur dans le hall, une messagerie où des mails proposent un poste sur une prestation, l'ordre de mission, deux épisodes (stagiaire : visite du car réduite à six postes ; assistant technique : la conférence montée à l'entrepôt), retour au bureau depuis le car, badge « Embauché », progression v3 |
@@ -59,6 +60,11 @@ et 30 images par seconde sur le PC le plus faible de l'établissement.
   route ; l'entrepôt devient un mode à part. Le chef de car n'est plus une entrée : ses parcours sont les
   exercices pratiques des leçons du Cours, et sa présentation du car devient le mode « Visite guidée ».
 
+- 25 octobre 2026 (v19.9) : tout ce qui n'est pas dans le décor passe par un **téléphone** qu'on lève devant soi,
+  comme dans un GTA ou un Schedule 1 : un smartphone en 3D tenu en main, dont les applications ouvrent les outils
+  (rangées dans les trois familles : le car, le Cours, les réglages). Il remplace le pupitre et les boutons du HUD :
+  à l'écran, il ne reste que le téléphone (Tab) et le menu (Échap) ; les anciennes touches restent des raccourcis.
+  Le car régie d'abord ; l'entrepôt suivra avec ses propres applications.
 - 24 octobre 2026 (v19.8) : le car régie se joue de trois façons, chacune à sa phase : **car vide** (tout à faire,
   Olivier propose d'abord la visite guidée), **car pré-installé** (jeu libre, ni chef de car ni missions) et **mission
   spécifique** (une tâche précise, le car préparé pour elle ; ensuite on enchaîne ou l'on s'arrête). La visite guidée
