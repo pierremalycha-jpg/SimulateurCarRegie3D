@@ -194,6 +194,7 @@ export const RATTACHEMENT = {
     'signal-422': ['1.4', '2.2'], 'signal-bits': ['1.4', '2.2'], 'signal-niveaux': ['1.4', '2.2'], 'signal-formats': ['1.4', '2.10'], 'signal-couleur': ['1.4', '2.2'],
     'sdi-cest-quoi': ['2.10', '2.2'], 'sdi-bits': ['2.2', '2.13', '2.10'], 'sdi-oeil': ['2.2', '2.13', '3.9'], 'sdi-falaise': ['2.2', '2.13', '3.9'], 'sdi-embedded': ['2.10', '1.4'], 'sdi-cable': ['2.10', '3.9'],
     'reseau-ip': ['3.6', '2.10'], 'reseau-vlan': ['3.6', '2.10'], 'reseau-switch': ['3.6', '2.13'], 'reseau-routage': ['3.6', '2.10', '2.13'], 'reseau-multicast': ['3.6', '2.11'], 'reseau-ptp': ['3.6', '1.4'],
+    'reseau-st2110': ['2.11', '3.6', '2.10'], 'reseau-paquet': ['3.6', '2.11'], 'reseau-rythme': ['2.2', '3.6', '2.11'], 'reseau-2022-7': ['3.12', '3.6', '2.11'], 'reseau-spine-leaf': ['3.6', '1.1', '2.10'], 'reseau-nmos': ['3.6', '2.10', '3.12'],
     'hf-frequences': ['2.10', '3.12'], 'hf-bilan': ['2.10', '2.7'], 'hf-antennes': ['2.7', '3.9'], 'hf-cofdm': ['2.11', '2.7'],
     'sdi-grille': ['2.10', '2.9', '3.12'],
     'synchro-genlock': ['1.2', '1.4', '3.12'], 'synchro-timecode': ['1.3', '2.5'],

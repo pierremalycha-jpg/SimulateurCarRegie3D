@@ -1,6 +1,7 @@
 // @ts-check
 import { el } from '../util.js';
 import { ROUTAGE } from './reseau_routage.js';
+import { ST2110_LESSONS } from './reseau_st2110.js';
 import { registerChapter } from './index.js';
 import { figure, sv, canvas, slider, choice, readout, fmtNum } from './kit.js';
 
@@ -431,7 +432,7 @@ function demoPtp(host) {
 // ======================================================================================
 registerChapter({
   id: 'reseau', title: 'Le réseau', icon: 'reseau',
-  intro: 'Adresses, masques, VLAN, commutateurs, multicast, PTP : le réseau de contrôle du car SDI et le réseau média du car IP.',
+  intro: 'Adresses, masques, VLAN, commutateurs, passerelle, multicast, PTP, puis le car IP : les flux ST 2110, leurs paquets et leur rythme, les réseaux rouge et bleu, le spine-leaf et NMOS.',
   lessons: [
     {
       id: 'reseau-ip', title: 'Adresse IP et masque de sous-réseau', minutes: '7 min',
@@ -589,5 +590,6 @@ Ce qu'il faut tenir : un esclave verrouillé à **mieux que la microseconde** (S
         { q: 'Une caméra IP neuve vient d\'être branchée : l\'offset PTP de tout le car saute, et le maître élu n\'est plus le SPG. Que faire ?', choices: ['La passer en « slave only » : laissée par défaut, elle a gagné l\'élection du BMCA', ['Corriger l\'asymétrie du câble de la caméra', 'Une asymétrie décale le seul esclave concerné, de a / 2 ; elle ne change pas le maître élu.'], ['Rien : le BMCA choisit toujours la meilleure horloge', 'Le BMCA compare ce que chaque horloge annonce (priorités, classe, précision) : un appareil laissé par défaut peut passer devant le SPG calé sur le GPS.']], answer: 0, why: 'Le BMCA élit le grand maître d\'après la priorité 1, la classe d\'horloge, la précision, la priorité 2 et l\'identité : un appareil laissé aux réglages par défaut peut se faire élire à la place du GPS. Le saut d\'offset trahit ce changement de maître ; le réglage « slave only » sur tout ce qui n\'est pas un générateur l\'empêche.' },
       ],
     },
+    ...ST2110_LESSONS,
   ],
 });
