@@ -9,31 +9,42 @@ Cours dont chaque leçon se termine par un exercice pratique au poste, guidé pa
 Simulation non officielle, sans lien avec le club.
 
 
-DEUX FAÇONS DE L'OUVRIR
------------------------
-D'abord, décompressez l'archive (clic droit > « Extraire tout… ») : les fichiers ne
-fonctionnent pas bien ouverts directement depuis le .zip.
+L'OUVRIR
+--------
+D'abord, décompressez l'archive (clic droit > « Extraire tout… ») : le programme ne
+fonctionne pas bien lancé directement depuis le .zip.
 
-1. TIEE-Simulator.html : sur n'importe quel ordinateur (Windows, macOS, Linux)
-   - Double-cliquez sur le fichier : le simulateur s'ouvre dans le navigateur
-     (Chrome, Edge ou Firefox récents conseillés).
-   - Rien à installer, pas besoin d'Internet.
-   - Tout fonctionne en solo. La progression est enregistrée dans ce navigateur.
-
-2. TIEE-Simulator.exe : sous Windows 10 ou 11, pour jouer aussi à plusieurs sur le réseau local
+TIEE-Simulator.exe, sous Windows 10 ou 11 :
    - Double-cliquez : une fenêtre noire s'ouvre (c'est le serveur), puis le navigateur
-     affiche le simulateur. Un second double-clic rouvre simplement la page.
-   - À la première ouverture, Windows peut afficher « Windows a protégé votre ordinateur »
-     (le programme n'est pas signé numériquement) : cliquez « Informations complémentaires »,
-     puis « Exécuter quand même ».
+     affiche l'écran « Accès réservé ».
+   - Entrez le mot de passe donné par votre formateur, puis « Entrer » : le simulateur
+     s'ouvre. Le mot de passe est redemandé à chaque lancement et dans chaque navigateur.
+     Après cinq essais manqués, il faut attendre une minute.
+   - Rien à installer, pas besoin d'Internet. La progression est enregistrée dans le navigateur.
+   - Un second double-clic rouvre simplement la page.
    - Si le pare-feu demande l'autorisation pour « TIEE Simulator », acceptez pour les réseaux
      privés : c'est ce qui permet aux autres de se connecter.
-   - La fenêtre affiche l'adresse à donner aux autres joueurs (http://192.168.x.x:8080).
-     Ils l'ouvrent dans leur navigateur, sans rien installer, sur le même réseau
-     (même box, même Wi-Fi ou même switch).
+   - Laissez la fenêtre noire ouverte pendant que vous jouez : la fermer arrête le simulateur.
+
+Signature : le programme est signé numériquement au nom de « TIEE Simulator - BTS Audiovisuel
+de Saint-Quentin » (clic droit > Propriétés > onglet « Signatures numériques »). La signature
+prouve qu'il n'a pas été modifié depuis sa construction. Si Windows affiche malgré tout
+« Windows a protégé votre ordinateur » (certificat que cet ordinateur ne connaît pas encore,
+ou exécutable non signé) : « Informations complémentaires », vérifiez l'éditeur, puis
+« Exécuter quand même ». Ne lancez pas une copie dont l'onglet « Signatures numériques »
+manque ou porte un autre nom : elle ne vient pas du BTS.
+
+Le mot de passe protège le simulateur : sans lui, le fichier ne contient que des données
+chiffrées. Ne le communiquez qu'aux personnes autorisées.
+
+
+JOUER À PLUSIEURS SUR LE RÉSEAU LOCAL
+-------------------------------------
+   - La fenêtre noire affiche l'adresse à donner aux autres joueurs (http://192.168.x.x:8080).
+     Ils l'ouvrent dans leur navigateur (Windows, macOS, Linux, tablette), sans rien installer,
+     sur le même réseau (même box, même Wi-Fi ou même switch), et entrent le mot de passe.
    - Dans le simulateur : Jouer, En équipe « Coopération », puis « Ouvrir le salon » : créer
      ou rejoindre une partie, choisir son pseudo et son poste.
-   - Laissez la fenêtre noire ouverte pendant la partie : la fermer arrête le serveur.
    - Les comptes rendus de session sont enregistrés dans le dossier « rapports »,
      à côté de l'exécutable.
 
@@ -63,7 +74,8 @@ Celui qui rejoint :
    - Le plus simple : ouvrez le lien reçu dans votre navigateur (Chrome, Edge, Firefox).
      Rien à installer. Puis Jouer, « Coopération », « Ouvrir le salon », votre pseudo,
      votre poste, « Rejoindre la partie ».
-   - Avec le kit (TIEE-Simulator.exe ou TIEE-Simulator.html) : Jouer, « Coopération »,
+   - Il faut aussi le mot de passe du simulateur : l'écran « Accès réservé » le demande.
+   - Avec le kit (TIEE-Simulator.exe) : Jouer, « Coopération »,
      « Ouvrir le salon », onglet « Rejoindre une partie », collez le lien dans
      « Vous avez reçu un lien de l'hôte ? », puis « Rejoindre ».
 
@@ -93,7 +105,8 @@ POUR BIEN DÉMARRER
    - G : le Cours. Chaque leçon (signal, SDI, synchro, caméra, réalisation, ralentis, son,
      réseau, HF, exploitation) se termine par ses exercices pratiques : « Commencer » lance le
      car et le chef de car vous guide au poste. J : le chef de car, au poste où vous êtes.
-   - Tab : le pupitre (aller à un poste, tous les outils) ; P : plan des caméras ; K : matériel.
+   - Tab (ou T) : le téléphone (aller à un poste, missions, tous les outils) ; P : plan des
+     caméras ; K : matériel.
 
 
 CRÉDITS ET LICENCES

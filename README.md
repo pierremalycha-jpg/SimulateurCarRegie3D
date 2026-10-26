@@ -394,6 +394,66 @@ Tests :
   « Emmène-moi / Montre-moi » doit mettre en évidence un élément réel de la page, et « Fais-le pour moi » doit faire
   valider l'étape.
 
+## v19.10 : un exécutable protégé par mot de passe et signé, construit par GitHub
+
+**Pourquoi.** Le dépôt est devenu public (26 octobre 2026). La version à partager ne passe plus par un fichier
+HTML, que n'importe qui pouvait ouvrir et copier : il n'y a plus que `TIEE-Simulator.exe`, qui demande un mot de
+passe à chaque lancement, et qui est signé.
+
+**Le mot de passe.** À la construction, la page du simulateur (three.js compris) est compressée puis chiffrée en
+AES-256-GCM avec une clé tirée du mot de passe par scrypt (N = 2^17, r = 8 : 128 Mo et de l'ordre d'une
+demi-seconde par essai ; `lan/coffre.mjs`). L'exécutable ne contient que ce coffre : ni la page en clair, ni le mot
+de passe (`tools/exe.mjs` le vérifie et refuse de livrer sinon). Au double-clic, le navigateur s'ouvre sur l'écran
+**« Accès réservé »** (logo du BTS, mentions) ; le premier bon mot de passe ouvre le coffre en mémoire, et chaque
+navigateur reçoit un jeton (cookie `HttpOnly`, perdu à l'arrêt du serveur). Sans jeton : ni la page, ni les
+parties, ni les comptes rendus, ni le WebSocket, ni le jeu par Internet. Les joueurs du réseau local et les invités
+par Internet entrent le mot de passe à leur tour. Cinq essais manqués par minute et par adresse, puis une minute
+d'attente. Lancé directement (`node lan/serveur.mjs`, page en clair), le serveur ne demande rien : c'est le mode de
+développement et des tests.
+
+**La signature.** `tools/signature.mjs` signe l'exécutable (Authenticode SHA-256, horodatage RFC 3161, par défaut
+DigiCert) sans outil Windows : resedit assemble la signature, Node la calcule ; la somme de contrôle PE est
+recalculée. `node tools/exe.mjs --verifier` la fait contrôler par `osslsigncode`. Deux possibilités :
+- **certificat de l'établissement**, gratuit : `node tools/signature.mjs --creer` (openssl) crée un certificat
+  auto-signé de cinq ans. Il prouve que l'exécutable vient du BTS et n'a pas été modifié (onglet « Signatures
+  numériques » des propriétés). Windows ne lui fait confiance que sur les postes où `certificat.cer` est installé
+  (« Éditeurs approuvés » et « Autorités de certification racines de confiance », par une stratégie de groupe du
+  lycée) ; ailleurs, SmartScreen avertit comme pour un exécutable non signé ;
+- **certificat d'une autorité reconnue** (payant, de l'ordre de 100 à 400 € par an selon le fournisseur, ordre de grandeur ; la clé
+  est désormais gardée sur un support matériel ou dans un service en ligne, comme Azure Artifact Signing) : seul ce
+  cas fait disparaître peu à peu l'avertissement de SmartScreen, à mesure que l'exécutable est téléchargé. Une clé
+  exportable en PEM passe par les mêmes secrets ; un service en ligne demande une étape de plus dans le workflow.
+
+**Construit par GitHub** (`.github/workflows/exe.yml`). Une fois pour toutes, dans *Settings → Secrets and
+variables → Actions → New repository secret* :
+- `TIEE_MDP` : le mot de passe (10 caractères au moins ; une phrase de quatre ou cinq mots est plus sûre et plus
+  facile à dicter) ;
+- `TIEE_SIGN_CERT` et `TIEE_SIGN_KEY` : le contenu de `certificat.pem` et de `cle.pem` (sans eux, l'exécutable est
+  construit mais pas signé) ; `TIEE_SIGN_KEY_MDP` si la clé est protégée par un mot de passe.
+
+Puis `git tag v19.10.0 && git push origin v19.10.0` : GitHub construit, vérifie (lancement, mauvais et bon mot de
+passe, signature) et publie l'exécutable, le kit et leurs empreintes SHA-256 dans les *Releases*. « Run workflow »
+(onglet Actions) fait la même chose sans publier (fichiers gardés 30 jours). Changer de mot de passe : modifier le
+secret et publier une nouvelle version (les anciennes copies gardent l'ancien).
+
+**Ce qui ne sort plus.** `TIEE-Simulator.html` n'est plus dans le kit, `dist/index.html` n'est plus versionné, et
+l'intégration continue ne publie plus la page construite dans les fichiers de ses exécutions.
+
+**Les limites, à connaître.**
+- Tant que le **code source** (`src/`) est public, quelqu'un qui sait se servir de Node.js peut reconstruire le
+  simulateur sans mot de passe (`npm ci && npm run build`), et l'historique git garde les anciennes versions de
+  `dist/index.html`. Pour fermer cette porte, il faut rendre le dépôt privé (*Settings → General → Danger Zone →
+  Change visibility*) ; les *Releases* d'un dépôt privé ne sont alors visibles que de ses membres (on distribue
+  l'exécutable par l'ENT, un partage de fichiers ou une clé USB).
+- Une personne qui a le mot de passe voit la page dans son navigateur et peut l'enregistrer : le mot de passe
+  écarte ceux qui ne l'ont pas, il n'empêche pas un utilisateur autorisé de copier.
+- Sur le réseau local, la page circule en HTTP : le mot de passe aussi, au moment où un joueur le tape.
+- La solidité dépend du mot de passe : un mot de passe court ou courant se devine en partant du fichier.
+
+Tests : `tests/unit/acces.test.mjs` (coffre, serveur protégé, ce qui est servi avant et après le mot de passe,
+essais limités), `node tools/e2e.mjs acces` (écran d'accès, mauvais et bon mot de passe, ouverture du simulateur,
+second navigateur, téléphone), `node tools/exe.mjs --verifier` (exécutable chiffré et signé, lancé pour de vrai).
+
 ## v19.9 : le téléphone, une seule porte vers tout ce qui n'est pas dans le décor
 
 **Pourquoi.** Retour du 25 octobre 2026 : trop de boutons et de touches à connaître (Pupitre, Missions, Chef de
@@ -1559,7 +1619,7 @@ node tools/shots.mjs dossier 1280 800 '["vision","hf"]'   # captures de postes
 | `vehicles.js` | Semi-remorque régie (caisse arrondie, livrée nervurée, portes, feux), tracteur à pare-brise courbe, camion satellite, groupe électrogène, bungalows, enrobé |
 | `params.js` | Registre des valeurs chiffrées relisibles (objectifs, liaisons, C/N, latences, line-up) et corrections appliquées |
 | `multi/` | Jeu à plusieurs : session, rôles, hôte du match, pseudos (`session.js`), tranches d'état partagées (`slices.js`), client du serveur réseau local et du jeu par Internet (`lan.js`), avatars des joueurs (`avatars.js`), fiches de rôle et objectifs (`roles.js`) |
-| `lan/` | Serveur réseau local sans dépendance (`serveur.mjs` : HTTP + WebSocket, parties, comptes rendus ; origine vérifiée, tailles, connexions, parties et comptes rendus plafonnés ; clé exigée de ce qui vient d'Internet), jeu par Internet (`internet.mjs` : analyse du réseau, ouverture de la box par UPnP, adresse publique, tunnel Cloudflare), lanceurs Windows / macOS / Linux, mode d'emploi |
+| `lan/` | Serveur réseau local sans dépendance (`serveur.mjs` : HTTP + WebSocket, parties, comptes rendus ; origine vérifiée, tailles, connexions, parties et comptes rendus plafonnés ; clé exigée de ce qui vient d'Internet ; écran « Accès réservé » et jetons quand la page est chiffrée), coffre de l'exécutable (`coffre.mjs` : page chiffrée par le mot de passe, scrypt + AES-256-GCM), jeu par Internet (`internet.mjs` : analyse du réseau, ouverture de la box par UPnP, adresse publique, tunnel Cloudflare), lanceurs Windows / macOS / Linux, mode d'emploi |
 | `match.js` | Simulation du match, rendu des joueurs, enregistrement d'état (base des ralentis EVS) |
 | `bcam.js` | Caméras broadcast : optique, cadreurs automatiques, traitement CCU (knee, white clip, HLG), câbles |
 | `rf.js` | Bilan de liaison HF, diversité, brouillage |
@@ -1587,7 +1647,7 @@ Hors de `src/` :
 | Dossier | Rôle |
 | --- | --- |
 | `lan/` | Serveur réseau local (voir plus haut), icône de l'exécutable Windows |
-| `partage/` | Mode d'emploi du kit de partage (HTML autonome et exécutable Windows) |
+| `partage/` | Mode d'emploi du kit de partage (exécutable Windows protégé par mot de passe) |
 | `tests/unit/` | Tests unitaires `node:test` ; `tests/helpers/` (DOM minimal, scène vide, réseau de test), `tests/register.mjs` (chargement des fichiers texte comme esbuild) |
 | `tests/e2e/` | Tests de bout en bout Playwright et leur harnais |
-| `tools/` | Construction (`build.mjs`, `zip.mjs`), exécutable Windows et kit de partage (`exe.mjs`, `icon.mjs`), lanceur des tests de bout en bout (`e2e.mjs`), mesures et captures |
+| `tools/` | Construction (`build.mjs`, `zip.mjs`), exécutable Windows et kit de partage (`exe.mjs`, `icon.mjs` ; serveur protégé `protege.mjs`, signature Authenticode `signature.mjs`), lanceur des tests de bout en bout (`e2e.mjs`), mesures et captures |

@@ -1,6 +1,8 @@
 node_modules/
 *.zip
-# produits par node tools/build.mjs (réseau local)
+# produits par node tools/build.mjs : rien de la page construite dans le dépôt public (v19.10)
+dist/index.html
+# réseau local
 dist/index-lan.html
 dist/car-regie-serveur-lan.mjs
 # versions à partager : fichier HTML autonome et exécutable Windows (npm run exe)
