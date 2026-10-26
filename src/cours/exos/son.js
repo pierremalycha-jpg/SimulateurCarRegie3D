@@ -19,9 +19,9 @@ const SRC = [
   { name: 'STUDIO', voice: 'studio' }, { name: 'BORD TERRAIN', voice: 'bt' },
 ];
 const DEP = [
-  { name: 'N-1 COMM', listener: 'comm', who: 'les commentateurs' },
-  { name: 'N-1 STUDIO', listener: 'studio', who: 'le présentateur en studio' },
-  { name: 'N-1 BT', listener: 'bt', who: 'la journaliste bord terrain' },
+  { name: 'N-1 COMM', listener: 'comm', who: 'les commentateurs', du: 'des commentateurs', leur: 'leur' },
+  { name: 'N-1 STUDIO', listener: 'studio', who: 'le présentateur en studio', du: 'du présentateur en studio', leur: 'lui' },
+  { name: 'N-1 BT', listener: 'bt', who: 'la journaliste bord terrain', du: 'de la journaliste bord terrain', leur: 'lui' },
 ];
 const TRANCHE = [
   {
@@ -123,10 +123,10 @@ registerExos({
           solution: `**${R37[juste]}** : la R37 tolère 40 ms d'avance et 60 ms de retard de bout en bout. Le son en avance se remarque plus vite : dans la nature, la lumière arrive toujours avant le son.`,
         },
         {
-          type: 'choix', q: `Le **${D.name}** est le retour de ${D.who}. Quelle source ne doit pas y figurer ?`,
+          type: 'choix', q: `Le **${D.name}** est le retour ${D.du}. Quelle source ne doit pas y figurer ?`,
           choices: [bon.name, ...autres.map((s) => [s.name, `${s.name} reste dans le ${D.name} : seule la voix de celui qui l'écoute en est retirée.`])], answer: 0,
-          aides: ['Un N-1, c\'est « tout sauf moi ».', `Quelle source porte la voix de ${D.who} ?`],
-          solution: `**${bon.name}** : le ${D.name} est le programme moins la voix de ${D.who}, qui leur reviendrait retardée, en écho.`,
+          aides: ['Un N-1, c\'est « tout sauf moi ».', `Quelle source porte la voix ${D.du} ?`],
+          solution: `**${bon.name}** : le ${D.name} est le programme moins la voix ${D.du}, qui ${D.leur} reviendrait retardée, en écho.`,
         },
         pick(rnd, DEPARTS),
       ];

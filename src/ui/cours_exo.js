@@ -135,5 +135,5 @@ function bilan(R, X, L, refaire, o) {
       el('button', { type: 'button', class: 'btn' + (ok ? '' : ' primary'), onclick: refaire }, 'Refaire (d\'autres valeurs)'),
       o.suite ? el('button', { type: 'button', class: 'btn' + (ok ? ' primary' : ''), onclick: () => { RUN = null; o.suite.go(); } }, o.suite.label) : null));
 }
-/** oublie l'essai en cours (changement de leçon) */
-export function resetExo() { RUN = null; }
+/** l'essai en cours (tests de bout en bout) */
+export const essaiExo = () => RUN;

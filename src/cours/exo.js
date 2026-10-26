@@ -56,6 +56,8 @@ export const entre = (rnd, a, b) => a + Math.floor(rnd() * (b - a + 1));
 export const pick = (rnd, arr) => arr[Math.floor(rnd() * arr.length)];
 /** n éléments différents au hasard, dans l'ordre du tirage */
 export const tirer = (rnd, arr, n) => shuffled(arr, rnd).slice(0, n);
+/** « de » devant un nom : du RCP, des caméras, d'un panneau, de la CCU */
+export const de = (/** @type {string} */ nom) => (nom.startsWith('le ') ? 'du ' + nom.slice(3) : nom.startsWith('les ') ? 'des ' + nom.slice(4) : /^[aeiouyéèêàâîôû]/i.test(nom) ? 'd\'' + nom : 'de ' + nom);
 /** un nombre écrit à la française (virgule, espaces fines des milliers) */
 export const fr = (v, d = 0) => Number(v).toLocaleString('fr-FR', { minimumFractionDigits: d, maximumFractionDigits: d }).replace(/\u202f/g, '\u00a0');
 

@@ -62,6 +62,8 @@ import { installMissionRun, RUN as MISSION_RUN } from './game/mission_run.js';
 import * as CARRIERE from './carriere/index.js';
 import { applyRole, PROFILE, setRole } from './app/profile.js';
 import { openCours } from './ui/cours_ui.js';
+import { essaiExo } from './ui/cours_exo.js';
+import * as PARCOURS from './cours/parcours.js';
 import { CHAPTERS as COURS_CHAPTERS, allLessons, lessonById as coursLessonById, lessonDone as coursLessonDone } from './cours/index.js';
 import './cours/all.js';
 import * as CTRL from './net/ctrlnet.js';
@@ -267,7 +269,7 @@ window.__dbg.diag = { ERRS, report, diagText, openDiag, el }; window.__dbg.on = 
 window.__dbg.title = { enter: enterFrom, show: showTitle };
 window.__dbg.nav = { openMenu, restart };
 window.__dbg.openCours = openCours; window.__dbg.PROFILE = PROFILE; window.__dbg.setRole = setRole; window.__dbg.camlab = camlabDebug; window.__dbg.vues3d = vues3dDebug; window.__dbg.entrepot = entrepotDebug;
-window.__dbg.COURS = { CHAPTERS: COURS_CHAPTERS, allLessons, lessonById: coursLessonById, lessonDone: coursLessonDone };
+window.__dbg.COURS = { CHAPTERS: COURS_CHAPTERS, allLessons, lessonById: coursLessonById, lessonDone: coursLessonDone, PARCOURS, essai: essaiExo };
 window.__dbg.CTRL = CTRL; window.__dbg.MATIERE = MATIERE;
 window.__dbg.jeu = { XP, sfx, JEU, openJournal, currentGoal, renderQuest };
 window.__dbg.tel = { open: openTelephone, close: closeTelephone, state: telDebug };

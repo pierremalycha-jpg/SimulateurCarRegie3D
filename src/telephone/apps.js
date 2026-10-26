@@ -157,6 +157,6 @@ function progressionView(box) {
   const go = (fn) => () => { closeTelephone(true); fn(); };
   box.append(el('section', { class: 'tel-sec' }, el('h3', {}, 'Ma progression'),
     libre() ? null : row('Journal des missions et badges', 'medaille', go(() => emit('journal'))),
-    row('Mon suivi dans le Cours', 'cours', go(() => openCours({ home: true }))),
+    row('Mon parcours dans le Cours', 'cours', go(() => openCours({ home: true }))),
     row('Livret de compétences', 'livret', go(() => openLivret()))));
 }

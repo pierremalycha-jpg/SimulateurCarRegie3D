@@ -81,7 +81,7 @@ export function cheminChapitre(page, ch, /** @type {Go} */ go, modules = /** @ty
     sec.append(el('ol', { class: 'pa-path' }, ...n.lecons.map((id, k) => {
       const L = /** @type {any} */ (lessonById(id)).lesson; const e = n.etats[k];
       const st = !n.ouvert ? 'lock' : e.terminee ? 'done' : id === cible ? 'cur' : e.quiz || e.exo != null ? 'part' : 'open';
-      return el('li', { class: `pa-step pa-${st}` },
+      return el('li', { class: `pa-step st-${st}` },
         el('button', { type: 'button', class: 'pa-node', 'data-lesson': id, 'aria-label': `${L.title} : ${st === 'lock' ? 'fermée' : st === 'done' ? 'terminée' : st === 'cur' ? 'à faire maintenant' : 'ouverte'}, ${e.etoiles} étoile${e.etoiles > 1 ? 's' : ''} sur 3`, onclick: () => go.lecon(id) },
           el('span', { class: 'pa-disc' }, st === 'lock' ? icon('cadenas') : st === 'done' ? icon('fait') : String(k + 1))),
         el('div', { class: 'pa-node-t' }, st === 'cur' ? el('em', {}, 'À faire') : null, el('b', {}, L.title), L.partie ? el('small', {}, L.partie) : null, etoiles(e.etoiles, 3, 'small')));

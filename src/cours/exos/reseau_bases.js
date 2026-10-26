@@ -1,5 +1,5 @@
 // @ts-check
-import { registerExos, entre, pick, tirer, fr } from '../exo.js';
+import { registerExos, entre, pick, tirer, fr, de } from '../exo.js';
 import { infoReseau, decouper, prefixePour, typeAdresse, portee, classe, encapsuler, serialisationUs, fluxParLien, propagationMs, bondSatelliteMs, routeurNat, TETE } from '../ip_calc.js';
 
 // ----------------------------------------------------------------------------------
@@ -186,7 +186,7 @@ registerExos({
       const sauf1 = (m) => M.filter((x) => x !== m).map((x) => x.port);
       // trame 3 : C écrit à B (déjà appris) ou à D (jamais entendu)
       const vers = rnd() < 0.5 ? B : D, connu = vers === B;
-      const c3 = connu ? [liste([B.port]), [liste(sauf1(C)), 'Le commutateur a appris le port de ' + B.nom + ' à la trame 2 : inutile d\'inonder.'], ['Aucun : la trame est jetée', 'Le commutateur ne jette pas une trame dont il connaît la destination.']]
+      const c3 = connu ? [liste([B.port]), [liste(sauf1(C)), 'Le commutateur a appris le port ' + de(B.nom) + ' à la trame 2 : inutile d\'inonder.'], ['Aucun : la trame est jetée', 'Le commutateur ne jette pas une trame dont il connaît la destination.']]
         : [liste(sauf1(C)), [liste([D.port]), D.nom + ' n\'a encore rien envoyé : le commutateur ignore où il est.'], ['Aucun : la trame est jetée', 'Une destination inconnue n\'est pas jetée : elle est inondée.']];
       const entrees = new Set([A, B, C].map((m) => m.mac)).size;
       return [
@@ -198,8 +198,8 @@ registerExos({
         },
         {
           type: 'choix', q: `Trame 2 : **${B.nom}** répond ; sa trame va vers **${A.nom}**. Par où sort-elle ?`,
-          choices: [liste([A.port]), [liste(sauf1(B)), 'Le commutateur a appris le port de ' + A.nom + ' à la trame 1 : plus besoin d\'inonder.'], ['Aucun : la trame est jetée', 'La destination est connue, la trame part par son port.']], answer: 0,
-          aides: ['Qu\'a appris le commutateur en recevant la trame 1 ?', 'L\'adresse source de la trame 1 était celle de ' + A.nom + ', entrée par le port ' + A.port + '.'],
+          choices: [liste([A.port]), [liste(sauf1(B)), 'Le commutateur a appris le port ' + de(A.nom) + ' à la trame 1 : plus besoin d\'inonder.'], ['Aucun : la trame est jetée', 'La destination est connue, la trame part par son port.']], answer: 0,
+          aides: ['Qu\'a appris le commutateur en recevant la trame 1 ?', 'L\'adresse source de la trame 1 était celle ' + de(A.nom) + ', entrée par le port ' + A.port + '.'],
           solution: `**${liste([A.port])}** : la destination est apprise. Le commutateur note aussi ${B.mac} derrière le port ${B.port}.`,
         },
         {
@@ -245,7 +245,7 @@ registerExos({
         {
           type: 'choix', q: `On branche **${U.qui}** sur un port neuf de SW-PROD. Dans quel VLAN mettre ce port access ?`,
           choices: [`VLAN ${U.vlan} (${U.nom})`, [`VLAN ${X.vlan} (${X.nom})`, `Le VLAN ${X.vlan} est celui de « ${X.nom} » : ${U.qui} y serait isolé de ses interlocuteurs et de sa passerelle.`], [`VLAN ${Y.vlan} (${Y.nom})`, `Le VLAN ${Y.vlan} est celui de « ${Y.nom} » : ${U.qui} n'y a rien à faire.`]], answer: 0,
-          aides: ['Chaque VLAN du car regroupe un usage.', `Quel est l'usage de ${U.qui} ?`],
+          aides: ['Chaque VLAN du car regroupe un usage.', `Quel est l'usage ${de(U.qui)} ?`],
           solution: `Le **VLAN ${U.vlan}** (${U.nom}). Le VLAN se règle sur le commutateur, pas dans la machine : elle envoie des trames ordinaires.`,
         },
         {
