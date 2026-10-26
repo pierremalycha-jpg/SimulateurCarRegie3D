@@ -49,6 +49,7 @@ import { takeCamera, releaseCamera, updateCamop } from './app/camop.js';
 import { AIM, updatePrompt } from './app/interact.js';
 import { teleport, goToStation, goToRolePost, placeAtStation } from './app/teleport.js';
 import { updateStatus, FPS } from './app/hud.js';
+import { openTelephone, closeTelephone, telDebug } from './telephone/index.js';
 import { installInput } from './app/input.js';
 import { buildStart, start } from './app/start.js';
 import { initTitle, loadStep, tick, titleReady, enterFrom, showTitle } from './app/title.js';
@@ -267,6 +268,7 @@ window.__dbg.openCours = openCours; window.__dbg.PROFILE = PROFILE; window.__dbg
 window.__dbg.COURS = { CHAPTERS: COURS_CHAPTERS, allLessons, lessonById: coursLessonById, lessonDone: coursLessonDone };
 window.__dbg.CTRL = CTRL; window.__dbg.MATIERE = MATIERE;
 window.__dbg.jeu = { XP, sfx, JEU, openJournal, currentGoal, renderQuest };
+window.__dbg.tel = { open: openTelephone, close: closeTelephone, state: telDebug };
 window.__dbg.carriere = CARRIERE; window.__dbg.mission = MISSION_RUN;
 window.__dbg.poste3d = { P3D, PUP, DESK, LSMS, ICOMS, voulu: poste3dVoulu };
 // le programme a démarré : le filet du chargement (boot.js) n'a plus à intervenir

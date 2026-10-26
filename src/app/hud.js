@@ -8,7 +8,7 @@ import { MIX, EVS, meSource, sourceLabel } from '../pipeline.js';
 import { AU, startAudio, applyFaders } from '../audio.js';
 import { AT } from '../atelier.js';
 import { $ } from '../ui/common.js';
-import { openPupitre } from '../ui/pupitre.js';
+import { toggleTelephone } from '../telephone/index.js';
 import { icon } from '../ui/icons.js';
 import { PL } from './player.js';
 
@@ -16,22 +16,15 @@ import { PL } from './player.js';
 // Affichage tête haute : barre d'outils, bande d'état (timecode, score, PGM / PVW, alarmes,
 // images par seconde) et lieu où l'on se trouve.
 // ----------------------------------------------------------------------------------
-const chefBtn = (btn) => { btn.classList.add('chef-btn'); return btn; };
 const soundLabel = () => (AU.muted ? 'Son coupé' : 'Son');
 export function buildToolbar() {
   const tb = $('#toolbar'); tb.innerHTML = '';
-  // le pupitre (aller quelque part, tous les outils), le chef de car (pendant un exercice ou la visite
-  // guidée : ui/tutor_ui.js l'affiche), le Cours, le son, le menu (tout le reste)
+  // le téléphone (aller quelque part, missions, Olivier, outils, Cours, réglages) et le menu (Échap)
   const b = (label, key, ico, fn, id, title) => el('button', { class: 'tbtn', id, title: title || label + (key ? ' (' + key + ')' : ''), onclick: fn }, icon(ico), el('span', { class: 'tl' }, label), key ? el('kbd', {}, key) : null);
-  // épuré : le niveau (game/fx.js), le pupitre, les missions, le chef pendant un exercice, le menu ;
-  // le Cours et le son sont dans le menu, le pupitre et les réglages
+  // épuré : le niveau (game/fx.js), le téléphone, le menu ; tout le reste est une application du téléphone
   tb.append(
-    b('Pupitre', 'Tab', 'pupitre', () => openPupitre(), 'tb-pupitre', 'Aller à un poste ou un endroit, et tous les outils (Tab ou T)'),
-    chefBtn(b('Chef de car', 'J', 'chef', () => emit('chef'), 'tb-chef', 'Le chef de car vous explique le poste et vous guide pas à pas (J)')),
-    b('Missions', 'L', 'missions', () => emit('journal'), 'tb-missions', 'Le journal des missions : ce qu\'il y a à faire ici, toutes les missions, tes badges (L)'),
+    b('Téléphone', 'Tab', 'telephone', () => toggleTelephone(), 'tb-tel', 'Le téléphone : aller à un poste, missions, Olivier, plan caméras, synoptiques, Cours, réglages (Tab ou T)'),
     b('Menu', 'Échap', 'menu', () => emit('menu'), 'tb-menu', 'Cours, réglages, son, équipe, retour à l\'accueil (Échap)'));
-  // le car pré-installé : jeu libre, ni missions ni chef de car
-  const mi = /** @type {HTMLElement | null} */ (tb.querySelector('#tb-missions')); if (mi) mi.hidden = S.modeCar === 'libre';
   emit('toolbar', tb);
 }
 export const soundToggle = () => { startAudio(); AU.muted = !AU.muted; applyFaders(); emit('soundToggle'); };

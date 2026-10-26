@@ -26,7 +26,7 @@ T.check('objectif à l\'écran : la mission 1 du mode Tout à faire, sans « nul
 T.check('l\'ancienne carte de mission est masquée', await ev(() => { const m = document.getElementById('mission'); return !m || getComputedStyle(m).display === 'none'; }));
 T.check('barre d\'XP : niveau 1, 0 XP', await ev(() => document.querySelector('#xpbar .xp-lvl b')?.textContent === '1' && /0 \/ 120 XP/.test(document.querySelector('#xpbar .xp-txt')?.textContent || '')));
 T.check('repère 3D sur le pied de car, avec sa distance', await until(page, () => { const m = document.getElementById('qmark'); return !!m && !m.hidden && /compound/i.test(m.textContent) && /\d+ m/.test(m.textContent); }, null, 8000));
-T.check('barre d\'outils : la touche Missions (L)', await ev(() => !!document.querySelector('#toolbar #tb-missions') && document.querySelector('#toolbar #tb-missions kbd')?.textContent === 'L'));
+T.check('barre d\'outils : le téléphone (Tab), qui contient les Missions', await ev(() => document.querySelector('#toolbar #tb-tel kbd')?.textContent === 'Tab' && !document.querySelector('#toolbar #tb-missions')));
 T.check('HUD épuré à l\'arrivée : objectif (avec le lieu), barre d\'outils (niveau compris), bande d\'état à trois cases, retour PGM, prise en main sur une ligne ; ni bandeau de lieu, ni PVW, ni i/s, ni toast, ni mini-plan', await ev(() => {
   const vis = (s) => { const e = document.querySelector(s); return !!e && !e.hidden && e.offsetParent !== null; };
   return vis('#quest') && /Compound/i.test(document.querySelector('#quest .q-where')?.textContent || '') && vis('#toolbar') && vis('#toolbar #xpbar') && document.querySelectorAll('#statusbar .chip:not([hidden])').length === 3 && !document.querySelector('#statusbar .chip.fps') && vis('#minimon') && vis('#onboard') && document.querySelectorAll('#onboard li').length >= 5 && !vis('.brand') && !vis('#toast') && !vis('#truckmap') && !document.querySelector('#statusbar .chip.green'); }));
@@ -41,8 +41,9 @@ await page.locator('#modal .qj-chap[data-ch="sdi"]').click();
 T.check('chapitre Le SDI : ses exercices', await until(page, () => document.querySelectorAll('#modal .qj-list .qj-row[data-exercise]').length >= 3 && !!document.querySelector('#modal .qj-row[data-exercise="x-brassage"]'), null, 3000));
 await page.keyboard.press('Escape');
 T.check('Échap referme le journal', await until(page, () => document.getElementById('modal').hidden, null, 3000));
-await page.locator('#tb-missions').click();
-T.check('bouton Missions : le journal s\'ouvre aussi', await until(page, () => !document.getElementById('modal').hidden && !!document.querySelector('#modal .qj'), null, 3000));
+await page.locator('#tb-tel').click();
+await page.locator('#telephone .tel-app[data-app="missions"]').click();
+T.check('application Missions du téléphone : le journal s\'ouvre aussi', await until(page, () => !document.getElementById('modal').hidden && !!document.querySelector('#modal .qj'), null, 3000));
 await page.keyboard.press('Escape');
 
 // ---------------- XP, niveau, badges ----------------
@@ -55,8 +56,10 @@ await ev(() => window.__dbg.openStation('melangeur'));
 await until(page, () => window.__dbg.S.mode === 'station', null, 10000);
 T.check('premier poste ouvert : +5 XP de découverte et le badge « Premiers pas »', await until(page, () => !!window.__dbg.PROG.game.keys['poste:melangeur'] && !!window.__dbg.PROG.game.badges['premier-pas'], null, 6000));
 T.check('bannière de badge', await until(page, () => { const b = document.getElementById('banner'); return !!b && !b.hidden && /Premiers pas/.test(b.textContent); }, null, 5000));
-await page.locator('#station .st-missions').click();
-T.check('au poste (bouton Missions, L étant le volet logo du mélangeur) : « Ici, au poste » avec les exercices du mélangeur, badge gagné en or/bronze', await until(page, () => { const m = document.getElementById('modal'); return !m.hidden && /Ici, au poste/.test(m.textContent) && !!m.querySelector('.qj-row[data-exercise="melangeur-commuter"]') && !!m.querySelector('.badge.won'); }, null, 5000));
+await page.locator('#station .st-tel').click();
+await until(page, () => window.__dbg.tel.state().open, null, 5000);
+await page.locator('#telephone .tel-app[data-app="missions"]').click();
+T.check('au poste (téléphone, application Missions, L étant le volet logo du mélangeur) : « Ici, au poste » avec les exercices du mélangeur, badge gagné en or/bronze', await until(page, () => { const m = document.getElementById('modal'); return !m.hidden && /Ici, au poste/.test(m.textContent) && !!m.querySelector('.qj-row[data-exercise="melangeur-commuter"]') && !!m.querySelector('.badge.won'); }, null, 5000));
 await shot('06-journal-poste');
 // « Commencer » depuis le journal : l'exercice d'Olivier démarre et l'objectif le suit
 await page.locator('#modal .qj-row[data-exercise="melangeur-commuter"] .btn').click();

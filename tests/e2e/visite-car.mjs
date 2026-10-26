@@ -21,10 +21,9 @@ for (const [n, x, z, yaw, pitch] of views) {
   console.log(n, 'prompt:', p);
   await shot('t-' + n);
 }
-// grand plan du car
-await ev(() => { window.__dbg.emit && 0; document.dispatchEvent(new KeyboardEvent('keydown', { code: 'Tab' })); });
-await page.keyboard.press('Tab'); await page.waitForTimeout(800); await shot('t-plan');
-await page.locator('#modal button', { hasText: 'Baie CCU' }).click(); await page.waitForTimeout(1200);
+// plan du car : l'application Aller à du téléphone
+await ev(() => window.__dbg.tel.open('aller')); await page.waitForTimeout(800); await shot('t-plan');
+await page.locator('#telephone .tel-row', { hasText: 'Baie CCU' }).first().click(); await page.waitForTimeout(1200);
 console.log('after plan click', await ev(() => window.__dbg.S.mode), await ev(() => document.querySelector('#station .st-head h2, #station h2')?.textContent));
 await shot('t-plan-goto');
 console.log('ERRORS', errors.length, errors.slice(0, 5).join('\n'));

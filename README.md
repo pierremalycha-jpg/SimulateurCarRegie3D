@@ -394,7 +394,7 @@ Tests :
   « Emmène-moi / Montre-moi » doit mettre en évidence un élément réel de la page, et « Fais-le pour moi » doit faire
   valider l'étape.
 
-## v19.12 : les ralentis et l'intercom en 3D (lot 3)
+## v19.13 : les ralentis et l'intercom en 3D (lot 3)
 
 **Pourquoi.** Suite des postes en 3D (lot 3 de la feuille de route, validé le 26 octobre 2026 avec l'écran partagé) :
 la télécommande des ralentis, dont le levier et la molette se manient à la main, et le pupitre d'intercom.
@@ -427,7 +427,7 @@ pour l'intercom visent maintenant la touche par son nom (`.icp-talk[aria-label="
 
 Tests : suites `poste3d-evs` et `poste3d-intercom` (`node tools/e2e.mjs poste3d-evs`, `… poste3d-intercom`).
 
-## v19.11.1 : correctif, le panneau des écrans qui descendait sans fin
+## v19.12.1 : correctif, le panneau des écrans qui descendait sans fin
 
 Retour du 25 octobre 2026 : au poste vision en 3D, sur les RCP, la fenêtre de droite descendait à l'infini. Les
 écrans du panneau (Grade 1, multiview, programme du son) sont une copie du rendu WebGL dans un petit canevas
@@ -438,9 +438,9 @@ par-dessus le moniteur (position absolue, 100 %) dans tout le poste 3D, pas seul
 (`src/styles/poste3d.css`). Les tests tournaient en densité 1 : `tests/e2e/poste3d-vision.mjs` vérifie maintenant,
 en densité 2, que les écrans des postes vision et son gardent leur taille.
 
-## v19.11 : l'écran partagé, le pupitre en 3D et les écrans du poste en 2D
+## v19.12 : l'écran partagé, le pupitre en 3D et les écrans du poste en 2D
 
-**Pourquoi.** Retour du 25 octobre 2026 sur la v19.10 : au poste vision, la vue 3D regardait les RCP et l'on ne voyait
+**Pourquoi.** Retour du 25 octobre 2026 sur la v19.11 : au poste vision, la vue 3D regardait les RCP et l'on ne voyait
 plus le multiview ni l'oscilloscope, donc plus l'effet de ses réglages. Il faut pouvoir tourner autour du matériel et
 garder les écrans du poste sous les yeux, à chaque poste.
 
@@ -464,9 +464,9 @@ le panneau ; le tiroir « Tous les réglages » de la vision ne refait plus les 
 Tests : les suites `poste3d`, `poste3d-vision` et `poste3d-son` vérifient les écrans du panneau ; `poste3d` vérifie
 l'orbite, le rapprochement, le retour à la vue et le repli de la fiche.
 
-## v19.10 : la vision et le son en 3D, le tiroir « Tous les réglages »
+## v19.11 : la vision et le son en 3D, le tiroir « Tous les réglages »
 
-**Pourquoi.** Suite du prototype v19.9 (lot 2 de la feuille de route) : les deux postes où l'on règle le plus de
+**Pourquoi.** Suite du prototype v19.10 (lot 2 de la feuille de route) : les deux postes où l'on règle le plus de
 matériel à la main, l'ingénieur vision et la régie son.
 
 **Le moteur des postes en 3D** (`src/poste3d/index.js`) sait maintenant :
@@ -498,7 +498,7 @@ Tests : `node tools/e2e.mjs poste3d-vision` et `poste3d-son` (matériel construi
 molettes, faders, talkback, tiroir et moniteurs recopiés, parcours « Exposer une caméra au RCP » et « Corriger une
 tranche » suivis en 3D).
 
-## v19.9 : le poste du truquiste en 3D, devant le vrai pupitre (prototype)
+## v19.10 : le poste du truquiste en 3D, devant le vrai pupitre (prototype)
 
 **Pourquoi.** Retour du 25 octobre 2026 : aux postes, l'interface 2D en plein écran fait perdre le matériel de vue.
 On voulait s'asseoir devant le pupitre en 3D, avec les explications par-dessus. Le poste Mélangeur sert de prototype
@@ -531,6 +531,43 @@ de l'en-tête bascule, le choix est mémorisé ; la vue 2D reste le défaut en m
 Tests : `node tools/e2e.mjs poste3d` (pupitre dans le car, zones cliquables nommées, survol, gestes, barre T, réglages
 du menu, repère du chef de car sur la touche 3D, parcours « Préparer, couper et enchaîner » jusqu'au bout, bascule
 2D / 3D, caméra rendue à la marche).
+
+## v19.9 : le téléphone, une seule porte vers tout ce qui n'est pas dans le décor
+
+**Pourquoi.** Retour du 25 octobre 2026 : trop de boutons et de touches à connaître (Pupitre, Missions, Chef de
+car dans la barre d'outils, Missions et Chef de car en tête de chaque poste, une touche par outil). Comme dans un
+GTA ou un Schedule 1, tout ce qui n'est pas dans le décor passe par un **téléphone** qu'on lève devant soi.
+
+**Le téléphone** (`src/telephone/`, touche **Tab** ou **T**, bouton **Téléphone** du HUD et de l'en-tête des
+postes). Un smartphone en 3D monte dans la main, à droite de l'écran (au centre sur un petit écran) ; son écran est
+une vraie page (texte net, cliquable, lisible au clavier). Barre d'état avec l'heure du car (timecode), accueil avec
+le lieu, l'objectif en cours et le niveau, puis les applications rangées dans les **trois familles** des menus :
+- **Le car** : Aller à (plan du car, postes par zone, stade et compound, équipiers ; remplace le pupitre),
+  Missions (le journal, pastille du nombre d'exercices au poste), Olivier (le chef de car), Plan caméras,
+  Synoptiques, Matériel, Équipe (en coopération) ;
+- **Cours** : Cours (au poste, la leçon du poste), Glossaire, Les postes, Progression (niveau et badges, Mon suivi,
+  livret de compétences) ;
+- **Réglages** : Réglages, Commandes ; en bas, trois interrupteurs (son, vol libre, retour PGM).
+
+Une application s'ouvre sur l'écran du téléphone (Aller à, Progression) ou range le téléphone et ouvre sa fenêtre
+habituelle. Échap revient à l'accueil puis range le téléphone, Tab le range, les flèches passent d'une application
+à l'autre, un clic à côté le range. Les anciennes touches (P, Y, K, G, L, J, H, M, V) restent des raccourcis : elles
+rangent le téléphone et font ce qu'elles faisaient. Car pré-installé (jeu libre) : ni Missions ni Olivier.
+
+**Ce qui disparaît.** Le pupitre (`ui/pupitre.js`) ; dans la barre d'outils, Pupitre, Missions et Chef de car (il
+reste le niveau, Téléphone et Menu) ; en tête des postes, Missions et Chef de car (remplacés par Téléphone). Les
+textes d'Olivier, les conseils et la liste des commandes parlent du téléphone.
+
+**Le rendu.** Le boîtier (aluminium, vitre, boutons, module photo, port USB-C) est construit par un `Builder` en
+mode `ao` et habillé par `matiere()`, éclairé par une pièce procédurale (`RoomEnvironment`, aucun fichier), dans son
+propre petit rendu WebGL posé par-dessus tout (il marche aussi par-dessus un poste ou le plan) ; les quatre coins
+de la vitre sont projetés avec la même caméra et une transformation projective CSS (`matrix3d`, `cssProjection`) y
+amène l'écran, si bien qu'il suit le téléphone quand il monte ou qu'il se range (un calque `CSS3DRenderer` a été
+écarté : Chrome n'y fait pas arriver les clics). Au repos, l'écran est à l'échelle 1 (340 × 740 px) dès que la fenêtre le permet. Le rendu ne tourne que
+pendant l'animation (environ 0,3 s) ; sans WebGL, l'écran s'affiche seul, avec un cadre dessiné.
+
+Tests : `tests/unit/telephone.test.mjs` (la projection de l'écran), `node tools/e2e.mjs telephone` (HUD réduit, lever et ranger, familles et applications, Aller à jusqu'au
+poste, téléphone par-dessus un poste, raccourci P, jeu libre, petit écran tactile).
 
 ## v19.8 : trois façons de jouer au car régie, le suivi des tâches sur le côté, Olivier en boîte de dialogue
 
@@ -1617,7 +1654,7 @@ node tools/shots.mjs dossier 1280 800 '["vision","hf"]'   # captures de postes
 | `game/missions.js`, `game/mission_run.js`, `ui/missions_ui.js` | La mission spécifique (Jouer → Car régie) : le catalogue par famille et la préparation du car (calcul pur), le déroulement (lancer, constater la fin, enchaîner ou arrêter), la liste à choisir |
 | `game/fx.js`, `game/sfx.js` | Effets de jeu (barre d'XP, bannières de niveau et de badge, carte-titre, vignette, flash tally, alerte de panne) et bruitages synthétisés en WebAudio avec leur réglage |
 | `styles/theme-jeu.css` | Le thème « jeu vidéo » : jetons de couleur, composants communs, HUD, écran titre, Jouer, menu, journal, badges |
-| `ui/pupitre.js` | Le pupitre (Tab ou T) : plan du car, touches des postes par zone, endroits du stade, équipiers, outils |
+| `telephone/index.js`, `telephone/apps.js`, `telephone/modele.js`, `styles/telephone.css` | Le téléphone (Tab ou T) : lever et ranger, touches, accueil (objectif, niveau), applications par famille (Aller à, Missions, Olivier, outils du car, Cours, Progression, Réglages), boîtier 3D et écran HTML posé dessus (transformation projective `cssProjection`) |
 | `app/title.js` | Écran titre TIEE Simulator : logo du BTS, trois entrées (Jouer, Cours, Réglages), progression du chargement, conseils d'Olivier, mentions |
 | `ui/settings.js` | Réglages : une seule fenêtre (ordinateur, partie en cours, ma progression, profil, espace formateur, aide, à propos) |
 | `ui/ma_progression.js` | Réglages → Ma progression : où elle est enregistrée et si ça marche, exporter dans un fichier, importer (fusion), effacer, vos données personnelles ; notification quand un enregistrement échoue |

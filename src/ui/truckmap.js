@@ -8,7 +8,7 @@ import { avatarPositions } from '../multi/avatars.js';
 
 // ----------------------------------------------------------------------------------
 // Plan du car : mini-plan dans l'interface (position, orientation, postes cliquables) et
-// plan du pupitre (touche Tab).
+// plan de l'application « Aller à » du téléphone (touche Tab).
 // ----------------------------------------------------------------------------------
 const NS = 'http://www.w3.org/2000/svg';
 const sv = (tag, attrs = {}, ...kids) => { const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); for (const c of kids) if (c != null) e.append(c); return e; };
@@ -70,10 +70,10 @@ function drawPlan(scale, labels) {
 
 export function initTruckMap(onGo, pl) {
   goTo = onGo; getPL = pl;
-  const box = el('div', { id: 'truckmap', hidden: true, title: 'Plan du car : Tab ouvre le pupitre' });
+  const box = el('div', { id: 'truckmap', hidden: true, title: 'Plan du car : Tab ouvre le téléphone' });
   const plan = drawPlan(16, false);
-  box.append(el('div', { class: 'tmap-head' }, el('b', {}, 'Plan du car'), el('span', {}, matchMedia('(pointer: coarse)').matches ? 'Touchez un point pour aller au poste' : 'Un point : aller au poste. Tab : le pupitre')), plan.svg);
-  box.addEventListener('click', () => emit('pupitre'));
+  box.append(el('div', { class: 'tmap-head' }, el('b', {}, 'Plan du car'), el('span', {}, matchMedia('(pointer: coarse)').matches ? 'Touchez un point pour aller au poste' : 'Un point : aller au poste. Tab : le téléphone')), plan.svg);
+  box.addEventListener('click', () => emit('telephone', { app: 'aller' }));
   $('#hud').appendChild(box);
   mini = plan;
 }

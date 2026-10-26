@@ -1,0 +1,91 @@
+/* ==================================================================================================
+   Le téléphone (src/telephone/) : un smartphone levé devant soi, comme dans un jeu. Le boîtier est
+   dessiné en 3D (canevas .tel-gl), l'écran est une page HTML posée sur la vitre (.tel-proj, transformation
+   projective calculée par telephone/modele.js). Fond d'écran nuit, icônes d'application en carrés arrondis teintés (--h), les trois
+   familles des menus (Le car, Cours, Réglages), interrupteurs rapides en bas.
+   ================================================================================================== */
+#telephone { position: fixed; inset: 0; z-index: 29; background: radial-gradient(ellipse at 80% 100%, rgba(0,0,0,.35), transparent 60%); }
+#telephone[hidden] { display: none; }
+#telephone.tel-off, #telephone.tel-off .tel-screen { pointer-events: none !important; }
+#telephone .tel-gl { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+#telephone .tel-proj { position: absolute; left: 0; top: 0; transform-origin: 0 0; }
+.tel-screen { display: flex; flex-direction: column; overflow: hidden; border-radius: 44px; color: var(--fg); font-family: var(--f-body);
+  background: radial-gradient(circle at 20% 0%, rgba(25,211,255,.22), transparent 45%), radial-gradient(circle at 100% 85%, rgba(255,176,32,.16), transparent 50%), linear-gradient(170deg, #0c1622, #070b11 60%, #0b0e14);
+  -webkit-font-smoothing: antialiased; backface-visibility: hidden; }
+/* sans WebGL : un cadre dessiné autour de l'écran */
+#telephone.tel-2d .tel-screen { box-shadow: 0 0 0 9px #0a0b0d, 0 0 0 11px #5a6068, 0 24px 60px rgba(0,0,0,.6); }
+
+/* barre d'état : l'heure (timecode du car), l'îlot de la caméra, réseau et batterie */
+.tel-status { position: relative; flex: none; height: 46px; display: flex; align-items: center; justify-content: space-between; padding: 6px 26px 0 30px; font: 600 15px var(--f-disp); letter-spacing: .02em; }
+.tel-island { position: absolute; left: 50%; top: 11px; width: 98px; height: 28px; margin-left: -49px; border-radius: 14px; background: #000; box-shadow: inset 0 0 0 1px #111; }
+.tel-icons { display: inline-flex; gap: 5px; align-items: center; }
+.tel-icons .ico { width: 15px; height: 15px; }
+
+.tel-view { flex: 1; min-height: 0; overflow-y: auto; overflow-x: hidden; scrollbar-width: thin; scrollbar-color: #2c3d50 transparent; }
+.tel-homebar { flex: none; height: 28px; display: grid; place-items: center; background: none; border: 0; padding: 0; cursor: pointer; }
+.tel-homebar i { width: 128px; height: 5px; border-radius: 3px; background: rgba(238,243,248,.8); }
+.tel-homebar:hover i, .tel-homebar:focus-visible i { background: var(--neon); box-shadow: 0 0 8px var(--neon); }
+
+/* accueil */
+.tel-home { display: grid; gap: 10px; padding: 2px 16px 10px; }
+.tel-where { display: flex; align-items: center; gap: 6px; font: 600 13px var(--f-disp); color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
+.tel-where .ico { color: var(--neon); }
+.tel-widget { display: grid; gap: 3px; text-align: left; width: 100%; padding: 9px 13px; border-radius: 20px; color: var(--fg); cursor: pointer;
+  background: rgba(20,29,39,.72); border: 1px solid rgba(255,255,255,.07); backdrop-filter: blur(10px); }
+.tel-widget:hover, .tel-widget:focus-visible { border-color: rgba(25,211,255,.6); outline: none; }
+.tel-goal small { display: flex; align-items: center; gap: 5px; font: 700 11px var(--f-disp); text-transform: uppercase; letter-spacing: .08em; color: var(--gold); }
+.tel-goal b { font: 700 16px/1.2 var(--f-disp); }
+.tel-goal span { font-size: 12.5px; line-height: 1.35; color: var(--muted); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.tel-prog { display: block; height: 4px; border-radius: 2px; background: rgba(255,255,255,.1); overflow: hidden; margin-top: 3px; }
+.tel-prog i { display: block; height: 100%; background: linear-gradient(90deg, var(--neon), #7eeaff); }
+.tel-lvl { grid-template-columns: auto minmax(0, 1fr) 70px auto; align-items: center; gap: 10px; padding: 7px 12px 7px 8px; }
+.tel-lvl-n { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 9px; background: linear-gradient(#ffd166, #ffb020); color: #2a1a02; font: 700 16px var(--f-disp); }
+.tel-lvl-t { display: grid; min-width: 0; line-height: 1.15; }
+.tel-lvl-t b { font: 700 14px var(--f-disp); text-transform: uppercase; letter-spacing: .04em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tel-lvl-t small { font: 600 11.5px var(--f-disp); color: var(--xp); }
+.tel-lvl .tel-prog { margin: 0; } .tel-lvl .tel-prog i { background: linear-gradient(90deg, #ffb020, #ffd166); }
+.tel-lvl-b { display: inline-flex; align-items: center; gap: 3px; font: 700 13px var(--f-disp); color: var(--muted); }
+
+.tel-fam h3 { margin: 0 4px 6px; font: 700 12px var(--f-disp); text-transform: uppercase; letter-spacing: .1em; color: var(--dim); }
+.tel-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px 6px; }
+.tel-app { position: relative; display: grid; justify-items: center; gap: 5px; padding: 0; background: none; border: 0; color: var(--fg); cursor: pointer; min-width: 0; }
+.tel-ico { display: grid; place-items: center; width: 54px; height: 54px; border-radius: 15px; color: #fff;
+  background: linear-gradient(155deg, hsl(var(--h) 75% 52%), hsl(var(--h) 70% 30%)); box-shadow: inset 0 1px 0 rgba(255,255,255,.3), 0 4px 10px rgba(0,0,0,.4); transition: transform .1s; }
+.tel-ico .ico { width: 28px; height: 28px; filter: drop-shadow(0 1px 1px rgba(0,0,0,.35)); }
+.tel-name { font: 600 11.5px/1.15 var(--f-body); text-align: center; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-shadow: 0 1px 2px #000; }
+.tel-app:hover .tel-ico { transform: translateY(-2px); }
+.tel-app:active .tel-ico { transform: scale(.94); }
+.tel-app:focus-visible { outline: none; } .tel-app:focus-visible .tel-ico { box-shadow: 0 0 0 3px var(--neon), 0 0 16px rgba(25,211,255,.6); }
+.tel-badge { position: absolute; top: -5px; right: calc(50% - 36px); min-width: 20px; height: 20px; padding: 0 5px; border-radius: 10px; background: var(--tally); color: #fff; font: 700 12px/20px var(--f-disp); font-style: normal; text-align: center; box-shadow: 0 0 0 2px #0b1118; }
+.tel-app.busy::after { content: ""; position: absolute; top: -3px; right: calc(50% - 33px); width: 12px; height: 12px; border-radius: 50%; background: var(--neon); box-shadow: 0 0 0 2px #0b1118, 0 0 8px var(--neon); }
+
+.tel-togs { display: grid; grid-template-columns: repeat(auto-fit, minmax(0, 1fr)); gap: 8px; padding: 8px; border-radius: 22px; background: rgba(20,29,39,.6); border: 1px solid rgba(255,255,255,.06); }
+.tel-tog { display: grid; justify-items: center; gap: 3px; padding: 6px 2px; border-radius: 16px; background: rgba(255,255,255,.07); border: 0; color: var(--muted); font: 600 11px var(--f-body); cursor: pointer; }
+.tel-tog .ico { width: 20px; height: 20px; }
+.tel-tog.on { background: var(--neon); color: #03202b; }
+.tel-tog:focus-visible { outline: 2px solid var(--neon); outline-offset: 2px; }
+
+/* une application ouverte sur l'écran */
+.tel-page { display: grid; align-content: start; }
+.tel-head { position: sticky; top: 0; z-index: 1; display: flex; align-items: center; gap: 6px; padding: 4px 14px 8px 8px; background: linear-gradient(#0c1520 70%, rgba(12,21,32,0)); }
+.tel-head h2 { margin: 0; font: 700 21px var(--f-disp); }
+.tel-back { display: grid; place-items: center; width: 38px; height: 38px; border-radius: 50%; background: none; border: 0; color: hsl(var(--h) 90% 65%); cursor: pointer; }
+.tel-back .ico { width: 22px; height: 22px; }
+.tel-back:hover, .tel-back:focus-visible { background: rgba(255,255,255,.08); outline: none; }
+.tel-appbody { display: grid; gap: 12px; padding: 0 14px 14px; }
+.tel-appbody .pcard { margin: 0; }
+.tel-here { display: grid; gap: 2px; margin: 0; padding: 10px 12px; border-radius: 16px; background: rgba(20,29,39,.72); font-size: 12.5px; color: var(--muted); }
+.tel-here small { font: 700 11px var(--f-disp); text-transform: uppercase; letter-spacing: .08em; color: var(--dim); }
+.tel-here b { font: 700 17px var(--f-disp); color: var(--neon); }
+.tel-plan { padding: 6px; border-radius: 14px; background: #05090d; border: 1px solid #142130; }
+.tel-plan svg { display: block; width: 100%; height: auto; }
+.tel-sec { display: grid; gap: 2px; padding: 6px; border-radius: 16px; background: rgba(20,29,39,.6); border-top: 3px solid var(--zc, transparent); }
+.tel-sec h3 { margin: 2px 6px 4px; font: 700 12px var(--f-disp); text-transform: uppercase; letter-spacing: .08em; color: var(--dim); }
+.tel-row { display: flex; align-items: center; gap: 10px; width: 100%; padding: 9px 10px; border-radius: 11px; background: none; border: 0; color: var(--fg); font: 500 14px var(--f-body); text-align: left; cursor: pointer; }
+.tel-row .ico { flex: none; width: 19px; height: 19px; color: var(--muted); }
+.tel-row span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tel-row small { font: 700 10.5px var(--f-disp); text-transform: uppercase; letter-spacing: .08em; color: var(--gold); }
+.tel-row:hover, .tel-row:focus-visible { background: rgba(25,211,255,.12); outline: none; }
+.tel-row:focus-visible { box-shadow: inset 0 0 0 2px var(--neon); }
+.tel-row.on .ico, .tel-row.on span { color: var(--gold); }
+.tel-row[style*="--mate"] { box-shadow: inset 3px 0 0 var(--mate); }

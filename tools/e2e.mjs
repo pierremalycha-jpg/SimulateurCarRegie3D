@@ -61,6 +61,7 @@ const SUITES = [
   ['poste3d-son', 'poste3d-son', [], 25],
   ['poste3d-evs', 'poste3d-evs', [], 25],
   ['poste3d-intercom', 'poste3d-intercom', [], 25],
+  ['telephone', 'telephone', [], 20],
 ];
 
 const args = process.argv.slice(2);

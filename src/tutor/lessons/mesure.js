@@ -25,7 +25,7 @@ const atVision = (c) => c.view().station === 'vision' && c.view().cam === c.mem.
 const goVision = (say, ok) => goStation('vision', say, ok, {
   go: (c) => ({ station: 'vision', cam: c.mem.cam }), done: atVision, skip: atVision,
   do: (c) => `Ouvre le poste vision sur la CAM ${c.mem.cam}.`,
-  hints: ['Le poste vision est dans la zone « Vision et ralentis » du pupitre (Tab) : touche Ingé vision 1 ou 2.', 'Au poste, la rangée de touches numérotées choisit la caméra que commandent le RCP et le PRISM : prends celle que je t\'ai donnée.'],
+  hints: ['Le poste vision est dans la zone « Vision et ralentis » du téléphone (Tab, application Aller à) : Ingé vision 1 ou 2.', 'Au poste, la rangée de touches numérotées choisit la caméra que commandent le RCP et le PRISM : prends celle que je t\'ai donnée.'],
   auto: (c) => c.io.go({ station: 'vision', cam: c.mem.cam }),
 });
 // tuile à utiliser pour un « Fais-le pour moi » : celle qui montre déjà l'affichage, sinon la tuile proposée

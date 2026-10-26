@@ -1,5 +1,5 @@
 // Accessibilité : le moteur axe-core (Deque) passe sur les écrans principaux — feuille de service,
-// chef de car, barre d'outils, pupitre, postes, guide, diagnostic, module caméra — selon WCAG 2.2 A et AA.
+// chef de car, barre d'outils, téléphone, postes, guide, diagnostic, module caméra — selon WCAG 2.2 A et AA.
 // Le canvas 3D est exclu (il n'a pas de texte). Le bilan liste chaque règle en défaut avec ses
 // éléments ; le test échoue sur les défauts graves (impact « critical » ou « serious »).
 // node tests/e2e/accessibilite.mjs [dossier]   (AXE_JSON=1 : écrit aussi le détail en JSON)
@@ -59,11 +59,14 @@ await page.locator('#st-antenne').click();
 await until(page, () => window.__dbg.S.mode === 'fps', null, 90000);
 await ev(() => window.__dbg.toggleChef(false));
 await scan('jeu');
-// pupitre
+// téléphone : l'accueil, puis Aller à
 await page.keyboard.press('Tab');
-await until(page, () => !!document.querySelector('#modal .pupitre'), null, 8000);
-await scan('pupitre', '#modal');
-await ev(() => document.querySelector('#modal .x')?.click());
+await until(page, () => { const s = window.__dbg.tel.state(); return s.open && s.t >= 1; }, null, 8000);
+await scan('telephone', '#telephone');
+await page.locator('#telephone .tel-app[data-app="aller"]').click();
+await scan('telephone-aller', '#telephone');
+await ev(() => window.__dbg.tel.close());
+await until(page, () => document.getElementById('telephone').hidden, null, 8000);
 // postes
 for (const st of ['melangeur', 'realisateur', 'vision', 'evs', 'son', 'reseau', 'grille', 'mesure']) {
   await ev((s) => window.__dbg.openStation(s), st);

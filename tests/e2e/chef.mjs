@@ -119,8 +119,9 @@ await quitLesson();
 // ---- présentation d'un poste : le mélangeur ----
 await clickChef('Fermer');
 await ev(() => window.__dbg.openStation('melangeur')); await page.waitForTimeout(800);
-await page.locator('#station .chef-btn').click();
-T.check('bouton du poste : le chef propose ce poste', await until(page, () => /Ici, au poste/.test(document.querySelector('#chef').textContent), null, 5000));
+await page.locator('#station .st-tel').click();
+await page.locator('#telephone .tel-app[data-app="olivier"]').click();
+T.check('téléphone du poste, application Olivier : le chef propose ce poste', await until(page, () => /Ici, au poste/.test(document.querySelector('#chef').textContent), null, 5000));
 await page.locator('#chef .chef-card', { hasText: 'Présente-moi' }).first().locator('button').click();
 T.check('présentation : rôle du poste', await until(page, () => window.__dbg.TUTOR.lesson && window.__dbg.TUTOR.lesson.id === 'poste-melangeur', null, 5000));
 await shot('09-presentation-poste');

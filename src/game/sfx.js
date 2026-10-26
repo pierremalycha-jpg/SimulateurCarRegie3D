@@ -89,7 +89,7 @@ export function sfx(name) {
 export const sfxNames = () => Object.keys(SOUNDS);
 
 // ---------------- accroches : clics et événements du simulateur ----------------
-const CLICKY = 'button, [role="button"], .tab, .lx, .jo-mode, .ti-key, .dkey, .tbtn, .seg button, summary';
+const CLICKY = 'button, [role="button"], .tab, .lx, .jo-mode, .ti-key, .tel-app, .tbtn, .seg button, summary';
 const HOVERY = '.ti-key, .mn-key, .jo-mode, .lx, .onair-key, .qj-row';
 export function installSfx() {
   // le contexte se crée au premier geste (clavier ou pointeur), pour que le premier son parte à l'heure

@@ -11,14 +11,14 @@ import { mixInputs } from '../../equip.js';
 export const at = (id) => (c) => c.view().station === id;
 const titleOf = (id) => (STATION_INFO[id] ? STATION_INFO[id].title : id);
 /**
- * indices communs pour rejoindre un poste : d'abord l'outil (le pupitre), puis l'endroit et le geste
+ * indices communs pour rejoindre un poste : d'abord l'outil (le téléphone), puis l'endroit et le geste
  * @param {string} id @returns {string[]}
  */
 export function stationHints(id) {
   const where = STATION_INFO[id] && STATION_INFO[id].where;
   return [
-    'Le pupitre (touche Tab) range les postes du car par zone : production, vision et ralentis, technique, cabine son. Dans quelle zone travaille ce poste ?',
-    `${where ? `Ce poste se trouve ici : ${where}. ` : ''}Clique sa touche dans le pupitre, ou approche-toi, vise le poste et appuie sur E.`,
+    'Le téléphone (touche Tab), application Aller à, range les postes du car par zone : production, vision et ralentis, technique, cabine son. Dans quelle zone travaille ce poste ?',
+    `${where ? `Ce poste se trouve ici : ${where}. ` : ''}Choisis-le dans le téléphone, ou approche-toi, vise le poste et appuie sur E.`,
   ];
 }
 
@@ -38,7 +38,7 @@ export function goStation(id, say, ok, more = {}) {
 }
 // geste d'interface (sans navigateur, les tests simulent seulement l'effet sur l'état)
 export const ui = (c, name, ...a) => (c.io.ui ? c.io.ui(name, ...a) : undefined);
-// bouton du pupitre (hwBtn : le libellé suivi de son sous-titre)
+// bouton d'un pupitre de poste (hwBtn : le libellé suivi de son sous-titre)
 export const hw = (text, label = text, scope = '#station') => ({ sel: `${scope} button.hw`, text, label });
 export const btn = (text, label = text, scope = '#station') => ({ sel: `${scope} button`, text, label });
 // entrée du mélangeur qui reçoit une source (CAM3, EVSA…) ; 0 si aucune
