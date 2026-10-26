@@ -4,7 +4,7 @@ import { el, tc } from '../util.js';
 import { icon } from '../ui/icons.js';
 import { sfx } from '../game/sfx.js';
 import { createPhone3D, SCREEN_PX } from './modele.js';
-import { APPS, homeView, appView } from './apps.js';
+import { APPS, homeView, appView, levelWidget } from './apps.js';
 
 // ----------------------------------------------------------------------------------
 // Le téléphone (touche Tab, ou T ; bouton Téléphone du HUD et des postes) : comme dans un jeu,
@@ -16,8 +16,8 @@ import { APPS, homeView, appView } from './apps.js';
 // Une application « dans le téléphone » s'affiche sur son écran (aller à, progression) ; les
 // autres rangent le téléphone et ouvrent leur fenêtre habituelle.
 // ----------------------------------------------------------------------------------
-/** @type {{ open: boolean, app: string, p3d: any, t: number, dir: number, raf: number, clock: any, last: number, safety: any }} */
-export const TEL = { open: false, app: '', p3d: null, t: 0, dir: 0, raf: 0, clock: 0, last: 0, safety: 0 };
+/** @type {{ open: boolean, app: string, p3d: any, t: number, dir: number, raf: number, clock: any, last: number, safety: any, press: boolean, stale: boolean }} */
+export const TEL = { open: false, app: '', p3d: null, t: 0, dir: 0, raf: 0, clock: 0, last: 0, safety: 0, press: false, stale: false };
 let root = null, screen = null, view = null, timeEl = null;
 
 const DUR_IN = 0.3, DUR_OUT = 0.22;
@@ -34,6 +34,9 @@ function build() {
   root = el('div', { id: 'telephone', class: 'tel', role: 'dialog', 'aria-modal': 'true', 'aria-label': 'Téléphone', hidden: true });
   // un clic à côté du téléphone le range
   root.addEventListener('pointerdown', (e) => { if (!screen.contains(/** @type {Node} */ (e.target))) { e.preventDefault(); closeTelephone(); } });
+  // un appui en cours sur l'écran : l'accueil ne se reconstruit pas sous le doigt (le clic serait perdu)
+  screen.addEventListener('pointerdown', () => { TEL.press = true; });
+  window.addEventListener('pointerup', () => { if (!TEL.press) return; TEL.press = false; if (TEL.stale) setTimeout(refreshHome, 0); }, true);
   document.body.append(root);
   TEL.p3d = createPhone3D(root, screen);
   window.addEventListener('resize', () => { if (TEL.p3d && !root.hidden) { TEL.p3d.resize(); TEL.p3d.pose(ease(TEL.t)); TEL.p3d.render(); } });
@@ -110,7 +113,10 @@ export function closeTelephone(vite = false) {
 export function toggleTelephone(app = '') { if (TEL.open) closeTelephone(); else openTelephone(app); }
 on('telephone', (o) => openTelephone((o && o.app) || ''));
 // le contenu suit le jeu (niveau, équipiers, objectif) tant que l'accueil est affiché
-for (const ev of ['xp', 'badge', 'session', 'teleport']) on(ev, () => { if (TEL.open && !TEL.app) show(''); });
+// niveau et badges : seul le bandeau du niveau change ; équipiers et lieu : l'accueil est refait, jamais sous le doigt
+for (const ev of ['xp', 'badge']) on(ev, () => { const w = TEL.open && !TEL.app && view.querySelector('.tel-lvl'); if (!w) return; if (TEL.press) TEL.stale = true; else w.replaceWith(levelWidget(launch)); });
+for (const ev of ['session', 'teleport']) on(ev, () => { if (TEL.open && !TEL.app) { TEL.stale = true; if (!TEL.press) refreshHome(); } });
+function refreshHome() { TEL.stale = false; if (TEL.open && !TEL.app) show(''); }
 
 /** déplacer le focus vers l'élément le plus proche dans une direction (flèches) */
 function moveFocus(dx, dy) {

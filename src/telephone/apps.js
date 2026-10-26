@@ -96,12 +96,7 @@ export function homeView(launch) {
       el('small', {}, icon('objectif'), g.tag || 'Objectif'), el('b', {}, g.title), g.text ? el('span', {}, g.text) : null,
       typeof g.prog === 'number' ? el('i', { class: 'tel-prog' }, el('i', { style: { width: `${Math.round(g.prog * 100)}%` } })) : null));
   }
-  // le niveau sur une ligne (la carte complète est dans l'application Progression)
-  const xp = xpOf(), L = levelOf(xp), won = badgesWon().length;
-  box.append(el('button', { type: 'button', class: 'tel-widget tel-lvl', title: 'Ma progression', onclick: () => launch('progression') },
-    el('b', { class: 'tel-lvl-n' }, String(L.n)), el('span', { class: 'tel-lvl-t' }, el('b', {}, L.title), el('small', {}, `${xp} XP`)),
-    el('i', { class: 'tel-prog' }, el('i', { style: { width: `${Math.round(L.pct * 100)}%` } })),
-    el('span', { class: 'tel-lvl-b' }, icon('medaille'), String(won))));
+  box.append(levelWidget(launch));
   for (const [fam, title] of FAMS) {
     const list = APPS.filter((a) => a.fam === fam && (!a.show || a.show()));
     box.append(el('section', { class: 'tel-fam', 'aria-label': title }, el('h3', {}, title), el('div', { class: 'tel-grid' }, ...list.map((a) => appTile(a, launch)))));
@@ -111,6 +106,14 @@ export function homeView(launch) {
     S.mode === 'fps' && !S.inTruck ? toggle('Vol libre', 'vol', () => PL.fly, () => { PL.fly = !PL.fly; updToolbar(); }) : null,
     toggle('Retour PGM', 'retour', () => { const m = $('#minimon'); return !!m && !m.hidden; }, () => { const m = $('#minimon'); if (m) m.hidden = !m.hidden; })));
   return box;
+}
+/** le niveau sur une ligne (la carte complète est dans l'application Progression) */
+export function levelWidget(launch) {
+  const xp = xpOf(), L = levelOf(xp), won = badgesWon().length;
+  return el('button', { type: 'button', class: 'tel-widget tel-lvl', title: 'Ma progression', onclick: () => launch('progression') },
+    el('b', { class: 'tel-lvl-n' }, String(L.n)), el('span', { class: 'tel-lvl-t' }, el('b', {}, L.title), el('small', {}, `${xp} XP`)),
+    el('i', { class: 'tel-prog' }, el('i', { style: { width: `${Math.round(L.pct * 100)}%` } })),
+    el('span', { class: 'tel-lvl-b' }, icon('medaille'), String(won)));
 }
 /** une application ouverte sur l'écran : en-tête avec retour, puis son contenu */
 export function appView(a, back) {
