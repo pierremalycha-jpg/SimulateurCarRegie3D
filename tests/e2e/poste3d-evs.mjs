@@ -65,6 +65,7 @@ T.check('levier poussé : la vitesse monte et la lecture démarre (ralenti), le 
 await page.hover('.p3d-hit.lsm-lever-3d');
 T.check('survol du levier : la bulle donne la vitesse et dit si le ralenti est fluide', await until(page, () => { const t = document.querySelector('.p3d-tip'); return t && !t.hidden && /Levier à \d+ %/.test(t.textContent) && /(fluide|saccade)/.test(t.textContent); }, null, 5000));
 await shot('03-levier-jog', 1200);
+await view('touches');
 await key('LIVE E/E').click();
 T.check('LIVE E/E : la sortie revient au direct, la touche s\'allume', await until(page, () => window.__dbg.EVS.ch[0].mode === 'live' && [...document.querySelectorAll('.p3d-hits .lsm-key')].some((x) => x.textContent === 'LIVE E/E' && x.classList.contains('on')), null, 5000));
 
