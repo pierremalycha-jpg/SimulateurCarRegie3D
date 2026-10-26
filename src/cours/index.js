@@ -2,6 +2,7 @@
 import { PROG, saveProgressSoon } from '../shared.js';
 import { emit } from '../state.js';
 import { shuffled } from '../util.js';
+import { SEUIL_EXO } from './exo.js';
 
 // ----------------------------------------------------------------------------------
 // Les cours : des chapitres (le signal vidéo, le SDI, le réseau, la HF…) faits de leçons, une par
@@ -65,6 +66,7 @@ export function coursProgress(id) {
   const P = PROG.cours = PROG.cours || {};
   return P[id] || (P[id] = { seen: false, quiz: /** @type {{ score: number, total: number } | null} */ (null) });
 }
+/** @typedef {{ best: number, seul: boolean, n: number, at: number }} ExoProgress exercice en autonomie : meilleur score sur 100, réussi seul (sans solution demandée) une fois au moins, essais */
 // ---------------- le quiz d'une leçon : un tirage dans la banque ----------------
 /** questions posées à chaque essai */
 export const QUIZ_N = 3;
@@ -83,6 +85,20 @@ export function drawQuiz(bank, prev = [], rnd = Math.random) {
 }
 
 export function markSeen(id) { const p = coursProgress(id); if (!p.seen) { p.seen = true; PROG.updatedAt = Date.now(); saveProgressSoon(); } }
+/** un essai de l'exercice en autonomie (cours/exo.js) : le meilleur score reste ; seul : aucune solution demandée */
+export function recordExo(id, score, seul) {
+  const p = /** @type {any} */ (coursProgress(id));
+  const prev = p.exo || null;
+  p.exo = { best: Math.max(prev ? prev.best : 0, score), seul: !!(prev && prev.seul) || (seul && score >= SEUIL_EXO), n: (prev ? prev.n : 0) + 1, at: Date.now() };
+  PROG.updatedAt = Date.now(); saveProgressSoon(); emit('coursExo', { id, score, seul, best: p.exo.best, first: !prev || prev.best < SEUIL_EXO });
+}
+/** un test de niveau (cours/parcours.js) pour ouvrir le niveau d'un chapitre : le meilleur résultat reste (PROG.niveaux) */
+export function recordTest(chapitre, niveau, score, total) {
+  const P = /** @type {any} */ (PROG); const N = P.niveaux = P.niveaux || {}; const C = N[chapitre] = N[chapitre] || {};
+  const prev = C[niveau];
+  if (!prev || score / total > prev.score / prev.total) C[niveau] = { score, total, at: Date.now() };
+  PROG.updatedAt = Date.now(); saveProgressSoon(); emit('niveauTest', { chapitre, niveau, score, total });
+}
 export function recordQuiz(id, score, total) { const p = coursProgress(id); if (!p.quiz || score >= p.quiz.score) p.quiz = { score, total }; PROG.updatedAt = Date.now(); saveProgressSoon(); emit('quiz', { id, score, total }); }
 /** leçon acquise : quiz réussi en entier */
 export const lessonDone = (id) => { const q = coursProgress(id).quiz; return !!q && q.score === q.total; };
