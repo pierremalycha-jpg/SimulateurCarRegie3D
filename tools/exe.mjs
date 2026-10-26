@@ -1,23 +1,27 @@
 // ----------------------------------------------------------------------------------
 // Version à partager : TIEE-Simulator.exe et le kit dist/TIEE-Simulator-partage.zip.
-// L'exécutable est le serveur réseau local (page du simulateur incluse) dans un exécutable
-// Node.js autonome (« single executable application ») : on double-clique, le navigateur
-// s'ouvre sur le simulateur, et les autres ordinateurs du réseau local peuvent rejoindre la
-// partie à l'adresse affichée. Rien à installer.
+// L'exécutable est le serveur réseau local dans un exécutable Node.js autonome (« single
+// executable application ») : on double-clique, le navigateur s'ouvre sur l'écran « Accès
+// réservé », on donne le mot de passe, le simulateur s'ouvre ; les autres ordinateurs du réseau
+// local rejoignent la partie à l'adresse affichée (mot de passe demandé aussi). Rien à installer.
 //
-//   node tools/build.mjs && node tools/exe.mjs
+//   TIEE_MDP='…' node tools/exe.mjs                 (après node tools/build.mjs)
 //   node tools/exe.mjs --node-exe chemin\node.exe   node.exe déjà téléchargé (même version que node)
 //   node tools/exe.mjs --verifier                   en plus : même blob dans le node de cette
 //                                                   machine (Linux), lancé et interrogé
+// Sur GitHub : .github/workflows/exe.yml (secrets TIEE_MDP et, pour signer, TIEE_SIGN_CERT / TIEE_SIGN_KEY).
 //
-// Étapes : serveur regroupé en un script CommonJS (esbuild) → blob SEA produit par ce node
+// Protection : la page est chiffrée par le mot de passe (tools/protege.mjs, lan/coffre.mjs) ;
+// l'exécutable ne contient ni la page en clair ni le mot de passe (vérifié plus bas). Plus de
+// TIEE-Simulator.html dans le kit : la page en clair ne sort plus.
+//
+// Étapes : serveur protégé regroupé en un script CommonJS (esbuild) → blob SEA produit par ce node
 // (même version que le node.exe cible) → node.exe officiel de nodejs.org (empreinte SHA-256
 // vérifiée, gardé dans .cache/exe) sans sa signature, avec le nom, la version et l'icône du
-// simulateur (resedit) → blob injecté (postject).
-// L'exécutable n'est pas signé : à la première ouverture, Windows SmartScreen demande
+// simulateur (resedit) → blob injecté (postject) → signature Authenticode si un certificat est
+// donné (tools/signature.mjs). Sans certificat reconnu par Windows, SmartScreen demande
 // « Informations complémentaires » → « Exécuter quand même » (expliqué dans le LISEZMOI).
 // ----------------------------------------------------------------------------------
-import * as esbuild from 'esbuild';
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
@@ -26,11 +30,12 @@ import { execFileSync, spawn } from 'node:child_process';
 import { NtExecutable, NtExecutableResource, Data, Resource } from 'resedit';
 import postject from 'postject';
 import { makeZip } from './zip.mjs';
+import { serveurProtege, mdpRefuse } from './protege.mjs';
+import { signer, signatureDemandee, certificats, fixeChecksum } from './signature.mjs';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
 const CACHE = path.join(ROOT, '.cache/exe');
-const SRV = path.join(ROOT, 'dist/car-regie-serveur-lan.mjs');
-const HTML = path.join(ROOT, 'dist/TIEE-Simulator.html');
+const PAGE = path.join(ROOT, 'dist/index-lan.html');
 const EXE = path.join(ROOT, 'dist/TIEE-Simulator.exe');
 const KIT = path.join(ROOT, 'dist/TIEE-Simulator-partage.zip');
 const FUSE = 'NODE_SEA_FUSE_fce680ab2cc467b6e072b8b5df1996b2';
@@ -40,16 +45,18 @@ const arg = (k) => { const i = process.argv.indexOf(k); return i > 0 ? process.a
 const sha256 = (b) => crypto.createHash('sha256').update(b).digest('hex');
 const mb = (n) => (n / 1048576).toFixed(1) + ' Mo';
 
-for (const f of [SRV, HTML]) if (!fs.existsSync(f)) { console.error(`${path.relative(ROOT, f)} introuvable : lancez d'abord node tools/build.mjs`); process.exit(1); }
+if (!fs.existsSync(PAGE)) { console.error(`${path.relative(ROOT, PAGE)} introuvable : lancez d'abord node tools/build.mjs`); process.exit(1); }
+const MDP = process.env.TIEE_MDP || '';
+if (mdpRefuse(MDP)) { console.error('TIEE_MDP : ' + mdpRefuse(MDP) + '.\nL\'exécutable chiffre la page avec ce mot de passe : sans lui, pas d\'exécutable.'); process.exit(1); }
 fs.mkdirSync(CACHE, { recursive: true });
 
-// ---------------- 1. le serveur en un seul script CommonJS (format des exécutables Node 22) ----------------
+// ---------------- 1. le serveur protégé en un seul script CommonJS (format des exécutables Node 22) ----------------
 const main = path.join(CACHE, 'serveur.cjs');
-await esbuild.build({
-  entryPoints: [SRV], outfile: main, bundle: true, platform: 'node', format: 'cjs', target: 'node22', legalComments: 'none', logLevel: 'warning',
+await serveurProtege({
+  page: fs.readFileSync(PAGE, 'utf8'), mdp: MDP, format: 'cjs', outfile: main,
   define: { 'import.meta.url': '"file:///TIEE-Simulator.exe"' }, // la page est intégrée : le chemin ne sert pas
   // lancé d'un double-clic : ouvrir la page, et garder la fenêtre ouverte sur une erreur
-  banner: { js: 'process.argv.splice(2, 0, "--ouvrir", "--exe");' },
+  banner: 'process.argv.splice(2, 0, "--ouvrir", "--exe");',
 });
 
 // ---------------- 2. le blob SEA ----------------
@@ -111,7 +118,7 @@ res.outputResource(exe, false, true); // la section se réduit avec son contenu 
 fs.writeFileSync(EXE, Buffer.from(exe.generate()));
 
 // contrôle : blob présent et intact, fusible activé, sections disjointes et alignées, image complète
-const out = fs.readFileSync(EXE);
+let out = fs.readFileSync(EXE);
 const fin = NtExecutable.from(out);
 const blobRes = NtExecutableResource.from(fin).entries.find((e) => e.type === 10 && String(e.id).toUpperCase() === 'NODE_SEA_BLOB');
 if (!blobRes || !Buffer.from(blobRes.bin).equals(blobData)) throw new Error('ressource NODE_SEA_BLOB absente ou altérée');
@@ -123,6 +130,21 @@ secs.forEach((x, i) => {
   const next = i + 1 < secs.length ? secs[i + 1].virtualAddress : fin.newHeader.optionalHeader.sizeOfImage;
   if (end > next) throw new Error(`section ${x.name} : déborde sur la suivante (${end.toString(16)} > ${next.toString(16)})`);
 });
+// rien en clair : ni le simulateur (three.js), ni le mot de passe
+if (['WebGLRenderer', 'Olivier'].some((m) => out.includes(m))) throw new Error('la page du simulateur se trouve en clair dans l\'exécutable');
+if (out.includes(Buffer.from(MDP, 'utf8')) || out.includes(Buffer.from(MDP, 'utf16le'))) throw new Error('le mot de passe se trouve dans l\'exécutable');
+
+// ---------------- 5 bis. signature numérique (si un certificat est donné) ----------------
+let signe = false;
+if (signatureDemandee()) {
+  const r = await signer(out);
+  out = r.exe; signe = true;
+  fs.writeFileSync(EXE, out);
+  const blobSigne = NtExecutableResource.from(NtExecutable.from(out, { ignoreCert: true })).entries.find((e) => e.type === 10 && String(e.id).toUpperCase() === 'NODE_SEA_BLOB');
+  if (!blobSigne || !Buffer.from(blobSigne.bin).equals(blobData)) throw new Error('signature : ressource NODE_SEA_BLOB altérée');
+  console.log(`signé : ${r.sujet}${r.horodate ? ' (horodaté)' : ' (sans horodatage : la signature ne vaudra plus après l\'expiration du certificat)'}`);
+} else console.log('non signé : donnez TIEE_SIGN_CERT et TIEE_SIGN_KEY pour signer (tools/signature.mjs)');
+fixeChecksum(out); fs.writeFileSync(EXE, out);
 console.log('dist/TIEE-Simulator.exe', mb(out.length), '· sha256', sha256(out).slice(0, 16));
 
 // ---------------- 6. le kit à partager ----------------
@@ -132,7 +154,6 @@ if (!fs.existsSync(licFile)) fs.writeFileSync(licFile, await (await fetch(`https
 const licences = ['three.js', '========', fs.readFileSync(path.join(ROOT, 'node_modules/three/LICENSE'), 'utf8'), '', `Node.js ${V} (inclus dans TIEE-Simulator.exe)`, '=================================', fs.readFileSync(licFile, 'utf8')].join('\n');
 const dir = 'TIEE-Simulator/';
 const kit = makeZip([
-  { name: dir + 'TIEE-Simulator.html', data: fs.readFileSync(HTML) },
   { name: dir + 'TIEE-Simulator.exe', data: out },
   { name: dir + 'LISEZMOI.txt', data: crlf(fs.readFileSync(path.join(ROOT, 'partage/LISEZMOI.txt'), 'utf8')) },
   { name: dir + 'LICENCES.txt', data: crlf(licences) },
@@ -151,19 +172,40 @@ if (process.argv.includes('--verifier')) {
   const p = spawn(test, ['--port', String(port)], { cwd: work, stdio: ['ignore', 'pipe', 'pipe'], env: { ...process.env, NODE_OPTIONS: '' } });
   let log = ''; p.stdout.on('data', (d) => { log += d; }); p.stderr.on('data', (d) => { log += d; });
   const ok = [];
+  const base = `http://127.0.0.1:${port}`;
+  const acces = (mdp) => fetch(base + '/api/acces', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ mdp }) });
   try {
     for (let i = 0; i < 100 && !log.includes('Sur cet ordinateur'); i++) await new Promise((r) => setTimeout(r, 100));
-    ok.push(['serveur démarré', log.includes(`http://localhost:${port}`)]);
-    const page = await (await fetch(`http://127.0.0.1:${port}/`)).text();
+    ok.push(['serveur démarré, accès protégé annoncé', log.includes(`http://localhost:${port}`) && log.includes('Accès protégé')]);
+    const verrou = await (await fetch(base + '/')).text();
+    ok.push(['sans mot de passe : écran « Accès réservé » seulement', verrou.includes('Accès réservé') && !verrou.includes('CARREGIE_LAN') && verrou.length < 1e5]);
+    ok.push(['sans mot de passe : parties refusées', (await fetch(base + '/api/parties')).status === 401]);
+    ok.push(['mauvais mot de passe refusé', (await acces(MDP + 'x')).status === 401]);
+    const r = await acces(MDP);
+    const cookie = String(r.headers.get('set-cookie') || '').split(';')[0];
+    ok.push(['bon mot de passe accepté, jeton donné', r.status === 200 && /^tiee_acces=[0-9a-f]{48}$/.test(cookie)]);
+    const page = await (await fetch(base + '/', { headers: { cookie } })).text();
     ok.push(['page servie, three.js intégré', page.includes('window.CARREGIE_LAN') && page.length > 1e6]);
-    const parties = await (await fetch(`http://127.0.0.1:${port}/api/parties`)).json();
+    const parties = await (await fetch(base + '/api/parties', { headers: { cookie } })).json();
     ok.push(['liste des parties', Array.isArray(parties.parties)]);
     ok.push(['options du double-clic actives', log.includes('Fermez cette fenêtre')]);
     // jouer par Internet (lan/internet.mjs, regroupé dans l'exécutable) : état lisible par l'hôte, clé créée
-    const net0 = await (await fetch(`http://127.0.0.1:${port}/api/internet`)).json();
+    const net0 = await (await fetch(base + '/api/internet', { headers: { cookie } })).json();
     ok.push(['jouer par Internet : module présent, clé créée', net0.direct && net0.direct.etat === 'non' && /^[a-z2-9]{12}$/.test(net0.cle) && fs.existsSync(path.join(work, 'cle-internet.txt'))]);
-    ok.push(['jouer par Internet : ping', (await (await fetch(`http://127.0.0.1:${port}/api/ping`)).json()).ok === true]);
+    ok.push(['jouer par Internet : ping', (await (await fetch(base + '/api/ping')).json()).ok === true]);
   } finally { p.kill(); fs.rmSync(work, { recursive: true, force: true }); }
+  // la signature, vérifiée par un outil indépendant (osslsigncode), si elle est là et l'outil aussi
+  if (signe) {
+    let tool = ''; try { tool = execFileSync('osslsigncode', ['--version'], { encoding: 'utf8' }); } catch (e) { /* absent */ }
+    if (!tool) console.log('—   signature : osslsigncode absent, vérification sautée');
+    else {
+      const ca = path.join(CACHE, 'chaine.pem'); fs.writeFileSync(ca, certificats().map((c) => c.toString()).join('\n'));
+      let v;
+      try { v = execFileSync('osslsigncode', ['verify', '-in', EXE, '-CAfile', ca, '-TSA-CAfile', '/etc/ssl/certs/ca-certificates.crt'], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }); } catch (e) { v = String(e.stdout || '') + String(e.stderr || ''); }
+      ok.push(['signature Authenticode valide (osslsigncode)', /Signature verification: ok/.test(v)]);
+      if (!/Signature verification: ok/.test(v)) console.error(v);
+    }
+  }
   for (const [n, v] of ok) console.log(v ? 'OK  ' : 'FAIL', n);
   if (ok.some(([, v]) => !v)) { console.error(log); process.exit(1); }
 }
