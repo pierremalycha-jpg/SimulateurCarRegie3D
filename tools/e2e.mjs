@@ -26,6 +26,7 @@ const SUITES = [
   ['session', 'session', [], 25],
   ['reseau-local', 'reseau-local', [], 30],
   ['internet', 'internet', [], 20],
+  ['acces', 'acces', [], 15],
   ['exploitation-hd', 'exploitation', ['hd'], 30],
   ['exploitation-ip', 'exploitation', ['ip'], 30],
   ['exploitation-scenario', 'exploitation', ['scenario'], 25],

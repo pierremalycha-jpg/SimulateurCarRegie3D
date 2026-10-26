@@ -39,15 +39,10 @@ jobs:
         run: npm run typecheck
       - name: Tests unitaires (node:test)
         run: npm test
+      # la page construite n'est pas publiée dans les fichiers de l'exécution : sur un dépôt public, tout
+      # le monde pourrait la télécharger ; la version à partager est l'exécutable protégé (exe.yml)
       - name: Construction
         run: npm run build
-      - uses: actions/upload-artifact@v4
-        with:
-          name: dist
-          path: |
-            dist/index.html
-            dist/car-regie-serveur-lan.mjs
-            dist/car-regie-reseau-local.zip
 
   # compatibilité : feuille de service, chef de car, un poste, diagnostic et écran de secours
   navigateurs:
