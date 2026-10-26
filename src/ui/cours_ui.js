@@ -14,6 +14,7 @@ import { exercisesOf, exerciseInfo, exerciseDone, specialState, allExercises } f
 import { TUTOR } from '../tutor/engine.js';
 import { livret } from '../livret.js';
 import { liveProg, openLivret } from './livret.js';
+import { vuesDuChapitre, vuesDeLecon, CHAP3D } from '../vues3d/catalogue.js';
 
 // ----------------------------------------------------------------------------------
 // L'espace Cours, plein écran (touche G, menu titre, écran Jouer, pupitre, menu du car) : il s'ouvre
@@ -21,7 +22,8 @@ import { liveProg, openLivret } from './livret.js';
 // Postes, Matériel. Leçons : à gauche le seul menu (recherche, chapitres et leçons, la caméra en 3D) ;
 // à droite, la leçon (l'essentiel, schéma, manipulation, explication, dans le car, exercices
 // pratiques, fiches « ? », quiz), ou, sans leçon choisie, le suivi : progression, ce qu'il reste à
-// faire, livret de compétences.
+// faire, livret de compétences. Une leçon qui a une vue 3D (src/vues3d) la propose (« Voir en 3D ») ; le
+// chapitre a alors son entrée « … en 3D » dans le sommaire, comme la caméra en 3D.
 // ----------------------------------------------------------------------------------
 const UI = { lesson: /** @type {string | null} */ (null), chapter: /** @type {string | null} */ (null), demo: /** @type {{ destroy?: () => void } | null | void} */ (null), q: '' };
 /** l'essai de quiz en cours (gardé quand la page se redessine) : questions tirées, réponses choisies, corrigé affiché */
@@ -69,6 +71,13 @@ export function openCours(o = {}) {
   });
 }
 on('cours', (o) => openCours(o && typeof o === 'object' ? o : typeof o === 'string' ? o : {}));
+/** les modules d'un chapitre : le sien (la caméra en 3D), puis ses vues 3D (une entrée qui ouvre la première, avec la liste) */
+function modulesDe(ch) {
+  const out = ch.module ? [ch.module] : [];
+  const vs = vuesDuChapitre(ch.id);
+  if (vs.length) out.push({ label: CHAP3D[ch.id] || 'En 3D', sub: vs.map((v) => v.titre).join(' · '), event: 'vue3d', arg: { chapitre: ch.id, from: 'cours', liste: true } });
+  return out;
+}
 function stopDemo() { try { if (UI.demo && UI.demo.destroy) UI.demo.destroy(); } catch (e) { /* démonstration déjà démontée */ } UI.demo = null; }
 
 // ---------------- l'onglet Leçons ----------------
@@ -109,9 +118,9 @@ function drawNav(nav, render) {
       const det = el('details', { class: 'co-chap', open: UI.chapter === ch.id ? '' : null },
         el('summary', {}, icon(ch.icon), el('span', {}, ch.title), el('small', { title: `${done} leçon(s) acquise(s) sur ${ch.lessons.length}` + (xs.length ? `, ${xd} exercice(s) fait(s) sur ${xs.length}` : '') }, `${done} / ${ch.lessons.length}`)),
         el('ol', {},
-          ch.module ? el('li', {}, el('button', { type: 'button', class: 'co-les co-module', onclick: () => { closeLayer(false); emit(ch.module.event, ch.module.arg); } }, icon('cube'), el('span', {}, ch.module.label, ch.module.sub ? el('small', {}, ch.module.sub) : null))) : null,
+          ...modulesDe(ch).map((m) => el('li', {}, el('button', { type: 'button', class: 'co-les co-module', 'data-event': m.event, onclick: () => { closeLayer(false); emit(m.event, m.arg); } }, icon('cube'), el('span', {}, m.label, m.sub ? el('small', {}, m.sub) : null)))),
           ...ch.lessons.map((l) => el('li', {}, lesBtn(ch, l, render)))),
-        !ch.lessons.length && !ch.module ? el('p', { class: 'note' }, 'Les leçons arrivent.') : null);
+        !ch.lessons.length && !modulesDe(ch).length ? el('p', { class: 'note' }, 'Les leçons arrivent.') : null);
       det.addEventListener('toggle', () => { if (det.open) UI.chapter = ch.id; });
       list.append(det);
     }
@@ -171,6 +180,14 @@ function lessonPage(page, { chapter, lesson, i }, render) {
     el('h2', {}, L.title, L.minutes ? el('small', {}, L.minutes) : null),
     el('section', { class: 'co-ess', 'aria-label': 'L\'essentiel' }, el('h4', {}, 'L\'essentiel'), el('ul', {}, ...L.essentials.map((t) => el('li', {}, rich(t, 'co-rich'))))));
   if (L.figure) { try { page.append(el('div', { class: 'co-figbox' }, L.figure())); } catch (e) { console.error(e); } }
+  // la notion en 3D : la scène s'ouvre à l'étape tirée de cette leçon, et « Quitter » ramène ici
+  const v3 = vuesDeLecon(L.id);
+  if (v3.length) {
+    page.append(el('section', { class: 'co-3d', 'aria-label': 'Voir en 3D' }, el('h4', {}, icon('cube'), 'Voir en 3D'),
+      ...v3.map((v) => el('div', { class: 'co-3d-item' },
+        el('div', {}, el('b', {}, v.titre), el('p', {}, v.resume)),
+        el('button', { type: 'button', class: 'btn small primary', 'data-vue': v.id, onclick: () => { closeLayer(false); emit('vue3d', { vue: v.id, lecon: L.id, from: 'cours' }); } }, 'Ouvrir la vue 3D')))));
+  }
   if (L.demo) {
     const host = el('div', { class: 'co-demo-host' });
     page.append(el('section', { class: 'co-demo', 'aria-label': 'Manipulation' }, el('h4', {}, icon('a_toi'), 'À vous : ', el('span', {}, L.demoTitle || 'essayez')), host));

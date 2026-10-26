@@ -13,7 +13,7 @@ import { CN_REQ, GUARDS, cofdmBitrate, buildChannels } from '../data/rf.js';
 const C = { grey: '#8a949c', amber: '#ffd38a', red: '#ff8a80', green: '#7fd1a0', cyan: '#7fd3f3', box: '#1a2026', line: '#2a3238' };
 const txt = (x, y, s, cls = 'co-s', anchor = 'middle') => sv('text', { x, y, textAnchor: anchor, class: cls }, s);
 /** affaiblissement en espace libre (dB), d en mètres, f en MHz */
-const fspl = (dM, fMHz) => 20 * Math.log10(Math.max(1, dM)) + 20 * Math.log10(fMHz) - 27.55;
+export const fspl = (dM, fMHz) => 20 * Math.log10(Math.max(1, dM)) + 20 * Math.log10(fMHz) - 27.55;
 const dB1 = (v) => `${v > 0 ? '+' : v < 0 ? '−' : ''}${fmtNum(Math.abs(v), 1)}`;
 const mW = (dBm) => { const m = 10 ** (dBm / 10); return m >= 1000 ? `${fmtNum(m / 1000, 1)} W` : m >= 1 ? `${fmtNum(m, 0)} mW` : m >= 1e-3 ? `${fmtNum(m * 1e3, 0)} µW` : m >= 1e-6 ? `${fmtNum(m * 1e6, 0)} nW` : `${fmtNum(m * 1e9, 1)} pW`; };
 const sens = (dBm) => dBm >= 1e3 ? '' : mW(dBm);
@@ -217,8 +217,8 @@ function demoBilan(host) {
 // 3. Antennes, diversité, polarisation
 // ======================================================================================
 /** gain (dBi) d'une antenne selon l'angle (degrés) à son axe : modèle parabolique en dB, comme rf.js */
-const ANT = { omni: { name: 'Omni', gain: 2, hp: 180 }, patch: { name: 'Patch', gain: 9, hp: 33 }, logper: { name: 'Log-périodique', gain: 10, hp: 27 }, panneau: { name: 'Panneau secteur', gain: 13, hp: 20 } };
-const antGain = (k, ang) => k === 'omni' ? ANT.omni.gain : ANT[k].gain - Math.min(28, 3 * (ang / ANT[k].hp) ** 2);
+export const ANT = { omni: { name: 'Omni', gain: 2, hp: 180 }, patch: { name: 'Patch', gain: 9, hp: 33 }, logper: { name: 'Log-périodique', gain: 10, hp: 27 }, panneau: { name: 'Panneau secteur', gain: 13, hp: 20 } };
+export const antGain = (k, ang) => k === 'omni' ? ANT.omni.gain : ANT[k].gain - Math.min(28, 3 * (ang / ANT[k].hp) ** 2);
 function figAntennes() {
   const f = figure(720, 218, 'Diagrammes de rayonnement : l\'antenne omnidirectionnelle (2 dBi) rayonne pareil dans toutes les directions ; le patch (9 dBi) et le panneau secteur (13 dBi) concentrent la puissance dans un faisceau : plus de gain dans l\'axe, presque rien derrière');
   ['omni', 'patch', 'panneau'].forEach((k, i) => {
