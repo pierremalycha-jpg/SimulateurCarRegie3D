@@ -18,6 +18,7 @@ import { telOpen, telKey, toggleTelephone } from '../telephone/index.js';
 import { titleOpen, titleKey } from './title.js';
 import { camlabOpen } from '../camlab/index.js';
 import { entrepotOpen } from '../entrepot/index.js';
+import { vues3dOpen } from '../vues3d/index.js';
 
 // ----------------------------------------------------------------------------------
 // Entrées : clavier, souris (regard verrouillé ou glissé), molette, écran tactile.
@@ -25,8 +26,8 @@ import { entrepotOpen } from '../entrepot/index.js';
 const isTyping = (e) => e.target && ['INPUT', 'SELECT', 'TEXTAREA'].includes(e.target.tagName) && e.target.type !== 'range' && e.target.type !== 'checkbox';
 
 function onKeyDown(e) {
-  // module « La caméra » : il a ses propres touches
-  if (camlabOpen() || entrepotOpen()) return;
+  // module « La caméra », vues 3D du Cours, entrepôt : ils ont leurs propres touches
+  if (camlabOpen() || entrepotOpen() || vues3dOpen()) return;
   // confirmation dans la page : Échap = annuler, Entrée = bouton qui a le focus ; rien d'autre
   if (askOpen()) { if (e.code === 'Escape') { closeAsk(false); e.preventDefault(); } return; }
   // fenêtre explicative « ? » : Échap la ferme (sans fermer le poste) ; les autres touches ne pilotent rien
