@@ -70,6 +70,7 @@ await key('LIVE E/E').click();
 T.check('LIVE E/E : la sortie revient au direct, la touche s\'allume', await until(page, () => window.__dbg.EVS.ch[0].mode === 'live' && [...document.querySelectorAll('.p3d-hits .lsm-key')].some((x) => x.textContent === 'LIVE E/E' && x.classList.contains('on')), null, 5000));
 
 // écran du serveur : un clic dans les trains place la sortie à cet instant
+await page.locator('.p3d-mons .lsm-trains').scrollIntoViewIfNeeded();
 const tb = await page.locator('.p3d-mons .lsm-trains').boundingBox();
 await page.mouse.click(tb.x + tb.width * 0.7, tb.y + tb.height * 0.5);
 T.check('clic dans les trains d\'enregistrement (panneau de droite) : la sortie se place à cet instant, en pause', await until(page, () => { const c = window.__dbg.EVS.ch[0]; return c.mode === 'pause' && window.__dbg.S.simTime - c.t > 5; }, null, 5000), JSON.stringify(await ch()));
