@@ -29,7 +29,13 @@ export const lum = (color, k = 0.9, o = {}) => matiere('plastique', { color, emi
  *  garde sa couleur (et la couleur de chaque instance d'un flux) dans la pénombre comme sous un projecteur */
 export const eclat = (color = 0xffffff, opacity = 1) => new THREE.MeshBasicMaterial({ color, toneMapped: false, transparent: opacity < 1, opacity });
 /** matière translucide (zones, gaines coupées, verre) */
-export const verre = (color, opacity = 0.18, o = {}) => matiere('plastique', { color, vertexColors: false, transparent: true, opacity, roughness: 0.2, ...o });
+export const verre = (color, opacity = 0.18, o = {}) => {
+  // matiere() ne connaît pas depthWrite : on le pose ensuite (sans lui, une gaine transparente cache ce qu'elle contient)
+  const { depthWrite, ...r } = o;
+  const m = matiere('plastique', { color, vertexColors: false, transparent: true, opacity, roughness: 0.2, ...r });
+  if (depthWrite !== undefined) m.depthWrite = depthWrite;
+  return m;
+};
 
 /**
  * Une pièce de matériel : un Builder en mode ao (arêtes arrondies, occlusion cuite), une seule matière

@@ -17,7 +17,7 @@ import { appareil, commutateur, Reseau } from '../materiel.js';
 const fmtNs = (ns) => (Math.abs(ns) >= 1000 ? `${fmtNum(ns / 1000, 2)} µs` : `${fmtNum(ns, 0)} ns`);
 
 export const VUE_RESEAU_PTP = {
-  id: 'reseau-ptp', chapitre: 'reseau', titre: 'PTP : l\'heure du car IP',
+  id: 'reseau-ptp', chapitre: 'reseau', aussi: ['synchro'], titre: 'PTP : l\'heure du car IP',
   resume: 'Un grand maître calé sur le GPS, un commutateur, deux esclaves : les messages Sync et Delay_Req, les instants t1 à t4, le calcul du décalage, la file d\'attente qui le fausse et l\'horloge frontière qui le corrige.',
   lecons: ['reseau-ptp'],
   lectures: ['Commutateur', 'Dernier échange', 'Erreur de la caméra', 'Erreur du mélangeur', 'Grand maître élu'],

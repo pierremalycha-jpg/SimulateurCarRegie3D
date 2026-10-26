@@ -191,7 +191,8 @@ function showVue(id, etape = 0) {
   const o = vue.orbite || {};
   Object.assign(R.orbit, { rMin: o.rMin ?? 0.4, rMax: o.rMax ?? 24, phiMin: o.phiMin ?? 0.12, phiMax: o.phiMax ?? 1.52 });
   R.inst = vue.build(makeCtx(group)) || {};
-  group.traverse((x) => { if (/** @type {any} */ (x).isMesh && !x.name.startsWith('texte') && x.name !== 'flux') { x.castShadow = true; x.receiveShadow = true; } });
+  // les objets translucides (verre, zones, faisceaux) et les rayons ne portent pas d'ombre
+  group.traverse((x) => { const m = /** @type {any} */ (x); if (m.isMesh && !x.name.startsWith('texte') && x.name !== 'flux') { x.castShadow = !m.material.transparent && !x.userData.passe; x.receiveShadow = true; } });
   for (const b of R.list.querySelectorAll('.v3-li')) b.classList.toggle('cur', /** @type {HTMLElement} */ (b).dataset.vue === id);
   R.etape = -1;
   renderSide();
