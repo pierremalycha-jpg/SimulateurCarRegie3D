@@ -13,6 +13,12 @@ import { VUE_ST2110_ROUGEBLEU } from './vues/st2110_rougebleu.js';
 import { VUE_SYNCHRO_GENLOCK } from './vues/synchro_genlock.js';
 import { VUE_CAMERA_FIBRE } from './vues/camera_fibre.js';
 import { VUE_HF_STADE } from './vues/hf_stade.js';
+import { VUE_RESEAU_ADRESSES } from './vues/reseau_adresses.js';
+import { VUE_RESEAU_TCPUDP } from './vues/reseau_tcpudp.js';
+import { VUE_RESEAU_COUCHES } from './vues/reseau_couches.js';
+import { VUE_RESEAU_WAN } from './vues/reseau_wan.js';
+import { VUE_RESEAU_QOS } from './vues/reseau_qos.js';
+import { VUE_RESEAU_DHCP } from './vues/reseau_dhcp.js';
 
 // ----------------------------------------------------------------------------------
 // Le catalogue des vues 3D du Cours : chaque vue est un fichier de vues/ (ses étapes, ses commandes,
@@ -44,7 +50,13 @@ import { VUE_HF_STADE } from './vues/hf_stade.js';
  * @property {(ctx: any) => any} build
  */
 /** @type {Vue3d[]} */
-export const VUES = [VUE_SDI_TRAME, VUE_SDI_OEIL, VUE_SDI_BRASSAGE, VUE_SYNCHRO_GENLOCK, VUE_CAMERA_FIBRE, VUE_RESEAU_MAC, VUE_RESEAU_VLAN, VUE_RESEAU_PASSERELLE, VUE_RESEAU_MULTICAST, VUE_RESEAU_PTP, VUE_ST2110_FLUX, VUE_ST2110_PAQUET, VUE_ST2110_ROUGEBLEU, VUE_HF_STADE];
+// dans l'ordre de lecture de chaque chapitre (le réseau suit ses parties : bases, adresses, transport, qualité, car IP)
+export const VUES = [
+  VUE_SDI_TRAME, VUE_SDI_OEIL, VUE_SDI_BRASSAGE, VUE_SYNCHRO_GENLOCK, VUE_CAMERA_FIBRE,
+  VUE_RESEAU_COUCHES, VUE_RESEAU_MAC, VUE_RESEAU_VLAN, VUE_RESEAU_ADRESSES, VUE_RESEAU_DHCP, VUE_RESEAU_PASSERELLE,
+  VUE_RESEAU_TCPUDP, VUE_RESEAU_WAN, VUE_RESEAU_MULTICAST, VUE_RESEAU_QOS,
+  VUE_RESEAU_PTP, VUE_ST2110_FLUX, VUE_ST2110_PAQUET, VUE_ST2110_ROUGEBLEU, VUE_HF_STADE,
+];
 
 /** nom de l'entrée « … en 3D » de chaque chapitre, dans le sommaire du Cours */
 export const CHAP3D = { sdi: 'Le SDI en 3D', synchro: 'La synchro en 3D', camera: 'La fibre en 3D', reseau: 'Le réseau en 3D', hf: 'La HF en 3D' };
