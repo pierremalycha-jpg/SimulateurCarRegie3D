@@ -10,15 +10,18 @@ import path from 'node:path';
 import { chiffrer, KDF } from '../lan/coffre.mjs';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
-export const MDP_MIN = 10;
+export const MDP_MIN = 3;        // un mot de passe court est accepté (choix du 26 octobre 2026)
+export const MDP_CONSEILLE = 10; // en dessous, la construction avertit : un mot de passe court se devine en partant du fichier
 
 /** vérifie le mot de passe choisi ; renvoie le message d'erreur, ou '' s'il convient */
 export function mdpRefuse(mdp) {
   if (!mdp) return 'mot de passe absent : donnez-le dans la variable d\'environnement TIEE_MDP (secret TIEE_MDP sur GitHub)';
-  if ([...mdp].length < MDP_MIN) return `mot de passe trop court (${MDP_MIN} caractères au moins ; une phrase de quatre mots est plus sûre et plus facile à retenir)`;
+  if ([...mdp].length < MDP_MIN) return `mot de passe trop court (${MDP_MIN} caractères au moins)`;
   if (mdp.length > 256) return 'mot de passe trop long (256 caractères au plus)';
   return '';
 }
+/** mot de passe accepté mais faible : avertissement à afficher, ou '' */
+export const mdpFaible = (mdp) => ([...String(mdp)].length < MDP_CONSEILLE ? `mot de passe court (moins de ${MDP_CONSEILLE} caractères) : il écarte les curieux, mais quelqu'un qui récupère l'exécutable peut le retrouver en essayant les combinaisons ; une phrase de quatre ou cinq mots résiste vraiment` : '');
 
 /**
  * @param {{ page: string, mdp: string, format?: 'cjs' | 'esm', kdf?: typeof KDF, outfile: string, banner?: string, define?: Record<string, string> }} o

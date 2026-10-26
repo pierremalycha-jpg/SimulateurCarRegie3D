@@ -30,7 +30,7 @@ import { execFileSync, spawn } from 'node:child_process';
 import { NtExecutable, NtExecutableResource, Data, Resource } from 'resedit';
 import postject from 'postject';
 import { makeZip } from './zip.mjs';
-import { serveurProtege, mdpRefuse } from './protege.mjs';
+import { serveurProtege, mdpRefuse, mdpFaible } from './protege.mjs';
 import { signer, signatureDemandee, certificats, fixeChecksum } from './signature.mjs';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
@@ -48,6 +48,7 @@ const mb = (n) => (n / 1048576).toFixed(1) + ' Mo';
 if (!fs.existsSync(PAGE)) { console.error(`${path.relative(ROOT, PAGE)} introuvable : lancez d'abord node tools/build.mjs`); process.exit(1); }
 const MDP = process.env.TIEE_MDP || '';
 if (mdpRefuse(MDP)) { console.error('TIEE_MDP : ' + mdpRefuse(MDP) + '.\nL\'exécutable chiffre la page avec ce mot de passe : sans lui, pas d\'exécutable.'); process.exit(1); }
+if (mdpFaible(MDP)) console.log((process.env.GITHUB_ACTIONS ? '::warning title=Mot de passe court::' : 'attention : ') + mdpFaible(MDP));
 fs.mkdirSync(CACHE, { recursive: true });
 
 // ---------------- 1. le serveur protégé en un seul script CommonJS (format des exécutables Node 22) ----------------
@@ -132,7 +133,8 @@ secs.forEach((x, i) => {
 });
 // rien en clair : ni le simulateur (three.js), ni le mot de passe
 if (['WebGLRenderer', 'Olivier'].some((m) => out.includes(m))) throw new Error('la page du simulateur se trouve en clair dans l\'exécutable');
-if (out.includes(Buffer.from(MDP, 'utf8')) || out.includes(Buffer.from(MDP, 'utf16le'))) throw new Error('le mot de passe se trouve dans l\'exécutable');
+// (un mot de passe de quelques lettres se trouve forcément ailleurs dans le fichier : rien à en conclure)
+if (MDP.length >= 8 && (out.includes(Buffer.from(MDP, 'utf8')) || out.includes(Buffer.from(MDP, 'utf16le')))) throw new Error('le mot de passe se trouve dans l\'exécutable');
 
 // ---------------- 5 bis. signature numérique (si un certificat est donné) ----------------
 let signe = false;

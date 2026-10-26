@@ -426,7 +426,8 @@ recalculée. `node tools/exe.mjs --verifier` la fait contrôler par `osslsigncod
 
 **Construit par GitHub** (`.github/workflows/exe.yml`). Une fois pour toutes, dans *Settings → Secrets and
 variables → Actions → New repository secret* :
-- `TIEE_MDP` : le mot de passe (10 caractères au moins ; une phrase de quatre ou cinq mots est plus sûre et plus
+- `TIEE_MDP` : le mot de passe (3 caractères au moins ; en dessous de 10, la construction avertit ; une phrase de
+  quatre ou cinq mots est plus sûre et plus
   facile à dicter) ;
 - `TIEE_SIGN_CERT` et `TIEE_SIGN_KEY` : le contenu de `certificat.pem` et de `cle.pem` (sans eux, l'exécutable est
   construit mais pas signé) ; `TIEE_SIGN_KEY_MDP` si la clé est protégée par un mot de passe.
@@ -448,7 +449,9 @@ l'intégration continue ne publie plus la page construite dans les fichiers de s
 - Une personne qui a le mot de passe voit la page dans son navigateur et peut l'enregistrer : le mot de passe
   écarte ceux qui ne l'ont pas, il n'empêche pas un utilisateur autorisé de copier.
 - Sur le réseau local, la page circule en HTTP : le mot de passe aussi, au moment où un joueur le tape.
-- La solidité dépend du mot de passe : un mot de passe court ou courant se devine en partant du fichier.
+- La solidité dépend du mot de passe : un mot de passe court ou courant se devine en partant du fichier. Un mot de
+  passe de trois lettres écarte les curieux, pas quelqu'un de déterminé : scrypt rend chaque essai coûteux, mais
+  quelques centaines de milliers de combinaisons s'essaient en quelques heures sur un PC (ordre de grandeur).
 
 Tests : `tests/unit/acces.test.mjs` (coffre, serveur protégé, ce qui est servi avant et après le mot de passe,
 essais limités), `node tools/e2e.mjs acces` (écran d'accès, mauvais et bon mot de passe, ouverture du simulateur,

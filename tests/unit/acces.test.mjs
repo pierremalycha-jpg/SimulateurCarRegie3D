@@ -11,7 +11,7 @@ import path from 'node:path';
 import net from 'node:net';
 import crypto from 'node:crypto';
 import { chiffrer, ouvrir, estCoffre } from '../../lan/coffre.mjs';
-import { serveurProtege, mdpRefuse } from '../../tools/protege.mjs';
+import { serveurProtege, mdpRefuse, mdpFaible } from '../../tools/protege.mjs';
 
 const MDP = 'la régie mobile du lycée';
 const PETIT = { N: 2 ** 12, r: 8, p: 1 }; // scrypt allégé : des tests rapides (l'exécutable garde KDF)
@@ -54,9 +54,10 @@ test('coffre : le bon mot de passe ouvre, un mauvais ou un coffre modifié non',
   assert.notEqual(c.data, c2.data);
 });
 
-test('mot de passe trop court ou absent refusé à la construction', () => {
-  assert.ok(mdpRefuse('')); assert.ok(mdpRefuse('court')); assert.ok(mdpRefuse('x'.repeat(300)));
-  assert.equal(mdpRefuse(MDP), '');
+test('mot de passe absent ou trop court refusé à la construction ; court accepté avec un avertissement', () => {
+  assert.ok(mdpRefuse('')); assert.ok(mdpRefuse('ab')); assert.ok(mdpRefuse('x'.repeat(300)));
+  assert.equal(mdpRefuse('xyz'), ''); assert.ok(mdpFaible('xyz'));
+  assert.equal(mdpRefuse(MDP), ''); assert.equal(mdpFaible(MDP), '');
 });
 
 test('le serveur protégé ne contient ni la page ni le mot de passe', () => {
