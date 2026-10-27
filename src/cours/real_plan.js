@@ -22,7 +22,7 @@ export const TERRAIN = { L: 105, l: 68 };
 /** les caméras d'un dispositif type : position (m), hauteur (m), rôle */
 export const CAMS_PLAN = [
   { id: 'c1', nom: 'CAM 1', role: 'plan large, tribune principale', x: 0, y: -62, h: 20 },
-  { id: 'c2', nom: 'CAM 2', role: 'serré, tribune principale', x: 3, y: -62, h: 20 },
+  { id: 'c2', nom: 'CAM 2', role: 'serré, tribune principale', x: 8, y: -62, h: 20 },
   { id: 'c3', nom: 'CAM 3', role: '16 m gauche, en hauteur', x: -36, y: -58, h: 18 },
   { id: 'c4', nom: 'CAM 4', role: '16 m droite, en hauteur', x: 36, y: -58, h: 18 },
   { id: 'c5', nom: 'CAM 5', role: 'bord terrain gauche', x: -28, y: -38, h: 1.5 },
@@ -63,7 +63,7 @@ function demoPlan(host) {
   const fig = el('div', { class: 'co-scroll' });
   const read = readout(['L\'action', 'À l\'antenne', 'Coupe vers', 'Focales de la caméra à l\'antenne']);
   const verdict = el('p', { class: 'co-verdict' });
-  const W = 720, H = 430, k = 4.6, cx = W / 2, cy = 200;
+  const W = 720, H = 470, k = 3.2, cx = W / 2 + 10, cy = 232;
   const X = (x) => cx + x * k, Y = (y) => cy - y * k;
   const draw = () => {
     const A = ACTIONS.find((x) => x.id === act) || ACTIONS[0], ca = CAMS_PLAN.find((x) => x.id === a) || CAMS_PLAN[0], cc = CAMS_PLAN.find((x) => x.id === c) || CAMS_PLAN[0];
@@ -75,7 +75,7 @@ function demoPlan(host) {
     f.append(sv('rect', { x: X(-TERRAIN.L / 2), y: Y(TERRAIN.l / 2), width: TERRAIN.L * k, height: TERRAIN.l * k, ...lw }), sv('line', { x1: X(0), y1: Y(34), x2: X(0), y2: Y(-34), ...lw }), sv('circle', { cx: X(0), cy: Y(0), r: 9.15 * k, ...lw }));
     for (const s of [-1, 1]) f.append(sv('rect', { x: s < 0 ? X(-52.5) : X(52.5 - 16.5), y: Y(20.16), width: 16.5 * k, height: 40.32 * k, ...lw }));
     // l'axe : la ligne qui partage le stade, les caméras du direct d'un seul côté
-    f.append(sv('line', { x1: X(-66), y1: Y(0), x2: X(66), y2: Y(0), stroke: C.amber, strokeWidth: 1.4, strokeDasharray: '7 5' }), txt(X(-66), Y(0) - 6, 'l\'axe', 'co-s', 'start'));
+    f.append(sv('line', { x1: X(-66), y1: Y(0), x2: X(66), y2: Y(0), stroke: C.amber, strokeWidth: 1.4, strokeDasharray: '7 5' }), txt(X(-66), Y(0) + 14, 'l\'axe', 'co-s', 'start'));
     f.append(txt(cx, H - 8, 'tribune principale (le côté des caméras du direct)', 'co-s'), txt(cx, 14, 'tribune d\'en face', 'co-s'));
     // les lignes de visée et les caméras
     for (const cam of CAMS_PLAN) {
@@ -88,7 +88,7 @@ function demoPlan(host) {
     // le ballon et son mouvement
     const bx = X(A.b[0]), by = Y(A.b[1]), ex = X(A.b[0] + A.v[0] * 14), ey = Y(A.b[1] + A.v[1] * 14);
     f.append(sv('line', { x1: bx, y1: by, x2: ex, y2: ey, stroke: '#fff', strokeWidth: 2.4 }), sv('circle', { cx: ex, cy: ey, r: 3.5, fill: '#fff' }), sv('circle', { cx: bx, cy: by, r: 6, fill: '#fff', stroke: '#0b1013', strokeWidth: 2 }));
-    f.append(txt(W - 10, 32, 'flèche sous chaque caméra : le sens du jeu à son écran', 'co-s', 'end'), txt(W - 10, 46, 'vert : comme à l\'antenne · rouge : à l\'envers · gris : dans l\'axe', 'co-s', 'end'));
+    ['sous chaque caméra,', 'le sens du jeu', 'à son écran :', 'vert : comme à l\'antenne', 'rouge : à l\'envers', 'gris : dans l\'axe'].forEach((t, i) => f.append(txt(8, 40 + i * 15, t, 'co-s', 'start')));
     fig.replaceChildren(f);
     const K = coupe(ca, cc, A.b, A.v);
     const D = distanceBallon(ca, A.b), fl = focalePour(D, LARGE_W), fs = focalePour(D, serreW());
@@ -112,12 +112,13 @@ function demoPlan(host) {
 
 // ---------------- le schéma ----------------
 function figPlan() {
-  const f = figure(720, 210, 'La règle des 180° : une ligne, l\'axe, partage le stade en deux ; toutes les caméras du direct sont d\'un même côté (la tribune principale), et le jeu va dans le même sens sur chacune ; une caméra de l\'autre côté (la reverse) montre le jeu à l\'envers ; une caméra derrière un but regarde dans l\'axe et ne dit pas de sens.');
+  const f = figure(720, 226, 'La règle des 180° : une ligne, l\'axe, partage le stade en deux ; toutes les caméras du direct sont d\'un même côté (la tribune principale), et le jeu va dans le même sens sur chacune ; une caméra de l\'autre côté (la reverse) montre le jeu à l\'envers ; une caméra derrière un but regarde dans l\'axe et ne dit pas de sens.');
   f.append(txt(10, 16, 'La règle des 180° : rester du même côté de l\'axe', 'co-t', 'start'));
   f.append(sv('rect', { x: 200, y: 40, width: 320, height: 130, fill: '#1e4a24', rx: 4 }), sv('line', { x1: 360, y1: 40, x2: 360, y2: 170, stroke: 'rgba(240,244,236,.7)' }), sv('line', { x1: 160, y1: 105, x2: 560, y2: 105, stroke: C.amber, strokeWidth: 1.6, strokeDasharray: '7 5' }), txt(566, 109, 'axe', 'co-s', 'start'));
   f.append(sv('line', { x1: 310, y1: 120, x2: 410, y2: 120, stroke: '#fff', strokeWidth: 2.5 }), sv('path', { d: 'M410 120 l-9 -5 v10 Z', fill: '#fff' }), txt(360, 136, 'le jeu', 'co-s'));
-  const cam = (x, y, n, s, col) => { f.append(sv('circle', { cx: x, cy: y, r: 9, fill: C.box, stroke: col, strokeWidth: 2 }), txt(x, y + 4, n, 'co-m'), txt(x, y + (y > 105 ? 26 : -16), s, 'co-s')); };
-  cam(300, 190, '1', '→ à l\'écran', C.green); cam(420, 190, '4', '→ à l\'écran', C.green); cam(360, 24, '9', '← à l\'écran : reverse', C.red); cam(176, 105, '7', '· dans l\'axe', C.grey);
+  const cam = (x, y, n, s, col, lx, ly, a = 'middle') => { f.append(sv('circle', { cx: x, cy: y, r: 9, fill: C.box, stroke: col, strokeWidth: 2 }), txt(x, y + 4, n, 'co-m'), txt(lx, ly, s, 'co-s', a)); };
+  cam(300, 192, '1', '→ à l\'écran', C.green, 300, 216); cam(420, 192, '4', '→ à l\'écran', C.green, 420, 216);
+  cam(360, 26, '9', '← à l\'écran : la reverse', C.red, 376, 30, 'start'); cam(176, 105, '7', '· dans l\'axe', C.grey, 176, 89);
   f.append(txt(10, 60, 'Du même côté :', 'co-s', 'start'), txt(10, 74, 'le jeu va dans le même', 'co-s', 'start'), txt(10, 88, 'sens sur chaque caméra.', 'co-s', 'start'));
   f.append(txt(600, 60, 'De l\'autre côté :', 'co-s', 'start'), txt(600, 74, 'tout s\'inverse ; on', 'co-s', 'start'), txt(600, 88, 'la garde aux ralentis.', 'co-s', 'start'));
   return f;

@@ -84,10 +84,10 @@ function demoFichiers(host) {
 function figFichiers() {
   const f = figure(720, 200, 'Le serveur ralenti enregistre ses entrées en boucle sur ses disques ; les clips protégés restent ; les clips partent en fichiers vers les autres serveurs, la post-production et l\'archive par le réseau, avec leurs métadonnées.');
   f.append(txt(10, 16, 'Du train au fichier : ce que devient une action', 'co-t', 'start'));
-  f.append(box(10, 34, 120, 44, C.amber), txt(70, 52, 'Caméras', 'co-s'), txt(70, 68, 'entrées REC', 'co-m'));
-  f.append(arrow(132, 56, 168, 56), box(172, 30, 170, 92, C.cyan), txt(257, 48, 'Serveur ralenti', 'co-t'), txt(257, 66, 'trains en boucle', 'co-s'), txt(257, 82, 'clips protégés', 'co-s'), txt(257, 98, 'codec intra, timecode', 'co-m'), txt(257, 114, 'IPDirector : noms, mots-clés', 'co-m'));
+  f.append(box(10, 34, 120, 44, C.amber), txt(70, 52, 'Caméras', 'co-s'), txt(70, 68, 'entrées REC', 'co-s'));
+  f.append(arrow(132, 56, 168, 56), box(172, 30, 170, 92, C.cyan), txt(257, 48, 'Serveur ralenti', 'co-t'), txt(257, 66, 'trains en boucle', 'co-s'), txt(257, 82, 'clips protégés', 'co-s'), txt(257, 98, 'codec intra, timecode', 'co-s'), txt(257, 114, 'IPDirector : noms, mots-clés', 'co-s'));
   const dests = [['Autre serveur', 'réseau entre serveurs'], ['Post-production', 'fichiers MXF, QuickTime'], ['Archive', 'NAS, bande LTO']];
-  dests.forEach(([a, b], i) => { const y = 30 + i * 40; f.append(arrow(344, 76, 430, y + 16), box(434, y, 170, 32, C.green), txt(519, y + 14, a, 'co-s'), txt(519, y + 27, b, 'co-m')); });
+  dests.forEach(([a, b], i) => { const y = 30 + i * 40; f.append(arrow(344, 76, 430, y + 16), box(434, y, 170, 32, C.green), txt(519, y + 14, a, 'co-s'), txt(519, y + 27, b, 'co-s')); });
   f.append(txt(10, 150, 'Une heure d\'une entrée à d Mb/s : d × 3 600 ÷ 8 ÷ 1 000 Go  (185 Mb/s ≈ 83 Go).', 'co-s', 'start'));
   f.append(txt(10, 168, 'Profondeur de la boucle = place libre ÷ (entrées × Go par heure).', 'co-s', 'start'));
   f.append(txt(10, 186, 'Transfert = taille × 8 ÷ (débit du lien × rendement) : 1 Go en ≈ 1,1 s sur 10 Gb/s à 70 %.', 'co-s', 'start'));

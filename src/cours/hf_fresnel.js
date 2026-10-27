@@ -84,7 +84,7 @@ function demoFresnel(host) {
     prof.replaceChildren(f);
     read.set('Longueur d\'onde, ouverture du faisceau', `${fmtNum(R.lambda * 100, 1)} cm ; faisceau de ${fmtNum(R.ouv, 1)}° à −3 dB (parabole de ${fmtNum(L.dant, 1)} m)`);
     read.set('Rayon de Fresnel à l\'obstacle', `${fmtNum(R.r1, 1)} m (au milieu de la liaison : ${fmtNum(R.rMilieu, 1)} m) ; la Terre y bombe de ${fmtNum(R.bombe, 2)} m`);
-    read.set('Dégagement de l\'obstacle', `${R.deg >= 0 ? '' : '−'}${fmtNum(Math.abs(R.deg), 1)} m sous la ligne de vue, soit ${fmtNum(R.rel * 100)} % du rayon (60 % demandés)`);
+    read.set('Dégagement de l\'obstacle', R.deg >= 0 ? `son sommet est ${fmtNum(R.deg, 1)} m sous la ligne de vue, soit ${fmtNum(R.rel * 100)} % du rayon (60 % demandés)` : `son sommet dépasse la ligne de vue de ${fmtNum(-R.deg, 1)} m : la vue est coupée (${fmtNum(R.rel * 100)} % du rayon)`);
     read.set('Perte de diffraction', `${fmtNum(R.diff, 1)} dB`);
     read.set('Bilan', `${L.p} dBm émis + 2 × ${fmtNum(R.G, 1)} dBi − ${fmtNum(R.espace, 1)} dB d'espace libre − ${fmtNum(R.diff, 1)} dB d'obstacle − ${PERTES} dB de câbles`);
     read.set('Niveau reçu et marge', `${dBs(R.recu)} dBm, marge de ${dBs(R.marge)} dB sur un récepteur à ${dBs(SENSIB_RX, 0)} dBm`);
@@ -113,16 +113,16 @@ function demoFresnel(host) {
 
 // ---------------- le schéma ----------------
 function figFresnel() {
-  const f = figure(720, 200, 'Une liaison point à point entre deux paraboles : la ligne de vue directe, autour d\'elle le premier ellipsoïde de Fresnel, le plus large au milieu ; un obstacle qui y entre fait perdre du niveau, même sans toucher la ligne de vue ; on garde libres 60 % de son rayon.');
+  const f = figure(720, 226, 'Une liaison point à point entre deux paraboles : la ligne de vue directe, autour d\'elle le premier ellipsoïde de Fresnel, le plus large au milieu ; un obstacle qui y entre fait perdre du niveau, même sans toucher la ligne de vue ; on garde libres 60 % de son rayon (en pointillé).');
   f.append(txt(10, 16, 'Voir l\'autre antenne ne suffit pas : il faut dégager l\'ellipsoïde', 'co-t', 'start'));
   const A = [60, 110], B = [660, 96];
   f.append(sv('ellipse', { cx: 360, cy: 103, rx: 300, ry: 46, fill: 'rgba(127,211,243,.12)', stroke: C.cyan, transform: 'rotate(-1.3 360 103)' }));
-  f.append(sv('ellipse', { cx: 360, cy: 103, rx: 300, ry: 27.6, fill: 'none', stroke: C.cyan, strokeDasharray: '4 3', transform: 'rotate(-1.3 360 103)' }));
+  f.append(sv('ellipse', { cx: 360, cy: 103, rx: 300, ry: 27.6, fill: 'rgba(127,211,243,.10)', stroke: C.cyan, strokeWidth: 1.4, strokeDasharray: '5 3', transform: 'rotate(-1.3 360 103)' }));
   f.append(sv('line', { x1: A[0], y1: A[1], x2: B[0], y2: B[1], stroke: '#fff', strokeWidth: 1.5 }));
-  for (const [x, y] of [A, B]) f.append(sv('path', { d: `M${x} ${y - 16} Q${x + (x < 360 ? 14 : -14)} ${y} ${x} ${y + 16}`, fill: 'none', stroke: C.amber, strokeWidth: 3 }), sv('line', { x1: x, y1: y + 16, x2: x, y2: 190, stroke: C.grey, strokeWidth: 3 }));
-  f.append(sv('rect', { x: 300, y: 118, width: 40, height: 72, fill: '#59646f', stroke: C.amber, strokeWidth: 1.5 }), txt(320, 112, 'obstacle', 'co-s'));
-  f.append(sv('line', { x1: 360, y1: 57, x2: 360, y2: 103, stroke: C.cyan }), txt(366, 74, 'r1 = 17,32 √(d1 d2 ÷ f D)', 'co-m', 'start'));
-  f.append(txt(360, 172, '60 % de r1 dégagés : la liaison ne perd rien à l\'obstacle', 'co-s'), txt(60, 196, 'mât, parabole', 'co-s'), txt(660, 196, 'mât du car', 'co-s'));
+  for (const [x, y] of [A, B]) f.append(sv('path', { d: `M${x} ${y - 16} Q${x + (x < 360 ? 14 : -14)} ${y} ${x} ${y + 16}`, fill: 'none', stroke: C.amber, strokeWidth: 3 }), sv('line', { x1: x, y1: y + 16, x2: x, y2: 200, stroke: C.grey, strokeWidth: 3 }));
+  f.append(sv('rect', { x: 290, y: 114, width: 40, height: 86, fill: '#59646f', stroke: C.red, strokeWidth: 1.5 }), txt(338, 150, 'un obstacle dans les 60 % :', 'co-s', 'start'), txt(338, 164, 'du niveau perdu, même si', 'co-s', 'start'), txt(338, 178, 'l\'on voit l\'autre antenne', 'co-s', 'start'));
+  f.append(sv('line', { x1: 450, y1: 57, x2: 450, y2: 101, stroke: C.cyan }), txt(456, 50, 'r1 = 17,32 √(d1 d2 ÷ f D)', 'co-m', 'start'));
+  f.append(txt(60, 214, 'mât, parabole', 'co-s'), txt(660, 214, 'mât du car', 'co-s'), txt(360, 218, 'pointillé : les 60 % du premier rayon, à garder libres', 'co-s'));
   return f;
 }
 
@@ -135,7 +135,7 @@ export const LESSON_FRESNEL = {
     'Un obstacle qui frôle la ligne de vue coûte déjà **6 dB** ; au-delà de quelques kilomètres, la **courbure de la Terre** se compte aussi.',
   ],
   figure: figFresnel,
-  demoTitle: 'La liaison de départ voit le car, mais un immeuble entre dans l\'ellipsoïde : montez les deux mâts jusqu\'à 60 % de dégagement. Passez à 20 km, à 13 GHz, puis changez de paraboles.',
+  demoTitle: 'Au départ, un immeuble masque le car : montez les deux mâts jusqu\'à ce que la ligne de vue passe, puis jusqu\'à 60 % de dégagement. Passez ensuite à 20 km, à 13 GHz, et changez de paraboles.',
   demo: demoFresnel,
   body: `Quand la fibre ne va pas jusqu'à la caméra (une arrivée de course à quelques kilomètres, un plateau en ville, un relais vers le car), on monte une **liaison point à point** : un émetteur et un récepteur, chacun avec une antenne **parabolique** sur un mât, qui se visent l'un l'autre. La parabole concentre l'énergie dans un faisceau très étroit : son gain vaut 10 log (η (π D ÷ λ)²), avec un rendement η de l'ordre de 0,55. À 7 GHz (λ = 4,3 cm), une parabole de 0,6 m fait environ **30 dBi**, avec un faisceau d'environ 5° à −3 dB (70 λ ÷ D). C'est ce qui permet de franchir des kilomètres avec quelques centaines de milliwatts, mais il faut **aligner** les deux paraboles au degré près, à la boussole puis au niveau reçu, et un mât qui bouge au vent fait décrocher.
 

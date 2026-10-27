@@ -137,18 +137,18 @@ function figCompression() {
   const f = figure(720, 230, 'Un codeur : l\'image (2,07 Gb/s en 1080p50 4:2:2 10 bits) passe par une transformée, une quantification qui jette ce que l\'œil voit le moins, un codage entropique ; un codec intra code chaque image seule, un codec inter code les différences entre images dans un GOP : I, B, B, P… avec ses flèches de prédiction.');
   f.append(txt(10, 16, 'Ce que fait un codeur', 'co-t', 'start'));
   f.append(box(10, 30, 120, 44, C.amber), txt(70, 50, 'Image', 'co-t'), txt(70, 66, '2,07 Gb/s', 'co-m'));
-  const steps = [['Transformée', 'DCT, ondelettes'], ['Quantification', 'on jette le moins visible'], ['Codage entropique', 'les fréquents en court']];
-  steps.forEach(([a, b], i) => { const x = 160 + i * 150; f.append(arrow(x - 28, 52, x - 4, 52), box(x, 30, 130, 44), txt(x + 65, 50, a, 'co-s'), txt(x + 65, 66, b, 'co-m')); });
+  const steps = [['Transformée', 'DCT, ondelettes'], ['Quantification', 'on jette le moins visible'], ['Codage entropique', 'codes courts, fréquents']];
+  steps.forEach(([a, b], i) => { const x = 160 + i * 150; f.append(arrow(x - 28, 52, x - 4, 52), box(x, 30, 130, 44), txt(x + 65, 50, a, 'co-t'), txt(x + 65, 66, b, 'co-s')); });
   f.append(arrow(612, 52, 636, 52), box(640, 30, 72, 44, C.green), txt(676, 50, 'Débit', 'co-t'), txt(676, 66, '200 Mb/s', 'co-m'));
   f.append(txt(10, 100, 'Intra : chaque image seule (JPEG XS, XAVC-I, ProRes) · Inter : les différences entre images (H.264, HEVC)', 'co-s', 'start'));
   // un GOP et ses prédictions
   const T = ['I', 'B', 'B', 'P', 'B', 'B', 'P', 'B', 'B', 'P', 'B', 'B', 'I'];
   const X = (k) => 24 + k * 52, Y = 150;
   T.forEach((t, k) => f.append(sv('rect', { x: X(k), y: Y, width: 40, height: 32, rx: 3, fill: t === 'I' ? C.i : t === 'P' ? C.p : C.b, opacity: 0.85 }), txt(X(k) + 20, Y + 21, t, 'co-t')));
-  const curve = (a, b, col, up = true) => { const xa = X(a) + 20, xb = X(b) + 20, y = up ? Y - 2 : Y + 34, c = up ? Y - 26 : Y + 58; f.append(sv('path', { d: `M${xa} ${y} Q${(xa + xb) / 2} ${c} ${xb} ${y}`, fill: 'none', stroke: col, strokeWidth: 1.3 })); };
+  const curve = (a, b, col, up = true) => { const xa = X(a) + 20, xb = X(b) + 20, y = up ? Y - 2 : Y + 34, c = up ? Y - 26 : Y + 58; f.append(sv('path', { d: `M${xa} ${y} Q${(xa + xb) / 2} ${c} ${xb} ${y}`, fill: 'none', stroke: col, strokeWidth: 1.8 })); };
   curve(0, 3, C.p); curve(3, 6, C.p); curve(6, 9, C.p);
   for (const k of [1, 2]) { curve(0, k, C.grey, false); curve(3, k, C.grey, false); }
-  f.append(txt(X(13) - 30, Y + 21, '…', 'co-t'), txt(360, 224, 'un GOP de 12 images (N = 12, M = 3) : une erreur sur une image I ou P dure jusqu\'à la prochaine image I', 'co-s'));
+  f.append(txt(360, 224, 'un GOP de 12 images (N = 12, M = 3) : une erreur sur une image I ou P dure jusqu\'à la prochaine image I', 'co-s'));
   return f;
 }
 

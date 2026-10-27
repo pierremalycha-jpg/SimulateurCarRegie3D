@@ -136,7 +136,7 @@ function figEnergie() {
   // la terre
   f.append(sv('line', { x1: 406, y1: 110, x2: 406, y2: 188, stroke: C.green, strokeWidth: 1.6, strokeDasharray: '5 3' }));
   for (let k = 0; k < 3; k++) f.append(sv('line', { x1: 392 + k * 4, y1: 194 + k * 6, x2: 420 - k * 4, y2: 194 + k * 6, stroke: C.green, strokeWidth: 1.6 }));
-  f.append(txt(430, 196, 'piquet de terre : posé et mesuré en premier', 'co-s', 'start'));
+  f.append(txt(430, 214, 'piquet de terre : posé et mesuré en premier', 'co-s', 'start'));
   // les trois phases
   f.append(txt(10, 160, 'Trois phases à 120° :', 'co-s', 'start'), txt(10, 176, '230 V phase-neutre, 400 V entre phases', 'co-m', 'start'), txt(10, 192, 'P = √3 × 400 V × I × cos φ', 'co-m', 'start'), txt(10, 208, '63 A tri ≈ 43,6 kVA ; 125 A ≈ 86,6 kVA', 'co-m', 'start'));
   f.append(txt(10, 228, 'Ordre : terre, contrôle des tensions et des phases, puis les baies une à une.', 'co-s', 'start'));
