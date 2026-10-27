@@ -51,9 +51,10 @@ export const PARCOURS = {
     expert: ['synchro-2059'],
   },
   camera: {
-    debutant: ['camera-systeme'],
-    intermediaire: ['camera-montage'],
-    avance: ['camera-fibre'],
+    debutant: ['camera-systeme', 'camera-focale', 'camera-iris', 'camera-exposition', 'camera-viseur'],
+    intermediaire: ['camera-point', 'camera-filtres', 'camera-prisme', 'camera-corps', 'camera-montage', 'camera-mesure'],
+    avance: ['camera-numerique', 'camera-courbes', 'camera-peinture', 'camera-fibre', 'camera-voie', 'camera-moniteur'],
+    expert: ['camera-plusloin'],
   },
   realisation: {
     debutant: ['real-melangeur', 'real-ordres', 'real-plan'],

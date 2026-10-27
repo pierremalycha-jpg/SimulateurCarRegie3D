@@ -1,13 +1,21 @@
 // @ts-check
 import { el } from '../util.js';
 import { CAMERA_FIBRE } from './camera_fibre.js';
+import { LECONS_OBJECTIF } from './camera_objectif.js';
+import { LECONS_CAPTEURS } from './camera_capteurs.js';
+import { LECONS_IMAGE } from './camera_image.js';
+import { LECONS_CORPS } from './camera_corps.js';
+import { LECONS_VOIE } from './camera_signal.js';
 import { registerChapter } from './index.js';
 import { figure, sv, slider, choice, readout, fmtNum } from './kit.js';
 
 // ----------------------------------------------------------------------------------
-// Chapitre « La caméra » : la chaîne caméra de bout en bout (tête, fibre hybride, CCU, RCP et MSU, qui règle
-// quoi), puis le montage d'une caméra de stade (ordre des gestes, équilibrage, fibre, sécurités). Le module à
-// part (src/camlab) montre la caméra de plateau en 3D ; ces leçons disent la même chose que lui et que le car :
+// Chapitre « La caméra », de la lentille frontale au moniteur, en sept parties (PARTIES_CAMERA) qui suivent les
+// chapitres de la caméra en 3D (src/camlab) : chaque leçon reprend ses notions (champ camlab) ; les leçons sont
+// écrites partie par partie dans cours/camera_objectif.js, camera_capteurs.js, camera_image.js, camera_corps.js et
+// camera_signal.js, calculs dans camera_calc.js. Ici : la chaîne caméra de bout en bout (tête, fibre hybride, CCU,
+// RCP et MSU, qui règle quoi), puis le montage d'une caméra de stade (ordre des gestes, équilibrage, fibre,
+// sécurités). Ces leçons disent la même chose que la caméra en 3D et que le car :
 //   · portées : fibre hybride SMPTE ≈ 2 km (data/cameras.js LINKS.smpte, guide « camsys »), 600 m pour la
 //     HXC-FB80 du module 3D (camlab/notions : alimentation), fibre monomode seule ≈ 10 km avec alimentation locale ;
 //   · niveau optique : −4 dBm à l'émission, 0,4 dB/km, 1,5 dB de connexions, comme la baie CCU (ui/stations.js),
@@ -347,13 +355,40 @@ function demoMontage(host) {
   drawOrder(); drawBal();
 }
 
+/**
+ * Les parties du chapitre, dans l'ordre du trajet de la lumière puis du signal (comme les neuf chapitres de la caméra
+ * en 3D, src/camlab), et leurs leçons dans l'ordre de lecture. Le parcours (cours/parcours.js) les range par niveau ;
+ * le sommaire garde les titres des parties dans chaque niveau.
+ */
+export const PARTIES_CAMERA = [
+  ['L\'objectif', ['camera-focale', 'camera-iris', 'camera-point']],
+  ['Filtres, prisme et capteurs', ['camera-filtres', 'camera-prisme', 'camera-exposition']],
+  ['Le traitement de l\'image', ['camera-numerique', 'camera-courbes', 'camera-peinture']],
+  ['Le corps, le viseur et le cadreur', ['camera-corps', 'camera-viseur', 'camera-montage']],
+  ['La voie caméra', ['camera-systeme', 'camera-fibre', 'camera-voie']],
+  ['Jusqu\'au moniteur', ['camera-mesure', 'camera-moniteur']],
+  ['Pour aller plus loin', ['camera-plusloin']],
+];
+/**
+ * Range les leçons dans l'ordre des parties et note la partie de chacune (une leçon absente du tableau irait à la fin).
+ * @param {import('./index.js').Lesson[]} lecons
+ */
+function ranger(lecons) {
+  /** @type {import('./index.js').Lesson[]} */
+  const out = [];
+  for (const [nom, ids] of /** @type {[string, string[]][]} */ (PARTIES_CAMERA)) for (const id of ids) { const l = lecons.find((x) => x.id === id); if (l) out.push(Object.assign(l, { partie: nom })); }
+  return out.concat(lecons.filter((l) => !out.includes(l)));
+}
+
 registerChapter({
   id: 'camera', title: 'La caméra', icon: 'ccu',
-  intro: 'La caméra système de bout en bout : la tête, l\'objectif, la fibre, la CCU et le RCP, jusqu\'au montage sur le terrain.',
-  module: { label: 'La caméra en 3D', sub: 'objectif, prisme, capteurs, menu, connectique', event: 'camera', arg: { from: 'cours' } },
-  lessons: [
+  intro: 'La caméra de la lentille frontale au moniteur, notion par notion avec la caméra en 3D : l\'objectif, les filtres, le prisme et les capteurs, l\'exposition, le traitement de l\'image, le corps, le viseur et le cadreur, la voie caméra (fibre, CCU, RCP, référence, line-up), la mesure et le moniteur, puis le grand capteur, le HDR et le super ralenti.',
+  module: { label: 'La caméra en 3D', sub: 'les 51 notions, de la lentille frontale au moniteur', event: 'camera', arg: { from: 'cours' } },
+  lessons: ranger([
+    ...LECONS_OBJECTIF, ...LECONS_CAPTEURS, ...LECONS_IMAGE, ...LECONS_CORPS, ...LECONS_VOIE,
     {
       id: 'camera-systeme', title: 'La chaîne caméra : tête, fibre, CCU, RCP', minutes: '9 min',
+      camlab: ['ccu', 'rcp'],
       essentials: [
         'Une **caméra système**, c\'est une **tête** sur le terrain et sa **CCU** dans le car, reliées par un seul câble : la **fibre hybride SMPTE** (ST 311).',
         'Deux fibres portent les signaux, une par sens (vers le car : l\'image, le son ; vers la tête : retours, ordres, tally, commandes) ; le cuivre porte l\'**énergie** envoyée par la CCU, ce qui limite le câble à ≈ 2 km.',
@@ -380,8 +415,6 @@ Qui règle quoi. L'**ingénieur vision** règle l'image au RCP : l'**iris** (joy
       competences: ['2.7', '2.10', '2.9'],
       article: 'camsys',
       exercises: [
-        { id: 'materiel-camera', intro: 'Dans la visionneuse de matériel, vous ouvrez l\'arrière de la tête de caméra puis celui de sa CCU et vous cliquez leurs connecteurs : la fibre hybride, l\'intercom du cadreur, l\'arrivée CAMERA, la référence et la sortie SDI vers la grille. Sur chaque face, retrouvez ce qui monte vers le car et ce qui descend vers la tête.' },
-        { id: 'cadreur-cadrer', intro: 'Vous prenez la caméra large en tribune : zoom, panoramique, puis la lecture du tally. Observez ce que le cadreur règle lui-même (le cadre, la focale) et ce qu\'il reçoit par la fibre sans y toucher : l\'image de son viseur, le tally, la voix de la réalisation.' },
         { id: 'ccu-depannage', intro: 'À la baie CCU, une caméra perd sa fibre et une autre sa référence. Lisez l\'état de chaque voie : le niveau optique dit si la lumière arrive, REF LOCK si la caméra est en phase ; rétablissez avant de chercher la cause.' },
       ],
       quiz: [
@@ -447,5 +480,5 @@ Qui règle quoi. L'**ingénieur vision** règle l'image au RCP : l'**iris** (joy
           answer: 2, why: 'Le centre de gravité est à environ 25 cm au-dessus de l\'axe d\'inclinaison : dès qu\'on incline, il sort de la verticale et crée un couple qui fait continuer la caméra. Le contrepoids (des ressorts) compense ce couple ; il se règle pour la charge, puis viennent les frictions, au goût du cadreur.' },
       ],
     },
-  ],
+  ]),
 });

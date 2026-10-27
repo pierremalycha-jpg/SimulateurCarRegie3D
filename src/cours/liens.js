@@ -58,6 +58,16 @@ export const GLOSSAIRE = {
   'Couple ORTF / XY': ['son-directivite', 'directivite'],
   // le son : la console analogique, le numérique, la loudness (cours/son_console.js)
   MADI: ['son-numerique', 'madi'], 'Loudness (LUFS)': ['son-loudness', 'loudness'], 'dBFS / dBTP': ['son-loudness', 'son-numerique', 'crete-vraie'], 'PFL / AFL': ['son-console', 'son-tranche'],
+  // la caméra, de la lentille frontale au moniteur (leçons qui reprennent les notions de la caméra en 3D)
+  'Caméra système': ['camera-systeme'], CCU: ['camera-systeme', 'camera-voie'], RCP: ['camera-systeme'], 'PANEL ACTIVE': ['camera-systeme'], 'CAM PW': ['camera-corps', 'camera-systeme'], CALL: ['camera-viseur'],
+  'Angle de champ': ['camera-focale'], Flare: ['camera-focale'], 'Iris / diaphragme': ['camera-iris'], Ramping: ['camera-iris'], Doubleur: ['camera-iris'],
+  'MOD (distance minimale)': ['camera-point'], 'Objectif box': ['camera-point'], 'Demandes zoom / point': ['camera-viseur', 'camera-point'],
+  'Filtre ND': ['camera-filtres'], 'Température de couleur': ['camera-filtres'], Gain: ['camera-exposition'], Shutter: ['camera-exposition'], 'Scintillement (flicker)': ['camera-exposition'],
+  'Balance des blancs (AWB)': ['camera-numerique'], 'Balance des noirs (ABB)': ['camera-numerique'], 'Master black / pedestal': ['camera-numerique'],
+  'Gamma (master gamma)': ['camera-courbes'], 'Black gamma': ['camera-courbes'], Knee: ['camera-courbes'], 'White clip (écrêteur)': ['camera-courbes'], Detail: ['camera-courbes'], 'Skin detail': ['camera-courbes'],
+  'Matrice (colorimétrie)': ['camera-peinture'], 'Fichier de scène': ['camera-peinture'], Paint: ['camera-courbes', 'camera-peinture'], Matching: ['camera-peinture', 'camera-voie'],
+  'Zébra': ['camera-viseur'], 'Retour (RET) / prompteur': ['camera-viseur'], Riding: ['camera-exposition'],
+  'Moniteur de référence (Grade 1)': ['camera-moniteur'], 'HFR / super ralenti': ['camera-plusloin'], 'Phases (super ralenti)': ['camera-plusloin'],
 };
 
 /** poste → leçon(s) ou fiche(s) ouvertes par son bouton « Cours » et la touche G ; selon le car, SDI ou IP */

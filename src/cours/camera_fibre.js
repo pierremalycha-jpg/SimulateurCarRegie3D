@@ -66,6 +66,7 @@ function demoFibre(host) {
 /** @type {import('./index.js').Lesson} */
 export const CAMERA_FIBRE = {
   id: 'camera-fibre', title: 'La fibre de la caméra : câble hybride, lumière, propreté', minutes: '8 min',
+  camlab: ['fibre'],
   essentials: [
     'Le **câble hybride SMPTE** (ST 311) réunit **deux fibres monomodes** (une par sens) et du **cuivre** qui alimente la tête ; son connecteur (ST 304, type LEMO 3K.93C) branche tout d\'un geste.',
     'Dans la fibre, la lumière reste dans le **cœur** (9 µm) par **réflexion totale** sur la gaine optique (125 µm) : ≈ 0,35 dB/km seulement, la longueur est limitée par l\'**énergie** du cuivre, pas par l\'image.',

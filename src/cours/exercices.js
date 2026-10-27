@@ -52,7 +52,6 @@ export const BY_LESSON = {
     { id: 'x-camera', intro: 'Exercice noté, dans le module « La caméra en 3D » : la caméra du plateau sort de son flight-case et vous la mettez en service seul, de l\'objectif au fichier de scène. Vous y retrouvez la leçon : la fibre nettoyée et branchée avant d\'alimenter, le niveau optique lu à la CCU, puis tout ce que la vision règle au RCP. Chaque erreur d\'ordre ou de geste est expliquée dans le bilan.' },
   ],
   'signal-niveaux': [
-    { id: 'vision-exposition', intro: 'Au poste vision, une caméra a l\'iris fermé : vous déverrouillez son RCP (PANEL ACTIVE), puis vous rouvrez l\'iris au joystick, cran par cran. Réglez en regardant le waveform plutôt que le moniteur : la moyenne de l\'image doit remonter entre 35 et 55 %, et les blancs rester sous la ligne des 100 %.' },
     { id: 'prism-waveform', intro: 'Au poste vision, vous mettez une tuile du PRISM en waveform et vous lisez les niveaux au curseur, en mV et en % (700 mV = 100 % = code 940). La parade RVB montre ensuite un noir qui tire au rouge : vous le corrigez au RCP, jusqu\'à ce que les trois traces repartent du même niveau en bas de l\'échelle.' },
   ],
   'signal-couleur': [
