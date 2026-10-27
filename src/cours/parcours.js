@@ -36,7 +36,7 @@ export const PARCOURS = {
   signal: {
     debutant: ['signal-formats', 'signal-bits', 'signal-422'],
     intermediaire: ['signal-niveaux'],
-    avance: ['signal-couleur'],
+    avance: ['signal-couleur', 'signal-compression'],
   },
   sdi: {
     debutant: ['sdi-cest-quoi', 'sdi-cable'],

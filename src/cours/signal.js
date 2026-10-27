@@ -2,6 +2,7 @@
 import { el } from '../util.js';
 import { registerChapter } from './index.js';
 import { figure, sv, canvas, slider, choice, readout, fmtNum } from './kit.js';
+import { LESSON_COMPRESSION } from './signal_compression.js';
 
 // ----------------------------------------------------------------------------------
 // Chapitre « Le signal vidéo numérique ». Première leçon : l'échantillonnage 4:4:4 / 4:2:2 / 4:2:0,
@@ -599,5 +600,6 @@ Pourquoi le car sort HDR **et** SDR : le diffuseur UHD reçoit du HLG BT.2020, l
         { q: 'Une source extérieure arrive en SDR BT.709 et doit entrer dans la production HLG BT.2020 du car. Pourquoi cette conversion demande-t-elle de la prudence ?', choices: [['Parce que ses couleurs sortent du triangle BT.2020', 'Le triangle BT.709 tient à l\'intérieur du BT.2020, bien plus large : toutes ses couleurs y sont reproductibles.'], ['Parce que son blanc n\'est pas celui du BT.2020', 'BT.709 et BT.2020 ont le même blanc, le D65 : rien à corriger de ce côté.'], 'Parce que ses hautes lumières ont été écrêtées à la prise de vue : il faut inventer ce que la HDR attend'], answer: 2, why: 'La courbe SDR a écrêté tout ce qui dépassait la lumière de référence : ciel et projecteurs sont des aplats. Monter en HDR demande de recréer des hautes lumières qui n\'existent pas dans la source. Les couleurs, elles, tiennent sans peine dans le triangle BT.2020.' },
       ],
     },
+    LESSON_COMPRESSION,
   ],
 });

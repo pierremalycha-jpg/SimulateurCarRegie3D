@@ -1,5 +1,6 @@
 // @ts-check
 import { registerExos, entre, pick, fr } from '../exo.js';
+import { FORMATS_C, ECHANTILLONNAGES, debitBrut, rapportCompression, bitsParPixel, dureeImage, gop, propagation } from '../signal_compression.js';
 
 // ----------------------------------------------------------------------------------
 // Exercices en autonomie du chapitre « Le signal vidéo numérique » : des débits, des codes, des
@@ -21,6 +22,33 @@ const FORMATS = [
 const SDI = ['HD-SDI (1,485 Gb/s)', '3G-SDI (2,97 Gb/s)', '6G-SDI (5,94 Gb/s)', '12G-SDI (11,88 Gb/s)'];
 const HLG = (E) => (E <= 1 / 12 ? Math.sqrt(3 * E) : 0.17883277 * Math.log(12 * E - 0.28466892) + 0.55991073);
 const code10 = (p) => Math.round(64 + p / 100 * 876);
+
+// ---------------- compresser l'image (cours/signal_compression.js) ----------------
+const LIAISONS = [
+  { nom: 'JPEG XS', mbps: [150, 200, 250, 300], usage: 'la contribution principale sur fibre' },
+  { nom: 'HEVC', mbps: [15, 20, 25, 30], usage: 'le secours par satellite' },
+  { nom: 'H.264 faible latence', mbps: [20, 30, 40, 50], usage: 'la liaison d\'une caméra HF' },
+];
+const CHOIX_CODEC = [
+  {
+    type: 'choix', q: 'La régie finale veut le programme du car avec le moins de retard possible, sur une fibre de l\'opérateur à 1 Gb/s. Quel codage ?',
+    choices: ['JPEG XS vers 200 Mb/s : quelques lignes de retard, qualité de production', ['HEVC à 25 Mb/s', 'Le HEVC économise du débit, mais il ajoute quelques centaines de millisecondes : inutile sur une fibre qui a de la place.'], ['Sans compression, en 3G-SDI sur la fibre', 'Le 3G-SDI demande 2,97 Gb/s : il ne tient pas dans un lien de 1 Gb/s.']], answer: 0,
+    aides: ['Le lien a de la place, mais pas pour 2,97 Gb/s.', 'Cherchez le codec intra qui ne retarde que de quelques lignes.'],
+    solution: '**JPEG XS** : ≈ 10 : 1, moins d\'une milliseconde de retard, et une image qui supporte la recompression de la régie finale.',
+  },
+  {
+    type: 'choix', q: 'Un commentateur à distance doit dialoguer avec le plateau. La liaison de secours en HEVC a 500 ms de latence. Que proposez-vous ?',
+    choices: ['Une liaison à faible latence pour ce duplex (sans images B, tampon court, ou JPEG XS)', ['Garder le HEVC : la qualité d\'image prime', 'La qualité n\'est pas en cause : une seconde d\'aller-retour fait se couper la parole aux deux interlocuteurs.'], ['Monter le débit du HEVC', 'Le débit ne change pas la latence : elle vient du réordonnancement des images B et du tampon.']], answer: 0,
+    aides: ['Une question et sa réponse font l\'aller-retour de la liaison.', 'Ce sont les images B et le tampon qui retardent.'],
+    solution: 'Une liaison **à faible latence** : au-delà de quelques centaines de millisecondes d\'aller-retour, la conversation devient pénible.',
+  },
+  {
+    type: 'choix', q: 'L\'opérateur ralenti doit pouvoir s\'arrêter sur n\'importe quelle image et la relire en arrière. Quel type de codage pour son serveur ?',
+    choices: ['Un codec intra : chaque image se décode seule', ['Un codec inter à long GOP, plus économe', 'En long GOP, une image se reconstruit à partir des précédentes : reculer image par image oblige à tout redécoder depuis la dernière I.'], ['Peu importe : tous les codecs se relisent pareil', 'Un codec inter doit reconstruire chaque image P ou B à partir de ses références : l\'accès à une image n\'est pas immédiat.']], answer: 0,
+    aides: ['Que faut-il pour afficher l\'image 7 d\'un GOP ?', 'Une image I se suffit à elle-même.'],
+    solution: 'Un codec **intra** (XAVC-I, DNxHD, ProRes…) : accès direct à chaque image, en avant comme en arrière.',
+  },
+];
 
 registerExos({
   'signal-422': {
@@ -220,6 +248,50 @@ registerExos({
             solution: 'Les **hautes lumières** : la courbe SDR les a écrêtées en aplats. Monter en HDR demande d\'inventer ce qui n\'existe pas dans la source ; les couleurs, elles, tiennent dans le BT.2020.',
           },
         ]),
+      ];
+    },
+  },
+  'signal-compression': {
+    titre: 'Choisir un débit et un codec',
+    consigne: 'Au poste Transmission, vous préparez les liaisons du car : débit brut de l\'image, rapport de compression, bits par pixel, et ce que coûte une erreur dans un GOP.',
+    gen: (rnd) => {
+      const F = pick(rnd, Object.values(FORMATS_C)), E = pick(rnd, Object.values(ECHANTILLONNAGES));
+      const brut = debitBrut(F, E) / 1e9, b = Math.round(brut * 1000) / 1000;
+      const L = pick(rnd, LIAISONS), mb = pick(rnd, L.mbps), F2 = pick(rnd, Object.values(FORMATS_C));
+      const r = Math.round(rapportCompression(debitBrut(F2, ECHANTILLONNAGES['422-10']), mb * 1e6) * 10) / 10;
+      const bpp = Math.round(bitsParPixel(mb * 1e6, F2) * 1000) / 1000;
+      const N = pick(rnd, [12, 24]), M = pick(rnd, [2, 3]), types = gop(N, M);
+      const refs = types.map((t, k) => k).filter((k) => types[k] === 'P');
+      const k = pick(rnd, refs), n = propagation([...types, ...gop(N, M)], k).length, ms = n * dureeImage(F2);
+      return [
+        {
+          type: 'nombre', unite: 'Gb/s', answer: b, tol: 0.01,
+          q: `Quel est le débit de l'image active, sans compression, en **${F.nom}** (${F.ips} images entières par seconde) et **${E.nom}** (${E.bpp} bits par pixel) ?`,
+          pieges: [{ v: Math.round(F.w * F.h * F.ips * E.bpp / 8 / 1e6) / 1000, why: 'C\'est le débit en gigaoctets par seconde : un octet vaut 8 bits.' }].filter((x) => Math.abs(x.v - b) > 0.02),
+          aides: ['Débit = largeur × hauteur × images par seconde × bits par pixel.', `${fr(F.w)} × ${fr(F.h)} × ${F.ips} × ${E.bpp}, puis ÷ 10⁹.`],
+          solution: `${fr(F.w)} × ${fr(F.h)} × ${F.ips} × ${E.bpp} = **${fr(b, 3)} Gb/s** d'image active.`,
+        },
+        {
+          type: 'nombre', answer: r, tol: Math.max(0.2, r * 0.01),
+          q: `Pour ${L.usage}, le car code son **${F2.nom} 4:2:2 10 bits** en **${L.nom} à ${mb} Mb/s**. Quel rapport de compression (écrivez seulement le nombre, « 10 » pour 10 : 1) ?`,
+          pieges: [{ v: Math.round(rapportCompression(F2.ips === 25 ? 1.485e9 : F2.w > 2000 ? 11.88e9 : 2.97e9, mb * 1e6) * 10) / 10, why: 'C\'est le débit du lien SDI, suppression comprise : on compare l\'image active (20 bits par pixel) au débit codé.' }].filter((x) => Math.abs(x.v - r) > Math.max(0.3, r * 0.02)),
+          aides: ['Rapport = débit brut de l\'image active ÷ débit codé.', `${fr(debitBrut(F2, ECHANTILLONNAGES['422-10']) / 1e6, 1)} Mb/s ÷ ${mb} Mb/s.`],
+          solution: `${fr(debitBrut(F2, ECHANTILLONNAGES['422-10']) / 1e6, 1)} ÷ ${mb} = **${fr(r, 1)} : 1**.`,
+        },
+        {
+          type: 'nombre', unite: 'bit/pixel', answer: bpp, tol: Math.max(0.005, bpp * 0.02),
+          q: `Toujours **${L.nom} à ${mb} Mb/s** en **${F2.nom}** : combien de bits reste-t-il pour chaque pixel ?`,
+          aides: ['Bits par pixel = débit ÷ (pixels par image × images par seconde).', `${mb} × 10⁶ ÷ (${fr(F2.w)} × ${fr(F2.h)} × ${F2.ips}).`],
+          solution: `${fr(mb * 1e6)} ÷ ${fr(F2.w * F2.h * F2.ips)} = **${fr(bpp, 3)} bit par pixel**, au lieu de 20 sans compression.`,
+        },
+        {
+          type: 'nombre', unite: 'images', answer: n,
+          q: `Un GOP de **${N} images**, une image P toutes les **${M}** (${types.slice(0, Math.min(N, 7)).join(' ')}…). Une erreur de transmission abîme l'**image ${k + 1}**, une P. Combien d'images sont abîmées, jusqu'à la prochaine I ?`,
+          pieges: [{ v: N - k, why: `Il faut compter aussi les ${M - 1} images B qui précèdent la P : elles s'appuient sur elle.` }, { v: 1, why: 'Une seule image, ce serait une image B ; les images suivantes s\'appuient sur la P abîmée.' }].filter((x) => x.v !== n),
+          aides: ['Les images qui suivent la P, jusqu\'à la prochaine I, s\'appuient sur elle.', `Les ${M - 1} image(s) B juste avant la P s'appuient aussi sur elle (elles sont prédites des deux côtés).`],
+          solution: `${M - 1} B avant elle, puis la P et tout ce qui suit jusqu'à la prochaine I (image ${N + 1}) : **${n} images**, soit ${fr(ms)} ms de défaut à ${F2.ips} images par seconde.`,
+        },
+        pick(rnd, CHOIX_CODEC),
       ];
     },
   },
