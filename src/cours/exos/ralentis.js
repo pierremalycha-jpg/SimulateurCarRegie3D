@@ -1,5 +1,6 @@
 // @ts-check
 import { registerExos, entre, pick, fr } from '../exo.js';
+import { goParHeure, profondeur, tailleGo, transfert } from '../ralentis_fichiers.js';
 
 // ----------------------------------------------------------------------------------
 // Exercices en autonomie du chapitre « Les ralentis » : la durée d'une action à l'antenne ((OUT − IN) ÷
@@ -55,6 +56,22 @@ const CLIPS = [
     choices: ['Relire à 100 % le clip en super ralenti relu à 33 %', ['Remplacer les mix par des coupes', 'Une coupe ne recouvre rien : sans mix, la playlist s\'allonge des recouvrements.'], ['Passer un clip large de 100 % à 50 %', 'Ralentir un clip l\'allonge : sa durée lue double.']], answer: 0,
     aides: ['Durée = somme des (durée du clip ÷ vitesse) − recouvrements.', 'Quel clip pèse le plus à cause de sa vitesse ?'],
     solution: 'Relire le **super ralenti à 100 %** : à 33 %, il dure trois fois sa longueur ; c\'est le clip le plus ralenti qui pèse le plus.',
+  },
+];
+
+// ---------------- stocker, échanger, archiver (cours/ralentis_fichiers.js) ----------------
+const FICHIERS_SITU = [
+  {
+    type: 'choix', q: 'En pleine deuxième mi-temps, le serveur annonce une boucle de 40 minutes. Que faites-vous en priorité ?',
+    choices: ['Exporter puis libérer les clips protégés déjà diffusés, pour rendre de la place', ['Protéger les trains entiers de la première mi-temps', 'Protéger prend encore de la place : la boucle raccourcirait davantage.'], ['Couper l\'enregistrement d\'une caméra principale', 'On perdrait les angles les plus utiles ; on commence par libérer ce qui a déjà servi.']], answer: 0,
+    aides: ['Qu\'est-ce qui réduit la place libre sans être utile maintenant ?', 'Un clip protégé déjà exporté peut quitter le serveur.'],
+    solution: '**Exporter puis libérer** les clips déjà utilisés : la place libre remonte, et la boucle avec elle.',
+  },
+  {
+    type: 'choix', q: 'Le studio veut le but tout de suite pour son plateau. Le clip est sur le serveur du car. Comment le lui envoyer ?',
+    choices: ['En fichier, par le réseau, avec ses métadonnées', ['En le relisant à l\'antenne pour que le studio l\'enregistre', 'Le studio en recevrait une copie de l\'antenne, avec l\'habillage, au temps réel ; un fichier va plus vite et garde la qualité du serveur.'], ['En retirant un disque du serveur', 'Les disques du serveur ne se retirent pas en plein direct : le transfert passe par le réseau.']], answer: 0,
+    aides: ['Le réseau du car va bien plus vite que le temps réel.', 'Ce qui suit le clip : son nom, ses mots-clés, son timecode.'],
+    solution: 'En **fichier par le réseau** (MXF ou QuickTime selon la demande), avec ses métadonnées : plus vite que le temps réel, sans perte.',
   },
 ];
 
@@ -129,6 +146,46 @@ registerExos({
           solution: '1. IN et OUT ; 2. rangé sur une touche F ; 3. nommé et décrit dans IPDirector ; 4. la playlist à la mi-temps.',
         },
         pick(rnd, CLIPS),
+      ];
+    },
+  },
+  'ralentis-fichiers': {
+    titre: 'Tenir la boucle et envoyer les clips',
+    consigne: 'Au poste du serveur ralenti, avant et pendant le match : la place que prend chaque heure, la profondeur de la boucle, la taille d\'un clip et le temps de son transfert.',
+    gen: (rnd) => {
+      const d = pick(rnd, [100, 120, 145, 185, 220, 300]), gh = Math.round(goParHeure(d) * 10) / 10;
+      const capa = pick(rnd, [8, 10, 12, 16, 20]), prot = entre(rnd, 2, 40) * 100, n = entre(rnd, 4, 8), h = Math.round(profondeur(capa, prot, n, d) * 10) / 10;
+      const sec = entre(rnd, 3, 24) * 5, go = Math.round(tailleGo(sec, d) * 100) / 100;
+      const lien = pick(rnd, [1, 10]), t = Math.round(transfert(go, lien) * 10) / 10;
+      return [
+        {
+          type: 'nombre', unite: 'Go', answer: gh, tol: 0.3,
+          q: `Une entrée du serveur enregistre en intra à **${d} Mb/s**. Combien de gigaoctets écrit-elle en une heure ?`,
+          pieges: [{ v: Math.round(d * 3.6 * 10) / 10, why: 'C\'est en gigabits : un octet vaut 8 bits, il faut encore diviser par 8.' }],
+          aides: ['Débit × durée donne des mégabits ; 8 bits font un octet.', `${d} × 3 600 ÷ 8 ÷ 1 000.`],
+          solution: `${d} × 3 600 ÷ 8 ÷ 1 000 = **${fr(gh, 1)} Go** par heure et par entrée.`,
+        },
+        {
+          type: 'nombre', unite: 'h', answer: h, tol: 0.15,
+          q: `Le serveur a **${capa} To** de disques, dont **${fr(prot)} Go** de clips protégés. Il enregistre **${n} entrées** à **${d} Mb/s**. Quelle est la profondeur de la boucle, en heures ?`,
+          pieges: [{ v: Math.round(capa * 1000 / (n * goParHeure(d)) * 10) / 10, why: 'Les clips protégés ne seront pas écrasés : leur place est à retirer de la capacité.' }].filter((x) => Math.abs(x.v - h) > 0.2),
+          aides: ['Profondeur = place libre ÷ (entrées × Go par heure).', `(${fr(capa * 1000)} − ${fr(prot)}) Go ÷ (${n} × ${fr(goParHeure(d), 1)} Go).`],
+          solution: `${fr(capa * 1000 - prot)} ÷ ${fr(n * goParHeure(d), 1)} = **${fr(h, 1)} h** de jeu relisible à tout instant.`,
+        },
+        {
+          type: 'nombre', unite: 'Go', answer: go, tol: 0.02,
+          q: `Un clip de **${sec} s** à **${d} Mb/s** part vers la post-production. Quelle est sa taille ?`,
+          aides: ['Taille (Mo) = débit (Mb/s) × durée (s) ÷ 8.', `${d} × ${sec} ÷ 8 ÷ 1 000.`],
+          solution: `${d} × ${sec} ÷ 8 = ${fr(d * sec / 8)} Mo, soit **${fr(go, 2)} Go**.`,
+        },
+        {
+          type: 'nombre', unite: 's', answer: t, tol: Math.max(0.15, t * 0.02),
+          q: `Ce clip de **${fr(go, 2)} Go** passe sur un lien de **${lien} Gb/s**, dont on obtient 70 % en débit utile. Combien de secondes dure le transfert ?`,
+          pieges: [{ v: Math.round(go / (lien * 0.7) * 10) / 10, why: 'Les gigaoctets ne se divisent pas directement par des gigabits par seconde : × 8 d\'abord.' }],
+          aides: ['Temps = taille en bits ÷ débit utile.', `${fr(go, 2)} × 8 ÷ (${lien} × 0,7).`],
+          solution: `${fr(go, 2)} × 8 ÷ ${fr(lien * 0.7, 1)} = **${fr(t, 1)} s**, ${t < sec ? `${fr(sec / t, 1)} fois plus vite que le temps réel` : 'plus lent que le temps réel'}.`,
+        },
+        pick(rnd, FICHIERS_SITU),
       ];
     },
   },

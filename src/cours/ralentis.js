@@ -2,6 +2,7 @@
 import { el } from '../util.js';
 import { registerChapter } from './index.js';
 import { figure, sv, canvas, slider, choice, readout, fmtNum } from './kit.js';
+import { LESSON_FICHIERS } from './ralentis_fichiers.js';
 
 // ----------------------------------------------------------------------------------
 // Chapitre « Les ralentis » : le serveur (enregistrement en boucle de toutes les caméras, trains,
@@ -375,5 +376,6 @@ Le travail pendant le match : l'opérateur LSM range les clips au fil des action
           answer: 1, why: 'Le nom d\'un clip est son adresse : 112, page 1, banque 1, touche F2 ; la lettre, l\'angle. Le clip garde tous les angles enregistrés entre son IN et son OUT : 112A relit le même moment par l\'angle A.' },
       ],
     },
+    LESSON_FICHIERS,
   ],
 });

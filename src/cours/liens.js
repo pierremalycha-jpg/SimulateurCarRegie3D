@@ -71,7 +71,7 @@ export const POSTES = {
   scripte: ['real-ordres'],
   producteur: ['real-ordres'],
   evs: ['ralentis-evs', 'signal-formats', 'signal-bits'],
-  ipdirector: ['ralentis-clips'],
+  ipdirector: ['ralentis-clips', 'ralentis-fichiers'],
   intercom: ['expl-intercom'],
   chefdecar: ['expl-lineup', 'expl-depannage'],
   pieddecar: ['camera-systeme', 'expl-transmission', 'expl-energie'],

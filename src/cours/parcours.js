@@ -59,7 +59,7 @@ export const PARCOURS = {
   },
   ralentis: {
     debutant: ['ralentis-evs'],
-    intermediaire: ['ralentis-clips'],
+    intermediaire: ['ralentis-clips', 'ralentis-fichiers'],
   },
   son: {
     debutant: ['son-tranche'],
