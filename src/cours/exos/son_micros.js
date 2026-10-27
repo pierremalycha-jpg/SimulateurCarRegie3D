@@ -30,13 +30,14 @@ registerExos({
       const L1 = entre(rnd, 76, 104), r = pick(rnd, [2, 4, 8, 16, 0.5, 0.25]), Lr = r1(aDistance(L1, 1, r));
       const Ls = entre(rnd, 80, 100), coh = rnd() < 0.4, tot = r1(somme(Ls, Ls, coh));
       const f = pick(rnd, [50, 100, 250, 500, 1000, 2000, 5000, 10000]), lam = longueurOnde(f);
+      const paTxt = frn(pa, pa < 0.1 ? 3 : pa < 1 ? 2 : pa < 10 ? 1 : 0);
       return [
         {
           type: 'nombre', unite: 'dB SPL', answer: juste, tol: 0.6,
-          q: `Un calibreur mesure une pression efficace de **${frn(pa, pa < 0.1 ? 3 : pa < 1 ? 2 : pa < 10 ? 1 : 0)} Pa**. Combien de dB SPL ?`,
+          q: `Un calibreur mesure une pression efficace de **${paTxt} Pa**. Combien de dB SPL ?`,
           pieges: [{ v: Math.round(10 * Math.log10(pa / 20e-6)), why: 'Une pression est une amplitude : 20 × log₁₀, pas 10 × log₁₀.' }],
-          aides: ['La référence est 20 µPa ; 94 dB SPL valent 1 Pa.', `dB SPL = 20 × log₁₀(${frn(pa, 3)} ÷ 0,00002).`],
-          solution: `20 × log₁₀(${frn(pa, 3)} ÷ 20 µPa) = **${fr(splDePa(pa), 1)} dB SPL**. Repère : 1 Pa = 94 dB SPL, et chaque facteur 10 sur la pression ajoute 20 dB.`,
+          aides: ['La référence est 20 µPa ; 94 dB SPL valent 1 Pa.', `dB SPL = 20 × log₁₀(${paTxt} ÷ 0,00002).`],
+          solution: `20 × log₁₀(${paTxt} ÷ 20 µPa) = **${fr(splDePa(pa), 1)} dB SPL**. Repère : 1 Pa = 94 dB SPL, et chaque facteur 10 sur la pression ajoute 20 dB.`,
         },
         {
           type: 'nombre', unite: 'dB SPL', answer: Lr, tol: 0.3,
@@ -129,7 +130,7 @@ registerExos({
           type: 'nombre', unite: 'dB', answer: ec, tol: 0.3,
           q: `De combien de dB ce statique (${fr(sens, 0)} dBV/Pa) est-il plus sensible qu'un dynamique type SM58 (−54,5 dBV/Pa) ?`,
           aides: ['Les deux sensibilités sont en dB : on les soustrait.', `${fr(sens, 0)} − (−54,5).`],
-          solution: `${fr(sens, 0)} − (−54,5) = **${fr(ec, 1)} dB** : ${fr(ec, 0)} dB de gain de moins à la console pour le même son, et autant de marge sur le souffle du préampli.`,
+          solution: `${fr(sens, 0)} − (−54,5) = **${fr(ec, 1)} dB** : autant de gain en moins à la console pour le même son, et autant de marge sur le souffle du préampli.`,
         },
         {
           type: 'nombre', unite: 'mV', answer: r1(mv), tol: Math.max(0.1, mv * 0.02),
@@ -165,7 +166,7 @@ registerExos({
     consigne: 'Sur la scène de la mi-temps et au bord du terrain : vous calculez ce qu\'un micro rejette selon l\'angle, et où mettre le retour de scène.',
     gen: (rnd) => {
       const k = pick(rnd, ['cardio', 'super', 'hyper']), D = DIRECTIVITES[k], th = pick(rnd, [45, 60, 90, 120, 135]), att = attenuation(D, th);
-      const k2 = pick(rnd, ['super', 'hyper', 'huit']), D2 = DIRECTIVITES[k2], rej = angleRejet(D2) || 180;
+      const k2 = pick(rnd, ['cardio', 'super', 'hyper']), D2 = DIRECTIVITES[k2], rej = angleRejet(D2) || 180;
       const d0 = pick(rnd, [1, 1.5, 2, 3]), k3 = pick(rnd, ['cardio', 'hyper']), D3 = DIRECTIVITES[k3], dist = r2(d0 * facteurDistance(D3));
       return [
         {
@@ -179,7 +180,7 @@ registerExos({
           type: 'nombre', unite: '°', answer: Math.round(rej), tol: 1,
           q: `À quel angle de son axe un micro **${D2.nom}** (${frn(D2.A, 2)} + ${frn(D2.B, 2)} × cos θ) ne capte-t-il plus rien ?`,
           aides: ['Cherchez l\'angle où A + B × cos θ = 0.', `cos θ = −${frn(D2.A, 2)} ÷ ${frn(D2.B, 2)}.`],
-          solution: `cos θ = −${frn(D2.A, 2)} ÷ ${frn(D2.B, 2)} : θ ≈ **${Math.round(rej)}°**. C'est là qu'on place le retour de scène${k2 === 'huit' ? ' (sur le côté pour une figure en 8)' : ', de biais, pas juste derrière'}.`,
+          solution: `cos θ = −${frn(D2.A, 2)} ÷ ${frn(D2.B, 2)} : θ ≈ **${Math.round(rej)}°**. C'est là qu'on place le retour de scène${k2 === 'cardio' ? ' : juste derrière un cardioïde' : ' : de biais, pas juste derrière, où le lobe arrière capte encore'}.`,
         },
         {
           type: 'nombre', unite: 'm', answer: dist, tol: 0.05,
