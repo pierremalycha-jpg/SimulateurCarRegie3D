@@ -384,7 +384,7 @@ function demoCofdm(host) {
 // ======================================================================================
 registerChapter({
   id: 'hf', title: 'La HF', icon: 'hf',
-  intro: 'Les liaisons sans fil du car : bandes et fréquences, bilan de liaison, antennes et diversité, COFDM.',
+  intro: 'Les liaisons sans fil du car : bandes et fréquences, bilan de liaison, antennes et diversité, COFDM, liaison point à point.',
   lessons: [
     {
       id: 'hf-frequences', title: 'Bandes et fréquences : qui émet quoi', minutes: '8 min',

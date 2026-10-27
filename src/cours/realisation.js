@@ -464,7 +464,7 @@ function figOrders() {
 
 registerChapter({
   id: 'realisation', title: 'La réalisation', icon: 'melangeur',
-  intro: 'Le mélangeur, les incrustations et le langage du direct : ce qui fait passer une image à l\'antenne.',
+  intro: 'Le mélangeur, les incrustations, le langage du direct et le plan caméras : ce qui fait passer une image à l\'antenne.',
   lessons: [
     {
       id: 'real-melangeur', title: 'Le mélangeur : PGM, preset et transitions', minutes: '7 min',

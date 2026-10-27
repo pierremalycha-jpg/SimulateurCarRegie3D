@@ -289,7 +289,7 @@ function figClips() {
 
 registerChapter({
   id: 'ralentis', title: 'Les ralentis', icon: 'evs',
-  intro: 'Le serveur ralenti : enregistrer toutes les caméras en boucle, rejouer une action, monter des clips.',
+  intro: 'Le serveur ralenti : enregistrer toutes les caméras en boucle, rejouer une action, monter des clips, les stocker et les échanger en fichiers.',
   lessons: [
     {
       id: 'ralentis-evs', title: 'Le serveur ralenti : trains, IN et vitesse', minutes: '8 min',

@@ -6,11 +6,14 @@ import { SON_MICROS } from './son_micros.js';
 import { SON_CONSOLE } from './son_console.js';
 
 // ----------------------------------------------------------------------------------
-// Chapitre « Le son » : la tranche d'entrée de la console (gain, alimentation fantôme 48 V,
-// polarité, égaliseur, fader) puis les départs (N-1 des commentateurs, synchro labiale,
-// embedding vers la transmission). Les manipulations calculent sur de vrais échantillons : un
-// micro canon (foule et frappe de balle) écrêté à 0 dBFS, deux micros d'ambiance dont on inverse
-// la polarité (corrélation, perte en mono), les compositions des N-1 et le décalage son/image.
+// Chapitre « Le son », en trois parties : capter (le son et le micro : cours/son_micros.js), mélanger
+// (la console analogique et ses sorties : cours/son_console.js ; puis, ici, la tranche d'entrée de la
+// console du car et ses départs) et le numérique, la mesure et le réseau (cours/son_console.js). Les
+// deux leçons de ce fichier : la tranche (gain, alimentation fantôme 48 V, polarité, égaliseur, fader)
+// puis les départs (N-1 des commentateurs, synchro labiale, embedding vers la transmission). Leurs
+// manipulations calculent sur de vrais échantillons : un micro canon (foule et frappe de balle)
+// écrêté à 0 dBFS, deux micros d'ambiance dont on inverse la polarité (corrélation, perte en mono),
+// les compositions des N-1 et le décalage son/image.
 // ----------------------------------------------------------------------------------
 const C = { grey: '#8a949c', amber: '#ffd38a', red: '#ff8a80', green: '#7fd1a0', cyan: '#7fd3f3', box: '#1a2026', line: '#2a3238', tally: '#f0372c', pvw: '#33c46c' };
 // more.fill : la couleur du texte, passée en style (la classe du schéma imposerait sinon la sienne)
@@ -281,7 +284,7 @@ const PARTIE_CONSOLE = PARTIES_SON[1];
 
 registerChapter({
   id: 'son', title: 'Le son', icon: 'mixage',
-  intro: 'La console son du car : la tranche, les retours des commentateurs, la synchro labiale.',
+  intro: 'Du micro au réseau : le son et sa mesure, les micros, le 48 V et les liaisons ; la console analogique et ses sorties, puis la console du car (la tranche, les N-1, la synchro labiale) ; l\'audio numérique, la loudness et Dante.',
   lessons: [
     {
       id: 'son-tranche', title: 'La tranche : gain, 48 V, phase, égaliseur, fader', minutes: '8 min', partie: PARTIE_CONSOLE,

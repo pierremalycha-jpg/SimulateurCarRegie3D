@@ -441,7 +441,7 @@ function demoColor(host) {
 
 registerChapter({
   id: 'signal', title: 'Le signal vidéo numérique', icon: 'vision',
-  intro: 'Ce qu\'il y a dans une image numérique avant toute interface : des échantillons, des bits, des niveaux, un format. Tout le reste du car en dépend.',
+  intro: 'Ce qu\'il y a dans une image numérique avant toute interface : des échantillons, des bits, des niveaux, un format, et ce qu\'en garde la compression. Tout le reste du car en dépend.',
   lessons: [
     {
       id: 'signal-422', title: 'L\'échantillonnage 4:2:2', minutes: '6 min',
