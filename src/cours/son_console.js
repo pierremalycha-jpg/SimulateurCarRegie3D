@@ -29,7 +29,7 @@ const arrow = (x1, y1, x2, y2, col = C.grey) => {
   return g;
 };
 /** un niveau en dB avec son signe (vrai signe moins), −∞ pour rien */
-const sdb = (v, d = 1) => (!Number.isFinite(v) ? '−∞' : (v > 0.04 ? '+' : '') + fmtNum(v, d).replace('-', '−'));
+const sdb = (v, d = 1) => (!Number.isFinite(v) ? '−∞' : Math.abs(v) < 0.5 * 10 ** -d ? fmtNum(0, d) : (v > 0 ? '+' : '') + fmtNum(v, d).replace('-', '−'));
 const fdb = (v, u = 'dB', d = 1) => `${sdb(v, d)} ${u}`;
 
 // ======================================================================================
@@ -65,7 +65,7 @@ function figConsole() {
   const R2 = 450;
   f.append(arrow(R + 152, 47, R2 - 4, 47, C.green), box(R2, 30, 260, 34, C.green), txt(R2 + 130, 46, 'master AUX → AUX OUT', 'co-t'), txt(R2 + 130, 59, 'les retours de scène des musiciens', 'co-s'));
   f.append(arrow(R + 152, 91, R2 - 4, 91, C.violet), box(R2, 74, 260, 34, C.violet), txt(R2 + 130, 90, 'effets intégrés (réverbération, écho)', 'co-t'), txt(R2 + 130, 103, 'leur retour revient dans le bus principal', 'co-s'));
-  f.append(arrow(R + 152, 135, R2 - 4, 135, C.amber), box(R2, 118, 260, 34, C.amber), txt(R2 + 130, 134, 'master du bus principal → MAIN OUT', 'co-t'), txt(R2 + 130, 147, 'XLR symétriques, +4 dBu au « 0 » (ordre de grandeur)', 'co-s'));
+  f.append(arrow(R + 152, 135, R2 - 4, 135, C.amber), box(R2, 118, 260, 34, C.amber), txt(R2 + 130, 134, 'master du bus principal → MAIN OUT', 'co-t'), txt(R2 + 130, 147, 'XLR symétriques, +4 dBu au « 0 »', 'co-s'));
   f.append(arrow(R + 152, 179, R2 - 4, 179, C.cyan), box(R2, 162, 260, 34, C.cyan), txt(R2 + 130, 178, 'casque, cabine et vumètres', 'co-t'), txt(R2 + 130, 191, 'on écoute et on lit la tranche seule', 'co-s'));
   f.append(arrow(R2 + 130, 108, R2 + 130, 116, C.violet));
   // le 48 V et la chaîne des gains
@@ -146,9 +146,9 @@ function demoConsole(host) {
 // 2. Les sorties de la console
 // ======================================================================================
 function figSorties() {
-  const f = figure(720, 284, 'Les sorties d\'une petite console analogique et ce qu\'elles alimentent : la sortie principale en XLR symétrique vers la diffusion façade et le départ vers le car, les sorties AUX pré-fader vers les retours de scène, l\'envoi d\'effets post-fader et son retour, la sortie d\'enregistrement RCA à −10 dBV, la cabine et le casque. En dessous : un envoi pré-fader ne suit pas le fader, un envoi post-fader le suit.');
+  const f = figure(720, 300, 'Les sorties d\'une petite console analogique et ce qu\'elles alimentent : la sortie principale en XLR symétrique vers la diffusion façade et le départ vers le car, les sorties AUX pré-fader vers les retours de scène, l\'envoi d\'effets post-fader et son retour, la sortie d\'enregistrement RCA à −10 dBV, la cabine et le casque. En dessous : un envoi pré-fader ne suit pas le fader, un envoi post-fader le suit.');
   f.append(txt(10, 16, 'La face arrière : qui reçoit quoi', 'co-t', 'start'));
-  f.append(box(10, 30, 170, 150, C.amber), txt(95, 172, 'Console (type Antmix)', 'co-t'));
+  f.append(box(10, 30, 170, 166, C.amber), txt(95, 188, 'Console (type Antmix)', 'co-t'));
   const outs = [
     ['MAIN OUT L/R', 'XLR · +4 dBu', 'diffusion façade, départ vers le car', C.amber],
     ['AUX OUT', 'jack · pré-fader', 'retours de scène des musiciens', C.green],
@@ -161,7 +161,7 @@ function figSorties() {
     f.append(sv('circle', { cx: 170, cy: y + 8, r: 5, fill: '#0b0e10', stroke: col }), txt(160, y + 12, a, 'co-m', 'end'), arrow(176, y + 8, 300, y + 8, col), box(304, y - 4, 404, 24, col), txt(312, y + 12, `${b} → ${c}`, 'co-s', 'start'));
   });
   // pré et post
-  const Y = 196;
+  const Y = 212;
   f.append(txt(10, Y, 'Pré ou post-fader : où l\'envoi est pris', 'co-t', 'start'));
   const chain = (y, label, at, col, what) => {
     f.append(box(10, y, 90, 24), txt(55, y + 16, 'GAIN · EQ', 'co-s'), arrow(102, y + 12, 140, y + 12), box(142, y, 70, 24, C.amber), txt(177, y + 16, 'fader', 'co-s'), arrow(214, y + 12, 250, y + 12), box(252, y, 80, 24), txt(292, y + 16, 'bus', 'co-s'));
@@ -357,7 +357,7 @@ function demoLoudness(host) {
     read.set('Court terme maximal', `${sdb(m.ctMax)} LUFS (momentanée : ${sdb(m.momMax)})`);
     read.set('Plage de loudness (LRA)', `${fmtNum(m.lra, 1)} LU`);
     read.set('Crête vraie maximale', `${sdb(m.crete)} dBTP${C2.crete ? '' : ' : au-dessus de −1 dBTP'}`);
-    read.set('Pour revenir à −23 LUFS', Number.isFinite(m.I) ? `${fdb(m.correction)} sur tout le programme${!C2.crete || m.crete + m.correction > R128.crete ? ', puis un limiteur de crête vraie' : ''}` : '—');
+    read.set('Pour revenir à −23 LUFS', !Number.isFinite(m.I) ? '—' : Math.abs(m.correction) < 0.05 ? 'rien : le programme est déjà à −23 LUFS' : `${fdb(m.correction)} sur tout le programme${!C2.crete || m.crete + m.correction > R128.crete ? ', puis un limiteur de crête vraie' : ''}`);
     const v = !C2.loudness ? ['ko', `Hors tolérance : ${sdb(m.I)} LUFS, à plus de ${fmtNum(C2.tol, 1).replace(',0', '')} LU de −23. ${m.I > -23 ? 'Trop fort' : 'Trop faible'} : en direct, on corrige au master en suivant le court terme.`]
       : !C2.crete ? ['warn', `La loudness tient, mais une crête vraie dépasse −1 dBTP (${sdb(m.crete)}) : il faut un limiteur, la chaîne la refuserait.`]
         : ['ok', `Conforme R128 : ${sdb(m.I)} LUFS (tolérance ±${fmtNum(C2.tol, 1).replace(',0', '')} LU${direct ? ' en direct' : ''}), crêtes vraies sous −1 dBTP. Le but monte à ${sdb(m.ctMax, 0)} LUFS au court terme : il pèse selon son énergie et sa durée.`];
