@@ -47,11 +47,11 @@ await page.keyboard.press('Escape');
 
 // un exercice pratique depuis une leçon : « Commencer » lance le car et le chef de car
 await page.locator('#ti-cours').click(); await layer('cours');
-await ev(() => window.__dbg.emit('cours', { lesson: 'signal-niveaux' }));
+await ev(() => window.__dbg.emit('cours', { lesson: 'camera-exposition' }));
 T.check('leçon : section « Exercices pratiques »', await until(page, () => !!document.querySelector('#layer .co-exo[data-exercise="vision-exposition"]'), null, 4000));
 await page.locator('#layer .co-exo[data-exercise="vision-exposition"] .btn').click();
 T.check('« Commencer » depuis le titre : car lancé, exercice du chef ouvert', await until(page, () => window.__dbg.S.mode === 'fps' && window.__dbg.TUTOR.lesson?.id === 'vision-exposition' && !document.getElementById('layer') && document.getElementById('title').hidden, null, 60000));
-T.check('le chef se souvient de la leçon d\'origine', await ev(() => window.__dbg.S.coursBack === 'signal-niveaux'));
+T.check('le chef se souvient de la leçon d\'origine', await ev(() => window.__dbg.S.coursBack === 'camera-exposition'));
 await ev(() => { window.__dbg.stopChefLesson(); window.__dbg.toggleChef(false); });
 
 // ---------------- dans le car ----------------
