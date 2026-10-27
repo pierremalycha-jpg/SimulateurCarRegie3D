@@ -80,7 +80,7 @@ const CAMERA = {
 const SPG = {
   id: 'materiel-synchro', domain: D, stations: ['synchro'],
   title: 'Repérer les sorties du générateur de synchro et du distributeur',
-  summary: 'Exercice de la leçon « La référence et le genlock » : le SPG, son GPS, ses sorties tri-level et timecode, puis le distributeur qui recopie la référence pour chaque appareil.',
+  summary: 'Exercice de la leçon « Régler un SPG700 de Tektronix » : le SPG du car, son GPS, ses sorties tri-level et timecode, puis le distributeur qui recopie la référence pour chaque appareil.',
   duration: '5 min', level: 'découverte',
   outro: 'Le SPG est le cœur du car : une référence (pour que les images soient en phase) et un timecode (pour les dater), tous deux calés sur le temps GPS.',
   steps: [

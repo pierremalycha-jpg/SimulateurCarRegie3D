@@ -200,6 +200,8 @@ export const RATTACHEMENT = {
     'hf-frequences': ['2.10', '3.12'], 'hf-bilan': ['2.10', '2.7'], 'hf-antennes': ['2.7', '3.9'], 'hf-cofdm': ['2.11', '2.7'], 'hf-fresnel': ['2.10', '2.11', '3.4'],
     'sdi-grille': ['2.10', '2.9', '3.12'],
     'synchro-genlock': ['1.2', '1.4', '3.12'], 'synchro-timecode': ['1.3', '2.5'],
+    'synchro-bases': ['1.2', '1.4'], 'synchro-signaux': ['1.4', '2.2', '3.9'], 'synchro-distribution': ['2.10', '3.9', '2.13'],
+    'synchro-spg': ['2.9', '1.2', '2.10', '3.12'], 'synchro-wordclock': ['2.10', '1.4', '4.1'], 'synchro-2059': ['3.6', '1.2', '2.10'],
     'camera-systeme': ['2.7', '2.10', '2.9'], 'camera-fibre': ['2.10', '3.9', '2.13'], 'camera-montage': ['2.7', '4.2', '3.9'],
     'real-melangeur': ['2.12', '2.9'], 'real-incrustations': ['2.6', '2.12'], 'real-ordres': ['2.8', '4.1', '3.11'], 'real-plan': ['2.9', '3.4', '3.11'],
     'ralentis-evs': ['2.12', '2.9', '2.7'], 'ralentis-clips': ['2.5', '2.12', '3.7', '3.14'], 'ralentis-fichiers': ['2.5', '3.14', '1.3'],

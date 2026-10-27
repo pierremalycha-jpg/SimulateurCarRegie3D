@@ -7,6 +7,7 @@ import '../content/terms_ctrlnet.js';
 import '../content/terms_fibre.js';
 import '../content/terms_ip.js';
 import '../content/terms_micro.js';
+import '../content/terms_synchro.js';
 import '../content/terms_videohub.js';
 
 // ----------------------------------------------------------------------------------
@@ -31,7 +32,7 @@ export const estLecon = (id) => !!lessonById(id);
 /** terme du glossaire (tel qu'écrit dans content/glossary.js) → leçon(s) puis fiche(s) « ? » */
 /** @type {Record<string, string | string[]>} */
 export const GLOSSAIRE = {
-  '(S,G)': ['reseau-multicast', 'mroute'], 'AES3 / AES67 / Dante': 'st2110-30', 'Bilan de liaison / marge': ['hf-bilan'], 'Black burst / tri-level': ['synchro-genlock', 'timing-ref'],
+  '(S,G)': ['reseau-multicast', 'mroute'], 'AES3 / AES67 / Dante': 'st2110-30', 'Bilan de liaison / marge': ['hf-bilan'], 'Black burst / tri-level': ['synchro-signaux', 'synchro-genlock', 'tri-level'],
   BMCA: ['reseau-ptp', 'bmca'], BNC: ['sdi-cable', 'sdi-cest-quoi'], 'BT.709 / BT.2020': ['signal-couleur', 'cie1931'], 'Caméra HF': ['hf-bilan', 'hf-frequences'], 'CMAX / CINST': 'cmax', 'Codes 64-940': ['signal-niveaux', 'mv-pct'],
   COFDM: ['hf-cofdm'], 'Contrôleur SDN': 'sdn', 'Diversité': ['hf-antennes'], DSCP: ['reseau-qos', 'qos'], 'Écart 2022-7': 'ecart', ECMP: 'ecmp', 'Effet falaise': ['sdi-falaise', 'sdi-oeil', 'effet-falaise'],
   'Embedder / désembedder': ['sdi-embedded'], FEC: ['reseau-streaming', 'fec'], 'Fibre hybride SMPTE': ['camera-fibre', 'camera-systeme', 'cable-hybride'], 'Fibre monomode': ['camera-fibre', 'sdi-cable', 'fibre-monomode'],
@@ -41,7 +42,8 @@ export const GLOSSAIRE = {
   'Numéro de séquence RTP': ['reseau-tcp-udp', 'rtp'], 'Offset PTP': ['reseau-ptp', 'offset'], OSPF: 'ospf', 'Parade RVB': ['signal-422', 'parade-rvb'], 'Passerelle IP ↔ SDI': 'passerelle-ip',
   'PIM-SSM': ['reseau-multicast', 'ssm', 'pim'], 'Point de croisement': 'point-croisement', PTP: ['reseau-ptp', 'ptp'], 'Quad-link / 2SI': ['signal-formats', '12g-sdi'], 'Querier IGMP': ['reseau-multicast', 'querier'],
   'Réseaux rouge et bleu': 'reseaux-ab', 'RFC 4175': 'st2110-20', RPF: 'rpf', 'running / startup-config': 'config', SDI: ['sdi-cest-quoi'], SDP: 'sdp',
-  SPG: ['synchro-genlock', 'timing-ref'], 'SMPTE ST 2110': ['reseau-multicast', 'st2110'], 'Snooping IGMP': ['reseau-multicast', 'snooping'], 'SPAN / port miroir': 'span', 'Spine-leaf': 'spine-leaf',
+  SPG: ['synchro-spg', 'synchro-genlock', 'timing-ref'], 'Word clock': ['synchro-wordclock', 'word-clock'], 'Distributeur (DA)': ['synchro-distribution', 'terminaison-75'],
+  'DARS (AES11)': ['synchro-wordclock', 'dars'], 'Terminaison 75 Ω': ['synchro-distribution', 'terminaison-75'], 'Stay GenLock': ['synchro-spg', 'stay-genlock'], 'SMPTE ST 2110': ['reseau-multicast', 'st2110'], 'Snooping IGMP': ['reseau-multicast', 'snooping'], 'SPAN / port miroir': 'span', 'Spine-leaf': 'spine-leaf',
   'ST 2022-7': 'st2022-7', 'ST 2110-21': 'st2110-21', 'Super-blancs': ['signal-niveaux', 'mv-pct'], SVI: ['reseau-vlan', 'svi'], 'Synchroniseur d\'images (frame sync)': ['synchro-genlock', 'timing-ref'],
   'Timecode (LTC)': ['synchro-timecode'], Tally: ['real-melangeur', 'tsl-umd'], Triax: ['sdi-cable'], 'TSL UMD': 'tsl-umd', 'UHD / HD': ['signal-formats', '12g-sdi'], UMD: 'tsl-umd',
   Vecteurscope: ['signal-couleur', 'vecteurscope'], VLAN: ['reseau-vlan', 'vlan'], VRX_FULL: 'vrx', 'Waveform (oscilloscope)': ['signal-niveaux', 'waveform'],
@@ -63,7 +65,7 @@ export const POSTES = {
   mesure: ['sdi-oeil', 'sdi-falaise', 'waveform', 'prism'],
   vision: ['signal-422', 'signal-niveaux', 'waveform'],
   reseau: { sdi: ['reseau-ip', 'reseau-vlan', 'reseau-adresses', 'ctrl-sdi'], ip: ['reseau-multicast', 'reseau-ptp', 'reseau-qos', 'st2110'] },
-  synchro: { sdi: ['synchro-genlock', 'timing-ref'], ip: ['reseau-ptp', 'ptp'] },
+  synchro: { sdi: ['synchro-genlock', 'synchro-spg', 'timing-ref'], ip: ['reseau-ptp', 'synchro-2059', 'ptp'] },
   ccu: ['camera-systeme', 'camera-fibre', 'sdi-cable', 'sdi-cest-quoi'],
   hf: ['hf-bilan', 'hf-frequences', 'hf-antennes', 'hf-fresnel'],
   son: ['son-tranche', 'son-n1', 'son-48v', 'son-statique', 'sdi-embedded'],

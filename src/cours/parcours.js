@@ -45,8 +45,10 @@ export const PARCOURS = {
     expert: ['sdi-bits'],
   },
   synchro: {
-    debutant: ['synchro-timecode'],
-    intermediaire: ['synchro-genlock'],
+    debutant: ['synchro-bases', 'synchro-timecode'],
+    intermediaire: ['synchro-signaux', 'synchro-genlock', 'synchro-distribution'],
+    avance: ['synchro-spg', 'synchro-wordclock'],
+    expert: ['synchro-2059'],
   },
   camera: {
     debutant: ['camera-systeme'],

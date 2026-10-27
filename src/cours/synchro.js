@@ -2,11 +2,16 @@
 import { el } from '../util.js';
 import { registerChapter } from './index.js';
 import { figure, sv, canvas, slider, choice, readout, fmtNum } from './kit.js';
+import { SYNCHRO_REF } from './synchro_ref.js';
+import { SYNCHRO_SPG } from './synchro_spg.js';
 
 // ----------------------------------------------------------------------------------
 // Chapitre « La synchro » : la référence et le genlock (deux sources dont on règle la phase H et V,
 // un mélangeur qui coupe proprement ou non selon sa fenêtre d'entrée), puis le timecode (images ↔
-// HH:MM:SS:II à 25, 50 et 29,97 images/s, deux machines à caler sur la même heure).
+// HH:MM:SS:II à 25, 50 et 29,97 images/s, deux machines à caler sur la même heure). Les six autres leçons
+// sont dans cours/synchro_ref.js (pourquoi synchroniser, black burst et tri-level, distribuer la référence)
+// et cours/synchro_spg.js (régler un SPG700, le word clock avec l'option son, ST 2059 et le car hybride) ;
+// l'ordre de lecture est celui du parcours (cours/parcours.js).
 // ----------------------------------------------------------------------------------
 
 // ---------------- genlock : les formats et la fenêtre du mélangeur ----------------
@@ -320,8 +325,10 @@ function figTimecode() {
 
 registerChapter({
   id: 'synchro', title: 'La synchro', icon: 'synchro',
-  intro: 'Toutes les machines du car commencent leurs images au même instant : la référence, le genlock, le timecode.',
+  intro: 'Toutes les machines du car commencent leurs images au même instant : la référence, ses signaux et leur distribution, le genlock, le générateur, l\'horloge audio, le timecode, le PTP.',
   lessons: [
+    ...SYNCHRO_REF,
+    ...SYNCHRO_SPG,
     {
       id: 'synchro-genlock', title: 'La référence et le genlock', minutes: '8 min',
       essentials: [
@@ -351,7 +358,6 @@ Sans genlock, une source tourne sur son quartz, juste à quelques dizaines de pp
       article: 'timing',
       exercises: [
         { id: 'synchro-reference', intro: 'Au poste Synchro, vous simulez une perte du GPS, puis vous re-verrouillez des CCU qui ont perdu la référence. Comparez les deux cas : en holdover, rien ne change à l\'image ; une CCU décrochée, elle, saute à la commutation.' },
-        { id: 'materiel-synchro', intro: 'Dans la visionneuse de matériel, vous ouvrez le SPG puis le distributeur, connecteur par connecteur : GPS, tri-level, LTC, entrée du DA. Suivez le chemin de la référence de la leçon, de l\'antenne GPS sur le toit jusqu\'à chaque appareil.' },
       ],
       quiz: [
         { q: 'Une CCU n\'est plus verrouillée sur la référence. Que voit-on ?', choices: ['Une image normale au multiview, mais un saut ou un roulement à la coupe vers elle', ['Une image noire, tout de suite', 'La CCU continue d\'envoyer une image : c\'est le moment où ses images commencent qui est faux, pas l\'image elle-même.'], ['Des couleurs fausses', 'La référence ne touche pas à la colorimétrie : elle ne donne que le rythme et la phase.']], answer: 0, why: 'Libre, la CCU cadence ses images sur son propre quartz : elles dérivent par rapport aux autres. Son image a l\'air normale ; c\'est à la commutation que le mélangeur ne peut pas la réaligner.' },
