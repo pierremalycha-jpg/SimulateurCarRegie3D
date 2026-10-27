@@ -78,7 +78,7 @@ export const PARCOURS = {
   },
   exploitation: {
     debutant: ['expl-intercom'],
-    intermediaire: ['expl-lineup', 'expl-transmission', 'expl-depannage'],
+    intermediaire: ['expl-lineup', 'expl-transmission', 'expl-depannage', 'expl-energie'],
     avance: ['expl-regie-mobile'],
     expert: ['expl-match'],
   },

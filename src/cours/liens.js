@@ -74,7 +74,8 @@ export const POSTES = {
   ipdirector: ['ralentis-clips'],
   intercom: ['expl-intercom'],
   chefdecar: ['expl-lineup', 'expl-depannage'],
-  pieddecar: ['camera-systeme', 'expl-transmission'],
+  pieddecar: ['camera-systeme', 'expl-transmission', 'expl-energie'],
+  energie: ['expl-energie'],
   cadreur: ['camera-systeme'],
 };
 /** la cible du bouton « Cours » d'un poste ('' : aucune, le Cours s'ouvre où on l'a laissé) */
