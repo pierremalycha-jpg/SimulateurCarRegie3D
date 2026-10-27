@@ -2,6 +2,7 @@
 import { registerExos, entre, pick, tirer, fr } from '../exo.js';
 import { fspl, ANT, antGain } from '../hf.js';
 import { cofdmBitrate } from '../../data/rf.js';
+import { lambda, fresnel1, renflement, gainParabole, perteDiffraction } from '../hf_fresnel.js';
 
 // ----------------------------------------------------------------------------------
 // Exercices en autonomie du chapitre « La HF » : un plan de fréquences (intermodulation, canaux TNT),
@@ -23,6 +24,22 @@ const dbm = (v) => `${v < 0 ? '−' : ''}${fr(Math.abs(v), Number.isInteger(v) ?
 const MODCOD = { QPSK: 'QPSK', '16QAM': '16-QAM', '64QAM': '64-QAM' };
 const TU = { '2K': 224, '8K': 896 };
 const GARDES = { '1/4': 0.25, '1/8': 0.125, '1/16': 1 / 16, '1/32': 1 / 32 };
+
+// ---------------- la liaison point à point (cours/hf_fresnel.js) ----------------
+const FRESNEL_SITU = [
+  {
+    type: 'choix', q: 'Les deux paraboles se voient, mais la cime d\'une rangée d\'arbres affleure la ligne de vue. Que faites-vous ?',
+    choices: ['Monter les mâts pour dégager au moins 60 % du premier rayon de Fresnel', ['Rien : on voit l\'autre antenne', 'L\'onde occupe tout l\'ellipsoïde de Fresnel : un obstacle au ras de la ligne de vue coûte déjà environ 6 dB.'], ['Monter la puissance de l\'émetteur au maximum', 'La puissance compense un temps la perte, mais l\'obstacle reste : le moindre changement (feuilles mouillées, vent) fait varier le niveau.']], answer: 0,
+    aides: ['La ligne de vue ne suffit pas : l\'onde occupe un volume.', 'La règle des 60 %.'],
+    solution: '**Monter les mâts** (ou déplacer un point) jusqu\'à dégager 60 % du premier rayon : la perte de diffraction devient nulle.',
+  },
+  {
+    type: 'choix', q: 'Pourquoi aligner une parabole de 1,2 m est-il plus délicat qu\'une de 0,3 m, à la même fréquence ?',
+    choices: ['Son faisceau est quatre fois plus étroit (≈ 70 λ ÷ D degrés)', ['Parce qu\'elle est plus lourde', 'Le poids compte pour le mât, mais c\'est la largeur du faisceau qui rend la visée délicate.'], ['Parce qu\'elle émet plus de puissance', 'Une antenne ne crée pas de puissance : elle la concentre, dans un faisceau d\'autant plus étroit qu\'elle est grande.']], answer: 0,
+    aides: ['Le gain d\'une antenne est une concentration de l\'énergie.', 'Plus le diamètre est grand par rapport à la longueur d\'onde, plus le faisceau est fin.'],
+    solution: 'Le faisceau à −3 dB vaut ≈ 70 λ ÷ D degrés : **quatre fois plus étroit** pour un diamètre quatre fois plus grand. On aligne au niveau reçu, au degré près.',
+  },
+];
 
 registerExos({
   'hf-frequences': {
@@ -244,6 +261,54 @@ registerExos({
             solution: 'Un **synchroniseur** la cale sur la référence du car, et le son de la caméra HF (et ses retours) est recalé d\'autant : la latence de 20 à 60 ms est le prix de la compression.',
           },
         ]),
+      ];
+    },
+  },
+  'hf-fresnel': {
+    titre: 'Préparer une liaison point à point',
+    consigne: 'Avant d\'aller poser les mâts d\'une liaison vers une position éloignée, vous calculez le premier rayon de Fresnel, le dégagement à garder, le renflement de la Terre et le gain des paraboles.',
+    gen: (rnd) => {
+      const D = pick(rnd, [2, 3, 4, 5, 6, 8, 10, 12, 15]), f = pick(rnd, [2.4, 5, 7, 13]), d1 = pick(rnd, [D / 2, D / 4, D / 3]);
+      const r = Math.round(fresnel1(d1, D - d1, f) * 100) / 100, r6 = Math.round(0.6 * fresnel1(d1, D - d1, f) * 100) / 100;
+      const Dt = pick(rnd, [5, 10, 15, 20, 30]), b = Math.round(renflement(Dt / 2, Dt / 2) * 100) / 100;
+      const da = pick(rnd, [0.3, 0.6, 0.9, 1.2]), fa = pick(rnd, [5, 7, 13]), g = Math.round(gainParabole(da, fa) * 10) / 10;
+      const relp = pick(rnd, [0, 20, 40]), pd = Math.round(perteDiffraction(relp / 100) * 10) / 10;
+      const where = d1 === D / 2 ? 'au milieu de la liaison' : `à ${fr(d1, 2)} km de l'émetteur`;
+      return [
+        {
+          type: 'nombre', unite: 'm', answer: r, tol: Math.max(0.05, r * 0.01),
+          q: `Liaison de **${D} km** à **${fr(f, 1)} GHz**. Quel est le rayon du premier ellipsoïde de Fresnel **${where}** ?`,
+          pieges: [{ v: Math.round(17.32 * d1 * (D - d1) / (f * D) * 100) / 100, why: 'Il manque la racine carrée : r1 = 17,32 × √(d1 × d2 ÷ (f × D)).' }].filter((x) => Math.abs(x.v - r) > Math.max(0.1, r * 0.02)),
+          aides: ['r1 = 17,32 × √(d1 × d2 ÷ (f × D)), distances en km, f en GHz, r1 en m.', `d1 = ${fr(d1, 2)} km, d2 = ${fr(D - d1, 2)} km.`],
+          solution: `17,32 × √(${fr(d1, 2)} × ${fr(D - d1, 2)} ÷ (${fr(f, 1)} × ${D})) = **${fr(r, 2)} m**.`,
+        },
+        {
+          type: 'nombre', unite: 'm', answer: r6, tol: Math.max(0.05, r6 * 0.015),
+          q: `Au même point, de combien de mètres au moins le sommet d'un obstacle doit-il rester sous la ligne de vue (la règle des 60 %) ?`,
+          pieges: [{ v: r, why: 'C\'est le rayon entier : la règle demande d\'en dégager 60 %.' }],
+          aides: ['On garde libres 60 % du premier rayon de Fresnel.', `0,6 × ${fr(r, 2)} m.`],
+          solution: `0,6 × ${fr(r, 2)} = **${fr(r6, 2)} m** sous la ligne de vue : la diffraction n'y coûte rien.`,
+        },
+        {
+          type: 'nombre', unite: 'm', answer: b, tol: Math.max(0.03, b * 0.02),
+          q: `Liaison de **${Dt} km**. De combien la Terre bombe-t-elle au milieu (atmosphère standard, k = 4/3) ?`,
+          pieges: [{ v: Math.round((Dt / 2) ** 2 / 12.74 * 100) / 100, why: 'C\'est sans le facteur k = 4/3 : les ondes se courbent un peu, le renflement effectif est plus petit.' }].filter((x) => Math.abs(x.v - b) > 0.05),
+          aides: ['Renflement = d1 × d2 ÷ (12,74 × k), en m, distances en km.', `${fr(Dt / 2, 1)} × ${fr(Dt / 2, 1)} ÷ (12,74 × 4/3).`],
+          solution: `${fr(Dt / 2, 1)} × ${fr(Dt / 2, 1)} ÷ 16,99 = **${fr(b, 2)} m**, à ajouter à la hauteur des obstacles.`,
+        },
+        {
+          type: 'nombre', unite: 'dBi', answer: g, tol: 0.3,
+          q: `Quel est le gain d'une parabole de **${fr(da, 1)} m** à **${fa} GHz** (rendement 0,55) ?`,
+          pieges: [{ v: Math.round(10 * Math.log10(0.55 * Math.PI * da / lambda(fa)) * 10) / 10, why: 'Le gain suit la surface : (π D ÷ λ) est au carré.' }],
+          aides: [`Longueur d'onde : 0,3 ÷ ${fa} = ${fr(lambda(fa) * 100, 2)} cm.`, `Gain = 10 log (0,55 × (π × ${fr(da, 1)} ÷ ${fr(lambda(fa), 4)})²).`],
+          solution: `π × ${fr(da, 1)} ÷ ${fr(lambda(fa), 4)} = ${fr(Math.PI * da / lambda(fa), 1)} ; au carré, × 0,55, puis 10 log : **${fr(g, 1)} dBi**.`,
+        },
+        pick(rnd, [...FRESNEL_SITU, {
+          type: 'nombre', unite: 'dB', answer: pd, tol: 0.3,
+          q: `Un obstacle ne laisse dégagés que **${relp} %** du premier rayon de Fresnel. Quelle perte de diffraction (UIT-R P.526 : ν = −√2 × dégagement, J = 6,9 + 20 log (√((ν − 0,1)² + 1) + ν − 0,1)) ?`,
+          aides: [`Dégagement relatif : ${fr(relp / 100, 2)} ; ν = −√2 × ${fr(relp / 100, 2)} = ${fr(-Math.SQRT2 * relp / 100, 3)}.`, 'Remplacez ν dans la formule ; à 0 % de dégagement, on trouve environ 6 dB.'],
+          solution: `ν = ${fr(-Math.SQRT2 * relp / 100, 3)} : **${fr(pd, 1)} dB** perdus${relp === 0 ? ', l\'obstacle affleure la ligne de vue' : ''}. À 60 %, plus rien.`,
+        }]),
       ];
     },
   },

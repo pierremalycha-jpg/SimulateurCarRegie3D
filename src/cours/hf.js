@@ -3,6 +3,7 @@ import { el } from '../util.js';
 import { registerChapter } from './index.js';
 import { figure, sv, canvas, slider, choice, readout, fmtNum } from './kit.js';
 import { CN_REQ, GUARDS, cofdmBitrate, buildChannels } from '../data/rf.js';
+import { LESSON_FRESNEL } from './hf_fresnel.js';
 
 // ----------------------------------------------------------------------------------
 // Chapitre « La HF » : bandes et fréquences (spectre, intermodulation des micros), bilan de
@@ -503,5 +504,6 @@ La **latence** est le prix de la compression et de l'entrelacement : de l'ordre 
         { q: 'Au poste HF, une caméra en 16-QAM 3/4 affiche un MER de 20 dB. La réalisation veut une image plus fine en 64-QAM 3/4 : qu\'en penser ?', choices: [['Bonne idée : 20 dB dépassent les 18 dB requis', 'Sur le papier seulement : avec 2 dB d\'avance, et moins encore avec la marge d\'implémentation, le premier creux d\'évanouissement fait tomber le MER sous le C/N requis.'], 'Risqué : la 64-QAM 3/4 demande de l\'ordre de 18 dB, il ne resterait que 2 dB d\'avance', ['Bonne idée : une modulation plus riche est aussi plus robuste', 'C\'est l\'inverse : chaque pas de modulation demande environ 6 dB de signal en plus.']], answer: 1, why: 'Le MER doit rester bien au-dessus du C/N requis. En 16-QAM 3/4 (de l\'ordre de 12 dB), 20 dB laissent 8 dB d\'avance ; en 64-QAM 3/4 (de l\'ordre de 18 dB), il n\'en resterait que 2 : au moindre creux, macro-blocs puis image figée, c\'est l\'effet falaise.' },
       ],
     },
+    LESSON_FRESNEL,
   ],
 });

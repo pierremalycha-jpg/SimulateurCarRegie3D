@@ -74,7 +74,7 @@ export const PARCOURS = {
   hf: {
     debutant: ['hf-frequences', 'hf-antennes'],
     intermediaire: ['hf-bilan'],
-    avance: ['hf-cofdm'],
+    avance: ['hf-cofdm', 'hf-fresnel'],
   },
   exploitation: {
     debutant: ['expl-intercom'],

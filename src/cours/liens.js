@@ -62,7 +62,7 @@ export const POSTES = {
   reseau: { sdi: ['reseau-ip', 'reseau-vlan', 'reseau-adresses', 'ctrl-sdi'], ip: ['reseau-multicast', 'reseau-ptp', 'reseau-qos', 'st2110'] },
   synchro: { sdi: ['synchro-genlock', 'timing-ref'], ip: ['reseau-ptp', 'ptp'] },
   ccu: ['camera-systeme', 'camera-fibre', 'sdi-cable', 'sdi-cest-quoi'],
-  hf: ['hf-bilan', 'hf-frequences', 'hf-antennes'],
+  hf: ['hf-bilan', 'hf-frequences', 'hf-antennes', 'hf-fresnel'],
   son: ['son-tranche', 'son-n1', 'sdi-embedded'],
   transmission: ['expl-transmission', 'reseau-streaming', 'reseau-etendue', 'signal-formats', 'sdi-cest-quoi', '12g-sdi'],
   melangeur: ['real-melangeur', 'signal-422', 'signal-formats'],

@@ -197,7 +197,7 @@ export const RATTACHEMENT = {
     'reseau-st2110': ['2.11', '3.6', '2.10'], 'reseau-paquet': ['3.6', '2.11'], 'reseau-rythme': ['2.2', '3.6', '2.11'], 'reseau-2022-7': ['3.12', '3.6', '2.11'], 'reseau-spine-leaf': ['3.6', '1.1', '2.10'], 'reseau-nmos': ['3.6', '2.10', '3.12'],
     'reseau-modele': ['3.6', '2.10', '2.13'], 'reseau-etendue': ['2.10', '2.11', '3.4'], 'reseau-ethernet': ['2.10', '3.9', '3.6'], 'reseau-adresses': ['3.6', '2.10'], 'reseau-types': ['3.6', '2.11'], 'reseau-dhcp-dns': ['3.6', '2.3', '2.13'], 'reseau-nat': ['3.6', '2.11', '2.13'],
     'reseau-tcp-udp': ['2.11', '3.6', '2.10'], 'reseau-streaming': ['2.11', '3.4', '2.10'], 'reseau-mesures': ['1.2', '2.13', '3.6'], 'reseau-qos': ['1.2', '3.6', '3.12'],
-    'hf-frequences': ['2.10', '3.12'], 'hf-bilan': ['2.10', '2.7'], 'hf-antennes': ['2.7', '3.9'], 'hf-cofdm': ['2.11', '2.7'],
+    'hf-frequences': ['2.10', '3.12'], 'hf-bilan': ['2.10', '2.7'], 'hf-antennes': ['2.7', '3.9'], 'hf-cofdm': ['2.11', '2.7'], 'hf-fresnel': ['2.10', '2.11', '3.4'],
     'sdi-grille': ['2.10', '2.9', '3.12'],
     'synchro-genlock': ['1.2', '1.4', '3.12'], 'synchro-timecode': ['1.3', '2.5'],
     'camera-systeme': ['2.7', '2.10', '2.9'], 'camera-fibre': ['2.10', '3.9', '2.13'], 'camera-montage': ['2.7', '4.2', '3.9'],
