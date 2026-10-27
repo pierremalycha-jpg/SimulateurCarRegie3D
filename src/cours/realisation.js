@@ -2,6 +2,7 @@
 import { el } from '../util.js';
 import { registerChapter } from './index.js';
 import { figure, sv, canvas, slider, choice, readout, fmtNum } from './kit.js';
+import { LESSON_PLAN } from './real_plan.js';
 
 // ----------------------------------------------------------------------------------
 // Chapitre « La réalisation » : le mélangeur (bus PGM et PST, coupe, enchaîné, volet, barre T,
@@ -575,5 +576,6 @@ La **production** (chargé de production, producteur) représente le diffuseur d
         { q: 'La CAM 3 est à l\'antenne ; le réalisateur veut passer en fondu sur la CAM 2. Quels ordres donne-t-il ?', choices: [['« Enchaîne », puis « Prépare la 2 »', 'Le fondu partirait vers ce qui est en preset à ce moment-là, souvent l\'ancien plan, pas la CAM 2 : l\'annonce vient toujours avant le déclenchement.'], ['« Envoie la 2 », sans annonce', 'C\'est une coupe directe, pas un fondu ; et le cadreur de la 2 n\'aurait pas eu son tally vert pour soigner son cadre.'], '« Prépare la 2 », puis « Enchaîne »'], answer: 2, why: 'Le réalisateur annonce, puis déclenche : « Prépare la 2 » met la CAM 2 en preset (tally vert, son cadreur soigne son cadre), « Enchaîne » lance le fondu. « Top » ou « Envoie » donneraient une coupe.' },
       ],
     },
+    LESSON_PLAN,
   ],
 });

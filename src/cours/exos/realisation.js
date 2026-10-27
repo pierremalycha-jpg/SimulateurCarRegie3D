@@ -1,5 +1,6 @@
 // @ts-check
 import { registerExos, entre, pick, fr } from '../exo.js';
+import { CAMS_PLAN, ACTIONS, coupe, focalePour, serreW, SERRE_H } from '../real_plan.js';
 
 // ----------------------------------------------------------------------------------
 // Exercices en autonomie du chapitre « La réalisation » : la durée d'une transition comptée en images,
@@ -105,6 +106,30 @@ const ROLES = [
   },
 ];
 
+// ---------------- le plan caméras (cours/real_plan.js) ----------------
+const ROLES_PLAN = [
+  {
+    type: 'choix', q: 'Le réalisateur veut une vue qui permette de juger un hors-jeu à l\'entrée de la surface de droite. Quelle caméra ?',
+    choices: ['La caméra 16 m droite, en hauteur, alignée sur la surface', ['La caméra derrière le but droit', 'Derrière le but, la caméra regarde dans l\'axe du terrain : elle écrase les distances et ne montre pas l\'alignement des joueurs.'], ['La reverse, en face', 'De l\'autre côté de l\'axe, elle inverse le sens du jeu ; et elle n\'est pas alignée sur la surface.']], answer: 0,
+    aides: ['Pour juger un alignement, il faut regarder perpendiculairement à la ligne.', 'Les caméras 16 m portent le nom de la ligne de la surface.'],
+    solution: 'La **caméra 16 m** : alignée sur la ligne des 16,5 m, elle voit les joueurs de profil par rapport à la ligne.',
+  },
+  {
+    type: 'choix', q: 'Le réalisateur veut passer du côté de la tribune principale à la reverse sans heurter le téléspectateur. Par quelle caméra passer ?',
+    choices: ['Une caméra dans l\'axe, derrière un but : elle ne dit pas de sens', ['La caméra 16 m de l\'autre côté du terrain', 'Elle est du même côté que la principale : elle ne change rien au sens, on reste du même côté.'], ['Aucune : on coupe directement', 'La coupe directe inverse le sens du jeu en plein direct : c\'est ce que la règle des 180° évite.']], answer: 0,
+    aides: ['Une vue où le jeu ne va ni à gauche ni à droite efface le sens précédent.', 'Où est une caméra qui regarde dans la longueur du terrain ?'],
+    solution: 'Par une vue **dans l\'axe** (derrière un but, la caméra volante) : le jeu vient vers elle ou s\'en éloigne, le téléspectateur n\'a plus de sens de référence.',
+  },
+  {
+    type: 'choix', q: 'Où place-t-on la caméra du plan large (le master) ?',
+    choices: ['En tribune principale, à la hauteur de la ligne médiane, en hauteur', ['Derrière un but, pour voir le terrain en entier', 'Sur l\'axe, elle ne donnerait pas le sens du jeu et écraserait les distances.'], ['Au bord du terrain, au milieu', 'Au ras de la pelouse, on ne voit ni l\'espace ni la tactique.']], answer: 0,
+    aides: ['Elle doit voir les deux moitiés du terrain sous le même angle.', 'C\'est elle qui fixe le côté des caméras du direct.'],
+    solution: '**En tribune principale, au milieu, en hauteur** : la caméra de base du direct, qui donne le sens de référence.',
+  },
+];
+const PAIRES = [['c1', 'c9'], ['c1', 'c4'], ['c3', 'c8'], ['c2', 'c5'], ['c6', 'c9'], ['c10', 'c3'], ['c4', 'c7'], ['c1', 'c6']];
+const camDe = (id) => /** @type {any} */ (CAMS_PLAN.find((x) => x.id === id));
+
 registerExos({
   'real-melangeur': {
     titre: 'Préparer, couper, enchaîner',
@@ -203,6 +228,47 @@ registerExos({
           solution: O.items.map((x, k) => `${k + 1}. ${x}`).join('\n'),
         },
         pick(rnd, ROLES),
+      ];
+    },
+  },
+  'real-plan': {
+    titre: 'Placer les caméras et garder l\'axe',
+    consigne: 'Au poste du réalisateur, le plan caméras à la main : vous calculez les focales des positions, et vous dites quelles coupes gardent le sens du jeu.',
+    gen: (rnd) => {
+      const D = entre(rnd, 45, 95), W = pick(rnd, [30, 40, 50, 60]), fl = Math.round(focalePour(D, W) * 10) / 10;
+      const D2 = entre(rnd, 25, 110), fs = Math.round(focalePour(D2, serreW()));
+      const A = pick(rnd, ACTIONS), [ia, ic] = pick(rnd, PAIRES), ca = camDe(ia), cc = camDe(ic);
+      const K = coupe(ca, cc, A.b, A.v), juste = K.neutre ? 2 : K.ok ? 0 : 1;
+      const RESULT = ['Oui : le jeu va dans le même sens sur les deux caméras', 'Non : la coupe franchit l\'axe, le sens du jeu s\'inverse', 'Elle passe : l\'une des deux vues est dans l\'axe, elle ne dit pas de sens'];
+      const dx = entre(rnd, 0, 40), dy = entre(rnd, 40, 70), h = entre(rnd, 12, 25), d3 = Math.round(Math.hypot(dx, dy, h) * 10) / 10;
+      return [
+        {
+          type: 'nombre', unite: 'mm', answer: fl, tol: 0.5,
+          q: `Une caméra de tribune (capteur 2/3", 9,59 mm de large) est à **${D} m** du jeu. Quelle focale pour un plan large de **${W} m** de champ ?`,
+          pieges: [{ v: Math.round(D * 5.39 / W * 10) / 10, why: 'C\'est avec la hauteur du capteur (5,39 mm) : le champ se mesure en largeur, avec la largeur du capteur.' }],
+          aides: ['f = D × largeur du capteur ÷ largeur du champ.', `${D} × 9,59 ÷ ${W}.`],
+          solution: `${D} × 9,59 ÷ ${W} = **${fr(fl, 1)} mm**.`,
+        },
+        {
+          type: 'nombre', unite: 'mm', answer: fs, tol: Math.max(2, fs * 0.015),
+          q: `La même caméra doit cadrer un joueur en pied (**${fr(SERRE_H, 1)} m** de haut, soit ${fr(serreW(), 2)} m de large en 16:9) à **${D2} m**. Quelle focale ?`,
+          pieges: [{ v: Math.round(focalePour(D2, SERRE_H)), why: 'C\'est la hauteur du cadre divisée par la largeur du capteur : utilisez la largeur du cadre (16:9), ou bien la hauteur avec la hauteur du capteur.' }],
+          aides: ['Même formule : f = D × 9,59 ÷ largeur du champ.', `Largeur du champ : ${fr(SERRE_H, 1)} × 16 ÷ 9 = ${fr(serreW(), 2)} m.`],
+          solution: `${D2} × 9,59 ÷ ${fr(serreW(), 2)} = **${fr(fs)} mm**${fs > 900 ? ' : au-delà des 900 mm d\'un zoom box UA107, il faut le doubleur' : ''}.`,
+        },
+        {
+          type: 'choix', q: `Action : **${A.nom.toLowerCase()}**. À l'antenne : **${ca.nom}** (${ca.role}). Le réalisateur coupe vers **${cc.nom}** (${cc.role}). Le sens du jeu est-il gardé ?`,
+          choices: RESULT.map((t, k) => (k === juste ? t : [t, `${ca.nom} montre le jeu ${K.sa > 0 ? 'vers la droite' : K.sa < 0 ? 'vers la gauche' : 'dans l\'axe'}, ${cc.nom} ${K.sc > 0 ? 'vers la droite' : K.sc < 0 ? 'vers la gauche' : 'dans l\'axe'}.`])), answer: juste,
+          aides: ['Regardez de quel côté de l\'axe est chaque caméra, et si l\'une regarde dans la longueur du jeu.', 'La droite de l\'image d\'une caméra, c\'est sa direction de visée tournée d\'un quart de tour : le mouvement va-t-il dans ce sens ?'],
+          solution: `**${RESULT[juste]}** : ${ca.nom} montre le jeu ${K.sa > 0 ? 'vers la droite' : K.sa < 0 ? 'vers la gauche' : 'dans l\'axe'}, ${cc.nom} ${K.sc > 0 ? 'vers la droite' : K.sc < 0 ? 'vers la gauche' : 'dans l\'axe'}.`,
+        },
+        pick(rnd, [...ROLES_PLAN, {
+          type: 'nombre', unite: 'm', answer: d3, tol: 0.3,
+          q: `Une caméra est à **${dy} m** du ballon en profondeur, **${dx} m** sur le côté, et à **${h} m** de haut. À quelle distance du ballon est-elle ?`,
+          pieges: [{ v: Math.round(Math.hypot(dx, dy) * 10) / 10, why: 'Il manque la hauteur : la caméra est en tribune, au-dessus de la pelouse.' }],
+          aides: ['Pythagore dans l\'espace : les trois écarts au carré.', `√(${dx}² + ${dy}² + ${h}²).`],
+          solution: `√(${dx}² + ${dy}² + ${h}²) = **${fr(d3, 1)} m** : c'est cette distance qui compte pour la focale et la mise au point.`,
+        }]),
       ];
     },
   },

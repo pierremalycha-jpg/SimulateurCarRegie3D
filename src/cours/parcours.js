@@ -54,7 +54,7 @@ export const PARCOURS = {
     avance: ['camera-fibre'],
   },
   realisation: {
-    debutant: ['real-melangeur', 'real-ordres'],
+    debutant: ['real-melangeur', 'real-ordres', 'real-plan'],
     intermediaire: ['real-incrustations'],
   },
   ralentis: {

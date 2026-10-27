@@ -67,7 +67,7 @@ export const POSTES = {
   transmission: ['expl-transmission', 'reseau-streaming', 'reseau-etendue', 'signal-formats', 'sdi-cest-quoi', '12g-sdi'],
   melangeur: ['real-melangeur', 'signal-422', 'signal-formats'],
   habillage: ['real-incrustations'],
-  realisateur: ['real-ordres'],
+  realisateur: ['real-ordres', 'real-plan'],
   scripte: ['real-ordres'],
   producteur: ['real-ordres'],
   evs: ['ralentis-evs', 'signal-formats', 'signal-bits'],
