@@ -573,6 +573,10 @@ parcours), `tests/unit/synchro.test.mjs`, `tests/unit/son-micros.test.mjs`, `tes
 suites `node tools/e2e.mjs camera` (la section « Sur la caméra en 3D », l'aller-retour vers la fiche, les quinze
 leçons), `vues3d` (25 vues, chaque étape, six chapitres « en 3D »), `cours`, `parcours`.
 
+**Version construite** : 19.19.0, exécutable Windows (et son kit) et application macOS dans les fichiers de
+l'exécution n° 10 du workflow « Versions à partager » (gardés jusqu'au 26 novembre 2026). La Release `v19.19.0` se
+publie en poussant l'étiquette `v19.19.0` sur ce commit.
+
 ## v19.18 : le Cours en parcours, à la façon de Duolingo (niveaux, exercices en autonomie, test de niveau)
 
 **Pourquoi.** Tout le Cours était ouvert d'un coup : un étudiant qui arrivait pouvait commencer par le ST 2110 sans
