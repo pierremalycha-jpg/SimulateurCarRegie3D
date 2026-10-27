@@ -10,6 +10,7 @@ import '../content/terms_fibre.js';
 import '../content/terms_ip.js';
 import '../content/terms_micro.js';
 import '../content/terms_synchro.js';
+import '../content/terms_audio.js';
 import './figs_mesure.js';
 import './figs_ctrlnet.js';
 import '../content/terms_videohub.js';

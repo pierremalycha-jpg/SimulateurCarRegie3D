@@ -9,6 +9,7 @@ import '../content/terms_ip.js';
 import '../content/terms_micro.js';
 import '../content/terms_synchro.js';
 import '../content/terms_videohub.js';
+import '../content/terms_audio.js';
 
 // ----------------------------------------------------------------------------------
 // Les liens du Cours avec le reste du simulateur : la leçon (ou la fiche « ? ») de chaque terme du
@@ -32,7 +33,7 @@ export const estLecon = (id) => !!lessonById(id);
 /** terme du glossaire (tel qu'écrit dans content/glossary.js) → leçon(s) puis fiche(s) « ? » */
 /** @type {Record<string, string | string[]>} */
 export const GLOSSAIRE = {
-  '(S,G)': ['reseau-multicast', 'mroute'], 'AES3 / AES67 / Dante': 'st2110-30', 'Bilan de liaison / marge': ['hf-bilan'], 'Black burst / tri-level': ['synchro-signaux', 'synchro-genlock', 'tri-level'],
+  '(S,G)': ['reseau-multicast', 'mroute'], 'AES3 / AES67 / Dante': ['son-numerique', 'son-dante', 'st2110-30'], 'Bilan de liaison / marge': ['hf-bilan'], 'Black burst / tri-level': ['synchro-signaux', 'synchro-genlock', 'tri-level'],
   BMCA: ['reseau-ptp', 'bmca'], BNC: ['sdi-cable', 'sdi-cest-quoi'], 'BT.709 / BT.2020': ['signal-couleur', 'cie1931'], 'Caméra HF': ['hf-bilan', 'hf-frequences'], 'CMAX / CINST': 'cmax', 'Codes 64-940': ['signal-niveaux', 'mv-pct'],
   COFDM: ['hf-cofdm'], 'Contrôleur SDN': 'sdn', 'Diversité': ['hf-antennes'], DSCP: ['reseau-qos', 'qos'], 'Écart 2022-7': 'ecart', ECMP: 'ecmp', 'Effet falaise': ['sdi-falaise', 'sdi-oeil', 'effet-falaise'],
   'Embedder / désembedder': ['sdi-embedded'], FEC: ['reseau-streaming', 'fec'], 'Fibre hybride SMPTE': ['camera-fibre', 'camera-systeme', 'cable-hybride'], 'Fibre monomode': ['camera-fibre', 'sdi-cable', 'fibre-monomode'],
@@ -55,6 +56,8 @@ export const GLOSSAIRE = {
   Contribution: ['expl-transmission', 'reseau-streaming', 'contribution'],
   'Alimentation fantôme 48 V': ['son-48v', 'p48'], 'Micro canon': ['son-statique', 'micro-statique'], XLR: ['son-liaisons', 'liaison-symetrique'],
   'Couple ORTF / XY': ['son-directivite', 'directivite'],
+  // le son : la console analogique, le numérique, la loudness (cours/son_console.js)
+  MADI: ['son-numerique', 'madi'], 'Loudness (LUFS)': ['son-loudness', 'loudness'], 'dBFS / dBTP': ['son-loudness', 'son-numerique', 'crete-vraie'], 'PFL / AFL': ['son-console', 'son-tranche'],
 };
 
 /** poste → leçon(s) ou fiche(s) ouvertes par son bouton « Cours » et la touche G ; selon le car, SDI ou IP */
@@ -68,7 +71,7 @@ export const POSTES = {
   synchro: { sdi: ['synchro-genlock', 'synchro-spg', 'timing-ref'], ip: ['reseau-ptp', 'synchro-2059', 'ptp'] },
   ccu: ['camera-systeme', 'camera-fibre', 'sdi-cable', 'sdi-cest-quoi'],
   hf: ['hf-bilan', 'hf-frequences', 'hf-antennes', 'hf-fresnel'],
-  son: ['son-tranche', 'son-n1', 'son-48v', 'son-statique', 'sdi-embedded'],
+  son: ['son-tranche', 'son-n1', 'son-console', 'son-48v', 'son-statique', 'son-loudness', 'son-numerique', 'sdi-embedded'],
   transmission: ['expl-transmission', 'reseau-streaming', 'reseau-etendue', 'signal-formats', 'sdi-cest-quoi', '12g-sdi'],
   melangeur: ['real-melangeur', 'signal-422', 'signal-formats'],
   habillage: ['real-incrustations'],
