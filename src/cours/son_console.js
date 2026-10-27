@@ -43,7 +43,7 @@ function figConsole() {
   f.append(sv('rect', { x: X, y: 24, width: W, height: 286, rx: 4, fill: '#161b20', stroke: C.line }));
   const rows = [
     ['XLR · jack', 'micro ou ligne', 'p'], ['GAIN', 'adapte le niveau', 'k'], ['coupe-bas', `${COUPE_BAS.f} Hz`, 'b'], ['HIGH', '12 kHz ±15 dB', 'k'], ['MID', '2,5 kHz ±15 dB', 'k'],
-    ['LOW', '80 Hz ±15 dB', 'k'], ['AUX', 'pré-fader : retours', 'k'], ['FX', 'post-fader : effets', 'k'], ['PAN', 'gauche · droite', 'k'], ['PEAK · PFL', 'crête · écoute seule', 'b'],
+    ['LOW', '80 Hz ±15 dB', 'k'], ['AUX', 'pré-fader : retours', 'k'], ['FX', 'post-fader : effets', 'k'], ['PAN', 'gauche · droite', 'k'], ['PEAK · PFL', 'crête, écoute', 'b'],
   ];
   rows.forEach(([a, b, t], i) => {
     const y = 40 + i * 21;
@@ -148,7 +148,7 @@ function demoConsole(host) {
 function figSorties() {
   const f = figure(720, 284, 'Les sorties d\'une petite console analogique et ce qu\'elles alimentent : la sortie principale en XLR symétrique vers la diffusion façade et le départ vers le car, les sorties AUX pré-fader vers les retours de scène, l\'envoi d\'effets post-fader et son retour, la sortie d\'enregistrement RCA à −10 dBV, la cabine et le casque. En dessous : un envoi pré-fader ne suit pas le fader, un envoi post-fader le suit.');
   f.append(txt(10, 16, 'La face arrière : qui reçoit quoi', 'co-t', 'start'));
-  f.append(box(10, 30, 170, 150, C.amber), txt(95, 50, 'Console', 'co-t'), txt(95, 66, 'type Antmix', 'co-s'));
+  f.append(box(10, 30, 170, 150, C.amber), txt(95, 172, 'Console (type Antmix)', 'co-t'));
   const outs = [
     ['MAIN OUT L/R', 'XLR · +4 dBu', 'diffusion façade, départ vers le car', C.amber],
     ['AUX OUT', 'jack · pré-fader', 'retours de scène des musiciens', C.green],
@@ -165,10 +165,10 @@ function figSorties() {
   f.append(txt(10, Y, 'Pré ou post-fader : où l\'envoi est pris', 'co-t', 'start'));
   const chain = (y, label, at, col, what) => {
     f.append(box(10, y, 90, 24), txt(55, y + 16, 'GAIN · EQ', 'co-s'), arrow(102, y + 12, 140, y + 12), box(142, y, 70, 24, C.amber), txt(177, y + 16, 'fader', 'co-s'), arrow(214, y + 12, 250, y + 12), box(252, y, 80, 24), txt(292, y + 16, 'bus', 'co-s'));
-    f.append(sv('circle', { cx: at, cy: y + 12, r: 4, fill: col }), arrow(at, y + 14, at, y + 30, col), txt(at + 8, y + 36, label, 'co-s', 'start', { fill: col }), txt(360, y + 16, what, 'co-s', 'start'));
+    f.append(sv('circle', { cx: at, cy: y + 12, r: 4, fill: col }), txt(at, y - 3, label, 'co-s', 'middle', { fill: col }), txt(360, y + 16, what, 'co-s', 'start'));
   };
-  chain(Y + 8, 'AUX pré', 120, C.green, 'pré : baisser le fader ne change rien au retour du musicien');
-  chain(Y + 40, 'FX post', 232, C.violet, 'post : la réverbération baisse avec la voix, sans rester seule');
+  chain(Y + 18, 'AUX pré', 120, C.green, 'pré : baisser le fader ne change rien au retour du musicien');
+  chain(Y + 54, 'FX post', 232, C.violet, 'post : la réverbération baisse avec la voix, sans rester seule');
   return f;
 }
 
@@ -235,8 +235,9 @@ function figNumerique() {
   let d = ''; for (let i = 0; i <= 120; i++) { const x = x0 + i / 120 * w, y = y0 - A * Math.sin(i / 120 * 2 * Math.PI * 1.5); d += `${i ? 'L' : 'M'}${x.toFixed(1)} ${y.toFixed(1)} `; }
   f.append(sv('path', { d, fill: 'none', stroke: C.grey, strokeDasharray: '3 3' }));
   for (let k = 0; k <= 18; k++) { const x = x0 + k / 18 * w, v = Math.sin(k / 18 * 2 * Math.PI * 1.5), q = Math.round(v * 4) / 4, y = y0 - A * q; f.append(sv('line', { x1: x, y1: y0, x2: x, y2: y, stroke: C.amber }), sv('circle', { cx: x, cy: y, r: 3, fill: C.amber })); }
-  f.append(txt(x0, 172, 'un échantillon toutes les 20,8 µs (48 kHz) ; ici quelques niveaux, en 24 bits 16 777 216', 'co-s', 'start'));
-  f.append(txt(x0, 188, 'Nyquist : on ne rend que ce qui est sous fs ÷ 2 = 24 kHz ; au-dessus, ça se replie', 'co-s', 'start'));
+  f.append(txt(x0, 172, 'un échantillon toutes les 20,8 µs à 48 kHz, arrondi', 'co-s', 'start'));
+  f.append(txt(x0, 188, '(ici sur quelques niveaux ; en 24 bits, 16 777 216)', 'co-s', 'start'));
+  f.append(txt(x0, 204, 'Nyquist : on ne rend que ce qui est sous 24 kHz', 'co-s', 'start'));
   // les liaisons
   const L = [['AES3', '2 canaux · XLR 110 Ω ou BNC 75 Ω', C.amber], ['MADI (AES10)', '64 canaux à 48 kHz · coax ou fibre', C.cyan], ['SDI embarqué', '16 canaux en HD-SDI', C.green], ['Réseau', 'AES67, Dante, ST 2110-30', C.violet]];
   L.forEach(([a, b, col], i) => { const y = 30 + i * 36; f.append(box(410, y, 300, 30, col), txt(420, y + 19, a, 'co-t', 'start'), txt(700, y + 19, b, 'co-s', 'end')); });
@@ -272,7 +273,7 @@ function demoNumerique(host) {
     read.set('Fréquence entendue', rep ? `${fmtNum(fa)} Hz : la fréquence s'est repliée (|${fmtNum(f)} − ${fmtNum(Math.round(f / fs) * fs)}|)` : `${fmtNum(fa)} Hz : rendue telle quelle`);
     read.set('Valeurs par échantillon', `2^${bits} = ${fmtNum(valeurs(bits))}`);
     read.set('Dynamique théorique', `${fmtNum(dyn, 1)} dB (6,02 × ${bits} + 1,76)`);
-    read.set('Débit brut (PCM)', `${fmtNum(deb / 1e6, 3)} Mb/s pour ${canaux} canal${canaux > 1 ? 'aux' : ''} (${fmtNum(fs)} × ${bits} bits${canaux > 1 ? ` × ${canaux}` : ''})`);
+    read.set('Débit brut (PCM)', `${fmtNum(deb / 1e6, 3)} Mb/s pour ${canaux} ${canaux > 1 ? 'canaux' : 'canal'} (${fmtNum(fs)} × ${bits} bits${canaux > 1 ? ` × ${canaux}` : ''})`);
     read.set('Sur un câble AES3', `2 canaux par câble : ${fmtNum(Math.ceil(canaux / 2))} câble${canaux > 2 ? 's' : ''} ; ${fmtNum(debitAes3(fs) / 1e6, 3)} Mb/s par câble (64 bits par période d'échantillon)`);
     read.set('Sur un lien MADI', fs > 96000 ? 'au-delà de 96 kHz, il faut d\'autres modes du MADI (à vérifier sur les appareils)' : `${canauxMadi(fs)} canaux au plus à ${fmtNum(fs)} Hz : ${canaux <= canauxMadi(fs) ? 'un lien suffit' : `${Math.ceil(canaux / canauxMadi(fs))} liens`} (${fmtNum(debitMadi(fs, Math.min(canaux, canauxMadi(fs))) / 1e6, 1)} Mb/s utiles sur 100)`);
     const A2 = ALIGNEMENTS[alig], dbu = dbuDeDbfs(dbfs, A2);
@@ -322,8 +323,9 @@ function figLoudness() {
 
 /** les programmes de la manipulation : des segments de loudness (LUFS) et de crête vraie (dBTP) */
 const PROGRAMMES = {
-  match: { nom: 'Une minute de match', seg: (k) => [{ duree: 12, lufs: -25 + k.comm, crete: -9 }, { duree: 6, lufs: -16 + k.but, crete: -3 + k.but }, { duree: 14, lufs: -24 + k.comm, crete: -8 }, { duree: 8, lufs: -33 + k.calme, crete: -18 }, { duree: 20, lufs: -23 + k.comm, crete: -7 }] },
-  magazine: { nom: 'Un sujet magazine avec une pause', seg: (k) => [{ duree: 20, lufs: -22 + k.comm, crete: -6 }, { duree: 10, lufs: -36 + k.calme, crete: -20 }, { duree: 6, lufs: -19 + k.but, crete: -2 + k.but }, { duree: 24, lufs: -23 + k.comm, crete: -7 }] },
+  // réglés pour tomber vers −23 LUFS : le passage calme reste sous la porte relative, le but pèse selon son énergie
+  match: { nom: 'Une minute de match', seg: (k) => [{ duree: 12, lufs: -25 + k.comm, crete: -9 }, { duree: 6, lufs: -17 + k.but, crete: -3 + k.but }, { duree: 14, lufs: -25.5 + k.comm, crete: -8 }, { duree: 8, lufs: -34 + k.calme, crete: -18 }, { duree: 20, lufs: -24.8 + k.comm, crete: -7 }] },
+  magazine: { nom: 'Un sujet magazine avec une pause', seg: (k) => [{ duree: 20, lufs: -23.5 + k.comm, crete: -6 }, { duree: 10, lufs: -36 + k.calme, crete: -20 }, { duree: 6, lufs: -20 + k.but, crete: -2 + k.but }, { duree: 24, lufs: -23.8 + k.comm, crete: -7 }] },
 };
 function demoLoudness(host) {
   const k = { comm: 0, but: 0, calme: 0, gain: 0 };
@@ -358,7 +360,7 @@ function demoLoudness(host) {
     read.set('Pour revenir à −23 LUFS', Number.isFinite(m.I) ? `${fdb(m.correction)} sur tout le programme${!C2.crete || m.crete + m.correction > R128.crete ? ', puis un limiteur de crête vraie' : ''}` : '—');
     const v = !C2.loudness ? ['ko', `Hors tolérance : ${sdb(m.I)} LUFS, à plus de ${fmtNum(C2.tol, 1).replace(',0', '')} LU de −23. ${m.I > -23 ? 'Trop fort' : 'Trop faible'} : en direct, on corrige au master en suivant le court terme.`]
       : !C2.crete ? ['warn', `La loudness tient, mais une crête vraie dépasse −1 dBTP (${sdb(m.crete)}) : il faut un limiteur, la chaîne la refuserait.`]
-        : ['ok', `Conforme R128 : ${sdb(m.I)} LUFS (tolérance ±${fmtNum(C2.tol, 1).replace(',0', '')} LU${direct ? ' en direct' : ''}), crêtes vraies sous −1 dBTP. Le but qui monte vers ${sdb(m.ctMax, 0)} LUFS ne compte qu'à sa juste part.`];
+        : ['ok', `Conforme R128 : ${sdb(m.I)} LUFS (tolérance ±${fmtNum(C2.tol, 1).replace(',0', '')} LU${direct ? ' en direct' : ''}), crêtes vraies sous −1 dBTP. Le but monte à ${sdb(m.ctMax, 0)} LUFS au court terme : il pèse selon son énergie et sa durée.`];
     verdict.className = 'co-verdict ' + v[0]; verdict.textContent = v[1];
   };
   const db = (v) => (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(v) + ' dB';
@@ -383,7 +385,7 @@ function demoLoudness(host) {
 function figDante() {
   const f = figure(720, 262, 'Un réseau Dante : le boîtier de scène, la console, l\'enregistreur et le PC de Dante Controller sur un commutateur Gigabit (le réseau primaire, et un second réseau en secours). Des flux unicast vont d\'un émetteur à un récepteur ; un flux multicast part une fois vers plusieurs. Un appareil est le leader de l\'horloge PTP ; celui qui reçoit le word clock du SPG peut le donner au réseau. QoS : DSCP 56 pour le PTP, 46 pour l\'audio.');
   f.append(txt(10, 16, 'Un réseau Dante : un câble à la place du multipaire', 'co-t', 'start'));
-  f.append(box(290, 104, 140, 40, C.cyan), txt(360, 122, 'Commutateur Gigabit', 'co-t'), txt(360, 136, 'QoS · IGMP snooping · sans EEE', 'co-s'));
+  f.append(box(280, 104, 160, 40, C.cyan), txt(360, 122, 'Commutateur Gigabit', 'co-t'), txt(360, 136, 'QoS · IGMP · EEE coupé', 'co-s'));
   const D = [
     [20, 34, 'Boîtier de scène', '32 entrées micro', C.amber], [20, 180, 'Leader d\'horloge', 'word clock du SPG → PTP', C.green],
     [560, 34, 'Console', '64 canaux en entrée', C.amber], [560, 116, 'Enregistreur', 'multipiste', C.amber], [560, 196, 'PC', 'Dante Controller', C.grey],
@@ -416,7 +418,9 @@ function demoDante(host) {
     g.fillStyle = '#aab4ba'; g.fillText('le paquet le plus lent et la fenêtre de latence (0 à 5 ms)', 10, 66);
     const X = (us) => 10 + Math.min(5000, us) / 5000 * W;
     g.fillStyle = 'rgba(51,196,108,.25)'; g.fillRect(10, 74, X(lat * 1000) - 10, 30);
-    for (const l of LATENCES) { g.strokeStyle = '#3a444c'; g.beginPath(); g.moveTo(X(l * 1000), 72); g.lineTo(X(l * 1000), 108); g.stroke(); g.fillStyle = '#6a747c'; g.fillText(`${fmtNum(l, 2).replace(/,?0+$/, '')} ms`, X(l * 1000) - 12, 120); }
+    g.textAlign = 'center';
+    for (const l of LATENCES) { g.strokeStyle = '#3a444c'; g.beginPath(); g.moveTo(X(l * 1000), 72); g.lineTo(X(l * 1000), 108); g.stroke(); g.fillStyle = '#6a747c'; g.fillText(`${fmtNum(l, 2).replace(/,?0+$/, '')}${l >= 1 ? ' ms' : ''}`, X(l * 1000), 120); }
+    g.textAlign = 'start';
     g.fillStyle = T.ok ? C.pvw : C.tally; g.fillRect(X(D.total) - 2, 70, 4, 38);
     g.fillStyle = '#aab4ba'; g.fillText(`${bonds} commutateur${bonds > 1 ? 's' : ''} : sérialisation ${fmtNum(D.ser, 1)} µs et attente ${fmtNum(D.attente, 1)} µs à chacun`, 10, 142);
     read.set('Flux envoyés par le boîtier', `${E.flux} flux ${multicast ? 'multicast (une seule copie, recopiée par le réseau)' : `unicast (${Math.ceil(canaux / 4)} par récepteur, ${rx} récepteur${rx > 1 ? 's' : ''})`}`);
@@ -584,7 +588,7 @@ La liaison est **symétrique**, au **niveau ligne**, jamais par la sortie casque
       'L\'**intégrée** écarte les silences (porte **−70 LUFS**) puis ce qui est **10 LU** sous la moyenne ; en direct, on suit la **momentanée** (400 ms) et le **court terme** (3 s).',
     ],
     figure: figLoudness,
-    demoTitle: 'Montez le but : l\'intégrée bouge à peine. Montez commentaires et ambiance de 3 dB : elle sort de la tolérance. Ajoutez 20 s de silence : rien ne change. Descendez le passage calme : il passe sous la porte relative.',
+    demoTitle: 'Montez commentaires et ambiance de 2 dB : l\'intégrée sort de la tolérance. Montez le but de 3 dB : six secondes pèsent lourd, car la moyenne se fait en énergie. Ajoutez 20 s de silence : rien ne change. Remontez le passage calme de 10 dB : il passe la porte relative et compte.',
     demo: demoLoudness,
     body: `Trois appareils lisent un niveau, et ils ne disent pas la même chose.
 

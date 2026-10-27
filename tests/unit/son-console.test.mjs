@@ -16,15 +16,17 @@ import { canalUtile, flux, fluxPour, emission, charge, delaiChemin, tient, laten
 
 const near = (a, b, e = 0.01) => assert.ok(Math.abs(a - b) <= e, `${a} ≠ ${b}`);
 const IDS = ['son-console', 'son-sorties', 'son-numerique', 'son-loudness', 'son-dante'];
+// l'échantillonnage et la loudness sont des courbes et des calculs : ils restent en 2D (tableau de pertinence du README)
+const AVEC_3D = ['son-console', 'son-sorties', 'son-dante'];
 
-test('les leçons : rangées dans leurs parties, une vue 3D, six questions au moins', () => {
+test('les leçons : rangées dans leurs parties, six questions au moins, une vue 3D pour la console et Dante', () => {
   for (const id of IDS) {
     const f = lessonById(id); assert.ok(f, id);
     assert.equal(f.chapter.id, 'son');
     assert.ok(PARTIES_SON.includes(f.lesson.partie), `${id} : partie`);
     assert.ok(f.lesson.quiz.length >= 6, `${id} : six questions`);
     assert.ok(typeof f.lesson.demo === 'function' && typeof f.lesson.figure === 'function', `${id} : schéma et manipulation`);
-    assert.ok(vuesDeLecon(id).length >= 1, `${id} : vue 3D`);
+    assert.equal(vuesDeLecon(id).length >= 1, AVEC_3D.includes(id), `${id} : vue 3D`);
   }
   assert.ok(vueById('son-console') && vueById('son-dante'));
 });

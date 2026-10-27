@@ -138,12 +138,12 @@ export function chaine(t) {
 }
 /** ce que dit le vumètre, en mots */
 export function verdictNiveau(/** @type {number} */ vu) {
-  if (!Number.isFinite(vu)) return 'rien : aucun signal';
+  if (!Number.isFinite(vu)) return 'aucun signal';
   if (vu > ECRETAGE - NOMINAL) return 'écrêté';
-  if (vu > PEAK - NOMINAL) return 'trop fort : la LED PEAK s\'allume';
-  if (vu > 6) return 'fort : peu de marge';
-  if (vu >= -6) return 'bien : autour du 0';
-  if (vu >= -20) return 'faible : on se rapproche du souffle';
+  if (vu > PEAK - NOMINAL) return 'trop fort, la LED PEAK s\'allume';
+  if (vu > 6) return 'fort, peu de marge';
+  if (vu >= -6) return 'bien, autour du « 0 »';
+  if (vu >= -20) return 'faible, près du souffle';
   return 'très faible';
 }
 

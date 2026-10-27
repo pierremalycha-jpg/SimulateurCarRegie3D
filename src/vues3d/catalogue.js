@@ -22,6 +22,8 @@ import { VUE_RESEAU_QOS } from './vues/reseau_qos.js';
 import { VUE_RESEAU_DHCP } from './vues/reseau_dhcp.js';
 import { VUE_SON_MICRO } from './vues/son_micro.js';
 import { VUE_SON_CAPSULES } from './vues/son_capsules.js';
+import { VUE_SON_CONSOLE } from './vues/son_console.js';
+import { VUE_SON_DANTE } from './vues/son_dante.js';
 
 // ----------------------------------------------------------------------------------
 // Le catalogue des vues 3D du Cours : chaque vue est un fichier de vues/ (ses étapes, ses commandes,
@@ -56,7 +58,7 @@ import { VUE_SON_CAPSULES } from './vues/son_capsules.js';
 // dans l'ordre de lecture de chaque chapitre (le réseau suit ses parties : bases, adresses, transport, qualité, car IP)
 export const VUES = [
   VUE_SDI_TRAME, VUE_SDI_OEIL, VUE_SDI_BRASSAGE, VUE_SYNCHRO_GENLOCK, VUE_SYNCHRO_SPG, VUE_CAMERA_FIBRE,
-  VUE_SON_MICRO, VUE_SON_CAPSULES,
+  VUE_SON_MICRO, VUE_SON_CAPSULES, VUE_SON_CONSOLE, VUE_SON_DANTE,
   VUE_RESEAU_COUCHES, VUE_RESEAU_MAC, VUE_RESEAU_VLAN, VUE_RESEAU_ADRESSES, VUE_RESEAU_DHCP, VUE_RESEAU_PASSERELLE,
   VUE_RESEAU_TCPUDP, VUE_RESEAU_WAN, VUE_RESEAU_MULTICAST, VUE_RESEAU_QOS,
   VUE_RESEAU_PTP, VUE_ST2110_FLUX, VUE_ST2110_PAQUET, VUE_ST2110_ROUGEBLEU, VUE_HF_STADE,
