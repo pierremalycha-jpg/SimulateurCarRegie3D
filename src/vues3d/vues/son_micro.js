@@ -19,7 +19,6 @@ const HX = -1.25; // centre de la tête (grille)
 const RG = 0.46; // rayon de la grille (≈ Ø 51 mm × 18)
 /** la distance réelle (m) → la distance dans la scène (rayon du cercle de la source autour de la tête) */
 const RV = (r) => 0.85 + Math.log(r / 0.02) / Math.log(100) * 3.2;
-const HEAD = new THREE.Vector3(HX, AY, 0);
 /** la direction d'arrivée : θ = 0 dans l'axe (devant la grille, vers −x), θ = 90° sur le côté (+z) */
 const DIR = (deg) => new THREE.Vector3(-Math.cos(deg * Math.PI / 180), 0, Math.sin(deg * Math.PI / 180));
 const hz = (f) => (f >= 1000 ? fmtNum(f / 1000, f >= 10000 ? 0 : 1) + ' kHz' : fmtNum(f, 0) + ' Hz');
@@ -50,7 +49,7 @@ Ses chiffres (fiche du fabricant) : réponse de **50 Hz à 15 kHz**, directivit�
       texte: `La **membrane**, un dôme de plastique très fin, porte une **bobine** de fil de cuivre émaillé, plus fin qu'un cheveu. La bobine plonge dans l'**entrefer** : la fente circulaire entre l'**aimant** (au centre) et la **pièce polaire** (la coupelle qui l'entoure), où le champ magnétique est intense.
 
 Rien ne frotte : la membrane est tenue par son bord souple et la bobine flotte dans la fente. Toute la capsule, membrane et bobine comprises, pèse quelques dixièmes de gramme pour la partie mobile : c'est elle que la pression doit mettre en mouvement.` },
-    { t: 'Le son pousse, la bobine produit une tension', lecon: 'son-dynamique', reglage: { ex: 0.35, ondes: true, polaire: false, tourne: false, th: 0, r: 0.05, f: 1000, L1: 70 }, vue: { cible: [-0.6, 1.6, 0], dir: [0.15, 0.3, 1], dist: 5.8 },
+    { t: 'Le son pousse, la bobine produit une tension', lecon: 'son-dynamique', reglage: { ex: 0.35, ondes: true, polaire: false, tourne: false, th: 0, r: 0.05, f: 1000, L1: 70 }, vue: { cible: [-0.5, 2.0, 0], dir: [0.12, 0.28, 1], dist: 7.2 },
       texte: `La source envoie ses **fronts de pression** (les cercles cyan). Chaque surpression pousse la membrane, chaque dépression la tire : la **bobine** va et vient dans le champ de l'aimant, et une **tension** apparaît à ses bornes, par **induction** : e = B · l · v (le champ, la longueur du fil, la **vitesse** de la bobine).
 
 L'**oscilloscope**, branché sur les broches 2 et 3, montre cette tension : quelques millivolts pour une voix proche. Le mouvement réel de la membrane est minuscule (une fraction de micromètre à 1 kHz) : ici, il est exagéré des milliers de fois.` },
@@ -58,7 +57,7 @@ L'**oscilloscope**, branché sur les broches 2 et 3, montre cette tension : quel
       texte: `La source fait **70 dB SPL à 1 m** (une voix projetée, ordre de grandeur). À la distance choisie, le micro reçoit moins : **−6 dB par doublement** de la distance. Le niveau en dB SPL devient une pression en pascals (94 dB SPL = 1 Pa), la sensibilité du micro (**−54,5 dBV/Pa**) la change en volts.
 
 Rapprochez la source avec le curseur « Distance » : à 5 cm, la voix arrive 26 dB plus fort qu'à 1 m. Passez au **type SM48** (−57,5 dBV/Pa) : 3 dB de moins pour le même son, 3 dB de gain en plus à la console.` },
-    { t: 'Tourner autour : la directivité cardioïde', lecon: 'son-directivite', reglage: { ex: 0, ondes: true, polaire: true, tourne: true, th: 0, r: 0.5, f: 1000, L1: 80 }, vue: { cible: [-1.25, 1.45, 0], dir: [0.05, 1, 0.45], dist: 10 },
+    { t: 'Tourner autour : la directivité cardioïde', lecon: 'son-directivite', reglage: { ex: 0, ondes: true, polaire: true, tourne: true, th: 0, r: 0.5, f: 1000, L1: 80 }, vue: { cible: [-2.1, 1.45, 0], dir: [0.05, 1, 0.42], dist: 11.5 },
       texte: `La source fait le tour du micro. À plat sur la table, la **courbe cardioïde** (ambre) : la sensibilité du micro selon l'angle d'arrivée, **0,5 + 0,5 × cos θ**. Dans l'axe, tout ; sur le côté (90°), la moitié, **−6 dB** ; derrière (180°), presque **rien**.
 
 Regardez l'oscilloscope : la tension s'effondre quand la source passe derrière. C'est pour cela qu'on place le **retour de scène** du chanteur derrière un cardioïde, dans le trou de sa courbe : le micro ne le reprend pas, le larsen recule.` },
@@ -66,7 +65,7 @@ Regardez l'oscilloscope : la tension s'effondre quand la source passe derrière.
       texte: `La source est à **2 cm**, et joue un grave (**100 Hz**). Un micro directif mesure en partie le **gradient** de pression, la différence entre l'avant et l'arrière de la membrane ; tout près d'une source, l'onde est encore sphérique et ce gradient grandit aux basses fréquences : les **graves montent**, c'est l'**effet de proximité**.
 
 Le modèle idéal donne ici plus de 20 dB ; un vrai micro est réglé pour en compenser une partie (ordre de grandeur). Éloignez la source à 50 cm, montez à 1 kHz : l'effet disparaît. À la console, le **passe-haut** de la tranche le corrige.` },
-    { t: 'Le connecteur XLR', lecon: 'son-dynamique', reglage: { ex: 0.6, ondes: true, polaire: false, tourne: false, th: 0, r: 0.05, f: 1000, L1: 70 }, vue: { cible: [1.75, 1.45, 0], dir: [0.8, 0.3, 0.6], dist: 2.6 },
+    { t: 'Le connecteur XLR', lecon: 'son-dynamique', reglage: { ex: 0.6, ondes: true, polaire: false, tourne: false, th: 0, r: 0.05, f: 1000, L1: 70 }, vue: { cible: [1.75, 1.45, 0], dir: [1, 0.25, 0.4], dist: 2.4 },
       texte: `Au bout du corps, le **XLR mâle** : broche **1** la masse (reliée au corps et au blindage du câble), broche **2** le point chaud, broche **3** le point froid. Les deux fils de la bobine arrivent sur 2 et 3 : la tension de la bobine est la **différence** entre ces deux broches, ce qu'attend une entrée **symétrique**.
 
 C'est aussi pourquoi le **48 V** ne gêne pas ce micro : la console le met à égalité sur 2 et 3, il n'y a aucune différence entre elles, rien ne traverse la bobine.` },
@@ -135,7 +134,7 @@ C'est aussi pourquoi le **48 V** ne gêne pas ce micro : la console le met à é
       const m = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.018, 0.16, 12), mat('alu', 0xd8c890, { metalness: 1, roughness: 0.25 }));
       m.rotation.z = Math.PI / 2; m.position.set(0.14, p.y, p.z); m.userData.info = { nom: `Broche ${p.n}`, texte: p.n === 1 ? 'La masse : le corps du micro et le blindage du câble.' : p.n === 2 ? 'Le point chaud : un fil de la bobine.' : 'Le point froid : l\'autre fil de la bobine.' };
       gX.add(m); pinPos[p.n] = new THREE.Vector3(0.22, p.y, p.z);
-      const t = texte(String(p.n), { h: 0.07, bg: 'rgba(18,22,26,.8)' }); t.position.set(0.3, p.y + 0.05, p.z); gX.add(t);
+      const t = texte(String(p.n), { h: 0.07, bg: 'rgba(18,22,26,.8)' }); t.position.set(0.24, p.y + (p.n === 3 ? -0.07 : 0.06), p.z * 1.9); t.rotation.y = Math.PI / 2; gX.add(t);
     }
     // les deux fils, de la bobine aux broches 2 et 3 (redessinés quand l'éclaté change)
     const fils = new THREE.Group(); fils.name = 'fils'; fils.userData.info = { nom: 'Les deux fils de la bobine', texte: 'Ils portent la tension induite jusqu\'aux broches 2 (point chaud) et 3 (point froid).' }; root.add(fils);
@@ -183,8 +182,9 @@ C'est aussi pourquoi le **48 V** ne gêne pas ce micro : la console le met à é
     function drawOsc(K) {
       const g = osc.g, W = osc.W, H = osc.H;
       g.fillStyle = '#071012'; g.fillRect(0, 0, W, H);
-      const pk = K.mv * Math.SQRT2, cal = [0.05, 0.1, 0.2, 0.5, 1, 2, 5, 10, 20, 50].find((c) => pk <= c * 3.6) || 50;
-      const X0 = 20, Wd = W - 40, Y0 = H / 2 + 6, hd = (H - 70) / 8;
+      // sans son, la bobine ne bouge pas : la trace est plate (le calibre reste celui du son attendu)
+      const pk0 = K.mv * Math.SQRT2, pk = S.ondes ? pk0 : 0, cal = [0.05, 0.1, 0.2, 0.5, 1, 2, 5, 10, 20, 50].find((c) => pk0 <= c * 3.6) || 50;
+      const X0 = 20, Wd = W - 40, Y0 = H / 2 + 2, hd = (H - 84) / 8;
       g.strokeStyle = '#183036'; g.lineWidth = 1;
       for (let i = 0; i <= 10; i++) { g.beginPath(); g.moveTo(X0 + i * Wd / 10, Y0 - 4 * hd); g.lineTo(X0 + i * Wd / 10, Y0 + 4 * hd); g.stroke(); }
       for (let j = -4; j <= 4; j++) { g.beginPath(); g.moveTo(X0, Y0 + j * hd); g.lineTo(X0 + Wd, Y0 + j * hd); g.stroke(); }
@@ -192,9 +192,9 @@ C'est aussi pourquoi le **48 V** ne gêne pas ce micro : la console le met à é
       for (let i = 0; i <= Wd; i++) { const y = Y0 - Math.sin(2 * Math.PI * 3 * i / Wd + S.ph) * pk / cal * hd; if (i) g.lineTo(X0 + i, y); else g.moveTo(X0, y); }
       g.stroke();
       g.fillStyle = '#9fe0b4'; g.font = '600 26px "B612 Mono", monospace';
-      g.fillText(`${fmtNum(K.mv, K.mv < 1 ? 3 : 2)} mV eff.`, 20, 36);
+      g.fillText(S.ondes ? `${fmtNum(K.mv, K.mv < 1 ? 3 : 2)} mV eff.` : 'silence : 0 mV', 20, 32);
       g.fillStyle = '#aab4ba'; g.font = '20px "Archivo Narrow", sans-serif';
-      g.fillText(`${fmtNum(cal, cal < 1 ? 2 : 0)} mV/carreau · ${hz(S.f)} · ${S.mic === 'sm58' ? 'type SM58' : 'type SM48'}`, W - 330, 36);
+      g.fillText(`${fmtNum(cal, cal < 1 ? 2 : 0)} mV par carreau · ${hz(S.f)} · ${S.mic === 'sm58' ? 'type SM58' : 'type SM48'}`, 20, H - 10);
       osc.mesh.material.map.needsUpdate = true;
     }
     function lire() {
@@ -208,13 +208,14 @@ C'est aussi pourquoi le **48 V** ne gêne pas ce micro : la console le met à é
     let K = lire(), tRead = 0, ui = null;
     const inputs = {};
     const setUi = (k, v) => { const i = inputs[k]; if (i) { i.value = String(v); i.dispatchEvent(new Event('input')); } };
+    /** la source tourne autour de la tête (la grille, qui recule quand le micro est éclaté) */
     function placeSource() {
       const d = DIR(S.th), R = RV(S.r);
-      src.position.copy(HEAD).addScaledVector(d, R);
+      src.position.set(gGr.position.x, AY, 0).addScaledVector(d, R);
     }
     function applyExplode() {
       for (const p of parts) p.g.position.x = p.base + p.off * S.ex;
-      drawFils();
+      drawFils(); placeSource();
     }
     applyExplode(); placeSource(); drawOsc(K);
     return {

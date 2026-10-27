@@ -16,9 +16,10 @@ import { COUL, mat, lum, verre, eclat, ecran, texte, piece, courbe, tube, cableE
 // arrive pareil sur les deux conducteurs et s'annule à l'entrée symétrique. Chiffres : cours/son_micro_calc.js.
 // ----------------------------------------------------------------------------------
 const ZF = 1.3; // rangée des capsules
-const ZB = -2.6; // la liaison micro
+const OX = 11; // la liaison micro est à droite des capsules, assez loin pour qu'on la regarde seule
+const ZB = 1.0;
 const Y2 = 1.25, Y3 = 1.0, Y1 = 0.75; // hauteurs des conducteurs 2, 3 et 1
-const XC = -3.7, XM = 3.7; // la console, le micro
+const XC = OX - 2.6, XM = OX + 2.6; // la console, le micro
 const CAPS = [
   { k: 'dynamique', x: -4.6, nom: 'Dynamique', loi: 'tension ∝ vitesse de la bobine', mic: 'sm58' },
   { k: 'statique', x: -1.6, nom: 'Statique', loi: 'tension ∝ déplacement de la membrane', mic: 'statique' },
@@ -32,50 +33,52 @@ export const VUE_SON_CAPSULES = {
   resume: 'Une capsule dynamique, une statique, un ruban et un électret sous les mêmes fronts de pression ; puis un câble micro ouvert : le 48 V sur les broches 2 et 3, un dynamique qu\'il ne traverse pas, un parasite qui s\'annule en symétrique.',
   lecons: ['son-statique', 'son-48v', 'son-liaisons'],
   lectures: ['Les capsules sous 1 Pa (94 dB SPL)', 'Tension au micro', 'Courants dans le câble', 'Parasite à l\'entrée de la console'],
-  depart: 'Devant, quatre capsules agrandies (mouvements très exagérés) ; derrière, un câble micro ouvert entre la console et le micro.',
-  vue: { cible: [0, 1.2, -0.6], dir: [0, 0.45, 1], dist: 12.5 },
-  orbite: { rMin: 1.2, rMax: 22 },
+  depart: 'À gauche, quatre capsules agrandies (mouvements très exagérés) ; à droite, un câble micro ouvert entre la console et le micro.',
+  vue: { cible: [5.2, 1.2, ZF], dir: [0, 0.55, 1], dist: 24 },
+  orbite: { rMin: 1.2, rMax: 32 },
+  // un sol à la taille de la scène (celui des vues s'arrête à 16 m du centre)
+  decor: { sol: false },
   etapes: [
-    { t: 'Changer la pression en tension', lecon: 'son-statique', reglage: { ondes: true }, vue: { cible: [0, 1.25, ZF], dir: [0, 0.3, 1], dist: 9.5 },
+    { t: 'Changer la pression en tension', lecon: 'son-statique', reglage: { ondes: true }, vue: { cible: [-0.2, 1.5, ZF], dir: [0, 0.3, 1], dist: 14 },
       texte: `Quatre capsules agrandies reçoivent les mêmes **fronts de pression** (les plans cyan qui avancent). Chacune change la pression en tension à sa façon :
 - la **dynamique** : une bobine qui bouge dans un aimant ;
 - la **statique** : une membrane qui s'approche et s'éloigne d'une plaque, comme un condensateur ;
 - le **ruban** : un ruban d'aluminium entre deux aimants ;
 - l'**électret** : un statique dont la charge est piégée à vie.
 Au-dessus de chacune, ce qu'elle donne sous 1 Pa (94 dB SPL), en ordre de grandeur pour les trois dernières.` },
-    { t: 'Le dynamique : une vitesse', lecon: 'son-statique', reglage: { ondes: true }, vue: { cible: [-4.6, 1.25, ZF], dir: [0.5, 0.3, 1], dist: 3.6 },
+    { t: 'Le dynamique : une vitesse', lecon: 'son-statique', reglage: { ondes: true }, vue: { cible: [-4.6, 1.35, ZF - 0.1], dir: [0.8, 0.3, 0.6], dist: 4.4 },
       texte: `La **membrane** (ambre) est collée à une **bobine** de cuivre qui plonge dans le champ de l'**aimant**. La pression la pousse : la bobine traverse le champ et produit une tension, d'autant plus grande qu'elle va **vite** (induction).
 
 Rien à alimenter, une construction solide : c'est le micro des voix sur scène. Mais la membrane et sa bobine pèsent : un type SM58 ne donne qu'environ **1,9 mV sous 1 Pa**.` },
-    { t: 'Le statique : un condensateur qui respire', lecon: 'son-statique', reglage: { ondes: true }, vue: { cible: [-1.6, 1.25, ZF], dir: [0.45, 0.3, 1], dist: 3.6 },
+    { t: 'Le statique : un condensateur qui respire', lecon: 'son-statique', reglage: { ondes: true }, vue: { cible: [-1.6, 1.35, ZF - 0.2], dir: [0.85, 0.3, 0.5], dist: 4.4 },
       texte: `Devant, une **membrane** métallisée de quelques micromètres ; derrière, à quelques dizaines de micromètres, une **plaque arrière** percée. Les deux sont **chargées** (+ et −) par la **polarisation**. Quand la membrane s'approche, la capacité change, la charge ne suit pas : c'est la **tension** qui varie, au rythme du **déplacement**.
 
 La capsule ne peut rien fournir seule : l'**électronique** (le boîtier vert) adapte son impédance énorme et donne un niveau bien plus fort, de l'ordre de **20 mV sous 1 Pa** ici. Il faut l'alimenter : c'est le **48 V**.` },
-    { t: 'Le ruban et l\'électret', lecon: 'son-statique', reglage: { ondes: true }, vue: { cible: [2.85, 1.25, ZF], dir: [0, 0.3, 1], dist: 5.4 },
+    { t: 'Le ruban et l\'électret', lecon: 'son-statique', reglage: { ondes: true }, vue: { cible: [2.85, 1.45, ZF - 0.1], dir: [0.45, 0.35, 1], dist: 6.4 },
       texte: `Le **ruban** est un dynamique sans bobine : un ruban d'aluminium plissé, plus fin qu'une feuille de papier, suspendu entre deux **aimants**. Ouvert devant et derrière, il capte les deux faces : **figure en 8**. Son très doux, mais fragile : un souffle, un choc, ou un 48 V appliqué sur un câble défectueux peuvent l'abîmer.
 
 L'**électret** a une plaque arrière dont la **charge** est **piégée à vie** dans un film plastique (les + violets) : plus besoin de polarisation. Son petit **transistor**, lui, doit être alimenté (pile, 48 V ou émetteur HF) : c'est le micro-cravate.` },
-    { t: 'Le 48 V voyage dans le câble', lecon: 'son-48v', reglage: { ondes: false, on: true, micro: 'statique', defaut: false, parasite: false, i: 3 }, vue: { cible: [0, 1.0, ZB], dir: [0, 0.35, 1], dist: 9.5 },
-      texte: `Derrière, un câble micro ouvert entre la **console** (à gauche) et un **micro statique** (à droite). Dans la console, le **+48 V** passe par **deux résistances de 6,81 kΩ** vers la broche **2** (rouge) et la broche **3** (cyan) ; des **condensateurs** l'empêchent d'entrer dans le préampli.
+    { t: 'Le 48 V voyage dans le câble', lecon: 'son-48v', reglage: { ondes: false, on: true, micro: 'statique', defaut: false, parasite: false, i: 3 }, vue: { cible: [OX - 0.7, 1.3, ZB], dir: [0, 0.45, 1], dist: 12 },
+      texte: `À droite des capsules, un câble micro ouvert entre la **console** (à gauche) et un **micro statique** (à droite). Dans la console, le **+48 V** passe par **deux résistances de 6,81 kΩ** vers la broche **2** (rouge) et la broche **3** (cyan) ; des **condensateurs** l'empêchent d'entrer dans le préampli.
 
 Les points orange sont le courant : il descend vers le micro **par les deux conducteurs du signal** et revient par la broche **1** (la masse, en gris). Les deux conducteurs portent la même tension : le signal, leur **différence**, n'est pas gêné. D'où le nom de fantôme.` },
-    { t: 'Ce qui reste au micro', lecon: 'son-48v', reglage: { ondes: false, on: true, micro: 'statique', defaut: false, parasite: false, i: 3 }, vue: { cible: [2.6, 1.3, ZB], dir: [-0.2, 0.3, 1], dist: 5.2 },
+    { t: 'Ce qui reste au micro', lecon: 'son-48v', reglage: { ondes: false, on: true, micro: 'statique', defaut: false, parasite: false, i: 3 }, vue: { cible: [OX + 2.4, 1.6, ZB], dir: [-0.3, 0.35, 1], dist: 5.6 },
       texte: `Vu du micro, les deux résistances sont en **parallèle** : **3,405 kΩ**. Le courant qu'il demande y fait chuter la tension : **U = 48 − I × 3,405 kΩ**, soit environ **38 V pour 3 mA**.
 
 Montez le « Courant demandé » vers 10 mA, le maximum prévu par la norme P48 : il ne reste qu'environ 14 V. Un micro gourmand sur une alimentation faible perd de la marge (il sature plus tôt). Coupez le 48 V : le statique est **muet**, ni crête ni souffle.` },
-    { t: 'Un dynamique sur le 48 V', lecon: 'son-48v', reglage: { ondes: false, on: true, micro: 'dynamique', defaut: false, parasite: false, i: 0 }, vue: { cible: [1.2, 1.1, ZB], dir: [0, 0.35, 1], dist: 7 },
+    { t: 'Un dynamique sur le 48 V', lecon: 'son-48v', reglage: { ondes: false, on: true, micro: 'dynamique', defaut: false, parasite: false, i: 0 }, vue: { cible: [OX + 1.2, 1.3, ZB], dir: [0, 0.45, 1], dist: 8.4 },
       texte: `On branche un **micro dynamique** sur la même ligne, 48 V allumé. Sa **bobine** est reliée entre la broche 2 et la broche 3 : toutes deux sont à **+48 V**, il n'y a **aucune différence** entre elles. Aucun courant ne la traverse : le dynamique fonctionne exactement comme sans 48 V.
 
 C'est pour cela qu'on peut laisser le 48 V sur une tranche où l'on branche un dynamique, **tant que la liaison est symétrique et saine**.` },
-    { t: 'Un câble abîmé', lecon: 'son-48v', reglage: { ondes: false, on: true, micro: 'dynamique', defaut: true, parasite: false, i: 0 }, vue: { cible: [1.2, 1.1, ZB], dir: [0, 0.35, 1], dist: 7 },
+    { t: 'Un câble abîmé', lecon: 'son-48v', reglage: { ondes: false, on: true, micro: 'dynamique', defaut: true, parasite: false, i: 0 }, vue: { cible: [OX + 1.2, 1.3, ZB], dir: [0, 0.45, 1], dist: 8.4 },
       texte: `Le câble a un défaut : la broche **3** touche la **masse** (le pont rouge). La broche 2 est toujours à +48 V, la 3 à 0 V : la **bobine** est entre les deux. Un courant continu d'environ **6,8 mA** la traverse (48 V ÷ 7,1 kΩ) : la membrane est décentrée, le son craque et se déforme.
 
 Même chose avec un adaptateur XLR vers jack TS, ou une liaison asymétrique. Un **ruban** ancien peut y laisser son ruban. On allume le 48 V fader baissé, et l'on change un câble douteux.` },
-    { t: 'Un parasite sur la ligne', lecon: 'son-liaisons', reglage: { ondes: false, on: false, micro: 'dynamique', defaut: false, parasite: true, sym: true, i: 0 }, vue: { cible: [-1.0, 1.1, ZB + 0.3], dir: [0, 0.4, 1], dist: 8.5 },
+    { t: 'Un parasite sur la ligne', lecon: 'son-liaisons', reglage: { ondes: false, on: false, micro: 'dynamique', defaut: false, parasite: true, sym: true, i: 0 }, vue: { cible: [OX - 0.4, 1.4, ZB + 0.3], dir: [0, 0.5, 1], dist: 10.5 },
       texte: `Un **câble secteur** (jaune) court le long du câble micro : il induit un **ronflement** (50 Hz et ses harmoniques). Les deux conducteurs torsadés le captent **pareil** (les points blancs, sur 2 et sur 3 en même temps) ; le signal, lui, part en **opposition** sur 2 et 3.
 
 L'entrée **symétrique** de la console ne garde que la **différence** entre 2 et 3 : le signal double, le parasite **s'annule**, au déséquilibre près. L'écran de l'entrée montre une voix propre.` },
-    { t: 'Sans symétrie, le parasite reste', lecon: 'son-liaisons', reglage: { ondes: false, on: false, micro: 'dynamique', defaut: false, parasite: true, sym: false, i: 0 }, vue: { cible: [-1.0, 1.1, ZB + 0.3], dir: [0, 0.4, 1], dist: 8.5 },
+    { t: 'Sans symétrie, le parasite reste', lecon: 'son-liaisons', reglage: { ondes: false, on: false, micro: 'dynamique', defaut: false, parasite: true, sym: false, i: 0 }, vue: { cible: [OX - 0.4, 1.4, ZB + 0.3], dir: [0, 0.5, 1], dist: 10.5 },
       texte: `La même ligne en **asymétrique** (un jack TS, un RCA) : un seul conducteur et la masse. L'entrée ne peut plus rien soustraire : le **parasite** arrive **tout entier** avec le signal.
 
 Sur un niveau de micro (quelques millivolts), quelques millivolts de ronflement couvrent la voix. D'où la règle : les micros voyagent en **symétrique** (XLR), et une source asymétrique qui doit aller loin passe par une **boîte de direct** (DI).` },
@@ -83,6 +86,8 @@ Sur un niveau de micro (quelques millivolts), quelques millivolts de ronflement 
   build(ctx) {
     const root = ctx.root;
     const S = { ondes: true, on: true, micro: 'statique', defaut: false, parasite: false, sym: true, i: 3, t: 0 };
+    const sol = new THREE.Mesh(new THREE.PlaneGeometry(60, 34), mat('beton', 0x1b2026, { roughness: 0.92 })); sol.rotation.x = -Math.PI / 2; sol.position.set(OX / 2, 0, -2); sol.receiveShadow = true; sol.name = 'sol'; root.add(sol);
+    const grille = new THREE.GridHelper(60, 120, 0x2b333b, 0x20272e); grille.position.set(OX / 2, 0.002, -2); /** @type {any} */ (grille.material).transparent = true; /** @type {any} */ (grille.material).opacity = 0.5; root.add(grille);
     // ================= devant : les quatre capsules =================
     const movers = {};
     const socle = (x) => { const p = piece('socle', 'plastique', (b) => { b.cbox(1.5, 0.5, 1.2, x, 0.25, ZF, 0x1d2227, 0.03); }); root.add(p); };
@@ -141,7 +146,9 @@ Sur un niveau de micro (quelques millivolts), quelques millivolts de ronflement 
       const film = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.42, 0.08, 40), mat('plastique', 0x7a5ad0, { roughness: 0.4 })); film.rotation.x = Math.PI / 2; film.position.set(x, y, ZF - 0.15);
       film.userData.info = { nom: 'Film électret', texte: 'Un film plastique dont la charge est piégée à vie : la capsule n\'a plus besoin de polarisation.' }; root.add(film);
       for (let i = 0; i < 6; i++) { const t = texte('+', { h: 0.12, color: '#f2e8ff' }); const a = i / 6 * 2 * Math.PI; t.position.set(x + Math.cos(a) * 0.26, y + Math.sin(a) * 0.26 - 0.03, ZF - 0.1); root.add(t); }
-      const memb = new THREE.Mesh(new THREE.CircleGeometry(0.42, 40), mat('alu', 0xe8c060, { metalness: 0.9, roughness: 0.25, side: THREE.DoubleSide }));
+      // membrane à demi transparente : on voit les charges piégées du film derrière elle
+      const memb = new THREE.Mesh(new THREE.CircleGeometry(0.42, 40), mat('alu', 0xe8c060, { metalness: 0.6, roughness: 0.3, side: THREE.DoubleSide, transparent: true, opacity: 0.45 }));
+      /** @type {any} */ (memb.material).depthWrite = false; memb.renderOrder = 3;
       const mv = new THREE.Group(); mv.position.set(x, y, ZF + 0.02); mv.add(memb); mv.userData.info = { nom: 'Membrane', texte: 'Comme dans un statique : sa distance au film chargé fait varier la tension.' }; root.add(mv);
       const fet = piece('transistor', 'plastique', (b) => { b.cbox(0.3, 0.24, 0.16, 0, 0, 0, 0x1f5a35, 0.02); }); fet.position.set(x, y - 0.1, ZF - 0.45); fet.userData.info = { nom: 'Transistor (FET)', texte: 'Il adapte l\'impédance de la capsule. Il doit être alimenté : pile, 48 V, ou l\'émetteur HF du micro-cravate.' }; root.add(fet);
       ctx.label(fet, 'transistor : pile ou 48 V', { off: [0, -0.28, 0], cls: 'small' });
@@ -149,7 +156,15 @@ Sur un niveau de micro (quelques millivolts), quelques millivolts de ronflement 
     }
     // les fronts de pression : des plans qui avancent vers les capsules
     const fronts = [];
-    for (let i = 0; i < 4; i++) { const m = new THREE.Mesh(new THREE.PlaneGeometry(11.5, 1.8), eclat(0x7fd3f3, 0.25)); m.position.set(0, 1.25, 4); m.userData.passe = true; /** @type {any} */ (m.material).side = THREE.DoubleSide; /** @type {any} */ (m.material).depthWrite = false; root.add(m); fronts.push(m); }
+    // un front : un voile très léger et son contour, plus net (sinon les voiles empilés délavent la scène)
+    for (let i = 0; i < 4; i++) {
+      const m = new THREE.Group(); m.position.set(0, 1.25, 4); root.add(m);
+      const fill = new THREE.Mesh(new THREE.PlaneGeometry(11.5, 1.6), eclat(0x7fd3f3, 0.05)); fill.userData.passe = true;
+      /** @type {any} */ (fill.material).side = THREE.DoubleSide; /** @type {any} */ (fill.material).depthWrite = false; m.add(fill);
+      const edge = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.PlaneGeometry(11.5, 1.6)), new THREE.LineBasicMaterial({ color: 0x7fd3f3, transparent: true, opacity: 0.8 }));
+      m.add(edge); m.userData.mats = [fill.material, edge.material];
+      fronts.push(m);
+    }
     function drawCaps() {
       for (const C of CAPS) {
         const E = screens[C.k], g = E.g, W = E.W, H = E.H, M = MICROS[C.mic], mv = mvParPa(M.sens);
@@ -178,15 +193,17 @@ Sur un niveau de micro (quelques millivolts), quelques millivolts de ronflement 
     // les trois conducteurs ouverts
     const condM = { 2: mat('plastique', COUL.rouge, { roughness: 0.45 }), 3: mat('plastique', COUL.cyan, { roughness: 0.45 }), 1: mat('alu', 0xa7adb3, { metalness: 0.6, roughness: 0.5 }) };
     const path = { 2: courbe([[XC - 0.4, Y2, ZB + 0.62], [XC + 0.4, Y2, ZB + 0.3], [XM - 0.4, Y2, ZB + 0.3], [XM, Y2, ZB + 0.3]]), 3: courbe([[XC - 0.4, Y3, ZB + 0.62], [XC + 0.4, Y3, ZB + 0.3], [XM - 0.4, Y3, ZB + 0.3], [XM, Y3, ZB + 0.3]]), 1: courbe([[XC + 0.4, Y1, ZB + 0.62], [XC + 0.6, Y1, ZB + 0.3], [XM - 0.4, Y1, ZB + 0.3], [XM, Y1, ZB + 0.3]]) };
+    /** @type {Record<number, THREE.Mesh>} */
+    const conds = {};
     for (const n of [2, 3, 1]) {
-      const m = tube(path[n], n === 1 ? 0.03 : 0.025, condM[n], 80, 10); m.userData.info = { nom: `Broche ${n} : ${n === 1 ? 'masse (blindage)' : n === 2 ? 'point chaud' : 'point froid'}`, texte: n === 1 ? 'Le retour du courant du 48 V, et le blindage du câble.' : 'Le signal (en opposition sur 2 et 3) et le +48 V (pareil sur 2 et 3).' };
+      const m = tube(path[n], n === 1 ? 0.03 : 0.025, condM[n], 80, 10); conds[n] = m; m.userData.info = { nom: `Broche ${n} : ${n === 1 ? 'masse (blindage)' : n === 2 ? 'point chaud' : 'point froid'}`, texte: n === 1 ? 'Le retour du courant du 48 V, et le blindage du câble.' : 'Le signal (en opposition sur 2 et 3) et le +48 V (pareil sur 2 et 3).' };
       root.add(m);
       ctx.label(new THREE.Vector3(XC + 1.4, n === 2 ? Y2 : n === 3 ? Y3 : Y1, ZB + 0.3), `broche ${n}`, { off: [0, 0.1, 0], cls: 'small' });
     }
     const gaine = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.42, XM - XC - 1.6, 32, 1, true), verre(0x8a949c, 0.08, { depthWrite: false, side: THREE.DoubleSide }));
     gaine.rotation.z = Math.PI / 2; gaine.position.set((XC + XM) / 2 + 0.2, Y3, ZB + 0.3); gaine.userData.passe = true; gaine.renderOrder = 1; root.add(gaine);
     // le défaut : la broche 3 touche la masse
-    const pont = new THREE.Mesh(new THREE.BoxGeometry(0.06, Y3 - Y1, 0.06), eclat(0xff3b30)); pont.position.set(1.6, (Y3 + Y1) / 2, ZB + 0.3); pont.visible = false;
+    const pont = new THREE.Mesh(new THREE.BoxGeometry(0.06, Y3 - Y1, 0.06), eclat(0xff3b30)); pont.position.set(OX + 1.6, (Y3 + Y1) / 2, ZB + 0.3); pont.visible = false;
     pont.userData.info = { nom: 'Défaut : la broche 3 touche la masse', texte: 'Un fil écrasé, une soudure, un adaptateur asymétrique : le 48 V trouve un chemin à travers la bobine du dynamique.' }; root.add(pont);
     // le micro au bout : un statique (boîtier) ou un dynamique (bobine)
     const micS = piece('micro statique', 'plastique', (b) => { b.cbox(1.0, 0.9, 0.7, 0, 0, 0, 0x30373f, 0.04); b.cbox(0.3, 0.5, 0.06, 0.1, 0, 0.36, 0x1f5a35, 0.02); });
@@ -197,7 +214,7 @@ Sur un niveau de micro (quelques millivolts), quelques millivolts de ronflement 
     const uScr = ecran(1.5, 0.55, 420, () => {}); uScr.mesh.position.set(XM + 0.4, 2.3, ZB + 0.2); root.add(uScr.mesh);
     uScr.mesh.userData.info = { nom: 'Ce que mesure le voltmètre au micro', texte: 'La tension qui reste au micro : U = 48 − I × 3,405 kΩ.' };
     // le câble secteur et l'écran de l'entrée
-    const secteur = tube(courbe([[XC + 0.2, 0.55, ZB + 1.15], [0, 0.6, ZB + 1.05], [XM, 0.55, ZB + 1.15]]), 0.06, mat('plastique', 0xd9b020, { roughness: 0.5 }), 60, 10);
+    const secteur = tube(courbe([[XC + 0.2, 0.55, ZB + 1.15], [OX, 0.6, ZB + 1.05], [XM, 0.55, ZB + 1.15]]), 0.06, mat('plastique', 0xd9b020, { roughness: 0.5 }), 60, 10);
     secteur.userData.info = { nom: 'Câble secteur (230 V)', texte: 'Il rayonne un champ à 50 Hz : le câble micro voisin capte un ronflement.' }; root.add(secteur);
     const halo = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.22, XM - XC - 0.3, 24, 1, true), eclat(0xffd020, 0.12)); halo.rotation.z = Math.PI / 2; halo.position.set((XC + XM) / 2 + 0.1, 0.57, ZB + 1.1); halo.userData.passe = true; /** @type {any} */ (halo.material).depthWrite = false; root.add(halo);
     const inScr = ecran(1.7, 0.75, 460, () => {}); inScr.mesh.position.set(XC - 0.6, 2.55, ZB + 0.1); root.add(inScr.mesh);
@@ -225,9 +242,10 @@ Sur un niveau de micro (quelques millivolts), quelques millivolts de ronflement 
       g.fillStyle = '#071012'; g.fillRect(0, 0, W, H);
       g.fillStyle = '#aab4ba'; g.font = '20px "Archivo Narrow", sans-serif';
       g.fillText(S.parasite ? (S.sym ? 'entrée symétrique : 2 − 3' : 'entrée asymétrique : conducteur − masse') : 'entrée de la console', 14, 28);
-      const res = S.parasite ? X.L.reste / 2 : 0;
+      // le parasite restant rapporté au signal (2 mV ici), puis le tout ramené à la hauteur de l'écran
+      const pr = S.parasite ? X.L.reste / 2 : 0, k = 1 / (1 + 1.4 * pr), res = pr * k;
       g.strokeStyle = '#9fe0b4'; g.lineWidth = 3; g.beginPath();
-      for (let i = 0; i <= W - 28; i++) { const u = i / (W - 28); const v = Math.sin(2 * Math.PI * 4 * u + ph) * 0.35 + res * (Math.sin(2 * Math.PI * 1.1 * u + ph * 0.3) + 0.4 * Math.sin(2 * Math.PI * 3.3 * u)); const y = H / 2 + 14 - v * (H / 2 - 30); if (i) g.lineTo(14 + i, y); else g.moveTo(14, y); }
+      for (let i = 0; i <= W - 28; i++) { const u = i / (W - 28); const v = Math.sin(2 * Math.PI * 4 * u + ph) * 0.6 * k + 0.6 * res * (Math.sin(2 * Math.PI * 1.1 * u + ph * 0.3) + 0.4 * Math.sin(2 * Math.PI * 3.3 * u)); const y = H / 2 + 14 - v * (H / 2 - 30); if (i) g.lineTo(14 + i, y); else g.moveTo(14, y); }
       g.stroke();
       g.fillStyle = S.parasite && !S.sym ? '#ff8a80' : '#9fe0b4'; g.font = '600 22px "B612 Mono", monospace';
       g.fillText(!S.parasite ? 'signal seul' : S.sym ? `parasite rejeté : ${fmtNum(X.L.rejection, 0)} dB` : 'parasite : tout entier', 14, H - 14);
@@ -236,6 +254,8 @@ Sur un niveau de micro (quelques millivolts), quelques millivolts de ronflement 
     function maj() {
       const X = etat();
       micS.visible = S.micro === 'statique'; micD.visible = S.micro !== 'statique';
+      // en asymétrique (jack TS, RCA), il n'y a plus de point froid : un conducteur et la masse
+      conds[3].visible = S.sym;
       const bm = /** @type {any} */ (bob.material); bm.color.set(S.micro === 'ruban' ? 0xd8dde2 : COUL.cuivre); bm.emissive.set(X.fu ? 0x7a1010 : 0x000000);
       micTag.set(S.micro === 'statique' ? 'micro statique' : S.micro === 'ruban' ? 'micro à ruban' : 'micro dynamique');
       pont.visible = S.defaut; secteur.visible = halo.visible = S.parasite;
@@ -267,7 +287,10 @@ Sur un niveau de micro (quelques millivolts), quelques millivolts de ronflement 
       update(dt) {
         S.t += dt;
         // devant : les fronts avancent, les parties mobiles suivent la pression
-        fronts.forEach((m, k) => { const u = ((S.t * 0.35 + k / fronts.length) % 1); m.position.z = 4.2 - u * 3.0; /** @type {any} */ (m.material).opacity = S.ondes ? 0.22 * (1 - u) + 0.03 : 0; m.visible = S.ondes; });
+        fronts.forEach((m, k) => {
+          const u = ((S.t * 0.35 + k / fronts.length) % 1); m.position.z = 4.2 - u * 3.0; m.visible = S.ondes;
+          const [fm, em] = m.userData.mats; fm.opacity = 0.06 * (1 - u); em.opacity = 0.85 * (1 - u) + 0.05;
+        });
         const p = Math.sin(2 * Math.PI * 0.35 * fronts.length * S.t);
         for (const [k, M] of Object.entries(movers)) { M.obj.position.z = M.z0 + (S.ondes ? p * M.amp : 0); if (k === 'ruban') M.obj.rotation.y = S.ondes ? p * 0.05 : 0; }
         // derrière : le courant du 48 V (orange), le parasite (blanc, sur 2 et 3 ensemble)

@@ -55,8 +55,10 @@ function figEchelle() {
     f.append(sv('line', { x1: X(d), y1: Y - 4, x2: X(d), y2: Y + 16, stroke: '#e8eef2' }), txt(X(d), Y + 28, d + ' dB', 'co-m'));
     f.append(txt(X(d), Y - 10, pascals(paDeSpl(d)), 'co-s'));
   }
+  // trois rangées d'étiquettes, pour que les exemples voisins ne se chevauchent pas
+  const RANG = [0, 1, 0, 1, 0, 2, 1];
   EXEMPLES.forEach(([d, t], i) => {
-    const y = Y + 46 + (i % 2) * 18;
+    const y = Y + 46 + RANG[i] * 16;
     f.append(sv('line', { x1: X(d), y1: Y + 14, x2: X(d), y2: y - 10, stroke: C.grey, strokeDasharray: '2 3' }), txt(X(d), y, t, 'co-s', i === 0 ? 'start' : i === EXEMPLES.length - 1 ? 'end' : 'middle', d === 94 ? { fill: C.amber } : {}));
   });
   f.append(txt(X(85), Y - 26, 'au-delà de 85 dB(A) sur une journée : protection obligatoire', 'co-s', 'start', { fill: C.amber }));
@@ -94,7 +96,7 @@ function demoAcoustique(host) {
     g.stroke();
     g.strokeStyle = '#e8eef2'; g.lineWidth = 1; g.beginPath(); g.moveTo(x0 + W0 / 12, 150); g.lineTo(x0 + W0 / 12 + W0 / 3, 150); g.stroke();
     g.fillStyle = '#e8eef2'; g.fillText(`λ = c ÷ f = ${metres(lam)}`, x0 + W0 / 12, 164);
-    g.fillStyle = '#aab4ba'; g.fillText('pression (ambre) : au-dessus de la ligne, surpression ; en dessous, dépression', x0 + W0 / 2, 164);
+    g.fillStyle = '#aab4ba'; g.fillText('ambre : la pression (en haut, surpression ; en bas, dépression)', x0 + W0 / 2, 164);
     // l'échelle des niveaux : à 1 m, au micro, avec la deuxième source
     const X = (d) => 40 + Math.max(0, Math.min(140, d)) / 140 * 640, Y = 200;
     g.fillStyle = '#1f4a2c'; g.fillRect(X(0), Y, X(85) - X(0), 10); g.fillStyle = '#4a4320'; g.fillRect(X(85), Y, X(120) - X(85), 10); g.fillStyle = '#4a2420'; g.fillRect(X(120), Y, X(140) - X(120), 10);
@@ -228,7 +230,7 @@ function figStatique() {
   for (let i = 0; i < 5; i++) f.append(txt(x2 + 47, y + 36 + i * 20, '+', 'co-m', 'middle', { fill: '#0b0e10' }));
   f.append(txt(x2 + 60, y + 14, 'film électret : charge à vie', 'co-s', 'start'), box(x2 + 76, y + 50, 70, 40, C.cyan), txt(x2 + 111, y + 74, 'FET', 'co-t'));
   f.append(txt(x2 + 111, y + 112, 'pile ou 48 V', 'co-s', 'middle', { fill: C.red }), txt(x2 + 111, y + 126, 'pour l\'électronique', 'co-s', 'middle', { fill: C.red }));
-  f.append(txt(x2 + 90, 236, 'Électret : micros-cravates, cravates HF', 'co-s', 'middle', { fill: C.amber }));
+  f.append(txt(x2 + 90, 236, 'Électret : micros-cravates, téléphones', 'co-s', 'middle', { fill: C.amber }));
   // 3. le canon
   const x3 = 470;
   f.append(sv('rect', { x: x3, y: y + 50, width: 200, height: 26, rx: 6, fill: '#262c33', stroke: '#8a949c' }));
@@ -291,7 +293,7 @@ function polarPath(d, cx, cy, R) {
   return s + 'Z';
 }
 function figDirectivites() {
-  const f = figure(720, 210, 'Quatre directivités dessinées par A + B cos θ, la source en haut : l\'omnidirectionnel (un cercle), le cardioïde (rien à l\'arrière), l\'hypercardioïde (plus serré, un petit lobe arrière, deux trous à 110°), la figure en 8 (deux faces en opposition de polarité, rien sur les côtés).');
+  const f = figure(720, 226, 'Quatre directivités dessinées par A + B cos θ, la source en haut : l\'omnidirectionnel (un cercle), le cardioïde (rien à l\'arrière), l\'hypercardioïde (plus serré, un petit lobe arrière, deux trous à 110°), la figure en 8 (deux faces en opposition de polarité, rien sur les côtés).');
   f.append(txt(10, 16, 'La directivité : A + B · cos θ (la source est en haut)', 'co-t', 'start'));
   ['omni', 'cardio', 'hyper', 'huit'].forEach((k, i) => {
     const d = DIRECTIVITES[k], cx = 90 + i * 180, cy = 104, R = 62;
@@ -299,7 +301,8 @@ function figDirectivites() {
     f.append(sv('line', { x1: cx - R, y1: cy, x2: cx + R, y2: cy, stroke: '#2a3238' }), sv('line', { x1: cx, y1: cy - R, x2: cx, y2: cy + R, stroke: '#2a3238' }));
     f.append(sv('path', { d: polarPath(d, cx, cy, R), fill: 'rgba(255,211,138,.18)', stroke: C.amber, strokeWidth: 1.8 }));
     const rej = angleRejet(d);
-    f.append(txt(cx, 186, d.nom.split(' (')[0], 'co-t'), txt(cx, 202, `90° : ${dbTxt(attenuation(d, 90), 'dB', 0)} · 180° : ${attenuation(d, 180) < -60 ? '−∞' : dbTxt(attenuation(d, 180), 'dB', 0)}${rej && rej < 180 ? ` · trou ${fmtNum(rej, 0)}°` : ''}`, 'co-s'));
+    f.append(txt(cx, 186, d.nom.split(' (')[0], 'co-t'), txt(cx, 202, `90° : ${attenuation(d, 90) < -60 ? '−∞' : dbTxt(attenuation(d, 90), 'dB', 0)} · 180° : ${attenuation(d, 180) < -60 ? '−∞' : dbTxt(attenuation(d, 180), 'dB', 0)}`, 'co-s'));
+    if (rej && rej < 180) f.append(txt(cx, 216, `trous à ± ${fmtNum(rej, 0)}°`, 'co-s'));
   });
   return f;
 }
@@ -327,7 +330,7 @@ function demoDirectivite(host) {
     const [sx, sy] = at(src, R + 14), [wx, wy] = at(ret, R + 14);
     g.fillStyle = C.cyan; g.beginPath(); g.arc(sx, sy, 8, 0, 2 * Math.PI); g.fill(); g.fillStyle = '#0b1013'; g.font = '600 10px Arial, sans-serif'; g.fillText('S', sx - 3, sy + 4);
     g.fillStyle = C.red; g.fillRect(wx - 9, wy - 6, 18, 12); g.fillStyle = '#0b1013'; g.fillText('R', wx - 3, wy + 4);
-    g.font = '11px Arial, sans-serif'; g.fillStyle = '#aab4ba'; g.fillText('S : la source · R : le retour de scène', 12, 292);
+    g.font = '11px Arial, sans-serif'; g.fillStyle = '#aab4ba'; g.fillText('S : la source', 12, 16); g.fillText('R : le retour de scène', 12, 30);
     // à droite : l'effet de proximité, gain des graves selon la distance, à la fréquence choisie
     const X0 = 360, X1 = 700, Y0 = 250, Y1 = 40, xr = (rr) => X0 + Math.log(rr / 0.01) / Math.log(100) * (X1 - X0), yv = (v) => Y0 - Math.min(25, Math.max(0, v)) / 25 * (Y0 - Y1);
     g.strokeStyle = '#22303a'; for (const v of [0, 5, 10, 15, 20, 25]) { g.beginPath(); g.moveTo(X0, yv(v)); g.lineTo(X1, yv(v)); g.stroke(); g.fillStyle = '#6a747c'; g.fillText('+' + v + ' dB', X0 - 40, yv(v) + 4); }
