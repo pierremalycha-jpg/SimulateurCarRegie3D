@@ -45,8 +45,9 @@ function figBases() {
   f.append(box(X0, 138, W, 26, C.violet), txt(X0 + 6, 155, `l'audio : un échantillon toutes les ${fmtNum(R.audioUs, 1)} µs`, 'co-s', 'start', C.violet));
   for (let i = 1; i < 48; i++) f.append(ln(X0 + i * W / 48, 158, X0 + i * W / 48, 164, '#5a646c', 1));
   f.append(txt(X0 + W, 178, `${fmtNum(R.audioParImage)} échantillons par image, exactement`, 'co-s', 'end'));
-  f.append(txt(X0, 204, 'Une source en avance d\'une demi-ligne, un convertisseur audio en retard d\'un échantillon :', 'co-s'));
-  f.append(txt(X0, 218, 'la coupe saute, le son claque. Tout se cale sur une seule horloge, celle du SPG.', 'co-s'));
+  f.append(txt(X0, 200, 'Une source en avance d\'une demi-ligne : la coupe saute.', 'co-s'));
+  f.append(txt(X0, 214, 'Un convertisseur en retard d\'un échantillon : le son claque.', 'co-s'));
+  f.append(txt(X0, 228, 'Tout se cale sur une seule horloge, celle du SPG.', 'co-s'));
   // deux quartz libres
   const X1 = 450;
   f.append(txt(X1, 40, 'Deux quartz libres', 'co-t'));
@@ -121,7 +122,7 @@ function trace(fn, t0, t1, x0, x1, y0, k, n = 600) {
 }
 function figSignaux() {
   const B = mesureBB('pal'), Tq = mesureTri('1080i50');
-  const f = figure(720, 270, `À gauche, le black burst PAL dessiné d'après sa définition : top de synchronisation à −300 mV pendant ${fmtNum(B.topUs, 1)} µs, salve de ${B.cycles} cycles à ${fmtNum(B.fMHz, 2)} MHz ; le repère 0H est le milieu du front descendant. À droite, le tri-level 1080i50 : −300 mV puis +300 mV, ${Tq.demi} périodes de 74,25 MHz chacune (${fmtNum(Tq.demiNs)} ns) ; le repère est le passage à 0 V du front montant.`);
+  const f = figure(720, 284, `À gauche, le black burst PAL dessiné d'après sa définition : top de synchronisation à −300 mV pendant ${fmtNum(B.topUs, 1)} µs, salve de ${B.cycles} cycles à ${fmtNum(B.fMHz, 2)} MHz ; le repère 0H est le milieu du front descendant. À droite, le tri-level 1080i50 : −300 mV puis +300 mV, ${Tq.demi} périodes de 74,25 MHz chacune (${fmtNum(Tq.demiNs)} ns) ; le repère est le passage à 0 V du front montant.`);
   const K = 0.12;
   // black burst : de −2 à 14 µs
   f.append(txt(10, 16, 'Black burst (PAL, 625 lignes)', 'co-t'));
@@ -130,8 +131,8 @@ function figSignaux() {
   f.append(sv('path', { d: trace((t) => bbMv(t, 'pal'), tb0, tb1, xb0, xb1, yb, K), fill: 'none', stroke: C.amber, strokeWidth: 1.6 }));
   f.append(ln(Xb(0), 40, Xb(0), 168, C.fg, 1, '2 2'), txt(Xb(0) + 3, 46, '0H (50 %)', 'co-s'));
   f.append(ln(Xb(0), 158, Xb(B.topUs), 158, C.grey, 1), txt((Xb(0) + Xb(B.topUs)) / 2, 172, `${fmtNum(B.topUs, 1)} µs`, 'co-s', 'middle'));
-  f.append(txt(Xb(0.6), yb - B.topMv * K + 14, '−300 mV', 'co-s'));
-  f.append(txt(Xb(B.salveDebutUs), yb - 30, `salve : ${B.cycles} cycles à ${fmtNum(B.fMHz, 2)} MHz`, 'co-s'), txt(Xb(B.salveDebutUs), yb - 18, `${fmtNum(B.salvePpMv)} mV crête à crête`, 'co-s'));
+  f.append(txt(Xb(0) - 4, yb - B.topMv * K + 4, '−300 mV', 'co-s', 'end'));
+  f.append(txt(Xb(B.salveDebutUs), yb - 48, `salve : ${B.cycles} cycles à ${fmtNum(B.fMHz, 2)} MHz`, 'co-s'), txt(Xb(B.salveDebutUs), yb - 34, `${fmtNum(B.salvePpMv)} mV crête à crête`, 'co-s'));
   f.append(txt(xb0, 196, `Une ligne : ${fmtNum(B.ligneUs)} µs · 625 lignes · une image de ${fmtNum(B.imageMs)} ms`, 'co-s'));
   f.append(txt(xb0, 212, `Fronts du top : ≈ ${fmtNum(B.frontNs)} ns · le repère dépend de l'amplitude (50 %)`, 'co-s'));
   // tri-level : de −1,2 à +1,6 µs
@@ -144,10 +145,11 @@ function figSignaux() {
   f.append(ln(Xt(-h), 150, Xt(0), 150, C.grey, 1), txt((Xt(-h) + Xt(0)) / 2, 146, `${Tq.demi} T`, 'co-s', 'middle'));
   f.append(ln(Xt(0), 52, Xt(h), 52, C.grey, 1), txt((Xt(0) + Xt(h)) / 2, 48, `${Tq.demi} T`, 'co-s', 'middle'));
   f.append(txt(Xt(-h) - 4, yt + 300 * K + 4, '−300 mV', 'co-s', 'end'), txt(Xt(h) + 6, yt - 300 * K + 4, '+300 mV', 'co-s'));
-  f.append(txt(xt0, 196, `T = 1 / 74,25 MHz = ${fmtNum(Tq.Tns, 2)} ns · ${Tq.demi} T = ${fmtNum(Tq.demiNs)} ns · fronts ≈ ${fmtNum(Tq.monteeNs)} ns`, 'co-s'));
-  f.append(txt(xt0, 212, `Une ligne : ${fmtNum(Tq.ligneUs, 2)} µs (2 640 T) · symétrique, sans composante continue`, 'co-s'));
-  f.append(txt(10, 244, 'Les deux portent le même rythme d\'image en 50 Hz (40 ms) : un appareil HD accepte souvent l\'un ou l\'autre ; un tri-level a un format, un black burst non.', 'co-s'));
-  f.append(txt(10, 260, 'En 720p50, la demi-impulsion fait 40 T (539 ns) et la ligne 1 980 T ; en 1080i59,94, T s\'allonge de 1,001.', 'co-s'));
+  f.append(txt(xt0, 196, `T = ${fmtNum(Tq.Tns, 2)} ns · ${Tq.demi} T = ${fmtNum(Tq.demiNs)} ns · fronts ≈ ${fmtNum(Tq.monteeNs)} ns`, 'co-s'));
+  f.append(txt(xt0, 212, `Ligne : ${fmtNum(Tq.ligneUs, 2)} µs (2 640 T) · sans composante continue`, 'co-s'));
+  f.append(txt(10, 242, 'Les deux portent le rythme d\'image de la famille 50 Hz (40 ms) : un appareil HD accepte souvent l\'un ou l\'autre.', 'co-s'));
+  f.append(txt(10, 258, 'Un tri-level a un format (1080i50, 720p50…), un black burst non.', 'co-s'));
+  f.append(txt(10, 274, 'En 720p50 : 40 T (539 ns) par moitié, ligne de 1 980 T ; en 1080i59,94, T est 1,001 fois plus long.', 'co-s'));
   return f;
 }
 const SIG_OPTS = /** @type {[string, string, string][]} */ ([['pal', 'BB PAL', 'Black burst 625 lignes, 50 trames/s'], ['ntsc', 'BB NTSC', 'Black burst 525 lignes, 59,94 trames/s'], ['1080i50', 'TRI 1080i50', 'Tri-level 1080 entrelacé, 25 images/s'], ['720p50', 'TRI 720p50', 'Tri-level 720 progressif, 50 images/s'], ['1080i59', 'TRI 1080i59,94', 'Tri-level 1080 entrelacé, 29,97 images/s']]);
@@ -215,9 +217,13 @@ function figDistribution() {
   const N = [0, 1, 2].map((n) => niveauLigne(n));
   const f = figure(720, 262, `En haut, la distribution en étoile : le SPG, un DA, un câble et une charge de 75 Ω par appareil. En bas, une chaîne en boucle de trois appareils et le bouchon sur la dernière BNC ; à droite, ce que reçoit le bout de la ligne : ouverte, ${fmtNum(N[0].k * 100)} % du niveau ; une charge, ${fmtNum(N[1].k * 100)} % ; deux charges, ${fmtNum(N[2].k * 100)} %.`);
   f.append(txt(10, 16, 'En étoile : une sortie, un câble, une charge par appareil', 'co-t'));
-  f.append(box(10, 30, 60, 34, C.amber), txt(40, 51, 'SPG', 'co-t', 'middle'), ln(70, 47, 100, 47, C.amber));
-  f.append(box(100, 30, 50, 34, C.amber), txt(125, 51, 'DA', 'co-t', 'middle'));
-  ['CCU 1', 'CCU 2', 'CCU 3', 'Mélangeur'].forEach((d, i) => { const x = 190 + i * 96; f.append(sv('path', { d: `M150 47 C 170 47, ${x - 30} ${30 + i * 2}, ${x} 40`, fill: 'none', stroke: C.amber, strokeWidth: 1.2 }), box(x, 28, 80, 26), txt(x + 40, 45, d, 'co-s', 'middle'), txt(x + 40, 68, '75 Ω interne', 'co-s', 'middle', C.green)); });
+  f.append(box(10, 28, 60, 34, C.amber), txt(40, 49, 'SPG', 'co-t', 'middle'), ln(70, 45, 100, 45, C.amber));
+  f.append(box(100, 28, 50, 34, C.amber), txt(125, 49, 'DA', 'co-t', 'middle'));
+  // une sortie du DA par appareil : chaque câble descend sous les boîtes puis remonte vers la sienne
+  ['CCU 1', 'CCU 2', 'CCU 3', 'Mélangeur'].forEach((d, i) => {
+    const x = 190 + i * 96, y = 74 + i * 4;
+    f.append(sv('path', { d: `M150 ${40 + i * 4} H${160 + i * 6} V${y} H${x + 40} V60`, fill: 'none', stroke: C.amber, strokeWidth: 1.2 }), box(x, 26, 80, 34), txt(x + 40, 40, d, 'co-s', 'middle'), txt(x + 40, 54, '75 Ω interne', 'co-s', 'middle', C.green));
+  });
   f.append(txt(10, 100, 'En boucle : deux BNC en T par appareil, le bouchon sur la dernière', 'co-t'));
   f.append(box(10, 112, 60, 34, C.amber), txt(40, 133, 'SPG', 'co-t', 'middle'));
   [0, 1, 2].forEach((i) => { const x = 100 + i * 100; f.append(ln(i ? x - 34 : 70, 129, x, 129, C.amber), box(x, 114, 66, 30), txt(x + 33, 128, ['Mélangeur', 'Grille', 'Multiview'][i], 'co-s', 'middle'), txt(x + 33, 140, 'boucle (Hi-Z)', 'co-s', 'middle')); });
@@ -227,9 +233,9 @@ function figDistribution() {
   f.append(txt(X0, 100, 'Au bout de la ligne', 'co-t'));
   N.forEach((n, i) => {
     const y = 136 + i * 42, lab = ['ouverte (aucune charge)', 'une charge de 75 Ω', 'deux charges (37,5 Ω)'][i];
-    f.append(txt(X0, y - 14, lab, 'co-s'));
+    f.append(txt(X0, y - 14, `${lab} · Γ = ${n.gamma === 1 ? '+1' : fmtNum(n.gamma, 2).replace('-', '−')}`, 'co-s'));
     f.append(sv('path', { d: trace((t) => triMv(t, '1080i50') * n.k, -0.9, 0.9, X0 + 150, X0 + 270, y, 0.03, 120), fill: 'none', stroke: n.verdict === 'ok' ? C.green : C.red, strokeWidth: 1.5 }));
-    f.append(txt(X0 + 150, y + 4, `${fmtNum(n.k * 100)} %`, 'co-m', 'end'), txt(X0 + 276, y - 4, `Γ = ${n.gamma === 1 ? '+1' : fmtNum(n.gamma, 2).replace('-', '−')}`, 'co-s'));
+    f.append(txt(X0 + 140, y + 4, `${fmtNum(n.k * 100)} %`, 'co-m', 'end'));
   });
   f.append(txt(10, 186, 'Une ligne ouverte renvoie toute l\'impulsion (écho), le niveau double ;', 'co-s'), txt(10, 200, 'une charge de trop le fait tomber aux deux tiers.', 'co-s'));
   f.append(txt(10, 226, `Retard d'un coaxial : ≈ ${fmtNum(retardCable(1))} ns par mètre (ordre de grandeur), ${fmtNum(retardCable(100) / 1000, 1)} µs pour 100 m ; une ligne 1080i50 dure 35,6 µs.`, 'co-s'));

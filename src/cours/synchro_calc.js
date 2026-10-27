@@ -279,8 +279,8 @@ export function wordclock(o) {
   const gamma = reflexion(RL);
   const R = RECEPTEURS[o.recepteur || 'ttl'];
   let ok, raison;
-  if (R.ttl && (haut < R.min || bas > 0.4)) { ok = false; raison = `le haut n'atteint que ${fmt2(haut)} V : l'entrée en attend au moins ${fmt2(R.min)}`; }
-  else if (!R.ttl && vpp < R.min) { ok = false; raison = `${fmt2(vpp)} V crête à crête : trop faible, l'entrée en demande ${fmt2(R.min)} au moins`; }
+  if (R.ttl && (haut < R.min || bas > 0.4)) { ok = false; raison = `le haut n'atteint que ${fmt2(haut)} V : l'entrée en attend au moins ${fmt2(R.min)} V`; }
+  else if (!R.ttl && vpp < R.min) { ok = false; raison = `${fmt2(vpp)} V crête à crête : trop faible, l'entrée en demande ${fmt2(R.min)} V au moins`; }
   else if (vpp > R.max) { ok = false; raison = `${fmt2(vpp)} V crête à crête : trop fort pour cette entrée (${fmt2(R.max)} V au plus)`; }
   else { ok = true; raison = `${fmt2(vpp)} V crête à crête : dans ce que l'entrée accepte`; }
   return { vpp, haut, bas, RL, n, gamma, ok, reflexions: n === 0 || Math.abs(gamma) > 0.1, raison };

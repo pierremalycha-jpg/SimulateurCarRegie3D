@@ -11,6 +11,7 @@ import { VUE_ST2110_FLUX } from './vues/st2110_flux.js';
 import { VUE_ST2110_PAQUET } from './vues/st2110_paquet.js';
 import { VUE_ST2110_ROUGEBLEU } from './vues/st2110_rougebleu.js';
 import { VUE_SYNCHRO_GENLOCK } from './vues/synchro_genlock.js';
+import { VUE_SYNCHRO_SPG } from './vues/synchro_spg.js';
 import { VUE_CAMERA_FIBRE } from './vues/camera_fibre.js';
 import { VUE_HF_STADE } from './vues/hf_stade.js';
 import { VUE_RESEAU_ADRESSES } from './vues/reseau_adresses.js';
@@ -54,7 +55,7 @@ import { VUE_SON_CAPSULES } from './vues/son_capsules.js';
 /** @type {Vue3d[]} */
 // dans l'ordre de lecture de chaque chapitre (le réseau suit ses parties : bases, adresses, transport, qualité, car IP)
 export const VUES = [
-  VUE_SDI_TRAME, VUE_SDI_OEIL, VUE_SDI_BRASSAGE, VUE_SYNCHRO_GENLOCK, VUE_CAMERA_FIBRE,
+  VUE_SDI_TRAME, VUE_SDI_OEIL, VUE_SDI_BRASSAGE, VUE_SYNCHRO_GENLOCK, VUE_SYNCHRO_SPG, VUE_CAMERA_FIBRE,
   VUE_SON_MICRO, VUE_SON_CAPSULES,
   VUE_RESEAU_COUCHES, VUE_RESEAU_MAC, VUE_RESEAU_VLAN, VUE_RESEAU_ADRESSES, VUE_RESEAU_DHCP, VUE_RESEAU_PASSERELLE,
   VUE_RESEAU_TCPUDP, VUE_RESEAU_WAN, VUE_RESEAU_MULTICAST, VUE_RESEAU_QOS,

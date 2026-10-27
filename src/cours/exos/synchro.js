@@ -170,7 +170,7 @@ function questionReference(rnd, intro) {
     type: 'choix', q: `${intro} **${A.nom}**. Quelle référence lui donnez-vous ?`,
     choices: [nomSortie(bon), [nomSortie(famille), verrou(A.id, famille).texte], [nomSortie(format), verrou(A.id, format).texte]], answer: 0,
     aides: ['Deux conditions : la famille de cadence (50 ou 59,94 Hz), puis ce que son entrée de référence accepte.', 'Un tri-level a un format ; un black burst PAL convient à beaucoup d\'appareils de la famille 50 Hz.'],
-    solution: `**${nomSortie(bon)}** : ${verrou(A.id, bon).texte} Il accepte ${A.accepte.map(nomSortie).join(' ou ')}.`,
+    solution: `**${nomSortie(bon)}** : l'appareil s'y verrouille ; son entrée de référence accepte ${A.accepte.map(nomSortie).join(' ou ')}.`,
   };
 }
 const deuxC = (v) => String(v).padStart(2, '0');
@@ -257,11 +257,11 @@ registerExos({
           type: 'nombre', unite: 'µs', answer: Math.round(B.salveUs * 100) / 100, tol: 0.02,
           q: `La salve d'un black burst **${std === 'pal' ? 'PAL' : 'NTSC'}** compte **${B.cycles} cycles** de sous-porteuse à **${fr(B.fMHz, std === 'pal' ? 8 : 6)} MHz**. Combien de µs dure-t-elle ?`,
           pieges: [{ v: Math.round(B.periodeNs * 100) / 100, why: 'C\'est la durée d\'un seul cycle, en nanosecondes.' }],
-          aides: ['Un cycle dure 1 ÷ fréquence.', `${B.cycles} ÷ ${fr(B.fMHz, 3)} MHz donne des µs.`],
-          solution: `${B.cycles} ÷ ${fr(B.fMHz, 3)} = **${fr(B.salveUs, 2)} µs** ; elle commence ≈ ${fr(B.salveDebutUs, 1)} µs après 0H.`,
+          aides: ['Un cycle dure 1 ÷ fréquence.', `${B.cycles} ÷ ${fr(B.fMHz, 2)} MHz donne des µs.`],
+          solution: `${B.cycles} ÷ ${fr(B.fMHz, 2)} = **${fr(B.salveUs, 2)} µs** ; elle commence ≈ ${fr(B.salveDebutUs, 1)} µs après 0H.`,
         },
         pick(rnd, [
-          questionReference(rnd, 'Au plateau, vous branchez la référence de'),
+          questionReference(rnd, 'Au plateau, vous branchez la référence de cet appareil :'),
           {
             type: 'choix', q: 'Le câble affaiblit la référence d\'un quart. Laquelle garde son repère au même instant ?',
             choices: ['Le tri-level : son repère est un passage à 0 V', ['Le black burst : son top est plus long', 'Son repère est à mi-hauteur du top : il dépend de l\'amplitude reçue.'], ['Aucune', 'Un passage à zéro ne dépend pas de l\'amplitude.']], answer: 0,
@@ -292,8 +292,8 @@ registerExos({
           type: 'nombre', answer: g, tol: 0.005,
           q: `Un raccord de **${fr(Z, Z % 1 ? 1 : 0)} Ω** ferme une ligne de 75 Ω. Quel est le coefficient de réflexion Γ = (Z − 75) ÷ (Z + 75) ?`,
           pieges: [{ v: -g, why: 'Le signe compte : Γ est négatif quand la charge est plus faible que 75 Ω, positif quand elle est plus forte.' }].filter((p) => Math.abs(p.v - g) > 0.005),
-          aides: ['Remplacez Z dans la formule.', `(${fr(Z, 1)} − 75) ÷ (${fr(Z, 1)} + 75).`],
-          solution: `(${fr(Z, 1)} − 75) ÷ (${fr(Z, 1)} + 75) = **${frs(g, 3)}** : ${fr(Math.abs(g) * 100)} % de l'impulsion repart vers le générateur${g < 0 ? ', retournée' : ''}.`,
+          aides: ['Remplacez Z dans la formule.', `(${fr(Z, Z % 1 ? 1 : 0)} − 75) ÷ (${fr(Z, Z % 1 ? 1 : 0)} + 75).`],
+          solution: `(${fr(Z, Z % 1 ? 1 : 0)} − 75) ÷ (${fr(Z, Z % 1 ? 1 : 0)} + 75) = **${frs(g, 3)}** : ${fr(Math.abs(g) * 100)} % de l'impulsion repart vers le générateur${g < 0 ? ', retournée' : ''}.`,
         },
         {
           type: 'nombre', unite: 'ns', answer: e,
@@ -330,7 +330,7 @@ registerExos({
         { q: 'Le timecode du LTC compte depuis 00:00:00:00 au lancement de l\'enregistrement, pas l\'heure du jour.', bon: 'Passer la source du LTC en heure du jour', faux: [['Passer la cadence à 29,97 i/s', 'La cadence ne change pas l\'origine du compte.'], ['Activer Stay GenLock', 'Stay GenLock concerne la référence d\'entrée, pas le timecode.']], why: 'en heure programme, le LTC part d\'un instant choisi ; un plateau en direct travaille en heure du jour.' },
       ]);
       return [
-        questionReference(rnd, 'Une sortie BLACK du SPG700 va à'),
+        questionReference(rnd, 'Une sortie BLACK du SPG700 nourrit cet appareil :'),
         {
           type: 'nombre', unite: 'µs', answer: off, tol: 0.05,
           q: `Le serveur ralenti sort ses images **${fr(r, 1)} µs** après sa référence. Quel décalage donnez-vous à sa sortie BLACK, en µs (négatif pour avancer) ?`,

@@ -35,17 +35,17 @@ function figSpg() {
   const f = figure(720, 300, 'Le générateur de synchro type SPG700, face arrière (disposition indicative) : l\'entrée genlock bouclée, les trois sorties BLACK (chacune black burst ou tri-level), le word clock 48 kHz et le DARS, le timecode LTC, les deux sorties SDI de l\'option, le réseau ; en dessous, une répartition type pour le car ou le plateau : BLACK 1 en tri-level 1080i50 vers le DA des CCU, BLACK 2 en black burst vers le mélangeur et la PTZ, BLACK 3 en black burst avancé pour le serveur ralenti, le word clock en 5 V vers la console son, le LTC à 25 i/s vers les enregistreurs.');
   f.append(txt(10, 16, 'Un générateur type SPG700, face arrière (disposition indicative)', 'co-t'));
   f.append(sv('rect', { x: 10, y: 26, width: 700, height: 78, rx: 4, fill: '#20262c', stroke: '#59646f' }));
-  bnc(f, 44, 52, 'GENLOCK', C.cyan); bnc(f, 74, 52, '(boucle)', C.cyan);
-  f.append(txt(59, 92, 'BB, tri-level ou 10 MHz', 'co-s', 'middle'));
-  [['BLACK 1', 150], ['BLACK 2', 196], ['BLACK 3', 242]].forEach(([l, x]) => bnc(f, /** @type {number} */ (x), 52, /** @type {string} */ (l)));
-  f.append(txt(196, 92, 'BB PAL / NTSC ou tri-level', 'co-s', 'middle'));
-  bnc(f, 320, 52, 'WORD CLK', C.violet); bnc(f, 368, 52, 'DARS', C.violet);
-  f.append(txt(344, 92, '48 kHz', 'co-s', 'middle'));
-  f.append(sv('rect', { x: 412, y: 40, width: 80, height: 22, rx: 3, fill: '#2a3036', stroke: '#59646f' }), txt(452, 76, 'LTC 1 à 4', 'co-s', 'middle', C.green), txt(452, 92, '3 sorties + 1 E/S', 'co-s', 'middle'));
-  bnc(f, 528, 52, 'SDI 1', C.grey); bnc(f, 568, 52, 'SDI 2', C.grey);
-  f.append(txt(548, 92, 'option SDI : mires', 'co-s', 'middle'));
-  f.append(sv('rect', { x: 606, y: 42, width: 26, height: 20, rx: 2, fill: '#2a3036', stroke: '#59646f' }), txt(619, 76, 'réseau', 'co-s', 'middle'));
-  f.append(sv('rect', { x: 650, y: 40, width: 46, height: 26, rx: 3, fill: '#15191d', stroke: '#59646f' }), txt(673, 82, 'secteur', 'co-s', 'middle'));
+  bnc(f, 40, 52, 'GENLOCK', C.cyan); bnc(f, 94, 52, 'boucle', C.cyan);
+  f.append(txt(67, 92, 'BB, tri-level, 10 MHz', 'co-s', 'middle'));
+  [['BLACK 1', 160], ['BLACK 2', 216], ['BLACK 3', 272]].forEach(([l, x]) => bnc(f, /** @type {number} */ (x), 52, /** @type {string} */ (l)));
+  f.append(txt(216, 92, 'BB PAL / NTSC ou tri-level', 'co-s', 'middle'));
+  bnc(f, 346, 52, 'WORD CLK', C.violet); bnc(f, 404, 52, 'DARS', C.violet);
+  f.append(txt(375, 92, '48 kHz', 'co-s', 'middle'));
+  f.append(sv('rect', { x: 444, y: 40, width: 70, height: 22, rx: 3, fill: '#2a3036', stroke: '#59646f' }), txt(479, 76, 'LTC 1 à 4', 'co-s', 'middle', C.green), txt(479, 92, '3 sorties + 1 E/S', 'co-s', 'middle'));
+  bnc(f, 548, 52, 'SDI 1', C.grey); bnc(f, 596, 52, 'SDI 2', C.grey);
+  f.append(txt(572, 92, 'option : mires', 'co-s', 'middle'));
+  f.append(sv('rect', { x: 628, y: 42, width: 24, height: 20, rx: 2, fill: '#2a3036', stroke: '#59646f' }), txt(640, 76, 'réseau', 'co-s', 'middle'));
+  f.append(sv('rect', { x: 664, y: 40, width: 38, height: 26, rx: 3, fill: '#15191d', stroke: '#59646f' }), txt(683, 82, 'secteur', 'co-s', 'middle'));
   // la répartition type
   f.append(txt(10, 132, 'Une répartition type, sur le plateau ou dans le car', 'co-t'));
   const rows = [
@@ -143,12 +143,13 @@ function figWordclock() {
   f.append(box(10, 210, 54, 26, C.amber), txt(37, 227, 'SPG', 'co-s', 'middle'), ln(64, 223, 96, 223, C.violet));
   ['Console', 'Conv. A/N', 'Enreg.'].forEach((d, i) => { const x = 96 + i * 92; f.append(box(x, 210, 70, 26), txt(x + 35, 227, d, 'co-s', 'middle'), ln(x + 70, 223, x + 92, 223, C.violet)); });
   f.append(sv('rect', { x: 372, y: 216, width: 14, height: 14, rx: 2, fill: '#3a4650', stroke: C.green }), txt(379, 252, '75 Ω', 'co-s', 'middle', C.green));
-  f.append(txt(10, 262, 'Entrées en haute impédance (boucle) ; une seule charge de 75 Ω. Mieux : une sortie de DA par appareil.', 'co-s'));
-  // échantillons par image
-  const X1 = 470;
-  f.append(txt(X1, 198, 'Échantillons à 48 kHz par image', 'co-t'));
-  f.append(txt(X1, 218, `25 i/s : ${fmtNum(A.moyen)} (entier)`, 'co-m'), txt(X1, 234, `50 i/s : ${fmtNum(audioParImage(FS_AUDIO, 50).moyen)}`, 'co-m'));
-  f.append(txt(X1, 250, `29,97 : ${fmtNum(B.moyen, 1)} → ${B.motif.map((x) => fmtNum(x)).join(' · ')}`, 'co-m'), txt(X1, 264, `soit ${fmtNum(B.total)} sur ${B.sequence} images`, 'co-s'));
+  f.append(txt(10, 252, 'Entrées en haute impédance (boucle) ; une seule charge de 75 Ω.', 'co-s'), txt(10, 266, 'Mieux : une sortie de DA par appareil.', 'co-s'));
+  // échantillons par image, en haut à droite
+  const X1 = 512;
+  f.append(txt(X1, 182, 'Échantillons à 48 kHz par image', 'co-t'));
+  f.append(txt(X1, 200, `25 i/s : ${fmtNum(A.moyen)} (entier)`, 'co-m'), txt(X1, 216, `50 i/s : ${fmtNum(audioParImage(FS_AUDIO, 50).moyen)}`, 'co-m'));
+  f.append(txt(X1, 232, `29,97 : ${fmtNum(B.moyen, 1)} en moyenne`, 'co-m'));
+  f.append(txt(X1, 246, B.motif.map((x) => fmtNum(x)).join(', '), 'co-s'), txt(X1, 260, `soit ${fmtNum(B.total)} sur ${B.sequence} images`, 'co-s'));
   return f;
 }
 function demoWordclock(host) {
@@ -179,7 +180,8 @@ function demoWordclock(host) {
     }
     g.stroke(); g.lineWidth = 1;
     g.fillStyle = '#aab4ba'; g.fillText('une période = un échantillon (20,8 µs à 48 kHz)', X0, 212);
-    read.set('Charges sur la ligne', W.n ? `${W.n} × 75 Ω = ${fmtNum(W.RL, 1)} Ω (${term} entrée${term > 1 ? 's' : ''} terminée${term > 1 ? 's' : ''} en interne${bouchon ? ' et le bouchon' : ''})` : 'aucune : la ligne est ouverte');
+    const qui = [term ? `${term} entrée${term > 1 ? 's' : ''} terminée${term > 1 ? 's' : ''} en interne` : '', bouchon ? 'le bouchon' : ''].filter(Boolean).join(' et ');
+    read.set('Charges sur la ligne', W.n ? `${W.n} × 75 Ω = ${fmtNum(W.RL, 1)} Ω (${qui})` : 'aucune : la ligne est ouverte');
     read.set('Signal reçu', `${fmtNum(W.vpp, 2)} V crête à crête, de ${fmtNum(W.bas, 2).replace('-', '−')} à ${fmtNum(W.haut, 2)} V (${WC_SORTIES[sortie].nom})`);
     read.set('Réflexions', !W.reflexions ? 'aucune : une seule charge de 75 Ω au bout' : `Γ = ${W.gamma === 1 ? '+1' : fmtNum(W.gamma, 2).replace('-', '−')} : des rebonds sur chaque front, de la gigue, parfois un faux front compté`);
     read.set('L\'entrée', `${R.nom} : ${W.raison}`);
@@ -222,7 +224,7 @@ function figSt2059() {
   for (let i = 0; i < 18; i++) f.append(ln(400 + i * 16, 52, 400 + i * 16, 68, C.cyan, 1.2));
   f.append(txt(400, 44, '… puis des images de 40 ms à 25 i/s, sans fin', 'co-s', 'start', C.cyan));
   f.append(txt(400, 84, 'n = partie entière de (t × cadence) : la phase se calcule', 'co-s'));
-  f.append(txt(240, 64, '≈ 56 ans', 'co-s', 'middle'));
+  f.append(txt(240, 54, '≈ 56 ans', 'co-s', 'middle'));
   f.append(txt(10, 112, `L'heure PTP compte en TAI : UTC = TAI − ${TAI_UTC} s (secondes intercalaires, depuis 2017) ; l'heure légale ajoute le fuseau.`, 'co-s'));
   // le car hybride
   f.append(txt(10, 140, 'Le car hybride : une seule horloge pour le SDI et pour l\'IP', 'co-t'));
