@@ -98,7 +98,7 @@ function demoCourbes(host) {
     for (const [L, n] of REPERES) { const v = signalDe(/** @type {number} */ (L), opts()); g.fillStyle = COUL.cyan; g.beginPath(); g.arc(X(/** @type {number} */ (L)), Y(v), 4, 0, Math.PI * 2); g.fill(); read.set(/** @type {string} */ (n), `${nf(v, 1)} %${/** @type {number} */ (L) === 1 ? '' : ` (BT.709 seule : ${nf(Math.min(109, oetf709(/** @type {number} */ (L)) * 100), 1)} %)`}`); }
     ecrire(g, 'BT.709 seule (pointillés) · réglage de la caméra (ambre)', X0 + 6, Y1 + 4);
     // le détail sur un contour
-    const N = 120, prof = Array.from({ length: N }, (_, i) => { const s = 1 / (1 + Math.exp(-(i - 60) / 2.2)); return 0.25 + 0.5 * s + ((Math.sin(i * 12.9898) * 43758.5453) % 1) * 0.012; });
+    const N = 64, prof = Array.from({ length: N }, (_, i) => { const s = 1 / (1 + Math.exp(-(i - 32) / 0.9)); return 0.25 + 0.5 * s + ((Math.sin(i * 12.9898) * 43758.5453) % 1) * 0.012; });
     const out = detail(prof, dl, 0.12, cr / 100);
     fond(g2, 720, 130);
     const PX = (i) => 40 + i / (N - 1) * 640, PY = (v) => 118 - v * 110;
@@ -140,6 +140,8 @@ function demoCourbes(host) {
 const SUJETS = { maillot: [0.8, 0.08, 0.07, 'maillot rouge'], pelouse: [0.15, 0.5, 0.1, 'pelouse'], peau: [0.78, 0.55, 0.42, 'visage'], ciel: [0.3, 0.55, 0.9, 'ciel'], gris: [0.5, 0.5, 0.5, 'gris'] };
 /** la caméra 2 voit le rouge un peu vers l'orange et le vert un peu terne (écart propre à son prisme, ordre de grandeur) */
 const ERREUR_CAM2 = { rg: -0.1, gr: -0.08, gb: 0.06 };
+/** les noms des cibles du vectorscope, comme sur le graticule */
+const VS_NOMS = { jaune: 'J', cyan: 'Cy', vert: 'V', magenta: 'Mg', rouge: 'R', bleu: 'B' };
 function demoPeinture(host) {
   const cv = canvas(720, 330, 'co-canvas co-smooth'), g = cv.getContext('2d');
   let suj = 'maillot', sat = 1, mrg = 0, mgr = 0, mgb = 0;
@@ -155,7 +157,7 @@ function demoPeinture(host) {
     g.strokeStyle = '#2a3238'; g.lineWidth = 1; g.beginPath(); g.arc(C0, C0, R0, 0, Math.PI * 2); g.stroke();
     trait(g, C0 - R0, C0, C0 + R0, C0, '#2a3238'); trait(g, C0, C0 - R0, C0, C0 + R0, '#2a3238');
     const a = CARNATIONS * Math.PI / 180; trait(g, C0, C0, C0 + Math.cos(a) * R0, C0 - Math.sin(a) * R0, '#a07050', 1, [4, 3]);
-    for (const b of BARRES.slice(1)) { const [cb, cr] = cbcr(0.75 * b[1], 0.75 * b[2], 0.75 * b[3]); const [x, y] = P(cb, cr); g.strokeStyle = COUL.grey; g.strokeRect(x - 7, y - 7, 14, 14); ecrire(g, String(b[0]).slice(0, 3), x, y - 10, { align: 'center', col: '#5a646c' }); }
+    for (const b of BARRES.slice(1)) { const [cb, cr] = cbcr(0.75 * b[1], 0.75 * b[2], 0.75 * b[3]); const [x, y] = P(cb, cr); g.strokeStyle = COUL.grey; g.strokeRect(x - 7, y - 7, 14, 14); ecrire(g, VS_NOMS[String(b[0])], x, y - 10, { align: 'center', col: '#8a949c' }); }
     const [r, gg, bb, nom] = /** @type {any} */ (SUJETS[suj]);
     const A = [r, gg, bb], B = cam2(A);
     const [xa, ya] = P(...cbcr(A[0], A[1], A[2])), [xb, yb] = P(...cbcr(B[0], B[1], B[2]));

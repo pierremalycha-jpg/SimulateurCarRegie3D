@@ -89,7 +89,9 @@ function demoFiltres(host) {
 const COULEURS = { pelouse: [0.12, 0.45, 0.08, 'la pelouse'], maillot: [0.8, 0.06, 0.05, 'un maillot rouge'], ciel: [0.35, 0.6, 1, 'le ciel'], peau: [0.75, 0.5, 0.38, 'un visage'], blanc: [0.9, 0.9, 0.9, 'un blanc'] };
 function demoPrisme(host) {
   const cv = canvas(720, 200, 'co-canvas co-smooth'), g = cv.getContext('2d');
-  let col = 'maillot', e = 10000, fmt = '1080p50';
+  /** électrons reçus d'une position du curseur (0 à 100) : de 50 à 30 000, en échelle logarithmique */
+  const eDe = (v) => Math.round(50 * Math.pow(600, v / 100));
+  let col = 'maillot', ve = 81, e = eDe(ve), fmt = '1080p50';
   const read = readout(['Capteur rouge · vert · bleu', 'Luminance Y', 'Avec un seul capteur à mosaïque (Bayer)']);
   const read2 = readout(['Bruit de photons', 'Rapport signal sur bruit']);
   const read3 = readout(['Format', 'Débit sur le câble', 'Liaison']);
@@ -126,7 +128,7 @@ function demoPrisme(host) {
     el('figure', { class: 'co-figc' }, cv, el('figcaption', {}, 'Le bloc prisme : la première surface renvoie le bleu, la seconde le rouge, le vert traverse. Chaque capteur s\'allume à la part de sa couleur.')),
     read.el,
     el('div', { class: 'co-ctl' },
-      slider('Lumière reçue par un photosite', 0, 100, Math.round(Math.log(e / 50) / Math.log(600) * 100), 1, (v) => { e = Math.round(50 * Math.pow(600, v / 100)); draw(); }, (v) => `${nf(Math.round(50 * Math.pow(600, v / 100)))} électrons`),
+      slider('Lumière reçue par un photosite', 0, 100, ve, 1, (v) => { e = eDe(v); draw(); }, (v) => `${nf(eDe(v))} électrons`),
       choice('Format', Object.keys(RASTERS).map((k) => [k, k]), fmt, (v) => { fmt = v; draw(); })),
     read2.el, read3.el);
   draw();
@@ -142,7 +144,7 @@ const SHUTTERS = [['50', 'OFF (1/50)'], ['60', '1/60'], ['100', '1/100 (ECS)'], 
 const luxDe = (v) => Math.round(20 * Math.pow(5000, v / 100));
 function demoExposition(host) {
   const cv = canvas(720, 230, 'co-canvas co-smooth'), g = cv.getContext('2d');
-  let vl = 40, ki = 4, nd = 0, gi = 1, sh = '50';
+  let vl = 35, ki = 4, nd = 0, gi = 1, sh = '50';
   const read = readout(['Le blanc nominal sort à', 'Profondeur de champ (20 mm, point à 3 m)', 'Bruit', 'Un ballon à 5 m/s pendant la pose', 'Lampes sur le secteur 50 Hz']);
   const verdict = el('p', { class: 'co-verdict' });
   const draw = () => {

@@ -169,10 +169,11 @@ export function saturer(r, g, b, k) { const y = Y709(r, g, b); return [y + k * (
 export function matrice([r, g, b], m) {
   return [r + (m.rg || 0) * (r - g) + (m.rb || 0) * (r - b), g + (m.gr || 0) * (g - r) + (m.gb || 0) * (g - b), b + (m.br || 0) * (b - r) + (m.bg || 0) * (b - g)];
 }
-/** le détail sur un profil : le signal plus k fois son écart à la moyenne de ses voisins, borné par le limiteur ; sous le seuil crisp, rien */
+/** le détail sur un profil : le signal plus k fois son écart à la moyenne de ses voisins (à trois points de part et d'autre),
+ *  borné par le limiteur ; sous le seuil crisp, rien */
 export function detail(profil, k = 0.5, limiter = 0.1, crisp = 0) {
   return profil.map((v, i) => {
-    const a = profil[Math.max(0, i - 2)], b = profil[Math.min(profil.length - 1, i + 2)];
+    const a = profil[Math.max(0, i - 3)], b = profil[Math.min(profil.length - 1, i + 3)];
     const e = v - (a + b) / 2;
     if (Math.abs(e) <= crisp) return v;
     return v + Math.max(-limiter, Math.min(limiter, k * e));

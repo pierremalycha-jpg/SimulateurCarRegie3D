@@ -122,7 +122,7 @@ function demoPdc(host) {
     trait(g, X(s), 80, X(s), 124, COUL.amber, 2);
     ecrire(g, `point ${metres(s)}`, X(s), 74, { align: 'center', col: COUL.amber });
     if (H < dMax) { trait(g, X(H), 150, X(H), 166, COUL.cyan, 2); ecrire(g, `hyperfocale ${metres(H)}`, X(H), 180, { align: 'center', col: COUL.cyan }); }
-    ecrire(g, `net de ${metres(near)} à ${metres(far)}`, Math.min(560, Math.max(80, (xa + Math.min(xb, X1)) / 2)), 106, { align: 'center', col: '#0b0e10', font: '600 11px Arial, sans-serif' });
+    ecrire(g, `zone nette : de ${metres(near)} à ${metres(far)}`, X1, 30, { align: 'right', col: COUL.pvw, font: '600 12px Arial, sans-serif' });
     // l'ouverture vue de face : le trou de l'iris, à la taille relative de la pupille (focale ÷ N)
     const pup = f / N, R = Math.max(1.5, Math.min(30, pup * 1.1));
     g.fillStyle = '#2a3036'; g.beginPath(); g.arc(72, 40, 32, 0, Math.PI * 2); g.fill();

@@ -76,8 +76,8 @@ function demoVoie(host) {
 // ======================================================================================
 /** l'image du stade, en bandes : lumière relative au blanc nominal et couleur de la scène (R, V, B linéaires) */
 const SCENE = [
-  ['tribune à l\'ombre', 0.04, [0.8, 0.85, 1]], ['pelouse', 0.22, [0.55, 1, 0.35]], ['maillot blanc', 1.05, [1, 1, 1]],
-  ['visage', 0.45, [1, 0.72, 0.58]], ['pelouse', 0.22, [0.55, 1, 0.35]], ['ciel', 1.6, [0.75, 0.9, 1]],
+  ['tribune à l\'ombre', 0.04, [1, 1, 1]], ['pelouse', 0.22, [0.55, 1, 0.35]], ['maillot blanc', 1.05, [1, 1, 1]],
+  ['visage', 0.6, [1, 0.72, 0.58]], ['pelouse', 0.22, [0.55, 1, 0.35]], ['ciel', 1.6, [0.75, 0.9, 1]],
 ];
 function demoMesure(host) {
   const cv = canvas(720, 300, 'co-canvas co-smooth'), g = cv.getContext('2d');
@@ -115,7 +115,7 @@ function demoMesure(host) {
     read.set('Niveaux', bandes.filter((b, i) => i !== 4).map((b) => `${b.nom} ${nf(b.y.y * 100, 0)} %`).join(' · '));
     read.set('Au-dessus de 103 %', bandes.filter((b) => b.y.y * 100 > 103).map((b) => b.nom).join(', ') || 'rien');
     read.set('Le visage au vectorscope', `${nf(vv.angle, 0)}° (ligne des carnations : ${CARNATIONS}°)`);
-    read.set('Le gris de la tribune', `teinte ${nf(vt.angle, 0)}°, à ${nf(vt.sat * 1000, 0)} millièmes du centre${vt.sat > 0.02 ? ' : la balance n\'est pas faite' : ''}`);
+    read.set('Le gris de la tribune', vt.sat < 0.001 ? 'au centre exact : neutre, la balance est juste' : `teinte ${nf(vt.angle, 0)}°, à ${nf(vt.sat * 1000, 0)} millièmes du centre${vt.sat > 0.01 ? ' : la balance n\'est pas faite pour cette lumière' : ''}`);
     const over = bandes.some((b) => b.y.y * 100 > 103), visL = vis.y.y * 100;
     const v = Math.abs(Tl - 5600) > 400 ? ['warn', `Les gris ne sont plus au centre du vectorscope et le visage s'écarte de sa ligne : la caméra est balancée pour 5 600 K sous une lumière à ${nf(Tl)} K. Refaites la balance.`]
       : over ? ['ko', 'Des crêtes au-dessus de 103 % : fermez l\'iris, ou remettez le knee pour garder le détail du blanc sous la limite.']
@@ -153,7 +153,7 @@ function demoMoniteur(host) {
     // le bleu seul : quatre barres qui contiennent du bleu à 75 %
     const bars = [BARRES[0], BARRES[2], BARRES[4], BARRES[6]];
     const vals = bars.map((x) => bleuSeul(x, k));
-    vals.forEach((v, i) => { const t = Math.round(255 * Math.max(0, Math.min(1, v)) ** (1 / 1.4)); g.fillStyle = `rgb(${Math.round(t * 0.3)},${Math.round(t * 0.45)},${t})`; g.fillRect(380 + i * 80, 30, 76, 150); ecrire(g, String(bars[i][0]), 418 + i * 80, 196, { align: 'center' }); });
+    vals.forEach((v, i) => { const t = Math.round(255 * Math.max(0.08, Math.min(1, (v - 0.55) / 0.4))); g.fillStyle = `rgb(${Math.round(t * 0.3)},${Math.round(t * 0.45)},${t})`; g.fillRect(380 + i * 80, 30, 76, 150); ecrire(g, String(bars[i][0]), 418 + i * 80, 196, { align: 'center' }); });
     ecrire(g, 'en bleu seul (BLUE ONLY)', 380, 22);
     read.set('La barre −2 %', plugeVisible(-2, b) ? 'visible : la luminosité est trop haute' : 'confondue avec le noir');
     read.set('La barre +2 %', plugeVisible(2, b) ? 'juste visible' : 'invisible : la luminosité est trop basse, les ombres seront bouchées');
@@ -172,7 +172,7 @@ function demoMoniteur(host) {
       slider('Luminosité (BRIGHTNESS)', -5, 5, b, 0.5, (v) => { b = v; draw(); }, (v) => (v > 0 ? '+' : v < 0 ? '−' : '') + nf(Math.abs(v), 1) + ' %'),
       slider('Contraste (blanc de l\'écran)', 60, 160, Lw, 1, (v) => { Lw = v; draw(); }, (v) => nf(v) + ' cd/m²'),
       slider('Chroma', 0.8, 1.2, k, 0.01, (v) => { k = v; draw(); }, (v) => '× ' + nf(v, 2))),
-    el('figure', { class: 'co-figc' }, cv, el('figcaption', {}, 'À gauche, la mire PLUGE sur l\'écran tel qu\'il est réglé ; à droite, quatre barres de couleur en bleu seul, qui contiennent toutes du bleu à 75 %.')),
+    el('figure', { class: 'co-figc' }, cv, el('figcaption', {}, 'À gauche, la mire PLUGE sur l\'écran tel qu\'il est réglé ; à droite, quatre barres de couleur en bleu seul, qui contiennent toutes du bleu à 75 % (écarts exagérés à l\'écran).')),
     verdict, read.el, read2.el);
   draw();
 }
@@ -191,7 +191,7 @@ function demoPlusLoin(host) {
     const p23 = pdcTotale(f23, N, D), p35 = pdcTotale(f35, N, D, 0.011 * CROP_S35);
     read.set('Focale pour ce cadre', `2/3" : ${nf(f23, 0)} mm · Super 35 : ${nf(f35, 0)} mm (× ${nf(CROP_S35, 1)})`);
     read.set('Zone nette à la même ouverture', `à ${fN(N)} : ${metres(p23)} en 2/3", ${metres(p35)} en Super 35`);
-    read.set('Pour la même zone nette en Super 35', `≈ ${fN(N * CROP_S35)}, ${nf(2 * Math.log2(CROP_S35), 1)} diaphragmes de plus : ${nf(CROP_S35 ** 2, 1)} fois moins de lumière`);
+    read.set('Pour la même zone nette en Super 35', `≈ ${fN(Math.round(N * CROP_S35 * 10) / 10)}, ${nf(2 * Math.log2(CROP_S35), 1)} diaphragmes de plus : ${nf(CROP_S35 ** 2, 1)} fois moins de lumière`);
     // HLG et SDR : la même scène, le blanc de référence à 75 % en HLG, à 100 % en SDR
     const Eref = hlgInverse(HLG_BLANC);
     fond(g, 720, 230);

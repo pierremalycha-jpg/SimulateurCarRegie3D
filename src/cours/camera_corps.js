@@ -86,7 +86,7 @@ function demoViseur(host) {
         for (let k = -H; k < bw + H; k += 12) { g.beginPath(); g.moveTo(x + k, Y + (h2 ? H : 0)); g.lineTo(x + k + H, Y + (h2 ? 0 : H)); g.stroke(); }
         g.restore();
       }
-      ecrire(g, String(nom), x + bw / 2, Y + H + 14, { align: 'center' }); ecrire(g, nf(lv[i], 0) + ' %', x + bw / 2, Y + H - 8, { align: 'center', col: '#0b0e10', font: '600 11px Arial, sans-serif' });
+      ecrire(g, String(nom), x + bw / 2, Y + H + 14, { align: 'center' }); g.fillStyle = 'rgba(8,11,14,.78)'; g.fillRect(x + bw / 2 - 24, Y + H - 24, 48, 20); ecrire(g, nf(lv[i], 0) + ' %', x + bw / 2, Y + H - 9, { align: 'center', col: COUL.blanc, font: '600 12px Arial, sans-serif' });
     });
     // la zone de sécurité
     const m = margeSecurite(sur) / 1920 * W, mv = (1080 * (1 - sur / 100) / 2) / 1080 * H;
