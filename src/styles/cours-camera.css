@@ -1,0 +1,13 @@
+/* Les leçons de la caméra (cours/camera_*.js) : les schémas repris de la caméra en 3D, côte à côte, et les
+   manipulations (champ vu de dessus, profondeur de champ, courbes, forme d'onde, PLUGE…). */
+.co-cfigs { display: grid; gap: 10px; grid-template-columns: minmax(0, 560px); justify-content: center; }
+.co-cfigs.n2, .co-cfigs.n3 { grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); justify-content: stretch; }
+.co-cfig { margin: 0; display: grid; gap: 4px; align-content: start; min-width: 0; }
+.co-cfig figcaption { font: 600 12.5px var(--f-leg); color: var(--muted); text-align: center; }
+.co-cfig .cl-fig { padding: 6px; }
+.cc-sw { display: inline-block; width: 1.1em; height: 1.1em; border-radius: 2px; vertical-align: -0.2em; border: 1px solid #070a0c; margin-right: 6px; }
+.cc-row { display: flex; flex-wrap: wrap; gap: 6px 18px; align-items: center; }
+.cc-tab { border-collapse: collapse; font: 13px var(--f-mono); color: var(--lcd, #d3f3df); width: 100%; }
+.cc-tab th, .cc-tab td { padding: 3px 8px; text-align: left; border-bottom: 1px solid var(--line); }
+.cc-tab th { font: 600 12px var(--f-disp); color: var(--muted); }
+.cc-tab td.on { color: var(--pvw); } .cc-tab td.off { color: var(--muted); } .cc-tab td.ko { color: #ff8a80; }
