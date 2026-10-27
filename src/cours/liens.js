@@ -6,6 +6,7 @@ import '../content/terms_mesure.js';
 import '../content/terms_ctrlnet.js';
 import '../content/terms_fibre.js';
 import '../content/terms_ip.js';
+import '../content/terms_micro.js';
 import '../content/terms_videohub.js';
 
 // ----------------------------------------------------------------------------------
@@ -50,6 +51,8 @@ export const GLOSSAIRE = {
   DNS: ['reseau-dhcp-dns', 'dns'], NAT: ['reseau-nat', 'nat'], 'TCP / UDP': ['reseau-tcp-udp', 'tcp'], 'SRT / RIST': ['reseau-streaming', 'srt'], RTMP: ['reseau-streaming', 'rtmp'],
   'HLS / DASH': ['reseau-streaming', 'hls'], NDI: ['reseau-streaming', 'ndi'], QoS: ['reseau-qos', 'qos'], Gigue: ['reseau-mesures', 'gigue'],
   Contribution: ['expl-transmission', 'reseau-streaming', 'contribution'],
+  'Alimentation fantôme 48 V': ['son-48v', 'p48'], 'Micro canon': ['son-statique', 'micro-statique'], XLR: ['son-liaisons', 'liaison-symetrique'],
+  'Couple ORTF / XY': ['son-directivite', 'directivite'],
 };
 
 /** poste → leçon(s) ou fiche(s) ouvertes par son bouton « Cours » et la touche G ; selon le car, SDI ou IP */
@@ -63,7 +66,7 @@ export const POSTES = {
   synchro: { sdi: ['synchro-genlock', 'timing-ref'], ip: ['reseau-ptp', 'ptp'] },
   ccu: ['camera-systeme', 'camera-fibre', 'sdi-cable', 'sdi-cest-quoi'],
   hf: ['hf-bilan', 'hf-frequences', 'hf-antennes', 'hf-fresnel'],
-  son: ['son-tranche', 'son-n1', 'sdi-embedded'],
+  son: ['son-tranche', 'son-n1', 'son-48v', 'son-statique', 'sdi-embedded'],
   transmission: ['expl-transmission', 'reseau-streaming', 'reseau-etendue', 'signal-formats', 'sdi-cest-quoi', '12g-sdi'],
   melangeur: ['real-melangeur', 'signal-422', 'signal-formats'],
   habillage: ['real-incrustations'],

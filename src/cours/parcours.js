@@ -62,8 +62,8 @@ export const PARCOURS = {
     intermediaire: ['ralentis-clips', 'ralentis-fichiers'],
   },
   son: {
-    debutant: ['son-tranche'],
-    intermediaire: ['son-n1'],
+    debutant: ['son-acoustique', 'son-dynamique', 'son-liaisons', 'son-tranche'],
+    intermediaire: ['son-statique', 'son-directivite', 'son-48v', 'son-n1'],
   },
   reseau: {
     debutant: ['reseau-modele', 'reseau-etendue', 'reseau-ethernet', 'reseau-switch', 'reseau-ip'],
