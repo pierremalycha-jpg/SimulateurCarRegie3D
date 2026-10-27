@@ -56,8 +56,10 @@ Tout est en français (code commenté en français, interface, commits).
   chapitre dans `cours/exos/` : valeurs tirées, deux aides et la solution qui coûtent des points ; toute nouvelle leçon
   a le sien, test unitaire) ; « Mon parcours » (`ui/cours_parcours.js`) remplace « Mon suivi » ; au profil Formateur
   tout est ouvert. Suite `node tools/e2e.mjs parcours`. Un long chapitre se
-  range en parties (v19.17 : `PARTIES` de `cours/reseau.js`, champ `partie` des leçons, titres dans le sommaire) ; les
-  calculs des bases du réseau sont dans `cours/ip_calc.js`.
+  range en parties (v19.17 : `PARTIES` de `cours/reseau.js`, champ `partie` des leçons, titres dans le sommaire ; aussi
+  `PARTIES_CAMERA` et `PARTIES_SON`) ; les calculs des bases du réseau sont dans `cours/ip_calc.js`. Une leçon peut reprendre
+  des notions de la caméra en 3D (v19.19, champ `camlab` : section « Sur la caméra en 3D », retour par Échap,
+  `leconDeNotion` pour le renvoi de la fiche).
 - **L'entrepôt** (`src/entrepot/`, tuile « L'entrepôt » de Jouer, décidé le 22 octobre 2026) : monter une
   régie mobile de A à Z d'après un cahier des charges. Catalogue de matériel réel (`catalogue/`, un fichier par
   groupe, points non vérifiés dans `averifier`), montage (`build.js`), moteur pur et seul juge de ce qui marche
@@ -80,7 +82,9 @@ Tout est en français (code commenté en français, interface, commits).
   schéma dans `figs/`, manipulation dans `labs/` (elle pilote la 3D par `ctx.lens`, clés listées dans
   `index.js`), styles `src/styles/camlab-<groupe>.css`. Le moule est vérifié par `tests/unit/camlab.test.mjs`
   (compétences du référentiel, leçon `cours` existante). Notions acquises et quiz : `progress.js`, `quiz.js` ;
-  exercice noté « Mise en service » : `mes.js` (exercice pratique `x-camera` de la leçon `camera-systeme`).
+  exercice noté « Mise en service » : `mes.js` (exercice pratique `x-camera` de la leçon `camera-systeme`). Chacune des 51
+  notions est reprise par une seule leçon du chapitre La caméra (v19.19, de la lentille frontale au moniteur, test
+  `tests/unit/camera-cours.test.mjs`) : une notion nouvelle se range dans une leçon.
 - **Les vues 3D du Cours** (`src/vues3d/`, v19.16, décidé le 26 octobre 2026) : une notion technique qui se
   comprend mieux en la voyant (câble, appareils, réseau, lieu) a sa vue ; une notion de calcul ou de courbe reste en
   2D (tableau de pertinence dans le README). Une vue = un fichier de `vues/` (id, chapitre, `lecons`, `etapes` avec
@@ -122,6 +126,8 @@ Tout est en français (code commenté en français, interface, commits).
   dans le stade (rumeur lointaine derrière les tribunes, devant le car), l'écoute de la console au poste son, presque
   rien ailleurs dans le car, silence à l'accueil ; volume dans Réglages. La console (vumètres, loudness, départs) n'en
   dépend pas. Les commentaires ne sont pas dits (pas de synthèse vocale, jugée trop robotique) : fil écrit au poste son.
+  Dans le Cours, Le son va du micro à la console analogique de la section son (type ANT Antmix) et à Dante (rangé
+  dans Le son, décidé le 27 octobre 2026) ; pour travailler avec la section son, le word clock du SPG se règle en 5 V.
 - **Rendu (v19.5)** : toute nouvelle géométrie passe par `matiere()` (`src/matiere.js`, recettes de relief
   procédurales, triplanaire : pas de texture de fichier) et par un `Builder` en mode `ao` avec `cbox` (arêtes
   arrondies, occlusion cuite) ; une famille de matière = une pièce fusionnée nommée. Le SSAO ne tourne que dans le

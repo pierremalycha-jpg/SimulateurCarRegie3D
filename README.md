@@ -394,6 +394,185 @@ Tests :
   « Emmène-moi / Montre-moi » doit mettre en évidence un élément réel de la page, et « Fais-le pour moi » doit faire
   valider l'étape.
 
+## v19.19 : un Cours bien plus dense (la caméra de la frontale au moniteur, la synchro, le son et Dante, en 3D)
+
+**Pourquoi.** Le parcours de la v19.18 marchait, mais plusieurs catégories étaient minces : trois leçons pour la
+caméra alors que la caméra en 3D en porte 51 notions, deux pour la synchro, deux pour le son. Le Cours passe de
+**57 à 94 leçons** (34 niveaux, 94 exercices en autonomie, 651 questions de quiz) et de **20 à 25 vues 3D**
+(179 étapes). La caméra en 3D fait désormais partie du parcours ; la synchro explique ses fondamentaux, le
+tri-level, le SPG700 et le word clock pour travailler avec la section son ; le son va du micro (un SM58 ouvert en
+3D) à la console analogique de l'établissement et à Dante ; les autres chapitres gagnent chacun une leçon.
+
+Chaque nouvelle leçon a le moule de la v19.18 : l'essentiel en trois lignes, un schéma, une manipulation qui
+calcule avec un modèle pur testé, l'explication (chiffres vérifiables, ordres de grandeur dits), « dans le car »,
+ses fiches « ? », sa banque de quiz (six questions au moins, trois choix, chaque mauvais choix expliqué), son
+exercice en autonomie (valeurs tirées, deux aides, la solution), son rattachement au référentiel et sa place dans
+`PARCOURS`.
+
+**Le parcours, chapitre par chapitre** (en gras, les leçons nouvelles) :
+
+| Catégorie | Débutant | Intermédiaire | Avancé | Expert |
+| --- | --- | --- | --- | --- |
+| Le signal vidéo numérique | formats, 8 ou 10 bits, 4:2:2 | niveaux | couleur et HDR, **compression** | |
+| Le SDI | le SDI, câbles et brassage | grille, audio embarqué | falaise, œil | du mot au bit |
+| La synchro | **pourquoi synchroniser**, timecode | **black burst et tri-level**, genlock, **distribuer la référence** | **SPG700**, **word clock** | **ST 2059 et car hybride** |
+| La caméra | chaîne caméra, **focale et zoom**, **diaphragme et profondeur de champ**, **exposition**, **viseur, tally, cadreur** | **point, tirage, monture**, **filtres**, **prisme et capteurs**, **corps**, montage, **forme d'onde et vectorscope** | **quantification, balance, noir**, **gamma, knee, détail**, **matrice et fichiers**, fibre, **référence, sortie, line-up**, **moniteur et mires** | **grand capteur, HDR, super ralenti** |
+| La réalisation | mélangeur, langage du direct, **plan caméras et règle des 180°** | incrustations | | |
+| Les ralentis | serveur ralenti | clips et playlists, **du serveur au fichier** | | |
+| Le son | **du son au signal**, **micro dynamique (SM58)**, **liaisons symétriques**, **console analogique**, la tranche | **micro statique**, **directivité**, **48 V**, **sorties de la console**, N-1 | **audio numérique**, **loudness EBU R128** | **Dante** |
+| Le réseau | (23 leçons, inchangé) | | | |
+| La HF | fréquences, antennes | bilan | COFDM, **liaison point à point** | |
+| L'exploitation | intercom | line-up, transmission, dépannage, **énergie du car** | régie mobile | jour de match |
+
+### La caméra, de la lentille frontale au moniteur (3 → 18 leçons)
+
+Le chapitre suit le trajet de la lumière puis du signal, comme les neuf chapitres de la caméra en 3D, en **sept
+parties** (`PARTIES_CAMERA` de `cours/camera.js`). Chaque leçon reprend des notions du module : la section **« Sur
+la caméra en 3D »** de la leçon (nouveau champ `camlab` des leçons) ouvre chaque notion à sa pastille, avec sa
+fiche, sa manipulation sur la caméra et l'image du viseur et ses trois questions ; Échap ramène à la leçon, et la
+fiche de la notion renvoie à sa leçon (`leconDeNotion`). **Les 51 notions sont reprises, chacune par une seule
+leçon** (test unitaire). Les schémas viennent du module (`figNotions`), le quiz part des questions d'Olivier et du
+quiz de chapitre (`quizDe`, plus au moins une question « dans le car ») ; les manipulations calculent avec
+`camlab/optics.js` et le nouveau `cours/camera_calc.js`.
+
+| Partie | Leçons |
+| --- | --- |
+| L'objectif | La focale et le zoom · Le diaphragme et la profondeur de champ · La mise au point, le tirage et la monture |
+| Filtres, prisme et capteurs | Les filtres : ND, température de couleur, passe-bas · Le prisme et les trois capteurs · L'exposition : iris, ND, gain, obturateur |
+| Le traitement de l'image | Du capteur aux nombres : quantification, balance, noir · Gamma, knee et détail · La matrice de couleurs et les fichiers de réglage |
+| Le corps, le viseur et le cadreur | Le corps : commandes, menu, connectique, alimentation · Le viseur, le tally et le cadreur · Monter une caméra de stade |
+| La voie caméra | La chaîne caméra · La fibre de la caméra · La référence, la sortie et le line-up de la voie caméra |
+| Jusqu'au moniteur | La forme d'onde et le vectorscope · Le moniteur de référence et les mires |
+| Pour aller plus loin | Grand capteur, UHD et HDR, super ralenti |
+
+Trois exercices pratiques rejoignent la leçon qui en parle : « Prendre une caméra et cadrer » (le viseur, le
+tally et le cadreur), « Repérer les connecteurs de la caméra système » (le corps), « Exposer une caméra au RCP »
+(l'exposition, il était dans les niveaux du signal).
+
+### La synchro (2 → 8 leçons) et le SPG700 en 3D
+
+- **Pourquoi synchroniser** : fréquence, phase, référence, deux quartz libres qui dérivent (ppm), ce qu'il faut caler.
+- **Black burst et tri-level** : PAL (−300 mV, salve à 4,43 MHz, ligne de 64 µs), tri-level SMPTE ST 274 / 296
+  (± 300 mV, 44 périodes de 74,25 MHz par demi-impulsion en 1080, 40 en 720p, référence au passage à zéro), un
+  oscilloscope calculé.
+- **Distribuer la référence** : DA en étoile, entrée bouclée et une seule terminaison 75 Ω (sans bouchon :
+  amplitude doublée et échos ; deux bouchons : deux tiers), retard du câble (≈ 5 ns/m, ordre de grandeur).
+- **Régler un SPG700 de Tektronix** : référence interne (oscillateur thermostaté) ou genlock (vidéo ou 10 MHz),
+  Stay GenLock, trois sorties BLACK au format et au décalage indépendants (le serveur ralenti avancé de 14,5 µs),
+  word clock 48 kHz et DARS, trois LTC plus une entrée ou sortie, VITC, option SDI ; une configuration type et
+  les erreurs classiques ; un SPG simplifié à régler dont le modèle dit qui se verrouille.
+- **Le word clock : travailler avec l'option son** : 1 920 échantillons par image à 25 i/s (séquence de 5
+  images en 29,97), un seul maître, le niveau électrique (AES11 annexe B : TTL, 1 à 5 V selon les entrées) et
+  donc la sortie du SPG700 réglée en **5 V** pour les appareils de la section son (1 V sur 75 Ω seulement si la
+  notice le demande), une seule terminaison en bout de chaîne, le DARS, Dante « Sync to External ».
+- **Du black burst au PTP** (ST 2059-1 et -2) : l'origine SMPTE (1970 en TAI), le numéro d'image et le timecode
+  calculés à partir de l'heure PTP (TAI − UTC = 37 s), le car hybride.
+
+Calculs : `cours/synchro_calc.js` ; six fiches « ? » (`content/terms_synchro.js`) ; l'exercice pratique
+« Repérer les sorties du générateur de synchro » rejoint la leçon du SPG700. **Vue 3D « Le SPG700 et ses
+sorties »** (9 étapes) : le générateur en face arrière et en façade, ses sorties vers les CCU (tri-level), le
+mélangeur, une PTZ en boucle, le serveur ralenti avancé, la console son et l'enregistreur (word clock, LTC), un
+oscilloscope et une lampe de verrouillage par appareil, le bouchon 75 Ω, la famille NTSC qui ne verrouille rien.
+
+### Le son (2 → 13 leçons) en trois parties, et quatre vues 3D
+
+Parties (`PARTIES_SON` de `cours/son.js`) : **Capter : le son et le micro** (`cours/son_micros.js`, calculs
+`cours/son_micro_calc.js`), **Mélanger : la console** (`cours/son_console.js` et les deux leçons de la console
+du car), **Numérique, mesure et réseau** (`cours/son_console.js`, calculs `cours/son_console_calc.js` et
+`cours/dante_calc.js`). Dante est rangé dans Le son, avec des renvois vers le réseau (types d'adresses, multicast,
+QoS, PTP) ; sa vue 3D apparaît aussi dans « Le réseau en 3D ».
+
+- **Du son au signal** : 20 µPa, dB SPL (94 dB SPL = 1 Pa), −6 dB par doublement de distance, +3 ou +6 dB pour
+  deux sources, longueur d'onde, dBV et dBu.
+- **Le micro dynamique (SM58 ouvert)** : membrane et bobine dans l'aimant, induction ; SM58 −54,5 dBV/Pa,
+  50 Hz–15 kHz ; type SM48 −57,5 dBV/Pa (3 dB de moins) ; le gain à mettre à la console.
+- **Le micro statique** : condensateur, électronique, polarisation par 48 V ou électret, canon, ruban.
+- **La directivité** : A + B·cos θ (−6 dB à 90° pour un cardioïde, trous de l'hyper et du supercardioïde), effet
+  de proximité, le retour de scène dans le trou.
+- **L'alimentation fantôme 48 V** : IEC 61938, 2 × 6,81 kΩ, U = 48 − I × 3,405 kΩ, un dynamique en symétrique
+  traversé par rien (un câble abîmé, si), les précautions.
+- **Liaisons symétriques** : XLR (1 masse, 2 point chaud, 3 point froid), réjection du mode commun, +4 dBu et
+  −10 dBV, boîte de direct.
+- **La console analogique** de la section son, **type ANT Antmix** (simulation non officielle) : la tranche de
+  la prise au fader (GAIN, coupe-bas, égaliseur 80 Hz / 2,5 kHz / 12 kHz à ± 15 dB, AUX pré-fader, FX
+  post-fader, PAN, PEAK, PFL), le 48 V commun, le gain staging (écrêtage interne vers +21 dBu, ordre de
+  grandeur).
+- **Les sorties de la console** : principale (XLR, +4 dBu), AUX des retours, effets, enregistrement (−10 dBV),
+  départ vers la vidéo, le larsen.
+- **L'audio numérique** : Nyquist et repliement, 6,02 n + 1,76 dB, EBU R68 et SMPTE RP 155, AES3, MADI,
+  l'horloge commune.
+- **Mesurer le programme** : crête, vumètre, loudness ITU-R BS.1770 (portes −70 LUFS et −10 LU), EBU R128
+  (−23 LUFS, −1 dBTP, LRA), calculée sur une suite de blocs.
+- **Dante** : adresses et mDNS, Dante Controller et ses abonnements, unicast et multicast (IGMP snooping),
+  leader PTP calé sur le word clock du car, latence (1 ms par défaut), QoS DSCP 56 et 46, EEE coupé, réseau
+  secondaire, AES67 vers le ST 2110-30.
+
+Dix-huit fiches « ? » (`content/terms_micro.js`, famille « Son : micros et liaisons » ; `content/terms_audio.js`,
+famille « Son »). **Quatre vues 3D**, dans une nouvelle entrée « Le son en 3D » :
+
+| Vue | Étapes | Ce qu'on y voit |
+| --- | --- | --- |
+| Le micro dynamique ouvert | 8 | Un micro de chant type SM58 agrandi et éclaté (grille, mousse, membrane, bobine, aimant, suspension, XLR) ; les fronts de pression, la tension induite à l'oscilloscope, la courbe cardioïde quand la source tourne, l'effet de proximité ; SM58 ou SM48 |
+| Trois capsules et le 48 V | 10 | Dynamique, statique, ruban et électret sous les mêmes fronts ; un câble micro ouvert : le 48 V sur les broches 2 et 3 par les deux 6,81 kΩ, un dynamique qu'il ne traverse pas, un câble abîmé, un parasite qui s'annule en symétrique |
+| La console analogique : réglages et sorties | 10 | La console agrandie, la tranche réglage par réglage, le signal qui s'allume jusqu'aux sorties de la face arrière (façade, retours, enregistreur, vidéo), l'écrêtage, les envois pré et post-fader, le larsen |
+| Dante : l'audio sur le réseau | 10 | Boîtier de scène, commutateur, console, enregistreur et Dante Controller : abonnements, unicast et multicast, sans IGMP snooping, leader PTP et word clock du car, latence, QoS et EEE, réseau secondaire, AES67 |
+
+### Une leçon de plus dans cinq autres chapitres
+
+| Chapitre | Leçon | La manipulation |
+| --- | --- | --- |
+| Le signal | `signal-compression` Compresser l'image : intra, inter, débit et latence | Débit brut (20 bits par pixel en 4:2:2 10 bits), rapport, bits par pixel, qualité attendue, latence (lignes, images, images B, tampon) ; une erreur mise dans un GOP qui se propage jusqu'à la prochaine image I |
+| La réalisation | `real-plan` Le plan caméras d'un match : positions, axe et règle des 180° | Dix caméras d'un dispositif type autour du terrain : le sens du jeu à l'écran de chacune (direction de visée tournée d'un quart de tour), les coupes qui franchissent l'axe, les vues neutres, les focales du plan large et du serré |
+| Les ralentis | `ralentis-fichiers` Du serveur au fichier : stocker, échanger, archiver | Go par heure et par entrée, profondeur de la boucle des trains (clips protégés déduits), taille d'un clip et temps de son transfert, métadonnées |
+| La HF | `hf-fresnel` La liaison point à point : paraboles, zone de Fresnel et dégagement | Le profil d'une liaison : ligne de vue, premier ellipsoïde de Fresnel (17,32 √(d1 d2 ÷ f D)), renflement de la Terre, diffraction (UIT-R P.526), gain des paraboles, niveau reçu et marge |
+| L'exploitation | `expl-energie` L'énergie du car : triphasé, P17, terre et secours | Les baies réparties sur les trois phases d'une P17 (√3 × 400 V × I), le courant du neutre, la charge du groupe, l'autonomie de l'onduleur ; la terre d'abord, R × IΔn ≤ 50 V |
+
+**La 3D, notion par notion (suite des tableaux des v19.16 et v19.17).**
+
+| Notion | 3D ? | Pourquoi |
+| --- | --- | --- |
+| Le générateur de synchro, ses sorties, la terminaison | Oui | Un appareil, ses prises, des câbles vers d'autres appareils |
+| Black burst, tri-level, word clock (formes d'onde) | Non (un oscilloscope dans la vue du SPG) | Des courbes : la manipulation 2D et l'écran de l'oscilloscope |
+| Le micro dynamique, les capsules, le 48 V dans le câble | Oui | Des pièces qui bougent, un câble ouvert |
+| La console analogique, ses sorties | Oui | Un appareil à régler et des prises à l'arrière |
+| Dante | Oui | Des appareils, des flux, une horloge |
+| Échantillonnage, loudness, compression | Non | Des courbes et des calculs |
+| La caméra | La caméra en 3D (module à part) | Chaque leçon ouvre ses notions sur la caméra |
+| Plan caméras, Fresnel, énergie, stockage | Non | Un plan vu de haut, un profil, des barres : le schéma calcule mieux qu'une scène |
+
+**Ce qui change ailleurs.** Champ `camlab` des leçons et section « Sur la caméra en 3D » (`ui/cours_ui.js`) ;
+`leconDeNotion` (`cours/index.js`) et renvoi de la fiche de la notion vers sa leçon (`camlab/fiche.js`) ; les
+introductions des chapitres ; près de soixante-dix termes du glossaire (caméra, synchro, son) reliés
+à leur leçon ; le poste Énergie a sa leçon ; le bouton « Cours » des postes son, HF, IPDirector, réalisateur et
+synchro propose aussi les nouvelles leçons.
+
+**À faire relire** (chiffres et matériel signalés pendant l'écriture) :
+
+- **SPG700** : disposition des connecteurs (indicative), intitulés des menus, option GPS (non confirmée : la
+  leçon le dit), niveaux de la sortie word clock (5 V CMOS ou 1 V sur 75 Ω) ; la tolérance d'une entrée de
+  référence (± 3 dB) ; le début de salve et les fronts du black burst ; « beaucoup de générateurs ne sortent pas
+  de tri-level 1080p50 » ; la répartition type des sorties, à adapter au plateau de l'établissement.
+- **Console Antmix** : nombre de voies, plage du GAIN, coupe-bas, égaliseur (relevé sur des fiches revendeur),
+  AUX pré ou post-fader, 48 V global ou par groupe, niveaux des sorties ; ordres de grandeur du modèle (« 0 » à
+  0 dBu, écrêtage +21 dBu, souffles) et du larsen.
+- **Micros** : sensibilités, bruit propre et pression maximale des micros statique, canon, ruban et électret ;
+  bruit d'entrée du préampli (−128 dBu) ; niveaux de voix ; le modèle idéal d'effet de proximité ; le courant
+  dans une bobine sur un câble abîmé.
+- **Dante** : canaux par flux unicast, latences et repères d'Audinate, DSCP 56 et 46, PTP v1 et v2, adresse du
+  secondaire, en-têtes comptés, ordre entre Preferred Leader et Sync to External.
+- **Caméra** : surfaces air-verre d'un zoom, servo de l'objectif ≈ 4 W, éclairements des scènes types (une fiche
+  dit 16 fois, une autre 25 fois), simplifications du black gamma, du master black, de la matrice et du détail,
+  seuils des valeurs de plan, règle de la PLUGE, Super 35 (≈ 25 mm, facteur 2,6), mireds arrondis.
+- **Leçons ajoutées** : débits des codecs de serveur et seuils de qualité de la compression (ordres de
+  grandeur pour du sport), latences du modèle ; puissances des baies du car et dimensionnement du groupe ; pluie
+  au-delà de 13 GHz ; dispositif type du plan caméras.
+
+Tests : `tests/unit/camera-cours.test.mjs` (les 51 notions reprises une fois, le modèle de la caméra, l'ordre du
+parcours), `tests/unit/synchro.test.mjs`, `tests/unit/son-micros.test.mjs`, `tests/unit/son-console.test.mjs`,
+`tests/unit/cours-plus.test.mjs` (énergie, compression, plan caméras, serveur ralenti, liaison point à point) ;
+suites `node tools/e2e.mjs camera` (la section « Sur la caméra en 3D », l'aller-retour vers la fiche, les quinze
+leçons), `vues3d` (25 vues, chaque étape, six chapitres « en 3D »), `cours`, `parcours`.
+
 ## v19.18 : le Cours en parcours, à la façon de Duolingo (niveaux, exercices en autonomie, test de niveau)
 
 **Pourquoi.** Tout le Cours était ouvert d'un coup : un étudiant qui arrivait pouvait commencer par le ST 2110 sans
@@ -1993,6 +2172,11 @@ node tools/shots.mjs dossier 1280 800 '["vision","hf"]'   # captures de postes
 | `ui/ma_progression.js` | Réglages → Ma progression : où elle est enregistrée et si ça marche, exporter dans un fichier, importer (fusion), effacer, vos données personnelles ; notification quand un enregistrement échoue |
 | `app/profile.js` | Profil Étudiant / Formateur, mémorisé ; classe `role-formateur` sur `body`, éléments `.role-only` |
 | `cours/index.js`, `cours/kit.js`, `cours/all.js`, un fichier par chapitre (`signal.js`, `sdi.js`, `synchro.js`, `camera.js`, `realisation.js`, `ralentis.js`, `son.js`, `reseau.js`, `hf.js`, `exploitation.js`) | La section Cours : dix chapitres et leurs leçons, ordre d'apprentissage, progression, tirage du quiz dans la banque de chaque leçon (`drawQuiz`, `QUIZ_N`), kit des schémas et manipulations |
+| `cours/camera_objectif.js`, `camera_capteurs.js`, `camera_image.js`, `camera_corps.js`, `camera_signal.js`, `camera_calc.js`, `camera_kit.js`, `styles/cours-camera.css` | La caméra de la lentille frontale au moniteur : quinze leçons rangées par `PARTIES_CAMERA` dans `cours/camera.js`, chacune avec ses notions de la caméra en 3D (champ `camlab`) ; le modèle pur de leurs manipulations ; `quizDe` (questions d'Olivier converties) et `figNotions` (schémas du module) |
+| `cours/synchro_ref.js`, `cours/synchro_spg.js`, `cours/synchro_calc.js`, `content/terms_synchro.js` | La synchro : bases, black burst et tri-level, distribution de la référence ; SPG700, word clock, ST 2059 ; leurs calculs (dérive, formes d'onde, terminaisons, verrouillage, word clock reçu, heure PTP → image) ; six fiches « ? » |
+| `cours/son_micros.js`, `cours/son_micro_calc.js`, `content/terms_micro.js` | Le son, partie « Capter » : acoustique, micro dynamique, micro statique, directivité, 48 V, liaisons ; leurs calculs ; huit fiches « ? » |
+| `cours/son_console.js`, `cours/son_console_calc.js`, `cours/dante_calc.js`, `content/terms_audio.js` | Le son : la console analogique et ses sorties, l'audio numérique, la loudness (BS.1770, R128), Dante ; leurs calculs ; dix fiches « ? » |
+| `cours/signal_compression.js`, `cours/real_plan.js`, `cours/ralentis_fichiers.js`, `cours/hf_fresnel.js`, `cours/expl_energie.js` | Une leçon chacune, avec son modèle pur : compresser l'image, le plan caméras et la règle des 180°, du serveur au fichier, la liaison point à point (Fresnel), l'énergie du car |
 | `cours/parcours.js` | Le parcours du Cours : niveaux de chaque chapitre (`PARCOURS`), état d'une leçon (étoiles, terminée), d'un niveau (conditions, ouvert, validé), suite conseillée (les fondamentaux d'abord), test de niveau (calcul pur) |
 | `cours/exo.js`, `cours/exos/` (un fichier par chapitre, le réseau en deux) | L'exercice en autonomie de chaque leçon : questions (nombre, choix, texte, ordre) tirées à chaque essai, vérification, aides et solution, points et score sur 100 |
 | `ui/cours_parcours.js`, `ui/cours_exo.js`, `styles/cours-parcours.css` | Mon parcours (suite, catégories), chemin d'un chapitre par niveau, aperçu d'une leçon fermée, étapes d'une leçon, test de niveau ; l'exercice une question à la fois et son bilan |
@@ -2006,11 +2190,11 @@ node tools/shots.mjs dossier 1280 800 '["vision","hf"]'   # captures de postes
 | `cours/ip_calc.js` | Les calculs des bases du réseau : adresses, diffusion, découpage, types d'adresses, encapsulation, propagation, débit de TCP avec pertes, latence SRT, files de QoS, NAT, gigue, budget de latence |
 | `cours/reseau_bases.js`, `cours/reseau_adresses.js`, `cours/reseau_transport.js`, `cours/reseau_qos.js`, `content/terms_ip.js`, `styles/cours-reseau.css` | Les onze leçons des bases du réseau (couches, LAN / MAN / WAN, Ethernet, adresses, types, DHCP et DNS, NAT, TCP et UDP, streaming, mesures, QoS) rangées par `PARTIES` dans `cours/reseau.js` ; leurs fiches « ? » ; le style des parties du sommaire et des bits |
 | `vues3d/index.js`, `vues3d/orbite.js`, `vues3d/kit.js`, `vues3d/materiel.js`, `styles/vues3d.css` | Le moteur des vues 3D du Cours : second contexte WebGL, orbite, étiquettes, clic sur un objet, panneau (En 3D, La leçon), liste ; matières et pièces, flux animés, appareils et câbles réseau |
-| `vues3d/catalogue.js`, `vues3d/vues/`, `vues3d/l2.js`, `vues3d/l2anim.js` | Les vingt vues (une par fichier : étapes, commandes, scène) rattachées aux chapitres et aux leçons ; le petit réseau de niveau 2 (table MAC, VLAN, trunk) et son animation |
+| `vues3d/catalogue.js`, `vues3d/vues/`, `vues3d/l2.js`, `vues3d/l2anim.js` | Les vingt-cinq vues (une par fichier : étapes, commandes, scène) rattachées aux chapitres et aux leçons ; le petit réseau de niveau 2 (table MAC, VLAN, trunk) et son animation |
 | `camlab/` | Module « La caméra en 3D » : caméra et plateau construits dans le code (`model.js`, `scene.js`), pastilles (`points.js`), 51 notions (`notions/`, une fiche par fichier, registres `ch1.js` … `ch89.js`), schémas (`figs.js`, `figs/`, `figkit.js`), manipulations (`labs.js`, `labs/`, commandes `controls.js`, optique `optics.js`, viseur simulé et traitement de l'image `vf.js`), affichage d'une fiche (`fiche.js`), progression (`progress.js`), quiz de chapitre (`quiz.js`), mise en service notée (`mes.js`) |
 | `entrepot/` | Module « L'entrepôt » (tuile de Jouer) : monter une régie mobile d'après un cahier des charges. Types (`types.js`), catalogue de matériel réel (`catalogue/`, un fichier par groupe : `blackmagic.js`, `panasonic.js`, `ross.js`, `reseau.js`, `divers.js`), montage (`build.js`), moteur (`engine.js`), missions notées (`missions.js`), résultat rendu (`suivi.js`), 3D (`scene.js` ; `scene/` : hall, appareils, câbles, bureau et ordinateur de la Carrière `bureau.js` ; vue en orbite `orbit.js`), panneaux (`ui/` : `stock.js`, `appareil.js`, menus de configuration `ui/config/` un fichier par famille, `synoptique.js`, `reseau.js`, `mission.js`), ouverture, boucle et mode Carrière (`index.js`) |
 | `carriere/` | La Carrière (mode de l'entrepôt) : les épisodes et leurs mails (`mails.js`), la boîte de réception et les missions lues dans la progression, calcul pur (`index.js`), la messagerie du bureau (`ui.js`), les mails qui arrivent et le lancement des missions au car (`installer.js`) |
-| `ui/cours_ui.js` | L'espace Cours : un seul sommaire (chapitres rangés par niveau), « Mon parcours », chemin d'un chapitre, leçons (quiz, exercice en autonomie, exercices pratiques, article de référence), glossaire, postes, matériel |
+| `ui/cours_ui.js` | L'espace Cours : un seul sommaire (chapitres rangés par niveau), « Mon parcours », chemin d'un chapitre, leçons (« Voir en 3D », « Sur la caméra en 3D », quiz, exercice en autonomie, exercices pratiques, article de référence), glossaire, postes, matériel |
 | `app/nav.js` | Navigation entre les trois entrées : menu du car (Échap), aiguillage des boutons « Aller au poste », « Commencer » (car lancé si besoin), changement de vacation, retour au bureau de l'entrepôt (Carrière) |
 | `ui/layer.js` | Espace plein écran (le Cours) : plaque, onglets, Fermer (Échap), ligne d'état |
 | `ui/guide.js` | Missions d'installation (liste des tâches), articles de référence des leçons, glossaire, postes, matériel, procédures maison, commandes |
