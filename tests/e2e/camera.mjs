@@ -2,7 +2,9 @@
 // pastilles et la liste des notions ouvrent une fiche (schéma, manipulation, questions d'Olivier),
 // le simulateur reste en pause pendant ce temps, Échap ramène dans le Cours sur le même chapitre.
 // Le suivi : une notion acquise se coche, le quiz d'un chapitre, le lien d'une fiche vers sa leçon
-// du Cours, et la mise en service notée lancée depuis la leçon camera-systeme, jouée jusqu'au bilan.
+// du Cours, et la mise en service notée lancée depuis la leçon camera-systeme, jouée jusqu'au bilan. Les leçons de la
+// caméra (v19.19) : la section « Sur la caméra en 3D » ouvre la notion à sa pastille, Échap ramène à la leçon ; les
+// quinze leçons qui reprennent les notions s'affichent avec leurs schémas et leur manipulation.
 // Les 51 fiches s'ouvrent une à une, à 1280 px puis à 390 px.
 // node tests/e2e/camera.mjs [dossier]
 import { launch, openPage, outDir, until, reporter } from './harness.mjs';
@@ -103,16 +105,17 @@ const qz = await ev(() => {
 });
 T.check('quiz du chapitre 1 : six questions, la première réponse compte (5 / 6), la notion à revoir proposée, le meilleur score enregistré et affiché dans la liste', qz.n === 6 && /^5 \/ 6/.test(qz.score || '') && qz.revoir && qz.best && qz.best.score === 5 && qz.item === '5 / 6', JSON.stringify(qz));
 
-// ---------------- le lien vers une leçon du Cours (champs cours et go d'une fiche, posés ici pour l'essai) ----------------
+// ---------------- le lien vers une leçon du Cours : la leçon de la caméra qui reprend la notion (champ camlab), puis
+// les champs cours et go d'une fiche, posés ici pour l'essai ----------------
 const ln = await ev(() => {
   const F = window.__dbg.camlab().data.NOTIONS.focale; F.cours = 'camera-systeme'; F.go = [{ label: 'La baie CCU', station: 'ccu' }];
   /** @type {HTMLElement} */ (document.querySelector('.cl-ni[data-n="focale"]')).click();
-  const r = { cours: document.querySelector('.camlab .cl-side .cs-cours')?.textContent, go: document.querySelector('.camlab .cl-side .cs-go')?.textContent };
-  /** @type {HTMLElement} */ (document.querySelector('.camlab .cl-side .cs-cours')).click();
+  const r = { cours: [...document.querySelectorAll('.camlab .cl-side .cs-cours')].map((b) => b.textContent), go: document.querySelector('.camlab .cl-side .cs-go')?.textContent };
+  /** @type {HTMLElement} */ (document.querySelector('.camlab .cl-side .cs-cours[data-lesson="camera-systeme"]')).click();
   delete F.cours; delete F.go;
   return { ...r, closed: !document.body.classList.contains('camlab-on'), lesson: !!document.querySelector('#layer.ly-cours .co-les.on[data-lesson="camera-systeme"]') };
 });
-T.check('la fiche montre « La leçon du Cours : … » et « Emmène-moi : … »', /La leçon du Cours : La chaîne caméra/.test(ln.cours || '') && /Emmène-moi : La baie CCU/.test(ln.go || ''), JSON.stringify(ln));
+T.check('la fiche montre sa leçon de la caméra, la leçon du champ cours et « Emmène-moi : … »', /La leçon du Cours : La focale et le zoom/.test(ln.cours[0] || '') && /La leçon du Cours : La chaîne caméra/.test(ln.cours[1] || '') && /Emmène-moi : La baie CCU/.test(ln.go || ''), JSON.stringify(ln));
 T.check('le bouton ferme le module et ouvre la leçon dans le Cours', ln.closed && ln.lesson);
 
 // ---------------- la mise en service, depuis l'exercice pratique de la leçon ----------------
@@ -184,6 +187,36 @@ const back = await ev(() => {
 });
 T.check('« Revenir à la leçon » : la leçon camera-systeme, l\'exercice montre le meilleur résultat', back.off && back.on && /meilleur résultat \d+ \/ 100/.test(back.exo), JSON.stringify(back).slice(0, 220));
 await A.screenshot({ path: `${OUT}/32-retour-lecon.png` });
+
+// ---------------- une leçon de la caméra : « Sur la caméra en 3D » ouvre la notion à sa pastille, Échap ramène à la leçon ----------------
+await ev(() => window.__dbg.emit('cours', { lesson: 'camera-iris' })); await A.waitForTimeout(500);
+const sec = await ev(() => { const s = document.querySelector('#layer .co-camlab'); return { n: s ? s.querySelectorAll('button[data-notion]').length : 0, ids: s ? [...s.querySelectorAll('button[data-notion]')].map((b) => /** @type {HTMLElement} */ (b).dataset.notion) : [], fig: document.querySelectorAll('#layer .co-cfigs .cl-fig svg').length, demo: document.querySelectorAll('#layer .co-demo canvas').length, quiz: !!document.querySelector('#layer .co-quiz, #layer .co-q') }; });
+T.check('leçon camera-iris : la section « Sur la caméra en 3D » (iris, pdc, ramping, doubleur), les schémas du module, la manipulation', sec.n === 4 && sec.ids.join() === 'iris,pdc,ramping,doubleur' && sec.fig === 2 && sec.demo >= 1, JSON.stringify(sec));
+const sect = await A.$('#layer .co-camlab'); if (sect) await sect.screenshot({ path: `${OUT}/33-lecon-camlab.png` }).catch(() => {});
+await A.click('#layer .co-camlab button[data-notion="pdc"]');
+await until(A, () => document.body.classList.contains('camlab-on') && window.__dbg.camlab()?.notion === 'pdc', null, 60000);
+await A.waitForTimeout(800);
+const pdc = await ev(() => ({ titre: document.querySelector('.camlab .cl-side h2')?.textContent, lecon: document.querySelector('.camlab .cl-side .cs-cours')?.textContent, layer: !!document.getElementById('layer') }));
+T.check('« Ouvrir sur la caméra » : le module s\'ouvre sur la fiche de la profondeur de champ, qui renvoie à la leçon', /profondeur de champ/i.test(pdc.titre || '') && /Le diaphragme et la profondeur de champ/.test(pdc.lecon || '') && !pdc.layer, JSON.stringify(pdc));
+await A.keyboard.press('Escape'); await A.waitForTimeout(300);
+if (await ev(() => document.body.classList.contains('camlab-on'))) { await A.keyboard.press('Escape'); await A.waitForTimeout(300); }
+await until(A, () => !document.body.classList.contains('camlab-on') && !!document.querySelector('#layer.ly-cours .co-les.on[data-lesson="camera-iris"]'), null, 20000);
+T.check('Échap : retour dans le Cours, sur la leçon camera-iris', await ev(() => !document.body.classList.contains('camlab-on') && !!document.querySelector('#layer.ly-cours .co-camlab')));
+// les autres leçons de la caméra s'affichent, chacune avec ses notions et sa manipulation (profil Formateur : tout est ouvert)
+await ev(() => window.__dbg.setRole('formateur'));
+const toutes = await ev(async () => {
+  const ids =['camera-focale', 'camera-point', 'camera-filtres', 'camera-prisme', 'camera-exposition', 'camera-numerique', 'camera-courbes', 'camera-peinture', 'camera-corps', 'camera-viseur', 'camera-voie', 'camera-mesure', 'camera-moniteur', 'camera-plusloin'];
+  const bad = [];
+  for (const id of ids) {
+    window.__dbg.emit('cours', { lesson: id }); await new Promise((r) => setTimeout(r, 120));
+    const n = document.querySelectorAll('#layer .co-camlab button[data-notion]').length, fig = document.querySelectorAll('#layer .co-cfigs svg').length, cv = document.querySelectorAll('#layer .co-demo canvas, #layer .co-demo table').length;
+    const ver = document.querySelector('#layer .co-demo .co-verdict')?.textContent || 'sans verdict';
+    if (!n || !fig || !cv || /NaN|undefined/.test(document.querySelector('#layer .co-demo')?.textContent || '')) bad.push(`${id} ${n} ${fig} ${cv} ${ver.slice(0, 30)}`);
+  }
+  return bad;
+});
+T.check('les quatorze autres leçons de la caméra : notions, schémas, manipulation, sans NaN', !toutes.length, toutes.join(' | '));
+await ev(() => window.__dbg.setRole('etudiant'));
 
 // ---------------- au téléphone (390 px) : chaque fiche sans défilement horizontal ----------------
 await A.keyboard.press('Escape'); await A.setViewportSize({ width: 390, height: 844 });
