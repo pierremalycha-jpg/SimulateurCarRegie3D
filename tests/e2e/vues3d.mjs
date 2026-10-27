@@ -29,7 +29,7 @@ T.check('la première vue du chapitre, à l\'étape 1', e.vue === 'sdi-trame' &&
 T.check('l\'espace Cours s\'est refermé, le titre est caché, la liste des vues est ouverte', await ev(() => !document.getElementById('layer') && document.getElementById('title').hidden && document.body.classList.contains('vues3d-on') && !document.querySelector('#vues3d .v3-list').hidden));
 const nListe = await ev(() => document.querySelectorAll('#vues3d .v3-list .v3-li').length);
 const nVues = await ev(() => window.__dbg.vues3d().list.querySelectorAll('.v3-ch').length);
-T.check('la liste : toutes les vues, rangées par chapitre', nListe >= 14 && nVues === 5, `${nListe} vues, ${nVues} chapitres`);
+T.check('la liste : toutes les vues, rangées par chapitre', nListe >= 14 && nVues === 6, `${nListe} vues, ${nVues} chapitres`);
 await A.screenshot({ path: `${OUT}/01-sdi-liste.png` });
 T.check('les touches du simulateur sont ignorées pendant la vue', await ev(() => { const before = window.__dbg.S.mode; document.dispatchEvent(new KeyboardEvent('keydown', { key: 'g', bubbles: true })); return !document.getElementById('layer') && window.__dbg.S.mode === before; }));
 await A.click('#vues3d .v3-lh .linkbtn'); await A.waitForTimeout(200);

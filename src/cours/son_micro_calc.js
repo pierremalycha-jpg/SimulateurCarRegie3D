@@ -83,6 +83,7 @@ export const MICROS = {
   statique: { nom: 'Micro statique de studio (ordre de grandeur)', techno: 'statique', sens: -34, bande: [20, 20000], z: 200, i48: 3, ordre: true, dir: 'cardio', bruit: 12, spMax: 135 },
   canon: { nom: 'Micro canon de bord terrain (ordre de grandeur)', techno: 'statique', sens: -28, bande: [40, 20000], z: 25, i48: 2, ordre: true, dir: 'hyper', bruit: 13, spMax: 130 },
   ruban: { nom: 'Micro à ruban passif (ordre de grandeur)', techno: 'ruban', sens: -55, bande: [30, 15000], z: 300, ordre: true, dir: 'huit' },
+  electret: { nom: 'Micro-cravate électret (ordre de grandeur)', techno: 'statique', sens: -44, bande: [50, 18000], z: 1000, i48: 1, ordre: true, dir: 'omni', bruit: 25, spMax: 125 },
 };
 /** sensibilité en mV/Pa */
 export const mvParPa = (sens) => 1000 * 10 ** (sens / 20);
@@ -143,6 +144,15 @@ export const facteurDistance = (d) => Math.sqrt(facteurQ(d));
 export function proximite(d, f, r, c = C_SON) {
   const k = 2 * Math.PI * f / c, g = Math.sqrt(1 + 1 / (k * r) ** 2);
   return 20 * log10((d.A + d.B * g) / (d.A + d.B));
+}
+
+/**
+ * La réponse d'un micro, en dB par rapport à une source lointaine dans l'axe : directivité et effet de
+ * proximité ensemble, |A + B · cos θ · √(1 + 1/(kr)²)| (amplitudes seules, modèle idéal).
+ */
+export function reponse(d, deg, f, r, c = C_SON) {
+  const k = 2 * Math.PI * f / c, g = Math.sqrt(1 + 1 / (k * r) ** 2);
+  return 20 * log10(Math.max(1e-6, Math.abs(d.A + d.B * Math.cos(deg * Math.PI / 180) * g)));
 }
 
 // ---------------- l'alimentation fantôme ----------------
