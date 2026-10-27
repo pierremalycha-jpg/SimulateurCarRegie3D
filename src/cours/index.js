@@ -30,6 +30,8 @@ import { SEUIL_EXO } from './exo.js';
  *   (identifiant de src/tutor/lessons) ou un exercice noté (« x-atelier », « x-brassage », « x-reseau », « x-match », voir
  *   cours/exercices.js) ; intro : deux ou trois phrases qui relient la leçon au geste à faire dans le car
  * @property {string} [article] article de référence du guide (content/guide.js), proposé en « Pour aller plus loin »
+ * @property {string[]} [camlab] notions de la caméra en 3D (src/camlab/notions) que la leçon reprend : la section « Sur la
+ *   caméra en 3D » ouvre chacune à sa pastille, et la fiche de la notion renvoie à la leçon
  * @property {QuizQuestion[]} quiz la banque de questions (cinq au moins) : chaque essai en tire QUIZ_N, réponses mélangées ;
  *   un choix peut porter sa propre explication [texte, pourquoi]
  */
@@ -60,6 +62,11 @@ export function lessonById(id) {
 }
 /** toutes les leçons, dans l'ordre des chapitres */
 export const allLessons = () => CHAPTERS.flatMap((c) => c.lessons.map((l) => ({ chapter: c, lesson: l })));
+/** la leçon qui reprend une notion de la caméra en 3D (champ camlab), ou null */
+export function leconDeNotion(/** @type {string} */ nid) {
+  for (const c of CHAPTERS) for (const l of c.lessons) if ((l.camlab || []).includes(nid)) return l;
+  return null;
+}
 
 // ---------------- progression (enregistrée avec celle du stagiaire) ----------------
 export function coursProgress(id) {

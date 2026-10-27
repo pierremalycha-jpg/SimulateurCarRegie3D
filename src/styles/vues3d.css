@@ -88,6 +88,7 @@
 .co-3d { display: grid; gap: 8px; padding: 10px 12px; background: linear-gradient(90deg, rgba(76,195,230,.12), rgba(76,195,230,.03)); border: 1px solid #070a0c; border-left: 3px solid var(--cyan); border-radius: 3px; }
 .co-3d h4 { margin: 0; display: flex; align-items: center; gap: 6px; color: var(--cyan); }
 .co-3d-item { display: flex; gap: 12px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+.co-camlab .note { margin: 0; } .co-acq { color: var(--pvw); font: 600 12.5px var(--f-leg); }
 .co-3d-item > div { flex: 1 1 260px; min-width: 0; } .co-3d-item b { font: 600 15px var(--f-disp); } .co-3d-item p { margin: 2px 0 0; font-size: 13.5px; color: var(--muted); line-height: 1.4; }
 
 /* écran étroit : la scène en haut, le panneau en bas */

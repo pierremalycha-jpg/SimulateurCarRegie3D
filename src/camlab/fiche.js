@@ -2,7 +2,7 @@
 import { el } from '../util.js';
 import { emit } from '../state.js';
 import { rich } from '../ui/rich.js';
-import { lessonById } from '../cours/index.js';
+import { lessonById, leconDeNotion } from '../cours/index.js';
 import { NOTIONS, CHAPITRES } from './notions/index.js';
 import { FIGS } from './figs.js';
 import { LABS } from './labs.js';
@@ -54,15 +54,15 @@ function quiz(id, f, ctx, onChange) {
   return el('div', {}, status, box, result);
 }
 
-/** la leçon du Cours de la fiche (champ cours) et les boutons « Emmène-moi » (champ go) */
-function liens(f, ctx) {
+/** les leçons du Cours de la fiche (celle du chapitre La caméra qui reprend la notion, puis le champ cours) et les boutons « Emmène-moi » (champ go) */
+function liens(f, id, ctx) {
   const items = [];
-  const L = f.cours ? lessonById(f.cours) : null;
-  if (L) {
-    items.push(el('button', { type: 'button', class: 'btn small cs-cours', 'data-lesson': L.lesson.id,
-      onclick: () => { if (ctx.cours) ctx.cours(L.lesson.id); else emit('cours', { lesson: L.lesson.id }); } },
-    'La leçon du Cours : ', el('b', {}, L.lesson.title)));
-  }
+  const lecon = (/** @type {any} */ l) => items.push(el('button', { type: 'button', class: 'btn small cs-cours', 'data-lesson': l.id,
+    onclick: () => { if (ctx.cours) ctx.cours(l.id); else emit('cours', { lesson: l.id }); } },
+  'La leçon du Cours : ', el('b', {}, l.title)));
+  const C = leconDeNotion(id), L = f.cours ? lessonById(f.cours) : null;
+  if (C) lecon(C);
+  if (L && L.lesson !== C) lecon(L.lesson);
   for (const g of f.go || []) {
     if (!g || !(g.station || g.lesson)) continue;
     const target = { station: g.station, lesson: g.lesson, label: g.label };
@@ -106,7 +106,7 @@ export function renderFiche(id, ctx) {
   if (f.plus) node.append(el('details', { class: 'cl-sec cl-plus' }, el('summary', {}, 'Pour aller plus loin'), rich(f.plus, 'chef-say cl-rich')));
   if (f.car) node.append(section('Dans le car', rich(f.car, 'chef-say cl-rich')));
   if (f.quiz && f.quiz.length) node.append(section('Les questions d\'Olivier', quiz(id, f, ctx, () => { badge.hidden = !notionAcquise(id); })));
-  const L = liens(f, ctx); if (L) node.append(L);
+  const L = liens(f, id, ctx); if (L) node.append(L);
   if (f.see && f.see.length) {
     node.append(section('Voir aussi', el('div', { class: 'cl-see' }, ...f.see.filter((s) => NOTIONS[s]).map((s) =>
       el('button', { type: 'button', class: 'cl-chip' + (NOTIONS[s].prevu ? ' prevu' : '') + (notionAcquise(s) ? ' cs-done' : ''), onclick: () => ctx.open(s) }, NOTIONS[s].t)))));

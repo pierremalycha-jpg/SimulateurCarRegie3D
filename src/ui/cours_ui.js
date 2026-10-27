@@ -20,6 +20,8 @@ import { accueilParcours, cheminChapitre, apercuFerme, etapesLecon, pageTest, no
 import { exoSection, etoiles } from './cours_exo.js';
 import { exoOf } from '../cours/exo.js';
 import { PROG } from '../shared.js';
+import { NOTIONS } from '../camlab/notions/index.js';
+import { notionAcquise } from '../camlab/progress.js';
 
 // ----------------------------------------------------------------------------------
 // L'espace Cours, plein écran (touche G, menu titre, écran Jouer, pupitre, menu du car) : il s'ouvre
@@ -226,6 +228,15 @@ function lessonPage(page, { chapter, lesson }, /** @type {import('./cours_parcou
       ...v3.map((v) => el('div', { class: 'co-3d-item' },
         el('div', {}, el('b', {}, v.titre), el('p', {}, v.resume)),
         el('button', { type: 'button', class: 'btn small primary', 'data-vue': v.id, onclick: () => { closeLayer(false); emit('vue3d', { vue: v.id, lecon: L.id, from: 'cours' }); } }, 'Ouvrir la vue 3D')))));
+  }
+  // les notions de la caméra en 3D que la leçon reprend : chacune s'ouvre à sa pastille, « Quitter » ramène ici
+  const cl = (L.camlab || []).filter((id) => NOTIONS[id]);
+  if (cl.length) {
+    page.append(el('section', { class: 'co-3d co-camlab', 'aria-label': 'Sur la caméra en 3D' }, el('h4', {}, icon('cube'), 'Sur la caméra en 3D'),
+      el('p', { class: 'note' }, 'Chaque notion s\'ouvre sur la caméra de plateau, à sa pastille : la fiche, la manipulation sur la caméra et l\'image du viseur, les trois questions d\'Olivier.'),
+      ...cl.map((id) => el('div', { class: 'co-3d-item' + (notionAcquise(id) ? ' acquise' : '') },
+        el('div', {}, el('b', {}, NOTIONS[id].t, notionAcquise(id) ? el('small', { class: 'co-acq' }, ' · notion acquise') : null), el('p', {}, NOTIONS[id].short)),
+        el('button', { type: 'button', class: 'btn small', 'data-notion': id, onclick: () => { closeLayer(false); emit('camera', { from: 'cours', notion: id, lesson: L.id }); } }, 'Ouvrir sur la caméra')))));
   }
   if (L.demo) {
     const host = el('div', { class: 'co-demo-host' });

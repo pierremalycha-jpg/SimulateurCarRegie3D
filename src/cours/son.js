@@ -2,6 +2,8 @@
 import { el } from '../util.js';
 import { registerChapter } from './index.js';
 import { figure, sv, canvas, slider, choice, readout, fmtNum } from './kit.js';
+import { SON_MICROS } from './son_micros.js';
+import { SON_CONSOLE } from './son_console.js';
 
 // ----------------------------------------------------------------------------------
 // Chapitre « Le son » : la tranche d'entrée de la console (gain, alimentation fantôme 48 V,
@@ -273,12 +275,16 @@ function figN1() {
   return f;
 }
 
+/** les parties du chapitre (titres du sommaire) : capter, mélanger, le numérique et le réseau */
+export const PARTIES_SON = ['Capter : le son et le micro', 'Mélanger : la console', 'Numérique, mesure et réseau'];
+const PARTIE_CONSOLE = PARTIES_SON[1];
+
 registerChapter({
   id: 'son', title: 'Le son', icon: 'mixage',
   intro: 'La console son du car : la tranche, les retours des commentateurs, la synchro labiale.',
   lessons: [
     {
-      id: 'son-tranche', title: 'La tranche : gain, 48 V, phase, égaliseur, fader', minutes: '8 min',
+      id: 'son-tranche', title: 'La tranche : gain, 48 V, phase, égaliseur, fader', minutes: '8 min', partie: PARTIE_CONSOLE,
       essentials: [
         'Le **gain** adapte le micro à la console : crêtes entre −18 et −10 dBFS ; au-delà de **0 dBFS**, le signal est **écrêté**, et aucun fader ne le répare.',
         'Les micros **statiques** ont besoin de l\'**alimentation fantôme 48 V** ; une **polarité** inversée sur un couple creuse l\'ambiance, jusqu\'à l\'annuler en mono.',
@@ -315,7 +321,7 @@ Viennent ensuite les traitements : le **passe-haut** coupe le grondement inutile
       ],
     },
     {
-      id: 'son-n1', title: 'N-1, synchro labiale et départs', minutes: '8 min',
+      id: 'son-n1', title: 'N-1, synchro labiale et départs', minutes: '8 min', partie: PARTIE_CONSOLE,
       essentials: [
         'Chaque commentateur reçoit un **N-1** (mix-minus) : tout le programme **sauf sa propre voix**, qui lui reviendrait retardée, en écho.',
         'L\'image est retardée par les traitements (synchroniseur, conversions, liaison HF…) : on **retarde le son** d\'autant pour garder la **synchro labiale** (EBU R37 : de 40 ms d\'avance à 60 ms de retard, de bout en bout).',
@@ -349,5 +355,7 @@ Le départ vers la chaîne est un signal SDI qui porte l'image et le son **embed
         { q: 'En sortie du car, en 1080p50, le son est en retard d\'une image sur la vidéo. Qu\'en conclure ?', choices: ['À corriger : 20 ms dépassent les 15 ms de retard permises à une étape', ['Rien à corriger : 20 ms restent sous les 60 ms tolérées', '60 ms, c\'est la tolérance de bout en bout, pour toute la chaîne ; le car n\'en est qu\'une étape, qui a droit à 15 ms de retard au plus.'], ['Gênant : le public remarque déjà un tel décalage', 'Selon l\'ITU-R BT.1359, un son en retard ne se remarque que vers 125 ms : 20 ms restent loin en dessous. Le problème est la part de l\'étape, pas la perception.']], answer: 0, why: 'Une image vaut 20 ms en 1080p50. L\'EBU R37 tolère 60 ms de retard de bout en bout, mais seulement 15 ms à chaque étape, et le car vise 0 ms : on retire l\'image de retard au son.' },
       ],
     },
+    ...SON_MICROS,
+    ...SON_CONSOLE,
   ],
 });

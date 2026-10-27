@@ -8,6 +8,8 @@ import './camera.js';
 import './realisation.js';
 import './ralentis.js';
 import './son.js';
+import './son_micros.js';
+import './son_console.js';
 import './reseau_bases.js';
 import './reseau_ip.js';
 import './hf.js';
