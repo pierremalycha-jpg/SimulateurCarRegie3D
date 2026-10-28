@@ -1,4 +1,5 @@
 // @ts-check
+import * as THREE from 'three';
 import { S } from '../state.js';
 import { TRUCK, groundHeight, inTruckFootprint } from '../world.js';
 import { truckFloorAt, T } from '../truck.js';
@@ -24,8 +25,9 @@ export const FIG = {
 const NT = EQUIPE.length;
 
 export function installFigurants(Wscene, Tscene) {
-  FIG.W = new Troupe(Wscene, MARCHEURS.length, 'figurants-compound');
-  FIG.T = new Troupe(Tscene, NT + MARCHEURS.length, 'figurants-car');
+  // le compound (du stade au fond du parking) ; l'intérieur du car (sans ombres portées : l'occlusion du car suffit)
+  FIG.W = new Troupe(Wscene, MARCHEURS.length, 'figurants-compound', { zone: new THREE.Sphere(new THREE.Vector3(-5, 1, -125), 52) });
+  FIG.T = new Troupe(Tscene, NT + MARCHEURS.length, 'figurants-car', { zone: new THREE.Sphere(new THREE.Vector3(TRUCK.cx, TRUCK.floor + 1, TRUCK.cz), 11), ombres: false });
   // l'équipe : le siège le plus proche de son poste
   EQUIPE.forEach((e, i) => {
     const st = T.stations.find((s) => s.id === e.station); if (!st) return;

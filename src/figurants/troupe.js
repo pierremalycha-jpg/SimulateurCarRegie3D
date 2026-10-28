@@ -50,17 +50,22 @@ const ZERO = new THREE.Matrix4().makeScale(0, 0, 0);
 const DUMMY = new THREE.DataTexture(new Uint8Array([0, 0, 0, 255]), 1, 1); DUMMY.needsUpdate = true;
 
 export class Troupe {
-  /** @param {THREE.Scene} scene @param {number} n nombre de places @param {string} nom */
-  constructor(scene, n, nom) {
+  /**
+   * @param {THREE.Scene} scene @param {number} n nombre de places @param {string} nom
+   * @param {{ zone: THREE.Sphere, ombres?: boolean }} o la zone où ils évoluent (les caméras qui ne la voient pas ne les
+   * dessinent pas : les caméras du stade, pour les figurants du compound) ; ombres portées
+   */
+  constructor(scene, n, nom, o) {
     const G = personGeometries();
     this.n = n; this.parts = {}; this.visible = new Array(n).fill(false);
+    const cull = (m) => { m.frustumCulled = true; m.boundingSphere = o.zone.clone(); m.castShadow = o.ombres !== false; };
     const col = new THREE.Color(0xffffff);
     for (const [name, geo, per, rough] of PARTS) {
       const g = G[geo].clone();
       g.setAttribute('aCol2', new THREE.InstancedBufferAttribute(new Float32Array(n * per * 3), 3));
       if (name === 'torso') g.setAttribute('aNum', new THREE.InstancedBufferAttribute(new Float32Array(n * 4).fill(-1), 4));
       const m = new THREE.InstancedMesh(g, kitMaterial(name, { rough, tNum: DUMMY }), n * per);
-      m.name = `${nom}-${name}`; m.castShadow = true; m.receiveShadow = true; m.frustumCulled = false;
+      m.name = `${nom}-${name}`; m.receiveShadow = true; cull(m);
       m.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
       for (let i = 0; i < n * per; i++) { m.setMatrixAt(i, ZERO); m.setColorAt(i, col); }
       scene.add(m); this.parts[name] = m;
@@ -68,7 +73,7 @@ export class Troupe {
     const cg = casqueGeo().clone();
     cg.setAttribute('aCol2', new THREE.InstancedBufferAttribute(new Float32Array(n * 3).fill(0.08), 3));
     const cm = new THREE.InstancedMesh(cg, kitMaterial('casque', { rough: 0.45 }), n);
-    cm.name = `${nom}-casque`; cm.castShadow = true; cm.frustumCulled = false; cm.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+    cm.name = `${nom}-casque`; cull(cm); cm.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
     for (let i = 0; i < n; i++) { cm.setMatrixAt(i, ZERO); cm.setColorAt(i, col.setHex(0x111214)); }
     scene.add(cm); this.parts.casque = cm;
     this.casques = new Array(n).fill(false);
