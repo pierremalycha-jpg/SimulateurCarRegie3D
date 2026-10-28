@@ -295,7 +295,7 @@ export function buildStart() {
     el('footer', { class: 'jo-foot' },
       el('p', { class: 'note cs-ver' }, el('span', { id: 'stversion' }, `TIEE Simulator, version ${APP_VERSION}`), el('button', { class: 'linkbtn', onclick: () => openDiag() }, icon('diagnostic'), 'Diagnostic technique')),
       el('p', { class: 'note jo-credit' }, el('b', {}, 'Développé par Pierre MALYCHA'), ' · réalisé par le BTS Audiovisuel de Saint-Quentin (lycée Henri-Martin)'),
-      el('p', { class: 'note cs-foot' }, 'Simulation non officielle, sans lien avec le club ni avec les constructeurs cités. Les caractéristiques techniques (objectifs, portées de câbles, seuils HF, niveaux vidéo et audio) sont des ordres de grandeur réalistes, donnés à titre pédagogique ; les noms d\'équipements sont des exemples de matériel courant.'))));
+      el('p', { class: 'note cs-foot' }, 'Simulation non officielle, sans lien avec les clubs ni avec les constructeurs cités. Joueurs fictifs, clubs sans blason. Les caractéristiques techniques (objectifs, portées de câbles, seuils HF, niveaux vidéo et audio) sont des ordres de grandeur réalistes, donnés à titre pédagogique ; les noms d\'équipements sont des exemples de matériel courant.'))));
 }
 
 /** @param {import('../game/missions.js').Prepa} [prepa] mission spécifique : le car préparé pour elle */

@@ -25,6 +25,7 @@ Calendrier indicatif, calé sur l'année scolaire (les épreuves ont lieu en mai
 | Version | Période | Contenu |
 |---|---|---|
 | Postes en 3D, lots 4 et 5 | nov. 2026 – janv. 2027 (proposé) | Lot 4 : les baies (CCU, grille, synchro, brassage avec cordons tirés en 3D, mesure, HF, transmission), face avant puis face arrière. Lot 5 : les postes « à écran » (réalisateur, scripte, habillage, production, chef de car, IPDirector, réseau) : la vue assise, l'interface 2D dans l'écran de l'ordinateur |
+| v19.20 | oct. 2026 (fait) | Le match ne se fige plus (ballon libre repris, coup d'envoi dosé) ; un match tiré à chaque partie (graine nouvelle, forme du jour, style, temps forts : Lens ne gagne plus à tous les coups) ; dix-sept vrais adversaires de Ligue 1 (nom et couleurs, sans blason ; joueurs et niveaux fictifs), tirés au sort ou choisis dans Jouer ; l'équipe à ses postes (douze équipiers assis ; à son poste, le titulaire laisse sa place) et le choix de son poste au départ ; le compound vit (techniciens qui entrent et sortent du car, sécurité, portail) ; plus de fils en l'air (câbles caméra au sol, caténaire en fils continus). Reste : des figurants qui s'écartent devant le joueur ; l'équipe au car vide une fois l'installation finie ; d'autres compétitions (Coupe de France, Ligue des champions) |
 | v19.19 | oct. 2026 (fait) | L'émission en direct au car pré-installé (choix par défaut, « Match en continu » à côté) : décompte ou « Antenne maintenant », générique de début de 30 s, deux périodes de 10 minutes, page de publicité à la mi-temps, générique de fin, tous lancés depuis l'IPDirector (base MÉDIAS, cue, LANCER, temps restant) ; médias dessinés et composés par le code (marques fictives, sonie −23 dBFS) ; le match par périodes (échauffement, mi-temps, sifflets, changement de côté) ; seul, les postes non occupés tenus par une équipe virtuelle (réalisateur, truquiste, IPDirector, son, habillage, vision, scripte) ; horloge du direct, conducteur au suivi, au scripte et au téléphone ; compte rendu noté, livret (3.11), progression v5. Reste : essayer la durée des périodes et le barème avec une classe ; la pub par la régie finale (décrochage, module M7) ; une coupure pub notée « à la seconde » |
 | v19.16 | oct. 2026 (fait) | Le Cours en 3D : quatorze vues (90 étapes) avec leur panneau d'explications (onglets En 3D et La leçon), ouvertes depuis le sommaire d'un chapitre (« … en 3D ») ou le « Voir en 3D » d'une leçon : le SDI (trame dans le coaxial, œil, BNC et brassage), la synchro (genlock), la fibre de la caméra, le réseau (table MAC, VLAN, passerelle, multicast, PTP), le ST 2110 (essences, paquet et rythme, rouge et bleu en spine-leaf), la HF dans le stade ; dix leçons de plus (du mot au bit, la passerelle, six leçons du car IP dans Le réseau, la fibre de la caméra). Reste : d'autres vues si les classes les demandent (grille et matrice, adressage IP restent en 2D, jugés mieux ainsi) |
 | v19.17 | oct. 2026 (fait) | Le réseau de A à Z : le chapitre rangé en cinq parties (bases, adresser et acheminer, transporter, QoS et mesures, car IP), onze leçons de plus (modèle en couches, LAN / MAN / WAN, Ethernet, adresse réseau et diffusion, types d'adresses, DHCP et DNS, NAT, TCP et UDP, streaming SRT / RIST / RTMP / HLS / NDI, mesures, QoS), 23 fiches « ? », calculs purs `cours/ip_calc.js` ; six vues 3D de plus (vingt, 132 étapes) : couches et encapsulation, adresses et diffusion, DHCP et DNS, TCP et UDP, du LAN au WAN et au streaming, QoS. Reste : IPv6 en 3D si les classes le demandent ; un exercice noté de plan d'adressage |
@@ -72,6 +73,11 @@ et 30 images par seconde sur le PC le plus faible de l'établissement.
   route ; l'entrepôt devient un mode à part. Le chef de car n'est plus une entrée : ses parcours sont les
   exercices pratiques des leçons du Cours, et sa présentation du car devient le mode « Visite guidée ».
 
+- 28 octobre 2026 (v19.20) : le match se **tire à chaque partie** (le résultat n'est jamais écrit d'avance) contre un
+  **vrai club de Ligue 1** (nom et couleurs admis, pas de blason ; joueurs fictifs ; niveaux de jeu fictifs, propres au
+  simulateur). Le car installé a son **équipe à ses postes**, visible : à son poste, le titulaire s'écarte ; on peut
+  choisir son poste avant de commencer. Le compound a ses **figurants** (techniciens, sécurité). Pas de fils qui
+  flottent : un câble est posé au sol, ou tendu entre deux supports.
 - 28 octobre 2026 (v19.19) : le car pré-installé se joue en **émission en direct** (par défaut) : le match ne commence
   plus tout seul ; un décompte (ou « Antenne maintenant ») mène au générique de début (30 s), puis deux périodes de 10
   minutes, la page de publicité à la mi-temps, le générique de fin ; les médias se lancent depuis l'**IPDirector**. Seul,
@@ -123,6 +129,11 @@ et 30 images par seconde sur le PC le plus faible de l'établissement.
 - R8 (25 octobre 2026) : les postes en 3D. Vue 3D par défaut (2D en mode allégé et en qualité Basse), ou 2D par
   défaut et 3D au choix ? Mesurer d'abord sur le PC le plus faible : au poste en 3D, le car est rendu comme en
   marchant. Faire relire la disposition des pupitres (photos du vrai matériel de l'établissement, R4).
+
+- R11 (28 octobre 2026) : les vrais clubs. Les noms et couleurs des clubs de Ligue 1 sont utilisés sans blason ni logo,
+  avec des joueurs fictifs et la mention « simulation non officielle, sans lien avec les clubs » : à faire valider par
+  l'établissement avant une diffusion hors de la classe. Les niveaux de jeu (×0,6 dans la force d'une équipe) donnent
+  environ 12 % de victoires de Lens contre le Paris SG et 62 % contre Metz : à ajuster après essai.
 
 - R10 (28 octobre 2026) : l'émission en direct. Des périodes de 10 minutes et un barème (lancement au top à 2 s près,
   média diffusé en entier, pas de noir) à essayer avec une classe ; faut-il proposer l'émission dans le car vide, une

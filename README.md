@@ -394,6 +394,105 @@ Tests :
   « Emmène-moi / Montre-moi » doit mettre en évidence un élément réel de la page, et « Fais-le pour moi » doit faire
   valider l'étape.
 
+## v19.20 : un match qui ne se joue pas d'avance, de vrais adversaires, l'équipe à ses postes, un compound qui vit
+
+**Pourquoi.** Quatre retours après l'émission en direct : au début d'un match, trois joueurs tournaient autour du
+ballon sans jamais le toucher et le jeu s'arrêtait ; le match était toujours le même (Lens gagnait à chaque fois) ; le
+car était vide de monde, on ne voyait personne aux postes ; au compound, des fils flottaient en l'air.
+
+**Le match ne se fige plus** (`match.js`). Un joueur ne prenait le ballon qu'à 0,6 m, alors que les joueurs se
+repoussent à moins de 1,2 m : deux ou trois joueurs pouvaient entourer un ballon arrêté, chacun à 0,7 m, et rester là.
+Le receveur d'une passe ratée courait vers la cible de la passe, loin du ballon ; la passe du coup d'envoi (10 m/s)
+s'arrêtait avant le milieu. Désormais : un ballon lent se contrôle à 0,95 m (pied tendu), les joueurs qui disputent un
+ballon libre ne se repoussent plus entre eux, la passe ratée libère son receveur, la passe du coup d'envoi est dosée
+pour arriver, et un filet de sécurité rend le ballon au joueur le plus proche s'il reste libre et arrêté plus de 1,5 s.
+Le test rejoue un match réellement figé par l'ancienne IA, relevé dans une série de simulations.
+
+**Un match tiré à chaque partie.** La simulation partait toujours de la même graine : on revoyait le même match. Chaque
+partie (et chaque avant-match de l'émission) tire maintenant une graine nouvelle et, à partir d'elle, le **tirage du
+match** (`tirerMatch`, calcul pur) :
+
+- la **forme du jour** de chaque équipe (un écart-type de 0,045 sur une force de l'ordre de 0,45) ;
+- le **style** de la rencontre : fermé (une fois sur quatre, moins de tirs), équilibré, ouvert (trois fois sur dix,
+  30 % de tirs en plus) ;
+- les **temps forts** : des phases de une à quatre minutes de jeu où l'une des équipes pousse (l'équipe la plus forte
+  pousse plus souvent, pas toujours).
+
+La force d'une équipe à un instant = son niveau × 0,6 + sa forme + l'avantage du terrain (+0,02 pour Lens) + le temps
+fort en cours. L'**ascendant** (l'écart des deux forces, borné à ±0,35) pèse sur la fréquence et la précision des tirs,
+les tacles et les arrêts du gardien. Ordre de grandeur mesuré sur 50 émissions simulées (deux périodes de 10 min) :
+contre Lille, Lens gagne 44 % du temps, fait match nul 30 %, perd 26 % ; contre Metz, 62 / 22 / 16 ; contre le Paris SG,
+12 / 40 / 48 ; environ deux buts par émission. La même graine rejoue le même match (tests). Le consultant
+présente la rencontre d'après le tirage (favori, équipe en confiance).
+
+**Les adversaires** (`data/clubs.js`, `adversaire.js`). Dix-sept clubs de Ligue 1 : Paris SG, Olympique de Marseille,
+AS Monaco, LOSC Lille, Olympique lyonnais, OGC Nice, RC Strasbourg, Stade rennais, Stade brestois, Toulouse FC, Paris
+FC, FC Nantes, AJ Auxerre, FC Lorient, Angers SCO, Le Havre AC, FC Metz. Leur nom et leurs couleurs, dans la tenue
+portée à Bollaert (choisie pour trancher sur le maillot or et les manches rouges des Lensois : l'OM en blanc et bleu
+ciel, Lille en blanc et marine, Nantes en vert…) ; **pas de blason ni de logo** ; des **joueurs fictifs** (onze noms
+tirés d'une liste, toujours les mêmes pour un club) ; un **niveau de jeu fictif**, propre au simulateur, qui ne prétend
+pas classer les clubs. Dans Jouer → Car pré-installé : « L'adversaire » (tiré au sort par défaut, ou choisi) ; l'affiche
+du soir en tête de l'écran suit. L'adversaire habille les joueurs et le parcage visiteurs, passe dans le bandeau du
+score, l'habillage (titre du match), les commentaires et le générique ; en coopération, l'hôte le transmet avec le
+match. Simulation non officielle, sans lien avec les clubs.
+
+**L'équipe à ses postes** (`figurants/equipe.js`). Quand le car est installé (pas au car vide ni à l'arrivée du jour
+de match), douze équipiers sont assis à leur poste, casque d'ordres sur la tête :
+
+| Poste | Équipier | Poste | Équipier |
+| --- | --- | --- | --- |
+| Son | Thomas, ingénieur du son | Vision 1 et 2 | Sami et Julie, ingénieurs vision |
+| Scripte | Claire | Ralentis (LSM) | Hugo |
+| Réalisateur | Marc | IPDirector, médias | Léa |
+| Truquiste | Nadia | Production | Paul, producteur |
+| Habillage | Inès | Chef de car | Olivier |
+| Régie HF | Yanis, technicien HF | | |
+
+Ils travaillent : les mains sur le pupitre ou les faders, le regard qui va des écrans au bureau, le réalisateur qui
+montre le mur d'écrans, le producteur qui suit, bras croisés. Ce sont les visages de l'équipe virtuelle de l'émission
+(`emission/ia.js`) : le générique de fin les nomme. Quand on s'assoit à un poste, son titulaire s'écarte, passe derrière
+les bureaux (par le passage entre les deux rangées, ou côté technique) et attend debout contre la paroi de l'allée, en
+regardant le mur d'écrans ; il revient s'asseoir quand on s'en va. En coopération, les postes des équipiers sont laissés
+libres de la même façon. Dans Jouer, **« Ton poste »** : on peut commencer assis au poste de son choix (le son, le
+mélangeur, l'IPDirector…), son titulaire ayant laissé la place ; « Aucun » garde l'arrivée au compound.
+
+**Le compound vit** (`figurants/compound.js`). Des techniciens vont et viennent : le technicien vidéo entre dans le car,
+vérifie la baie CCU et la grille, ressort contrôler le pied de car ; l'électricien fait la navette entre le groupe
+électrogène et l'arrière du car, en gilet orange, la radio à la main ; la liaison satellite passe du camion satellite à
+la baie d'intercom ; un cadreur part au stade par le portail et revient ; l'assistante de production va des bungalows
+au car, derrière la production ; un runner court entre les bungalows et le stade. Trois agents de sécurité en gilet
+fluo : au portail du stade, en ronde le long des grilles, à l'entrée du compound. Un **portail** est ouvert dans la
+grille, là où passent la rampe de câbles et les piétons. Les figurants ne traversent ni les bureaux du car ni les
+véhicules (vérifié point par point par les tests) ; ils ne bloquent pas le joueur.
+
+**Plus de fils en l'air.**
+
+- Les tracés des câbles caméra (affichés avec les étiquettes) montaient en éventail, en diagonale, de la rampe au
+  panneau du pied de car, et flottaient jusqu'à 60 cm au-dessus du sol : ils sont maintenant posés au sol (3 à 22 cm) et
+  montent à la verticale contre la paroi, chacun à sa prise.
+- Les quatre câbles noirs du pied de car font de même.
+- Les haubans d'un pixel qui descendaient des pylônes du stade jusqu'au sol, derrière les grilles du compound, sont
+  retirés (ceux de l'anneau du toit restent).
+- La caténaire de la voie ferrée, faite de boîtes de 4 cm d'épaisseur sur 1,4 km, se brisait à distance en pointillés
+  flottants : elle est dessinée en fils continus, le porteur qui pend entre les portiques (45 cm de flèche), le fil de
+  contact et les pendules.
+
+**Ce qui change ailleurs.** `match.js` : `tirerMatch`, `forceEquipe`, `nouveauMatch` (graine, tirage, score à zéro,
+coup d'envoi tiré au sort), `nouveauMatchEnContinu` (au lancement d'une partie hors émission), `avantMatch(duree,
+graine)`. `people.js` : `peindreTenues` (les tenues d'après TEAMS, de nouveau quand l'adversaire change). `world.js` :
+`peindreVisiteurs`, `OBSTACLES_COMPOUND`. `data/match.js` : `setAdversaire`. Rendu : les figurants sont deux troupes
+instanciées (`figurants/troupe.js`, les mêmes corps que les joueurs : une dizaine de meshes instanciés par scène, quel
+que soit leur nombre).
+
+**À faire relire.** Les niveaux de jeu des clubs sont des ordres de grandeur fictifs ; les tenues sont des couleurs de
+club, pas des maillots officiels. Les noms des clubs sont réels, les joueurs ne le sont pas.
+
+Tests : `tests/unit/match.test.mjs` (nouveau : le match figé repart, coup d'envoi, même graine même match, résultats
+variés, force, clubs), `tests/unit/figurants.test.mjs` (nouveau : équipe et rôles, chemins, se lever et revenir,
+itinéraires du compound sans obstacle) ; suite `node tools/e2e.mjs figurants` (nouvelle : adversaire et poste dans
+Jouer, au poste choisi le titulaire laisse sa place puis revient, chemins vérifiés avec les obstacles du car et du
+compound, techniciens qui entrent et sortent, sécurité, câbles au sol, car vide sans équipe).
+
 ## v19.19 : l'émission en direct (générique, pub, générique de fin lancés depuis l'IPDirector, équipe virtuelle)
 
 **Pourquoi.** Au car régie, le match tournait sans début ni fin : il manquait tout ce qui fait une **émission**, les
@@ -2146,21 +2245,23 @@ node tools/shots.mjs dossier 1280 800 '["vision","hf"]'   # captures de postes
 | `tutor/` | Chef de car : moteur des parcours (`engine.js`), lecture du réseau pour expliquer et vérifier (`net_helpers.js`), parcours réseau ST 2110 (`lessons/reseau.js`, `lessons/reseau_leaf.js`, `lessons/reseau_ops.js`), parcours des postes, compétences et matériel (`lessons/realisation.js`, `image.js`, `ralentis.js`, `son.js`, `liaisons.js`, `exploitation.js`, `materiel.js`, outils communs `kit.js`), présentation de chaque poste (`lessons/postes.js`) |
 | `ui/tutor_ui.js` | Le chef de car en boîte de dialogue en bas de l'écran : accueil du car vide, exercices du poste où l'on est, visite guidée (tour du car puis chaque poste ; réduite aux postes d'une mission de la Carrière), retour à la leçon du Cours, étapes, mise en évidence, gestes « Fais-le pour moi » hors des postes (caméra, visionneuse, atelier), commandes vers le terminal, voix |
 | `app/` | Application : vue et qualité graphique (`view.js`), joueur et déplacements (`player.js`), visée et interactions (`interact.js`), cadreur (`camop.js`), téléportation et postes (`teleport.js`), barre d'outils et d'état (`hud.js`), clavier / souris / tactile (`input.js`), écran Jouer, modes du car (car vide, pré-installé, mission spécifique) et lancement avec le car préparé (`start.js`), diagnostic de performance (`perf.js`), profileur `?perf` (`profiler.js`) |
-| `data/` | Catalogues techniques : caméras, objectifs, liaisons, formats (`cameras.js`) ; positions et antennes du stade (`stadium.js`) ; HF COFDM (`rf.js`) ; exposition et lumières (`exposure.js`) ; équipes (`match.js`) |
+| `data/` | Catalogues techniques : caméras, objectifs, liaisons, formats (`cameras.js`) ; positions et antennes du stade (`stadium.js`) ; HF COFDM (`rf.js`) ; exposition et lumières (`exposure.js`) ; équipes (`match.js` : Lens et l'adversaire du soir) ; clubs de Ligue 1, tenues, joueurs fictifs, niveaux fictifs (`clubs.js`) |
 | `content/` | Contenus pédagogiques : fiches de poste (`stations.js`), glossaire (`glossary.js`), fiches des termes réseau et ST 2110 (`netterms.js`), chapitres du guide (`guide.js`), commandes (`controls.js`) |
 | `state.js` | État partagé de la simulation (`S`) et bus d'événements (`on` / `emit`) |
 | `truck.js` | Intérieur du car : plan, postes, écrans, baies et pupitres détaillés, collisions ; matières par famille, pénombre à spots, accessoires |
 | `equip.js` | Profil matériel (XVS-6000, XT4K, LSM, IPDirector) et répartition des canaux EVS |
-| `world.js` | Stade, éclairage, public, compound et extérieur du car |
+| `world.js` | Stade, éclairage, public (parcage visiteurs aux couleurs de l'adversaire), compound et extérieur du car, obstacles du compound |
+| `adversaire.js` | L'adversaire du soir : tiré au sort ou choisi, il repeint les joueurs et le parcage visiteurs, passe à l'habillage ; transmis par l'hôte en coopération |
+| `figurants/` | La vie autour du car : l'équipe à ses postes, qui laisse sa place quand on s'assoit (`equipe.js`), les techniciens et la sécurité du compound (`compound.js`), deux troupes instanciées aux poses procédurales (`troupe.js`), la boucle (`index.js`) |
 | `render.js` | Rendu physique : conversion des matériaux, environnement (ciel capturé, studio du car), post-traitement de la vue « œil » (halo, ACES, SSAO dans le car) |
 | `matiere.js` | Matières procédurales : recettes de relief, rugosité et teinte (cartes tuilables générées en code), matériau physique plaqué en triplanaire, relief coupé en qualité Basse |
-| `people.js` | Joueurs et arbitres articulés : géométries, tenues (nom et numéro), visage, animation de course |
+| `people.js` | Joueurs et arbitres articulés : géométries, tenues (nom et numéro, repeintes quand l'adversaire change), visage, animation de course |
 | `landscape.js` | Sol jusqu'à l'horizon (carte des parcelles), arbres instanciés en plans alpha, terrils |
 | `vehicles.js` | Semi-remorque régie (caisse arrondie, livrée nervurée, portes, feux), tracteur à pare-brise courbe, camion satellite, groupe électrogène, bungalows, enrobé |
 | `params.js` | Registre des valeurs chiffrées relisibles (objectifs, liaisons, C/N, latences, line-up) et corrections appliquées |
 | `multi/` | Jeu à plusieurs : session, rôles, hôte du match, pseudos (`session.js`), tranches d'état partagées (`slices.js`), client du serveur réseau local et du jeu par Internet (`lan.js`), avatars des joueurs (`avatars.js`), fiches de rôle et objectifs (`roles.js`) |
 | `lan/` | Serveur réseau local sans dépendance (`serveur.mjs` : HTTP + WebSocket, parties, comptes rendus ; origine vérifiée, tailles, connexions, parties et comptes rendus plafonnés ; clé exigée de ce qui vient d'Internet ; écran « Accès réservé » et jetons quand la page est chiffrée), coffre de l'exécutable (`coffre.mjs` : page chiffrée par le mot de passe, scrypt + AES-256-GCM), jeu par Internet (`internet.mjs` : analyse du réseau, ouverture de la box par UPnP, adresse publique, tunnel Cloudflare), lanceurs Windows / macOS / Linux, mode d'emploi |
-| `match.js` | Simulation du match, ses périodes (avant-match, deux périodes, mi-temps, fin ; ou le match en continu), rendu des joueurs, enregistrement d'état (base des ralentis EVS) |
+| `match.js` | Simulation du match, son tirage à chaque partie (graine, forme du jour, style, temps forts), ses périodes (avant-match, deux périodes, mi-temps, fin ; ou le match en continu), rendu des joueurs, enregistrement d'état (base des ralentis EVS) |
 | `bcam.js` | Caméras broadcast : optique, cadreurs automatiques, traitement CCU (knee, white clip, HLG), câbles |
 | `rf.js` | Bilan de liaison HF, diversité, brouillage |
 | `pipeline.js` | Grille, mélangeur, EVS, multiview, retour antenne, mesures (waveform, vecteurscope), HDR |
