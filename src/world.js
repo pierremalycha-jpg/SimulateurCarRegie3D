@@ -340,7 +340,7 @@ function crowdAtlas() {
 function boardsTexture() {
   const c = makeCanvas(2048, 64); const g = c.getContext('2d');
   const ads = [
-    ['#c8102e', '#f5c400', 'SANG ET OR'], ['#1d3a8a', '#ffffff', 'AS RIVIÈRE'], ['#101010', '#ffd23f', 'SPORT EN DIRECT'], ['#1d6b3a', '#ffffff', 'FAIR PLAY'],
+    ['#c8102e', '#f5c400', 'SANG ET OR'], ['#1d3a8a', '#ffffff', 'BIENVENUE À BOLLAERT'], ['#101010', '#ffd23f', 'SPORT EN DIRECT'], ['#1d6b3a', '#ffffff', 'FAIR PLAY'],
     ['#f5c400', '#c8102e', 'BOLLAERT'], ['#13294b', '#5fd1ff', 'UHD · HDR · 50P'], ['#c8102e', '#ffffff', 'BASSIN MINIER'], ['#2b2b2b', '#ffffff', 'RESPECT'],
   ];
   const wSeg = 2048 / 8;
@@ -1042,6 +1042,7 @@ varying vec2 vCUv; varying vec3 vShirt; varying vec3 vAcc; varying float vSeed; 
   const home = [0xc8102e, 0xf5c400, 0xc8102e, 0xf5c400, 0xc8102e, 0x1a1a1a, 0xf2f2f2, 0x8a8f99, 0x2b2b2b];
   const kopCols = [0xc8102e, 0xf5c400, 0xc8102e, 0xf5c400, 0x111111];
   const awayCols = [TEAMS[1].shirt, TEAMS[1].shorts, TEAMS[1].shirt, 0x2b2b2b];
+  W.visiteurs = []; // supporters visiteurs : [indice, tirage du maillot, tirage de l'écharpe] (peindreVisiteurs)
   placements.forEach((p, i) => {
     q.setFromEuler(new THREE.Euler(0, p.rot, 0));
     m.compose(new THREE.Vector3(p.x, p.y, p.z), q, new THREE.Vector3(1, 1, 1));
@@ -1049,10 +1050,12 @@ varying vec2 vCUv; varying vec3 vShirt; varying vec3 vAcc; varying float vSeed; 
     seeds[i] = r();
     side[i] = p.side;
     const pal = p.away ? awayCols : p.kop ? kopCols : home;
-    const sh = pal[Math.floor(r() * pal.length)];
+    const r1 = r(); const sh = pal[Math.floor(r1 * pal.length)];
     col.setHex(sh); mesh.setColorAt(i, col);
     // accessoire (écharpe, bonnet) : l'autre couleur du club
-    const ac = p.away ? (r() < 0.5 ? TEAMS[1].sleeves : TEAMS[1].shirt) : sh === 0xc8102e ? 0xf5c400 : sh === 0xf5c400 ? 0xc8102e : (r() < 0.5 ? 0xc8102e : 0xf5c400);
+    const r2 = r();
+    const ac = p.away ? (r2 < 0.5 ? TEAMS[1].sleeves : TEAMS[1].shirt) : sh === 0xc8102e ? 0xf5c400 : sh === 0xf5c400 ? 0xc8102e : (r2 < 0.5 ? 0xc8102e : 0xf5c400);
+    if (p.away) W.visiteurs.push([i, r1, r2]);
     col.setHex(ac); acc[i * 3] = col.r; acc[i * 3 + 1] = col.g; acc[i * 3 + 2] = col.b;
     aos[i] = p.ao;
   });
@@ -1063,6 +1066,18 @@ varying vec2 vCUv; varying vec3 vShirt; varying vec3 vAcc; varying float vSeed; 
   mesh.frustumCulled = false; mesh.receiveShadow = true;
   scene.add(mesh);
   W.crowd = mesh;
+}
+
+/** le parcage visiteurs aux couleurs de l'adversaire du soir (adversaire.js, quand il change) */
+export function peindreVisiteurs() {
+  const mesh = W.crowd; if (!mesh || !W.visiteurs || !mesh.instanceColor) return;
+  const pal = [TEAMS[1].shirt, TEAMS[1].shorts, TEAMS[1].shirt, 0x2b2b2b];
+  const acc = mesh.geometry.attributes.aAcc, col = new THREE.Color();
+  for (const [i, r1, r2] of W.visiteurs) {
+    mesh.setColorAt(i, col.setHex(pal[Math.floor(r1 * pal.length)]));
+    col.setHex(r2 < 0.5 ? TEAMS[1].sleeves : TEAMS[1].shirt); acc.setXYZ(i, col.r, col.g, col.b);
+  }
+  mesh.instanceColor.needsUpdate = true; acc.needsUpdate = true;
 }
 
 function buildCompound(scene) {

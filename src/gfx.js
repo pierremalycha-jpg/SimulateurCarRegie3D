@@ -11,7 +11,7 @@ export const GFX = {
   bug: { canvas: null, ctx: null, tex: null, last: '' },
   main: { canvas: null, ctx: null, tex: null },
   template: null, cued: 'lower', player: 9, anim: 0, animDir: 0, replayTag: true, replayOnAir: false, lastDraw: 0,
-  title: 'FC LUMIÈRE – AS RIVIÈRE', subtitle: 'Championnat · Journée 12',
+  title: `${TEAMS[0].name} – ${TEAMS[1].name}`, subtitle: 'Championnat · Journée 12',
 };
 
 export function initGfx() {
@@ -28,7 +28,7 @@ const FONT = '"Barlow Condensed", "Arial Narrow", sans-serif';
 function drawBug() {
   const g = GFX.bug.ctx; const T = TEAMS;
   const clock = mmss(M.clock);
-  const key = `${M.score.join('-')}|${clock}|${GFX.replayOnAir}`;
+  const key = `${T[1].short}|${M.score.join('-')}|${clock}|${GFX.replayOnAir}`;
   if (key === GFX.bug.last) return;
   GFX.bug.last = key;
   g.clearRect(0, 0, GFX.w, GFX.h);

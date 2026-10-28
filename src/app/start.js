@@ -32,6 +32,11 @@ import { setLanceur } from '../ui/tutor_ui.js';
 import { missionById, premiereAFaire } from '../game/missions.js';
 import { showTitle } from './title.js';
 import { livePlayerCard } from '../game/quest.js';
+import { CLUBS } from '../data/clubs.js';
+import { choisirAdversaire } from '../adversaire.js';
+import { nouveauMatchEnContinu } from '../match.js';
+import { ROLES_IA } from '../emission/ia.js';
+import { isHost } from '../multi/session.js';
 
 // ----------------------------------------------------------------------------------
 // L'écran Jouer (lieu, mode, solo ou coopération, conditions de captation) et le lancement d'une partie.
@@ -91,7 +96,12 @@ export function buildStart() {
   updFmt();
   // le choix : le lieu, le mode, seul ou en coopération
   // emission : le car pré-installé joue une émission en direct (src/emission/), sinon le match en continu
-  const PICK = { lieu: 'car', mode: 'installe', team: 'solo', ep: 'carriere', mission: premiereAFaire(PROG), emission: true };
+  const PICK = { lieu: 'car', mode: 'installe', team: 'solo', ep: 'carriere', mission: premiereAFaire(PROG), emission: true, adversaire: 'hasard', poste: 'libre' };
+  // l'adversaire (tiré au sort par défaut) et le poste où l'on commence : gardés dans ce navigateur
+  try { PICK.adversaire = localStorage.getItem('carregie.adversaire') || 'hasard'; PICK.poste = localStorage.getItem('carregie.poste') || 'libre'; } catch (e) { /* stockage indisponible */ }
+  if (PICK.adversaire !== 'hasard' && !CLUBS.some((c) => c.id === PICK.adversaire)) PICK.adversaire = 'hasard';
+  if (PICK.poste !== 'libre' && !ROLES_IA.some((r) => r.poste === PICK.poste)) PICK.poste = 'libre';
+  const garder = (k, v) => { try { localStorage.setItem('carregie.' + k, v); } catch (e) { /* stockage indisponible */ } };
   // premier lancement dans ce navigateur : le car vide, où Olivier propose d'abord le tour du car
   try { if (localStorage.getItem('carregie.chefIntro') !== '1') PICK.mode = 'zero'; } catch (e) { /* stockage indisponible */ }
   const run = (preset, prepa) => start(preset, light.value, qual.value, snd.value === '1', fmt.value, infra.value === 'ip', prepa);
@@ -103,6 +113,7 @@ export function buildStart() {
     if (M.id === 'mission') { emit('missionCar', { type: 'lancer', id: PICK.mission }); return; }
     S.chefTour = false; S.visite = false; S.carriere = null; S.modeCar = /** @type {any} */ (M.modeCar);
     S.emission = M.id === 'installe' && PICK.emission;
+    S.adversaire = PICK.adversaire; S.poste = M.id === 'installe' ? PICK.poste : 'libre';
     run(M.preset);
   };
   // depuis le Cours (exercices pratiques) : la vacation demandée, avec les conditions de captation choisies ici ;
@@ -111,17 +122,20 @@ export function buildStart() {
   SHEET.go = (preset, o = {}) => {
     if (o.ip) infra.value = 'ip'; else if (o.sdi) infra.value = 'sdi';
     S.chefTour = !!o.visite; S.visite = !!o.visite; S.carriere = o.carriere || null; S.modeCar = o.modeCar || null; S.emission = false;
+    S.adversaire = 'hasard'; S.poste = 'libre';
     run(preset, o.prepa);
   };
   // un exercice d'Olivier lancé d'ailleurs (Cours, journal) : le car prêt à l'antenne, avec le chef de car
   setLanceur((o) => SHEET.go && SHEET.go('standard', { ip: o.ip, sdi: o.sdi }));
   // coopération : le car installé, avec les réglages de l'hôte s'il y en a déjà un
   setSessionStarter({
-    cfg: () => ({ fmt: fmt.value, ip: infra.value === 'ip', light: light.value, emission: PICK.emission }),
+    cfg: () => ({ fmt: fmt.value, ip: infra.value === 'ip', light: light.value, emission: PICK.emission, adversaire: PICK.adversaire }),
     start: async () => {
       for (let i = 0; i < 25 && !(SES.hostPeer && !SES.hostPeer.sameTab && SES.hostPeer.presence.cfg); i++) await new Promise((r) => setTimeout(r, 120));
       const h = SES.hostPeer && !SES.hostPeer.sameTab && SES.hostPeer.presence.cfg;
       S.chefTour = false; S.visite = false; S.carriere = null; S.modeCar = 'libre'; S.emission = h ? !!h.emission : PICK.emission;
+      // en coopération, chacun prend le poste de son rôle (fiche de rôle) ; l'adversaire est celui de l'hôte
+      S.adversaire = h ? h.adversaire || 'hasard' : PICK.adversaire; S.poste = 'libre';
       start('standard', h ? h.light : light.value, qual.value, snd.value === '1', h ? h.fmt : fmt.value, h ? !!h.ip : infra.value === 'ip');
     },
   });
@@ -160,8 +174,22 @@ export function buildStart() {
   const drawEmission = () => {
     emBox.replaceChildren(
       el('div', { class: 'seg', role: 'group', 'aria-label': 'Le match' }, ...[[true, 'Émission en direct', 'Compte à rebours, générique de 30 s lancé depuis l\'IPDirector, deux périodes de 10 minutes, page de pub à la mi-temps, générique de fin, compte rendu noté'], [false, 'Match en continu', 'Le match tourne sans fin, sans conducteur']].map(([v, t, d]) => el('button', { type: 'button', 'data-emission': v ? 'oui' : 'non', 'aria-pressed': String(PICK.emission === v), title: d, onclick: () => { PICK.emission = /** @type {boolean} */ (v); drawEmission(); } }, t))),
-      el('p', { class: 'note' }, PICK.emission ? 'Le match commence par un compte à rebours, puis le générique (30 s) lancé depuis l\'IPDirector : 10 minutes de jeu, la pub, 10 minutes, le générique de fin. Seul, les postes que tu n\'occupes pas sont tenus par l\'équipe virtuelle.' : 'Le match tourne en continu, comme avant : à toi de choisir ce que tu fais.'));
+      el('p', { class: 'note' }, PICK.emission ? 'Le match commence par un compte à rebours, puis le générique (30 s) lancé depuis l\'IPDirector : 10 minutes de jeu, la pub, 10 minutes, le générique de fin. Seul, les postes que tu n\'occupes pas sont tenus par l\'équipe virtuelle.' : 'Le match tourne en continu : à toi de choisir ce que tu fais.'),
+      el('div', { class: 'jo-choix' },
+        el('label', { for: 'st-adversaire' }, 'L\'adversaire'),
+        el('select', { id: 'st-adversaire', onchange: (e) => { PICK.adversaire = e.target.value; garder('adversaire', PICK.adversaire); majAffiche(); } },
+          el('option', { value: 'hasard', selected: PICK.adversaire === 'hasard' ? '' : null }, 'Tiré au sort'),
+          ...CLUBS.map((c) => el('option', { value: c.id, selected: PICK.adversaire === c.id ? '' : null }, c.name.charAt(0) + c.name.slice(1).toLowerCase().replace(/\b(sg|fc|ac|ogc|sco|as|aj|rc|losc)\b/g, (m) => m.toUpperCase())))),
+        el('label', { for: 'st-poste' }, 'Ton poste'),
+        el('select', { id: 'st-poste', onchange: (e) => { PICK.poste = e.target.value; garder('poste', PICK.poste); } },
+          el('option', { value: 'libre', selected: PICK.poste === 'libre' ? '' : null }, 'Aucun : je commence au compound'),
+          ...ROLES_IA.map((r) => el('option', { value: r.poste, selected: PICK.poste === r.poste ? '' : null }, r.nom)))),
+      el('p', { class: 'note' }, 'Le résultat n\'est jamais écrit d\'avance : forme du jour, temps forts et niveau des équipes sont tirés à chaque partie. Dans le car, l\'équipe est à ses postes ; à ton poste, tu prends la place du titulaire.'));
   };
+  // l'affiche du soir, en tête de l'écran : l'adversaire choisi, ou « tiré au sort »
+  const affiche = el('span', {});
+  const majAffiche = () => { const c = CLUBS.find((x) => x.id === PICK.adversaire); affiche.textContent = `RC Lens – ${c ? c.appel.replace(/^le /, '') : 'adversaire tiré au sort'}`; };
+  majAffiche();
   const teamSeg = el('div', { class: 'seg jo-team-seg', role: 'group', 'aria-label': 'Seul ou en équipe' });
   const teamNote = el('p', { class: 'note' });
   const lan = lanAvailable();
@@ -241,7 +269,7 @@ export function buildStart() {
         el('h1', {}, 'Jouer'),
         el('p', { class: 'lede' }, 'Choisissez le lieu, le mode et votre équipe. Un match se joue en continu dans un stade inspiré de Bollaert-Delelis : tout ce que vous réglez se voit à l\'image.')),
       el('div', { class: 'glass dk-match', role: 'group', 'aria-label': 'La rencontre de ce soir' },
-        el('span', {}, 'RC Lens – AS Rivière'),
+        affiche,
         el('span', { class: 'dim' }, 'Bollaert-Delelis, reconstitution'),
         el('span', {}, el('em', {}, 'Antenne '), '20:45   ', el('em', {}, 'Coup d\'envoi '), '21:00'),
         truckLine)),
@@ -285,6 +313,9 @@ export function start(preset, light, quality, sound, format = S.format, ip = fal
   if (prepa && prepa.cams === 'none') loadPreset('none');
   else if (prepa && prepa.lineup === false) loadPreset(Array.isArray(CFG.car.camPreset) && CFG.car.camPreset.length ? 'car' : 'standard', false);
   defaultRouting(true);
+  // l'adversaire du soir et un match neuf (tirage) : chez l'hôte d'une coopération, il est transmis aux autres ;
+  // l'émission en direct tire son match à l'avant-match (emission/index.js)
+  if (!SES.active || isHost()) { choisirAdversaire(S.adversaire); if (!S.emission) nouveauMatchEnContinu(); }
   if (preset === 'brassage' || preset === 'scenario' || preset === 'zero') { S.patch.on = true; patchEmpty(); }
   if (preset === 'zero' && !S.ipMode) factoryCtrlNet();
   // mission spécifique : le réseau de contrôle aux adresses d'usine (ui/guide.js, mission mz-net)
@@ -297,6 +328,8 @@ export function start(preset, light, quality, sound, format = S.format, ip = fal
   if (sound) startAudio(); else { startAudio(); AU.muted = true; applyFaders(); }
   buildToolbar();
   if (preset === 'brassage') { emit('openStationNow', { id: 'brassage' }); toast('Car vide : brassez chaque liaison en suivant la liste de câblage. Le multiview montre le résultat.', '', 7000); }
+  // le poste choisi dans Jouer : on s'y assoit dès l'entrée (le titulaire virtuel se lève et laisse la place)
+  else if (S.poste && S.poste !== 'libre') emit('openStationLater', S.poste);
   else if (preset === 'scenario') emit('startScenario');
   else if (preset === 'atelier') emit('startAtelier');
   if (matchMedia('(pointer: coarse)').matches) setupTouch();
