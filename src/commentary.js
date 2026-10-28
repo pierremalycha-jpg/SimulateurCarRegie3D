@@ -33,6 +33,17 @@ function add(spk, text, prio = 1, maxAge = 3, opts = {}) {
   CMT.queue = CMT.queue.filter((q) => q.prio >= prio - 1 || now - q.t < 0.5);
   CMT.queue.push({ spk, text, prio, t: now, maxAge, delay: opts.delay || 0, rate: opts.rate, pitch: opts.pitch });
 }
+// l'émission en direct (src/emission/) : les commentateurs ouvrent l'antenne, la reprennent après la pub, la referment
+on('emission', (e) => {
+  if (!e || e.type !== 'segment' || S.sessionFollower) return;
+  const titre = `${TEAMS[0].name.replace(/^RC /, '')}, ${teamSay(1)}`;
+  if (e.id === 'presentation') {
+    add('comm1', `Bonsoir à tous et bienvenue à Bollaert-Delelis pour ${titre}. Le stade est plein, l'ambiance est déjà là.`, 4, 8);
+    add('comm2', 'Bonsoir. Un match important pour les deux équipes, on attend beaucoup d\'intensité.', 3, 12, { delay: 5 });
+  }
+  if (e.id === 'reprise') add('comm1', `Nous sommes de retour à Bollaert pour la seconde période. ${scoreSay()}.`, 4, 8);
+  if (e.id === 'generiqueFin') add('comm1', 'Merci de nous avoir suivis, bonne soirée à tous.', 3, 6);
+});
 function interrupt() { if (CMT.cur) { setVoiceLevel(CMT.cur.spk, -90); CMT.cur = null; } }
 function duration(text, rate) { return 0.45 + text.split(/\s+/).length * 0.34 / (rate || 1); }
 function sayNow(q) {
@@ -49,7 +60,23 @@ on('remoteCommentary', (d) => { if (!CMT.on || !d || !SPK[d.spk]) return; CMT.qu
 on('match', (e) => {
   if (!CMT.on || S.mode === 'start' || S.sessionFollower) return;
   const now = S.time;
-  if (e.type === 'kickoff') { add('comm1', M.clock < 5 ? pick(['Coup d\'envoi ! C\'est parti ici à Lens.', 'Et c\'est parti ! Coup d\'envoi de cette rencontre.']) : pick(['Le jeu reprend.', 'On repart, engagement.']), 3, 4); return; }
+  if (e.type === 'kickoff') {
+    // l'émission en direct (périodes) : le coup d'envoi de la seconde période se dit autrement
+    const debut2 = M.periode === 2 && Math.abs(M.clock - M.dureePeriode) < 5;
+    add('comm1', M.clock < 5 ? pick(['Coup d\'envoi ! C\'est parti ici à Lens.', 'Et c\'est parti ! Coup d\'envoi de cette rencontre.']) : debut2 ? pick(['C\'est reparti pour la seconde période !', 'Coup d\'envoi de la seconde période, les équipes ont changé de côté.']) : pick(['Le jeu reprend.', 'On repart, engagement.']), 3, 4);
+    return;
+  }
+  if (e.type === 'halftime') {
+    add('comm1', `C'est la mi-temps à Bollaert. ${scoreSay()}.`, 5, 5);
+    add('comm2', pick(['Une première période engagée, il faudra plus de justesse au retour des vestiaires.', 'Les deux équipes se sont neutralisées, on attend mieux en seconde période.', 'Un bon rythme, des occasions : la suite promet.']), 3, 10, { delay: 2.5 });
+    add('comm1', 'On marque une courte pause, à tout de suite.', 3, 12, { delay: 7 });
+    return;
+  }
+  if (e.type === 'fulltime') {
+    add('comm1', `C'est terminé ! Score final : ${scoreSay()}.`, 5, 5);
+    add('comm2', pick(['Un beau match, et un public formidable jusqu\'au bout.', 'Les supporters sang et or ont poussé jusqu\'à la dernière seconde.', 'Un résultat logique au vu de la physionomie de la rencontre.']), 3, 10, { delay: 2.5 });
+    return;
+  }
   if (e.type === 'pass') {
     if (now - CMT.lastPass < 2.4 || CMT.cur || CMT.queue.length || rnd() > 0.5) return;
     CMT.lastPass = now;

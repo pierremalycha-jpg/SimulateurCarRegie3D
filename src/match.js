@@ -19,6 +19,9 @@ export const M = {
   owner: -1, lastTeam: 0, passTarget: -1, decision: 1, state: 'kickoff', stateT: 3, restartTaker: -1,
   score: [0, 0], clock: 0, half: 1, attackDir: [1, -1], possession: [0, 0], shots: [0, 0], onTarget: [0, 0], corners: [0, 0],
   excite: [0.15, 0.15], exciteG: 0.2, rng: mulberry32(1234), lastGoal: null, lastEvent: null, kickoffTeam: 0, celebrateTeam: -1, scorer: -1,
+  // périodes (l'émission en direct, src/emission/) : 'libre' = match en continu, sans fin (le jeu libre, les
+  // exercices, les missions) ; sinon 'avant' (échauffement, horloge arrêtée), 1, 'mi-temps', 2, 'fin'
+  periode: /** @type {'libre' | 'avant' | 1 | 'mi-temps' | 2 | 'fin'} */ ('libre'), dureePeriode: 600, kick1: 0,
 };
 
 export function playerName(i) {
@@ -54,8 +57,8 @@ function basePos(h, ballX = 0, ballZ = 0, attacking = false) {
   return [x * dir, clamp(z, -32, 32)];
 }
 
-function setupKickoff(team, instant = false) {
-  M.state = 'kickoff'; M.stateT = 4; M.kickoffTeam = team; M.owner = -1;
+function setupKickoff(team, instant = false, wait = 4) {
+  M.state = 'kickoff'; M.stateT = wait; M.kickoffTeam = team; M.owner = -1;
   Object.assign(M.ball, { x: 0, y: 0.11, z: 0, vx: 0, vy: 0, vz: 0 });
   for (const h of M.humans) {
     let [x, z] = h.team >= 0 ? BASE[h.i % 11] : [0, 0];
@@ -71,6 +74,45 @@ function setupKickoff(team, instant = false) {
     if (instant) { h.x = x; h.z = z; h.heading = h.team === 0 ? Math.PI / 2 : -Math.PI / 2; }
     h.celebrate = 0;
   }
+}
+
+// ----------------------------------------------------------------------------------
+// Périodes d'un match (l'émission en direct) : avant-match, deux périodes de dureePeriode secondes,
+// mi-temps, fin. Le temps de jeu ne court que pendant les périodes ; en dehors, pas de ballon.
+// ----------------------------------------------------------------------------------
+/** l'horloge de jeu court-elle ? (le match en continu, ou une période en cours) */
+export const horlogeCourt = (periode = M.periode) => periode === 'libre' || periode === 1 || periode === 2;
+/** fin de la période en cours : à quel temps de jeu (secondes) ; null hors période */
+export const finDePeriode = (periode = M.periode, duree = M.dureePeriode) => (periode === 1 ? duree : periode === 2 ? 2 * duree : null);
+/** l'avant-match : score et statistiques à zéro, les joueurs à l'échauffement dans leur moitié, horloge à 0 */
+export function avantMatch(duree = 600) {
+  Object.assign(M, { periode: 'avant', dureePeriode: Math.max(10, duree), clock: 0, score: [0, 0], possession: [0, 0], shots: [0, 0], onTarget: [0, 0], corners: [0, 0], attackDir: [1, -1], kick1: 0, lastGoal: null, lastShot: null, celebrateTeam: -1, scorer: -1, passTarget: -1 });
+  setupKickoff(0, true);
+  M.state = 'pregame';
+  emit('match', { type: 'periode', periode: 'avant' });
+}
+/** coup d'envoi de la période suivante (1re après l'avant-match, 2e après la mi-temps : on change de côté) */
+export function coupDEnvoi() {
+  if (M.periode === 'avant') { M.periode = 1; M.clock = 0; setupKickoff(M.kick1, false, 5); }
+  else if (M.periode === 'mi-temps') { M.periode = 2; M.clock = M.dureePeriode; M.attackDir = [-M.attackDir[0], -M.attackDir[1]]; setupKickoff(1 - M.kick1, false, 10); }
+  else return false;
+  emit('match', { type: 'periode', periode: M.periode });
+  return true;
+}
+/** retour au match en continu (quitter l'émission) : le jeu reprend s'il était arrêté */
+export function matchEnContinu() {
+  const arrete = M.state === 'pregame' || M.state === 'break';
+  M.periode = 'libre';
+  if (arrete) setupKickoff(M.kickoffTeam || 0, false, 6);
+}
+// le temps de la période est écoulé : coup de sifflet, les joueurs quittent le jeu
+function finPeriode() {
+  const fin = M.periode === 2;
+  M.clock = /** @type {number} */ (finDePeriode());
+  M.periode = fin ? 'fin' : 'mi-temps';
+  M.state = 'break'; M.owner = -1; M.passTarget = -1; M.celebrateTeam = -1;
+  Object.assign(M.ball, { vx: 0, vz: 0, vy: 0, y: 0.11 });
+  emit('match', { type: fin ? 'fulltime' : 'halftime', score: [...M.score] });
 }
 
 function nearest(team, x, z, exclude = -1) {
@@ -151,10 +193,14 @@ export function stepMatch(dt) {
 
 function step(dt) {
   const b = M.ball; const r = M.rng;
-  M.clock += dt;
+  if (horlogeCourt()) M.clock += dt;
   M.exciteG = Math.max(0.12, M.exciteG - dt * 0.05);
   M.excite[0] = M.exciteG * (b.x < 0 ? 1 : 0.55) + (M.celebrateTeam === 0 ? 0.9 : 0);
   M.excite[1] = M.exciteG * (b.x > 0 ? 1 : 0.55) + (M.celebrateTeam === 1 ? 0.9 : 0);
+  // hors du jeu (échauffement, mi-temps, fin) : pas de ballon, les joueurs seulement
+  if (M.state === 'pregame' || M.state === 'break') { for (const p of M.humans) moveHuman(p, dt); return; }
+  // fin de période : le sifflet attend la fin d'une célébration
+  { const f = finDePeriode(); if (f != null && M.clock >= f && M.state !== 'celebration') { finPeriode(); return; } }
   if (M.state === 'celebration') {
     M.stateT -= dt;
     if (M.stateT <= 0) { M.celebrateTeam = -1; setupKickoff(1 - M.lastGoal.team); emit('match', { type: 'whistle' }); }
@@ -322,7 +368,18 @@ function moveHuman(p, dt) {
         if (p.i === M.scorer) { tx = cx; tz = cz; } else { tx = sc.x - Math.sin(p.i) * 1.6; tz = sc.z - Math.cos(p.i) * 1.6; }
         p.celebrate = 1;
       } else { [tx, tz] = basePos(p, 0, 0, false); speedCap = 2.0; }
-    } else if (st === 'kickoff') { tx = p.tx; tz = p.tz; speedCap = 4; p.celebrate = 0; }
+    } else if (st === 'kickoff') { tx = p.tx; tz = p.tz; speedCap = M.stateT > 5 ? 3 : 4; p.celebrate = 0; }
+    else if (st === 'pregame') {
+      // échauffement : petites courses autour de la place du coup d'envoi
+      const a = S.simTime * 0.45 + p.i * 1.7;
+      tx = p.tx + Math.sin(a) * 2.2; tz = p.tz + Math.cos(a * 0.8) * 1.6; speedCap = 2.6; p.celebrate = 0;
+    } else if (st === 'break') {
+      // mi-temps ou fin : chaque équipe rejoint son banc, le long de la touche Lepagnot
+      const k = p.i % 11; tx = (p.team === 0 ? -16 : 4) + k * 1.1; tz = -31.5 - (k % 2) * 0.9; speedCap = 2.2; p.celebrate = 0;
+    }
+  } else if (st === 'pregame' || st === 'break') {
+    // arbitres : au rond central à l'échauffement, vers le tunnel à la pause
+    tx = st === 'pregame' ? (p.i - 23) * 2.5 : (p.i - 23) * 1.2; tz = st === 'pregame' ? -2 : -33.5; speedCap = 2;
   } else {
     // arbitres
     if (p.role === 'ref') { tx = clamp(b.x - 6, -45, 45); tz = clamp(b.z + (b.x > 0 ? 9 : -9), -28, 28); }
