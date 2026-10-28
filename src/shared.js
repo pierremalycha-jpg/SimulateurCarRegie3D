@@ -33,9 +33,10 @@ export const MYREV = { domains: [], items: {}, params: {}, extra: [], updatedAt:
  * Version du format de la progression (PROG.v). À monter quand sa forme change, avec l'étape qui convient
  * dans migrateProgress. 1 : sans numéro (jusqu'à la v19.3) ; 2 : numérotée, réussites « seul » (clean) des
  * parcours et des missions réseau (v19.4) ; 3 : la Carrière, dates de réception et de lecture des mails (v19.6) ;
- * 4 : le parcours du Cours, exercice en autonomie de chaque leçon (cours[id].exo) et tests de niveau (niveaux) (v19.18).
+ * 4 : le parcours du Cours, exercice en autonomie de chaque leçon (cours[id].exo) et tests de niveau (niveaux) (v19.18) ;
+ * 5 : les émissions en direct conduites au car (emissions : score, médias lancés soi-même) (v19.19).
  */
-export const PROG_VERSION = 4;
+export const PROG_VERSION = 5;
 export const PROG = { v: PROG_VERSION, missions: {}, visited: {}, scenarios: [], reports: [], perf: null, patchBest: 0, updatedAt: 0 };
 /** état du dernier enregistrement de la progression : sur cet ordinateur (local), sur le serveur de la page (remote) */
 export const SAVE = { local: /** @type {boolean | null} */ (null), remote: /** @type {boolean | null} */ (null), at: 0, error: '' };
@@ -159,6 +160,8 @@ export function migrateProgress(d) {
       for (const [n, r] of Object.entries(t)) if (!isObj(r) || !(Number(r.total) > 0)) delete t[n];
     }
   }
+  // v4 → v5 : les émissions en direct ([{ at, score, parVous, seul }]) ; une entrée abîmée est retirée
+  if ('emissions' in p) p.emissions = Array.isArray(p.emissions) ? p.emissions.filter((e) => isObj(e) && Number.isFinite(e.score)) : [];
   p.v = Math.max(v, PROG_VERSION);
   return p;
 }
@@ -176,6 +179,8 @@ export function mergeProgress(d) {
   PROG.perf = PROG.perf || d.perf || null;
   PROG.patchBest = Math.max(PROG.patchBest || 0, d.patchBest || 0);
   { const seenA = new Set((PROG.rigs || []).map((x) => x.at)); PROG.rigs = PROG.rigs || []; for (const x of d.rigs || []) if (!seenA.has(x.at)) PROG.rigs.push(x); }
+  // émissions en direct : celles des deux appareils
+  if (d.emissions) { const P = /** @type {any} */ (PROG); P.emissions = P.emissions || []; const seenE = new Set(P.emissions.map((x) => x.at)); for (const x of d.emissions) if (!seenE.has(x.at)) P.emissions.push(x); }
   // parcours du chef de car : un parcours réussi ailleurs le reste ici
   // (réussi seul ici ou là-bas : ça reste acquis)
   if (d.tutor) {
@@ -256,6 +261,7 @@ async function saveProgress() {
   if (saving) { again = true; return; }
   PROG.missions = { ...S.missionsDone }; PROG.visited = { ...S.visited }; PROG.updatedAt = Date.now(); PROG.v = Math.max(PROG.v || 1, PROG_VERSION);
   PROG.scenarios = PROG.scenarios.slice(-20); PROG.reports = PROG.reports.slice(-50); if (PROG.rigs) PROG.rigs = PROG.rigs.slice(-20);
+  { const P = /** @type {any} */ (PROG); if (P.emissions) P.emissions = P.emissions.slice(-20); }
   // stockage du navigateur plein (photos du formateur, autres pages) ou désactivé : on le dit, la progression reste en mémoire
   noteSave('local', LS.set('progress', PROG), 'stockage du navigateur plein ou désactivé');
   if (!SH.db || !SH.uid || SH.readOnly) return;
@@ -301,7 +307,7 @@ export function importProgress(text) {
   const wrapped = isObj(d) && d.format === EXPORT_FORMAT;
   const p = wrapped ? d.progression : d;
   // une progression brute a au moins l'un de ses champs habituels
-  if (!isObj(p) || (!wrapped && !['missions', 'visited', 'cours', 'tutor', 'game', 'camera', 'net', 'carriere', 'niveaux'].some((k) => k in p))) return { ok: false, error: 'Ce fichier ne contient pas de progression du TIEE Simulator.' };
+  if (!isObj(p) || (!wrapped && !['missions', 'visited', 'cours', 'tutor', 'game', 'camera', 'net', 'carriere', 'niveaux', 'emissions'].some((k) => k in p))) return { ok: false, error: 'Ce fichier ne contient pas de progression du TIEE Simulator.' };
   mergeProgress(p);
   restoreProgress();
   saveProgressSoon();
@@ -327,6 +333,8 @@ export function addReport(where, text) {
   saveProgressSoon();
 }
 export function addScenarioResult(r) { PROG.scenarios.push({ at: Date.now(), ...r }); saveProgressSoon(); }
+/** une émission en direct terminée (src/emission/) : score sur 100, médias lancés soi-même, réussie seul */
+export function addEmissionResult(r) { const P = /** @type {any} */ (PROG); (P.emissions = P.emissions || []).push({ at: Date.now(), ...r }); saveProgressSoon(); }
 export function setPerf(p) { PROG.perf = { ...p, at: Date.now() }; saveProgressSoon(); }
 on('mission', saveProgressSoon);
 on('station', saveProgressSoon);

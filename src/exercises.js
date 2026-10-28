@@ -52,7 +52,8 @@ export function updateExercises(dt) {
   // opérateur EVS automatique : lance la lecture quand l'EVS A passe à l'antenne
   const pgm = meSource(MIX.pgm);
   const chA = EVS.ch[0];
-  if ((EX.evsAuto || EX.autoPlayA) && pgm === 'EVSA' && chA.mode === 'pause' && !EX._played && (MIX.auto ? MIX.pos > 0.45 : true)) {
+  // (un média de l'émission chargé sur ce canal ne se lance pas ici : c'est l'IPDirector qui le lance)
+  if ((EX.evsAuto || EX.autoPlayA) && pgm === 'EVSA' && chA.mode === 'pause' && !chA.media && !EX._played && (MIX.auto ? MIX.pos > 0.45 : true)) {
     evsAction(0, 'playvar'); EX._played = true; EX.autoPlayA = false;
   }
   if (pgm !== 'EVSA') EX._played = false;
@@ -108,6 +109,7 @@ on('match', (e) => {
     if (EX.evsAuto && S.station !== 'evs') {
       setTimeout(() => {
         if (meSource(MIX.pgm) === 'EVSA') return; // ne pas toucher un ralenti à l'antenne
+        if (EVS.ch[0].media) return; // ni un média de l'émission chargé sur le canal (UHD : un seul canal de lecture)
         evsAction(0, 'lastaction');
         const rec = recordedCams().map((id) => camById(id)).filter(Boolean);
         const best = rec.find((c) => c.hfr > 1) || rec.find((c) => c.role === 'serre') || rec[0];

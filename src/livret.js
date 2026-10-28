@@ -65,8 +65,10 @@ export function activityState(prog, /** @type {Kind} */ kind, /** @type {string}
     case 'exercice': return {
       done: ref === 'brassage' ? (P.patchBest || 0) >= 100 : ref === 'atelier' ? (P.rigs || []).some((r) => r && (r.errs ?? 0) <= ATELIER_ERREURS)
         : ref === 'quiz2110' ? best(N.quiz) >= SEUIL_SCORE : ref === 'examenReseau' ? best(N.exams) >= SEUIL_SCORE
-          : ref === 'entrepot' ? Object.values((P.entrepot || {}).missions || {}).some((m) => m && m.best && (m.best.score ?? m.best) >= SEUIL_SCORE) : false,
-      aided: false,
+          : ref === 'entrepot' ? Object.values((P.entrepot || {}).missions || {}).some((m) => m && m.best && (m.best.score ?? m.best) >= SEUIL_SCORE)
+            // l'émission en direct : 60 sur 100, les trois médias lancés soi-même (sinon : à refaire seul)
+            : ref === 'emission' ? (P.emissions || []).some((e) => e && e.score >= SEUIL_SCORE && e.seul) : false,
+      aided: ref === 'emission' && (P.emissions || []).some((e) => e && e.score >= SEUIL_SCORE && !e.seul) && !(P.emissions || []).some((e) => e && e.score >= SEUIL_SCORE && e.seul),
     };
   }
   return { done: false, aided: false };

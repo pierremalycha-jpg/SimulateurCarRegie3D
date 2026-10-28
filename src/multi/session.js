@@ -305,7 +305,15 @@ let avatarSrc = null;
 export function setAvatarSource(fn) { avatarSrc = fn; }
 
 // ---------------- match : hôte → suiveurs ----------------
+// d'autres modules ajoutent leur état à l'instantané de l'hôte (l'émission en direct : son conducteur)
+const SNAP_EXTRA = /** @type {Record<string, { get: () => any, apply: (v: any) => void }>} */ ({});
+/** une partie d'état publiée par l'hôte avec le match, appliquée chez les suiveurs */
+export function registerSnapExtra(key, get, apply) { SNAP_EXTRA[key] = { get, apply }; }
 function hostSnapshot() {
+  const x = {}; for (const [k, e] of Object.entries(SNAP_EXTRA)) { try { x[k] = e.get(); } catch (er) { x[k] = null; } }
+  return { ...matchSnapshot(), xs: x };
+}
+function matchSnapshot() {
   const h = [];
   for (const p of M.humans) h.push(r2(p.x), r2(p.z), r2(p.heading), r2(((p.phase % TAU) + TAU) % TAU), Math.round(Math.min(p.speed || 0, 9.9) * 10) * 10 + (p.celebrate ? 1 : 0));
   const b = M.ball;
@@ -349,6 +357,7 @@ export function followMatch(dt) {
   if (dt > 0) { bb.vx = clamp((bb.x - ox) / dt, -40, 40); bb.vz = clamp((bb.z - oz) / dt, -40, 40); }
   M.state = A.st; M.clock = A.cl + (Bm.cl - A.cl) * k; M.score = A.sc.slice(); M.owner = A.o; M.scorer = A.s; M.celebrateTeam = A.ct;
   M.excite[0] = A.x[0]; M.excite[1] = A.x[1];
+  if (Bm.xs) for (const [k, e] of Object.entries(SNAP_EXTRA)) { try { e.apply(Bm.xs[k]); } catch (er) { console.error(er); } }
   if (A.ps) { M.possession[0] = A.ps[0]; M.possession[1] = A.ps[1]; } if (A.sh) M.shots = A.sh.slice();
   S.simTime = rt;
   // cadres des caméras (sauf celle que je tiens moi-même)

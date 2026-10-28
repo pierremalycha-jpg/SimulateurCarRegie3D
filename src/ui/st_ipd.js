@@ -8,6 +8,7 @@ import { evsLayout, EQUIP } from '../equip.js';
 import { explain } from './widgets.js';
 import { ctrlFunc } from '../net/ctrlnet.js';
 import { openDevice } from '../equipment/viewer.js';
+import { panneauMedias, panneauConducteur } from '../emission/panneau.js';
 
 const KEYWORDS = ['BUT', 'TIR', 'ARRÊT', 'FAUTE', 'CORNER', 'HORS-JEU', 'CARTON', 'CONTRE', 'BELLE ACTION', 'AMBIANCE'];
 
@@ -44,6 +45,10 @@ export function buildIPD(body, arg, ctx) {
     el('p', { class: 'note' }, 'Dans IPDirector, chaque élément peut avoir sa transition (cut, mix, volet) et sa vitesse ; ici les clips s\'enchaînent en cut à la vitesse du levier.'));
   // ---------- contrôle des canaux ----------
   const ctl = el('div', { class: 'hwpanel ipd' }, el('h3', {}, 'Control panel · canaux du serveur'), el('div', { class: 'list ipd-ch' }));
+  // les médias de l'émission (générique, pub) et le conducteur : en tête du poste
+  const medias = panneauMedias({ explain, evsOk: () => evsOk() });
+  const cond = panneauConducteur();
+  body.append(el('div', { class: 'ipd-grid em-ipd' }, medias.el, cond.el));
   body.append(el('div', { class: 'ipd-grid' }, el('div', { class: 'list' }, db, el('div', { class: 'hwpanel ipd' }, el('h3', {}, 'Clip sélectionné'), detail)), el('div', { class: 'list' }, logger, pl, ctl)),
     el('div', { class: 'hwrow' }, el('button', { class: 'btn small', onclick: () => openDevice('ipd', 1) }, 'Voir le poste IPDirector'), el('button', { class: 'btn small', onclick: () => openDevice('evs', 1) }, `Voir le serveur ${EQUIP.evsModel}`)),
     el('p', { class: 'note' }, 'IPDirector travaille sur les mêmes clips que la télécommande LSM : un clip sauvegardé au poste ralentis apparaît ici, un nom ou un mot-clé ajouté ici apparaît sur l\'écran du serveur. Interface simplifiée inspirée des modules Database explorer, Clip logger, Playlist et Control panel.'));
@@ -142,7 +147,7 @@ export function buildIPD(body, arg, ctx) {
     update() {
       const key = EVS.clips.map((c) => (c ? c.in + c.name + (c.kw || []).length + c.rating : '')).join() + '|' + EVS.playlist.join();
       if (key !== lastKey) { lastKey = key; drawDb(); drawPl(); if (selIdx != null && !document.activeElement.closest?.('.ipd')) drawDetail(); }
-      drawEvents(); drawCtl();
+      drawEvents(); drawCtl(); medias.update(); cond.update();
     },
   };
 }

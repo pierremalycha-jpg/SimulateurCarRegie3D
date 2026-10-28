@@ -104,7 +104,8 @@ export const blocOf = (code) => BLOCS[Number(code.split('.')[0]) - 1];
 //   missions  : missions du guide (ui/guide.js) ; m6 et m14 (repérage) ne sont pas rattachées
 //   phases    : phases du scénario jour de match (scenario.js), réussies à 60 % au moins
 //   reseau    : missions du parcours réseau ST 2110 (net/course.js)
-//   exercices : brassage complet, montage caméra à l'atelier, quiz ST 2110 et examen réseau (60 %)
+//   exercices : brassage complet, montage caméra à l'atelier, quiz ST 2110 et examen réseau (60 %), régie de l'entrepôt,
+//               émission en direct (60 %, médias lancés soi-même)
 //   cours     : leçons de la section Cours (src/cours), acquises quand le quiz est réussi en entier
 //   camera    : module « La caméra en 3D » (src/camlab) : la mise en service notée (« mes », réussie à
 //               60 sur 100) et chaque notion écrite, acquise quand ses trois questions sont réussies du
@@ -189,6 +190,9 @@ export const RATTACHEMENT = {
     // l'entrepôt : une régie mobile montée de A à Z d'après un cahier des charges (traduire la commande,
     // mettre en place et rendre opérant, interconnecter, tester)
     entrepot: ['1.1', '2.1', '2.10', '3.9'],
+    // l'émission en direct : suivre le conducteur (3.11), lancer les médias depuis l'IPDirector (2.5 : le médiaflow),
+    // exploiter le serveur et le mélangeur en direct (2.9), suivre les annonces de l'intercom (4.1)
+    emission: ['3.11', '2.5', '2.9', '4.1'],
   },
   cours: {
     'signal-422': ['1.4', '2.2'], 'signal-bits': ['1.4', '2.2'], 'signal-niveaux': ['1.4', '2.2'], 'signal-formats': ['1.4', '2.10'], 'signal-couleur': ['1.4', '2.2'],

@@ -1,6 +1,6 @@
 // Les trois modes du car régie (Jouer → Car régie, v19.8) : la mission spécifique (la liste par famille,
 // le car préparé, le suivi des tâches sur le côté, « Mission réussie », enchaîner avec rechargement puis sans,
-// Olivier en boîte de dialogue en bas d'écran), le car pré-installé (ni chef de car ni missions) et le car vide
+// Olivier en boîte de dialogue en bas d'écran), le car pré-installé en match continu (ni chef de car ni missions) et le car vide
 // (Olivier propose d'abord la visite ; les tâches de l'installation par groupe). Puis la boîte de dialogue à 390 px.
 // node tests/e2e/modes-car.mjs [dossier]
 import { launch, openPage, outDir, until, reporter } from './harness.mjs';
@@ -69,7 +69,8 @@ T.check('même car : la mission suivante commence sans recharger', await until(A
 // une page à la fois : le rendu logiciel de deux stades ralentirait trop la suivante
 await A.close();
 const B = await openPage(browser, { errors: T.errors });
-await B.click('.jo-mode[data-mode="installe"]'); await B.click('#st-antenne');
+// (l'émission en direct, choix par défaut du car pré-installé, a sa suite : emission ; ici le match en continu)
+await B.click('.jo-mode[data-mode="installe"]'); await B.click('.jo-emission [data-emission="non"]'); await B.click('#st-antenne');
 await until(B, () => window.__dbg.S.mode !== 'start', null, 120000); await B.waitForTimeout(1500);
 T.check('car pré-installé : jeu libre, pas de missions dans le téléphone, pas d\'objectif', await B.evaluate(() => window.__dbg.S.modeCar === 'libre' && (window.__dbg.tel.open(), !window.__dbg.tel.state().apps.includes('missions')) && (window.__dbg.tel.close(), true) && (document.getElementById('quest') || { hidden: true }).hidden));
 await B.keyboard.press('KeyJ'); await B.waitForTimeout(300); await B.keyboard.press('KeyL'); await B.waitForTimeout(300);

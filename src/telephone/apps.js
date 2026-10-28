@@ -24,6 +24,8 @@ import { currentGoal, playerCard } from '../game/quest.js';
 import { xpOf, levelOf, badgesWon } from '../game/xp.js';
 import { TUTOR, lessonsFor, lessonBlocked } from '../tutor/engine.js';
 import { closeTelephone } from './index.js';
+import { EMI } from '../emission/etat.js';
+import { panneauConducteur } from '../emission/panneau.js';
 
 // ----------------------------------------------------------------------------------
 // Les applications du téléphone, rangées dans les trois familles des menus (décision v19) : le
@@ -54,6 +56,7 @@ export const APPS = [
   { id: 'plan', name: 'Plan caméras', ico: 'plan', hue: 110, fam: 'car', key: 'P', desc: 'Le stade vu de haut : installer, déplacer, prendre une caméra', open: () => { if (station()) closeStation(); openPlan(); } },
   { id: 'synoptiques', name: 'Synoptiques', ico: 'synoptiques', hue: 265, fam: 'car', key: 'Y', desc: 'Les schémas du car : vidéo, synchro, audio, réseaux, énergie', open: () => openSynoptics() },
   { id: 'materiel', name: 'Matériel', ico: 'materiel', hue: 20, fam: 'car', key: 'K', desc: 'Les appareils, leurs faces et leurs connecteurs', open: () => openEquipmentIndex() },
+  { id: 'direct', name: 'Le direct', ico: 'antenne', hue: 355, fam: 'car', desc: 'L\'émission en direct : le conducteur, la séquence en cours, le prochain top ; l\'IPDirector pour lancer les médias', show: () => EMI.on, view: directView },
   { id: 'equipe', name: 'Équipe', ico: 'equipe', hue: 320, fam: 'car', desc: 'La session à plusieurs : rôles, équipiers', show: () => !!SES.active, open: () => openSessionPanel() },
   { id: 'cours', name: 'Cours', ico: 'cours', hue: 190, fam: 'cours', key: 'G', desc: 'Les leçons (au poste : la leçon du poste)', open: () => (station() ? emit('cours', { poste: station() }) : openCours()) },
   { id: 'glossaire', name: 'Glossaire', ico: 'lexique', hue: 230, fam: 'cours', desc: 'Les mots du métier', open: () => openCours({ tab: 'glossaire' }) },
@@ -152,6 +155,15 @@ function allerView(box) {
 }
 
 /** Progression : niveau et badges, puis les trois endroits où se lit la progression */
+// le conducteur de l'émission en direct, et le chemin vers l'IPDirector (les médias se lancent de là)
+function directView(box) {
+  const c = panneauConducteur({ commandes: true });
+  const ipd = T.stations.find((s) => s.station === 'ipdirector');
+  box.append(c.el, el('section', { class: 'tel-sec' }, el('h3', {}, 'Les médias'),
+    ipd ? row('Aller à l\'IPDirector (générique, pub)', 'ipdirector', () => { closeTelephone(true); goToStation(ipd); }) : null));
+  c.update();
+  const iv = setInterval(() => { if (!c.el.isConnected) { clearInterval(iv); return; } c.update(); }, 250);
+}
 function progressionView(box) {
   box.append(playerCard());
   const go = (fn) => () => { closeTelephone(true); fn(); };

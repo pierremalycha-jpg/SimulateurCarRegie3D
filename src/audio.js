@@ -581,6 +581,8 @@ on('match', (e) => {
   if (e.type === 'kick') kickSound(e.power, e.x || M.ball.x, e.z || M.ball.z);
   if (e.type === 'whistle') whistle(false);
   if (e.type === 'goal') whistle(true);
+  // fin d'une période : deux coups brefs et un long
+  if (e.type === 'halftime' || e.type === 'fulltime') { whistle(false); setTimeout(() => whistle(false), 450); setTimeout(() => whistle(true), 900); }
   if (e.type === 'bounce') thud(e.v || 3, M.ball.x, M.ball.z);
   if (e.type === 'tackle') thud(6, M.ball.x, M.ball.z);
 });
