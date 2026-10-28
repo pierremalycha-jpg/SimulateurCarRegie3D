@@ -58,6 +58,12 @@ export function installProgression() {
     if (award({ key: 'panne:' + a.f.id, pts: fast ? BAREME.panneRapide : BAREME.panne, label: (fast ? 'Panne résolue en moins d\'une minute : ' : 'Panne résolue : ') + a.f.label })) bump('panne');
     else award({ pts: BAREME.panneRefaite, label: 'Panne déjà rencontrée, résolue de nouveau : ' + a.f.label });
   });
+  // l'émission en direct (src/emission/) : réussie à 60/100 avec les trois médias lancés soi-même depuis l'IPDirector
+  on('emission', (e) => {
+    if (!e || e.type !== 'fini' || e.score < 60) return;
+    if (!e.seul) { award({ pts: BAREME.emissionRefaite, label: `Émission en direct terminée : ${e.score}/100 (médias lancés par l'équipe virtuelle)` }); return; }
+    if (!award({ key: 'emission', pts: BAREME.emission, label: `Émission en direct conduite : ${e.score}/100` })) award({ pts: BAREME.emissionRefaite, label: `Émission en direct, de nouveau : ${e.score}/100` });
+  });
   on('scenarioDone', (r) => { if (r) award({ pts: r.score, label: 'Jour de match terminé : ' + r.score + ' %' }); });
   on('atelier', (e) => { if (!e || e.type !== 'done') return; if (!award({ key: 'atelier', pts: BAREME.atelier, label: 'Caméra montée à l\'atelier' })) award({ pts: BAREME.atelierRefait, label: 'Montage refait à l\'atelier' }); });
   on('patchDone', () => award({ key: 'brassage', pts: BAREME.brassage, label: 'Car vide brassé à 100 %' }));

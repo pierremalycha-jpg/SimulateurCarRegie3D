@@ -70,9 +70,9 @@ test('import : les fichiers qui ne sont pas une progression sont refusés, avec 
 });
 
 test('v3 → v4 : l\'exercice en autonomie des leçons et les tests de niveau, fusionnés entre deux appareils', () => {
-  assert.equal(PROG_VERSION, 4);
+  assert.ok(PROG_VERSION >= 4);
   const p = migrateProgress({ v: 3, missions: {}, cours: { a: { seen: true, quiz: null, exo: 'abîmé' }, b: { seen: true, quiz: null, exo: { best: 80, seul: true, n: 2 } } }, niveaux: { reseau: { intermediaire: { score: 9, total: 10 }, avance: 'abîmé' }, sdi: 4 } });
-  assert.equal(p.v, 4);
+  assert.equal(p.v, PROG_VERSION);
   assert.equal(p.cours.a.exo, undefined, 'un exercice abîmé est retiré');
   assert.equal(p.cours.b.exo.best, 80);
   assert.deepEqual(p.niveaux, { reseau: { intermediaire: { score: 9, total: 10 } } });
@@ -82,4 +82,15 @@ test('v3 → v4 : l\'exercice en autonomie des leçons et les tests de niveau, f
   assert.deepEqual(/** @type {any} */ (PROG.cours['signal-422']).exo, { best: 70, seul: true, n: 3, at: 9 }, 'meilleur score d\'ici, réussi seul là-bas');
   assert.equal(/** @type {any} */ (PROG.cours['signal-bits']).exo.best, 90);
   assert.deepEqual(/** @type {any} */ (PROG).niveaux, { sdi: { avance: { score: 5, total: 6 } }, reseau: { expert: { score: 10, total: 12 } } });
+});
+
+test('v4 → v5 : les émissions en direct, nettoyées et fusionnées entre deux appareils', () => {
+  assert.equal(PROG_VERSION, 5);
+  const p = migrateProgress({ v: 4, missions: {}, emissions: [{ at: 1, score: 72, parVous: 3, seul: true }, 'abîmé', { at: 2 }] });
+  assert.equal(p.v, 5);
+  assert.deepEqual(p.emissions, [{ at: 1, score: 72, parVous: 3, seul: true }]);
+  assert.deepEqual(migrateProgress({ v: 4, emissions: 'x' }).emissions, []);
+  /** @type {any} */ (PROG).emissions = [{ at: 1, score: 72, parVous: 3, seul: true }];
+  mergeProgress({ emissions: [{ at: 1, score: 72, parVous: 3, seul: true }, { at: 5, score: 40, parVous: 0, seul: false }] });
+  assert.deepEqual(/** @type {any} */ (PROG).emissions.map((e) => e.at), [1, 5]);
 });

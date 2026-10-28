@@ -59,6 +59,8 @@ export const BAREME = {
   brassage: 80,         // car vide brassé à 100 %
   entrepot: 100,        // mission de l'entrepôt réussie (≥ 60/100)
   entrepotRefait: 25,
+  emission: 100,        // une émission en direct conduite jusqu'au générique de fin (≥ 60/100, médias lancés soi-même)
+  emissionRefaite: 25,
   poste: 5,             // un poste découvert
   lieu: 5,              // un endroit du stade découvert
 };
