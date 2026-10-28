@@ -137,6 +137,24 @@ function ringPath(r, s1, s2) {
 const PANEL = [TRUCK.x1 - 2.3, 1.2, TRUCK.z1 + 0.15];
 const LOCALTV = [-9.5, 0.6, -86.5];
 function compoundTail(fromX) { return [[fromX, 0.05, -93], [fromX, 0.05, -114.6], [PANEL[0], 0.05, -114.6], PANEL]; }
+/**
+ * Le câble tel qu'on le dessine : posé sur son support (quelques centimètres au-dessus, un peu décalé d'une caméra à
+ * l'autre) ; au pied du car, il longe le sol jusqu'à la paroi puis monte à la verticale jusqu'à sa prise du panneau
+ * de raccordement (avant : douze câbles en éventail montaient en diagonale, en l'air, de la rampe au panneau).
+ * @param {number[][]} pts le tracé de la liaison (computeRoute) @param {number} id numéro de la caméra
+ */
+export function traceCable(pts, id) {
+  const dy = 0.03 + id * 0.012, dz = id * 0.06;
+  const out = pts.map((p) => [p[0], p[1] + dy, p[2] + dz]);
+  const n = pts.length;
+  if (n >= 2 && pts[n - 1] === PANEL) {
+    // chaque câble a sa prise, de gauche à droite du panneau, sur trois rangées
+    const xs = PANEL[0] - 0.66 + ((id - 1) % 12) * 0.12, ys = PANEL[1] - 0.25 + (Math.floor((id - 1) / 12) % 3) * 0.12;
+    const avant = out[n - 2];
+    out.splice(n - 1, 1, [xs, dy, avant[2]], [xs, dy, PANEL[2] + 0.12], [xs, ys, PANEL[2] + 0.03]);
+  }
+  return out;
+}
 
 export function computeRoute(pos, typeKey, linkKey) {
   const [x, y, z] = pos;
@@ -483,12 +501,12 @@ export class BCam {
     if (this.infraLine) { W.scene.remove(this.infraLine); this.infraLine.geometry.dispose(); this.infraLine = null; }
     this.route = computeRoute(this.base.toArray(), this.type, this.link);
     if (this.route.pts.length > 1) {
-      const g = new THREE.BufferGeometry().setFromPoints(this.route.pts.map((p) => new THREE.Vector3(p[0], p[1] + 0.12 + this.id * 0.03, p[2] + this.id * 0.06)));
+      const g = new THREE.BufferGeometry().setFromPoints(traceCable(this.route.pts, this.id).map((p) => new THREE.Vector3(p[0], p[1], p[2])));
       this.cable = new THREE.Line(g, overlayMat(new THREE.LineBasicMaterial({ color: Lk.color, depthTest: true })));
       setLayer(this.cable, 1); W.scene.add(this.cable);
     }
     if (this.route.infra) {
-      const g = new THREE.BufferGeometry().setFromPoints(this.route.infra.map((p) => new THREE.Vector3(p[0], p[1] + 0.12 + this.id * 0.03, p[2] + this.id * 0.06)));
+      const g = new THREE.BufferGeometry().setFromPoints(traceCable(this.route.infra, this.id).map((p) => new THREE.Vector3(p[0], p[1], p[2])));
       this.infraLine = new THREE.Line(g, overlayMat(new THREE.LineDashedMaterial({ color: 0xffd23f, dashSize: 1.5, gapSize: 1.2 })));
       this.infraLine.computeLineDistances(); setLayer(this.infraLine, 1); W.scene.add(this.infraLine);
     }
