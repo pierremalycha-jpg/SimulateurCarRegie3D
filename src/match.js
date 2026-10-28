@@ -2,7 +2,7 @@
 import * as THREE from 'three';
 import { clamp, mulberry32, wrapAngle, lerpAngle } from './util.js';
 import { S, emit } from './state.js';
-import { PLAYER_NAMES } from './data/match.js';
+import { PLAYER_NAMES, TEAMS } from './data/match.js';
 import { PITCH } from './world.js';
 import { buildPeople, poseHuman, flushPeople, ballTexture, PEOPLE } from './people.js';
 
@@ -19,6 +19,8 @@ export const M = {
   owner: -1, lastTeam: 0, passTarget: -1, decision: 1, state: 'kickoff', stateT: 3, restartTaker: -1,
   score: [0, 0], clock: 0, half: 1, attackDir: [1, -1], possession: [0, 0], shots: [0, 0], onTarget: [0, 0], corners: [0, 0],
   excite: [0.15, 0.15], exciteG: 0.2, rng: mulberry32(1234), lastGoal: null, lastEvent: null, kickoffTeam: 0, celebrateTeam: -1, scorer: -1,
+  // le tirage du match (tirerMatch) : graine, forme du jour, style, temps forts ; av : l'ascendant de chaque équipe
+  graine: 1234, tirage: /** @type {Tirage | null} */ (null), av: [0, 0], avT: -1,
   // périodes (l'émission en direct, src/emission/) : 'libre' = match en continu, sans fin (le jeu libre, les
   // exercices, les missions) ; sinon 'avant' (échauffement, horloge arrêtée), 1, 'mi-temps', 2, 'fin'
   periode: /** @type {'libre' | 'avant' | 1 | 'mi-temps' | 2 | 'fin'} */ ('libre'), dureePeriode: 600, kick1: 0,
@@ -32,16 +34,82 @@ export function playerName(i) {
 export function playerNumber(i) { const k = i % 11; return [1, 2, 4, 5, 3, 6, 8, 10, 7, 9, 11][k]; }
 export function teamOf(i) { return i < 11 ? 0 : i < 22 ? 1 : -1; }
 
+// ----------------------------------------------------------------------------------
+// Le tirage du match : à chaque partie une graine nouvelle (avant, la graine était fixe et l'on revoyait le même
+// match, gagné par Lens), la forme du jour de chaque équipe, le style de la rencontre et ses temps forts (des
+// phases de une à quatre minutes de jeu où l'une des équipes pousse). Les niveaux viennent de data/clubs.js.
+// Calcul pur : la même graine et les mêmes niveaux donnent le même tirage.
+// ----------------------------------------------------------------------------------
+/**
+ * @typedef {{ graine: number, niveaux: number[], forme: number[], style: { id: string, label: string, tir: number }, temps: Array<{ de: number, a: number, equipe: number, k: number }> }} Tirage
+ */
+export const STYLES = [
+  { id: 'ferme', label: 'match fermé', tir: 0.8 },
+  { id: 'equilibre', label: 'match équilibré', tir: 1 },
+  { id: 'ouvert', label: 'match ouvert', tir: 1.3 },
+];
+const CYCLE = 7200; // les temps forts sont tirés pour deux heures de jeu, puis reviennent (match en continu)
+/** @returns {Tirage} */
+export function tirerMatch(graine, niveaux = [TEAMS[0].niveau ?? 75, TEAMS[1].niveau ?? 75]) {
+  const r = mulberry32(graine >>> 0);
+  const gauss = () => Math.sqrt(-2 * Math.log(1 - r())) * Math.cos(2 * Math.PI * r());
+  const forme = [gauss() * 0.045, gauss() * 0.045];
+  const u = r(); const style = STYLES[u < 0.25 ? 0 : u < 0.7 ? 1 : 2];
+  // l'équipe la plus forte pousse plus souvent, mais pas toujours
+  const ecart = (niveaux[0] - niveaux[1]) / 100 * 0.6 + forme[0] - forme[1];
+  const temps = []; let t = 0;
+  while (t < CYCLE) { const d = 60 + r() * 180; temps.push({ de: t, a: t + d, equipe: r() < clamp(0.5 + ecart * 1.5, 0.2, 0.8) ? 0 : 1, k: 0.03 + r() * 0.1 }); t += d; }
+  return { graine: graine >>> 0, niveaux: niveaux.slice(), forme, style, temps };
+}
+/** la force d'une équipe à un moment du match (niveau, forme, avantage du terrain pour Lens, temps fort) */
+export function forceEquipe(tir, equipe, clock) {
+  if (!tir) return 0.75;
+  const c = ((clock % CYCLE) + CYCLE) % CYCLE;
+  const ph = tir.temps.find((p) => c >= p.de && c < p.a);
+  // l'écart de niveau compte, sans tout décider : la forme du jour et les temps forts pèsent autant
+  return tir.niveaux[equipe] / 100 * 0.6 + tir.forme[equipe] + (equipe === 0 ? 0.02 : 0) + (ph && ph.equipe === equipe ? ph.k : 0);
+}
+/** l'ascendant d'une équipe sur l'autre, borné (−0,35 à 0,35) */
+const ascendant = (equipe) => M.av[equipe] || 0;
+function majAscendant() {
+  if (Math.abs(M.clock - M.avT) < 0.5) return;
+  M.avT = M.clock;
+  const a = clamp(forceEquipe(M.tirage, 0, M.clock) - forceEquipe(M.tirage, 1, M.clock), -0.35, 0.35);
+  M.av = [a, -a];
+}
+/**
+ * Un nouveau match : nouvelle graine (au hasard si rien n'est donné), nouveau tirage, score et statistiques à
+ * zéro, coup d'envoi tiré au sort. Les joueurs restent où ils sont : setupKickoff (ou avantMatch) les place.
+ */
+export function nouveauMatch(graine = Math.floor(Math.random() * 2 ** 32)) {
+  M.graine = graine >>> 0; M.rng = mulberry32(M.graine); M.tirage = tirerMatch(M.graine ^ 0x5bd1e995);
+  Object.assign(M, { clock: 0, score: [0, 0], possession: [0, 0], shots: [0, 0], onTarget: [0, 0], corners: [0, 0], attackDir: [1, -1], lastGoal: null, lastShot: null, celebrateTeam: -1, scorer: -1, passTarget: -1, owner: -1, gkPlan: null, avT: -1, av: [0, 0], libreT: 0 });
+  // rien ne reste du match précédent (la même graine rejoue le même match)
+  Object.assign(M, { passTarget2: null, dribbleDir: undefined, decision: 1, noControl: 0, lastTeam: 0, restartTaker: -1, exciteG: 0.2, excite: [0.15, 0.15] });
+  for (const h of M.humans) { h.vx = 0; h.vz = 0; h.celebrate = 0; }
+  stepAcc = 0;
+  M.kick1 = M.rng() < 0.5 ? 0 : 1;
+  emit('match', { type: 'tirage', tirage: M.tirage });
+  return M.tirage;
+}
+/** le match en continu repart de zéro (début d'une partie au car pré-installé, aux exercices…) */
+export function nouveauMatchEnContinu(graine) {
+  nouveauMatch(graine);
+  M.periode = 'libre';
+  setupKickoff(M.kick1, true, 3);
+}
+
 export function initMatch() {
   M.humans = [];
+  nouveauMatch();
   for (let i = 0; i < NH; i++) {
     const team = teamOf(i);
     const k = i % 11;
     const h = { i, team, role: i >= 22 ? (i === 22 ? 'ref' : 'ast') : (k === 0 ? 'gk' : k < 5 ? 'def' : k < 9 ? 'mid' : 'fwd'), x: 0, z: 0, vx: 0, vz: 0, heading: 0, phase: Math.random() * 6, celebrate: 0, max: i >= 22 ? 6.5 : SPEED[k], tx: 0, tz: 0, skin: 0 };
-    h.skin = [0xe0b090, 0xc58c64, 0x8d5a3b, 0x5e3a24, 0xf0c8a8][Math.floor(M.rng() * 5)];
+    h.skin = [0xe0b090, 0xc58c64, 0x8d5a3b, 0x5e3a24, 0xf0c8a8][Math.floor(Math.random() * 5)];
     M.humans.push(h);
   }
-  setupKickoff(0, true);
+  setupKickoff(M.kick1, true);
 }
 
 function basePos(h, ballX = 0, ballZ = 0, attacking = false) {
@@ -84,9 +152,10 @@ function setupKickoff(team, instant = false, wait = 4) {
 export const horlogeCourt = (periode = M.periode) => periode === 'libre' || periode === 1 || periode === 2;
 /** fin de la période en cours : à quel temps de jeu (secondes) ; null hors période */
 export const finDePeriode = (periode = M.periode, duree = M.dureePeriode) => (periode === 1 ? duree : periode === 2 ? 2 * duree : null);
-/** l'avant-match : score et statistiques à zéro, les joueurs à l'échauffement dans leur moitié, horloge à 0 */
-export function avantMatch(duree = 600) {
-  Object.assign(M, { periode: 'avant', dureePeriode: Math.max(10, duree), clock: 0, score: [0, 0], possession: [0, 0], shots: [0, 0], onTarget: [0, 0], corners: [0, 0], attackDir: [1, -1], kick1: 0, lastGoal: null, lastShot: null, celebrateTeam: -1, scorer: -1, passTarget: -1 });
+/** l'avant-match : un nouveau match (tirage, score à zéro), les joueurs à l'échauffement dans leur moitié, horloge à 0 */
+export function avantMatch(duree = 600, graine = undefined) {
+  nouveauMatch(graine);
+  Object.assign(M, { periode: 'avant', dureePeriode: Math.max(10, duree) });
   setupKickoff(0, true);
   M.state = 'pregame';
   emit('match', { type: 'periode', periode: 'avant' });
@@ -139,9 +208,12 @@ function kick(dirx, dirz, speed, vy, type) {
 function decide(o) {
   const h = M.humans[o]; const dir = M.attackDir[h.team]; const r = M.rng;
   const gx = dir * PITCH.hl; const dGoal = Math.hypot(gx - h.x, h.z);
-  if (dGoal < 25 && Math.abs(h.z) < 22 && r() < 0.42 && h.role !== 'gk') {
+  // le tirage du match : l'équipe qui a l'ascendant tente plus et cadre mieux ; un match ouvert fait tirer davantage
+  const av = ascendant(h.team), style = M.tirage ? M.tirage.style.tir : 1;
+  if (dGoal < 25 && Math.abs(h.z) < 22 && r() < clamp(0.46 * style * (1 + av * 1.6), 0.15, 0.75) && h.role !== 'gk') {
     // tir
-    const tz = (r() * 2 - 1) * 4.6; const ty = r() * 2.6;
+    const prec = clamp(1 - av * 0.9, 0.6, 1.4);
+    const tz = (r() * 2 - 1) * 4.6 * prec; const ty = r() * 2.6 * prec;
     const dist = Math.hypot(gx - h.x, tz - h.z);
     const speed = 22 + r() * 8;
     const t = dist / speed;
@@ -194,6 +266,7 @@ export function stepMatch(dt) {
 function step(dt) {
   const b = M.ball; const r = M.rng;
   if (horlogeCourt()) M.clock += dt;
+  majAscendant();
   M.exciteG = Math.max(0.12, M.exciteG - dt * 0.05);
   M.excite[0] = M.exciteG * (b.x < 0 ? 1 : 0.55) + (M.celebrateTeam === 0 ? 0.9 : 0);
   M.excite[1] = M.exciteG * (b.x > 0 ? 1 : 0.55) + (M.celebrateTeam === 1 ? 0.9 : 0);
@@ -212,9 +285,11 @@ function step(dt) {
         M.owner = taker.i; emit('match', { type: 'whistle' }); emit('match', { type: 'kickoff' });
         M.state = 'play'; M.decision = 0.3;
         b.x = taker.x + 0.3 * M.attackDir[taker.team]; b.z = taker.z;
-        // passe en retrait
+        // passe en retrait, assez appuyée pour arriver jusqu'au milieu (avant : 10 m/s, le ballon s'arrêtait en route
+        // et le receveur courait vers la cible d'une passe précédente)
         const mate = M.humans.find((p) => p.team === taker.team && p.i % 11 === 7);
-        kick(mate.x - taker.x, mate.z - taker.z, 10, 0.3, 'pass'); M.passTarget = mate.i;
+        const d = Math.hypot(mate.x - taker.x, mate.z - taker.z);
+        kick(mate.x - taker.x, mate.z - taker.z, clamp(9 + d * 0.38, 9, 22), 0.3, 'pass'); M.passTarget = mate.i; M.passTarget2 = [mate.x, mate.z];
       } else {
         M.state = 'play'; M.owner = M.restartTaker; M.decision = 0.2;
       }
@@ -236,7 +311,7 @@ function step(dt) {
       const opp = nearest(1 - o.team, b.x, b.z);
       if (opp >= 0) {
         const p = M.humans[opp]; const d = Math.hypot(p.x - b.x, p.z - b.z);
-        if (d < 0.8 && r() < dt * 1.6) { M.owner = opp; M.lastTeam = p.team; M.decision = 0.4 + r(); emit('match', { type: 'tackle' }); }
+        if (d < 0.8 && r() < dt * 1.6 * clamp(1 + ascendant(p.team) * 2, 0.4, 2)) { M.owner = opp; M.lastTeam = p.team; M.decision = 0.4 + r(); emit('match', { type: 'tackle' }); }
       }
     }
   } else {
@@ -251,19 +326,29 @@ function step(dt) {
     M.noControl = Math.max(0, (M.noControl || 0) - dt);
     // gardien
     if (M.state === 'play') goalkeeping(dt);
-    // contrôle
+    // contrôle : un ballon lent se ramasse de plus loin (pied tendu) ; sinon, plusieurs joueurs pouvaient
+    // l'entourer à 0,7 m sans jamais l'atteindre (ils se repoussent à moins de 1,2 m) et le match s'arrêtait
+    const sp = Math.hypot(b.vx, b.vz);
     if (M.state === 'play' && M.noControl <= 0 && b.y < 1.0) {
-      const sp = Math.hypot(b.vx, b.vz);
       for (const p of M.humans) {
         if (p.team < 0) continue;
         const d = Math.hypot(p.x - b.x, p.z - b.z);
-        const reach = p.i === M.passTarget ? 0.9 : 0.6;
+        const reach = p.i === M.passTarget || sp < 2.5 ? 0.95 : 0.6;
         if (d < reach && r() < (p.i === M.passTarget ? 0.6 : clamp(1.2 - sp / 22, 0.08, 1) * 0.3)) {
           M.owner = p.i; M.lastTeam = p.team; M.passTarget = -1; M.decision = 0.3 + r() * 0.9;
           emit('match', { type: 'control', team: p.team });
           break;
         }
       }
+    }
+    // passe ratée : le ballon s'arrête loin de sa cible, le receveur n'a plus de raison d'y courir
+    if (M.passTarget >= 0 && sp < 1 && M.passTarget2 && Math.hypot(b.x - M.passTarget2[0], b.z - M.passTarget2[1]) > 2) M.passTarget = -1;
+    // filet de sécurité : un ballon libre arrêté plus d'une seconde et demie revient au joueur le plus proche
+    M.libreT = M.state === 'play' && M.owner < 0 && sp < 1 && b.y < 0.5 ? (M.libreT || 0) + dt : 0;
+    if (M.libreT > 1.5) {
+      let best = -1, bd = 1e9;
+      for (const p of M.humans) { if (p.team < 0) continue; const d = Math.hypot(p.x - b.x, p.z - b.z); if (d < bd) { bd = d; best = p.i; } }
+      if (best >= 0 && bd < 3) { const p = M.humans[best]; M.owner = best; M.lastTeam = p.team; M.passTarget = -1; M.decision = 0.3 + r() * 0.6; M.libreT = 0; emit('match', { type: 'control', team: p.team }); }
     }
     // sorties et buts
     if (M.state === 'play') boundaries();
@@ -283,7 +368,7 @@ function goalkeeping(dt) {
       const tt = (gx - b.x) / b.vx;
       const zc = b.z + b.vz * tt, yc = b.y + b.vy * tt - 4.9 * tt * tt;
       if (!M.gkPlan || M.gkPlan.team !== t || M.gkPlan.t0 !== M.lastShot?.t) {
-        M.gkPlan = { team: t, z: zc, y: yc, saved: M.rng() < 0.6, t0: M.lastShot?.t };
+        M.gkPlan = { team: t, z: zc, y: yc, saved: M.rng() < clamp(0.5 + ascendant(t) * 0.8, 0.3, 0.8), t0: M.lastShot?.t };
       }
       gk.tz = clamp(zc, -3.4, 3.4);
       if (Math.abs(gx - b.x) < 1.6 && Math.abs(zc) < 3.66 && yc < 2.44 && M.gkPlan.saved && Math.abs(gk.z - b.z) < 2.2) {
@@ -386,8 +471,9 @@ function moveHuman(p, dt) {
     else if (p.i === 23) { tx = clamp(b.x, 0, 50); tz = 34.8; }
     else { tx = clamp(b.x, -50, 0); tz = -34.8; }
   }
-  // séparation
-  for (const q of M.humans) {
+  // séparation (sauf pour qui dispute un ballon libre à moins de 2 m : il doit pouvoir l'atteindre)
+  const dispute = st === 'play' && M.owner < 0 && p.team >= 0 && Math.hypot(b.x - p.x, b.z - p.z) < 2;
+  if (!dispute) for (const q of M.humans) {
     if (q === p) continue;
     const dx = p.x - q.x, dz = p.z - q.z; const d2 = dx * dx + dz * dz;
     if (d2 < 1.4 && d2 > 1e-4 && st !== 'celebration') { const d = Math.sqrt(d2); tx += dx / d * 0.8; tz += dz / d * 0.8; }

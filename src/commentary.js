@@ -22,7 +22,7 @@ export const CMT = { on: true, log: [], queue: [], cur: null, idleT: 0, lastPass
 const rnd = () => Math.random();
 const pick = (a) => a[Math.floor(rnd() * a.length)];
 const surname = (i) => { const n = playerName(i); return n.includes('. ') ? n.split('. ').slice(1).join(' ') : n; };
-const teamSay = (t) => { const n = TEAMS[t].name.replace(/^(RC|AS|FC|OGC|SC)\s+/i, ''); return n.charAt(0) + n.slice(1).toLowerCase(); };
+const teamSay = (t) => TEAMS[t].appel || TEAMS[t].name;
 const scoreSay = () => `${teamSay(0)} ${M.score[0]}, ${teamSay(1)} ${M.score[1]}`;
 
 // ---- file d'attente : priorité (5 = but … 1 = description), péremption ----
@@ -36,14 +36,23 @@ function add(spk, text, prio = 1, maxAge = 3, opts = {}) {
 // l'émission en direct (src/emission/) : les commentateurs ouvrent l'antenne, la reprennent après la pub, la referment
 on('emission', (e) => {
   if (!e || e.type !== 'segment' || S.sessionFollower) return;
-  const titre = `${TEAMS[0].name.replace(/^RC /, '')}, ${teamSay(1)}`;
+  const titre = `${teamSay(0)}, ${teamSay(1)}`;
   if (e.id === 'presentation') {
     add('comm1', `Bonsoir à tous et bienvenue à Bollaert-Delelis pour ${titre}. Le stade est plein, l'ambiance est déjà là.`, 4, 8);
-    add('comm2', 'Bonsoir. Un match important pour les deux équipes, on attend beaucoup d\'intensité.', 3, 12, { delay: 5 });
+    add('comm2', `Bonsoir. ${avantMatchDit()}`, 3, 12, { delay: 5 });
   }
   if (e.id === 'reprise') add('comm1', `Nous sommes de retour à Bollaert pour la seconde période. ${scoreSay()}.`, 4, 8);
   if (e.id === 'generiqueFin') add('comm1', 'Merci de nous avoir suivis, bonne soirée à tous.', 3, 6);
 });
+// le consultant présente la rencontre d'après le tirage du match (match.js) : niveaux, forme du jour
+function avantMatchDit() {
+  const T = M.tirage; if (!T) return 'Un match important pour les deux équipes, on attend beaucoup d\'intensité.';
+  const ecart = T.niveaux[0] - T.niveaux[1];
+  const forme = T.forme[1] - T.forme[0];
+  const pronostic = ecart > 8 ? `Lens part favori à domicile, mais ${teamSay(1)} n'est pas venu en touriste.` : ecart < -8 ? `${teamSay(1)} arrive avec l'étiquette de favori, Lens devra s'appuyer sur son public.` : 'Deux équipes proches, le match peut basculer d\'un côté comme de l\'autre.';
+  const f = forme > 0.04 ? ` ${teamSay(1)} reste sur une bonne série.` : forme < -0.04 ? ` Lens est en confiance en ce moment.` : '';
+  return pronostic + f;
+}
 function interrupt() { if (CMT.cur) { setVoiceLevel(CMT.cur.spk, -90); CMT.cur = null; } }
 function duration(text, rate) { return 0.45 + text.split(/\s+/).length * 0.34 / (rate || 1); }
 function sayNow(q) {

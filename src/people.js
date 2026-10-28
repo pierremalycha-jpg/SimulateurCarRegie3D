@@ -169,7 +169,7 @@ function buildGeos() {
   }
   return G;
 }
-function mergeIndexed(list) {
+export function mergeIndexed(list) {
   const pos = [], mask = [], idx = []; let base = 0;
   for (const g of list) {
     const p = g.attributes.position, m = g.attributes.aMask;
@@ -186,7 +186,7 @@ function mergeIndexed(list) {
 
 // ------------------------------- matériaux -------------------------------
 // deux couleurs par instance : instanceColor (principale) et aCol2 (secondaire), mélangées par le masque
-function kitMaterial(kind, opts = {}) {
+export function kitMaterial(kind, opts = {}) {
   const m = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: opts.rough ?? 0.8, metalness: 0, side: opts.side || THREE.FrontSide });
   const num = kind === 'torso', face = kind === 'head';
   m.onBeforeCompile = (sh) => {
@@ -252,7 +252,7 @@ function numberAtlas() {
 }
 
 // ------------------------------- construction -------------------------------
-export const PEOPLE = { parts: {}, n: 0, ball: new THREE.Vector3(), time: 0, atlas: null };
+export const PEOPLE = { parts: {}, n: 0, ball: new THREE.Vector3(), time: 0, atlas: null, humans: null };
 /** @type {Array<[string, string, number, number]>} : nom, géométrie, nombre par personne, rugosité */
 const PARTS = [
   // nom, géométrie, nombre par personne, rugosité
@@ -284,6 +284,16 @@ export function buildPeople(scene, humans) {
     mesh.setColorAt(0, new THREE.Color(0xe01020)); mesh.setColorAt(1, new THREE.Color(0xe01020));
     scene.add(mesh); PEOPLE.parts.flag = mesh;
   }
+  PEOPLE.humans = humans;
+  peindreTenues();
+}
+/**
+ * Les tenues (maillot, short, chaussettes, gardien, noms et numéros au dos) d'après TEAMS : à la construction, et
+ * de nouveau quand l'adversaire change (adversaire.js). Peau, cheveux et chaussures ne changent pas.
+ */
+export function peindreTenues() {
+  const humans = PEOPLE.humans; if (!humans || !PEOPLE.parts.torso) return;
+  const t = numberAtlas(); PEOPLE.atlas.image = t.image; PEOPLE.atlas.needsUpdate = true; t.dispose();
   const r = mulberry32(77);
   const col = new THREE.Color();
   const set = (part, i, a, b) => {
@@ -298,7 +308,7 @@ export function buildPeople(scene, humans) {
       const T = TEAMS[h.team]; const gk = h.role === 'gk';
       shirt = gk ? T.gk : T.shirt; sleeves = gk ? T.gk : (T.sleeves ?? T.shirt); shorts = gk ? 0x111111 : T.shorts; socks = gk ? T.gk : T.socks;
       trim = gk ? 0x111111 : (T.sleeves ?? T.shorts);
-      numCol = gk ? 0x111111 : (h.team === 0 ? 0xc8102e : 0x1d3a8a);
+      numCol = gk ? 0x111111 : (T.num ?? (h.team === 0 ? 0xc8102e : 0x1d3a8a));
     } else { shirt = 0x1b1c20; sleeves = 0x1b1c20; shorts = 0x111111; socks = 0x111111; trim = 0x3a3d44; numCol = null; }
     const skin = h.skin, hair = hairs[Math.floor(r() * hairs.length)];
     const boot = bootsC[Math.floor(r() * bootsC.length)], sole = boot === 0x111111 ? 0xe8e8e8 : 0x222222;
@@ -316,7 +326,6 @@ export function buildPeople(scene, humans) {
     }
   });
   for (const m of Object.values(PEOPLE.parts)) { if (m.instanceColor) m.instanceColor.needsUpdate = true; m.geometry.attributes.aCol2.needsUpdate = true; }
-  PEOPLE.humans = humans;
 }
 
 // ------------------------------- animation -------------------------------

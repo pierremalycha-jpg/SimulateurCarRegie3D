@@ -50,7 +50,7 @@ export const EPISODES = [
     objet: 'Bienvenue ! Ton stage commence ce soir au stade',
     corps: (c) => `Bonjour,
 
-Bienvenue chez **${c.societe}** ! Pour ton premier jour de stage, tu pars au stade Bollaert-Delelis avec le **car régie** (le camion qui contient toute la régie de production : on y fabrique l'image et le son du match). Ce soir : RC Lens – AS Rivière, antenne à 20 h 45.
+Bienvenue chez **${c.societe}** ! Pour ton premier jour de stage, tu pars au stade Bollaert-Delelis avec le **car régie** (le camion qui contient toute la régie de production : on y fabrique l'image et le son du match). Ce soir, le RC Lens reçoit à Bollaert ; antenne à 20 h 45.
 
 Olivier, le **chef de car**, t'accueille au **compound** (le parking technique où stationnent les véhicules de production). Il te fait faire le tour du car, puis il te présente six postes : c'est là que travaillent les gens que tu vas croiser toute la saison.
 

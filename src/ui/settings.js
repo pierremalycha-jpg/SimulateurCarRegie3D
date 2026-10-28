@@ -85,7 +85,7 @@ export function openSettings() {
     section('À propos',
       el('p', {}, el('b', {}, 'TIEE Simulator'), ` version ${APP_VERSION}. Réalisé par le BTS Audiovisuel de Saint-Quentin (lycée Henri-Martin), pour l'option Techniques d'ingénierie et exploitation des équipements. Développé par Pierre MALYCHA.`),
       el('p', { class: 'note' }, 'Moteur 3D : three.js (licence MIT). Polices : Archivo, Archivo Narrow, B612 Mono, Barlow, JetBrains Mono, intégrées à la page (licence SIL OFL). Icônes : Phosphor (licence MIT).'),
-      el('p', { class: 'note' }, 'Simulation non officielle, sans lien avec le club ni avec les constructeurs cités. Les caractéristiques techniques sont des ordres de grandeur réalistes, donnés à titre pédagogique.')));
+      el('p', { class: 'note' }, 'Simulation non officielle, sans lien avec les clubs ni avec les constructeurs cités. Joueurs fictifs, clubs sans blason. Les caractéristiques techniques sont des ordres de grandeur réalistes, donnés à titre pédagogique.')));
   modal.open('Réglages', body, { width: 820 });
 }
 on('settings', () => openSettings());

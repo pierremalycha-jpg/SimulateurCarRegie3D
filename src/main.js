@@ -60,6 +60,9 @@ import { initVues3d, vues3dOpen, vues3dDebug } from './vues3d/index.js';
 import { installCarriere } from './carriere/installer.js';
 import { installMissionRun, RUN as MISSION_RUN } from './game/mission_run.js';
 import { installEmission, updateEmission, emissionDebug } from './emission/index.js';
+import { installFigurants, updateFigurants, figurantsDebug, sauterFigurants } from './figurants/index.js';
+import { EQUIPE } from './figurants/equipe.js';
+import { MARCHEURS } from './figurants/compound.js';
 import * as CARRIERE from './carriere/index.js';
 import { applyRole, PROFILE, setRole } from './app/profile.js';
 import { openCours } from './ui/cours_ui.js';
@@ -124,6 +127,8 @@ loadStep('La chaîne vidéo : grille, mélangeur, multiview', 80); await tick();
 initPipeline();
 initPlan(W.scene);
 initAvatars(W.scene, T.scene, { stations: T.stations, chairs: T.chairs || [] });
+// l'équipe à ses postes, les techniciens et la sécurité du compound
+installFigurants(W.scene, T.scene);
 
 // session à plusieurs : ce que les autres voient de moi (avatar, poste, caméra tenue)
 setAvatarSource(() => ({ x: PL.pos.x, y: PL.pos.y, z: PL.pos.z, yaw: PL.yaw, truck: S.inTruck, fly: PL.fly, station: S.mode === 'station' && ST.cur ? ST.cur.id : null, cam: S.mode === 'camop' && S.camop ? S.camop.id : null }));
@@ -182,7 +187,7 @@ function step(now) {
   t = pe('caméras', t);
   if (S.mode === 'fps') updatePlayer(dt);
   t = pe('joueur', t);
-  updateGfx(dt); { const pgm = meSource(MIX.pgm); updateAudio(dt, { pgmSrc: pgm, replayA: EVS.ch[0].playing, replayB: EVS.ch[1] && EVS.ch[1].playing, studioOnAir: pgm === 'STUDIO', ear: earState() }); updateCommentary(dt, { pgmSrc: pgm, replay: (pgm === 'EVSA' || pgm === 'EVSB') && EVS.ch[pgm === 'EVSA' ? 0 : 1].playing, studioOnAir: pgm === 'STUDIO' }); } updateTruck(S.time); updateExercises(dt); updateScenario(dt); updateEmission(dt); updateNet(dt, ROUTER.map, ROUTER.phase); updateCourse(dt); updateSession(dt); trackMix(); if (S.frame % 10 === 0) updateSessionHud();
+  updateGfx(dt); { const pgm = meSource(MIX.pgm); updateAudio(dt, { pgmSrc: pgm, replayA: EVS.ch[0].playing, replayB: EVS.ch[1] && EVS.ch[1].playing, studioOnAir: pgm === 'STUDIO', ear: earState() }); updateCommentary(dt, { pgmSrc: pgm, replay: (pgm === 'EVSA' || pgm === 'EVSB') && EVS.ch[pgm === 'EVSA' ? 0 : 1].playing, studioOnAir: pgm === 'STUDIO' }); } updateTruck(S.time); updateFigurants(dt); updateExercises(dt); updateScenario(dt); updateEmission(dt); updateNet(dt, ROUTER.map, ROUTER.phase); updateCourse(dt); updateSession(dt); trackMix(); if (S.frame % 10 === 0) updateSessionHud();
   slowAcc += dt; if (slowAcc > 0.5) { watchFps(slowAcc); slowAcc = 0; checkMissions(); updateFaults(); if (S.mode === 'fps') drawMissionCard(); renderQuest(); }
   t = pe('simulation', t);
 
@@ -277,6 +282,7 @@ window.__dbg.jeu = { XP, sfx, JEU, openJournal, currentGoal, renderQuest };
 window.__dbg.tel = { open: openTelephone, close: closeTelephone, state: telDebug };
 window.__dbg.carriere = CARRIERE; window.__dbg.mission = MISSION_RUN;
 window.__dbg.emission = emissionDebug;
+window.__dbg.figurants = { etat: figurantsDebug, sauter: sauterFigurants, modules: { EQUIPE, MARCHEURS } };
 window.__dbg.poste3d = { P3D, PUP, DESK, LSMS, ICOMS, voulu: poste3dVoulu };
 // le programme a démarré : le filet du chargement (boot.js) n'a plus à intervenir
 window.__carReady = true;

@@ -62,3 +62,8 @@
 .jo-emission { margin-top: 10px; display: flex; flex-direction: column; gap: 6px; }
 .jo-emission[hidden] { display: none; }
 .jo-emission .seg { align-self: flex-start; }
+/* l'adversaire et le poste de départ (car pré-installé) */
+.jo-emission .jo-choix { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 6px 10px; align-items: center; max-width: 460px; }
+.jo-emission .jo-choix label { font-weight: 600; color: var(--muted, #9fb0c3); }
+.jo-emission .jo-choix select { min-height: 32px; width: 100%; }
+@media (max-width: 600px) { .jo-emission .jo-choix { grid-template-columns: minmax(0, 1fr); } }

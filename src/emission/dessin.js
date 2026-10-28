@@ -357,7 +357,7 @@ function generiqueFin(g, W, H, t, I) {
     badgeChaine(g, W / 2, H * 0.38, 1.5, a);
     texte(g, 'Une émission réalisée dans le TIEE Simulator', W / 2, H * 0.55, 28, `rgba(255,255,255,${a})`, { weight: 600 });
     texte(g, 'BTS Audiovisuel de Saint-Quentin · lycée Henri-Martin', W / 2, H * 0.63, 22, `rgba(255,210,63,${a})`, { weight: 600 });
-    texte(g, 'Simulation non officielle, sans lien avec le club', W / 2, H * 0.86, 18, `rgba(200,206,214,${a})`, { weight: 500 });
+    texte(g, 'Simulation non officielle, sans lien avec les clubs', W / 2, H * 0.86, 18, `rgba(200,206,214,${a})`, { weight: 500 });
   }
   g.restore();
 }

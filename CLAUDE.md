@@ -48,6 +48,15 @@ Tout est en français (code commenté en français, interface, commits).
   postes non occupés sont tenus par l'**équipe virtuelle** (`ia.js`, `titulaire`) ; le poste où l'on est assis n'est
   jamais touché (au mélangeur, les ordres arrivent par l'intercom). Livret 3.11, progression v5 (`PROG.emissions`).
   Tests `tests/unit/emission.test.mjs`, suite `node tools/e2e.mjs emission` (`sauter` raccourcit les séquences).
+- **Le match et la vie autour du car** (v19.20, décidé le 28 octobre 2026) : le match se **tire à chaque partie**
+  (`match.js` : `tirerMatch`, `nouveauMatch`, graine nouvelle ; forme du jour, style, temps forts ; la même graine rejoue
+  le même match) contre un **club de Ligue 1** (`data/clubs.js`, `adversaire.js` : tiré au sort ou choisi dans Jouer,
+  transmis par l'hôte en coopération). Les **figurants** (`src/figurants/`, deux troupes instanciées `troupe.js`) :
+  l'équipe du car assise à ses postes quand le car est installé (`equipe.js` ; le titulaire du poste où l'on s'assoit
+  s'écarte et attend dans l'allée), les techniciens et la sécurité du compound (`compound.js`, itinéraires en boucle,
+  jamais à travers les obstacles : `OBSTACLES_COMPOUND` de `world.js`, `truckBlocked`). Dans Jouer, « Ton poste » :
+  commencer assis à un poste. Un câble est posé au sol ou tendu entre deux supports, jamais en l'air sans raison.
+  Tests `tests/unit/match.test.mjs`, `tests/unit/figurants.test.mjs`, suite `node tools/e2e.mjs figurants`.
 - **Réglages** : une seule fenêtre (`src/ui/settings.js`), avec le profil Étudiant / Formateur
   (`src/app/profile.js`) ; l'espace formateur (configuration, suivi, relecture) n'y apparaît qu'au profil
   Formateur (classe `role-only`).
@@ -152,7 +161,8 @@ Tout est en français (code commenté en français, interface, commits).
 - Pédagogique, précis, chiffres vérifiables (normes SMPTE, débits, longueurs) ; quand un chiffre est un ordre
   de grandeur, le dire. Le jargon est expliqué à sa première apparition.
 - Pas de marque AMP. Le nom RC Lens et les couleurs sang et or sont admis, pas le blason officiel ; garder la
-  mention « simulation non officielle, sans lien avec le club ».
+  mention « simulation non officielle, sans lien avec le club ». Les adversaires (`data/clubs.js`) : nom et couleurs
+  du club, jamais de blason ni de logo, des joueurs fictifs, un niveau de jeu fictif ; « sans lien avec les clubs ».
 - Les captures et rapports de travail vont dans le dossier de brouillon de la session, pas dans le dépôt.
 
 ## Tests de bout en bout (Playwright, Chromium logiciel)

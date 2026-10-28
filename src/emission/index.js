@@ -18,6 +18,7 @@ import { setInfoMedias } from './video.js';
 import { sonMedias, silenceMedias, niveauMedia } from './musique.js';
 import { updateIA, segmentIA, resetIA, ROLES_IA, IA_STATS } from './ia.js';
 import { texteDirect } from './panneau.js';
+import { EQUIPE } from '../figurants/equipe.js';
 
 // ----------------------------------------------------------------------------------
 // L'émission en direct (Jouer → Car régie → Car pré-installé → « Émission en direct ») : le match ne
@@ -79,8 +80,10 @@ function qui(roleId) {
   }
   let best = '', t = 10;
   for (const [k, v] of Object.entries(EMI.postes)) { const [r, w] = k.split('\u0000'); if (r === roleId && w !== 'ia' && v >= t) { best = w; t = v; } }
-  return best === 'vous' ? (getPseudo() || 'Vous') : best || 'Équipe virtuelle';
+  return best === 'vous' ? (getPseudo() || 'Vous') : best || equipiers(roleId);
 }
+// l'équipe du car (figurants/equipe.js) : ceux qu'on voit à leur poste
+const equipiers = (roleId) => EQUIPE.filter((e) => e.role === roleId).map((e) => e.nom).join(' et ') || 'Équipe virtuelle';
 function generique() {
   const nCams = S.cams.length;
   return /** @type {[string, string][]} */ ([
@@ -88,7 +91,7 @@ function generique() {
     ['Cadreurs', `${nCams} caméra${nCams > 1 ? 's' : ''}, cadreurs automatiques`],
     ['Commentaires', `${SPK.comm1.name} et ${SPK.comm2.name}`],
     ['Bord terrain', SPK.bt.name],
-    ['Chef de car', 'Olivier'],
+    ['Chef de car', 'Olivier'], ['Producteur', 'Paul'], ['Régie HF', 'Yanis'],
     ['Production', 'BTS Audiovisuel de Saint-Quentin'],
     ['TIEE Simulator', 'développé par Pierre MALYCHA'],
   ]);

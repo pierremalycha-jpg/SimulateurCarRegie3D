@@ -35,6 +35,14 @@ export const RING_Y = 37;
 export const TRUCK = { cx: -18, cz: -120, len: 18, wid: 5.8, floor: 1.2, ceil: 3.45, doorX0: -17.75, doorX1: -16.75 };
 TRUCK.x0 = TRUCK.cx - TRUCK.len / 2; TRUCK.x1 = TRUCK.cx + TRUCK.len / 2;
 TRUCK.z0 = TRUCK.cz - TRUCK.wid / 2; TRUCK.z1 = TRUCK.cz + TRUCK.wid / 2;
+/** les obstacles du compound (rectangles x0..x1, z0..z1) : le car et son tracteur, le groupe électrogène, le camion
+ * satellite, les bungalows ; le joueur et les figurants (figurants/compound.js) ne les traversent pas */
+export const OBSTACLES_COMPOUND = [
+  { x0: TRUCK.x0 - 4.8, x1: TRUCK.x1, z0: TRUCK.z0 - 0.1, z1: TRUCK.z1 + 0.1, truck: true },
+  { x0: 13.4, x1: 22.6, z0: -126.4, z1: -123.6 },
+  { x0: -54.3, x1: -44.4, z0: -129.4, z1: -126.6 },
+  { x0: 18.9, x1: 38.1, z0: -151.3, z1: -148.7 },
+];
 
 export const W = {
   scene: null, sun: null, flood1: null, flood2: null, hemi: null, sky: null,
@@ -340,7 +348,7 @@ function crowdAtlas() {
 function boardsTexture() {
   const c = makeCanvas(2048, 64); const g = c.getContext('2d');
   const ads = [
-    ['#c8102e', '#f5c400', 'SANG ET OR'], ['#1d3a8a', '#ffffff', 'AS RIVIÈRE'], ['#101010', '#ffd23f', 'SPORT EN DIRECT'], ['#1d6b3a', '#ffffff', 'FAIR PLAY'],
+    ['#c8102e', '#f5c400', 'SANG ET OR'], ['#1d3a8a', '#ffffff', 'BIENVENUE À BOLLAERT'], ['#101010', '#ffd23f', 'SPORT EN DIRECT'], ['#1d6b3a', '#ffffff', 'FAIR PLAY'],
     ['#f5c400', '#c8102e', 'BOLLAERT'], ['#13294b', '#5fd1ff', 'UHD · HDR · 50P'], ['#c8102e', '#ffffff', 'BASSIN MINIER'], ['#2b2b2b', '#ffffff', 'RESPECT'],
   ];
   const wSeg = 2048 / 8;
@@ -689,11 +697,11 @@ function buildRoofs(scene) {
     S2.cyl(0.25, 0.25, 1.2, mx, H + 0.6, mz, 0xd8262f, 8); // balisage
     S2.box(4, 1, 4, mx, 0.5, mz, 0x9aa0a6);
     W.obstacles.push({ x0: mx - 2.2, x1: mx + 2.2, z0: mz - 2.2, z1: mz + 2.2 });
-    // haubans vers l'anneau et vers un massif d'ancrage extérieur
+    // haubans vers l'anneau du toit
     const top = [mx, H - 1, mz];
     const sx = -Math.sign(mx), sz = -Math.sign(mz);
     for (const t of [0.22, 0.45]) { cables.push(top, [mx + sx * Math.abs(2 * mx) * t, RING_Y + 1.2, mz]); cables.push(top, [mx, RING_Y + 1.2, mz + sz * Math.abs(2 * mz) * t]); }
-    cables.push(top, [mx * 1.45, 0.2, mz * 1.45]);
+    // (plus de hauban vers le sol : vu du compound, ce fil d'un pixel tombait du ciel jusque derrière les grilles)
   }
   // polycarbonate translucide : la sous-face reste claire (lumière transmise)
   const roofMat = pbr(new THREE.MeshLambertMaterial({ vertexColors: true, map: roofTexture(), transparent: true, opacity: 0.93, side: THREE.DoubleSide, emissive: 0x5a5f66 }), 0.55, 0.35);
@@ -1042,6 +1050,7 @@ varying vec2 vCUv; varying vec3 vShirt; varying vec3 vAcc; varying float vSeed; 
   const home = [0xc8102e, 0xf5c400, 0xc8102e, 0xf5c400, 0xc8102e, 0x1a1a1a, 0xf2f2f2, 0x8a8f99, 0x2b2b2b];
   const kopCols = [0xc8102e, 0xf5c400, 0xc8102e, 0xf5c400, 0x111111];
   const awayCols = [TEAMS[1].shirt, TEAMS[1].shorts, TEAMS[1].shirt, 0x2b2b2b];
+  W.visiteurs = []; // supporters visiteurs : [indice, tirage du maillot, tirage de l'écharpe] (peindreVisiteurs)
   placements.forEach((p, i) => {
     q.setFromEuler(new THREE.Euler(0, p.rot, 0));
     m.compose(new THREE.Vector3(p.x, p.y, p.z), q, new THREE.Vector3(1, 1, 1));
@@ -1049,10 +1058,12 @@ varying vec2 vCUv; varying vec3 vShirt; varying vec3 vAcc; varying float vSeed; 
     seeds[i] = r();
     side[i] = p.side;
     const pal = p.away ? awayCols : p.kop ? kopCols : home;
-    const sh = pal[Math.floor(r() * pal.length)];
+    const r1 = r(); const sh = pal[Math.floor(r1 * pal.length)];
     col.setHex(sh); mesh.setColorAt(i, col);
     // accessoire (écharpe, bonnet) : l'autre couleur du club
-    const ac = p.away ? (r() < 0.5 ? TEAMS[1].sleeves : TEAMS[1].shirt) : sh === 0xc8102e ? 0xf5c400 : sh === 0xf5c400 ? 0xc8102e : (r() < 0.5 ? 0xc8102e : 0xf5c400);
+    const r2 = r();
+    const ac = p.away ? (r2 < 0.5 ? TEAMS[1].sleeves : TEAMS[1].shirt) : sh === 0xc8102e ? 0xf5c400 : sh === 0xf5c400 ? 0xc8102e : (r2 < 0.5 ? 0xc8102e : 0xf5c400);
+    if (p.away) W.visiteurs.push([i, r1, r2]);
     col.setHex(ac); acc[i * 3] = col.r; acc[i * 3 + 1] = col.g; acc[i * 3 + 2] = col.b;
     aos[i] = p.ao;
   });
@@ -1063,6 +1074,18 @@ varying vec2 vCUv; varying vec3 vShirt; varying vec3 vAcc; varying float vSeed; 
   mesh.frustumCulled = false; mesh.receiveShadow = true;
   scene.add(mesh);
   W.crowd = mesh;
+}
+
+/** le parcage visiteurs aux couleurs de l'adversaire du soir (adversaire.js, quand il change) */
+export function peindreVisiteurs() {
+  const mesh = W.crowd; if (!mesh || !W.visiteurs || !mesh.instanceColor) return;
+  const pal = [TEAMS[1].shirt, TEAMS[1].shorts, TEAMS[1].shirt, 0x2b2b2b];
+  const acc = mesh.geometry.attributes.aAcc, col = new THREE.Color();
+  for (const [i, r1, r2] of W.visiteurs) {
+    mesh.setColorAt(i, col.setHex(pal[Math.floor(r1 * pal.length)]));
+    col.setHex(r2 < 0.5 ? TEAMS[1].sleeves : TEAMS[1].shirt); acc.setXYZ(i, col.r, col.g, col.b);
+  }
+  mesh.instanceColor.needsUpdate = true; acc.needsUpdate = true;
 }
 
 function buildCompound(scene) {
@@ -1087,6 +1110,7 @@ function buildCompound(scene) {
   const fenceMat = new THREE.MeshStandardMaterial({ map: fenceTex, alphaTest: 0.45, side: THREE.DoubleSide, roughness: 0.6, metalness: 0.5, color: 0xb8bec4 });
   const fences = [];
   for (let x = -68; x <= 58; x += 3.5) {
+    if (x === 2) continue; // portail : le passage des piétons et de la rampe de câbles vers le stade
     for (const dx of [-1.7, 1.7]) Bm.cyl(0.021, 0.021, 2.0, x + dx, 1.0, -96, 0xa0a6ac, 8);
     Bm.cyl(0.021, 0.021, 3.4, x, 1.98, -96, 0xa0a6ac, 8, 0, Math.PI / 2); Bm.cyl(0.021, 0.021, 3.4, x, 0.06, -96, 0xa0a6ac, 8, 0, Math.PI / 2);
     Bp.cbox(0.6, 0.15, 0.22, x + 1.75, 0.075, -96, 0x8f9296, 0.02);
@@ -1133,7 +1157,11 @@ function buildCompound(scene) {
     const run = (pts, r, col) => Bc.add(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts.map((p) => new THREE.Vector3(...p)), false, 'catmullrom', 0.5), 48, r, 7, false), null, col);
     run([[13.4, 0.05, -122], [10, 0.04, -121.3], [6, 0.05, -121.2], [2.5, 0.04, -120.5], [-1.5, 0.05, -120.0], [-5, 0.04, -119.4], [-8, 0.05, -118.4]], 0.035, 0x111214);
     run([[13.4, 0.05, -121.6], [9, 0.04, -121.0], [5, 0.05, -120.7], [1, 0.04, -120.1], [-3, 0.05, -119.4], [-7, 0.04, -118.6], [-8.4, 0.05, -118.0]], 0.035, 0x111214);
-    for (let k = 0; k < 4; k++) run([[2.2 + k * 0.08, 0.1, -96.2], [2.2 + k * 0.08, 0.1, -100], [2.1 + k * 0.08, 0.1, -108], [2.0 + k * 0.08, 0.1, -115], [-2 + k * 0.1, 0.1, -115.1], [-6, 0.1, -115.1 + k * 0.08], [-10.5, 0.4, -116.4 + k * 0.06], [T.x1 - 3.6 + k * 0.34, 1.0, T.z1 + 0.2]], 0.014, [0x1d2a44, 0x111214, 0x3a1e1e, 0x111214][k]);
+    // sur la rampe de câbles, puis au sol jusqu'au pied du car, et à la verticale jusqu'au panneau (pas en l'air)
+    for (let k = 0; k < 4; k++) {
+      const xp = T.x1 - 3.0 + k * 0.22;
+      run([[2.2 + k * 0.08, 0.1, -96.2], [2.2 + k * 0.08, 0.1, -100], [2.1 + k * 0.08, 0.1, -108], [2.0 + k * 0.08, 0.1, -115], [-2 + k * 0.1, 0.1, -115.1], [-6, 0.03, -115.3 + k * 0.08], [xp + 0.6, 0.03, -115.6 + k * 0.06], [xp, 0.03, T.z1 + 0.35], [xp, 0.06, T.z1 + 0.12], [xp, 0.6, T.z1 + 0.05], [xp, 1.0, T.z1 + 0.05]], 0.014, [0x1d2a44, 0x111214, 0x3a1e1e, 0x111214][k]);
+    }
     const cm = Bc.mesh(matiere('plastique', { seed: 45, scale: 0.15, roughness: 0.6, name: 'compound-cables' })); cm.castShadow = true; g.add(cm);
   }
   const mesh = B.mesh(new THREE.MeshLambertMaterial({ vertexColors: true }));
@@ -1149,10 +1177,7 @@ function buildCompound(scene) {
   setLayer(g, 2);
   scene.add(g);
   // obstacles
-  W.obstacles.push({ x0: T.x0 - 4.8, x1: T.x1, z0: T.z0 - 0.1, z1: T.z1 + 0.1, truck: true });
-  W.obstacles.push({ x0: 13.4, x1: 22.6, z0: -126.4, z1: -123.6 });
-  W.obstacles.push({ x0: -54.3, x1: -44.4, z0: -129.4, z1: -126.6 });
-  W.obstacles.push({ x0: 18.9, x1: 38.1, z0: -151.3, z1: -148.7 });
+  for (const o of OBSTACLES_COMPOUND) W.obstacles.push({ ...o });
   W.interactables.push({ id: 'pieddecar', pos: new THREE.Vector3(T.x1 - 2.3, 1.3, T.z1 + 0.5), r: 3, label: 'Pied de car (raccordements)', info: 'pieddecar' });
   W.interactables.push({ id: 'energie', pos: new THREE.Vector3(18, 1.5, -123.4), r: 4, label: 'Groupe électrogène', info: 'energie' });
   W.interactables.push({ id: 'dsng', pos: new THREE.Vector3(-48, 1.5, -126.4), r: 4, label: 'Camion satellite (DSNG)', info: 'transmission' });
@@ -1238,7 +1263,21 @@ function buildSurroundings(scene) {
   // --- voie ferrée le long de la tribune Trannin ---
   for (const x of [-110.5, -115]) { for (const dx of [-0.72, 0.72]) B.box(0.08, 0.16, 1400, x + dx, 0.18, 0, 0x8a8f94); B.box(3.0, 0.1, 1400, x, 0.05, 0, 0x5a524a); }
   for (let z = -680; z <= 680; z += 50) { B.box(0.25, 7.5, 0.25, -108.4, 3.75, z, 0x6b7076); B.box(8.6, 0.15, 0.15, -112.6, 7.2, z, 0x6b7076); }
-  B.box(0.04, 0.04, 1400, -110.5, 6.4, 0, 0x2a2a2a); B.box(0.04, 0.04, 1400, -115, 6.4, 0, 0x2a2a2a);
+  // caténaire : le porteur pend entre les portiques, le fil de contact reste droit, des pendules les relient. En
+  // lignes d'un pixel continues : en boîtes de 4 cm, vues du compound, elles se brisaient en pointillés flottants
+  {
+    const pts = [];
+    for (const x of [-110.5, -115]) for (let z = -680; z < 680; z += 50) {
+      const y = (u) => 7.05 - 0.45 * 4 * u * (1 - u); // flèche de 45 cm au milieu de la portée
+      for (let k = 0; k < 10; k++) pts.push(x, y(k / 10), z + k * 5, x, y((k + 1) / 10), z + (k + 1) * 5);
+      pts.push(x, 6.4, z, x, 6.4, z + 50);
+      for (let k = 1; k < 10; k++) pts.push(x, y(k / 10), z + k * 5, x, 6.4, z + k * 5);
+      pts.push(x, 7.05, z, x, 7.2, z); // attache au bras du portique
+    }
+    const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pts, 3));
+    W.catenaireMat = new THREE.LineBasicMaterial({ color: 0x2a2c2f });
+    scene.add(new THREE.LineSegments(g, W.catenaireMat));
+  }
   for (let z = -300; z <= 300; z += 3) B.box(0.05, 1.6, 2.8, -107.6, 0.8, z, 0x8a9096); // clôture
   W.obstacles.push({ x0: -108.2, x1: -107.2, z0: -320, z1: 320 });
   // --- gare (style Art déco, tour de l'horloge), au sud-est ---

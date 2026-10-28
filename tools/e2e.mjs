@@ -66,6 +66,7 @@ const SUITES = [
   ['poste3d-intercom', 'poste3d-intercom', [], 25],
   ['telephone', 'telephone', [], 20],
   ['emission', 'emission', [], 30],
+  ['figurants', 'figurants', [], 25],
 ];
 
 const args = process.argv.slice(2);
