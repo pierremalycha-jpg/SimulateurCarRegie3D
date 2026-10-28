@@ -36,6 +36,8 @@ export const ROLES_IA = [
   { id: 'habillage', poste: 'habillage', nom: 'Habillage', tranche: 'gfx' },
 ];
 const ROLE = Object.fromEntries(ROLES_IA.map((r) => [r.id, r]));
+// le rôle d'une session à plusieurs (multi/session.js, ROLES_S) qui tient chacun de ces postes
+const ROLE_SES = { realisateur: 'realisateur', truquiste: 'truquiste', ralentis: 'evs', ipdirector: 'evs', son: 'son', vision: 'vision', habillage: 'habillage' };
 /**
  * Qui tient ce rôle : 'vous' (le poste où l'on est assis), le pseudo d'un participant, ou '' (l'équipe virtuelle).
  * @param {string} id
@@ -44,8 +46,10 @@ export function titulaire(id) {
   const r = ROLE[id]; if (!r) return '';
   if (S.mode === 'station' && S.station === r.poste) return 'vous';
   if (SES.active) {
+    // mon rôle dans la session, celui d'un participant, ou un participant assis à ce poste
+    if (ROLE_SES[id] && SES.role === ROLE_SES[id]) return 'vous';
     if (r.tranche) { const p = holderOf(r.tranche); if (p && !p.sameTab) return pseudoOf(p); }
-    const p = SES.peers.find((x) => !x.sameTab && x.presence && (x.presence.role === id || (x.presence.av && x.presence.av.s === r.poste)));
+    const p = SES.peers.find((x) => !x.sameTab && x.presence && ((ROLE_SES[id] && x.presence.role === ROLE_SES[id]) || (x.presence.av && x.presence.av.s === r.poste)));
     if (p) return pseudoOf(p);
   }
   return '';
@@ -229,9 +233,14 @@ function demarrerRalenti(now, why) {
 }
 function ralenti(now, L) {
   const q = /** @type {{ step: string, t: number, why: string, onAir?: number }} */ (IA.seq); const a = EVS.ch[0]; const pgm = meSource(MIX.pgm);
-  const pret = a.mode === 'pause' && a.in != null && !a.media;
+  // un ralenti calé : point d'entrée et de sortie posés sur le canal A (l'opérateur ralentis a pu déjà le lire)
+  const pret = a.mode !== 'live' && a.in != null && a.out != null && !a.media;
   if (q.step === 'attend') {
-    if (pret) { passerSur('EVSA', 'stinger', { prep: 'Ralenti : prépare l\'EVS A.', top: 'Ralenti, volet logo !', annonce: 1.2, delai: 0.9 }); q.step = 'air'; q.t = now; }
+    if (pret) {
+      // l'opérateur ralentis virtuel revient au point d'entrée : le ralenti part quand il passe à l'antenne
+      if (!titulaire('ralentis')) evsAction(0, 'gotoin');
+      passerSur('EVSA', 'stinger', { prep: 'Ralenti : prépare l\'EVS A.', top: 'Ralenti, volet logo !', annonce: 1.2, delai: 0.9 }); q.step = 'air'; q.t = now;
+    }
     else if (now - q.t > 5) IA.seq = null; // pas de ralenti prêt : tant pis
     return;
   }

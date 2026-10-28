@@ -40,7 +40,7 @@ export function panneauMedias(ctx) {
   for (const id of ORDRE_MEDIAS) {
     const m = MEDIAS[id];
     const cv = /** @type {HTMLCanvasElement} */ (el('canvas', { width: 160, height: 90, class: 'em-vig', 'aria-hidden': 'true' }));
-    const charger = el('button', { class: 'btn small', 'data-media': id, onclick: () => charge(id) }, 'Charger');
+    const charger = el('button', { class: 'btn small', 'data-media': id, 'aria-label': `Charger ${m.nom.toLowerCase()} sur le canal de diffusion`, onclick: () => charge(id) }, 'Charger');
     const prochainTag = el('span', { class: 'pill warn em-next', hidden: true }, 'au conducteur');
     const row = el('div', { class: 'item em-media', 'data-media': id }, cv,
       el('div', { class: 'grow' }, el('div', { class: 't' }, m.titre, ' ', prochainTag), el('div', { class: 's' }, `${dureeTC(m.duree)} · ${m.desc}`)), charger);

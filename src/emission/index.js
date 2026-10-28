@@ -6,7 +6,7 @@ import { TEAMS } from '../data/match.js';
 import { MIX, meSource, resolve, EVS, dskToggle, ftbToggle } from '../pipeline.js';
 import { mixInputs } from '../equip.js';
 import { GFX, gfxOut } from '../gfx.js';
-import { AU } from '../audio.js';
+import { AU, applyAll } from '../audio.js';
 import { SPK } from '../commentary.js';
 import { $, toast, intercom, modal } from '../ui/common.js';
 import { addEmissionResult } from '../shared.js';
@@ -58,7 +58,11 @@ export function demarrer() {
 /** quitter l'émission : le match repart en continu (jeu libre) */
 export function quitter() {
   EMI.on = false; silenceMedias();
-  if (!isFollower()) { matchEnContinu(); if (MIX.ftb.on) ftbToggle(); if (!MIX.dsk1.on) dskToggle(1, false); }
+  if (!isFollower()) {
+    matchEnContinu(); if (MIX.ftb.on) ftbToggle(); if (!MIX.dsk1.on) dskToggle(1, false);
+    // la console comme au match : l'équipe virtuelle a pu fermer ambiances et commentaires à la fin d'antenne
+    if (!(S.mode === 'station' && S.station === 'son')) { for (const k of ['amb', 'canon', 'comm']) AU.vca[k].fader = 0; applyAll(); }
+  }
   const h = $('#direct'); if (h) h.hidden = true;
   emit('emission', { type: 'quitte' });
 }
