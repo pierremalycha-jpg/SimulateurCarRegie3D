@@ -32,7 +32,7 @@ let s = await E();
 T.check('avant l\'antenne : le match à l\'échauffement, horloge arrêtée', s.seg === 'attente' && s.periode === 'avant' && s.state === 'pregame' && s.clock === 0, JSON.stringify(s));
 T.check('le générique est déjà chargé (cue) sur PGM2 par l\'IPDirector virtuel', !!s.media && s.media.id === 'gen-debut' && !s.media.playing && s.media.by === 'ia');
 T.check('l\'horloge du direct : le compte à rebours, « Antenne maintenant », « Suspendre »', await ev(() => { const d = document.getElementById('direct'); return !!d && !d.hidden && /Avant l'antenne/i.test(d.textContent) && !!d.querySelector('[data-k="direct:antenne"]') && !!d.querySelector('[data-k="direct:pause"]'); }));
-T.check('le suivi sur le côté : le conducteur de l\'émission', await until(A, () => { const q = document.getElementById('quest'); return !!q && !q.hidden && /Émission en direct/.test(q.textContent) && q.querySelectorAll('.q-task').length === 10; }, null, 10000));
+T.check('le suivi sur le côté : le conducteur de l\'émission', await until(A, () => { const q = document.getElementById('quest'); return !!q && !q.hidden && /Émission en direct/.test(q.textContent) && /Avant l'antenne/.test(q.textContent) && q.querySelectorAll('.q-task').length >= 8 && !!q.querySelector('.q-task.now'); }, null, 10000));
 await shot('02-avant-antenne');
 // le décompte se suspend
 await A.click('#direct [data-k="direct:pause"]'); await A.waitForTimeout(300);

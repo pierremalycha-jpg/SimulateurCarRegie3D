@@ -63,7 +63,8 @@ export function quitter() {
     // la console comme au match : l'équipe virtuelle a pu fermer ambiances et commentaires à la fin d'antenne
     if (!(S.mode === 'station' && S.station === 'son')) { for (const k of ['amb', 'canon', 'comm']) AU.vca[k].fader = 0; applyAll(); }
   }
-  const h = $('#direct'); if (h) h.hidden = true;
+  // l'horloge du direct (elle a pu rester dans l'en-tête d'un poste refermé) : rangée et cachée
+  if (H.root) { H.root.hidden = true; H.root.classList.remove('in-head'); if (H.root.parentElement !== document.body) document.body.appendChild(H.root); }
   emit('emission', { type: 'quitte' });
 }
 
