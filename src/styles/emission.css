@@ -7,6 +7,8 @@
   background: rgba(5,9,13,.9); border: 1px solid #2c3d50; clip-path: var(--notch-s); box-shadow: 0 4px 18px rgba(0,0,0,.55);
   font-family: var(--f-leg, "Barlow Condensed", sans-serif); color: var(--fg, #eef3f8); font-size: 14px; white-space: nowrap; pointer-events: none; }
 .direct[hidden] { display: none; }
+/* le plan des caméras occupe le côté droit : l'horloge s'efface tant qu'il est ouvert */
+#plan:not([hidden]) ~ .direct:not(.in-head) { display: none; }
 .direct .dr-lamp { width: 11px; height: 11px; border-radius: 50%; background: #3a434c; box-shadow: inset 0 0 0 1px rgba(0,0,0,.6); flex: none; }
 .direct.air { border-color: rgba(255,59,48,.7); box-shadow: 0 0 0 1px rgba(255,59,48,.35), 0 0 18px rgba(255,59,48,.25), 0 4px 18px rgba(0,0,0,.55); }
 .direct.air .dr-lamp { background: var(--tally, #ff3b30); box-shadow: 0 0 10px var(--tally, #ff3b30); }

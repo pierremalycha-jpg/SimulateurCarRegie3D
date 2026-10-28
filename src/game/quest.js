@@ -154,7 +154,7 @@ export function renderQuest(force = false) {
     el('div', { class: 'q-head' }, icon(g.kind === 'match' || g.kind === 'emission' ? 'antenne' : g.kind === 'mission' ? 'plan' : g.kind === 'fini' ? 'trophee' : g.kind === 'idle' ? 'missions' : 'objectif'), el('span', { class: 'q-tag' }, g.tag), g.sub ? el('span', { class: 'q-sub' }, g.sub) : null,
       el('button', { type: 'button', class: 'q-btn', title: 'Journal des missions (L)', 'aria-label': 'L : journal des missions', onclick: () => openJournal() }, icon('missions'), el('kbd', {}, 'L'))),
     el('h3', { class: 'q-title' }, g.title),
-    g.prog != null ? el('div', { class: 'q-prog', role: 'progressbar', 'aria-valuemin': '0', 'aria-valuemax': '100', 'aria-valuenow': String(Math.round(g.prog * 100)) }, el('i', { style: { width: `${Math.round(g.prog * 100)}%` } })) : null,
+    g.prog != null ? el('div', { class: 'q-prog', role: 'progressbar', 'aria-label': 'Avancement', 'aria-valuemin': '0', 'aria-valuemax': '100', 'aria-valuenow': String(Math.round(g.prog * 100)) }, el('i', { style: { width: `${Math.round(g.prog * 100)}%` } })) : null,
     g.text && !(g.kind === 'exercice' && g.tasks && !S.visite) ? el('p', { class: 'q-text' + (g.todo ? ' todo' : '') }, g.todo && g.kind === 'exercice' ? el('i', { class: 'q-dot' }) : null, g.text) : null,
     g.goals ? el('ul', { class: 'q-goals' }, ...g.goals.map(([t, ok]) => el('li', { class: ok ? 'ok' : '' }, icon(ok ? 'fait' : 'suivant'), t))) : null,
     g.tasks && g.tasks.length ? taskList(g.tasks) : null,
