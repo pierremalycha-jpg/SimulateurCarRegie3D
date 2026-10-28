@@ -34,10 +34,18 @@ export const SLICES = {
   // serveur ralenti : les deux canaux de lecture et l'enregistrement
   evs: {
     role: 'evs', via: 'presence', field: 'e',
-    get: () => ({ rec: EVS.recording, ch: EVS.ch.map((c) => [c.mode, c.cam, r2(c.t), r2(c.speed), r2(c.lever), c.playing ? 1 : 0, c.in == null ? null : r2(c.in), c.out == null ? null : r2(c.out)]) }),
+    // le média de l'émission chargé sur un canal (générique, pub) : [id, position, en lecture, lancé par]
+    get: () => ({ rec: EVS.recording, ch: EVS.ch.map((c) => [c.mode, c.cam, r2(c.t), r2(c.speed), r2(c.lever), c.playing ? 1 : 0, c.in == null ? null : r2(c.in), c.out == null ? null : r2(c.out), c.media ? [c.media.id, Math.round(c.media.pos * 4) / 4, c.media.playing ? 1 : 0, c.media.by] : null]) }),
     apply(v) {
       if (EVS.recording !== v.rec) evsSetRecording(v.rec);
-      v.ch.forEach((a, i) => { const c = EVS.ch[i]; if (!c) return; [c.mode, c.cam, c.t, c.speed, c.lever] = a; c.playing = !!a[5]; c.in = a[6]; c.out = a[7]; });
+      v.ch.forEach((a, i) => {
+        const c = EVS.ch[i]; if (!c) return; [c.mode, c.cam, c.t, c.speed, c.lever] = a; c.playing = !!a[5]; c.in = a[6]; c.out = a[7];
+        // la position d'un média avance aussi ici : on ne la recale que si elle s'écarte
+        const m = a[8];
+        if (!m) c.media = null;
+        else if (!c.media || c.media.id !== m[0] || Math.abs(c.media.pos - m[1]) > 0.6) c.media = { id: m[0], pos: m[1], playing: !!m[2], by: m[3] };
+        else { c.media.playing = !!m[2]; c.media.by = m[3]; }
+      });
     },
   },
   // habillage : graphique préparé et animation

@@ -14,6 +14,8 @@ import { routerInOf, physToLogical, destFeed } from './patch.js';
 import { FORMATS } from './data/cameras.js';
 import { NET, netOk, ptpLocked } from './ipnet.js';
 import { FAB, delivery, setRxManual } from './net/fabric.js';
+import { textureMedia } from './emission/video.js';
+import { MEDIAS } from './emission/medias.js';
 
 const FONT = '"Barlow Condensed", "Arial Narrow", sans-serif';
 const MONO = '"JetBrains Mono", ui-monospace, monospace';
@@ -174,7 +176,8 @@ export function route(dest, src) {
 // ----------------------------------------------------------------------------------
 export const EVS = {
   recording: true, recStopT: Infinity, recStart: {},
-  ch: [0, 1].map((i) => ({ name: i ? 'B' : 'A', mode: 'live', cam: i ? 2 : 1, t: 0, speed: 0, lever: 0.5, playing: false, in: null, out: null, rt: null, lastTq: -1, ok: true, msg: '', pl: null, dirty: false, lastCam: null })),
+  // media : un média de l'émission chargé sur le canal (générique, pub : src/emission/) ; { id, pos, playing, by }
+  ch: [0, 1].map((i) => ({ name: i ? 'B' : 'A', mode: 'live', cam: i ? 2 : 1, t: 0, speed: 0, lever: 0.5, playing: false, in: null, out: null, rt: null, lastTq: -1, ok: true, msg: '', pl: null, dirty: false, lastCam: null, media: /** @type {{ id: string, pos: number, playing: boolean, by: string } | null} */ (null) })),
   clips: [], playlist: [], fastJog: false, page: 1, lsmCh: 0, logs: [], browse: false,
 };
 // nom d'un clip façon Multicam : page · banque · touche · angle (ex. 111A)
@@ -210,9 +213,20 @@ export function evsSetRecording(onoff) {
   if (!onoff) EVS.recStopT = S.simTime; else EVS.recStopT = Infinity;
   emit('evs');
 }
+/** le canal de lecture qui diffuse les médias de l'émission : PGM2 (EVS B) s'il existe, sinon PGM1 (UHD) */
+export const canalMedias = () => (evsLayout().plays > 1 ? 1 : 0);
 export function evsAction(chIdx, action, arg) {
   const c = EVS.ch[chIdx];
   if (chIdx === 1 && evsLayout().plays < 2) { c.ok = false; c.msg = 'Pas de second canal de lecture dans cette configuration.'; emit('evs', { ch: chIdx, action: 'refused' }); return; }
+  // les médias de l'émission (IPDirector) : charger (au début, en pause), lancer, arrêter, éjecter ;
+  // by : qui l'a fait ('vous', 'ia' ou le pseudo d'un participant)
+  if (action === 'media') { const m = MEDIAS[arg && arg.id ? arg.id : arg]; if (!m) return; c.media = { id: m.id, pos: 0, playing: false, by: (arg && arg.by) || 'vous' }; c.mode = 'pause'; c.playing = false; c.pl = null; emit('evs', { ch: chIdx, action }); return; }
+  if (action === 'mediaplay') { if (!c.media) return; if (c.media.pos >= MEDIAS[c.media.id].duree - 0.05) c.media.pos = 0; c.media.playing = true; if (arg) c.media.by = arg; emit('evs', { ch: chIdx, action }); return; }
+  if (action === 'mediastop') { if (c.media) c.media.playing = false; emit('evs', { ch: chIdx, action }); return; }
+  if (action === 'mediarewind') { if (c.media) { c.media.pos = 0; c.media.playing = false; } emit('evs', { ch: chIdx, action }); return; }
+  if (action === 'mediaeject') { if (c.media) { c.media = null; c.mode = 'live'; c.playing = false; } emit('evs', { ch: chIdx, action }); return; }
+  // toute autre commande reprend le canal pour les ralentis : le média est éjecté
+  if (c.media) { c.media = null; c.mode = 'live'; c.playing = false; }
   const now = S.simTime;
   const [t0] = recRange();
   const goPause = () => { if (c.mode === 'live') { c.t = now - 0.04; } c.mode = 'pause'; c.playing = false; };
@@ -268,6 +282,11 @@ export function evsAction(chIdx, action, arg) {
 function updateEVS(dt) {
   const now = S.simTime;
   for (const c of EVS.ch) {
+    // média de l'émission : il avance au temps réel, puis s'arrête sur sa dernière image
+    if (c.media) {
+      if (c.media.playing) { const d = MEDIAS[c.media.id].duree; c.media.pos = Math.min(d, c.media.pos + dt); if (c.media.pos >= d) { c.media.playing = false; emit('evs', { action: 'mediaend', id: c.media.id }); } }
+      continue;
+    }
     if (c.mode === 'play' && c.playing) {
       c.t += dt * c.speed;
       if (c.out != null && c.t >= c.out && c.in != null && c.t - dt * c.speed < c.out) {
@@ -355,7 +374,7 @@ export function updateMixer(dt) {
   }
   // ralenti à l'antenne -> tag "RALENTI"
   const pgmSrc = meSource(MIX.pgm);
-  GFX.replayOnAir = MIX.dsk1.on && (pgmSrc === 'EVSA' || pgmSrc === 'EVSB') && EVS.ch[pgmSrc === 'EVSA' ? 0 : 1].mode !== 'live';
+  GFX.replayOnAir = MIX.dsk1.on && (pgmSrc === 'EVSA' || pgmSrc === 'EVSB') && EVS.ch[pgmSrc === 'EVSA' ? 0 : 1].mode !== 'live' && !EVS.ch[pgmSrc === 'EVSA' ? 0 : 1].media;
 }
 
 const mixMat = new THREE.ShaderMaterial({
@@ -494,8 +513,9 @@ export function resolve(id, depth = 0, direct = false, dest = null) {
   switch (id) {
     case 'EVSA': case 'EVSB': {
       const ch = EVS.ch[id === 'EVSA' ? 0 : 1];
-      if (ch.mode === 'live') { const r = resolve('CAM' + ch.cam, depth + 1); return { ...r, alarm: r.alarm }; }
       if (id === 'EVSB' && evsLayout().plays < 2) return { tex: noSignalTex('EVS B · PAS DE CANAL', 'Un seul canal de lecture en UHD'), scale: SC, alarm: 'NO SIG' };
+      if (ch.media) return { tex: textureMedia(id === 'EVSA' ? 0 : 1, ch.media), scale: SC, alarm: '' };
+      if (ch.mode === 'live') { const r = resolve('CAM' + ch.cam, depth + 1); return { ...r, alarm: r.alarm }; }
       if (!ch.ok) return { tex: noSignalTex('EVS ' + ch.name, ch.msg.slice(0, 40)), scale: SC, alarm: '' };
       return { tex: ch.rt.texture, scale: 1, alarm: '' };
     }
@@ -593,7 +613,10 @@ function drawOverlay() {
     g.fillStyle = '#f2f5f7'; g.font = `600 ${big ? 26 : 19}px ${FONT}`; g.textAlign = 'center';
     let extra = '';
     if (r.cam) extra = '  ' + r.cam.descr();
-    if (src === 'EVSA' || src === 'EVSB') { const ch = EVS.ch[src === 'EVSA' ? 0 : 1]; extra = ch.mode === 'live' ? `  E/E CAM ${ch.cam}` : `  ${ch.playing ? '▶ ' + Math.round(ch.speed * 100) + ' %' : '❚❚'} CAM ${ch.cam}`; }
+    if (src === 'EVSA' || src === 'EVSB') {
+      const ch = EVS.ch[src === 'EVSA' ? 0 : 1];
+      extra = ch.media ? `  ${ch.media.playing ? '▶' : '❚❚'} ${MEDIAS[ch.media.id].titre} −${Math.ceil(MEDIAS[ch.media.id].duree - ch.media.pos)} s` : ch.mode === 'live' ? `  E/E CAM ${ch.cam}` : `  ${ch.playing ? '▶ ' + Math.round(ch.speed * 100) + ' %' : '❚❚'} CAM ${ch.cam}`;
+    }
     g.fillText(label + (big ? extra : ''), t.x + t.w / 2, t.y + t.h - uh / 2 - 8);
     if (!big && extra) { g.font = `500 14px ${FONT}`; g.fillStyle = '#aab4bd'; g.fillText(extra.trim(), t.x + t.w / 2, t.y + 16); }
     // alarmes
@@ -841,7 +864,7 @@ export function renderPipeline(renderer, dt) {
   tp = pe('· caméras', tp);
   // --- EVS ---
   for (const ch of EVS.ch) {
-    if (ch.mode === 'live') { ch.ok = true; continue; }
+    if (ch.mode === 'live' || ch.media) { ch.ok = true; continue; }
     const cam = camById(ch.cam);
     if (!cam) { ch.ok = false; ch.msg = 'Caméra absente'; continue; }
     const fps = 50 * cam.hfr;
@@ -904,7 +927,7 @@ export function renderPipeline(renderer, dt) {
   // hors de vue, le multiview n'est redessiné que deux fois par seconde (il reste prêt quand on entre dans le car)
   if (mvSeen || S.time - MV.lastRender > 0.5) {
     MV.lastRender = S.time;
-    const key = `${MIX.pgm}|${MIX.pst}|${MIX.key1.on}|${MIX.auto}|${MIX.pos > 0}|${MIX.ftb.on}|${S.cams.map((c) => c.id + (c.signalOK ? 'o' : 'x') + (c.paint.bars ? 'b' : '') + (c.rf ? c.rf.state : '') + c.lens).join(',')}|${EVS.ch.map((c) => c.mode + c.cam + c.playing + Math.round(c.speed * 100)).join(',')}`;
+    const key = `${MIX.pgm}|${MIX.pst}|${MIX.key1.on}|${MIX.auto}|${MIX.pos > 0}|${MIX.ftb.on}|${S.cams.map((c) => c.id + (c.signalOK ? 'o' : 'x') + (c.paint.bars ? 'b' : '') + (c.rf ? c.rf.state : '') + c.lens).join(',')}|${EVS.ch.map((c) => c.mode + c.cam + c.playing + Math.round(c.speed * 100) + (c.media ? c.media.id + c.media.playing : '')).join(',')}`;
     if (P.mvDirty || key !== MV.lastKey || S.time - MV.lastDraw > 0.25) { drawOverlay(); MV.lastKey = key; MV.lastDraw = S.time; P.mvDirty = false; }
     if (!mvSeen || S.frame % 3 === 0) drawDyn();
     renderer.setRenderTarget(P.rts.mv); renderer.render(MV.scene, MV.cam);
