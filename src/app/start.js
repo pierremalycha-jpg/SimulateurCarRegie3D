@@ -70,7 +70,7 @@ export function launch(preset, o = {}) { if (S.mode === 'start' && SHEET.go) SHE
 // choisie dans game/missions.js, le car préparé pour elle ; ensuite on enchaîne ou l'on s'arrête)
 const MODES = [
   { id: 'zero', preset: 'zero', modeCar: 'vide', ico: 'plan', title: 'Car vide', desc: 'Tout est à faire : stade vide, car non brassé, caméras non réglées, réseau à configurer. Les tâches s\'affichent sur le côté et se cochent toutes seules. Olivier, le chef de car, te propose d\'abord le tour du car, puis t\'aide quand tu l\'appelles (J).', lamp: 'Installer', go: 'Commencer l\'installation' },
-  { id: 'installe', preset: 'standard', modeCar: 'libre', ico: 'antenne', title: 'Car pré-installé', desc: 'Tout est en place : 12 caméras installées et réglées, le car brassé, le réseau en service, le match en direct. Jeu libre : ni missions ni chef de car.', lamp: 'Antenne', go: 'Entrer dans le car' },
+  { id: 'installe', preset: 'standard', modeCar: 'libre', ico: 'antenne', title: 'Car pré-installé', desc: 'Tout est en place : 12 caméras installées et réglées, le car brassé, le réseau en service. Jeu libre : ni missions ni chef de car. L\'émission en direct (générique, deux périodes, pub, générique de fin) ou le match en continu.', lamp: 'Antenne', go: 'Entrer dans le car' },
   { id: 'mission', preset: 'standard', modeCar: 'mission', ico: 'missions', title: 'Mission spécifique', desc: 'Une tâche précise : le paramétrage du réseau, le line-up, un exercice à un poste, une épreuve notée. Le car est préparé pour elle ; une fois terminée, tu enchaînes sur une autre ou tu t\'arrêtes.', lamp: 'Mission', go: 'Lancer la mission' },
 ];
 export function buildStart() {
@@ -90,7 +90,8 @@ export function buildStart() {
   const snd = selector('stsnd', 'Son', [['1', 'Activé'], ['0', 'Coupé']], '1', () => updSum());
   updFmt();
   // le choix : le lieu, le mode, seul ou en coopération
-  const PICK = { lieu: 'car', mode: 'installe', team: 'solo', ep: 'carriere', mission: premiereAFaire(PROG) };
+  // emission : le car pré-installé joue une émission en direct (src/emission/), sinon le match en continu
+  const PICK = { lieu: 'car', mode: 'installe', team: 'solo', ep: 'carriere', mission: premiereAFaire(PROG), emission: true };
   // premier lancement dans ce navigateur : le car vide, où Olivier propose d'abord le tour du car
   try { if (localStorage.getItem('carregie.chefIntro') !== '1') PICK.mode = 'zero'; } catch (e) { /* stockage indisponible */ }
   const run = (preset, prepa) => start(preset, light.value, qual.value, snd.value === '1', fmt.value, infra.value === 'ip', prepa);
@@ -101,6 +102,7 @@ export function buildStart() {
     // la mission spécifique : game/mission_run.js prépare le car et lance la tâche
     if (M.id === 'mission') { emit('missionCar', { type: 'lancer', id: PICK.mission }); return; }
     S.chefTour = false; S.visite = false; S.carriere = null; S.modeCar = /** @type {any} */ (M.modeCar);
+    S.emission = M.id === 'installe' && PICK.emission;
     run(M.preset);
   };
   // depuis le Cours (exercices pratiques) : la vacation demandée, avec les conditions de captation choisies ici ;
@@ -108,18 +110,18 @@ export function buildStart() {
   // spécifique : le car préparé pour elle (son infrastructure l'emporte sur le choix de l'écran)
   SHEET.go = (preset, o = {}) => {
     if (o.ip) infra.value = 'ip'; else if (o.sdi) infra.value = 'sdi';
-    S.chefTour = !!o.visite; S.visite = !!o.visite; S.carriere = o.carriere || null; S.modeCar = o.modeCar || null;
+    S.chefTour = !!o.visite; S.visite = !!o.visite; S.carriere = o.carriere || null; S.modeCar = o.modeCar || null; S.emission = false;
     run(preset, o.prepa);
   };
   // un exercice d'Olivier lancé d'ailleurs (Cours, journal) : le car prêt à l'antenne, avec le chef de car
   setLanceur((o) => SHEET.go && SHEET.go('standard', { ip: o.ip, sdi: o.sdi }));
   // coopération : le car installé, avec les réglages de l'hôte s'il y en a déjà un
   setSessionStarter({
-    cfg: () => ({ fmt: fmt.value, ip: infra.value === 'ip', light: light.value }),
+    cfg: () => ({ fmt: fmt.value, ip: infra.value === 'ip', light: light.value, emission: PICK.emission }),
     start: async () => {
       for (let i = 0; i < 25 && !(SES.hostPeer && !SES.hostPeer.sameTab && SES.hostPeer.presence.cfg); i++) await new Promise((r) => setTimeout(r, 120));
       const h = SES.hostPeer && !SES.hostPeer.sameTab && SES.hostPeer.presence.cfg;
-      S.chefTour = false; S.visite = false; S.carriere = null; S.modeCar = 'libre';
+      S.chefTour = false; S.visite = false; S.carriere = null; S.modeCar = 'libre'; S.emission = h ? !!h.emission : PICK.emission;
       start('standard', h ? h.light : light.value, qual.value, snd.value === '1', h ? h.fmt : fmt.value, h ? !!h.ip : infra.value === 'ip');
     },
   });
@@ -153,6 +155,13 @@ export function buildStart() {
   const modes = el('div', { class: 'jo-modes', role: 'group', 'aria-label': 'Le mode' });
   // la mission spécifique : la liste des missions, rangée par famille (ui/missions_ui.js)
   const pickBox = el('div', { class: 'jo-missions', hidden: true });
+  // le car pré-installé : l'émission en direct, ou le match en continu
+  const emBox = el('div', { class: 'jo-emission', hidden: true });
+  const drawEmission = () => {
+    emBox.replaceChildren(
+      el('div', { class: 'seg', role: 'group', 'aria-label': 'Le match' }, ...[[true, 'Émission en direct', 'Compte à rebours, générique de 30 s lancé depuis l\'IPDirector, deux périodes de 10 minutes, page de pub à la mi-temps, générique de fin, compte rendu noté'], [false, 'Match en continu', 'Le match tourne sans fin, sans conducteur']].map(([v, t, d]) => el('button', { type: 'button', 'data-emission': v ? 'oui' : 'non', 'aria-pressed': String(PICK.emission === v), title: d, onclick: () => { PICK.emission = /** @type {boolean} */ (v); drawEmission(); } }, t))),
+      el('p', { class: 'note' }, PICK.emission ? 'Le match commence par un compte à rebours, puis le générique (30 s) lancé depuis l\'IPDirector : 10 minutes de jeu, la pub, 10 minutes, le générique de fin. Seul, les postes que tu n\'occupes pas sont tenus par l\'équipe virtuelle.' : 'Le match tourne en continu, comme avant : à toi de choisir ce que tu fais.'));
+  };
   const teamSeg = el('div', { class: 'seg jo-team-seg', role: 'group', 'aria-label': 'Seul ou en équipe' });
   const teamNote = el('p', { class: 'note' });
   const lan = lanAvailable();
@@ -172,6 +181,7 @@ export function buildStart() {
   const draw = () => {
     for (const b of lieuxWall.querySelectorAll('.lx')) { const on = /** @type {HTMLElement} */ (b).dataset.lieu === PICK.lieu; b.classList.toggle('on', on); b.setAttribute('aria-pressed', String(on)); }
     if (PICK.lieu === 'entrepot') {
+      emBox.hidden = true; pickBox.hidden = true;
       const L = epModes(); if (!L.some((m) => m.id === PICK.ep)) PICK.ep = L[0].id;
       modes.replaceChildren(...L.map((m) => el('button', { type: 'button', class: 'jo-mode', 'data-mode': 'ep:' + (m.id || 'libre'), 'aria-pressed': String(m.id === PICK.ep), onclick: () => { PICK.ep = m.id; draw(); } }, icon(m.ico), el('b', {}, m.title), el('span', {}, m.desc))));
       teamSeg.replaceChildren(el('button', { type: 'button', 'data-v': 'solo', 'aria-pressed': 'true' }, 'Solo'), el('button', { type: 'button', 'data-v': 'coop', 'aria-pressed': 'false', disabled: '' }, 'Coopération'));
@@ -194,6 +204,7 @@ export function buildStart() {
     lamp.textContent = PICK.team === 'coop' ? 'Salon' : N.lamp;
     goTitle.textContent = PICK.team === 'coop' ? 'Ouvrir le salon' : N.go;
     goDesc.textContent = PICK.team === 'coop' ? 'Créez la partie ou rejoignez celle d\'un collègue, choisissez votre rôle, puis entrez dans le car ensemble.' : N.desc;
+    emBox.hidden = N.id !== 'installe'; if (!emBox.hidden) drawEmission();
     const avecListe = PICK.team !== 'coop' && N.id === 'mission';
     pickBox.hidden = !avecListe;
     if (avecListe) { pickBox.replaceChildren(missionPicker(PICK.mission, choisir)); choisir(PICK.mission); }
@@ -236,7 +247,7 @@ export function buildStart() {
         truckLine)),
     el('div', { class: 'jo-steps' },
       step(1, 'Le lieu', lieuxWall),
-      step(2, 'Le mode', modes, pickBox),
+      step(2, 'Le mode', modes, emBox, pickBox),
       step(3, 'En équipe', el('div', { class: 'jo-team' }, teamSeg, teamNote),
         lan ? el('p', { class: 'note cs-lan' }, el('b', {}, 'Réseau local'), ` : ce simulateur est servi par l'ordinateur de l'hôte (${location.host}).`) : null)),
     // à droite : ce qui lance la partie, et les conditions de captation repliées dessous

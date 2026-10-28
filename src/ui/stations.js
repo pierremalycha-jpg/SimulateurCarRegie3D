@@ -38,6 +38,8 @@ import { checklistItems, cablingCSV, generatedRows } from './config.js';
 import { buildVideohub } from './st_videohub.js';
 import { buildPrismStation } from './prism_station.js';
 import { poste3dDispo, poste3dVoulu, setPoste3dVoulu, mountPoste3D } from '../poste3d/index.js';
+import { panneauConducteur } from '../emission/panneau.js';
+import { EMI } from '../emission/etat.js';
 
 export const ST = { cur: null, lastUpd: 0 };
 
@@ -288,14 +290,18 @@ function buildScripte(body, arg, ctx) {
     ['Mire + 1 kHz vers la chaîne', -20 * 60], ['Générique, prise d\'antenne', -10 * 60], ['Avant-match plateau (studio)', -9 * 60], ['Entrée des joueurs (tunnel)', -3 * 60], ['Coup d\'envoi', 0], ['Mi-temps', 45 * 60], ['Reprise', 60 * 60], ['Fin du match, résumé', 105 * 60],
   ];
   const kickoff = S.kickoffTOD;
+  // l'émission en direct : le vrai conducteur, séquence par séquence (le conducteur type sinon)
+  const cond = panneauConducteur({ commandes: true });
+  const type = el('div', { class: 'hwpanel' }, el('h3', {}, 'Conducteur type d\'un match'), list);
   body.append(el('div', { class: 'panelgrid' },
     el('div', { class: 'hwpanel' }, el('h3', {}, 'Heure maître (timecode du SPG)'), tcBox, el('h3', {}, 'Temps de jeu'), cd),
-    el('div', { class: 'hwpanel' }, el('h3', {}, 'Conducteur'), list)),
+    EMI.on ? cond.el : type),
     el('div', { class: 'hwpanel' }, el('h3', {}, 'Notes de scripte (actions marquantes)'), el('p', { class: 'note' }, 'Chaque action est notée avec son timecode. Un clic envoie le point d\'entrée à l\'EVS A (MARK IN 3 s avant).'), log));
   for (const [t, off] of rundown) list.appendChild(el('div', { class: 'item' }, el('span', { class: 'lcd amber' }, tc(kickoff + off).slice(0, 8)), el('div', { class: 'grow' }, el('div', { class: 't' }, t))));
   let lastN = -1;
   return {
     update() {
+      cond.update();
       tcBox.textContent = tc(S.tcOffset + S.simTime);
       cd.textContent = mmss(M.clock) + `  ·  ${TEAMS[0].short} ${M.score[0]} - ${M.score[1]} ${TEAMS[1].short}`;
       if (S.events.length !== lastN) {

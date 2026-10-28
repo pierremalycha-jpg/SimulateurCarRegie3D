@@ -20,6 +20,8 @@ import { BLOCS } from '../content/referentiel.js';
 import { PROG } from '../shared.js';
 import { avancement } from '../carriere/index.js';
 import { episodeById } from '../carriere/mails.js';
+import { EMI } from '../emission/etat.js';
+import { goalEmission } from '../emission/panneau.js';
 
 // ----------------------------------------------------------------------------------
 // L'objectif à l'écran, comme dans un jeu : en haut à gauche, ce qu'il y a à faire maintenant
@@ -74,7 +76,8 @@ const ACTES_FIN = () => /** @type {Acte[]} */ ([
 ]);
 /** @returns {Goal | null} */
 export function currentGoal() {
-  // le car pré-installé : jeu libre, sans objectif
+  // l'émission en direct (car pré-installé) : le conducteur ; sinon le car pré-installé est un jeu libre, sans objectif
+  if (EMI.on) return goalEmission();
   if (S.modeCar === 'libre') return null;
   const l = TUTOR.lesson, s = step();
   const M = S.modeCar === 'mission' ? S.mission : null;
@@ -148,7 +151,7 @@ export function renderQuest(force = false) {
   const whereNow = /** @type {HTMLElement | null} */ ($('#where'));
   r.replaceChildren(...[
     el('div', { class: 'q-where' }, whereNow ? whereNow.textContent : ''),
-    el('div', { class: 'q-head' }, icon(g.kind === 'match' ? 'antenne' : g.kind === 'mission' ? 'plan' : g.kind === 'fini' ? 'trophee' : g.kind === 'idle' ? 'missions' : 'objectif'), el('span', { class: 'q-tag' }, g.tag), g.sub ? el('span', { class: 'q-sub' }, g.sub) : null,
+    el('div', { class: 'q-head' }, icon(g.kind === 'match' || g.kind === 'emission' ? 'antenne' : g.kind === 'mission' ? 'plan' : g.kind === 'fini' ? 'trophee' : g.kind === 'idle' ? 'missions' : 'objectif'), el('span', { class: 'q-tag' }, g.tag), g.sub ? el('span', { class: 'q-sub' }, g.sub) : null,
       el('button', { type: 'button', class: 'q-btn', title: 'Journal des missions (L)', 'aria-label': 'L : journal des missions', onclick: () => openJournal() }, icon('missions'), el('kbd', {}, 'L'))),
     el('h3', { class: 'q-title' }, g.title),
     g.prog != null ? el('div', { class: 'q-prog', role: 'progressbar', 'aria-valuemin': '0', 'aria-valuemax': '100', 'aria-valuenow': String(Math.round(g.prog * 100)) }, el('i', { style: { width: `${Math.round(g.prog * 100)}%` } })) : null,
