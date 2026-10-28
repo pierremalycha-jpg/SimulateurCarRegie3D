@@ -30,13 +30,24 @@ Tout est en français (code commenté en français, interface, commits).
 - **Jouer** : le lieu (car régie ; l'entrepôt ; salle de concert en préparation, `src/content/lieux.js`), le
   mode, solo ou coopération (salon `src/ui/session_ui.js`), conditions de captation repliées. Les modes du car
   (décidés le 24 octobre 2026) : **Car vide** (tout à faire ; Olivier propose d'abord la visite guidée, puis aide sur
-  demande), **Car pré-installé** (jeu libre : ni chef de car, ni missions, ni objectif ; la coopération se joue ici),
+  demande), **Car pré-installé** (jeu libre : ni chef de car, ni missions ; par défaut l'**émission en direct**, sinon
+  « Match en continu » ; la coopération se joue ici),
   **Mission spécifique** (une tâche choisie dans `src/game/missions.js`, rangée par famille : installer le car, aux
   postes avec Olivier, épreuves notées ; le car est préparé pour elle (`prepa`) ; à la fin, « Mission suivante »
   (sans recharger si le car convient, `memeCar`) ou « Arrêter » ; déroulement `src/game/mission_run.js`, liste
   `src/ui/missions_ui.js`). Pour l'entrepôt : la Carrière, ses missions, le bac à sable, la reprise du montage. Les
   exercices restent rangés dans leur leçon du Cours ; la Mission spécifique propose les mêmes (mêmes identifiants,
   rien ne compte deux fois).
+- **L'émission en direct** (`src/emission/`, v19.19, décidée le 28 octobre 2026) : au car pré-installé, le match se
+  joue comme une émission : décompte (ou « Antenne maintenant »), générique de début de 30 s, deux périodes de 10 min,
+  page de pub à la mi-temps, générique de fin, compte rendu. Le conducteur est un calcul pur (`conducteur.js` :
+  `SEGMENTS`, `DUREES`, `avance`, `bilan`) ; les médias (`medias.js`) se lancent depuis l'IPDirector (`panneau.js`) sur
+  le canal de diffusion de l'EVS (`EVS.ch[i].media`, PGM2, PGM1 en UHD) ; images et musiques sont fabriquées par le
+  code (`dessin.js`, `musique.js` : sonie −23 dBFS, marques fictives). Le match a des périodes (`M.periode` dans
+  `match.js` : `libre` = le match en continu de toujours, pour le car vide, les missions et les exercices). Seul, les
+  postes non occupés sont tenus par l'**équipe virtuelle** (`ia.js`, `titulaire`) ; le poste où l'on est assis n'est
+  jamais touché (au mélangeur, les ordres arrivent par l'intercom). Livret 3.11, progression v5 (`PROG.emissions`).
+  Tests `tests/unit/emission.test.mjs`, suite `node tools/e2e.mjs emission` (`sauter` raccourcit les séquences).
 - **Réglages** : une seule fenêtre (`src/ui/settings.js`), avec le profil Étudiant / Formateur
   (`src/app/profile.js`) ; l'espace formateur (configuration, suivi, relecture) n'y apparaît qu'au profil
   Formateur (classe `role-only`).

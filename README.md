@@ -394,6 +394,123 @@ Tests :
   « Emmène-moi / Montre-moi » doit mettre en évidence un élément réel de la page, et « Fais-le pour moi » doit faire
   valider l'étape.
 
+## v19.19 : l'émission en direct (générique, pub, générique de fin lancés depuis l'IPDirector, équipe virtuelle)
+
+**Pourquoi.** Au car régie, le match tournait sans début ni fin : il manquait tout ce qui fait une **émission**, les
+médias (générique de début, page de publicité, générique de fin), le top antenne et la conduite d'un conducteur. Et seul,
+on ne pouvait tenir qu'un poste à la fois pendant que les autres restaient vides. Désormais, Jouer → Car régie → **Car
+pré-installé** propose (choix par défaut) l'**émission en direct** : le match ne commence plus tout seul, il se joue
+comme une émission, du compte à rebours au générique de fin, et les postes que l'on n'occupe pas sont tenus par une
+**équipe virtuelle**. « Match en continu » garde le jeu libre d'avant.
+
+**Le déroulé** (le conducteur, `emission/conducteur.js`, calcul pur) :
+
+| Séquence | Durée | Ce qui se passe |
+| --- | --- | --- |
+| Avant l'antenne | 2 min (décompte) | Le match attend à l'échauffement (horloge arrêtée). Le décompte se **suspend**, ou l'on prend l'**antenne maintenant**. Le générique est chargé sur le canal de diffusion de l'EVS, le truquiste le prépare au preset |
+| Générique de début | 30 s | Top antenne : l'**IPDirector lance le générique**, le truquiste le prend à l'antenne |
+| Présentation | 15 s | Fondu sur le plan large, titre du match à l'habillage, les commentateurs ouvrent l'émission |
+| 1re période | 10 min | Coup d'envoi : le temps de jeu court, score et chrono à l'antenne, ralentis |
+| Mi-temps | 10 s | Coup de sifflet (deux brefs, un long), plan large, statistiques ; la pub est chargée |
+| Page de publicité | 1 min 10 | Top pub : l'IPDirector lance l'écran publicitaire, le score sort de l'image |
+| Retour au stade | 12 s | Plan large, les commentateurs reprennent l'antenne, le score revient |
+| 2e période | 10 min | Les équipes ont changé de côté ; le temps de jeu va de 10:00 à 20:00 |
+| Fin du match | 15 s | Sifflet final, score et statistiques ; le générique de fin est chargé |
+| Générique de fin | 30 s | Top générique : score final et générique déroulant, puis fondu au noir |
+| Fin d'antenne | | Le compte rendu noté s'affiche |
+
+Un média ne part pas tout seul : il faut le **lancer au top**, depuis l'IPDirector. Le lancer pendant la séquence qui
+le précède, c'est donner le top soi-même : le générique lancé pendant le décompte **prend l'antenne**, la pub lancée
+pendant la mi-temps part tout de suite. Lancé en retard, il se voit (le média figé sur sa première image à l'antenne) ;
+jamais lancé, l'émission continue sans lui au bout de 20 s, et il compte comme manqué.
+
+**L'IPDirector** (`emission/panneau.js`, en tête du poste) : la base **MÉDIAS** du serveur (des fichiers importés
+avant le match, pas des enregistrements des caméras), chacun avec sa vignette et sa durée (00:30:00, 01:10:00,
+00:30:00) ; on **charge** un média sur le canal de diffusion (PGM2, l'EVS B ; PGM1 en UHD, le seul canal de lecture), il
+attend en pause sur sa première image (cue) ; **LANCER** au top, **STOP**, **Début**, **Éjecter** ; l'écoulé, le **temps
+restant** (aussi au multiview, sur la tuile de l'EVS) et, pour la pub, la partie en cours. Le prochain top est affiché
+en grand (« TOP ! » en rouge quand c'est le moment), le conducteur à côté. Toute autre commande du canal (ralentis) éjecte
+le média.
+
+**Les médias**, dessinés et composés par le code (aucun fichier, `emission/dessin.js`, `emission/musique.js`) :
+
+- **le générique de début** (30 s) : noir de tête, faisceaux des projecteurs, le terrain qui se dessine, le titre « Le
+  Grand Match », l'affiche (les deux équipes, écussons génériques, « VS »), le coup d'envoi à 21:00, le logo de la chaîne
+  fictive TIEE Sport, un éclair, le noir ; un indicatif à 128 bpm (16 mesures = 30 s : montée, thème en ré majeur,
+  coup final sur le logo) ;
+- **la page de publicité** (1 min 10) : le jingle « Publicité » (l'écran publicitaire doit être reconnaissable à
+  l'image et au son, avant comme après), trois spots de 20 s de marques fictives (La Baraque du Terril, Mutuelle des
+  Corons, Ch'ti Vélo) avec leur musique, puis le jingle de retour (« Retour à Bollaert ») ;
+- **le générique de fin** (30 s) : le score final, puis le **générique déroulant** : qui a tenu chaque poste (vous, un
+  participant, ou l'équipe virtuelle), les commentateurs, l'établissement ; le thème plus lent, fondu au noir.
+
+Le son sort sur l'entrée AES de la console qui reçoit le canal (AES 2 = PGM2) : le fader EVS de la console s'ouvre avec
+l'image (AFV). Chaque média est livré autour de **−23 dBFS efficaces**, crêtes sous −1 dBFS (mesuré hors ligne : −23 à
+−26 dBFS selon les passages ; les trois spots à 0,5 dB près), comme le programme : la pub n'est pas plus forte que le
+match.
+
+**L'équipe virtuelle** (`emission/ia.js`). Seul, chaque poste que l'on n'occupe pas est tenu, et suit le conducteur :
+
+- **le réalisateur** choisit les plans pendant le jeu (le large comme base, le 16 m du côté du ballon, des serrés sur le
+  porteur, le joueur ; jamais le contrechamp en direct), demande les ralentis (après un but : le buteur, la joie, le
+  ralenti en volet logo, le retour, le bandeau du buteur ; après une occasion suivie d'une sortie de but), prend les
+  médias au top et enchaîne sur le stade à leur fin ;
+- **le truquiste** exécute ses ordres avec un temps de réaction (0,2 à 0,5 s), score (DSK 1) au jeu, retiré sous les
+  médias, fondu au noir à la fin ;
+- **l'IPDirector** charge le prochain média (au plus tard 30 s avant son top) et le lance au top ; il rend le canal
+  quand un média est fini ;
+- **le son** baisse les ambiances sous un média (−22 dB), ferme les commentateurs avant l'antenne et sous les médias,
+  met le canal de diffusion à 0 dB pour un média et le ramène à −6 dB pour les ralentis ;
+- **l'habillage** : le titre du match à la présentation, les statistiques à la mi-temps et à la fin, le bandeau du
+  buteur ;
+- **la vision** suit l'exposition (iris) ; **les ralentis** (EVS A) calent l'action, comme avant ;
+- **la scripte** annonce dans l'intercom : « Antenne dans 1 minute », « 30 secondes », le décompte, « Retour dans 10 »,
+  « Mi-temps dans 1 minute », et rappelle à l'IPDirector un média oublié.
+
+Le poste où l'on est assis n'est jamais touché : au mélangeur, c'est le réalisateur virtuel qui **donne ses ordres dans
+l'intercom** (« Prépare l'EVS B… Top générique ! », « Retour stade : prépare la 1 », « Enchaîne ! ») et attend qu'on
+les exécute ; au réalisateur, ce sont nos ordres que le truquiste virtuel exécute. En coopération, l'équipe virtuelle
+ne tient que les rôles sans titulaire, chez l'hôte (qui fait tourner le match) ; son conducteur part à tous avec
+l'instantané du match.
+
+**À l'écran.** L'**horloge du direct** (sous la barre d'outils, et dans l'en-tête du poste quand on est assis) : la
+lampe d'antenne, la séquence, le prochain top et le temps qui reste, le score et le temps de jeu ; pendant le décompte,
+« Antenne maintenant » et « Suspendre ». Le **suivi des tâches** montre le conducteur, coché au fil de l'émission. Le
+poste du **scripte** affiche le conducteur de l'émission (avec ses commandes), le téléphone a l'application **Le
+direct** (le conducteur, et le chemin de l'IPDirector).
+
+**Le compte rendu** (sur 100, `bilan` dans `conducteur.js`) : chaque média lancé au top (15 points à 2 s près, 10 à 5 s,
+5 à 10 s ; en avance aussi) et diffusé en entier (10), pas de noir ni de mire ni de média figé à l'antenne (15, −1 point
+par 2 s), le score à l'antenne pendant le jeu (5), le retour au stade à la fin du générique et de la pub (5) ; qui
+tenait chaque poste ; au mélangeur, les ordres du réalisateur exécutés et le temps de réaction. « Rejouer l'émission »,
+« Continuer en match libre ».
+
+**Ce qui change ailleurs.**
+
+- `match.js` : le match a des **périodes** (`M.periode` : `libre` = le match en continu de toujours, sinon avant-match,
+  1re période, mi-temps, 2e période, fin ; `avantMatch`, `coupDEnvoi`, `matchEnContinu`) : le temps de jeu ne court
+  que pendant une période, échauffement et retour au banc hors du jeu, sifflets de mi-temps et de fin, changement de
+  côté ; les commentaires saluent la mi-temps, la reprise, la fin, l'ouverture et la clôture de l'émission.
+- `pipeline.js` : un canal de l'EVS peut lire un **média** (`EVS.ch[i].media`), image et temps restant au multiview ;
+  partagé en coopération (tranche `evs`).
+- Progression **v5** (`PROG.emissions` : score, médias lancés soi-même, fusion entre deux appareils). Livret : l'émission
+  est un exercice pratique rattaché à **3.11 (mettre en œuvre les conducteurs)**, 2.5 (le médiaflow), 2.9 et 4.1 ;
+  elle ne compte que réussie (60 sur 100) avec les **trois médias lancés soi-même** depuis l'IPDirector. XP : 100 la
+  première fois, 25 ensuite (25 aussi quand l'équipe virtuelle a lancé les médias).
+
+**À faire relire.** La règle des écrans publicitaires (décret n° 92-280 du 27 mars 1992, article 14 : publicités
+« aisément identifiables » et séparées du programme par des écrans reconnaissables à l'image et au son) ; la pub d'une
+retransmission sportive placée dans une pause naturelle du jeu (la mi-temps) ; la sonie des publicités alignée sur celle
+des programmes (EBU R128, imposée par le CSA, aujourd'hui l'Arcom, depuis 2011). Dans la réalité, la pub d'un match
+diffusé par une grande chaîne est souvent insérée par la **régie finale** de la chaîne, pas par le car : ici, comme dans
+une petite production ou une diffusion en ligne, le car la diffuse lui-même. Les durées (deux périodes de 10 minutes,
+décompte de 2 minutes) sont celles d'un exercice, pas d'un match.
+
+Tests : `tests/unit/emission.test.mjs` (médias, conducteur, décompte, média lancé ou manqué, périodes, compte rendu,
+match par périodes, musiques), `tests/unit/progression.test.mjs` (v4 → v5) ; suite `node tools/e2e.mjs emission`
+(nouvelle : Jouer, décompte, IPDirector, top, générique, périodes, pub, générique de fin, compte rendu, livret ; puis
+l'émission rejouée au mélangeur avec l'IPDirector virtuel), `modes-car` (le car pré-installé en match continu).
+
 ## v19.18 : le Cours en parcours, à la façon de Duolingo (niveaux, exercices en autonomie, test de niveau)
 
 **Pourquoi.** Tout le Cours était ouvert d'un coup : un étudiant qui arrivait pouvait commencer par le ST 2110 sans
@@ -1985,6 +2102,7 @@ node tools/shots.mjs dossier 1280 800 '["vision","hf"]'   # captures de postes
 | `game/xp.js`, `game/progression.js` | Progression du joueur : XP (barème par activité), niveaux de technicien, badges (dont un par compétence du livret), fusion entre appareils ; accroches sur les événements du simulateur |
 | `game/quest.js` | Le suivi des tâches sur le côté (la mission en cours et ses tâches : car vide par groupe, étapes d'un exercice, plan de la visite, mission spécifique, jour de match, Carrière), le repère 3D, le journal des missions (touche L), la carte joueur |
 | `game/missions.js`, `game/mission_run.js`, `ui/missions_ui.js` | La mission spécifique (Jouer → Car régie) : le catalogue par famille et la préparation du car (calcul pur), le déroulement (lancer, constater la fin, enchaîner ou arrêter), la liste à choisir |
+| `emission/` | L'émission en direct (car pré-installé) : le conducteur et le compte rendu, calcul pur (`conducteur.js`), les médias de l'IPDirector (`medias.js`), leurs images (`dessin.js`, texture d'un canal de l'EVS `video.js`) et leur musique (`musique.js`), l'état partagé (`etat.js`), l'équipe virtuelle des postes non occupés (`ia.js`), les panneaux (`panneau.js` : médias de l'IPDirector, conducteur, objectif), la boucle, l'horloge du direct et le compte rendu (`index.js`) ; styles `styles/emission.css` |
 | `game/fx.js`, `game/sfx.js` | Effets de jeu (barre d'XP, bannières de niveau et de badge, carte-titre, vignette, flash tally, alerte de panne) et bruitages synthétisés en WebAudio avec leur réglage |
 | `styles/theme-jeu.css` | Le thème « jeu vidéo » : jetons de couleur, composants communs, HUD, écran titre, Jouer, menu, journal, badges |
 | `telephone/index.js`, `telephone/apps.js`, `telephone/modele.js`, `styles/telephone.css` | Le téléphone (Tab ou T) : lever et ranger, touches, accueil (objectif, niveau), applications par famille (Aller à, Missions, Olivier, outils du car, Cours, Progression, Réglages), boîtier 3D et écran HTML posé dessus (transformation projective `cssProjection`) |
@@ -2042,7 +2160,7 @@ node tools/shots.mjs dossier 1280 800 '["vision","hf"]'   # captures de postes
 | `params.js` | Registre des valeurs chiffrées relisibles (objectifs, liaisons, C/N, latences, line-up) et corrections appliquées |
 | `multi/` | Jeu à plusieurs : session, rôles, hôte du match, pseudos (`session.js`), tranches d'état partagées (`slices.js`), client du serveur réseau local et du jeu par Internet (`lan.js`), avatars des joueurs (`avatars.js`), fiches de rôle et objectifs (`roles.js`) |
 | `lan/` | Serveur réseau local sans dépendance (`serveur.mjs` : HTTP + WebSocket, parties, comptes rendus ; origine vérifiée, tailles, connexions, parties et comptes rendus plafonnés ; clé exigée de ce qui vient d'Internet ; écran « Accès réservé » et jetons quand la page est chiffrée), coffre de l'exécutable (`coffre.mjs` : page chiffrée par le mot de passe, scrypt + AES-256-GCM), jeu par Internet (`internet.mjs` : analyse du réseau, ouverture de la box par UPnP, adresse publique, tunnel Cloudflare), lanceurs Windows / macOS / Linux, mode d'emploi |
-| `match.js` | Simulation du match, rendu des joueurs, enregistrement d'état (base des ralentis EVS) |
+| `match.js` | Simulation du match, ses périodes (avant-match, deux périodes, mi-temps, fin ; ou le match en continu), rendu des joueurs, enregistrement d'état (base des ralentis EVS) |
 | `bcam.js` | Caméras broadcast : optique, cadreurs automatiques, traitement CCU (knee, white clip, HLG), câbles |
 | `rf.js` | Bilan de liaison HF, diversité, brouillage |
 | `pipeline.js` | Grille, mélangeur, EVS, multiview, retour antenne, mesures (waveform, vecteurscope), HDR |
