@@ -1,6 +1,7 @@
 // @ts-check
 import * as THREE from 'three';
 import { S } from './state.js';
+import { STYLE } from './style.js';
 
 // ----------------------------------------------------------------------------------
 // Rendu « réaliste » :
@@ -9,7 +10,9 @@ import { S } from './state.js';
 //  · éclairage d'environnement (IBL) : le ciel du moment est capturé en carte d'environnement
 //    préfiltrée (PMREM) ; un studio lumineux tient lieu d'environnement dans le car ;
 //  · post-traitement de la vue « œil » (déplacement, vol, car) : image HDR multi-échantillonnée,
-//    halo des sources intenses (bloom), courbe filmique ACES, étalonnage léger, vignettage, tramage.
+//    halo des sources intenses (bloom), courbe filmique ACES, étalonnage léger, vignettage, tramage ;
+//  · style « dessin » (style.js) : contours à l'encre tirés de la profondeur de l'image (silhouettes et plis, qui
+//    s'effacent au loin) et couleurs plus franches, dans la même passe de composition.
 // Les caméras broadcast ont leur propre traitement (peinture CCU) et ne passent pas par ici.
 // ----------------------------------------------------------------------------------
 export const RENDER = { pbr: false, envI: 0.3, envTruck: 0.55, std: new Set(), post: null, envRT: null, truckEnvRT: null, bloom: 0.05, truckBloom: 0.16 };
@@ -118,7 +121,9 @@ class Post {
     this.r = renderer;
     this.w = 0; this.h = 0;
     this.msaa = S.quality === 'haute' ? 4 : 2;
-    this.rt = new THREE.WebGLRenderTarget(1, 1, { type: THREE.HalfFloatType, samples: this.msaa });
+    // la profondeur de l'image (résolue avec l'anticrénelage) sert aux contours du style « dessin »
+    const dt = new THREE.DepthTexture(1, 1); dt.type = THREE.UnsignedIntType;
+    this.rt = new THREE.WebGLRenderTarget(1, 1, { type: THREE.HalfFloatType, samples: this.msaa, depthTexture: dt });
     this.down = []; this.up = [];
     for (let i = 0; i < 5; i++) this.down.push(new THREE.WebGLRenderTarget(1, 1, rtOpts));
     for (let i = 0; i < 4; i++) this.up.push(new THREE.WebGLRenderTarget(1, 1, rtOpts));
@@ -145,7 +150,7 @@ class Post {
         c += texture2D(tSrc, vUv - t).rgb + texture2D(tSrc, vUv + t).rgb + texture2D(tSrc, vUv + vec2(-t.x, t.y)).rgb + texture2D(tSrc, vUv + vec2(t.x, -t.y)).rgb;
         gl_FragColor = vec4(texture2D(tBase, vUv).rgb + c / 16.0 * uMix, 1.0); }`, { tSrc: { value: null }, tBase: { value: null }, uTexel: { value: new THREE.Vector2() }, uMix: { value: 1 } });
     // composition : exposition, halo, ACES (même courbe que three.js), étalonnage, vignettage, tramage, sRGB
-    this.mComp = sh(`uniform sampler2D tSrc, tBloom, tAO; uniform float uExp, uBloom, uVig, uSat, uCon, uTime, uAO; uniform vec3 uLift; varying vec2 vUv;
+    this.mComp = sh(`uniform sampler2D tSrc, tBloom, tAO, tDepth; uniform float uExp, uBloom, uVig, uSat, uCon, uTime, uAO, uInk, uNear, uFar, uPx; uniform vec2 uTexel, uFade; uniform vec3 uLift; varying vec2 vUv;
       vec3 RRTAndODTFit(vec3 v){ vec3 a = v * (v + 0.0245786) - 0.000090537; vec3 b = v * (0.983729 * v + 0.4329510) + 0.238081; return a / b; }
       vec3 aces(vec3 color){
         const mat3 I = mat3(vec3(0.59719, 0.07600, 0.02840), vec3(0.35458, 0.90834, 0.13383), vec3(0.04823, 0.01566, 0.83777));
@@ -153,8 +158,22 @@ class Post {
         color *= 1.0 / 0.6; color = I * color; color = RRTAndODTFit(color); color = O * color; return clamp(color, 0.0, 1.0); }
       vec3 srgb(vec3 c){ return mix(pow(c, vec3(1.0 / 2.4)) * 1.055 - 0.055, c * 12.92, vec3(lessThanEqual(c, vec3(0.0031308)))); }
       float h12(vec2 p){ return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453); }
+      float lz(float d){ return uNear * uFar / (uFar - d * (uFar - uNear)); }
+      // contour d'encre : silhouette (un voisin nettement plus loin) et pli (dérivée seconde de 1/z, nulle sur un plan)
+      float encre(){
+        float d0 = texture2D(tDepth, vUv).x; if (d0 >= 0.99999) return 0.0;
+        vec2 t = uTexel * uPx;
+        float z0 = lz(d0), zl = lz(texture2D(tDepth, vUv - vec2(t.x, 0.0)).x), zr = lz(texture2D(tDepth, vUv + vec2(t.x, 0.0)).x);
+        float zd = lz(texture2D(tDepth, vUv - vec2(0.0, t.y)).x), zu = lz(texture2D(tDepth, vUv + vec2(0.0, t.y)).x);
+        float sil = smoothstep(0.035, 0.09, (max(max(zl, zr), max(zd, zu)) - z0) / z0);
+        float w0 = 1.0 / z0;
+        float pli = (abs(1.0 / zl + 1.0 / zr - 2.0 * w0) + abs(1.0 / zd + 1.0 / zu - 2.0 * w0)) / w0;
+        pli = smoothstep(0.012, 0.035, pli) * 0.7;
+        return max(sil, pli) * (1.0 - smoothstep(uFade.x, uFade.y, z0));
+      }
       void main(){
         vec3 c = texture2D(tSrc, vUv).rgb * uExp + texture2D(tBloom, vUv).rgb * uBloom;
+        if (uInk > 0.0) c *= 1.0 - 0.86 * uInk * encre();
         // occlusion ambiante (écran) : les surfaces lumineuses (écrans, LED) y échappent
         float ao = mix(texture2D(tAO, vUv).r, 1.0, smoothstep(0.9, 2.4, max(c.r, max(c.g, c.b)) * 0.6));
         c *= mix(1.0, ao, uAO);
@@ -166,7 +185,7 @@ class Post {
         c = srgb(c);
         c = clamp((c - 0.5) * uCon + 0.5 + uLift * (1.0 - c), 0.0, 1.0);
         c += (h12(gl_FragCoord.xy + uTime) - 0.5) / 255.0;
-        gl_FragColor = vec4(c, 1.0); }`, { tSrc: { value: null }, tBloom: { value: null }, tAO: { value: null }, uAO: { value: 0 }, uExp: { value: 1 }, uBloom: { value: 0.05 }, uVig: { value: 0.22 }, uSat: { value: 1.06 }, uCon: { value: 1.03 }, uLift: { value: new THREE.Vector3(0.012, 0.014, 0.02) }, uTime: { value: 0 } });
+        gl_FragColor = vec4(c, 1.0); }`, { tSrc: { value: null }, tBloom: { value: null }, tAO: { value: null }, tDepth: { value: null }, uAO: { value: 0 }, uExp: { value: 1 }, uBloom: { value: 0.05 }, uVig: { value: 0.22 }, uSat: { value: 1.06 }, uCon: { value: 1.03 }, uLift: { value: new THREE.Vector3(0.012, 0.014, 0.02) }, uTime: { value: 0 }, uInk: { value: 0 }, uNear: { value: 0.1 }, uFar: { value: 3000 }, uPx: { value: 1 }, uTexel: { value: new THREE.Vector2() }, uFade: { value: new THREE.Vector2(60, 240) } });
     // ------------- occlusion ambiante (SSAO) : pré-passe normales + profondeur à demi-résolution -------------
     this.gbuf = null; this.aoRT = null; this.aoBlurRT = null;
     this.normalMat = new THREE.MeshNormalMaterial();
@@ -253,7 +272,7 @@ class Post {
     for (let i = 0; i < 5; i++) { dw = Math.max(1, dw >> 1); dh = Math.max(1, dh >> 1); this.down[i].setSize(dw, dh); if (i < 4) this.up[i].setSize(dw, dh); }
   }
   pass(mat, target) { this.quad.material = mat; this.r.setRenderTarget(target); this.r.render(this.scene, this.cam); }
-  render(scene, camera, exposure, bloom, ao = null) {
+  render(scene, camera, exposure, bloom, ao = null, inTruck = false) {
     const r = this.r;
     const v = r.getDrawingBufferSize(new THREE.Vector2());
     this.setSize(v.x, v.y);
@@ -270,6 +289,13 @@ class Post {
       this.pass(this.mUp, this.up[i]);
     }
     const c = this.mComp.uniforms; c.tSrc.value = this.rt.texture; c.tBloom.value = this.up[0].texture; c.tAO.value = aoTex; c.uAO.value = ao ? (ao.strength ?? 1) : 0; c.uExp.value = exposure; c.uBloom.value = bloom; c.uTime.value = (S.frame % 64) * 1.7;
+    // style « dessin » : encre (plus fine et plus proche dans le car), couleurs franches, ombres un peu bleutées
+    const cel = STYLE.cel;
+    c.tDepth.value = this.rt.depthTexture; c.uNear.value = camera.near; c.uFar.value = camera.far; c.uTexel.value.set(1 / this.w, 1 / this.h);
+    c.uInk.value = cel ? STYLE.encre * (inTruck ? 0.7 : 1) : 0; c.uPx.value = Math.max(1, this.h / 900);
+    const haut = Math.max(0, camera.position.y - 25); // vu d'avion, les contours portent plus loin
+    c.uFade.value.set(inTruck ? 6 : 70 + haut * 2.5, inTruck ? 14 : 260 + haut * 5);
+    c.uSat.value = cel ? 1.16 : 1.06; c.uCon.value = cel ? 1.05 : 1.03; c.uLift.value.set(cel ? 0.016 : 0.012, cel ? 0.02 : 0.014, cel ? 0.034 : 0.02);
     this.pass(this.mComp, null);
     r.toneMapping = tm;
   }
@@ -286,7 +312,7 @@ export function renderEye(renderer, scene, camera, exposure, inTruck) {
     const scr = inTruck ? Object.values(RENDER.T.screens) : RENDER.W.screens;
     for (const m of scr) if (m.uniforms && m.uniforms.uLin) m.uniforms.uLin.value = 2;
     VIEW_INV.exp.value = exposure;
-    RENDER.post.render(scene, camera, exposure, inTruck ? RENDER.truckBloom : RENDER.bloom, aoEnabled(inTruck) ? AO_TRUCK : null);
+    RENDER.post.render(scene, camera, exposure, inTruck ? RENDER.truckBloom : RENDER.bloom, aoEnabled(inTruck) ? AO_TRUCK : null, inTruck);
     for (const m of scr) if (m.uniforms && m.uniforms.uLin) m.uniforms.uLin.value = 0;
   } else {
     renderer.toneMappingExposure = exposure;

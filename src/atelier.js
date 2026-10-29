@@ -2,7 +2,7 @@
 import * as THREE from 'three';
 import { S, emit } from './state.js';
 import { W } from './world.js';
-import { el, makeCanvas } from './util.js';
+import { el, makeCanvas, texteAjuste } from './util.js';
 import { screenMaterial } from './geo.js';
 import { addCamera, removeCamera, lineUpCamera } from './bcam.js';
 import { camById } from './state.js';
@@ -49,8 +49,8 @@ function rod(g, a, b, r, m, seg = 8) {
 }
 function label(text, w, h, bg = '#ebe5d1', fg = '#16181b', size = 60) {
   const c = makeCanvas(512, Math.round(512 * h / w)); const g = c.getContext('2d');
-  g.fillStyle = bg; g.fillRect(0, 0, c.width, c.height); g.fillStyle = fg; g.font = `700 ${size}px "Barlow Semi Condensed", "Barlow Condensed", "Arial Narrow", sans-serif`;
-  g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(text, 256, c.height / 2 + 3);
+  g.fillStyle = bg; g.fillRect(0, 0, c.width, c.height); g.fillStyle = fg;
+  g.textAlign = 'center'; g.textBaseline = 'middle'; texteAjuste(g, text, 256, c.height / 2 + 3, 480, Math.min(size, Math.round(c.height * 0.8)), { family: '"Barlow Semi Condensed", "Barlow Condensed", "Arial Narrow", sans-serif' });
   const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4;
   return new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshStandardMaterial({ map: t, roughness: 0.8 }));
 }

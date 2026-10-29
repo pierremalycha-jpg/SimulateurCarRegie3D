@@ -1,6 +1,8 @@
 // @ts-check
 import * as THREE from 'three';
-import { S } from '../state.js';
+import { S, on } from '../state.js';
+import { M } from '../match.js';
+import { TEAMS } from '../data/match.js';
 import { TRUCK, groundHeight, inTruckFootprint } from '../world.js';
 import { truckFloorAt, T } from '../truck.js';
 import { SES } from '../multi/session.js';
@@ -8,10 +10,12 @@ import { PL } from '../app/player.js';
 import { Troupe } from './troupe.js';
 import { EQUIPE, longueur, pointSur, avancerEquipier } from './equipe.js';
 import { MARCHEURS, departMarcheur, avancerMarcheur } from './compound.js';
+import { BANCS, MEMBRES, COMMENTATEURS, tenueBanc, poseBanc } from './banc.js';
 
 // ----------------------------------------------------------------------------------
-// Les figurants : l'équipe du car à ses postes (equipe.js) et la vie du compound (compound.js). Deux troupes
-// instanciées (troupe.js) : l'une dans le stade (le compound), l'autre dans le car ; un technicien qui entre dans
+// Les figurants : l'équipe du car à ses postes (equipe.js), la vie du compound (compound.js), les bancs de touche et
+// les commentateurs (banc.js). Trois troupes instanciées (troupe.js) : le compound, le bord du terrain (bancs et
+// tribune de presse), l'intérieur du car ; un technicien qui entre dans
 // le car passe de l'une à l'autre en franchissant la porte. L'équipe n'est là que si le car est installé (pas au
 // car vide ni au brassage d'arrivée) ; le poste où l'on s'assoit (ou celui d'un équipier en coopération) est
 // laissé libre par son titulaire.
@@ -20,8 +24,11 @@ export const FIG = {
   W: /** @type {Troupe | null} */ (null), T: /** @type {Troupe | null} */ (null),
   equipe: /** @type {Array<{ e: typeof EQUIPE[0], st: any, siege: { x: number, y: number, z: number }, cap: number, chemin: number[][], L: number, etat: { s: number, assis: number, sens?: number }, ici: boolean, occupe: boolean }>} */ ([]),
   marcheurs: /** @type {Array<{ m: typeof MARCHEURS[0], e: ReturnType<typeof departMarcheur>, slotW: number, slotT: number }>} */ ([]),
+  /** bancs de touche et commentateurs */
+  B: /** @type {Troupe | null} */ (null),
   t: 0, present: false,
 };
+const NB = BANCS.length * MEMBRES.length;
 const NT = EQUIPE.length;
 
 export function installFigurants(Wscene, Tscene) {
@@ -39,11 +46,36 @@ export function installFigurants(Wscene, Tscene) {
     FIG.equipe.push({ e, st, siege, cap: Math.atan2(st.look.x - st.pos.x, st.look.z - st.pos.z), chemin, L: longueur(chemin), etat: { s: 0, assis: 1 }, ici: false, occupe: false });
     FIG.T.habiller(i, e.tenue);
   });
+  // les bancs de touche et la tribune de presse (zone : du banc visiteurs aux commentateurs)
+  FIG.B = new Troupe(Wscene, NB + COMMENTATEURS.length, 'figurants-banc', { zone: new THREE.Sphere(new THREE.Vector3(1, 4, -48), 24) });
+  COMMENTATEURS.forEach((c, k) => FIG.B.habiller(NB + k, { haut: 0x2b3a55, col: 0xf2f2f2, bas: 0x1d2129, peau: [0xe0ac86, 0x9c6b47][k], cheveux: [0x2a1d14, 0x0c0c0c][k], manchesLongues: true, casque: true }));
+  peindreBancs();
+  on('adversaire', () => peindreBancs());
   // les marcheurs : une place dans chaque troupe
   MARCHEURS.forEach((m, k) => {
     FIG.marcheurs.push({ m, e: departMarcheur(m), slotW: k, slotT: NT + k });
     FIG.W.habiller(k, m.tenue); FIG.T.habiller(NT + k, m.tenue);
   });
+}
+
+/** les tenues des bancs d'après les couleurs des clubs (et de nouveau quand l'adversaire change) */
+export function peindreBancs() {
+  if (!FIG.B) return;
+  BANCS.forEach((b, j) => MEMBRES.forEach((m, k) => FIG.B.habiller(j * MEMBRES.length + k, tenueBanc(TEAMS[b.team], m, j * 11 + k))));
+}
+// les bancs et les commentateurs (vus aussi par les caméras du stade : mis à jour même quand on est dans le car)
+function updateBancs(t, dansLeCar) {
+  if (!FIG.B || (dansLeCar && S.frame % 3)) return;
+  const b = M.ball;
+  BANCS.forEach((banc, j) => {
+    const fete = M.state === 'celebration' && M.celebrateTeam === banc.team;
+    MEMBRES.forEach((m, k) => FIG.B.poser(j * MEMBRES.length + k, poseBanc(banc, m, k, t + j * 7.3, b, fete)));
+  });
+  COMMENTATEURS.forEach((c, k) => {
+    const vers = Math.max(-1.2, Math.min(1.2, Math.atan2(b.x - c.x, b.z - c.z)));
+    FIG.B.poser(NB + k, { x: c.x, y: c.y, z: c.z, yaw: 0, assis: 1, bras: k ? 'croise' : 'bureau', teteYaw: vers, tetePitch: 0.32, penche: 0.1, t: t + k * 2 });
+  });
+  FIG.B.publier();
 }
 
 /** l'équipe est-elle au car ? (car installé, partie commencée) */
@@ -106,6 +138,7 @@ export function updateFigurants(dt) {
     if (dedans) { FIG.W.cacher(w.slotW); if (dansLeCar) FIG.T.poser(w.slotT, { ...P, y: truckFloorAt(e.x, e.z) }); }
     else { FIG.T.cacher(w.slotT); if (!dansLeCar || S.frame % 4 === 0) FIG.W.poser(w.slotW, { ...P, y: groundHeight(e.x, e.z) }); }
   }
+  updateBancs(t, dansLeCar);
   if (dansLeCar) FIG.T.publier(); else FIG.W.publier();
   if (S.frame % 4 === 0) FIG.W.publier();
 }
@@ -115,6 +148,10 @@ export function figurantsDebug() {
     equipe: FIG.equipe.map((q) => ({ id: q.e.id, nom: q.e.nom, occupe: q.occupe, s: Math.round(q.etat.s * 100) / 100, assis: Math.round(q.etat.assis * 100) / 100, L: q.L, visible: FIG.T.visible[FIG.equipe.indexOf(q)] })),
     marcheurs: FIG.marcheurs.map((w) => ({ id: w.m.id, x: w.e.x, z: w.e.z, cache: w.e.cache, k: w.e.k, dedans: inTruckFootprint(w.e.x, w.e.z), visibleW: FIG.W.visible[w.slotW], visibleT: FIG.T.visible[w.slotT] })),
     present: FIG.present,
+    bancs: FIG.B ? FIG.B.visible.filter(Boolean).length : 0,
+    // couleur de veste (buste) de chaque place des bancs, et où chacun est (x, y, z de son bassin)
+    tenuesBanc: FIG.B ? Array.from({ length: NB }, (_, i) => new THREE.Color().fromArray(FIG.B.parts.torso.instanceColor.array, i * 3).getHex()) : [],
+    posesBanc: FIG.B ? Array.from({ length: NB + COMMENTATEURS.length }, (_, i) => { const e = FIG.B.parts.pelvis.instanceMatrix.array; return [e[i * 16 + 12], e[i * 16 + 13], e[i * 16 + 14]].map((v) => Math.round(v * 100) / 100); }) : [],
   };
 }
 /** pour les tests : fait avancer les figurants de quelques secondes d'un coup */

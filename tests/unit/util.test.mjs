@@ -1,7 +1,7 @@
 // Fonctions utilitaires pures (src/util.js)
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { clamp, lerp, smoothstep, wrapAngle, lerpAngle, dbToLin, linToDb, powDbToLin, linToPowDb, spring, mulberry32, tc, clockStr, mmss, fmt, kelvinRGBNorm } from '../../src/util.js';
+import { clamp, lerp, smoothstep, wrapAngle, lerpAngle, dbToLin, linToDb, powDbToLin, linToPowDb, spring, mulberry32, tc, clockStr, mmss, fmt, kelvinRGBNorm, tailleAjustee } from '../../src/util.js';
 
 const near = (a, b, eps = 1e-9) => assert.ok(Math.abs(a - b) <= eps, `${a} ≠ ${b} (±${eps})`);
 
@@ -58,4 +58,12 @@ test('format français : virgule décimale', () => {
 test('température de couleur : 5 600 K = référence neutre, tungstène plus chaud', () => {
   const ref = kelvinRGBNorm(5600); near(ref[0], 1, 1e-9); near(ref[2], 1, 1e-9);
   const tung = kelvinRGBNorm(3200); assert.ok(tung[0] > 1 && tung[2] < 1, 'à 3 200 K : plus de rouge, moins de bleu');
+});
+
+test('textes du décor : la police descend jusqu\'à ce que le texte tienne dans sa case', () => {
+  const mesure = (n) => (s) => n * s * 0.5; // n caractères de 0,5 em
+  assert.equal(tailleAjustee(mesure(10), 1000, 60, 10), 60, 'un texte court garde sa taille');
+  const s = tailleAjustee(mesure(40), 500, 60, 10);
+  assert.ok(mesure(40)(s) <= 500 && mesure(40)(s + 1) > 500, `taille ${s} : la plus grande qui tient`);
+  assert.equal(tailleAjustee(mesure(400), 100, 60, 12), 12, 'jamais sous le minimum (fillText resserre alors le texte)');
 });

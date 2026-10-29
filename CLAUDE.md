@@ -57,6 +57,12 @@ Tout est en français (code commenté en français, interface, commits).
   jamais à travers les obstacles : `OBSTACLES_COMPOUND` de `world.js`, `truckBlocked`). Dans Jouer, « Ton poste » :
   commencer assis à un poste. Un câble est posé au sol ou tendu entre deux supports, jamais en l'air sans raison.
   Tests `tests/unit/match.test.mjs`, `tests/unit/figurants.test.mjs`, suite `node tools/e2e.mjs figurants`.
+- **Le style graphique** (v19.21, décidé le 29 octobre 2026) : « dessin » par défaut (cel shading, `src/style.js` :
+  paliers de lumière et ombres nettes par réécriture des `ShaderChunk` de three.js, sans coût ; contours à l'encre et
+  couleurs franches dans la composition de `render.js`, qualité Moyenne et Haute), « réaliste » au choix (Réglages). Un
+  texte du décor s'écrit avec `texteAjuste` (`util.js`) et ne dépasse jamais de son support : un panneau écrit du stade
+  s'inscrit dans `W.panneaux` avec sa boîte (suite `node tools/e2e.mjs graphismes`). Les bancs de touche
+  (`figurants/banc.js`) : remplaçants aux couleurs du club, staff, entraîneur dans sa zone technique.
 - **Réglages** : une seule fenêtre (`src/ui/settings.js`), avec le profil Étudiant / Formateur
   (`src/app/profile.js`) ; l'espace formateur (configuration, suivi, relecture) n'y apparaît qu'au profil
   Formateur (classe `role-only`).

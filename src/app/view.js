@@ -6,6 +6,7 @@ import { el, clamp } from '../util.js';
 import { setCloudQuality, W } from '../world.js';
 import { $ } from '../ui/common.js';
 import { PL } from './player.js';
+import { typeOmbre } from '../style.js';
 
 // ----------------------------------------------------------------------------------
 // Vue du joueur : moteur de rendu WebGL, caméra « des yeux », qualité graphique.
@@ -31,7 +32,7 @@ export function createRenderer() {
   renderer.setSize(window.innerWidth, window.innerHeight, false);
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap; renderer.shadowMap.autoUpdate = false;
+  renderer.shadowMap.enabled = true; renderer.shadowMap.type = typeOmbre(); renderer.shadowMap.autoUpdate = false; // net pour le style « dessin » (style.js)
   renderer.autoClear = true;
   window.addEventListener('resize', () => {
     renderer.setSize(window.innerWidth, window.innerHeight, false);
