@@ -115,7 +115,9 @@ Tout est en français (code commenté en français, interface, commits).
   `src/cours/exercices.js` (BY_LESSON : chaque exercice une seule fois, test unitaire), avec les exercices notés
   (`x-atelier`, `x-brassage`, `x-reseau`, `x-match`, `x-camera`). Le chef (`src/ui/tutor_ui.js`, touche J) est une
   **boîte de dialogue en bas de l'écran** (`#chef.dlg` : portrait, nom, texte, gestes ; elle passe en haut si
-  l'élément montré est dessous, se réduit en une ligne ; pas de petite fenêtre déplaçable) ; il ne propose que les
+  l'élément montré est dessous, se réduit en une ligne ; pas de petite fenêtre déplaçable ; v19.21 : sous une fenêtre ouverte
+  sauf quand l'étape s'y joue, à gauche du téléphone levé, jamais sur la bande d'état ni le retour PGM : `etage()`, suite
+  `node tools/e2e.mjs superpositions`) ; il ne propose que les
   exercices du poste où l'on est ; en fin d'exercice, « Revenir à la leçon » (ou « Mission suivante »). La **visite
   guidée** : proposée par Olivier au début du car vide (et la mission de stagiaire de la Carrière) : le tour du car,
   puis la présentation de chaque poste ; son plan est dans le suivi des tâches.
@@ -133,7 +135,9 @@ Tout est en français (code commenté en français, interface, commits).
   `#qmark`), le journal des missions (touche L, application Missions du téléphone : exercices du poste,
   toutes les missions par chapitre, badges), XP / niveaux / badges (`xp.js`, calcul pur, barème `BAREME`, badges de
   compétence pilotés par `src/livret.js`), accroches sur les événements (`progression.js`), effets (`fx.js`) et
-  bruitages WebAudio (`sfx.js`, réglage dans Réglages → Jeu). Le HUD est épuré : trois blocs (objectif avec le lieu,
+  bruitages WebAudio (v19.21 : recettes en calcul pur dans `sons.js`, moteur et accroches dans `sfx.js`, réglage dans Réglages →
+  Jeu ; ni onde carrée ni dents de scie, notes tenues en ré majeur pentatonique, un clic reste sous −30 dBFS ; un
+  nouveau son est une recette de `sons.js`, testée par `tests/unit/sons.test.mjs` et rendue par `node tools/e2e.mjs sons`). Le HUD est épuré : trois blocs (objectif avec le lieu,
   barre d'outils avec le niveau : Téléphone, Menu ; bande d'état TC · match · PGM · alarmes) et le retour PGM ; le mini-plan et le panneau du jour de match sont masqués (réglage, objectif). Toute nouvelle activité notée émet un événement et
   prend une ligne dans `progression.js`. Le thème visuel est `src/styles/theme-jeu.css` (chargé en dernier : il
   redéfinit les jetons de couleur et les composants) ; une animation d'entrée n'anime que la position, jamais
@@ -158,6 +162,10 @@ Tout est en français (code commenté en français, interface, commits).
   des définitions courtes ; une leçon les cite dans `terms`.
 
 ## Contenu et ton
+- **Le tutoiement partout** (décidé le 29 octobre 2026) : l'interface, Olivier, les leçons, les quiz et les exercices
+  tutoient l'élève. Seuls le formateur (espace formateur, rôle formateur en coopération) et le relecteur professionnel
+  (fiche de relecture) sont vouvoyés, ainsi que les personnages qui parlent à d'autres que l'élève (la chaîne, les
+  commentateurs).
 - Pédagogique, précis, chiffres vérifiables (normes SMPTE, débits, longueurs) ; quand un chiffre est un ordre
   de grandeur, le dire. Le jargon est expliqué à sa première apparition.
 - Pas de marque AMP. Le nom RC Lens et les couleurs sang et or sont admis, pas le blason officiel ; garder la

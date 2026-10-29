@@ -394,6 +394,65 @@ Tests :
   « Emmène-moi / Montre-moi » doit mettre en évidence un élément réel de la page, et « Fais-le pour moi » doit faire
   valider l'étape.
 
+## v19.21 : une interface plus nette, tutoyée, et des bruitages de studio
+
+**Pourquoi.** Un premier lancement au profil Étudiant, relu capture par capture, montrait des défauts qu'un débutant
+voit tout de suite : Olivier passait devant le menu Échap (« Retour à l'accueil » caché) et devant le téléphone ; sur
+l'écran titre, le conseil d'Olivier recouvrait la mire ; les heures s'écrivaient « 20: 44: 50 » ; l'interface vouvoyait
+ici et tutoyait là ; les bruitages sonnaient « jeu d'arcade ». C'est le premier lot de la refonte des interfaces ; le
+premier lancement (lot 2) et la charte (lot 3) sont proposés en maquettes (ROADMAP.md).
+
+**Olivier à sa place** (`ui/tutor_ui.js`, `etage()` ; `styles/chef-dialogue.css`). La boîte de dialogue :
+
+- passe sous une fenêtre ouverte (menu Échap, réglages, synoptiques…), sauf quand l'étape en cours se joue dedans
+  (« Suivre le câble », dans la visionneuse de matériel) ;
+- se range à gauche du téléphone levé ;
+- dans le car, se pose au-dessus de la bande d'état (timecode, PGM, alarmes) et se centre dans la place que laisse le
+  retour PGM.
+
+**L'écran titre.** Le moniteur (la mire), le niveau et le conseil d'Olivier s'empilent dans la colonne de droite : les
+zones de l'ancienne grille (`menu.css`) les plaçaient l'un sur l'autre.
+
+**La ponctuation des chiffres.** B612 Mono cale le deux-points, le point et la virgule à gauche d'une case entière :
+« 20: 44 », « 192. 168. 1. 23 », « 1, 5 dB ». Une famille « TIEE Ponctuation » (Archivo, limitée à ces trois signes
+par `unicode-range`, `tools/build.mjs`) passe devant B612 Mono dans `--f-mono` : « 20:44 », « 192.168.1.23 ». Les
+colonnes restent alignées (chaque valeur d'une colonne a autant de signes).
+
+**Réglages.** Les choix sont dans le même ordre partout (Affiché, puis Masqué) ; la note qui renvoyait au « pupitre
+(Tab) », remplacé par le téléphone en v19.9, renvoie à l'application Aller à.
+
+**Le tutoiement partout** (décidé le 29 octobre 2026). Olivier tutoyait, l'interface vouvoyait. Environ 1 500 formes
+converties dans 130 fichiers, conjugaison comprise (« Que faites-vous ? » → « Que fais-tu ? », « vous préparerez » →
+« tu prépareras », « Approchez-vous » → « Approche-toi ») : Jouer, suivi des tâches, téléphone, postes, Cours (leçons,
+quiz, exercices en autonomie, exercices pratiques), vues 3D, entrepôt, émission, coopération. Restent au vouvoiement :
+ce qui s'adresse au formateur (espace formateur, consignes du rôle formateur en coopération) et au relecteur
+professionnel (fiche de relecture), et les personnages qui parlent à d'autres que l'élève (la chaîne et le stade à
+l'intercom, les commentateurs, la publicité, la box qui « propose » une adresse à la machine).
+
+**Des bruitages de studio** (`game/sons.js`, recettes en calcul pur ; `game/sfx.js`, le moteur WebAudio). Trente-cinq
+sons au lieu de seize, sur une palette de régie plutôt que d'arcade :
+
+- ni onde carrée ni dents de scie : des cloches en synthèse FM (verre, métal doux), des « bois » (marimba), des
+  souffles filtrés et des clics ;
+- les notes tenues sont toutes en ré majeur pentatonique : deux sons qui se suivent ne jurent jamais ;
+- une chaîne de sortie commune : coupe-bas 40 Hz, coupe-haut 11 kHz, compresseur, réverbération courte calculée
+  (1,1 s, aigus amortis) ; les clics varient de ± 3 % pour ne pas sonner « mitraillette » ;
+- des niveaux hiérarchisés (crêtes mesurées, volume des bruitages au maximum) : le survol vers −42 dBFS, un clic vers
+  −30, une information ou une réussite vers −21 à −14, un passage de niveau vers −6.
+
+Nouveaux : la touche principale, une application du téléphone, un onglet, un interrupteur (il monte quand on allume,
+descend quand on éteint), une carte de Jouer, un repli, le curseur de volume (un cran, plus aigu vers le haut), le
+téléphone levé et rangé (à droite, comme lui), s'asseoir à un poste, le Cours en plein écran, une information,
+Olivier qui parle, une tâche cochée, un niveau du Cours ouvert, une caméra posée, le lancement d'une partie, le top
+antenne de l'émission (deux bips courts et un long à 1 kHz) et la fin d'antenne. Le refus reste discret (deux bois
+graves, sans buzzer).
+
+**Tests.** `tests/unit/sons.test.mjs` (palette : genres de voix, niveaux, durées, notes dans la gamme, survol le plus
+discret) ; `tests/e2e/sons.mjs` rend chaque son hors ligne dans le navigateur (ni saturé ni muet), vérifie les gestes
+(carte, interrupteur, curseur, fenêtre, bruitages coupés) et écrit la **planche d'écoute** (`planche-sons.wav`, tous
+les sons à la suite, et `planche-sons.txt`) ; `tests/e2e/superpositions.mjs` (écran titre, Olivier sous le menu, à côté
+du téléphone, hors de la bande d'état et du retour PGM, devant la fenêtre d'une étape ; la ponctuation des chiffres).
+
 ## v19.20 : un match qui ne se joue pas d'avance, de vrais adversaires, l'équipe à ses postes, un compound qui vit
 
 **Pourquoi.** Quatre retours après l'émission en direct : au début d'un match, trois joueurs tournaient autour du
@@ -2203,6 +2262,7 @@ node tools/shots.mjs dossier 1280 800 '["vision","hf"]'   # captures de postes
 | `game/missions.js`, `game/mission_run.js`, `ui/missions_ui.js` | La mission spécifique (Jouer → Car régie) : le catalogue par famille et la préparation du car (calcul pur), le déroulement (lancer, constater la fin, enchaîner ou arrêter), la liste à choisir |
 | `emission/` | L'émission en direct (car pré-installé) : le conducteur et le compte rendu, calcul pur (`conducteur.js`), les médias de l'IPDirector (`medias.js`), leurs images (`dessin.js`, texture d'un canal de l'EVS `video.js`) et leur musique (`musique.js`), l'état partagé (`etat.js`), l'équipe virtuelle des postes non occupés (`ia.js`), les panneaux (`panneau.js` : médias de l'IPDirector, conducteur, objectif), la boucle, l'horloge du direct et le compte rendu (`index.js`) ; styles `styles/emission.css` |
 | `game/fx.js`, `game/sfx.js` | Effets de jeu (barre d'XP, bannières de niveau et de badge, carte-titre, vignette, flash tally, alerte de panne) et bruitages synthétisés en WebAudio avec leur réglage |
+| `game/sons.js` | Les recettes des bruitages (calcul pur) : voix (clic, note, cloche FM, bois, souffle, corps grave), notes de ré majeur pentatonique, durées ; jouées par `game/sfx.js` (chaîne de sortie, réverbération, accroches sur les gestes et les événements) |
 | `styles/theme-jeu.css` | Le thème « jeu vidéo » : jetons de couleur, composants communs, HUD, écran titre, Jouer, menu, journal, badges |
 | `telephone/index.js`, `telephone/apps.js`, `telephone/modele.js`, `styles/telephone.css` | Le téléphone (Tab ou T) : lever et ranger, touches, accueil (objectif, niveau), applications par famille (Aller à, Missions, Olivier, outils du car, Cours, Progression, Réglages), boîtier 3D et écran HTML posé dessus (transformation projective `cssProjection`) |
 | `app/title.js` | Écran titre TIEE Simulator : logo du BTS, trois entrées (Jouer, Cours, Réglages), progression du chargement, conseils d'Olivier, mentions |
