@@ -39,7 +39,7 @@ import { lessonById as coursLesson } from '../cours/index.js';
 // (progression) est coché, et la fin ramène au bureau de l'entrepôt.
 // ----------------------------------------------------------------------------------
 const CHEF = { name: 'Olivier', role: 'chef de car' };
-const UI = { root: /** @type {HTMLElement | null} */ (null), openDom: '', placed: false, min: false, said: '', lastKey: '', voice: false, notes: /** @type {string[]} */ ([]), feedback: '', spotUntil: 0, intro: false, accueilVide: false, scrolled: /** @type {Element | null} */ (null) };
+const UI = { root: /** @type {HTMLElement | null} */ (null), openDom: '', placed: false, min: false, said: '', lastKey: '', voice: false, notes: /** @type {string[]} */ ([]), feedback: '', spotUntil: 0, intro: false, accueilVide: false, scrolled: /** @type {Element | null} */ (null), cible: /** @type {Element | null} */ (null) };
 try { UI.voice = localStorage.getItem('carregie.chefVoice') === '1'; } catch (e) { /* stockage indisponible */ }
 
 // ---------------- entrées / sorties pour le moteur ----------------
@@ -509,6 +509,7 @@ function findTarget(list) {
 function spot(list, scroll = false) {
   const sp = document.getElementById('chef-spot'); if (!sp) return;
   const f = list ? findTarget(list) : null;
+  UI.cible = f ? f.n : null;
   if (!f) { sp.hidden = true; return; }
   // dans le tiroir « Tous les réglages » d'un poste en 3D, la cible peut être hors de sa zone visible : on l'y
   // amène une fois (sans lutter ensuite contre le défilement de l'utilisateur)
@@ -531,12 +532,35 @@ function dodge(r) {
   placer(r.top + r.height / 2 > window.innerHeight / 2);
 }
 
+// ---------------- place de la boîte de dialogue parmi les fenêtres ----------------
+// Olivier passe sous une fenêtre ouverte (menu Échap, réglages, synoptiques…) sauf quand l'étape en cours se
+// joue dedans ; le téléphone levé, il se range à sa gauche. Dans le car, il laisse voir la bande d'état
+// (timecode, PGM, alarmes) et le retour PGM : il se pose au-dessus de l'une, à côté de l'autre.
+function etage() {
+  const R = UI.root; if (!R || R.hidden) return;
+  if (!TUTOR.lesson) UI.cible = null;
+  const dedans = (/** @type {string} */ sel) => !!(UI.cible && UI.cible.isConnected && UI.cible.closest(sel));
+  R.classList.toggle('sous', modal.isOpen && !dedans('#modal'));
+  let tel = '';
+  if (S.telephone) {
+    const p = document.querySelector('#telephone .tel-proj');
+    const r = p && p.getBoundingClientRect();
+    if (r && r.width > 0) tel = Math.round(window.innerWidth - r.left + 20) + 'px';
+  }
+  R.classList.toggle('cote-tel', !!tel);
+  if (tel) R.style.setProperty('--chef-tel', tel); else R.style.removeProperty('--chef-tel');
+  const mm = document.getElementById('minimon');
+  R.classList.toggle('au-car', !!(mm && mm.offsetParent && !mm.hidden && S.mode === 'fps'));
+}
+on('modalopen', etage); on('modalclose', etage); on('telephone:open', etage); on('telephone:close', etage);
+
 // ---------------- boucle : vérifier l'étape, suivre l'élément à montrer ----------------
 setInterval(() => { try { tick(); } catch (e) { const r = report(e, 'chef de car (suivi de l\'étape)'); if (r && r.n === 1) console.error(e); } }, 250);
 function tick() {
   for (const b of document.querySelectorAll('.chef-btn')) b.classList.toggle('busy', !!TUTOR.lesson);
   // dans la barre d'outils, le chef n'apparaît que s'il a quelque chose en cours (touche J à tout moment)
   const tb = document.getElementById('tb-chef'); if (tb) tb.hidden = !(TUTOR.lesson || TUTOR.open || S.visite);
+  etage();
   if (!TUTOR.lesson) { if (UI.root && !UI.root.hidden && S.mode !== 'start') render(); return; }
   const was = TUTOR.done;
   check();
@@ -576,6 +600,6 @@ on('station', () => {
   if (TUTOR.open) { render(true); return; }
   // la première fois qu'on ouvre un poste, le chef se présente (une fois par navigateur)
   let seen; try { seen = localStorage.getItem('carregie.chefHint') === '1'; localStorage.setItem('carregie.chefHint', '1'); } catch (e) { seen = true; }
-  if (!seen) toast('Besoin d\'aide ? Le chef de car (application Olivier du téléphone, ou touche J) vous présente ce poste et vous guide pas à pas.', '', 7000);
+  if (!seen) toast('Besoin d\'aide ? Le chef de car (application Olivier du téléphone, ou touche J) te présente ce poste et te guide pas à pas.', '', 7000);
 });
 on('stationClose', () => { if (TUTOR.open) render(true); });

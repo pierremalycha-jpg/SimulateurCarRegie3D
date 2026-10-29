@@ -19,7 +19,12 @@ const FONTS = [['Archivo', 'archivo', [400, 500, 600, 700]], ['Archivo Narrow', 
 const fontCss = FONTS.flatMap(([family, pkg, weights]) => weights.map((w) => {
   const b64 = fs.readFileSync(`node_modules/@fontsource/${pkg}/files/${pkg}-latin-${w}-normal.woff2`).toString('base64');
   return `@font-face{font-family:"${family}";font-style:normal;font-weight:${w};font-display:swap;src:url(data:font/woff2;base64,${b64}) format("woff2")}`;
-})).join('');
+})).join('')
+  // le deux-points, le point et la virgule de B612 Mono sont calés à gauche d'une case entière (« 20: 44 »,
+  // « 192. 168. 1. 23 », « 1, 5 dB ») : ceux d'Archivo les remplacent dans la police à chasse fixe de l'interface
+  // (--f-mono commence par cette famille, limitée à ces trois signes ; les colonnes restent alignées, chaque
+  // valeur d'une colonne ayant autant de signes)
+  + [400, 700].map((w) => `@font-face{font-family:"TIEE Ponctuation";font-style:normal;font-weight:${w};font-display:swap;unicode-range:U+002C,U+002E,U+003A;src:url(data:font/woff2;base64,${fs.readFileSync(`node_modules/@fontsource/archivo/files/archivo-latin-${w === 400 ? 500 : 600}-normal.woff2`).toString('base64')}) format("woff2")}`).join('');
 const raw = fs.readFileSync('src/index.template.html', 'utf8');
 for (const m of ['<!--BOOT-->', '<!--FONTS-->', '/*STYLES*/']) if (!raw.includes(m)) throw new Error(`src/index.template.html : marqueur ${m} introuvable`);
 // styles propres à une fonction (menu, PRISM, Videohub, réseau du car…) : src/styles/*.css, par ordre alphabétique

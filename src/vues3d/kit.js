@@ -11,7 +11,7 @@ import { Builder, roundedBox } from '../geo.js';
 // maillage instancié par flux). Couleurs : les mêmes que les schémas 2D du Cours.
 // ----------------------------------------------------------------------------------
 export const FONT = '"Archivo Narrow", "Arial Narrow", sans-serif';
-export const MONO = '"B612 Mono", Menlo, Consolas, monospace';
+export const MONO = '"TIEE Ponctuation", "B612 Mono", Menlo, Consolas, monospace';
 
 /** palette commune (schémas du Cours, cours/sdi.js) */
 export const COUL = {

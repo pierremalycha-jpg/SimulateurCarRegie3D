@@ -328,6 +328,9 @@ body:not(.hud-map) #truckmap { display: none !important; }
 #title.loading .ti-hint { visibility: hidden; }
 @media (pointer: coarse) { .ti-hint { display: none; } }
 .ti-side { grid-area: side; display: grid; gap: 14px; align-content: center; min-width: 0; }
+/* le moniteur, le niveau et le conseil s'empilent dans la colonne : les zones « mon » et « tip » de l'ancienne grille
+   (menu.css) n'existent plus ici et les plaçaient l'un sur l'autre */
+.ti-side > * { grid-area: auto; }
 .ti-mon { background: #02050a; border: 1px solid #22303f; border-radius: 0; clip-path: var(--notch); box-shadow: 0 0 0 1px rgba(25,211,255,.1), 0 20px 50px rgba(0,0,0,.6); padding: 8px; }
 .ti-umd b { color: #bfefff; } .ti-umd small { color: var(--muted); }
 #title.ready .ti-umd i { background: var(--pvw); box-shadow: 0 0 6px var(--pvw); }

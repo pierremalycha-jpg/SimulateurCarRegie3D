@@ -25,6 +25,18 @@
 .chef-visit-more[open] summary { color: var(--fg); }
 /* la boîte de dialogue ne cache pas la prise en main, ni le retour PGM */
 .chef-open #onboard { display: none; }
+/* sa place parmi le reste (etage() de tutor_ui.js) : sous une fenêtre ouverte (menu, réglages…) sauf quand
+   l'étape s'y joue, à gauche du téléphone levé ; dans le car, au-dessus de la bande d'état (timecode, PGM,
+   alarmes) et centrée dans la place que laisse le retour PGM */
+.chef.dlg.sous { z-index: 28; }
+@media (min-width: 901px) {
+  .chef.dlg.au-car:not(.haut) { bottom: calc(56px + env(safe-area-inset-bottom, 0px)); }
+  .chef.dlg.au-car { left: var(--gut-l, 16px); right: calc(var(--gut-r, 16px) + min(320px, 42vw) + 16px); width: auto; max-width: 780px; margin-inline: auto; transform: none; }
+}
+@media (min-width: 721px) {
+  .chef.dlg.cote-tel { left: var(--gut-l, 16px); right: var(--chef-tel); width: auto; max-width: 780px; margin-inline: auto; transform: none; }
+  .chef.dlg.au-car.min, .chef.dlg.cote-tel.min { max-width: 620px; }
+}
 @media (max-width: 720px) {
   .chef.dlg { left: 0 !important; right: 0; bottom: 0; transform: none; width: auto; max-height: 52vh; }
   .chef.dlg.haut { top: auto !important; bottom: 0; }
