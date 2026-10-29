@@ -136,7 +136,7 @@ Tout est en français (code commenté en français, interface, commits).
   toutes les missions par chapitre, badges), XP / niveaux / badges (`xp.js`, calcul pur, barème `BAREME`, badges de
   compétence pilotés par `src/livret.js`), accroches sur les événements (`progression.js`), effets (`fx.js`) et
   bruitages WebAudio (v19.21 : recettes en calcul pur dans `sons.js`, moteur et accroches dans `sfx.js`, réglage dans Réglages →
-  Jeu ; ni onde carrée ni dents de scie, notes tenues en ré majeur pentatonique, un clic reste sous −30 dBFS ; un
+  Jeu ; ni onde carrée ni dents de scie, notes tenues en ré majeur pentatonique, les gestes fréquents sous −24 dBFS, le refus sous la réussite ; un
   nouveau son est une recette de `sons.js`, testée par `tests/unit/sons.test.mjs` et rendue par `node tools/e2e.mjs sons`). Le HUD est épuré : trois blocs (objectif avec le lieu,
   barre d'outils avec le niveau : Téléphone, Menu ; bande d'état TC · match · PGM · alarmes) et le retour PGM ; le mini-plan et le panneau du jour de match sont masqués (réglage, objectif). Toute nouvelle activité notée émet un événement et
   prend une ligne dans `progression.js`. Le thème visuel est `src/styles/theme-jeu.css` (chargé en dernier : il
