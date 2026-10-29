@@ -23,6 +23,10 @@ for (const r of R) T.check(`${r.name} : ni saturé ni muet (crête ${r.peak.toFi
 const crete = Object.fromEntries(R.map((r) => [r.name, r.peak]));
 T.check('le survol est le plus discret', R.every((r) => r.name === 'hover' || crete.hover <= r.peak), crete.hover.toFixed(3));
 T.check('une réussite sonne plus fort qu\'un clic', crete.confirm > crete.ui && crete.mission > crete.ui && crete.levelup > crete.press);
+const db = (n) => 20 * Math.log10(crete[n]);
+T.check('les gestes fréquents restent discrets (sous −24 dBFS)', ['hover', 'ui', 'press', 'tap', 'tab', 'toggleOn', 'toggleOff', 'fold', 'dialog', 'xp', 'tally'].every((n) => db(n) < -24));
+T.check('le refus est plus discret qu\'une réussite', crete.error < crete.confirm, `${db('error').toFixed(1)} / ${db('confirm').toFixed(1)} dBFS`);
+T.check('une étape validée, un bon quiz : sous une mission réussie, sous un passage de niveau', crete.step < crete.mission && crete.quizok < crete.mission && crete.mission < crete.levelup);
 
 // ---------------- la planche d'écoute : tous les sons à la suite, 0,4 s entre deux ----------------
 const planche = await ev(async () => {
