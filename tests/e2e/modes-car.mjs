@@ -46,7 +46,13 @@ await reload;
 await A.waitForFunction('!!window.__dbg', null, { timeout: 180000, polling: 300 });
 T.check('après le rechargement : la mission et l\'exercice d\'Olivier commencent', await until(A, () => window.__dbg.S.modeCar === 'mission' && window.__dbg.mission.m && window.__dbg.mission.m.id === 'vision-exposition' && window.__dbg.TUTOR.lesson && window.__dbg.TUTOR.lesson.id === 'vision-exposition', null, 150000));
 await A.waitForTimeout(1200);
-T.check('Olivier en boîte de dialogue, en bas de l\'écran', await until(A, () => { const c = document.getElementById('chef'); if (!c || c.hidden || !c.classList.contains('dlg')) return false; const r = c.getBoundingClientRect(); return r.bottom > window.innerHeight - 40 && Math.abs((r.left + r.right) / 2 - window.innerWidth / 2) < 30; }, null, 10000));
+// en bas de l'écran (v19.21 : au-dessus de la bande d'état, à côté du retour PGM, jamais dessus)
+T.check('Olivier en boîte de dialogue, en bas de l\'écran, sans cacher la bande d\'état ni le retour PGM', await until(A, () => {
+  const c = document.getElementById('chef'); if (!c || c.hidden || !c.classList.contains('dlg')) return false;
+  const r = c.getBoundingClientRect(), H = window.innerHeight;
+  const croise = (/** @type {Element | null} */ e) => { if (!e) return false; const b = e.getBoundingClientRect(); return b.width > 10 && r.left < b.right && r.right > b.left && r.top < b.bottom && r.bottom > b.top; };
+  return r.bottom > H - 90 && r.top > H * 0.35 && !croise(document.getElementById('minimon')) && !croise(document.getElementById('statusbar'));
+}, null, 10000));
 T.check('le suivi montre les étapes de l\'exercice', await ev(() => document.querySelectorAll('#quest .q-task').length >= 3 && !!document.querySelector('#quest .q-task.now')));
 await shot(A, '04-dialogue');
 for (let i = 0; i < 30; i++) {
