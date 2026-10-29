@@ -1,6 +1,7 @@
 // @ts-check
 import * as THREE from 'three';
 import { S, emit, on } from './state.js';
+import { setStyle, STYLE } from './style.js';
 import { clamp, el } from './util.js';
 import { LIGHTING } from './data/exposure.js';
 import { TEAMS } from './data/match.js';
@@ -149,6 +150,7 @@ on('openStationLater', (id) => setTimeout(() => { placeAtStation(id); openStatio
 on('setLighting', (v) => { applyLighting(v); toast(`${LIGHTING[v].label} : la lumière a changé, les ingénieurs vision doivent réajuster les iris (poste vision, ou AUTO IRIS).`, '', 6000); });
 on('setLabels', (v) => { S.showLabels = v; if (v) pcam.layers.enable(1); else pcam.layers.disable(1); });
 on('setQuality', (v) => setQuality(v));
+on('setStyle', (cel) => setStyle(cel, renderer, [W.scene, T.scene]));
 on('match', (e) => { if (e.type === 'goal') toast(`BUT ! ${TEAMS[e.team].name} · ${e.score[0]}-${e.score[1]}`, 'good', 3500); });
 
 // ----------------------------------------------------------------------------------
@@ -260,7 +262,7 @@ initShared();
 // la configuration du car peut arriver après le démarrage : on recalcule la répartition EVS
 on('config', (part) => { if (part === 'car' && S.mode !== 'start') { defaultRouting(false); emit('router', {}); } updBrand(); });
 function updBrand() { paintTruckSign(CFG.car.name); const w2 = $('#where2'); if (w2 && CFG.car.name && !S.inTruck) w2.textContent = CFG.car.name; }
-document.fonts && document.fonts.ready.then(() => { W.boards && W.boards.redraw(); P.mvDirty = true; paintTruckSign(CFG.car.name); });
+document.fonts && document.fonts.ready.then(() => { W.boards && W.boards.redraw(); for (const f of W.textes) f(); P.mvDirty = true; paintTruckSign(CFG.car.name); });
 requestAnimationFrame(frame);
 window.__S = S; // accès console pour le débogage
 // diagnostic : la carte graphique et la fluidité, pour le texte à copier
@@ -283,6 +285,7 @@ window.__dbg.tel = { open: openTelephone, close: closeTelephone, state: telDebug
 window.__dbg.carriere = CARRIERE; window.__dbg.mission = MISSION_RUN;
 window.__dbg.emission = emissionDebug;
 window.__dbg.figurants = { etat: figurantsDebug, sauter: sauterFigurants, modules: { EQUIPE, MARCHEURS } };
+window.__dbg.style = { STYLE, chunks: () => THREE.ShaderChunk.lights_pars_begin.includes('celRamp') };
 window.__dbg.poste3d = { P3D, PUP, DESK, LSMS, ICOMS, voulu: poste3dVoulu };
 // le programme a démarré : le filet du chargement (boot.js) n'a plus à intervenir
 window.__carReady = true;

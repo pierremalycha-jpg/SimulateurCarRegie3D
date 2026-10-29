@@ -82,3 +82,49 @@ test('le marcheur : il avance à sa vitesse, s\'arrête le temps de la pause, et
   avancerMarcheur(m, e, 1.5); assert.equal(e.x, 2); assert.equal(e.vitesse, 0); assert.equal(e.bras, 'radio'); assert.equal(e.cap, 0.5);
   avancerMarcheur(m, e, 0.6); assert.equal(e.k, 0, 'la pause finie, il repart vers le premier point');
 });
+
+// ---------------- les bancs de touche (banc.js) ----------------
+import { BANCS, ABRI, MEMBRES, COMMENTATEURS, siege, tenueBanc, poseBanc } from '../../src/figurants/banc.js';
+import { TEAMS } from '../../src/data/match.js';
+import { CLUBS } from '../../src/data/clubs.js';
+
+test('les bancs : neuf sièges sous chaque abri, un remplaçant ou un membre du staff sur chacun, l\'entraîneur debout', () => {
+  assert.deepEqual(BANCS.map((b) => b.team), [0, 1]);
+  const roles = MEMBRES.map((m) => m.role);
+  assert.equal(roles.filter((r) => r === 'remplacant').length, 7, 'sept remplaçants');
+  assert.ok(roles.includes('entraineur') && roles.includes('adjoint'), 'l\'entraîneur et son adjoint');
+  const assis = MEMBRES.filter((m) => m.siege >= 0).map((m) => m.siege);
+  assert.equal(new Set(assis).size, assis.length, 'un siège chacun');
+  for (const k of assis) assert.ok(k >= 0 && k < ABRI.sieges);
+  for (const b of BANCS) {
+    for (let k = 0; k < ABRI.sieges; k++) { const p = siege(b.cx, k); assert.ok(Math.abs(p.x - b.cx) <= ABRI.long / 2 - 0.3, `siège ${k} sous l'abri`); }
+    // les joueurs rejoignent leur banc à la mi-temps (match.js) : Lens à gauche, l'adversaire à droite
+    assert.ok(b.team === 0 ? b.cx < 0 : b.cx > 0);
+  }
+  assert.ok(COMMENTATEURS.length === 2 && COMMENTATEURS.every((c) => c.y > 10), 'deux commentateurs en tribune de presse');
+});
+
+test('les tenues du banc suivent les couleurs du club, l\'entraîneur est en costume', () => {
+  for (const club of [TEAMS[0], ...CLUBS.slice(0, 4)]) {
+    const r = tenueBanc(club, MEMBRES[0], 0);
+    assert.equal(r.haut, club.sleeves ?? club.shirt); assert.equal(r.col, club.shirt); assert.equal(r.bas, club.shorts); assert.ok(r.manchesLongues);
+  }
+  const coach = tenueBanc(TEAMS[0], MEMBRES.find((m) => m.role === 'entraineur'), 3);
+  assert.ok(coach.haut < 0x404040 && coach.col === 0xf2f2f2, 'costume sombre, chemise blanche');
+});
+
+test('les poses du banc : l\'entraîneur reste dans sa zone technique, le banc se lève quand son équipe marque', () => {
+  const coach = MEMBRES.find((m) => m.role === 'entraineur'), sub = MEMBRES[0];
+  for (const b of BANCS) for (let t = 0; t < 400; t += 0.7) {
+    const p = poseBanc(b, coach, 9, t, { x: 20, z: 5 }, false);
+    assert.ok(Math.abs(p.x - b.cx) <= ABRI.zt.dx && p.z >= ABRI.zt.z0 - 1e-9 && p.z <= ABRI.zt.z1 + 1e-9, `t = ${t} : dans la zone technique`);
+    assert.ok(p.z < -34, 'jamais sur le terrain (touche à z = −34)');
+    assert.ok(Math.abs(p.teteYaw) <= 1.1);
+  }
+  const calme = poseBanc(BANCS[0], sub, 0, 10, { x: 0, z: 0 }, false);
+  assert.equal(calme.assis, 1); assert.equal(calme.yaw, 0, 'face au terrain');
+  assert.ok(calme.teteYaw > 0, 'il regarde le ballon, à sa droite');
+  let debout = 0; for (let t = 0; t < 6; t += 0.1) if (poseBanc(BANCS[0], sub, 0, t, { x: 0, z: 0 }, true).assis === 0) debout++;
+  assert.ok(debout > 40, 'un but : debout, bras levés, presque tout le temps de la fête');
+  assert.equal(poseBanc(BANCS[0], sub, 0, 1, { x: 0, z: 0 }, true).bras, 'leve');
+});

@@ -67,8 +67,8 @@ function drawMain() {
     g.fillStyle = 'rgba(12,16,24,0.92)'; roundRect(g, x, y, w, h, 4); g.fill();
     g.fillStyle = T.color; g.fillRect(x, y, 64, h);
     g.fillStyle = '#fff'; g.font = `700 34px ${FONT}`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(String(playerNumber(p)), x + 32, y + h / 2 + 2);
-    g.textAlign = 'left'; g.font = `700 28px ${FONT}`; g.fillText(playerName(p).toUpperCase(), x + 80, y + 24);
-    g.font = `500 18px ${FONT}`; g.fillStyle = '#b9c3cc'; g.fillText(`${POSITIONS[p % 11]} · ${T.name}`, x + 80, y + 48);
+    g.textAlign = 'left'; g.font = `700 28px ${FONT}`; g.fillText(playerName(p).toUpperCase(), x + 80, y + 24, w - 96);
+    g.font = `500 18px ${FONT}`; g.fillStyle = '#b9c3cc'; g.fillText(`${POSITIONS[p % 11]} · ${T.name}`, x + 80, y + 48, w - 96);
   } else if (GFX.template === 'stats') {
     const w = 520, h = 250, x = (GFX.w - w) / 2, y = (GFX.h - h) / 2 + (1 - a) * 30;
     g.globalAlpha = a;
@@ -81,7 +81,7 @@ function drawMain() {
     g.font = `600 22px ${FONT}`;
     rows.forEach((r, i) => {
       const yy = y + 90 + i * 40;
-      g.fillStyle = '#b9c3cc'; g.fillText(r[0], x + w / 2, yy);
+      g.fillStyle = '#b9c3cc'; g.fillText(r[0], x + w / 2, yy, w * 0.4);
       g.fillStyle = '#fff'; g.fillText(String(r[1]), x + 70, yy); g.fillText(String(r[2]), x + w - 70, yy);
     });
     g.font = `600 18px ${FONT}`; g.fillStyle = '#fff';
@@ -91,16 +91,16 @@ function drawMain() {
     g.globalAlpha = a;
     g.fillStyle = 'rgba(12,16,24,0.93)'; roundRect(g, x, y, w, h, 6); g.fill();
     g.fillStyle = TEAMS[0].color; g.fillRect(x, y, w, 46);
-    g.fillStyle = '#fff'; g.font = `700 26px ${FONT}`; g.textBaseline = 'middle'; g.fillText(TEAMS[0].name, x + 16, y + 24);
+    g.fillStyle = '#fff'; g.font = `700 26px ${FONT}`; g.textBaseline = 'middle'; g.fillText(TEAMS[0].name, x + 16, y + 24, w - 32);
     g.font = `500 21px ${FONT}`;
-    for (let i = 0; i < 11; i++) { g.fillStyle = '#ffd23f'; g.fillText(String(playerNumber(i)), x + 18, y + 72 + i * 31); g.fillStyle = '#f2f5f7'; g.fillText(playerName(i), x + 60, y + 72 + i * 31); }
+    for (let i = 0; i < 11; i++) { g.fillStyle = '#ffd23f'; g.fillText(String(playerNumber(i)), x + 18, y + 72 + i * 31); g.fillStyle = '#f2f5f7'; g.fillText(playerName(i), x + 60, y + 72 + i * 31, w - 76); }
   } else if (GFX.template === 'titre') {
     const w = 620, h = 90, x = (GFX.w - w) / 2, y = GFX.h - 150 + (1 - a) * 40;
     g.globalAlpha = a;
     g.fillStyle = 'rgba(12,16,24,0.93)'; roundRect(g, x, y, w, h, 6); g.fill();
     g.fillStyle = '#ffd23f'; g.fillRect(x, y + h - 5, w, 5);
-    g.fillStyle = '#fff'; g.font = `700 34px ${FONT}`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(GFX.title, x + w / 2, y + 34);
-    g.font = `500 20px ${FONT}`; g.fillStyle = '#b9c3cc'; g.fillText(GFX.subtitle, x + w / 2, y + 66);
+    g.fillStyle = '#fff'; g.font = `700 34px ${FONT}`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(GFX.title, x + w / 2, y + 34, w - 40);
+    g.font = `500 20px ${FONT}`; g.fillStyle = '#b9c3cc'; g.fillText(GFX.subtitle, x + w / 2, y + 66, w - 40);
   }
   g.restore();
   GFX.main.tex.needsUpdate = true;
