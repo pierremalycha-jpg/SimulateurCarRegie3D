@@ -55,14 +55,14 @@ export function panneauMedias(ctx) {
   function charge(id) {
     if (!ok()) return;
     const m = mediaCharge();
-    if (m && m.playing && meSource(MIX.pgm) === sourceMedias()) { toast('Un média est à l\'antenne sur ce canal : attendez qu\'il soit fini (ou que le truquiste en sorte).', 'bad'); return; }
+    if (m && m.playing && meSource(MIX.pgm) === sourceMedias()) { toast('Un média est à l\'antenne sur ce canal : attends qu\'il soit fini (ou que le truquiste en sorte).', 'bad'); return; }
     evsAction(ch(), 'media', { id, by: parMoi() });
     ctx.explain(`« ${MEDIAS[id].titre} » chargé sur ${nomCanal()}, en pause sur sa première image (cue). Au top, LANCER : le truquiste le prend à l'antenne (source ${sourceMedias() === 'EVSB' ? 'EVS B' : 'EVS A'} au mélangeur).`, 'ipd:charge');
   }
   function joue() {
     if (!ok()) return;
     const m = mediaCharge();
-    if (!m) { toast('Aucun média chargé : choisissez-en un dans la liste (Charger).', 'bad'); return; }
+    if (!m) { toast('Aucun média chargé : choisis-en un dans la liste (Charger).', 'bad'); return; }
     evsAction(ch(), 'mediaplay', parMoi());
     const seg = segmentDe(EMI.C); const suiv = SEGMENTS[EMI.C.i + 1];
     const auTop = EMI.on && (seg.media === m.id || ((seg.type === 'compte' || seg.type === 'duree') && !!suiv && suiv.media === m.id));

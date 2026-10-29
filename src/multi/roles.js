@@ -13,15 +13,15 @@ import { SES } from './session.js';
 // ----------------------------------------------------------------------------------
 export const ROLE_BRIEF = {
   formateur: { station: 'chefdecar', steps: ['Attribuez un rôle à chacun (onglet Participants).', 'Annoncez la mise à l\'antenne, puis injectez des pannes chez le bon poste.', 'Enregistrez le compte rendu à la fin.'] },
-  realisateur: { station: 'realisateur', steps: ['Regardez le multiview : choisissez la prochaine image.', 'Ordres au truquiste : « Prépare la 3 », puis « Top » (cut) ou « Enchaîne ».', 'Demandez le ralenti à l\'EVS après chaque action forte, le score à l\'habillage.'] },
-  truquiste: { station: 'melangeur', steps: ['Exécutez les ordres du réalisateur dès qu\'ils s\'affichent.', 'Préparez au bus PST ce qu\'il annonce, coupez au « Top ».', 'Gardez le score (DSK) quand on vous le demande.'] },
-  evs: { station: 'evsA', steps: ['Vérifiez que l\'enregistrement tourne (REC).', 'Après une action, marquez l\'entrée et la sortie, lisez au ralenti.', 'Annoncez « ralenti prêt » : le truquiste l\'envoie à l\'antenne.'] },
+  realisateur: { station: 'realisateur', steps: ['Regarde le multiview : choisis la prochaine image.', 'Ordres au truquiste : « Prépare la 3 », puis « Top » (cut) ou « Enchaîne ».', 'Demande le ralenti à l\'EVS après chaque action forte, le score à l\'habillage.'] },
+  truquiste: { station: 'melangeur', steps: ['Exécute les ordres du réalisateur dès qu\'ils s\'affichent.', 'Prépare au bus PST ce qu\'il annonce, coupe au « Top ».', 'Garde le score (DSK) quand on te le demande.'] },
+  evs: { station: 'evsA', steps: ['Vérifie que l\'enregistrement tourne (REC).', 'Après une action, marque l\'entrée et la sortie, lis au ralenti.', 'Annonce « ralenti prêt » : le truquiste l\'envoie à l\'antenne.'] },
   son: { station: 'son', steps: ['Ambiances toujours ouvertes, canons près du ballon.', 'Commentaires dans le PGM, jamais dans l\'international ni dans leur N-1.', 'Loudness autour de −23 LUFS, corrélation positive.'] },
-  vision: { station: 'vision1', steps: ['Suivez l\'exposition de chaque caméra au waveform (iris).', 'Alignez les caméras entre elles (noirs, blancs, couleur).', 'Réagissez aux changements de lumière et aux images sombres.'] },
-  technique: { station: 'grille', steps: ['Surveillez les alarmes (barre d\'état) : liaisons, synchro, transmission.', 'Grille : le PGM doit partir vers la transmission.', 'Dépannez les liaisons caméras et la HF.'] },
-  habillage: { station: 'habillage', steps: ['Score et horloge à l\'antenne pendant le jeu.', 'Bandeaux joueurs et statistiques à la demande du réalisateur.', 'Retirez un graphique avant le ralenti s\'il gêne.'] },
-  cadreur: { station: null, steps: ['Allez à votre caméra et prenez-la (touche E devant elle).', 'Cadre propre quand votre tally est rouge : vous êtes à l\'antenne.', 'Suivez le jeu, anticipez les changements de plan.'] },
-  observateur: { station: null, steps: ['Suivez la prestation : multiview, postes en lecture seule, ordres.'] },
+  vision: { station: 'vision1', steps: ['Suis l\'exposition de chaque caméra au waveform (iris).', 'Aligne les caméras entre elles (noirs, blancs, couleur).', 'Réagis aux changements de lumière et aux images sombres.'] },
+  technique: { station: 'grille', steps: ['Surveille les alarmes (barre d\'état) : liaisons, synchro, transmission.', 'Grille : le PGM doit partir vers la transmission.', 'Dépanne les liaisons caméras et la HF.'] },
+  habillage: { station: 'habillage', steps: ['Score et horloge à l\'antenne pendant le jeu.', 'Bandeaux joueurs et statistiques à la demande du réalisateur.', 'Retire un graphique avant le ralenti s\'il gêne.'] },
+  cadreur: { station: null, steps: ['Va à ta caméra et prends-la (touche E devant elle).', 'Cadre propre quand ton tally est rouge : tu es à l\'antenne.', 'Suis le jeu, anticipe les changements de plan.'] },
+  observateur: { station: null, steps: ['Suis la prestation : multiview, postes en lecture seule, ordres.'] },
 };
 
 // compteurs de la prestation (pour les objectifs) : mis à jour par trackRoleStats
@@ -100,7 +100,7 @@ export function objectives(role) {
       const c = SES.cam ? camById(SES.cam) : null;
       const held = S.mode === 'camop' && S.camop && S.camop.id === SES.cam;
       return [
-        { label: 'Votre caméra', value: c ? `CAM ${c.id} · ${c.T.short}` : 'introuvable', ok: !!c },
+        { label: 'Ta caméra', value: c ? `CAM ${c.id} · ${c.T.short}` : 'introuvable', ok: !!c },
         { label: 'Prise en main', value: held ? 'oui' : 'non (E devant la caméra)', ok: held },
         { label: 'Temps à l\'antenne', value: `${Math.floor(RS.onAir / 60)} min ${String(Math.floor(RS.onAir % 60)).padStart(2, '0')} s`, ok: null },
       ];

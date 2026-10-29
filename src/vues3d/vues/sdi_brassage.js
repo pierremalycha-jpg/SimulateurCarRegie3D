@@ -37,7 +37,7 @@ En vidéo, tout est en **75 Ω** : le rapport des diamètres de la broche et du 
     { t: 'Une pièce 50 Ω : la réflexion', reglage: { eclate: false, p50: true }, vue: { cible: [-1.2, 0.6, 0], dir: [0, 0.45, 1], dist: 4.6 },
       texte: `Un BNC **50 Ω** (informatique, radio) s'emboîte parfaitement dans un 75 Ω, mais sa broche est plus épaisse. À cette **rupture d'impédance**, une partie de chaque impulsion repart en arrière : Γ = (50 − 75) / (50 + 75) = **−0,2**, soit **20 %** de l'amplitude réfléchie, en sens inverse.
 
-Ces réflexions brouillent les bits suivants : l'œil se ferme, la liaison perd une bonne partie de sa portée. Sur une liaison courte, ça passe peut-être ; sur une longue, c'est la falaise. Coupez la pièce 50 Ω : plus d'écho.` },
+Ces réflexions brouillent les bits suivants : l'œil se ferme, la liaison perd une bonne partie de sa portée. Sur une liaison courte, ça passe peut-être ; sur une longue, c'est la falaise. Coupe la pièce 50 Ω : plus d'écho.` },
     { t: 'La baie normalée : sans cordon', reglage: { cordon: null }, vue: { cible: [PX, 1.4, 0], dir: [0.15, 0.28, 1], dist: 5 },
       texte: `La **baie de brassage** (jackfield) aligne des embases par paires : en haut les **sorties** des appareils (caméras, serveurs, mire), en bas les **entrées** (ici la grille). La façade est montrée en transparence.
 
@@ -45,7 +45,7 @@ Sans cordon, chaque embase du haut est reliée **à l'intérieur** à celle d'en
     { t: 'Le cordon dévie le signal', reglage: { cordon: [1, 4] }, vue: { cible: [PX, 1.4, 0], dir: [0.15, 0.28, 1], dist: 5 },
       texte: `Un **cordon** enfoncé dans une embase **coupe la liaison normale** de sa paire. Ici, la sortie de la CAM 2 part par le cordon vers l'entrée 5 de la grille : l'entrée 5 reçoit la CAM 2, l'entrée 2 ne reçoit plus rien, et l'EVS A, dont la liaison normale est coupée par le cordon, n'arrive plus nulle part.
 
-L'embase laissée seule est fermée sur **75 Ω** (baie autoterminée). Le brassage sert à **dévier** un signal en secours, sans toucher aux câbles de l'arrière. Changez le cordon dans « À vous ».` },
+L'embase laissée seule est fermée sur **75 Ω** (baie autoterminée). Le brassage sert à **dévier** un signal en secours, sans toucher aux câbles de l'arrière. Change le cordon dans « À toi ».` },
     { t: 'Ce qui casse au brassage', reglage: { cordon: [1, 4], p50: true }, vue: { cible: [0.8, 1.2, 0], dir: [0, 0.3, 1], dist: 9 },
       texte: `Chaque passage par la baie ajoute deux connecteurs et un cordon : de l'ordre de **0,5 dB**, peu, mais une **rupture d'impédance** possible à chaque usure. Les pannes « intermittentes » naissent là :
 - un cordon fatigué ou écrasé (réflexions : le dépassement monte à la baie de mesure) ;
@@ -205,7 +205,7 @@ Une liaison longue se fait d'un seul tenant ; un signal à envoyer à plusieurs 
             el('button', { type: 'button', class: 'btn small', onclick: () => { S.cordon = null; rebuild(); ctx.say('Cordon retiré : la baie est de nouveau normalée.'); } }, 'Retirer')),
           el('div', { class: 'v3-row' },
             el('button', { type: 'button', class: 'btn small', 'data-k': 'eclate', 'aria-pressed': String(S.eclate), onclick: () => { S.eclate = !S.eclate; syncUi(); } }, 'BNC éclaté'),
-            el('button', { type: 'button', class: 'btn small', 'data-k': 'p50', 'aria-pressed': String(S.p50), onclick: () => { S.p50 = !S.p50; rebuild(); syncUi(); ctx.say(S.p50 ? 'Pièce 50 Ω posée : regardez les échos rouges repartir vers la gauche.' : 'Tout en 75 Ω : plus d\'écho.'); } }, 'Pièce 50 Ω')));
+            el('button', { type: 'button', class: 'btn small', 'data-k': 'p50', 'aria-pressed': String(S.p50), onclick: () => { S.p50 = !S.p50; rebuild(); syncUi(); ctx.say(S.p50 ? 'Pièce 50 Ω posée : regarde les échos rouges repartir vers la gauche.' : 'Tout en 75 Ω : plus d\'écho.'); } }, 'Pièce 50 Ω')));
         return ui;
       },
     };

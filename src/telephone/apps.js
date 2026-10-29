@@ -133,7 +133,7 @@ const row = (label, ico, fn, o = {}) => el('button', { type: 'button', class: 't
 function allerView(box) {
   const here = station();
   const [zone, hint] = whereAmI();
-  box.append(el('p', { class: 'tel-here' }, el('small', {}, 'Vous êtes ici'), el('b', {}, zone), hint ? el('span', {}, hint) : null));
+  box.append(el('p', { class: 'tel-here' }, el('small', {}, 'Tu es ici'), el('b', {}, zone), hint ? el('span', {}, hint) : null));
   const I = T.layout.size;
   const plan = el('div', { class: 'tel-plan', title: 'Un point du plan : aller au poste' }, planFor(292 / (I.x1 - I.x0)));
   // un point du plan emmène au poste (truckmap.js) : le téléphone se range d'abord

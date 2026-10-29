@@ -106,7 +106,7 @@ function demoStrip(host) {
     read.set('Échantillons écrêtés', clipped ? `${fmtNum(clipped)} sur ${fmtNum(NS)} (${fmtNum(clipped / FS * 1000, 1)} ms de son déformé)` : 'aucun');
     read.set('Bruit du préampli (ordre de grandeur)', `−${fmtNum(145 - gain)} dBFS${p48 ? '' : ' : on n\'entend plus que lui'}`);
     read.set('Crête après le fader', !p48 ? '—' : `${fmtDb(Math.min(0, pk) + fader)}FS${clipped ? ' : plus bas, mais toujours écrêté' : ''}`);
-    const v = !p48 ? ['ko', 'Muet : un micro statique (à condensateur) a besoin de l\'alimentation fantôme 48 V.'] : would >= 0 ? ['ko', `Écrêté : baissez le GAIN d'au moins ${fmtNum(would + 10, 0)} dB. Le fader n'y peut rien, la forme d'onde est déjà coupée.`] : would > -10 ? ['warn', 'Crêtes au-dessus de −10 dBFS : trop peu de marge pour un tir plus fort ou un cri du public.'] : would < -24 ? ['warn', 'Trop bas : le signal se rapproche du souffle ; montez le gain vers des crêtes de −18 à −10 dBFS.'] : ['ok', 'Bien réglé : crêtes entre −18 et −10 dBFS environ, de la marge avant 0 dBFS.'];
+    const v = !p48 ? ['ko', 'Muet : un micro statique (à condensateur) a besoin de l\'alimentation fantôme 48 V.'] : would >= 0 ? ['ko', `Écrêté : baisse le GAIN d'au moins ${fmtNum(would + 10, 0)} dB. Le fader n'y peut rien, la forme d'onde est déjà coupée.`] : would > -10 ? ['warn', 'Crêtes au-dessus de −10 dBFS : trop peu de marge pour un tir plus fort ou un cri du public.'] : would < -24 ? ['warn', 'Trop bas : le signal se rapproche du souffle ; monte le gain vers des crêtes de −18 à −10 dBFS.'] : ['ok', 'Bien réglé : crêtes entre −18 et −10 dBFS environ, de la marge avant 0 dBFS.'];
     verdict.className = 'co-verdict ' + v[0]; verdict.textContent = v[1];
   };
   const drawPhase = () => {
@@ -285,7 +285,7 @@ registerChapter({
         'Ensuite seulement : passe-haut, **égaliseur**, dynamique, puis le **fader**, qui dose la source dans le mélange.',
       ],
       figure: figStrip,
-      demoTitle: 'Montez le gain jusqu\'à l\'OVL, puis baissez le fader : la forme d\'onde reste coupée. Éteignez le 48 V. Plus bas, inversez la polarité du micro droit et poussez la part commune à 100 %.',
+      demoTitle: 'Monte le gain jusqu\'à l\'OVL, puis baisse le fader : la forme d\'onde reste coupée. Éteins le 48 V. Plus bas, inverse la polarité du micro droit et pousse la part commune à 100 %.',
       demo: demoStrip,
       body: `La console reçoit chaque source sur une **tranche** : une colonne de réglages traversée dans un ordre fixe (dans le simulateur : entrée, gain et 48 V, polarité, passe-haut, égaliseur, dynamique, retard, panoramique, fader, puis les bus). Le premier réglage est le plus important : le **gain d'entrée** (préamplificateur) adapte le niveau très faible d'un micro, quelques millivolts, à l'échelle de la console.
 
@@ -304,7 +304,7 @@ Viennent ensuite les traitements : le **passe-haut** coupe le grondement inutile
       competences: ['1.4', '2.9'],
       article: 'vista',
       exercises: [
-        { id: 'son-tranche', intro: 'En cabine son, trois défauts vous attendent sur la console : un canon qui sature, une ambiance muette, une autre en opposition de phase. Vous les corrigerez dans la vue ENTRÉE des tranches, sans toucher aux faders : regardez l\'OVL s\'éteindre quand le gain baisse, l\'ambiance revenir avec le 48 V et le corrélateur remonter vers +1 quand la polarité est rétablie.' },
+        { id: 'son-tranche', intro: 'En cabine son, trois défauts t\'attendent sur la console : un canon qui sature, une ambiance muette, une autre en opposition de phase. Tu les corrigeras dans la vue ENTRÉE des tranches, sans toucher aux faders : regarde l\'OVL s\'éteindre quand le gain baisse, l\'ambiance revenir avec le 48 V et le corrélateur remonter vers +1 quand la polarité est rétablie.' },
       ],
       quiz: [
         { q: 'Le crête-mètre d\'un canon allume l\'OVL. Que faire ?', choices: ['Baisser le gain d\'entrée de la tranche', 'Baisser le fader de la tranche', 'Couper l\'alimentation 48 V'], answer: 0, why: 'L\'OVL signale un écrêtage à l\'entrée : le convertisseur est saturé avant même le fader. Baisser le fader donnerait un son écrêté moins fort ; couper le 48 V rendrait le canon muet. Il faut viser des crêtes entre −18 et −10 dBFS avec le gain.' },
@@ -322,7 +322,7 @@ Viennent ensuite les traitements : le **passe-haut** coupe le grondement inutile
         'Le son du départ est **embeddé** dans le SDI selon le **plan de son** de la chaîne : paire 1 programme, paire 2 international…',
       ],
       figure: figN1,
-      demoTitle: 'Cliquez la case rouge de la matrice (COMM 2 dans le N-1 COMM), puis « Appliquer la règle du N-1 ». Plus bas, l\'image a 3 images de retard : retardez le son jusqu\'à ce que le bip tombe sous le flash, puis passez en 1080i50.',
+      demoTitle: 'Clique la case rouge de la matrice (COMM 2 dans le N-1 COMM), puis « Appliquer la règle du N-1 ». Plus bas, l\'image a 3 images de retard : retarde le son jusqu\'à ce que le bip tombe sous le flash, puis passe en 1080i50.',
       demo: demoN1,
       body: `Le son ne part pas qu'à l'antenne. La console fabrique plusieurs **départs** (des bus) : le **programme** (PGM, tout le mélange, commentaires compris), le **son international** (INTL : ambiances et effets, sans aucune voix, pour les diffuseurs étrangers qui y posent leurs commentaires), et des **retours** pour ceux qui parlent à l'antenne : commentateurs, présentateur en studio, journaliste bord terrain.
 
@@ -339,7 +339,7 @@ Le départ vers la chaîne est un signal SDI qui porte l'image et le son **embed
       competences: ['1.4', '2.2', '2.11'],
       article: 'timing',
       exercises: [
-        { id: 'son-departs', intro: 'En cabine son, onglet « Bus, N-1, départ », vous corrigerez trois départs : un consultant envoyé dans son propre retour, un son décalé de l\'image, deux paires inversées dans l\'embedder. Vérifiez à chaque fois ce que reçoit l\'autre bout : le N-1 sans la voix de celui qui l\'écoute, un décalage revenu dans la tolérance, la paire 1 sur le programme et la paire 2 sur l\'international.' },
+        { id: 'son-departs', intro: 'En cabine son, onglet « Bus, N-1, départ », tu corrigeras trois départs : un consultant envoyé dans son propre retour, un son décalé de l\'image, deux paires inversées dans l\'embedder. Vérifie à chaque fois ce que reçoit l\'autre bout : le N-1 sans la voix de celui qui l\'écoute, un décalage revenu dans la tolérance, la paire 1 sur le programme et la paire 2 sur l\'international.' },
       ],
       quiz: [
         { q: 'Que contient le N-1 COMM, le retour des commentateurs ?', choices: ['Le programme sans les voix des commentateurs', 'Uniquement les voix des commentateurs', 'Le programme complet'], answer: 0, why: 'Un N-1 est le programme moins la voix de celui qui l\'écoute : ambiances, canons, studio, bord terrain, mais pas leurs propres voix. Avec le programme complet, ils s\'entendraient revenir avec le retard du son du car, en écho.' },

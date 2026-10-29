@@ -25,10 +25,10 @@ const date = (/** @type {number} */ t) => new Date(t).toLocaleString('fr-FR', { 
 export function renderMission(m, ctx) {
   const box = el('div', { class: 'ep-mission' });
   if (!m) {
-    box.append(el('p', { class: 'lede' }, 'Bac à sable : aucune commande. Montez ce que vous voulez, ou prenez une mission.'));
+    box.append(el('p', { class: 'lede' }, 'Bac à sable : aucune commande. Monte ce que tu veux, ou prends une mission.'));
     for (const x of MISSIONS) {
       const r = resultat(x.id);
-      box.append(el('div', { class: 'ep-item' }, el('div', { class: 'ep-item-t' }, el('b', {}, x.titre), el('small', {}, `${x.client} · ${x.niveau} · ${x.duree}${r && r.best ? ` · votre meilleur : ${r.best.score} / 100` : ''}`), el('p', {}, x.brief)),
+      box.append(el('div', { class: 'ep-item' }, el('div', { class: 'ep-item-t' }, el('b', {}, x.titre), el('small', {}, `${x.client} · ${x.niveau} · ${x.duree}${r && r.best ? ` · ton meilleur : ${r.best.score} / 100` : ''}`), el('p', {}, x.brief)),
         el('button', { type: 'button', class: 'btn small primary', 'data-k': `mission:${x.id}`, onclick: async () => { if (ctx.B.appareils.length > 1 && !(await ask('Prendre cette mission remet tout le matériel au stock. Continuer ?', { title: x.titre, ok: 'Prendre la mission' }))) return; vider(x.id); ctx.panel('mission'); } }, 'Prendre')));
     }
     return box;
@@ -41,17 +41,17 @@ export function renderMission(m, ctx) {
     el('h3', {}, 'Exigences'),
     el('ul', { class: 'ep-exig' }, ...N.items.map((i) => el('li', { class: i.ok ? 'ok' : i.partiel ? 'part' : 'ko' }, el('i', { 'aria-hidden': 'true' }), el('span', {}, el('b', {}, i.label), el('small', {}, ` ${i.pts} pt${i.pts > 1 ? 's' : ''}${i.ok ? '' : i.partiel ? ', moitié' : ', 0'}`), i.why ? el('span', { class: 'why' }, i.why) : null)))),
     N.budget ? el('p', { class: 'ep-budget ' + (N.budget.ok ? 'ok' : 'ko') }, `Budget : ${N.budget.used.toLocaleString('fr-FR')} € sur ${N.budget.max.toLocaleString('fr-FR')} € (ordres de grandeur)${N.budget.ok ? '.' : ' : dépassé, 10 points de moins.'}`) : null,
-    el('p', { class: 'ep-score' }, el('b', {}, `${N.score} / 100`), R && R.best ? el('small', {}, ` · votre meilleur : ${R.best.score} / 100 (${date(R.best.at)})`) : null),
+    el('p', { class: 'ep-score' }, el('b', {}, `${N.score} / 100`), R && R.best ? el('small', {}, ` · ton meilleur : ${R.best.score} / 100 (${date(R.best.at)})`) : null),
     el('div', { class: 'ep-cf-row' },
       el('button', { type: 'button', class: 'btn primary', 'data-k': 'mission:rendre', onclick: () => {
         const r = rendre(m.id, N);
-        ctx.say(r.nouveau ? `Montage rendu : ${N.score} / 100, votre meilleur résultat. Il compte pour l'exercice noté et le livret.` : `Montage rendu : ${N.score} / 100 (votre meilleur reste ${r.best ? r.best.score : N.score} / 100).`);
+        ctx.say(r.nouveau ? `Montage rendu : ${N.score} / 100, ton meilleur résultat. Il compte pour l'exercice noté et le livret.` : `Montage rendu : ${N.score} / 100 (ton meilleur reste ${r.best ? r.best.score : N.score} / 100).`);
         ctx.panel('mission');
       } }, 'Rendre le montage'),
       el('button', { type: 'button', class: 'btn small', 'data-k': 'mission:cr', onclick: async () => { const res = await offerDownload(`compte-rendu-entrepot-${m.id}.html`, compteRendu(m, ctx)); ctx.say(res === 'saved' ? 'Compte rendu enregistré.' : 'Téléchargement impossible.'); } }, 'Compte rendu (HTML)'),
       el('button', { type: 'button', class: 'btn small', 'data-k': 'mission:vider', onclick: async () => { if (await ask('Tout remettre au stock et recommencer la mission ?', { title: m.titre, ok: 'Recommencer' })) { vider(m.id); ctx.panel('mission'); } } }, 'Recommencer')),
-    N.score >= 60 ? null : el('p', { class: 'note' }, 'L\'exercice noté est réussi à partir de 60 / 100. Lisez l\'explication de chaque exigence manquante : elle dit ce que le moteur constate.'));
-  if (R && R.runs && R.runs.length) box.append(el('details', { class: 'ep-cf' }, el('summary', {}, `Vos essais (${R.runs.length})`), el('ul', { class: 'ep-cf-list' }, ...R.runs.slice().reverse().map((x) => el('li', {}, el('span', {}, `${x.score} / 100`), el('small', {}, `${date(x.at)}${x.budget != null ? ` · ${x.budget.toLocaleString('fr-FR')} €` : ''}`))))));
+    N.score >= 60 ? null : el('p', { class: 'note' }, 'L\'exercice noté est réussi à partir de 60 / 100. Lis l\'explication de chaque exigence manquante : elle dit ce que le moteur constate.'));
+  if (R && R.runs && R.runs.length) box.append(el('details', { class: 'ep-cf' }, el('summary', {}, `Tes essais (${R.runs.length})`), el('ul', { class: 'ep-cf-list' }, ...R.runs.slice().reverse().map((x) => el('li', {}, el('span', {}, `${x.score} / 100`), el('small', {}, `${date(x.at)}${x.budget != null ? ` · ${x.budget.toLocaleString('fr-FR')} €` : ''}`))))));
   const comp = m.competences.map((c) => COMPETENCES.find((k) => k.code === c)).filter(Boolean);
   if (comp.length) box.append(el('h3', {}, 'Compétences du référentiel'), el('ul', { class: 'prose' }, ...comp.map((c) => el('li', {}, `${c.code} · ${c.titre}`))));
   if (L && ctx.quitter) box.append(el('p', { class: 'ep-app-foot' }, el('button', { type: 'button', class: 'btn small', 'data-k': 'mission:lecon', onclick: () => ctx.quitter && ctx.quitter() }, `Revenir à la leçon « ${L.lesson.title} »`)));

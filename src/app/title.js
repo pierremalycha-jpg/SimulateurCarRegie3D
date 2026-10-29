@@ -14,9 +14,9 @@ import { livePlayerCard } from '../game/quest.js';
 // ----------------------------------------------------------------------------------
 export const TITLE = { ready: false, pct: 0 };
 const TIPS = [
-  'Dans le Cours, chaque leçon se termine par un exercice pratique : Olivier vous emmène au poste et vérifie vos gestes.',
-  'Jouer, Car vide : tout est à faire. Olivier vous propose d\'abord le tour du car, puis les tâches se cochent toutes seules sur le côté.',
-  'Jouer, Mission spécifique : une tâche précise (le réseau, le line-up, un poste), le car préparé pour elle ; ensuite, vous enchaînez ou vous arrêtez.',
+  'Dans le Cours, chaque leçon se termine par un exercice pratique : Olivier t\'emmène au poste et vérifie tes gestes.',
+  'Jouer, Car vide : tout est à faire. Olivier te propose d\'abord le tour du car, puis les tâches se cochent toutes seules sur le côté.',
+  'Jouer, Mission spécifique : une tâche précise (le réseau, le line-up, un poste), le car préparé pour elle ; ensuite, tu enchaînes ou tu arrêtes.',
   'Jouer, Car pré-installé : tout est en place, jeu libre, sans missions ni chef de car.',
   'Tab ou T lève le téléphone : aller à un poste, les missions, Olivier, tous les outils.',
   'Dans le car, Échap ouvre le menu : le Cours, les réglages, le retour à l\'accueil.',

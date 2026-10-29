@@ -31,7 +31,7 @@ export const VUE_RESEAU_ADRESSES = {
   resume: 'Huit machines sur un commutateur : le masque les range en sous-réseaux, l\'écran montre les bits, une diffusion n\'est gardée que dans son sous-réseau, la passerelle relie les sous-réseaux.',
   lecons: ['reseau-adresses', 'reseau-types', 'reseau-ip'],
   lectures: ['Machine choisie', 'Masque', 'Son réseau', 'Sa diffusion', 'Sous-réseaux', 'Dernier envoi'],
-  depart: 'Chaque zone de couleur est un sous-réseau. Changez le masque, choisissez une machine, envoyez une diffusion (« À vous »).',
+  depart: 'Chaque zone de couleur est un sous-réseau. Change le masque, choisis une machine, envoie une diffusion (« À toi »).',
   vue: { cible: [0.2, 1.35, -0.4], dir: [0, 0.42, 1], dist: 14.2 },
   orbite: { rMin: 1.5, rMax: 22 },
   etapes: [

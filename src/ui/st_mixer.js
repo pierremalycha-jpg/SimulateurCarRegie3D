@@ -28,7 +28,7 @@ export const MIXACT = {
     if (bus === 'pgm') mixSetPgm(n); else if (bus === 'pst') mixSetPst(n);
     else { MIX.key1.src = n; explain(`Bus de clé : ${sourceLabel(meSource(n))} sera incrustée par KEY 1 (redimensionneur 2,5D du keyer).`, 'mix:keybus'); }
   },
-  trans(k) { MIX.trans = k; explain(TRANS_TXT[k] + ' Lancez avec AUTO TRANS ou le levier.', 'mix:trans'); },
+  trans(k) { MIX.trans = k; explain(TRANS_TXT[k] + ' Lance avec AUTO TRANS ou le levier.', 'mix:trans'); },
   wipe(i) { MIX.wipe = i; MIX.trans = 'wipe'; explain(`Motif de volet : ${WIPES[i]}.`, 'mix:wipe'); },
   next(which) {
     if (which === 'bkgd') { MIX.next.bkgd = !MIX.next.bkgd; if (!MIX.next.bkgd && !MIX.next.key1) MIX.next.key1 = true; }

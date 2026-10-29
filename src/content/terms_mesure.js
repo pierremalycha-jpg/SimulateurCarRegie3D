@@ -70,7 +70,7 @@ const ADD = {
     t: 'Lightning', aka: 'affichage « éclair » de Tektronix', cat: V,
     short: 'Croise la luminance (en hauteur) et une différence de couleur (en largeur) : Cb en haut, Cr en bas, le noir au centre. Vérifie la mire d\'un coup d\'œil.',
     body: "Sur la mire, la trace dessine un éclair : chaque barre a sa cible, en haut (Y et Cb) et en bas (Y et Cr).\n\n- une barre hors de sa cible = un gain ou une couleur faux dans la chaîne ;\n- la transition **vert → magenta** doit passer par les repères du centre ; si elle les manque, la luminance et la couleur ne sont plus alignées dans le temps (retard d'une composante) ;\n- des transitions bombées = décalage entre Cb et Cr.",
-    car: 'Tuile Lightning (cibles 75 % ou 100 %). Mettez une caméra en barres au RCP pour voir l\'éclair.',
+    car: 'Tuile Lightning (cibles 75 % ou 100 %). Mets une caméra en barres au RCP pour voir l\'éclair.',
     fig: 'lightning', see: ['vecteurscope', 'mire-75', 'ycbcr'], ref: 'Tektronix, notes d\'application sur les affichages Lightning et Diamond',
   },
   diamant: {

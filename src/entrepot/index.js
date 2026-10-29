@@ -218,7 +218,7 @@ function refreshPanel() {
 function barLabel() {
   const M = missionById(B.mission);
   if (EP.carriere) { const ep = enCours(PROG); return `Carrière · ${M ? M.titre : ep ? ep.mission.titre : 'lis tes mails au bureau'}`; }
-  return M ? M.titre : 'Bac à sable : montez ce que vous voulez';
+  return M ? M.titre : 'Bac à sable : monte ce que tu veux';
 }
 /** la touche Messagerie et la zone Bureau n'existent qu'en Carrière ; le nombre de mails non lus */
 function syncBar() {

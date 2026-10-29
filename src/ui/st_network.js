@@ -225,7 +225,7 @@ function tabTopo(box, R) {
       click(g, { kind: 'dev', id: d.id }); svg.append(g);
     });
   });
-  const legend = el('div', { class: 'net-legend' }, ...[['#2fd25a', 'lien utilisé'], ['#ffb020', '> 80 % ou OSPF bloqué'], ['#ff3b30', 'saturé (pertes)'], ['#c77dff', 'sans PIM'], ['#7a2a24', 'coupé'], ['#4a5560', 'sans trafic']].map(([c, t]) => el('span', {}, el('i', { style: { background: c } }), t)), el('span', {}, 'Pastilles d\'un appareil : carte rouge à gauche, carte bleue à droite. Cliquez un élément pour voir son état ; cliquez de nouveau un commutateur sélectionné pour le configurer.'));
+  const legend = el('div', { class: 'net-legend' }, ...[['#2fd25a', 'lien utilisé'], ['#ffb020', '> 80 % ou OSPF bloqué'], ['#ff3b30', 'saturé (pertes)'], ['#c77dff', 'sans PIM'], ['#7a2a24', 'coupé'], ['#4a5560', 'sans trafic']].map(([c, t]) => el('span', {}, el('i', { style: { background: c } }), t)), el('span', {}, 'Pastilles d\'un appareil : carte rouge à gauche, carte bleue à droite. Clique un élément pour voir son état ; clique de nouveau un commutateur sélectionné pour le configurer.'));
   const terms = el('div', { class: 'net-terms' }, el('span', { class: 'note' }, 'Sur ce schéma :'), ...TOPO_TERMS.map((id) => el('span', { class: 'net-term', 'data-qterm': id }, TERMS[id].t)));
   box.append(el('div', { class: 'synwrap net-svgwrap' }, svg), legend, terms, selPanel(R));
   box.append(el('p', { class: 'note' }, `Chaque réseau est une fabric « spine-leaf » : les leaves (commutateurs de haut de baie) reçoivent les appareils en 25 GbE (100 GbE pour les gros flux), et chacune est reliée aux deux spines par 2 × 100 GbE. Tout appareil émet chaque flux deux fois, une fois par réseau (ST 2022-7) : les deux réseaux sont totalement indépendants (pas de lien entre eux). Un flux vidéo ${S.format === 'UHD' ? 'UHD 2160p50' : S.format === 'HD' ? 'HD 1080p50' : 'HD 1080i50'} fait ≈ ${fmt(videoGbps(), 2)} Gb/s.`));
@@ -234,7 +234,7 @@ const TOPO_TERMS = ['spine-leaf', 'spine', 'leaf', 'uplink', 'reseaux-ab', 'st20
 function shortName(d, w) { const n = d.name.replace('Passerelle ', 'Pass. ').replace('Multiviewer', 'MV').replace('Encodeur ', '').replace(' (cœur DSP)', '').replace('Grade 1 + scopes', 'Grade 1').replace('Décodeurs retour / duplex', 'Décodeurs').replace('Générateur de test', 'Générateur').replace('Unité de commentaire', 'Commentaire').replace('Stagebox terrain', 'Stagebox').replace(' caméras HF / POV / PTZ', ' HF/POV/PTZ').replace(' écrans d\'angle', ' écrans'); const max = Math.floor(w / 6.6); return n.length > max ? n.slice(0, max - 1) + '…' : n; }
 function selPanel(R) {
   const s = V.sel; const p = el('div', { class: 'hwpanel' });
-  if (!s) { p.append(el('h3', {}, 'Sélection'), el('p', { class: 'note' }, 'Cliquez un commutateur, un lien, un appareil ou un grand maître pour voir son état.')); return p; }
+  if (!s) { p.append(el('h3', {}, 'Sélection'), el('p', { class: 'note' }, 'Clique un commutateur, un lien, un appareil ou un grand maître pour voir son état.')); return p; }
   const kv = el('dl', { class: 'kv' }); const add = (k, v, cls) => kv.append(el('dt', {}, k), el('dd', { class: cls || '' }, v));
   if (s.kind === 'sw') {
     const sw = FAB.switches[s.id];
@@ -273,10 +273,10 @@ function selPanel(R) {
 
 // ---------------- commutateurs ----------------
 function guiSess(id) { return (V.gui[id] = V.gui[id] || cliSession(id)); }
-function termLog(id) { return (V.term[id] = V.term[id] || { s: cliSession(id), lines: [{ t: 'out', s: `Connecté à ${host(id)} (${FAB.switches[id].mgmt}) — tapez « ? » pour la liste des commandes, Tab pour compléter.` }], hi: -1 }); }
+function termLog(id) { return (V.term[id] = V.term[id] || { s: cliSession(id), lines: [{ t: 'out', s: `Connecté à ${host(id)} (${FAB.switches[id].mgmt}) — tape « ? » pour la liste des commandes, Tab pour compléter.` }], hi: -1 }); }
 // applique une modification par la ligne de commande (même moteur que le terminal)
 function applyCli(id, lines, why) {
-  const sw = FAB.switches[id]; if (!sw.power) { toast('Commutateur hors tension : allumez-le d\'abord', 'bad'); return false; }
+  const sw = FAB.switches[id]; if (!sw.power) { toast('Commutateur hors tension : allume-le d\'abord', 'bad'); return false; }
   const s = guiSess(id); s.mode = 'exec'; s.ctx = null;
   const errs = [];
   for (const l of ['configure terminal', ...lines, 'end']) { const r = runCli(s, l); if (r && r.startsWith('%')) errs.push(`${l} → ${r}`); }
@@ -312,7 +312,7 @@ function switchFrame(R) {
     el('div', { class: 'hwrow' },
       el('button', { class: 'btn small', onclick: () => { setSwitchPower(sw.id, !sw.power); explain(sw.power ? `${sw.running.hostname} rallumé : il redémarre sur sa configuration de démarrage (startup-config). Ce qui n'avait pas été enregistré par « write memory » est perdu.` : `${sw.running.hostname} hors tension. ${sw.role === 'ctl' ? 'Le contrôle NMOS est perdu.' : `Les flux qui passaient par lui ne passent plus que par le réseau ${sw.color === 'red' ? 'bleu' : 'rouge'} : à l'image rien ne change (ST 2022-7), mais il n'y a plus de secours.`}`, sw.power ? 'warn' : ''); R.refresh(); } }, sw.power ? 'Couper l\'alimentation' : 'Rallumer'),
       el('button', { class: 'btn small' + (dirty ? ' primary' : ''), onclick: () => { writeMemory(sw.id); termLog(sw.id).lines.push({ t: 'gui', s: '! interface graphique :\nwrite memory' }); explain(`write memory : la configuration active (running-config) de ${sw.running.hostname} est copiée dans la configuration de démarrage (startup-config). Elle survivra à un redémarrage.`); R.refresh(); } }, 'Enregistrer (write memory)'),
-      el('button', { class: 'btn small', onclick: () => { loadReference(sw.id); log('refload', { sw: sw.id }); explain(`Configuration de référence chargée dans la running-config de ${sw.running.hostname} (pensez à « write memory »).`); R.refresh(); } }, 'Charger la config de référence'),
+      el('button', { class: 'btn small', onclick: () => { loadReference(sw.id); log('refload', { sw: sw.id }); explain(`Configuration de référence chargée dans la running-config de ${sw.running.hostname} (pense à « write memory »).`); R.refresh(); } }, 'Charger la config de référence'),
       el('button', { class: 'btn small danger', onclick: async () => { if (!(await ask(`Remettre ${sw.running.hostname} en sortie d'usine ? (running-config seulement)`, { title: 'Sortie d\'usine', ok: 'Remettre en sortie d\'usine', danger: true }))) return; loadFactory(sw.id); explain(`${sw.running.hostname} en sortie d'usine : plus de routage, de VLAN média, de PTP… Tout ce qui passait par lui est perdu. Exercice : reconstruire la configuration (ou recharger la référence).`, 'warn'); R.refresh(); } }, 'Remettre en sortie d\'usine'),
       el('button', { class: 'btn small', onclick: () => offerDownload(`${sw.running.hostname}-running-config.txt`, runningConfig(sw)) }, 'Télécharger la config')));
   return el('div', { class: 'net-swframe' }, head, frontPanel(sw, R));
@@ -467,7 +467,7 @@ function subQos(box, R) {
     chk('qos trust dscp', q.trust === 'dscp', (x) => cmd([x ? 'qos trust dscp' : 'no qos trust'], x ? 'le commutateur respecte le marquage DSCP posé par les appareils.' : 'DSCP ignoré : PTP, audio et vidéo partagent la même file.')),
     chk('PTP (DSCP 46) en file prioritaire', q.ptpPriority, (x) => cmd([x ? 'qos map dscp 46 to traffic-class 7' : 'no qos map dscp 46'], x ? 'PTP passe avant la vidéo dans chaque file de sortie : sa latence reste constante.' : 'PTP dans la file par défaut : derrière des rafales de paquets vidéo, son temps de traversée varie (gigue de plusieurs centaines de ns).')),
     pre(showOut(sw.id, 'show qos maps')),
-    el('p', { class: 'note' }, `Plan DSCP du car (à vérifier avec votre intégrateur) : PTP ${DSCP_REF.ptp} (EF), audio ${DSCP_REF.audio} (AF41), vidéo ${DSCP_REF.video} (AF31), données ${DSCP_REF.anc} (AF21), contrôle ${DSCP_REF.ctl} (CS2). AES67 recommande EF pour PTP et AF41 pour l'audio.`)));
+    el('p', { class: 'note' }, `Plan DSCP du car (à vérifier avec ton intégrateur) : PTP ${DSCP_REF.ptp} (EF), audio ${DSCP_REF.audio} (AF41), vidéo ${DSCP_REF.video} (AF31), données ${DSCP_REF.anc} (AF21), contrôle ${DSCP_REF.ctl} (CS2). AES67 recommande EF pour PTP et AF41 pour l'audio.`)));
 }
 function lcsDiff(a, b) {
   const n = a.length, m = b.length; const dp = Array.from({ length: n + 1 }, () => new Uint16Array(m + 1));
@@ -542,7 +542,7 @@ function cheatSheet() {
   const tb = el('tbody'); for (const r of CHEAT) tb.append(el('tr', {}, el('td', {}, r[0]), ...r.slice(1).map((c) => el('td', { class: 'mono' }, c))));
   return el('details', { class: 'net-cheat' }, el('summary', {}, 'Antisèche : la même commande chez Arista (EOS), Cisco NX-OS et Cisco IOS-XE'),
     el('div', { class: 'tblwrap' }, el('table', { class: 'tbl compact net-tbl' }, el('thead', {}, el('tr', {}, ...['Opération', 'Arista EOS', 'Cisco NX-OS', 'Cisco IOS-XE'].map((h) => el('th', {}, h)))), tb)),
-    el('p', { class: 'note' }, 'Le simulateur accepte la syntaxe EOS et plusieurs variantes NX-OS (ip pim sparse-mode, ip router ospf 1 area…, show ip ospf neighbors, copy running-config startup-config). Les noms d\'interfaces et certains détails varient selon les modèles et les versions : vérifiez toujours dans la documentation de votre constructeur.'));
+    el('p', { class: 'note' }, 'Le simulateur accepte la syntaxe EOS et plusieurs variantes NX-OS (ip pim sparse-mode, ip router ospf 1 area…, show ip ospf neighbors, copy running-config startup-config). Les noms d\'interfaces et certains détails varient selon les modèles et les versions : vérifie toujours dans la documentation de ton constructeur.'));
 }
 
 // ---------------- plan d'adressage ----------------
@@ -621,7 +621,7 @@ function tabFlows(box, R) {
       kv.append(el('dt', {}, 'Bilan'), el('dd', { class: !s.ok || s.loss > 0 ? 'err' : !s.protected ? 'warn' : '' }, s.reason || 'reçu sur les deux réseaux : le récepteur fusionne les deux flux paquet par paquet (ST 2022-7), une perte sur l\'un est comblée par l\'autre.'));
       det.append(kv, el('div', { class: 'hwrow' }, el('button', { class: 'btn small primary', 'data-tut': 'analyze', onclick: () => { selectRx(V.rx); log('analyzer', { rx: V.rx }); R.go('meas', { msub: 'stream' }); } }, 'Analyser ce flux'), el('button', { class: 'btn small', 'data-tut': 'sdp', onclick: () => openSdp(f.id) }, 'Voir le SDP de l\'émetteur'), ...COLORS.map((c) => el('button', { class: 'btn small', onclick: () => R.go('switch', { sw: rd.nics[c].sw, port: rd.nics[c].port, sub: 'mcast' }) }, `Multicast sur ${host(rd.nics[c].sw)}`))));
     }
-  } else det.append(el('h3', {}, 'Détail'), el('p', { class: 'note' }, 'Cliquez une réception pour voir le chemin suivi sur chaque réseau.'));
+  } else det.append(el('h3', {}, 'Détail'), el('p', { class: 'note' }, 'Clique une réception pour voir le chemin suivi sur chaque réseau.'));
   const tot = COLORS.map((c) => { let l = 0, cap = 0; for (const x of FAB.links) if (x.color === c && res.up[x.id].up) { l += ((res.linkLoad[x.id + ':up'] || {}).load || 0); cap += res.up[x.id].speed; } return `${CLABEL[c]} : ${fmtG(l)} montants sur ${cap} Gb/s d'uplinks`; });
   box.append(ctl, det, el('div', { class: 'hwpanel' }, el('h3', {}, 'Récepteurs (connexions IS-05)'), el('p', { class: 'note' }, 'Bande passante des uplinks — ' + tot.join(' · ') + '. Les connexions se font depuis la grille (contrôleur IP) : ce tableau montre ce que le réseau en a fait.'),
     el('div', { class: 'tblwrap' }, el('table', { class: 'tbl compact net-tbl' }, el('thead', {}, el('tr', {}, ...['Récepteur', 'Flux', 'Groupe (rouge)', 'Rouge', 'Bleu', 'État', 'NMOS'].map((x) => el('th', {}, x)))), tb))));

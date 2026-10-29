@@ -51,7 +51,7 @@ function demoAdressage(host) {
     verdict.className = 'co-verdict ' + (allOk ? 'ok' : conflits.length ? 'ko' : 'warn');
     verdict.textContent = allOk ? 'Le plan tient : chaque caméra a sa propre adresse, dans le sous-réseau du pupitre, et le switch alimente tout le monde.'
       : conflits.length ? 'Les caméras sortent du carton avec la même adresse : on les branche une par une et on change l\'adresse de chacune avant de brancher la suivante.'
-        : 'Pas de conflit, mais le pupitre ne joint pas toutes les caméras : vérifiez l\'adresse et le masque.';
+        : 'Pas de conflit, mais le pupitre ne joint pas toutes les caméras : vérifie l\'adresse et le masque.';
   };
   host.append(
     el('table', { class: 'co-table' }, el('thead', {}, el('tr', {}, el('th', {}, 'Machine'), el('th', {}, 'Adresse (ou DHCP)'), el('th', {}, 'PoE+'))), el('tbody', {}, ...rows)),
@@ -88,7 +88,7 @@ export const LESSON_REGIE_MOBILE = {
     'Les appareils sortent du carton avec une **adresse d\'usine** (souvent la même pour toute une série) ou en **DHCP** : on les met en service un par un, et on note chaque adresse.',
   ],
   figure: figRegieMobile,
-  demoTitle: 'Donnez une adresse à chaque machine (elles sortent du carton avec celle d\'usine), choisissez le masque, cochez ce que le switch alimente : le pupitre doit joindre les trois caméras sans conflit, dans le budget PoE+.',
+  demoTitle: 'Donne une adresse à chaque machine (elles sortent du carton avec celle d\'usine), choisis le masque, coche ce que le switch alimente : le pupitre doit joindre les trois caméras sans conflit, dans le budget PoE+.',
   demo: demoAdressage,
   body: `Une **régie mobile** tient dans une baie 19" et sur une table : des caméras **PTZ** (tourelle motorisée, pilotée à distance), un **pupitre** qui les commande par le réseau, un **mélangeur** compact, un **enregistreur**, quelques **convertisseurs**, un **switch** qui alimente les caméras par le câble réseau (**PoE+**, 30 W par port au plus, dans la limite du budget du switch). Avant de sortir le matériel, on lit le cahier des charges et on écrit le synoptique : chaque flèche est un câble, avec son connecteur à chaque bout.
 
@@ -106,7 +106,7 @@ export const LESSON_REGIE_MOBILE = {
   terms: ['vlan', 'qos', 'poe', 'dhcp'],
   competences: ['1.1', '2.1', '2.10', '3.9'],
   exercises: [
-    { id: 'x-entrepot', intro: 'Exercice noté, dans l\'entrepôt : le lycée commande une régie à trois caméras PTZ pour sa cérémonie. Vous sortez le matériel du stock, vous le posez, vous le câblez et vous le configurez (adresses, formats, pupitre, tally, enregistrement, micro embarqué) jusqu\'à ce que le cahier des charges soit rempli, dans le budget.' },
+    { id: 'x-entrepot', intro: 'Exercice noté, dans l\'entrepôt : le lycée commande une régie à trois caméras PTZ pour sa cérémonie. Tu sors le matériel du stock, tu le poses, tu le câbles et tu le configures (adresses, formats, pupitre, tally, enregistrement, micro embarqué) jusqu\'à ce que le cahier des charges soit rempli, dans le budget.' },
   ],
   quiz: [
     { q: 'Trois caméras PTZ neuves de la même marque sont branchées en même temps sur le switch. Le pupitre n\'en joint aucune. Pourquoi ?', choices: ['Elles ont la même adresse d\'usine : en conflit, aucune ne répond sûrement', ['Le switch n\'est pas assez rapide', 'La commande d\'une PTZ demande quelques kilobits par seconde : le débit n\'est pas en cause.'], ['Les câbles réseau sont trop longs', 'Jusqu\'à 100 m, un câble Ethernet ne pose pas de problème.']], answer: 0, why: 'Une série sort du carton avec la même adresse : on met les caméras en service une par une, en changeant l\'adresse de chacune.' },

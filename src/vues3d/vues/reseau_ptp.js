@@ -42,7 +42,7 @@ L'esclave corrige son horloge du décalage. Tout repose sur une hypothèse : l'a
     { t: 'Un commutateur ordinaire fausse l\'heure', reglage: { mode: 'ord', charge: 80, asym: 0 }, vue: { cible: [-0.2, 1.2, 0.2], dir: [0, 0.42, 1], dist: 11.5 },
       texte: `Dans un commutateur **ordinaire**, le message PTP attend dans la file, derrière les trames vidéo : **1,2 µs par trame** de 1 500 octets à 10 Gb/s. L'attente change à chaque message, et n'est pas la même à l'aller et au retour.
 
-Le calcul prend cette différence pour un décalage d'horloge : l'erreur des esclaves **saute de plusieurs microsecondes**. Bien au-delà de la microseconde exigée par ST 2059-2 : les images ne sont plus alignées. Montez la charge, regardez les cadrans.` },
+Le calcul prend cette différence pour un décalage d'horloge : l'erreur des esclaves **saute de plusieurs microsecondes**. Bien au-delà de la microseconde exigée par ST 2059-2 : les images ne sont plus alignées. Monte la charge, regarde les cadrans.` },
     { t: 'L\'horloge frontière', reglage: { mode: 'bc', charge: 80, asym: 0 }, vue: { cible: [-0.2, 1.2, 0.2], dir: [0, 0.42, 1], dist: 11.5 },
       texte: `Une **horloge frontière** (boundary clock) n'est plus un simple passage : le commutateur est **esclave** du grand maître sur son port amont et **maître** des appareils sur ses ports aval. Chaque échange ne traverse plus de file : il s'arrête au commutateur.
 
@@ -54,7 +54,7 @@ On corrige par une constante d'asymétrie dans la configuration de l'esclave, qu
     { t: 'Le BMCA : un grand maître de secours', reglage: { mode: 'bc', charge: 30, asym: 0, panne: true }, vue: { cible: [-2.6, 1.3, 0.2], dir: [0, 0.4, 1], dist: 7.5 },
       texte: `Deux grands maîtres, tous deux sur le GPS, s'annoncent (**Announce**). Le **BMCA** (best master clock algorithm) élit le meilleur : priorité 1, classe d'horloge, précision, priorité 2, identité. Le GM 1 est élu (la couronne).
 
-Coupez le GM 1 : ses Announce cessent, le GM 2 est élu en moins d'une seconde. Les deux étant calés sur le GPS, les esclaves ne sautent presque pas. Un appareil laissé par défaut peut au contraire se faire élire à leur place : on règle les caméras en **slave only**.` },
+Coupe le GM 1 : ses Announce cessent, le GM 2 est élu en moins d'une seconde. Les deux étant calés sur le GPS, les esclaves ne sautent presque pas. Un appareil laissé par défaut peut au contraire se faire élire à leur place : on règle les caméras en **slave only**.` },
   ],
   build(ctx) {
     const root = ctx.root;

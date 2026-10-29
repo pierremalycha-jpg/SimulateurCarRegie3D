@@ -356,7 +356,7 @@ export const QUIZ = {
   // ---- 7. La voie caméra ----
   7: [
     {
-      n: 'fibre', q: 'À la CCU, le niveau optique reçu est de −19 dBm. Qu\'en pensez-vous ?',
+      n: 'fibre', q: 'À la CCU, le niveau optique reçu est de −19 dBm. Qu\'en penses-tu ?',
       a: [
         ['Très bon : plus le nombre est négatif, mieux c\'est.', 'C\'est l\'inverse : −19 dBm, c\'est très peu de lumière. En exploitation, on lit entre −5 et −15 dBm.'],
         ['La liaison est au bord du décrochage (vers −20 dBm) : on inspecte et on nettoie les connecteurs.', 'Exact : une poussière sur un connecteur coûte plusieurs décibels. La liaison passe encore, mais elle risque de décrocher pendant l\'émission.'],

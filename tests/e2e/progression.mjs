@@ -15,7 +15,7 @@ const ev = (f, a) => A.evaluate(f, a);
 await ev(() => { const P = window.__dbg.PROG; P.cours = { 'signal-422': { seen: true, quiz: { score: 3, total: 3 } } }; });
 await ev(() => window.__dbg.emit('settings')); await A.waitForTimeout(400);
 const st = await ev(() => ({ sec: !!document.querySelector('#rg-progression'), state: document.querySelector('#rg-progression .mp-state')?.textContent || '', resume: document.querySelector('#rg-progression .note')?.textContent || '', rgpd: document.querySelector('#rg-progression .mp-rgpd summary')?.textContent || '' }));
-T.check('Réglages : la section « Ma progression », où elle est enregistrée, le résumé, « Vos données personnelles »', st.sec && /navigateur/.test(st.state) && /1 leçon acquise/.test(st.resume) && /données personnelles/.test(st.rgpd), JSON.stringify(st));
+T.check('Réglages : la section « Ma progression », où elle est enregistrée, le résumé, « Tes données personnelles »', st.sec && /navigateur/.test(st.state) && /1 leçon acquise/.test(st.resume) && /données personnelles/.test(st.rgpd), JSON.stringify(st));
 await A.locator('#rg-progression').screenshot({ path: `${OUT}/01-ma-progression.png` });
 
 // export : un fichier JSON au format de l'application, avec la leçon

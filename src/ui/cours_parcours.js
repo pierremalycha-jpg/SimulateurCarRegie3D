@@ -75,7 +75,7 @@ export function cheminChapitre(page, ch, /** @type {Go} */ go, modules = /** @ty
       const avant = b.niveaux.slice(0, i).filter((x) => !x.valide);
       const nq = Math.min(12, Math.max(6, 2 * leconsDuTest(ch.id, n.niveau.id, PROG).length));
       sec.append(el('div', { class: 'pa-ferme' },
-        el('p', {}, `Ce niveau s'ouvre quand ${avant.length > 1 ? 'les niveaux' : 'le niveau'} ${avant.map((x) => x.niveau.titre).join(', ')} ${avant.length > 1 ? 'sont validés' : 'est validé'}. Vous connaissez déjà ces notions ? Le test de niveau les vérifie : ${nq} questions, ${Math.round(SEUIL_TEST * 100)} % de bonnes réponses.`),
+        el('p', {}, `Ce niveau s'ouvre quand ${avant.length > 1 ? 'les niveaux' : 'le niveau'} ${avant.map((x) => x.niveau.titre).join(', ')} ${avant.length > 1 ? 'sont validés' : 'est validé'}. Tu connais déjà ces notions ? Le test de niveau les vérifie : ${nq} questions, ${Math.round(SEUIL_TEST * 100)} % de bonnes réponses.`),
         el('button', { type: 'button', class: 'btn small pa-test-btn', 'data-niveau': n.niveau.id, onclick: () => go.test(ch.id, n.niveau.id) }, icon('ouvert'), `Passer le test pour ouvrir ${n.niveau.titre}`)));
     }
     sec.append(el('ol', { class: 'pa-path' }, ...n.lecons.map((id, k) => {
@@ -92,7 +92,7 @@ export function cheminChapitre(page, ch, /** @type {Go} */ go, modules = /** @ty
       sec.append(el('div', { class: 'pa-palier' }, el('b', {}, icon('trophee'), `Pour ouvrir le niveau ${suivant.niveau.titre}`),
         el('ul', {}, ...conditions(n).map((c) => el('li', { class: c.ok ? 'ok' : '' }, icon(c.ok ? 'fait' : 'cadenas'), c.texte)))));
     } else if (n.valide && suivant) sec.append(el('p', { class: 'pa-palier ok' }, icon('trophee'), `Niveau ${n.niveau.titre} validé : ${suivant.niveau.titre} est ouvert.`));
-    else if (n.valide && !suivant) sec.append(el('p', { class: 'pa-palier ok' }, icon('trophee'), `Dernier niveau du chapitre validé : vous avez fait tout « ${ch.title} ».`));
+    else if (n.valide && !suivant) sec.append(el('p', { class: 'pa-palier ok' }, icon('trophee'), `Dernier niveau du chapitre validé : tu as fait tout « ${ch.title} ».`));
     page.append(sec);
   });
 }
@@ -145,7 +145,7 @@ export function pageTest(page, /** @type {Go} */ go) {
   const redraw = (/** @type {string} */ focus) => { page.replaceChildren(); pageTest(page, go); const f = /** @type {HTMLElement | null} */ (page.querySelector(focus)); if (f) f.focus(); };
   page.append(el('p', { class: 'co-crumb' }, icon(ch.icon), ch.title, el('span', {}, ' · test de niveau')),
     el('h2', {}, `Ouvrir le niveau ${nv.titre}`),
-    el('p', { class: 'lede' }, `${n} questions tirées des quiz des leçons que vous sautez (${T.lecons.length} leçon${T.lecons.length > 1 ? 's' : ''}). Il faut en réussir ${need}. Réussi, le niveau ${nv.titre} s'ouvre ; les leçons sautées restent à faire quand vous voulez, pour leurs étoiles et le livret.`));
+    el('p', { class: 'lede' }, `${n} questions tirées des quiz des leçons que tu sautes (${T.lecons.length} leçon${T.lecons.length > 1 ? 's' : ''}). Il faut en réussir ${need}. Réussi, le niveau ${nv.titre} s'ouvre ; les leçons sautées restent à faire quand tu veux, pour leurs étoiles et le livret.`));
   const text = (c) => (Array.isArray(c) ? c[0] : c);
   T.draw.forEach((d, qi) => {
     const L = /** @type {any} */ (lessonById(d.lesson)).lesson; const Q = L.quiz[d.i];
@@ -166,7 +166,7 @@ export function pageTest(page, /** @type {Go} */ go) {
   } else {
     const ok = testPasse(score, n);
     box.append(el('div', { class: 'co-score pa-test-res' + (ok ? ' ok' : ''), tabindex: '-1', role: 'status' },
-      el('b', {}, `${score} / ${n}`), ok ? ` : réussi, le niveau ${nv.titre} est ouvert.` : ` : il en fallait ${need}. Faites les leçons du niveau, ou retentez le test (d'autres questions).`,
+      el('b', {}, `${score} / ${n}`), ok ? ` : réussi, le niveau ${nv.titre} est ouvert.` : ` : il en fallait ${need}. Fais les leçons du niveau, ou retente le test (d'autres questions).`,
       ok ? el('button', { type: 'button', class: 'btn primary', onclick: () => { finirTest(); go.chapitre(T.ch); } }, 'Voir le parcours') : el('button', { type: 'button', class: 'btn', onclick: () => { nouveauTest(T.ch, T.niveau); redraw('.co-choice-btn'); } }, 'Refaire le test'),
       ok ? null : el('button', { type: 'button', class: 'btn small', onclick: () => { finirTest(); go.chapitre(T.ch); } }, 'Retour au parcours')));
   }

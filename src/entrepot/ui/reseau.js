@@ -78,7 +78,7 @@ export function renderReseau(ctx) {
     const tb = el('tbody');
     for (const a of rows) tb.append(el('tr', {}, el('th', { scope: 'row' }, a.nom), ...rows.map((b) => a.uid === b.uid ? el('td', { class: 'self' }, '·') : el('td', { class: E.reach[`${a.uid}>${b.uid}`] ? 'ok' : 'ko', title: explainReach(ctx.B, E, a.uid, b.uid) }, E.reach[`${a.uid}>${b.uid}`] ? '✓' : '✗'))));
     t.append(tb);
-    box.append(el('details', { class: 'ep-cf' }, el('summary', {}, 'Qui joint qui'), el('p', { class: 'ep-cf-note' }, 'Ligne : depuis ; colonne : vers. Survolez une case pour l\'explication.'), el('div', { class: 'ep-matrix-wrap' }, t)));
+    box.append(el('details', { class: 'ep-cf' }, el('summary', {}, 'Qui joint qui'), el('p', { class: 'ep-cf-note' }, 'Ligne : depuis ; colonne : vers. Survole une case pour l\'explication.'), el('div', { class: 'ep-matrix-wrap' }, t)));
   }
   return box;
 }

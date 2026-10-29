@@ -22,7 +22,7 @@ export const ICOMACT = {
   },
   listen(l, t) {
     const st = icomState(l, t); st.listen = !st.listen;
-    explain(`LISTEN ${l} ${st.listen ? 'activé : vous entendez ce canal' : 'coupé : vous n\'entendez plus ce canal'}. Chaque touche a un volume d'écoute réglable ; on coupe les canaux inutiles pour rester concentré.`, 'icom:l' + l);
+    explain(`LISTEN ${l} ${st.listen ? 'activé : tu entends ce canal' : 'coupé : tu n\'entends plus ce canal'}. Chaque touche a un volume d'écoute réglable ; on coupe les canaux inutiles pour rester concentré.`, 'icom:l' + l);
   },
 };
 

@@ -24,7 +24,7 @@ function perfTest() {
   perfRunning = true;
   modal.close();
   const where = S.mode === 'station' ? 'dans un poste' : S.inTruck ? 'dans le car' : S.mode === 'fps' ? 'dans le stade' : 'sur l\'écran d\'accueil';
-  toast('Mesure des performances pendant 6 secondes… ne touchez à rien.', '', 6000);
+  toast('Mesure des performances pendant 6 secondes… ne touche à rien.', '', 6000);
   const times = []; let prev = performance.now(); const t0 = prev;
   const tick = (now) => {
     times.push(now - prev); prev = now;
@@ -46,13 +46,13 @@ function perfTest() {
       ['Caméras simulées', `${S.cams.length} (chaque caméra est une image 3D rendue en plus)`],
     ]) kv.append(el('dt', {}, k), el('dd', { class: cls || '' }, v));
     const tips = el('ul', {});
-    if (soft) tips.append(el('li', {}, 'Le navigateur n\'utilise pas la carte graphique : activez l\'accélération matérielle dans ses réglages, ou essayez un autre navigateur (Chrome, Edge, Firefox récents).'));
-    if (fps < 50) tips.append(el('li', {}, 'Branchez l\'ordinateur portable sur secteur et fermez les autres onglets lourds (visio, vidéos).'), el('li', {}, 'Moins de caméras = moins d\'images à calculer : le plan à 6 caméras (plan des caméras, touche P) aide beaucoup.'), el('li', {}, 'Une fenêtre plus petite ou un écran moins défini réduit aussi la charge.'));
+    if (soft) tips.append(el('li', {}, 'Le navigateur n\'utilise pas la carte graphique : active l\'accélération matérielle dans ses réglages, ou essaie un autre navigateur (Chrome, Edge, Firefox récents).'));
+    if (fps < 50) tips.append(el('li', {}, 'Branche l\'ordinateur portable sur secteur et ferme les autres onglets lourds (visio, vidéos).'), el('li', {}, 'Moins de caméras = moins d\'images à calculer : le plan à 6 caméras (plan des caméras, touche P) aide beaucoup.'), el('li', {}, 'Une fenêtre plus petite ou un écran moins défini réduit aussi la charge.'));
     const apply = rec !== S.quality ? el('button', { class: 'btn primary', onclick: () => { setQuality(rec); modal.close(); toast(`Qualité graphique : ${QUAL_LABEL[rec]}`, 'good'); } }, `Passer en qualité ${QUAL_LABEL[rec]} (recommandé)`) : null;
     modal.open('Diagnostic de performance', el('div', { class: 'list' }, el('p', { class: verdict[0] }, verdict[1]), kv,
-      el('p', {}, rec !== S.quality ? `Qualité recommandée : ${QUAL_LABEL[rec]}.` : fps < 30 ? 'Vous êtes déjà en qualité Basse : suivez les conseils ci-dessous.' : `La qualité ${QUAL_LABEL[S.quality]} est adaptée à cet ordinateur.`),
+      el('p', {}, rec !== S.quality ? `Qualité recommandée : ${QUAL_LABEL[rec]}.` : fps < 30 ? 'Tu es déjà en qualité Basse : suis les conseils ci-dessous.' : `La qualité ${QUAL_LABEL[S.quality]} est adaptée à cet ordinateur.`),
       tips.children.length ? el('div', { class: 'prose' }, el('h3', {}, 'Pour gagner en fluidité'), tips) : null,
-      el('p', { class: 'note' }, 'Ce résultat est enregistré avec votre progression : le formateur le voit dans son tableau de bord, utile pour repérer un poste de formation trop juste.'),
+      el('p', { class: 'note' }, 'Ce résultat est enregistré avec ta progression : le formateur le voit dans son tableau de bord, utile pour repérer un poste de formation trop juste.'),
       el('div', { class: 'hwrow' }, apply, el('button', { class: 'btn', onclick: () => modal.close() }, 'Fermer'))), { width: 720 });
   };
   requestAnimationFrame(tick);

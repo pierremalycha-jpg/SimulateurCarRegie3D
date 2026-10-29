@@ -25,7 +25,7 @@ const code10 = (p) => Math.round(64 + p / 100 * 876);
 registerExos({
   'signal-422': {
     titre: 'Calculer ce que pèse la couleur',
-    consigne: 'Le chef de car prépare le plan des liaisons : il vous demande ce que pèse l\'image active selon l\'échantillonnage, et quoi garder pour chaque usage.',
+    consigne: 'Le chef de car prépare le plan des liaisons : il te demande ce que pèse l\'image active selon l\'échantillonnage, et quoi garder pour chaque usage.',
     gen: (rnd) => {
       const I = pick(rnd, IMAGES.slice(0, 2)), fps = pick(rnd, [25, 50]), mode = pick(rnd, ['444', '422', '420']);
       const v = actif(I, fps, 10, mode);
@@ -35,15 +35,15 @@ registerExos({
         {
           type: 'nombre', unite: 'Gb/s', answer: Math.round(v * 1000) / 1000, tol: Math.max(0.02, v * 0.01),
           q: `Image active en **${I.nom}${fps}**, **${MODES[mode].nom}**, 10 bits : quel débit, en Gb/s (sans la suppression ni les données) ?`,
-          pieges: autres.map((m) => ({ v: Math.round(actif(I, fps, 10, m) * 1000) / 1000, why: `C'est le débit en ${MODES[m].nom}. En ${MODES[mode].nom}, comptez ${fr(MODES[mode].n, 1)} échantillon${MODES[mode].n > 1 ? 's' : ''} par pixel.` })),
-          aides: ['Comptez les échantillons par pixel : 3 en 4:4:4 (Y, Cb, Cr sur chaque pixel), 2 en 4:2:2, 1,5 en 4:2:0.', `Débit = largeur × hauteur × images par seconde × 10 bits × échantillons par pixel, puis divisez par 10⁹ : ${I.w} × ${I.h} × ${fps} × 10 × …`],
+          pieges: autres.map((m) => ({ v: Math.round(actif(I, fps, 10, m) * 1000) / 1000, why: `C'est le débit en ${MODES[m].nom}. En ${MODES[mode].nom}, compte ${fr(MODES[mode].n, 1)} échantillon${MODES[mode].n > 1 ? 's' : ''} par pixel.` })),
+          aides: ['Compte les échantillons par pixel : 3 en 4:4:4 (Y, Cb, Cr sur chaque pixel), 2 en 4:2:2, 1,5 en 4:2:0.', `Débit = largeur × hauteur × images par seconde × 10 bits × échantillons par pixel, puis divise par 10⁹ : ${I.w} × ${I.h} × ${fps} × 10 × …`],
           solution: `${I.w} × ${I.h} × ${fps} × 10 bits × ${fr(MODES[mode].n, 1)} = **${fr(v, 2)} Gb/s**. Le 4:2:2 garde les deux tiers du 4:4:4, le 4:2:0 la moitié : la luminance ne change jamais, seule la couleur est réduite.`,
         },
         {
           type: 'nombre', answer: m2 === '444' ? 3 * N : 2 * N,
           q: `Une ligne active compte **${fr(N)} pixels**, en **${MODES[m2].nom}**. Combien d'échantillons en tout sur la ligne (Y, Cb et Cr réunis) ?`,
-          pieges: [{ v: N, why: 'C\'est le nombre d\'échantillons de luminance seuls : ajoutez ceux de Cb et de Cr.' }, { v: m2 === '444' ? 2 * N : 3 * N, why: m2 === '444' ? 'En 4:4:4, Cb et Cr sont sur chaque pixel, comme Y.' : 'En 4:2:2, Cb et Cr ne sont portés qu\'un pixel sur deux.' }],
-          aides: [`Sur quatre pixels, la notation ${MODES[m2].nom} donne le nombre d'échantillons Y, Cb et Cr.`, `${m2 === '444' ? '4 + 4 + 4 = 12' : '4 + 2 + 2 = 8'} échantillons pour quatre pixels : faites la règle de trois sur ${fr(N)} pixels.`],
+          pieges: [{ v: N, why: 'C\'est le nombre d\'échantillons de luminance seuls : ajoute ceux de Cb et de Cr.' }, { v: m2 === '444' ? 2 * N : 3 * N, why: m2 === '444' ? 'En 4:4:4, Cb et Cr sont sur chaque pixel, comme Y.' : 'En 4:2:2, Cb et Cr ne sont portés qu\'un pixel sur deux.' }],
+          aides: [`Sur quatre pixels, la notation ${MODES[m2].nom} donne le nombre d'échantillons Y, Cb et Cr.`, `${m2 === '444' ? '4 + 4 + 4 = 12' : '4 + 2 + 2 = 8'} échantillons pour quatre pixels : fais la règle de trois sur ${fr(N)} pixels.`],
           solution: `${m2 === '444' ? `${fr(N)} Y + ${fr(N)} Cb + ${fr(N)} Cr = **${fr(3 * N)}**` : `${fr(N)} Y + ${fr(N / 2)} Cb + ${fr(N / 2)} Cr = **${fr(2 * N)}**`} échantillons. C'est pourquoi on dit qu'un pixel 4:2:2 « vaut » deux mots de 10 bits, 20 bits.`,
         },
         pick(rnd, [
@@ -65,7 +65,7 @@ registerExos({
   },
   'signal-bits': {
     titre: 'Des niveaux, des pas et des codes',
-    consigne: 'À la baie de mesure, vous vérifiez la quantification de plusieurs sources : combien de niveaux, quelle finesse, quel code transporte le SDI.',
+    consigne: 'À la baie de mesure, tu vérifies la quantification de plusieurs sources : combien de niveaux, quelle finesse, quel code transporte le SDI.',
     gen: (rnd) => {
       const n = pick(rnd, [6, 8, 10, 12]), L = 2 ** n;
       const b = pick(rnd, [8, 10, 12]), pas = 100 / (2 ** b - 1);
@@ -81,14 +81,14 @@ registerExos({
           type: 'nombre', unite: '% du blanc', answer: Math.round(pas * 1000) / 1000, tol: pas * 0.03,
           q: `En **${b} bits**, de combien de pour cent du blanc est un pas de quantification (l'écart entre deux niveaux voisins, sur toute l'échelle) ?`,
           pieges: [{ v: Math.round(pas / 2 * 1000) / 1000, why: 'C\'est le demi-pas : l\'erreur de quantification maximale, pas le pas lui-même.' }],
-          aides: ['L\'échelle va du code 0 au code le plus haut : combien d\'intervalles entre les niveaux ?', `Il y a 2^${b} − 1 = ${fr(2 ** b - 1)} intervalles : divisez 100 % par ce nombre.`],
+          aides: ['L\'échelle va du code 0 au code le plus haut : combien d\'intervalles entre les niveaux ?', `Il y a 2^${b} − 1 = ${fr(2 ** b - 1)} intervalles : divise 100 % par ce nombre.`],
           solution: `100 % ÷ ${fr(2 ** b - 1)} = **${fr(pas, 3)} %**. L'erreur d'arrondi vaut au plus un demi-pas, ${fr(pas / 2, 3)} % : c'est elle qui dessine les bandes dans un dégradé lent.`,
         },
         {
           type: 'nombre', answer: x * 4,
           q: `Une source **8 bits** envoie le code **${x}**. Elle entre dans le SDI, qui transporte des mots de 10 bits. Quel code 10 bits porte le câble ?`,
           pieges: [{ v: x, why: 'Le SDI ajoute deux bits à droite du mot : la valeur change d\'échelle.' }, { v: x * 2, why: 'Deux bits de plus multiplient par 2 × 2, pas par 2.' }],
-          aides: ['Le SDI ajoute deux bits de poids faible, à zéro : décaler de deux bits vers la gauche, c\'est multiplier par… ?', 'Deux bits à zéro ajoutés à droite : × 2 × 2. Vérifiez avec le blanc : 235 en 8 bits, 940 en 10 bits.'],
+          aides: ['Le SDI ajoute deux bits de poids faible, à zéro : décaler de deux bits vers la gauche, c\'est multiplier par… ?', 'Deux bits à zéro ajoutés à droite : × 2 × 2. Vérifie avec le blanc : 235 en 8 bits, 940 en 10 bits.'],
           solution: `${x} × 4 = **${x * 4}** : les deux bits de poids faible sont à zéro. La source garde ses 256 niveaux, un code sur quatre de l'échelle 10 bits ; ses marches restent celles du 8 bits.`,
         },
         pick(rnd, [
@@ -101,7 +101,7 @@ registerExos({
           {
             type: 'choix', q: 'Sur quelle image l\'ingénieur vision repère-t-il d\'abord des bandes de quantification ?',
             choices: ['Un ciel de fin de journée, en dégradé lent', ['Une pelouse texturée et bien exposée', 'La texture masque l\'erreur d\'un demi-pas : on ne voit pas de marches sur une surface qui varie déjà.'], ['Le score blanc sur un bandeau noir', 'Un contraste fort ne montre pas de marches : il n\'y a pas de pente lente à découper.']], answer: 0,
-            aides: ['Les marches ne se voient que là où le niveau varie lentement, sur une grande surface.', 'Cherchez la zone la plus lisse de l\'image.'],
+            aides: ['Les marches ne se voient que là où le niveau varie lentement, sur une grande surface.', 'Cherche la zone la plus lisse de l\'image.'],
             solution: 'Le **ciel en dégradé lent** : la pente y est découpée en bandes larges de plusieurs lignes, que la texture ou le contraste ne masquent pas.',
           },
         ]),
@@ -110,7 +110,7 @@ registerExos({
   },
   'signal-niveaux': {
     titre: 'Lire et poser des niveaux',
-    consigne: 'Au poste vision, vous passez du pourcentage du waveform au code numérique et aux millivolts, puis vous choisissez le bon réglage du RCP.',
+    consigne: 'Au poste vision, tu passes du pourcentage du waveform au code numérique et aux millivolts, puis tu choisis le bon réglage du RCP.',
     gen: (rnd) => {
       const p = pick(rnd, [2, 10, 20, 35, 45, 50, 55, 75, 90, 100, 103, 106]);
       const c = entre(rnd, 120, 930), pc = (c - 64) / 876 * 100;
@@ -126,7 +126,7 @@ registerExos({
           type: 'nombre', unite: '%', answer: Math.round(pc * 10) / 10, tol: 0.6, q: `L'État SDI de la baie de mesure lit le code **${c}** sur la luminance. À combien de pour cent est ce point ?`,
           // la lecture en pleine échelle rejoint la bonne vers le code 445 : le piège n'y est pas posé
           pieges: [{ v: Math.round(c / 1023 * 1000) / 10, why: 'C\'est la lecture en pleine échelle : en studio, le noir est au code 64, pas au code 0.' }].filter((x) => Math.abs(x.v - pc) > 1.5),
-          aides: ['Retirez d\'abord le code du noir.', `(${c} − 64) ÷ 876 × 100.`],
+          aides: ['Retire d\'abord le code du noir.', `(${c} − 64) ÷ 876 × 100.`],
           solution: `(${c} − 64) ÷ 876 = **${fr(pc, 1)} %**${pc < 35 ? ' : une ombre' : pc > 90 ? ' : un blanc, à surveiller' : ' : un niveau de pelouse ou de visage'}.`,
         },
         {
@@ -136,7 +136,7 @@ registerExos({
         },
         pick(rnd, [
           {
-            type: 'choix', q: `Le waveform montre les noirs de la caméra ${entre(rnd, 2, 9)} vers **${entre(rnd, 6, 10)} %**, quand les autres caméras les posent à 1 %. Que reprenez-vous au RCP ?`,
+            type: 'choix', q: `Le waveform montre les noirs de la caméra ${entre(rnd, 2, 9)} vers **${entre(rnd, 6, 10)} %**, quand les autres caméras les posent à 1 %. Que reprends-tu au RCP ?`,
             choices: ['Le piédestal (master black), à baisser', ['Le gain, à baisser', 'Le gain multiplie le signal : il déplace les blancs, à peine un noir proche de zéro.'], ['Rien : le légaliseur s\'en charge', 'Des noirs à quelques pour cent sont légaux : le légaliseur n\'y touchera pas, l\'image restera grise.']], answer: 0,
             aides: ['Quel réglage ajoute ou retire une constante à tout le signal ?', 'Le gain multiplie (il agit surtout sur les blancs) ; l\'autre réglage décale.'],
             solution: 'Le **piédestal** : il pose les noirs, entre 0 et 2 %. Les blancs descendent d\'autant ; on les revérifie ensuite.',
@@ -164,7 +164,7 @@ registerExos({
           type: 'nombre', unite: 'Gb/s', answer: Math.round(deb * 1000) / 1000, tol: 0.01,
           q: `Quel débit sur le câble pour du **${F.nom}** 4:2:2 10 bits ? Le raster complet compte ${fr(F.tot)} échantillons par ligne sur ${fr(F.lignes)} lignes, chaque pixel vaut 20 bits.`,
           pieges: [{ v: Math.round((F.nom.startsWith('720') ? 1280 * 720 : 1920 * 1080) * F.ips * 20 / 1e7) / 100, why: 'C\'est l\'image active seule : le SDI transporte aussi la suppression (les lignes et les échantillons hors image).' }],
-          aides: ['Comptez le raster complet, suppression comprise, pas seulement l\'image active.', `${fr(F.tot)} × ${fr(F.lignes)} × ${F.ips} images par seconde × 20 bits.`],
+          aides: ['Compte le raster complet, suppression comprise, pas seulement l\'image active.', `${fr(F.tot)} × ${fr(F.lignes)} × ${F.ips} images par seconde × 20 bits.`],
           solution: `${fr(F.tot)} × ${fr(F.lignes)} × ${F.ips} × 20 = **${fr(deb, 3)} Gb/s** : le ${F.sdi}.`,
         },
         {
@@ -189,7 +189,7 @@ registerExos({
   },
   'signal-couleur': {
     titre: 'HDR et SDR, gamut et blanc de référence',
-    consigne: 'Le car sort le match en HLG BT.2020 pour la chaîne UHD et en SDR BT.709 pour la HD : vous placez les niveaux et vous choisissez les conversions.',
+    consigne: 'Le car sort le match en HLG BT.2020 pour la chaîne UHD et en SDR BT.709 pour la HD : tu places les niveaux et tu choisis les conversions.',
     gen: (rnd) => {
       const k = pick(rnd, [1, 2, 4, 6, 12]), v = HLG(k / 12) * 100;
       return [
@@ -197,7 +197,7 @@ registerExos({
           type: 'nombre', unite: '%', answer: Math.round(v * 10) / 10, tol: 1,
           q: `Un projecteur du stade donne **${k} fois** la lumière qui sature la caméra en SDR. À combien de pour cent du signal HLG est-il ? (Courbe HLG : E' = √(3E) jusqu'à E = 1/12, puis 0,17883 × ln(12E − 0,28467) + 0,55991 ; la saturation du SDR est à E = 1/12.)`,
           pieges: [{ v: 100, why: k === 12 ? '' : 'C\'est la SDR qui écrête à 100 % : la HLG garde encore de la place au-dessus.' }].filter((x) => x.why),
-          aides: [`La lumière qui saturait le SDR est à E = 1/12 : ${k} fois plus, c'est E = ${k}/12.`, k === 1 ? 'E = 1/12 est la limite des deux morceaux : √(3 × 1/12) = √(1/4).' : `Au-dessus de 1/12, prenez le logarithme : 0,17883 × ln(12 × ${k}/12 − 0,28467) + 0,55991.`],
+          aides: [`La lumière qui saturait le SDR est à E = 1/12 : ${k} fois plus, c'est E = ${k}/12.`, k === 1 ? 'E = 1/12 est la limite des deux morceaux : √(3 × 1/12) = √(1/4).' : `Au-dessus de 1/12, prends le logarithme : 0,17883 × ln(12 × ${k}/12 − 0,28467) + 0,55991.`],
           solution: `**${fr(v, 1)} %**${k === 1 ? ' : la lumière qui sature le SDR n\'est qu\'à mi-échelle en HLG' : k === 12 ? ' : le haut de l\'échelle HLG, douze fois la saturation du SDR' : ' : sous 100 %, avec son détail, quand le SDR l\'écrête en aplat'}.`,
         },
         {
@@ -216,7 +216,7 @@ registerExos({
           {
             type: 'choix', q: 'Une source extérieure arrive en SDR BT.709 et doit entrer dans la production HLG BT.2020. Qu\'est-ce qui demande de la prudence ?',
             choices: ['Ses hautes lumières, écrêtées à la prise de vue : il faut les recréer', ['Ses couleurs, qui sortent du triangle BT.2020', 'Le triangle BT.709 tient tout entier dans le BT.2020 : ses couleurs y sont toutes reproductibles.'], ['Son blanc, qui n\'est pas celui du BT.2020', 'BT.709 et BT.2020 ont le même blanc, le D65.']], answer: 0,
-            aides: ['Comparez les deux triangles : lequel contient l\'autre ?', 'Le problème vient de la courbe SDR : qu\'a-t-elle fait de ce qui dépassait la lumière de référence ?'],
+            aides: ['Compare les deux triangles : lequel contient l\'autre ?', 'Le problème vient de la courbe SDR : qu\'a-t-elle fait de ce qui dépassait la lumière de référence ?'],
             solution: 'Les **hautes lumières** : la courbe SDR les a écrêtées en aplats. Monter en HDR demande d\'inventer ce qui n\'existe pas dans la source ; les couleurs, elles, tiennent dans le BT.2020.',
           },
         ]),

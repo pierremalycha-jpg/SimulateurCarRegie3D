@@ -138,7 +138,7 @@ function subPtp(box, R) {
   const sel = selectEl(opts, MS.ptpDev, (v) => { MS.ptpDev = v; R.refresh(); });
   const kv = el('dl', { class: 'kv' }); const setKv = liveKv(kv);
   const c1 = chart(180), c2 = chart(120);
-  const gmBtn = el('button', { class: 'btn small', onclick: () => { FAB.gm.gm1.up = !FAB.gm.gm1.up; markDirty(); explain(FAB.gm.gm1.up ? 'Grand maître 1 rétabli : avec priority1 100, il est réélu. Observez le petit transitoire de l\'offset.' : 'Grand maître 1 coupé : après 3 Announce manqués, le BMCA élit le grand maître 2. Observez l\'offset : un saut de quelques centaines de ns, rattrapé par l\'asservissement en quelques secondes.'); R.refresh(); } }, FAB.gm.gm1.up ? 'Couper le grand maître 1' : 'Rétablir le grand maître 1');
+  const gmBtn = el('button', { class: 'btn small', onclick: () => { FAB.gm.gm1.up = !FAB.gm.gm1.up; markDirty(); explain(FAB.gm.gm1.up ? 'Grand maître 1 rétabli : avec priority1 100, il est réélu. Observe le petit transitoire de l\'offset.' : 'Grand maître 1 coupé : après 3 Announce manqués, le BMCA élit le grand maître 2. Observe l\'offset : un saut de quelques centaines de ns, rattrapé par l\'asservissement en quelques secondes.'); R.refresh(); } }, FAB.gm.gm1.up ? 'Couper le grand maître 1' : 'Rétablir le grand maître 1');
   box.append(el('div', { class: 'hwpanel' }, el('div', { class: 'hwrow' }, el('h3', {}, 'Horloge suivie'), sel, gmBtn), kv, c1, c2),
     el('div', { class: 'hwpanel prose' }, el('h3', {}, 'Lire la courbe'), el('p', {}, 'L\'offset est l\'écart entre l\'horloge de l\'appareil et celle de son maître, mesuré à chaque message Sync (8 par seconde en ST 2059-2). Verrouillé : quelques dizaines de ns. Au changement de grand maître : un saut, puis la convergence de l\'asservissement. Sans priorité PTP dans les commutateurs (QoS) et avec des liens chargés : bruit de plusieurs centaines de ns. Horloge non traçable : l\'appareil suit un maître qui dérive par rapport au GPS (courbe du bas).')));
   R.live = () => {
@@ -181,7 +181,7 @@ function subCapture(box, R) {
     el('p', { class: 'note' }, `Le PC de mesure est branché sur ${probe} de chaque ${sw.role === 'spine' ? 'spine' : 'leaf'}. Une session miroir (SPAN) recopie le trafic du port choisi vers ce port : « monitor session 1 source ${C.port} » puis « monitor session 1 destination ${probe} ». Attention : si ${probe} est plus lent que le trafic recopié, c'est la capture qui perd des paquets, pas le réseau.`)));
   const r = C.res;
   if (!r) { box.append(el('p', { class: 'note' }, 'Aucune capture pour l\'instant.')); return; }
-  if (r.span && r.span.load > r.span.cap) box.append(el('div', { class: 'item' }, el('span', { class: 'dot amber' }), el('div', { class: 'grow' }, el('div', { class: 't' }, `Port miroir saturé : ${fmt(r.span.load, 1)} Gb/s recopiés vers un port de ${r.span.cap} Gb/s`), el('div', { class: 's' }, 'La capture est incomplète (paquets manquants côté analyseur) ; les flux, eux, ne sont pas affectés. Capturez dans un seul sens (rx ou tx) ou utilisez un port plus rapide.'))));
+  if (r.span && r.span.load > r.span.cap) box.append(el('div', { class: 'item' }, el('span', { class: 'dot amber' }), el('div', { class: 'grow' }, el('div', { class: 't' }, `Port miroir saturé : ${fmt(r.span.load, 1)} Gb/s recopiés vers un port de ${r.span.cap} Gb/s`), el('div', { class: 's' }, 'La capture est incomplète (paquets manquants côté analyseur) ; les flux, eux, ne sont pas affectés. Capture dans un seul sens (rx ou tx) ou utilise un port plus rapide.'))));
   // flux observés
   const st = el('tbody');
   for (const x of r.streams) st.append(el('tr', {}, el('td', {}, x.dir === 'in' ? 'entrant' : 'sortant'), el('td', {}, x.f.label), el('td', { class: 'mono' }, x.src), el('td', { class: 'mono' }, x.group), el('td', { class: 'mono' }, x.mac), el('td', { class: 'mono' }, x.f.kind === 'video' ? '2110-20' : x.f.kind === 'audio' ? '2110-30' : '2110-40'), el('td', { class: 'mono' }, x.dscp), el('td', { class: 'mono' }, fmtN(x.pps)), el('td', { class: 'mono' }, x.mbps >= 1000 ? fmt(x.mbps / 1000, 2) + ' Gb/s' : fmt(x.mbps, 1) + ' Mb/s')));
@@ -194,7 +194,7 @@ function subCapture(box, R) {
   const det = el('div', { class: 'net-decode' });
   const pk = r.packets.find((p) => p.no === C.sel);
   if (pk) for (const [layer, fields] of pk.layers) det.append(el('details', { open: true }, el('summary', {}, layer), el('dl', { class: 'kv' }, ...fields.flatMap(([k, v]) => [el('dt', {}, k), el('dd', {}, v)]))));
-  else det.append(el('p', { class: 'note' }, 'Cliquez un paquet pour le décoder couche par couche.'));
+  else det.append(el('p', { class: 'note' }, 'Clique un paquet pour le décoder couche par couche.'));
   box.append(el('div', { class: 'hwpanel' }, el('h3', {}, `Paquets (${list.length})`), filt, el('div', { class: 'tblwrap net-pk' }, el('table', { class: 'tbl compact net-tbl' }, el('thead', {}, el('tr', {}, ...['N°', 'Temps (µs)', 'Sens', 'Source', 'Destination', 'Protocole', 'Long.', 'Info'].map((h) => el('th', {}, h)))), tb)), det,
     el('p', { class: 'note' }, 'Extrait représentatif : quelques paquets consécutifs de chaque flux, puis les messages de contrôle (PTP, IGMP, OSPF, PIM) avec leurs vrais intervalles. Un « ÉCART » dans les numéros de séquence RTP signale des paquets perdus.')));
 }
@@ -211,7 +211,7 @@ function subLoad(box, R) {
     tb.append(el('tr', { onclick: go }, el('td', {}, linkName(L.k)), el('td', { class: 'mono ' + (L.u > 1 ? 'err' : L.u > 0.8 ? 'warn' : '') }, fmt(L.u * 100, 0) + ' %'), el('td', { class: 'mono' }, `${fmt(L.load, 1)} / ${L.cap} Gb/s`), el('td', { class: 'mono' }, L.n), el('td', {}, c)));
   }
   box.append(el('div', { class: 'hwpanel' }, el('h3', {}, 'Liens les plus chargés (par sens)'), el('div', { class: 'tblwrap' }, el('table', { class: 'tbl compact net-tbl' }, el('thead', {}, el('tr', {}, ...['Lien', 'Charge', 'Débit', 'Flux', 'Historique (30 s)'].map((h) => el('th', {}, h)))), tb)),
-    el('p', { class: 'note' }, 'Au-delà de 100 %, les paquets en trop sont jetés pour tous les flux du lien (mode PIM). Au-delà de 80 %, la gigue augmente et PTP devient bruité si sa priorité n\'est pas configurée. Cliquez une ligne pour ouvrir le port.')));
+    el('p', { class: 'note' }, 'Au-delà de 100 %, les paquets en trop sont jetés pour tous les flux du lien (mode PIM). Au-delà de 80 %, la gigue augmente et PTP devient bruité si sa priorité n\'est pas configurée. Clique une ligne pour ouvrir le port.')));
   R.live = () => {
     for (const [c, L] of sp) {
       const h = AN.links[L.k] || []; const g = c.getContext('2d'); g.fillStyle = '#07090b'; g.fillRect(0, 0, 160, 28);

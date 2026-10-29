@@ -35,11 +35,11 @@ Sur le toit de la tribune principale, à 12 m, deux **antennes de réception** (
     { t: 'Le bilan de liaison', reglage: { ant: 'patch', echo: false, div: true }, lecon: 'hf-bilan',
       texte: `Le niveau reçu se compte en décibels : **puissance émise + gains des antennes − affaiblissement en espace libre − câbles**.
 
-L'espace libre coûte FSPL = 20 log d + 20 log f − 27,55 (d en m, f en MHz) : à 2,2 GHz, **79 dB à 100 m**, et chaque doublement de distance retire **6 dB**. La **marge** est l'écart avec la sensibilité du récepteur (−87 dBm ici) : au-dessus de 10 dB, confortable ; sous 3 dB, le moindre creux fait décrocher l'image. Faites glisser la caméra le long de la touche.` },
+L'espace libre coûte FSPL = 20 log d + 20 log f − 27,55 (d en m, f en MHz) : à 2,2 GHz, **79 dB à 100 m**, et chaque doublement de distance retire **6 dB**. La **marge** est l'écart avec la sensibilité du récepteur (−87 dBm ici) : au-dessus de 10 dB, confortable ; sous 3 dB, le moindre creux fait décrocher l'image. Fais glisser la caméra le long de la touche.` },
     { t: 'Les échos : sol et tribunes', reglage: { ant: 'omni', echo: true, div: false }, lecon: 'hf-antennes',
       texte: `Le signal n'arrive pas que par le chemin direct : il **rebondit** sur le sol et sur la tribune d'en face (les rayons pâles). Ces échos arrivent un peu plus tard et s'**ajoutent** au direct, en phase (le niveau monte) ou en opposition (il s'effondre).
 
-À 2,2 GHz, la longueur d'onde fait **14 cm** : quelques centimètres de déplacement changent tout. D'où des **évanouissements** de 10 à 20 dB, à des endroits précis : regardez l'historique au fond, quand la caméra avance.` },
+À 2,2 GHz, la longueur d'onde fait **14 cm** : quelques centimètres de déplacement changent tout. D'où des **évanouissements** de 10 à 20 dB, à des endroits précis : regarde l'historique au fond, quand la caméra avance.` },
     { t: 'La diversité : deux antennes valent mieux qu\'une', reglage: { ant: 'omni', echo: true, div: true }, lecon: 'hf-antennes',
       texte: `Les creux ne tombent **pas au même endroit** pour deux antennes écartées : quand A est dans un trou, B ne l'est presque jamais. Le récepteur en **diversité** garde, à chaque instant, la meilleure (ou combine les deux).
 
@@ -51,7 +51,7 @@ Le prix : il faut **viser**. Hors du faisceau (les cônes), le gain s'effondre. 
     { t: 'COFDM : l\'écho dans l\'intervalle de garde', reglage: { ant: 'omni', echo: true, div: true }, lecon: 'hf-cofdm',
       texte: `Un écho est un retard : un détour de 60 m, c'est **0,2 µs**. Avec une seule porteuse à 8 MHz, un symbole ne dure que 0,125 µs : l'écho brouille le symbole suivant.
 
-Le **COFDM** répartit le débit sur des milliers de porteuses lentes : en 2K, un symbole dure **224 µs**, précédé d'un **intervalle de garde** (56 µs en garde 1/4). Tout écho plus court que la garde est absorbé : dans un stade, ils le sont tous (lisez « Échos »). Restent les **creux** de niveau, que règle la diversité.` },
+Le **COFDM** répartit le débit sur des milliers de porteuses lentes : en 2K, un symbole dure **224 µs**, précédé d'un **intervalle de garde** (56 µs en garde 1/4). Tout écho plus court que la garde est absorbé : dans un stade, ils le sont tous (lis « Échos »). Restent les **creux** de niveau, que règle la diversité.` },
     { t: 'Un obstacle : la falaise', reglage: { ant: 'patch', echo: true, div: true, obst: true }, lecon: 'hf-bilan',
       texte: `La caméra passe derrière un **obstacle** (banc de touche, joueurs, angle de tribune) : de l'ordre de **16 dB** de plus d'un coup. Si la marge était faible, l'image **gèle puis disparaît** : c'est l'effet de falaise du numérique.
 

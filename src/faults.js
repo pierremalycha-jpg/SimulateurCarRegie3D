@@ -72,11 +72,11 @@ S.faultsSolved = 0;
 export function injectFault(id, hidden = false) {
   const pool = FAULTS.filter((f) => f.can());
   const f = id === 'random' ? randPick(pool) : FAULTS.find((x) => x.id === id);
-  if (!f || !f.can()) { toast('Cette panne n\'est pas possible avec la configuration actuelle : choisissez-en une autre.', 'bad'); return; }
+  if (!f || !f.can()) { toast('Cette panne n\'est pas possible avec la configuration actuelle : choisis-en une autre.', 'bad'); return; }
   const st = f.inject();
   const entry = { f, st, t0: S.time, hidden, done: false };
   ACTIVE.push(entry);
-  toast(hidden ? 'Une panne a été injectée. À vous de la trouver !' : `Panne injectée : ${f.label}`, 'bad');
+  toast(hidden ? 'Une panne a été injectée. À toi de la trouver !' : `Panne injectée : ${f.label}`, 'bad');
   if (hidden) intercom('CHAÎNE', 'Problème signalé côté antenne ou régie, pouvez-vous vérifier ?', 'bad');
   emit('fault'); emit('faultNew', entry);
   return entry;

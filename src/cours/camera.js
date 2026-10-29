@@ -131,7 +131,7 @@ function demoChaine(host) {
   /** @type {Record<string, Element>} */ const legT = {};
   svg.append(txt(cx, cy - 44, 'coupe du câble', 'co-s'));
   legend.forEach(([k, s], i) => { legT[k] = txt(254, 178 + i * 15, s, 'co-s', 'start'); svg.append(legT[k]); });
-  svg.append(txt(8, 160, '→ vers la CCU · ← vers la tête', 'co-s', 'start'), txt(8, 176, 'cliquez un appareil ou le câble', 'co-s', 'start'));
+  svg.append(txt(8, 160, '→ vers la CCU · ← vers la tête', 'co-s', 'start'), txt(8, 176, 'clique un appareil ou le câble', 'co-s', 'start'));
   const note = el('p', { class: 'co-note' });
   const verdict = el('p', { class: 'co-verdict' });
   const read = readout(['Sens', 'Dans le câble', 'Côté car', 'Qui s\'en sert', 'Énergie à la tête', 'Perdu dans le câble', 'Longueur maximale', 'Niveau optique à la CCU']);
@@ -155,7 +155,7 @@ function demoChaine(host) {
     for (const k of ['cu1', 'cu2']) at(cuts[k], 'fill', S.lanes.includes('cu') && hyb ? C.copper : '#5a4636');
     at(legT.f1, 'fill', S.lanes.includes('f1') ? C.amber : C.grey); at(legT.f2, 'fill', S.lanes.includes('f2') ? C.cyan : C.grey); at(legT.cu, 'fill', S.lanes.includes('cu') && hyb ? C.copper : C.grey);
     lenT.textContent = `câble : ${fmtLen(L)}${hyb ? '' : ' (monomode)'}`;
-    note.textContent = block ? `${BLOCKS[block][0]} : ${BLOCKS[block][1]}` : 'Choisissez ce qui circule ; cliquez un appareil ou le câble pour son rôle.';
+    note.textContent = block ? `${BLOCKS[block][0]} : ${BLOCKS[block][1]}` : 'Choisis ce qui circule ; clique un appareil ou le câble pour son rôle.';
     read.set('Sens', S.up && S.down ? 'dans les deux sens' : S.up ? 'de la tête vers la CCU (fibre 1)' : sig === 'power' ? 'de la CCU vers la tête (cuivre)' : 'de la CCU vers la tête (fibre 2)');
     read.set('Dans le câble', sig === 'power' && !hyb ? 'rien : en monomode seule, la tête est alimentée sur place (DC IN)' : S.cable);
     read.set('Côté car', S.car); read.set('Qui s\'en sert', S.who);
@@ -175,11 +175,11 @@ function demoChaine(host) {
     read.set('Niveau optique à la CCU', `${fmtDbm(rx)} dBm : ${rx < -30 ? 'pas de signal' : rx < RX_MIN ? 'la liaison décroche' : rx < -15 ? 'faible, sans marge' : 'normal (−5 à −15 dBm)'}`);
     // le verdict : la pire des deux limites
     let cls = 'ok', msg;
-    if (hyb && !pw.ok) { cls = 'ko'; msg = `À ${fmtLen(L)}, la tête ne s'allume pas : la chute de tension dans le cuivre empêche la CCU de faire passer ${P} W (à la baie CCU : ALIM. COUPÉE). Passez en fibre monomode avec une alimentation locale.`; }
-    else if (rx < RX_MIN) { cls = 'ko'; msg = `${fmtDbm(rx)} dBm à la CCU : la liaison décroche${DIRT[dirt] ? ' ; nettoyez les connecteurs avant tout' : ''}.`; }
+    if (hyb && !pw.ok) { cls = 'ko'; msg = `À ${fmtLen(L)}, la tête ne s'allume pas : la chute de tension dans le cuivre empêche la CCU de faire passer ${P} W (à la baie CCU : ALIM. COUPÉE). Passe en fibre monomode avec une alimentation locale.`; }
+    else if (rx < RX_MIN) { cls = 'ko'; msg = `${fmtDbm(rx)} dBm à la CCU : la liaison décroche${DIRT[dirt] ? ' ; nettoie les connecteurs avant tout' : ''}.`; }
     else if (!hyb && L > SM_MAX * 1000) { cls = 'warn'; msg = `Au-delà des ≈ ${SM_MAX} km annoncés pour le kit monomode : hors de la fiche, même si la lumière arrive encore (${fmtDbm(rx)} dBm).`; }
     else if (hyb && L > 0.85 * pw.Lmax) { cls = 'warn'; msg = `La tête s'allume, mais la tension n'est plus qu'à ${fmtNum(pw.V)} V : aucune marge. Le constructeur annonce un peu moins que cette limite théorique.`; }
-    else if (rx < -15) { cls = 'warn'; msg = `${fmtDbm(rx)} dBm : l'image passe, sans marge. Un connecteur sale coûte plusieurs décibels : nettoyez et mesurez.`; }
+    else if (rx < -15) { cls = 'warn'; msg = `${fmtDbm(rx)} dBm : l'image passe, sans marge. Un connecteur sale coûte plusieurs décibels : nettoie et mesure.`; }
     else msg = `Liaison bonne : ${hyb ? `tête alimentée par la CCU (${fmtNum(pw.V)} V)` : 'tête alimentée sur place'}, ${fmtDbm(rx)} dBm à la CCU.`;
     verdict.className = 'co-verdict ' + cls; verdict.textContent = msg;
   };
@@ -243,11 +243,11 @@ const STEPS = [
 ];
 const NEED = {
   pied: 'le pied doit d\'abord être sur son repère, jambes bloquées : tout le reste repose sur lui.',
-  araignee: 'verrouillez d\'abord l\'araignée : sous près de 50 kg, des jambes libres s\'écartent.',
+  araignee: 'verrouille d\'abord l\'araignée : sous près de 50 kg, des jambes libres s\'écartent.',
   tete: 'la tête fluide n\'est pas encore sur le pied.',
-  niveau: 'mettez d\'abord la tête à niveau : une fois chargée, elle ne se remet plus à niveau.',
-  verrou: 'verrouillez d\'abord la tête : une plateforme libre bascule sous la charge.',
-  manches: 'les commandes se fixent sur les manches : montez-les d\'abord.',
+  niveau: 'mets d\'abord la tête à niveau : une fois chargée, elle ne se remet plus à niveau.',
+  verrou: 'verrouille d\'abord la tête : une plateforme libre bascule sous la charge.',
+  manches: 'les commandes se fixent sur les manches : monte-les d\'abord.',
   adapt: 'l\'adaptateur grand objectif reçoit la caméra, l\'objectif et le viseur : il doit être posé et verrouillé.',
   camera: 'la tête de caméra doit être en place et verrouillée (le câble de l\'objectif et la fibre s\'y branchent).',
   objectif: 'l\'objectif n\'est pas encore monté.',
@@ -277,7 +277,7 @@ function demoMontage(host) {
   // ---- 1. l'ordre ----
   let order = shuffle(STEPS), done = /** @type {string[]} */ ([]), errs = 0;
   const pool = el('div', { class: 'co-btns cm-pool' }), list = el('ol', { class: 'cm-done' });
-  const verdict = el('p', { class: 'co-verdict' }, 'Cliquez le premier geste du montage.');
+  const verdict = el('p', { class: 'co-verdict' }, 'Clique le premier geste du montage.');
   const read = readout(['Gestes faits', 'Erreurs', 'Charge sur la tête', 'Masse montée']);
   const mass = (k) => STEPS.filter((s) => done.includes(s.id)).reduce((a, s) => a + (s[k] || 0), 0);
   const drawOrder = () => {
@@ -299,7 +299,7 @@ function demoMontage(host) {
     }
     drawOrder();
   };
-  const again = el('button', { type: 'button', class: 'btn small', onclick: () => { order = shuffle(STEPS); done = []; errs = 0; verdict.className = 'co-verdict'; verdict.textContent = 'Cliquez le premier geste du montage.'; drawOrder(); } }, 'Recommencer');
+  const again = el('button', { type: 'button', class: 'btn small', onclick: () => { order = shuffle(STEPS); done = []; errs = 0; verdict.className = 'co-verdict'; verdict.textContent = 'Clique le premier geste du montage.'; drawOrder(); } }, 'Recommencer');
 
   // ---- 2. l'équilibrage ----
   const parts = PAY.map((p) => ({ ...p }));
@@ -330,7 +330,7 @@ function demoMontage(host) {
     bread.set('Hauteur du centre de gravité', `${fmtNum(B.y * 100)} cm au-dessus de l'axe`);
     bread.set('Contrepoids à 15° d\'inclinaison', `${fmtNum(B.counter15)} N·m à compenser par les ressorts de la tête`);
     bverdict.className = 'co-verdict ' + (bal ? 'ok' : 'ko');
-    bverdict.textContent = bal ? 'En équilibre : le centre de gravité est au-dessus de l\'axe, la caméra tient seule à l\'horizontale. Restent le contrepoids et les frictions.' : B.x > 0 ? `Elle pique du nez : reculez la plaque de ${fmtNum(B.x * 100, 1)} cm.` : `Elle part en arrière : avancez la plaque de ${fmtNum(-B.x * 100, 1)} cm.`;
+    bverdict.textContent = bal ? 'En équilibre : le centre de gravité est au-dessus de l\'axe, la caméra tient seule à l\'horizontale. Restent le contrepoids et les frictions.' : B.x > 0 ? `Elle pique du nez : recule la plaque de ${fmtNum(B.x * 100, 1)} cm.` : `Elle part en arrière : avance la plaque de ${fmtNum(-B.x * 100, 1)} cm.`;
   };
   const chks = parts.filter((p) => p.opt).map((p) => {
     const inp = /** @type {HTMLInputElement} */ (el('input', { type: 'checkbox', checked: p.on }));
@@ -339,7 +339,7 @@ function demoMontage(host) {
   });
   host.append(
     el('h5', { class: 'co-h5' }, '1 · Monter dans l\'ordre'),
-    el('div', { class: 'co-2' }, el('div', {}, el('p', { class: 'co-note' }, 'Les gestes, dans le désordre :'), pool), el('div', {}, el('p', { class: 'co-note' }, 'Votre montage :'), list)),
+    el('div', { class: 'co-2' }, el('div', {}, el('p', { class: 'co-note' }, 'Les gestes, dans le désordre :'), pool), el('div', {}, el('p', { class: 'co-note' }, 'Ton montage :'), list)),
     verdict, el('div', { class: 'co-ctl' }, again), read.el,
     el('h5', { class: 'co-h5' }, '2 · Équilibrer avant / arrière'),
     el('div', { class: 'co-ctl' }, slider('Plaque', -12, 12, 0, 0.5, (x) => { d = x / 100; drawBal(); }, (x) => (x === 0 ? 'au milieu' : fmtNum(Math.abs(x), 1) + (x > 0 ? ' cm vers l\'avant' : ' cm vers l\'arrière'))), ...chks),
@@ -360,7 +360,7 @@ registerChapter({
         'L\'**ingénieur vision** règle l\'image au **RCP** (iris, noir, couleur), le chef vision tient le **MSU** ; le **cadreur** règle le cadre, le zoom, le point et son viseur.',
       ],
       figure: figQui,
-      demoTitle: 'Choisissez ce qui circule et suivez-le de la tête au car ; allongez le câble jusqu\'à ce que la tête ne s\'allume plus, puis passez en monomode et salissez un connecteur.',
+      demoTitle: 'Choisis ce qui circule et suis-le de la tête au car ; allonge le câble jusqu\'à ce que la tête ne s\'allume plus, puis passe en monomode et salis un connecteur.',
       demo: demoChaine,
       body: `Une **caméra système** est faite de trois éléments reliés entre eux. Sur le terrain, la **tête de caméra** : le prisme et les trois capteurs, le traitement de l'image, l'objectif et le viseur ; une tête de stade pèse environ 5 kg sans son objectif. Dans le car, la **CCU** (Camera Control Unit, la voie caméra), un boîtier en baie par caméra. Sur le pupitre de la régie vision, le **RCP** (Remote Control Panel), la télécommande de l'image. Tête et CCU vont par paire, de la même marque : ce qui passe entre elles suit un format de transmission propre au constructeur.
 
@@ -380,9 +380,9 @@ Qui règle quoi. L'**ingénieur vision** règle l'image au RCP : l'**iris** (joy
       competences: ['2.7', '2.10', '2.9'],
       article: 'camsys',
       exercises: [
-        { id: 'materiel-camera', intro: 'Dans la visionneuse de matériel, vous ouvrez l\'arrière de la tête de caméra puis celui de sa CCU et vous cliquez leurs connecteurs : la fibre hybride, l\'intercom du cadreur, l\'arrivée CAMERA, la référence et la sortie SDI vers la grille. Sur chaque face, retrouvez ce qui monte vers le car et ce qui descend vers la tête.' },
-        { id: 'cadreur-cadrer', intro: 'Vous prenez la caméra large en tribune : zoom, panoramique, puis la lecture du tally. Observez ce que le cadreur règle lui-même (le cadre, la focale) et ce qu\'il reçoit par la fibre sans y toucher : l\'image de son viseur, le tally, la voix de la réalisation.' },
-        { id: 'ccu-depannage', intro: 'À la baie CCU, une caméra perd sa fibre et une autre sa référence. Lisez l\'état de chaque voie : le niveau optique dit si la lumière arrive, REF LOCK si la caméra est en phase ; rétablissez avant de chercher la cause.' },
+        { id: 'materiel-camera', intro: 'Dans la visionneuse de matériel, tu ouvres l\'arrière de la tête de caméra puis celui de sa CCU et tu cliques leurs connecteurs : la fibre hybride, l\'intercom du cadreur, l\'arrivée CAMERA, la référence et la sortie SDI vers la grille. Sur chaque face, retrouve ce qui monte vers le car et ce qui descend vers la tête.' },
+        { id: 'cadreur-cadrer', intro: 'Tu prends la caméra large en tribune : zoom, panoramique, puis la lecture du tally. Observe ce que le cadreur règle lui-même (le cadre, la focale) et ce qu\'il reçoit par la fibre sans y toucher : l\'image de son viseur, le tally, la voix de la réalisation.' },
+        { id: 'ccu-depannage', intro: 'À la baie CCU, une caméra perd sa fibre et une autre sa référence. Lis l\'état de chaque voie : le niveau optique dit si la lumière arrive, REF LOCK si la caméra est en phase ; rétablis avant de chercher la cause.' },
       ],
       quiz: [
         { q: 'Dans le câble hybride SMPTE, par où passe l\'énergie de la tête de caméra ?', choices: ['Par les fibres optiques, avec l\'image', 'Par les conducteurs de cuivre du câble : la CCU l\'envoie depuis le car', 'Par une batterie fixée sur la tête'], answer: 1, why: 'Une fibre porte de la lumière, pas de puissance utile : l\'énergie passe par les deux conducteurs de cuivre, sous une tension élevée envoyée par la CCU. Une batterie ou un bloc sur DC IN ne sert que quand la tête n\'est pas alimentée par le câble : fibre monomode seule, longue distance, caméra sans CCU.' },
@@ -409,7 +409,7 @@ Qui règle quoi. L'**ingénieur vision** règle l'image au RCP : l'**iris** (joy
         'La fibre se **nettoie aux deux bouts** avant d\'être branchée et s\'attache au pied ; la mise en service se fait avec la vision : énergie, image, tally, CALL.',
       ],
       figure: figRig,
-      demoTitle: 'Cliquez les gestes dans l\'ordre du montage : un geste trop tôt est refusé, avec la raison. Puis faites glisser la plaque jusqu\'à l\'équilibre, et retirez le viseur ou ajoutez le pare-soleil.',
+      demoTitle: 'Clique les gestes dans l\'ordre du montage : un geste trop tôt est refusé, avec la raison. Puis fais glisser la plaque jusqu\'à l\'équilibre, et retire le viseur ou ajoute le pare-soleil.',
       demo: demoMontage,
       body: `Une caméra principale de passerelle pèse plus de 80 kg une fois montée, dont près de 50 kg sur la tête fluide. L'ordre de montage n'est pas une formalité : il évite la bascule, la chute d'un objectif de 24 kg et la liaison qui décroche à l'antenne. Une seule règle le résume : **rien ne se pose sur une pièce qui n'est pas stable et verrouillée**. L'atelier de montage du simulateur la fait respecter geste par geste : une pièce présentée trop tôt est refusée, et l'erreur comptée.
 
@@ -428,8 +428,8 @@ Qui règle quoi. L'**ingénieur vision** règle l'image au RCP : l'**iris** (joy
       competences: ['2.7', '4.2', '3.9'],
       article: 'montage',
       exercises: [
-        { id: 'atelier-montage', intro: 'Olivier vous accompagne dans l\'atelier, phase par phase : support, caméra et objectif, commandes, équilibrage, liaison, mise en service. À chaque pièce, regardez ce qu\'elle exige d\'être déjà verrouillé, et réglez l\'équilibre comme dans la leçon : la caméra doit tenir seule à l\'horizontale.' },
-        { id: 'x-atelier', intro: 'Le même montage, seul et chronométré : le temps et chaque geste refusé sont notés dans le rapport de montage. Visez zéro erreur avant de chercher la vitesse : l\'ordre de la leçon suffit.' },
+        { id: 'atelier-montage', intro: 'Olivier t\'accompagne dans l\'atelier, phase par phase : support, caméra et objectif, commandes, équilibrage, liaison, mise en service. À chaque pièce, regarde ce qu\'elle exige d\'être déjà verrouillé, et règle l\'équilibre comme dans la leçon : la caméra doit tenir seule à l\'horizontale.' },
+        { id: 'x-atelier', intro: 'Le même montage, seul et chronométré : le temps et chaque geste refusé sont notés dans le rapport de montage. Vise zéro erreur avant de chercher la vitesse : l\'ordre de la leçon suffit.' },
       ],
       quiz: [
         { q: 'Pourquoi verrouille-t-on panoramique et inclinaison avant de poser l\'adaptateur et l\'objectif ?', choices: ['Pour que la plateforme ne bascule pas pendant qu\'on charge près de 50 kg', 'Pour régler les frictions de la tête', 'Pour protéger la bulle de niveau'], answer: 0, why: 'Tête libre, une charge posée d\'un côté fait basculer la plateforme : l\'objectif de 24 kg tomberait. Les frictions se règlent après l\'équilibrage, au goût du cadreur ; la bulle se règle avant de charger, le verrou ne la protège pas.' },

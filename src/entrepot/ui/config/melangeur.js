@@ -94,7 +94,7 @@ export function menuMelangeur(a, m, ctx) {
   if (c.stream && typeof c.stream === 'object') out.push(section('Streaming', note('Le mélangeur diffuse lui-même son programme en RTMP : il lui faut une passerelle (la box) et un accès Internet. Réglages : onglet Output de l\'ATEM Software Control.'),
     coche(a.uid, 'stream.on', !!c.stream.on, 'Diffuser (ON AIR)'),
     choix(a.uid, 'stream.service', c.stream.service || 'YouTube', [['YouTube', 'YouTube'], ['Twitch', 'Twitch'], ['Facebook', 'Facebook'], ['Personnalisé', 'Serveur RTMP personnalisé']], 'Plateforme'),
-    texte(a.uid, 'stream.cle', c.stream.cle, 'Clé de diffusion', { placeholder: 'xxxx-xxxx-xxxx-xxxx', mono: true, aide: 'Donnée par la plateforme ; elle identifie la chaîne, ne la publiez pas.' }),
+    texte(a.uid, 'stream.cle', c.stream.cle, 'Clé de diffusion', { placeholder: 'xxxx-xxxx-xxxx-xxxx', mono: true, aide: 'Donnée par la plateforme ; elle identifie la chaîne, ne la publie pas.' }),
     ...services(ctx, `${a.uid}:rtmp:`)));
   if (Array.isArray(c.hyperdecks)) {
     const dl = `ep-dl-hd-${a.uid}`;

@@ -191,7 +191,7 @@ function drawCamProfile(g, def, st, onPick, conns) {
   // connecteurs visibles
   const ports = [['lens', 'multi', 438, 300, 'LENS 12P'], ['vf', 'multi', 560, 160, 'VF 20P'], ['mic1', 'xlr', 445, 205, 'MIC 1'], ['ccu', 'lemo', 680, 320, '']];
   for (const [id, k, x, y, l] of ports) { const gg = E('g', {}, g); gg.style.cursor = 'pointer'; gg.addEventListener('click', pick(id)); drawPort(gg, { k, x, y, l, small: true }, conns[id]); }
-  E('text', { x: 20, y: 30, fill: '#93a0ab', 'font-size': 12, 'font-family': FONT }, g, 'Cliquez sur une partie de la caméra · disposition schématique');
+  E('text', { x: 20, y: 30, fill: '#93a0ab', 'font-size': 12, 'font-family': FONT }, g, 'Clique sur une partie de la caméra · disposition schématique');
 }
 
 // ----------------------------------------------------------------------------------
@@ -216,7 +216,7 @@ function genericDef(key, n) {
     items.push({ t: 'port', id: p, k, x: 60 + (i % cols) * 90, y: 90 + Math.floor(i / cols) * 90, l: portName(key, p) });
     ports[p] = { n: portName(key, p), c: { ip: 'RJ-45 / fibre', power: 'Secteur', comms: 'XLR / RJ-45', fiber: 'Fibre', rf: 'RF', data: 'Données' }[c.sig] || 'BNC 75 Ω', s: c.sig, d: 'io', std: '', desc: c.type };
   });
-  return { key, title: DEV_NAMES[key] || key, generic: true, intro: 'Appareil représenté de manière simplifiée : seules les connexions utilisées dans votre installation sont affichées.', views: { arriere: { label: 'Connexions', w, h, items } }, ports, controls: {}, specs: [], lesson: [] };
+  return { key, title: DEV_NAMES[key] || key, generic: true, intro: 'Appareil représenté de manière simplifiée : seules les connexions utilisées dans ton installation sont affichées.', views: { arriere: { label: 'Connexions', w, h, items } }, ports, controls: {}, specs: [], lesson: [] };
 }
 
 function instances(key) {
@@ -244,7 +244,7 @@ function renderPhoto(p) {
   const host = VIEW.svgHost; host.innerHTML = '';
   const wrap = el('div', { class: 'photo-view' }, el('img', { src: photoUrl(p), alt: p.title }));
   p.hotspots.forEach((h, j) => wrap.appendChild(el('button', { class: 'hs' + (VIEW.photoSel === j ? ' on' : ''), style: { left: h.x * 100 + '%', top: h.y * 100 + '%' }, title: h.label, onclick: () => { VIEW.photoSel = j; VIEW.sel = h.port && (VIEW.def.ports[h.port] || VIEW.def.controls[h.port]) ? h.port : null; if (VIEW.sel) (S.seenPort ||= {})[VIEW.def.key + ':' + VIEW.sel] = true; renderPhoto(p); renderInfo(); } }, String(j + 1))));
-  host.append(wrap, el('p', { class: 'note' }, `Photo de votre matériel · ${p.hotspots.length} point(s) cliquable(s)`));
+  host.append(wrap, el('p', { class: 'note' }, `Photo de ton matériel · ${p.hotspots.length} point(s) cliquable(s)`));
 }
 function renderSvg() {
   const def = VIEW.def;
@@ -292,13 +292,13 @@ function renderInfo() {
   if (def.lesson.length) box.append(el('h3', { class: 'eq-h' }, 'Sur le terrain'), el('ul', { class: 'steps prose' }, def.lesson.map((l) => el('li', {}, l))));
   const cables = deviceCables(def.key, VIEW.n);
   if (cables.length) {
-    box.append(el('h3', { class: 'eq-h' }, `Raccordements dans votre car (${cables.length})`));
+    box.append(el('h3', { class: 'eq-h' }, `Raccordements dans ton car (${cables.length})`));
     const list = el('div', { class: 'list' });
     for (const c of cables.slice(0, 40)) list.appendChild(cableRow(c, def.key, VIEW.n));
     if (cables.length > 40) list.appendChild(el('p', { class: 'note' }, `… et ${cables.length - 40} autres (voir la liste de câblage au poste chef de car).`));
     box.append(list);
   }
-  box.append(el('p', { class: 'note' }, 'Cliquez sur un connecteur ou une commande pour son rôle. Les anneaux de couleur montrent les connecteurs câblés dans votre installation (rouge pointillé : liaison en défaut).'));
+  box.append(el('p', { class: 'note' }, 'Clique sur un connecteur ou une commande pour son rôle. Les anneaux de couleur montrent les connecteurs câblés dans ton installation (rouge pointillé : liaison en défaut).'));
 }
 function cableRow(c, key, n) {
   const mine = c.a.dev === key && c.a.n === n ? c.a : c.b; const other = mine === c.a ? c.b : c.a;
@@ -309,7 +309,7 @@ function cableRow(c, key, n) {
 function liveLinks(def, id) {
   const box = el('div', { class: 'list' });
   const cables = deviceCables(def.key, VIEW.n).filter((c) => (c.a.dev === def.key && c.a.n === VIEW.n && c.a.port === id) || (c.b.dev === def.key && c.b.n === VIEW.n && c.b.port === id));
-  box.append(el('h3', { class: 'eq-h' }, 'Dans votre installation'));
+  box.append(el('h3', { class: 'eq-h' }, 'Dans ton installation'));
   if (def.key === 'router') {
     const m = /^(in|out)(\d+)$/.exec(id);
     if (m && m[1] === 'in') box.append(el('p', { class: 'note' }, `Source câblée : ${routerInLabel(+m[2]) || 'non utilisée'}.`));
@@ -379,7 +379,7 @@ export function openEquipmentIndex() {
   const groups = [
     ['Chaîne caméra', ['cam', 'ccu', 'rcp', 'conv']], ['Ralentis', ['evs', 'lsm', 'ipd']], ['Mélangeur', ['mixer', 'mixpanel', 'siu']], ['Commutation et traitement', ['router', 'mv']], ['Synchronisation', ['spg', 'da']], ['Liaisons', ['rx', 'pdc']],
   ];
-  const body = el('div', { class: 'list' }, el('p', { class: 'note' }, 'Faces avant et arrière, connecteurs, signaux et raccordements réels de votre installation.'), el('button', { class: 'btn', onclick: () => emit('openSynoptics') }, 'Synoptiques du car (vidéo, synchro, audio, intercom, réseaux, énergie, baies)'));
+  const body = el('div', { class: 'list' }, el('p', { class: 'note' }, 'Faces avant et arrière, connecteurs, signaux et raccordements réels de ton installation.'), el('button', { class: 'btn', onclick: () => emit('openSynoptics') }, 'Synoptiques du car (vidéo, synchro, audio, intercom, réseaux, énergie, baies)'));
   for (const [g, keys] of groups) {
     body.append(el('h3', { class: 'eq-h' }, g));
     const row = el('div', { class: 'grid2' });

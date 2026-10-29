@@ -234,7 +234,7 @@ function renderSide() {
   const vueTab = el('div', { class: 'v3-vue' },
     el('p', { class: 'v3-resume' }, vue.resume),
     el('section', { class: 'v3-steps', 'aria-label': 'Étapes' }, el('div', { class: 'v3-nav' }, prev, stepNo, next), dots, stepT, stepTxt),
-    cmds ? el('section', { class: 'v3-cmd', 'aria-label': 'Commandes de la vue' }, el('h4', {}, 'À vous'), cmds) : null,
+    cmds ? el('section', { class: 'v3-cmd', 'aria-label': 'Commandes de la vue' }, el('h4', {}, 'À toi'), cmds) : null,
     reads ? el('section', { class: 'v3-reads', 'aria-label': 'Lectures' }, el('h4', {}, 'Ce que mesure la scène'), reads) : null,
     el('section', { class: 'v3-what', 'aria-label': 'Ce qui se passe' }, el('h4', {}, 'Ce qui se passe'), live),
     selBox);
@@ -256,10 +256,10 @@ function renderSide() {
     read(k, v) { if (readVals[k]) readVals[k].textContent = v; },
     sel(info) {
       selBox.hidden = !info; if (!info) return;
-      selBox.replaceChildren(el('h4', {}, 'Vous avez choisi'), el('b', { class: 'v3-seln' }, info.nom), info.texte ? rich(info.texte, 'v3-rich') : null);
+      selBox.replaceChildren(el('h4', {}, 'Tu as choisi'), el('b', { class: 'v3-seln' }, info.nom), info.texte ? rich(info.texte, 'v3-rich') : null);
     },
   };
-  live.textContent = vue.depart || 'Choisissez une étape, tournez autour de la scène, cliquez un objet pour le décrire.';
+  live.textContent = vue.depart || 'Choisis une étape, tourne autour de la scène, clique un objet pour le décrire.';
   const L = backLesson && vue.lecons.includes(backLesson) ? backLesson : vue.lecons[0];
   const found = lessonById(L);
   R.side.replaceChildren(

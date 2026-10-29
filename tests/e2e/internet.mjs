@@ -96,7 +96,7 @@ for (let i = 0; i < 50 && !log2.includes('localhost'); i++) await new Promise((r
 const C = await newPage('chloe', `http://localhost:${PORT2}/?lite`);
 await openSalon(C);
 await C.locator('#modal .tab', { hasText: 'Rejoindre une partie' }).click();
-check('Chloé : champ « Vous avez reçu un lien de l\'hôte ? »', await until(C, () => !!document.querySelector('.ses-linkjoin input'), null, 10000));
+check('Chloé : champ « Tu as reçu un lien de l\'hôte ? »', await until(C, () => !!document.querySelector('.ses-linkjoin input'), null, 10000));
 await C.locator('.ses-linkjoin input').fill(`127.0.0.1:${tport}/?lite&cle=${KEY}`); // recopié sans « http:// »
 await C.screenshot({ path: OUT + '/i8-chloe-colle-le-lien.png' });
 await C.locator('.ses-linkjoin button', { hasText: 'Rejoindre' }).click();

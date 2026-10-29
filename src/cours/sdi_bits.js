@@ -91,7 +91,7 @@ export const SDI_BITS = {
     'Le récepteur retrouve le **début des mots** grâce aux repères **3FF 000 000**, des valeurs interdites ailleurs ; une mire **checkfield** pousse égaliseurs et horloges à leurs limites.',
   ],
   figure: figBits,
-  demoTitle: 'Choisissez une suite de mots, coupez l\'embrouillage, inversez la polarité : regardez les paliers sans transition et ce que relit le récepteur.',
+  demoTitle: 'Choisis une suite de mots, coupe l\'embrouillage, inverse la polarité : regarde les paliers sans transition et ce que relit le récepteur.',
   demo: (host) => demoBits(host),
   body: `Un câble SDI n'a qu'un conducteur utile : les mots de l'image partent **en série**, bit après bit. Chaque mot de 10 bits sort **bit de poids faible d'abord** (b0, puis b1… jusqu'à b9). En 3G, cela fait 2,97 milliards de bits par seconde : un bit dure **337 ps**, l'**unité d'intervalle** (UI) de l'œil ; 673 ps en HD, 84 ps en 12G.
 

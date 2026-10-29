@@ -22,8 +22,8 @@ export const CONTROLS_HELP = [
 ];
 
 // premiers gestes, rappelés au premier lancement (encart « Prise en main » ou chef de car)
-export const FIRST_STEPS = [['Z Q S D', 'se déplacer (flèches aussi)'], ['Souris', 'regarder : cliquez d\'abord dans la vue'], ['E', 'utiliser ce que vous visez'], ['Tab', 'le téléphone : aller à un poste, missions, outils'], ['1 – 9', 'commuter une caméra à l\'antenne'], ['L', 'les missions : objectif, exercices, badges'], ['Échap', 'le menu']];
+export const FIRST_STEPS = [['Z Q S D', 'se déplacer (flèches aussi)'], ['Souris', 'regarder : clique d\'abord dans la vue'], ['E', 'utiliser ce que tu vises'], ['Tab', 'le téléphone : aller à un poste, missions, outils'], ['1 – 9', 'commuter une caméra à l\'antenne'], ['L', 'les missions : objectif, exercices, badges'], ['Échap', 'le menu']];
 /** les mêmes gestes, en un mot : la ligne de prise en main du HUD */
 export const FIRST_STEPS_SHORT = [['Z Q S D', 'se déplacer'], ['Souris', 'regarder'], ['E', 'utiliser'], ['Tab', 'téléphone'], ['1 – 9', 'commuter'], ['L', 'missions'], ['Échap', 'menu']];
 export const FIRST_STEPS_TOUCH_SHORT = [['Pouce gauche', 'se déplacer'], ['Glisser', 'regarder'], ['Action', 'utiliser'], ['Aller à', 'se téléporter']];
-export const FIRST_STEPS_TOUCH = [['Pouce gauche', 'se déplacer'], ['Glisser', 'regarder'], ['Bouton action', 'utiliser ce que vous visez'], ['Aller à', 'se téléporter devant un poste']];
+export const FIRST_STEPS_TOUCH = [['Pouce gauche', 'se déplacer'], ['Glisser', 'regarder'], ['Bouton action', 'utiliser ce que tu vises'], ['Aller à', 'se téléporter devant un poste']];

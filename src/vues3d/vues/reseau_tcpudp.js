@@ -51,7 +51,7 @@ Le récepteur les prend comme ils viennent ; RTP leur ajoute un numéro et un ho
 
 Pour le temps réel, c'est le bon choix ; la réparation se fait au-dessus, quand on peut se l'offrir : deux réseaux (ST 2022-7), de la correction en avance (FEC), ou des retransmissions bornées par un tampon (SRT, RIST).` },
     { t: 'Un long chemin qui perd : TCP s\'effondre', reglage: { perte: 5, rtt: 200 }, lecon: 'reseau-streaming',
-      texte: `Aller-retour de 200 ms, 5 % de pertes : chaque perte coûte un aller-retour et divise la fenêtre, qui n'a jamais le temps de regrandir. À l'échelle réelle, une connexion TCP plafonne alors vers **0,3 Mb/s**, même sur une fibre à 1 Gb/s (formule de Mathis : lisez « À l'échelle réelle »).
+      texte: `Aller-retour de 200 ms, 5 % de pertes : chaque perte coûte un aller-retour et divise la fenêtre, qui n'a jamais le temps de regrandir. À l'échelle réelle, une connexion TCP plafonne alors vers **0,3 Mb/s**, même sur une fibre à 1 Gb/s (formule de Mathis : lis « À l'échelle réelle »).
 
 C'est pourquoi un direct par Internet ne passe pas en TCP : on prend **SRT** ou **RIST**, de l'UDP qui ne redemande que les paquets perdus, dans un tampon de latence de quelques allers-retours.` },
   ],

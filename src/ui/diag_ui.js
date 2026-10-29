@@ -114,7 +114,7 @@ export function openDiag() {
   const n = ERRS.filter(visible).length;
   modal.open('Diagnostic technique', el('div', { class: 'diag' },
     el('p', {}, n ? `${n} problème${n > 1 ? 's' : ''} noté${n > 1 ? 's' : ''} depuis l'ouverture de la page.` : 'Aucune erreur depuis l\'ouverture de la page.',
-      ' Si quelque chose ne marche pas, copiez ce diagnostic et envoyez-le à votre formateur ou à la personne qui maintient le simulateur : il dit quel navigateur vous utilisez, ce qui lui manque et ce qui a échoué.'),
+      ' Si quelque chose ne marche pas, copie ce diagnostic et envoie-le à ton formateur ou à la personne qui maintient le simulateur : il dit quel navigateur tu utilises, ce qui lui manque et ce qui a échoué.'),
     area,
     el('div', { class: 'hwrow' }, copyBtn, el('button', { class: 'btn', onclick: () => { area.value = diagText(); } }, 'Actualiser le diagnostic'))), { width: 760 });
   hideBar();

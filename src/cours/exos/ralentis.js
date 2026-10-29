@@ -19,7 +19,7 @@ const CADENCES = [
 ];
 const EVS = [
   {
-    type: 'choix', q: 'En plein match, un stagiaire veut « libérer le serveur » en arrêtant l\'enregistrement de la CAM 2. Que lui répondez-vous ?',
+    type: 'choix', q: 'En plein match, un stagiaire veut « libérer le serveur » en arrêtant l\'enregistrement de la CAM 2. Que lui réponds-tu ?',
     choices: ['Jamais : rien de ce qui se passe ensuite sur cette caméra ne pourra être rejoué', ['D\'accord, la boucle reprendra seule', 'L\'enregistrement ne repart pas tout seul : tant qu\'il est arrêté, rien n\'est gardé.'], ['D\'accord, les autres trains gardent la CAM 2', 'Chaque train enregistre sa propre entrée : les autres ne gardent pas la CAM 2.']], answer: 0,
     aides: ['Que devient une action qui a lieu pendant que le train ne tourne pas ?', 'C\'est la pire erreur du poste.'],
     solution: '**Jamais** : arrêter l\'enregistrement est la pire erreur du poste, rien de ce qui suit ne pourra être rejoué.',
@@ -27,7 +27,7 @@ const EVS = [
   {
     type: 'choix', q: 'Pourquoi l\'opérateur pose-t-il son IN quelques secondes avant l\'action ?',
     choices: ['Pour que le ralenti parte avec de l\'élan, en montrant la préparation du geste', ['Pour protéger les images de l\'écrasement', 'C\'est le clip qui protège de l\'écrasement, pas la place de l\'IN.'], ['Parce que le serveur a un retard de quelques secondes', 'Tous les trains portent le timecode du car : l\'IN se pose à l\'image près.']], answer: 0,
-    aides: ['Pensez à ce que voit le téléspectateur au début du ralenti.', 'Un ralenti qui commence sur le tir n\'a pas d\'élan.'],
+    aides: ['Pense à ce que voit le téléspectateur au début du ralenti.', 'Un ralenti qui commence sur le tir n\'a pas d\'élan.'],
     solution: 'Pour l\'**élan** : le ralenti montre la préparation du geste avant l\'action.',
   },
   {
@@ -61,7 +61,7 @@ const CLIPS = [
 registerExos({
   'ralentis-evs': {
     titre: 'Caler un ralenti',
-    consigne: 'Au poste Ralentis : le réalisateur vous donne un temps d\'antenne ; vous choisissez la vitesse, vous dites si le geste sera fluide et combien d\'entrées il vous faut.',
+    consigne: 'Au poste Ralentis : le réalisateur te donne un temps d\'antenne ; tu choisis la vitesse, tu dis si le geste sera fluide et combien d\'entrées il te faut.',
     gen: (rnd) => {
       const d = entre(rnd, 4, 12) / 2, V = pick(rnd, VITESSES), duree = d / V.v;
       const [D, T] = pick(rnd, [[4, 8], [3, 12], [4, 12], [5, 10], [2, 8], [3, 6], [5, 20]]);
@@ -77,20 +77,20 @@ registerExos({
         },
         {
           type: 'nombre', unite: '%', answer: Math.round(D / T * 1000) / 10, tol: 1,
-          q: `Le réalisateur donne **${T} s** d'antenne pour une action de **${D} s**. À quelle vitesse poussez-vous le levier, en pour cent ?`,
+          q: `Le réalisateur donne **${T} s** d'antenne pour une action de **${D} s**. À quelle vitesse pousses-tu le levier, en pour cent ?`,
           pieges: [{ v: Math.round(T / D * 1000) / 10, why: 'C\'est le rapport inverse : la vitesse est la durée de l\'action divisée par le temps d\'antenne.' }],
-          aides: ['Partez de la formule : durée à l\'antenne = durée de l\'action ÷ vitesse.', `Vitesse = ${D} ÷ ${T}.`],
+          aides: ['Pars de la formule : durée à l\'antenne = durée de l\'action ÷ vitesse.', `Vitesse = ${D} ÷ ${T}.`],
           solution: `${D} ÷ ${T} = **${fr(D / T * 100, D * 3 === T ? 0 : 1)} %**${D * 3 === T ? ' (un tiers : la vitesse idéale d\'une caméra 3×)' : ''}.`,
         },
         {
           type: 'nombre', answer: rep,
-          q: `La sortie du serveur donne 50 images par seconde (1080p50). Vous relisez ${C.cam} à **${C.t}**. Combien de fois chaque image enregistrée est-elle montrée ?`,
-          aides: ['Comptez combien d\'images enregistrées sont lues par seconde à cette vitesse.', `${C.ips} × ${C.v === 1 / 3 ? '1/3' : C.v === 1 / 6 ? '1/6' : fr(C.v, 2)} images différentes par seconde, pour 50 images en sortie.`],
+          q: `La sortie du serveur donne 50 images par seconde (1080p50). Tu relis ${C.cam} à **${C.t}**. Combien de fois chaque image enregistrée est-elle montrée ?`,
+          aides: ['Compte combien d\'images enregistrées sont lues par seconde à cette vitesse.', `${C.ips} × ${C.v === 1 / 3 ? '1/3' : C.v === 1 / 6 ? '1/6' : fr(C.v, 2)} images différentes par seconde, pour 50 images en sortie.`],
           solution: `${fr(C.ips * C.v, 1)} images différentes par seconde pour 50 en sortie : chaque image est montrée **${rep} fois**. ${rep === 1 ? 'Le geste est parfaitement fluide.' : 'Le mouvement avance par à-coups : il faudrait une caméra plus rapide.'}`,
         },
         pick(rnd, [{
           type: 'nombre', answer: reste,
-          q: `Le serveur a **${E} entrées** d'enregistrement. Vous y mettez **${k} caméra${k > 1 ? 's' : ''} super ralenti 3×**. Combien de caméras normales pouvez-vous encore enregistrer ?`,
+          q: `Le serveur a **${E} entrées** d'enregistrement. Tu y mets **${k} caméra${k > 1 ? 's' : ''} super ralenti 3×**. Combien de caméras normales peux-tu encore enregistrer ?`,
           pieges: [{ v: E - k, why: 'Une caméra 3× sort ses 150 images/s sur trois liaisons (phases A, B, C) : elle occupe trois entrées.' }],
           aides: ['Combien de liaisons à 50 images/s une caméra 3× demande-t-elle ?', `Chaque caméra 3× prend 3 entrées : ${E} − 3 × ${k}.`],
           solution: `${E} − ${3 * k} = **${reste}**${reste === 0 ? ' : les caméras 3× prennent tout' : ''}.`,
@@ -100,7 +100,7 @@ registerExos({
   },
   'ralentis-clips': {
     titre: 'Monter le résumé de la mi-temps',
-    consigne: 'Au poste IPDirector et à la LSM : vous nommez les clips, vous calculez la durée de la playlist et vous l\'ajustez au temps demandé.',
+    consigne: 'Au poste IPDirector et à la LSM : tu nommes les clips, tu calcules la durée de la playlist et tu l\'ajustes au temps demandé.',
     gen: (rnd) => {
       const n = entre(rnd, 2, 4);
       const clips = Array.from({ length: n }, () => ({ d: entre(rnd, 20, 70) / 10, V: pick(rnd, VITESSES.slice(0, 3)) }));
@@ -112,7 +112,7 @@ registerExos({
         {
           type: 'nombre', unite: 's', answer: Math.round(tot * 100) / 100, tol: 0.06,
           q: `Playlist en 1080p50 : ${clips.map((c, k) => `clip ${k + 1} de **${fr(c.d, 1)} s à ${c.V.t}**`).join(', ')} ; ${trans.map((t, k) => `entre ${k + 1} et ${k + 2}, ${t.t}`).join(' ; ')}. Combien dure-t-elle à l'antenne ?`,
-          pieges: [{ v: Math.round(lu * 100) / 100, why: 'Un mix recouvre la fin d\'un clip et le début du suivant : retirez la durée de chaque mix (25 images = 0,5 s).' }, { v: Math.round((clips.reduce((s, c) => s + c.d, 0) - rec) * 100) / 100, why: 'Chaque clip dure sa longueur divisée par sa vitesse : un clip à 33 % dure trois fois plus.' }].filter((p) => Math.abs(p.v - tot) > 0.06),
+          pieges: [{ v: Math.round(lu * 100) / 100, why: 'Un mix recouvre la fin d\'un clip et le début du suivant : retire la durée de chaque mix (25 images = 0,5 s).' }, { v: Math.round((clips.reduce((s, c) => s + c.d, 0) - rec) * 100) / 100, why: 'Chaque clip dure sa longueur divisée par sa vitesse : un clip à 33 % dure trois fois plus.' }].filter((p) => Math.abs(p.v - tot) > 0.06),
           aides: ['Durée = somme des (durée du clip ÷ vitesse) − somme des durées de transition.', `Clips lus : ${clips.map((c) => `${fr(c.d, 1)} ÷ ${c.V.v === 1 / 3 ? '(1/3)' : fr(c.V.v, 1)}`).join(' + ')} ; un mix de 25 images vaut 0,5 s en 1080p50.`],
           solution: `${clips.map((c) => fr(c.d / c.V.v, 1)).join(' + ')}${rec ? ` − ${fr(rec, 1)}` : ''} = **${fr(tot, 1)} s**.`,
         },
@@ -123,7 +123,7 @@ registerExos({
           solution: `**${nom}** : page ${P}, banque ${B}, touche F${F}, angle ${A}.`,
         },
         {
-          type: 'ordre', q: 'Remettez dans l\'ordre le travail des clips pendant le match.',
+          type: 'ordre', q: 'Remets dans l\'ordre le travail des clips pendant le match.',
           items: ['L\'opérateur LSM pose un IN et un OUT sur l\'action', 'Il range le clip sur une touche F libre', 'Le logueur le nomme dans IPDirector, avec mots-clés et note', 'À la mi-temps, la playlist du résumé part à l\'antenne'],
           aides: ['Un clip existe d\'abord sur la télécommande, avant d\'être décrit.', 'On délimite, on range, on décrit, puis on monte.'],
           solution: '1. IN et OUT ; 2. rangé sur une touche F ; 3. nommé et décrit dans IPDirector ; 4. la playlist à la mi-temps.',

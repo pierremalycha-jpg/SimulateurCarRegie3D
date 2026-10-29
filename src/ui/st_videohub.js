@@ -51,18 +51,18 @@ const cap = (t) => t.charAt(0).toUpperCase() + t.slice(1);
 // ---------------- explications ----------------
 function explainSel(n) {
   const p = outPlan(n), x = xpOf(n), lk = lockState(n);
-  explain(`Destination : ${descOut(n)}${p.dest ? ` (${p.to})` : ' : sortie libre, rien n\'y est câblé'}. Elle reçoit ${x ? descIn(x) : 'aucune entrée'}. Choisissez la source${VH.take ? ', puis TAKE' : ' : la commutation sera immédiate (TAKE désactivé)'}.${lk !== 'U' ? ' Cette sortie est verrouillée : il faudra d\'abord la déverrouiller.' : ''}`, 'vh:sel');
+  explain(`Destination : ${descOut(n)}${p.dest ? ` (${p.to})` : ' : sortie libre, rien n\'y est câblé'}. Elle reçoit ${x ? descIn(x) : 'aucune entrée'}. Choisis la source${VH.take ? ', puis TAKE' : ' : la commutation sera immédiate (TAKE désactivé)'}.${lk !== 'U' ? ' Cette sortie est verrouillée : il faudra d\'abord la déverrouiller.' : ''}`, 'vh:sel');
 }
 function explainTake(n, m, prev) {
   const outs = outsOfIn(m).filter((o) => o !== n);
   const p = outPlan(n), ip = inPlan(m);
-  const tail = { tx: ' C\'est un départ vers la chaîne : vérifiez le retour antenne, puis verrouillez la sortie.', mel: ` Le bouton ${n} du mélangeur montre maintenant cette source.`, mv: ` La tuile ${n - 22} du multiview change d'image.`, evs: ` L'EVS enregistre maintenant cette source sur REC ${n - 22}.`, aux: ' Vérifiez l\'image sur l\'écran concerné.', free: ' Rien n\'est câblé sur cette sortie : la commutation est faite, mais aucune destination ne la reçoit.' }[p.group] || '';
+  const tail = { tx: ' C\'est un départ vers la chaîne : vérifie le retour antenne, puis verrouille la sortie.', mel: ` Le bouton ${n} du mélangeur montre maintenant cette source.`, mv: ` La tuile ${n - 22} du multiview change d'image.`, evs: ` L'EVS enregistre maintenant cette source sur REC ${n - 22}.`, aux: ' Vérifie l\'image sur l\'écran concerné.', free: ' Rien n\'est câblé sur cette sortie : la commutation est faite, mais aucune destination ne la reçoit.' }[p.group] || '';
   explain(`Point de croisement établi : ${descIn(m)} → ${descOut(n)}${prev && prev !== m ? ` (au lieu de l'entrée ${prev})` : ''}. Une sortie ne reçoit qu'une source à la fois.${outs.length ? ` L'entrée ${m} alimente aussi ${outs.length === 1 ? 'la sortie ' + outs[0] : outs.length + ' autres sorties (' + outs.slice(0, 6).join(', ') + (outs.length > 6 ? '…' : '') + ')'} : une source peut partir vers autant de destinations qu'on veut.` : ''}${!ip.live ? ` Attention : rien n'est câblé sur l'entrée ${m}, la destination ne reçoit aucune image.` : ''}${tail}`, 'grille:take');
 }
 function doRoute(n, m) {
   // en car SDI, la prise part en Ethernet vers la carte de contrôle de la grille
   const k = ctrlFunc('grille');
-  if (!k.ok) { SW.pend = null; toast('Grille injoignable par le réseau de contrôle.', 'bad'); explain(`Prise refusée : le logiciel ne joint plus la grille (${k.why}). Les points de croisement en place restent, mais aucune nouvelle prise ne passe : voyez le poste Réseau.`, 'warn:ctrl'); return false; }
+  if (!k.ok) { SW.pend = null; toast('Grille injoignable par le réseau de contrôle.', 'bad'); explain(`Prise refusée : le logiciel ne joint plus la grille (${k.why}). Les points de croisement en place restent, mais aucune nouvelle prise ne passe : vois le poste Réseau.`, 'warn:ctrl'); return false; }
   const prev = xpOf(n);
   const err = vhRoute(n, m);
   SW.pend = null;
@@ -81,10 +81,10 @@ async function toggleLock(n) {
   if (l === 'L') {
     const by = VH.lockedBy[n] || 'un autre client du réseau';
     const ok = await ask(`La ${descOut(n)} a été verrouillée depuis un autre poste (${by}).\n\nLa déverrouiller d'ici retire son verrou sans le prévenir. On appelle d'abord ce poste à l'intercom pour savoir pourquoi la sortie est figée.`, { title: 'Sortie verrouillée par un autre poste', ok: 'Forcer le déverrouillage', danger: true });
-    if (!ok) { explain(`Verrou de la sortie ${n} conservé. Une sortie verrouillée par un autre poste (état L) l'est souvent pour une bonne raison : demandez avant de forcer.`, 'vh:lock'); return; }
+    if (!ok) { explain(`Verrou de la sortie ${n} conservé. Une sortie verrouillée par un autre poste (état L) l'est souvent pour une bonne raison : demande avant de forcer.`, 'vh:lock'); return; }
   }
   setLock(n, null);
-  explain(`${cap(descOut(n))} déverrouillée (état U) : tous les postes peuvent de nouveau la commuter. Faites votre changement, puis reverrouillez-la si c'est une sortie critique.`, 'vh:lock');
+  explain(`${cap(descOut(n))} déverrouillée (état U) : tous les postes peuvent de nouveau la commuter. Fais ton changement, puis reverrouille-la si c'est une sortie critique.`, 'vh:lock');
 }
 
 // ---------------- façade ----------------
@@ -104,7 +104,7 @@ function fpDigit(d) {
   DIG.t = now;
   let s = DIG.s + d, n = +s;
   if (s.length === 2 && (n < 1 || n > VH_N)) { s = String(d); n = d; }
-  if (n < 1) { DIG.s = ''; explain('Touche 0 : tapez le numéro de la sortie ou de la source sur deux chiffres (0 seul ne désigne aucun port, 10 = 1 puis 0).', 'vh:fp'); return; }
+  if (n < 1) { DIG.s = ''; explain('Touche 0 : tape le numéro de la sortie ou de la source sur deux chiffres (0 seul ne désigne aucun port, 10 = 1 puis 0).', 'vh:fp'); return; }
   DIG.s = s.length >= 2 || n > 4 ? '' : s;
   fpPick(n);
 }
@@ -114,7 +114,7 @@ function fpTurn(d) {
   else fpPick(wrap((FP.inp || xpOf(FP.out) || 1) + d));
 }
 function fpTake() {
-  if (!FP.pending || !FP.inp) { explain('TAKE : rien à valider. Touche IN, choisissez une source (molette ou touches numérotées), puis TAKE.', 'vh:fp'); return; }
+  if (!FP.pending || !FP.inp) { explain('TAKE : rien à valider. Touche IN, choisis une source (molette ou touches numérotées), puis TAKE.', 'vh:fp'); return; }
   const n = FP.out, m = FP.inp;
   FP.pending = false; FP.inp = null; FP.mode = 'out';
   doRoute(n, m);
@@ -218,8 +218,8 @@ function buildControl() {
     SB.push(s); srcs.append(s);
   }
   const takeChk = el('input', { type: 'checkbox', id: 'vh-usetake' });
-  takeChk.addEventListener('change', () => { VH.take = takeChk.checked; SW.pend = null; explain(VH.take ? 'Utiliser TAKE : un clic sur une source la prépare seulement (elle clignote en rouge), TAKE la commute. C\'est le réglage du car : une erreur de clic ne part pas à l\'antenne.' : 'TAKE désactivé (réglage d\'origine du logiciel) : un clic sur une source la commute tout de suite. Verrouillez au moins les départs vers la chaîne.', 'vh:take'); });
-  const take = el('button', { type: 'button', class: 'vh-take', onclick: () => { if (SW.pend) doRoute(SW.out, SW.pend); else explain(VH.take ? 'TAKE : choisissez d\'abord une source (elle clignote), puis TAKE.' : 'TAKE n\'est pas utilisé : chaque clic sur une source commute directement (case « Utiliser TAKE »).', 'vh:take'); } }, 'TAKE');
+  takeChk.addEventListener('change', () => { VH.take = takeChk.checked; SW.pend = null; explain(VH.take ? 'Utiliser TAKE : un clic sur une source la prépare seulement (elle clignote en rouge), TAKE la commute. C\'est le réglage du car : une erreur de clic ne part pas à l\'antenne.' : 'TAKE désactivé (réglage d\'origine du logiciel) : un clic sur une source la commute tout de suite. Verrouille au moins les départs vers la chaîne.', 'vh:take'); });
+  const take = el('button', { type: 'button', class: 'vh-take', onclick: () => { if (SW.pend) doRoute(SW.out, SW.pend); else explain(VH.take ? 'TAKE : choisis d\'abord une source (elle clignote), puis TAKE.' : 'TAKE n\'est pas utilisé : chaque clic sur une source commute directement (case « Utiliser TAKE »).', 'vh:take'); } }, 'TAKE');
   const cancel = el('button', { type: 'button', class: 'btn small', onclick: () => { if (SW.pend) explain(`Source préparée abandonnée : la sortie ${SW.out} garde sa source.`, 'vh:take'); SW.pend = null; } }, 'Annuler');
   const lockBtn = el('button', { type: 'button', class: 'btn small vh-lockbtn', onclick: () => toggleLock(SW.out) }, lockIcon(), el('span', {}, 'Verrouiller'));
   const status = el('div', { class: 'vh-status lcd amber' });
@@ -271,7 +271,7 @@ function swSource(m) {
   if (lockState(n) !== 'U' || !VH.take) { doRoute(n, m); return; }
   if (m === xpOf(n)) { SW.pend = null; explain(`${cap(descIn(m))} est déjà la source de la sortie ${n} : rien à commuter.`, 'vh:take'); return; }
   SW.pend = m;
-  explain(`Source préparée : ${descIn(m)} pour la ${descOut(n)}. Elle clignote, TAKE aussi : rien n'est commuté tant que vous ne validez pas (Annuler pour renoncer). C'est la sécurité contre les fausses manœuvres.`, 'vh:take');
+  explain(`Source préparée : ${descIn(m)} pour la ${descOut(n)}. Elle clignote, TAKE aussi : rien n'est commuté tant que tu ne valides pas (Annuler pour renoncer). C'est la sécurité contre les fausses manœuvres.`, 'vh:take');
 }
 
 // ---------------- monitoring : mosaïques rendues dans une texture ----------------
@@ -442,7 +442,7 @@ function buildSetup() {
   const inBody = el('tbody'), outBody = el('tbody');
   for (let n = 1; n <= VH_N; n++) {
     const inp = el('input', { type: 'text', maxlength: 20, 'aria-label': `Étiquette de l'entrée ${n}`, spellcheck: 'false' });
-    inp.addEventListener('change', () => { const before = inLabel(n); setInLabel(n, inp.value); inp.value = inLabel(n); explain(`Étiquette de l'entrée ${n} : « ${before} » → « ${inLabel(n)} ». L'étiquette n'est qu'un nom enregistré dans la grille : elle ne change ni le câblage ni l'image. Une étiquette fausse fait router la mauvaise source : comparez-la avec le câblage et le monitoring.`, 'vh:label'); });
+    inp.addEventListener('change', () => { const before = inLabel(n); setInLabel(n, inp.value); inp.value = inLabel(n); explain(`Étiquette de l'entrée ${n} : « ${before} » → « ${inLabel(n)} ». L'étiquette n'est qu'un nom enregistré dans la grille : elle ne change ni le câblage ni l'image. Une étiquette fausse fait router la mauvaise source : compare-la avec le câblage et le monitoring.`, 'vh:label'); });
     const from = el('td', { class: 'note' }), sig = el('td');
     inRows.push({ inp, from, sig }); inBody.append(el('tr', {}, el('th', { scope: 'row' }, String(n)), el('td', {}, inp), from, sig));
     const outp = el('input', { type: 'text', maxlength: 20, 'aria-label': `Étiquette de la sortie ${n}`, spellcheck: 'false' });

@@ -42,7 +42,7 @@
     return lines.join('\n');
   }
   function copy(text, btn) {
-    var done = function (ok) { btn.textContent = ok ? 'Copié ✓' : 'Sélectionnez le texte puis copiez (Cmd/Ctrl + C)'; };
+    var done = function (ok) { btn.textContent = ok ? 'Copié ✓' : 'Sélectionne le texte puis copie (Cmd/Ctrl + C)'; };
     var area = /** @type {HTMLTextAreaElement | null} */ (document.querySelector('#err .boot-diag textarea'));
     var legacy = function () { try { if (area) { area.focus(); area.select(); } done(document.execCommand('copy')); } catch (e) { done(false); } };
     try { if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(function () { done(true); }, legacy); else legacy(); } catch (e) { legacy(); }
@@ -56,12 +56,12 @@
     box.hidden = false;
     var sheet = document.createElement('div'); sheet.className = 'sheet boot-sheet';
     if (!explained) {
-      sheet.innerHTML = '<header><h2>Le simulateur n\'a pas pu démarrer</h2></header><div class="body prose"><p></p><p class="note">Essayez avec Chrome, Edge ou Firefox à jour. Sur Mac, mettez Safari à jour (Safari 15 au minimum, menu Pomme → Réglages du système → Mise à jour de logiciels).</p></div>';
+      sheet.innerHTML = '<header><h2>Le simulateur n\'a pas pu démarrer</h2></header><div class="body prose"><p></p><p class="note">Essaie avec Chrome, Edge ou Firefox à jour. Sur Mac, mets Safari à jour (Safari 15 au minimum, menu Pomme → Réglages du système → Mise à jour de logiciels).</p></div>';
       /** @type {HTMLElement} */ (sheet.querySelector('p')).textContent = reason;
       box.innerHTML = ''; box.appendChild(sheet);
     }
     var d = document.createElement('div'); d.className = 'boot-diag';
-    d.innerHTML = '<p class="note">Pour obtenir de l\'aide, copiez ce diagnostic et envoyez-le à votre formateur.</p><textarea readonly rows="8" aria-label="Texte du diagnostic"></textarea><button class="btn primary" type="button">Copier le diagnostic</button>';
+    d.innerHTML = '<p class="note">Pour obtenir de l\'aide, copie ce diagnostic et envoie-le à ton formateur.</p><textarea readonly rows="8" aria-label="Texte du diagnostic"></textarea><button class="btn primary" type="button">Copier le diagnostic</button>';
     var area = /** @type {HTMLTextAreaElement} */ (d.querySelector('textarea')); area.value = text;
     var btn = /** @type {HTMLButtonElement} */ (d.querySelector('button')); btn.onclick = function () { copy(text, btn); };
     (explained ? /** @type {HTMLElement} */ (box.querySelector('.sheet .body') || box) : /** @type {HTMLElement} */ (sheet.querySelector('.body'))).appendChild(d);

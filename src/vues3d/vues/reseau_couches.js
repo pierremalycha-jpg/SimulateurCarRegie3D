@@ -35,7 +35,7 @@ export const VUE_RESEAU_COUCHES = {
     { t: 'Quatre couches, chacune son travail', reglage: { de: 0, a: 16 }, lecon: 'reseau-modele',
       texte: `Deux machines, et entre elles un commutateur, un routeur, un pare-feu. Chaque machine empile quatre **couches** (modèle TCP/IP) : **application** (les données et leur format), **transport** (les ports, TCP ou UDP), **Internet** (les adresses IP, le chemin), **accès réseau** (la trame Ethernet, le câble).
 
-Regardez le voyage complet d'une image ST 2110 ; les étapes suivantes le découpent.` },
+Regarde le voyage complet d'une image ST 2110 ; les étapes suivantes le découpent.` },
     { t: 'L\'encapsulation : un en-tête par couche', reglage: { de: 0, a: 5 }, lecon: 'reseau-modele', vue: { cible: [XE, 2.2, 0.3], dir: [0.15, 0.2, 1], dist: 5.2 },
       texte: `Chez l'émetteur, l'image descend les couches et s'enveloppe à chaque étage : **RTP** (12 octets : numéro, horodatage), **UDP** (8 : les ports), **IP** (20 : les adresses), **Ethernet** (18 : les adresses MAC, le type, le contrôle). Comme des poupées russes.
 
@@ -48,10 +48,10 @@ Sur le fil, s'ajoutent encore un préambule et un silence : 1 200 octets d'image
       texte: `Le **pare-feu** va jusqu'au niveau 4 : sous la trame et l'en-tête IP, il lit le **protocole et le port** (UDP 5004, TCP 443…). Une règle dit ce qui passe : il peut laisser passer le flux vidéo et bloquer tout le reste.` },
     { t: 'La décapsulation chez le destinataire', reglage: { de: 11, a: 16 }, lecon: 'reseau-modele', vue: { cible: [XD, 2.2, 0.3], dir: [-0.15, 0.2, 1], dist: 5.2 },
       texte: `Chez le destinataire, le paquet remonte les couches et chaque couche retire **son** en-tête : la carte réseau la trame, IP le paquet, UDP le datagramme (il lit le port pour trouver le logiciel), RTP remet l'image à sa place grâce au numéro et à l'horodatage. L'application reçoit ses 1 200 octets.` },
-    { t: 'TCP, UDP, ICMP : changez ce qui part', reglage: { de: 0, a: 16, envoi: 'web' }, lecon: 'reseau-ethernet',
+    { t: 'TCP, UDP, ICMP : change ce qui part', reglage: { de: 0, a: 16, envoi: 'web' }, lecon: 'reseau-ethernet',
       texte: `Une **page web** voyage dans un segment **TCP** (20 octets d'en-tête, port 443), sans RTP. Un **ping** n'a pas de couche transport : un message **ICMP** de 8 octets directement dans IP. Le reste ne change pas : même paquet IP, même trame Ethernet, mêmes appareils.
 
-Dépanner, c'est remonter ces couches de bas en haut : le voyant (1), le VLAN et la MAC (2), l'adresse et le ping (3), le port et le service (4 et au-delà). Changez l'envoi dans « À vous ».` },
+Dépanner, c'est remonter ces couches de bas en haut : le voyant (1), le VLAN et la MAC (2), l'adresse et le ping (3), le port et le service (4 et au-delà). Change l'envoi dans « À toi ».` },
   ],
   build(ctx) {
     const root = ctx.root;

@@ -72,7 +72,7 @@ export function initTruckMap(onGo, pl) {
   goTo = onGo; getPL = pl;
   const box = el('div', { id: 'truckmap', hidden: true, title: 'Plan du car : Tab ouvre le téléphone' });
   const plan = drawPlan(16, false);
-  box.append(el('div', { class: 'tmap-head' }, el('b', {}, 'Plan du car'), el('span', {}, matchMedia('(pointer: coarse)').matches ? 'Touchez un point pour aller au poste' : 'Un point : aller au poste. Tab : le téléphone')), plan.svg);
+  box.append(el('div', { class: 'tmap-head' }, el('b', {}, 'Plan du car'), el('span', {}, matchMedia('(pointer: coarse)').matches ? 'Touche un point pour aller au poste' : 'Un point : aller au poste. Tab : le téléphone')), plan.svg);
   box.addEventListener('click', () => emit('telephone', { app: 'aller' }));
   $('#hud').appendChild(box);
   mini = plan;

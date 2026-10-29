@@ -62,7 +62,7 @@ export function act(t) {
   if (!t) return;
   if (t.kind === 'station') { goToStation(t); return; }
   if (t.kind === 'cam') { takeCamera(t.cam); return; }
-  if (t.action === 'enterTruck') { teleport(1); toast('Vous êtes dans la régie production. Approchez-vous d\'un poste et appuyez sur E.'); return; }
+  if (t.action === 'enterTruck') { teleport(1); toast('Tu es dans la régie production. Approche-toi d\'un poste et appuie sur E.'); return; }
   if (t.info) { openInfo(t.info); if (t.id.startsWith('ant:')) S.openedInfo.antenne = true; }
 }
 // bandeau « E : … » sous le réticule ; reconstruit seulement quand la cible change

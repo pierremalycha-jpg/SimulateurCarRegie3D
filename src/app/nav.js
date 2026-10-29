@@ -111,7 +111,7 @@ export async function restart(preset = '', label = '') {
   document.body.append(el('div', { id: 'leaving', class: 'overlay' }, msg));
   setTimeout(() => location.reload(), 3200);
   // rechargement refusé (page intégrée) : on le dit
-  setTimeout(() => { msg.textContent = 'Le simulateur n\'a pas pu se recharger tout seul : rechargez la page (touche F5).'; }, 9000);
+  setTimeout(() => { msg.textContent = 'Le simulateur n\'a pas pu se recharger tout seul : recharge la page (touche F5).'; }, 9000);
 }
 /** après un « Changer de vacation » : la vacation demandée se lance dès que le car est prêt (ou le bureau de la Carrière) */
 export function resumeAfterReload() {

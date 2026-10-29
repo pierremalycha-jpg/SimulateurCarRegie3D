@@ -109,7 +109,7 @@ Le mot **XYZ** dit où l'on est : **H** = 1 pour l'EAV (fin de ligne), 0 pour le
     { t: 'La vidéo active : Cb Y Cr Y', mode: 'mots', cible: 'ACT', vue: { cible: [XL, 1.0, 0], dir: [-0.04, 0.2, 1], dist: 4.4 },
       texte: `Après le SAV, les échantillons de l'image, entrelacés : **Cb Y Cr Y Cb Y Cr Y**… Un Cb et un Cr pour deux Y : c'est le **4:2:2**. Le flux C (bleu) et le flux Y (jaune) alternent mot à mot.
 
-Chaque mot est un code de **10 bits** : Y va de **64** (noir) à **940** (blanc) ; Cb et Cr tournent autour de **512** (pas de couleur). Survolez la coupe, ou lisez la loupe : la pelouse donne un Y vers 40 % et un Cb sous 512 (peu de bleu).` },
+Chaque mot est un code de **10 bits** : Y va de **64** (noir) à **940** (blanc) ; Cb et Cr tournent autour de **512** (pas de couleur). Survole la coupe, ou lis la loupe : la pelouse donne un Y vers 40 % et un Cb sous 512 (peu de bleu).` },
     { t: 'Le son dans la HANC : les paquets audio', mode: 'mots', cible: 'ANC', vue: { cible: [XL, 1.0, 0], dir: [-0.04, 0.2, 1], dist: 4.4 },
       texte: `Juste après le CRC, dans le flux C, l'embedder range les **paquets audio** (ST 299-1). Chaque paquet :
 - **ADF** 000 3FF 3FF : « un paquet commence » ;
@@ -273,7 +273,7 @@ Pourquoi ? Il n'y a **pas de fil d'horloge** : le récepteur reconstitue l'horlo
         for (let c = Math.floor(kLo / L) - 1; c <= Math.floor(kHi / L) + 1; c++) {
           for (const r of S.cyc.runs) {
             const k0 = c * L + r.k0, k1 = k0 + r.n; if (k1 < kLo || k0 > kHi) continue;
-            const info = () => ({ nom: r.z === 'ACT' ? 'Vidéo active (Cb Y Cr Y…)' : r.z === 'ANC' ? 'Paquet audio (ST 299-1)' : ZONES[r.z].nom, texte: `${ZONES[r.z].long}, ligne ${r.ligne} : ${r.n} mots (${Math.round(r.n / 2)} par flux). Passez en « Mot à mot » pour lire les valeurs.` });
+            const info = () => ({ nom: r.z === 'ACT' ? 'Vidéo active (Cb Y Cr Y…)' : r.z === 'ANC' ? 'Paquet audio (ST 299-1)' : ZONES[r.z].nom, texte: `${ZONES[r.z].long}, ligne ${r.ligne} : ${r.n} mots (${Math.round(r.n / 2)} par flux). Passe en « Mot à mot » pour lire les valeurs.` });
             // les zones de quelques mots (EAV, LN, CRC, SAV) seraient invisibles à cette échelle : élargies à 6 cm, un peu plus hautes
             const a = sOf(k1), b = sOf(k0), mid = (a + b) / 2, w = r.z === 'ACT' || r.n > 60 ? b - a - U * 1.5 * (r.z === 'ACT' ? 0 : 1) : Math.max(0.06, b - a);
             put(mid - w / 2, mid + w / 2, Y0, RD * (r.n > 60 ? 1.86 : 1.98), r.col, info, r.n > 60 ? 0.003 : 0.0045);

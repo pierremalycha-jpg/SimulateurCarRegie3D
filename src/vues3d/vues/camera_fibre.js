@@ -53,11 +53,11 @@ La lumière est **infrarouge** (1 310 nm), invisible : on ne regarde jamais dans
     { t: 'Une poussière sur la face', fibre: 'mono', salete: 'poussiere', vue: { cible: [5.9, 1.2, 0], dir: [-0.15, 0.2, 1], dist: 4 },
       texte: `Au bout, la **face du connecteur** telle que la montre un microscope d'inspection : le disque de la gaine (125 µm), le cœur au centre (9 µm). Une **poussière** de quelques microns s'y est posée : elle bloque une partie de la lumière et en renvoie vers la caméra.
 
-Quelques dB perdus d'un coup : bien plus que des kilomètres de fibre. La règle : **inspecter, nettoyer, inspecter**, aux deux bouts, à chaque branchement, et remettre les bouchons. Passez la face en « propre » dans « À vous ».` },
+Quelques dB perdus d'un coup : bien plus que des kilomètres de fibre. La règle : **inspecter, nettoyer, inspecter**, aux deux bouts, à chaque branchement, et remettre les bouchons. Passe la face en « propre » dans « À toi ».` },
     { t: 'Le niveau optique à la CCU', fibre: 'mono', salete: 'propre', vue: { cible: [3.8, 2.2, 0], dir: [0, 0.22, 1], dist: 7.6 },
       texte: `La CCU affiche le **niveau reçu** de chaque voie, en dBm : de l'ordre de **−5 à −15 dBm** en exploitation, décrochage vers **−20 dBm**. Le laser émet de l'ordre de −2 dBm ; chaque élément retire des décibels : la fibre (presque rien), chaque paire de connecteurs (≈ 0,4 dB), chaque raccord de touret, et surtout la saleté.
 
-Allongez la fibre, ajoutez des tourets, salissez un connecteur : une voie très en dessous des autres trahit un connecteur sale, pas la longueur.` },
+Allonge la fibre, ajoute des tourets, salis un connecteur : une voie très en dessous des autres trahit un connecteur sale, pas la longueur.` },
   ],
   build(ctx) {
     const root = ctx.root;
@@ -183,7 +183,7 @@ Allongez la fibre, ajoutez des tourets, salissez un connecteur : une voie très 
       commandes() {
         ui = el('div', { class: 'v3-ctl' },
           choice('Fibre', [['mono', 'monomode 9 µm'], ['multi', 'multimode 50 µm']], S.fibre, (v) => { S.fibre = v; maj(); }),
-          choice('Face du connecteur', [['propre', 'propre'], ['poussiere', 'une poussière'], ['sale', 'sale']], S.salete, (v) => { S.salete = v; maj(); ctx.say(v === 'propre' ? 'Face nettoyée et inspectée.' : 'La face est sale : regardez le niveau à la CCU.'); }),
+          choice('Face du connecteur', [['propre', 'propre'], ['poussiere', 'une poussière'], ['sale', 'sale']], S.salete, (v) => { S.salete = v; maj(); ctx.say(v === 'propre' ? 'Face nettoyée et inspectée.' : 'La face est sale : regarde le niveau à la CCU.'); }),
           slider('Longueur', 0.1, 10, S.km, 0.1, (v) => { S.km = v; maj(); }, (v) => fmtNum(v, 1) + ' km'),
           slider('Raccords de tourets', 0, 6, S.tourets, 1, (v) => { S.tourets = v; maj(); }, (v) => String(v)));
         return ui;

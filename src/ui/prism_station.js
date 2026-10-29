@@ -15,7 +15,7 @@ import { PRISM, measurePoints, pointById, setInput, linkOf, counters, repairLink
 import { DEVICES, DEVICE_LIST } from '../equipment/devices.js';
 import { updateFaults } from '../faults.js';
 
-const HELLO = 'Baie de mesure : choisissez un point de mesure (une sortie de CCU, une sortie de la grille, le PGM ou la mire du SPG), puis lisez l\'instrument. Préréglage « Couche physique » : l\'œil, la gigue, l\'état SDI (erreurs CRC, longueur de câble) et le timing. Chaque tuile a son « ? ».';
+const HELLO = 'Baie de mesure : choisis un point de mesure (une sortie de CCU, une sortie de la grille, le PGM ou la mire du SPG), puis lis l\'instrument. Préréglage « Couche physique » : l\'œil, la gigue, l\'état SDI (erreurs CRC, longueur de câble) et le timing. Chaque tuile a son « ? ».';
 
 /** @param {HTMLElement} body @param {any} [arg] { input } : point de mesure demandé @param {any} [ctx] */
 export function buildPrismStation(body, arg, ctx) {
@@ -115,7 +115,7 @@ export function buildPrismStation(body, arg, ctx) {
     ipNote,
     el('div', { class: 'mz-grid' },
       el('div', { class: 'hwpanel' }, el('h3', {}, 'Points de mesure'), el('p', { class: 'note' }, 'Comme sur les jacks d\'écoute de la baie de brassage : l\'instrument reçoit le signal tel qu\'il arrive à cet endroit, câble compris. Liseré rouge : erreurs CRC ou signal perdu sur ce point.'), points),
-      el('div', { class: 'hwpanel' }, el('h3', { 'data-qterm': 'affaiblissement' }, 'Liaison mesurée'), path, chain, kv, el('p', { class: 'note' }, 'Intervenir : changer le cordon (connecteur abîmé, câble écrasé, touret trop long) ou insérer un répéteur qui régénère le signal à mi-chemin. Mesurez d\'abord, réparez ensuite.'), fixBtns)),
+      el('div', { class: 'hwpanel' }, el('h3', { 'data-qterm': 'affaiblissement' }, 'Liaison mesurée'), path, chain, kv, el('p', { class: 'note' }, 'Intervenir : changer le cordon (connecteur abîmé, câble écrasé, touret trop long) ou insérer un répéteur qui régénère le signal à mi-chemin. Mesure d\'abord, répare ensuite.'), fixBtns)),
     el('div', { class: 'hwpanel' }, el('h3', {}, 'Valeurs de référence des interfaces SDI'), el('div', { class: 'tblwrap' }, lim), el('p', { class: 'note' }, 'Normes SMPTE ST 292-1 (HD-SDI), ST 424 (3G-SDI), ST 2082-1 (12G-SDI) ; mesures de gigue selon RP 184 et RP 192. La norme définit l\'œil à la sortie de l\'émetteur, avec 1 m de câble ; la longueur acceptée par un récepteur est donnée par l\'affaiblissement qu\'il doit au moins compenser (les égaliseurs actuels font mieux).')));
   qify(body);
   drawPoints(); drawLink(true);

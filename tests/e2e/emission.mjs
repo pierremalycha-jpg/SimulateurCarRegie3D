@@ -49,7 +49,7 @@ await shot('03-ipdirector');
 // le top donné depuis l'IPDirector : LANCER pendant le décompte prend l'antenne sur le générique
 await A.click('.em-lancer');
 T.check('LANCER pendant le décompte : c\'est le top, la séquence du générique', await segIs('generique', 60000));
-T.check('le générique part, lancé par vous, à l\'heure', await until(A, () => { const d = window.__dbg.emission().EMI; return d.C.lance.generique != null && Math.abs(d.C.lance.generique) < 1 && window.__dbg.EVS.ch[1].media.playing && window.__dbg.EVS.ch[1].media.by === 'vous'; }, null, 30000));
+T.check('le générique part, lancé par toi, à l\'heure', await until(A, () => { const d = window.__dbg.emission().EMI; return d.C.lance.generique != null && Math.abs(d.C.lance.generique) < 1 && window.__dbg.EVS.ch[1].media.playing && window.__dbg.EVS.ch[1].media.by === 'vous'; }, null, 30000));
 T.check('le truquiste virtuel prend l\'EVS B à l\'antenne', await until(A, () => window.__dbg.ROUTER.map['ME' + window.__dbg.MIX.pgm] === 'EVSB', null, 30000));
 // une image du générique : l'affiche du match
 await ev(() => { window.__dbg.EVS.ch[1].media.pos = 15; });
@@ -107,9 +107,9 @@ await shot('09-generique-fin');
 await sauter();
 T.check('fin d\'antenne : fondu au noir, compte rendu', await until(A, () => window.__dbg.emission().EMI.C.fini && window.__dbg.MIX.ftb.on, null, 90000) && await until(A, () => /Compte rendu · émission en direct/.test(document.getElementById('modal').textContent), null, 60000));
 const R = await ev(() => window.__dbg.emission().EMI.rapport);
-T.check('le compte rendu : les trois médias lancés par vous, au top ; un score sur 100', R && R.parVous === 3 && [0, 2, 4].every((k) => R.lignes[k].pts === 15) && R.score >= 0 && R.score <= 100 && R.lignes.length === 9, R && `${R.score}/100 · ${R.lignes.map((l) => l.pts + '/' + l.max).join(' ')}`);
+T.check('le compte rendu : les trois médias lancés par toi, au top ; un score sur 100', R && R.parVous === 3 && [0, 2, 4].every((k) => R.lignes[k].pts === 15) && R.score >= 0 && R.score <= 100 && R.lignes.length === 9, R && `${R.score}/100 · ${R.lignes.map((l) => l.pts + '/' + l.max).join(' ')}`);
 T.check('l\'émission est enregistrée dans la progression (seule) et compte dans le livret', await ev(() => { const e = (window.__dbg.PROG.emissions || []).slice(-1)[0]; return !!e && e.seul === true && e.parVous === 3; }));
-T.check('le compte rendu : l\'IPDirector tenu par vous', await ev(() => /IPDirector, médias\s*:\s*Vous/.test(document.querySelector('.em-qui').textContent)));
+T.check('le compte rendu : l\'IPDirector tenu par toi', await ev(() => /IPDirector, médias\s*:\s*Toi/.test(document.querySelector('.em-qui').textContent)));
 await shot('10-compte-rendu');
 
 // ---------------- rejouer, assis au mélangeur : l'équipe virtuelle tient l'IPDirector ----------------

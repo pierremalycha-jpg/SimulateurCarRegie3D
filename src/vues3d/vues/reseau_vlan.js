@@ -41,7 +41,7 @@ export const VUE_RESEAU_VLAN = {
   resume: 'Deux commutateurs, dix machines rangées par usage : chaque VLAN est une zone dont la diffusion ne sort pas, sauf étiquetée par le trunk.',
   lecons: ['reseau-vlan'],
   lectures: ['Réglage', 'Dernière diffusion', 'Reçue par'],
-  depart: 'Chaque couleur est un VLAN. Envoyez une diffusion depuis n\'importe quelle machine (« À vous »).',
+  depart: 'Chaque couleur est un VLAN. Envoie une diffusion depuis n\'importe quelle machine (« À toi »).',
   vue: { cible: [-0.2, 0.9, 0.2], dir: [0, 0.6, 1], dist: 12.8 },
   orbite: { rMin: 1.5, rMax: 20 },
   etapes: [

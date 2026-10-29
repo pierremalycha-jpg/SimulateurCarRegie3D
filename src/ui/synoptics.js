@@ -225,7 +225,7 @@ function videoDiagram() {
   D.wire(D.p('dec', 'l'), rIn(440), ip ? 'ip' : 'video', { label: 'RETOUR ANT. · STUDIO', d: `M${OX},272 H1090 V440 H${rx}`, lx: 900, ly: 440 });
   D.wire(rIn(460), D.p('giant', 'l'), 'fiber', { label: 'AUX écran géant (fibre)', d: `M${rx},460 H1095 V352 H${OX}`, lx: 900, ly: 460 });
   const ly = D.legend(OX, 420);
-  D.note(OX, ly + 30, ['Toutes les sources entrent dans la grille ; mélangeur, EVS,', 'multiviews, départs et moniteurs reçoivent ce que la grille', 'leur envoie. Cliquez un bloc pour voir l\'appareil.']);
+  D.note(OX, ly + 30, ['Toutes les sources entrent dans la grille ; mélangeur, EVS,', 'multiviews, départs et moniteurs reçoivent ce que la grille', 'leur envoie. Clique un bloc pour voir l\'appareil.']);
   D.cartouche('Synoptique vidéo');
   return D;
 }
@@ -484,7 +484,7 @@ function racksDiagram() {
   const rows = [['Rangée côté mur d\'écrans', RACK_ROWS.mur], ['Rangée côté porte', RACK_ROWS.porte]];
   const U = 11, rw = 175, gap = 22, top = 90, rh = 42 * U;
   const W = 40 + 7 * (rw + gap) + 20, H = top + 2 * (rh + 90) + 40;
-  const D = diagram(W, H, 'Élévation des baies (zone technique)', 'Baies 19" de 42 U · vue de face · cliquez une baie pour voir l\'appareil principal');
+  const D = diagram(W, H, 'Élévation des baies (zone technique)', 'Baies 19" de 42 U · vue de face · clique une baie pour voir l\'appareil principal');
   rows.forEach(([label, keys], r) => {
     const y0 = top + r * (rh + 90) + 20;
     D.note(40, y0 - 10, label.toUpperCase(), 'zl');
@@ -509,21 +509,21 @@ function racksDiagram() {
 
 /** @type {Array<[string, string, Function, string]>} : clé, titre, dessin, aide */
 const TABS = [
-  ['video', 'Vidéo', videoDiagram, 'Le chemin des images : caméras → CCU → grille → mélangeur, EVS, multiviews → départs vers la chaîne. Suivez une caméra à l\'antenne (cadre rouge) depuis le stade jusqu\'au TX actif.'],
+  ['video', 'Vidéo', videoDiagram, 'Le chemin des images : caméras → CCU → grille → mélangeur, EVS, multiviews → départs vers la chaîne. Suis une caméra à l\'antenne (cadre rouge) depuis le stade jusqu\'au TX actif.'],
   ['sync', 'Synchronisation', syncDiagram, 'Tout ce qui commute doit être calé sur la même référence. Le SPG (verrouillé GPS) alimente les distributeurs, qui alimentent chaque appareil.'],
   ['audio', 'Audio', audioDiagram, 'Des micros du stade à l\'embedder du départ : bus PGM, international (sans voix) et N-1 (sans la voix de celui qui écoute).'],
   ['comms', 'Intercom · tally', commsDiagram, 'Qui parle à qui : postes à touches du car, cadreurs (dans la fibre), beltpacks, commentateurs, chaîne. Le tally part du mélangeur et allume les caméras et le multiview.'],
   ['net', 'Réseaux', netDiagram, 'Les réseaux de commande : RCP vers CCU, pupitre vers mélangeur, LSM vers EVS, gestion des équipements' + ' (et réseau média ST 2110 en car IP).'],
   ['power', 'Énergie', powerDiagram, 'De l\'armoire du stade ou du groupe jusqu\'aux deux alimentations de chaque baie.'],
   ['racks', 'Baies', racksDiagram, 'Ce qu\'il y a dans chaque baie de la zone technique, unité par unité.'],
-  ['plan', 'Implantation', null, 'Le plan du car vu de dessus : zones, postes et circulation. Cliquez un poste pour vous y rendre.'],
+  ['plan', 'Implantation', null, 'Le plan du car vu de dessus : zones, postes et circulation. Clique un poste pour t\'y rendre.'],
 ];
 
 // panneau réutilisable (modal ou poste chef de car)
 export function synopticsPanel(start = 'video') {
   let cur = start, paper = false, key = '';
   const tabs = el('div', { class: 'tabs' });
-  const host = el('div', { class: 'svgwrap synwrap', tabindex: 0, role: 'region', 'aria-label': 'Synoptique (défilez avec les flèches)' });
+  const host = el('div', { class: 'svgwrap synwrap', tabindex: 0, role: 'region', 'aria-label': 'Synoptique (défile avec les flèches)' });
   const help = el('p', { class: 'note' });
   const draw = () => {
     const t = TABS.find((x) => x[0] === cur);

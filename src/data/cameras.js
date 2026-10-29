@@ -128,7 +128,7 @@ export const ROLES = {
   grue: { label: 'Grue (plans aériens bas)', desc: 'Mouvements amples au-dessus du bord terrain.' },
   suivi: { label: 'Suivi en mouvement', desc: 'La caméra se déplace pour suivre l\'action.' },
   beaute: { label: 'Plan beauté', desc: 'Vue d\'ensemble du stade (ouverture, retours de pub).' },
-  manuel: { label: 'Manuel (vous)', desc: 'Vous cadrez vous-même cette caméra.' },
+  manuel: { label: 'Manuel (toi)', desc: 'Tu cadres toi-même cette caméra.' },
 };
 
 // Liaisons caméra -> car

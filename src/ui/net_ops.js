@@ -128,7 +128,7 @@ function viewRoute(box, R) {
     card('Sources (émetteurs)', srcs, srcInfo),
     connectCard(R, rx, t, f),
     card('Destinations (récepteurs)', dsts)));
-  box.prepend(el('div', { class: 'ops-toolbar' }, search, el('span', { class: 'ops-sub' }, 'Choisissez une source et une destination : les moniteurs du bandeau montrent la source et ce que reçoit vraiment la destination.')));
+  box.prepend(el('div', { class: 'ops-toolbar' }, search, el('span', { class: 'ops-sub' }, 'Choisis une source et une destination : les moniteurs du bandeau montrent la source et ce que reçoit vraiment la destination.')));
   applyFilter();
 }
 function connectCard(R, rx, t, f) {
@@ -147,7 +147,7 @@ function connectCard(R, rx, t, f) {
         FAB.rxManual[rx.id] ? el('span', { class: 'ops-sub' }, 'Ce récepteur est en saisie manuelle : la connexion IS-05 remplacera ses paramètres.') : null));
   } else {
     if (!OPS.man || OPS.man.rx !== rx.id) { const cur = t.red ? t : { red: { on: true, src: '', group: '', port: 5004 }, blue: { on: true, src: '', group: '', port: 5004 } }; OPS.man = { rx: rx.id, red: { ...cur.red }, blue: { ...cur.blue } }; }
-    body.append(el('p', { class: 'ops-help' }, 'Comme dans l\'interface web du récepteur : pour chaque réseau, l\'adresse de la source, le groupe multicast et le port UDP (IGMPv3 : abonnement au couple source + groupe). Recopiez-les depuis la fiche de la source.'),
+    body.append(el('p', { class: 'ops-help' }, 'Comme dans l\'interface web du récepteur : pour chaque réseau, l\'adresse de la source, le groupe multicast et le port UDP (IGMPv3 : abonnement au couple source + groupe). Recopie-les depuis la fiche de la source.'),
       paramTable(COLORS.map((c) => ({ c, ...OPS.man[c], ro: false })), rd),
       el('div', { class: 'ops-actions' }, el('button', { class: 'btn primary', 'data-act': 'apply-rx', onclick: () => applyManual(R, rx) }, 'Appliquer'),
         FAB.rxManual[rx.id] ? el('button', { class: 'btn', onclick: () => { setRxManual(rx.id, null); OPS.mode = null; explain(`${rx.label} : paramètres manuels retirés, le récepteur revient à la connexion NMOS décidée par le contrôleur (grille).`); R.refresh(); } }, 'Revenir en NMOS') : null));

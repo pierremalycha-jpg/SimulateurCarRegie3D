@@ -143,7 +143,7 @@ function demoVlan(host) {
   const ports = PORTS0.map(([dev, vlan]) => ({ dev, vlan }));
   let sel = 0, tag = 20, last = /** @type {null | { v: number, out: { i: number, tagged: boolean }[], no: number[] }} */ (null);
   const W = 700, H = 240, PX = (i) => 36 + i * 83;
-  const svg = figure(W, H, 'Commutateur 8 ports : les appareils en haut, un port par appareil ; cliquez un port pour le choisir');
+  const svg = figure(W, H, 'Commutateur 8 ports : les appareils en haut, un port par appareil ; clique un port pour le choisir');
   const read = readout(['Trame envoyée', 'Elle sort par', 'Elle ne sort pas par', 'Domaine de diffusion']);
   const vlanC = choice('VLAN du port choisi', [...Object.keys(VL).map((k) => [k, `${k} ${VL[k].name}`]), ['0', 'Trunk 802.1Q', 'Lien vers un autre commutateur : tous les VLAN passent, chaque trame avec son étiquette']], '20', (v) => { ports[sel].vlan = +v; last = null; draw(); });
   const tagC = choice('Étiquette de la trame entrant par le trunk', Object.keys(VL).map((k) => [k, `VLAN ${k}`]), String(tag), (v) => { tag = +v; last = null; draw(); });
@@ -176,7 +176,7 @@ function demoVlan(host) {
     });
     tagC.hidden = ports[sel].vlan !== 0;
     sendBtn.textContent = `Envoyer une trame de diffusion depuis le port ${sel + 1} (${ports[sel].dev})`;
-    if (!last) { read.set('Trame envoyée', 'aucune : choisissez un port puis envoyez'); read.set('Elle sort par', '—'); read.set('Elle ne sort pas par', '—'); read.set('Domaine de diffusion', '—'); return; }
+    if (!last) { read.set('Trame envoyée', 'aucune : choisis un port puis envoie'); read.set('Elle sort par', '—'); read.set('Elle ne sort pas par', '—'); read.set('Domaine de diffusion', '—'); return; }
     const name = (i) => `port ${i + 1} (${ports[i].dev})`;
     read.set('Trame envoyée', `diffusion (par exemple une requête ARP) entrée par le port ${sel + 1}, ${ports[sel].vlan === 0 ? `avec l'étiquette VLAN ${last.v}` : `port access du VLAN ${last.v} : le commutateur la range dans le VLAN ${last.v}`}`);
     read.set('Elle sort par', last.out.length ? last.out.map((o) => `${name(o.i)}${o.tagged ? `, avec l'étiquette 802.1Q « VLAN ${last.v} »` : ', sans étiquette'}`).join(' · ') : 'aucun port : personne d\'autre dans ce VLAN');
@@ -254,7 +254,7 @@ function demoMac(host) {
     tbl.replaceChildren(el('thead', {}, el('tr', {}, el('th', {}, 'Adresse MAC'), el('th', {}, 'Port'), el('th', {}, 'Apprise à l\'étape'))),
       el('tbody', {}, ...(rows.length ? rows.map(([mac, e]) => el('tr', {}, el('td', {}, mac), el('td', {}, String(e.port)), el('td', {}, String(e.step)))) : [el('tr', {}, el('td', { colspan: 3 }, 'vide : le commutateur ne sait encore rien'))])));
     jl.replaceChildren(...journal.slice(-5).map((t) => el('li', {}, t)));
-    read.set('Trames en attente', queue.length ? `${queue.length} — ${queue[0].from.name} → ${queue[0].to ? queue[0].to.name : 'tous'} : ${queue[0].what}` : 'aucune : lancez un échange');
+    read.set('Trames en attente', queue.length ? `${queue.length} — ${queue[0].from.name} → ${queue[0].to ? queue[0].to.name : 'tous'} : ${queue[0].what}` : 'aucune : lance un échange');
     read.set('Entrées dans la table', `${rows.length} sur 4 appareils (une table réelle en tient des milliers ; chaque entrée est oubliée après 300 s sans trafic)`);
     nextBtn.disabled = !queue.length;
   }
@@ -299,7 +299,7 @@ function demoMcast(host) {
   let mode = 'snoop', n = 4, rate = 2.2;
   const on = /** @type {Record<string, boolean>} */ ({ mel: true, mv: true, evs: true, mon: true, prism: false });
   const W = 720, H = 300;
-  const svg = figure(W, H, 'Caméras à gauche, deux commutateurs leaf, récepteurs à droite : la couleur de chaque lien dit sa charge (vert, ambre, rouge saturé). Cliquez un récepteur pour l\'abonner ou le désabonner');
+  const svg = figure(W, H, 'Caméras à gauche, deux commutateurs leaf, récepteurs à droite : la couleur de chaque lien dit sa charge (vert, ambre, rouge saturé). Clique un récepteur pour l\'abonner ou le désabonner');
   // le schéma contient des touches (les récepteurs) : c'est un groupe, pas une image
   svg.setAttribute('role', 'group');
   const read = readout(['Lien de la caméra 1 (25 Gb/s)', 'Lien entre les deux leaves (100 Gb/s)', 'Port du moniteur vision (10 Gb/s)', 'Abonnement du moniteur']);
@@ -358,7 +358,7 @@ function demoMcast(host) {
     read.set('Abonnement du moniteur', on.mon ? `IGMPv3 join (S = 10.20.1.21, G = 239.1.1.1) : « la caméra 1, et seulement elle »` : 'aucun (IGMP leave envoyé)');
     const uni = mode === 'unicast' && n * (on.mel ? 1 : 0) > 0;
     verdict.className = 'co-verdict ' + (sat.length ? 'ko' : 'ok');
-    verdict.textContent = sat.length ? `Saturé : ${[...new Set(sat)].slice(0, 4).join(', ')}${sat.length > 4 ? '…' : ''}. Tous les flux qui passent par un lien saturé perdent des paquets.` : `Tous les liens tiennent.${uni ? ' Mais chaque caméra doit connaître la liste de ses destinataires : au premier changement de configuration, tout est à refaire.' : mode === 'flood' ? ' Pour l\'instant : augmentez le nombre de caméras.' : ''}`;
+    verdict.textContent = sat.length ? `Saturé : ${[...new Set(sat)].slice(0, 4).join(', ')}${sat.length > 4 ? '…' : ''}. Tous les flux qui passent par un lien saturé perdent des paquets.` : `Tous les liens tiennent.${uni ? ' Mais chaque caméra doit connaître la liste de ses destinataires : au premier changement de configuration, tout est à refaire.' : mode === 'flood' ? ' Pour l\'instant : augmente le nombre de caméras.' : ''}`;
   }
   host.append(
     el('div', { class: 'co-ctl' },
@@ -468,7 +468,7 @@ registerChapter({
         'Dans le car : 10.1.<VLAN>.x /24, passerelle en .1 ; un masque ou une passerelle faux donnent une panne qui ressemble à un câble coupé.',
       ],
       figure: figIp,
-      demoTitle: 'Changez le masque du RCP, mettez la CCU dans un autre VLAN, effacez une passerelle : regardez qui se parle encore.',
+      demoTitle: 'Change le masque du RCP, mets la CCU dans un autre VLAN, efface une passerelle : regarde qui se parle encore.',
       demo: demoIp,
       body: `Une adresse IPv4 s'écrit en quatre nombres de 0 à 255, mais la machine la voit comme **32 bits**. Le **masque** coupe ces 32 bits en deux : à gauche la partie **réseau**, commune à tous les appareils d'un même sous-réseau ; à droite la partie **appareil** (hôte). On l'écrit **/24** (24 bits de réseau) ou 255.255.255.0 : les 1 du masque recouvrent la partie réseau. Un /24 contient 256 adresses, dont 254 pour des appareils : la première (tous les bits d'appareil à 0) nomme le réseau, la dernière (tous à 1) est l'adresse de **diffusion** (broadcast), reçue par tout le monde.
 
@@ -501,7 +501,7 @@ Deux machines avec la **même adresse** se perturbent toutes les deux : la table
         'Le car sépare gestion, caméras, production, intercom : une machine bavarde ou une boucle dans un VLAN ne gêne pas les autres.',
       ],
       figure: figVlan,
-      demoTitle: 'Choisissez un port, envoyez une trame de diffusion et regardez où elle arrive. Passez un port en trunk, changez un VLAN, recommencez.',
+      demoTitle: 'Choisis un port, envoie une trame de diffusion et regarde où elle arrive. Passe un port en trunk, change un VLAN, recommence.',
       demo: demoVlan,
       body: `Un commutateur (switch) recopie une trame de **diffusion** (broadcast, adresse FF:FF:FF:FF:FF:FF) sur tous ses ports : c'est ainsi que les machines se trouvent (ARP), que les protocoles de découverte fonctionnent. Mais sur un car de 80 machines, tout le monde entendrait tout. Le **VLAN** (Virtual LAN, IEEE 802.1Q) découpe le commutateur en plusieurs commutateurs virtuels : une trame de diffusion ne sort que sur les ports **du même VLAN**. Deux machines dans deux VLAN ne se voient pas, même branchées côte à côte : il faut un routeur entre elles (dans le car, le commutateur de cœur, qui route entre les VLAN).
 
@@ -534,7 +534,7 @@ Deux pannes classiques : une machine branchée sur un port du **mauvais VLAN** (
         '**MAC** : l\'adresse de la carte, pour le réseau local ; **IP** : l\'adresse configurée, pour aller de bout en bout. **ARP** traduit l\'une en l\'autre.',
       ],
       figure: figMac,
-      demoTitle: 'Lancez « RCP 1 règle la CCU 1 » et avancez trame par trame : regardez la table se remplir et l\'inondation disparaître.',
+      demoTitle: 'Lance « RCP 1 règle la CCU 1 » et avance trame par trame : regarde la table se remplir et l\'inondation disparaître.',
       demo: demoMac,
       body: `Chaque carte réseau a une **adresse MAC** de 48 bits, écrite en six octets hexadécimaux (02:1A:20:00:00:31). Les trois premiers octets identifient le fabricant, les trois derniers la carte : elle est unique au monde et n'a pas à être configurée. Le commutateur ne connaît que ces adresses. Il ne lit jamais l'adresse IP, qui est l'affaire du routeur.
 
@@ -566,7 +566,7 @@ Ce que l'on en voit en exploitation :
         'Sans **IGMP snooping**, le commutateur traite le multicast comme de la diffusion : tous les ports reçoivent tout, et les petits ports débordent.',
       ],
       figure: figMcast,
-      demoTitle: 'Passez d\'unicast à multicast, coupez le snooping, ajoutez des caméras, abonnez ou désabonnez les récepteurs : regardez quel lien sature.',
+      demoTitle: 'Passe d\'unicast à multicast, coupe le snooping, ajoute des caméras, abonne ou désabonne les récepteurs : regarde quel lien sature.',
       demo: demoMcast,
       body: `En SDI, une image est un câble : pour l'envoyer à trois endroits, on la distribue par la grille. En IP, l'image est un flux de paquets. Une caméra 1080p50 4:2:2 10 bits en **ST 2110-20** produit 2,07 Gb/s d'image active, soit de l'ordre de **2,2 Gb/s** sur le réseau avec les en-têtes (2,5 à 2,6 Gb/s en 1080p59,94 ; 8 à 9 Gb/s en UHD). En **unicast**, l'appareil qui émet doit connaître chaque destinataire et envoyer **une copie par destinataire** : quatre récepteurs, 8,8 Gb/s sur le lien de la caméra ; douze caméras pour un multiview, un mélangeur et un EVS, et le lien entre les commutateurs porte des dizaines de copies. Cela ne tient pas, et la configuration change à chaque branchement.
 
@@ -596,7 +596,7 @@ Dernière subtilité : une trame Ethernet a besoin d'une adresse MAC de destinat
         'Les commutateurs doivent être des **horloges frontières** : sinon leurs files d\'attente font varier le délai et l\'erreur dépasse la microseconde.',
       ],
       figure: figPtp,
-      demoTitle: 'Montez la charge du commutateur, puis passez-le en commutateur ordinaire : regardez l\'erreur des deux esclaves. Ajoutez de l\'asymétrie.',
+      demoTitle: 'Monte la charge du commutateur, puis passe-le en commutateur ordinaire : regarde l\'erreur des deux esclaves. Ajoute de l\'asymétrie.',
       demo: demoPtp,
       body: `Pour commuter proprement entre deux caméras, leurs images doivent commencer au même instant. En SDI, le générateur de synchro (SPG) distribue une **référence** à chaque appareil par un câble : black burst ou tri-level, c'est le **genlock**. En IP, il n'y a plus de câble de référence. Chaque appareil reçoit à la place **l'heure**, très précisément, et en déduit lui-même où commencent les images : la norme **SMPTE ST 2059-1** définit un instant d'origine (l'époque, le 1er janvier 1970 TAI) et la règle pour aligner tout signal vidéo ou audio sur cette heure. Deux appareils à la même heure produisent des images alignées sans jamais s'être parlé.
 

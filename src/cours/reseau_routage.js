@@ -70,7 +70,7 @@ function demoRoutage(host) {
   const out = el('ol', { class: 'co-trace' });
   const verdict = el('p', { class: 'co-verdict' });
   const draw = () => {
-    if (src === dst) { out.replaceChildren(el('li', {}, 'Une machine ne s\'envoie pas de paquet à elle-même par le réseau : choisissez une autre destination.')); verdict.textContent = ''; return; }
+    if (src === dst) { out.replaceChildren(el('li', {}, 'Une machine ne s\'envoie pas de paquet à elle-même par le réseau : choisis une autre destination.')); verdict.textContent = ''; return; }
     const r = trajet(src, dst, { masque, passerelle: gw });
     out.replaceChildren(...r.etapes.map((t) => el('li', {}, t)));
     verdict.textContent = r.ok ? (r.chemin === 'direct' ? 'Livré directement, sans routeur.' : 'Livré par la passerelle : un saut de routeur, TTL 63 à l\'arrivée.') : (r.panne === 'masque' ? 'Échec : le masque fait croire à un voisin qui n\'en est pas un.' : 'Échec : pas de passerelle pour sortir du sous-réseau.');
@@ -95,7 +95,7 @@ export const ROUTAGE = {
     'Passerelle absente ou fausse : la machine voit ses voisines, rien au-delà. Masque faux : elle croit voisine une machine d\'un autre VLAN, et l\'appelle en vain.',
   ],
   figure: figRoutage,
-  demoTitle: 'Choisissez qui envoie et vers qui, puis faussez le masque ou retirez la passerelle : suivez la décision, étape par étape.',
+  demoTitle: 'Choisis qui envoie et vers qui, puis fausse le masque ou retire la passerelle : suis la décision, étape par étape.',
   demo: demoRoutage,
   body: `Un VLAN est un réseau fermé : une diffusion n'en sort pas, et une machine ne joint directement que ses voisines du même sous-réseau. Pour aller plus loin, il faut un **routeur**. Dans le car SDI, c'est le commutateur central **SW-CŒUR**, de niveau 3 : il a une adresse dans chaque VLAN (10.1.20.1 pour les caméras, 10.1.60.1 pour les fichiers…), ses **SVI**. Chacune est la **passerelle** des machines de son VLAN.
 

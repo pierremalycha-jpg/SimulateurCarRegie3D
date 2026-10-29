@@ -15,7 +15,7 @@ export const GUIDE = [
 <li><b>Toits et HF</b> : les toits en polycarbonate translucide s'arrêtent avant les premiers rangs (qui sont mouillés par vent). Les antennes de réception HF sont posées à leur rive ; toits et charpente atténuent les liaisons qui les traversent.</li>
 <li><b>Autour</b> : les cités minières, la gare au sud-est, et à l'horizon, à l'ouest-nord-ouest, les terrils jumeaux de Loos-en-Gohelle et les chevalements de la fosse 11/19.</li>
 </ul>
-<p class="note">Le compound TV est placé derrière la tribune Lepagnot (côté presse et vestiaires), position la plus courte vers la passerelle et le local technique. À vérifier avec votre propre plan d'installation à Bollaert.</p>`},
+<p class="note">Le compound TV est placé derrière la tribune Lepagnot (côté presse et vestiaires), position la plus courte vers la passerelle et le local technique. À vérifier avec ton propre plan d'installation à Bollaert.</p>`},
   {
     id: 'deroule', title: 'Déroulé d\'une production', html: `
 <p>Une captation de match se prépare plusieurs jours à l'avance et s'installe en général la veille (J-1) ou le matin même.</p>
@@ -33,7 +33,7 @@ export const GUIDE = [
 </ol>`},
   {
     id: 'chaine', title: 'La chaîne du signal', html: `
-<p>Suivez le chemin d'une image, de l'objectif jusqu'au téléspectateur :</p>
+<p>Suis le chemin d'une image, de l'objectif jusqu'au téléspectateur :</p>
 <ol class="steps">
 <li><b>Objectif → capteurs.</b> La lumière traverse le zoom (focale, iris, filtres ND) et un prisme qui la sépare sur 3 capteurs (rouge, vert, bleu).</li>
 <li><b>Caméra → CCU.</b> Par la fibre SMPTE (ou triax, fibre seule, HF), la caméra envoie l'image à sa CCU dans le car et reçoit en retour l'alimentation, l'intercom, le retour programme, le tally et la référence.</li>
@@ -102,7 +102,7 @@ export const GUIDE = [
 <li><b>Distance minimale de mise au point (MOD)</b> : 3 m environ pour les grands box, d'où leur place en tribune ; un portable courant fait le point beaucoup plus près (0,3 à 0,8 m), sauf les longs portables (2,8 m pour l'UA46).</li>
 <li><b>Masse</b> : 24 à 27 kg d'objectif + adaptateur + caméra : trépied ou pied lourd et tête fluide de grande capacité (type Vinten Vector), contrepoids réglé.</li>
 </ul>
-<p class="note">Les modèles cités sont des exemples de matériel courant en production sportive ; vérifiez les fiches constructeur pour un projet réel.</p>`},
+<p class="note">Les modèles cités sont des exemples de matériel courant en production sportive ; vérifie les fiches constructeur pour un projet réel.</p>`},
   {
     id: 'hfguide', title: 'Liaisons HF', html: `
 <p>Une liaison HF caméra se dimensionne par un <b>bilan de liaison</b> :</p>
@@ -152,11 +152,11 @@ export const GUIDE = [
 <h3>Mixer un match</h3>
 <ol>
 <li>Ambiances (couples ORTF en tribune principale, XY dans le kop) toujours ouvertes : elles portent l'émotion.</li>
-<li>Canons : on ouvre celui qui est près du ballon. Le simulateur propose un assistant « suivi du jeu » qui pilote les faders motorisés ; coupez-le pour mixer à la main.</li>
-<li>Commentaires au-dessus de l'ambiance, jamais dans l'international ; quand le commentateur « lance » le bord terrain, ouvrez sa tranche.</li>
+<li>Canons : on ouvre celui qui est près du ballon. Le simulateur propose un assistant « suivi du jeu » qui pilote les faders motorisés ; coupe-le pour mixer à la main.</li>
+<li>Commentaires au-dessus de l'ambiance, jamais dans l'international ; quand le commentateur « lance » le bord terrain, ouvre sa tranche.</li>
 <li>Contrôles : loudness intégrée −23 LUFS, corrélateur positif, plan de son conforme, synchro labiale.</li>
 </ol>
-<p class="note">Limite du simulateur : les voix des commentateurs ne sont pas dites ; leurs phrases s'affichent en fil écrit au poste son (onglet Commentaires) et leur niveau est simulé. Ce qu'on en entendrait suit fidèlement la console (patch, gain, fader, VCA, mute, bus écouté, master, DIM) : vumètres, loudness, lampe rouge de la cabine. Ce que vous entendez vous-même dépend de l'endroit : l'écoute de la console au poste son, la foule dans le stade, presque rien ailleurs dans le car.</p>`},
+<p class="note">Limite du simulateur : les voix des commentateurs ne sont pas dites ; leurs phrases s'affichent en fil écrit au poste son (onglet Commentaires) et leur niveau est simulé. Ce qu'on en entendrait suit fidèlement la console (patch, gain, fader, VCA, mute, bus écouté, master, DIM) : vumètres, loudness, lampe rouge de la cabine. Ce que tu entends toi-même dépend de l'endroit : l'écoute de la console au poste son, la foule dans le stade, presque rien ailleurs dans le car.</p>`},
   {
     id: 'car', title: 'Le car régie', html: `
 <p>Un car régie est en général un semi-remorque d'environ 13,5 à 14,5 m (16,50 m au maximum avec le tracteur en Europe pour un ensemble articulé), souvent avec une ou deux extensions latérales qui doublent la largeur une fois déployées. Il est climatisé, isolé, et contient :</p>
@@ -173,7 +173,7 @@ export const GUIDE = [
 <ul>
 <li><b>Bloc optique :</b> un prisme sépare la lumière en rouge, vert et bleu vers trois capteurs CMOS 2/3" (4K natif, obturation globale sur la HDC-5500). Monture <b>B4</b> : on y monte les zooms broadcast (portables d'environ 13x à 46x, ou « box » de 27x à 125x sur pied).</li>
 <li><b>Viseur</b> (connecteur VF) : le cadreur y voit son image, le retour programme (RET), le tally et les marques de cadrage.</li>
-<li><b>Connecteurs arrière :</b> fibre CCU (LEMO 3K.93C), SDI 1/2/3 et SDI MONI pour un usage local, TEST OUT, PROMPTER/GENLOCK, INTERCOM 1 et 2 (XLR 5 broches), AUDIO CH1/CH2 (XLR 3), EARPHONE, DC IN (XLR 4, 10,5 à 17 V), DC OUT, REMOTE, RET CTRL, TRACKER et CRANE (données de position pour la réalité augmentée et les grues). Ouvrez la tête dans la visionneuse (touche K) pour voir chaque connecteur.</li>
+<li><b>Connecteurs arrière :</b> fibre CCU (LEMO 3K.93C), SDI 1/2/3 et SDI MONI pour un usage local, TEST OUT, PROMPTER/GENLOCK, INTERCOM 1 et 2 (XLR 5 broches), AUDIO CH1/CH2 (XLR 3), EARPHONE, DC IN (XLR 4, 10,5 à 17 V), DC OUT, REMOTE, RET CTRL, TRACKER et CRANE (données de position pour la réalité augmentée et les grues). Ouvre la tête dans la visionneuse (touche K) pour voir chaque connecteur.</li>
 </ul>
 <h3>2. La liaison : un seul câble pour tout</h3>
 <p>Le câble hybride SMPTE (ST 311, connecteur ST 304 type LEMO 3K.93C) contient <b>deux fibres monomodes</b> (une par sens) et des <b>conducteurs de cuivre</b> pour l'alimentation de la tête. Dans un sens : l'image de la caméra et le son des micros. Dans l'autre : le retour programme, le prompteur, les ordres (intercom PROD et ENG), le tally, la référence et toutes les commandes du RCP.</p>
@@ -228,7 +228,7 @@ export const GUIDE = [
 <p class="note">Les modèles cités sont des exemples de matériel courant ; masses et connecteurs d'après les fiches constructeurs. Travail sur passerelle : voir le chapitre Sécurité (protection collective d'abord).</p>`},
   {
     id: 'evsarch', title: 'Le serveur ralenti en détail', html: `
-<p>Un serveur de production live (dans votre car : <b>EVS XT4K</b>) enregistre en permanence plusieurs flux et, en même temps, relit n'importe quel instant de ces enregistrements, à n'importe quelle vitesse. Il est piloté par la <b>télécommande LSM</b> (logiciel Multicam) et, pour la gestion des clips, par <b>IPDirector</b>.</p>
+<p>Un serveur de production live (dans ton car : <b>EVS XT4K</b>) enregistre en permanence plusieurs flux et, en même temps, relit n'importe quel instant de ces enregistrements, à n'importe quelle vitesse. Il est piloté par la <b>télécommande LSM</b> (logiciel Multicam) et, pour la gestion des clips, par <b>IPDirector</b>.</p>
 <h3>Les canaux : enregistrement et lecture</h3>
 <p>Le serveur dispose d'un nombre fixe de canaux : sur un XT4K, <b>4 canaux en UHD-4K</b> ou <b>8 canaux en HD</b> (12 et plus avec la configuration ChannelMAX). On les répartit selon la production. Avec un seul XT4K :</p>
 <table><tr><th>Format</th><th>Répartition typique</th><th>Conséquence</th></tr>
@@ -261,7 +261,7 @@ export const GUIDE = [
 <h3>IPDirector</h3>
 <p>Le poste IPDirector travaille sur les mêmes clips que la LSM : base de données (recherche par mots-clés, joueurs, notes), log des actions pendant le direct, montage de playlists, contrôle des canaux, transferts vers le montage. Dans le car, il occupe en général un second opérateur ralentis ou un logueur.</p>
 <h3>Raccordements</h3>
-<p>Entrées et sorties 12G-SDI (UHD sur un seul câble) ou 3G/HD-SDI, Quad 3G-SDI en option, IP intégrée ; référence et timecode ; réseau XNet pour partager les clips entre serveurs ; 2 × 10 GbE pour IPDirector et les transferts ; réseau de gestion redondant ; audio embeddé, AES, MADI, analogique ; liaison série RS-422 vers la télécommande LSM (d'après les manuels XT). Ouvrez « Serveur ralenti EVS XT4K » dans la visionneuse de matériel pour voir chaque port.</p>`},
+<p>Entrées et sorties 12G-SDI (UHD sur un seul câble) ou 3G/HD-SDI, Quad 3G-SDI en option, IP intégrée ; référence et timecode ; réseau XNet pour partager les clips entre serveurs ; 2 × 10 GbE pour IPDirector et les transferts ; réseau de gestion redondant ; audio embeddé, AES, MADI, analogique ; liaison série RS-422 vers la télécommande LSM (d'après les manuels XT). Ouvre « Serveur ralenti EVS XT4K » dans la visionneuse de matériel pour voir chaque port.</p>`},
   {
     id: 'ipguide', title: 'Production IP : ST 2110, PTP, NMOS', html: `
 <p>Dans un car « IP », les signaux ne voyagent plus sur des câbles coaxiaux point à point mais sur un <b>réseau Ethernet</b> (commutateurs 25 / 100 GbE). La grille de commutation devient un réseau piloté par un contrôleur.</p>
@@ -322,7 +322,7 @@ export const GUIDE = [
 <li>Couche 3 : adresse et passerelle cohérentes ? pas de conflit ? OSPF en FULL ?</li>
 <li>Multicast : plage SSM, IGMPv3, PIM sur les SVI et les uplinks, show ip mroute le long du chemin.</li>
 <li>Bande passante, puis PTP (show ptp parent), puis enregistrement NMOS. Après réparation : write memory.</li></ol>
-<p class="note">Simplifications : syntaxe et sorties des commandes inspirées des constructeurs sans en être la copie ; pas de BGP/EVPN, d'agrégats LACP ni de QoS fine ; minuteries raccourcies ; débits arrondis. Plan d'adressage et numérotation des ports : exemple pédagogique, à adapter aux conventions de votre car.</p>`},
+<p class="note">Simplifications : syntaxe et sorties des commandes inspirées des constructeurs sans en être la copie ; pas de BGP/EVPN, d'agrégats LACP ni de QoS fine ; minuteries raccourcies ; débits arrondis. Plan d'adressage et numérotation des ports : exemple pédagogique, à adapter aux conventions de ton car.</p>`},
   {
     id: 'mesure2110', title: 'Mesurer et analyser un flux ST 2110', html: `
 <p>En SDI, un oscilloscope et un moniteur suffisaient. En IP, une image peut être parfaite et le réseau en danger (une seule jambe 2022-7 reçue), ou l'image dégradée alors que tous les commutateurs sont « verts ». Le poste <b>Réseau IP → Mesures</b> donne les trois instruments de base.</p>
@@ -352,7 +352,7 @@ export const GUIDE = [
 <p>Dans le poste, chaque ligne du SDP est commentée : <code>m=</code> (média, port, type de charge), <code>c=</code> (groupe), <code>a=source-filter</code> (SSM), <code>a=rtpmap</code> et <code>a=fmtp</code> (format), <code>a=ts-refclk</code> (horloge PTP), <code>a=group:DUP</code> et <code>a=mid</code> (les deux jambes 2022-7).</p>
 <h3>Parcours de formation</h3>
 <p>L'onglet <b>Formation</b> du poste Réseau IP propose quatorze missions (de la lecture de la topologie à la reconstruction d'une leaf), un quiz de dix questions tirées au sort et un examen de dépannage noté (trois pannes cachées, quinze minutes). Les résultats remontent au formateur dans l'Espace formateur → suivi des stagiaires.</p>
-<p class="note">Valeurs simulées : CINST, VRX, gigue, latences et offsets suivent l'état du réseau mais ne remplacent pas un analyseur réel. Les formules de CMAX et VRX_FULL suivent le modèle étroit de ST 2110-21 ; à faire vérifier pour vos formats.</p>`},
+<p class="note">Valeurs simulées : CINST, VRX, gigue, latences et offsets suivent l'état du réseau mais ne remplacent pas un analyseur réel. Les formules de CMAX et VRX_FULL suivent le modèle étroit de ST 2110-21 ; à faire vérifier pour tes formats.</p>`},
   {
     id: 'hdrguide', title: 'HDR, SDR et colorimétrie', html: `
 <h3>Gamut et courbe</h3>
@@ -439,7 +439,7 @@ export const GUIDE = [
 <li>Tester chaque position au line-up, y compris les commentateurs et la chaîne.</li></ul>`},
   {
     id: 'cablage', title: 'Lire une liste de câblage', html: `
-<p>Le chef de car prépare (ou génère depuis un logiciel) une <b>liste de câblage</b> : chaque câble porte un numéro, écrit sur une étiquette à ses deux extrémités. Le poste « Chef de car », onglet <b>Liste de câblage</b>, génère celle de votre installation.</p>
+<p>Le chef de car prépare (ou génère depuis un logiciel) une <b>liste de câblage</b> : chaque câble porte un numéro, écrit sur une étiquette à ses deux extrémités. Le poste « Chef de car », onglet <b>Liste de câblage</b>, génère celle de ton installation.</p>
 <h3>Les colonnes</h3>
 <ul>
 <li><b>N°</b> : identifiant unique du câble (C001…), identique sur les deux étiquettes.</li>
@@ -474,14 +474,14 @@ export const GUIDE = [
 </ul>
 <h3>Héberger, rejoindre</h3>
 <ul>
-<li>Jouer → En équipe : <b>Coopération</b>, puis « Ouvrir le salon ». Le salon montre l'adresse (réseau local) ou le code (en ligne) à donner aux autres. Choisissez votre <b>pseudo</b> : il s'affiche au-dessus de votre personnage.</li>
-<li><b>Créer une partie</b> : votre ordinateur fait tourner le match pour tous. <b>Rejoindre une partie</b> : sur le réseau local, les parties en cours s'affichent toutes seules, avec qui tient quel rôle.</li>
+<li>Jouer → En équipe : <b>Coopération</b>, puis « Ouvrir le salon ». Le salon montre l'adresse (réseau local) ou le code (en ligne) à donner aux autres. Choisis ton <b>pseudo</b> : il s'affiche au-dessus de ton personnage.</li>
+<li><b>Créer une partie</b> : ton ordinateur fait tourner le match pour tous. <b>Rejoindre une partie</b> : sur le réseau local, les parties en cours s'affichent toutes seules, avec qui tient quel rôle.</li>
 <li><b>Les postes du salon</b> : formateur, réalisateur, truquiste, ralentis (EVS), son, vision, technique, habillage, cadreur (une caméra chacun), observateur. Chaque poste montre qui le tient, ou « Libre ». L'hôte ou le formateur peut <b>réattribuer les rôles</b> (« Équipe » → Participants).</li>
 </ul>
 <h3>Pendant la prestation</h3>
 <ul>
 <li><b>Les autres joueurs</b> : un technicien en tenue de la couleur de son rôle, casque d'ordres, pseudo et rôle au-dessus de la tête. Assis à son pupitre quand il tient un poste ; quand il cadre, son étiquette passe au-dessus de sa caméra. Le plan du car les montre aussi, et « Aller à… » propose de <b>rejoindre un équipier</b>.</li>
-<li><b>Fiche de rôle</b> (en haut à gauche) : ce qu'on attend de vous, un bouton « Aller à mon poste » (un cadreur y prend directement sa caméra) et des <b>objectifs suivis en direct</b> : ordres exécutés et temps de réaction du truquiste, enregistrement et ralentis passés pour l'EVS, loudness et commentaires hors de l'international pour le son, caméras bien exposées pour la vision, alarmes pour la technique…</li>
+<li><b>Fiche de rôle</b> (en haut à gauche) : ce qu'on attend de toi, un bouton « Aller à mon poste » (un cadreur y prend directement sa caméra) et des <b>objectifs suivis en direct</b> : ordres exécutés et temps de réaction du truquiste, enregistrement et ralentis passés pour l'EVS, loudness et commentaires hors de l'international pour le son, caméras bien exposées pour la vision, alarmes pour la technique…</li>
 <li><b>Qui pilote quoi</b> : chaque poste appartient à un rôle (mélangeur → truquiste, EVS → ralentis, console → son, RCP → vision, grille, transmission, HF et baie CCU → technique, habillage → habillage). Les autres le voient <b>en lecture seule</b> (bandeau « tenu par… ») mais suivent tout ce qui s'y passe. Un poste sans titulaire reste à l'hôte.</li>
 <li><b>Le match</b> tourne chez l'hôte ; les autres le reçoivent avec 0,3 s de retard, comme un retour. Les commentaires viennent aussi de l'hôte.</li>
 <li><b>Ordres</b> : au poste réalisateur, « Prépare la 3 », « Top », « Enchaîne », « Ralenti »… s'affichent en grand chez le truquiste et l'opérateur ralenti, avec un bip, et passent dans le fil d'intercom. L'onglet « Ordres et messages » sert de canal écrit.</li>

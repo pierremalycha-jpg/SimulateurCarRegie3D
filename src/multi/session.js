@@ -81,7 +81,7 @@ export async function joinSession(code, role, opts = {}) {
   SES.unsub.push(named.onConnection((c) => { SES.connected = c; emit('session', { type: 'conn' }); }, () => {}));
   for (const t of ['sx', 'force', 'evt', 'cmt', 'ord', 'hello', 'ses']) SES.unsub.push(named.on(t, (m) => onMsg(t, m), () => {}));
   send('hello', { role: SES.role });
-  log(`Vous rejoignez la session ${code} comme ${ROLES_S[SES.role].label}.`);
+  log(`Tu rejoins la session ${code} comme ${ROLES_S[SES.role].label}.`);
   emit('session', { type: 'join' });
   return { ok: true, code };
 }
@@ -99,7 +99,7 @@ export function setRole(role, cam) {
   if (!SES.active || !ROLES_S[role]) return;
   SES.role = role; SES.since = Date.now(); SES.cam = cam || null;
   pres({ role, since: SES.since, cam: SES.cam });
-  log(`Vous prenez le rôle ${ROLES_S[role].label}.`);
+  log(`Tu prends le rôle ${ROLES_S[role].label}.`);
   emit('session', { type: 'role' });
 }
 function send(topic, data) { if (!SES.named) return; const p = SES.named.emit(topic, data); if (p && p.catch) p.catch((e) => { if (e && e.code === 'not_permitted') log(`Envoi refusé (${topic}) : droits insuffisants sur la page.`); }); }
@@ -183,7 +183,7 @@ export function nameOf(p) {
   const pr = p.presence || {};
   const id = p.by || pr.uid;
   const n = (pr.name && String(pr.name).slice(0, 24)) || (id && SES.names[id] && SES.names[id].name) || 'participant';
-  return p.sameTab ? n + ' (vous)' : n;
+  return p.sameTab ? n + ' (toi)' : n;
 }
 export const pseudoOf = (p) => (p && p.presence && p.presence.name && String(p.presence.name).slice(0, 24)) || 'participant';
 export function roleLabel(p) { const r = p && p.presence && p.presence.role; return r && ROLES_S[r] ? ROLES_S[r].label + (r === 'cadreur' && p.presence.cam ? ' CAM ' + p.presence.cam : '') : '—'; }
@@ -226,7 +226,7 @@ function onMsg(topic, m) {
       const from = SES.peers.find((p) => p.peer === m.peer);
       if (from && mayDirect(m.peer)) {
         setRole(d.role, d.role === 'cadreur' ? (d.cam || 1) : null);
-        log(`${pseudoOf(from)} vous confie le rôle ${ROLES_S[d.role].label}${d.role === 'cadreur' ? ' (CAM ' + (d.cam || 1) + ')' : ''}.`, 'warn');
+        log(`${pseudoOf(from)} te confie le rôle ${ROLES_S[d.role].label}${d.role === 'cadreur' ? ' (CAM ' + (d.cam || 1) + ')' : ''}.`, 'warn');
         emit('session', { type: 'assigned', role: d.role, by: pseudoOf(from) });
       }
     }
@@ -382,7 +382,7 @@ function takeOverMatch() {
   if (!SES.buf.length) return;
   M.stateT = 1; M.decision = 0.5; M.noControl = 0.3;
   if (M.state === 'celebration') M.stateT = 3;
-  log('Vous faites maintenant tourner le match pour la session (hôte).', 'warn');
+  log('Tu fais maintenant tourner le match pour la session (hôte).', 'warn');
 }
 
 // ---------------- formateur : panne injectée chez les titulaires ----------------
@@ -404,7 +404,7 @@ export function assignRole(peerId, role, cam) {
   if (SES.me && peerId === SES.me.peer) { setRole(role, role === 'cadreur' ? (cam || 1) : null); return; }
   send('ses', { type: 'assign', to: peerId, role, cam: cam || null });
   const p = SES.peers.find((x) => x.peer === peerId);
-  log(`Vous confiez le rôle ${ROLES_S[role].label} à ${pseudoOf(p)}.`);
+  log(`Tu confies le rôle ${ROLES_S[role].label} à ${pseudoOf(p)}.`);
 }
 export function announce(text) { send('ses', { type: 'note', text: String(text).slice(0, 300) }); log('Vous (formateur) : ' + text); }
 export function chat(text) { sendOrder('msg', { text: String(text).slice(0, 300) }); }

@@ -125,13 +125,13 @@ function demoFreq(host) {
   cv.addEventListener('pointerdown', (ev) => { const r = cv.getBoundingClientRect(); const x = (ev.clientX - r.left) / r.width * MW; let best = -1, bd = 12; mics.forEach((f, i) => { const d = Math.abs(fToX(f) - x); if (d < bd) { bd = d; best = i; } }); drag = best; if (drag >= 0) cv.setPointerCapture(ev.pointerId); });
   cv.addEventListener('pointermove', (ev) => { if (drag < 0) return; const r = cv.getBoundingClientRect(); const f = Math.round(xToF((ev.clientX - r.left) / r.width * MW) * 40) / 40; mics[drag] = Math.min(694, Math.max(470, f)); drawMics(); });
   cv.addEventListener('pointerup', () => { drag = -1; }); cv.addEventListener('pointercancel', () => { drag = -1; });
-  cv.title = 'Glissez un micro pour changer sa fréquence'; cv.style.cursor = 'ew-resize';
+  cv.title = 'Glisse un micro pour changer sa fréquence'; cv.style.cursor = 'ew-resize';
   host.append(
     el('div', { class: 'co-ctl' },
       slider('Micros HF', 2, 8, mics.length, 1, (v) => { while (mics.length < v) mics.push(Math.min(693, Math.max(...mics) + 1.6)); mics = mics.slice(0, v); drawMics(); }),
       el('button', { class: 'btn small', onclick: () => { mics = autoPlan(mics.length, Math.min(...mics)); drawMics(); } }, 'Plan automatique (sans intermodulation)'),
       el('button', { class: 'btn small', onclick: () => { const f = Math.min(...mics); mics = mics.map((_, i) => f + i * 0.5); drawMics(); } }, 'Espacer de 500 kHz (plan naïf)')),
-    el('figure', { class: 'co-figc' }, cv, el('figcaption', {}, 'Micros HF en UHF : glissez un micro. Rouge pointillé : produits d\'intermodulation d\'ordre 3 ; canaux rouges : multiplex TNT occupés (exemple)')),
+    el('figure', { class: 'co-figc' }, cv, el('figcaption', {}, 'Micros HF en UHF : glisse un micro. Rouge pointillé : produits d\'intermodulation d\'ordre 3 ; canaux rouges : multiplex TNT occupés (exemple)')),
     el('div', { class: 'co-ctl' }, slider('Caméra HF', 2030, 2490, camF, 10, (v) => { camF = v; drawCam(); }, (v) => `${v} MHz`), choice('Largeur', [['8', '8 MHz'], ['10', '10 MHz']], '10', (v) => { camBw = +v; drawCam(); })),
     el('figure', { class: 'co-figc' }, cc, el('figcaption', {}, 'Bande 2 GHz des caméras HF, plan de fréquences du simulateur : vert attribué, rouge occupé, bleu Wi-Fi')),
     read.el, verdict);
@@ -278,7 +278,7 @@ function demoAnt(host) {
       g.fillStyle = a.col; g.beginPath(); g.arc(ax, ay, 6, 0, Math.PI * 2); g.fill(); g.font = 'bold 11px sans-serif'; g.fillText(`Antenne ${a.id}`, ax, ay - 10);
       g.fillStyle = colOf(m); g.font = '11px monospace'; g.fillText(`${fmtNum(L[i].lvl, 0)} dBm`, ax, ay + 18);
     });
-    g.fillStyle = '#fff'; g.beginPath(); g.arc(px(cam.x), py(cam.y), 6, 0, Math.PI * 2); g.fill(); g.font = '10px sans-serif'; g.fillText('caméra HF (glissez)', px(cam.x), py(cam.y) + 16);
+    g.fillStyle = '#fff'; g.beginPath(); g.arc(px(cam.x), py(cam.y), 6, 0, Math.PI * 2); g.fill(); g.font = '10px sans-serif'; g.fillText('caméra HF (glisse-la)', px(cam.x), py(cam.y) + 16);
     // historique
     gh.fillStyle = '#0b0e10'; gh.fillRect(0, 0, CW, CH);
     const y = (v) => 8 + (-40 - v) / 70 * (CH - 16);
@@ -393,7 +393,7 @@ registerChapter({
         'Les fréquences se **demandent** avant l\'événement (ANFR, Arcep, coordinateur de l\'organisateur) : on n\'émet pas où l\'on veut.',
       ],
       figure: figSpectre,
-      demoTitle: 'Glissez les micros pour fabriquer puis éviter les produits d\'intermodulation ; essayez le plan naïf, puis le plan automatique. Promenez la caméra HF dans la bande 2 GHz.',
+      demoTitle: 'Glisse les micros pour fabriquer puis éviter les produits d\'intermodulation ; essaie le plan naïf, puis le plan automatique. Promène la caméra HF dans la bande 2 GHz.',
       demo: demoFreq,
       body: `Tout ce qui émet dans le stade se partage le même spectre. Les **micros HF** (émetteurs de quelques dizaines de mW) travaillent en **UHF, 470 à 694 MHz**, dans les canaux de 8 MHz de la télévision : la bande est partagée avec la TNT, et un canal occupé par un multiplex local est inutilisable. Au-dessus de 694 MHz, la bande a été donnée à la téléphonie mobile (le « second dividende numérique », 2019 en France) : les anciens micros en 700 MHz sont interdits. Restent quelques fenêtres étroites (823–832 MHz, 1 785–1 805 MHz) et la bande libre 863–865 MHz, à faible puissance, pour les micros bon marché.
 
@@ -421,7 +421,7 @@ Le piège des micros : deux émetteurs proches, à f1 et f2, se mélangent dans 
         'La **marge** = niveau reçu − sensibilité. Au-dessus de 10 dB, confortable ; sous 3 dB, le moindre creux fait décrocher l\'image.',
       ],
       figure: figBilan,
-      demoTitle: 'Éloignez la caméra, mettez une tribune sur le trajet, changez de modulation : regardez la marge passer du vert au rouge.',
+      demoTitle: 'Éloigne la caméra, mets une tribune sur le trajet, change de modulation : regarde la marge passer du vert au rouge.',
       demo: demoBilan,
       body: `Les puissances d'une liaison HF s'étalent sur douze ordres de grandeur, de 1 W à l'émission jusqu'au picowatt au récepteur. On les écrit donc en **dBm**, décibels par rapport à 1 mW : 0 dBm = 1 mW, +30 dBm = 1 W, −60 dBm = 1 nW. L'intérêt : les gains et les pertes s'**additionnent**. Doubler la puissance, c'est +3 dB ; la multiplier par dix, +10 dB. Les gains d'antenne s'écrivent en **dBi**, par rapport à une antenne isotrope idéale qui rayonnerait pareil dans toutes les directions : un fouet fait environ 2 dBi, un patch 9, un panneau secteur 13.
 
@@ -432,7 +432,7 @@ De l'autre côté, le récepteur a une **sensibilité** : le niveau en dessous d
 La **marge** est la différence entre le niveau reçu et la sensibilité. Elle encaisse tout ce que le bilan n'a pas prévu : un évanouissement multi-trajet (10 à 20 dB pendant quelques millisecondes), un corps, la pluie, un brouilleur. Les ordres de grandeur du métier : au-delà de 10 dB on est tranquille ; entre 3 et 10 dB la liaison tient mais chaque creux se voit ; sous 3 dB on est à la merci du prochain pas du cadreur ; sous 0 dB l'image est perdue. Dans ce simulateur, la mission « une caméra HF » demande une marge supérieure à 3 dB avec deux antennes allumées. En numérique, la dégradation n'est pas progressive : c'est l'**effet falaise**, image parfaite puis plus rien en quelques dB.
 
 En pratique, on ne mesure pas la marge en dBm mais en **C/N** ou **MER** sur le récepteur : c'est le même calcul, rapporté au bruit. Et on joue sur ce qui est à portée de main : rapprocher ou surélever une antenne (la distance), choisir une antenne plus directive (le gain), baisser la modulation (la sensibilité), avant d'augmenter la puissance (l'autonomie de l'émetteur et les voisins en pâtissent).`,
-      car: { text: 'Au poste HF : pour chaque caméra HF, le bilan de liaison est affiché (puissance, gains, espace libre, obstacles), avec le C/N requis par la modulation et la marge en direct. La mission « une caméra HF » demande une marge supérieure à 3 dB ; promenez la Steadicam jusque dans le tunnel et regardez la marge tomber.', station: 'hf' },
+      car: { text: 'Au poste HF : pour chaque caméra HF, le bilan de liaison est affiché (puissance, gains, espace libre, obstacles), avec le C/N requis par la modulation et la marge en direct. La mission « une caméra HF » demande une marge supérieure à 3 dB ; promène la Steadicam jusque dans le tunnel et regarde la marge tomber.', station: 'hf' },
       terms: ['effet-falaise'],
       competences: ['2.10', '2.7'], article: 'hfguide',
       quiz: [
@@ -451,7 +451,7 @@ En pratique, on ne mesure pas la marge en dBm mais en **C/N** ou **MER** sur le 
         'La **diversité** (plusieurs antennes, le récepteur garde ou combine les meilleures) : les trous ne tombent pas au même endroit sur deux antennes.',
       ],
       figure: figAntennes,
-      demoTitle: 'Déplacez la caméra (ou lancez-la le long de la touche) et regardez les creux sur A et sur B ; tournez une antenne, changez son type.',
+      demoTitle: 'Déplace la caméra (ou lance-la le long de la touche) et regarde les creux sur A et sur B ; tourne une antenne, change son type.',
       demo: demoAnt,
       body: `Une antenne **omnidirectionnelle** (fouet, dipôle) rayonne et reçoit pareil dans toutes les directions du plan horizontal : son gain est faible, de l'ordre de 2 dBi, mais elle n'a pas à être visée. Une antenne **directive** concentre la même énergie dans un faisceau : un **patch** (une plaque carrée) fait 7 à 9 dBi avec un faisceau d'une soixantaine de degrés ; un **panneau secteur** 12 à 14 dBi avec un faisceau plus étroit, encore plus en vertical ; une **log-périodique** (le « râteau ») 6 à 10 dBi sur une large bande. Le gain se paie en couverture : à 40° de l'axe d'un panneau, on a déjà perdu 12 dB, et derrière il ne reste presque rien. D'où la pose : panneaux sur le toit de la tribune, visés vers le terrain ; omni dans le tunnel et au compound.
 
@@ -479,7 +479,7 @@ Dernier paramètre : la **polarisation**. Une antenne verticale reçoit mal une 
         'Modulation et codage règlent le compromis **débit contre robustesse** : 64-QAM pour la belle image en ligne de vue, QPSK pour passer partout.',
       ],
       figure: figCofdm,
-      demoTitle: 'Allongez le retard de l\'écho jusqu\'à sortir de l\'intervalle de garde, passez en mono-porteuse, puis jouez modulation et codage.',
+      demoTitle: 'Allonge le retard de l\'écho jusqu\'à sortir de l\'intervalle de garde, passe en mono-porteuse, puis joue sur la modulation et le codage.',
       demo: demoCofdm,
       body: `Dans un stade, le signal d'une caméra HF arrive au récepteur par plusieurs chemins : le direct et des réflexions sur les tribunes, retardées de quelques microsecondes (1 µs par 300 m de détour). Pour une transmission **mono-porteuse** à 8 Mbit de symboles par seconde, un symbole dure 0,125 µs : un écho de 10 µs étale chaque symbole sur les 80 suivants. C'est l'**interférence entre symboles**, et aucun égaliseur raisonnable ne la défait en mobilité.
 

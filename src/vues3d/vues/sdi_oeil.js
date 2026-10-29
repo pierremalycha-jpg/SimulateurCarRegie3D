@@ -30,7 +30,7 @@ export const VUE_SDI_OEIL = {
   resume: 'Le même train de bits mesuré le long d\'un coaxial : les fronts s\'arrondissent, l\'œil se ferme, l\'égaliseur le rouvre jusqu\'à la falaise. Un DA remet le compteur à zéro.',
   lecons: ['sdi-oeil', 'sdi-falaise', 'sdi-cable'],
   lectures: ['Liaison', 'Affaiblissement au bout', 'Le récepteur compense', 'Marge', 'État'],
-  depart: 'Réglez la longueur, le format et le câble : les cinq panneaux et l\'œil du récepteur suivent.',
+  depart: 'Règle la longueur, le format et le câble : les cinq panneaux et l\'œil du récepteur suivent.',
   vue: { cible: [0.2, 0.9, 0], dir: [0, 0.32, 1], dist: 10.5 },
   orbite: { rMin: 1, rMax: 20 },
   etapes: [
@@ -41,7 +41,7 @@ Le premier panneau mesure le train de bits **à 0 m** : des créneaux nets, chaq
     { t: 'Le câble mange les aigus', lecon: 'sdi-oeil', reglage: { len: 100 }, vue: { cible: [-0.5, 0.9, 0], dir: [0, 0.3, 1], dist: 9.5 },
       texte: `Plus on s'éloigne de l'émetteur, plus les fronts **s'arrondissent** : un coaxial affaiblit davantage les hautes fréquences (effet de peau dans l'âme, pertes dans le diélectrique). Les bits isolés, qui demandent les fréquences les plus hautes, n'ont plus le temps d'atteindre leur niveau.
 
-On compte l'affaiblissement à la **demi-fréquence d'horloge** : 742,5 MHz en HD, 1,485 GHz en 3G, 5,94 GHz en 12G. Un 1694A y perd ≈ 18, 26 et 58 dB par 100 m (fiches Belden, arrondies). Passez en 12G : à longueur égale, la forme s'écrase bien plus vite.` },
+On compte l'affaiblissement à la **demi-fréquence d'horloge** : 742,5 MHz en HD, 1,485 GHz en 3G, 5,94 GHz en 12G. Un 1694A y perd ≈ 18, 26 et 58 dB par 100 m (fiches Belden, arrondies). Passe en 12G : à longueur égale, la forme s'écrase bien plus vite.` },
     { t: 'L\'œil au bout du câble', lecon: 'sdi-oeil', reglage: { len: 100 }, vue: { cible: [5.85, 1.1, 0.2], dir: [-0.3, 0.18, 1], dist: 3.9 },
       texte: `Au récepteur, l'analyseur superpose des milliers de bits sur deux intervalles : c'est le **diagramme de l'œil**. L'**œil brut** (à gauche) se ferme vite avec la longueur.
 
@@ -49,11 +49,11 @@ L'**égaliseur** du récepteur remonte les aigus et rouvre l'œil (au milieu), j
     { t: 'La falaise : parfait, puis plus rien', lecon: 'sdi-falaise', reglage: { len: 132 }, vue: { cible: [5.85, 1.1, 0.2], dir: [-0.3, 0.18, 1], dist: 3.9 },
       texte: `Près de la limite (ici 132 m de 1694A en 3G), l'image reste **parfaite**, mais le récepteur se trompe parfois : l'analyseur compte des **erreurs CRC**. Quelques mètres de plus, des **éclats** apparaissent ; encore un peu, et l'image **disparaît**.
 
-C'est l'**effet de falaise** : en numérique, pas de dégradation douce qui préviendrait. On garde de la marge, et l'on surveille le compteur d'erreurs CRC, qui monte avant que l'image ne casse. Faites glisser la longueur entre 120 et 150 m.` },
+C'est l'**effet de falaise** : en numérique, pas de dégradation douce qui préviendrait. On garde de la marge, et l'on surveille le compteur d'erreurs CRC, qui monte avant que l'image ne casse. Fais glisser la longueur entre 120 et 150 m.` },
     { t: 'Un DA remet le compteur à zéro', lecon: 'sdi-cable', reglage: { len: 220, da: true }, vue: { cible: [0.2, 0.9, 0], dir: [0, 0.32, 1], dist: 10 },
       texte: `Une liaison trop longue se coupe en deux : au milieu, un **distributeur** (DA) ou une grille **égalise et réhorloge** le signal. Il en repart un signal neuf, aux fronts nets : les panneaux d'après le DA retrouvent des créneaux.
 
-Le budget de câble se compte donc **par liaison**, d'un appareil qui réhorloge au suivant, pas sur toute la chaîne. Chaque passage en brassage ou raccord coûte en plus quelques dixièmes de dB. Coupez le DA : 220 m d'un seul tenant ne passent plus en 3G.` },
+Le budget de câble se compte donc **par liaison**, d'un appareil qui réhorloge au suivant, pas sur toute la chaîne. Chaque passage en brassage ou raccord coûte en plus quelques dixièmes de dB. Coupe le DA : 220 m d'un seul tenant ne passent plus en 3G.` },
   ],
   build(ctx) {
     const root = ctx.root;

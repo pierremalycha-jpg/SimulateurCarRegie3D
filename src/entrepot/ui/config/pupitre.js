@@ -45,7 +45,7 @@ export function menuPupitre(a, m, ctx) {
       rows),
     section('Recherche sur le réseau (Auto IP)',
       note('Le pupitre interroge son réseau : il trouve les caméras branchées sur le même switch (le même domaine de niveau 2), même si elles ne sont pas dans son sous-réseau.'),
-      !moi || !moi.link ? etat(false, 'Le pupitre n\'a pas de lien réseau : branchez IP CONT sur le switch.') : vues.length ? recherche : etat(null, 'Aucune caméra trouvée sur le réseau du pupitre.')),
+      !moi || !moi.link ? etat(false, 'Le pupitre n\'a pas de lien réseau : branche IP CONT sur le switch.') : vues.length ? recherche : etat(null, 'Aucune caméra trouvée sur le réseau du pupitre.')),
     section('Tally',
       note('Menu SYSTEM → TALLY. Le mélangeur (ou l\'interface GPI & Tally) ferme un contact par caméra à l\'antenne sur TALLY/GPIO 1 : contact n = emplacement n. Avec TALLY IP sur ON, le pupitre envoie ce tally à la caméra de l\'emplacement en IP.'),
       coche(a.uid, 'tallyIp', !!c.tallyIp, 'TALLY IP (renvoyer le tally aux caméras)'),

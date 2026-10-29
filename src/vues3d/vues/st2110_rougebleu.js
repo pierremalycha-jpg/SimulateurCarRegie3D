@@ -35,7 +35,7 @@ Dimensionner, c'est vérifier que les flux qui montent d'une leaf tiennent dans 
     { t: 'Rouge et bleu : chaque paquet deux fois', lecon: 'reseau-2022-7', etat: {}, vue: { cible: [0, 1.2, -0.4], dir: [0, 0.5, 1], dist: 12 },
       texte: `À côté du rouge, un réseau **bleu** identique, sans aucun câble entre les deux. Chaque appareil a **deux cartes**.
 
-La caméra envoie **chaque paquet deux fois**, un par réseau, avec le **même numéro de séquence**. Le mélangeur reçoit les deux copies et garde, numéro par numéro, **la première arrivée** (ST 2022-7). Lisez « Au mélangeur ».` },
+La caméra envoie **chaque paquet deux fois**, un par réseau, avec le **même numéro de séquence**. Le mélangeur reçoit les deux copies et garde, numéro par numéro, **la première arrivée** (ST 2022-7). Lis « Au mélangeur ».` },
     { t: 'Une spine rouge tombe', lecon: 'reseau-2022-7', etat: { s1r: false }, vue: { cible: [-1.5, 1.2, -0.6], dir: [0, 0.45, 1], dist: 9 },
       texte: `La spine 1 du rouge s'arrête. Côté rouge, le routage bascule la CAM 1 sur la spine 2 en quelques dizaines de millisecondes… et pendant ce temps, le **bleu** a porté chaque paquet perdu en rouge.
 

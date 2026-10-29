@@ -26,13 +26,13 @@ function resume(P) {
 function etat() {
   const remote = !!(SH.db && SH.uid && !SH.readOnly);
   // ce navigateur refuse d'enregistrer (navigation privée, stockage plein) : le serveur de la page suffit, s'il répond
-  if (SAVE.local === false && remote && SAVE.remote !== false) return { ok: true, text: 'Enregistrée sur le serveur de la page (votre compte), pas dans ce navigateur, qui refuse d\'enregistrer (navigation privée ou stockage plein).' };
-  if (SAVE.local === false) return { ok: false, text: 'La progression n\'a pas pu être enregistrée dans ce navigateur (stockage plein ou désactivé). Exportez-la dans un fichier pour ne rien perdre.' };
+  if (SAVE.local === false && remote && SAVE.remote !== false) return { ok: true, text: 'Enregistrée sur le serveur de la page (ton compte), pas dans ce navigateur, qui refuse d\'enregistrer (navigation privée ou stockage plein).' };
+  if (SAVE.local === false) return { ok: false, text: 'La progression n\'a pas pu être enregistrée dans ce navigateur (stockage plein ou désactivé). Exporte-la dans un fichier pour ne rien perdre.' };
   if (remote && SAVE.remote === false) return { ok: false, text: 'Enregistrée dans ce navigateur, mais pas sur le serveur de la page (connexion perdue ?) : un nouvel essai a lieu au prochain enregistrement.' };
   const quand = SAVE.at ? ` Dernier enregistrement à ${new Date(SAVE.at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}.` : '';
-  if (remote) return { ok: true, text: 'Enregistrée dans ce navigateur et sur le serveur de la page (votre compte) : vous la retrouvez sur un autre ordinateur.' + quand };
+  if (remote) return { ok: true, text: 'Enregistrée dans ce navigateur et sur le serveur de la page (ton compte) : tu la retrouves sur un autre ordinateur.' + quand };
   if (SH.readOnly) return { ok: true, text: 'Enregistrée dans ce navigateur seulement : cette page n\'accepte pas d\'enregistrement en ligne.' + quand };
-  return { ok: true, text: 'Enregistrée dans ce navigateur seulement (fichier à partager, exécutable ou réseau local) : pour changer d\'ordinateur, exportez-la puis importez-la sur l\'autre.' + quand };
+  return { ok: true, text: 'Enregistrée dans ce navigateur seulement (fichier à partager, exécutable ou réseau local) : pour changer d\'ordinateur, exporte-la puis importe-la sur l\'autre.' + quand };
 }
 
 /** la section des Réglages */
@@ -56,10 +56,10 @@ export function progressionSection() {
   const exporter = async () => {
     const name = `tiee-progression-${new Date().toISOString().slice(0, 10)}.json`;
     const r = await offerDownload(name, exportProgress(APP_VERSION));
-    msg.textContent = r === 'saved' ? `Fichier « ${name} » enregistré : gardez-le, ou importez-le sur un autre ordinateur.` : r === 'declined' ? 'Export annulé.' : 'L\'export n\'a pas pu se faire dans ce navigateur.';
+    msg.textContent = r === 'saved' ? `Fichier « ${name} » enregistré : garde-le, ou importe-le sur un autre ordinateur.` : r === 'declined' ? 'Export annulé.' : 'L\'export n\'a pas pu se faire dans ce navigateur.';
   };
   const effacer = async () => {
-    const ok = await ask('Toute votre progression sera effacée : leçons acquises, exercices, scores, XP et badges, dans ce navigateur et sur le serveur de la page.\n\nExportez-la d\'abord si vous voulez la garder. Cette action ne se défait pas.', { title: 'Effacer ma progression', ok: 'Effacer définitivement', danger: true });
+    const ok = await ask('Toute ta progression sera effacée : leçons acquises, exercices, scores, XP et badges, dans ce navigateur et sur le serveur de la page.\n\nExporte-la d\'abord si tu veux la garder. Cette action ne se défait pas.', { title: 'Effacer ma progression', ok: 'Effacer définitivement', danger: true });
     if (ok !== true) return;
     const r = await eraseProgress();
     if (!r.ok) { msg.textContent = r.error || 'Effacement incomplet.'; return; }
@@ -74,11 +74,11 @@ export function progressionSection() {
       el('button', { type: 'button', class: 'btn danger', id: 'mp-erase', onclick: effacer }, 'Effacer ma progression'),
       file),
     msg,
-    el('details', { class: 'mp-rgpd' }, el('summary', {}, 'Vos données personnelles'),
-      el('p', {}, el('b', {}, 'Ce qui est enregistré. '), 'Votre progression (leçons, quiz, exercices, scores, XP et badges, postes visités, dates de réception et de lecture des mails de la Carrière), les erreurs que vous signalez et le test de performance de l\'ordinateur (carte graphique, images par seconde). En coopération : votre pseudo et votre rôle, et le compte rendu de la partie (temps de réaction aux ordres, pannes résolues).'),
-      el('p', {}, el('b', {}, 'Où. '), 'Dans ce navigateur. Sur la page publiée sur claude.ai, aussi dans la base de données de la page, rattachée à votre compte : le formateur qui a publié la page la voit dans son suivi des stagiaires. En réseau local, les comptes rendus de partie sont enregistrés sur l\'ordinateur du formateur qui fait tourner le serveur.'),
+    el('details', { class: 'mp-rgpd' }, el('summary', {}, 'Tes données personnelles'),
+      el('p', {}, el('b', {}, 'Ce qui est enregistré. '), 'Ta progression (leçons, quiz, exercices, scores, XP et badges, postes visités, dates de réception et de lecture des mails de la Carrière), les erreurs que tu signales et le test de performance de l\'ordinateur (carte graphique, images par seconde). En coopération : ton pseudo et ton rôle, et le compte rendu de la partie (temps de réaction aux ordres, pannes résolues).'),
+      el('p', {}, el('b', {}, 'Où. '), 'Dans ce navigateur. Sur la page publiée sur claude.ai, aussi dans la base de données de la page, rattachée à ton compte : le formateur qui a publié la page la voit dans son suivi des stagiaires. En réseau local, les comptes rendus de partie sont enregistrés sur l\'ordinateur du formateur qui fait tourner le serveur.'),
       el('p', {}, el('b', {}, 'Ce qui n\'est pas fait. '), 'Ni publicité, ni mesure d\'audience, ni revente. Les polices sont intégrées à la page. La page publiée charge son moteur 3D (three.js) depuis le service jsDelivr, qui voit donc l\'adresse IP de l\'ordinateur ; le fichier à partager et l\'exécutable n\'appellent aucun service extérieur, sauf l\'import d\'un fichier Excel par le formateur (bibliothèque chargée depuis cdnjs).'),
-      el('p', {}, el('b', {}, 'Vos droits. '), 'Consulter (« Exporter dans un fichier »), effacer (« Effacer ma progression » : ce navigateur et la copie du serveur), ou le demander au formateur ou à l\'établissement, responsables du traitement. Les autres ordinateurs que vous avez utilisés gardent leur copie : effacez-la aussi sur chacun.')));
+      el('p', {}, el('b', {}, 'Tes droits. '), 'Consulter (« Exporter dans un fichier »), effacer (« Effacer ma progression » : ce navigateur et la copie du serveur), ou le demander au formateur ou à l\'établissement, responsables du traitement. Les autres ordinateurs que tu as utilisés gardent leur copie : efface-la aussi sur chacun.')));
 }
 
 // un échec d'enregistrement se dit tout de suite, une seule fois (et le retour à la normale aussi)
@@ -86,6 +86,6 @@ on('progressSave', (/** @type {{ where: string, ok: boolean }} */ e) => {
   if (!e) return;
   const remote = !!(SH.db && SH.uid && !SH.readOnly);
   if (!e.ok && e.where === 'local' && remote) toast('Ce navigateur n\'enregistre pas la progression (navigation privée ou stockage plein) : elle est gardée sur le serveur de la page.', '', 6000);
-  else if (!e.ok) toast(e.where === 'local' ? 'La progression ne s\'enregistre plus dans ce navigateur (stockage plein ou désactivé) : exportez-la depuis Réglages → Ma progression.' : 'La progression n\'a pas pu être envoyée au serveur de la page : elle reste dans ce navigateur, nouvel essai au prochain enregistrement.', 'bad', 8000);
+  else if (!e.ok) toast(e.where === 'local' ? 'La progression ne s\'enregistre plus dans ce navigateur (stockage plein ou désactivé) : exporte-la depuis Réglages → Ma progression.' : 'La progression n\'a pas pu être envoyée au serveur de la page : elle reste dans ce navigateur, nouvel essai au prochain enregistrement.', 'bad', 8000);
   else if (e.where === 'remote' && SAVE.local !== false) toast('La progression est de nouveau enregistrée sur le serveur.', 'good');
 });

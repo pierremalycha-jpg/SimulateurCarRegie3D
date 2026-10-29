@@ -43,7 +43,7 @@ C'est pourquoi une passerelle fausse d'un seul côté donne un aller qui arrive 
     { t: 'Panne : pas de passerelle', panne: { passerelle: false }, envoi: ['rcp1', 'nas'], vue: { cible: [A, 1.0, 0.4], dir: [0.1, 0.45, 1], dist: 6.5 },
       texte: `Le RCP 1 n'a plus de passerelle. Vers la CCU 1, rien ne change : c'est un voisin. Vers le NAS, il ne sait **à qui confier** le paquet : « destination injoignable », rien ne part.
 
-Signature de la panne : tout ce qui est local marche, tout ce qui est au-delà échoue (supervision, heure NTP, fichiers). Essayez les deux envois depuis « À vous ».` },
+Signature de la panne : tout ce qui est local marche, tout ce qui est au-delà échoue (supervision, heure NTP, fichiers). Essaie les deux envois depuis « À toi ».` },
     { t: 'Panne : un masque trop large', panne: { masque: 16 }, envoi: ['rcp1', 'nas'], vue: { cible: [A, 1.0, 0.4], dir: [0.1, 0.45, 1], dist: 6.5 },
       texte: `Le RCP 1 a reçu un masque **/16**. Vu en /16, 10.1.60.20 et 10.1.20.31 sont dans le même réseau, 10.1.0.0 : le RCP croit le NAS **voisin** et l'appelle par ARP… dans son îlot. La diffusion reste dans le VLAN 20 ; le NAS ne l'entend jamais, personne ne répond.
 
@@ -160,7 +160,7 @@ Quand une liaison est coupée, le dernier routeur qui répond dit **où** cherch
         const a = /** @type {HTMLSelectElement} */ (el('select', { 'aria-label': 'Qui envoie' }, ...opt.map((x) => x.cloneNode(true))));
         const b = /** @type {HTMLSelectElement} */ (el('select', { 'aria-label': 'Vers' }, ...opt.map((x) => x.cloneNode(true)))); b.value = 'nas';
         ui = el('div', { class: 'v3-ctl' },
-          el('div', { class: 'v3-row' }, el('span', {}, 'Paquet :'), a, el('span', {}, '→'), b, el('button', { type: 'button', class: 'btn small primary', onclick: () => { if (a.value === b.value) { ctx.say('Choisissez deux machines différentes.'); return; } send(a.value, b.value); } }, 'Envoyer')),
+          el('div', { class: 'v3-row' }, el('span', {}, 'Paquet :'), a, el('span', {}, '→'), b, el('button', { type: 'button', class: 'btn small primary', onclick: () => { if (a.value === b.value) { ctx.say('Choisis deux machines différentes.'); return; } send(a.value, b.value); } }, 'Envoyer')),
           el('div', { class: 'v3-row' }, el('span', {}, 'Pannes du RCP 1 :'),
             el('button', { type: 'button', class: 'btn small', 'data-k': 'gw', 'aria-pressed': 'false', onclick: () => { S.passerelle = !S.passerelle; sync(); ctx.say(S.passerelle ? 'Passerelle du RCP 1 rétablie : 10.1.20.1.' : 'Le RCP 1 n\'a plus de passerelle.'); } }, 'sans passerelle'),
             el('button', { type: 'button', class: 'btn small', 'data-k': 'mask', 'aria-pressed': 'false', onclick: () => { S.masque = S.masque === 24 ? 16 : 24; sync(); ctx.say(`Masque du RCP 1 : /${S.masque}.`); } }, 'masque /16')),

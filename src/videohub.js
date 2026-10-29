@@ -127,7 +127,7 @@ export function outsOfIn(n) { const r = []; for (let o = 1; o <= VH_N; o++) if (
 export const lockState = (n) => VH.locks[n] || 'U';
 export function lockMsg(n) {
   const l = lockState(n);
-  return `Sortie ${n} « ${outLabel(n)} » verrouillée${l === 'L' ? ` depuis un autre poste (${VH.lockedBy[n] || 'autre client du réseau'})` : ''} : la grille refuse de la commuter. Déverrouillez-la d'abord (LOCK).`;
+  return `Sortie ${n} « ${outLabel(n)} » verrouillée${l === 'L' ? ` depuis un autre poste (${VH.lockedBy[n] || 'autre client du réseau'})` : ''} : la grille refuse de la commuter. Déverrouille-la d'abord (LOCK).`;
 }
 /** @param {number} n @param {'O' | 'L' | null} owner @param {string} [by] */
 export function setLock(n, owner, by = '') {
@@ -209,7 +209,7 @@ const VH_FAULTS = [
     },
     check: (st) => inLabel(st.a) === 'CAM ' + st.a && inLabel(st.b) === 'CAM ' + st.b && ROUTER.map.MV13 === 'CAM' + st.a,
     repair: (st) => { delete VH.labels.in[st.a]; delete VH.labels.in[st.b]; if (VH.locks[35]) setLock(35, null); route('MV13', 'CAM' + st.a); },
-    hint: 'La tuile 13 du multiview ne montre pas la caméra demandée. Monitoring des entrées de la grille : comparez chaque image à son étiquette ; deux étiquettes sont inversées. Videohub Setup : corriger les étiquettes, puis router la bonne caméra sur la sortie 35 (MV 13).',
+    hint: 'La tuile 13 du multiview ne montre pas la caméra demandée. Monitoring des entrées de la grille : compare chaque image à son étiquette ; deux étiquettes sont inversées. Videohub Setup : corriger les étiquettes, puis router la bonne caméra sur la sortie 35 (MV 13).',
   },
 ];
 FAULTS.push(...VH_FAULTS);

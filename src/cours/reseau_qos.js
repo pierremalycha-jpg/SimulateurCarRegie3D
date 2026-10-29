@@ -73,7 +73,7 @@ export const MESURES = {
     'Outils : **ping** (aller-retour), **traceroute** (chemin), **iperf** (débit, pertes), un analyseur de trames (Wireshark : gigue et pertes RTP).',
   ],
   figure: figMesures,
-  demoTitle: 'Réglez la distance, le nombre d\'équipements, le débit des liens et l\'encombrement des files : regardez ce qui pèse dans la latence et ce qui fait la gigue.',
+  demoTitle: 'Règle la distance, le nombre d\'équipements, le débit des liens et l\'encombrement des files : regarde ce qui pèse dans la latence et ce qui fait la gigue.',
   demo: demoMesures,
   body: `Quatre chiffres décrivent ce qu'un réseau fait subir à un flux. On les mesure avant l'antenne, et on les surveille pendant.
 
@@ -178,7 +178,7 @@ export const QOS = {
     'La QoS ne crée pas de débit : elle protège l\'horloge, la voix et les commandes quand ça déborde. Un réseau média se **dimensionne** d\'abord pour ne pas déborder.',
   ],
   figure: figQos,
-  demoTitle: 'Montez les copies de fichiers et les médias au-delà du lien, avec une seule file puis avec la QoS : regardez qui perd et qui attend.',
+  demoTitle: 'Monte les copies de fichiers et les médias au-delà du lien, avec une seule file puis avec la QoS : regarde qui perd et qui attend.',
   demo: demoQos,
   body: `Un commutateur reçoit des paquets sur plusieurs ports et les renvoie sur un autre. Si plusieurs entrées visent la même sortie (trois caméras vers un multiview, une copie de fichiers vers le NAS pendant le direct), le port de sortie reçoit plus qu'il ne peut envoyer : c'est la **congestion**. Les paquets en trop **attendent** dans une **file**, ce qui ajoute du retard et de la gigue ; quand la file est pleine, les suivants sont **jetés**. Sans réglage, la file est unique et tout le monde subit : le message PTP attend derrière une rafale de fichiers.
 
@@ -189,7 +189,7 @@ export const QOS = {
 
 **Ce que recommandent les normes du car IP.** AES67 et ST 2110 marquent **PTP en EF (46)** et les **médias en AF41 (34)**. Dans les commutateurs, PTP va dans une file en priorité stricte : un message Sync qui attend quelques microsecondes derrière une vidéo fausse la mesure du délai et fait dériver toutes les horloges (les horloges frontières limitent le problème). Dans le car SDI, le réseau de contrôle classe aussi par usage : voix de l'intercom en EF, commandes et tally en CS4, gestion en CS2, données au mieux, fichiers et Internet en CS1.
 
-**Ce que la QoS ne fait pas.** Elle ne crée pas de débit : si les médias seuls dépassent le lien, ils perdent des paquets quoi qu'on règle. Un réseau ST 2110 se **dimensionne** pour ne jamais déborder (contrôle des réservations, liens surdimensionnés) ; la QoS reste une assurance pour l'horloge et les commandes. Et sur Internet, personne ne respecte votre marquage : la QoS ne vaut que sur un réseau que l'on maîtrise.
+**Ce que la QoS ne fait pas.** Elle ne crée pas de débit : si les médias seuls dépassent le lien, ils perdent des paquets quoi qu'on règle. Un réseau ST 2110 se **dimensionne** pour ne jamais déborder (contrôle des réservations, liens surdimensionnés) ; la QoS reste une assurance pour l'horloge et les commandes. Et sur Internet, personne ne respecte ton marquage : la QoS ne vaut que sur un réseau que l'on maîtrise.
 
 **Deux autres outils.** Le **policing** coupe ce qui dépasse un débit convenu (un invité limité à 20 Mb/s) ; le **shaping** lisse un envoi en le retardant pour ne pas dépasser un débit (un encodeur qui sort vers une liaison louée).`,
   plus: `- En 802.1p, la CoS 1 (« arrière-plan ») passe **après** la CoS 0 (« au mieux ») : un piège classique.
@@ -201,7 +201,7 @@ export const QOS = {
   competences: ['1.2', '3.6', '3.12'], article: 'reseau',
   quiz: [
     { q: 'Quand la QoS a-t-elle un effet ?',
-      choices: [['Tout le temps : elle accélère les paquets prioritaires', 'Un paquet ne va jamais plus vite que le lien ; sans file d\'attente, l\'ordre de service ne change rien.'], 'Quand un port de sortie est engorgé : elle décide qui passe d\'abord et qui perd', ['Seulement sur Internet', 'C\'est l\'inverse : sur Internet, personne ne respecte votre marquage.']],
+      choices: [['Tout le temps : elle accélère les paquets prioritaires', 'Un paquet ne va jamais plus vite que le lien ; sans file d\'attente, l\'ordre de service ne change rien.'], 'Quand un port de sortie est engorgé : elle décide qui passe d\'abord et qui perd', ['Seulement sur Internet', 'C\'est l\'inverse : sur Internet, personne ne respecte ton marquage.']],
       answer: 1, why: 'Sans congestion, tout passe aussitôt. La QoS n\'agit que lorsque des paquets attendent : elle range et ordonne l\'attente.' },
     { q: 'Quelle valeur DSCP AES67 et ST 2110 recommandent-ils pour PTP ?',
       choices: ['46 (EF)', ['34 (AF41)', 'C\'est la valeur des médias.'], ['0 (au mieux)', 'PTP y attendrait derrière tout le reste : l\'horloge dériverait.']],

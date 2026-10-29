@@ -127,16 +127,16 @@ function dynCurve(cv, c, big = false) {
 }
 
 // ---------------- textes pédagogiques ----------------
-function tGain(c) { const mic = c.kind === 'mic'; return `Gain d'entrée de ${c.short} : ${mic ? '+' + c.gain + ' dB (préampli micro)' : sgn(c.gain - c.defGain, 0) + ' dB (gain numérique)'}. Il règle le niveau AVANT tout traitement : visez des crêtes entre −18 et −10 dBFS sur le vumètre d'entrée, sans jamais allumer l'OVL rouge. Trop bas, le bruit de fond remonte quand on pousse le fader ; trop haut, la saturation est gravée dans le signal et aucun fader ne la retire.`; }
+function tGain(c) { const mic = c.kind === 'mic'; return `Gain d'entrée de ${c.short} : ${mic ? '+' + c.gain + ' dB (préampli micro)' : sgn(c.gain - c.defGain, 0) + ' dB (gain numérique)'}. Il règle le niveau AVANT tout traitement : vise des crêtes entre −18 et −10 dBFS sur le vumètre d'entrée, sans jamais allumer l'OVL rouge. Trop bas, le bruit de fond remonte quand on pousse le fader ; trop haut, la saturation est gravée dans le signal et aucun fader ne la retire.`; }
 function t48(c) { const cond = portsOf(c.src).some((p) => PLUG[p] && PLUG[p].cond); return `Alimentation fantôme 48 V ${c.ph48 ? 'active' : 'coupée'} sur ${c.src}. ${cond ? (c.ph48 ? 'Le micro statique branché ici (' + portInfo(c.src) + ') est alimenté.' : 'ATTENTION : le micro statique branché ici n\'est plus alimenté, il ne délivre plus rien (vumètre à zéro).') : 'La source branchée ici (' + portInfo(c.src) + ') n\'en a pas besoin : on laisse le 48 V coupé sur les sources ligne et les micros dynamiques.'}`; }
 function tPhase(c) { return c.st ? `Polarité du côté droit de ${c.short} ${c.phase ? 'INVERSÉE' : 'normale'}. Les deux micros d'un couple captent la même foule : si un côté est inversé, le corrélateur devient négatif et l'ambiance s'annule quand le programme est écouté en mono (récepteurs mono, smartphones). Touche MONO de l'écoute pour l'entendre.` : `Polarité de ${c.short} ${c.phase ? 'inversée' : 'normale'} : utile quand un câble ou un micro est câblé à l'envers, ou quand deux micros proches captent la même source.`; }
 function tHpf(c) { return `Filtre passe-haut ${c.hpf.on ? 'actif à ' + c.hpf.f + ' Hz' : 'hors service'} sur ${c.short} : il coupe les graves inutiles (vent, vibrations, grondement de la foule, manipulations). Repères : canons 100 à 150 Hz, voix 80 à 120 Hz, couples d'ambiance 40 à 80 Hz.`; }
-function tBand(c, i) { const b = c.eq.b[i]; return `Égaliseur de ${c.short}, bande ${i + 1} (${BANDS[i]}) : ${sgn(b.g)} dB à ${fhz(b.f)}Hz, Q ${fmt(b.q, 1)} — ${BAND_TXT[i]}. Rouge = égaliseur sur l'écran Vistonics. Corrigez d'abord en coupant (−) plutôt qu'en ajoutant (+).`; }
+function tBand(c, i) { const b = c.eq.b[i]; return `Égaliseur de ${c.short}, bande ${i + 1} (${BANDS[i]}) : ${sgn(b.g)} dB à ${fhz(b.f)}Hz, Q ${fmt(b.q, 1)} — ${BAND_TXT[i]}. Rouge = égaliseur sur l'écran Vistonics. Corrige d'abord en coupant (−) plutôt qu'en ajoutant (+).`; }
 function tComp(c) { return `Compresseur de ${c.short} ${c.dyn.on ? 'actif' : 'hors service'} : au-dessus de ${c.dyn.thr} dBFS, le niveau monte ${fmt(c.dyn.ratio, 1)} fois moins vite (ratio ${fmt(c.dyn.ratio, 1)}:1), attaque ${c.dyn.att} ms, retour ${c.dyn.rel} ms, gain de compensation ${sgn(c.dyn.mk, 0)} dB. Il resserre l'écart entre les mots forts et faibles d'un commentateur. Vert = dynamique sur l'écran Vistonics ; la barre verte du vumètre montre la réduction de gain.`; }
 function tGate(c) { return `Gate / expandeur de ${c.short} ${c.gate.on ? 'actif' : 'hors service'} : sous ${c.gate.thr} dBFS, la tranche est atténuée de ${c.gate.range} dB. Sur les micros des commentateurs, il coupe la foule qui « repisse » dans le micro quand ils se taisent ; trop haut, il mange le début des mots.`; }
 function tDelay(c) { return `Retard d'entrée de ${c.short} : ${c.delay} ms. Le son voyage à 343 m/s, soit environ 3 ms par mètre : on retarde une source proche pour la caler sur une source lointaine (ou sur une image en retard).`; }
 function tPan(c) { const p = Math.round(c.pan * 100); return `${c.st ? 'Balance' : 'Panoramique'} de ${c.short} : ${p === 0 ? 'au centre' : Math.abs(p) + ' % à ' + (p < 0 ? 'gauche' : 'droite')}. Jaune = panoramique sur les Vistonics. Les canons se placent comme sur le plan large : but de gauche à gauche, but de droite à droite.`; }
-function tFader(c) { const v = vcaDb(c); return `${c.short} à ${fdb(c.fader)} dB${v ? ` (+ VCA ${sgn(v)} dB)` : ''}. Le fader dose la source dans les bus ; 0 dB = gain unitaire. Les départs (INTL, N-1) sont pris après le fader : ils suivent le même dosage.${c.group === 'canon' && AU.autoCanon ? ' L\'assistant de suivi du jeu pilote ces faders motorisés : coupez-le (Control Bay) pour mixer les canons à la main.' : ''}`; }
+function tFader(c) { const v = vcaDb(c); return `${c.short} à ${fdb(c.fader)} dB${v ? ` (+ VCA ${sgn(v)} dB)` : ''}. Le fader dose la source dans les bus ; 0 dB = gain unitaire. Les départs (INTL, N-1) sont pris après le fader : ils suivent le même dosage.${c.group === 'canon' && AU.autoCanon ? ' L\'assistant de suivi du jeu pilote ces faders motorisés : coupe-le (Control Bay) pour mixer les canons à la main.' : ''}`; }
 const SEND_TXT = {
   pgm: (c) => `${c.short} ${c.pgm ? 'assigné au' : 'retiré du'} bus PGM (le son à l'antenne).`,
   intl: (c) => (c.intl ? (c.voice ? `${c.short} envoyé dans l'international : ERREUR, les diffuseurs étrangers entendraient une voix française par-dessus leurs commentateurs.` : `${c.short} envoyé dans l'international : correct, c'est un son d'ambiance ou d'effet.`) : `${c.short} retiré de l'international.${c.voice ? ' Correct : l\'international ne porte jamais de voix.' : ' Attention : l\'international doit garder toute l\'ambiance du stade.'}`),
@@ -154,23 +154,23 @@ function monTxt(k) { return `Écoute sur ${AU.bus[k].label} : ${{ pgm: 'le progr
 // chaque geste agit sur le son et s'explique dans le fil « Ce qui se passe ».
 // ----------------------------------------------------------------------------------
 export const AUACT = {
-  fader(c, v) { c.fader = v; if (c.group === 'canon' && AU.autoCanon) { AU.autoCanon = false; explain('Vous avez pris la main sur un canon : l\'assistant de suivi du jeu est coupé.', 'son:auto'); } applyStrip(c); explain(tFader(c), 'son:f' + c.id); },
+  fader(c, v) { c.fader = v; if (c.group === 'canon' && AU.autoCanon) { AU.autoCanon = false; explain('Tu as pris la main sur un canon : l\'assistant de suivi du jeu est coupé.', 'son:auto'); } applyStrip(c); explain(tFader(c), 'son:f' + c.id); },
   mute(c) { c.mute = !c.mute; applyStrip(c); explain(`${c.short} ${c.mute ? 'coupé (MUTE) : il disparaît du programme et de tous les départs.' : 'rétabli.'}`, 'son:mute'); },
-  pfl(c) { startAudio(); c.pfl = !c.pfl; applyStrip(c); applyBuses(); explain(c.pfl ? `PFL ${c.short} : vous écoutez la tranche seule, avant son fader, sans rien changer à l'antenne. L'écoute bascule sur le bus PFL tant qu'une touche PFL est allumée.` : 'PFL relâché : l\'écoute revient sur le bus choisi.', 'son:pfl'); },
+  pfl(c) { startAudio(); c.pfl = !c.pfl; applyStrip(c); applyBuses(); explain(c.pfl ? `PFL ${c.short} : tu écoutes la tranche seule, avant son fader, sans rien changer à l'antenne. L'écoute bascule sur le bus PFL tant qu'une touche PFL est allumée.` : 'PFL relâché : l\'écoute revient sur le bus choisi.', 'son:pfl'); },
   sel(c) { AU.sel = c.id; explain(`SEL : ${c.label} s'affiche sur l'écran de la Control Bay, avec toutes ses commandes (patch, égaliseur 4 bandes, dynamique, départs, VCA).`, 'son:sel'); },
   /** plage du gain d'entrée : préampli micro 0 à +70 dB, sinon ±30 dB autour du gain nominal */
   gainRange(c) { return c.kind === 'mic' ? [0, 70] : [c.defGain - 30, c.defGain + 30]; },
   gain(c, v) { c.gain = v; applyStrip(c); explain(tGain(c), 'son:' + c.id + 'in'); },
   pan(c, v) { c.pan = v; applyStrip(c); explain(tPan(c), 'son:' + c.id + 'pan'); },
-  master(v) { AU.master.fader = v; applyAll(); explain(`Master PGM à ${fdb(v)} dB : il agit sur tout le programme. Surveillez la loudness intégrée (cible −23 LUFS).`, 'son:mpgm'); },
+  master(v) { AU.master.fader = v; applyAll(); explain(`Master PGM à ${fdb(v)} dB : il agit sur tout le programme. Surveille la loudness intégrée (cible −23 LUFS).`, 'son:mpgm'); },
   vca(k, v) { const o = AU.vca[k]; o.fader = v; applyAll(); explain(`${o.label} à ${fdb(v)} dB : toutes ses tranches bougent ensemble (le VCA agit sur leurs gains, il ne mélange pas le son). Leurs faders ne bougent pas : l'écran montre « V » à côté de leur valeur.`, 'son:m' + k); },
   monitor(k) { startAudio(); setMonitor(k); explain(monTxt(k), 'son:mon'); },
   dim() { AU.dim = !AU.dim; applyBuses(); explain(AU.dim ? 'DIM : l\'écoute baisse de 20 dB (pour parler dans la cabine ou répondre à l\'intercom) sans toucher à l\'antenne.' : 'DIM relâché : écoute à niveau normal.', 'son:dim'); },
   mono() { AU.mono = !AU.mono; applyBuses(); explain(AU.mono ? `Écoute en MONO (G + D) : c'est ainsi que l'entendent les récepteurs mono et beaucoup de smartphones. Une ambiance en opposition de phase y disparaît. Corrélateur actuel : ${fmt(AU.corr, 2)}.` : 'Écoute stéréo rétablie.', 'son:mono'); },
   /** talkback maintenu vers un N-1 */
-  talkback(k, on) { if (!on) { talkback(k, false); return; } startAudio(); talkback(k, true); explain(`Talkback (maintenu) vers ${AU.bus[k].label} : votre micro d'ordres part dans ce N-1 seulement (${AU.bus[k].dest}). Jamais dans le PGM ni l'international. Écoutez ce N-1 pour entendre le « bip » simulé.`, 'son:tb'); },
-  auto() { AU.autoCanon = !AU.autoCanon; explain(AU.autoCanon ? 'Assistant de suivi du jeu ACTIF (aide du simulateur) : les faders motorisés des six canons suivent le ballon, le plus proche est ouvert. Des automatismes de ce genre existent en production, mais beaucoup d\'ingénieurs du son « suivent le ballon » à la main.' : 'Assistant coupé : à vous de suivre le jeu avec les faders des canons (le canon le plus proche du ballon est indiqué au-dessus de sa tranche).', 'son:auto'); },
-  lim() { AU.master.lim = !AU.master.lim; applyBuses(); explain(AU.master.lim ? 'Limiteur de sortie du PGM actif (−2 dBFS) : il protège la ligne contre les crêtes (un but, une frappe près d\'un canon). Il ne remplace pas un bon mixage : s\'il travaille en permanence, baissez le master.' : 'Limiteur du PGM contourné : une crête peut maintenant saturer le départ.', AU.master.lim ? 'son:lim' : 'warn'); },
+  talkback(k, on) { if (!on) { talkback(k, false); return; } startAudio(); talkback(k, true); explain(`Talkback (maintenu) vers ${AU.bus[k].label} : ton micro d'ordres part dans ce N-1 seulement (${AU.bus[k].dest}). Jamais dans le PGM ni l'international. Écoute ce N-1 pour entendre le « bip » simulé.`, 'son:tb'); },
+  auto() { AU.autoCanon = !AU.autoCanon; explain(AU.autoCanon ? 'Assistant de suivi du jeu ACTIF (aide du simulateur) : les faders motorisés des six canons suivent le ballon, le plus proche est ouvert. Des automatismes de ce genre existent en production, mais beaucoup d\'ingénieurs du son « suivent le ballon » à la main.' : 'Assistant coupé : à toi de suivre le jeu avec les faders des canons (le canon le plus proche du ballon est indiqué au-dessus de sa tranche).', 'son:auto'); },
+  lim() { AU.master.lim = !AU.master.lim; applyBuses(); explain(AU.master.lim ? 'Limiteur de sortie du PGM actif (−2 dBFS) : il protège la ligne contre les crêtes (un but, une frappe près d\'un canon). Il ne remplace pas un bon mixage : s\'il travaille en permanence, baisse le master.' : 'Limiteur du PGM contourné : une crête peut maintenant saturer le départ.', AU.master.lim ? 'son:lim' : 'warn'); },
 };
 
 /** vumètres de la Control Bay : PGM G/D, international, N-1, corrélation, loudness court terme, limiteur, écoute */
@@ -308,7 +308,7 @@ export function buildAudio(body, arg, ctx) {
         mini = el('canvas', { width: 56, height: 30, class: 'vx-mini' }); scr.append(mini);
         scr.append(K({ label: 'FRÉQ ' + (i + 1), color: SEC.eq, log: true, min: i === 0 ? 30 : i === 3 ? 2000 : 80, max: i === 0 ? 500 : i === 3 ? 18000 : 12000, get: () => c.eq.b[i].f, set: (v) => { c.eq.b[i].f = v; }, fmt: (v) => fhz(v), def: [100, 400, 2500, 10000][i], after: upd(() => tBand(c, i)) }),
           K({ label: 'GAIN ' + (i + 1), color: SEC.eq, min: -15, max: 15, step: 0.5, get: () => c.eq.b[i].g, set: (v) => { c.eq.b[i].g = v; }, fmt: (v) => sgn(v), def: 0, after: upd(() => tBand(c, i)) }));
-        const b1 = vbtn('EQ', SEC.eq, () => c.eq.on, () => { c.eq.on = !c.eq.on; applyStrip(c); explain(`Égaliseur de ${c.short} ${c.eq.on ? 'en service' : 'contourné (bypass)'} : comparez avec et sans, c'est le meilleur juge.`, 'son:eqon'); });
+        const b1 = vbtn('EQ', SEC.eq, () => c.eq.on, () => { c.eq.on = !c.eq.on; applyStrip(c); explain(`Égaliseur de ${c.short} ${c.eq.on ? 'en service' : 'contourné (bypass)'} : compare avec et sans, c'est le meilleur juge.`, 'son:eqon'); });
         const b2 = vbtn('HPF', SEC.eq, () => c.hpf.on, () => { c.hpf.on = !c.hpf.on; applyStrip(c); explain(tHpf(c), 'son:hpf'); }, 'Filtre passe-haut');
         syncs.push(b1, b2); scr.append(el('div', { class: 'vx-b2' }, b1, b2));
       } else if (ui.view === 'dyn') {
@@ -381,7 +381,7 @@ export function buildAudio(body, arg, ctx) {
       const meter = el('canvas', { width: 14, height: 150, class: 'vx-meter' });
       const get = isP ? o.fader : () => o.fader;
       const set = isP ? o.set : (v) => { o.fader = v; };
-      const fd = vfader(get, (v) => { set(v); applyAll(); explain(isP ? `Master PGM à ${fdb(v)} dB : il agit sur tout le programme. Surveillez la loudness intégrée (cible −23 LUFS).` : isV ? `${o.label} à ${fdb(v)} dB : toutes ses tranches bougent ensemble (le VCA agit sur leurs gains, il ne mélange pas le son). Leurs faders ne bougent pas : l'écran montre « V » à côté de leur valeur.` : `Master ${o.label} à ${fdb(v)} dB : niveau envoyé vers ${o.dest}.`, 'son:m' + (it.k || 'pgm')); }, col, o.short);
+      const fd = vfader(get, (v) => { set(v); applyAll(); explain(isP ? `Master PGM à ${fdb(v)} dB : il agit sur tout le programme. Surveille la loudness intégrée (cible −23 LUFS).` : isV ? `${o.label} à ${fdb(v)} dB : toutes ses tranches bougent ensemble (le VCA agit sur leurs gains, il ne mélange pas le son). Leurs faders ne bougent pas : l'écran montre « V » à côté de leur valeur.` : `Master ${o.label} à ${fdb(v)} dB : niveau envoyé vers ${o.dest}.`, 'son:m' + (it.k || 'pgm')); }, col, o.short);
       const lcd = el('div', { class: 'vx-lcd' });
       const mute = isP ? el('div', { class: 'vx-mute ghost' }, '—') : el('button', { class: 'vx-mute', 'aria-label': 'MUTE ' + o.label, title: 'Couper ' + o.label, onclick: () => { o.mute = !o.mute; applyAll(); explain(`${o.label} ${o.mute ? 'coupé : ' + (isV ? 'toutes ses tranches sont muettes (mute de groupe).' : 'plus rien n\'est envoyé vers ' + o.dest + '.') : 'rétabli.'}`, o.mute ? 'warn' : 'son:mmute'); } }, 'MUTE');
       const s = el('div', { class: 'vx-strip m' }, scrib, el('small', { class: 'vx-hint' }), scr, el('div', { class: 'vx-fsec' }, meter, fd), lcd, mute);
@@ -461,7 +461,7 @@ export function buildAudio(body, arg, ctx) {
     for (const k of AU.order) {
       const c = AU.ch[k];
       const status = el('td');
-      const sel = selectEl((c.st ? ST_PORTS : MONO_PORTS).map((p) => [p, p]), c.src, (v) => { setPatch(k, v); explain(`Patch : ${c.short} ← ${v} (${portInfo(v)}).${v === c.home ? ' Conforme à la feuille de patch.' : ' Différent de la feuille de patch (' + c.home + ') : vérifiez que c\'est voulu.'}`, v === c.home ? 'son:patch' : 'warn'); upd(); });
+      const sel = selectEl((c.st ? ST_PORTS : MONO_PORTS).map((p) => [p, p]), c.src, (v) => { setPatch(k, v); explain(`Patch : ${c.short} ← ${v} (${portInfo(v)}).${v === c.home ? ' Conforme à la feuille de patch.' : ' Différent de la feuille de patch (' + c.home + ') : vérifie que c\'est voulu.'}`, v === c.home ? 'son:patch' : 'warn'); upd(); });
       sel.setAttribute('aria-label', 'Patch de ' + c.short);
       const what = el('td', { class: 'note' });
       const ph = el('td');
@@ -516,7 +516,7 @@ export function buildAudio(body, arg, ctx) {
       el('div', { class: 'list' },
         el('div', { class: 'hwpanel' }, el('h3', {}, 'Retard de ligne (synchro labiale)'),
           el('div', { class: 'hwrow' }, el('button', { class: 'btn small', onclick: () => step(-20) }, '− 1 image'), dlv, el('button', { class: 'btn small', onclick: () => step(20) }, '+ 1 image'), follow), dl, avLcd, dkv,
-          el('p', { class: 'note' }, `Tolérance de bout en bout (EBU R37, sortie vers l'émission) : son en avance de ${AV_TOL.early} ms au plus, en retard de ${AV_TOL.late} ms au plus ; à chaque étape (dont le car), R37 demande de rester entre 5 ms d'avance et 15 ms de retard : visez 0 ms. L'image des caméras filaires arrive sans retard ; celle de la caméra HF arrive avec la latence du codec. Le micro de la caméra HF voyage avec son image : il est déjà calé sur elle.`)),
+          el('p', { class: 'note' }, `Tolérance de bout en bout (EBU R37, sortie vers l'émission) : son en avance de ${AV_TOL.early} ms au plus, en retard de ${AV_TOL.late} ms au plus ; à chaque étape (dont le car), R37 demande de rester entre 5 ms d'avance et 15 ms de retard : vise 0 ms. L'image des caméras filaires arrive sans retard ; celle de la caméra HF arrive avec la latence du codec. Le micro de la caméra HF voyage avec son image : il est déjà calé sur elle.`)),
         el('div', { class: 'hwpanel' }, el('h3', {}, 'Embedder du départ (SDI, paires 1 à 8)'), el('table', { class: 'tbl' }, el('thead', {}, el('tr', {}, el('th', {}, 'Paire'), el('th', {}, 'Embeddé dans le départ'), el('th', {}, 'Plan de son demandé'), el('th', {}, ''))), embBody), embStatus,
           el('p', { class: 'note' }, 'L\'embedder insère le son dans les espaces de suppression du signal SDI du départ (jusqu\'à 16 canaux en HD ; le simulateur montre les 4 premières paires). La chaîne envoie un plan de son : quel son sur quelle paire.')))));
     return {
@@ -562,9 +562,9 @@ export function buildAudio(body, arg, ctx) {
       el('div', { class: 'hwpanel' }, el('h3', {}, 'En direct de la cabine commentateurs'), el('div', { class: 'hwrow' }, tog, el('span', { class: 'note' }, 'Les interventions s\'affichent ici en texte, sans voix ; leurs niveaux sont simulés sur les tranches.')), feed),
       el('div', { class: 'hwpanel prose' }, el('h3', {}, 'Comment les voix passent par la console'), kv,
         el('p', {}, `${SPK.comm1.name} (commentateur) arrive sur MADI 1, ${SPK.comm2.name} (consultant) sur MADI 2, par l'unité de commentaire de la cabine. ${SPK.bt.name}, au bord du terrain, parle dans un micro HF dont le récepteur entre en MIC 11. Le plateau revient par la transmission (AES 3).`),
-        el('p', {}, 'Ce qu\'on entendrait de chaque voix suit vraiment la console : patch, gain, fader, VCA, mute, assignation au bus écouté, master, DIM. Fermez COMM 1 : les phrases du commentateur passent en « non entendu » et son vumètre tombe ; écoutez le N-1 COMM : les commentateurs n\'y sont pas (normal).'),
+        el('p', {}, 'Ce qu\'on entendrait de chaque voix suit vraiment la console : patch, gain, fader, VCA, mute, assignation au bus écouté, master, DIM. Ferme COMM 1 : les phrases du commentateur passent en « non entendu » et son vumètre tombe ; écoute le N-1 COMM : les commentateurs n\'y sont pas (normal).'),
         el('p', { class: 'note' }, 'Limite du simulateur : les voix ne sont pas dites (la synthèse vocale du navigateur sonnait trop robotique). Leur niveau est simulé : il fait bouger les vumètres, la loudness et la lampe rouge de la cabine ; l\'égaliseur et la dynamique agissent sur les vumètres et sur la « repisse » de foule dans les micros.'),
-        el('p', {}, 'Quand le commentateur « lance » le bord terrain, ouvrez la tranche BORD T. : sinon personne ne l\'entend à l\'antenne.'))));
+        el('p', {}, 'Quand le commentateur « lance » le bord terrain, ouvre la tranche BORD T. : sinon personne ne l\'entend à l\'antenne.'))));
     return {
       update() {
         tog.classList.toggle('lit', CMT.on);
@@ -585,7 +585,7 @@ export function buildAudio(body, arg, ctx) {
         el('p', {}, 'Console de mixage numérique compacte de Studer (marque aujourd\'hui chez Evertz), pensée pour les espaces réduits : régies de car, petits studios, radio filmée. Elle reprend l\'ergonomie des grandes Vista avec les écrans Vistonics.'),
         el('ul', {}, el('li', {}, 'Surfaces : version 22 faders (environ 1 m de large, idéale en car) ou 32 faders.'), el('li', {}, 'Moteur DSP intégré annoncé à 96 canaux de traitement (mono, stéréo ou 5.1), bus de sortie, N-x, auxiliaires.'), el('li', {}, 'E/S intégrées : entrées micro/ligne avec préamplis, sorties ligne, AES ; extension par cartes D21m (MADI, AES, SDI, réseau audio AoIP) ; selon la version et les options, les nombres varient : se référer à la fiche du constructeur.'), el('li', {}, 'Fonctions broadcast : talkback, lampes rouges et GPIO, N-x (mix-minus), snapshots, automation, retards, surround.')),
         el('p', { class: 'note' }, 'Simulation pédagogique non officielle : interface et chiffres simplifiés, sans lien avec le constructeur.')),
-      el('div', { class: 'hwpanel prose' }, el('h3', {}, 'Vistonics : « là où vous regardez, vous agissez »'),
+      el('div', { class: 'hwpanel prose' }, el('h3', {}, 'Vistonics : « là où tu regardes, tu agis »'),
         el('p', {}, 'Les molettes et les touches sont montées directement sur l\'écran tactile, au-dessus de chaque tranche : la valeur réglée s\'affiche sous la molette, sans menu caché. Un écran porte 10 tranches.'),
         el('p', {}, 'Code couleur : égaliseur en rouge, dynamique en vert, panoramique en jaune. On reconnaît d\'un coup d\'œil ce qui est actif.'),
         el('p', {}, 'Dans le simulateur, les touches ENTRÉE / ÉGALISEUR / DYNAMIQUE / PAN · DÉPARTS changent ce que portent les molettes des écrans, et SEL envoie la tranche sur l\'écran de la Control Bay avec toutes ses commandes.')),
@@ -623,7 +623,7 @@ export function buildAudio(body, arg, ctx) {
 on('audio', (e) => {
   if (!e || e.type !== 'cue' || e.k !== 'bt') return;
   const c = AU.ch.bt; if (faderLin(c) > 0.05) return;
-  if (S.station === 'son') explain(`Le commentateur lance ${SPK.bt.name} au bord du terrain : ouvrez la tranche BORD T. (n° ${c.n}), sinon on ne l'entendra pas à l'antenne !`, 'warn');
+  if (S.station === 'son') explain(`Le commentateur lance ${SPK.bt.name} au bord du terrain : ouvre la tranche BORD T. (n° ${c.n}), sinon on ne l'entendra pas à l'antenne !`, 'warn');
   else intercom('RÉAL', `Son : on part au bord terrain avec ${SPK.bt.name}, ouvre-la !`);
 });
 // voix présente sur l'entrée d'une tranche

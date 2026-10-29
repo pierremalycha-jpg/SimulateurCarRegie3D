@@ -69,14 +69,14 @@ function demo422(host) {
   };
   const pick = (ev) => { const r = dst.getBoundingClientRect(); cx = Math.round((ev.clientX - r.left) / r.width * W); cy = Math.round((ev.clientY - r.top) / r.height * H); redraw(); };
   dst.addEventListener('pointerdown', pick); dst.addEventListener('pointermove', (ev) => { if (ev.buttons) pick(ev); });
-  dst.title = 'Cliquez pour déplacer la loupe'; dst.style.cursor = 'crosshair';
+  dst.title = 'Clique pour déplacer la loupe'; dst.style.cursor = 'crosshair';
   host.append(
     el('div', { class: 'co-ctl' },
       choice('Échantillonnage', [['444', '4:4:4', 'Couleur sur chaque pixel'], ['422', '4:2:2', 'Couleur un pixel sur deux (SDI, car régie)'], ['420', '4:2:0', 'Couleur un pixel sur deux et une ligne sur deux (diffusion, Internet)']], mode, (v) => { mode = v; redraw(); }),
       slider('Loupe', 2, 12, zoom, 1, (v) => { zoom = v; redraw(); }, (v) => '× ' + v)),
     el('div', { class: 'co-3' },
       el('figure', {}, src, el('figcaption', {}, 'Image d\'origine (4:4:4)')),
-      el('figure', {}, dst, el('figcaption', {}, 'Après échantillonnage · cliquez pour placer la loupe')),
+      el('figure', {}, dst, el('figcaption', {}, 'Après échantillonnage · clique pour placer la loupe')),
       el('figure', {}, zoomC, el('figcaption', {}, 'Loupe'))),
     read.el);
   redraw();
@@ -450,11 +450,11 @@ registerChapter({
         'Le car travaille en 4:2:2 10 bits ; la diffusion vers le public est en 4:2:0.',
       ],
       figure: fig422,
-      demoTitle: 'Passez l\'image en 4:2:2 puis en 4:2:0 et regardez à la loupe les lignes fines et le texte rouge.',
+      demoTitle: 'Passe l\'image en 4:2:2 puis en 4:2:0 et regarde à la loupe les lignes fines et le texte rouge.',
       demo: demo422,
       body: `La caméra capte du rouge, du vert et du bleu. Avant le transport, on calcule pour chaque pixel une **luminance** Y (le noir et blanc, qui porte la netteté) et deux **différences de couleur**, Cb (bleu moins Y) et Cr (rouge moins Y). C'est le **YCbCr**.
 
-La notation **4:2:2** compte les échantillons sur quatre pixels d'une ligne : 4 de luminance, 2 de Cb, 2 de Cr. En **4:4:4**, la couleur est sur chaque pixel ; en **4:2:0**, elle est aussi divisée par deux d'une ligne à l'autre. Comme l'œil distingue bien moins les détails de couleur que ceux de lumière, le 4:2:2 n'enlève rien de visible sur une image naturelle : regardez la loupe sur la pelouse et les maillots, puis sur le texte rouge fin, le seul endroit où la couleur « bave ».
+La notation **4:2:2** compte les échantillons sur quatre pixels d'une ligne : 4 de luminance, 2 de Cb, 2 de Cr. En **4:4:4**, la couleur est sur chaque pixel ; en **4:2:0**, elle est aussi divisée par deux d'une ligne à l'autre. Comme l'œil distingue bien moins les détails de couleur que ceux de lumière, le 4:2:2 n'enlève rien de visible sur une image naturelle : regarde la loupe sur la pelouse et les maillots, puis sur le texte rouge fin, le seul endroit où la couleur « bave ».
 
 Pourquoi le car reste en 4:2:2 : l'image va être **incrustée** (chroma key du plateau virtuel, bandeaux), **ralentie**, **corrigée** ; chaque traitement a besoin de couleur précise sur les contours. Le SDI du car transporte donc du 4:2:2 10 bits (ST 292 en HD, ST 424 en 3G). En sortie, le codeur de diffusion passe en 4:2:0 8 ou 10 bits : moitié moins de données de couleur, invisible au public.
 
@@ -480,7 +480,7 @@ Pourquoi le car reste en 4:2:2 : l'image va être **incrustée** (chroma key du 
         'Le car travaille en **10 bits** (étalonnage, HDR, incrustation) ; la diffusion au public se contente de 8 bits.',
       ],
       figure: figBits,
-      demoTitle: 'Descendez à 6 puis 4 bits et regardez le ciel ; revenez à 8 bits et comparez la vue étalonnée à celle du 10 bits.',
+      demoTitle: 'Descends à 6 puis 4 bits et regarde le ciel ; reviens à 8 bits et compare la vue étalonnée à celle du 10 bits.',
       demo: demoBits,
       body: `Après l'échantillonnage (où ?), vient la **quantification** (combien ?) : la valeur de chaque échantillon est arrondie au niveau le plus proche d'une échelle à **2 puissance n** barreaux. En 8 bits, 256 niveaux par composante, un pas de 0,39 % du blanc ; en 10 bits, 1 024 niveaux, un pas de 0,098 %, quatre fois plus fin. La différence entre la valeur vraie et le niveau retenu est l'**erreur de quantification** : au plus un demi-pas.
 
@@ -512,7 +512,7 @@ Le SDI transporte des mots de 10 bits (ST 292-1, ST 424, ST 2082) ; une source 8
         'Le **waveform** montre le niveau de chaque point : ce qui dépasse 100 % est écrêté, ce qui passe sous 0 % est perdu dans le noir.',
       ],
       figure: figLevels,
-      demoTitle: 'Montez le gain à 120 % : les blancs s\'empilent sur la ligne des 100 %. Baissez le piédestal : le short disparaît sous le noir. Comparez sortie brute et légalisée.',
+      demoTitle: 'Monte le gain à 120 % : les blancs s\'empilent sur la ligne des 100 %. Baisse le piédestal : le short disparaît sous le noir. Compare sortie brute et légalisée.',
       demo: demoLevels,
       body: `Les codes ne sont pas utilisés de 0 à 1 023. Les normes de studio (ITU-R BT.601 puis BT.709) placent le **noir au code 64** et le **blanc au code 940** en 10 bits, soit 16 et 235 en 8 bits : c'est la plage **narrow range**, ou plage légale, que l'on exprime de 0 à 100 % (ou de 0 à 700 mV, l'héritage de l'analogique). Les codes 0 à 3 et 1 020 à 1 023 sont réservés aux mots de synchronisation du SDI (EAV, SAV) et ne doivent jamais apparaître dans l'image.
 
@@ -543,7 +543,7 @@ Pourquoi un waveform : parce que l'œil s'adapte et se trompe, pas l'instrument.
         'Le débit suit : 1080i et 720p tiennent en **HD-SDI** (1,485 Gb/s), le 1080p50 demande le **3G** (2,97), le 2160p50 le **12G** (11,88).',
       ],
       figure: figFormats,
-      demoTitle: 'Passez de 1080i à 1080p puis à 2160p et lisez la liaison nécessaire ; regardez le peigne de l\'entrelacé sur la balle qui bouge.',
+      demoTitle: 'Passe de 1080i à 1080p puis à 2160p et lis la liaison nécessaire ; regarde le peigne de l\'entrelacé sur la balle qui bouge.',
       demo: demoFormats,
       body: `Le nom d'un format se lit en trois parties : **1080** lignes actives, **i** ou **p**, puis la cadence. Le **p** (progressif) saisit l'image entière d'un coup, 25 ou 50 fois par seconde. Le **i** (entrelacé) la découpe en deux **trames**, les lignes impaires puis les lignes paires, prises à 20 ms d'écart : 50 trames par seconde pour 25 images. On écrit 1080i25 (25 images) ou 1080i50 (50 trames) pour la même chose, d'où bien des confusions. Le 720p50 est l'autre format HD historique : moins de lignes, mais des images entières.
 
@@ -575,7 +575,7 @@ Les cadences : l'Europe est à 25 et 50 Hz, les Amériques et le Japon à 29,97 
         'Le car sort les deux versions, **HDR** et **SDR** : convertir l\'une en l\'autre demande de rabattre les couleurs et les lumières hors du petit triangle.',
       ],
       figure: cieDiagram,
-      demoTitle: 'Poussez la saturation jusqu\'à sortir du triangle BT.709 ; passez en HLG et montez la lumière de scène au-delà de × 1 : le SDR écrête, le HLG continue.',
+      demoTitle: 'Pousse la saturation jusqu\'à sortir du triangle BT.709 ; passe en HLG et monte la lumière de scène au-delà de × 1 : le SDR écrête, le HLG continue.',
       demo: demoColor,
       body: `Trois nombres R, V, B ne veulent rien dire tant qu'on n'a pas dit **quel** rouge, **quel** vert, **quel** bleu : ce sont les **primaires**. Portées sur le diagramme de chromaticité CIE 1931 (le fer à cheval de toutes les couleurs visibles, sans leur luminance), elles forment un triangle : tout ce qui est dedans est reproductible, tout ce qui est dehors ne l'est pas. C'est le **gamut**. La HD (**BT.709**) couvre à peu près le tiers du fer à cheval ; l'UHD (**BT.2020**) en couvre les deux tiers, avec un vert et un rouge presque monochromatiques qu'aucun écran grand public n'atteint encore tout à fait. Les deux ont le même blanc, le **D65** (6 500 K).
 

@@ -123,18 +123,18 @@ export function closeStation(silent) {
   if (!silent) emit('stationClose', c.id);
 }
 const STATION_HELLO = {
-  vision: 'Le moniteur de référence, l\'oscilloscope et le multiview restent affichés : chaque réglage du RCP s\'y voit tout de suite. Joystick : glissez la poignée (iris), faites tourner la bague (master black) ; molettes : glisser ou molette de la souris, double-clic = 0.',
-  evs: 'Les sorties EVS A, EVS B et le programme restent affichés. Les trains d\'enregistrement défilent sur l\'écran du LSM : cliquez dedans pour vous placer.',
-  intercom: 'Chaque touche du pupitre a TALK et LISTEN. Essayez-les : le type de liaison (conférence, point à point, IFB, 4 fils) est expliqué ici.',
+  vision: 'Le moniteur de référence, l\'oscilloscope et le multiview restent affichés : chaque réglage du RCP s\'y voit tout de suite. Joystick : glisse la poignée (iris), fais tourner la bague (master black) ; molettes : glisser ou molette de la souris, double-clic = 0.',
+  evs: 'Les sorties EVS A, EVS B et le programme restent affichés. Les trains d\'enregistrement défilent sur l\'écran du LSM : clique dedans pour te placer.',
+  intercom: 'Chaque touche du pupitre a TALK et LISTEN. Essaie-les : le type de liaison (conférence, point à point, IFB, 4 fils) est expliqué ici.',
   melangeur: 'Le multiview ci-dessus reste visible : chaque commutation s\'y voit (tally rouge = PGM, vert = PVW).',
-  grille: 'Choisissez une destination, une source, puis TAKE. Le multiview montre le résultat de vos prises.',
-  son: 'Console inspirée de la Studer Vista 1 : deux écrans Vistonics de 10 tranches (molettes sur l\'écran : rouge = égaliseur, vert = dynamique, jaune = panoramique), FaderGlow le long des faders, Control Bay avec vumètres et écoutes. Les commentateurs interviennent pendant le match (fil écrit, onglet Commentaires) : leurs vumètres suivent vos faders. Ici, vous entendez l\'écoute de la console ; ailleurs dans le car, presque rien.',
-  hf: 'Le spectre et l\'image reçue restent affichés : changez fréquence, modulation ou antennes et regardez la marge.',
+  grille: 'Choisis une destination, une source, puis TAKE. Le multiview montre le résultat de tes prises.',
+  son: 'Console inspirée de la Studer Vista 1 : deux écrans Vistonics de 10 tranches (molettes sur l\'écran : rouge = égaliseur, vert = dynamique, jaune = panoramique), FaderGlow le long des faders, Control Bay avec vumètres et écoutes. Les commentateurs interviennent pendant le match (fil écrit, onglet Commentaires) : leurs vumètres suivent tes faders. Ici, tu entends l\'écoute de la console ; ailleurs dans le car, presque rien.',
+  hf: 'Le spectre et l\'image reçue restent affichés : change fréquence, modulation ou antennes et regarde la marge.',
   ccu: 'Le multiview reste visible : une voie en défaut y apparaît immédiatement (PAS DE SIGNAL, image qui roule).',
   synchro: 'Le multiview reste visible : une caméra mal synchronisée y « roule » à la commutation.',
-  transmission: 'Comparez le départ vers la chaîne et le retour antenne (en retard de quelques secondes).',
+  transmission: 'Compare le départ vers la chaîne et le retour antenne (en retard de quelques secondes).',
   habillage: 'À gauche, la sortie fill/key du moteur graphique ; à droite, le programme : le graphique n\'y apparaît que si le DSK est à l\'antenne.',
-  chefdecar: 'Le multiview reste visible pendant que vous lisez le synoptique ou injectez des pannes.',
+  chefdecar: 'Le multiview reste visible pendant que tu lis le synoptique ou injectes des pannes.',
   get reseau() { return S.ipMode ? STATION_HELLO_IP : 'Le car SDI a aussi son réseau : trois switchs Gigabit relient tout ce qui se pilote par Ethernet (RCP et CCU, pupitre et processeur du mélangeur, grille, EVS et IPDirector, tally, intercom, console son). Chaque machine a sa fiche (adresse IP, masque, passerelle, VLAN, QoS) ; l\'onglet Outils teste avec un ping, l\'onglet Formation explique les bases.'; },
 };
 const STATION_HELLO_IP = 'Deux onglets. Technique : les deux réseaux rouge et bleu en spine-leaf, leurs commutateurs (interface graphique ou terminal), l\'adressage, les flux, PTP et le diagnostic. Exploitation : l\'interface épurée d\'un contrôleur et des appareils, pour régler les adresses, connecter une source à une destination et surveiller PTP et NMOS. Chaque réglage agit réellement sur ce que reçoivent le mélangeur, l\'EVS et le multiview.';
@@ -151,8 +151,8 @@ on('mixer', (e) => {
     pst: `PST (preset) = ${pst} : la source est préparée sur le bus vert. Elle apparaît dans la tuile PVW du multiview avec un tally vert. Rien ne change à l'antenne.`,
     pgm: `Commutation directe sur le bus PGM : ${pgm} passe à l'antenne immédiatement (tally rouge). Pratique, mais on ne voit pas avant ce qu'on envoie : on préfère PST + CUT.`,
     cut: `CUT : PGM et PST s'échangent instantanément (au top image, synchronisé par la référence). À l'antenne : ${pgm}. La source précédente revient en preset.`,
-    autostart: `AUTO : la transition « ${TRANS[MIX.trans]} » se déroule en ${MIX.rate} images (${fmt(MIX.rate / 50, 2)} s). Regardez la tuile PGM du multiview.`,
-    transition: `Transition terminée : ${pgm} est à l'antenne. Comptez vos images : 25 images = 0,5 s à 50 i/s.`,
+    autostart: `AUTO : la transition « ${TRANS[MIX.trans]} » se déroule en ${MIX.rate} images (${fmt(MIX.rate / 50, 2)} s). Regarde la tuile PGM du multiview.`,
+    transition: `Transition terminée : ${pgm} est à l'antenne. Compte tes images : 25 images = 0,5 s à 50 i/s.`,
     dsk: `DSK ${e.n} ${e.on ? 'à l\'antenne' : 'retiré'} : ${e.n === 1 ? 'le score/chrono' : 'le graphique (bandeau, stats…)'} est incrusté en aval de tout. Le clean feed, lui, reste sans habillage (pour les diffuseurs étrangers).`,
     ftb: e.on ? 'FTB (fade to black) : fondu au noir de toute la sortie, DSK compris. Utilisé en tout début ou toute fin d\'émission.' : 'Retour du noir : le programme réapparaît.',
     key: `KEY 1 ${MIX.key1.on ? 'à l\'antenne' : 'retirée'} : l'incrustation en image dans l'image (DVE) se superpose au fond de M/E.`,
@@ -165,7 +165,7 @@ on('router', (e) => {
   explain(`TAKE : ${sourceLabel(e.src)} → ${d ? d.group + ' · ' + d.label : e.dest}. La grille établit un point de croisement : la même entrée peut alimenter autant de sorties que nécessaire (une source, plusieurs destinations), mais chaque sortie ne reçoit qu'une seule source.`, 'grille:take');
 });
 on('gfx', () => { if (ST.cur && ST.cur.id === 'habillage') explain(GFX.animDir < 0 ? 'TAKE OUT : le graphique sort en animation. Le key repasse à 0 : le fond redevient visible partout.' : `TAKE IN « ${GFX.cued} » : le moteur graphique anime le fill (l'image) et le key (la transparence). ${MIX.dsk2.on ? 'Le DSK 2 est à l\'antenne : il se voit au PGM.' : 'Attention : DSK 2 hors antenne, rien ne se voit au PGM !'}`, 'gfx:take'); });
-on('fault', () => { if (ST.cur && ST.cur.id === 'chefdecar') explain('Panne en cours : regardez le multiview et l\'onglet « État de l\'installation ». Méthode : constater, localiser (quel maillon ?), contourner (secours), puis réparer.', 'warn'); });
+on('fault', () => { if (ST.cur && ST.cur.id === 'chefdecar') explain('Panne en cours : regarde le multiview et l\'onglet « État de l\'installation ». Méthode : constater, localiser (quel maillon ?), contourner (secours), puis réparer.', 'warn'); });
 
 export function updateStation(dt) {
   if (!ST.cur) return;
@@ -216,16 +216,16 @@ function buildDirector(body, arg, ctx) {
   const score = hwBtn('SCORE', { sub: 'DSK 1', onclick: () => order('dsk1') });
   const lower = hwBtn('BANDEAU', { sub: 'joueur', onclick: () => order('lower') });
   p.append(rowP, el('div', { class: 'hwrow' }, top, mix, sting, replay, score, lower));
-  p.append(el('p', { class: 'note' }, 'Ici, une équipe virtuelle exécute vos ordres : le truquiste commute (avec un temps de réaction réaliste) et l\'opérateur EVS prépare le ralenti de la dernière action sur EVS A. Annoncez toujours la caméra (« Prépare ») avant le « Top ».'));
+  p.append(el('p', { class: 'note' }, 'Ici, une équipe virtuelle exécute tes ordres : le truquiste commute (avec un temps de réaction réaliste) et l\'opérateur EVS prépare le ralenti de la dernière action sur EVS A. Annonce toujours la caméra (« Prépare ») avant le « Top ».'));
   const ex = el('div', { class: 'hwpanel' }, el('h3', {}, 'Exercices'),
     el('div', { class: 'hwrow' },
       el('button', { class: 'btn primary', onclick: () => { startExercise('td'); closeStation(); emit('openStationLater', 'melangeur'); } }, 'Je suis truquiste : le réalisateur virtuel me donne les ordres'),
       el('button', { class: 'btn', onclick: () => { stopExercise(); } }, 'Arrêter l\'exercice')),
-    el('p', { class: 'note' }, 'Dans l\'exercice truquiste, un réalisateur virtuel annonce les caméras (« Prépare la 3… Top ! »). Vous avez quelques secondes pour exécuter au mélangeur. Score affiché dans l\'intercom.'));
+    el('p', { class: 'note' }, 'Dans l\'exercice truquiste, un réalisateur virtuel annonce les caméras (« Prépare la 3… Top ! »). Tu as quelques secondes pour exécuter au mélangeur. Score affiché dans l\'intercom.'));
   const kmBtn = hwBtn('TOUCHES 1-9', { sub: keyModeLabel(), onclick: () => { setKeyMode(COMMUT.mode === 'direct' ? 'preset' : 'direct'); explain(COMMUT.mode === 'direct' ? 'Clavier en mode DIRECT : chaque chiffre envoie l\'entrée à l\'antenne, sans passer par le truquiste virtuel. En petite production, le réalisateur commute souvent lui-même.' : 'Clavier en mode PRESET : le chiffre prépare l\'entrée (PST, tally vert), Espace ou Entrée = « Top » (CUT).', 'real:keys'); } });
   const kLegend = el('p', { class: 'note' });
   const kp = el('div', { class: 'hwpanel' }, el('h3', {}, 'Commuter soi-même au clavier'), el('div', { class: 'hwrow' }, kmBtn, kLegend),
-    el('p', { class: 'note' }, 'Les chiffres correspondent aux numéros des entrées du mélangeur (affichés sous chaque bouton du pupitre et dans le multiview). Ils marchent aussi en vous déplaçant dans le stade ou en vol, avec le retour PGM (M) affiché.'));
+    el('p', { class: 'note' }, 'Les chiffres correspondent aux numéros des entrées du mélangeur (affichés sous chaque bouton du pupitre et dans le multiview). Ils marchent aussi en te déplaçant dans le stade ou en vol, avec le retour PGM (M) affiché.'));
   body.append(p, kp, ex);
   let lastN = '';
   function order(kind, n) {
@@ -235,7 +235,7 @@ function buildDirector(body, arg, ctx) {
       directorOrder(kind, n);
       const human = (sl) => { const p = holderOf(sl); return p && !p.sameTab && p.presence && p.presence.role !== 'formateur'; };
       const who = { prep: 'mix', cut: 'mix', mix: 'mix', stinger: 'mix', dsk1: 'mix', replay: 'evs', lower: 'gfx' }[kind];
-      if (who && human(who)) { explain('Ordre transmis au stagiaire qui tient le poste : regardez le multiview pour voir quand il l\'exécute.', 'real:' + kind); return; }
+      if (who && human(who)) { explain('Ordre transmis au stagiaire qui tient le poste : regarde le multiview pour voir quand il l\'exécute.', 'real:' + kind); return; }
     }
     explain({ prep: 'Annonce « Prépare… » : le truquiste met la source en preset. Le cadreur concerné voit son tally vert (s\'il est câblé) et sait qu\'il va passer.', cut: '« Top ! » : le truquiste fait le CUT au moment exact annoncé. Le temps de réaction compte : on anticipe sur l\'action.', mix: '« Enchaîne » : transition douce, souvent sur un changement de valeur de plan ou de rythme.', stinger: 'Volet logo : marque l\'entrée ou la sortie d\'un ralenti.', replay: 'Ralenti : l\'opérateur EVS se cale sur l\'action, choisit l\'angle, le truquiste prépare l\'entrée EVS et l\'envoie en volet.', dsk1: 'Score : le DSK 1 incruste le chrono et le score.', lower: 'Bandeau : l\'habilleur joue le nom du joueur (DSK 2).' }[kind] || '', 'real:' + kind);
     if (kind === 'prep') { intercom('RÉAL', `Prépare la ${sourceLabel(meSource(n)).replace('CAM ', '')}…`); setTimeout(() => mixSetPst(n), delay); }
@@ -333,7 +333,7 @@ function buildGfx(body, arg, ctx) {
   const tag = hwBtn('TAG RALENTI', { sub: 'auto', onclick: () => { GFX.replayTag = !GFX.replayTag; } });
   p.append(row, field('Joueur pour le bandeau', pl), el('div', { class: 'hwrow' }, take, out, el('span', { style: { flex: 1 } }), d1, d2, tag));
   const warn = el('p', { class: 'note warn' });
-  p.append(warn, el('p', { class: 'note' }, 'Le moteur graphique sort un fill et un key. Le mélangeur les incruste par ses DSK : si le DSK 2 n\'est pas à l\'antenne, votre bandeau ne se voit pas au PGM. Le score/chrono (DSK 1) est relié au chronomètre du match.'));
+  p.append(warn, el('p', { class: 'note' }, 'Le moteur graphique sort un fill et un key. Le mélangeur les incruste par ses DSK : si le DSK 2 n\'est pas à l\'antenne, ton bandeau ne se voit pas au PGM. Le score/chrono (DSK 1) est relié au chronomètre du match.'));
   body.append(p);
   const g = prev.getContext('2d');
   return {
@@ -405,7 +405,7 @@ function cablingList() {
   const modeSel = selectEl([['gen', 'Liste générée (installation simulée)'], ...(CFG.cabling && CFG.cabling.rows ? [['imp', `Liste du car importée (${CFG.cabling.rows.length} lignes)`]] : [])], 'gen', (v) => { mode = v; draw(); }, null, 'Liste affichée');
   const exp = el('button', { class: 'btn small', onclick: () => offerDownload(mode === 'imp' ? 'liste-cablage-car.csv' : 'liste-cablage-simulateur.csv', cablingCSV(mode === 'imp' ? CFG.cabling.rows : generatedRows())) }, 'Exporter (CSV)');
   const box = el('div', { class: 'list' },
-    el('p', { class: 'note' }, 'Liste de câblage générée à partir de votre installation : chaque ligne est un câble réel, avec ses deux extrémités (appareil · connecteur). Cliquez une extrémité pour ouvrir l\'appareil sur ce connecteur. Sur le terrain, cette liste est imprimée et chaque câble porte son numéro aux deux bouts. Le formateur peut importer la liste réelle du car dans l\'Espace formateur.'),
+    el('p', { class: 'note' }, 'Liste de câblage générée à partir de ton installation : chaque ligne est un câble réel, avec ses deux extrémités (appareil · connecteur). Clique une extrémité pour ouvrir l\'appareil sur ce connecteur. Sur le terrain, cette liste est imprimée et chaque câble porte son numéro aux deux bouts. Le formateur peut importer la liste réelle du car dans l\'Espace formateur.'),
     el('div', { class: 'hwrow' }, modeSel, sigSel, q, count, exp), el('div', { class: 'tblwrap' }, tb));
   let lastKey = '';
   function drawImported() {
@@ -430,7 +430,7 @@ function cablingList() {
   return { el: box, update() { const k = buildCabling().length + ':' + buildCabling().filter((c) => !c.ok).length; if (k !== lastKey) { lastKey = k; draw(); } } };
 }
 function materielTab() {
-  const box = el('div', { class: 'list' }, el('p', { class: 'note' }, 'Faces avant et arrière des appareils, d\'après les fiches techniques constructeurs (chaîne caméra type Sony HDC / HDCU / RCP, mélangeur Sony XVS-6000 et pupitre ICP-X7000, serveur EVS XT4K, télécommande LSM et IPDirector). Les connecteurs câblés dans votre installation sont entourés de la couleur du signal.'));
+  const box = el('div', { class: 'list' }, el('p', { class: 'note' }, 'Faces avant et arrière des appareils, d\'après les fiches techniques constructeurs (chaîne caméra type Sony HDC / HDCU / RCP, mélangeur Sony XVS-6000 et pupitre ICP-X7000, serveur EVS XT4K, télécommande LSM et IPDirector). Les connecteurs câblés dans ton installation sont entourés de la couleur du signal.'));
   const row = el('div', { class: 'grid2' });
   for (const [k, l] of DEVICE_LIST) row.appendChild(el('button', { class: 'choice', onclick: () => openDevice(k, k === 'cam' || k === 'ccu' || k === 'rcp' ? (S.cams[0] ? S.cams[0].id : 1) : 1) }, el('b', { style: { fontSize: '17px' } }, l), el('span', {}, DEV_NAMES[k] || '')));
   box.append(row);
@@ -472,13 +472,13 @@ function buildHF(body, arg, ctx) {
     el('div', { class: 'dockrow' }, el('div', { class: 'monwrap grow' }, el('div', { class: 'lab' }, 'Image reçue (décodeur)'), monSlot), el('div', { class: 'monwrap grow' }, el('div', { class: 'lab' }, 'Couverture'), map)), ctx.explainBox);
   body.append(el('div', { class: 'hwpanel' }, el('h3', {}, 'Antennes de réception (diversité)'), ants),
     cards,
-    el('p', { class: 'note' }, 'Bilan : niveau reçu = puissance + gains d\'antennes − affaiblissement en espace libre − obstacles. La marge = C/N combiné − C/N requis par la modulation. Au-dessous de 0 dB : macro-blocs, puis image figée et perte (effet falaise). Astuce : promenez-vous avec la Steadicam (prenez-la au bord du terrain, touche E) jusque dans le tunnel et regardez la marge.'));
+    el('p', { class: 'note' }, 'Bilan : niveau reçu = puissance + gains d\'antennes − affaiblissement en espace libre − obstacles. La marge = C/N combiné − C/N requis par la modulation. Au-dessous de 0 dB : macro-blocs, puis image figée et perte (effet falaise). Astuce : promène-toi avec la Steadicam (prends-la au bord du terrain, touche E) jusque dans le tunnel et regarde la marge.'));
   let lastKey = '';
   const opts = (obj) => Object.keys(obj).map((k) => [k, k]);
   const buildCards = () => {
     cards.innerHTML = '';
     const hf = S.cams.filter((c) => c.rf);
-    if (!hf.length) cards.appendChild(el('div', { class: 'hwpanel' }, el('p', {}, 'Aucune caméra HF installée. Ouvrez le plan des caméras (P) et installez une Steadicam HF ou un drone.')));
+    if (!hf.length) cards.appendChild(el('div', { class: 'hwpanel' }, el('p', {}, 'Aucune caméra HF installée. Ouvre le plan des caméras (P) et installe une Steadicam HF ou un drone.')));
     for (const c of hf) {
       const r = c.rf;
       const chOpts = RF.channels.map((ch) => [ch.f, `${(ch.f / 1000).toFixed(3)} GHz · ${ch.status === 'attrib' ? 'ATTRIBUÉ' : ch.status === 'occ' ? 'occupé' : ch.status === 'wifi' ? 'Wi-Fi' : 'libre'}`]);
@@ -487,7 +487,7 @@ function buildHF(body, arg, ctx) {
       const state = el('span', { class: 'pill' });
       const card = el('div', { class: 'hwpanel' }, el('h3', {}, `CAM ${c.id} · ${c.T.short} · émetteur COFDM`), el('div', { class: 'hwrow' }, state),
         el('div', { class: 'grid2' },
-          field('Fréquence', selectEl(chOpts, r.ch, (v) => { r.ch = +v; const ci = channelInfo(r.ch); later(() => explain(`CAM ${c.id} sur ${fmt(r.ch / 1000, 3)} GHz${ci && ci.status !== 'attrib' ? ' : canal NON attribué par la coordination (' + (ci.status === 'libre' ? 'interdit sans autorisation' : ci.user) + ')' : ' : canal attribué par la coordination des fréquences'}. Regardez le spectre : la porteuse se déplace ; un brouilleur sur le même canal fait chuter le C/N.`, 'hf:ch')); })),
+          field('Fréquence', selectEl(chOpts, r.ch, (v) => { r.ch = +v; const ci = channelInfo(r.ch); later(() => explain(`CAM ${c.id} sur ${fmt(r.ch / 1000, 3)} GHz${ci && ci.status !== 'attrib' ? ' : canal NON attribué par la coordination (' + (ci.status === 'libre' ? 'interdit sans autorisation' : ci.user) + ')' : ' : canal attribué par la coordination des fréquences'}. Regarde le spectre : la porteuse se déplace ; un brouilleur sur le même canal fait chuter le C/N.`, 'hf:ch')); })),
           field('Puissance', selectEl(TX_POWERS.map((p) => [p, p >= 1000 ? '1 W' : p + ' mW']), r.txmW, (v) => { const before = r.txmW; r.txmW = +v; later(() => explain(`Puissance ${r.txmW >= 1000 ? '1 W' : r.txmW + ' mW'} : ${fmt(10 * Math.log10(r.txmW / before), 1)} dB sur le bilan de liaison, donc sur la marge (${fmt(r.margin, 1)} dB). Plus de puissance = plus d'autonomie consommée et plus de risque de gêner les voisins.`, 'hf:pw')); })),
           field('Largeur de canal', selectEl([[8, '8 MHz'], [10, '10 MHz'], [20, '20 MHz']], r.bw, (v) => { r.bw = +v; later(() => explain(`Canal de ${r.bw} MHz : débit ${fmt(r.bitrate, 1)} Mb/s. Un canal plus large transporte plus de débit mais reçoit plus de bruit (+${fmt(10 * Math.log10(r.bw / 8), 1)} dB par rapport à 8 MHz) et occupe plus de spectre.`, 'hf:bw')); })),
           field('Modulation', selectEl(opts(MODS), r.mod, (v) => { r.mod = v; later(() => explain(`Modulation ${r.mod} : C/N requis ${fmt(r.req, 1)} dB, débit ${fmt(r.bitrate, 1)} Mb/s, marge ${fmt(r.margin, 1)} dB. Plus il y a de points dans la constellation, plus le débit monte et plus la liaison est fragile.`, 'hf:mod')); })),
@@ -512,7 +512,7 @@ function buildHF(body, arg, ctx) {
   const buildAnts = () => {
     ants.innerHTML = '';
     for (const a of RF.antennas) {
-      const b = hwBtn(a.on ? 'ON' : 'OFF', { title: `Allumer ou couper l'antenne « ${a.label} »`, onclick: () => { a.on = !a.on; b.firstChild.textContent = a.on ? 'ON' : 'OFF'; b.classList.toggle('lit', a.on); later(() => explain(`Antenne « ${a.label} » ${a.on ? 'en service' : 'coupée'}. Le récepteur combine les antennes (diversité MRC) : ${a.on ? 'le C/N combiné remonte' : 'le C/N combiné baisse'} ; regardez la marge de chaque caméra.`, 'hf:ant')); } });
+      const b = hwBtn(a.on ? 'ON' : 'OFF', { title: `Allumer ou couper l'antenne « ${a.label} »`, onclick: () => { a.on = !a.on; b.firstChild.textContent = a.on ? 'ON' : 'OFF'; b.classList.toggle('lit', a.on); later(() => explain(`Antenne « ${a.label} » ${a.on ? 'en service' : 'coupée'}. Le récepteur combine les antennes (diversité MRC) : ${a.on ? 'le C/N combiné remonte' : 'le C/N combiné baisse'} ; regarde la marge de chaque caméra.`, 'hf:ant')); } });
       b.classList.toggle('lit', a.on);
       const lv = el('div', { class: 's' });
       ants.appendChild(el('div', { class: 'item' }, b, el('div', { class: 'grow' }, el('div', { class: 't' }, a.label), el('div', { class: 's' }, `${a.kind === 'omni' ? 'Omnidirectionnelle' : 'Panneau secteur'} · ${a.gain} dBi`), lv)));
@@ -597,8 +597,8 @@ function buildRouter(body, arg, ctx) {
   const take = hwBtn(ip ? 'CONNECT' : 'TAKE', { cls: 'big', onclick: () => { if (!srcSel) return; const err = route(dest, srcSel); errBox.textContent = err || ''; if (!err) { toast(`${labelDest(dest)} ← ${sourceLabel(srcSel)}`, 'good'); if (ip) explain(`IS-05 : le contrôleur demande au récepteur « ${labelDest(dest)} » de s'abonner au flux de ${sourceLabel(srcSel)} (multicast ${mcastOf(srcSel)}, ${String(flowGbps()).replace('.', ',')} Gb/s par réseau). La commutation se fait au changement d'image grâce au PTP.`, 'grille:take'); } else explain(err, 'warn'); srcSel = null; } });
   const labelDest = (id) => { const d = DESTS.find((x) => x.id === id); return d ? `${d.group} · ${d.label}` : id; };
   const buildTabs = () => { tabs.innerHTML = ''; for (const g of groups) tabs.appendChild(el('button', { class: 'tab' + (g === group ? ' on' : ''), onclick: () => { group = g; dest = DESTS.find((d) => d.group === g).id; srcSel = null; buildTabs(); buildDests(); } }, g)); };
-  const buildDests = () => { dGrid.innerHTML = ''; for (const d of DESTS.filter((x) => x.group === group)) { const b = hwBtn(d.label.replace('Entrée ', '').replace('Tuile ', 'MV '), { sub: sourceLabel(ROUTER.map[d.id]), onclick: () => { dest = d.id; srcSel = null; explain(`Destination choisie : ${d.group} · ${d.label}, qui reçoit actuellement ${sourceLabel(ROUTER.map[d.id])}. Choisissez maintenant la source.`, 'grille:sel'); } }); b.dataset.d = d.id; dGrid.appendChild(b); } };
-  const buildSrcs = () => { sGrid.innerHTML = ''; for (const s of allSources()) { const b = hwBtn(s.id.startsWith('CAM') ? 'CAM ' + s.short : s.short, { sub: s.id.startsWith('CAM') ? (s.cam ? s.cam.T.short : 'libre') : '', onclick: () => { srcSel = s.id; explain(`Source présélectionnée : ${sourceLabel(s.id)}. Rien n'est commuté tant que vous n'appuyez pas sur TAKE (sécurité contre les fausses manœuvres).`, 'grille:sel'); } }); b.dataset.s = s.id; if (!s.exists || (s.id.startsWith('CAM') && !s.cam)) b.classList.add('dead'); sGrid.appendChild(b); } };
+  const buildDests = () => { dGrid.innerHTML = ''; for (const d of DESTS.filter((x) => x.group === group)) { const b = hwBtn(d.label.replace('Entrée ', '').replace('Tuile ', 'MV '), { sub: sourceLabel(ROUTER.map[d.id]), onclick: () => { dest = d.id; srcSel = null; explain(`Destination choisie : ${d.group} · ${d.label}, qui reçoit actuellement ${sourceLabel(ROUTER.map[d.id])}. Choisis maintenant la source.`, 'grille:sel'); } }); b.dataset.d = d.id; dGrid.appendChild(b); } };
+  const buildSrcs = () => { sGrid.innerHTML = ''; for (const s of allSources()) { const b = hwBtn(s.id.startsWith('CAM') ? 'CAM ' + s.short : s.short, { sub: s.id.startsWith('CAM') ? (s.cam ? s.cam.T.short : 'libre') : '', onclick: () => { srcSel = s.id; explain(`Source présélectionnée : ${sourceLabel(s.id)}. Rien n'est commuté tant que tu n'appuies pas sur TAKE (sécurité contre les fausses manœuvres).`, 'grille:sel'); } }); b.dataset.s = s.id; if (!s.exists || (s.id.startsWith('CAM') && !s.cam)) b.classList.add('dead'); sGrid.appendChild(b); } };
   buildTabs(); buildDests(); buildSrcs();
   const netBox = el('div', { class: 'list' });
   const netPanel = ip ? el('div', { class: 'hwpanel' }, el('h3', {}, 'Réseau ST 2110 · contrôleur NMOS'),
@@ -611,7 +611,7 @@ function buildRouter(body, arg, ctx) {
     el('div', { class: 'hwpanel' }, el('h3', {}, ip ? '3 · Connecter (IS-05)' : '3 · Prendre'), el('div', { class: 'hwrow' }, cur, take,
       el('button', { class: 'btn', onclick: () => { ROUTER.customMV = false; ROUTER.customREC = false; defaultRouting(true); emit('router', {}); toast('Salvo « match » rappelé : configuration par défaut de la grille'); explain('Salvo : un ensemble de points de croisement enregistré et rappelé en une seule action. On en prépare pour chaque configuration (avant-match, match, mi-temps).'); } }, 'Rappeler le salvo par défaut'),
       el('button', { class: 'btn', onclick: () => openDevice('router', 1) }, 'Voir le châssis de la grille')), errBox,
-      el('p', { class: 'note' }, 'Une caméra super ralenti 3x occupe 3 entrées REC consécutives (une par phase). Le départ TX1 doit recevoir le PGM : vérifiez toujours le retour antenne après une manipulation.')));
+      el('p', { class: 'note' }, 'Une caméra super ralenti 3x occupe 3 entrées REC consécutives (une par phase). Le départ TX1 doit recevoir le PGM : vérifie toujours le retour antenne après une manipulation.')));
   let lk = '';
   return {
     update() {

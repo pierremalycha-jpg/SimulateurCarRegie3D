@@ -12,7 +12,7 @@ export function explainBox() {
   const list = el('div', { class: 'ex-list', tabindex: 0, role: 'region', 'aria-label': 'Ce qui se passe : explications en direct' });
   const box = el('div', { class: 'explain' }, el('div', { class: 'ex-h' }, el('span', { class: 'dot amber' }), 'Ce qui se passe'), list);
   EXPL.box = box; EXPL.list = list;
-  list.appendChild(el('div', { class: 'ex-item muted' }, 'Chaque action que vous faites ici est expliquée en direct : ce qu\'elle change dans le signal et ce que vous devez voir à l\'image.'));
+  list.appendChild(el('div', { class: 'ex-item muted' }, 'Chaque action que tu fais ici est expliquée en direct : ce qu\'elle change dans le signal et ce que tu dois voir à l\'image.'));
   return box;
 }
 export function explain(text, kind = '') {

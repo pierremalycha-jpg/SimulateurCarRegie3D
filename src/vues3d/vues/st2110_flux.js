@@ -48,11 +48,11 @@ Les trois partent sur le **même câble réseau**, mais ce sont trois flux indé
 - la **console son** prend l'audio seul : quelques Mb/s, sans voir passer une image ;
 - le **serveur ralenti** prend les trois, pour enregistrer l'image, son son et son timecode.
 
-Cochez ce que chacun veut dans « À vous » : les paquets suivent.` },
+Coche ce que chacun veut dans « À toi » : les paquets suivent.` },
     { t: 'L\'horodatage réaligne l\'image et le son', vue: { cible: [1.2, 1.6, 0.3], dir: [0, 0.35, 1], dist: 8 },
       texte: `Au-dessus, le **grand maître PTP** donne la même heure à tous (impulsions orange). Chaque paquet porte un **horodatage RTP** : l'heure PTP de l'image à laquelle il appartient (horloge de 90 kHz pour la vidéo, de 48 kHz pour l'audio).
 
-Les flux ont voyagé séparément, peut-être par des chemins différents : le serveur ralenti range les paquets **par horodatage**, pas par ordre d'arrivée. L'image et le son de la même image se retrouvent : c'est **ST 2110-10**. Cliquez un paquet pour lire son horodatage.` },
+Les flux ont voyagé séparément, peut-être par des chemins différents : le serveur ralenti range les paquets **par horodatage**, pas par ordre d'arrivée. L'image et le son de la même image se retrouvent : c'est **ST 2110-10**. Clique un paquet pour lire son horodatage.` },
   ],
   build(ctx) {
     const root = ctx.root;

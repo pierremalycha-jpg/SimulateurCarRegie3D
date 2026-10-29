@@ -49,7 +49,7 @@ L'encodeur **appelle** (SRT en mode caller) : sa sortie ouvre la ligne. La régi
     { t: 'SRT : redemander ce qui se perd', mode: 'srt', lecon: 'reseau-streaming', vue: { cible: [0.6, 1.2, 1.0], dir: [0, 0.55, 1], dist: 14 },
       texte: `Internet perd des paquets (✕ dans le nuage). La régie repère le trou grâce aux numéros et **redemande** le paquet (accusé négatif, en rouge) ; le car le **renvoie** (en orange). Tout cela doit tenir dans le **tampon de latence** de SRT : ici, de l'ordre de 3 à 4 fois l'aller-retour.
 
-Réglez l'aller-retour et les pertes dans « À vous » : la latence conseillée suit (guide de déploiement de Haivision).` },
+Règle l'aller-retour et les pertes dans « À toi » : la latence conseillée suit (guide de déploiement de Haivision).` },
     { t: 'Vers la plateforme : RTMP', mode: 'rtmp', lecon: 'reseau-streaming', vue: { cible: [5.4, 0.6, 0.6], dir: [0.1, 0.6, 1], dist: 6.5 },
       texte: `La régie envoie aussi le direct vers une **plateforme** (YouTube, Twitch…) en **RTMP** : une connexion **TCP** sur le port 1935, identifiée par une clé de diffusion. Les segments partent, les **accusés** reviennent.
 

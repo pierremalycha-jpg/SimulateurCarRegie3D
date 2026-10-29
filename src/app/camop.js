@@ -29,7 +29,7 @@ export function takeCamera(cam) {
   const o = $('#camop'); o.hidden = false; o.innerHTML = '';
   o.append(el('div', { class: 'vf', 'data-gl': 'camop', id: 'vf' }), el('div', { class: 'safe' }), el('div', { class: 'safe2' }), el('div', { class: 'cross' }), el('div', { class: 'tally', id: 'vf-tally' }),
     el('div', { class: 'head', id: 'vf-head' }), el('div', { class: 'zoombar' }, el('i', { id: 'vf-zoom' })), el('div', { class: 'info', id: 'vf-info' }),
-    el('div', { class: 'help' }, el('b', {}, 'Vous êtes cadreur'), el('br'), 'Souris : panoramique / inclinaison', el('br'), 'Molette ou + / − : zoom', el('br'), 'X : doubleur x2 · R (maintenu) : retour PGM', el('br'), cam.T.moving === 'touchline' ? 'Z Q S D : marcher avec la Steadicam' : '', cam.T.moving === 'touchline' ? el('br') : '', 'E ou Échap : rendre la caméra', el('br'),
+    el('div', { class: 'help' }, el('b', {}, 'Tu es cadreur'), el('br'), 'Souris : panoramique / inclinaison', el('br'), 'Molette ou + / − : zoom', el('br'), 'X : doubleur x2 · R (maintenu) : retour PGM', el('br'), cam.T.moving === 'touchline' ? 'Z Q S D : marcher avec la Steadicam' : '', cam.T.moving === 'touchline' ? el('br') : '', 'E ou Échap : rendre la caméra', el('br'),
       el('button', { class: 'btn small', style: { marginTop: '6px' }, onclick: () => releaseCamera() }, 'Rendre la caméra')));
   VF = { vf: $('#vf'), tally: $('#vf-tally'), head: $('#vf-head'), zoom: $('#vf-zoom'), info: $('#vf-info'), infoKey: '' };
   $('#hud').hidden = true;

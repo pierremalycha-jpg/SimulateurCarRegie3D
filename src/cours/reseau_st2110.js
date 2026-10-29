@@ -64,7 +64,7 @@ const FLUX = {
     'Un récepteur ne prend **que ce qu\'il lui faut** : la console son s\'abonne à l\'audio (quelques Mb/s), sans recevoir l\'image (2,2 Gb/s en 1080p50).',
   ],
   figure: figFlux,
-  demoTitle: 'Choisissez le format, le nombre de canaux, et ce que chaque appareil veut recevoir : comparez la charge de son lien au même signal en SDI.',
+  demoTitle: 'Choisis le format, le nombre de canaux, et ce que chaque appareil veut recevoir : compare la charge de son lien au même signal en SDI.',
   demo: demoFlux,
   body: `En SDI, une image et tout ce qui l'accompagne (son embarqué, timecode, métadonnées) partent ensemble, sur un câble, à un débit fixe. Le car IP les **sépare** : chaque **essence** devient un flux IP à part, envoyé en **multicast** vers son propre groupe.
 
@@ -157,7 +157,7 @@ const PAQUET = {
     'Les en-têtes coûtent environ **7 %** du lien : 2,07 Gb/s d\'image deviennent 2,2 Gb/s sur le fil ; un paquet ne dépasse pas le **MTU** (1 500 octets) sans trames jumbo.',
   ],
   figure: figPaquet,
-  demoTitle: 'Cliquez chaque couche du paquet ; changez le format et la taille des paquets : regardez le nombre de paquets et la part utile du lien.',
+  demoTitle: 'Clique chaque couche du paquet ; change le format et la taille des paquets : regarde le nombre de paquets et la part utile du lien.',
   demo: demoPaquet,
   body: `Une image 1080 en 4:2:2 10 bits, c'est 1 080 lignes de 1 920 pixels. Les pixels vont par deux : un Cb, deux Y, un Cr, quatre échantillons de 10 bits, **5 octets pour 2 pixels** (un « pgroup », RFC 4175). Une ligne fait donc 4 800 octets. Le paquet le plus courant en porte **1 200** : 480 pixels, un quart de ligne. Quatre paquets par ligne, 4 320 par image, **216 000 par seconde** en 1080p50.
 
@@ -249,7 +249,7 @@ const RYTHME = {
     'En 1080p50, un récepteur étroit n\'a besoin que d\'un tampon de **8 paquets** ; un émetteur large peut en demander **720**. Un émetteur étroit passe partout.',
   ],
   figure: figRythme,
-  demoTitle: 'Choisissez le type d\'émetteur et regardez les départs des paquets puis le remplissage du tampon du récepteur.',
+  demoTitle: 'Choisis le type d\'émetteur et regarde les départs des paquets puis le remplissage du tampon du récepteur.',
   demo: demoRythme,
   body: `Une image 1080p50, ce sont 4 320 paquets toutes les 20 ms. Un émetteur pourrait les envoyer **d'un bloc**, à la vitesse de son lien (25 Gb/s), puis se taire : en moyenne, le débit serait le même. Mais à chaque image, des milliers de paquets arriveraient d'un coup dans les commutateurs et chez le récepteur, qui lit l'image ligne après ligne, à son rythme. Il faudrait des tampons énormes, et la moindre file pleine perdrait des paquets.
 
@@ -344,7 +344,7 @@ const ROUGE_BLEU = {
     'Il faut un tampon au moins égal à l\'**écart** d\'arrivée entre les deux réseaux ; on ne perd un paquet que si les deux copies manquent.',
   ],
   figure: fig2022,
-  demoTitle: 'Réglez les pertes de chaque réseau, coupez une spine, puis les deux : comptez les paquets réparés et perdus.',
+  demoTitle: 'Règle les pertes de chaque réseau, coupe une spine, puis les deux : compte les paquets réparés et perdus.',
   demo: demo2022,
   body: `En SDI, un câble coupé, c'est une image perdue jusqu'à ce qu'on bascule sur un secours. Le car IP double tout : deux **fabrics** spine-leaf séparées, la **rouge** (A) et la **bleue** (B), sans aucun lien entre elles, alimentées et câblées à part. Chaque appareil a une carte sur chacune (adresses 10.1.x.y et 10.2.x.y, même fin d'adresse dans le car du simulateur).
 
@@ -358,7 +358,7 @@ Deux limites :
   plus: `- Au poste Réseau IP, la mesure « Écart rouge / bleu » et les compteurs « paquets réparés / perdus » viennent de l'analyseur de flux.
 - Les pannes « spine rouge coupée » ou « grand maître perdu » du simulateur montrent ce que couvre la redondance, et ce qu'elle ne couvre pas.
 - Le contrôle (NMOS) passe par un troisième réseau, à part : il n'est pas doublé de la même façon.`,
-  car: { text: 'Au poste Réseau IP (car IP) : la topologie montre les fabrics rouge et bleue ; l\'onglet Flux montre le chemin de chaque réception sur les deux réseaux, et Mesures l\'écart et les paquets réparés. Coupez une spine rouge : aucune image ne bouge.', station: 'reseau' },
+  car: { text: 'Au poste Réseau IP (car IP) : la topologie montre les fabrics rouge et bleue ; l\'onglet Flux montre le chemin de chaque réception sur les deux réseaux, et Mesures l\'écart et les paquets réparés. Coupe une spine rouge : aucune image ne bouge.', station: 'reseau' },
   terms: ['reseaux-ab', 'st2022-7', 'ecart', 'sdp', 'pertes', 'rtp'],
   competences: ['3.12', '3.6', '2.11'], article: 'ipguide',
   quiz: [
@@ -425,7 +425,7 @@ const SPINE = {
     'On dimensionne les liens montants : si les appareils d\'une leaf peuvent envoyer plus que ses liens vers les spines, elle est **surabonnée** et des flux sont refusés.',
   ],
   figure: figSpine,
-  demoTitle: 'Réglez les ports d\'une leaf et ses liens vers les spines, puis le nombre de flux qui la quittent : lisez le surabonnement et la charge de chaque lien.',
+  demoTitle: 'Règle les ports d\'une leaf et ses liens vers les spines, puis le nombre de flux qui la quittent : lis le surabonnement et la charge de chaque lien.',
   demo: demoSpine,
   body: `Un car IP, c'est des centaines de flux de plusieurs Gb/s qui vont d'un bout à l'autre. Un seul gros commutateur serait un point de panne unique ; une chaîne de commutateurs, un embouteillage. On utilise une architecture **spine-leaf** :
 - les **leaves** sont au plus près du matériel, en haut de chaque baie (« top of rack ») : dans le car du simulateur, 48 ports à 25 GbE vers les appareils et 8 à 100 GbE vers le haut ;
@@ -517,7 +517,7 @@ const NMOS = {
     'Le récepteur s\'abonne alors en IGMP sur chaque réseau : NMOS décide **qui reçoit quoi**, le réseau transporte. Registre en panne : plus de nouvelles connexions, les flux en cours continuent.',
   ],
   figure: figNmos,
-  demoTitle: 'Choisissez un récepteur et un émetteur, envoyez la requête IS-05 : lisez ce que le contrôleur transmet au récepteur.',
+  demoTitle: 'Choisis un récepteur et un émetteur, envoie la requête IS-05 : lis ce que le contrôleur transmet au récepteur.',
   demo: demoNmos,
   body: `En SDI, connecter une caméra à l'entrée 3 du mélangeur, c'est un point de croisement de la grille. En IP, c'est dire à l'entrée 3 : « abonne-toi au groupe 239.1.1.1, envoyé par 10.1.11.1, port 5004, et au même flux sur le réseau bleu ». Personne ne veut taper cela pour 300 flux. Les spécifications **NMOS** (Networked Media Open Specifications, AMWA) automatisent la découverte et la connexion, quel que soit le constructeur.
 

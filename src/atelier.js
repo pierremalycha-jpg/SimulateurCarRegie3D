@@ -217,7 +217,7 @@ const OPS = [
   { id: 'legs', kind: 'act', on: 'tripod', hold: 1.0, label: 'Déployer et bloquer les jambes', phase: 'Support', req: ['tripod'], at: [0.32, 0.45, 0.18], tip: 'Les jambes se sortent à la hauteur d\'optique voulue (≈ 1,40 m d\'axe) et chaque serrage est bloqué.' },
   { id: 'spreader', kind: 'act', on: 'tripod', label: 'Verrouiller l\'araignée', phase: 'Support', req: ['tripod'], at: [0, 0.05, 0], tip: 'Araignée verrouillée : sous 50 kg de charge, des jambes libres s\'écartent.' },
   { id: 'head', kind: 'place', part: 'head', label: 'Poser la tête fluide sur l\'embase', phase: 'Support', req: ['legs', 'spreader'], tip: 'Embase plate 4 vis : la tête se boulonne sur le pied (un adaptateur est nécessaire si le support n\'a qu\'une embase Mitchell).' },
-  { id: 'level', kind: 'adjust', on: 'head', label: 'Mettre la tête à niveau (bulle)', phase: 'Support', req: ['head'], at: [-0.08, H_UP + 0.21, 0.12], tip: 'Visez la bulle, molette pour rattraper l\'horizon, E pour valider quand elle est au centre.' },
+  { id: 'level', kind: 'adjust', on: 'head', label: 'Mettre la tête à niveau (bulle)', phase: 'Support', req: ['head'], at: [-0.08, H_UP + 0.21, 0.12], tip: 'Vise la bulle, molette pour rattraper l\'horizon, E pour valider quand elle est au centre.' },
   { id: 'lock', kind: 'act', on: 'head', label: 'Verrouiller panoramique et inclinaison', phase: 'Support', req: ['head'], at: [0.13, H_UP + 0.13, 0.04], tip: 'Toujours verrouiller la tête avant d\'ajouter ou de retirer une charge : une plateforme libre bascule.' },
   { id: 'barL', kind: 'place', part: 'barL', label: 'Monter le manche gauche', phase: 'Support', req: ['head'], tip: 'Les dentures de la rosace doivent s\'emboîter avant de serrer.' },
   { id: 'barR', kind: 'place', part: 'barR', label: 'Monter le manche droit', phase: 'Support', req: ['head'], tip: 'Les dentures de la rosace doivent s\'emboîter avant de serrer.' },
@@ -247,13 +247,13 @@ const OPS = [
 const OPI = Object.fromEntries(OPS.map((o) => [o.id, o]));
 // raisons pédagogiques des refus (prérequis manquants)
 const WHY = {
-  legs: 'Déployez et bloquez d\'abord les jambes du pied.', spreader: 'Verrouillez l\'araignée : sous la charge, des jambes libres s\'écartent.',
-  head: 'Il faut d\'abord la tête fluide.', level: 'Mettez la tête à niveau avant de la charger : une fois l\'adaptateur posé, on ne rattrape plus l\'horizon.',
-  lock: 'Verrouillez la tête (panoramique et inclinaison) avant d\'y poser une charge : une plateforme libre bascule brutalement.',
-  plate: 'Il faut d\'abord la plaque coulissante sur la tête.', adaptor: 'Il faut d\'abord l\'adaptateur.', adlock: 'Verrouillez l\'adaptateur sur la plaque (levier fermé, test de traction) avant d\'y ajouter du poids.',
-  camera: 'Il faut d\'abord la tête de caméra.', camlock: 'Verrouillez la caméra dans l\'adaptateur.', lens: 'Il faut d\'abord l\'objectif.', lenslock: 'Verrouillez l\'objectif sur son support.',
-  vf: 'Il faut d\'abord le viseur.', zoom: 'Il manque la commande de zoom.', focus: 'Il manque la commande de point.', fiberCam: 'Branchez d\'abord la fibre côté caméra.',
-  fiberWall: 'La fibre n\'est pas raccordée à la prise murale.', headset: 'Branchez le casque : sans intercom, pas de mise en service avec la vision.', lenscable: 'Le câble d\'objectif n\'est pas branché.',
+  legs: 'Déploie et bloque d\'abord les jambes du pied.', spreader: 'Verrouille l\'araignée : sous la charge, des jambes libres s\'écartent.',
+  head: 'Il faut d\'abord la tête fluide.', level: 'Mets la tête à niveau avant de la charger : une fois l\'adaptateur posé, on ne rattrape plus l\'horizon.',
+  lock: 'Verrouille la tête (panoramique et inclinaison) avant d\'y poser une charge : une plateforme libre bascule brutalement.',
+  plate: 'Il faut d\'abord la plaque coulissante sur la tête.', adaptor: 'Il faut d\'abord l\'adaptateur.', adlock: 'Verrouille l\'adaptateur sur la plaque (levier fermé, test de traction) avant d\'y ajouter du poids.',
+  camera: 'Il faut d\'abord la tête de caméra.', camlock: 'Verrouille la caméra dans l\'adaptateur.', lens: 'Il faut d\'abord l\'objectif.', lenslock: 'Verrouille l\'objectif sur son support.',
+  vf: 'Il faut d\'abord le viseur.', zoom: 'Il manque la commande de zoom.', focus: 'Il manque la commande de point.', fiberCam: 'Branche d\'abord la fibre côté caméra.',
+  fiberWall: 'La fibre n\'est pas raccordée à la prise murale.', headset: 'Branche le casque : sans intercom, pas de mise en service avec la vision.', lenscable: 'Le câble d\'objectif n\'est pas branché.',
   tripod: 'Il faut d\'abord le pied.', barL: 'Il faut d\'abord un manche.', barR: 'Il faut d\'abord un manche.', power: 'La caméra n\'est pas encore allumée par la vision.', tripodH: '',
 };
 
@@ -399,22 +399,22 @@ const clampN = (v, a, b) => Math.max(a, Math.min(b, v));
 
 function use() {
   const t = AT.target;
-  if (!t) { if (AT.held) say('Visez la place de la pièce (son fantôme) pour la monter, ou Q pour la reposer.'); return; }
+  if (!t) { if (AT.held) say('Vise la place de la pièce (son fantôme) pour la monter, ou Q pour la reposer.'); return; }
   if (t.kind === 'pick') return pickUp(t.part);
   if (t.kind === 'mount') return install(t.part, t.side);
   if (t.kind === 'act') return act(OPI[t.op]);
 }
 function pickUp(pid) {
-  if (AT.held) { say(`Vous tenez déjà : ${PARTS[AT.held].label}. Q pour la reposer.`); return; }
+  if (AT.held) { say(`Tu tiens déjà : ${PARTS[AT.held].label}. Q pour la reposer.`); return; }
   const o = AT.objs[pid]; if (!o || o.state !== 'case') return;
   const P = PARTS[pid];
-  if (P.lift2) { startHold(1.3, 'Levage à deux : un collègue soulève l\'autre côté', () => grab(pid)); say('Objectif de ≈ 24 kg : maintenez E, un collègue vous aide à le soulever.'); return; }
+  if (P.lift2) { startHold(1.3, 'Levage à deux : un collègue soulève l\'autre côté', () => grab(pid)); say('Objectif de ≈ 24 kg : maintiens E, un collègue t\'aide à le soulever.'); return; }
   grab(pid);
 }
 function grab(pid) {
   const o = AT.objs[pid]; AT.held = pid; o.state = 'hand';
   if (pid === 'tripod') o.obj.scale.setScalar(0.5);
-  say(`En main : ${PARTS[pid].label} (${PARTS[pid].ex}). ${PARTS[pid].tool ? 'Visez le connecteur à nettoyer.' : 'Visez sa place : le fantôme vert indique où la monter.'}`);
+  say(`En main : ${PARTS[pid].label} (${PARTS[pid].ex}). ${PARTS[pid].tool ? 'Vise le connecteur à nettoyer.' : 'Vise sa place : le fantôme vert indique où la monter.'}`);
   makeGhost(pid); updatePanel();
 }
 function putBack() {
@@ -453,7 +453,7 @@ function act(op) {
   // nettoyage (avec le stylo) et reprise d'une fibre sale après la mise sous tension
   if (op.tool === 'pen') {
     const end = op.id === 'cleanCam' ? 'cam' : 'wall';
-    if (AT.held !== 'pen') return fail(op, 'Prenez le stylo de nettoyage (flight case « Accessoires ») avant de toucher au connecteur.');
+    if (AT.held !== 'pen') return fail(op, 'Prends le stylo de nettoyage (flight case « Accessoires ») avant de toucher au connecteur.');
     const reconnect = AT.dirty[end];
     startHold(reconnect ? 1.8 : 1.0, reconnect ? 'Débrancher, nettoyer, inspecter, rebrancher' : 'Nettoyer et inspecter le connecteur', () => {
       AT.clean[end] = true; AT.dirty[end] = false;
@@ -468,8 +468,8 @@ function act(op) {
   const miss = missing(op);
   if (miss.length) { AT.incidents += /lock|adlock/.test(miss[0]) ? 1 : 0; return fail(op, WHY[miss[0]] || `Il faut d'abord : ${OPI[miss[0]] ? OPI[miss[0]].label.toLowerCase() : miss[0]}.`); }
   if (op.kind === 'adjust') {
-    if (op.id === 'level') { if (Math.abs(AT.level) <= 0.2) { done(op); say('Tête de niveau : la bulle est au centre.', 'ok'); } else fail(op, `Pas encore de niveau (${AT.level.toFixed(1).replace('.', ',')}°) : tournez la molette jusqu'à centrer la bulle.`); }
-    if (op.id === 'balance') { if (Math.abs(AT.balance) <= 0.01) { done(op); AT.tilting = 0; say('Caméra équilibrée : elle tient seule à l\'horizontale. Contrepoids et frictions réglés.', 'ok'); } else fail(op, `Pas encore en équilibre : la caméra ${AT.balance > 0 ? 'pique du nez' : 'part en arrière'}. Faites glisser la plaque à la molette.`); }
+    if (op.id === 'level') { if (Math.abs(AT.level) <= 0.2) { done(op); say('Tête de niveau : la bulle est au centre.', 'ok'); } else fail(op, `Pas encore de niveau (${AT.level.toFixed(1).replace('.', ',')}°) : tourne la molette jusqu'à centrer la bulle.`); }
+    if (op.id === 'balance') { if (Math.abs(AT.balance) <= 0.01) { done(op); AT.tilting = 0; say('Caméra équilibrée : elle tient seule à l\'horizontale. Contrepoids et frictions réglés.', 'ok'); } else fail(op, `Pas encore en équilibre : la caméra ${AT.balance > 0 ? 'pique du nez' : 'part en arrière'}. Fais glisser la plaque à la molette.`); }
     return;
   }
   if (op.hold) { startHold(op.hold, op.label, () => finishAct(op)); return; }
@@ -518,7 +518,7 @@ function powerOn(op) {
         AT.alarm = true;
         ctx.intercom && ctx.intercom('VISION', `Alarme CCU : niveau optique bas, l'image décroche. Vérifie la fibre ${AT.dirty.cam ? 'côté caméra' : 'à la prise murale'} : débranche, nettoie, rebranche.`, 'bad');
         AT.errors.push({ op: 'clean', label: 'Fibre branchée sans nettoyage', msg: 'Connecteur branché sans être nettoyé : niveau optique trop bas à la CCU.', t: (performance.now() - AT.t0) / 1000 });
-        say('Prenez le stylo de nettoyage et visez le connecteur fautif (maintenez E).', 'bad');
+        say('Prends le stylo de nettoyage et vise le connecteur fautif (maintiens E).', 'bad');
       } else if (AT.cap) {
         ctx.intercom && ctx.intercom('VISION', 'J\'ai du noir sur la 1… Ton bouchon est encore sur l\'objectif ?', 'bad');
       } else ctx.intercom && ctx.intercom('VISION', 'J\'ai l\'image de la 1. Je fais les noirs et les blancs depuis le RCP.', 'ok');
@@ -527,8 +527,8 @@ function powerOn(op) {
   }, 1200);
 }
 function tallyTest(op) {
-  if (AT.dirty.cam || AT.dirty.wall) return fail(op, 'Réglez d\'abord l\'alarme de niveau optique : la liaison doit être propre.');
-  if (AT.cap) return fail(op, 'La vision n\'a pas d\'image : retirez le bouchon d\'objectif.');
+  if (AT.dirty.cam || AT.dirty.wall) return fail(op, 'Règle d\'abord l\'alarme de niveau optique : la liaison doit être propre.');
+  if (AT.cap) return fail(op, 'La vision n\'a pas d\'image : retire le bouchon d\'objectif.');
   ctx.intercom && ctx.intercom('CAM 1', 'CALL.');
   const tal = AT.objs.vf.obj.getObjectByName('tally');
   let n = 0; const iv = setInterval(() => { n++; if (tal) tal.material.emissive.setHex(n % 2 ? 0xff2a1a : 0x000000), tal.material.emissiveIntensity = 2.2; if (n >= 6) { clearInterval(iv); if (tal) tal.material.emissive.setHex(0); } }, 300);
@@ -682,9 +682,9 @@ function buildPanel() {
   $('#atelier')?.remove();
   const box = el('aside', { id: 'atelier', 'aria-label': 'Feuille de montage' },
     el('div', { class: 'at-head' }, el('span', { class: 'tape' }, 'Montage · CAM 1'), el('span', { class: 'at-meta' }, el('b', { id: 'at-time' }, '0:00'), ' · ', el('b', { id: 'at-err' }, '0'), ' erreur(s)')),
-    el('p', { class: 'at-intro' }, 'Caméra principale, plan large : pied lourd, tête fluide, adaptateur grand objectif, objectif box, viseur, commandes, fibre. Visez une pièce dans les flight cases, E pour la prendre, Q pour la reposer.'),
+    el('p', { class: 'at-intro' }, 'Caméra principale, plan large : pied lourd, tête fluide, adaptateur grand objectif, objectif box, viseur, commandes, fibre. Vise une pièce dans les flight cases, E pour la prendre, Q pour la reposer.'),
     el('ol', { class: 'at-list', id: 'at-list' }),
-    el('p', { class: 'at-log', id: 'at-log', role: 'status', 'aria-live': 'polite' }, 'Commencez par le pied : flight case « PIED », au fond de la passerelle.'),
+    el('p', { class: 'at-log', id: 'at-log', role: 'status', 'aria-live': 'polite' }, 'Commence par le pied : flight case « PIED », au fond de la passerelle.'),
     el('div', { class: 'at-foot' }, el('button', { class: 'btn small', onclick: () => endAtelier(false, true) }, 'Quitter l\'atelier')));
   document.body.appendChild(box);
   AT.logEl = box.querySelector('#at-log');

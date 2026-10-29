@@ -53,7 +53,7 @@ export const NET_MISSIONS = [
       { t: 'Sélectionner un appareil et repérer ses deux cartes (rouge et bleue)', ok: () => ev('sel', (e) => e.kind === 'dev') },
     ],
     q: [{ id: 'q1', t: 'Combien de liens 100 GbE relient une leaf aux spines de son réseau ?', a: () => 4, check: eqNum() }],
-    hints: ['Les spines sont en haut (rouge) et en bas (bleu) ; cliquez une boîte pour voir son détail sous le schéma.', 'Chaque leaf a deux liens vers chacune des deux spines de son réseau.'],
+    hints: ['Les spines sont en haut (rouge) et en bas (bleu) ; clique une boîte pour voir son détail sous le schéma.', 'Chaque leaf a deux liens vers chacune des deux spines de son réseau.'],
     learn: 'Une leaf a 4 × 100 GbE d\'uplinks (2 par spine). Deux appareils sur des leaves différentes communiquent toujours en leaf → spine → leaf : trois commutateurs, quel que soit le chemin.',
   },
   {
@@ -115,10 +115,10 @@ export const NET_MISSIONS = [
     obj: [{ t: 'Ouvrir le SDP d\'un flux vidéo (plan d\'adressage ou flux NMOS)', ok: () => ev('sdp', (e) => /^v:/.test(e.fid)) }],
     q: [
       { id: 'q1', t: 'Quel type de charge RTP (PT) porte la vidéo ST 2110-20 dans ce car ?', a: () => 96, check: eqNum() },
-      { id: 'q2', t: 'Quelle ligne du SDP regroupe les deux jambes rouge et bleue ? (commencez par a=)', a: () => 'a=group:DUP primary secondary', check: () => (v) => /a=group:dup/.test(String(v).toLowerCase().replace(/\s+/g, '')) },
+      { id: 'q2', t: 'Quelle ligne du SDP regroupe les deux jambes rouge et bleue ? (commence par a=)', a: () => 'a=group:DUP primary secondary', check: () => (v) => /a=group:dup/.test(String(v).toLowerCase().replace(/\s+/g, '')) },
       { id: 'q3', t: () => `Quel est le groupe multicast bleu de ${FAB.flows['v:CAM1'] ? 'la CAM 1' : 'la première caméra'} ?`, a: () => (FAB.flows['v:CAM1'] || Object.values(FAB.flows).find((f) => f.kind === 'video')).groups.blue, check: eqStr },
     ],
-    hints: ['Chaque ligne du SDP est commentée dans la fenêtre : survolez-la ou lisez la colonne de droite.', 'm=video 5004 RTP/AVP 96 : le dernier nombre est le type de charge.'],
+    hints: ['Chaque ligne du SDP est commentée dans la fenêtre : survole-la ou lis la colonne de droite.', 'm=video 5004 RTP/AVP 96 : le dernier nombre est le type de charge.'],
     learn: 'Un SDP ST 2110 porte deux m= (primary / secondary) regroupés par a=group:DUP, un filtre de source (SSM), les paramètres de l\'image (fmtp) et la référence PTP (ts-refclk). Un SDP faux = un récepteur abonné au mauvais flux.',
   },
   {
@@ -157,7 +157,7 @@ export const NET_MISSIONS = [
       { t: 'Rétablir l\'image de la caméra', live: true, ok: solved },
       { t: 'Enregistrer la correction (write memory) sur les commutateurs modifiés', live: true, ok: savedAfterFix },
     ],
-    hints: ['Diagnostic : quel appareil est injoignable, et pourquoi ?', 'show interfaces status sur la leaf caméras : regardez la colonne Vlan du port de la CCU.', 'interface EthernetN ⏎ switchport access vlan 101 (201 en bleu) ⏎ end ⏎ wr'],
+    hints: ['Diagnostic : quel appareil est injoignable, et pourquoi ?', 'show interfaces status sur la leaf caméras : regarde la colonne Vlan du port de la CCU.', 'interface EthernetN ⏎ switchport access vlan 101 (201 en bleu) ⏎ end ⏎ wr'],
     learn: 'Un port d\'accès dans le mauvais VLAN coupe l\'appareil de sa passerelle : plus rien n\'entre ni ne sort. La correction doit être faite sur les deux réseaux, puis enregistrée.',
   },
   {
@@ -168,7 +168,7 @@ export const NET_MISSIONS = [
       { t: 'Rétablir les voisinages OSPF', live: true, ok: solved },
       { t: 'Enregistrer la correction', live: true, ok: savedAfterFix },
     ],
-    hints: ['Un voisin en EXSTART qui ne passe jamais en FULL : comparez la MTU des deux côtés.', 'show interfaces Ethernet49 sur la leaf, puis sur la spine en face.'],
+    hints: ['Un voisin en EXSTART qui ne passe jamais en FULL : compare la MTU des deux côtés.', 'show interfaces Ethernet49 sur la leaf, puis sur la spine en face.'],
     learn: 'Une MTU différente aux deux bouts bloque OSPF en EXSTART : le lien est « up » mais ne route rien. Le trafic passe par les autres chemins… jusqu\'à la prochaine panne. Une alarme sans effet visible n\'est jamais à ignorer.',
   },
   {
@@ -209,13 +209,13 @@ export const NET_MISSIONS = [
   },
   {
     id: 'n14', title: 'Reconstruire une leaf', tab: 'switch', sw: 'LEAF-B5', sub: 'term', setup: () => { loadFactory('LEAF-B5'); writeMemory('LEAF-B5'); markDirty(); },
-    intro: 'La leaf audio du réseau bleu a été remplacée par un commutateur neuf, en configuration usine. Reconfigurez-la (sans charger la configuration de référence) : VLAN 205, SVI 10.2.5.1/24 en IGMPv3 + PIM + OSPF, uplinks routés en /31, PTP, QoS…',
+    intro: 'La leaf audio du réseau bleu a été remplacée par un commutateur neuf, en configuration usine. Reconfigure-la (sans charger la configuration de référence) : VLAN 205, SVI 10.2.5.1/24 en IGMPv3 + PIM + OSPF, uplinks routés en /31, PTP, QoS…',
     obj: [
       { t: 'leaf-b5 sans alarme et tous les flux audio protégés (rouge + bleu)', live: true, ok: () => { const sw = FAB.switches['LEAF-B5']; if (!sw || !FAB.res) return false; const bad = FAB.issues.some((i) => i.sw === 'LEAF-B5' && i.sev !== 'info'); const audio = Object.entries(FAB.res.rxState).filter(([k]) => k.startsWith('CONS:') || k.startsWith('CU:')); return !bad && audio.length > 0 && audio.every(([, s]) => s.protected); } },
       { t: 'Enregistrer la configuration', live: true, ok: () => { const sw = FAB.switches['LEAF-B5']; return sw && JSON.stringify(sw.running) === JSON.stringify(sw.startup); } },
     ],
-    hints: ['Comparez avec leaf-r5-audio : show running-config, en remplaçant 1 par 2 dans les adresses et 105 par 205.', 'Uplinks : no switchport ⏎ ip address 10.255.2.x/31 ⏎ speed 100g ⏎ error-correction encoding reed-solomon ⏎ pim ipv4 sparse-mode ⏎ ip ospf area 0.0.0.0 ⏎ ptp enable', 'Global : hostname, ip routing, ip multicast-routing, ip pim ssm range 239.0.0.0/8, router ospf 1, ptp mode boundary, ptp domain 127, ptp profile smpte2059-2, qos trust dscp.'],
-    learn: 'Reconstruire une leaf, c\'est dérouler les couches dans l\'ordre : ports et vitesses, VLAN et SVI, routage, multicast, PTP, QoS — puis enregistrer. Gardez toujours une sauvegarde des configurations de référence.',
+    hints: ['Compare avec leaf-r5-audio : show running-config, en remplaçant 1 par 2 dans les adresses et 105 par 205.', 'Uplinks : no switchport ⏎ ip address 10.255.2.x/31 ⏎ speed 100g ⏎ error-correction encoding reed-solomon ⏎ pim ipv4 sparse-mode ⏎ ip ospf area 0.0.0.0 ⏎ ptp enable', 'Global : hostname, ip routing, ip multicast-routing, ip pim ssm range 239.0.0.0/8, router ospf 1, ptp mode boundary, ptp domain 127, ptp profile smpte2059-2, qos trust dscp.'],
+    learn: 'Reconstruire une leaf, c\'est dérouler les couches dans l\'ordre : ports et vitesses, VLAN et SVI, routage, multicast, PTP, QoS — puis enregistrer. Garde toujours une sauvegarde des configurations de référence.',
   },
 ];
 
@@ -295,7 +295,7 @@ export const QUIZ = [
   ['Un émetteur ST 2110-21 de type N (étroit)…', ['envoie des paquets réguliers ; le récepteur n\'a besoin que d\'un petit tampon', 'envoie l\'image par rafales', 'est réservé à l\'audio', 'n\'a pas besoin de PTP'], 0, 'Le modèle fixe CMAX (rafale tolérée) et VRX_FULL (tampon du récepteur virtuel).'],
   ['En mode PIM, un uplink est saturé. Que se passe-t-il ?', ['Tous les flux qui le traversent perdent des paquets', 'Le dernier flux connecté est refusé', 'Le trafic bascule sur l\'autre réseau', 'Rien grâce à la QoS'], 0, 'Un contrôleur SDN, lui, aurait refusé la connexion de trop.'],
   ['Marquage DSCP recommandé pour PTP (AES67) ?', ['46 (EF)', '34 (AF41)', '26 (AF31)', '0'], 0, 'Et une file prioritaire dans les commutateurs, pour une latence constante.'],
-  ['Session miroir d\'un port 100 GbE chargé à 60 Gb/s vers un port 25 GbE. Conséquence ?', ['La capture est incomplète, le réseau n\'est pas affecté', 'Le port source perd des paquets', 'Les flux sont refusés', 'Le commutateur redémarre'], 0, 'Les paquets manquants sont dans la capture, pas sur le réseau : vérifiez toujours la capacité du port miroir.'],
+  ['Session miroir d\'un port 100 GbE chargé à 60 Gb/s vers un port 25 GbE. Conséquence ?', ['La capture est incomplète, le réseau n\'est pas affecté', 'Le port source perd des paquets', 'Les flux sont refusés', 'Le commutateur redémarre'], 0, 'Les paquets manquants sont dans la capture, pas sur le réseau : vérifie toujours la capacité du port miroir.'],
   ['Pourquoi un VLAN par leaf dans ce car ?', ['Le niveau 2 reste local : tout ce qui sort de la leaf est routé', 'Pour séparer la vidéo de l\'audio', 'Parce que PTP l\'exige', 'Pour économiser des adresses IP'], 0, 'Pas de VLAN étendu sur la fabric : pas de boucles ni de tempêtes de diffusion entre leaves.'],
 ];
 export function newQuiz(n = 10) {

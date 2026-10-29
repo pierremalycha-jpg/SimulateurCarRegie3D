@@ -23,7 +23,7 @@ function controls() {
     list.push({ name: `TALK ${l}`, cls: 'icp-talk', aria: 'TALK ' + l, text: 'TALK ' + l, ki: m * 2, act: () => ICOMACT.talk(l, t, d), on: () => icomState(l, t).talk, corners: rect(x - KEY.dx, z + KEY.dz, KEY.w, KEY.d, 0.0075),
       info: () => `${icomState(l, t).talk ? 'Micro ouvert' : 'Parler'} vers ${l} (${abbr}). ${what} Le nom d'abord, des phrases courtes, et on referme le TALK dès qu'on a fini.` });
     list.push({ name: `LISTEN ${l}`, cls: 'icp-lis', aria: 'LISTEN ' + l, text: 'LISTEN ' + l, ki: m * 2 + 1, act: () => ICOMACT.listen(l, t), on: () => icomState(l, t).listen, corners: rect(x + KEY.dx, z + KEY.dz, KEY.w, KEY.d, 0.0075),
-      info: () => `${icomState(l, t).listen ? 'Vous écoutez' : 'Vous n\'écoutez pas'} ${l}. On coupe les canaux inutiles pour rester concentré sur les ordres.` });
+      info: () => `${icomState(l, t).listen ? 'Tu écoutes' : 'Tu n\'écoutes pas'} ${l}. On coupe les canaux inutiles pour rester concentré sur les ordres.` });
   });
   return list;
 }
@@ -40,7 +40,7 @@ const ZONES = [
   { id: 'micro', at: [-0.19, 0.3, -0.03], view: 'micro', title: 'Le micro et le haut-parleur',
     text: ['Le **micro col de cygne** part vers la matrice dès qu\'un TALK est ouvert ; le **haut-parleur** du pupitre (ou le casque) rend les canaux en LISTEN.', 'La voix voyage en numérique (AES3, AES67) jusqu\'à la matrice, dans la baie technique, qui la route vers les destinataires : cartes 4 fils, CCU des caméras, beltpacks, chaîne.'] },
 ];
-const INTRO = { title: 'Le pupitre d\'intercom', text: ['Le pupitre du **réalisateur** : la matrice d\'intercom, dans la baie technique, relie tous les postes du car, les cadreurs, les commentateurs et la chaîne.', 'Survolez une touche : son canal et son rôle s\'affichent ; cliquez **TALK** pour parler, **LISTEN** pour écouter. Glissez pour tourner autour du pupitre, clic droit (ou Maj + glisser) pour le déplacer, molette pour vous approcher ; double-clic pour revenir à la vue.', 'À droite : ce que regarde le réalisateur, le journal de l\'intercom et l\'état de vos touches. « Tous les réglages » ouvre le pupitre à plat, avec le trajet d\'un ordre jusqu\'au cadreur et le tally.'] };
+const INTRO = { title: 'Le pupitre d\'intercom', text: ['Le pupitre du **réalisateur** : la matrice d\'intercom, dans la baie technique, relie tous les postes du car, les cadreurs, les commentateurs et la chaîne.', 'Survole une touche : son canal et son rôle s\'affichent ; clique **TALK** pour parler, **LISTEN** pour écouter. Glisse pour tourner autour du pupitre, clic droit (ou Maj + glisser) pour le déplacer, molette pour t\'approcher ; double-clic pour revenir à la vue.', 'À droite : ce que regarde le réalisateur, le journal de l\'intercom et l\'état de tes touches. « Tous les réglages » ouvre le pupitre à plat, avec le trajet d\'un ordre jusqu\'au cadreur et le tally.'] };
 
 export const POSTE_INTERCOM = {
   id: 'intercom',
@@ -55,7 +55,7 @@ export const POSTE_INTERCOM = {
     const state = el('div', { class: 'p3d-icomstate' });
     host.append(el('div', { class: 'p3d-monrow' }, monFrame('mv', 'Multiview'), monFrame('PGM', 'Programme (PGM)', 'pgm')),
       el('div', { class: 'p3d-mon' }, el('div', { class: 'lab' }, 'Sur l\'intercom'), log),
-      el('div', { class: 'p3d-mon' }, el('div', { class: 'lab' }, 'Votre pupitre'), state));
+      el('div', { class: 'p3d-mon' }, el('div', { class: 'lab' }, 'Ton pupitre'), state));
     let sig = '';
     return {
       update() {
@@ -64,8 +64,8 @@ export const POSTE_INTERCOM = {
         const lis = keys.filter((e) => icomState(e[0], e[1]).listen).map((e) => e[0]);
         const s = ICOM.log.map((e) => e.t + e.msg).join('|') + '#' + talk.join() + '#' + lis.join();
         if (s === sig) return; sig = s;
-        log.replaceChildren(...(ICOM.log.length ? ICOM.log.slice(-6).reverse().map((e) => el('li', {}, el('span', { class: 'mono' }, mmss(e.t)), el('b', {}, e.who), e.msg)) : [el('li', { class: 'note' }, 'Rien pour l\'instant : les ordres du réalisateur et vos ouvertures de micro s\'inscrivent ici.')]));
-        state.replaceChildren(el('p', {}, el('b', {}, 'Micro ouvert vers : '), talk.length ? talk.join(', ') : 'aucun (TALK fermés)'), el('p', {}, el('b', {}, 'Vous écoutez : '), lis.length ? lis.join(', ') : 'rien'));
+        log.replaceChildren(...(ICOM.log.length ? ICOM.log.slice(-6).reverse().map((e) => el('li', {}, el('span', { class: 'mono' }, mmss(e.t)), el('b', {}, e.who), e.msg)) : [el('li', { class: 'note' }, 'Rien pour l\'instant : les ordres du réalisateur et tes ouvertures de micro s\'inscrivent ici.')]));
+        state.replaceChildren(el('p', {}, el('b', {}, 'Micro ouvert vers : '), talk.length ? talk.join(', ') : 'aucun (TALK fermés)'), el('p', {}, el('b', {}, 'Tu écoutes : '), lis.length ? lis.join(', ') : 'rien'));
       },
     };
   },

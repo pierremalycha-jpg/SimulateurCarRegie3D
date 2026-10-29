@@ -146,11 +146,11 @@ export function buildStart() {
   const teaser = (L) => {
     const body = el('div', { class: 'lx-teaser' },
       el('p', { class: 'lede' }, L.pitch || ''),
-      el('h3', {}, 'Ce que vous y ferez'),
+      el('h3', {}, 'Ce que tu y feras'),
       el('ul', {}, ...(L.vous || []).map((t) => el('li', {}, t))),
       el('h3', {}, 'Le matériel annoncé'),
       el('ul', { class: 'lx-gear' }, ...(L.materiel || []).map((t) => el('li', {}, t))),
-      el('p', { class: 'note' }, `Votre guide sur place : ${L.tuteur}. Prévu : ${L.prevu} ; le calendrier peut encore bouger.`));
+      el('p', { class: 'note' }, `Ton guide sur place : ${L.tuteur}. Prévu : ${L.prevu} ; le calendrier peut encore bouger.`));
     modal.open(`Ce qui se prépare : ${L.nom}`, body, { width: 640 });
   };
   const concert = LIEUX.find((L) => L.id === 'concert');
@@ -203,8 +203,8 @@ export function buildStart() {
   const epModes = () => [
     { id: 'carriere', ico: 'chef', title: 'Carrière', desc: carriereDesc(), lamp: 'Carrière', go: commencee(PROG) ? 'Retourner au bureau' : 'Commencer ma carrière' },
     ...MISSIONS.map((x) => ({ id: x.id, ico: 'materiel', title: x.titre, desc: `${x.client}. ${x.brief}`, lamp: 'Mission', go: 'Entrer dans l\'entrepôt' })),
-    { id: '', ico: 'processeur', title: 'Bac à sable', desc: 'Pas de commande : sortez le matériel que vous voulez, câblez, configurez, et regardez ce qui marche.', lamp: 'Libre', go: 'Entrer dans l\'entrepôt' },
-    ...(montageEnregistre() ? [{ id: 'reprendre', ico: 'plan', title: 'Reprendre le montage', desc: 'Votre dernier montage, tel que vous l\'avez laissé.', lamp: 'Reprise', go: 'Reprendre' }] : []),
+    { id: '', ico: 'processeur', title: 'Bac à sable', desc: 'Pas de commande : sors le matériel que tu veux, câble, configure, et regarde ce qui marche.', lamp: 'Libre', go: 'Entrer dans l\'entrepôt' },
+    ...(montageEnregistre() ? [{ id: 'reprendre', ico: 'plan', title: 'Reprendre le montage', desc: 'Ton dernier montage, tel que tu l\'as laissé.', lamp: 'Reprise', go: 'Reprendre' }] : []),
   ];
   const draw = () => {
     for (const b of lieuxWall.querySelectorAll('.lx')) { const on = /** @type {HTMLElement} */ (b).dataset.lieu === PICK.lieu; b.classList.toggle('on', on); b.setAttribute('aria-pressed', String(on)); }
@@ -213,7 +213,7 @@ export function buildStart() {
       const L = epModes(); if (!L.some((m) => m.id === PICK.ep)) PICK.ep = L[0].id;
       modes.replaceChildren(...L.map((m) => el('button', { type: 'button', class: 'jo-mode', 'data-mode': 'ep:' + (m.id || 'libre'), 'aria-pressed': String(m.id === PICK.ep), onclick: () => { PICK.ep = m.id; draw(); } }, icon(m.ico), el('b', {}, m.title), el('span', {}, m.desc))));
       teamSeg.replaceChildren(el('button', { type: 'button', 'data-v': 'solo', 'aria-pressed': 'true' }, 'Solo'), el('button', { type: 'button', 'data-v': 'coop', 'aria-pressed': 'false', disabled: '' }, 'Coopération'));
-      teamNote.textContent = 'L\'entrepôt se monte seul : le matériel, le câblage et la configuration sont à vous.';
+      teamNote.textContent = 'L\'entrepôt se monte seul : le matériel, le câblage et la configuration sont à toi.';
       const N = L.find((m) => m.id === PICK.ep) || L[0];
       lamp.textContent = N.lamp; goTitle.textContent = N.go;
       goDesc.textContent = N.id === 'reprendre' ? N.desc : N.id === 'carriere' ? 'Lire tes mails à l\'ordinateur du bureau, accepter une mission (à l\'entrepôt ou au car régie), la réussir : la suivante arrive.' : 'Sortir le matériel du stock, le poser, le câbler et le configurer jusqu\'à ce que le cahier des charges soit rempli.';
@@ -227,11 +227,11 @@ export function buildStart() {
     teamSeg.replaceChildren(...[['solo', 'Solo'], ['coop', 'Coopération']].map(([v, t]) => el('button', { type: 'button', 'data-v': v, 'aria-pressed': String(v === PICK.team), onclick: () => { PICK.team = v; draw(); } }, t)));
     teamNote.textContent = PICK.team === 'coop'
       ? (lan ? 'Réseau local : l\'hôte crée le salon, les autres le rejoignent ; chacun choisit un pseudo et un rôle dans la prestation. La coopération se joue avec le car pré-installé.' : 'En ligne : l\'hôte crée le salon et donne son code ; chacun choisit un pseudo et un rôle dans la prestation. La coopération se joue avec le car pré-installé.')
-      : 'Vous êtes seul dans le car : vous passez d\'un poste à l\'autre avec le téléphone (touche Tab).';
+      : 'Tu es seul dans le car : tu passes d\'un poste à l\'autre avec le téléphone (touche Tab).';
     const N = MODES.find((m) => m.id === PICK.mode) || MODES[0];
     lamp.textContent = PICK.team === 'coop' ? 'Salon' : N.lamp;
     goTitle.textContent = PICK.team === 'coop' ? 'Ouvrir le salon' : N.go;
-    goDesc.textContent = PICK.team === 'coop' ? 'Créez la partie ou rejoignez celle d\'un collègue, choisissez votre rôle, puis entrez dans le car ensemble.' : N.desc;
+    goDesc.textContent = PICK.team === 'coop' ? 'Crée la partie ou rejoins celle d\'un collègue, choisis ton rôle, puis entre dans le car ensemble.' : N.desc;
     emBox.hidden = N.id !== 'installe'; if (!emBox.hidden) drawEmission();
     const avecListe = PICK.team !== 'coop' && N.id === 'mission';
     pickBox.hidden = !avecListe;
@@ -267,7 +267,7 @@ export function buildStart() {
         el('button', { type: 'button', class: 'linkbtn dk-menu', id: 'st-reglages', onclick: () => emit('settings') }, icon('reglages'), 'Réglages')),
       el('div', { class: 'jo-title' },
         el('h1', {}, 'Jouer'),
-        el('p', { class: 'lede' }, 'Choisissez le lieu, le mode et votre équipe. Un match se joue en continu dans un stade inspiré de Bollaert-Delelis : tout ce que vous réglez se voit à l\'image.')),
+        el('p', { class: 'lede' }, 'Choisis le lieu, le mode et ton équipe. Un match se joue en continu dans un stade inspiré de Bollaert-Delelis : tout ce que tu règles se voit à l\'image.')),
       el('div', { class: 'glass dk-match', role: 'group', 'aria-label': 'La rencontre de ce soir' },
         affiche,
         el('span', { class: 'dim' }, 'Bollaert-Delelis, reconstitution'),
@@ -327,7 +327,7 @@ export function start(preset, light, quality, sound, format = S.format, ip = fal
   S.mode = 'fps';
   if (sound) startAudio(); else { startAudio(); AU.muted = true; applyFaders(); }
   buildToolbar();
-  if (preset === 'brassage') { emit('openStationNow', { id: 'brassage' }); toast('Car vide : brassez chaque liaison en suivant la liste de câblage. Le multiview montre le résultat.', '', 7000); }
+  if (preset === 'brassage') { emit('openStationNow', { id: 'brassage' }); toast('Car vide : brasse chaque liaison en suivant la liste de câblage. Le multiview montre le résultat.', '', 7000); }
   // le poste choisi dans Jouer : on s'y assoit dès l'entrée (le titulaire virtuel se lève et laisse la place)
   else if (S.poste && S.poste !== 'libre') emit('openStationLater', S.poste);
   else if (preset === 'scenario') emit('startScenario');

@@ -181,7 +181,7 @@ function demoMixer(host) {
     read.set('Tally rouge', red.map((i) => SCENES[i].name).join(' et ') + (red.length > 1 ? ' : les deux images sont à l\'antenne' : ''));
     read.set('Tally vert', green.length ? SCENES[green[0]].name : st.pst === st.pgm ? 'aucun : la même source est sur les deux bus' : 'aucun pendant la transition');
     read.set('Durée de la transition', st.dur ? `${st.dur} images = ${fmtS(st.dur / st.fps)} en ${fmtName()}` : '0 image : AUTO TRANS fait une coupe');
-    read.set('Dernier geste', st.last || 'aucun : préparez une source sur la rangée B, puis CUT ou AUTO TRANS');
+    read.set('Dernier geste', st.last || 'aucun : prépare une source sur la rangée B, puis CUT ou AUTO TRANS');
   };
   const tick = () => { const now = performance.now(), dt = Math.min(0.1, (now - prev) / 1000); prev = now; t += dt; if (M.step(dt)) { sync(); setBar(st.dir > 0 ? 0 : 100); } draw(); };
   const timer = setInterval(tick, 40);
@@ -321,7 +321,7 @@ function demoKeys(host) {
   const gainS = slider('Gain', 1, 20, 1, 0.5, (v) => { gain = v; redraw(); }, (v) => '× ' + fmtNum(v, 1));
   const setS = (lbl, v, s) => { const i = /** @type {HTMLInputElement} */ (lbl.querySelector('input')); i.value = String(v); /** @type {HTMLElement} */ (lbl.querySelector('output')).textContent = s; };
   outC.addEventListener('pointerdown', (ev) => { const r = outC.getBoundingClientRect(); probe = { x: Math.max(0, Math.min(IW - 1, Math.round((ev.clientX - r.left) / r.width * IW))), y: Math.max(0, Math.min(IH - 1, Math.round((ev.clientY - r.top) / r.height * IH))) }; redraw(); });
-  outC.style.cursor = 'crosshair'; outC.title = 'Cliquez pour lire la formule en un point';
+  outC.style.cursor = 'crosshair'; outC.title = 'Clique pour lire la formule en un point';
   host.append(
     el('div', { class: 'co-ctl' },
       choice('Clé', [['lin', 'linéaire', 'Le key vient de l\'habillage, avec le fill'], ['luma', 'luminance', 'Le key est calculé sur la luminance du fill']], mode, (v) => {
@@ -334,7 +334,7 @@ function demoKeys(host) {
     el('div', { class: 'co-3' },
       el('figure', {}, fillC, el('figcaption', {}, 'Fill : le graphique sur fond noir (sortie 1 de l\'habillage)')),
       el('figure', {}, keyC, el('figcaption', {}, 'Key utilisé, après clip et gain : blanc = fill, noir = fond')),
-      el('figure', {}, outC, el('figcaption', {}, 'Résultat · cliquez un point pour lire la formule'))),
+      el('figure', {}, outC, el('figcaption', {}, 'Résultat · clique un point pour lire la formule'))),
     el('p', { class: 'note' }, 'k = (signal de découpe − clip) × gain, borné entre 0 et 1 ; PGM = fond × (1 − k) + fill × k. Le score (DSK 1) est incrusté par-dessus avec sa propre clé linéaire.'),
     read.el);
   redraw();
@@ -439,7 +439,7 @@ function demoOrders(host) {
       el('figure', { class: 'co-figc' }, pgm, el('figcaption', {}, 'Programme : ce qui part à l\'antenne'))),
     el('div', { class: 'co-2' }, el('div', {}, el('p', { class: 'co-h5' }, 'Journal de la scripte (timecode, 25 images par seconde)'), journal), read.el),
     el('p', { class: 'note' }, 'Les délais du truquiste simulé sont des ordres de grandeur : 4 images après un « Top » annoncé, 15 images pour trouver et couper une caméra demandée sans annonce.'));
-  say('Antenne : CAM 1, plan large. Choisissez une caméra, annoncez-la, puis donnez le top.');
+  say('Antenne : CAM 1, plan large. Choisis une caméra, annonce-la, puis donne le top.');
   draw();
   return { destroy: () => clearInterval(timer) };
 }
@@ -473,7 +473,7 @@ registerChapter({
         'Après la transition, les bus s\'échangent ; pendant un enchaîné, les deux sources sont à l\'antenne et leurs deux tallys sont rouges.',
       ],
       figure: figMixer,
-      demoTitle: 'Préparez la CAM 3 sur la rangée B, puis CUT. Préparez une autre caméra, choisissez MIX et AUTO TRANS : regardez les tallys du multiview pendant le fondu. Essayez la barre T et la durée en 1080i50.',
+      demoTitle: 'Prépare la CAM 3 sur la rangée B, puis CUT. Prépare une autre caméra, choisis MIX et AUTO TRANS : regarde les tallys du multiview pendant le fondu. Essaie la barre T et la durée en 1080i50.',
       demo: demoMixer,
       body: `Le **mélangeur** (on dit aussi le truqueur ; en anglais vision mixer ou switcher) reçoit toutes les sources du car par la grille : caméras, serveurs ralentis, habillage, duplex. Le **truquiste** l'exploite sur ordre du réalisateur. Chaque source a une touche sur chacune des **rangées** du pupitre ; la rangée **A · PGM** (le bus programme) dit ce qui est à l'antenne, la rangée **B · PST** (le bus preset, ou PVW pour preview) ce qui passera à la prochaine transition. Un moniteur montre chacun des deux bus.
 
@@ -490,7 +490,7 @@ Le **tally** est le signal que le mélangeur renvoie pour chaque source : **roug
       competences: ['2.12', '2.9'],
       article: 'timing',
       exercises: [
-        { id: 'melangeur-commuter', intro: 'Au poste Truquiste, vous préparerez une caméra sur la rangée B · PST, puis vous couperez, enchaînerez en AUTO TRANS, pousserez la barre T et passerez un volet logo. À chaque geste, regardez le multiview : le cadre vert suit la source en preset, le cadre rouge celle à l\'antenne, et les deux sont rouges pendant l\'enchaîné.' },
+        { id: 'melangeur-commuter', intro: 'Au poste Truquiste, tu prépareras une caméra sur la rangée B · PST, puis tu couperas, enchaîneras en AUTO TRANS, pousseras la barre T et passeras un volet logo. À chaque geste, regarde le multiview : le cadre vert suit la source en preset, le cadre rouge celle à l\'antenne, et les deux sont rouges pendant l\'enchaîné.' },
       ],
       quiz: [
         { q: 'Pendant un enchaîné de la CAM 1 vers la CAM 3, quel tally est rouge ?', choices: ['Seulement la CAM 1, jusqu\'à la fin du fondu', 'La CAM 1 et la CAM 3', 'Seulement la CAM 3, dès le début du fondu'], answer: 1, why: 'Pendant le fondu, les deux images sont mélangées à l\'antenne : le tally suit tout ce qui est visible, les deux cadreurs sont rouges et ne doivent pas bouger leur cadre. La CAM 3 n\'est verte qu\'avant la transition, la CAM 1 redevient verte après.' },
@@ -508,7 +508,7 @@ Le **tally** est le signal que le mélangeur renvoie pour chaque source : **roug
         'Les clés du **M/E** sont prises dans les transitions ; les **DSK** sont après, au-dessus de tout : le score y reste quand on coupe. Le **clean feed** est pris avant les DSK.',
       ],
       figure: figKeys,
-      demoTitle: 'En clé linéaire, cliquez sur le fond du bandeau et lisez la formule. Passez en clé luminance : le fond sombre, le cartouche rouge et l\'ombre disparaissent. Montez le gain, puis le clip, et regardez les bords du texte.',
+      demoTitle: 'En clé linéaire, clique sur le fond du bandeau et lis la formule. Passe en clé luminance : le fond sombre, le cartouche rouge et l\'ombre disparaissent. Monte le gain, puis le clip, et regarde les bords du texte.',
       demo: demoKeys,
       body: `Une **incrustation** (key) remplace une partie de l'image de fond par une autre. Il faut deux choses : le **fill** (le remplissage, l'image à poser) et le **key** (la découpe), un signal en niveaux de gris qui dit, pixel par pixel, combien de fill on veut : noir (0 %), le fond reste ; blanc (100 %), le fill le remplace ; gris, on mélange. Le calcul de l'incrustateur est une moyenne pondérée : **PGM = fond × (1 − k) + fill × k**. Un fond de bandeau à 72 % dans le key laisse donc voir l'image derrière à 28 %.
 
@@ -526,7 +526,7 @@ L'**ordre des couches** décide qui recouvre qui. Dans chaque étage M/E du mél
       competences: ['2.6', '2.12'],
       article: 'chaine',
       exercises: [
-        { id: 'melangeur-incrustations', intro: 'Vous ouvrirez le score sur le DSK 1 au poste Truquiste, puis vous préparerez, lancerez et retirerez un bandeau joueur au poste Habillage, sur le DSK 2. Regardez la sortie fill + key de l\'habillage : le bandeau n\'arrive au programme que lorsque son DSK est ouvert, et le score reste en place quand le bandeau sort, parce qu\'il est sur une autre couche.' },
+        { id: 'melangeur-incrustations', intro: 'Tu ouvriras le score sur le DSK 1 au poste Truquiste, puis tu prépareras, lanceras et retireras un bandeau joueur au poste Habillage, sur le DSK 2. Regarde la sortie fill + key de l\'habillage : le bandeau n\'arrive au programme que lorsque son DSK est ouvert, et le score reste en place quand le bandeau sort, parce qu\'il est sur une autre couche.' },
       ],
       quiz: [
         { q: 'Le key d\'un bandeau vaut 60 % sur son fond semi-transparent. À l\'antenne, ce fond…', choices: ['laisse voir l\'image derrière à 40 %', 'est opaque : tout ce qui n\'est pas noir dans le key est plein', 'disparaît : seul le blanc pur du key est incrusté'], answer: 0, why: 'PGM = fond × (1 − 0,6) + fill × 0,6 : l\'image derrière compte encore pour 40 %. Une clé linéaire garde toutes les valeurs intermédiaires du key ; seule une clé luminance réglée trop dure transformerait ce gris en tout ou rien.' },
@@ -544,7 +544,7 @@ L'**ordre des couches** décide qui recouvre qui. Dans chaque étage M/E du mél
         'La **production** représente la chaîne dans le car : horaires, publicités, contenus ; c\'est elle qui négocie un imprévu.',
       ],
       figure: figOrders,
-      demoTitle: 'Annoncez une caméra (« Prépare la… »), puis donnez le top : lisez le délai. Recommencez avec « Envoie la… » sans annonce, puis avec un « Top » sans rien préparer. Le journal note chaque ordre avec son timecode.',
+      demoTitle: 'Annonce une caméra (« Prépare la… »), puis donne le top : lis le délai. Recommence avec « Envoie la… » sans annonce, puis avec un « Top » sans rien préparer. Le journal note chaque ordre avec son timecode.',
       demo: demoOrders,
       body: `Le **réalisateur** raconte le match en images, face au multiview. Il ne touche pas au mélangeur : il parle, dans l'intercom, au **truquiste**, aux **cadreurs**, aux opérateurs **ralenti**, à l'**habillage** et au **son**. Les ordres sont courts et toujours les mêmes, pour qu'il n'y ait jamais de doute, le numéro d'abord :
 - « **Prépare la 3** » (ou « Attention la 3 ») : le truquiste met la CAM 3 en preset ; son tally passe au vert, le cadreur sait qu'il va passer et soigne son cadre ;
@@ -563,9 +563,9 @@ La **production** (chargé de production, producteur) représente le diffuseur d
       competences: ['2.8', '4.1', '3.11'],
       article: 'icomguide',
       exercises: [
-        { id: 'realisateur-ordres', intro: 'Au poste Réalisateur, vous donnerez les ordres au truquiste simulé : « Prépare », « Top », « Enchaîne », puis le score. Annoncez toujours avant de déclencher, et vérifiez au multiview que la caméra annoncée passe au vert avant votre top, puis au rouge.' },
-        { id: 'scripte-notes', intro: 'Au poste Scripte, vous lirez le timecode maître et le temps de jeu, puis vous enverrez la dernière action notée au serveur ralenti. Observez que l\'EVS se cale quelques secondes avant le timecode de la note : c\'est la même horloge pour tout le car.' },
-        { id: 'production-suivi', intro: 'Au poste Production, vous comparerez le programme qui sort du car et le retour antenne de la chaîne, puis vous lirez le compte des coupes et des enchaînés. Notez le décalage de quelques secondes du retour : c\'est la production qui suit ce que la chaîne diffuse vraiment.' },
+        { id: 'realisateur-ordres', intro: 'Au poste Réalisateur, tu donneras les ordres au truquiste simulé : « Prépare », « Top », « Enchaîne », puis le score. Annonce toujours avant de déclencher, et vérifie au multiview que la caméra annoncée passe au vert avant ton top, puis au rouge.' },
+        { id: 'scripte-notes', intro: 'Au poste Scripte, tu liras le timecode maître et le temps de jeu, puis tu enverras la dernière action notée au serveur ralenti. Observe que l\'EVS se cale quelques secondes avant le timecode de la note : c\'est la même horloge pour tout le car.' },
+        { id: 'production-suivi', intro: 'Au poste Production, tu compareras le programme qui sort du car et le retour antenne de la chaîne, puis tu liras le compte des coupes et des enchaînés. Note le décalage de quelques secondes du retour : c\'est la production qui suit ce que la chaîne diffuse vraiment.' },
       ],
       quiz: [
         { q: 'Le réalisateur dit « Top » sans avoir annoncé de caméra. Que fait le truquiste ?', choices: ['Il coupe sur la source en preset, quelle qu\'elle soit', 'Rien : le mélangeur refuse une coupe sans annonce', 'Il coupe sur la CAM 1, le plan large'], answer: 0, why: 'Il y a toujours une source en preset, souvent l\'ancien plan revenu là après la dernière transition : le top la met à l\'antenne. Le mélangeur ne connaît pas les annonces, elles servent aux personnes ; et rien ne ramène automatiquement au plan large.' },

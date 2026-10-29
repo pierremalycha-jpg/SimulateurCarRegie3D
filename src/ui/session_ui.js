@@ -48,7 +48,7 @@ export async function openSessionPanel() {
 
 const fileMode = () => location.protocol === 'file:';
 // copier un texte (adresse, code, lien)
-const copyBtn = (txt, what) => el('button', { type: 'button', class: 'btn small', onclick: async () => { try { await navigator.clipboard.writeText(txt()); toast(what + ' copié' + (/^(Adresse|Clé)/.test(what) ? 'e' : '') + '.', 'good'); } catch (e) { toast('Copie impossible ici : sélectionnez le texte et copiez-le à la main.', 'bad'); } } }, 'Copier');
+const copyBtn = (txt, what) => el('button', { type: 'button', class: 'btn small', onclick: async () => { try { await navigator.clipboard.writeText(txt()); toast(what + ' copié' + (/^(Adresse|Clé)/.test(what) ? 'e' : '') + '.', 'good'); } catch (e) { toast('Copie impossible ici : sélectionne le texte et copie-le à la main.', 'bad'); } } }, 'Copier');
 
 // ---------------- jouer par Internet ----------------
 // l'invité a reçu un lien (http://86.x.x.x:8080/?cle=… ou https://….trycloudflare.com/?cle=…) : on l'ouvre
@@ -63,12 +63,12 @@ export function openInviteLink(v) {
 }
 function linkJoin() {
   const inp = el('input', { type: 'text', class: 'ses-link', placeholder: 'http://… ?cle=…', 'aria-label': 'Lien reçu de l\'hôte', autocomplete: 'off', spellcheck: 'false' });
-  const go = () => { const r = openInviteLink(inp.value); if (r !== 'ok') { inp.focus(); toast(r === 'vide' ? 'Collez d\'abord le lien que l\'hôte vous a envoyé.' : 'Ce lien n\'est pas lisible : recopiez-le en entier (il se termine par ?cle= et douze caractères).', 'bad', 6000); } };
+  const go = () => { const r = openInviteLink(inp.value); if (r !== 'ok') { inp.focus(); toast(r === 'vide' ? 'Colle d\'abord le lien que l\'hôte t\'a envoyé.' : 'Ce lien n\'est pas lisible : recopie-le en entier (il se termine par ?cle= et douze caractères).', 'bad', 6000); } };
   inp.addEventListener('keydown', (e) => { e.stopPropagation(); if (e.key === 'Enter') go(); });
   return el('div', { class: 'ses-linkjoin' },
-    el('label', { class: 'sl-k' }, 'Vous avez reçu un lien de l\'hôte ?'),
+    el('label', { class: 'sl-k' }, 'Tu as reçu un lien de l\'hôte ?'),
     el('div', { class: 'hwrow' }, inp, el('button', { type: 'button', class: 'btn small primary', onclick: go }, 'Rejoindre')),
-    el('p', { class: 'note' }, 'Collez-le ici (ou ouvrez-le directement dans votre navigateur) : la partie de l\'hôte s\'ouvre, par Internet, sans rien installer.'));
+    el('p', { class: 'note' }, 'Colle-le ici (ou ouvre-le directement dans ton navigateur) : la partie de l\'hôte s\'ouvre, par Internet, sans rien installer.'));
 }
 // bloc de l'hôte : analyse du réseau, ouverture de la box, lien par tunnel ; l'état vient du serveur
 function internetBox() {
@@ -83,20 +83,20 @@ function internetBox() {
     const parts = [el('b', { class: 'sn-title' }, 'Inviter quelqu\'un par Internet')];
     if (st.lien) {
       parts.push(el('div', { class: 'sl-info sn-link' }, el('span', { class: 'sl-k' }, 'Lien à lui envoyer'), el('code', { class: 'sn-url' }, st.lien), copyBtn(() => st.lien, 'Lien'),
-        el('p', { class: 'note' }, 'Envoyez-le par message. La personne l\'ouvre dans son navigateur (Chrome, Edge, Firefox), sans rien installer, puis « Rejoindre une partie ». Gardez cette fenêtre et la fenêtre noire ouvertes pendant la partie.')));
+        el('p', { class: 'note' }, 'Envoie-le par message. La personne l\'ouvre dans son navigateur (Chrome, Edge, Firefox), sans rien installer, puis « Rejoindre une partie ». Garde cette fenêtre et la fenêtre noire ouvertes pendant la partie.')));
     }
     if (D.etat === 'non' && T.etat === 'non') {
-      parts.push(el('p', { class: 'note' }, 'Pour une personne qui n\'est pas sur votre réseau. Le simulateur analyse votre réseau, ouvre le port de votre box tout seul (UPnP) et vous donne le lien à lui envoyer.'),
+      parts.push(el('p', { class: 'note' }, 'Pour une personne qui n\'est pas sur ton réseau. Le simulateur analyse ton réseau, ouvre le port de ta box tout seul (UPnP) et te donne le lien à lui envoyer.'),
         el('button', { type: 'button', class: 'btn primary sn-go', onclick: () => act('direct') }, 'Inviter par Internet'));
     } else if (D.etat === 'recherche') parts.push(el('p', { class: 'note sn-wait' }, 'Analyse du réseau et ouverture de la box…'));
     else if (D.etat === 'ouvert') {
-      if (D.partagee) parts.push(el('p', { class: 'note is-bad' }, `La box a ouvert le port, mais elle n'a pas d'adresse publique à elle (adresse de la box : ${D.wan || '?'}, vue d'Internet : ${D.publique || '?'}). Votre opérateur partage l'adresse entre plusieurs abonnés, ou deux box sont en cascade : un lien direct ne peut pas marcher. Créez un lien par tunnel.`));
+      if (D.partagee) parts.push(el('p', { class: 'note is-bad' }, `La box a ouvert le port, mais elle n'a pas d'adresse publique à elle (adresse de la box : ${D.wan || '?'}, vue d'Internet : ${D.publique || '?'}). Ton opérateur partage l'adresse entre plusieurs abonnés, ou deux box sont en cascade : un lien direct ne peut pas marcher. Crée un lien par tunnel.`));
       else if (D.verifie === true) parts.push(el('p', { class: 'note is-ok' }, 'Lien direct vérifié : il répond depuis Internet.'));
-      else if (D.verifie === false) parts.push(el('p', { class: 'note' }, 'Lien direct créé, mais pas vérifiable depuis cet ordinateur (certaines box ne le permettent pas). Faites l\'essai avec la personne ; si la page ne s\'ouvre pas chez elle, créez plutôt un lien par tunnel.'));
+      else if (D.verifie === false) parts.push(el('p', { class: 'note' }, 'Lien direct créé, mais pas vérifiable depuis cet ordinateur (certaines box ne le permettent pas). Fais l\'essai avec la personne ; si la page ne s\'ouvre pas chez elle, crée plutôt un lien par tunnel.'));
       else parts.push(el('p', { class: 'note sn-wait' }, 'Vérification du lien…'));
     } else if (D.etat === 'echec' && T.etat !== 'pret') parts.push(el('p', { class: 'note is-bad' }, `La box n'a pas été ouverte : ${D.why}. Le plus simple : un lien par tunnel, qui marche sans toucher à la box.`));
     if (T.etat === 'pret' && st.lien === T.lien) parts.push(el('p', { class: 'note is-ok' }, 'Lien par tunnel prêt : il passe par Cloudflare, sans toucher à la box.'));
-    if (st.profil && /Public/i.test(st.profil) && D.etat === 'ouvert' && !D.partagee) parts.push(el('p', { class: 'note is-bad' }, 'Windows considère votre réseau comme « public » : le pare-feu y bloque les connexions qui arrivent. Paramètres > Réseau et Internet > votre Wi-Fi ou Ethernet > Type de profil réseau : Privé. Le lien par tunnel, lui, n\'est pas concerné.'));
+    if (st.profil && /Public/i.test(st.profil) && D.etat === 'ouvert' && !D.partagee) parts.push(el('p', { class: 'note is-bad' }, 'Windows considère ton réseau comme « public » : le pare-feu y bloque les connexions qui arrivent. Paramètres > Réseau et Internet > ton Wi-Fi ou Ethernet > Type de profil réseau : Privé. Le lien par tunnel, lui, n\'est pas concerné.'));
     // le tunnel : proposé dès que le lien direct n'est pas sûr
     const tunnelUseful = D.etat === 'echec' || (D.etat === 'ouvert' && (D.partagee || D.verifie !== true));
     if (T.etat === 'non' && tunnelUseful) {
@@ -115,7 +115,7 @@ function internetBox() {
         line('Adresse publique', D.publique || D.wan || '…'),
         line('Port', D.extPort ? `${D.extPort} (TCP) ouvert vers ${D.local}:${D.port}` : `${st.port} (TCP), non ouvert`),
         line('Tunnel', T.etat === 'pret' ? T.url : T.etat === 'non' ? 'non utilisé' : T.etat),
-        el('p', { class: 'note' }, `Ouvrir la box à la main : dans l'interface de la box (souvent http://192.168.1.1, ou mafreebox.freebox.fr), créez une redirection de port TCP ${st.port} vers ${local}, port ${st.port}. Le lien est alors http://<adresse publique>:${st.port}/?cle=${st.cle}`)),
+        el('p', { class: 'note' }, `Ouvrir la box à la main : dans l'interface de la box (souvent http://192.168.1.1, ou mafreebox.freebox.fr), crée une redirection de port TCP ${st.port} vers ${local}, port ${st.port}. Le lien est alors http://<adresse publique>:${st.port}/?cle=${st.cle}`)),
       el('button', { type: 'button', class: 'linkbtn', onclick: () => act('fermer') }, 'Fermer l\'accès par Internet'));
     }
     box.replaceChildren(...parts);
@@ -132,7 +132,7 @@ function internetBox() {
 async function lanKit() {
   const r = await downloadLanKit();
   if (r === 'unavailable') toast('Archive indisponible ici : le serveur réseau local est fourni avec les sources du simulateur (dossier lan, ou dist/car-regie-serveur-lan.mjs).', 'bad', 7000);
-  else if (r === 'error') toast('Le téléchargement n\'a pas abouti : réessayez.', 'bad');
+  else if (r === 'error') toast('Le téléchargement n\'a pas abouti : réessaie.', 'bad');
 }
 const lanKitRow = () => el('div', { class: 'ses-kit' },
   el('div', {}, el('b', {}, 'Jouer sur un réseau local, sans Internet'), el('p', { class: 'note' }, 'La personne qui héberge télécharge le serveur (Windows, macOS, Linux : Node.js nécessaire), le lance, et donne aux autres l\'adresse qu\'il affiche.')),
@@ -155,26 +155,26 @@ function drawJoin(body) {
   const taken = () => (mode === 'join' && party ? party.players : []);
   function draw() {
     cards.innerHTML = '';
-    const me = pseudo.value.trim() || 'vous';
+    const me = pseudo.value.trim() ? pseudo.value.trim() + ' (toi)' : 'toi';
     for (const [k, r] of Object.entries(ROLES_S)) {
       const who = taken().filter((p) => p.role === k && (k !== 'cadreur' || +p.cam === +camSel.value)).map((p) => p.name);
       const mine = k === role;
-      const names = [...who, ...(mine ? [me + ' (vous)'] : [])];
+      const names = [...who, ...(mine ? [me] : [])];
       cards.append(el('button', { type: 'button', class: 'ses-role sl-slot' + (mine ? ' on' : '') + (who.length ? ' taken' : ''), style: { '--rc': ROLE_COLORS[k] }, 'aria-pressed': String(mine), onclick: () => { role = k; draw(); } },
         el('b', {}, r.label),
         el('span', { class: 'sl-who' + (names.length ? '' : ' free') }, names.length ? names.join(', ') : 'Libre'),
         el('small', {}, r.desc),
-        who.length ? el('em', {}, (k === 'cadreur' ? 'CAM ' + camSel.value + ' tenue par ' : 'Déjà pris par ') + who.join(', ') + (r.slices.length ? ' : vous seriez en lecture seule' : '')) : null));
+        who.length ? el('em', {}, (k === 'cadreur' ? 'CAM ' + camSel.value + ' tenue par ' : 'Déjà pris par ') + who.join(', ') + (r.slices.length ? ' : tu serais en lecture seule' : '')) : null));
     }
     camRow.hidden = role !== 'cadreur';
     const n = taken().length;
-    count.textContent = mode === 'join' && party ? `${n} joueur${n > 1 ? 's' : ''} dans la partie` : mode === 'host' ? 'Vous ouvrez le salon' : '';
+    count.textContent = mode === 'join' && party ? `${n} joueur${n > 1 ? 's' : ''} dans la partie` : mode === 'host' ? 'Tu ouvres le salon' : '';
   }
   // parties du réseau local
   const list = el('div', { class: 'ses-parties' });
   function drawParties() {
     list.innerHTML = '';
-    if (!parties.length) { list.append(el('p', { class: 'note' }, 'Aucune partie pour l\'instant. Demandez à l\'hôte de créer la sienne (« Créer une partie ») : la liste se met à jour toute seule.')); return; }
+    if (!parties.length) { list.append(el('p', { class: 'note' }, 'Aucune partie pour l\'instant. Demande à l\'hôte de créer la sienne (« Créer une partie ») : la liste se met à jour toute seule.')); return; }
     for (const p of parties) {
       const sel = party && party.code === p.code;
       list.append(el('button', { type: 'button', class: 'ses-party' + (sel ? ' on' : ''), 'aria-pressed': String(!!sel), onclick: () => { party = p; drawParties(); draw(); } },
@@ -209,7 +209,7 @@ function drawJoin(body) {
   if (lan && host) internetStatus().then((st) => { const c = st && (st.cartes || [])[0]; if (c) { addr = `http://${c.address}:${st.port}`; addrEl.textContent = addr; } });
   const info = lan && viaNet
     ? el('div', { class: 'sl-info lan' }, el('span', { class: 'sl-k' }, 'Par Internet'),
-      el('p', { class: 'note' }, 'Vous êtes sur la partie de l\'hôte, ouverte par son lien. Choisissez votre pseudo et votre poste, puis « Rejoindre la partie ».'))
+      el('p', { class: 'note' }, 'Tu es sur la partie de l\'hôte, ouverte par son lien. Choisis ton pseudo et ton poste, puis « Rejoindre la partie ».'))
     : lan
     ? el('div', { class: 'sl-info lan' }, el('span', { class: 'sl-k' }, 'Adresse du salon (même réseau)'), addrEl, copy(() => addr, 'Adresse'),
       el('p', { class: 'note' }, 'Les autres joueurs, sur le même réseau (Wi-Fi ou câble), ouvrent cette adresse dans leur navigateur. Rien à installer.'))
@@ -218,10 +218,10 @@ function drawJoin(body) {
   function show(m) {
     mode = m; [...tabs.children].forEach((b) => { b.classList.toggle('on', b.dataset.k === m); b.setAttribute('aria-pressed', String(b.dataset.k === m)); });
     pane.innerHTML = '';
-    if (m === 'host') pane.append(el('p', { class: 'note' }, lan ? 'Votre ordinateur fait tourner le match pour tout le monde. Les autres verront votre partie dans « Rejoindre une partie ».' : 'Vous faites tourner le match. Donnez le code ci-dessus aux autres joueurs.'),
+    if (m === 'host') pane.append(el('p', { class: 'note' }, lan ? 'Ton ordinateur fait tourner le match pour tout le monde. Les autres verront ta partie dans « Rejoindre une partie ».' : 'Tu fais tourner le match. Donne le code ci-dessus aux autres joueurs.'),
       ...(lan ? [] : [el('button', { type: 'button', class: 'linkbtn', onclick: () => { code.value = randomCode(); } }, 'Tirer un nouveau code')]));
     else if (lan) pane.append(el('div', { class: 'hwrow' }, el('b', {}, viaNet ? 'Parties de l\'hôte' : 'Parties sur ce réseau'), srvName), list, ...(viaNet ? [] : [linkJoin()]));
-    else pane.append(el('p', { class: 'note' }, 'Entrez ci-dessus le code que l\'hôte vous a donné.'));
+    else pane.append(el('p', { class: 'note' }, 'Entre ci-dessus le code que l\'hôte t\'a donné.'));
     goBtn.textContent = m === 'host' ? 'Créer la partie' : 'Rejoindre la partie';
     draw();
   }
@@ -229,31 +229,31 @@ function drawJoin(body) {
   const goBtn = el('button', { class: 'btn primary sl-go' }, 'Rejoindre la partie');
   goBtn.onclick = async () => {
     const n = setPseudo(pseudo.value);
-    if (!n) { pseudo.focus(); toast('Choisissez un pseudo : c\'est le nom que les autres verront au-dessus de votre personnage.', 'bad', 5000); return; }
+    if (!n) { pseudo.focus(); toast('Choisis un pseudo : c\'est le nom que les autres verront au-dessus de ton personnage.', 'bad', 5000); return; }
     let c;
     if (mode === 'host') c = lan ? randomCode() : code.value;
-    else if (lan) { if (!party) { toast('Choisissez une partie dans la liste.', 'bad'); return; } c = party.code.replace(/^car-/, ''); }
+    else if (lan) { if (!party) { toast('Choisis une partie dans la liste.', 'bad'); return; } c = party.code.replace(/^car-/, ''); }
     else c = code.value;
     goBtn.disabled = true;
     const r = await joinSession(c, role, { cam: role === 'cadreur' ? +camSel.value : null, cfg: startCb ? startCb.cfg() : null, host: mode === 'host' });
     goBtn.disabled = false;
-    if (!r.ok) { toast(r.why === 'not_permitted' ? 'Accès refusé : demandez au formateur de vous partager la page au niveau Contributeur.' : r.why === 'unreachable' ? 'Serveur réseau local injoignable : vérifiez qu\'il tourne toujours sur l\'ordinateur de l\'hôte.' : r.why === 'full' ? 'Partie complète : rejoignez-en une autre ou demandez à l\'hôte d\'en créer une.' : 'Impossible de rejoindre la partie (' + r.why + ') : réessayez dans un instant.', 'bad', 7000); return; }
+    if (!r.ok) { toast(r.why === 'not_permitted' ? 'Accès refusé : demande au formateur de te partager la page au niveau Contributeur.' : r.why === 'unreachable' ? 'Serveur réseau local injoignable : vérifie qu\'il tourne toujours sur l\'ordinateur de l\'hôte.' : r.why === 'full' ? 'Partie complète : rejoins-en une autre ou demande à l\'hôte d\'en créer une.' : 'Impossible de rejoindre la partie (' + r.why + ') : réessaie dans un instant.', 'bad', 7000); return; }
     clearInterval(timer); resetRoleStats();
     modal.close();
     if (S.mode === 'start' && startCb) await startCb.start();
-    toast(mode === 'host' ? (lan ? `Partie créée. Les autres la rejoignent depuis ${addr} (ou par le lien Internet), « Rejoindre une partie ».` : `Partie ${r.code} créée : donnez ce code aux autres joueurs.`) : `Vous êtes ${ROLES_S[role].label}${role === 'cadreur' ? ' (CAM ' + camSel.value + ')' : ''}.`, 'good', 7000);
+    toast(mode === 'host' ? (lan ? `Partie créée. Les autres la rejoignent depuis ${addr} (ou par le lien Internet), « Rejoindre une partie ».` : `Partie ${r.code} créée : donne ce code aux autres joueurs.`) : `Tu es ${ROLES_S[role].label}${role === 'cadreur' ? ' (CAM ' + camSel.value + ')' : ''}.`, 'good', 7000);
   };
   body.append(el('div', { class: 'salon' },
     el('section', { class: 'sl-conn', 'aria-label': 'Connexion' },
       el('div', { class: 'ses-banner' + (lan ? ' lan' : '') }, el('b', {}, lan ? (viaNet ? 'Par Internet' : 'Réseau local') : 'En ligne'), el('span', {}, lan ? 'Servi par l\'ordinateur de l\'hôte' : 'Page publiée sur claude.ai')),
       info,
-      el('label', { class: 'sl-k', for: 'ses-pseudo' }, 'Votre pseudo'), pseudo,
+      el('label', { class: 'sl-k', for: 'ses-pseudo' }, 'Ton pseudo'), pseudo,
       tabs, pane, goBtn,
       ...(lan && host ? [internetBox()] : [])),
     el('section', { class: 'sl-room', 'aria-label': 'Les postes' },
       el('div', { class: 'sl-head' }, el('h3', {}, 'Les postes de la prestation'), count),
       cards, camRow,
-      el('p', { class: 'note' }, 'Choisissez votre poste. Chacun n\'est piloté que par celui qui le tient ; les autres le voient en direct, en lecture seule. L\'hôte (ou le formateur) peut réattribuer les postes une fois la partie lancée.'))),
+      el('p', { class: 'note' }, 'Choisis ton poste. Chacun n\'est piloté que par celui qui le tient ; les autres le voient en direct, en lecture seule. L\'hôte (ou le formateur) peut réattribuer les postes une fois la partie lancée.'))),
   ...(lan ? [] : [lanKitRow()]));
   show(lan ? 'join' : 'host');
   if (lan) { poll(); timer = setInterval(poll, 2000); }
@@ -267,8 +267,8 @@ function drawActive(body) {
   const show = (k) => { cur = k; content.innerHTML = ''; [...tabs.children].forEach((b) => b.classList.toggle('on', b.dataset.k === k)); ({ peers: tabPeers, orders: tabOrders, trainer: tabTrainer })[k](content); };
   for (const [k, l] of T) tabs.append(el('button', { class: 'tab', 'data-k': k, onclick: () => show(k) }, l));
   const title = SES.transport === 'lan' ? `Partie de ${SES.hostPeer ? pseudoOf(SES.hostPeer) : '…'} · ${internetKey() ? 'par Internet' : 'réseau local'}` : 'Partie ' + SES.code;
-  body.append(el('div', { class: 'hwrow' }, el('span', { class: 'pill ' + (SES.connected ? 'ok' : 'warn') }, SES.connected ? 'connecté' : 'reconnexion…'), el('b', { style: { fontFamily: 'var(--f-disp)', fontSize: '19px' } }, title), el('span', { class: 'note' }, `Vous : ${pseudoOf(SES.me)} · ${ROLES_S[SES.role].label}${isHost() ? ' · vous faites tourner le match (hôte)' : ''}`),
-    el('button', { class: 'btn small', onclick: async () => { await finishIfTrainer(); await leaveSession(); modal.close(); toast('Vous avez quitté la partie.'); } }, 'Quitter la partie')), tabs, content);
+  body.append(el('div', { class: 'hwrow' }, el('span', { class: 'pill ' + (SES.connected ? 'ok' : 'warn') }, SES.connected ? 'connecté' : 'reconnexion…'), el('b', { style: { fontFamily: 'var(--f-disp)', fontSize: '19px' } }, title), el('span', { class: 'note' }, `Toi : ${pseudoOf(SES.me)} · ${ROLES_S[SES.role].label}${isHost() ? ' · tu fais tourner le match (hôte)' : ''}`),
+    el('button', { class: 'btn small', onclick: async () => { await finishIfTrainer(); await leaveSession(); modal.close(); toast('Tu as quitté la partie.'); } }, 'Quitter la partie')), tabs, content);
   show(cur);
   let peersKey = '';
   panelRefresh = (e) => {
@@ -333,7 +333,7 @@ function roleBrief() {
   const r = SES.role, B = ROLE_BRIEF[r] || { steps: [] };
   const go = goToRolePost ? el('button', { class: 'btn small primary', onclick: () => { modal.close(); goToRolePost(r, SES.cam); } }, r === 'cadreur' ? `Aller à la CAM ${SES.cam || 1}` : 'Aller à mon poste') : null;
   return el('div', { class: 'ses-brief', style: { '--rc': ROLE_COLORS[r] } },
-    el('div', { class: 'hwrow' }, el('b', {}, 'Votre rôle : ' + ROLES_S[r].label + (r === 'cadreur' && SES.cam ? ' · CAM ' + SES.cam : '')), (B.station || r === 'cadreur') ? go : null),
+    el('div', { class: 'hwrow' }, el('b', {}, 'Ton rôle : ' + ROLES_S[r].label + (r === 'cadreur' && SES.cam ? ' · CAM ' + SES.cam : '')), (B.station || r === 'cadreur') ? go : null),
     el('ol', {}, ...B.steps.map((t) => el('li', {}, t))),
     el('div', { class: 'ses-obj' }, ...objectives(r).map((o) => el('span', { class: o.ok === true ? 'is-ok' : o.ok === false ? 'is-bad' : '' }, o.label + ' : ', el('b', {}, o.value)))));
 }
@@ -364,7 +364,7 @@ function tabTrainer(box) {
     el('div', { class: 'hwrow' }, sel, el('label', { for: 'ses-hid', class: 'hwrow' }, hidden, 'Panne cachée'), el('button', { class: 'btn primary', onclick: () => trainerInject(sel.value, hidden.checked) }, 'Injecter la panne')),
     el('table', { class: 'tbl' }, el('thead', {}, el('tr', {}, el('th', {}, 'Panne'), el('th', {}, 'Où'), el('th', {}, 'État'))), act),
     el('div', { class: 'hwrow' }, note, el('button', { class: 'btn small', onclick: () => { if (note.value.trim()) { announce(note.value.trim()); note.value = ''; } } }, 'Annoncer')),
-    el('div', { class: 'hwrow' }, el('button', { class: 'btn', onclick: () => downloadReport() }, 'Télécharger le compte rendu (HTML)'), el('button', { class: 'btn primary', onclick: async () => { const r = await finishIfTrainer(true); toast(r && r.ok ? (r.file ? `Compte rendu enregistré sur l'ordinateur de l'hôte : ${r.file}.html` : 'Compte rendu enregistré (Espace formateur → Stagiaires).') : 'Compte rendu non enregistré (' + ((r && (r.message || r.code)) || 'indisponible') + ') : téléchargez-le en HTML pour le garder.', r && r.ok ? 'good' : 'bad', 7000); } }, 'Enregistrer le compte rendu')));
+    el('div', { class: 'hwrow' }, el('button', { class: 'btn', onclick: () => downloadReport() }, 'Télécharger le compte rendu (HTML)'), el('button', { class: 'btn primary', onclick: async () => { const r = await finishIfTrainer(true); toast(r && r.ok ? (r.file ? `Compte rendu enregistré sur l'ordinateur de l'hôte : ${r.file}.html` : 'Compte rendu enregistré (Espace formateur → Stagiaires).') : 'Compte rendu non enregistré (' + ((r && (r.message || r.code)) || 'indisponible') + ') : télécharge-le en HTML pour le garder.', r && r.ok ? 'good' : 'bad', 7000); } }, 'Enregistrer le compte rendu')));
 }
 function trainerInject(id, hidden) {
   const before = allKeys();
@@ -446,7 +446,7 @@ function drawRoleCard() {
   const show = SES.active && S.mode === 'fps';
   if (!card) {
     if (!show) return;
-    card = el('aside', { id: 'role-card', 'aria-label': 'Votre rôle' });
+    card = el('aside', { id: 'role-card', 'aria-label': 'Ton rôle' });
     card.addEventListener('click', (e) => { if (e.target.closest('button')) return; card.classList.toggle('min'); cardKey = ''; drawRoleCard(); });
     $('#hud').appendChild(card);
   }
@@ -463,7 +463,7 @@ function drawRoleCard() {
   if (obj.length) card.append(el('ul', { class: 'rc-obj' }, ...obj.map((o) => el('li', { class: o.ok === true ? 'is-ok' : o.ok === false ? 'is-bad' : '' }, el('span', {}, o.label), el('b', {}, o.value)))));
   if (goToRolePost && (B.station || r === 'cadreur')) card.append(el('button', { class: 'btn small', onclick: () => goToRolePost(r, SES.cam) }, r === 'cadreur' ? `Aller à la CAM ${SES.cam || 1}` : 'Aller à mon poste'));
 }
-on('session', (e) => { if (e.type === 'role' || e.type === 'assigned' || e.type === 'leave') { cardKey = ''; drawRoleCard(); } if (e.type === 'assigned') toast(`${e.by} vous confie le rôle ${ROLES_S[e.role].label}.`, 'good', 6000); });
+on('session', (e) => { if (e.type === 'role' || e.type === 'assigned' || e.type === 'leave') { cardKey = ''; drawRoleCard(); } if (e.type === 'assigned') toast(`${e.by} te confie le rôle ${ROLES_S[e.role].label}.`, 'good', 6000); });
 on('session', (e) => {
   if (e.type !== 'order' || e.mine) return;
   const o = e.o;
@@ -500,7 +500,7 @@ export function applyStationLock(stationId) {
   const sl = STATION_SLICE[stationId];
   const p = holderOf(sl);
   const roleNeeded = Object.entries(ROLES_S).find(([, r]) => r.slices.includes(sl));
-  const txt = p ? `Poste tenu par ${nameOf(p)} (${roleLabel(p)}) : vous voyez ses réglages en direct, sans pouvoir les modifier.` : `Poste piloté par l'hôte de la session. Prenez le rôle « ${roleNeeded ? roleNeeded[1].label : '?'} » pour le piloter.`;
+  const txt = p ? `Poste tenu par ${nameOf(p)} (${roleLabel(p)}) : tu vois ses réglages en direct, sans pouvoir les modifier.` : `Poste piloté par l'hôte de la session. Prends le rôle « ${roleNeeded ? roleNeeded[1].label : '?'} » pour le piloter.`;
   if (!bar) { bar = el('div', { class: 'ses-lockbar' }); const head = root.querySelector('.st-head'); if (head) head.after(bar); else root.prepend(bar); }
   bar.textContent = '🔒 ' + txt;
 }
@@ -514,7 +514,7 @@ if (lockRoot) for (const t of ['pointerdown', 'mousedown', 'click', 'input', 'ch
     if (!x.closest('.st-body') || x.closest('.tabs, .vx-tabs, .tab, .vx-tab, .net-tabs, [data-ro-ok]')) return;
     if (t === 'keydown' && /** @type {KeyboardEvent} */ (e).code === 'Escape') return;
     e.preventDefault(); e.stopPropagation();
-    if (t === 'pointerdown' && performance.now() - lockToastT > 2500) { lockToastT = performance.now(); toast('Poste en lecture seule : pour le piloter, prenez son rôle (bouton « Équipe »).'); }
+    if (t === 'pointerdown' && performance.now() - lockToastT > 2500) { lockToastT = performance.now(); toast('Poste en lecture seule : pour le piloter, prends son rôle (bouton « Équipe »).'); }
   }, { capture: true, passive: false });
 }
 // le réalisateur en session : ses ordres partent vers le truquiste humain s'il y en a un

@@ -72,7 +72,7 @@ export const CAMERA_FIBRE = {
     'Ce qui ruine une liaison, c\'est la **saleté** : une poussière sur un cœur de 9 µm coûte plusieurs dB. On **inspecte et nettoie les deux bouts** avant de brancher, et on lit le **niveau optique** à la CCU.',
   ],
   figure: figFibre,
-  demoTitle: 'Allongez la fibre, ajoutez des raccords de tourets, salissez un connecteur, passez en multimode : suivez le niveau reçu à la CCU.',
+  demoTitle: 'Allonge la fibre, ajoute des raccords de tourets, salis un connecteur, passe en multimode : suis le niveau reçu à la CCU.',
   demo: demoFibre,
   body: `Entre la tête de caméra et sa CCU, un seul câble : le **câble hybride SMPTE** (ST 311), de l'ordre de 9 mm de diamètre. Dedans :
 - **deux fibres monomodes**, une par sens : vers le car l'image, le son, les données de la tête ; vers la tête le retour programme, les ordres, le tally, les commandes du RCP ;
@@ -110,7 +110,7 @@ Le connecteur **ST 304** (type LEMO 3K.93C) branche tout d'un geste ; les deux f
     { q: 'Pourquoi le monomode plutôt que le multimode pour une caméra de stade ?',
       choices: [['Parce qu\'il est moins cher', 'Le coût n\'est pas la raison : la portée et la bande passante le sont.'], 'Un seul chemin : pas d\'étalement des impulsions et ≈ 0,35 dB/km, contre ≈ 3 dB/km en multimode', ['Parce que le multimode n\'existe pas en 9 µm', 'C\'est vrai par définition, mais ce n\'est pas une raison.']],
       answer: 1, why: 'En multimode, plusieurs chemins de longueurs différentes étalent les impulsions ; le monomode porte loin, sans étalement.' },
-    { q: 'Vous débranchez une fibre caméra en fin de match. Que faites-vous aussitôt ?',
+    { q: 'Tu débranches une fibre caméra en fin de match. Que fais-tu aussitôt ?',
       choices: [['Je regarde dans le connecteur pour vérifier la propreté', 'Jamais à l\'œil nu : la lumière est infrarouge et invisible, et il faut un microscope pour voir un cœur de 9 µm.'], 'Je remets les bouchons sur les deux connecteurs', ['Je souffle dans le connecteur', 'Le souffle dépose de l\'humidité et des particules ; on nettoie avec les outils prévus.']],
       answer: 1, why: 'Les bouchons protègent les faces de la poussière ; au prochain branchement, on inspectera et nettoiera quand même.' },
   ],

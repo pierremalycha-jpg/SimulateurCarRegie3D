@@ -38,7 +38,7 @@ export function menuEnregistreur(a, m, ctx) {
       choix(a.uid, 'codec', c.codec || 'H.264', CODECS, 'Codec'),
       String(c.codec || 'H.264') === 'H.264' ? choix(a.uid, 'qualite', c.qualite || 'High', [['High', 'High'], ['Medium', 'Medium'], ['Low', 'Low']], 'Qualité H.264', { aide: 'Le débit, donc la taille des fichiers ; sans effet sur la note de la mission.' }) : null),
     section('Support',
-      note('Une carte SD dans SD 1 ou SD 2, ou un disque sur USB-C : le support choisi doit être présent (sortez une carte SD ou un disque du stock et branchez-le).'),
+      note('Une carte SD dans SD 1 ou SD 2, ou un disque sur USB-C : le support choisi doit être présent (sors une carte SD ou un disque du stock et branche-le).'),
       choix(a.uid, 'media', c.media || 'sd1', supports, 'Enregistrer sur')),
     section('Transport',
       coche(a.uid, 'distant', c.distant !== false, 'REMOTE (pilotage par le réseau, TCP 9993)', { aide: 'Sur OFF, le HyperDeck refuse les ordres de l\'ATEM ou de vMix.' }),

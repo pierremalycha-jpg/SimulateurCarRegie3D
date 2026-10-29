@@ -28,7 +28,7 @@ export const VUE_ST2110_PAQUET = {
   resume: 'Une ligne d\'image en quatre paquets ; un paquet ouvert couche par couche, chaque champ écrit dessus ; puis le rythme d\'envoi et le tampon du récepteur (ST 2110-21).',
   lecons: ['reseau-paquet', 'reseau-rythme'],
   lectures: ['Couche ouverte', 'Taille du paquet', 'Rythme', 'Tampon du récepteur'],
-  depart: 'Chaque étape ouvre une couche de plus. Cliquez une couche pour lire ses champs.',
+  depart: 'Chaque étape ouvre une couche de plus. Clique une couche pour lire ses champs.',
   vue: { cible: [0.8, 1.3, 0], dir: [0, 0.35, 1], dist: 9 },
   orbite: { rMin: 1, rMax: 18 },
   etapes: [
@@ -61,7 +61,7 @@ Un émetteur **étroit** (type N, ST 2110-21) envoie ses paquets **régulièreme
     { t: 'Le rythme : rafales et tampon qui déborde', ouvre: 6, rythme: 'rafale', vue: { cible: [4.8, 1.3, 0], dir: [0, 0.38, 1], dist: 6.8 },
       texte: `Un émetteur qui envoie par **rafales** remplit le tampon d'un coup. Un émetteur **large** (type W) est autorisé à le faire un peu : il lui faut un récepteur large, avec un tampon de 720 paquets en 1080p50. Au-delà de ce que tient le tampon, des **paquets sont perdus** : des morceaux d'image manquent.
 
-Essayez les trois rythmes dans « À vous », et regardez le tampon.` },
+Essaie les trois rythmes dans « À toi », et regarde le tampon.` },
   ],
   build(ctx) {
     const root = ctx.root;

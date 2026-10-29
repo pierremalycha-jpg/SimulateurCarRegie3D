@@ -90,13 +90,13 @@ const CHARGE = [['plaque', 1.5], ['adaptateur', 15.5], ['caméra', 5], ['objecti
 const SUPPORT = [['pied', 15], ['tête fluide', 18]];
 const MONTAGE = [
   {
-    type: 'choix', q: 'L\'adaptateur grand objectif est posé, levier fermé, mais son témoin de verrouillage n\'est pas visible. Que faites-vous avant d\'y glisser la caméra ?',
+    type: 'choix', q: 'L\'adaptateur grand objectif est posé, levier fermé, mais son témoin de verrouillage n\'est pas visible. Que fais-tu avant d\'y glisser la caméra ?',
     choices: ['Je vérifie le verrou : témoin visible et test de traction', ['Je glisse la caméra : elle ne pèse que 5 kg', 'Le poids ne change rien à la règle : rien ne se pose sur une pièce qui n\'est pas verrouillée, et l\'objectif de 23,5 kg viendra ensuite.'], ['Je continue et je vérifierai une fois tout monté', 'Une fois l\'objectif posé, un adaptateur mal verrouillé, c\'est la chute de 24 kg.']], answer: 0,
     aides: ['Une seule règle fixe l\'ordre du montage.', 'Rien ne se pose sur une pièce qui n\'est pas stable et verrouillée.'],
     solution: '**Vérifier le verrou** : levier fermé, témoin visible, test de traction. C\'est l\'adaptateur qui portera la caméra, puis l\'objectif.',
   },
   {
-    type: 'choix', q: 'La caméra tient seule à l\'horizontale, mais dès que le cadreur l\'incline vers le bas, elle tend à continuer de plonger. Que réglez-vous ?',
+    type: 'choix', q: 'La caméra tient seule à l\'horizontale, mais dès que le cadreur l\'incline vers le bas, elle tend à continuer de plonger. Que règles-tu ?',
     choices: ['Le contrepoids de la tête', ['La plaque, en la reculant', 'À l\'horizontale, le centre de gravité est déjà au-dessus de l\'axe : reculer la plaque le ferait passer derrière.'], ['Rien : le fluide retient la caméra', 'Le fluide freine le mouvement, il ne retient pas la charge.']], answer: 0,
     aides: ['Le centre de gravité est au-dessus de l\'axe d\'inclinaison : que se passe-t-il quand on incline ?', 'Il faut un couple opposé, donné par des ressorts.'],
     solution: 'Le **contrepoids** : ses ressorts compensent le couple qui naît quand le centre de gravité, à environ 25 cm au-dessus de l\'axe, sort de la verticale. Les frictions viennent après.',
@@ -104,7 +104,7 @@ const MONTAGE = [
   {
     type: 'choix', q: 'L\'objectif box (≈ 23,5 kg) attend dans son flight case. Comment le monte-t-on ?',
     choices: ['À deux, sur une tête verrouillée et un adaptateur déjà bloqué', ['Seul, en le tenant par le pare-soleil', 'Près de 24 kg en bout de bras : on le lève à deux, jamais par le pare-soleil.'], ['Avant l\'adaptateur, directement sur la plaque', 'L\'objectif se pose sur l\'adaptateur grand objectif, qui doit être verrouillé avant.']], answer: 0,
-    aides: ['Pensez à sa masse et à ce qui doit déjà le porter.', 'La tête et l\'adaptateur doivent être verrouillés.'],
+    aides: ['Pense à sa masse et à ce qui doit déjà le porter.', 'La tête et l\'adaptateur doivent être verrouillés.'],
     solution: '**À deux**, tête verrouillée, adaptateur déjà bloqué, puis on le verrouille et on branche son câble.',
   },
 ];
@@ -112,7 +112,7 @@ const MONTAGE = [
 registerExos({
   'camera-systeme': {
     titre: 'Lire la voie caméra',
-    consigne: 'À la baie CCU, avant le line-up : vous vérifiez le niveau optique et la longueur de câble possible de chaque caméra, puis vous répondez aux questions de l\'équipe vision.',
+    consigne: 'À la baie CCU, avant le line-up : tu vérifies le niveau optique et la longueur de câble possible de chaque caméra, puis tu réponds aux questions de l\'équipe vision.',
     gen: (rnd) => {
       const L = entre(rnd, 4, 40) * 50, dirt = pick(rnd, [0, 0, 3]);
       const v = Math.round(opticalAt(L, dirt) * 10) / 10;
@@ -125,20 +125,20 @@ registerExos({
           type: 'nombre', unite: 'dBm', answer: v, tol: 0.15,
           q: `La tête de la CAM ${entre(rnd, 1, 8)} émet **−4 dBm** ; la fibre perd 0,4 dB/km ; la liaison passe par **trois paires de connecteurs** à 0,5 dB chacune${dirt ? ', et l\'un d\'eux a une poussière qui coûte **3 dB**' : ''}. Le câble fait **${fr(L)} m**. Quel niveau la CCU lit-elle ?`,
           pieges: [{ v: sansConn, why: 'Les trois paires de connecteurs coûtent aussi : 3 × 0,5 = 1,5 dB.' }, ...(dirt ? [{ v: Math.round(opticalAt(L, 0) * 10) / 10, why: 'La poussière coûte 3 dB : elle compte dans le bilan.' }] : [])].filter((p) => Math.abs(p.v - v) > 0.2),
-          aides: ['Partez du niveau émis et retirez chaque perte, en décibels : la fibre, les connecteurs, la saleté.', `−4 − 0,4 × ${fr(L / 1000, 2)} km − 3 × 0,5${dirt ? ' − 3' : ''}.`],
+          aides: ['Pars du niveau émis et retire chaque perte, en décibels : la fibre, les connecteurs, la saleté.', `−4 − 0,4 × ${fr(L / 1000, 2)} km − 3 × 0,5${dirt ? ' − 3' : ''}.`],
           solution: `−4 − ${fr(0.4 * L / 1000, 2)} − 1,5${dirt ? ' − 3' : ''} = **${moins(v, 1)} dBm**, dans la plage d'exploitation (−5 à −15 dBm). La fibre ne coûte presque rien ; ${dirt ? 'la poussière, elle, coûte plus que tout le câble.' : 'ce sont les connecteurs qui pèsent le plus.'}`,
         },
         {
           type: 'nombre', unite: 'm', answer: Lmax, tol: Math.max(20, Lmax * 0.02),
           q: `La CCU envoie **240 V** sur le cuivre du câble hybride, qui fait **66 Ω par kilomètre** (aller et retour compris). La puissance maximale qu'on peut faire passer dans une résistance R vaut V² ÷ (4R). La tête demande **${P} W**${P === 110 ? ' (objectif box et grand viseur)' : P === 60 ? ' (objectif portable)' : ''}. Quelle longueur de câble au plus, en mètres ?`,
           pieges: [{ v: Math.round(powerAt(1, P).Lmax * 4 / 10) * 10, why: 'Il manque le 4 de la formule : la puissance maximale est V² ÷ (4R), pas V² ÷ R.' }],
-          aides: ['Cherchez d\'abord la résistance R qui donne juste la puissance demandée : P = V² ÷ (4R).', `R = 240² ÷ (4 × ${P}) ohms ; la longueur, c'est R ÷ 66 Ω par kilomètre.`],
+          aides: ['Cherche d\'abord la résistance R qui donne juste la puissance demandée : P = V² ÷ (4R).', `R = 240² ÷ (4 × ${P}) ohms ; la longueur, c'est R ÷ 66 Ω par kilomètre.`],
           solution: `R = 57 600 ÷ ${4 * P} = ${fr(57600 / (4 * P), 1)} Ω, soit ${fr(57600 / (4 * P) / 66, 2)} km : **≈ ${fr(Lmax)} m**. C'est l'énergie, pas la lumière, qui fixe la longueur du câble hybride${P >= 100 ? ' : de l\'ordre de 2 km pour une caméra de stade' : ''}.`,
         },
         {
           type: 'choix', q: `Dans le câble hybride SMPTE, par où passe **${S.s}** ?`,
           choices: choix.map((k) => (k === S.v ? VOIES[k] : [VOIES[k], POURQUOI[S.v]])), answer: choix.indexOf(S.v),
-          aides: ['Demandez-vous où naît ce signal : sur le terrain, ou dans le car ?', 'Deux fibres, une par sens ; le cuivre ne porte que l\'énergie.'],
+          aides: ['Demande-toi où naît ce signal : sur le terrain, ou dans le car ?', 'Deux fibres, une par sens ; le cuivre ne porte que l\'énergie.'],
           solution: `**${VOIES[S.v]}**. ${POURQUOI[S.v]}`,
         },
         pick(rnd, SITUATIONS),
@@ -147,7 +147,7 @@ registerExos({
   },
   'camera-montage': {
     titre: 'Monter et équilibrer la caméra',
-    consigne: 'Sur la passerelle de la tribune, vous montez la CAM 1 : l\'ordre des gestes, les masses en jeu, le couple d\'une charge mal placée.',
+    consigne: 'Sur la passerelle de la tribune, tu montes la CAM 1 : l\'ordre des gestes, les masses en jeu, le couple d\'une charge mal placée.',
     gen: (rnd) => {
       const debut = entre(rnd, 0, CHAINE_SUPPORT.length - 5);
       const chaine = pick(rnd, [CHAINE_SUPPORT.slice(debut, debut + 5), CHAINE_SUPPORT.slice(debut, debut + 5), CHAINE_LIAISON]);
@@ -159,7 +159,7 @@ registerExos({
       return [
         {
           type: 'ordre', items: chaine,
-          q: 'Remettez ces gestes du montage dans l\'ordre.',
+          q: 'Remets ces gestes du montage dans l\'ordre.',
           aides: ['Une seule règle : rien ne se pose sur une pièce qui n\'est pas stable et verrouillée.', chaine === CHAINE_LIAISON ? 'La fibre se nettoie avant d\'être branchée, et la caméra doit être en place pour la recevoir.' : 'On part du sol : chaque pièce attend que celle qui la porte soit posée et verrouillée ; l\'équilibrage vient quand toute la charge est en place.'],
           solution: chaine.map((s, k) => `${k + 1}. ${s}`).join('\n'),
         },
@@ -173,7 +173,7 @@ registerExos({
         {
           type: 'nombre', unite: 'kg', answer: M, tol: 0.05,
           q: `Quelle masse ${total ? 'pèse le montage entier, du sol au viseur' : 'repose sur la tête fluide'} ? Pièces : ${liste.map(([n, k]) => `${n} ${kg(Number(k))} kg`).join(', ')}.`,
-          aides: ['Additionnez toutes les pièces de la liste, sans en oublier.', 'Faites la somme en gardant les dixièmes.'],
+          aides: ['Additionne toutes les pièces de la liste, sans en oublier.', 'Fais la somme en gardant les dixièmes.'],
           solution: `${liste.map(([, k]) => kg(Number(k))).join(' + ')} = **${fr(M, 1)} kg**. ${total ? 'Plus de 80 kg une fois tout monté : c\'est pourquoi le pied se pose sur son repère et l\'araignée se verrouille.' : 'Près de 50 kg sur la tête avec toute la charge : jamais sur une tête libre.'}`,
         },
         pick(rnd, MONTAGE),
@@ -182,7 +182,7 @@ registerExos({
   },
   'camera-fibre': {
     titre: 'Le bilan optique d\'une liaison',
-    consigne: 'Une caméra est raccordée par plusieurs tourets : vous calculez ce que la CCU va recevoir, la marge qui reste, et ce qu\'un mauvais choix de fibre coûterait.',
+    consigne: 'Une caméra est raccordée par plusieurs tourets : tu calcules ce que la CCU va recevoir, la marge qui reste, et ce qu\'un mauvais choix de fibre coûterait.',
     gen: (rnd) => {
       const km = entre(rnd, 3, 20) / 10, paires = entre(rnd, 2, 5), sal = pick(rnd, ['propre', 'poussiere', 'sale']);
       const B = bilanOptique(km, paires, sal), v = Math.round(B.recu * 10) / 10;
@@ -195,26 +195,26 @@ registerExos({
           type: 'nombre', unite: 'dBm', answer: v, tol: 0.15,
           q: `Le laser de la tête émet **−2 dBm**. La liaison : **${fr(km, 1)} km** de fibre monomode (0,35 dB/km), **${paires} paires de connecteurs** (0,4 dB chacune), ${SALE[sal]}${sal === 'propre' ? '' : sal === 'poussiere' ? ' (3 dB)' : ' (8 dB)'}. Quel niveau la CCU lit-elle ?`,
           pieges: [{ v: Math.round((B.recu + B.sal) * 10) / 10, why: 'La saleté compte dans le bilan, et c\'est souvent elle qui coûte le plus.' }, { v: Math.round((B.recu + B.conn) * 10) / 10, why: 'Chaque paire de connecteurs coûte 0,4 dB, même propre.' }].filter((p) => Math.abs(p.v - v) > 0.2),
-          aides: ['Partez du niveau émis et retirez chaque perte : la fibre, les paires de connecteurs, la saleté.', `−2 − ${fr(km, 1)} × 0,35 − ${paires} × 0,4${B.sal ? ' − ' + B.sal : ''}.`],
+          aides: ['Pars du niveau émis et retire chaque perte : la fibre, les paires de connecteurs, la saleté.', `−2 − ${fr(km, 1)} × 0,35 − ${paires} × 0,4${B.sal ? ' − ' + B.sal : ''}.`],
           solution: `−2 − ${fr(B.fibre, 2)} − ${fr(B.conn, 1)}${B.sal ? ' − ' + B.sal : ''} = **${moins(v, 1)} dBm** : ${B.etat === 'bon' ? 'dans la plage d\'exploitation (−5 à −15 dBm)' : B.etat === 'limite' ? 'sous −15 dBm, près du décrochage' : 'sous −20 dBm, la liaison décroche'}. ${sal !== 'propre' ? 'Le connecteur sale coûte plus que toute la fibre : on inspecte, on nettoie, on inspecte.' : 'La fibre ne coûte presque rien : ce sont les connecteurs qui pèsent.'}`,
         },
         {
           type: 'nombre', answer: raccords,
           q: `Sur cette même liaison (la CCU lit ${moins(B.recu, 1)} dBm), combien de raccords de touret propres (0,4 dB chacun) peut-on encore ajouter sans passer sous **−15 dBm**, le bas de la plage d'exploitation ?`,
-          aides: ['Calculez d\'abord la marge entre le niveau lu et −15 dBm.', `(${moins(B.recu, 1)} − (−15)) ÷ 0,4, arrondi à l'entier inférieur.`],
+          aides: ['Calcule d\'abord la marge entre le niveau lu et −15 dBm.', `(${moins(B.recu, 1)} − (−15)) ÷ 0,4, arrondi à l'entier inférieur.`],
           solution: `Marge : ${fr(B.recu + 15, 1)} dB ; ${fr(B.recu + 15, 1)} ÷ 0,4 = ${fr((B.recu + 15) / 0.4, 1)} : **${raccords} raccords** au plus. ${raccords > 10 ? 'Des raccords propres coûtent peu ; une seule face sale en coûte bien plus.' : 'La marge est mince : la moindre poussière la mange.'}`,
         },
         {
           type: 'nombre', unite: 'dB', answer: de, tol: 0.05,
           q: `Un technicien propose une fibre multimode (≈ 3 dB/km) au lieu de la monomode (≈ 0,35 dB/km) pour **${fr(km2, 1)} km** de liaison. Combien de décibels de plus perdrait-on ?`,
           pieges: [{ v: Math.round(km2 * OPTIQUE.fibre.multi * 100) / 100, why: 'C\'est la perte totale de la multimode : la question demande ce qu\'elle perd de plus que la monomode.' }],
-          aides: ['Calculez la perte de chaque fibre sur la longueur, puis la différence.', `${fr(km2, 1)} × (3 − 0,35).`],
+          aides: ['Calcule la perte de chaque fibre sur la longueur, puis la différence.', `${fr(km2, 1)} × (3 − 0,35).`],
           solution: `${fr(km2, 1)} × 2,65 = **${fr(de, 2)} dB** de plus, sans compter l'étalement des impulsions : la multimode ne sert qu'aux courtes distances.`,
         },
         {
           type: 'choix', q: `Une liaison de **${km3} km** en fibre **multimode** (3 dB/km), ${p3} paires de connecteurs (0,4 dB), ${SALE[s3]}${s3 === 'propre' ? '' : s3 === 'poussiere' ? ' (3 dB)' : ' (8 dB)'}, laser à −2 dBm. Dans quel état est-elle ?`,
           choices: [['Bonne : dans la plage d\'exploitation (−5 à −15 dBm)', `Le niveau reçu est de ${moins(B3.recu, 1)} dBm.`], ['Limite : sous −15 dBm, près du décrochage', `Le niveau reçu est de ${moins(B3.recu, 1)} dBm.`], ['Décrochée : sous −20 dBm', `Le niveau reçu est de ${moins(B3.recu, 1)} dBm.`]], answer: ETATS.indexOf(B3.etat),
-          aides: ['Faites le bilan : niveau émis moins toutes les pertes.', 'Comparez à −15 dBm (bas de la plage) et à −20 dBm (décrochage).'],
+          aides: ['Fais le bilan : niveau émis moins toutes les pertes.', 'Compare à −15 dBm (bas de la plage) et à −20 dBm (décrochage).'],
           solution: `−2 − ${fr(B3.fibre, 1)} − ${fr(B3.conn, 1)}${B3.sal ? ' − ' + B3.sal : ''} = **${moins(B3.recu, 1)} dBm** : ${B3.etat === 'bon' ? 'bonne' : B3.etat === 'limite' ? 'limite' : 'décrochée'}. En multimode, c'est la fibre elle-même qui coûte : 3 dB par kilomètre.`,
         },
       ];

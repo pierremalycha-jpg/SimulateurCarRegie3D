@@ -33,8 +33,8 @@ export const RCP_PAGES = {
 };
 export function rcpOk(c) {
   if (!c) return false;
-  if (!S.ipMode) { const k = ctrlCam(c.id); if (!k.ok) { toast(`CCU ${c.id} injoignable par le réseau de contrôle.`, 'bad'); explain(`Réglage refusé : le RCP ne joint plus la CCU ${c.id} par le réseau de contrôle du car (${k.why}). L'image passe toujours en SDI, mais plus aucune commande : voyez le poste Réseau.`, 'warn:ctrl'); return false; } }
-  if (c.panelActive === false) { toast('PANEL ACTIVE éteint : rallumez-le pour régler la caméra.', 'bad'); explain('Réglage refusé : PANEL ACTIVE est éteint. On l\'éteint pour verrouiller une caméra réglée ; rallumez-le pour reprendre la main.', 'warn:locked'); return false; }
+  if (!S.ipMode) { const k = ctrlCam(c.id); if (!k.ok) { toast(`CCU ${c.id} injoignable par le réseau de contrôle.`, 'bad'); explain(`Réglage refusé : le RCP ne joint plus la CCU ${c.id} par le réseau de contrôle du car (${k.why}). L'image passe toujours en SDI, mais plus aucune commande : vois le poste Réseau.`, 'warn:ctrl'); return false; } }
+  if (c.panelActive === false) { toast('PANEL ACTIVE éteint : rallume-le pour régler la caméra.', 'bad'); explain('Réglage refusé : PANEL ACTIVE est éteint. On l\'éteint pour verrouiller une caméra réglée ; rallume-le pour reprendre la main.', 'warn:locked'); return false; }
   return true;
 }
 let irisSeq = null;
@@ -62,11 +62,11 @@ export const RCPACT = {
   nd(c, v) { const p = c.paint; const before = ND_FILTERS[p.nd].f, after = ND_FILTERS[v].f; p.nd = v; explain(`Filtre ND ${ND_FILTERS[v].label} : ${stopsTxt(Math.log2(after / before))}. Le ND retire de la lumière sans changer les couleurs, pour pouvoir garder un iris de travail (f/4 à f/8) en plein soleil.`, 'rcp:nd'); },
   shutter(c, v) { c.paint.shutter = v; const te = c.exposureTime(); explain(`Shutter ${SHUTTERS[v].label} : temps de pose ${fmt(te * 1000, 1)} ms (au lieu de ${fmt(1000 / c.fps, 1)} ms à ${c.fps} i/s), soit ${stopsTxt(Math.log2(te * c.fps))}. Les mouvements sont plus nets (ralentis), mais l'image s'assombrit et les éclairages 100 Hz peuvent scintiller.`, 'rcp:shut'); },
   sceneStore(c, i) { SCENES[c.id + ':' + i] = { ...c.paint }; explain(`Fichier de scène ${i} mémorisé pour la CAM ${c.id} : tous les réglages de rendu (noirs, gamma, knee, détail, couleurs). On en prépare un par situation (soleil, ombre, nuit).`); },
-  sceneRecall(c, i) { const s = SCENES[c.id + ':' + i]; if (!s) { toast('Fichier de scène vide : mémorisez-le d\'abord avec STORE.'); return false; } Object.assign(c.paint, s); explain(`Fichier de scène ${i} rappelé : la caméra reprend instantanément tous ces réglages.`); return true; },
+  sceneRecall(c, i) { const s = SCENES[c.id + ':' + i]; if (!s) { toast('Fichier de scène vide : mémorise-le d\'abord avec STORE.'); return false; } Object.assign(c.paint, s); explain(`Fichier de scène ${i} rappelé : la caméra reprend instantanément tous ces réglages.`); return true; },
   /** touche assignable (ASSIGN) */
   assign(c, l) {
     const a = ASSIGN.find((x) => x[0] === l); if (!a) return; const [, prop, , name] = a;
-    if (prop) { c.paint[prop] = !c.paint[prop]; explain(`${name} ${c.paint[prop] ? 'activé' : 'désactivé'}. ${prop === 'gammaOn' && !c.paint[prop] ? 'Sans gamma, l\'image est linéaire : très contrastée et sombre, c\'est pour cela qu\'on applique toujours une courbe (BT.709 ou HLG).' : prop === 'kneeOn' && !c.paint[prop] ? 'Sans knee, les hautes lumières ne sont plus compressées : elles écrêtent net au niveau du white clip (103 % par défaut ici) et perdent leur détail ; regardez le haut du waveform.' : prop === 'detailOn' && !c.paint[prop] ? 'Sans détail, l\'image paraît plus douce.' : ''}`); }
+    if (prop) { c.paint[prop] = !c.paint[prop]; explain(`${name} ${c.paint[prop] ? 'activé' : 'désactivé'}. ${prop === 'gammaOn' && !c.paint[prop] ? 'Sans gamma, l\'image est linéaire : très contrastée et sombre, c\'est pour cela qu\'on applique toujours une courbe (BT.709 ou HLG).' : prop === 'kneeOn' && !c.paint[prop] ? 'Sans knee, les hautes lumières ne sont plus compressées : elles écrêtent net au niveau du white clip (103 % par défaut ici) et perdent leur détail ; regarde le haut du waveform.' : prop === 'detailOn' && !c.paint[prop] ? 'Sans détail, l\'image paraît plus douce.' : ''}`); }
     else if (l === 'ND ▲') { if (c.paint.nd < 4) { c.paint.nd++; explain(`ND ${ND_FILTERS[c.paint.nd].label} (−1 ou −2 diaph selon le cran).`); } }
     else if (l === 'ND ▼') { if (c.paint.nd > 0) { c.paint.nd--; explain(`ND ${ND_FILTERS[c.paint.nd].label} (+1 ou +2 diaph selon le cran).`); } }
     else if (l === 'BLK GAM') { c.paint.blackGamma = c.paint.blackGamma ? 0 : 30; explain(`Black gamma ${c.paint.blackGamma ? '+30 : ombres débouchées' : 'remis à 0'}.`); }
@@ -78,7 +78,7 @@ export const RCPACT = {
   white(c, i, v) { c.paint[['wbR', 'wbG', 'wbB'][i]] = v; explain(i === 1 ? `Gain vert ${v} : le vert sert en général de référence, on règle plutôt le rouge et le bleu.` : `Gain ${i ? 'bleu' : 'rouge'} ${v > 0 ? '+' : ''}${v} (${v > 0 ? '+' : ''}${fmt(v * 0.25, 1)} %) : l'image ${i ? (v > 0 ? 'refroidit (bleutée)' : 'se réchauffe') : (v > 0 ? 'se réchauffe (rougeâtre)' : 'refroidit')}. Au vecteurscope, le gris de la pelouse ombragée et les maillots blancs se décalent vers ${i ? (v > 0 ? 'B' : 'Yl') : (v > 0 ? 'R' : 'Cy')}.`, 'rcp:w' + i); },
   /** potentiomètre BLACK (ou FLARE quand la touche FLARE est allumée) */
   blackGet(c, i) { return S.rcpFlare ? c.paint['flare' + 'RGB'[i]] : c.paint[['blackR', 'blackG', 'blackB'][i]]; },
-  black(c, i, v) { const p = c.paint; if (S.rcpFlare) { p['flare' + 'RGB'[i]] = v; explain(`Flare ${'RGB'[i]} ${v} : compense le voile lumineux de l'optique dans les noirs de cette couleur.`, 'rcp:f' + i); } else { p[['blackR', 'blackG', 'blackB'][i]] = v; explain(`Noir ${['rouge', 'vert', 'bleu'][i]} ${v > 0 ? '+' : ''}${v} : les ombres virent ${v > 0 ? 'vers le ' + ['rouge', 'vert', 'bleu'][i] : 'à l\'opposé'}. Regardez le bas des traces en parade RVB : les trois doivent être alignées.`, 'rcp:b' + i); } },
+  black(c, i, v) { const p = c.paint; if (S.rcpFlare) { p['flare' + 'RGB'[i]] = v; explain(`Flare ${'RGB'[i]} ${v} : compense le voile lumineux de l'optique dans les noirs de cette couleur.`, 'rcp:f' + i); } else { p[['blackR', 'blackG', 'blackB'][i]] = v; explain(`Noir ${['rouge', 'vert', 'bleu'][i]} ${v > 0 ? '+' : ''}${v} : les ombres virent ${v > 0 ? 'vers le ' + ['rouge', 'vert', 'bleu'][i] : 'à l\'opposé'}. Regarde le bas des traces en parade RVB : les trois doivent être alignées.`, 'rcp:b' + i); } },
   awb(c) { c.autoWhite(); explain(`AWB : balance des blancs automatique à ${S.sceneCCT} K. La caméra mesure un blanc de référence et calcule ses gains rouge et bleu. Dans un vrai stade, le cadreur cadre une charte ou une surface blanche pendant le réglage.`); },
   abb(c) { c.autoBlack(); explain('ABB : balance des noirs automatique. L\'iris se ferme, la caméra mesure son noir et égalise les trois couleurs.'); },
   flare() { S.rcpFlare = !S.rcpFlare; explain(S.rcpFlare ? 'FLARE allumé : les potentiomètres BLACK règlent maintenant la compensation de flare.' : 'FLARE éteint : les potentiomètres règlent la balance des noirs.'); },
@@ -138,7 +138,7 @@ export function lcdPage(c, page, lcd, encs, touch, redraw, rebuild) {
 export function visionMonitors(getSel) {
   // sortie SDR (BT.709) et sortie HDR (HLG) de la même CCU
   const monSDR = el('div', { class: 'mon fill', 'data-gl': 'AUX_VISION', title: 'Sortie SDR BT.709' });
-  const monHDR = el('div', { class: 'mon fill', 'data-gl': 'HDR', title: 'Sortie HDR HLG (simulation d\'un moniteur HDR sur votre écran)', hidden: true });
+  const monHDR = el('div', { class: 'mon fill', 'data-gl': 'HDR', title: 'Sortie HDR HLG (simulation d\'un moniteur HDR sur ton écran)', hidden: true });
   const hdrBtns = { sdr: el('button', { class: 'minibtn' }, 'SDR'), hlg: el('button', { class: 'minibtn' }, 'HDR HLG'), both: el('button', { class: 'minibtn' }, 'SDR | HDR') };
   const setHdr = (m) => {
     S.hdrView = m !== 'sdr'; if (!S.hdrView) { SCOPE.hdr = false; if (PRISM.vision.input === 'hlg') { setInput('vision', 'sdr'); if (prism) prism.refresh(); } }
@@ -316,6 +316,6 @@ export function buildVision(body, arg = 0, ctx) {
         el('td', { class: c.meter.mean < 0.3 || c.meter.mean > 0.6 ? 'warn' : '' }, Math.round(c.meter.mean * 100) + ' %'), el('td', { class: c.meter.peak > 1.035 ? 'warn' : '' }, Math.round(c.meter.peak * 100) + ' %'),
         el('td', { class: bad(e.r) }, fmt(e.r * 100, 1) + ' %'), el('td', { class: bad(e.b) }, fmt(e.b * 100, 1) + ' %')));
     }
-    overview.append(el('div', { class: 'tblwrap' }, tb), el('p', { class: 'note' }, 'Repères : niveau moyen 35 à 55 % selon le plan, crêtes ≤ 103 % (white clip), écarts de couleur sous 2 %. Cliquez une ligne pour prendre la caméra au RCP.'));
+    overview.append(el('div', { class: 'tblwrap' }, tb), el('p', { class: 'note' }, 'Repères : niveau moyen 35 à 55 % selon le plan, crêtes ≤ 103 % (white clip), écarts de couleur sous 2 %. Clique une ligne pour prendre la caméra au RCP.'));
   }
 }

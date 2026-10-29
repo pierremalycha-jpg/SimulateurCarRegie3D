@@ -225,7 +225,7 @@ function tabPhotos(box, editable) {
 function tabEleves(box) {
   const canSeeAll = !SH.db || SH.canEdit || SH.isOwner;
   box.append(el('h3', { class: 'eq-h' }, 'Suivi des stagiaires'));
-  if (!canSeeAll) { box.append(el('p', { class: 'note' }, 'Seul le formateur voit la progression de tous les stagiaires. Votre propre progression est enregistrée automatiquement.'), myProgress(), el('h3', { class: 'eq-h' }, 'Mon livret de compétences'), livretPanel(liveProg())); return; }
+  if (!canSeeAll) { box.append(el('p', { class: 'note' }, 'Seul le formateur voit la progression de tous les stagiaires. Ta propre progression est enregistrée automatiquement.'), myProgress(), el('h3', { class: 'eq-h' }, 'Mon livret de compétences'), livretPanel(liveProg())); return; }
   const host = el('div', { class: 'list' });
   box.append(el('p', { class: 'note' }, SH.db ? 'Chaque personne qui ouvre la page avec un accès « Contributeur » enregistre sa progression ici (missions, parcours du chef de car, scénarios, brassage, signalements d\'erreur, performances de son ordinateur). Cliquez sur une ligne pour voir son livret de compétences. Avec un accès « Lecteur », la progression reste dans son navigateur.' : 'Mode local : seule la progression de ce navigateur est visible.'), host);
   let rows = [];

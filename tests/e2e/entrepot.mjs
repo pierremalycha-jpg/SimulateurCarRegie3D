@@ -105,7 +105,7 @@ await A.click('.ep-b-mission'); await A.waitForTimeout(400);
 await shot('05-cahier-100');
 await A.click('.ep-side [data-k="mission:rendre"]'); await A.waitForTimeout(400);
 T.check('« Rendre le montage » enregistre 100 / 100 (PROG.entrepot.missions.conference.best)', await ev(() => { const P = window.__dbg.PROG || null; const r = P && P.entrepot && P.entrepot.missions && P.entrepot.missions.conference; return !!r && r.best && r.best.score === 100 && r.runs.length === 1; }));
-T.check('le cahier des charges affiche le meilleur résultat et l\'essai', await ev(() => /votre meilleur : 100 \/ 100/.test(document.querySelector('.ep-side').textContent) && /Vos essais \(1\)/.test(document.querySelector('.ep-side').textContent)));
+T.check('le cahier des charges affiche le meilleur résultat et l\'essai', await ev(() => /ton meilleur : 100 \/ 100/.test(document.querySelector('.ep-side').textContent) && /Tes essais \(1\)/.test(document.querySelector('.ep-side').textContent)));
 const [dl] = await Promise.all([A.waitForEvent('download', { timeout: 20000 }).catch(() => null), A.click('.ep-side [data-k="mission:cr"]')]);
 T.check('le compte rendu se télécharge (HTML)', !!dl && /compte-rendu-entrepot-conference\.html/.test(dl.suggestedFilename()));
 

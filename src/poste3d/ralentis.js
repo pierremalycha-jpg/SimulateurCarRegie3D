@@ -51,7 +51,7 @@ function controls() {
     } else if (k.kind === 'cam') {
       const id = rec[k.i];
       list.push({ name: id != null ? `${k.name} (CAM ${id})` : k.name, cls: 'lsm-key', text: k.name, ki, attrs: id != null ? { 'data-id': id } : {}, act: () => { if (id != null) LSMACT.cam(id); }, off: () => id == null, on: () => id != null && ch().cam === id, corners,
-        info: () => { const c = id != null ? camById(id) : null; return c ? `Angle ${'ABCDEFGH'[k.i]} : la CAM ${id} (${c.T.short})${c.hfr > 1 ? `, super ralenti ${c.hfr}x (${50 * c.hfr} i/s)` : ''}. Au même timecode que les autres angles : on change d'angle sans perdre l'action.` : 'Pas d\'entrée enregistrée sur cette touche : affectez des entrées REC à la grille.'; } });
+        info: () => { const c = id != null ? camById(id) : null; return c ? `Angle ${'ABCDEFGH'[k.i]} : la CAM ${id} (${c.T.short})${c.hfr > 1 ? `, super ralenti ${c.hfr}x (${50 * c.hfr} i/s)` : ''}. Au même timecode que les autres angles : on change d'angle sans perdre l'action.` : 'Pas d\'entrée enregistrée sur cette touche : affecte des entrées REC à la grille.'; } });
     } else {
       list.push({ name: TEXT[k.name] || k.name, cls: 'lsm-key', text: TEXT[k.name] || k.name, ki, act: () => LSMACT.key(k.name), on: () => lsmKeyOn(k.name), corners, info: INFO[k.name] || '' });
     }
@@ -65,7 +65,7 @@ function controls() {
     along: [[LEVER.x, 0.034, LEVER.z1], [LEVER.x, 0.034, LEVER.z0]], corners: rect(LEVER.x, (LEVER.z0 + LEVER.z1) / 2, 0.05, LEVER.z1 - LEVER.z0 + 0.02, 0.034) });
   // molette jog : sans butée
   list.push({ name: 'Molette jog', cls: 'lsm-jog-3d', aria: 'Molette jog', text: 'JOG', jog: (n) => { LSMS.jogA += n / 35 * 2 * Math.PI; LSMACT.jog(n); },
-    info: () => { const c = ch(); return EVS.browse ? 'BROWSE : la molette fait défiler les clips de la base.' : `Molette jog : un tour ≈ 35 images${EVS.fastJog ? ' (FAST JOG : dix fois plus)' : ''}. Tournez-la en glissant autour d'elle (sens des aiguilles d'une montre = vers l'avant), molette de la souris ou flèches. Position ${tc(S.tcOffset + (c.mode === 'live' ? S.simTime : c.t))}, ${fmt(Math.max(0, S.simTime - (c.mode === 'live' ? S.simTime : c.t)), 1)} s derrière le direct.`; },
+    info: () => { const c = ch(); return EVS.browse ? 'BROWSE : la molette fait défiler les clips de la base.' : `Molette jog : un tour ≈ 35 images${EVS.fastJog ? ' (FAST JOG : dix fois plus)' : ''}. Tourne-la en glissant autour d'elle (sens des aiguilles d'une montre = vers l'avant), molette de la souris ou flèches. Position ${tc(S.tcOffset + (c.mode === 'live' ? S.simTime : c.t))}, ${fmt(Math.max(0, S.simTime - (c.mode === 'live' ? S.simTime : c.t)), 1)} s derrière le direct.`; },
     corners: rect(JOG.x, JOG.z, JOG.r * 2, JOG.r * 2, 0.017) });
   return list;
 }
@@ -82,7 +82,7 @@ const ZONES = [
   { id: 'levier', at: [0.13, 0.06, -0.05], view: 'levier', title: 'Le levier et la molette',
     text: ['Le **levier** règle la vitesse de lecture : poussé à fond, 100 % ; à mi-course, 50 %. Le pousser lance le ralenti.', 'Une caméra normale (50 i/s) relue à 33 % répète chaque image trois fois : le mouvement saccade. Une caméra **super ralenti** 3x (150 i/s) reste fluide jusqu\'à 33 %.', 'La **molette jog** avance ou recule image par image (un tour ≈ 35 images) pour poser précisément l\'IN ; FAST JOG la rend dix fois plus rapide.'] },
 ];
-const INTRO = { title: 'Le poste ralentis (EVS)', text: ['La télécommande **LSM** pilote le serveur ralenti : il enregistre en boucle toutes ses caméras sur le même timecode, et l\'opérateur peut revenir en arrière sur n\'importe quel angle.', 'Méthode : la sortie reste en **LIVE** pendant le jeu. Après l\'action : DERN. ACTION (ou jog arrière + IN), choisissez l\'angle, puis poussez le levier quand le réalisateur envoie l\'EVS.', 'Survolez une commande : son nom et son rôle s\'affichent. Glissez pour tourner autour du pupitre, clic droit (ou Maj + glisser) pour le déplacer, molette pour vous approcher ; double-clic pour revenir à la vue.', 'À droite, en direct : les sorties EVS A et EVS B, le programme et l\'écran du serveur (trains d\'enregistrement : cliquez pour vous placer). « Tous les réglages » ouvre la télécommande à plat.'] };
+const INTRO = { title: 'Le poste ralentis (EVS)', text: ['La télécommande **LSM** pilote le serveur ralenti : il enregistre en boucle toutes ses caméras sur le même timecode, et l\'opérateur peut revenir en arrière sur n\'importe quel angle.', 'Méthode : la sortie reste en **LIVE** pendant le jeu. Après l\'action : DERN. ACTION (ou jog arrière + IN), choisis l\'angle, puis pousse le levier quand le réalisateur envoie l\'EVS.', 'Survole une commande : son nom et son rôle s\'affichent. Glisse pour tourner autour du pupitre, clic droit (ou Maj + glisser) pour le déplacer, molette pour t\'approcher ; double-clic pour revenir à la vue.', 'À droite, en direct : les sorties EVS A et EVS B, le programme et l\'écran du serveur (trains d\'enregistrement : clique pour te placer). « Tous les réglages » ouvre la télécommande à plat.'] };
 
 export const POSTE_EVS = {
   id: 'evs',

@@ -52,7 +52,7 @@ function controls() {
     list.push({ name: () => `MUTE ${c.short}`, cls: 'vx-mute', text: 'MUTE', aria: 'MUTE ' + c.short, info: 'Coupe la tranche : elle disparaît du programme et de tous les départs.', act: () => AUACT.mute(c), on: () => c.mute, corners: rect(G.btn(i, 2), 0.022, 0.013) });
   });
   // masters : PGM et VCA des commentaires
-  list.push({ name: 'Master PGM', aria: 'Fader Master PGM', text: 'Master PGM', slider: true, up: true, step: 1 / 140, value: () => pos(AU.master.fader), set: (p) => AUACT.master(dbOf(p)), info: () => `Master du programme : ${fdb(AU.master.fader)} dB. Il agit sur tout le PGM ; surveillez la loudness (cible −23 LUFS).`, ...FADER(G.masters[0]) });
+  list.push({ name: 'Master PGM', aria: 'Fader Master PGM', text: 'Master PGM', slider: true, up: true, step: 1 / 140, value: () => pos(AU.master.fader), set: (p) => AUACT.master(dbOf(p)), info: () => `Master du programme : ${fdb(AU.master.fader)} dB. Il agit sur tout le PGM ; surveille la loudness (cible −23 LUFS).`, ...FADER(G.masters[0]) });
   list.push({ name: () => AU.vca.comm.label, aria: 'Fader ' + AU.vca.comm.label, text: AU.vca.comm.label, slider: true, up: true, step: 1 / 140, value: () => pos(AU.vca.comm.fader), set: (p) => AUACT.vca('comm', dbOf(p)), info: () => `${AU.vca.comm.label} : ${fdb(AU.vca.comm.fader)} dB. Un VCA règle d'un geste le gain de toutes ses tranches, sans mélanger le son.`, ...FADER(G.masters[1]) });
   for (const k of CB) list.push({ ...k, cls: 'hw', corners: rect(G.cb(k.j), 0.026, 0.016) });
   return list;
@@ -73,7 +73,7 @@ const ZONES = [
   { id: 'cbay', at: [0.42, 0.22, -0.3], view: 'cbay', title: 'La Control Bay',
     text: ['L\'écran de la tranche sélectionnée (SEL), la loudness intégrée (cible −23 LUFS, EBU R128) et les vumètres du PGM.', 'Les touches : l\'**écoute** (PGM, international, N-1), **DIM**, **MONO**, le **talkback** maintenu vers un N-1, le **suivi du jeu** des canons et le **limiteur** du PGM.'] },
 ];
-const INTRO = { title: 'La console de la régie son', text: ['Une console inspirée de la **Studer Vista 1** : deux baies Vistonics de dix tranches, la Control Bay à droite, le pont de vumètres au fond.', 'Survolez une commande : son nom et son rôle s\'affichent. Faders : tirer vers le haut ou le bas ; molettes : glisser ou molette de la souris, double-clic pour revenir à la valeur nominale. Glissez pour tourner autour du pupitre, clic droit (ou Maj + glisser) pour le déplacer, molette pour vous approcher ; double-clic pour revenir à la vue.', 'À droite, en direct : l\'image du programme, les vumètres, la corrélation et la loudness.', '« Tous les réglages » ouvre la console à plat : couches, égaliseur, dynamique, patch, bus et N-1, snapshots, commentaires.'] };
+const INTRO = { title: 'La console de la régie son', text: ['Une console inspirée de la **Studer Vista 1** : deux baies Vistonics de dix tranches, la Control Bay à droite, le pont de vumètres au fond.', 'Survole une commande : son nom et son rôle s\'affichent. Faders : tirer vers le haut ou le bas ; molettes : glisser ou molette de la souris, double-clic pour revenir à la valeur nominale. Glisse pour tourner autour du pupitre, clic droit (ou Maj + glisser) pour le déplacer, molette pour t\'approcher ; double-clic pour revenir à la vue.', 'À droite, en direct : l\'image du programme, les vumètres, la corrélation et la loudness.', '« Tous les réglages » ouvre la console à plat : couches, égaliseur, dynamique, patch, bus et N-1, snapshots, commentaires.'] };
 
 export const POSTE_SON = {
   id: 'son',

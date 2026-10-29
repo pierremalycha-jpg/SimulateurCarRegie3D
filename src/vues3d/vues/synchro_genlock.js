@@ -40,11 +40,11 @@ Au-dessus de chaque source, sa **phase** au mélangeur : le repère est au centr
     { t: 'Couper proprement', reglage: { evs: 0, libre: false, sync: false, gps: true, coupe: true }, vue: { cible: [2.8, 1.3, 0.2], dir: [-0.1, 0.35, 1], dist: 6.5 },
       texte: `Le mélangeur coupe d'une source à l'autre **au top image**, dans la suppression (sur une ligne prévue pour cela). Toutes les sources étant en phase, l'image suivante commence exactement où la précédente s'arrêtait : la coupe ne se voit pas.
 
-Regardez le moniteur programme du mélangeur : il change de source toutes les quelques secondes, sans à-coup.` },
+Regarde le moniteur programme du mélangeur : il change de source toutes les quelques secondes, sans à-coup.` },
     { t: 'La phase : compenser les retards', reglage: { evs: 14.5, libre: false, sync: false, gps: true, coupe: true }, vue: { cible: [1.0, 1.4, 0.4], dir: [0, 0.3, 1], dist: 8.5 },
       texte: `Être verrouillé ne suffit pas. Chaque appareil a ses temps de traitement, chaque câble son retard (≈ 5 ns par mètre). Le serveur ralenti sort ici ses images **14,5 µs** trop tard : hors de la fenêtre. À la coupe vers lui, l'image **saute**.
 
-Chaque appareil a donc un réglage de **phase** (V en lignes, H en µs). Avec le curseur « Phase H du serveur », avancez-le jusqu'à ramener son repère dans le vert : la coupe redevient propre.` },
+Chaque appareil a donc un réglage de **phase** (V en lignes, H en µs). Avec le curseur « Phase H du serveur », avance-le jusqu'à ramener son repère dans le vert : la coupe redevient propre.` },
     { t: 'Une source libre dérive', reglage: { evs: 0, libre: true, sync: false, gps: true, coupe: true }, vue: { cible: [1.0, 1.4, 0.4], dir: [0, 0.3, 1], dist: 8.5 },
       texte: `La référence de la **CCU 2** est débranchée : elle repart sur son **quartz**. À 20 ppm près, elle dérive de **20 µs par seconde** : son repère traverse la fenêtre en moins d'une seconde et ne revient en phase que lorsqu'elle a pris une image entière d'avance (16 min 40 s plus tard).
 

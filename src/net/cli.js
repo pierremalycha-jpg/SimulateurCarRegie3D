@@ -100,7 +100,7 @@ const EXEC = [
   C('reload', 'redémarrer (recharge la startup)', (s) => { const sw = swOf(s); const lost = JSON.stringify(sw.running) !== JSON.stringify(sw.startup); sw.running = clone(sw.startup); markDirty(); s.mode = 'exec'; return (lost ? '! Les modifications non enregistrées sont perdues.\n' : '') + 'Redémarrage… configuration de démarrage (startup) rechargée.'; }),
   C('ping <ip>', 'tester la joignabilité IP', (s, a) => ping(swOf(s), a.ip)),
   C('clear ip igmp snooping groups', 'vider les abonnements (ils reviennent au prochain query)', () => 'Abonnements effacés : les récepteurs répondent au prochain query du querier.'),
-  C('exit', 'fermer la session', () => '(session fermée — rouvrez le terminal)'),
+  C('exit', 'fermer la session', () => '(session fermée — rouvre le terminal)'),
 ];
 const CONFIG = [
   C('hostname <w>', 'nom du commutateur', (s, a) => { cfgOf(s).hostname = a.w; return ch(s); }),

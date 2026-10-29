@@ -76,11 +76,11 @@ function qui(roleId) {
   if (roleId === 'ipdirector') {
     const n = {}; for (const r of Object.values(EMI.J.medias)) if (r && r.par && r.par !== 'ia') n[r.par] = (n[r.par] || 0) + 1;
     const w = Object.keys(n).sort((a, b) => n[b] - n[a])[0];
-    if (w) return w === 'vous' ? (getPseudo() || 'Vous') : w;
+    if (w) return w === 'vous' ? (getPseudo() || 'Toi') : w;
   }
   let best = '', t = 10;
   for (const [k, v] of Object.entries(EMI.postes)) { const [r, w] = k.split('\u0000'); if (r === roleId && w !== 'ia' && v >= t) { best = w; t = v; } }
-  return best === 'vous' ? (getPseudo() || 'Vous') : best || equipiers(roleId);
+  return best === 'vous' ? (getPseudo() || 'Toi') : best || equipiers(roleId);
 }
 // l'équipe du car (figurants/equipe.js) : ceux qu'on voit à leur poste
 const equipiers = (roleId) => EQUIPE.filter((e) => e.role === roleId).map((e) => e.nom).join(' et ') || 'Équipe virtuelle';
@@ -178,10 +178,10 @@ export function compteRendu() {
   const truq = t.ordres ? el('p', { class: 'note' }, `Au mélangeur : ${t.faits} ordre${t.faits > 1 ? 's' : ''} du réalisateur exécuté${t.faits > 1 ? 's' : ''} sur ${t.ordres}${t.faits ? `, en ${(t.reaction / t.faits).toFixed(1).replace('.', ',')} s en moyenne` : ''}.`) : null;
   const body = el('div', { class: 'list em-rapport' },
     el('div', { class: 'lcd amber big' }, `Émission : ${R.score} / 100`),
-    el('p', {}, ok ? 'L\'émission est allée à l\'antenne proprement : génériques et pub au top, retours au stade, score à l\'image.' : 'L\'émission est allée au bout, mais l\'antenne a souffert : reprenez les lignes en dessous de leur maximum.'),
+    el('p', {}, ok ? 'L\'émission est allée à l\'antenne proprement : génériques et pub au top, retours au stade, score à l\'image.' : 'L\'émission est allée au bout, mais l\'antenne a souffert : reprends les lignes en dessous de leur maximum.'),
     el('div', { class: 'tblwrap' }, el('table', { class: 'tbl compact' }, el('thead', {}, el('tr', {}, el('th', {}, 'Critère'), el('th', {}, 'Points'), el('th', {}, 'Détail'))), el('tbody', {}, ...lignes))),
     el('h3', { class: 'eq-h' }, 'Qui tenait les postes'), el('ul', { class: 'em-qui' }, ...postes), truq,
-    el('p', { class: 'note' }, R.parVous === 3 && !SES.active ? 'Les trois médias ont été lancés par vous depuis l\'IPDirector : l\'émission compte dans votre livret (compétence 3.11, mettre en œuvre un conducteur).' : 'Pour que l\'émission compte dans le livret, lancez vous-même les trois médias (générique, pub, générique de fin) depuis l\'IPDirector.'),
+    el('p', { class: 'note' }, R.parVous === 3 && !SES.active ? 'Les trois médias ont été lancés par toi depuis l\'IPDirector : l\'émission compte dans ton livret (compétence 3.11, mettre en œuvre un conducteur).' : 'Pour que l\'émission compte dans le livret, lance toi-même les trois médias (générique, pub, générique de fin) depuis l\'IPDirector.'),
     el('div', { class: 'hwrow' },
       el('button', { class: 'btn primary', 'data-k': 'emission:rejouer', onclick: () => { modal.close(); demarrer(); } }, 'Rejouer l\'émission'),
       el('button', { class: 'btn', 'data-k': 'emission:libre', onclick: () => { modal.close(); quitter(); toast('Le match continue, sans conducteur : jeu libre.'); } }, 'Continuer en match libre'),

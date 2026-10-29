@@ -51,7 +51,7 @@ export function exoSection(L, o = {}) {
   if (!R) {
     box.append(el('div', { class: 'pa-exo-intro' },
       el('b', {}, X.titre), el('p', {}, X.consigne),
-      el('p', { class: 'note' }, `Vous êtes seul : chaque question a deux aides (−${pct(COUT.aide)} chacune) et sa solution (la question ne rapporte alors rien) ; une réponse fausse coûte aussi des points. Réussi à ${SEUIL_EXO} sur 100, trois étoiles à ${SEUIL_PARFAIT}. Chaque essai tire d'autres valeurs.`),
+      el('p', { class: 'note' }, `Tu es seul : chaque question a deux aides (−${pct(COUT.aide)} chacune) et sa solution (la question ne rapporte alors rien) ; une réponse fausse coûte aussi des points. Réussi à ${SEUIL_EXO} sur 100, trois étoiles à ${SEUIL_PARFAIT}. Chaque essai tire d'autres valeurs.`),
       el('div', { class: 'hwrow' }, p ? etoiles(etoilesExo(p.best), 2, 'small') : null,
         el('button', { type: 'button', class: 'btn primary pa-exo-go', onclick: commencer }, p ? 'Refaire l\'exercice (d\'autres valeurs)' : 'Commencer l\'exercice'))));
     return box;
@@ -71,13 +71,13 @@ export function exoSection(L, o = {}) {
     if (resolue) return;
     const v = it.type === 'choix' ? R.choix : it.type === 'ordre' ? R.ordre : R.saisie;
     const r = verifier(it, v);
-    if (r.vide) { R.retour = { ok: false, why: it.type === 'nombre' ? 'Écrivez un nombre (la virgule ou le point conviennent).' : it.type === 'choix' ? 'Choisissez une réponse.' : 'Écrivez votre réponse.' }; redraw('.pa-q-input'); return; }
+    if (r.vide) { R.retour = { ok: false, why: it.type === 'nombre' ? 'Écris un nombre (la virgule ou le point conviennent).' : it.type === 'choix' ? 'Choisis une réponse.' : 'Écris ta réponse.' }; redraw('.pa-q-input'); return; }
     const cle = it.type === 'nombre' ? String(lireNombre(v)) : it.type === 'texte' ? String(v).trim().toLowerCase() : JSON.stringify(v);
     if (r.ok) { st.ok = true; R.retour = { ok: true }; } else { if (!R.faux.includes(cle)) { st.erreurs++; R.faux.push(cle); } R.retour = { ok: false, why: r.why }; if (it.type === 'choix') R.choix = null; }
     redraw(st.ok ? '.pa-next' : '.pa-q-input, .pa-q-choices button.sel, .pa-verif');
   };
   if (it.type === 'nombre' || it.type === 'texte') {
-    const inp = /** @type {HTMLInputElement} */ (el('input', { type: 'text', class: 'pa-q-input', value: resolue && !st.ok ? '' : R.saisie, inputmode: it.type === 'nombre' ? 'decimal' : null, placeholder: it.placeholder || (it.type === 'nombre' ? 'votre réponse' : ''), 'aria-label': 'Votre réponse', autocomplete: 'off', spellcheck: 'false', disabled: resolue }));
+    const inp = /** @type {HTMLInputElement} */ (el('input', { type: 'text', class: 'pa-q-input', value: resolue && !st.ok ? '' : R.saisie, inputmode: it.type === 'nombre' ? 'decimal' : null, placeholder: it.placeholder || (it.type === 'nombre' ? 'ta réponse' : ''), 'aria-label': 'Ta réponse', autocomplete: 'off', spellcheck: 'false', disabled: resolue }));
     inp.addEventListener('input', () => { R.saisie = inp.value; });
     inp.addEventListener('keydown', (ev) => { if (ev.key === 'Enter') { ev.preventDefault(); verif(); } });
     card.append(el('div', { class: 'pa-q-row' }, inp, it.unite ? el('span', { class: 'pa-unit' }, it.unite) : null));
@@ -99,7 +99,7 @@ export function exoSection(L, o = {}) {
   // les aides déjà ouvertes
   if (st.aides) card.append(el('div', { class: 'pa-aides' }, ...it.aides.slice(0, st.aides).map((a, j) => el('p', { class: 'pa-aide' }, icon('indice'), el('b', {}, j ? 'Méthode : ' : 'Indice : '), rich(a, 'co-rich')))));
   // le retour : juste, faux (et pourquoi), solution
-  if (R.retour && !R.retour.ok && !resolue) card.append(el('p', { class: 'pa-retour faux', role: 'status' }, el('b', {}, 'Pas encore.'), ' ', R.retour.why || (st.erreurs ? `Cette erreur coûte ${pct(it.type === 'choix' ? COUT.erreurChoix : COUT.erreur)} de la question. Relisez, ou demandez une aide.` : '')));
+  if (R.retour && !R.retour.ok && !resolue) card.append(el('p', { class: 'pa-retour faux', role: 'status' }, el('b', {}, 'Pas encore.'), ' ', R.retour.why || (st.erreurs ? `Cette erreur coûte ${pct(it.type === 'choix' ? COUT.erreurChoix : COUT.erreur)} de la question. Relis, ou demande une aide.` : '')));
   if (resolue) {
     card.append(el('div', { class: 'pa-retour ' + (st.ok ? 'juste' : 'sol'), role: 'status' },
       el('b', {}, st.ok ? `Juste ! ${Math.round(pointsItem(it, st) * 100)} % de la question.` : `La réponse : ${reponse(it)}.`), rich(it.solution, 'co-rich')));
@@ -125,10 +125,10 @@ export function exoSection(L, o = {}) {
 // le résultat d'un essai : score, étoiles, détail, et la suite
 function bilan(R, X, L, refaire, o) {
   const ok = R.score >= SEUIL_EXO, best = /** @type {any} */ (coursProgress(L.id)).exo;
-  const msg = R.score >= SEUIL_PARFAIT ? 'Excellent : presque sans aide.' : ok ? 'Exercice réussi. Refaites-le avec moins d\'aide pour gagner la dernière étoile et monter la moyenne du niveau.' : `Pas encore réussi : il faut ${SEUIL_EXO} sur 100. Relisez la leçon et refaites l'exercice, avec d'autres valeurs.`;
+  const msg = R.score >= SEUIL_PARFAIT ? 'Excellent : presque sans aide.' : ok ? 'Exercice réussi. Refais-le avec moins d\'aide pour gagner la dernière étoile et monter la moyenne du niveau.' : `Pas encore réussi : il faut ${SEUIL_EXO} sur 100. Relis la leçon et refais l'exercice, avec d'autres valeurs.`;
   return el('div', { class: 'pa-bilan' + (ok ? ' ok' : ''), tabindex: '-1', role: 'status' },
     el('div', { class: 'pa-bilan-score' }, el('b', {}, `${R.score}`), el('span', {}, '/ 100'), etoiles(etoilesExo(R.score), 2)),
-    el('p', {}, msg, best && best.best > R.score ? ` Votre meilleur score reste ${best.best}.` : ''),
+    el('p', {}, msg, best && best.best > R.score ? ` Ton meilleur score reste ${best.best}.` : ''),
     !seul(R.etats) && ok ? el('p', { class: 'note' }, 'Une solution a été demandée : l\'exercice compte pour le niveau, mais pas encore pour le livret de compétences (à refaire sans solution).') : null,
     el('ol', { class: 'pa-detail' }, ...R.items.map((it, j) => { const e = R.etats[j]; const pts = pointsItem(it, e); return el('li', { class: pts >= 1 ? 'ok' : pts > 0 ? 'mi' : 'ko' }, el('span', {}, `Question ${j + 1}`), el('small', {}, e.solution ? 'solution demandée' : [e.aides ? `${e.aides} aide${e.aides > 1 ? 's' : ''}` : '', e.erreurs ? `${e.erreurs} erreur${e.erreurs > 1 ? 's' : ''}` : ''].filter(Boolean).join(', ') || 'du premier coup'), el('b', {}, `${Math.round(pts * 100)} %`)); })),
     el('div', { class: 'hwrow' },

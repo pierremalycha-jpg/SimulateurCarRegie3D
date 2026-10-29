@@ -236,7 +236,7 @@ function rcpDevice() {
 // ---------------------------------------------------------------- EVS XT4K
 function evsDevice() {
   const P = {};
-  for (let i = 1; i <= 12; i++) P['sdi' + i] = M(`SDI ${i}`, BNC, 'video', 'io', '12G-SDI (UHD-4K sur un seul câble) ou 3G/HD-SDI ; Quad 3G-SDI (2SI ou découpage en carrés) en option', 'Connecteur des modules codec, affecté en entrée (enregistrement) ou en sortie (lecture, multiviewer) dans la configuration du serveur. L\'affectation de votre car est donnée dans « Dans votre installation ».');
+  for (let i = 1; i <= 12; i++) P['sdi' + i] = M(`SDI ${i}`, BNC, 'video', 'io', '12G-SDI (UHD-4K sur un seul câble) ou 3G/HD-SDI ; Quad 3G-SDI (2SI ou découpage en carrés) en option', 'Connecteur des modules codec, affecté en entrée (enregistrement) ou en sortie (lecture, multiviewer) dans la configuration du serveur. L\'affectation de ton car est donnée dans « Dans ton installation ».');
   Object.assign(P, {
     xnet: M('XNet', 'Réseau EVS', 'ip', 'io', 'Réseau de production XNet (3 Gb/s d\'après la documentation de lancement)', 'Partage des trains et des clips entre serveurs : un opérateur peut relire l\'enregistrement d\'un autre serveur comme s\'il était local.'),
     gbe1: M('10GbE 1', 'SFP+', 'ip', 'io', '10 Gb/s Ethernet', 'Réseau de partage des médias : IPDirector, transferts de fichiers vers le montage, archivage.'),
@@ -249,7 +249,7 @@ function evsDevice() {
     ltcin: M('LTC IN', 'XLR / bornier', 'ref', 'in', 'SMPTE ST 12-1 (LTC)', 'Timecode heure du jour venant du SPG : toutes les entrées enregistrées partagent le même timecode, d\'où le multicam synchronisé.'),
     ltcout: M('LTC OUT', 'XLR / bornier', 'ref', 'out', 'LTC', 'Sortie timecode.'),
     gpi: M('GPI', 'D-sub', 'data', 'io', 'Entrées / sorties par contact (manuels XT)', 'Déclenchements par contacts : démarrer une lecture depuis le mélangeur, renvoyer un tally, etc.'),
-    rs1: M('RS-422 1', 'D-sub 9', 'data', 'io', 'Liaison série (19 200 bauds d\'après les manuels XT)', 'Port série de télécommande : sur les serveurs XT, la télécommande LSM s\'y raccorde. Vérifier l\'affectation des ports dans la configuration de votre serveur.'),
+    rs1: M('RS-422 1', 'D-sub 9', 'data', 'io', 'Liaison série (19 200 bauds d\'après les manuels XT)', 'Port série de télécommande : sur les serveurs XT, la télécommande LSM s\'y raccorde. Vérifier l\'affectation des ports dans la configuration de ton serveur.'),
     rs2: M('RS-422 2', 'D-sub 9', 'data', 'io', 'Série', 'Second port de télécommande (deuxième LSM ou protocole Sony/VDCP pour un automate ou le mélangeur).'),
     rs3: M('RS-422 3', 'D-sub 9', 'data', 'io', 'Série', 'Port série (protocoles tiers).'),
     rs4: M('RS-422 4', 'D-sub 9', 'data', 'io', 'Série', 'Port série (protocoles tiers).'),
@@ -289,7 +289,7 @@ function evsDevice() {
     views: { arriere: { label: 'Face arrière', w: 1000, h: 520, items: rear }, avant: { label: 'Face avant', w: 1000, h: 520, items: front } },
     ports: P, controls: C,
     specs: [['Canaux', '4 canaux UHD-4K ou 8 canaux HD ; 12 canaux HD et plus avec la configuration ChannelMAX'], ['Vidéo', '12G-SDI (UHD sur un seul câble), Quad 3G-SDI 2SI / découpage en carrés en option ; IP intégrée'], ['Enregistrement', 'XAVC-4K en UHD, 10 bits, HDR'], ['Stockage', 'Interne jusqu\'à 9 To (≈ 30 h d\'UHD-4K), extensible en externe jusqu\'à 40 To (≈ 130 h d\'UHD-4K annoncées)'], ['Audio', 'Jusqu\'à 192 pistes non compressées, routeur audio interne ; analogique, AES, embeddé, MADI'], ['Réseaux', 'XNet (production), 2 × 10 GbE (partage des médias, IPDirector), LAN de gestion redondant'], ['Pilotage', 'Télécommande LSM (Multicam), IPDirector, protocoles série / IP'], ['Format', '6U'], ['Dans ce car', '(calculé selon le format : voir la configuration EVS au poste ralentis)']],
-    lesson: ['En UHD, un XT4K n\'a que 4 canaux : par exemple 3 REC + 1 PLAY. Une caméra super ralenti 3x occupe à elle seule les 3 canaux d\'enregistrement.', 'En HD, le même serveur offre 8 canaux (12 avec ChannelMAX) : c\'est souvent le format qui donne le plus d\'angles enregistrés.', 'Les alimentations sont doublées : branchez-les sur deux circuits différents de l\'onduleur.', 'Le genlock et le LTC doivent venir du même SPG que le reste du car.', 'Les connecteurs série et GPI sont décrits d\'après les manuels techniques XT (XT2, XT3, XT4K) : vérifiez l\'affectation exacte des ports de votre serveur.'],
+    lesson: ['En UHD, un XT4K n\'a que 4 canaux : par exemple 3 REC + 1 PLAY. Une caméra super ralenti 3x occupe à elle seule les 3 canaux d\'enregistrement.', 'En HD, le même serveur offre 8 canaux (12 avec ChannelMAX) : c\'est souvent le format qui donne le plus d\'angles enregistrés.', 'Les alimentations sont doublées : branche-les sur deux circuits différents de l\'onduleur.', 'Le genlock et le LTC doivent venir du même SPG que le reste du car.', 'Les connecteurs série et GPI sont décrits d\'après les manuels techniques XT (XT2, XT3, XT4K) : vérifie l\'affectation exacte des ports de ton serveur.'],
   };
 }
 
@@ -314,7 +314,7 @@ function lsmDevice() {
   ['SHIFT', 'MENU', 'CLEAR', 'PAGE'].forEach((l, i) => top.push({ t: 'btn', id: 'opblock', x: 412 + i * 62, y: 270, w: 56, h: 40, l }));
   top.push({ t: 'lever', id: 'lever', x: 720, y: 40, w: 60, h: 300 });
   top.push({ t: 'jog', id: 'jog', x: 860, y: 380, r: 88 });
-  top.push({ t: 'text', x: 40, y: 350, s: 'Disposition simplifiée : se référer au manuel Multicam de votre version.', size: 11, w: 500 });
+  top.push({ t: 'text', x: 40, y: 350, s: 'Disposition simplifiée : se référer au manuel Multicam de ta version.', size: 11, w: 500 });
   const rear = /** @type {Item[]} */ ([{ t: 'body', x: 10, y: 10, w: 960, h: 140, r: 10 }, { t: 'port', id: 'rs422', k: 'dsub9', x: 120, y: 80, l: 'RS-422' }, { t: 'port', id: 'dcin', k: 'xlr', x: 240, y: 80, l: 'DC' }]);
   return {
     key: 'lsm', title: 'Télécommande de ralentis (type EVS LSM, logiciel Multicam)', multi: true,
@@ -377,7 +377,7 @@ function xvsDevice() {
     views: { arriere: { label: 'Face arrière', w: 1000, h: 600, items } },
     ports: P, controls: {},
     specs: [['Gamme', 'Sony XVS (XVS-9000 / 8000 / 7000 / 6000)'], ['HD', 'Jusqu\'à 4 M/E selon les sources, 48 à 64 entrées, 24 sorties assignables, jusqu\'à 16 keyers'], ['4K (configuration de base)', '2 M/E, 16 entrées, 6 sorties, 8 keyers (4 full + 4 sub)'], ['Keyers', '4 par M/E, redimensionneur 2,5D sur chaque keyer ; DME 3D en option (XKS-8470 : 2 canaux HD ; XKS-8475 : 1 canal 4K)'], ['Frame memory', 'Stockage non volatil 480 Go : images fixes et clips, transitions « clip » (logo animé)'], ['Multiviewer', '2 canaux intégrés, découpages 4 / 10 / 13 / 16'], ['AUX', 'Transitions cut et mix ; correction colorimétrique primaire sur toutes les entrées et AUX'], ['Interfaces', '12G-SDI ; IP ST 2110 par cartes 100G (option)'], ['Réseau', 'MVS LAN et UTIL LAN (1000BASE-T)'], ['Référence', 'REF IN BNC 75 Ω avec boucle']],
-    lesson: ['Les chiffres d\'entrées varient selon les sources (48 ou 64 en HD) et selon les cartes installées : vérifiez la configuration de votre processeur.', 'En 4K, le nombre d\'entrées baisse fortement : dans ce simulateur, le mélangeur passe de 22 à 16 entrées utilisées en UHD.', 'Le pupitre et le processeur sont reliés par le réseau du mélangeur via l\'unité d\'interface système (MKS-X7700) : si le pupitre « gèle », le processeur continue de sortir l\'image.'],
+    lesson: ['Les chiffres d\'entrées varient selon les sources (48 ou 64 en HD) et selon les cartes installées : vérifie la configuration de ton processeur.', 'En 4K, le nombre d\'entrées baisse fortement : dans ce simulateur, le mélangeur passe de 22 à 16 entrées utilisées en UHD.', 'Le pupitre et le processeur sont reliés par le réseau du mélangeur via l\'unité d\'interface système (MKS-X7700) : si le pupitre « gèle », le processeur continue de sortir l\'image.'],
   };
 }
 function icpDevice() {

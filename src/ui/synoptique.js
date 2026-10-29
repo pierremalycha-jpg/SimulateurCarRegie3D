@@ -46,7 +46,7 @@ export function buildSynoptique() {
     box(300, y, 92, 24, c.rf ? `RX HF ${c.id}` : `CCU ${c.id}`, null, { stroke: bad ? '#ff3b30' : '#3a4652', info: c.rf ? 'hf' : 'ccu' });
     line(392, y + 12, rX, y + 12, '#5a6672');
   });
-  if (!cams.length) txt(10, top + 14, 'Aucune caméra : ouvrez le plan (P).', { fill: '#93a0ab' });
+  if (!cams.length) txt(10, top + 14, 'Aucune caméra : ouvre le plan (P).', { fill: '#93a0ab' });
   box(rX, rY, 110, rH + 12, S.ipMode ? 'RÉSEAU IP' : 'GRILLE', S.ipMode ? 'ST 2110 rouge + bleu' : 'SDI', { info: 'grille', fill: '#1b2530' });
   // traitements
   const mx = 600;

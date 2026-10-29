@@ -324,7 +324,7 @@ export async function eraseProgress() {
   for (const k of Object.keys(S.visited)) delete S.visited[k];
   try { localStorage.removeItem('carregie.progress'); } catch (e) { /* stockage indisponible */ }
   if (SH.db && SH.uid && !SH.readOnly) {
-    try { await SH.db.doc('progress/' + SH.uid).set(JSON.parse(JSON.stringify(PROG))); } catch (e) { return { ok: false, error: 'La copie du serveur n\'a pas pu être effacée : demandez-le au formateur.' }; }
+    try { await SH.db.doc('progress/' + SH.uid).set(JSON.parse(JSON.stringify(PROG))); } catch (e) { return { ok: false, error: 'La copie du serveur n\'a pas pu être effacée : demande-le au formateur.' }; }
   }
   return { ok: true };
 }

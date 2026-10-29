@@ -47,7 +47,7 @@ function v6court(g) {
 registerExos({
   'reseau-modele': {
     titre: 'Envelopper, compter, dépanner par couche',
-    consigne: 'Au poste Réseau IP, l\'analyseur déplie les paquets couche par couche : vous remettez les enveloppes dans l\'ordre, vous comptez ce qui passe sur le fil, puis vous dépannez de bas en haut.',
+    consigne: 'Au poste Réseau IP, l\'analyseur déplie les paquets couche par couche : tu remets les enveloppes dans l\'ordre, tu comptes ce qui passe sur le fil, puis tu dépannes de bas en haut.',
     gen: (rnd) => {
       const cas = pick(rnd, [
         { nom: 'un paquet d\'image ST 2110 (pixels dans RTP, sur UDP)', o: { transport: 'udp', rtp: true }, d: pick(rnd, [800, 1000, 1200, 1400]), couches: ['Les données : les pixels de l\'image', 'L\'en-tête RTP (numéro, horodatage)', 'L\'en-tête UDP (les ports)', 'L\'en-tête IP (les adresses)', 'La trame Ethernet (adresses MAC, contrôle)', 'Le préambule et le silence, sur le fil'] },
@@ -69,7 +69,7 @@ registerExos({
           type: 'nombre', unite: 'octets', answer: E.surFil,
           q: `${cas.nom.charAt(0).toUpperCase() + cas.nom.slice(1)} porte **${fr(cas.d)} octets** de données. En-têtes : ${tetes}, IP 20, Ethernet 18 (adresses, type, contrôle) ; sur le fil, 20 de plus (préambule et silence). Combien d'octets occupe-t-il sur le fil ?`,
           pieges: [{ v: ip, why: 'C\'est la taille du paquet IP : il manque l\'enveloppe Ethernet et ce que le fil ajoute.' }, { v: E.surFil - TETE.fil, why: 'C\'est la trame Ethernet : sur le fil s\'ajoutent encore le préambule et le silence entre deux trames, 20 octets.' }],
-          aides: ['Additionnez toutes les enveloppes, de l\'application jusqu\'au fil.', `${fr(cas.d)} + ${tetes.replace(/[A-Z]+ /g, '').replace(', ', ' + ')} + 20 (IP) + 18 (Ethernet) + 20 (fil).`],
+          aides: ['Additionne toutes les enveloppes, de l\'application jusqu\'au fil.', `${fr(cas.d)} + ${tetes.replace(/[A-Z]+ /g, '').replace(', ', ' + ')} + 20 (IP) + 18 (Ethernet) + 20 (fil).`],
           solution: `${E.couches.map((c) => `${c.nom} : ${fr(c.total)}`).join(' ; ')}. Sur le fil : **${fr(E.surFil)} octets**, dont ${fr(E.efficacite * 100, 0)} % de données utiles.`,
         },
         pick(rnd, [
@@ -94,7 +94,7 @@ registerExos({
         ]),
         {
           type: 'ordre', items: ['Le voyant du port et la vitesse négociée', 'Le VLAN du port et la table MAC du commutateur', 'L\'adresse, le masque, la passerelle, puis le ping', 'Le service : le port écouté, le pare-feu, le réglage du logiciel'],
-          q: `Le ${pick(rnd, ['RCP 4', 'panneau d\'intercom 2', 'PC d\'habillage', 'serveur EVS'])} ne répond plus. Dans quel ordre vérifiez-vous, en dépannant de bas en haut ?`,
+          q: `Le ${pick(rnd, ['RCP 4', 'panneau d\'intercom 2', 'PC d\'habillage', 'serveur EVS'])} ne répond plus. Dans quel ordre vérifies-tu, en dépannant de bas en haut ?`,
           aides: ['On commence par la couche 1, la plus basse : le câble.', 'Couche 1 (physique), 2 (liaison : VLAN, MAC), 3 (réseau : IP), 4 et au-delà (le service).'],
           solution: 'De **bas en haut** : le voyant (1), le VLAN et la table MAC (2), l\'adresse et le ping (3), le service (4 et au-delà). Sauter une couche fait perdre du temps.',
         },
@@ -103,7 +103,7 @@ registerExos({
   },
   'reseau-etendue': {
     titre: 'Du car au monde : distances et retards',
-    consigne: 'Le chef de car prépare la contribution vers la régie finale : vous classez les réseaux du dispositif et vous calculez les retards de chaque chemin.',
+    consigne: 'Le chef de car prépare la contribution vers la régie finale : tu classes les réseaux du dispositif et tu calcules les retards de chaque chemin.',
     gen: (rnd) => {
       const V = pick(rnd, [['Lille', 40], ['Paris', 250], ['Lyon', 700], ['Marseille', 1000], ['Bruxelles', 120], ['Strasbourg', 520]]);
       const ar = rnd() < 0.5, km = V[1], t = propagationMs(km) * (ar ? 2 : 1);
@@ -113,7 +113,7 @@ registerExos({
           type: 'nombre', unite: 'ms', answer: Math.round(t * 1000) / 1000, tol: Math.max(0.01, t * 0.03),
           q: `La fibre de l'opérateur fait **${fr(km)} km** entre le stade et la régie de ${V[0]}. Combien de temps met la lumière pour ${ar ? 'un **aller-retour**' : 'un **aller**'}, en millisecondes (propagation seule) ?`,
           pieges: [{ v: Math.round(t / (ar ? 2 : 0.5) * 1000) / 1000, why: ar ? 'C\'est un aller seul : un aller-retour parcourt deux fois la fibre.' : 'C\'est un aller-retour : la question ne demande qu\'un sens.' }, { v: Math.round(km / 300 * (ar ? 2 : 1) * 1000) / 1000, why: 'C\'est la vitesse de la lumière dans le vide : dans le verre, elle ne fait qu\'environ 200 000 km/s.' }],
-          aides: ['Dans le verre, la lumière parcourt environ 200 000 km/s : environ 5 µs par kilomètre.', `${fr(km)} km × 5 µs${ar ? ' × 2 (aller et retour)' : ''}, puis convertissez en ms (1 ms = 1 000 µs).`],
+          aides: ['Dans le verre, la lumière parcourt environ 200 000 km/s : environ 5 µs par kilomètre.', `${fr(km)} km × 5 µs${ar ? ' × 2 (aller et retour)' : ''}, puis convertis en ms (1 ms = 1 000 µs).`],
           solution: `${fr(km)} km ÷ 204 000 km/s${ar ? ' × 2' : ''} ≈ **${fr(t, 2)} ms**, avant la traversée des équipements et l'attente dans les files.`,
         },
         {
@@ -126,10 +126,10 @@ registerExos({
         pick(rnd, [
           { type: 'choix', q: 'Le réseau du car, avec ses commutateurs, ses VLAN et sa QoS, est…', choices: ['Un LAN : un lieu, un exploitant qui choisit tout', ['Un MAN, parce que le car se déplace', 'L\'étendue se juge à la zone couverte : quelques dizaines de mètres.'], ['Un WAN, parce qu\'il sort sur Internet', 'Il a une sortie vers un WAN, mais lui-même reste local.']], answer: 0, aides: ['L\'étendue se juge à la zone couverte et à qui possède les liens.', 'Un lieu, un exploitant : c\'est le réseau local.'], solution: 'Un **LAN** : il couvre un lieu et appartient à celui qui l\'exploite.' },
           { type: 'choix', q: 'Le stade est relié au centre technique de l\'opérateur, de l\'autre côté de la ville, par une boucle de fibre louée. Quel réseau est-ce ?', choices: ['Un MAN (réseau métropolitain)', ['Un LAN', 'Un LAN couvre un seul lieu ; ici on relie deux sites de la ville.'], ['Un PAN', 'Un PAN est un réseau personnel, quelques mètres (Bluetooth).']], answer: 0, aides: ['Deux sites de la même ville, à quelques kilomètres.', 'Metropolitan Area Network.'], solution: 'Un **MAN** : des boucles de fibre qui relient les sites d\'une ville, quelques dizaines de kilomètres.' },
-          { type: 'choix', q: 'La contribution du car vers la régie finale de Paris, par la fibre d\'un opérateur, passe par…', choices: ['Un WAN : des liens d\'opérateurs entre des villes', ['Un MAN', 'Un MAN reste dans une ville ; Lens et Paris sont à 200 km.'], ['Le LAN du car', 'Le LAN s\'arrête à la sortie du car ; au-delà, on dépend d\'opérateurs.']], answer: 0, aides: ['Des villes différentes, des liens qui ne vous appartiennent pas.', 'Wide Area Network.'], solution: 'Un **WAN** : on y dépend d\'opérateurs, on double les chemins et on mesure latence et pertes avant l\'antenne.' },
+          { type: 'choix', q: 'La contribution du car vers la régie finale de Paris, par la fibre d\'un opérateur, passe par…', choices: ['Un WAN : des liens d\'opérateurs entre des villes', ['Un MAN', 'Un MAN reste dans une ville ; Lens et Paris sont à 200 km.'], ['Le LAN du car', 'Le LAN s\'arrête à la sortie du car ; au-delà, on dépend d\'opérateurs.']], answer: 0, aides: ['Des villes différentes, des liens qui ne t\'appartiennent pas.', 'Wide Area Network.'], solution: 'Un **WAN** : on y dépend d\'opérateurs, on double les chemins et on mesure latence et pertes avant l\'antenne.' },
         ]),
         pick(rnd, [
-          { type: 'choix', q: 'Pour un duplex en direct (un dialogue entre le plateau et le stade), quel chemin choisir ?', choices: ['La fibre d\'opérateur : quelques millisecondes', ['Le satellite géostationnaire : il couvre tout le pays', 'Un bond fait ≈ 240 ms dans un sens, au-delà des 150 ms recommandées pour une conversation (UIT G.114).'], ['N\'importe lequel : la latence ne s\'entend pas', 'Au-delà de 150 ms dans un sens, les interlocuteurs se coupent la parole et laissent des silences.']], answer: 0, aides: ['L\'UIT recommande de rester sous 150 ms dans un sens pour une conversation (G.114).', 'Comparez un bond satellite (≈ 240 ms) à quelques centaines de kilomètres de fibre (≈ 1 ms).'], solution: 'La **fibre** : quelques millisecondes, bien sous les 150 ms de la G.114. Le satellite reste le secours.' },
+          { type: 'choix', q: 'Pour un duplex en direct (un dialogue entre le plateau et le stade), quel chemin choisir ?', choices: ['La fibre d\'opérateur : quelques millisecondes', ['Le satellite géostationnaire : il couvre tout le pays', 'Un bond fait ≈ 240 ms dans un sens, au-delà des 150 ms recommandées pour une conversation (UIT G.114).'], ['N\'importe lequel : la latence ne s\'entend pas', 'Au-delà de 150 ms dans un sens, les interlocuteurs se coupent la parole et laissent des silences.']], answer: 0, aides: ['L\'UIT recommande de rester sous 150 ms dans un sens pour une conversation (G.114).', 'Compare un bond satellite (≈ 240 ms) à quelques centaines de kilomètres de fibre (≈ 1 ms).'], solution: 'La **fibre** : quelques millisecondes, bien sous les 150 ms de la G.114. Le satellite reste le secours.' },
           { type: 'choix', q: 'En production à distance (REMI), les caméras sont au stade et la régie à Paris. Où se ressent la latence du WAN ?', choices: ['Dans les commandes des RCP et le retour des images en régie', ['Nulle part : le réseau est en fibre', 'La fibre ajoute environ 5 µs par kilomètre, et les équipements s\'y ajoutent : tout se retrouve dans la boucle de commande.'], ['Seulement dans le son', 'Images et commandes traversent le même WAN : tout est retardé.']], answer: 0, aides: ['Que traverse le WAN dans une production à distance ?', 'Les images vont du stade à la régie, les commandes de la régie au stade.'], solution: 'Dans les **commandes et le retour des images** : chaque réglage du RCP fait l\'aller-retour du WAN avant de se voir.' },
         ]),
       ];
@@ -137,7 +137,7 @@ registerExos({
   },
   'reseau-ethernet': {
     titre: 'Dimensionner un lien Ethernet',
-    consigne: 'Le car IP reçoit de nouvelles caméras : vous comptez les flux qu\'un lien peut porter, le temps de poser une trame, sa taille, et le bon support.',
+    consigne: 'Le car IP reçoit de nouvelles caméras : tu comptes les flux qu\'un lien peut porter, le temps de poser une trame, sa taille, et le bon support.',
     gen: (rnd) => {
       const F = pick(rnd, [{ nom: '1080p50 (≈ 2,2 Gb/s)', g: 2.2 }, { nom: 'UHD 2160p50 (≈ 8,6 Gb/s)', g: 8.6 }]);
       const L = pick(rnd, F.g > 5 ? [25, 100] : [10, 25, 100]);
@@ -157,7 +157,7 @@ registerExos({
           type: 'nombre', unite: 'µs', answer: Math.round(us * 1000) / 1000, tol: us * 0.02,
           q: `Une trame porte **${fr(d)} octets** de données ; avec l'en-tête et le contrôle Ethernet (18 octets), le préambule et le silence (20), elle occupe ${fr(fil)} octets sur le fil. Combien de microsecondes pour la poser sur un lien **${g} GbE** ?`,
           pieges: [{ v: Math.round(fil / (g * 1e3) * 1000) / 1000, why: 'Il faut compter en bits : un octet en fait 8.' }],
-          aides: ['Le temps de sérialisation, c\'est le nombre de bits divisé par le débit.', `${fr(fil)} octets × 8 bits ÷ ${g} × 10⁹ b/s, puis convertissez en µs.`],
+          aides: ['Le temps de sérialisation, c\'est le nombre de bits divisé par le débit.', `${fr(fil)} octets × 8 bits ÷ ${g} × 10⁹ b/s, puis convertis en µs.`],
           solution: `${fr(fil)} × 8 = ${fr(fil * 8)} bits ÷ ${g} Gb/s = **${fr(us, 3)} µs**. Dix fois plus de débit, dix fois moins de temps ; la propagation, elle, ne change pas.`,
         },
         {
@@ -177,7 +177,7 @@ registerExos({
   },
   'reseau-switch': {
     titre: 'Suivre la table MAC',
-    consigne: 'Au poste Réseau, le commutateur SW-VISION vient de redémarrer : sa table MAC est vide. Vous suivez les premières trames et ce qu\'il en apprend.',
+    consigne: 'Au poste Réseau, le commutateur SW-VISION vient de redémarrer : sa table MAC est vide. Tu suis les premières trames et ce qu\'il en apprend.',
     gen: (rnd) => {
       const ports = tirer(rnd, [1, 2, 3, 4, 5, 6, 7, 8], 4).sort((a, b) => a - b);
       const M = tirer(rnd, [{ nom: 'le RCP 1', mac: '02:1A:20:00:00:31' }, { nom: 'la CCU 1', mac: '02:1A:20:00:00:11' }, { nom: 'le RCP 2', mac: '02:1A:20:00:00:32' }, { nom: 'la CCU 2', mac: '02:1A:20:00:00:12' }, { nom: 'le PC de supervision', mac: '02:1A:10:00:00:50' }], 4).map((m, k) => ({ ...m, port: ports[k] }));
@@ -205,7 +205,7 @@ registerExos({
         {
           type: 'choix', q: `Trame 3 : **${C.nom}** (port ${C.port}) envoie une trame vers **${vers.nom}**. Par où sort-elle ?`,
           choices: c3, answer: 0,
-          aides: ['Faites la liste des adresses sources déjà vues aux trames 1 et 2.', connu ? `${B.nom} a envoyé la trame 2 : son port est connu.` : `${D.nom} n'a encore rien envoyé.`],
+          aides: ['Fais la liste des adresses sources déjà vues aux trames 1 et 2.', connu ? `${B.nom} a envoyé la trame 2 : son port est connu.` : `${D.nom} n'a encore rien envoyé.`],
           solution: connu ? `**${liste([B.port])}** : ${B.nom} est connu depuis la trame 2.` : `**${liste(sauf1(C))}** : ${D.nom} n'a encore jamais parlé, sa destination est inconnue ; sa première réponse l'apprendra au commutateur.`,
         },
         pick(rnd, [
@@ -213,7 +213,7 @@ registerExos({
             type: 'nombre', answer: entrees, unite: 'entrées',
             q: 'Après ces trois trames, combien d\'entrées compte la table MAC du commutateur ?',
             pieges: sauf(entrees, [{ v: 4, why: 'Une machine qui n\'a encore rien envoyé n\'est dans aucune table : seules les adresses sources sont apprises.' }, { v: 2, why: 'Chaque trame apprend l\'adresse source de celle qui l\'envoie : la trame 3 en apprend une de plus.' }]),
-            aides: ['Le commutateur n\'apprend que les adresses sources.', 'Comptez les machines qui ont envoyé une trame.'],
+            aides: ['Le commutateur n\'apprend que les adresses sources.', 'Compte les machines qui ont envoyé une trame.'],
             solution: `**${entrees}** : ${A.nom}, ${B.nom} et ${C.nom}, les trois expéditeurs. ${D.nom.charAt(0).toUpperCase() + D.nom.slice(1)} n'y est pas : aucune trame n'en est encore partie.`,
           },
           {
@@ -229,7 +229,7 @@ registerExos({
   },
   'reseau-vlan': {
     titre: 'Ranger les ports en VLAN',
-    consigne: 'Le car SDI sépare ses usages : 10 gestion, 20 caméras, 30 production, 40 ralentis, 50 intercom et son, 60 fichiers, 90 invités. Vous rangez des ports et vous suivez une diffusion.',
+    consigne: 'Le car SDI sépare ses usages : 10 gestion, 20 caméras, 30 production, 40 ralentis, 50 intercom et son, 60 fichiers, 90 invités. Tu ranges des ports et tu suis une diffusion.',
     gen: (rnd) => {
       const [U, X, Y] = tirer(rnd, PLAN, 3);
       // un commutateur de six ports access et un trunk (port 24) vers SW-CŒUR
@@ -271,7 +271,7 @@ registerExos({
   },
   'reseau-ip': {
     titre: 'Adresse, masque : voisin ou passerelle ?',
-    consigne: 'Au poste Réseau du car SDI, vous mettez des machines en service : combien d\'appareils dans un réseau, quel masque écrire, qui passe par la passerelle.',
+    consigne: 'Au poste Réseau du car SDI, tu mets des machines en service : combien d\'appareils dans un réseau, quel masque écrire, qui passe par la passerelle.',
     gen: (rnd) => {
       const p = pick(rnd, [16, 20, 22, 23, 24, 25, 26, 27, 28, 29, 30]), h = 2 ** (32 - p) - 2;
       const q = pick(rnd, [8, 16, 19, 22, 24, 25, 26, 27, 28, 29, 30]), m = infoReseau('10.0.0.0', q).masque;
@@ -285,21 +285,21 @@ registerExos({
         {
           type: 'nombre', unite: 'appareils', answer: h,
           q: `Combien d'appareils peut-on adresser dans un réseau **/${p}** ?`,
-          pieges: sauf(h, [{ v: 2 ** (32 - p), why: 'C\'est le nombre d\'adresses : retirez celle du réseau et celle de diffusion.' }, { v: 32 - p, why: 'C\'est le nombre de bits d\'appareil, pas le nombre d\'adresses.' }]),
+          pieges: sauf(h, [{ v: 2 ** (32 - p), why: 'C\'est le nombre d\'adresses : retire celle du réseau et celle de diffusion.' }, { v: 32 - p, why: 'C\'est le nombre de bits d\'appareil, pas le nombre d\'adresses.' }]),
           aides: [`Un /${p} laisse 32 − ${p} = ${32 - p} bits pour l'appareil.`, `2 puissance ${32 - p} adresses, moins deux : le réseau et la diffusion.`],
           solution: `2^${32 - p} − 2 = **${fr(h)}** appareils${p === 30 ? ' : un lien entre deux routeurs' : ''}.`,
         },
         versMasque ? {
           type: 'texte', forme: 'ip', accept: [m], placeholder: '255.255.255.0',
-          q: `La fiche de la machine demande le masque en décimal pointé. Écrivez le masque d'un **/${q}**.`,
-          pieges: sauf(m, [{ v: infoReseau('10.0.0.0', q).joker, why: 'C\'est le joker, l\'inverse du masque : les 1 du masque sont à gauche, sur la partie réseau.' }, { v: '255.255.255.0', why: 'C\'est le /24 : comptez les bits à 1.' }]),
+          q: `La fiche de la machine demande le masque en décimal pointé. Écris le masque d'un **/${q}**.`,
+          pieges: sauf(m, [{ v: infoReseau('10.0.0.0', q).joker, why: 'C\'est le joker, l\'inverse du masque : les 1 du masque sont à gauche, sur la partie réseau.' }, { v: '255.255.255.0', why: 'C\'est le /24 : compte les bits à 1.' }]),
           aides: [`${q} bits à 1 en partant de la gauche, puis des 0 : chaque octet plein vaut 255.`, 'Un octet entamé vaut 128, 192, 224, 240, 248, 252 ou 254 selon qu\'il a 1 à 7 bits à 1.'],
           solution: `/${q} = **${m}** : ${Math.floor(q / 8)} octet${q >= 16 ? 's' : ''} plein${q >= 16 ? 's' : ''}${q % 8 ? ` puis ${q % 8} bit${q % 8 > 1 ? 's' : ''} à 1` : ''}.`,
         } : {
           type: 'nombre', answer: q,
           q: `Sur la fiche d'un appareil, le masque est écrit **${m}**. Quelle est la longueur du préfixe (le nombre après la barre oblique) ?`,
           pieges: sauf(q, [{ v: 32 - q, why: 'C\'est le nombre de bits d\'appareil ; le préfixe compte les bits à 1.' }]),
-          aides: ['Comptez les bits à 1 : 255 en vaut 8.', 'Un octet partiel : 128 = 1 bit, 192 = 2, 224 = 3, 240 = 4, 248 = 5, 252 = 6, 254 = 7.'],
+          aides: ['Compte les bits à 1 : 255 en vaut 8.', 'Un octet partiel : 128 = 1 bit, 192 = 2, 224 = 3, 240 = 4, 248 = 5, 252 = 6, 254 = 7.'],
           solution: `${m} = **/${q}** : ${q} bits à 1.`,
         },
         {
@@ -310,7 +310,7 @@ registerExos({
         },
         pick(rnd, [
           { type: 'choix', q: 'Une machine voit ses voisines mais ni la supervision ni le serveur d\'heure. Cause probable ?', choices: ['Sa passerelle est fausse ou absente', ['Son câble est coupé', 'Elle ne verrait plus personne, voisines comprises.'], ['Son adresse MAC est en conflit', 'Un conflit perturberait aussi les échanges avec les voisines.']], answer: 0, aides: ['Ce qui marche est local ; ce qui échoue est au-delà du sous-réseau.', 'Qui fait sortir les paquets du sous-réseau ?'], solution: 'La **passerelle** : tout ce qui est local marche, tout ce qui passe par le routeur échoue.' },
-          { type: 'choix', q: 'Le RCP 10.1.20.31 a reçu un masque /16 par erreur et cherche la CCU 10.1.30.11 du VLAN 30. Que se passe-t-il ?', choices: ['Il la croit voisine et l\'appelle par ARP, mais elle est sur un autre VLAN : pas de réponse', ['Il passe par sa passerelle, comme en /24', 'En /16, la partie réseau est 10.1 pour les deux adresses : il ne pense pas à la passerelle.'], ['Rien ne change : le masque ne sert qu\'au routeur', 'Chaque machine applique son propre masque pour décider.']], answer: 0, aides: ['Appliquez /16 aux deux adresses.', 'Même partie réseau : direct par ARP. Mais la diffusion ARP sort-elle du VLAN 20 ?'], solution: 'Il l\'**appelle par ARP en vain** : le masque trop large fait croire à un voisin. Une panne qui ressemble à un câble coupé.' },
+          { type: 'choix', q: 'Le RCP 10.1.20.31 a reçu un masque /16 par erreur et cherche la CCU 10.1.30.11 du VLAN 30. Que se passe-t-il ?', choices: ['Il la croit voisine et l\'appelle par ARP, mais elle est sur un autre VLAN : pas de réponse', ['Il passe par sa passerelle, comme en /24', 'En /16, la partie réseau est 10.1 pour les deux adresses : il ne pense pas à la passerelle.'], ['Rien ne change : le masque ne sert qu\'au routeur', 'Chaque machine applique son propre masque pour décider.']], answer: 0, aides: ['Applique /16 aux deux adresses.', 'Même partie réseau : direct par ARP. Mais la diffusion ARP sort-elle du VLAN 20 ?'], solution: 'Il l\'**appelle par ARP en vain** : le masque trop large fait croire à un voisin. Une panne qui ressemble à un câble coupé.' },
           { type: 'choix', q: 'Une machine fraîchement installée répond une fois sur deux, et une autre du même VLAN aussi. Que vérifier d\'abord ?', choices: ['Qu\'elles n\'ont pas la même adresse IP (conflit d\'adresses)', ['Le masque de la passerelle', 'Une passerelle fausse couperait tout ce qui est au-delà, pas une fois sur deux.'], ['La longueur du câble', 'Un câble trop long donne des erreurs sur une seule machine, pas sur deux à la fois.']], answer: 0, aides: ['Deux machines touchées en même temps, par intermittence.', 'La table ARP des voisins bascule d\'une machine à l\'autre.'], solution: 'Un **conflit d\'adresses** : la table ARP des voisins bascule de l\'une à l\'autre, chacune répond une fois sur deux.' },
         ]),
       ];
@@ -318,7 +318,7 @@ registerExos({
   },
   'reseau-adresses': {
     titre: 'Réseau, diffusion, plage d\'appareils',
-    consigne: 'Vous écrivez le plan d\'adressage d\'une installation : pour une adresse et son préfixe, le réseau, la diffusion, la plage ; puis vous choisissez les préfixes.',
+    consigne: 'Tu écris le plan d\'adressage d\'une installation : pour une adresse et son préfixe, le réseau, la diffusion, la plage ; puis tu choisis les préfixes.',
     gen: (rnd) => {
       const { ip, p, I } = hote(rnd, [20, 22, 23, 25, 26, 27, 28, 29]);
       const I24 = infoReseau(ip, 24);
@@ -330,7 +330,7 @@ registerExos({
         {
           type: 'texte', forme: 'ip', accept: [I.reseau], placeholder: 'a.b.c.d',
           q: `Une machine a l'adresse **${ip}/${p}**. Quelle est l'adresse du réseau ?`,
-          pieges: sauf(I.reseau, [{ v: I24.reseau, why: `Ce serait vrai en /24. En /${p}, le masque ${I.masque} coupe ${p < 24 ? 'le troisième nombre' : 'le quatrième nombre'} : raisonnez par blocs.` }, { v: ip, why: 'C\'est l\'adresse de la machine : l\'adresse du réseau a tous ses bits d\'appareil à 0.' }]),
+          pieges: sauf(I.reseau, [{ v: I24.reseau, why: `Ce serait vrai en /24. En /${p}, le masque ${I.masque} coupe ${p < 24 ? 'le troisième nombre' : 'le quatrième nombre'} : raisonne par blocs.` }, { v: ip, why: 'C\'est l\'adresse de la machine : l\'adresse du réseau a tous ses bits d\'appareil à 0.' }]),
           aides: [`Le masque /${p} s'écrit ${I.masque} : où coupe-t-il ?`, p < 24 ? `Le troisième nombre se découpe en blocs de ${256 - Number(I.masque.split('.')[2])} ; le quatrième passe à 0.` : `Le dernier nombre se découpe en blocs de ${256 - Number(I.masque.split('.')[3])} : dans quel bloc tombe ${ip.split('.')[3]} ?`],
           solution: `${ip} ET ${I.masque} = **${I.reseau}** : tous les bits d'appareil à 0.`,
         },
@@ -345,7 +345,7 @@ registerExos({
           type: 'texte', forme: 'ip', accept: [I.dernier], placeholder: 'a.b.c.d',
           q: `Le plan met les serveurs en fin de plage. Quelle est la **plus haute adresse** que l'on peut donner à un appareil de ${I.reseau}/${p} ?`,
           pieges: sauf(I.dernier, [{ v: I.broadcast, why: 'C\'est l\'adresse de diffusion : elle ne se donne à aucun appareil.' }, { v: I24.dernier, why: `C'est la fin de plage d'un /24, pas d'un /${p}.` }]),
-          aides: ['La plus haute adresse du réseau est la diffusion : elle est réservée.', 'Retirez 1 à l\'adresse de diffusion.'],
+          aides: ['La plus haute adresse du réseau est la diffusion : elle est réservée.', 'Retire 1 à l\'adresse de diffusion.'],
           solution: `**${I.dernier}**, juste sous la diffusion ${I.broadcast}.`,
         },
         parSous ? {
@@ -357,8 +357,8 @@ registerExos({
         } : {
           type: 'nombre', answer: pn,
           q: `Il faut loger **${fr(n)} appareils** dans un seul sous-réseau. Quel est le plus long préfixe qui convient (le plus petit réseau) ?`,
-          pieges: sauf(pn, [{ v: pn + 1, why: `Un /${pn + 1} ne loge que ${fr(2 ** (32 - pn - 1) - 2)} appareils : n'oubliez pas le réseau et la diffusion.` }]),
-          aides: ['Il faut n + 2 adresses : les appareils, le réseau et la diffusion.', `Cherchez la plus petite puissance de 2 qui atteint ${fr(n + 2)} : son exposant donne les bits d'appareil, et 32 − cet exposant le préfixe.`],
+          pieges: sauf(pn, [{ v: pn + 1, why: `Un /${pn + 1} ne loge que ${fr(2 ** (32 - pn - 1) - 2)} appareils : n'oublie pas le réseau et la diffusion.` }]),
+          aides: ['Il faut n + 2 adresses : les appareils, le réseau et la diffusion.', `Cherche la plus petite puissance de 2 qui atteint ${fr(n + 2)} : son exposant donne les bits d'appareil, et 32 − cet exposant le préfixe.`],
           solution: `${fr(n)} + 2 = ${fr(n + 2)} adresses ≤ 2^${32 - pn} = ${fr(2 ** (32 - pn))} : **/${pn}** (${fr(2 ** (32 - pn) - 2)} appareils).`,
         },
       ];
@@ -366,7 +366,7 @@ registerExos({
   },
   'reseau-types': {
     titre: 'Reconnaître une adresse et sa portée',
-    consigne: 'Au poste Réseau, des adresses inconnues apparaissent dans les journaux : vous dites de quel type elles sont, où va un envoi, et vous lisez une adresse IPv6.',
+    consigne: 'Au poste Réseau, des adresses inconnues apparaissent dans les journaux : tu dis de quel type elles sont, où va un envoi, et tu lis une adresse IPv6.',
     gen: (rnd) => {
       const T = pick(rnd, [
         { ip: `10.1.${entre(rnd, 10, 90)}.${entre(rnd, 1, 254)}`, lib: 'privée (RFC 1918)' },
@@ -400,21 +400,21 @@ registerExos({
         {
           type: 'choix', q: `De quel type est l'adresse **${T.ip}** ?`,
           choices: [T.lib, ...faux.map((f) => [f, POURQUOI[f]])], answer: 0,
-          aides: ['Regardez d\'abord le premier nombre, puis le deuxième.', 'Privées : 10/8, 172.16/12, 192.168/16 ; APIPA 169.254 ; boucle 127 ; multicast 224 à 239 ; CGNAT 100.64 à 100.127.'],
+          aides: ['Regarde d\'abord le premier nombre, puis le deuxième.', 'Privées : 10/8, 172.16/12, 192.168/16 ; APIPA 169.254 ; boucle 127 ; multicast 224 à 239 ; CGNAT 100.64 à 100.127.'],
           solution: `**${T.lib}** (${ty.ref}${ty.cidr ? ', ' + ty.cidr : ''}) : ${ty.detail}`,
         },
         {
           type: 'choix', q: `Le RCP 1 (10.1.20.31/24) envoie un paquet à **${D.dst}**. Qu'est-ce que c'est ?`,
           choices: [D.g, ...tirer(rnd, GENRES.filter((x) => x !== D.g), 2)], answer: 0,
-          aides: ['Est-ce une adresse de groupe (224 à 239), une diffusion, ou une machine ?', 'Pour une machine, appliquez le masque /24 : même réseau que 10.1.20.0, ou non ?'],
+          aides: ['Est-ce une adresse de groupe (224 à 239), une diffusion, ou une machine ?', 'Pour une machine, applique le masque /24 : même réseau que 10.1.20.0, ou non ?'],
           solution: `**${D.g}** : ${P.ou}.`,
         },
         {
           type: 'texte', forme: 'ip', accept: [court], placeholder: '2001:db8::1',
-          q: `Une box affiche l'adresse IPv6 **${long}**. Écrivez-la sous sa forme abrégée.`,
+          q: `Une box affiche l'adresse IPv6 **${long}**. Écris-la sous sa forme abrégée.`,
           pieges: sauf(court, [{ v: court.replace(/(^|:)([0-9a-f]{1,3})(?=:|$)/g, (m, a, b) => a + b.padStart(4, '0')), why: 'On retire aussi les zéros de tête de chaque groupe (0db8 s\'écrit db8).' },
             ...(g6[0] === 0x2001 && g6[2] === 0 ? [{ v: court.replace(':0:', '::'), why: '« :: » ne s\'écrit qu\'une fois : deux fois, on ne saurait plus combien de groupes nuls chacun remplace.' }] : [])]),
-          aides: ['Deux règles : on retire les zéros de tête de chaque groupe, et une seule suite de groupes nuls devient « :: ».', 'Choisissez la plus longue suite de groupes à 0000 pour le « :: ».'],
+          aides: ['Deux règles : on retire les zéros de tête de chaque groupe, et une seule suite de groupes nuls devient « :: ».', 'Choisis la plus longue suite de groupes à 0000 pour le « :: ».'],
           solution: `**${court}**${g6[0] === 0xfe80 ? ' : une adresse de lien local (fe80::), que chaque interface se donne' : ''}.`,
         },
         pick(rnd, [
@@ -426,7 +426,7 @@ registerExos({
   },
   'reseau-dhcp-dns': {
     titre: 'Recevoir une adresse, trouver un nom',
-    consigne: 'Le VLAN des invités reçoit ses adresses par DHCP, la production est en adresses fixes : vous suivez les échanges et vous dépannez les noms.',
+    consigne: 'Le VLAN des invités reçoit ses adresses par DHCP, la production est en adresses fixes : tu suis les échanges et tu dépannes les noms.',
     gen: (rnd) => {
       const a = entre(rnd, 10, 120), b = a + entre(rnd, 19, 120);
       const bail = pick(rnd, [1, 2, 4, 8, 12, 24]);
@@ -435,7 +435,7 @@ registerExos({
         pick(rnd, [
           {
             type: 'ordre', items: ['Discover : « y a-t-il un serveur DHCP ? » (diffusion)', 'Offer : le serveur propose une adresse, le masque, la passerelle, le DNS et le bail', 'Request : la machine accepte cette offre (encore en diffusion)', 'Ack : le serveur confirme, la machine est configurée'],
-            q: `Le portable d'un invité arrive dans le VLAN 90 sans adresse. Remettez les messages DHCP dans l'ordre.`,
+            q: `Le portable d'un invité arrive dans le VLAN 90 sans adresse. Remets les messages DHCP dans l'ordre.`,
             aides: ['Une machine sans adresse commence par chercher un serveur.', 'Chercher, proposer, accepter, confirmer : D, O, R, A.'],
             solution: '**Discover, Offer, Request, Ack** : quatre messages, les deux premiers en diffusion depuis 0.0.0.0 vers 255.255.255.255.',
           },
@@ -450,7 +450,7 @@ registerExos({
           type: 'nombre', unite: 'adresses', answer: b - a + 1,
           q: `Le routeur prête aux invités les adresses de **10.1.90.${a}** à **10.1.90.${b}**. Combien d'adresses compte cette réserve (le pool) ?`,
           pieges: [{ v: b - a, why: 'Les deux bornes comptent : de .' + a + ' à .' + b + ' compris.' }],
-          aides: ['Comptez les deux bornes : la première et la dernière adresse prêtées.', `Faites ${b} − ${a}, puis ajoutez la borne de départ.`],
+          aides: ['Compte les deux bornes : la première et la dernière adresse prêtées.', `Fais ${b} − ${a}, puis ajoute la borne de départ.`],
           solution: `${b} − ${a} + 1 = **${b - a + 1}** adresses : au-delà, un invité de plus n'obtiendrait rien.`,
         },
         rnd() < 0.5 ? {
@@ -477,7 +477,7 @@ registerExos({
   },
   'reseau-routage': {
     titre: 'Passer d\'un réseau à l\'autre',
-    consigne: 'Au poste Réseau, SW-CŒUR route entre les VLAN (passerelles 10.1.x.1). Vous suivez un paquet d\'une machine à l\'autre et vous dépannez le chemin.',
+    consigne: 'Au poste Réseau, SW-CŒUR route entre les VLAN (passerelles 10.1.x.1). Tu suis un paquet d\'une machine à l\'autre et tu dépannes le chemin.',
     gen: (rnd) => {
       const [S, D] = tirer(rnd, PLAN.slice(0, 6), 2);
       const local = rnd() < 0.4;
@@ -495,14 +495,14 @@ registerExos({
           type: 'nombre', answer: t0 - k,
           q: `Un paquet part avec un **TTL de ${t0}** et traverse **${k} routeur${k > 1 ? 's' : ''}** avant d'arriver. Quel TTL lit-on à l'arrivée ?`,
           pieges: [{ v: t0 + k, why: 'Chaque routeur décrémente le TTL : il descend.' }, { v: t0, why: 'Le TTL change à chaque routeur : c\'est un compteur de sauts.' }],
-          aides: ['Chaque routeur retire 1 au TTL.', `Partez de ${t0} et retirez un par routeur traversé.`],
+          aides: ['Chaque routeur retire 1 au TTL.', `Pars de ${t0} et retire un par routeur traversé.`],
           solution: `${t0} − ${k} = **${t0 - k}**. Un paquet à 0 est détruit : c'est ainsi qu'une boucle s'éteint, et que traceroute découvre les routeurs.`,
         },
         {
           type: 'texte', forme: 'ip', accept: [I.premier], placeholder: 'a.b.c.d',
           q: `Le plan d'adressage donne toujours la **première adresse d'appareil** du sous-réseau à la passerelle. Une machine est en **${ip}/${p}** : quelle passerelle lui régler ?`,
           pieges: sauf(I.premier, [{ v: I.reseau, why: 'C\'est l\'adresse du réseau : elle ne se donne à aucun appareil, routeur compris.' }, { v: infoReseau(ip, 24).premier, why: `C'est la première adresse d'un /24 ; en /${p}, la machine est dans ${I.reseau}.` }]),
-          aides: [`Cherchez d'abord l'adresse du réseau de ${ip}/${p}.`, 'La première adresse d\'appareil est juste après l\'adresse du réseau.'],
+          aides: [`Cherche d'abord l'adresse du réseau de ${ip}/${p}.`, 'La première adresse d\'appareil est juste après l\'adresse du réseau.'],
           solution: `Réseau ${I.reseau}/${p} : passerelle **${I.premier}**.`,
         },
         pick(rnd, [
@@ -515,7 +515,7 @@ registerExos({
   },
   'reseau-nat': {
     titre: 'Sortir sur Internet, être joint',
-    consigne: 'Le car sort sur Internet par une box qui traduit les adresses : vous suivez une connexion qui sort, un paquet qui entre, et vous réglez une contribution SRT.',
+    consigne: 'Le car sort sur Internet par une box qui traduit les adresses : tu suis une connexion qui sort, un paquet qui entre, et tu règles une contribution SRT.',
     gen: (rnd) => {
       const pub = `203.0.113.${entre(rnd, 2, 250)}`;
       const R = routeurNat(pub);
@@ -548,7 +548,7 @@ registerExos({
           choices: cas === 'reponse' ? [`Elle le remet à ${e.ip}, d'après sa table`, ['Elle le jette : il vient de l\'extérieur', 'C\'est une réponse à une connexion sortie : sa table la reconnaît.'], ['Elle le diffuse à tout le réseau privé', 'La box sait exactement à qui il revient.']]
             : cas === 'redir' ? ['Elle le remet à 192.168.1.50, par la redirection', ['Elle le jette : rien n\'est sorti vers 192.0.2.77', 'Sans la redirection, oui ; avec elle, ce port mène à 192.168.1.50.'], ['Elle le remet au dernier PC sorti', 'La table de traduction ne concerne que les réponses ; ici, c\'est la redirection qui décide.']]
               : ['Elle le jette : aucune ligne de sa table ni redirection ne correspond', ['Elle le remet au PC qui a ce port', 'Aucune connexion sortie n\'a reçu ce port : la table est muette.'], ['Elle le diffuse à tout le réseau privé', 'Une box ne diffuse jamais un paquet d\'Internet.']], answer: 0,
-          aides: ['La box ne laisse entrer que ce qui répond à une sortie, ou ce qu\'une redirection désigne.', 'Cherchez une ligne de la table (réponse) ou une redirection pour ce port.'],
+          aides: ['La box ne laisse entrer que ce qui répond à une sortie, ou ce qu\'une redirection désigne.', 'Cherche une ligne de la table (réponse) ou une redirection pour ce port.'],
           solution: e ? `Remis à **${e.ip}:${e.port}** (${e.par === 'réponse' ? 'réponse à une sortie' : 'redirection de port'}).` : '**Jeté** : ce qui arrive sans avoir été demandé est bloqué, sauf redirection.',
         },
         rnd() < 0.5 ? {

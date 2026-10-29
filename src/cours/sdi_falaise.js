@@ -21,7 +21,7 @@ export const FALAISE = {
     'En numérique, c\'est tout ou rien : l\'image est parfaite, puis des erreurs invisibles, puis des étincelles, puis plus rien, en quelques mètres. On garde toujours de la marge.',
   ],
   figure: () => el('div', { class: 'co-figwrap', html: COURS_FIGS.sdi() }),
-  demoTitle: 'allongez le câble jusqu\'à perdre l\'image, en HD-SDI puis en 12G-SDI, avec et sans égaliseur : regardez l\'œil se fermer et le compteur d\'erreurs.',
+  demoTitle: 'allonge le câble jusqu\'à perdre l\'image, en HD-SDI puis en 12G-SDI, avec et sans égaliseur : regarde l\'œil se fermer et le compteur d\'erreurs.',
   demo: (host) => ({ destroy: labSdi(host) }),
   body: `**Ce que transporte un câble SDI.** Le SDI envoie l'image en série : les bits passent l'un après l'autre sur un seul conducteur, ce qui demande un débit très élevé. L'image n'est pas compressée. Chaque pixel est décrit par sa luminance (Y) et ses différences de couleur (Cb, Cr), en 4:2:2 sur 10 bits.
 
@@ -59,7 +59,7 @@ Entre deux lignes d'image, dans la suppression, le signal transporte des donnée
         ['Parce que son débit est huit fois plus élevé : le câble affaiblit davantage les fréquences hautes qu\'il utilise.', '11,88 Gb/s contre 1,485 Gb/s : l\'atténuation à la moitié de la fréquence d\'horloge est environ trois fois plus forte.'],
         ['Parce que les connecteurs BNC 12G sont plus petits.', 'Le connecteur doit être prévu pour le 12G, mais c\'est l\'affaiblissement du câble qui limite la portée.']],
       answer: 1, why: '11,88 Gb/s contre 1,485 Gb/s : l\'atténuation à la moitié de la fréquence d\'horloge est environ trois fois plus forte.' },
-    { q: 'Le réalisateur veut la même caméra au mélangeur et sur l\'écran géant du stade. Que faites-vous ?',
+    { q: 'Le réalisateur veut la même caméra au mélangeur et sur l\'écran géant du stade. Que fais-tu ?',
       choices: [['Je mets un T BNC pour partager le câble entre les deux.', 'Un T casse l\'impédance de 75 Ω : réflexions et œil fermé. Une sortie SDI alimente une seule entrée.'],
         ['J\'augmente le niveau de sortie pour alimenter deux entrées.', 'Le niveau SDI est fixe (800 mV). Il ne se règle pas pour alimenter plusieurs entrées.'],
         ['Je passe par la grille ou par un distributeur (DA), qui recopie le signal vers les deux destinations.', 'La grille ou le DA régénère le signal et le recopie. Le SDI reste point à point.']],

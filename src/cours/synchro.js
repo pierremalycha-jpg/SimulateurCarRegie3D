@@ -115,8 +115,8 @@ function demoGenlock(host) {
     const dAB = Math.abs(B - A), m = dAB * 1000 / NS_PER_M;
     read.set('L\'écart A–B en câble', `${fmtNum(dAB, 1)} µs ≈ ${m < 2000 ? fmtNum(m, 0) + ' m' : fmtNum(m / 1000, 1) + ' km'} de coaxial (≈ ${NS_PER_M} ns/m)${m >= 2000 ? ' : un tel écart vient d\'un traitement, pas d\'un câble' : ''}`);
     verdict.className = 'co-verdict ' + (okA && okB ? (bLocked || mode === 'sync' ? 'ok' : 'warn') : 'ko');
-    verdict.textContent = !bLocked && mode !== 'sync' ? `B n'est pas verrouillée : son quartz dérive de ${PPM} µs par seconde, elle traverse la fenêtre en moins d'une seconde. Verrouillez-la (genlock) ou passez par un synchroniseur.`
-      : !okA || !okB ? `Hors fenêtre : ${[!okA ? 'A' : '', !okB ? 'B' : ''].filter(Boolean).join(' et ')} arrive${!okA && !okB ? 'nt' : ''} trop loin de la référence. Réglez la phase (V en lignes, H en µs) pour revenir sur la ligne zéro.`
+    verdict.textContent = !bLocked && mode !== 'sync' ? `B n'est pas verrouillée : son quartz dérive de ${PPM} µs par seconde, elle traverse la fenêtre en moins d'une seconde. Verrouille-la (genlock) ou passe par un synchroniseur.`
+      : !okA || !okB ? `Hors fenêtre : ${[!okA ? 'A' : '', !okB ? 'B' : ''].filter(Boolean).join(' et ')} arrive${!okA && !okB ? 'nt' : ''} trop loin de la référence. Règle la phase (V en lignes, H en µs) pour revenir sur la ligne zéro.`
         : mode === 'sync' && !bLocked ? 'Le synchroniseur sauve la coupe, pas le reste : B est en retard d\'une image au plus, et le son doit être retardé d\'autant.'
           : 'Les deux sources sont dans la fenêtre : le mélangeur les réaligne et coupe au top image, sans saut.';
     drawTiming();
@@ -210,7 +210,7 @@ const tcStr = (t, R) => `${pad(t.h)}:${pad(t.m)}:${pad(t.s)}${R.df ? ';' : ':'}$
 /** lit « HH:MM:SS:II » (ou ; avant les images) ; renvoie un message d'erreur si le timecode n'existe pas */
 function parseTC(str, R) {
   const m = /^\s*(\d{1,2})[:.](\d{1,2})[:.](\d{1,2})[:;.](\d{1,2})\s*$/.exec(str);
-  if (!m) return { err: 'Écrivez HH:MM:SS:II, par exemple 20:47:13:12.' };
+  if (!m) return { err: 'Écris HH:MM:SS:II, par exemple 20:47:13:12.' };
   const t = { h: +m[1], m: +m[2], s: +m[3], f: +m[4] };
   if (t.h > 23 || t.m > 59 || t.s > 59) return { err: 'Heures de 00 à 23, minutes et secondes de 00 à 59.' };
   if (t.f >= R.nom) return { err: `En ${R.name}, les images vont de 00 à ${pad(R.nom - 1)}.` };
@@ -330,7 +330,7 @@ registerChapter({
         'Le mélangeur réaligne dans une petite **fenêtre** (de l\'ordre de ± ½ ligne, 8,9 µs en 1080p50) ; au-delà, ou sans genlock, l\'image saute à la coupe.',
       ],
       figure: figGenlock,
-      demoTitle: 'Coupez vers B, puis poussez la phase H de B au-delà de 9 µs et recoupez ; mettez B en « libre » et regardez-la défiler ; passez l\'entrée en synchroniseur.',
+      demoTitle: 'Coupe vers B, puis pousse la phase H de B au-delà de 9 µs et recoupe ; mets B en « libre » et regarde-la défiler ; passe l\'entrée en synchroniseur.',
       demo: demoGenlock,
       body: `Le mélangeur fabrique le programme en passant d'une source à l'autre **au top image** : la commutation se fait dans l'intervalle de suppression, sur une ligne prévue pour cela (la ligne 7 en 1080, recommandation SMPTE RP 168), entre la fin d'une image et le début de la suivante. Pour que la coupe ne se voie pas, toutes les sources doivent commencer leurs images et leurs lignes au même instant : elles sont **synchrones**. C'est le rôle du **genlock** (generator lock) : chaque appareil cale le rythme de sa sortie sur une **référence** commune, au lieu de suivre son propre quartz.
 
@@ -350,8 +350,8 @@ Sans genlock, une source tourne sur son quartz, juste à quelques dizaines de pp
       competences: ['1.2', '1.4', '3.12'],
       article: 'timing',
       exercises: [
-        { id: 'synchro-reference', intro: 'Au poste Synchro, vous simulez une perte du GPS, puis vous re-verrouillez des CCU qui ont perdu la référence. Comparez les deux cas : en holdover, rien ne change à l\'image ; une CCU décrochée, elle, saute à la commutation.' },
-        { id: 'materiel-synchro', intro: 'Dans la visionneuse de matériel, vous ouvrez le SPG puis le distributeur, connecteur par connecteur : GPS, tri-level, LTC, entrée du DA. Suivez le chemin de la référence de la leçon, de l\'antenne GPS sur le toit jusqu\'à chaque appareil.' },
+        { id: 'synchro-reference', intro: 'Au poste Synchro, tu simules une perte du GPS, puis tu re-verrouilles des CCU qui ont perdu la référence. Compare les deux cas : en holdover, rien ne change à l\'image ; une CCU décrochée, elle, saute à la commutation.' },
+        { id: 'materiel-synchro', intro: 'Dans la visionneuse de matériel, tu ouvres le SPG puis le distributeur, connecteur par connecteur : GPS, tri-level, LTC, entrée du DA. Suis le chemin de la référence de la leçon, de l\'antenne GPS sur le toit jusqu\'à chaque appareil.' },
       ],
       quiz: [
         { q: 'Une CCU n\'est plus verrouillée sur la référence. Que voit-on ?', choices: ['Une image normale au multiview, mais un saut ou un roulement à la coupe vers elle', ['Une image noire, tout de suite', 'La CCU continue d\'envoyer une image : c\'est le moment où ses images commencent qui est faux, pas l\'image elle-même.'], ['Des couleurs fausses', 'La référence ne touche pas à la colorimétrie : elle ne donne que le rythme et la phase.']], answer: 0, why: 'Libre, la CCU cadence ses images sur son propre quartz : elles dérivent par rapport aux autres. Son image a l\'air normale ; c\'est à la commutation que le mélangeur ne peut pas la réaligner.' },
@@ -369,7 +369,7 @@ Sans genlock, une source tourne sur son quartz, juste à quelques dizaines de pp
         'Il voyage en **LTC** (signal audio), **VITC** (dans la suppression trame) ou **ATC** (données du SDI) ; le **drop-frame** ne concerne que le 29,97 images/s, pas le 25 ni le 50.',
       ],
       figure: figTimecode,
-      demoTitle: 'Convertissez 1 250 images en timecode à 25 puis à 50 i/s ; tapez 00:01:00;00 en drop-frame ; notez une action, puis calez la machine B sur le SPG.',
+      demoTitle: 'Convertis 1 250 images en timecode à 25 puis à 50 i/s ; tape 00:01:00;00 en drop-frame ; note une action, puis cale la machine B sur le SPG.',
       demo: demoTimecode,
       body: `Le timecode SMPTE (ST 12-1) donne à chaque image un nom unique dans la journée : les heures, les minutes, les secondes et le numéro de l'image dans la seconde (II, pour « images » ; FF en anglais, pour frames). En 25 images/s, les images vont de 00 à 24, et une journée en compte 2 160 000. Le calcul est direct : n = ((HH × 60 + MM) × 60 + SS) × 25 + II. Le timecode n'est pas une référence : il ne met pas les images en phase, c'est le rôle du genlock ; il les **date**. Les deux viennent du même SPG et changent ensemble, au début de chaque image.
 

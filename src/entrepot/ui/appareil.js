@@ -57,7 +57,7 @@ export function renderAppareil(uid, ctx) {
   }
   const al = E.alertes.filter((x) => x.dev === uid && !(x.level === 'erreur' && P && !P.on && x.msg === P.why));
   if (al.length) box.append(el('ul', { class: 'ep-alertes' }, ...al.map((x) => el('li', { class: x.level }, x.msg))));
-  if (PENDING.a) box.append(el('p', { class: 'ep-pending' }, el('span', {}, `Câble en main depuis ${nomBout(PENDING.a)} (${SIGNAUX[(portOf((appareil(PENDING.a.dev) || { modele: '' }).modele, PENDING.a.port) || { sig: 'sdi' }).sig].nom}). Choisissez le connecteur d'arrivée, ici ou sur un autre appareil.`),
+  if (PENDING.a) box.append(el('p', { class: 'ep-pending' }, el('span', {}, `Câble en main depuis ${nomBout(PENDING.a)} (${SIGNAUX[(portOf((appareil(PENDING.a.dev) || { modele: '' }).modele, PENDING.a.port) || { sig: 'sdi' }).sig].nom}). Choisis le connecteur d'arrivée, ici ou sur un autre appareil.`),
     el('button', { type: 'button', class: 'linkbtn', 'data-k': 'lacher', onclick: () => { PENDING.a = null; ctx.open(uid); } }, 'Lâcher le câble')));
 
   // ---- onglets ----
@@ -127,7 +127,7 @@ function vueFaces(/** @type {import('../types.js').Appareil} */ a, /** @type {im
   }
   const host = el('div', { class: 'ep-face' });
   drawFace(host, m.faces[face], st, conns, (id) => { if (m.ports.some((p) => p.id === id)) clickPort(uid, id, ctx); }, `${m.nom}, ${m.faces[face].label || face}`);
-  out.push(host, el('p', { class: 'ep-face-leg' }, 'Cliquez sur un connecteur pour prendre un câble, puis sur celui d\'arrivée. Anneau : couleur du signal quand il est câblé, rouge pointillé si la liaison est fausse, orange quand il accepte le câble en main.'));
+  out.push(host, el('p', { class: 'ep-face-leg' }, 'Clique sur un connecteur pour prendre un câble, puis sur celui d\'arrivée. Anneau : couleur du signal quand il est câblé, rouge pointillé si la liaison est fausse, orange quand il accepte le câble en main.'));
   // le connecteur choisi
   const p = m.ports.find((x) => x.id === APP.port);
   if (p) out.push(detailPort(a, p, ctx));

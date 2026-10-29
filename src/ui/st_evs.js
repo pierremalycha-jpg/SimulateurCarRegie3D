@@ -47,10 +47,10 @@ export const LSMACT = {
       case 'SHIFT': LSM.shift = !LSM.shift; explain(LSM.shift ? 'SHIFT : la prochaine touche donne sa fonction secondaire (inscrite en petit dessous).' : 'SHIFT relâché.'); return;
       case 'MENU': explain('MENU : bascule entre le menu opérationnel et le menu secondaire (réglages, modes PGM). SHIFT + MENU revient au menu principal.'); return;
       case 'CLEAR': { if (LSM.plst) { evsAction(chI(), 'plstclear'); explain('Playlist vidée.'); return; } const c = cur(); c.in = null; c.out = null; explain('CLEAR : points IN et OUT effacés.'); return; }
-      case 'PAGE': if (!s) { explain('PAGE : faites SHIFT puis PAGE, puis une touche F pour choisir la page (1 à 10).'); return; } LSM.shift = false; LSM.page = true; explain('Choix de la page : appuyez sur une touche F (F1 = page 1 … F10 = page 10).'); return;
+      case 'PAGE': if (!s) { explain('PAGE : fais SHIFT puis PAGE, puis une touche F pour choisir la page (1 à 10).'); return; } LSM.shift = false; LSM.page = true; explain('Choix de la page : appuie sur une touche F (F1 = page 1 … F10 = page 10).'); return;
       case 'LAST': act('lastaction'); return;
       case 'REC': evsSetRecording(!EVS.recording); explain(EVS.recording ? 'Enregistrement relancé : les trains reprennent.' : 'Enregistrement ARRÊTÉ : plus rien n\'est enregistré, aucun ralenti possible sur la suite du match !', EVS.recording ? '' : 'warn'); return;
-      case 'AUTO': EX.evsAuto = !EX.evsAuto; explain(EX.evsAuto ? 'Opérateur automatique : après chaque action, l\'EVS A se cale tout seul (utile quand vous êtes au mélangeur).' : 'Opérateur automatique coupé : c\'est vous qui préparez les ralentis.'); return;
+      case 'AUTO': EX.evsAuto = !EX.evsAuto; explain(EX.evsAuto ? 'Opérateur automatique : après chaque action, l\'EVS A se cale tout seul (utile quand tu es au mélangeur).' : 'Opérateur automatique coupé : c\'est toi qui prépares les ralentis.'); return;
       default:
     }
   },
@@ -62,7 +62,7 @@ export const LSMACT = {
     const c = cur();
     // touche vide + point IN ou OUT marqué : le clip est créé sur cette touche (SHIFT + F : écrase un clip existant)
     if (LSM.shift || (!EVS.clips[idx] && (c.in != null || c.out != null))) { LSM.shift = false; evsAction(chI(), 'save', idx); const cl = EVS.clips[idx]; explain(cl ? `Clip ${clipName(idx)} sauvegardé (page ${EVS.page}, F${i + 1}, angle de la CAM ${cl.cam}, ${fmt(cl.out - cl.in, 1)} s), avec tous les angles enregistrés. Il est protégé de l'écrasement de la boucle et visible dans IPDirector.` : 'Pas de point IN : rien à sauvegarder.'); return; }
-    if (EVS.clips[idx]) { evsAction(chI(), 'recall', idx); explain(`Clip ${clipName(idx)} rappelé sur ${chI() ? 'PGM2' : 'PGM1'} : calé sur son IN, prêt à jouer.`); } else explain('Touche vide : marquez d\'abord un IN (et un OUT), puis appuyez sur une touche F libre pour créer le clip.', 'warn');
+    if (EVS.clips[idx]) { evsAction(chI(), 'recall', idx); explain(`Clip ${clipName(idx)} rappelé sur ${chI() ? 'PGM2' : 'PGM1'} : calé sur son IN, prêt à jouer.`); } else explain('Touche vide : marque d\'abord un IN (et un OUT), puis appuie sur une touche F libre pour créer le clip.', 'warn');
   },
   /** angle : une caméra enregistrée, au même timecode */
   cam(id) {
@@ -106,8 +106,8 @@ function act(a, v) {
   const txt = {
     markin: `IN sur ${T(c.in ?? S.simTime)} : début du clip. Tous les angles enregistrés partagent ce timecode.`,
     markout: `OUT sur ${T(c.out ?? S.simTime)} : fin du clip (la lecture s'arrêtera ici).`,
-    gotoin: c.in != null ? `GOTO IN : la sortie se cale sur ${T(c.in)}, image figée, prête à partir.` : 'Pas de point IN : marquez-le d\'abord (touche IN).',
-    gotoout: c.out != null ? `GOTO OUT : calage sur le point de sortie ${T(c.out)}.` : 'Pas de point OUT : marquez-le d\'abord (touche OUT).',
+    gotoin: c.in != null ? `GOTO IN : la sortie se cale sur ${T(c.in)}, image figée, prête à partir.` : 'Pas de point IN : marque-le d\'abord (touche IN).',
+    gotoout: c.out != null ? `GOTO OUT : calage sur le point de sortie ${T(c.out)}.` : 'Pas de point OUT : marque-le d\'abord (touche OUT).',
     live: 'LIVE (E/E) : la sortie montre l\'entrée en direct, sans retard. C\'est l\'état d\'attente normal entre deux ralentis.',
     play: 'PLAY : lecture à 100 %, vitesse réelle (souvent pour revoir une action complète ou un but sous un autre angle).',
     lastaction: S.lastAction ? `Calé 3 s avant la dernière action (${S.lastAction.label}) : IN et OUT posés automatiquement.` : 'Aucune action notée pour l\'instant.',
@@ -138,7 +138,7 @@ export function evsScreen() {
   const plist = el('div', { class: 'lsm-pl' });
   const trains = el('canvas', { class: 'lsm-trains', width: 760, height: 210 });
   const msg = el('div', { class: 'note warn' });
-  const screen = el('div', { class: 'lsm-screen' }, el('div', { class: 'lsm-sub' }, `ÉCRAN DU SERVEUR ${EQUIP.evsModel} · MULTICAM`), appbar, cfg, msg, clipGrid, el('div', { class: 'lsm-sub' }, 'TRAINS D\'ENREGISTREMENT · cliquez pour vous placer'), trains, el('div', { class: 'lsm-sub' }, 'PLAYLIST'), plist);
+  const screen = el('div', { class: 'lsm-screen' }, el('div', { class: 'lsm-sub' }, `ÉCRAN DU SERVEUR ${EQUIP.evsModel} · MULTICAM`), appbar, cfg, msg, clipGrid, el('div', { class: 'lsm-sub' }, 'TRAINS D\'ENREGISTREMENT · clique pour te placer'), trains, el('div', { class: 'lsm-sub' }, 'PLAYLIST'), plist);
   const tg = trains.getContext('2d');
   trains.addEventListener('click', (e) => {
     const r = trains.getBoundingClientRect(); const x = (e.clientX - r.left) / r.width * 760;
@@ -255,7 +255,7 @@ export function buildEVS(body, arg = 0, ctx) {
   const lever = el('input', { type: 'range', min: 0, max: 100, step: 1, value: 50, class: 'tbar lsm-lever', id: noMon ? null : 'lsmlever', 'aria-label': 'Levier de vitesse' });
   lever.addEventListener('input', () => LSMACT.lever(+lever.value / 100));
   const levTxt = el('div', { class: 'lcd' }, '50 %');
-  const wheel = el('div', { class: 'wheel', title: 'Jog : faites glisser en rond ou utilisez la molette' }, el('i'));
+  const wheel = el('div', { class: 'wheel', title: 'Jog : fais glisser en rond ou utilise la molette' }, el('i'));
   let wa = 0, dragging = false, lastA = 0;
   const angOf = (e) => { const r = wheel.getBoundingClientRect(); return Math.atan2(e.clientY - (r.top + r.height / 2), e.clientX - (r.left + r.width / 2)); };
   wheel.addEventListener('pointerdown', (e) => { dragging = true; lastA = angOf(e); wheel.setPointerCapture(e.pointerId); });
@@ -267,8 +267,8 @@ export function buildEVS(body, arg = 0, ctx) {
   const right = el('div', { class: 'lsm-right' }, el('div', { class: 'hwrow', style: { gap: '16px', alignItems: 'center' } }, el('div', { class: 'list', style: { alignItems: 'center' } }, el('span', { class: 'note' }, 'LEVIER'), lever, levTxt), presets), wheel, el('span', { class: 'note' }, 'JOG'));
   body.append(el('div', { class: 'lsm' + (noMon ? ' noscreen' : '') }, keypad, right, ...(scr ? [scr.el] : [])),
     el('div', { class: 'hwrow' }, el('button', { class: 'btn small', onclick: () => openDevice('lsm', 1) }, 'Voir la télécommande LSM'), el('button', { class: 'btn small', onclick: () => openDevice('evs', 1) }, `Voir le serveur ${EQUIP.evsModel}`), el('button', { class: 'btn small', onclick: () => openDevice('ipd', 1) }, 'Voir le poste IPDirector')),
-    el('p', { class: 'note' }, 'Méthode : laissez la sortie en LIVE pendant le jeu. Après l\'action : DERN. ACTION (ou jog arrière + IN), choisissez l\'angle, puis poussez le levier quand le réalisateur envoie l\'EVS. Clips : IN / OUT puis F libre = créer · F occupée = rappeler · SHIFT + F = écraser · SHIFT + PAGE puis F = changer de page. Clavier : Espace lecture/pause · I / O · L live · ← → image par image (Maj = 10) · ↑ ↓ levier · 1-8 angle.'),
-    el('p', { class: 'note' }, 'Disposition simplifiée de la télécommande : les fonctions suivent les manuels Multicam (versions 10 à 12), mais l\'emplacement exact des touches dépend de votre modèle et de votre version.'));
+    el('p', { class: 'note' }, 'Méthode : laisse la sortie en LIVE pendant le jeu. Après l\'action : DERN. ACTION (ou jog arrière + IN), choisis l\'angle, puis pousse le levier quand le réalisateur envoie l\'EVS. Clips : IN / OUT puis F libre = créer · F occupée = rappeler · SHIFT + F = écraser · SHIFT + PAGE puis F = changer de page. Clavier : Espace lecture/pause · I / O · L live · ← → image par image (Maj = 10) · ↑ ↓ levier · 1-8 angle.'),
+    el('p', { class: 'note' }, 'Disposition simplifiée de la télécommande : les fonctions suivent les manuels Multicam (versions 10 à 12), mais l\'emplacement exact des touches dépend de ton modèle et de ta version.'));
 
   let lastRec = '';
   return {
@@ -283,7 +283,7 @@ export function buildEVS(body, arg = 0, ctx) {
       if (sig !== lastRec) {
         lastRec = sig; camRow.innerHTML = '';
         recCams.forEach((id, i) => { const cam = camById(id); const b = K(`CAM ${'ABCDEFGH'[i]}`, () => LSMACT.cam(id), 'cyan'); b.dataset.id = id; b.title = `CAM ${id}`; b.appendChild(el('small', {}, `${id}${cam.hfr > 1 ? ' · ' + cam.hfr + 'x' : ''}`)); camRow.appendChild(b); });
-        if (!recCams.length) camRow.appendChild(el('span', { class: 'note warn' }, 'Aucune caméra enregistrée : affectez des entrées REC à la grille.'));
+        if (!recCams.length) camRow.appendChild(el('span', { class: 'note warn' }, 'Aucune caméra enregistrée : affecte des entrées REC à la grille.'));
       }
       [...camRow.children].forEach((b) => b.classList && b.classList.toggle('on', +b.dataset.id === c.cam));
       fkeys.forEach((b, i) => { const idx = (EVS.page - 1) * 10 + i; const cl = EVS.clips[idx]; b.classList.toggle('on', !!cl); b.lastChild.textContent = LSM.page ? 'page ' + (i + 1) : cl ? clipName(idx) : ''; b.title = cl ? `${clipName(idx)} · CAM ${cl.cam} · ${tc(S.tcOffset + cl.in)}` : 'vide'; });

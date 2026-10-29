@@ -19,13 +19,13 @@ export function tabCourse(box, R) {
   box.append(el('div', { class: 'hwpanel' },
     el('div', { class: 'hwrow' }, el('h3', {}, 'Parcours ST 2110'), el('span', { class: 'pill ' + (T.done === T.total ? 'ok' : '') }, `${T.done} / ${T.total} missions · ${T.pts} / ${T.max} points`), el('span', { class: 'pill' }, `Quiz : ${best(net().quiz)}`), el('span', { class: 'pill' }, `Examen : ${best(net().exams)}`)),
     el('div', { class: 'net-progress' }, el('i', { style: { width: (T.done / T.total * 100) + '%' } })),
-    el('p', { class: 'note' }, 'Quatorze missions, de la lecture de la topologie au dépannage et à la reconstruction d\'une leaf. Les objectifs se cochent tout seuls quand vous agissez dans le poste (ou dans d\'autres postes du car). Chaque mission vaut 10 points : −2 par indice, −5 si vous chargez la configuration de référence. Résultats enregistrés dans votre suivi (visible du formateur).'),
+    el('p', { class: 'note' }, 'Quatorze missions, de la lecture de la topologie au dépannage et à la reconstruction d\'une leaf. Les objectifs se cochent tout seuls quand tu agis dans le poste (ou dans d\'autres postes du car). Chaque mission vaut 10 points : −2 par indice, −5 si tu charges la configuration de référence. Résultats enregistrés dans ton suivi (visible du formateur).'),
     el('div', { class: 'hwrow' },
       el('button', { class: 'btn small primary', onclick: () => openQuiz(R) }, 'Quiz ST 2110 (10 questions)'),
       el('button', { class: 'btn small', onclick: async () => { if (!(await ask('Lancer l\'examen réseau ? Trois pannes cachées vont être injectées l\'une après l\'autre (15 min maximum). Le réseau est d\'abord remis en configuration de référence.', { title: 'Examen réseau', ok: 'Lancer l\'examen' }))) return; startExam(); R.refresh(); } }, 'Examen réseau (3 pannes, 15 min)'),
       el('button', { class: 'btn small', onclick: () => emit('openGuide', 'reseau') }, 'Cours : réseau spine-leaf'),
       el('button', { class: 'btn small', onclick: () => emit('openGuide', 'mesure2110') }, 'Cours : mesurer un flux 2110'),
-      el('button', { class: 'btn small', onclick: async () => { if (await ask('Effacer votre progression sur le parcours réseau ?', { title: 'Recommencer le parcours réseau', ok: 'Effacer ma progression', danger: true })) { resetCourse(); R.refresh(); } } }, 'Recommencer le parcours'))));
+      el('button', { class: 'btn small', onclick: async () => { if (await ask('Effacer ta progression sur le parcours réseau ?', { title: 'Recommencer le parcours réseau', ok: 'Effacer ma progression', danger: true })) { resetCourse(); R.refresh(); } } }, 'Recommencer le parcours'))));
   if (NC.done) { const m = NET_MISSIONS.find((x) => x.id === NC.done.id); box.append(el('div', { class: 'hwpanel net-done' }, el('h3', {}, `Mission réussie : ${m.title} · ${NC.done.pts}/10`), el('p', {}, m.learn), el('div', { class: 'hwrow' }, nextBtn(m, R), el('button', { class: 'btn small', onclick: () => { NC.done = null; R.refresh(); } }, 'Fermer')))); }
   if (NC.active) missionCard(box, R);
   const grid = el('div', { class: 'net-missions' });
@@ -45,7 +45,7 @@ async function start(m, R) {
 }
 function nextBtn(m, R) {
   const i = NET_MISSIONS.indexOf(m); const n = NET_MISSIONS[i + 1];
-  return n ? el('button', { class: 'btn small primary', onclick: () => start(n, R) }, `Mission suivante : ${n.title}`) : el('span', { class: 'note ok' }, 'Parcours terminé : tentez l\'examen réseau !');
+  return n ? el('button', { class: 'btn small primary', onclick: () => start(n, R) }, `Mission suivante : ${n.title}`) : el('span', { class: 'note ok' }, 'Parcours terminé : tente l\'examen réseau !');
 }
 // carte de la mission en cours (affichée dans l'onglet Formation et en tête des autres onglets)
 export function missionCard(box, R, compact = false) {
@@ -60,9 +60,9 @@ export function missionCard(box, R, compact = false) {
   if (!compact) {
     for (const q of m.q || []) {
       const done = NC.answers[m.id + ':' + q.id];
-      const inp = el('input', { type: 'text', placeholder: 'Votre réponse', 'aria-label': qText(q) });
+      const inp = el('input', { type: 'text', placeholder: 'Ta réponse', 'aria-label': qText(q) });
       const res = el('span', { class: 'note' });
-      const check = () => { const ok = answer(m.id, q.id, inp.value); res.textContent = ok ? 'Exact.' : 'Ce n\'est pas ça : vérifiez dans le poste.'; res.className = 'note ' + (ok ? 'ok' : 'err'); if (ok) R.refresh(); };
+      const check = () => { const ok = answer(m.id, q.id, inp.value); res.textContent = ok ? 'Exact.' : 'Ce n\'est pas ça : vérifie dans le poste.'; res.className = 'note ' + (ok ? 'ok' : 'err'); if (ok) R.refresh(); };
       inp.addEventListener('keydown', (e) => { if (e.key === 'Enter') check(); e.stopPropagation(); });
       card.append(el('div', { class: 'net-q' + (done ? ' ok' : '') }, el('span', { class: 'chk' }, done ? '✓' : '?'), el('span', { class: 'grow' }, qText(q)), done ? el('b', { class: 'ok' }, String(q.a())) : el('span', { class: 'hwrow' }, inp, el('button', { class: 'btn small', onclick: check }, 'Vérifier'), res)));
     }
@@ -86,7 +86,7 @@ function openQuiz(R) {
     body.innerHTML = '';
     if (i >= Q.length) {
       const pct = Math.round(score / Q.length * 100); saveQuiz(pct, Q.length);
-      body.append(el('div', { class: 'lcd amber big' }, `Score : ${score} / ${Q.length} (${pct} %)`), el('p', { class: 'note' }, pct >= 80 ? 'Très bien : les bases ST 2110 sont acquises.' : 'Relisez les chapitres « Production IP » et « Réseau ST 2110 spine-leaf » du guide, puis recommencez.'), el('div', { class: 'hwrow' }, el('button', { class: 'btn primary', onclick: () => { modal.close(); R.refresh(); } }, 'Fermer'), el('button', { class: 'btn', onclick: () => { modal.close(); openQuiz(R); } }, 'Nouveau quiz')));
+      body.append(el('div', { class: 'lcd amber big' }, `Score : ${score} / ${Q.length} (${pct} %)`), el('p', { class: 'note' }, pct >= 80 ? 'Très bien : les bases ST 2110 sont acquises.' : 'Relis les chapitres « Production IP » et « Réseau ST 2110 spine-leaf » du guide, puis recommence.'), el('div', { class: 'hwrow' }, el('button', { class: 'btn primary', onclick: () => { modal.close(); R.refresh(); } }, 'Fermer'), el('button', { class: 'btn', onclick: () => { modal.close(); openQuiz(R); } }, 'Nouveau quiz')));
       return;
     }
     const q = Q[i]; answered = false;
@@ -114,7 +114,7 @@ function examPanel(box, R) {
     for (const f of E.faults) tb.append(el('tr', {}, el('td', {}, f.label), el('td', { class: f.entry && f.entry.done ? 'ok' : 'err' }, f.entry && f.entry.done ? 'résolue' : 'non résolue'), el('td', { class: 'mono' }, f.dur ? mmss(f.dur) : '—'), el('td', { class: 'mono' }, `${f.pts} / 30`), el('td', {}, f.aided ? 'référence chargée (÷2)' : '—'), el('td', { class: 'note' }, f.entry ? f.entry.f.hint : '')));
     box.append(el('div', { class: 'hwpanel' }, el('h3', {}, 'Examen réseau terminé'), el('div', { class: 'lcd amber big' }, `Score : ${E.score} %`),
       el('div', { class: 'tblwrap' }, el('table', { class: 'tbl compact net-tbl' }, el('thead', {}, el('tr', {}, ...['Panne', 'État', 'Temps', 'Points', 'Aide', 'Explication'].map((h) => el('th', {}, h)))), tb)),
-      el('p', { class: 'note' }, `Configurations enregistrées : ${E.saved ? 'oui' : 'non (−10)'} · alarmes restantes : ${E.issuesLeft} · pénalités : ${E.pen}. Le résultat est enregistré dans votre suivi.`),
+      el('p', { class: 'note' }, `Configurations enregistrées : ${E.saved ? 'oui' : 'non (−10)'} · alarmes restantes : ${E.issuesLeft} · pénalités : ${E.pen}. Le résultat est enregistré dans ton suivi.`),
       el('div', { class: 'hwrow' }, el('button', { class: 'btn', onclick: () => offerDownload('examen-reseau-st2110.html', examReportHTML(E)) }, 'Télécharger le compte rendu'), el('button', { class: 'btn primary', onclick: () => { closeExam(); R.refresh(); } }, 'Fermer'))));
     return;
   }

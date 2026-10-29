@@ -132,7 +132,7 @@ export function listeCablage(/** @type {Ctx} */ ctx) {
 /** @param {Ctx} ctx */
 export function renderSynoptique(ctx) {
   const box = el('div', { class: 'ep-syno' });
-  if (!ctx.B.cables.length) { box.append(el('p', { class: 'note' }, 'Aucun câble pour l\'instant. Ouvrez un appareil et cliquez sur un connecteur pour prendre un câble.')); return box; }
+  if (!ctx.B.cables.length) { box.append(el('p', { class: 'note' }, 'Aucun câble pour l\'instant. Ouvre un appareil et clique sur un connecteur pour prendre un câble.')); return box; }
   const host = el('div', { class: 'ep-syno-svg' });
   const draw = () => host.replaceChildren(dessin(ctx, VUE.calques, (uid) => ctx.open(uid)));
   const toggles = el('div', { class: 'ep-chips', role: 'group', 'aria-label': 'Calques' }, ...CALQUES.map(([id, nom]) => {
@@ -148,6 +148,6 @@ export function renderSynoptique(ctx) {
       el('button', { type: 'button', class: 'btn small', onclick: async () => { const svg = dessin(ctx, VUE.calques, () => {}); const r = await offerDownload('synoptique-entrepot.svg', '<?xml version="1.0" encoding="UTF-8"?>\n' + new XMLSerializer().serializeToString(svg)); ctx.say(r === 'saved' ? 'Synoptique enregistré (SVG).' : 'Téléchargement impossible.'); } }, 'Exporter le dessin (SVG)'),
       el('button', { type: 'button', class: 'btn small', onclick: async () => { const r = await offerDownload('liste-de-cablage.csv', listeCablage(ctx)); ctx.say(r === 'saved' ? 'Liste de câblage enregistrée (CSV).' : 'Téléchargement impossible.'); } }, 'Liste de câblage (CSV)')));
   if (ko.length) box.append(el('h3', {}, `Liaisons fausses (${ko.length})`), el('ul', { class: 'ep-cables' }, ...ko.map((c) => el('li', { class: 'ko', style: `--c:${SIGNAUX[c.sig].couleur}` }, el('i', { 'aria-hidden': 'true' }), el('span', {}, `${(appareil(c.a.dev) || { nom: '?' }).nom} → ${(appareil(c.b.dev) || { nom: '?' }).nom}`, el('small', {}, ' ' + ctx.E.cables[c.uid].why)), el('button', { type: 'button', class: 'linkbtn', onclick: () => debrancher(c.uid) }, 'Débrancher')))));
-  box.append(el('p', { class: 'note' }, `${ctx.B.cables.length} câble${ctx.B.cables.length > 1 ? 's' : ''}. Survolez une liaison pour lire ses deux bouts ; un clic sur un appareil l'ouvre.`));
+  box.append(el('p', { class: 'note' }, `${ctx.B.cables.length} câble${ctx.B.cables.length > 1 ? 's' : ''}. Survole une liaison pour lire ses deux bouts ; un clic sur un appareil l'ouvre.`));
   return box;
 }

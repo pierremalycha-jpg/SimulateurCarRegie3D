@@ -73,7 +73,7 @@ export const STATION_INFO = {
     role: 'Qualifie le signal lui-même, pas seulement l\'image : on y brasse une sortie de CCU, de la grille ou du mélangeur sur l\'instrument de mesure (type PRISM) pour lire le diagramme de l\'œil, la gigue, les erreurs CRC, la longueur de câble estimée et le timing par rapport à la référence.',
     gear: ['Moniteur de mesure SDI / IP (type Telestream PRISM, anciennement Tektronix), option couche physique (œil, gigue, câble)', 'Jacks d\'écoute de la baie de brassage, cordons courts 75 Ω', 'Référence du SPG (black burst, tri-level) bouclée sur l\'instrument'],
     process: ['Installation : mesurer chaque liaison coaxiale (affaiblissement, marge de l\'égaliseur, CRC à zéro)', 'Line-up : barres de chaque caméra au vecteurscope, timing de chaque source', 'Direct : surveiller les CRC ; une erreur sans défaut visible = liaison au bord de la falaise', 'Dépannage : œil, dépassement, longueur estimée, puis changer le cordon ou ajouter un répéteur'],
-    tips: ['La norme définit l\'œil à la sortie de l\'émetteur avec 1 m de câble : un œil brut fermé après 80 m en 3G est normal, regardez l\'œil égalisé.', 'Un dépassement de plus de 10 % trahit une rupture d\'impédance : connecteur mal serti, BNC 50 Ω, câble écrasé.', 'Le seul bon compte de CRC pendant une émission, c\'est zéro.'],
+    tips: ['La norme définit l\'œil à la sortie de l\'émetteur avec 1 m de câble : un œil brut fermé après 80 m en 3G est normal, regarde l\'œil égalisé.', 'Un dépassement de plus de 10 % trahit une rupture d\'impédance : connecteur mal serti, BNC 50 Ω, câble écrasé.', 'Le seul bon compte de CRC pendant une émission, c\'est zéro.'],
   },
   brassage: {
     title: 'Baie de brassage (jackfield)', where: 'Zone technique',

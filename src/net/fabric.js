@@ -501,7 +501,7 @@ export function evaluate() {
     if (r.refused && b.refused) R.refused[rid] = true;
     if (r.refused || b.refused) R.nRefused = (R.nRefused || 0) + 1;
   }
-  if (R.nRefused) iss(Object.keys(R.refused).length ? 'err' : 'warn', `Contrôleur SDN : ${R.nRefused} connexion(s) refusée(s) faute de bande passante`, `${Object.keys(R.refused).length} récepteur(s) ne reçoivent rien (refus sur les deux réseaux). Le contrôleur préfère refuser un flux plutôt que de saturer un lien et dégrader tous les autres. Libérez de la bande passante ou passez le lien à une vitesse supérieure.`, {});
+  if (R.nRefused) iss(Object.keys(R.refused).length ? 'err' : 'warn', `Contrôleur SDN : ${R.nRefused} connexion(s) refusée(s) faute de bande passante`, `${Object.keys(R.refused).length} récepteur(s) ne reçoivent rien (refus sur les deux réseaux). Le contrôleur préfère refuser un flux plutôt que de saturer un lien et dégrader tous les autres. Libère de la bande passante ou passe le lien à une vitesse supérieure.`, {});
   R.rxState = st;
   const lostRx = Object.entries(st).filter(([, x]) => !x.ok && !R.refused[x.rx]);
   if (lostRx.length) iss('err', `${lostRx.length} réception(s) sans flux sur les deux réseaux`, `${lostRx.slice(0, 5).map(([id]) => FAB.rx[id].label).join(', ')}${lostRx.length > 5 ? '…' : ''}. Cause : ${lostRx[0][1].reason}`, {});

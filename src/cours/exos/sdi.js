@@ -39,7 +39,7 @@ const r1 = (v) => Math.round(v * 10) / 10, r2 = (v) => Math.round(v * 100) / 100
 registerExos({
   'sdi-cest-quoi': {
     titre: 'Lire une ligne SDI et choisir la liaison',
-    consigne: 'À la baie de mesure, vous vérifiez ce que transporte chaque câble de la grille : le débit, la place de la suppression, l\'ordre des repères d\'une ligne.',
+    consigne: 'À la baie de mesure, tu vérifies ce que transporte chaque câble de la grille : le débit, la place de la suppression, l\'ordre des repères d\'une ligne.',
     gen: (rnd) => {
       const T = pick(rnd, FMT), deb = T.tot * T.lignes * T.ips * 2 * 10 / 1e9;
       const actif = T.act * T.actives * T.ips * 20 / 1e9;
@@ -60,19 +60,19 @@ registerExos({
           ? {
             type: 'nombre', answer: T.lignes - T.actives,
             q: `En **${T.nom}**, combien de lignes de suppression verticale (le VANC) entre deux images ? L'image compte ${fr(T.actives)} lignes actives sur ${fr(T.lignes)}.`,
-            pieges: [{ v: T.lignes, why: 'C\'est le nombre total de lignes de la trame : retirez les lignes actives.' }],
+            pieges: [{ v: T.lignes, why: 'C\'est le nombre total de lignes de la trame : retire les lignes actives.' }],
             aides: ['Toutes les lignes de la trame ne portent pas l\'image : les autres forment la suppression verticale.', `${fr(T.lignes)} lignes en tout, dont ${fr(T.actives)} actives.`],
             solution: `${fr(T.lignes)} − ${fr(T.actives)} = **${T.lignes - T.actives} lignes** : on y range le timecode (ATC), le VPID, des sous-titres.`,
           }
           : {
             type: 'nombre', answer: T.tot - T.act,
             q: `En **${T.nom}**, une ligne compte ${fr(T.tot)} mots par flux, dont ${fr(T.act)} de vidéo active. Combien de mots par flux pour la suppression horizontale (EAV, numéro de ligne, CRC, HANC, SAV) ?`,
-            pieges: [{ v: T.tot, why: 'C\'est la ligne entière : retirez la vidéo active.' }, { v: T.act, why: 'C\'est la vidéo active : la question porte sur ce qui reste.' }],
+            pieges: [{ v: T.tot, why: 'C\'est la ligne entière : retire la vidéo active.' }, { v: T.act, why: 'C\'est la vidéo active : la question porte sur ce qui reste.' }],
             aides: ['La suppression horizontale, c\'est tout ce qui n\'est pas de la vidéo active sur la ligne.', `${fr(T.tot)} mots en tout, dont ${fr(T.act)} actifs.`],
             solution: `${fr(T.tot)} − ${fr(T.act)} = **${fr(T.tot - T.act)} mots** : 4 d'EAV, 2 de numéro de ligne, 2 de CRC, l'HANC (l'audio embarqué), 4 de SAV.`,
           },
         {
-          type: 'ordre', q: 'Remettez dans l\'ordre où ils passent dans le câble les morceaux d\'une ligne SDI, à partir de la fin de l\'image de la ligne précédente.',
+          type: 'ordre', q: 'Remets dans l\'ordre où ils passent dans le câble les morceaux d\'une ligne SDI, à partir de la fin de l\'image de la ligne précédente.',
           items: ['EAV : fin de la vidéo active (3FF 000 000 XYZ)', 'Le numéro de ligne (LN)', 'Le CRC de la ligne', 'L\'HANC : paquets audio et données', 'SAV : début de la vidéo active', 'La vidéo active : les échantillons de l\'image'],
           aides: ['La ligne commence par le repère qui ferme l\'image de la ligne d\'avant.', 'Après ce repère viennent deux mots qui disent où l\'on est, deux qui contrôlent la ligne, puis l\'espace des données, et le repère qui ouvre l\'image.'],
           solution: 'EAV, numéro de ligne, CRC, HANC, SAV, puis la vidéo active. Le récepteur se repère sur EAV et SAV, dont les mots 3FF et 000 sont interdits à l\'image.',
@@ -87,7 +87,7 @@ registerExos({
   },
   'sdi-cable': {
     titre: 'Monter une liaison qui tient',
-    consigne: 'Dans la zone technique, vous tirez une liaison 3G de la CCU vers la grille, à travers la baie de brassage : son budget, sa garantie, les pièges des connecteurs.',
+    consigne: 'Dans la zone technique, tu tires une liaison 3G de la CCU vers la grille, à travers la baie de brassage : son budget, sa garantie, les pièges des connecteurs.',
     gen: (rnd) => {
       const L = entre(rnd, 4, 9) * 10, n = entre(rnd, 1, 3), att = L * 25.6 / 100 + n * 0.5;
       const L1 = entre(rnd, 8, 14) * 10, L2 = entre(rnd, 1, 5) * 5;
@@ -96,14 +96,14 @@ registerExos({
           type: 'nombre', unite: 'dB', answer: r1(att), tol: 0.4,
           q: `La liaison 3G mesure **${L} m** de 1694A (≈ 25,6 dB/100 m à la demi-fréquence d'horloge) et passe **${n} fois** par la baie de brassage (≈ 0,5 dB par passage, un ordre de grandeur). Quel affaiblissement au total ?`,
           pieges: [{ v: r1(L * 25.6 / 100), why: 'C\'est le câble seul : chaque passage dans la baie ajoute deux connecteurs et un cordon.' }],
-          aides: ['Additionnez l\'affaiblissement du câble et celui des passages en brassage.', `${L} m × 25,6 dB/100 m, plus ${n} × 0,5 dB.`],
+          aides: ['Additionne l\'affaiblissement du câble et celui des passages en brassage.', `${L} m × 25,6 dB/100 m, plus ${n} × 0,5 dB.`],
           solution: `${L} × 0,256 + ${n} × 0,5 = **${fr(att, 1)} dB**.`,
         },
         {
           type: 'choix', q: `Ces ${fr(att, 1)} dB, comparés aux 20 dB d'égalisation que la norme du 3G garantit : que faut-il en penser ?`,
           choices: att <= 20
-            ? ['Dans la garantie : la liaison passe avec de la marge', ['Au-delà de la garantie : elle ne tient que grâce à un bon égaliseur, sans marge', 'Comparez les deux nombres : l\'affaiblissement reste sous les 20 dB garantis.'], PEU_IMPORTE]
-            : [['Dans la garantie : la liaison passe avec de la marge', 'Comparez les deux nombres : l\'affaiblissement dépasse les 20 dB garantis.'], 'Au-delà de la garantie : elle ne tient que grâce à un bon égaliseur, sans marge', PEU_IMPORTE],
+            ? ['Dans la garantie : la liaison passe avec de la marge', ['Au-delà de la garantie : elle ne tient que grâce à un bon égaliseur, sans marge', 'Compare les deux nombres : l\'affaiblissement reste sous les 20 dB garantis.'], PEU_IMPORTE]
+            : [['Dans la garantie : la liaison passe avec de la marge', 'Compare les deux nombres : l\'affaiblissement dépasse les 20 dB garantis.'], 'Au-delà de la garantie : elle ne tient que grâce à un bon égaliseur, sans marge', PEU_IMPORTE],
           answer: att <= 20 ? 0 : 1,
           aides: ['ST 424 exige qu\'un récepteur 3G compense au moins 20 dB.', 'Au-delà, les égaliseurs actuels font souvent mieux (35 à 40 dB), mais rien ne le garantit.'],
           solution: att <= 20 ? `**${fr(att, 1)} dB ≤ 20 dB** : la liaison est dans ce que tout récepteur 3G doit accepter, avec ${fr(20 - att, 1)} dB de marge.` : `**${fr(att, 1)} dB > 20 dB** : elle dépend d'un égaliseur meilleur que la norme. On surveille les CRC, ou l'on raccourcit, ou l'on insère un répéteur.`,
@@ -140,7 +140,7 @@ registerExos({
   },
   'sdi-grille': {
     titre: 'Commuter sans se tromper',
-    consigne: 'Au poste Grille, vous commandez la Videohub 40 × 40 du car : des messages par le réseau, des points de croisement, des verrous et des étiquettes.',
+    consigne: 'Au poste Grille, tu commandes la Videohub 40 × 40 du car : des messages par le réseau, des points de croisement, des verrous et des étiquettes.',
     gen: (rnd) => {
       const cam = entre(rnd, 1, 16);
       const R = pick(rnd, [
@@ -159,13 +159,13 @@ registerExos({
       return [
         {
           type: 'texte', placeholder: '30 23', accept: msg,
-          q: `Par le réseau (protocole de la Videohub, TCP 9990), vous envoyez l'entrée **${R.a} « ${src} »** sur la sortie **${R.b} « ${dst} »**. Qu'écrivez-vous sous \`VIDEO OUTPUT ROUTING:\` ?`,
+          q: `Par le réseau (protocole de la Videohub, TCP 9990), tu envoies l'entrée **${R.a} « ${src} »** sur la sortie **${R.b} « ${dst} »**. Qu'écris-tu sous \`VIDEO OUTPUT ROUTING:\` ?`,
           pieges: [
             { v: `${R.b} ${R.a}`, why: 'Ce sont les numéros de la façade : le protocole compte les ports à partir de 0.' },
             { v: `${R.a - 1} ${R.b - 1}`, why: 'L\'ordre est inversé : la sortie d\'abord, l\'entrée ensuite.' },
             { v: `${R.a} ${R.b}`, why: 'Deux erreurs : la sortie vient d\'abord, et les ports se comptent à partir de 0.' },
           ].filter((x) => x.v !== msg),
-          aides: ['Le protocole donne la sortie d\'abord, puis l\'entrée.', 'Les ports y sont comptés à partir de 0 : retirez 1 à chaque numéro de la façade. Exemple de la leçon : « 30 23 » route l\'entrée 24 sur la sortie 31.'],
+          aides: ['Le protocole donne la sortie d\'abord, puis l\'entrée.', 'Les ports y sont comptés à partir de 0 : retire 1 à chaque numéro de la façade. Exemple de la leçon : « 30 23 » route l\'entrée 24 sur la sortie 31.'],
           solution: `**${msg}** : la sortie ${R.b} devient ${R.b - 1}, l'entrée ${R.a} devient ${R.a - 1}. La grille répond ACK et prévient tous ses clients.`,
         },
         ferme
@@ -185,13 +185,13 @@ registerExos({
           },
         pick(rnd, [
           {
-            type: 'ordre', q: 'À la façade de la Videohub, remettez dans l\'ordre la commutation d\'une caméra vers une tuile du multiview.',
+            type: 'ordre', q: 'À la façade de la Videohub, remets dans l\'ordre la commutation d\'une caméra vers une tuile du multiview.',
             items: ['OUT, puis le numéro de la sortie (la destination)', 'IN, puis la source', 'Regarder l\'image de la source à l\'écran', 'TAKE pour valider'],
             aides: ['On commute toujours dans le même ordre : la destination d\'abord.', 'Destination, source, contrôle, validation.'],
             solution: 'Destination (OUT), source (IN), un regard sur l\'image (une étiquette n\'est qu\'un nom), puis **TAKE** ; CLEAR annule.',
           },
           {
-            type: 'ordre', q: 'Avant le match, la chaîne demande un test de ligne sur TX1, verrouillé. Remettez les étapes dans l\'ordre.',
+            type: 'ordre', q: 'Avant le match, la chaîne demande un test de ligne sur TX1, verrouillé. Remets les étapes dans l\'ordre.',
             items: ['Prévenir à l\'intercom et déverrouiller TX1', 'Router la mire sur TX1', 'Faire le test avec la chaîne', 'Remettre le PGM sur TX1', 'Reverrouiller TX1'],
             aides: ['Une sortie verrouillée refuse toute commutation : il faut commencer par la libérer.', 'On déverrouille, on teste, on remet le programme, on reverrouille.'],
             solution: 'Déverrouiller, mire, test, PGM, **reverrouiller** : le départ vers la chaîne ne reste jamais libre pendant le direct.',
@@ -199,7 +199,7 @@ registerExos({
         ]),
         pick(rnd, [
           {
-            type: 'choix', q: 'Vous rappelez le salvo « match » ; TX2 était verrouillé sur la mire depuis le test de ligne. Que reçoit TX2 ?',
+            type: 'choix', q: 'Tu rappelles le salvo « match » ; TX2 était verrouillé sur la mire depuis le test de ligne. Que reçoit TX2 ?',
             choices: ['Toujours la mire : une sortie verrouillée refuse aussi les salvos', ['Le PGM, comme le prévoit le salvo', 'Une sortie verrouillée refuse toute commutation, d\'où qu\'elle vienne, salvo compris.'], ['Rien : le salvo est annulé en entier', 'Le salvo change les autres sorties ; seule la sortie verrouillée garde sa source.']], answer: 0,
             aides: ['Un verrou fige une sortie, d\'où que vienne la demande.', 'Un salvo n\'est qu\'un ensemble de commutations.'],
             solution: 'TX2 garde **la mire** : la chaîne ne reçoit pas le programme. D\'où la règle : relire l\'état de la grille après chaque salvo.',
@@ -207,7 +207,7 @@ registerExos({
           {
             type: 'choix', q: 'Le réalisateur demande la CAM 3 sur MV 13 ; l\'étiquette dit « CAM 3 » mais l\'image est celle de la caméra 2. Où est l\'erreur ?',
             choices: ['Dans les étiquettes des entrées : à relire avec la liste de câblage', ['Dans la grille, qui a routé la mauvaise entrée', 'La grille a fermé le point demandé : elle route une entrée, pas un nom.'], ['Dans le multiview, qui affiche mal la tuile', 'La tuile montre ce que la sortie reçoit : c\'est bien la caméra 2 qui arrive.']], answer: 0,
-            aides: ['Une étiquette n\'est qu\'un nom écrit dans Videohub Setup.', 'Comparez le nom, l\'image et le câblage.'],
+            aides: ['Une étiquette n\'est qu\'un nom écrit dans Videohub Setup.', 'Compare le nom, l\'image et le câblage.'],
             solution: 'Les **étiquettes** : l\'entrée appelée « CAM 3 » est câblée sur la caméra 2. On regarde l\'image avant de valider, et l\'on relit les étiquettes au line-up.',
           },
           {
@@ -217,9 +217,9 @@ registerExos({
             solution: '**Régénérée mais hors phase** : la grille remet le budget de câble à zéro, pas le temps ; c\'est au réglage de phase de la source (ou à un synchroniseur) de le faire.',
           },
           {
-            type: 'choix', q: 'Vous voulez commuter une sortie que le protocole montre à l\'état « L ». Que faire ?',
+            type: 'choix', q: 'Tu veux commuter une sortie que le protocole montre à l\'état « L ». Que faire ?',
             choices: ['Appeler à l\'intercom le poste qui l\'a verrouillée avant toute chose', ['La commuter : le verrou ne vaut que pour la façade', 'Un verrou vaut pour tous les postes : la commutation sera refusée.'], ['Elle est libre : L veut dire « libre »', 'Libre, c\'est U ; O, verrouillée par ce poste ; L, par un autre poste.']], answer: 0,
-            aides: ['Trois états : U, O, L.', 'L : verrouillée par un autre poste que le vôtre.'],
+            aides: ['Trois états : U, O, L.', 'L : verrouillée par un autre poste que le tien.'],
             solution: '**L**, c\'est le verrou d\'un autre poste : on ne le force qu\'après l\'avoir appelé à l\'intercom.',
           },
         ]),
@@ -228,7 +228,7 @@ registerExos({
   },
   'sdi-embedded': {
     titre: 'Ranger le son dans le SDI',
-    consigne: 'À la transmission, vous retrouvez des canaux audio embarqués dans le programme : leur groupe, leur paire AES, ce qu\'ils pèsent, et ce qui les fait disparaître.',
+    consigne: 'À la transmission, tu retrouves des canaux audio embarqués dans le programme : leur groupe, leur paire AES, ce qu\'ils pèsent, et ce qui les fait disparaître.',
     gen: (rnd) => {
       const c = entre(rnd, 1, 16), g = Math.ceil(c / 4), p = c % 2 ? c : c - 1;
       const n = pick(rnd, [2, 4, 8, 16, 32]), deb = n * 24 * 48000 / 1e6;
@@ -241,7 +241,7 @@ registerExos({
         },
         {
           type: 'texte', placeholder: '5-6', accept: [`${p}-${p + 1}`, `${p}/${p + 1}`, `${p}et${p + 1}`, `${p},${p + 1}`], forme: 'ip',
-          q: `Le désembeddeur sort le groupe ${g} en paires AES. Sur quelle paire écoutez-vous le canal **${c}** ? (écrivez les deux canaux, par exemple 5-6)`,
+          q: `Le désembeddeur sort le groupe ${g} en paires AES. Sur quelle paire écoutes-tu le canal **${c}** ? (écris les deux canaux, par exemple 5-6)`,
           pieges: [c % 2 ? { v: `${c - 1}-${c}`, why: 'Une paire AES commence par un canal impair : 1-2, 3-4, 5-6…' } : { v: `${c}-${c + 1}`, why: 'Une paire AES commence par un canal impair : 1-2, 3-4, 5-6…' }].filter((x) => !x.v.startsWith('0-')),
           aides: ['Une paire AES porte deux canaux qui se suivent.', 'Les paires commencent par un canal impair : 1-2, 3-4, 5-6, 7-8…'],
           solution: `La paire **${p}-${p + 1}**, la ${p === 4 * g - 3 ? 'première' : 'seconde'} du groupe ${g}.`,
@@ -250,7 +250,7 @@ registerExos({
           type: 'nombre', unite: 'Mb/s', answer: Math.round(deb * 1000) / 1000, tol: deb * 0.01,
           q: `Combien pèsent **${n} canaux** embarqués, à 48 kHz et 24 bits, en Mb/s ?${n > 16 ? ' (32 canaux : possible en 3G et 12G, ST 299-2)' : ''}`,
           pieges: [{ v: Math.round(n * 16 * 48000 / 1e3) / 1e3, why: 'C\'est en 16 bits : l\'audio embarqué est à 24 bits.' }],
-          aides: ['Débit = canaux × bits par échantillon × échantillons par seconde.', `${n} × 24 × 48 000, puis divisez par un million.`],
+          aides: ['Débit = canaux × bits par échantillon × échantillons par seconde.', `${n} × 24 × 48 000, puis divise par un million.`],
           solution: `${n} × 24 × 48 000 = **${fr(deb, 3)} Mb/s**, ${fr(deb / 2970 * 100, 2)} % d'une liaison 3G : le son voyage presque gratuitement avec l'image.`,
         },
         pick(rnd, [
@@ -284,7 +284,7 @@ registerExos({
   },
   'sdi-falaise': {
     titre: 'Garder de la marge avant la falaise',
-    consigne: 'Avant le direct, vous passez en revue les liaisons coaxiales du car : ce que le débit change à la portée, et ce que montre une liaison qui approche de la falaise.',
+    consigne: 'Avant le direct, tu passes en revue les liaisons coaxiales du car : ce que le débit change à la portée, et ce que montre une liaison qui approche de la falaise.',
     gen: (rnd) => {
       const [A, B] = pick(rnd, [[4, 1], [4, 2], [2, 1], [1, 0], [4, 0], [3, 1]]).map((k) => LIAISONS[k]);
       const ratio = A.g / B.g;
@@ -292,7 +292,7 @@ registerExos({
       const max = LINKS.coax.max[F.id], loin = rnd() < 0.5, L = loin ? Math.round(max * (1.2 + rnd() * 0.3) / 5) * 5 : Math.round(max * (0.3 + rnd() * 0.3) / 5) * 5;
       return [
         {
-          type: 'ordre', q: 'On allonge pas à pas le câble d\'une liaison SDI. Remettez dans l\'ordre ce que l\'on observe.',
+          type: 'ordre', q: 'On allonge pas à pas le câble d\'une liaison SDI. Remets dans l\'ordre ce que l\'on observe.',
           items: ['Image parfaite, aucune erreur', 'Image parfaite, mais le PRISM compte des erreurs CRC', 'Des étincelles et des gels', 'Plus d\'image'],
           aides: ['En numérique, l\'image ne se dégrade pas peu à peu.', 'Les premières erreurs sont invisibles : seul l\'analyseur les voit.'],
           solution: 'Parfaite, puis des **erreurs invisibles** (CRC), puis des étincelles, puis plus rien, en quelques mètres : c\'est la falaise. D\'où la marge et la surveillance des CRC.',
@@ -300,7 +300,7 @@ registerExos({
         {
           type: 'nombre', answer: r2(ratio), tol: 0.02,
           q: `Combien de fois plus de bits par seconde le **${A.nom}** (${fr(A.g, A.g < 1 ? 2 : 3)} Gb/s) envoie-t-il que le **${B.nom}** (${fr(B.g, B.g < 1 ? 2 : 3)} Gb/s) ?`,
-          pieges: [{ v: r2(B.g / A.g), why: 'Le rapport est inversé : divisez le plus grand débit par le plus petit.' }],
+          pieges: [{ v: r2(B.g / A.g), why: 'Le rapport est inversé : divise le plus grand débit par le plus petit.' }],
           aides: ['Un rapport de débits se calcule par une division.', `${fr(A.g, 3)} ÷ ${fr(B.g, 3)}.`],
           solution: `${fr(A.g, 3)} ÷ ${fr(B.g, 3)} = **${fr(ratio, 2)}** : des fréquences ${fr(ratio, 1)} fois plus hautes, que le câble affaiblit davantage. Plus le débit monte, plus la portée baisse.`,
         },
@@ -312,7 +312,7 @@ registerExos({
             ['Une image un peu plus sombre et moins nette', 'C\'était l\'analogique. En numérique, l\'image est parfaite, ou elle casse.'],
           ],
           answer: loin ? 1 : 0,
-          aides: ['Comparez la longueur à la portée.', 'En numérique, c\'est tout ou rien.'],
+          aides: ['Compare la longueur à la portée.', 'En numérique, c\'est tout ou rien.'],
           solution: loin ? `**Des étincelles ou plus rien** : ${L} m dépassent les ≈ ${max} m. Il faut une liaison plus courte, un répéteur ou de la fibre.` : `**Une image parfaite** : ${L} m restent bien sous les ≈ ${max} m, avec de la marge.`,
         },
         pick(rnd, [
@@ -340,7 +340,7 @@ registerExos({
   },
   'sdi-oeil': {
     titre: 'Le budget d\'une liaison et son œil',
-    consigne: 'À la baie de mesure, vous calculez l\'affaiblissement d\'une liaison de 1694A, vous le comparez à ce que la norme garantit, et vous lisez la gigue.',
+    consigne: 'À la baie de mesure, tu calcules l\'affaiblissement d\'une liaison de 1694A, tu le compares à ce que la norme garantit, et tu lis la gigue.',
     gen: (rnd) => {
       const C = pick(rnd, CABLE), cas = pick(rnd, C.garantie === 40 ? ['dans', 'hors'] : ['dans', 'bord', 'hors']);
       // une longueur tirée dans la zone voulue : sous la garantie, entre la garantie et 40 dB, au-delà de 40 dB
@@ -353,7 +353,7 @@ registerExos({
         {
           type: 'nombre', unite: 'dB', answer: r1(att), tol: 0.3,
           q: `Une liaison **${C.nom}** de **${L} m** de 1694A : ce câble perd ≈ ${fr(C.k, 1)} dB/100 m à la demi-fréquence d'horloge (${C.f}). Quel affaiblissement ?`,
-          pieges: CABLE.filter((x) => x !== C).map((x) => ({ v: r1(L * x.k / 100), why: `C'est l'affaiblissement en ${x.nom} : prenez celui du ${C.nom}.` })),
+          pieges: CABLE.filter((x) => x !== C).map((x) => ({ v: r1(L * x.k / 100), why: `C'est l'affaiblissement en ${x.nom} : prends celui du ${C.nom}.` })),
           aides: ['L\'affaiblissement est proportionnel à la longueur.', `${L} m × ${fr(C.k, 1)} dB pour 100 m.`],
           solution: `${L} × ${fr(C.k / 100, 3)} = **${fr(att, 1)} dB**.`,
         },
@@ -361,7 +361,7 @@ registerExos({
           type: 'choix', q: `Ces ${fr(att, 1)} dB, pour un récepteur ${C.nom} : la norme garantit ${C.garantie} dB d'égalisation, les bons égaliseurs actuels vont vers 35 à 40 dB. Que conclure ?`,
           choices: ['Dans la garantie : la liaison passe avec de la marge', 'Au-delà de la garantie : elle tient grâce à un bon égaliseur, sans marge ; surveiller les CRC ou ajouter un répéteur', 'Au-delà de ce qu\'un bon égaliseur sait faire : répéteur, liaison plus courte ou fibre'],
           answer: zone,
-          aides: [`Comparez ${fr(att, 1)} dB à ${C.garantie} dB, puis à 40 dB.`, 'Trois zones : sous la garantie, entre la garantie et ≈ 40 dB, au-delà.'],
+          aides: [`Compare ${fr(att, 1)} dB à ${C.garantie} dB, puis à 40 dB.`, 'Trois zones : sous la garantie, entre la garantie et ≈ 40 dB, au-delà.'],
           solution: zone === 0 ? `**${fr(att, 1)} ≤ ${C.garantie} dB** : tout récepteur conforme passe, avec ${fr(C.garantie - att, 1)} dB de marge.` : zone === 1 ? `**${fr(att, 1)} dB** dépassent les ${C.garantie} dB garantis : la liaison dépend d'un égaliseur meilleur que la norme, sans marge.` : `**${fr(att, 1)} dB** : même un bon égaliseur ne rouvrira pas l'œil. Répéteur à mi-parcours, liaison plus courte ou fibre.`,
         },
         {
@@ -375,7 +375,7 @@ registerExos({
           type: 'nombre', unite: 'ps', answer: Math.round(gig * 10) / 10, tol: Math.max(1, gig * 0.02),
           q: `En **${D.nom}** (${fr(D.g, 3)} Gb/s), la gigue d'alignement admise est de ${fr(D.gigue, 1)} UI. Combien de picosecondes ? (1 UI = la durée d'un bit)`,
           pieges: [{ v: Math.round(ui * 10) / 10, why: 'C\'est la durée d\'un bit entière, 1 UI : la gigue admise n\'en est qu\'une fraction.' }],
-          aides: ['Commencez par la durée d\'un bit : 1 ÷ le débit.', `1 UI = 1 000 ÷ ${fr(D.g, 3)} ps ; puis × ${fr(D.gigue, 1)}.`],
+          aides: ['Commence par la durée d\'un bit : 1 ÷ le débit.', `1 UI = 1 000 ÷ ${fr(D.g, 3)} ps ; puis × ${fr(D.gigue, 1)}.`],
           solution: `1 UI = ${fr(ui, 1)} ps ; × ${fr(D.gigue, 1)} = **${fr(gig, 1)} ps**. Au-delà, les croisements de l'œil s'épaississent et l'œil se ferme sur les côtés.`,
         },
       ];
@@ -383,7 +383,7 @@ registerExos({
   },
   'sdi-bits': {
     titre: 'Du mot au bit, sur le câble',
-    consigne: 'Vous suivez quelques mots de la ligne jusqu\'au câble : la durée d\'un bit, l\'ordre de leurs bits, le codage NRZI, et ce que le récepteur en fait.',
+    consigne: 'Tu suis quelques mots de la ligne jusqu\'au câble : la durée d\'un bit, l\'ordre de leurs bits, le codage NRZI, et ce que le récepteur en fait.',
     gen: (rnd) => {
       const D = pick(rnd, LIAISONS.filter((l) => l.nom !== '6G-SDI')), ui = 1000 / D.g;
       const w = pick(rnd, [0x200, 0x040, 0x3AC, 0x2D8, 0x110, 0x0F0, entre(rnd, 4, 1019)]);
@@ -401,17 +401,17 @@ registerExos({
         },
         {
           type: 'texte', placeholder: '0000000001', forme: 'ip', accept: lsb,
-          q: `Le mot **${w.toString(16).toUpperCase().padStart(3, '0')}h** s'écrit ${msb} en binaire (b9 à gauche). Écrivez ses 10 bits dans l'ordre où ils partent sur le câble.`,
+          q: `Le mot **${w.toString(16).toUpperCase().padStart(3, '0')}h** s'écrit ${msb} en binaire (b9 à gauche). Écris ses 10 bits dans l'ordre où ils partent sur le câble.`,
           pieges: msb !== lsb ? [{ v: msb, why: 'C\'est l\'ordre d\'écriture, bit de poids fort à gauche : le SDI envoie le bit de poids faible d\'abord.' }] : [],
-          aides: ['Le SDI envoie chaque mot bit de poids faible d\'abord.', 'Lisez l\'écriture binaire de droite à gauche.'],
+          aides: ['Le SDI envoie chaque mot bit de poids faible d\'abord.', 'Lis l\'écriture binaire de droite à gauche.'],
           solution: `**${lsb}** : b0 part le premier, b9 le dernier. L'embrouillage vient ensuite mélanger cette suite.`,
         },
         {
           type: 'texte', placeholder: '01101101', forme: 'ip', accept: lv.join(''),
-          q: `Après l'embrouillage, voici 8 bits : **${y.join(' ')}**. Le câble part du niveau 0. Écrivez les 8 niveaux successifs en NRZI (un 1 fait basculer le niveau, un 0 le garde).`,
+          q: `Après l'embrouillage, voici 8 bits : **${y.join(' ')}**. Le câble part du niveau 0. Écris les 8 niveaux successifs en NRZI (un 1 fait basculer le niveau, un 0 le garde).`,
           pieges: y.join('') !== lv.join('') ? [{ v: y.join(''), why: 'Ce sont les bits eux-mêmes : en NRZI, l\'information est dans les changements de niveau, pas dans le niveau.' }] : [],
-          aides: ['Partez du niveau 0 et lisez les bits un à un.', 'À chaque 1, le niveau change (0 → 1 ou 1 → 0) ; à chaque 0, il reste le même.'],
-          solution: `**${lv.join('')}** : un 1 fait basculer, un 0 garde. Inversez la polarité du câble : les niveaux changent tous, mais les bascules, donc les données, restent les mêmes.`,
+          aides: ['Pars du niveau 0 et lis les bits un à un.', 'À chaque 1, le niveau change (0 → 1 ou 1 → 0) ; à chaque 0, il reste le même.'],
+          solution: `**${lv.join('')}** : un 1 fait basculer, un 0 garde. Inverse la polarité du câble : les niveaux changent tous, mais les bascules, donc les données, restent les mêmes.`,
         },
         pick(rnd, [
           {

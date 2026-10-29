@@ -72,15 +72,15 @@ const COUCHES = [
 ];
 const ORDRES = [
   {
-    q: 'Remettez dans l\'ordre une coupe bien annoncée.',
+    q: 'Remets dans l\'ordre une coupe bien annoncée.',
     items: ['Le réalisateur : « Prépare la 3 »', 'Le truquiste met la CAM 3 sur la rangée B · PST', 'Le tally de la CAM 3 passe au vert : le cadreur soigne son cadre', 'Le réalisateur : « Top »', 'La CAM 3 passe à l\'antenne, tally rouge'],
   },
   {
-    q: 'Remettez dans l\'ordre le compte de la scripte jusqu\'à la prise d\'antenne.',
+    q: 'Remets dans l\'ordre le compte de la scripte jusqu\'à la prise d\'antenne.',
     items: ['« Antenne dans 1 minute »', '« 30 secondes »', '« 10, 9, 8… »', '« Top antenne »'],
   },
   {
-    q: 'Remettez dans l\'ordre un ralenti demandé par le réalisateur.',
+    q: 'Remets dans l\'ordre un ralenti demandé par le réalisateur.',
     items: ['Le réalisateur : « Ralenti A, la 2 et la 7 »', 'L\'opérateur ralenti cale l\'action sur ces angles', 'L\'opérateur annonce « ralenti prêt »', 'Le truquiste l\'envoie à l\'antenne en volet logo'],
   },
 ];
@@ -108,7 +108,7 @@ const ROLES = [
 registerExos({
   'real-melangeur': {
     titre: 'Préparer, couper, enchaîner',
-    consigne: 'Au poste Truquiste, avant le coup d\'envoi : vous réglez la durée des transitions en images, puis vous suivez les tallys pendant les commutations.',
+    consigne: 'Au poste Truquiste, avant le coup d\'envoi : tu règles la durée des transitions en images, puis tu suis les tallys pendant les commutations.',
     gen: (rnd) => {
       const F = pick(rnd, FORMATS), N = pick(rnd, [12, 15, 20, 25, 30, 50]);
       const G = pick(rnd, FORMATS), s = pick(rnd, [0.4, 0.8, 1, 1.2, 2]);
@@ -118,18 +118,18 @@ registerExos({
           type: 'nombre', unite: 's', answer: Math.round(N / F.ips * 1000) / 1000, tol: 0.01,
           q: `Le car est en **${F.nom}** ; la durée de l'enchaîné est réglée à **${N} images**. Combien de secondes dure le fondu ?`,
           pieges: [{ v: Math.round(N / autre.ips * 1000) / 1000, why: `C'est la durée en ${autre.nom} : ${autre.ips} images par seconde.` }].filter((p) => Math.abs(p.v - N / F.ips) > 0.01),
-          aides: ['Le mélangeur compte les transitions en images du format.', `En ${F.nom}, il y a ${F.ips} images par seconde : divisez ${N} par ${F.ips}.`],
-          solution: `${N} ÷ ${F.ips} = **${fr(N / F.ips, 2)} s**. La même durée en images dure ${F.ips === 25 ? 'deux fois moins' : 'deux fois plus'} longtemps en ${autre.nom} : vérifiez le format du car avant de régler.`,
+          aides: ['Le mélangeur compte les transitions en images du format.', `En ${F.nom}, il y a ${F.ips} images par seconde : divise ${N} par ${F.ips}.`],
+          solution: `${N} ÷ ${F.ips} = **${fr(N / F.ips, 2)} s**. La même durée en images dure ${F.ips === 25 ? 'deux fois moins' : 'deux fois plus'} longtemps en ${autre.nom} : vérifie le format du car avant de régler.`,
         },
         {
           type: 'nombre', unite: 'images', answer: Math.round(s * G.ips),
-          q: `Le réalisateur veut des enchaînés de **${fr(s, 1)} s**. Le car est en **${G.nom}** : quelle durée en images réglez-vous ?`,
+          q: `Le réalisateur veut des enchaînés de **${fr(s, 1)} s**. Le car est en **${G.nom}** : quelle durée en images règles-tu ?`,
           pieges: [{ v: Math.round(s * autreG.ips), why: `C'est la valeur pour du ${autreG.nom}.` }].filter((p) => p.v !== Math.round(s * G.ips)),
           aides: ['La durée se règle en images du format, pas en secondes.', `${fr(s, 1)} s × ${G.ips} images par seconde.`],
           solution: `${fr(s, 1)} × ${G.ips} = **${Math.round(s * G.ips)} images**.`,
         },
         {
-          type: 'ordre', q: 'Remettez dans l\'ordre le geste de base du truquiste.',
+          type: 'ordre', q: 'Remets dans l\'ordre le geste de base du truquiste.',
           items: ['Préparer la caméra sur la rangée B · PST', 'Regarder le cadre au moniteur preset', 'Lancer la transition (CUT ou AUTO TRANS)', 'Les bus s\'échangent : l\'ancienne source attend en preset'],
           aides: ['On ne fait passer à l\'antenne que ce qu\'on a vu avant.', 'Préparer, vérifier, transiter : et après la transition ?'],
           solution: '1. Préparer sur PST ; 2. vérifier au moniteur preset ; 3. la transition ; 4. les bus s\'échangent (flip-flop).',
@@ -140,7 +140,7 @@ registerExos({
   },
   'real-incrustations': {
     titre: 'Calculer une incrustation',
-    consigne: 'Au poste Habillage et au Truquiste : vous calculez ce que donne une incrustation pixel par pixel, vous réglez une clé luminance et vous rangez les couches.',
+    consigne: 'Au poste Habillage et au Truquiste : tu calcules ce que donne une incrustation pixel par pixel, tu règles une clé luminance et tu ranges les couches.',
     gen: (rnd) => {
       const fond = entre(rnd, 2, 8) * 10, fill = entre(rnd, 5, 10) * 10, k = pick(rnd, [25, 40, 50, 60, 72, 80]);
       const pgm = fond * (1 - k / 100) + fill * k / 100, inv = fond * k / 100 + fill * (1 - k / 100);
@@ -166,7 +166,7 @@ registerExos({
           type: 'nombre', unite: '%', answer: kl,
           q: `Clé luminance : k = (Y − clip) × gain, bornée entre 0 et 100 %. Un point du logo a une luminance Y de **${Y} %** ; le clip est à **${clip} %** et le gain à **${gain}**. Que vaut le key en ce point ?`,
           pieges: [{ v: Math.max(0, (Y - clip) * gain), why: 'Le key ne dépasse jamais 100 % : au-delà, le fill remplace entièrement le fond.' }, { v: Y - clip, why: 'Il manque le gain : il multiplie l\'écart au seuil.' }].filter((p) => p.v !== kl),
-          aides: ['Retirez d\'abord le seuil (clip) à la luminance.', `(${Y} − ${clip}) × ${gain}, puis bornez à 100 %.`],
+          aides: ['Retire d\'abord le seuil (clip) à la luminance.', `(${Y} − ${clip}) × ${gain}, puis borne à 100 %.`],
           solution: `(${Y} − ${clip}) × ${gain} = ${(Y - clip) * gain} %${(Y - clip) * gain > 100 ? ', borné à **100 %**' : ` : **${kl} %**`}. Un gain fort fait passer vite de 0 à 100 % : les bords se durcissent.`,
         },
         pick(rnd, COUCHES),
@@ -175,7 +175,7 @@ registerExos({
   },
   'real-ordres': {
     titre: 'Le temps du direct',
-    consigne: 'Au poste Scripte : vous comptez en timecode, vous remettez les ordres du réalisateur dans l\'ordre et vous dites qui fait quoi.',
+    consigne: 'Au poste Scripte : tu comptes en timecode, tu remets les ordres du réalisateur dans l\'ordre et tu dis qui fait quoi.',
     gen: (rnd) => {
       const f0 = ((entre(rnd, 20, 21) * 60 + entre(rnd, 0, 59)) * 60 + entre(rnd, 0, 59)) * 25 + entre(rnd, 0, 24);
       const N = entre(rnd, 8, 70), juste = tc(f0 + N);
@@ -188,18 +188,18 @@ registerExos({
           type: 'texte', forme: 'ip', accept: [juste], placeholder: '21:04:13:24',
           q: `La scripte note un tir à **${tc(f0)}** (25 images par seconde, images de 00 à 24). Le but arrive **${N} images** plus tard. Quel timecode note-t-elle ?`,
           pieges: [{ v: faux30, why: 'À 25 images par seconde, les images vont de 00 à 24 : la seconde change après l\'image 24, pas après la 29.' }].filter((p) => p.v !== juste),
-          aides: ['Ajoutez les images, puis faites passer à la seconde suivante chaque paquet de 25.', `${N} images = ${Math.floor(N / 25)} s et ${N % 25} images ; ajoutez-les à ${tc(f0)}.`],
+          aides: ['Ajoute les images, puis fais passer à la seconde suivante chaque paquet de 25.', `${N} images = ${Math.floor(N / 25)} s et ${N % 25} images ; ajoute-les à ${tc(f0)}.`],
           solution: `${tc(f0)} + ${N} images = **${juste}**.`,
         },
         {
           type: 'nombre', unite: 'images', answer: D,
           q: `Une action commence à **${tc(f1)}** et se termine à **${tc(f1 + D)}**. Combien d'images dure-t-elle (25 images par seconde) ?`,
-          aides: ['Passez les deux timecodes en images, ou comptez les secondes entières puis les images.', 'Une seconde vaut 25 images ; une minute, 1 500.'],
+          aides: ['Passe les deux timecodes en images, ou compte les secondes entières puis les images.', 'Une seconde vaut 25 images ; une minute, 1 500.'],
           solution: `${Math.floor(D / 25)} s et ${D % 25} images : **${D} images** (${fr(D / 25, 2)} s).`,
         },
         {
           type: 'ordre', q: O.q, items: O.items,
-          aides: ['Un ordre s\'annonce toujours avant d\'être déclenché.', 'Cherchez d\'abord la première et la dernière étape.'],
+          aides: ['Un ordre s\'annonce toujours avant d\'être déclenché.', 'Cherche d\'abord la première et la dernière étape.'],
           solution: O.items.map((x, k) => `${k + 1}. ${x}`).join('\n'),
         },
         pick(rnd, ROLES),

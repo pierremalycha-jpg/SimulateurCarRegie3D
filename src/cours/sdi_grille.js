@@ -61,7 +61,7 @@ function demoGrille(host) {
   const lock = DST.map(() => false);
   // étiquettes : la panne inverse celles des entrées 2 et 3 ; l'image, elle, suit le câble
   const lab = (s) => (swap && s === 1 ? 'CAM 3' : swap && s === 2 ? 'CAM 2' : SRC[s].label);
-  const verdict = el('p', { class: 'co-verdict' }, 'Cliquez une case : la ligne est la sortie (la destination), la colonne l\'entrée (la source).');
+  const verdict = el('p', { class: 'co-verdict' }, 'Clique une case : la ligne est la sortie (la destination), la colonne l\'entrée (la source).');
   const proto = el('pre', { class: 'co-proto', 'aria-label': 'Message envoyé à la grille par le réseau' }, '(aucun message encore)');
   const mx = el('table', { class: 'co-mx' }), state = el('table', { class: 'co-table co-mxstate' });
   const read = readout(['Points de croisement fermés', 'Entrées utilisées', 'Départs vers la chaîne', 'Commutations refusées']);
@@ -79,7 +79,7 @@ function demoGrille(host) {
     if (lock[d]) {
       refused++; pend = null;
       proto.textContent = `VIDEO OUTPUT ROUTING:\n${DST[d].n - 1} ${SRC[s].n - 1}\n\n→ la sortie ${DST[d].n} est verrouillée : son point de croisement ne change pas`;
-      say('ko', `Refusé : la sortie ${DST[d].n} « ${DST[d].label} » est verrouillée. Aucune commutation n'y passe, d'où qu'elle vienne : déverrouillez-la d'abord.`);
+      say('ko', `Refusé : la sortie ${DST[d].n} « ${DST[d].label} » est verrouillée. Aucune commutation n'y passe, d'où qu'elle vienne : déverrouille-la d'abord.`);
     } else if (useTake) {
       pend = { d, s };
       say('warn', `Préparé : sortie ${DST[d].n} « ${DST[d].label} » ← entrée ${SRC[s].n} « ${lab(s)} ». TAKE valide, CLEAR annule ; d'ici là, la sortie garde ${lab(xp[d])}.`);
@@ -98,13 +98,13 @@ function demoGrille(host) {
     const R = applyRoutes(xp, lock, want); xp = R.xp;
     proto.textContent = R.changed.length ? block('VIDEO OUTPUT ROUTING', R.changed.map((d) => `${DST[d].n - 1} ${SRC[xp[d]].n - 1}`)) : '(rien à envoyer : la grille est déjà dans cet état)';
     const kept = R.kept.map((d) => DST[d].label);
-    say(kept.length ? 'warn' : 'ok', `${name} rappelé : ${what}. ${R.changed.length} point${R.changed.length > 1 ? 's' : ''} changé${R.changed.length > 1 ? 's' : ''} d'un coup${kept.length ? ` ; ${kept.join(' et ')}, ${kept.length > 1 ? 'verrouillés, gardent leur' : 'verrouillé, garde sa'} source : relisez l'état de la grille après un salvo.` : '.'}`);
+    say(kept.length ? 'warn' : 'ok', `${name} rappelé : ${what}. ${R.changed.length} point${R.changed.length > 1 ? 's' : ''} changé${R.changed.length > 1 ? 's' : ''} d'un coup${kept.length ? ` ; ${kept.join(' et ')}, ${kept.length > 1 ? 'verrouillés, gardent leur' : 'verrouillé, garde sa'} source : relis l'état de la grille après un salvo.` : '.'}`);
     draw();
   };
   const take = /** @type {HTMLButtonElement} */ (el('button', { type: 'button', class: 'btn small primary co-take', onclick: doTake }, 'TAKE'));
   const clear = /** @type {HTMLButtonElement} */ (el('button', { type: 'button', class: 'btn small', onclick: () => { if (!pend) return; pend = null; say('', 'CLEAR : commutation préparée annulée, rien n\'a changé à la sortie.'); draw(); } }, 'CLEAR'));
   const swapChk = /** @type {HTMLInputElement} */ (el('input', { type: 'checkbox' }));
-  swapChk.addEventListener('change', () => { swap = swapChk.checked; say('warn', swap ? 'Panne : les étiquettes des entrées 2 et 3 sont inversées. Les câbles n\'ont pas bougé : l\'entrée 2 porte toujours l\'image de la CAM 2, mais elle s\'appelle « CAM 3 ». Regardez l\'état des destinations.' : 'Étiquettes rétablies : chaque entrée porte le nom de ce qui y est câblé.'); draw(); });
+  swapChk.addEventListener('change', () => { swap = swapChk.checked; say('warn', swap ? 'Panne : les étiquettes des entrées 2 et 3 sont inversées. Les câbles n\'ont pas bougé : l\'entrée 2 porte toujours l\'image de la CAM 2, mais elle s\'appelle « CAM 3 ». Regarde l\'état des destinations.' : 'Étiquettes rétablies : chaque entrée porte le nom de ce qui y est câblé.'); draw(); });
   const draw = () => {
     const head = el('tr', {}, el('th', { scope: 'col' }, el('span', {}, 'sortie ↓'), el('b', {}, 'entrée →')), ...SRC.map((s, i) => el('th', { scope: 'col' }, el('span', {}, 'IN ' + s.n), el('b', {}, lab(i)))), el('th', { scope: 'col' }, el('span', {}, ''), el('b', {}, 'verrou')));
     const rows = DST.map((d, j) => el('tr', {}, el('th', { scope: 'row' }, el('span', {}, 'OUT ' + d.n), el('b', {}, d.label)),
@@ -146,7 +146,7 @@ export const GRILLE_LESSONS = [
       'Celle du car est une **Videohub 40 × 40 12G**, commandée de sa façade et par le réseau ; une **étiquette** n\'est qu\'un nom : on regarde l\'image avant de valider.',
     ],
     figure: figGrille,
-    demoTitle: 'Routez une caméra sur deux sorties, verrouillez TX1 et TX2, puis rappelez le salvo « test de ligne » ; inversez les étiquettes et lisez l\'image réellement reçue.',
+    demoTitle: 'Route une caméra sur deux sorties, verrouille TX1 et TX2, puis rappelle le salvo « test de ligne » ; inverse les étiquettes et lis l\'image réellement reçue.',
     demo: demoGrille,
     body: `La **grille de commutation** (router, en anglais) est le carrefour vidéo du car. Ses **entrées** reçoivent les sources : sorties des CCU, lectures des serveurs de ralentis, programme et clean feed du mélangeur, habillage, mire, duplex. Ses **sorties** alimentent les destinations : entrées du mélangeur, enregistrements des serveurs, tuiles du multiview, départs vers la chaîne, écran géant, moniteurs. À l'intérieur, une **matrice** : chaque case, à l'intersection d'une sortie et d'une entrée, est un **point de croisement**. Deux règles : une sortie ne reçoit **qu'une** source à la fois ; une source peut partir vers **autant de sorties** qu'on veut, la grille recopie le signal. Une grille 40 × 40 a 1 600 points de croisement, mais son état tient en 40 nombres : l'entrée de chaque sortie.
 
@@ -167,15 +167,15 @@ La Videohub 40 × 40 12G du car SDI :
     competences: ['2.10', '2.9', '3.12'],
     article: 'chaine',
     exercises: [
-      { id: 'grille-routage', intro: 'Au poste Grille, le réalisateur veut une autre caméra sur la tuile 13 du multiview, puis la chaîne reçoit la mire au lieu du programme. Faites à chaque fois destination, source, TAKE, et vérifiez au multiview que la sortie a changé de source sans toucher aux autres.' },
-      { id: 'videohub-routage', intro: 'Vous envoyez une caméra sur l\'écran géant depuis la façade, puis sur la tuile 13 depuis Videohub Control, et vous lisez le monitoring. Observez qu\'une même entrée alimente deux sorties, chacune par son propre point de croisement.' },
-      { id: 'videohub-verrou', intro: 'Vous verrouillez TX1 et TX2, vous tentez d\'y envoyer la mire, puis vous retrouvez deux étiquettes de caméras inversées. Notez que le refus vient de la grille elle-même, et qu\'une étiquette fausse ne se voit qu\'en comparant le nom, l\'image et le câblage.' },
-      { id: 'materiel-grille', intro: 'Dans la visionneuse de matériel, vous ouvrez l\'arrière de la grille puis celui du processeur du mélangeur : entrées, sorties, référence. Repérez que chaque entrée du mélangeur est une sortie de la grille, et que la grille reçoit la référence pour commuter entre deux images.' },
+      { id: 'grille-routage', intro: 'Au poste Grille, le réalisateur veut une autre caméra sur la tuile 13 du multiview, puis la chaîne reçoit la mire au lieu du programme. Fais à chaque fois destination, source, TAKE, et vérifie au multiview que la sortie a changé de source sans toucher aux autres.' },
+      { id: 'videohub-routage', intro: 'Tu envoies une caméra sur l\'écran géant depuis la façade, puis sur la tuile 13 depuis Videohub Control, et tu lis le monitoring. Observe qu\'une même entrée alimente deux sorties, chacune par son propre point de croisement.' },
+      { id: 'videohub-verrou', intro: 'Tu verrouilles TX1 et TX2, tu tentes d\'y envoyer la mire, puis tu retrouves deux étiquettes de caméras inversées. Note que le refus vient de la grille elle-même, et qu\'une étiquette fausse ne se voit qu\'en comparant le nom, l\'image et le câblage.' },
+      { id: 'materiel-grille', intro: 'Dans la visionneuse de matériel, tu ouvres l\'arrière de la grille puis celui du processeur du mélangeur : entrées, sorties, référence. Repère que chaque entrée du mélangeur est une sortie de la grille, et que la grille reçoit la référence pour commuter entre deux images.' },
     ],
     quiz: [
       { q: 'La CAM 3 alimente déjà MÉL 3. Le réalisateur la veut aussi sur la tuile 13 du multiview. Que devient MÉL 3 après la commutation ?', choices: ['Rien ne change : une source peut partir vers autant de sorties qu\'on veut', 'MÉL 3 perd la caméra : une source ne va qu\'à une sortie', 'Les deux sorties sont désormais liées : changer l\'une changera l\'autre'], answer: 0, why: 'La grille recopie le signal : la colonne de la CAM 3 a maintenant deux points fermés, un par sortie. Chaque sortie a son propre point de croisement : en commuter une ne touche jamais l\'autre. C\'est la sortie qui ne reçoit qu\'une source, pas l\'inverse.' },
       { q: 'TX1 est verrouillée sur le PGM. Depuis un autre poste, quelqu\'un y route la mire. Résultat ?', choices: ['La mire part à la chaîne : le verrou ne bloque que le poste qui l\'a posé', 'La grille refuse : TX1 garde le programme', 'La grille demande une confirmation sur sa façade'], answer: 1, why: 'Le verrou agit dans la grille elle-même : toute demande sur cette sortie est refusée, qu\'elle vienne de la façade, d\'un logiciel, d\'un panneau ou d\'un salvo. Pour un test de ligne, on déverrouille, on teste, on reverrouille.' },
-      { q: 'Vous routez l\'entrée étiquetée « CAM 3 » sur la tuile 13 et la tuile montre la CAM 2. Que faites-vous ?', choices: ['Je compare l\'étiquette à ce qui est câblé (Videohub Setup, monitoring) : l\'étiquette est fausse, je la corrige et je route la bonne entrée', 'Je redémarre la grille : elle a perdu ses points de croisement', 'Je change le câble de la CAM 3'], answer: 0, why: 'La grille a fait exactement ce qu\'on lui a demandé : elle a routé un numéro d\'entrée. Une étiquette n\'est qu\'un nom : inversée, elle fait router la mauvaise image en croyant bien faire. Rien n\'est en panne, ni la grille ni le câble.' },
+      { q: 'Tu routes l\'entrée étiquetée « CAM 3 » sur la tuile 13 et la tuile montre la CAM 2. Que fais-tu ?', choices: ['Je compare l\'étiquette à ce qui est câblé (Videohub Setup, monitoring) : l\'étiquette est fausse, je la corrige et je route la bonne entrée', 'Je redémarre la grille : elle a perdu ses points de croisement', 'Je change le câble de la CAM 3'], answer: 0, why: 'La grille a fait exactement ce qu\'on lui a demandé : elle a routé un numéro d\'entrée. Une étiquette n\'est qu\'un nom : inversée, elle fait router la mauvaise image en croyant bien faire. Rien n\'est en panne, ni la grille ni le câble.' },
       { q: 'Depuis un logiciel connecté à la Videohub (port 9990), on veut envoyer la mire (entrée 22) sur l\'écran géant (sortie 33). Quelle ligne écrire sous « VIDEO OUTPUT ROUTING: » ?',
         choices: [['33 22', 'Ce sont les numéros de la façade. Le protocole compte les ports à partir de 0 : la sortie 33 devient 32, l\'entrée 22 devient 21.'],
           ['21 32', 'L\'ordre est inversé : le protocole donne la sortie d\'abord, l\'entrée ensuite. « 21 32 » enverrait l\'entrée 33 sur la sortie 22, une entrée du mélangeur.'],

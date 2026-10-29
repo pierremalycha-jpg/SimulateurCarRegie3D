@@ -71,7 +71,7 @@ function buildLegend() {
 function buildZoom() {
   const Z = $('#planzoom'); Z.innerHTML = '';
   Z.append(el('button', { class: 'tbtn', 'aria-label': 'Zoom avant', title: 'Zoom avant', onclick: () => { PLAN.mpp = clamp(PLAN.mpp / 1.3, 0.04, 1.2); } }, '+'), el('button', { class: 'tbtn', 'aria-label': 'Zoom arrière', title: 'Zoom arrière', onclick: () => { PLAN.mpp = clamp(PLAN.mpp * 1.3, 0.04, 1.2); } }, '−'),
-    el('button', { class: 'tbtn', onclick: () => { fitView(); } }, 'Vue complète'), el('button', { class: 'tbtn' + (PLAN.free ? ' on' : ''), onclick: (e) => { PLAN.free = !PLAN.free; e.currentTarget.classList.toggle('on', PLAN.free); toast(PLAN.free ? 'Placement libre : cliquez au bord du terrain ou en tribune pour créer une position.' : 'Placement libre désactivé'); } }, 'Placement libre'));
+    el('button', { class: 'tbtn', onclick: () => { fitView(); } }, 'Vue complète'), el('button', { class: 'tbtn' + (PLAN.free ? ' on' : ''), onclick: (e) => { PLAN.free = !PLAN.free; e.currentTarget.classList.toggle('on', PLAN.free); toast(PLAN.free ? 'Placement libre : clique au bord du terrain ou en tribune pour créer une position.' : 'Placement libre désactivé'); } }, 'Placement libre'));
 }
 export function fitView() {
   const w = window.innerWidth - (window.innerWidth > 760 ? 420 : 0), h = window.innerWidth > 760 ? window.innerHeight : window.innerHeight * 0.46;
@@ -151,7 +151,7 @@ export function planPointer(type, e) {
     if (PLAN.free) {
       const [x, z] = worldOf(e.clientX, e.clientY);
       const sa = standAt(x, z); const o = sa ? sa.o : Math.min(0, bowlOffset(x, z));
-      if (Math.abs(x) > 113 || Math.abs(z) > 93) { toast('Hors du stade : cliquez au bord du terrain ou dans une tribune.'); return; }
+      if (Math.abs(x) > 113 || Math.abs(z) > 93) { toast('Hors du stade : clique au bord du terrain ou dans une tribune.'); return; }
       if (!sa && bowlOffset(x, z) > 0) { toast('Angle ouvert du stade : pas de tribune ici (pylône du toit).'); return; }
       let y = 1.6;
       if (o > 0) y = standHeightAt(x, z) + 1.4;
@@ -221,7 +221,7 @@ function camForm(slot, cam) {
       el('p', { class: 'note' }, el('b', {}, 'Objectif : '), lensInfo(st.lens, T().sensor, dist), '. ', LENSES[st.lens].desc, LENSES[st.lens].mod ? ` Mise au point mini ${String(LENSES[st.lens].mod).replace('.', ',')} m${LENSES[st.lens].kg ? `, ${String(LENSES[st.lens].kg).replace('.', ',')} kg` : ''}${LENSES[st.lens].dim ? ` (${LENSES[st.lens].dim})` : ''}.` : ''),
       el('p', { class: 'note' }, el('b', {}, 'Cadrage : '), ROLES[st.role].desc),
       el('p', { class: 'note' }, el('b', {}, 'Liaison : '), Lk.desc),
-      st.link === 'hf' ? el('p', { class: 'note warn' }, 'Liaison HF : pensez à allumer des antennes de réception (losanges violets sur le plan) et à régler la modulation en régie HF.')
+      st.link === 'hf' ? el('p', { class: 'note warn' }, 'Liaison HF : pense à allumer des antennes de réception (losanges violets sur le plan) et à régler la modulation en régie HF.')
         : el('p', { class: 'note ' + (tooLong ? 'err' : 'ok') }, `Longueur de câble : ${Math.round(route.length)} m${route.infra ? ` + ${Math.round(route.infraLength)} m de pré-câblage` : ''}${max != null ? ` · limite ${max >= 10000 ? '> 10 km' : max + ' m'} en ${S.format === 'UHD' ? 'UHD' : 'HD'}` : ''} → ${tooLong ? 'TROP LONG : la caméra ne fonctionnera pas' : 'OK'}${!Lk.power && st.link !== 'hf' ? ' · alimentation locale nécessaire' : ''}`),
       el('p', { class: 'note' }, `Raccordement : ${st.link === 'hf' ? 'récepteur HF ' + st.id + ' (baie HF)' : (Lk.power ? 'embase SMPTE/triax n° ' + st.id : 'fibre n° ' + st.id) + ' au pied de car → CCU ' + st.id}.`),
       el('div', { class: 'hwrow' },
@@ -238,9 +238,9 @@ function camForm(slot, cam) {
 function install(slot, cam, st) {
   let paint = null;
   if (cam) { paint = { ...cam.paint }; removeCamera(cam.id); }
-  if (camById(st.id)) { toast(`La CAM ${st.id} existe déjà : choisissez un autre numéro (CCU).`, 'bad'); return; }
+  if (camById(st.id)) { toast(`La CAM ${st.id} existe déjà : choisis un autre numéro (CCU).`, 'bad'); return; }
   const c = addCamera({ id: st.id, type: st.type, lens: st.lens, link: st.link, role: st.role, slotId: slot ? slot.id : null, pos: slot ? slot.pos : null, targetPlayer: st.target });
-  if (!c) { toast('Plus de CCU disponible (16 au plus) : démontez une caméra pour en installer une autre.', 'bad', 6000); return; }
+  if (!c) { toast('Plus de CCU disponible (16 au plus) : démonte une caméra pour en installer une autre.', 'bad', 6000); return; }
   if (paint) Object.assign(c.paint, paint); else if (S.autoLineup) lineUpCamera(c);
   PLAN.sel = 'cam:' + c.id; renderPanel(); refreshMarkers();
   toast(`CAM ${c.id} installée · ${c.status.ok ? 'liaison OK' : c.status.reason}`, c.status.ok ? 'good' : 'bad');
@@ -274,7 +274,7 @@ export function renderPanel() {
         camForm(slot, cam)));
     }
   } else {
-    body.append(el('p', { class: 'note' }, 'Cliquez sur une position (cercle) pour installer une caméra, ou sur une caméra existante pour la modifier. Les losanges violets sont les antennes HF : un clic les allume ou les éteint.'));
+    body.append(el('p', { class: 'note' }, 'Clique sur une position (cercle) pour installer une caméra, ou sur une caméra existante pour la modifier. Les losanges violets sont les antennes HF : un clic les allume ou les éteint.'));
   }
   // bilan
   const total = S.cams.reduce((a, c) => a + (c.route ? c.route.length : 0), 0);

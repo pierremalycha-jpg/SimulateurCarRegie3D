@@ -79,7 +79,7 @@ export const MODELE = {
     'Chaque appareil travaille à un niveau : le câble au 1, le **commutateur** au 2 (adresses MAC), le **routeur** au 3 (adresses IP), le **pare-feu** jusqu\'au 4 (ports). On dépanne de bas en haut.',
   ],
   figure: figModele,
-  demoTitle: 'Choisissez ce qui part sur le réseau, puis l\'appareil qui le voit passer : regardez les en-têtes ajoutés et ce que chaque appareil lit.',
+  demoTitle: 'Choisis ce qui part sur le réseau, puis l\'appareil qui le voit passer : regarde les en-têtes ajoutés et ce que chaque appareil lit.',
   demo: demoModele,
   body: `Envoyer une image de la caméra au mélangeur, c'est résoudre plusieurs problèmes à la fois : mettre un signal sur un câble, désigner le voisin à qui le remettre, trouver un chemin à travers les routeurs, livrer au bon logiciel, comprendre les données. Plutôt que d'en faire un seul protocole géant, on empile des **couches**, chacune avec son travail et son vocabulaire.
 
@@ -137,7 +137,7 @@ function figEtendue() {
   f.append(sv('rect', { x: 6, y: 6, width: 428, height: 184, rx: 18, fill: 'rgba(208,140,255,.06)', stroke: '#d08cff', 'stroke-dasharray': '5 4' }));
   f.append(sv('rect', { x: 26, y: 40, width: 230, height: 136, rx: 16, fill: 'rgba(255,211,138,.07)', stroke: '#ffd38a', 'stroke-dasharray': '5 4' }));
   f.append(sv('rect', { x: 46, y: 84, width: 104, height: 74, rx: 10, fill: 'rgba(127,209,160,.12)', stroke: '#7fd1a0' }));
-  f.append(sv('text', { x: 98, y: 102, textAnchor: 'middle', class: 'co-t' }, 'LAN : le car'), sv('text', { x: 98, y: 118, textAnchor: 'middle', class: 'co-s' }, 'Ethernet, 100 m'), sv('text', { x: 98, y: 132, textAnchor: 'middle', class: 'co-m' }, '< 1 ms'), sv('text', { x: 98, y: 148, textAnchor: 'middle', class: 'co-s' }, 'à vous'));
+  f.append(sv('text', { x: 98, y: 102, textAnchor: 'middle', class: 'co-t' }, 'LAN : le car'), sv('text', { x: 98, y: 118, textAnchor: 'middle', class: 'co-s' }, 'Ethernet, 100 m'), sv('text', { x: 98, y: 132, textAnchor: 'middle', class: 'co-m' }, '< 1 ms'), sv('text', { x: 98, y: 148, textAnchor: 'middle', class: 'co-s' }, 'à toi'));
   f.append(sv('text', { x: 200, y: 60, textAnchor: 'middle', class: 'co-t' }, 'MAN : la ville'), sv('text', { x: 200, y: 112, textAnchor: 'middle', class: 'co-s' }, 'fibre louée'), sv('text', { x: 200, y: 126, textAnchor: 'middle', class: 'co-s' }, 'ou noire, ≈ 15 km'), sv('text', { x: 200, y: 142, textAnchor: 'middle', class: 'co-m' }, '≈ 0,2 ms'));
   f.append(sv('text', { x: 345, y: 30, textAnchor: 'middle', class: 'co-t' }, 'WAN : le pays, le monde'), sv('text', { x: 345, y: 74, textAnchor: 'middle', class: 'co-s' }, 'fibre d\'opérateur,'), sv('text', { x: 345, y: 88, textAnchor: 'middle', class: 'co-s' }, 'Internet, satellite'), sv('text', { x: 345, y: 108, textAnchor: 'middle', class: 'co-m' }, 'Lens → Paris :'), sv('text', { x: 345, y: 122, textAnchor: 'middle', class: 'co-m' }, '≈ 3 à 15 ms'), sv('text', { x: 345, y: 138, textAnchor: 'middle', class: 'co-m' }, 'satellite : ≈ 500 ms'), sv('text', { x: 345, y: 158, textAnchor: 'middle', class: 'co-s' }, 'aux opérateurs'));
   return f;
@@ -189,7 +189,7 @@ export const ETENDUE = {
     'Une captation emploie les trois : le LAN du car, la fibre du stade (MAN), la **contribution** vers la régie finale (WAN : fibre d\'opérateur, satellite, Internet).',
   ],
   figure: figEtendue,
-  demoTitle: 'Choisissez un chemin et ce qu\'on y fait passer : comparez la latence et dites si l\'usage la supporte.',
+  demoTitle: 'Choisis un chemin et ce qu\'on y fait passer : compare la latence et dis si l\'usage la supporte.',
   demo: demoEtendue,
   body: `On classe les réseaux par leur **étendue**, et ce n'est pas qu'une affaire de taille : avec la distance changent les propriétaires des liens, les techniques, le débit disponible et surtout le **retard**.
 
@@ -219,8 +219,8 @@ export const ETENDUE = {
       choices: [['Parce que le satellite compresse trop l\'image', 'La compression n\'y est pour rien : c\'est la distance.'], ['Parce que le satellite perd beaucoup de paquets', 'Une liaison satellite bien réglée perd très peu ; son défaut est ailleurs.'], 'Parce qu\'un bond fait environ 240 ms de retard, au-delà des 150 ms qu\'une conversation supporte'],
       answer: 2, why: '36 000 km de montée et autant de descente, à la vitesse de la lumière : environ 240 ms par bond, plus le codage. L\'UIT (G.114) recommande moins de 150 ms dans un sens.' },
     { q: 'Qu\'appelle-t-on de la « fibre noire » ?',
-      choices: ['Une fibre louée nue, qu\'on éclaire avec ses propres équipements', ['Une fibre hors service', 'Elle est « noire » parce que personne ne l\'éclaire avant vous, pas parce qu\'elle est en panne.'], ['Une fibre gainée de noir pour l\'extérieur', 'La couleur de la gaine n\'a rien à voir : c\'est un mode de location.']],
-      answer: 0, why: 'L\'opérateur ne fournit que le verre ; vous y mettez vos propres modules et choisissez débit et protocoles. C\'est courant pour relier un stade à un centre technique (MAN).' },
+      choices: ['Une fibre louée nue, qu\'on éclaire avec ses propres équipements', ['Une fibre hors service', 'Elle est « noire » parce que personne ne l\'éclaire avant toi, pas parce qu\'elle est en panne.'], ['Une fibre gainée de noir pour l\'extérieur', 'La couleur de la gaine n\'a rien à voir : c\'est un mode de location.']],
+      answer: 0, why: 'L\'opérateur ne fournit que le verre ; tu y mets tes propres modules et choisis débit et protocoles. C\'est courant pour relier un stade à un centre technique (MAN).' },
     { q: 'Quelle différence entre un WAN d\'opérateur managé et Internet pour une contribution ?',
       choices: [['Aucune : tout passe par les mêmes câbles', 'Les câbles peuvent être les mêmes, pas les engagements.'], 'Le réseau managé garantit un débit et une qualité (SLA) ; Internet ne garantit rien : débit variable, pertes possibles', ['Internet est toujours plus rapide', 'Il peut être rapide, mais rien n\'est garanti, et il perd parfois des paquets.']],
       answer: 1, why: 'Sur Internet, il faut un protocole qui répare les pertes (SRT, RIST) et de la marge ; sur un réseau managé, l\'opérateur s\'engage sur le débit et la disponibilité.' },
@@ -286,7 +286,7 @@ export const ETHERNET = {
     'La **trame** : adresses MAC de destination et de source, type, données de 46 à **1 500 octets** (la MTU), contrôle FCS. Un lien est **full duplex** : chaque sens a tout son débit.',
   ],
   figure: figEthernet,
-  demoTitle: 'Choisissez un lien et un flux : combien en tiennent, combien de temps met une trame, quelle part est utile ? Essayez les trames géantes.',
+  demoTitle: 'Choisis un lien et un flux : combien en tiennent, combien de temps met une trame, quelle part est utile ? Essaie les trames géantes.',
   demo: demoEthernet,
   body: `**Ethernet** est né en 1973 pour relier des ordinateurs d'un même laboratoire ; normalisé sous le nom **IEEE 802.3**, il est devenu le réseau local de presque tout, du PC de bureau au cœur d'un car ST 2110. Ce qui ne change pas d'un débit à l'autre, c'est la **trame**.
 

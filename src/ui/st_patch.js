@@ -13,13 +13,13 @@ const DX = 46;
 
 // Poste « baie de brassage » : exercice du car vide (on brasse soi-même chaque liaison)
 export function buildPatch(body, arg, ctx) {
-  ctx.dock.append(el('div', { class: 'monwrap grow' }, el('div', { class: 'lab' }, 'Multiview (résultat de votre brassage)'), el('div', { class: 'mon fill', 'data-gl': 'mv' })));
+  ctx.dock.append(el('div', { class: 'monwrap grow' }, el('div', { class: 'lab' }, 'Multiview (résultat de ton brassage)'), el('div', { class: 'mon fill', 'data-gl': 'mv' })));
   let sel = null; let showCheck = false; const t0 = S.time;
   const status = el('div', { class: 'lcd amber' });
   const modeBtn = el('button', { class: 'btn' });
   const checkBtn = el('button', { class: 'btn', onclick: () => { showCheck = !showCheck; draw(); } });
   const ctl = el('div', { class: 'hwpanel' }, el('h3', {}, 'Exercice : le car vide'),
-    el('p', { class: 'note' }, 'En exploitation, les jacks sont « normalés » : sans cordon, chaque source arrive directement à sa destination. Dans l\'exercice du car vide, les normales sont retirées : rien n\'arrive tant que vous n\'avez pas brassé chaque liaison selon la liste de câblage. Cliquez une prise du haut puis une prise du bas ; cliquez une prise occupée pour retirer son cordon.'),
+    el('p', { class: 'note' }, 'En exploitation, les jacks sont « normalés » : sans cordon, chaque source arrive directement à sa destination. Dans l\'exercice du car vide, les normales sont retirées : rien n\'arrive tant que tu n\'as pas brassé chaque liaison selon la liste de câblage. Clique une prise du haut puis une prise du bas ; clique une prise occupée pour retirer son cordon.'),
     el('div', { class: 'hwrow' }, modeBtn,
       el('button', { class: 'btn', onclick: () => { patchEmpty(); emit('router', {}); explain('Tous les cordons retirés.'); draw(); } }, 'Tout débrancher'),
       el('button', { class: 'btn', onclick: () => { patchNormal(); emit('router', {}); explain('Solution appliquée : chaque liaison est brassée comme sur la liste de câblage.'); draw(); } }, 'Montrer la solution'),
@@ -135,7 +135,7 @@ export function buildPatch(body, arg, ctx) {
     for (const n in e.inputs) line(`${physLabel(e.inputs[n])} → grille IN ${n} (${routerInLabel(+n)})`, p.inputs[n] === e.inputs[n]);
     for (const o in e.outputs) line(`Grille OUT ${o} → ${DEST_LABEL(e.outputs[o])}`, p.outputs[o] === e.outputs[o]);
     for (const c in e.refs) line(`DA → CCU ${c} REF IN`, !!p.refs[c]);
-    if (sc.pct === 100 && S.patch.on && !S.patchDone) { S.patchDone = true; toast('Brassage complet : toutes les liaisons sont justes !', 'good', 5000); explain('Bravo : le car est entièrement brassé. Vérifiez maintenant au multiview que chaque nom correspond à la bonne image (c\'est ce que fait le chef de car au line-up).'); emit('patchDone'); }
+    if (sc.pct === 100 && S.patch.on && !S.patchDone) { S.patchDone = true; toast('Brassage complet : toutes les liaisons sont justes !', 'good', 5000); explain('Bravo : le car est entièrement brassé. Vérifie maintenant au multiview que chaque nom correspond à la bonne image (c\'est ce que fait le chef de car au line-up).'); emit('patchDone'); }
   }
   draw();
   let lk = '';

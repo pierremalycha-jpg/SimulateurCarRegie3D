@@ -52,7 +52,7 @@ function demoAdresses(host) {
   const qBox = el('div');
   const draw = () => {
     const n = parseIp(ip);
-    if (n == null) { bin.replaceChildren(el('p', { class: 'co-note' }, 'Écrivez une adresse IPv4 : quatre nombres de 0 à 255 séparés par des points.')); return; }
+    if (n == null) { bin.replaceChildren(el('p', { class: 'co-note' }, 'Écris une adresse IPv4 : quatre nombres de 0 à 255 séparés par des points.')); return; }
     const I = /** @type {NonNullable<ReturnType<typeof infoReseau>>} */ (infoReseau(n, p));
     bin.replaceChildren(rangee('adresse', n, p, I.ip), rangee(`masque /${p}`, /** @type {number} */ (parseIp(I.masque)), p, I.masque), rangee('réseau (ET)', /** @type {number} */ (parseIp(I.reseau)), p, I.reseau), I.broadcast ? rangee('diffusion', /** @type {number} */ (parseIp(I.broadcast)), p, I.broadcast) : el('p', { class: 'co-note' }, `/${p} : pas d'adresse de diffusion`));
     R.set('Masque', `/${p} = ${I.masque} (joker ${I.joker})`);
@@ -87,7 +87,7 @@ export const ADRESSES = {
     '**Découper** un réseau, c\'est allonger le préfixe : un /24 donne deux /25 ou quatre /26, chacun avec son réseau, sa diffusion et sa passerelle.',
   ],
   figure: figAdresses,
-  demoTitle: 'Écrivez une adresse, faites glisser le préfixe : regardez les bits basculer de la partie réseau à la partie appareil, puis découpez le réseau.',
+  demoTitle: 'Écris une adresse, fais glisser le préfixe : regarde les bits basculer de la partie réseau à la partie appareil, puis découpe le réseau.',
   demo: demoAdresses,
   body: `Une adresse IPv4 est un nombre de **32 bits**, écrit en quatre nombres de 0 à 255 pour qu'on puisse le lire. Pour la comprendre, il faut parfois revenir au binaire : chaque nombre fait 8 bits, de poids 128, 64, 32, 16, 8, 4, 2 et 1. 20 = 16 + 4 s'écrit 00010100 ; 130 = 128 + 2 s'écrit 10000010.
 
@@ -160,7 +160,7 @@ function demoTypes(host) {
   const det = el('p', { class: 'co-verdict' });
   const draw = () => {
     const t = typeAdresse(dst), M = MACHINES_T[m];
-    if (!t) { R.set('Type', '— (écrivez une adresse IPv4)'); det.textContent = ''; return; }
+    if (!t) { R.set('Type', '— (écris une adresse IPv4)'); det.textContent = ''; return; }
     const c = classe(dst), po = portee(dst, M.ip, M.p);
     R.set('Type', t.type);
     R.set('Plage', t.cidr ? `${t.cidr} (${t.ref})` : 'hors des plages réservées');
@@ -188,7 +188,7 @@ export const TYPES = {
     '**IPv6** : 128 bits écrits en hexadécimal (2001:db8::1), plus de diffusion. Les cars restent en IPv4, mais les box et la 4G parlent déjà IPv6.',
   ],
   figure: figTypes,
-  demoTitle: 'Choisissez la machine qui envoie, puis une adresse de destination (ou écrivez-en une) : type, plage, et ce que devient l\'envoi.',
+  demoTitle: 'Choisis la machine qui envoie, puis une adresse de destination (ou écris-en une) : type, plage, et ce que devient l\'envoi.',
   demo: demoTypes,
   body: `**Trois façons d'adresser.**
 - **Unicast** : une source, une destination. C'est presque tout le trafic : un RCP qui règle sa CCU, une page web, une copie de fichier.
@@ -314,7 +314,7 @@ export const DHCP_DNS = {
     'Dans un car, les appareils de production ont des **adresses fixes** (le plan d\'adressage) ; le DHCP sert aux invités et aux portables. Sans réponse DHCP, une machine se met en **169.254.x.x**.',
   ],
   figure: figDhcp,
-  demoTitle: 'Placez le serveur DHCP, coupez le DNS, joignez la supervision par son nom ou par son adresse : suivez les messages et le résultat.',
+  demoTitle: 'Place le serveur DHCP, coupe le DNS, joins la supervision par son nom ou par son adresse : suis les messages et le résultat.',
   demo: demoDhcp,
   body: `**DHCP** (Dynamic Host Configuration Protocol) évite de régler chaque machine à la main. Au démarrage, une machine sans adresse ne peut parler à personne en particulier : elle **diffuse**.
 - **Discover** : de 0.0.0.0 vers 255.255.255.255, en UDP (port 67 pour le serveur, 68 pour le client) : « y a-t-il un serveur DHCP ? » ;
@@ -410,7 +410,7 @@ export const NAT = {
     'Pour une contribution par Internet : le côté derrière une box ou en 4G **appelle** ; le côté qui **écoute** a besoin d\'un port ouvert et redirigé. En 4G, l\'adresse est souvent partagée (CGNAT) : impossible d\'y être joint.',
   ],
   figure: figNat,
-  demoTitle: 'Faites sortir le PC, faites revenir la réponse, puis faites frapper un inconnu au port 9000, avant et après la redirection.',
+  demoTitle: 'Fais sortir le PC, fais revenir la réponse, puis fais frapper un inconnu au port 9000, avant et après la redirection.',
   demo: demoNat,
   body: `Le car est en adresses **privées** (10.1.x.x) : elles ne circulent pas sur Internet. Pour en sortir, il faut un routeur qui fasse de la **traduction d'adresses**, le **NAT** (Network Address Translation) ; plus précisément de la traduction d'adresses et de ports (NAPT), comme le fait n'importe quelle box.
 

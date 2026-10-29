@@ -38,7 +38,7 @@ export const VUE_RESEAU_MAC = {
   resume: 'Cinq machines sur un commutateur : la diffusion ARP recopiée partout, la table MAC qui se remplit, puis chaque trame vers son seul port.',
   lecons: ['reseau-switch'],
   lectures: ['Dernière trame', 'Décision du commutateur', 'Table MAC'],
-  depart: 'Avancez étape par étape : chaque étape envoie ses trames. « À vous » permet d\'en envoyer d\'autres.',
+  depart: 'Avance étape par étape : chaque étape envoie ses trames. « À toi » permet d\'en envoyer d\'autres.',
   vue: { cible: [0, 1.0, 0.3], dir: [0, 0.55, 1], dist: 7.4 },
   orbite: { rMin: 1.2, rMax: 16 },
   etapes: [
@@ -74,7 +74,7 @@ En exploitation :
 - une entrée **vieillit** (300 s par défaut) : une machine muette sort de la table ;
 - une adresse qui **saute** d'un port à l'autre trahit une boucle ou deux machines à la même MAC.
 
-Essayez « Débrancher la CCU 2 et la rebrancher sur le port 6 » : la table se corrige à sa première trame.` },
+Essaie « Débrancher la CCU 2 et la rebrancher sur le port 6 » : la table se corrige à sa première trame.` },
   ],
   build(ctx) {
     const root = ctx.root;

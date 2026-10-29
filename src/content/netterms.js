@@ -113,7 +113,7 @@ export const TERMS = {
     t: 'RTP', aka: 'Real-time Transport Protocol', cat: 'Transport et multicast',
     short: 'Le protocole qui transporte les médias : il numérote et horodate chaque paquet.',
     body: "RTP se place au-dessus d'UDP. Son en-tête de 12 octets contient notamment :\n- le **numéro de séquence** (16 bits) : il augmente de 1 à chaque paquet. Un trou signale une perte, et il sert à fusionner les deux copies en ST 2022-7. ST 2110-20 l'étend à 32 bits ;\n- l'**horodatage** (32 bits) : le moment de l'image ou de l'échantillon, compté à 90 kHz pour la vidéo et 48 kHz pour l'audio, à partir de l'heure PTP ;\n- le **type de charge utile** (PT) : le format, décrit dans le SDP ;\n- le **SSRC** : l'identifiant de la source du flux ;\n- le bit **M** (marqueur) : il signale le dernier paquet d'une image en vidéo.\n\nUDP ne corrige rien et ne retransmet rien. C'est voulu : en direct, un paquet en retard ne sert plus à rien.",
-    car: 'Capture sur port miroir (Mesures) : cliquez un paquet RTP pour voir ses champs décodés. Un « ÉCART » dans les numéros signale des pertes.',
+    car: 'Capture sur port miroir (Mesures) : clique un paquet RTP pour voir ses champs décodés. Un « ÉCART » dans les numéros signale des pertes.',
     fig: 'rtp', see: ['udp', 'pt', 'st2022-7', 'packet-enc'], ref: 'RFC 3550',
   },
   pt: {

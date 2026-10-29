@@ -212,7 +212,7 @@ function tabMachines(box) {
 
 // fiche d'une machine : réglages modifiables, explication de chaque champ, diagnostic, tests
 function fiche(id) {
-  const d = N.devById(id); if (!d) return el('div', { class: 'hwpanel cn-fiche' }, el('p', { class: 'note' }, 'Choisissez une machine dans le tableau.'));
+  const d = N.devById(id); if (!d) return el('div', { class: 'hwpanel cn-fiche' }, el('p', { class: 'note' }, 'Choisis une machine dans le tableau.'));
   const c = N.CN.m[id], st = N.devState(id), at = N.attachPort(id), port = at ? N.portOf(at.sw, at.n) : null;
   const panel = el('aside', { class: 'hwpanel cn-fiche', 'aria-label': 'Fiche de ' + d.name });
   panel.append(el('header', { class: 'cn-fh' }, led(st.level), el('h3', {}, d.name), el('span', { class: 'cn-badge ' + st.level }, LVL[st.level])),
@@ -246,7 +246,7 @@ function fichePing(a, b) {
   if (CUR) CUR.render(true);
 }
 const FIELD_HELP = {
-  mode: 'Adresse fixe : vous saisissez l\'adresse notée au plan. DHCP : la machine demande son adresse à un serveur ; dans ce car, seul le VLAN des invités (90) en a un.',
+  mode: 'Adresse fixe : tu saisis l\'adresse notée au plan. DHCP : la machine demande son adresse à un serveur ; dans ce car, seul le VLAN des invités (90) en a un.',
   ip: 'Quatre nombres de 0 à 255. Plan du car : 10.1.<VLAN>.<machine> ; la .1 est réservée à la passerelle.',
   mask: 'Il dit quelle partie de l\'adresse désigne le réseau : 255.255.255.0 (ou /24) = les trois premiers nombres. Toutes les machines d\'un VLAN ont le même.',
   gw: 'L\'adresse à qui la machine confie ce qui sort de son sous-réseau : la .1 de son VLAN (interface du SW-CŒUR). Une passerelle fausse coupe la supervision, pas le VLAN.',
@@ -434,12 +434,12 @@ function tabOutils(box) {
   const P = N.CN.lastPing;
   box.append(el('div', { class: 'hwpanel cn-ping' }, el('h3', { 'data-qterm': 'ping' }, 'Ping entre deux machines'),
     el('div', { class: 'cn-pingrow' }, el('div', { class: 'field' }, el('label', { for: 'cn-src' }, 'Depuis'), Object.assign(src, { id: 'cn-src' })), el('div', { class: 'field' }, el('label', { for: 'cn-dst' }, 'Vers'), Object.assign(dst, { id: 'cn-dst' })), go),
-    P ? pingBox(P) : el('p', { class: 'note' }, 'Choisissez deux machines et lancez le ping : le résultat dit si la demande et la réponse passent, par quel chemin, et pourquoi.')));
+    P ? pingBox(P) : el('p', { class: 'note' }, 'Choisis deux machines et lance le ping : le résultat dit si la demande et la réponse passent, par quel chemin, et pourquoi.')));
   // balayage
   const SW = N.CN.lastSweep;
   const sweepBox = el('div', { class: 'hwpanel cn-sweepbox' }, el('h3', { 'data-qterm': 'ping' }, 'Balayage depuis le PC de supervision'),
     el('p', { class: 'note' }, 'Le PC du chef de car envoie un ping à chaque machine du car (hors invités) : la méthode la plus rapide pour trouver qui ne répond plus.'),
-    el('div', { class: 'hwrow' }, el('button', { class: 'btn cn-sweep', type: 'button', onclick: () => { const s = N.sweep(); const bad = s.rows.filter((r) => r.state !== 'ok'); explain(bad.length ? `Balayage : ${bad.length} machine${bad.length > 1 ? 's' : ''} ne répond${bad.length > 1 ? 'ent' : ''} pas bien (${bad.map((r) => name(r.id)).join(', ')}). Ouvrez sa fiche : diagnostic et tests.` : `Balayage : les ${s.rows.length} machines répondent.`, bad.length ? 'warn:cnsweep' : 'ok:cnsweep'); if (CUR) CUR.render(true); } }, 'Lancer le balayage')));
+    el('div', { class: 'hwrow' }, el('button', { class: 'btn cn-sweep', type: 'button', onclick: () => { const s = N.sweep(); const bad = s.rows.filter((r) => r.state !== 'ok'); explain(bad.length ? `Balayage : ${bad.length} machine${bad.length > 1 ? 's' : ''} ne répond${bad.length > 1 ? 'ent' : ''} pas bien (${bad.map((r) => name(r.id)).join(', ')}). Ouvre sa fiche : diagnostic et tests.` : `Balayage : les ${s.rows.length} machines répondent.`, bad.length ? 'warn:cnsweep' : 'ok:cnsweep'); if (CUR) CUR.render(true); } }, 'Lancer le balayage')));
   if (SW) {
     const bad = SW.rows.filter((r) => r.state !== 'ok');
     sweepBox.append(el('p', { class: 'cn-okline' }, led(bad.length ? 'err' : 'ok'), `${SW.rows.length - bad.length} sur ${SW.rows.length} répondent.`),
@@ -484,7 +484,7 @@ function loadPanel() {
     const lost = N.QOS_ORDER.filter((k) => D.loss[k] > 0.001).map((k) => `${N.QOS[k].name} ${Math.round(D.loss[k] * 100)} %`).join(', ');
     return el('div', { class: 'cn-barrow' }, el('span', { class: 'cn-barl' }, label), wrap, el('span', { class: 'mono cn-barv' }, `${fmtMb(Math.min(tot, cap))}${tot > cap ? ` (demandé ${fmtMb(tot)})` : ''}`), lost ? el('span', { class: 'cn-lost' }, 'pertes : ' + lost) : null);
   };
-  const copy = el('button', { class: 'btn toggle cn-copy', type: 'button', 'aria-pressed': String(N.CN.copy), onclick: () => { N.setCopy(!N.CN.copy); explain(N.CN.copy ? 'Copie de fichiers lancée (NAS → PC d\'habillage) : TCP prend tout le débit qu\'on lui laisse. Le lien montant du SW-PROD sature. Avec la QoS, l\'intercom et les commandes passent devant ; désactivez la QoS du SW-CŒUR pour entendre la différence.' : 'Copie terminée : le lien montant respire.', 'cn:copy'); } }, N.CN.copy ? 'Arrêter la copie de fichiers' : 'Lancer une copie de fichiers (NAS → habillage)');
+  const copy = el('button', { class: 'btn toggle cn-copy', type: 'button', 'aria-pressed': String(N.CN.copy), onclick: () => { N.setCopy(!N.CN.copy); explain(N.CN.copy ? 'Copie de fichiers lancée (NAS → PC d\'habillage) : TCP prend tout le débit qu\'on lui laisse. Le lien montant du SW-PROD sature. Avec la QoS, l\'intercom et les commandes passent devant ; désactive la QoS du SW-CŒUR pour entendre la différence.' : 'Copie terminée : le lien montant respire.', 'cn:copy'); } }, N.CN.copy ? 'Arrêter la copie de fichiers' : 'Lancer une copie de fichiers (NAS → habillage)');
   return el('div', { class: 'hwpanel cn-load' }, el('h3', { 'data-qterm': 'charge' }, 'Charge des liens montants (1 Gb/s)'),
     el('p', { class: 'note' }, 'Chaque couleur est une classe de QoS. Quand un lien sature, le switch sert d\'abord la classe la plus prioritaire, si sa QoS est activée.'),
     ...N.UPLINKS.flatMap((u) => [bar(R.load[u.id].down, R.load[u.id].cap, `${u.label} · vers ${N.swById(u.b.sw).name}`), bar(R.load[u.id].up, R.load[u.id].cap, `${u.label} · vers SW-CŒUR`)]),

@@ -63,11 +63,11 @@ const ZONES = [
   { id: 'cles', at: [-0.1, 0.03, 0.06], view: 'cles', title: 'Clé 1 et habillage aval',
     text: ['**KEY 1** : le redimensionneur 2,5D incruste la source du bus KEY/AUX en image dans l\'image (coin, taille).', '**DSK 1 et 2** : l\'habillage en aval de tout (score, bandeaux) ; **FTB** : le fondu au noir de toute la sortie.'] },
   { id: 'menu', at: [-0.645, 0.03, -0.26], view: 'menu', title: 'Menu et mémoires',
-    text: ['L\'écran du menu résume l\'état de la M/E (transition, clé, DSK, format). Touchez-le pour régler la durée, la taille de la clé et le mode du clavier.', '**STORE** puis **SNAP** : mémorise l\'état du pupitre pour le rappeler en une touche (préparé avant le direct).'] },
+    text: ['L\'écran du menu résume l\'état de la M/E (transition, clé, DSK, format). Touche-le pour régler la durée, la taille de la clé et le mode du clavier.', '**STORE** puis **SNAP** : mémorise l\'état du pupitre pour le rappeler en une touche (préparé avant le direct).'] },
   { id: 'ecrans', at: [-0.3, 0.75, -0.95], view: 'ecrans', title: 'Les écrans du truquiste',
-    text: ['Devant vous, **PGM** (ce qui part à l\'antenne) et **PVW** (le preset) ; à gauche, le **multiview** : toutes les sources, avec leur tally (rouge = à l\'antenne, vert = en preset).', 'Ils sont aussi en direct dans le panneau de droite.'] },
+    text: ['Devant toi, **PGM** (ce qui part à l\'antenne) et **PVW** (le preset) ; à gauche, le **multiview** : toutes les sources, avec leur tally (rouge = à l\'antenne, vert = en preset).', 'Ils sont aussi en direct dans le panneau de droite.'] },
 ];
-const INTRO = { title: 'Le pupitre du truquiste', text: ['Un panneau de commande type **ICP-X7000** qui pilote le processeur **XVS-6000** dans la baie technique.', 'Survolez une touche : son nom et son rôle s\'affichent. Cliquez pour l\'actionner. Glissez pour tourner autour du pupitre, clic droit (ou Maj + glisser) pour le déplacer, molette pour vous approcher ; double-clic pour revenir à la vue.', 'À droite, le multiview, le PGM et le PVW en direct : chaque commutation s\'y voit. Les étiquettes ouvrent la fiche de chaque zone.'] };
+const INTRO = { title: 'Le pupitre du truquiste', text: ['Un panneau de commande type **ICP-X7000** qui pilote le processeur **XVS-6000** dans la baie technique.', 'Survole une touche : son nom et son rôle s\'affichent. Clique pour l\'actionner. Glisse pour tourner autour du pupitre, clic droit (ou Maj + glisser) pour le déplacer, molette pour t\'approcher ; double-clic pour revenir à la vue.', 'À droite, le multiview, le PGM et le PVW en direct : chaque commutation s\'y voit. Les étiquettes ouvrent la fiche de chaque zone.'] };
 
 export const POSTE_MELANGEUR = {
   id: 'melangeur',
@@ -84,11 +84,11 @@ export const POSTE_MELANGEUR = {
     /** @type {any[]} */
     const list = [];
     list.push({ name: 'Barre T', id: 'tbar', cls: 'p3d-tbar', aria: 'Levier de transition', text: 'Barre T', slider: true,
-      info: () => `Levier de transition, à la main : ${Math.round(leverPos() * 100)} %. Tirez-le jusqu'à l'autre butée pour finir la transition ; au milieu, les deux images se superposent. Clavier : flèches haut et bas.`,
+      info: () => `Levier de transition, à la main : ${Math.round(leverPos() * 100)} %. Tire-le jusqu'à l'autre butée pour finir la transition ; au milieu, les deux images se superposent. Clavier : flèches haut et bas.`,
       corners: () => { const y = 0.035, x0 = TB.x - 0.045, x1 = TB.x + 0.045; return [[x0, y, TB.z0 - 0.02], [x1, y, TB.z0 - 0.02], [x1, y, TB.z1 + 0.02], [x0, y, TB.z1 + 0.02]]; },
       value: leverPos, set: (v) => MIXACT.tbar(v), along: [[TB.x, 0.066, TB.z0], [TB.x, 0.066, TB.z1]] });
     list.push({ name: 'Écran du menu', cls: 'p3d-menu', text: 'Écran du menu', panel: 'menu',
-      info: 'L\'écran tactile du pupitre : il résume l\'état de la M/E. Touchez-le pour ses réglages (durée, clé, clavier).',
+      info: 'L\'écran tactile du pupitre : il résume l\'état de la M/E. Touche-le pour ses réglages (durée, clé, clavier).',
       corners: () => { const y = 0.0125, x0 = -0.77, x1 = -0.52, z0 = -0.235, z1 = -0.065; return [[x0, y, z0], [x1, y, z0], [x1, y, z1], [x0, y, z1]]; } });
     return list.concat(keys);
   },

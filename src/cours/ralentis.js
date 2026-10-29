@@ -136,7 +136,7 @@ function demoTrains(host) {
   const calc = () => {
     const v = lever(speed), fpsRec = 50 * A().hfr;
     if (inP == null || outP == null || outP <= inP) {
-      read.set('IN · OUT', inP == null ? 'posez un IN (et un OUT), ou DERN. ACTION' : `IN ${tc(T0 + inP)} · OUT à poser après l'IN`);
+      read.set('IN · OUT', inP == null ? 'pose un IN (et un OUT), ou DERN. ACTION' : `IN ${tc(T0 + inP)} · OUT à poser après l'IN`);
       read.set('Durée de l\'action (OUT − IN)', '—'); read.set('Durée à l\'antenne', '—'); read.set('Images enregistrées de l\'angle, entre IN et OUT', '—'); read.set('Images de sortie (50 par seconde)', '—');
     } else {
       const d = outP - inP;
@@ -160,7 +160,7 @@ function demoTrains(host) {
   const curS = slider('Molette (jog)', 0, SPAN, cur, 0.04, (v) => { cur = v; if (playing) stop(); redraw(); }, (v) => tc(T0 + v).slice(3));
   const setCur = (v) => { cur = Math.max(0, Math.min(SPAN, v)); const i = /** @type {HTMLInputElement} */ (curS.querySelector('input')); i.value = String(cur); /** @type {HTMLElement} */ (curS.querySelector('output')).textContent = tc(T0 + cur).slice(3); };
   tl.addEventListener('pointerdown', (ev) => { const r = tl.getBoundingClientRect(); setCur(S((ev.clientX - r.left) / r.width * TW)); if (playing) stop(); redraw(); });
-  tl.style.cursor = 'crosshair'; tl.title = 'Cliquez pour placer le curseur';
+  tl.style.cursor = 'crosshair'; tl.title = 'Clique pour placer le curseur';
   const b = (label, fn, title) => el('button', { class: 'btn small', type: 'button', title, onclick: () => { fn(); if (playing) stop(); redraw(); } }, label);
   host.append(
     el('div', { class: 'co-ctl' },
@@ -298,7 +298,7 @@ registerChapter({
         'Une caméra **super ralenti 3×** prend **150 images/s** sur trois entrées : relue à 33 %, chaque image montrée est différente, le mouvement reste fluide.',
       ],
       figure: figTrains,
-      demoTitle: 'Appuyez sur DERN. ACTION, puis Lire, avec la CAM 3 à 33 %. Passez sur la CAM 2 à 33 %, puis à 25 % : regardez la pellicule (images répétées) et le ballon qui saccade. Essayez 100 % et 200 %.',
+      demoTitle: 'Appuie sur DERN. ACTION, puis Lire, avec la CAM 3 à 33 %. Passe sur la CAM 2 à 33 %, puis à 25 % : regarde la pellicule (images répétées) et le ballon qui saccade. Essaie 100 % et 200 %.',
       demo: demoTrains,
       body: `Le **serveur ralenti** (dans le car, un EVS XT4K) enregistre sans arrêt plusieurs sources que la grille lui envoie : chaque entrée d'enregistrement est un **train**, une boucle de plusieurs heures. Tant que l'enregistrement tourne, chaque image de chaque entrée est disponible ; quand la boucle est pleine, les images les plus anciennes sont écrasées. Tous les trains portent le même **timecode** (celui du générateur de synchro, entré en LTC) : on peut passer d'un angle à l'autre sur la même action, à l'image près. Le nombre de canaux est fixe et se partage entre enregistrement et lecture : sur un XT4K, 8 canaux en HD (par exemple 6 entrées et 2 sorties ; 12 canaux avec l'option ChannelMAX), 4 en UHD (3 entrées et 1 sortie).
 
@@ -315,8 +315,8 @@ Pourquoi un ralenti saccade : la sortie du serveur donne 50 images par seconde (
       competences: ['2.12', '2.9', '2.7'],
       article: 'evsarch',
       exercises: [
-        { id: 'evs-ralenti', intro: 'Au poste Ralentis, vous relancerez l\'enregistrement s\'il le faut, poserez l\'IN sur la dernière action, choisirez l\'angle le plus rapide, puis vous enverrez le ralenti à l\'antenne au mélangeur, en volet logo. Regardez la vitesse affichée sur la sortie du serveur : pour une caméra 3×, elle est réglée à 33 %, pour que chaque image enregistrée ne soit montrée qu\'une fois.' },
-        { id: 'materiel-evs', intro: 'Dans la visionneuse de matériel, Olivier vous fait lire l\'arrière du serveur : connecteurs vidéo affectés en entrée ou en sortie, référence, timecode, réseau XNet. Repérez l\'entrée LTC : c\'est elle qui met le même timecode sur tous les trains, et c\'est ce qui permet de changer d\'angle au même instant.' },
+        { id: 'evs-ralenti', intro: 'Au poste Ralentis, tu relanceras l\'enregistrement s\'il le faut, poseras l\'IN sur la dernière action, choisiras l\'angle le plus rapide, puis tu enverras le ralenti à l\'antenne au mélangeur, en volet logo. Regarde la vitesse affichée sur la sortie du serveur : pour une caméra 3×, elle est réglée à 33 %, pour que chaque image enregistrée ne soit montrée qu\'une fois.' },
+        { id: 'materiel-evs', intro: 'Dans la visionneuse de matériel, Olivier te fait lire l\'arrière du serveur : connecteurs vidéo affectés en entrée ou en sortie, référence, timecode, réseau XNet. Repère l\'entrée LTC : c\'est elle qui met le même timecode sur tous les trains, et c\'est ce qui permet de changer d\'angle au même instant.' },
       ],
       quiz: [
         { q: 'Une action de 3 s (OUT − IN) est relue à 50 %. Combien dure-t-elle à l\'antenne ?', choices: ['6 s', '1,5 s', '3 s'], answer: 0, why: 'Durée à l\'antenne = (OUT − IN) ÷ vitesse = 3 ÷ 0,5 = 6 s. On multiplie par la vitesse (1,5 s) quand on confond ralenti et accéléré ; 3 s, c\'est la lecture à 100 %.' },
@@ -342,7 +342,7 @@ Pourquoi un ralenti saccade : la sortie du serveur donne 50 images par seconde (
         'Une **playlist** enchaîne des clips, chacun à sa vitesse, avec une transition vers le suivant : durée = somme des durées lues − recouvrements des transitions.',
       ],
       figure: figClips,
-      demoTitle: 'Cherchez les clips TIR, puis ceux à trois étoiles. Construisez un résumé de 30 s : ajoutez des clips, réglez leur vitesse et les transitions, et lisez la durée à l\'antenne.',
+      demoTitle: 'Cherche les clips TIR, puis ceux à trois étoiles. Construis un résumé de 30 s : ajoute des clips, règle leur vitesse et les transitions, et lis la durée à l\'antenne.',
       demo: demoPlaylist,
       body: `La boucle d'enregistrement finit toujours par écraser ses images les plus anciennes. Ce que l'on veut garder devient un **clip** : un IN et un OUT posés sur les trains, qui gardent **tous les angles** enregistrés entre les deux et sont protégés de l'écrasement. Sur la télécommande LSM, on range le clip sur une touche F libre de la page en cours ; son nom est son adresse : **111A** est le clip de la page 1, banque 1, touche F1, angle A ; 112C, la touche F2 de la même banque, angle C. Pendant un match, un opérateur range ainsi des dizaines de clips : buts, tirs, arrêts, fautes, ambiances.
 
@@ -356,8 +356,8 @@ Le travail pendant le match : l'opérateur LSM range les clips au fil des action
       competences: ['2.5', '2.12', '3.7', '3.14'],
       article: 'evsarch',
       exercises: [
-        { id: 'evs-clips', intro: 'À la télécommande LSM, vous délimiterez deux actions par un IN et un OUT, les rangerez sur deux touches F, puis vous les enchaînerez en playlist et lancerez la lecture. Lisez le nom que prend chaque clip sur sa touche : il donne la page, la banque, la touche et l\'angle.' },
-        { id: 'ipdirector-clips', intro: 'Au poste IPDirector, vous renommerez un clip, lui donnerez un mot-clé et une note, puis l\'ajouterez à la playlist. Vérifiez ensuite que le nouveau nom apparaît aussi sur la télécommande LSM : c\'est la même base de clips pour tous les postes.' },
+        { id: 'evs-clips', intro: 'À la télécommande LSM, tu délimiteras deux actions par un IN et un OUT, les rangeras sur deux touches F, puis tu les enchaîneras en playlist et lanceras la lecture. Lis le nom que prend chaque clip sur sa touche : il donne la page, la banque, la touche et l\'angle.' },
+        { id: 'ipdirector-clips', intro: 'Au poste IPDirector, tu renommeras un clip, lui donneras un mot-clé et une note, puis l\'ajouteras à la playlist. Vérifie ensuite que le nouveau nom apparaît aussi sur la télécommande LSM : c\'est la même base de clips pour tous les postes.' },
       ],
       quiz: [
         { q: 'Que désigne le clip « 111A » sur la télécommande LSM ?', choices: ['Page 1, banque 1, touche F1, angle A', 'Le 111e clip de l\'opérateur A', 'La première action de la première mi-temps, caméra 1'], answer: 0, why: 'Le nom d\'un clip LSM est une adresse : on le retrouve à sa page et à sa touche, et la lettre dit quel angle (quelle entrée d\'enregistrement) il relit. Ce n\'est ni un numéro d\'ordre ni un moment du match : ça, c\'est le travail du nom et des mots-clés dans IPDirector.' },

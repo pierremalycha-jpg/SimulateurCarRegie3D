@@ -11,7 +11,7 @@ import { ctrlFunc } from '../net/ctrlnet.js';
 export function mixerOk() {
   const k = ctrlFunc('mixer'); if (k.ok) return true;
   toast('Pupitre du mélangeur : processeur injoignable par le réseau de contrôle.', 'bad');
-  explain(`Commutation refusée : le pupitre ne joint plus le processeur du mélangeur (${k.why}). Le programme reste sur sa dernière source : voyez le poste Réseau.`, 'warn:ctrl');
+  explain(`Commutation refusée : le pupitre ne joint plus le processeur du mélangeur (${k.why}). Le programme reste sur sa dernière source : vois le poste Réseau.`, 'warn:ctrl');
   return false;
 }
 import { canControl } from '../multi/session.js';
@@ -50,7 +50,7 @@ export function keyLegend() {
 export function commutKey(e, where = 'station') {
   const d = digitOf(e);
   // session à plusieurs : seul le titulaire du mélangeur commute
-  if (!canControl('mix') && (d != null || ['Enter', 'NumpadEnter'].includes(e.code) || (where === 'station' && e.code === 'Space'))) { osd('Mélangeur tenu par un autre participant : prenez le rôle Truquiste pour commuter', 'warn'); return true; }
+  if (!canControl('mix') && (d != null || ['Enter', 'NumpadEnter'].includes(e.code) || (where === 'station' && e.code === 'Space'))) { osd('Mélangeur tenu par un autre participant : prends le rôle Truquiste pour commuter', 'warn'); return true; }
   // car SDI : une touche de commutation sans réseau de contrôle vers le processeur ne passe pas
   if ((d != null || ['Enter', 'NumpadEnter'].includes(e.code) || (where === 'station' && e.code === 'Space')) && !mixerOk()) return true;
   if (d != null) {

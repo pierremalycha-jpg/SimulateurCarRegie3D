@@ -178,7 +178,7 @@ export function bilan(J) {
     const nom = MEDIAS[id].nom;
     const ecart = r.retard == null ? Infinity : Math.abs(r.retard);
     const pl = ecart <= 2 ? 15 : ecart <= 5 ? 10 : ecart <= 10 ? 5 : 0;
-    lignes.push({ titre: `${nom} : lancé au top`, pts: pl, max: 15, detail: r.retard == null ? 'jamais lancé' : `${fr(Math.abs(r.retard))} s ${r.retard < 0 ? 'avant' : 'après'} le top${r.par ? ' (' + (r.par === 'vous' ? 'par vous' : r.par === 'ia' ? 'par l\'équipe virtuelle' : 'par ' + r.par) + ')' : ''}` });
+    lignes.push({ titre: `${nom} : lancé au top`, pts: pl, max: 15, detail: r.retard == null ? 'jamais lancé' : `${fr(Math.abs(r.retard))} s ${r.retard < 0 ? 'avant' : 'après'} le top${r.par ? ' (' + (r.par === 'vous' ? 'par toi' : r.par === 'ia' ? 'par l\'équipe virtuelle' : 'par ' + r.par) + ')' : ''}` });
     const pa = Math.round(10 * Math.max(0, Math.min(1, r.antenne || 0)));
     lignes.push({ titre: `${nom} : à l'antenne`, pts: pa, max: 10, detail: `${Math.round(100 * Math.max(0, Math.min(1, r.antenne || 0)))} % du média diffusé` });
   }

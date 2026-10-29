@@ -54,7 +54,7 @@ export function buildIPD(body, arg, ctx) {
     el('p', { class: 'note' }, 'IPDirector travaille sur les mêmes clips que la télécommande LSM : un clip sauvegardé au poste ralentis apparaît ici, un nom ou un mot-clé ajouté ici apparaît sur l\'écran du serveur. Interface simplifiée inspirée des modules Database explorer, Clip logger, Playlist et Control panel.'));
 
   // en car SDI, IPDirector pilote le serveur par le réseau de contrôle
-  const evsOk = () => { const k = ctrlFunc('evs'); if (k.ok) return true; toast('Serveur EVS injoignable par le réseau de contrôle.', 'bad'); explain(`Action refusée : IPDirector ne joint plus le serveur EVS (${k.why}). L'enregistrement continue sur le serveur, mais ni log ni clip ne passent : voyez le poste Réseau.`, 'warn:ctrl'); return false; };
+  const evsOk = () => { const k = ctrlFunc('evs'); if (k.ok) return true; toast('Serveur EVS injoignable par le réseau de contrôle.', 'bad'); explain(`Action refusée : IPDirector ne joint plus le serveur EVS (${k.why}). L'enregistrement continue sur le serveur, mais ni log ni clip ne passent : vois le poste Réseau.`, 'warn:ctrl'); return false; };
   function logNow(kw) {
     if (!evsOk()) return;
     const t = S.simTime;
@@ -72,7 +72,7 @@ export function buildIPD(body, arg, ctx) {
     drawAll();
   }
   function playPl() {
-    if (!EVS.playlist.length) { toast('Playlist vide : ajoutez des clips depuis la base.'); return; }
+    if (!EVS.playlist.length) { toast('Playlist vide : ajoute des clips depuis la base.'); return; }
     evsAction(ch, 'plstplay'); explain(`Playlist lancée sur PGM${ch + 1} : ${EVS.playlist.length} clips. Le réalisateur peut la prendre au mélangeur (EVS ${ch ? 'B' : 'A'}).`);
   }
   function drawDb() {
@@ -86,12 +86,12 @@ export function buildIPD(body, arg, ctx) {
         el('td', { class: 'mono' }, clipName(i)), el('td', {}, cl.name || '—'), el('td', { class: 'mono' }, tc(S.tcOffset + cl.in).slice(3)), el('td', { class: 'mono' }, fmt(cl.out - cl.in, 1) + ' s'),
         el('td', {}, 'CAM ' + cl.cam), el('td', {}, kw || '—'), el('td', {}, '★'.repeat(cl.rating || 0) || '—')));
     });
-    if (!tbody.children.length) tbody.appendChild(el('tr', {}, el('td', { colspan: 7, class: 'note' }, EVS.clips.some(Boolean) ? 'Aucun clip ne correspond à la recherche.' : 'Aucun clip : créez des clips à la LSM (IN / OUT puis une touche F libre) ou créez-en depuis un log.')));
+    if (!tbody.children.length) tbody.appendChild(el('tr', {}, el('td', { colspan: 7, class: 'note' }, EVS.clips.some(Boolean) ? 'Aucun clip ne correspond à la recherche.' : 'Aucun clip : crée des clips à la LSM (IN / OUT puis une touche F libre) ou crées-en depuis un log.')));
   }
   function drawDetail() {
     detail.innerHTML = '';
     const cl = selIdx != null ? EVS.clips[selIdx] : null;
-    if (!cl) { detail.appendChild(el('p', { class: 'note' }, 'Sélectionnez un clip dans la base.')); return; }
+    if (!cl) { detail.appendChild(el('p', { class: 'note' }, 'Sélectionne un clip dans la base.')); return; }
     const name = el('input', { type: 'text', value: cl.name || '', 'aria-label': 'Nom du clip', placeholder: 'Nom du clip' });
     name.addEventListener('change', () => { cl.name = name.value.slice(0, 40); explain(`Clip ${clipName(selIdx)} renommé « ${cl.name} » : le nom apparaît aussi sur l'écran du serveur côté LSM.`); drawDb(); });
     const pls = el('select', { 'aria-label': 'Joueur' }, el('option', { value: '' }, 'Ajouter un joueur…'), ...[...Array(22).keys()].map((p) => el('option', { value: p }, `${playerNumber(p)} ${playerName(p)}`)));
@@ -127,7 +127,7 @@ export function buildIPD(body, arg, ctx) {
         el('button', { class: 'btn small', 'aria-label': 'Monter dans la playlist', title: 'Monter dans la playlist', onclick: () => { if (j > 0) { [EVS.playlist[j - 1], EVS.playlist[j]] = [EVS.playlist[j], EVS.playlist[j - 1]]; drawPl(); } } }, '↑'),
         el('button', { class: 'btn small', 'aria-label': 'Retirer de la playlist', title: 'Retirer de la playlist', onclick: () => { EVS.playlist.splice(j, 1); drawPl(); } }, '×')));
     });
-    if (!EVS.playlist.length) plBody.appendChild(el('p', { class: 'note' }, 'Playlist vide : ajoutez des clips depuis la base.'));
+    if (!EVS.playlist.length) plBody.appendChild(el('p', { class: 'note' }, 'Playlist vide : ajoute des clips depuis la base.'));
     else plBody.appendChild(el('p', { class: 'note' }, `Durée totale à 100 % : ${fmt(tot, 1)} s (à 50 % : ${fmt(tot * 2, 1)} s).`));
   }
   function drawCtl() {

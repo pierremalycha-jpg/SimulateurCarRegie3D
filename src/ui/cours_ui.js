@@ -188,7 +188,7 @@ function home(page, /** @type {import('./cours_parcours.js').Go} */ go) {
   const nextX = xs.find((x) => !exerciseDone(x.id) && leconOuverte(x.lesson.id, PROG, { libre: libre() }));
   const nextXi = nextX ? exerciseInfo(nextX.id) : null;
   page.append(el('h2', {}, 'Mon parcours'),
-    el('p', { class: 'lede' }, 'Chaque catégorie se fait par niveaux : Débutant, puis Intermédiaire, Avancé et Expert. Une leçon se termine par son quiz et un exercice en autonomie, où l\'aide se paie en points ; un niveau validé ouvre le suivant. Commencez par les fondamentaux.'),
+    el('p', { class: 'lede' }, 'Chaque catégorie se fait par niveaux : Débutant, puis Intermédiaire, Avancé et Expert. Une leçon se termine par son quiz et un exercice en autonomie, où l\'aide se paie en points ; un niveau validé ouvre le suivant. Commence par les fondamentaux.'),
     ...(libre() ? [el('p', { class: 'note pa-libre' }, icon('ouvert'), 'Profil Formateur : tous les niveaux sont ouverts. Au profil Étudiant, on commence par le niveau Débutant de chaque catégorie.')] : []),
     P.hero,
     el('div', { class: 'co-kpis pa-kpis' },
@@ -229,7 +229,7 @@ function lessonPage(page, { chapter, lesson }, /** @type {import('./cours_parcou
   }
   if (L.demo) {
     const host = el('div', { class: 'co-demo-host' });
-    page.append(el('section', { class: 'co-demo', 'aria-label': 'Manipulation' }, el('h4', {}, icon('a_toi'), 'À vous : ', el('span', {}, L.demoTitle || 'essayez')), host));
+    page.append(el('section', { class: 'co-demo', 'aria-label': 'Manipulation' }, el('h4', {}, icon('a_toi'), 'À toi : ', el('span', {}, L.demoTitle || 'essaie')), host));
     try { UI.demo = L.demo(host); } catch (e) { console.error(e); host.append(el('p', { class: 'note' }, 'La manipulation n\'a pas pu démarrer dans ce navigateur.')); }
   }
   page.append(el('section', { class: 'co-text' }, rich(L.body, 'co-rich')));
@@ -269,7 +269,7 @@ function quiz(L, onChange = () => {}) {
   // la section est redessinée en place ; le focus clavier revient sur l'élément visé
   const redraw = (/** @type {string} */ focus) => { const nb = quiz(L, onChange); box.replaceWith(nb); const f = /** @type {HTMLElement | null} */ (nb.querySelector(focus)); if (f) f.focus(); };
   box.append(el('h4', {}, 'Quiz', p.quiz ? el('small', {}, ` · meilleur score ${p.quiz.score} / ${p.quiz.total}`) : null),
-    el('p', { class: 'co-quiz-help' }, `${E.draw.length} questions tirées parmi ${L.quiz.length}. Choisissez vos réponses, puis validez : le corrigé s'affiche à la fin.`));
+    el('p', { class: 'co-quiz-help' }, `${E.draw.length} questions tirées parmi ${L.quiz.length}. Choisis tes réponses, puis valide : le corrigé s'affiche à la fin.`));
   const text = (c) => (Array.isArray(c) ? c[0] : c);
   const items = E.draw.map(({ i, order }, qi) => {
     const Q = L.quiz[i];
@@ -292,7 +292,7 @@ function quiz(L, onChange = () => {}) {
       onclick: () => { if (!E.answers.every((x) => x != null)) return; E.checked = true; recordQuiz(L.id, score, n); onChange(); redraw('.co-score'); },
     }, 'Valider mes réponses'), all ? null : el('small', {}, `${E.answers.filter((x) => x != null).length} / ${n} répondues`)));
   } else {
-    box.append(el('p', { class: 'co-score', tabindex: '-1', role: 'status' }, el('b', {}, `${score} / ${n}`), score === n ? (etatLecon(L.id, PROG).terminee ? ' : quiz réussi, leçon terminée.' : exoOf(L.id) ? ' : quiz réussi. Reste l\'exercice en autonomie, juste en dessous.' : ' : quiz réussi, leçon terminée.') : ' : relisez l\'essentiel et refaites le quiz (d\'autres questions seront tirées).',
+    box.append(el('p', { class: 'co-score', tabindex: '-1', role: 'status' }, el('b', {}, `${score} / ${n}`), score === n ? (etatLecon(L.id, PROG).terminee ? ' : quiz réussi, leçon terminée.' : exoOf(L.id) ? ' : quiz réussi. Reste l\'exercice en autonomie, juste en dessous.' : ' : quiz réussi, leçon terminée.') : ' : relis l\'essentiel et refais le quiz (d\'autres questions seront tirées).',
       el('button', { type: 'button', class: 'btn small', onclick: () => { const prev = E.draw.map((d) => d.i); const draw = drawQuiz(L.quiz, prev); ESSAI = { id: L.id, draw, answers: draw.map(() => null), checked: false }; redraw('.co-choice-btn'); } }, 'Refaire le quiz')));
   }
   return box;

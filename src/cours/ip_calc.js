@@ -145,7 +145,7 @@ export const bondSatelliteMs = () => propagationMs(2 * GEO_KM, 'air');
 
 /** les étendues de réseau du cours (ordres de grandeur) */
 export const ETENDUES = {
-  lan: { nom: 'LAN (réseau local)', km: 0.1, ex: 'le car, un studio, un bâtiment', qui: 'vous', techno: 'Ethernet cuivre et fibre, Wi-Fi', debit: '1 à 100 Gb/s', rtt: 'moins de 1 ms' },
+  lan: { nom: 'LAN (réseau local)', km: 0.1, ex: 'le car, un studio, un bâtiment', qui: 'toi', techno: 'Ethernet cuivre et fibre, Wi-Fi', debit: '1 à 100 Gb/s', rtt: 'moins de 1 ms' },
   man: { nom: 'MAN (réseau métropolitain)', km: 15, ex: 'le stade relié au centre technique de la ville', qui: 'un opérateur ou une collectivité (fibre louée, fibre noire)', techno: 'fibre, boucle métropolitaine', debit: '1 à 100 Gb/s', rtt: 'de l\'ordre de 0,1 à 1 ms' },
   wan: { nom: 'WAN (réseau étendu)', km: 250, ex: 'le car relié à la régie finale à Paris', qui: 'des opérateurs (réseau managé, Internet)', techno: 'fibre opérateur, MPLS, Internet, satellite, 4G/5G', debit: 'de quelques Mb/s à 10 Gb/s', rtt: 'de quelques ms à 600 ms (satellite)' },
 };

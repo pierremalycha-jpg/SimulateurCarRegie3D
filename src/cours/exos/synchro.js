@@ -21,7 +21,7 @@ const LIGNES = [
 registerExos({
   'synchro-timecode': {
     titre: 'Dater les images au timecode',
-    consigne: 'La scripte note les actions au timecode du car (heure du jour, 25 images/s) ; l\'opérateur ralenti les retrouve. Vous convertissez, vous vérifiez la dérive d\'une machine mal calée.',
+    consigne: 'La scripte note les actions au timecode du car (heure du jour, 25 images/s) ; l\'opérateur ralenti les retrouve. Tu convertis, tu vérifies la dérive d\'une machine mal calée.',
     gen: (rnd) => {
       const n = entre(rnd, 25 * 5, 25 * 3600 * 3);
       const h = entre(rnd, 13, 22), m = entre(rnd, 0, 59), s = entre(rnd, 0, 59), ii = entre(rnd, 0, 24);
@@ -33,21 +33,21 @@ registerExos({
           type: 'texte', placeholder: 'HH:MM:SS:II', forme: 'ip', accept: [T, T.replace(/^0/, '')],
           q: `Un clip commence à l'image **${fr(n)}** de la journée (on compte à partir de 00:00:00:00, à 25 images/s). Quel est son timecode ?`,
           pieges: [{ v: tc(n, 30), why: 'C\'est le calcul à 30 images/s : en Europe, une seconde compte 25 images, numérotées de 00 à 24.' }].filter((x) => x.v !== T),
-          aides: ['Divisez d\'abord par 25 : le quotient donne les secondes, le reste le numéro de l\'image (00 à 24).', 'Puis découpez les secondes en heures (3 600 s), minutes (60 s) et secondes.'],
+          aides: ['Divise d\'abord par 25 : le quotient donne les secondes, le reste le numéro de l\'image (00 à 24).', 'Puis découpe les secondes en heures (3 600 s), minutes (60 s) et secondes.'],
           solution: `${fr(n)} = ${fr(Math.floor(n / 25))} s et ${n % 25} images : **${T}**.`,
         },
         {
           type: 'nombre', answer: k,
           q: `La scripte a noté « but, **${deux(h)}:${deux(m)}:${deux(s)}:${deux(ii)}** ». À quel numéro d'image de la journée est-ce (25 images/s, 00:00:00:00 = image 0) ?`,
           pieges: [{ v: ((h * 60 + m) * 60 + s) * 30 + ii, why: 'C\'est le calcul à 30 images/s : le car tourne à 25.' }, { v: ((h * 60 + m) * 60 + s) * 25, why: 'Il manque les images de la dernière seconde (II).' }].filter((x) => x.v !== k),
-          aides: ['Ramenez tout en secondes, puis en images.', 'n = ((HH × 60 + MM) × 60 + SS) × 25 + II.'],
+          aides: ['Ramène tout en secondes, puis en images.', 'n = ((HH × 60 + MM) × 60 + SS) × 25 + II.'],
           solution: `((${h} × 60 + ${m}) × 60 + ${s}) × 25 + ${ii} = **${fr(k)}**.`,
         },
         {
           type: 'nombre', unite: 'min', answer: Math.round(min * 10) / 10, tol: Math.max(0.3, min * 0.01),
           q: `Un enregistreur a été calé (jam sync) sur le LTC du car, puis il compte seul sur son quartz, juste à **${ppm} ppm** près. Au bout de combien de minutes a-t-il dérivé d'une image entière (25 images/s) ?`,
           pieges: [{ v: Math.round(min / 2 * 10) / 10, why: 'C\'est pour une image de 20 ms (50 images/s) : à 25 images/s, une image dure 40 ms.' }],
-          aides: [`À ${ppm} ppm, l'horloge gagne ou perd ${ppm} µs par seconde.`, `Une image dure 40 ms = 40 000 µs : divisez par ${ppm} µs/s, puis par 60.`],
+          aides: [`À ${ppm} ppm, l'horloge gagne ou perd ${ppm} µs par seconde.`, `Une image dure 40 ms = 40 000 µs : divise par ${ppm} µs/s, puis par 60.`],
           solution: `40 000 µs ÷ ${ppm} µs/s = ${fr(40000 / ppm)} s, soit **${fr(min, 1)} min**. D'où l'asservissement permanent au timecode du car.`,
         },
         pick(rnd, [
@@ -78,7 +78,7 @@ registerExos({
           {
             type: 'choix', q: 'En 50 images/s, combien d\'images compte une minute ?',
             choices: ['3 000', ['1 500', 'C\'est une minute à 25 images/s.'], ['3 600', 'C\'est le nombre de secondes dans une heure, ou une minute à 60 images/s.']], answer: 0,
-            aides: ['Une seconde compte 50 images.', 'Multipliez les 50 images d\'une seconde par 60.'],
+            aides: ['Une seconde compte 50 images.', 'Multiplie les 50 images d\'une seconde par 60.'],
             solution: '50 × 60 = **3 000** images. Le timecode ST 12-1 numérote les paires d\'images de 00 à 24, avec un drapeau pour la seconde image de chaque paire.',
           },
         ]),
@@ -87,7 +87,7 @@ registerExos({
   },
   'synchro-genlock': {
     titre: 'Mettre les sources en phase',
-    consigne: 'Au poste Synchro et à la baie de mesure, vous réglez la phase des sources du mélangeur : le retard des câbles, la fenêtre d\'entrée, la dérive d\'une source sans genlock.',
+    consigne: 'Au poste Synchro et à la baie de mesure, tu règles la phase des sources du mélangeur : le retard des câbles, la fenêtre d\'entrée, la dérive d\'une source sans genlock.',
     gen: (rnd) => {
       const L = entre(rnd, 2, 30) * 10, us = L * 5 / 1000;
       const F = pick(rnd, LIGNES), ligne = 1e6 / (F.lignes * F.ips), demi = ligne / 2;
@@ -97,7 +97,7 @@ registerExos({
           type: 'nombre', unite: 'µs', answer: Math.round(us * 1000) / 1000, tol: Math.max(0.01, us * 0.02),
           q: `La CCU est à **${L} m** de coaxial du mélangeur. Quel retard ce câble ajoute-t-il, en µs (≈ 5 ns par mètre, un ordre de grandeur) ?`,
           pieges: [{ v: L * 5, why: 'C\'est le retard en nanosecondes : 1 µs = 1 000 ns.' }],
-          aides: ['Le retard est proportionnel à la longueur.', `${L} m × 5 ns, puis divisez par 1 000 pour passer en µs.`],
+          aides: ['Le retard est proportionnel à la longueur.', `${L} m × 5 ns, puis divise par 1 000 pour passer en µs.`],
           solution: `${L} × 5 ns = ${fr(L * 5)} ns = **${fr(us, 2)} µs** : peu devant une ligne de 17,8 µs en 1080p50, mais à compenser par la phase H.`,
         },
         {
@@ -111,7 +111,7 @@ registerExos({
           type: 'nombre', unite: 'min', answer: Math.round(min * 10) / 10, tol: Math.max(0.2, min * 0.01),
           q: `Une source n'est pas genlockée : son quartz est juste à **${ppm} ppm** près. En combien de minutes fait-elle le tour d'une image entière à 50 Hz (20 ms) ?`,
           pieges: [{ v: Math.round(min * 2 * 10) / 10, why: 'C\'est pour une image de 40 ms (25 images/s) : à 50 Hz, une image dure 20 ms.' }],
-          aides: [`À ${ppm} ppm, elle dérive de ${ppm} µs par seconde.`, `20 ms = 20 000 µs : divisez par ${ppm} µs/s, puis par 60.`],
+          aides: [`À ${ppm} ppm, elle dérive de ${ppm} µs par seconde.`, `20 ms = 20 000 µs : divise par ${ppm} µs/s, puis par 60.`],
           solution: `20 000 ÷ ${ppm} = ${fr(20000 / ppm)} s, soit **${fr(min, 1)} min**. Elle traverse la fenêtre du mélangeur en quelques secondes au plus : à la coupe, l'image saute.`,
         },
         pick(rnd, [
@@ -140,7 +140,7 @@ registerExos({
             solution: 'Le **tri-level** : le repère est le passage à 0 V, qui ne bouge pas si l\'amplitude varie.',
           },
           {
-            type: 'ordre', q: 'Remettez dans l\'ordre le chemin de la référence, du toit du car jusqu\'à l\'entrée du mélangeur.',
+            type: 'ordre', q: 'Remets dans l\'ordre le chemin de la référence, du toit du car jusqu\'à l\'entrée du mélangeur.',
             items: ['L\'antenne GPS', 'Le SPG (générateur de synchro)', 'Le distributeur (DA)', 'La CCU, verrouillée et phasée', 'L\'entrée du mélangeur, dans la fenêtre'],
             aides: ['Tout part de l\'heure des satellites.', 'La référence est distribuée en étoile, une sortie de DA par appareil.'],
             solution: 'GPS → SPG → DA → appareil (genlock et phase) → mélangeur. Le SPG est doublé d\'un secours.',

@@ -360,7 +360,7 @@ registerChapter({
         'Les débits suivent les formats : SD 270 Mb/s, **HD 1,485 Gb/s**, **3G 2,97**, 6G 5,94, **12G 11,88 Gb/s** (ST 259, 292-1, 424, 2081-1, 2082-1).',
       ],
       figure: figTrame,
-      demoTitle: 'Promenez le curseur le long d\'une ligne : SAV, vidéo active, EAV, numéro de ligne, CRC, puis l\'espace ancillary.',
+      demoTitle: 'Promène le curseur le long d\'une ligne : SAV, vidéo active, EAV, numéro de ligne, CRC, puis l\'espace ancillary.',
       demo: demoTrame,
       body: `**SDI** veut dire Serial Digital Interface : l'image numérique du chapitre précédent, mot après mot, bit après bit, sur un seul câble **coaxial 75 Ω** terminé par des **BNC**. Un câble, un sens, un signal : c'est la simplicité qui a fait sa réputation dans les cars. Le signal fait 800 mV crête à crête, il est embrouillé (scrambled) pour ne pas dépendre du contenu de l'image, et le récepteur en retire lui-même l'horloge.
 
@@ -373,7 +373,7 @@ Le débit se déduit du raster : 2 640 × 1 125 mots × 25 images × 2 flux × 1
 - Mots réservés : 3FF et 000 (EAV, SAV, drapeaux ancillary). L'image : 4 à 1 019.
 - EAV porte F (trame), V (suppression verticale) et H (suppression horizontale) : le récepteur se repère sans compter.
 - 1 mot toutes les 6,73 ns à 148,5 MHz (1080p50) : une ligne dure 17,8 µs, une image 20 ms.`,
-      car: { text: 'La grille Videohub du car, les baies CCU et la transmission se parlent en 3G-SDI (1080p50) ou 12G-SDI (UHD) : ce sont les câbles coaxiaux BNC que vous suivez dans la zone technique. La tuile État SDI de la baie de mesure lit le format (VPID) et les CRC de chaque signal.', station: 'grille' },
+      car: { text: 'La grille Videohub du car, les baies CCU et la transmission se parlent en 3G-SDI (1080p50) ou 12G-SDI (UHD) : ce sont les câbles coaxiaux BNC que tu suis dans la zone technique. La tuile État SDI de la baie de mesure lit le format (VPID) et les CRC de chaque signal.', station: 'grille' },
       terms: ['12g-sdi', 'crc-edh', 'vpid', 'amplitude-sdi'],
       competences: ['2.10', '2.2'], article: 'formats',
       quiz: [
@@ -401,7 +401,7 @@ Le débit se déduit du raster : 2 640 × 1 125 mots × 25 images × 2 flux × 1
         'En numérique, l\'image reste parfaite puis tombe **d\'un coup** (effet de falaise) : HD ≈ 200 m, 3G ≈ 120–140 m, 12G ≈ 70–80 m sur un bon câble, ordres de grandeur.',
       ],
       figure: figOeil,
-      demoTitle: 'Allongez le câble en 3G : l\'œil brut se ferme, l\'œil égalisé tient, puis tout tombe. Comparez avec le HD et le 12G, et avec un câble mince.',
+      demoTitle: 'Allonge le câble en 3G : l\'œil brut se ferme, l\'œil égalisé tient, puis tout tombe. Compare avec le HD et le 12G, et avec un câble mince.',
       demo: demoOeil,
       body: `Un signal SDI est une suite de 0 et de 1 à 1,485, 2,97 ou 11,88 milliards de bits par seconde. Dans un coaxial, les fronts s'arrondissent : le câble **atténue** d'autant plus que la fréquence est élevée, et un bit qui alterne à chaque période est la fréquence la plus haute du signal, la **demi-fréquence d'horloge** (742,5 MHz en HD, 1,485 GHz en 3G, 5,94 GHz en 12G). C'est à cette fréquence que l'on compte l'affaiblissement : pour un Belden 1694A (le RG6 de référence des cars), environ 17,7 dB par 100 m en HD, 25,6 en 3G, 58 en 12G (fiche technique). Un câble plus mince (RG59, mini-coax) perd nettement plus.
 
@@ -443,7 +443,7 @@ Les règles qui en découlent dans un car : des **liaisons courtes** (la grille 
         'Un seul BNC porte image, son et timecode ; l\'**embedder** les y range, le **désembeddeur** les ressort en AES ou analogique.',
       ],
       figure: figEmbedded,
-      demoTitle: 'Cochez des canaux : chaque groupe présent ajoute un paquet de 31 mots dans l\'HANC. Retirez le timecode, puis le VPID, et lisez ce que le câble transporte encore.',
+      demoTitle: 'Coche des canaux : chaque groupe présent ajoute un paquet de 31 mots dans l\'HANC. Retire le timecode, puis le VPID, et lis ce que le câble transporte encore.',
       demo: demoEmbedded,
       body: `Entre l'EAV et le SAV de chaque ligne, le SDI laisse plus de 700 mots inutilisés ; entre deux images, 45 lignes entières. La norme ST 291 y définit des **paquets ancillary** : un drapeau de trois mots (000 3FF 3FF, des valeurs que l'image ne peut pas prendre), un identifiant de type (**DID**, et SDID ou DBN), le nombre de mots de données, les données, une somme de contrôle. Un récepteur qui ne connaît pas un type de paquet l'ignore ; une grille, un DA les laissent passer intacts ; un mélangeur ou un convertisseur doivent les **réinsérer** sur leur sortie, et c'est là qu'ils se perdent parfois.
 
@@ -483,7 +483,7 @@ Dans le car, l'audio part de la régie son vers la vidéo : l'**embedder** (souv
         'Les passages en **brassage** et les raccords coûtent chacun quelques dixièmes de dB et une réflexion possible : une liaison longue se fait d\'un seul tenant, ou avec un répéteur.',
       ],
       figure: figCable,
-      demoTitle: 'Allongez la liaison CCU → grille jusqu\'au rouge et voyez où placer un DA ; cochez une pièce 50 Ω sur une liaison courte : la longueur est bonne, la liaison ne l\'est plus.',
+      demoTitle: 'Allonge la liaison CCU → grille jusqu\'au rouge et vois où placer un DA ; coche une pièce 50 Ω sur une liaison courte : la longueur est bonne, la liaison ne l\'est plus.',
       demo: demoChaine,
       body: `Le SDI est une ligne de transmission : la source a une impédance de 75 Ω, le câble 75 Ω, la charge 75 Ω. Tant que c'est le cas, l'énergie file d'un bout à l'autre. Toute **rupture d'impédance** renvoie une partie du signal vers la source : une **réflexion**, qui se superpose aux bits suivants, crée un **dépassement** après chaque front et referme l'œil. Les normes demandent une perte de retour d'au moins 15 dB, soit moins de 3 % d'énergie réfléchie ; une pièce 50 Ω donne un coefficient de réflexion de 20 % (14 dB), déjà hors tolérance, et plusieurs ruptures s'additionnent.
 

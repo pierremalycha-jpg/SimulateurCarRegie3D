@@ -70,7 +70,7 @@ export const TCP_UDP = {
     'Un **port** (0 à 65 535) désigne le service dans la machine : 443 le web chiffré, 53 le DNS, 319 et 320 PTP, 1935 RTMP, 5004 RTP. Adresse et port forment une **socket**.',
   ],
   figure: figTcp,
-  demoTitle: 'Allongez l\'aller-retour, ajoutez des pertes : regardez le débit de TCP s\'effondrer pendant qu\'UDP garde son rythme, avec des trous.',
+  demoTitle: 'Allonge l\'aller-retour, ajoute des pertes : regarde le débit de TCP s\'effondrer pendant qu\'UDP garde son rythme, avec des trous.',
   demo: demoTcp,
   body: `La couche **transport** (niveau 4) livre les données au bon logiciel de la machine, désigné par son **port**. Deux protocoles s'y partagent presque tout le trafic, avec deux philosophies opposées.
 
@@ -166,7 +166,7 @@ function demoStreaming(host) {
       calc.className = 'co-verdict ' + (s ? 'ok' : 'ko');
     } else if (k === 'rtmp') {
       const ok = tcp >= B.debit * 1.5;
-      calc.textContent = `RTMP passe par TCP : sur ce chemin, ≈ ${fmtNum(tcp, 1)} Mb/s possibles pour un flux de ${B.debit} Mb/s. ` + (ok ? 'Ça tient, avec de la marge.' : 'Ça ne tient pas : le direct prendra du retard puis se coupera. Baissez le débit, ou envoyez en SRT si la plateforme l\'accepte.');
+      calc.textContent = `RTMP passe par TCP : sur ce chemin, ≈ ${fmtNum(tcp, 1)} Mb/s possibles pour un flux de ${B.debit} Mb/s. ` + (ok ? 'Ça tient, avec de la marge.' : 'Ça ne tient pas : le direct prendra du retard puis se coupera. Baisse le débit, ou envoie en SRT si la plateforme l\'accepte.');
       calc.className = 'co-verdict ' + (ok ? 'ok' : 'ko');
     } else if (k === 'rtp') {
       calc.textContent = 'Réseau managé : peu ou pas de pertes, débit garanti. RTP sur UDP, avec de la correction en avance (FEC) ou deux chemins (ST 2022-7) pour la sécurité.';
@@ -192,7 +192,7 @@ export const STREAMING = {
     'On choisit avec trois chiffres : la **latence** admise, le **débit** disponible et les **pertes** du chemin. Le protocole n\'est pas le codec : H.264, HEVC ou JPEG XS voyagent dans tous.',
   ],
   figure: figStreaming,
-  demoTitle: 'Choisissez un besoin et un chemin, réglez l\'aller-retour et les pertes : quel protocole, quelle latence SRT, et ce que donnerait TCP.',
+  demoTitle: 'Choisis un besoin et un chemin, règle l\'aller-retour et les pertes : quel protocole, quelle latence SRT, et ce que donnerait TCP.',
   demo: demoStreaming,
   body: `« Streamer », c'est envoyer un flux audio et vidéo en continu sur un réseau IP. Mais d'un bout à l'autre d'un direct, les contraintes changent, et les protocoles avec.
 

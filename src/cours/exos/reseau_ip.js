@@ -104,7 +104,7 @@ const BESOINS_NMOS = [
 registerExos({
   'reseau-tcp-udp': {
     titre: 'TCP ou UDP : choisir et chiffrer',
-    consigne: 'Le car envoie des fichiers, des commandes et des flux temps réel : vous dites quel transport convient à chacun, et ce que donne TCP sur un long chemin qui perd.',
+    consigne: 'Le car envoie des fichiers, des commandes et des flux temps réel : tu dis quel transport convient à chacun, et ce que donne TCP sur un long chemin qui perd.',
     gen: (rnd) => {
       const rtt = pick(rnd, [20, 50, 100, 150, 200]), p = pick(rnd, [0.5, 1, 2]), d = debitTcp(rtt, p / 100, 1000);
       const win = pick(rnd, [{ o: 65535, nom: '64 Ko (65 535 octets, sans l\'option d\'agrandissement)' }, { o: 262144, nom: '256 Kio (262 144 octets)' }]);
@@ -114,8 +114,8 @@ registerExos({
         {
           type: 'nombre', unite: 'Mb/s', answer: Math.round(d * 100) / 100, tol: d * 0.03,
           q: `Une connexion TCP vers la régie finale : **${rtt} ms** d'aller-retour, **${fr(p, 1)} %** de pertes, segments de 1 460 octets, sur une fibre à 1 Gb/s. Quel débit peut-elle tenir, d'après la formule de Mathis ?`,
-          pieges: [{ v: Math.round(d / Math.sqrt(p / 100) * 100) / 100, why: 'Les pertes sont sous une racine carrée : divisez par √p, pas par p.' }, { v: Math.round(d / 8 * 100) / 100, why: 'Le segment fait 1 460 octets : comptez-le en bits (× 8) avant de diviser par l\'aller-retour.' }].filter((x) => Math.abs(x.v - d) > d * 0.05),
-          aides: ['Débit ≈ (taille d\'un segment ÷ aller-retour) × 1,22 ÷ √pertes. Le lien à 1 Gb/s ne limite rien ici.', `1 460 × 8 bits ÷ ${fr(rtt / 1000, 3)} s, puis × 1,22 ÷ √${fr(p / 100, 3)}, et divisez par 10⁶ pour des Mb/s.`],
+          pieges: [{ v: Math.round(d / Math.sqrt(p / 100) * 100) / 100, why: 'Les pertes sont sous une racine carrée : divise par √p, pas par p.' }, { v: Math.round(d / 8 * 100) / 100, why: 'Le segment fait 1 460 octets : compte-le en bits (× 8) avant de diviser par l\'aller-retour.' }].filter((x) => Math.abs(x.v - d) > d * 0.05),
+          aides: ['Débit ≈ (taille d\'un segment ÷ aller-retour) × 1,22 ÷ √pertes. Le lien à 1 Gb/s ne limite rien ici.', `1 460 × 8 bits ÷ ${fr(rtt / 1000, 3)} s, puis × 1,22 ÷ √${fr(p / 100, 3)}, et divise par 10⁶ pour des Mb/s.`],
           solution: `(11 680 bits ÷ ${fr(rtt / 1000, 3)} s) × 1,22 ÷ √${fr(p / 100, 3)} ≈ **${fr(d, 2)} Mb/s**, sur une fibre à 1 Gb/s. C'est un ordre de grandeur, mais il dit l'essentiel : un direct en TCP sur un chemin long qui perd prend du retard puis décroche.`,
         },
         pick(rnd, [
@@ -135,18 +135,18 @@ registerExos({
         {
           type: 'choix', q: `Quel transport pour **${T.q}** ?`,
           choices: [CH_TRANSPORT[T.t][0], ...['udp', 'tcp', 'icmp'].filter((k) => k !== T.t).map((k) => CH_TRANSPORT[k])], answer: 0,
-          aides: ['Demandez-vous ce qui compte : que tout arrive, ou que le rythme soit tenu ?', 'Le temps réel et le multicast passent en UDP ; les fichiers, le web et les commandes en TCP.'],
+          aides: ['Demande-toi ce qui compte : que tout arrive, ou que le rythme soit tenu ?', 'Le temps réel et le multicast passent en UDP ; les fichiers, le web et les commandes en TCP.'],
           solution: `**${CH_TRANSPORT[T.t][0]}**. ${T.pq}`,
         },
         pick(rnd, [
           {
-            type: 'ordre', q: 'Remettez dans l\'ordre le début d\'une connexion TCP vers l\'interface web d\'une caméra.',
+            type: 'ordre', q: 'Remets dans l\'ordre le début d\'une connexion TCP vers l\'interface web d\'une caméra.',
             items: ['Le portable envoie SYN', 'La caméra répond SYN-ACK', 'Le portable répond ACK', 'Le portable envoie le premier segment de la requête', 'La caméra acquitte le segment'],
             aides: ['Une connexion s\'ouvre en trois messages avant le premier octet utile.', 'SYN (« je veux te parler »), SYN-ACK (« d\'accord »), ACK (« c\'est parti »), puis les données et leurs accusés.'],
             solution: 'SYN, SYN-ACK, ACK : la **poignée de main en trois temps**, un aller-retour avant le premier octet utile ; puis chaque segment est acquitté.',
           },
           {
-            type: 'ordre', q: 'Le segment 2 d\'un transfert TCP se perd. Remettez dans l\'ordre ce qui se passe ensuite.',
+            type: 'ordre', q: 'Le segment 2 d\'un transfert TCP se perd. Remets dans l\'ordre ce qui se passe ensuite.',
             items: ['Le segment 3 arrive : le récepteur répond « j\'attends 2 »', 'Les segments suivants arrivent : il répète « j\'attends 2 »', 'L\'émetteur reçoit trois accusés identiques', 'L\'émetteur renvoie le segment 2 sans attendre le délai', 'Le récepteur acquitte d\'un coup tout ce qu\'il gardait'],
             aides: ['TCP livre dans l\'ordre : le récepteur garde ce qui suit et redemande ce qui manque.', 'Trois accusés en double signalent le trou : c\'est la retransmission rapide.'],
             solution: 'Le récepteur répète son accusé, l\'émetteur reçoit **trois accusés en double** et renvoie le segment 2 ; tout arrive, dans l\'ordre, mais en retard : le blocage en tête de file.',
@@ -157,7 +157,7 @@ registerExos({
   },
   'reseau-streaming': {
     titre: 'Contribuer et diffuser : protocoles et latences',
-    consigne: 'Le car doit sortir le match par plusieurs chemins : vous choisissez le protocole de chacun et vous réglez SRT sur un accès Internet qui perd.',
+    consigne: 'Le car doit sortir le match par plusieurs chemins : tu choisis le protocole de chacun et tu règles SRT sur un accès Internet qui perd.',
     gen: (rnd) => {
       const rtt = pick(rnd, [10, 20, 30, 50, 80, 120, 200]), pp = pick(rnd, [0.5, 2, 5, 8, 15]), s = /** @type {{ mult: number, latence: number }} */ (latenceSrt(rtt, pp));
       const mbps = pick(rnd, [5, 10, 20, 40]), perte = pick(rnd, [0.5, 1, 2]), u = pertesUdp(mbps, perte / 100);
@@ -167,15 +167,15 @@ registerExos({
         {
           type: 'nombre', unite: 'ms', answer: s.latence, tol: 1,
           q: `Le chemin SRT vers la régie finale mesure **${rtt} ms** d'aller-retour et **${fr(pp, 1)} %** de pertes. Quelle latence SRT régler ? (Guide de Haivision : jusqu'à 1 % de pertes, 3 × l'aller-retour ; 3 % : 4 × ; 7 % : 6 × ; 10 % : 8 × ; 20 % : 10 × ; l'aller-retour est compté à 20 ms au moins.)`,
-          pieges: [{ v: s.mult * rtt, why: 'L\'aller-retour se compte à 20 ms au moins : en dessous, prenez 20 ms.' }, { v: 120, why: '120 ms est la valeur par défaut de SRT : elle ne tient pas compte de ce chemin.' }].filter((x) => x.v !== s.latence),
-          aides: ['Cherchez dans le guide la ligne qui couvre ces pertes : elle donne un multiplicateur de l\'aller-retour.', `Multiplicateur × aller-retour, avec un aller-retour de ${Math.max(20, rtt)} ms au moins.`],
+          pieges: [{ v: s.mult * rtt, why: 'L\'aller-retour se compte à 20 ms au moins : en dessous, prends 20 ms.' }, { v: 120, why: '120 ms est la valeur par défaut de SRT : elle ne tient pas compte de ce chemin.' }].filter((x) => x.v !== s.latence),
+          aides: ['Cherche dans le guide la ligne qui couvre ces pertes : elle donne un multiplicateur de l\'aller-retour.', `Multiplicateur × aller-retour, avec un aller-retour de ${Math.max(20, rtt)} ms au moins.`],
           solution: `${fr(pp, 1)} % de pertes : ${s.mult} × l'aller-retour, soit ${s.mult} × ${Math.max(20, rtt)} ms = **${s.latence} ms** (un ordre de grandeur conseillé, à vérifier en essai). Plus le chemin perd, plus le tampon doit laisser de temps aux retransmissions.`,
         },
         {
           type: 'nombre', unite: 'paquets/s', answer: Math.round(u.perdusS * 10) / 10, tol: Math.max(0.2, u.perdusS * 0.02),
           q: `Un flux SRT de **${mbps} Mb/s** en paquets de 1 316 octets (sept paquets MPEG-TS) traverse un accès qui perd **${fr(perte, 1)} %** des paquets. Combien de paquets SRT doit-il redemander chaque seconde ?`,
-          pieges: [{ v: Math.round(u.pps * 10) / 10, why: 'C\'est le nombre de paquets envoyés par seconde : appliquez-lui le taux de pertes.' }],
-          aides: ['Comptez d\'abord les paquets par seconde : débit ÷ taille d\'un paquet en bits.', `${mbps} × 10⁶ ÷ (1 316 × 8), puis × ${fr(perte / 100, 3)}.`],
+          pieges: [{ v: Math.round(u.pps * 10) / 10, why: 'C\'est le nombre de paquets envoyés par seconde : applique-lui le taux de pertes.' }],
+          aides: ['Compte d\'abord les paquets par seconde : débit ÷ taille d\'un paquet en bits.', `${mbps} × 10⁶ ÷ (1 316 × 8), puis × ${fr(perte / 100, 3)}.`],
           solution: `${mbps} × 10⁶ ÷ 10 528 bits ≈ ${fr(u.pps, 0)} paquets par seconde, dont ${fr(perte, 1)} % perdus : **${fr(u.perdusS, 1)} par seconde**, que SRT redemande dans son tampon.`,
         },
         {
@@ -203,7 +203,7 @@ registerExos({
   },
   'reseau-multicast': {
     titre: 'Multicast : copies, abonnements, adresses',
-    consigne: 'Au poste Réseau IP, vous comptez ce que porte chaque lien selon l\'unicast ou le multicast, vous lisez les adresses et vous suivez un abonnement.',
+    consigne: 'Au poste Réseau IP, tu comptes ce que porte chaque lien selon l\'unicast ou le multicast, tu lis les adresses et tu suis un abonnement.',
     gen: (rnd) => {
       const g = video('1080p50').gbpsFil;
       const n = entre(rnd, 2, 6), m = entre(rnd, 2, 5);
@@ -236,13 +236,13 @@ registerExos({
         ]),
         {
           type: 'texte', forme: 'ip', placeholder: '01:00:5e:…', accept: [mac, mac.replace(/:/g, '-')],
-          q: `Quelle adresse MAC de destination porte une trame du groupe **239.${a}.${b}.${c}** ? (Écrivez-la en hexadécimal, octets séparés par « : ».)`,
+          q: `Quelle adresse MAC de destination porte une trame du groupe **239.${a}.${b}.${c}** ? (Écris-la en hexadécimal, octets séparés par « : ».)`,
           pieges: a >= 128 ? [{ v: `01:00:5e:${h(a)}:${h(b)}:${h(c)}`, why: `Seuls les 23 derniers bits du groupe passent dans l'adresse MAC : le bit de poids fort de ${a} tombe, il reste ${a & 0x7f}.` }] : [],
-          aides: ['Une MAC de groupe IPv4 commence par 01:00:5E, suivi des 23 derniers bits de l\'adresse du groupe.', `Écrivez ${a}, ${b} et ${c} en hexadécimal ; du premier, gardez seulement les 7 bits de droite.`],
+          aides: ['Une MAC de groupe IPv4 commence par 01:00:5E, suivi des 23 derniers bits de l\'adresse du groupe.', `Écris ${a}, ${b} et ${c} en hexadécimal ; du premier, garde seulement les 7 bits de droite.`],
           solution: `**${mac}** : 01:00:5E puis les 23 derniers bits de 239.${a}.${b}.${c}. Comme 32 groupes partagent la même MAC, un plan d'adressage multicast propre évite les doublons.`,
         },
         {
-          type: 'ordre', q: 'Le contrôleur connecte l\'entrée 2 du mélangeur à la caméra 6 (SSM). Remettez les étapes dans l\'ordre.',
+          type: 'ordre', q: 'Le contrôleur connecte l\'entrée 2 du mélangeur à la caméra 6 (SSM). Remets les étapes dans l\'ordre.',
           items: ['Le contrôleur NMOS écrit la source S et le groupe G dans le récepteur', 'Le récepteur envoie un rapport IGMPv3 (S, G) à sa leaf', 'La leaf note le port abonné et envoie un join PIM vers la source', 'Le join remonte par une spine jusqu\'à la leaf de la caméra', 'Le flux descend l\'arbre et n\'est recopié que vers le port abonné'],
           aides: ['Tout part du récepteur : c\'est lui qui demande, pas la caméra qui envoie.', 'IGMP entre le récepteur et sa leaf, PIM entre les commutateurs, jusqu\'à la source.'],
           solution: 'Le contrôleur écrit (S, G), le récepteur le demande en **IGMPv3**, sa leaf le demande en **PIM** jusqu\'à la leaf de la source ; le flux descend l\'arbre ainsi construit.',
@@ -266,7 +266,7 @@ registerExos({
   },
   'reseau-mesures': {
     titre: 'Mesurer un chemin : débit, latence, gigue',
-    consigne: 'Avant l\'antenne, vous chiffrez un transfert, le retard d\'un lien et la sérialisation d\'un paquet, puis vous lisez une mesure de ping.',
+    consigne: 'Avant l\'antenne, tu chiffres un transfert, le retard d\'un lien et la sérialisation d\'un paquet, puis tu lis une mesure de ping.',
     gen: (rnd) => {
       const mo = pick(rnd, [100, 250, 500, 2000]), D = pick(rnd, [1, 10]), t = mo * 8 / (D * 1000);
       const km = pick(rnd, [15, 80, 250, 600, 1000]), pr = propagationMs(km);
@@ -276,14 +276,14 @@ registerExos({
           type: 'nombre', unite: 's', answer: Math.round(t * 1000) / 1000, tol: t * 0.02,
           q: `Combien de temps faut-il, au mieux (sans les en-têtes), pour envoyer un fichier de **${fr(mo)} Mo** sur un lien à **${D} Gb/s** ?`,
           pieges: [{ v: Math.round(mo / (D * 1000) * 1000) / 1000, why: 'Un fichier se compte en octets, un lien en bits : 1 octet = 8 bits.' }],
-          aides: ['Mettez tout en bits : 1 octet = 8 bits, et en réseau k, M et G valent 1 000, 10⁶ et 10⁹.', `${fr(mo)} Mo × 8 = ${fr(mo * 8)} Mb, à diviser par ${fr(D * 1000)} Mb/s.`],
+          aides: ['Mets tout en bits : 1 octet = 8 bits, et en réseau k, M et G valent 1 000, 10⁶ et 10⁹.', `${fr(mo)} Mo × 8 = ${fr(mo * 8)} Mb, à diviser par ${fr(D * 1000)} Mb/s.`],
           solution: `${fr(mo * 8)} Mb ÷ ${fr(D * 1000)} Mb/s = **${fr(t, 3)} s**, un peu plus en pratique avec les en-têtes.`,
         },
         {
           type: 'nombre', unite: 'ms', answer: Math.round(pr * 1000) / 1000, tol: pr * 0.04,
           q: `Le car est relié à la régie finale par **${fr(km)} km** de fibre. Quel temps de propagation dans un sens ?`,
           pieges: [{ v: Math.round(km / 300 * 1000) / 1000, why: 'La lumière va moins vite dans le verre que dans le vide : environ 5 µs par kilomètre, pas 3,3.' }, { v: Math.round(2 * pr * 1000) / 1000, why: 'C\'est l\'aller-retour (ce que mesure le ping) : la question porte sur un seul sens.' }],
-          aides: ['Dans la fibre, le signal parcourt environ 200 000 km par seconde.', 'Environ 5 µs par kilomètre : multipliez, puis passez en millisecondes.'],
+          aides: ['Dans la fibre, le signal parcourt environ 200 000 km par seconde.', 'Environ 5 µs par kilomètre : multiplie, puis passe en millisecondes.'],
           solution: `${fr(km)} km × ≈ 5 µs = **${fr(pr, 2)} ms** environ (204 000 km/s dans la fibre). Incompressible : aucun réglage ne le réduit.`,
         },
         {
@@ -297,7 +297,7 @@ registerExos({
           {
             type: 'choix', q: '`ping -c 100` vers le codeur de la régie finale : minimum 12 ms, moyenne 14 ms, maximum 96 ms, 0 % de pertes. Que montre cette mesure ?',
             choices: ['De la gigue : certains paquets attendent dans des files', ['Une distance trop longue', 'La distance fixe le minimum, 12 ms, pour tous les paquets ; l\'écart avec le maximum vient d\'ailleurs.'], ['Des pertes sur le chemin', 'Aucun paquet n\'est perdu : 0 %.']], answer: 0,
-            aides: ['Comparez le minimum et le maximum : la propagation est la même pour tous les paquets.', 'Ce qui varie d\'un paquet à l\'autre, ce sont les files d\'attente.'],
+            aides: ['Compare le minimum et le maximum : la propagation est la même pour tous les paquets.', 'Ce qui varie d\'un paquet à l\'autre, ce sont les files d\'attente.'],
             solution: 'De la **gigue** : l\'écart entre 12 et 96 ms vient des files d\'attente. Le tampon du récepteur doit couvrir ces écarts, en ajoutant son retard.',
           },
           {
@@ -309,7 +309,7 @@ registerExos({
           {
             type: 'choix', q: 'Un flux perd 3 % de ses paquets ; le compteur d\'erreurs FCS du port de la leaf monte sans cesse, alors que le lien n\'est chargé qu\'à 20 %. Quelle cause ?',
             choices: ['Un câble ou un module optique abîmé', ['Une file pleine sur le port', 'À 20 % de charge, la file ne déborde pas ; et une file pleine jette des paquets sans erreur FCS.'], ['La gigue du chemin', 'La gigue retarde les paquets, elle ne les abîme pas.']], answer: 0,
-            aides: ['Une erreur FCS veut dire une trame arrivée abîmée.', 'Ce n\'est pas la charge : regardez la couche physique.'],
+            aides: ['Une erreur FCS veut dire une trame arrivée abîmée.', 'Ce n\'est pas la charge : regarde la couche physique.'],
             solution: 'Un **câble ou un module abîmé** : les trames arrivent corrompues (FCS faux) et sont jetées. On nettoie ou on change la jarretière, puis le module.',
           },
         ]),
@@ -318,7 +318,7 @@ registerExos({
   },
   'reseau-qos': {
     titre: 'Marquer et prioriser au port de sortie',
-    consigne: 'Un port de sortie reçoit plus qu\'il ne peut envoyer : vous marquez chaque usage, puis vous comparez une seule file et la priorité stricte.',
+    consigne: 'Un port de sortie reçoit plus qu\'il ne peut envoyer : tu marques chaque usage, puis tu compares une seule file et la priorité stricte.',
     gen: (rnd) => {
       const k = pick(rnd, ['ptp', 'media', 'commande', 'fichiers']), C = CLASSES[k];
       const USAGE = { ptp: 'les messages PTP du grand maître', media: 'les flux vidéo ST 2110-20 des caméras', commande: 'les commandes et l\'intercom', fichiers: 'la copie des fichiers de l\'EVS vers le NAS' };
@@ -330,7 +330,7 @@ registerExos({
         {
           type: 'nombre', answer: C.dscp, q: `D'après les normes du car IP (AES67, ST 2110), quelle valeur de **DSCP** marque ce trafic : **${USAGE[k]}** ?`,
           pieges: [{ v: C.cos, why: `${C.cos} est la priorité CoS (3 bits de l'étiquette VLAN), pas le DSCP (6 bits de l'en-tête IP).` }].filter((x) => x.v !== C.dscp),
-          aides: ['EF 46 pour ce qui ne doit jamais attendre, AF41 34 pour les médias, CS4 32 pour les commandes, DF 0 au mieux.', 'Demandez-vous ce que ce trafic supporte : attendre quelques microsecondes, ou pas du tout ?'],
+          aides: ['EF 46 pour ce qui ne doit jamais attendre, AF41 34 pour les médias, CS4 32 pour les commandes, DF 0 au mieux.', 'Demande-toi ce que ce trafic supporte : attendre quelques microsecondes, ou pas du tout ?'],
           solution: `**${C.dscp}** (${C.phb}) pour ${USAGE[k]}${k === 'ptp' ? ' : une file en priorité stricte, car un Sync qui attend fausse la mesure du délai' : k === 'fichiers' ? ' : au mieux, ils peuvent attendre' : ''}.`,
         },
         {
@@ -371,7 +371,7 @@ registerExos({
   },
   'reseau-ptp': {
     titre: 'L\'heure du car IP : décalage, asymétrie, élection',
-    consigne: 'Au poste Réseau IP, onglet PTP : vous refaites le calcul d\'un esclave, vous chiffrez l\'erreur d\'une asymétrie et vous dites quelle horloge le BMCA élit.',
+    consigne: 'Au poste Réseau IP, onglet PTP : tu refais le calcul d\'un esclave, tu chiffres l\'erreur d\'une asymétrie et tu dis quelle horloge le BMCA élit.',
     gen: (rnd) => {
       const a = entre(rnd, 6, 20) * 100, b = entre(rnd, 2, Math.max(2, a / 100 - 2)) * 100, del = (a + b) / 2, off = a - del;
       const m = pick(rnd, [20, 40, 60, 100, 150, 200]), asym = m * 5;
@@ -382,7 +382,7 @@ registerExos({
           type: 'nombre', unite: 'ns', answer: off,
           q: `Une caméra IP relève **t2 − t1 = ${fr(a)} ns** (le Sync, à l'aller) et **t4 − t3 = ${fr(b)} ns** (le Delay_Req, au retour). Quel décalage calcule-t-elle entre son horloge et celle du maître ?`,
           pieges: [{ v: del, why: 'C\'est le délai moyen, l\'estimation du temps de trajet : pas l\'écart entre les horloges.' }, { v: a - b, why: 'Le décalage passe par le délai moyen : (t2 − t1) − délai moyen, soit la moitié de cet écart.' }],
-          aides: ['Calculez d\'abord le délai moyen : la moyenne de l\'aller et du retour.', 'Décalage = (t2 − t1) − délai moyen.'],
+          aides: ['Calcule d\'abord le délai moyen : la moyenne de l\'aller et du retour.', 'Décalage = (t2 − t1) − délai moyen.'],
           solution: `Délai moyen = (${fr(a)} + ${fr(b)}) ÷ 2 = ${fr(del)} ns ; décalage = ${fr(a)} − ${fr(del)} = **${fr(off)} ns**. La caméra corrige son horloge d'autant, en supposant le trajet symétrique.`,
         },
         {
@@ -400,7 +400,7 @@ registerExos({
         },
         pick(rnd, [
           {
-            type: 'ordre', q: 'Remettez dans l\'ordre un échange PTP entre le grand maître et un esclave.',
+            type: 'ordre', q: 'Remets dans l\'ordre un échange PTP entre le grand maître et un esclave.',
             items: ['Le maître envoie Sync et note son heure d\'émission t1', 'L\'esclave note l\'heure d\'arrivée du Sync : t2', 'Le Follow_Up lui apporte t1', 'L\'esclave envoie Delay_Req et note t3', 'Le maître note l\'arrivée t4 et la renvoie dans Delay_Resp'],
             aides: ['L\'aller d\'abord (du maître vers l\'esclave), le retour ensuite.', 'Sync, Follow_Up, puis Delay_Req et Delay_Resp.'],
             solution: 'Sync (t1, t2), Follow_Up (t1 exact), puis Delay_Req (t3) et Delay_Resp (t4) : avec ces quatre instants, l\'esclave calcule le délai et son décalage.',
@@ -417,7 +417,7 @@ registerExos({
   },
   'reseau-st2110': {
     titre: 'Les flux d\'une caméra IP',
-    consigne: 'Vous préparez le plan des flux du car IP : le débit de chaque essence sur le fil, ce qu\'un port peut porter, et quelle norme pour quel contenu.',
+    consigne: 'Tu prépares le plan des flux du car IP : le débit de chaque essence sur le fil, ce qu\'un port peut porter, et quelle norme pour quel contenu.',
     gen: (rnd) => {
       const fk = pick(rnd, Object.keys(FORMATS)), V = video(fk);
       const tp = pick(rnd, [0.001, 0.000125]), can = tp === 0.001 ? pick(rnd, [2, 4, 8]) : pick(rnd, [8, 16, 32, 64]), A = audio(can, tp);
@@ -442,8 +442,8 @@ registerExos({
         pick(rnd, [
           {
             type: 'nombre', answer: nf, q: `Combien de flux vidéo **${FORMATS[fk2]}** (${fr(g2, 2)} Gb/s chacun) peut-on faire passer sur un port à **${lien} GbE**, en gardant la charge sous 90 % ?`,
-            pieges: [{ v: Math.floor(lien / g2), why: 'Sans marge : gardez 10 % du lien libre pour les micro-rafales.' }, { v: Math.round(lien * 0.9 / g2 * 100) / 100, why: 'Un flux ne se coupe pas : arrondissez à l\'entier inférieur.' }].filter((x) => x.v !== nf),
-            aides: ['Prenez 90 % du lien, puis divisez par le débit d\'un flux.', `${lien} × 0,9 ÷ ${fr(g2, 2)}, arrondi à l'entier inférieur.`],
+            pieges: [{ v: Math.floor(lien / g2), why: 'Sans marge : garde 10 % du lien libre pour les micro-rafales.' }, { v: Math.round(lien * 0.9 / g2 * 100) / 100, why: 'Un flux ne se coupe pas : arrondis à l\'entier inférieur.' }].filter((x) => x.v !== nf),
+            aides: ['Prends 90 % du lien, puis divise par le débit d\'un flux.', `${lien} × 0,9 ÷ ${fr(g2, 2)}, arrondi à l'entier inférieur.`],
             solution: `${fr(lien * 0.9, 1)} Gb/s utiles ÷ ${fr(g2, 2)} = **${nf}** flux (un flux ne se coupe pas).`,
           },
           {
@@ -465,7 +465,7 @@ registerExos({
   },
   'reseau-paquet': {
     titre: 'Découper une ligne en paquets',
-    consigne: 'À la capture sur port miroir, vous refaites le compte : paquets par ligne et par seconde, taille sur le fil, ce que dit chaque en-tête.',
+    consigne: 'À la capture sur port miroir, tu refais le compte : paquets par ligne et par seconde, taille sur le fil, ce que dit chaque en-tête.',
     gen: (rnd) => {
       const fk = pick(rnd, ['1080p50', '2160p50', '1080i25']), charge = pick(rnd, [800, 960, 1200, 1440]), V = video(fk, charge);
       const c2 = pick(rnd, [960, 1200, 1400]), fil = c2 + ENTETES.rfc4175 + ENTETES.rtp + ENTETES.udp + ENTETES.ip + ENTETES.eth + ENTETES.fil;
@@ -474,7 +474,7 @@ registerExos({
           type: 'nombre', answer: V.parLigne,
           q: `Une ligne active **${FORMATS[fk]}** compte ${fr(V.F.w)} pixels, à 5 octets pour 2 pixels (4:2:2 10 bits). L'émetteur met **${fr(charge)} octets** de pixels par paquet. Combien de paquets par ligne ?`,
           pieges: [{ v: Math.round(V.F.w * 2.5 / charge * 100) / 100, why: 'Un paquet ne porte qu\'une ligne : on arrondit au paquet supérieur, le dernier est plus court.' }, { v: Math.ceil(V.F.w * 2 / charge), why: 'Un pixel 4:2:2 10 bits fait 2,5 octets (20 bits), pas 2.' }].filter((x) => x.v !== V.parLigne),
-          aides: ['Calculez d\'abord la taille d\'une ligne en octets.', `${fr(V.F.w)} × 2,5 = ${fr(V.ligne)} octets, divisés par ${fr(charge)}, arrondis au-dessus.`],
+          aides: ['Calcule d\'abord la taille d\'une ligne en octets.', `${fr(V.F.w)} × 2,5 = ${fr(V.ligne)} octets, divisés par ${fr(charge)}, arrondis au-dessus.`],
           solution: `${fr(V.ligne)} octets ÷ ${fr(charge)} = **${V.parLigne}** paquets par ligne${V.ligne % charge ? ' (le dernier, plus court)' : ''}.`,
         },
         {
@@ -487,15 +487,15 @@ registerExos({
         {
           type: 'nombre', unite: 'octets', answer: fil,
           q: `Un paquet porte **${fr(c2)} octets** de pixels. En-têtes : RFC 4175 8 octets, RTP 12, UDP 8, IP 20, Ethernet 18 (contrôle compris), et 20 octets de préambule et de silence sur le fil. Combien d'octets occupe-t-il sur le fil ?`,
-          pieges: [{ v: fil - ENTETES.fil, why: 'C\'est la trame Ethernet : sur le fil s\'ajoutent le préambule et l\'intervalle, 20 octets.' }, { v: c2 + 48, why: 'C\'est le paquet IP : ajoutez Ethernet et ce qu\'occupe le fil.' }],
-          aides: ['Additionnez les en-têtes de toutes les couches, de RFC 4175 jusqu\'au fil.', `${fr(c2)} + 8 + 12 + 8 + 20 + 18 + 20.`],
+          pieges: [{ v: fil - ENTETES.fil, why: 'C\'est la trame Ethernet : sur le fil s\'ajoutent le préambule et l\'intervalle, 20 octets.' }, { v: c2 + 48, why: 'C\'est le paquet IP : ajoute Ethernet et ce qu\'occupe le fil.' }],
+          aides: ['Additionne les en-têtes de toutes les couches, de RFC 4175 jusqu\'au fil.', `${fr(c2)} + 8 + 12 + 8 + 20 + 18 + 20.`],
           solution: `${fr(c2)} + 86 = **${fr(fil)} octets**, dont ${fr(c2 / fil * 100, 1)} % de pixels.`,
         },
         pick(rnd, [
           {
             type: 'choix', q: 'Un émetteur est réglé pour mettre 1 500 octets de pixels par paquet, sur un réseau au MTU standard. Que se passe-t-il ?',
             choices: ['Le paquet IP dépasse 1 500 octets : sans trames jumbo partout, il est jeté', ['Rien : 1 500 est le MTU', 'Le MTU compte tout le paquet IP : 1 500 octets de pixels + 48 d\'en-têtes RFC 4175, RTP, UDP et IP font 1 548.'], ['Le commutateur découpe le paquet', 'Les flux ST 2110 ne sont pas fragmentés : un paquet trop gros est simplement jeté.']], answer: 0,
-            aides: ['Le MTU limite le paquet IP entier, en-têtes compris.', '1 500 + 8 + 12 + 8 + 20 : comparez avec 1 500.'],
+            aides: ['Le MTU limite le paquet IP entier, en-têtes compris.', '1 500 + 8 + 12 + 8 + 20 : compare avec 1 500.'],
             solution: '1 548 octets de paquet IP pour un MTU de 1 500 : il est **jeté** (une panne du poste Réseau IP), sauf trames jumbo de bout en bout. D\'où les 1 200 octets courants.',
           },
           {
@@ -516,7 +516,7 @@ registerExos({
   },
   'reseau-rythme': {
     titre: 'Le rythme d\'un émetteur ST 2110-21',
-    consigne: 'L\'analyseur de flux mesure le rythme des émetteurs : vous calculez l\'intervalle et les limites du modèle, puis vous jugez une mesure.',
+    consigne: 'L\'analyseur de flux mesure le rythme des émetteurs : tu calcules l\'intervalle et les limites du modèle, puis tu juges une mesure.',
     gen: (rnd) => {
       const fk = pick(rnd, ['1080p50', '2160p50', '1080i25']), V = video(fk), dt = 1e6 / V.pps;
       const fk2 = pick(rnd, ['1080p50', '2160p50']), ch = pick(rnd, [960, 1200]), N = modele21(fk2, 'N', ch), W = modele21(fk2, 'W', ch);
@@ -543,14 +543,14 @@ registerExos({
           solution: `${fr(N.npackets)} ÷ 540 ≈ ${fr(N.npackets / 540, 2)} → **${N.vrx}** paquets au plus dans le récepteur virtuel.`,
         },
         {
-          type: 'choix', q: `En **${FORMATS[fk2]}**, ${fr(ch)} octets par paquet, CMAX vaut ${N.cmax} pour un émetteur étroit (N) et ${W.cmax} pour un large (W). L'analyseur mesure un CINST maximal de **${cm}**. Que concluez-vous ?`,
+          type: 'choix', q: `En **${FORMATS[fk2]}**, ${fr(ch)} octets par paquet, CMAX vaut ${N.cmax} pour un émetteur étroit (N) et ${W.cmax} pour un large (W). L'analyseur mesure un CINST maximal de **${cm}**. Que conclus-tu ?`,
           choices: [
             ['Conforme au type N (étroit)', `${cm} dépasse ${N.cmax}, le CMAX d'un émetteur étroit.`],
             ['Non conforme au type N, mais conforme au type W (large)', cm <= N.cmax ? `${cm} reste sous ${N.cmax} : il est conforme même au type étroit, plus exigeant.` : `${cm} dépasse aussi ${W.cmax}, le CMAX d'un émetteur large.`],
             ['Non conforme, même au type W', `${cm} reste sous ${W.cmax}, le CMAX d'un émetteur large.`],
           ],
           answer: cas === 'N' ? 0 : cas === 'W' ? 1 : 2,
-          aides: ['CINST compte les paquets arrivés en avance sur le rythme parfait : il ne doit pas dépasser CMAX.', `Comparez ${cm} à ${N.cmax}, puis à ${W.cmax}.`],
+          aides: ['CINST compte les paquets arrivés en avance sur le rythme parfait : il ne doit pas dépasser CMAX.', `Compare ${cm} à ${N.cmax}, puis à ${W.cmax}.`],
           solution: cas === 'N' ? `**Conforme au type N** : ${cm} ≤ ${N.cmax}.` : cas === 'W' ? `**Conforme au type W seulement** : ${cm} > ${N.cmax} mais ≤ ${W.cmax}. Face à un récepteur étroit, ses tampons déborderaient.` : `**Non conforme** : ${cm} > ${W.cmax}. Une rafale pareille fait perdre des paquets dans les files.`,
         },
         {
@@ -565,7 +565,7 @@ registerExos({
   },
   'reseau-2022-7': {
     titre: 'Rouge et bleu : ce que répare la fusion',
-    consigne: 'Le car double chaque flux sur les réseaux rouge et bleu : vous chiffrez ce que la fusion répare, le tampon qu\'elle demande, et ce qu\'elle ne couvre pas.',
+    consigne: 'Le car double chaque flux sur les réseaux rouge et bleu : tu chiffres ce que la fusion répare, le tampon qu\'elle demande, et ce qu\'elle ne couvre pas.',
     gen: (rnd) => {
       const pr = pick(rnd, [0.1, 0.5, 1, 2]), pb = pick(rnd, [0.1, 0.5, 1, 2]), n = 1e6;
       const perdus = Math.round(n * pr / 100 * pb / 100), rep = Math.round(n * (pr / 100 * (1 - pb / 100) + pb / 100 * (1 - pr / 100)));
@@ -574,7 +574,7 @@ registerExos({
         {
           type: 'nombre', unite: 'paquets', answer: perdus, tol: Math.max(0.5, perdus * 0.01),
           q: `Le réseau rouge perd **${fr(pr, 1)} %** des paquets, le bleu **${fr(pb, 1)} %**, de façon indépendante. Sur 1 000 000 de paquets, combien manquent encore après la fusion ST 2022-7 ?`,
-          pieges: [{ v: Math.round(n * (pr + pb) / 100), why: 'Un paquet n\'est perdu que si ses deux copies manquent : multipliez les probabilités, n\'additionnez pas.' }, { v: Math.round(n * Math.max(pr, pb) / 100), why: 'C\'est la perte d\'un seul réseau : l\'autre copie la répare presque toujours.' }].filter((x) => x.v !== perdus),
+          pieges: [{ v: Math.round(n * (pr + pb) / 100), why: 'Un paquet n\'est perdu que si ses deux copies manquent : multiplie les probabilités, n\'additionne pas.' }, { v: Math.round(n * Math.max(pr, pb) / 100), why: 'C\'est la perte d\'un seul réseau : l\'autre copie la répare presque toujours.' }].filter((x) => x.v !== perdus),
           aides: ['On ne perd un paquet que si la copie rouge et la copie bleue manquent toutes les deux.', `Probabilité : ${fr(pr / 100, 3)} × ${fr(pb / 100, 3)}, sur 1 000 000 de paquets.`],
           solution: `${fr(pr / 100, 3)} × ${fr(pb / 100, 3)} × 10⁶ = **${fr(perdus)}** paquets ; tous les autres sont reçus ou réparés par l'autre réseau.`,
         },
@@ -609,7 +609,7 @@ registerExos({
           {
             type: 'choix', q: 'Quelle panne la redondance rouge / bleu ne couvre-t-elle pas ?',
             choices: ['La caméra émettrice qui tombe en panne', ['Une spine rouge coupée', 'Le bleu porte chaque paquet : la fusion couvre une fabric entière.'], ['Des pertes de 1 % sur le bleu', 'Le rouge répare presque tout : il ne reste qu\'un paquet sur 10 000 si le rouge perd autant.']], answer: 0,
-            aides: ['La fusion répare ce qui manque sur un seul des deux réseaux.', 'Cherchez une panne commune aux deux copies.'],
+            aides: ['La fusion répare ce qui manque sur un seul des deux réseaux.', 'Cherche une panne commune aux deux copies.'],
             solution: 'L\'**émetteur en panne** : les deux copies manquent. De même une mauvaise configuration recopiée des deux côtés, ou une perte de PTP.',
           },
         ]),
@@ -618,7 +618,7 @@ registerExos({
   },
   'reseau-spine-leaf': {
     titre: 'Dimensionner une fabric spine-leaf',
-    consigne: 'Vous dimensionnez la fabric d\'un car IP : la capacité d\'une leaf vers le haut, les liens à poser, et le chemin d\'un flux.',
+    consigne: 'Tu dimensionnes la fabric d\'un car IP : la capacité d\'une leaf vers le haut, les liens à poser, et le chemin d\'un flux.',
     gen: (rnd) => {
       const p = pick(rnd, [32, 48]), v = pick(rnd, [10, 25]), u = pick(rnd, [4, 6, 8]), Vu = 100, S = surabonnement(p, v, u, Vu);
       const Vu2 = pick(rnd, [100, 400]), nb = Math.ceil(p * v / Vu2);
@@ -634,7 +634,7 @@ registerExos({
         {
           type: 'nombre', unite: 'liens', answer: nb,
           q: `Pour qu'une leaf de **${p} ports à ${v} GbE** soit non bloquante (1 : 1), combien lui faut-il de liens montants à **${Vu2} GbE** ?`,
-          pieges: [{ v: Math.floor(p * v / Vu2), why: 'Arrondissez au lien supérieur : avec un lien de moins, la leaf est surabonnée.' }].filter((x) => x.v !== nb),
+          pieges: [{ v: Math.floor(p * v / Vu2), why: 'Arrondis au lien supérieur : avec un lien de moins, la leaf est surabonnée.' }].filter((x) => x.v !== nb),
           aides: ['Non bloquant : autant de capacité vers le haut que vers le bas.', `${p} × ${v} ÷ ${Vu2}, arrondi au-dessus.`],
           solution: `${fr(p * v)} Gb/s ÷ ${Vu2} = **${nb}** liens montants (arrondi au-dessus).`,
         },
@@ -673,14 +673,14 @@ registerExos({
   },
   'reseau-nmos': {
     titre: 'Découvrir et connecter avec NMOS',
-    consigne: 'Le contrôleur de diffusion connecte les flux du car IP : vous remettez la connexion dans l\'ordre, vous choisissez la bonne spécification et vous lisez un SDP.',
+    consigne: 'Le contrôleur de diffusion connecte les flux du car IP : tu remets la connexion dans l\'ordre, tu choisis la bonne spécification et tu lis un SDP.',
     gen: (rnd) => {
       const n = entre(rnd, 1, 12), bleu = rnd() < 0.5, B = pick(rnd, BESOINS_NMOS);
       const r = bleu ? 2 : 1, autre = bleu ? 1 : 2;
       const sdp = [`- \`m=video 5004 RTP/AVP 96\` (réseau rouge)`, `- \`c=IN IP4 239.1.1.${n}/32\``, `- \`a=source-filter: incl IN IP4 239.1.1.${n} 10.1.11.${n}\``, `- \`m=video 5004 RTP/AVP 96\` (réseau bleu)`, `- \`c=IN IP4 239.2.1.${n}/32\``, `- \`a=source-filter: incl IN IP4 239.2.1.${n} 10.2.11.${n}\``].join('\n');
       return [
         {
-          type: 'ordre', q: 'Une caméra IP neuve est branchée ; le réalisateur veut la voir sur l\'entrée 4 du mélangeur. Remettez les étapes dans l\'ordre.',
+          type: 'ordre', q: 'Une caméra IP neuve est branchée ; le réalisateur veut la voir sur l\'entrée 4 du mélangeur. Remets les étapes dans l\'ordre.',
           items: ['La caméra trouve le registre par DNS-SD', 'Elle s\'y enregistre : node, devices, senders, receivers (IS-04)', 'Le contrôleur lit le registre et affiche la caméra', 'Au « take », il envoie au récepteur un PATCH …/staged avec l\'émetteur et ses paramètres de transport (IS-05)', 'Le récepteur s\'abonne lui-même en IGMP (S, G) sur le rouge et le bleu'],
           aides: ['D\'abord être connu (IS-04), ensuite être connecté (IS-05).', 'NMOS ne transporte aucune image : à la fin, c\'est le récepteur qui s\'abonne au flux.'],
           solution: 'Découverte du registre, **enregistrement IS-04**, affichage par le contrôleur, **connexion IS-05**, puis abonnement IGMP du récepteur sur chaque réseau.',
@@ -693,7 +693,7 @@ registerExos({
         },
         {
           type: 'texte', forme: 'ip', placeholder: '10.…', accept: [`10.${r}.11.${n}`],
-          q: `Vous connectez la caméra ${n} **à la main** à une passerelle. Son SDP dit :\n${sdp}\nQuelle **adresse source** écrire pour le réseau **${bleu ? 'bleu' : 'rouge'}** ?`,
+          q: `Tu connectes la caméra ${n} **à la main** à une passerelle. Son SDP dit :\n${sdp}\nQuelle **adresse source** écrire pour le réseau **${bleu ? 'bleu' : 'rouge'}** ?`,
           pieges: [{ v: `239.${r}.1.${n}`, why: 'C\'est le groupe multicast (la destination) : la source est la dernière adresse de la ligne source-filter.' }, { v: `10.${autre}.11.${n}`, why: `C'est la source sur le réseau ${bleu ? 'rouge' : 'bleu'} : chaque réseau a sa carte et son adresse.` }],
           aides: ['La source se lit sur la ligne « a=source-filter » du bon réseau.', 'Sur cette ligne : d\'abord le groupe (destination), puis la source.'],
           solution: `**10.${r}.11.${n}** : la dernière adresse de la ligne source-filter du réseau ${bleu ? 'bleu' : 'rouge'}. Une seule erreur de source, et le filtre SSM ne laisse rien passer.`,
