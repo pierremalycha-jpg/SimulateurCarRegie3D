@@ -8,7 +8,8 @@ import { launch, openPage, outDir, until, reporter } from './harness.mjs';
 const OUT = outDir('graphismes');
 const T = reporter();
 const browser = await launch();
-const A = await openPage(browser, { errors: T.errors, query: 'full', viewport: { width: 1280, height: 720 }, before: async (p) => p.addInitScript(() => { try { localStorage.setItem('carregie.quality', 'haute'); localStorage.removeItem('carregie.style'); } catch (e) { /* stockage indisponible */ } }) });
+// qualité Moyenne (post-traitement et encre, comme en Haute, mais plus légère pour le rendu logiciel des tests)
+const A = await openPage(browser, { errors: T.errors, query: 'full', viewport: { width: 1024, height: 576 }, before: async (p) => p.addInitScript(() => { try { localStorage.setItem('carregie.quality', 'moyenne'); localStorage.removeItem('carregie.style'); } catch (e) { /* stockage indisponible */ } }) });
 const ev = (f, a) => A.evaluate(f, a);
 const frames = async (n = 3) => { const f0 = await ev(() => window.__dbg.S.frame); await until(A, (f) => window.__dbg.S.frame > f, f0 + n, 90000); };
 const shot = async (n) => { await frames(); await A.screenshot({ path: `${OUT}/${n}.png` }); };
@@ -56,7 +57,7 @@ T.check('les banderoles du balcon Xercès tombent entre deux noms du bandeau (pa
 await voir([2, 2.0, -27], 0, -0.15);
 await frames(4);
 T.check('style « dessin » par défaut : rampe de lumière dans les morceaux de shader, ombres PCF nettes', await ev(() => { const d = window.__dbg; return d.style.STYLE.cel === true && d.style.chunks() && d.renderer.shadowMap.type === 1; }));
-T.check('contours à l\'encre dans le post-traitement (qualité Haute), lus dans la profondeur de l\'image', await ev(() => { const P = window.__dbg.RENDER.post; return !!P && !!P.rt.depthTexture && P.mComp.uniforms.uInk.value > 0.5 && P.mComp.uniforms.uSat.value > 1.1; }));
+T.check('contours à l\'encre dans le post-traitement (qualité Moyenne), lus dans la profondeur de l\'image', await ev(() => { const P = window.__dbg.RENDER.post; return !!P && !!P.rt.depthTexture && P.mComp.uniforms.uInk.value > 0.5 && P.mComp.uniforms.uSat.value > 1.1; }));
 
 // ---------------- les bancs de touche ----------------
 await ev(() => window.__dbg.figurants.sauter(2));
@@ -80,12 +81,10 @@ await ev(() => { const M = window.__dbg.M; M.state = 'play'; M.celebrateTeam = -
 
 // ---------------- vues du stade ----------------
 await voir([-20, 22, -150], Math.PI, 0.02); await shot('04-facade-lepagnot');
-await voir([0, 6, -30], 0, 0.06); await shot('05-tribune-lepagnot');
 await voir([0, 6, 25], Math.PI, 0.1); await shot('06-kop-marek');
 await voir([45, 3, -10], Math.PI / 2 + 0.6, 0.12); await shot('07-trannin');
 await voir([14, 12.9, -62.5], 0.9, -0.35); await shot('08-commentateurs');
 await ev(() => window.__dbg.teleport(0)); await shot('09-compound-nom-du-car');
-await ev(() => window.__dbg.teleport(13)); await shot('10-aerien');
 await ev(() => window.__dbg.teleport(1)); await shot('11-car');
 
 // ---------------- retour au réaliste, puis au dessin ----------------

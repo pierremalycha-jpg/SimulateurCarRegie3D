@@ -292,7 +292,8 @@ class Post {
     // style « dessin » : encre (plus fine et plus proche dans le car), couleurs franches, ombres un peu bleutées
     const cel = STYLE.cel;
     c.tDepth.value = this.rt.depthTexture; c.uNear.value = camera.near; c.uFar.value = camera.far; c.uTexel.value.set(1 / this.w, 1 / this.h);
-    c.uInk.value = cel ? STYLE.encre * (inTruck ? 0.7 : 1) : 0; c.uPx.value = Math.max(1, this.h / 900); const haut = Math.max(0, camera.position.y - 25); // vu d'avion, les contours portent plus loin
+    c.uInk.value = cel ? STYLE.encre * (inTruck ? 0.7 : 1) : 0; c.uPx.value = Math.max(1, this.h / 900);
+    const haut = Math.max(0, camera.position.y - 25); // vu d'avion, les contours portent plus loin
     c.uFade.value.set(inTruck ? 6 : 70 + haut * 2.5, inTruck ? 14 : 260 + haut * 5);
     c.uSat.value = cel ? 1.16 : 1.06; c.uCon.value = cel ? 1.05 : 1.03; c.uLift.value.set(cel ? 0.016 : 0.012, cel ? 0.02 : 0.014, cel ? 0.034 : 0.02);
     this.pass(this.mComp, null);
