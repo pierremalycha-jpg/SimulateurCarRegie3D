@@ -74,7 +74,7 @@ import * as CTRL from './net/ctrlnet.js';
 import { installPerfTest, watchFps } from './app/perf.js';
 import { openMenu, restart, resumeAfterReload } from './app/nav.js';
 import { toggleChef } from './ui/tutor_ui.js';
-import { installSfx, sfx, JEU, applyJeu } from './game/sfx.js';
+import { installSfx, sfx, JEU, applyJeu, rendre, sfxNames, sfxEtat } from './game/sfx.js';
 import { installProgression } from './game/progression.js';
 import { installFx } from './game/fx.js';
 import { renderQuest, updateQuestMarker, openJournal, currentGoal } from './game/quest.js';
@@ -274,6 +274,7 @@ setDiagInfo(() => {
 window.__dbg = { RENDER, openReview, openSessionPanel, SES, S, M, MIX, EVS, ROUTER, P, W, T, PL, pcam, COMMUT, CMT, applyAudio: applyAll, voiceGain, ecoute, earState, setMonitor, stripRms, corrNow, EX, teleport, openStation, closeStation, openPlan, closePlan, takeCamera, releaseCamera, start, openGuide, renderer, applyLighting, openDevice, openEquipmentIndex, openTrainer, CFG, SH, AU, SC, NET, FAB, NC, AN, emit, injectFault, clearFaults, ACTIVE, FAULTS, truckBlocked, truckFloorAt, goToStation, TRUCK, AT, atelierDebug, beginAtelier, endAtelier, avOk, AVATARS, avatarPositions, profSnapshot, profReset, TUTOR, toggleChef, startChefLesson, chefDoForMe, chefNext, stopChefLesson, PROG };
 window.__dbg.diag = { ERRS, report, diagText, openDiag, el }; window.__dbg.on = on;
 window.__dbg.title = { enter: enterFrom, show: showTitle };
+window.__dbg.sfx = { sfx, rendre, noms: sfxNames, etat: sfxEtat, JEU };
 window.__dbg.nav = { openMenu, restart };
 window.__dbg.openCours = openCours; window.__dbg.PROFILE = PROFILE; window.__dbg.setRole = setRole; window.__dbg.camlab = camlabDebug; window.__dbg.vues3d = vues3dDebug; window.__dbg.entrepot = entrepotDebug;
 window.__dbg.COURS = { CHAPTERS: COURS_CHAPTERS, allLessons, lessonById: coursLessonById, lessonDone: coursLessonDone, PARCOURS, essai: essaiExo };

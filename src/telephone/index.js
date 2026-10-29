@@ -92,7 +92,7 @@ export function openTelephone(app = '') {
   const was = TEL.open;
   TEL.open = true; S.telephone = true;
   root.hidden = false; root.classList.remove('tel-off');
-  if (!was) { TEL.p3d.resize(); TEL.p3d.pose(ease(TEL.t)); sfx('open'); }
+  if (!was) { TEL.p3d.resize(); TEL.p3d.pose(ease(TEL.t)); sfx('telUp'); }
   show(app);
   updClock(); clearInterval(TEL.clock); TEL.clock = setInterval(updClock, 1000);
   animate(1);
@@ -103,7 +103,7 @@ export function closeTelephone(vite = false) {
   if (!TEL.open) return;
   TEL.open = false; S.telephone = false;
   clearInterval(TEL.clock);
-  if (!vite) sfx('close');
+  if (!vite) sfx('telDown');
   // pendant qu'il descend, le téléphone ne prend plus les clics (la fenêtre ouverte par l'application les reçoit)
   root.classList.add('tel-off');
   if (screen && screen.contains(document.activeElement)) /** @type {HTMLElement} */ (document.activeElement).blur();

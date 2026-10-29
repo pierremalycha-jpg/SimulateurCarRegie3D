@@ -67,6 +67,7 @@ const SUITES = [
   ['telephone', 'telephone', [], 20],
   ['emission', 'emission', [], 30],
   ['figurants', 'figurants', [], 25],
+  ['sons', 'sons', [], 15],
   ['superpositions', 'superpositions', [], 20],
 ];
 
