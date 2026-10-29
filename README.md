@@ -437,8 +437,9 @@ sons au lieu de seize, sur une palette de régie plutôt que d'arcade :
 - les notes tenues sont toutes en ré majeur pentatonique : deux sons qui se suivent ne jurent jamais ;
 - une chaîne de sortie commune : coupe-bas 40 Hz, coupe-haut 11 kHz, compresseur, réverbération courte calculée
   (1,1 s, aigus amortis) ; les clics varient de ± 3 % pour ne pas sonner « mitraillette » ;
-- des niveaux hiérarchisés (crêtes mesurées, volume des bruitages au maximum) : le survol vers −42 dBFS, un clic vers
-  −30, une information ou une réussite vers −21 à −14, un passage de niveau vers −6.
+- des niveaux hiérarchisés (crêtes mesurées par la suite `sons`, volume des bruitages au maximum) : le survol vers
+  −44 dBFS, un clic ou un interrupteur entre −35 et −26, une fenêtre ou le téléphone vers −20, une information vers
+  −21, un refus vers −18, une réussite vers −14, une mission vers −10, un passage de niveau vers −6.
 
 Nouveaux : la touche principale, une application du téléphone, un onglet, un interrupteur (il monte quand on allume,
 descend quand on éteint), une carte de Jouer, un repli, le curseur de volume (un cran, plus aigu vers le haut), le
@@ -448,10 +449,15 @@ antenne de l'émission (deux bips courts et un long à 1 kHz) et la fin d'antenn
 graves, sans buzzer).
 
 **Tests.** `tests/unit/sons.test.mjs` (palette : genres de voix, niveaux, durées, notes dans la gamme, survol le plus
-discret) ; `tests/e2e/sons.mjs` rend chaque son hors ligne dans le navigateur (ni saturé ni muet), vérifie les gestes
+discret) ; `tests/e2e/sons.mjs` rend chaque son hors ligne dans le navigateur (ni saturé ni muet ; gestes sous −24 dBFS,
+refus sous la réussite, étape sous la mission, mission sous le passage de niveau), vérifie les gestes
 (carte, interrupteur, curseur, fenêtre, bruitages coupés) et écrit la **planche d'écoute** (`planche-sons.wav`, tous
 les sons à la suite, et `planche-sons.txt`) ; `tests/e2e/superpositions.mjs` (écran titre, Olivier sous le menu, à côté
-du téléphone, hors de la bande d'état et du retour PGM, devant la fenêtre d'une étape ; la ponctuation des chiffres).
+du téléphone, hors de la bande d'état et du retour PGM, devant la fenêtre d'une étape mais sous le menu Échap ; la
+ponctuation des chiffres). Pendant un exercice, Olivier reste devant les fenêtres de travail (visionneuse,
+synoptiques) : ses boutons Suivant et « Fais-le pour moi » doivent rester à portée ; seuls le menu Échap et les
+réglages (fenêtres « de pause ») passent devant lui. Le test `chef` laisse 30 s au poste réseau pour s'ouvrir : en
+rendu logiciel, le premier dessin du poste bloque parfois la page 4 à 13 s (mesuré aussi sur la v19.20).
 
 ## v19.20 : un match qui ne se joue pas d'avance, de vrais adversaires, l'équipe à ses postes, un compound qui vit
 

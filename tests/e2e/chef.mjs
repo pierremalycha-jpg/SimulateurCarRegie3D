@@ -23,7 +23,9 @@ T.check('touche J : le chef apparaît', await until(page, () => !document.queryS
 T.check('hors d\'un poste : le chef invite à s\'asseoir et renvoie au Cours', await ev(() => /Assieds-toi à un poste/.test(document.querySelector('#chef').textContent) && [...document.querySelectorAll('#chef button')].some((b) => /Tous les exercices/.test(b.textContent)) && !document.querySelector('#chef details.chef-more')));
 // au poste réseau : les exercices de ce poste, et la proposition de passer en IP
 await ev(() => window.__dbg.openStation('reseau')); await page.waitForTimeout(800);
-T.check('au poste : « Ici, au poste » et ses exercices', await until(page, () => /Ici, au poste/.test(document.querySelector('#chef').textContent) && /Mettre en service une leaf neuve/.test(document.querySelector('#chef').textContent), null, 5000));
+// l'ouverture du poste peut bloquer la page plusieurs secondes en rendu logiciel (premier dessin du poste, 4 à 13 s
+// mesurées sur main comme sur la branche) : la condition a 30 s pour se vérifier
+T.check('au poste : « Ici, au poste » et ses exercices', await until(page, () => /Ici, au poste/.test(document.querySelector('#chef').textContent) && /Mettre en service une leaf neuve/.test(document.querySelector('#chef').textContent), null, 30000));
 T.check('car SDI : proposition de passer en IP', await ev(() => [...document.querySelectorAll('#chef button')].some((b) => /Passer le car en IP/.test(b.textContent))));
 await shot('01-accueil-sdi');
 await clickChef('Passer le car en IP');

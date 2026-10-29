@@ -70,8 +70,8 @@ export const RECETTES = {
   press: { voix: [tick(2600, 0.02, 0.1), bell(N.D6, 0.14, 0.045, { t0: 0.004 })], rev: 0.1 },
   tap: { voix: [tick(4600, 0.01, 0.07, { q: 2 }), glass(N.A6, 0.09, 0.03, { idx: 0.35 })], rev: 0.08 },
   tab: { voix: [tick(2100, 0.02, 0.07), thump(640, 460, 0.045, 0.035)], rev: 0.03 },
-  toggleOn: { voix: [tick(2300, 0.012, 0.08), tick(3600, 0.012, 0.08, { t0: 0.035 })], rev: 0.03 },
-  toggleOff: { voix: [tick(3600, 0.012, 0.08), tick(2100, 0.012, 0.07, { t0: 0.035 })], rev: 0.03 },
+  toggleOn: { voix: [tick(2300, 0.012, 0.05), tick(3600, 0.012, 0.05, { t0: 0.035 })], rev: 0.03 },
+  toggleOff: { voix: [tick(3600, 0.012, 0.05), tick(2100, 0.012, 0.045, { t0: 0.035 })], rev: 0.03 },
   select: { voix: [pluck(N.Fs5, 0.3, 0.05), tick(3000, 0.012, 0.05)], rev: 0.1 },
   fold: { voix: [tick(1700, 0.014, 0.06), air(900, 1800, 0.08, 0.025, { a: 0.3 })], rev: 0.03 },
   // ---- les fenêtres : s'ouvrir, se fermer, le Cours en plein écran, s'asseoir à un poste ----
