@@ -64,6 +64,8 @@ export const modal = {
       el('header', {}, el('h2', { class: 'tape' }, title), ...(opts.headerExtra || []), close),
       el('div', { class: 'body' }, body));
     m.appendChild(sheet); m.hidden = false;
+    // une fenêtre « de pause » (menu Échap, réglages) passe devant Olivier même pendant un exercice (tutor_ui.js)
+    m.dataset.pause = opts.pause ? '1' : '';
     m.onclick = (e) => { if (e.target === m) modal.close(); };
     S.modalOpen = true;
     modal._onClose = opts.onClose || null;

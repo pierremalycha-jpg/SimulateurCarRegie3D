@@ -138,7 +138,7 @@ export function openMenu() {
     key('mn-reglages', 'reglages', 'Réglages', 'Qualité, son, lumière, profil, touches, diagnostic', then(() => emit('settings'))),
     SES.active ? key('mn-equipe', 'equipe', 'Équipe', 'Les joueurs de la partie, leurs rôles, les ordres', then(openSessionPanel)) : null,
     key('mn-home', 'accueil', 'Retour à l\'accueil', 'Quitter la partie, revenir à l\'écran titre', then(() => restart())));
-  modal.open('Menu', body, { width: 480 });
+  modal.open('Menu', body, { width: 480, pause: true });
   if (!matchMedia('(pointer: coarse)').matches) /** @type {HTMLElement} */ (body.querySelector('#mn-resume')).focus({ preventScroll: true });
 }
 on('menu', () => openMenu());

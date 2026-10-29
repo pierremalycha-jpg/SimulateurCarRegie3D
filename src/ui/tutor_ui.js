@@ -533,14 +533,17 @@ function dodge(r) {
 }
 
 // ---------------- place de la boîte de dialogue parmi les fenêtres ----------------
-// Olivier passe sous une fenêtre ouverte (menu Échap, réglages, synoptiques…) sauf quand l'étape en cours se
-// joue dedans ; le téléphone levé, il se range à sa gauche. Dans le car, il laisse voir la bande d'état
-// (timecode, PGM, alarmes) et le retour PGM : il se pose au-dessus de l'une, à côté de l'autre.
+// Hors exercice, Olivier passe sous toute fenêtre ouverte ; pendant un exercice, il reste devant les fenêtres de
+// travail (visionneuse, synoptiques… : ses boutons Suivant et « Fais-le pour moi » doivent rester à portée) et ne
+// passe que sous le menu Échap et les réglages, sauf si l'étape s'y joue. Le téléphone levé, il se range à sa
+// gauche. Dans le car, il laisse voir la bande d'état (timecode, PGM, alarmes) et le retour PGM : il se pose
+// au-dessus de l'une, à côté de l'autre.
 function etage() {
   const R = UI.root; if (!R || R.hidden) return;
   if (!TUTOR.lesson) UI.cible = null;
   const dedans = (/** @type {string} */ sel) => !!(UI.cible && UI.cible.isConnected && UI.cible.closest(sel));
-  R.classList.toggle('sous', modal.isOpen && !dedans('#modal'));
+  const pause = document.getElementById('modal')?.dataset.pause === '1';
+  R.classList.toggle('sous', modal.isOpen && (pause || !TUTOR.lesson) && !dedans('#modal'));
   let tel = '';
   if (S.telephone) {
     const p = document.querySelector('#telephone .tel-proj');

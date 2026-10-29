@@ -72,4 +72,8 @@ for (let k = 0; k < 8 && (await etape()) !== 'follow'; k++) { await ev(() => win
 T.check('exercice : l\'étape « Suivre le câble » se joue dans la visionneuse (fenêtre)', (await etape()) === 'follow' && await ev(() => !document.getElementById('modal').hidden), await etape());
 T.check('exercice : Olivier reste devant la fenêtre qui porte l\'étape', await until(page, () => !document.getElementById('chef').classList.contains('sous'), null, 3000));
 await shot('05-exercice-fenetre');
+// pendant l'exercice, le menu Échap (une fenêtre de pause) passe quand même devant Olivier
+await ev(() => window.__dbg.nav.openMenu());
+T.check('exercice : le menu Échap passe devant Olivier', await until(page, () => document.getElementById('chef').classList.contains('sous') && /Reprendre/.test(document.getElementById('modal').textContent || ''), null, 3000));
+await page.keyboard.press('Escape');
 await T.finish();
