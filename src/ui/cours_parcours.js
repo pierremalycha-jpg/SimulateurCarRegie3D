@@ -17,7 +17,7 @@ import { etoiles } from './cours_exo.js';
 // suivant ; le test de niveau pour sauter ce que l'on sait déjà ; l'aperçu d'une leçon encore fermée. Au
 // profil Formateur, tout est ouvert. ui/cours_ui.js range ces vues dans l'onglet Leçons.
 // ----------------------------------------------------------------------------------
-/** @typedef {{ lecon: (id: string) => void, chapitre: (id: string) => void, accueil: () => void, test: (ch: string, niveau: string) => void, render: () => void }} Go */
+/** @typedef {{ lecon: (id: string) => void, chapitre: (id: string) => void, accueil: () => void, test: (ch: string, niveau: string) => void, referentiel: (code: string | null) => void, render: () => void }} Go */
 export const libre = () => isTrainer();
 const RAISON = { commencer: 'Nouvelle leçon', quiz: 'Le quiz reste à réussir', exercice: 'L\'exercice reste à réussir', ameliorer: 'Refaire l\'exercice avec moins d\'aide : la moyenne du niveau manque' };
 const BOUTON = { commencer: 'Commencer', quiz: 'Reprendre', exercice: 'Reprendre', ameliorer: 'Refaire l\'exercice' };

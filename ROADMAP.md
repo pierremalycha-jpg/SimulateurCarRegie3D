@@ -17,14 +17,15 @@ Henri-Martin), développé par Pierre MALYCHA.
 - La préparation nourrit l'exploitation : ce qu'on prépare à l'entrepôt part sur le lieu.
 - Un lieu fini avant le suivant : chaque version livre un événement jouable de bout en bout.
 - Vérifié par des pros et en classe : un relecteur professionnel par lieu, un test avec des étudiants.
-- Aligné sur le référentiel : chaque parcours est rattaché aux compétences de la fiche RNCP37022,
-  numérotées 1.1 à 4.5 dans le document de rattachement.
+- Aligné sur le référentiel : chaque parcours est rattaché aux compétences de l'option TIEE, numérotées C1 à C39
+  comme dans le référentiel officiel et les sujets de TMO (jusqu'à la v19.22 : 1.1 à 4.5, table `ANCIEN`).
 
 Calendrier indicatif, calé sur l'année scolaire (les épreuves ont lieu en mai-juin).
 
 | Version | Période | Contenu |
 |---|---|---|
 | Postes en 3D, lots 4 et 5 | nov. 2026 – janv. 2027 (proposé) | Lot 4 : les baies (CCU, grille, synchro, brassage avec cordons tirés en 3D, mesure, HF, transmission), face avant puis face arrière. Lot 5 : les postes « à écran » (réalisateur, scripte, habillage, production, chef de car, IPDirector, réseau) : la vue assise, l'interface 2D dans l'écran de l'ordinateur |
+| v19.23 | nov. 2026 (fait) | Le référentiel officiel cité dans l'application : compétences renumérotées C1 à C39 comme dans les sujets de TMO (table de correspondance avec les anciens 1.1 à 4.5, badges migrés), unités et épreuves (E3 PTES, E4 TMO en CCF, E51, E52, E6), 112 savoir-faire, savoirs A1 à L12 avec le niveau TIEE ; bloc « Référentiel » en fin de chaque leçon (compétences, épreuve, savoir-faire, savoirs), rappel en tête de chapitre, page « Le référentiel du BTS » (épreuves, ce que la TMO attend, chaque compétence avec ses activités dans le simulateur), livret aux numéros officiels ; cinq leçons pour la TMO dans L'exploitation (du cahier des charges au schéma de principe, l'énergie du car, le nodal, le PAD, recette et maintenance), avec manipulation, quiz et exercice. Reste : faire relire les ordres de grandeur (énergie, MTBF, prix) par un professionnel ; un module « recette » jouable dans le car (M4) |
 | v19.22 | nov. 2026 (fait) | Une interface épurée, inspirée de la direction artistique d'Apple : un fond nuit neutre, des panneaux de verre dépoli aux grands rayons, un seul accent bleu (plus de néon cyan, de coin coupé, de LED ni de capitales espacées), Archivo partout en plus grand, des dégradés sur l'écran titre, la touche de lancement et le téléphone ; l'écran titre centré (sans moniteur à mire), Jouer en textes courts, le HUD en pilules, le menu du car en liste, Olivier et les fenêtres en verre, le Cours en cartes calmes, les Réglages en groupes ; un étalonnage 3D plus doux et une encre plus fine ; suite epure. Reste : faire relire par une classe, repasser les postes 2D un à un, un mode clair si demandé |
 | v19.21 | oct. 2026 (fait) | Des graphismes repris : le style « dessin » par défaut (cel shading : lumière en paliers et ombres nettes réécrites dans les shaders, sans coût, même en qualité Basse ; contours à l'encre lus dans la profondeur et couleurs franches en Moyenne et Haute ; nuages dessinés), le style réaliste au choix dans les réglages ; aucun texte du décor ne dépasse (enseigne du stade sur la façade Lepagnot, bandeaux des tribunes aux bonnes proportions entre les banderoles, panneaux LED, nom du car, signalétique, étiquettes ; vérifié par la suite graphismes) ; des formes moins brutes sans rien ajouter (abris de touche en coque bombée avec sièges baquets, caissons et écrans arrondis, commentateurs en vrais corps) ; les bancs de touche peuplés (remplaçants aux couleurs du club, adjoint, préparateur, entraîneur dans sa zone technique, le banc qui se lève sur un but). Reste : régler la force de l'encre et les paliers avec une classe ; le paysage du bassin minier (maisons, sol) à reprendre dans le même style |
 | v19.20 | oct. 2026 (fait) | Le match ne se fige plus (ballon libre repris, coup d'envoi dosé) ; un match tiré à chaque partie (graine nouvelle, forme du jour, style, temps forts : Lens ne gagne plus à tous les coups) ; dix-sept vrais adversaires de Ligue 1 (nom et couleurs, sans blason ; joueurs et niveaux fictifs), tirés au sort ou choisis dans Jouer ; l'équipe à ses postes (douze équipiers assis ; à son poste, le titulaire laisse sa place) et le choix de son poste au départ ; le compound vit (techniciens qui entrent et sortent du car, sécurité, portail) ; plus de fils en l'air (câbles caméra au sol, caténaire en fils continus). Reste : des figurants qui s'écartent devant le joueur ; l'équipe au car vide une fois l'installation finie ; d'autres compétitions (Coupe de France, Ligue des champions) |
@@ -67,6 +68,11 @@ pannes, une documentation exportable, la relecture d'un professionnel du domaine
 et 30 images par seconde sur le PC le plus faible de l'établissement.
 
 **Décidé.**
+
+- 2 novembre 2026 (v19.23) : l'application **cite le référentiel officiel** (arrêté du 4 juin 2013 modifié) avec ses
+  numéros : compétences C1 à C39, unités U3 à U6, savoir-faire SF01 à SF112, savoirs A1 à L12. La numérotation 1.1 à 4.5
+  du document de rattachement est abandonnée (table de correspondance gardée). Les leçons manquantes pour la TMO sont
+  écrites dans le chapitre L'exploitation plutôt que dans un chapitre à part.
 
 - 21 octobre 2026 : les quatre modules du car passent avant les autres lieux. Ils comblent 8 des 9
   compétences absentes du car sans nouveau décor.
