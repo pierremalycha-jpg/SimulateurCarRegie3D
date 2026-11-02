@@ -394,6 +394,85 @@ Tests :
   « Emmène-moi / Montre-moi » doit mettre en évidence un élément réel de la page, et « Fais-le pour moi » doit faire
   valider l'étape.
 
+## v19.24 : le Cours qui se dévoile, et le son des bases à l'antenne
+
+**Pourquoi.** Entre les schémas, les textes, les fiches « ? » et le référentiel, une leçon finissait par être une pile de
+cartes qu'on lisait d'un bloc : complet, mais dense. Demande : une interface plus agréable et plus facile à parcourir, qui
+reste complète techniquement, où l'information arrive **petit à petit quand on descend**, comme sur une page de présentation
+d'Apple ; et des cours plus denses, avec les fondamentaux qui manquaient (les micros stéréo et les couples, par exemple).
+
+**La page de lecture** (`ui/cours_ui.js`, `ui/reveal.js`, `styles/cours-lecture.css`) : une leçon se lit maintenant comme une
+page, de haut en bas, sans rien perdre.
+
+- **L'en-tête** : le fil d'Ariane (chapitre, niveau, partie, rang), le grand titre et **l'essentiel en trois phrases**, sans
+  cadre, en plus grand : on sait en dix secondes de quoi il s'agit.
+- **La barre des étapes** (Apprendre · Quiz · Exercice, les étoiles) reste **collée en haut** pendant la lecture, sur un verre
+  léger : on voit toujours où l'on en est et l'on saute au quiz d'un clic.
+- **Les sections se dévoilent au défilement** (`[data-reveal]` → `.co-reveal.in`, IntersectionObserver un peu avant le bord
+  de l'écran) : le schéma, la manipulation, l'explication, le car, les mots de la leçon, le référentiel, le quiz, l'exercice,
+  les exercices pratiques arrivent l'un après l'autre, remontés de quelques pixels et fondus, ce qui est déjà à l'écran en
+  cascade. L'opacité finale est toujours 1 ; moins d'animations (`prefers-reduced-motion`) ou un navigateur sans
+  observateur : tout est visible d'emblée ; sous un pilote de test (`navigator.webdriver`), la transition est coupée pour que
+  les captures se relisent. Une section redessinée (le quiz, l'exercice) garde sa révélation.
+- **Le schéma** prend toute la largeur et porte sa **légende** (le titre accessible du SVG, écrit sous lui) : il se lit seul,
+  avant l'explication. **L'explication** est une colonne de lecture (68 caractères, 16,5 px, interligne 1,68), sans cadre ;
+  « Pour aller plus loin » et l'article de référence sont rangés dedans.
+- **Les cartes ne restent qu'aux blocs où l'on agit** : la manipulation, le quiz, l'exercice, « Dans le car » (une bande
+  teintée avec sa touche). Les **mots de la leçon** (les fiches « ? ») sont une ligne de pastilles discrètes ; le
+  **référentiel** est compact : les compétences en pastilles sur une ligne, savoir-faire et savoirs repliés.
+- « Mon parcours » et le chemin d'un chapitre ont le même en-tête et se dévoilent aussi, niveau par niveau. Le sommaire
+  affiche les **parties** d'un chapitre qui en a (le réseau, le son).
+
+Rien n'est retiré : toutes les sections, tous les identifiants et toutes les classes que lisent les suites existantes
+(cours, parcours, referentiel, epure, accessibilite) sont conservés ; seul l'ordre de lecture change (le car avant les mots
+de la leçon et le référentiel, l'article dans l'explication).
+
+**Le chapitre Le son, de deux à neuf leçons**, rangé en trois parties (`cours/son.js` : `PARTIES`), les calculs purs dans
+`cours/son_calc.js` (testés), les leçons dans `cours/son_bases.js` et `cours/son_traitement.js`, les exercices dans
+`cours/exos/son.js`, quinze fiches « ? » dans `content/terms_son.js` (famille Son du lexique) :
+
+| Partie | Leçon | Niveau | Ce qu'on y fait | Compétences |
+|---|---|---|---|---|
+| Les bases | Le décibel : dBu, dBFS, dB SPL | Débutant | 20 log et 10 log, les références (0 dBu = 0,775 V, dBV, dBFS, 20 µPa), l'alignement EBU R68 (0 dBu = −18 dBFS) et SMPTE RP 155, sommes de sources (+3, +6 dB), −6 dB par doublement de distance | C32, C10 |
+| Les bases | Les micros : dynamique, statique, directivité | Débutant | bobine mobile et condensateur (48 V, IEC 61938), diagrammes du premier ordre a + (1 − a) cos θ, facteur de distance, le canon à tube d'interférence (directif dans l'aigu seulement), effet de proximité, choisir le micro | C23, C32 |
+| Les bases | Les couples stéréo : XY, ORTF, AB, MS | Intermédiaire | écarts de niveau et de temps (pleine latéralisation vers 15 dB ou 1,1 ms, Williams 1987), XY, Blumlein, ORTF, NOS, DIN, AB, l'angle d'enregistrement calculé, MS décodé (L = M + S, R = M − S) et son équivalent XY, la compatibilité mono (filtre en peigne) | C23, C32, C10 |
+| Les bases | Niveaux et liaisons : micro, ligne, symétrique | Intermédiaire | micro, +4 dBu, −10 dBV (11,8 dB), XLR (1 masse, 2 chaud, 3 froid), réjection de mode commun, boucles de masse, pontage d'impédance (150 Ω → 1,5 kΩ : −0,8 dB) | C25, C19, C32 |
+| La console | Compresseur, limiteur, gate | Intermédiaire | seuil, ratio, genou, attaque, relâchement, gain de rattrapage, limiteur (−1 dBTP), gate et expandeur, l'ordre dans la tranche | C23, C32 |
+| Les départs | Le loudness : EBU R128, LUFS et crête vraie | Avancé | filtre K, momentané, court terme, intégré avec ses deux portes (−70 LUFS, −10 LU) calculées, LRA, −23 LUFS ±0,5 / ±1 LU, crête vraie par suréchantillonnage (jusqu'à 3 dB d'écart, montré), normalisation d'un PAD | C32, C10, C33 |
+| Les départs | L'audio numérique : 48 kHz, 24 bits, AES3, MADI, Dante | Avancé | Nyquist, 6,02 n + 1,76 dB, 1,152 Mb/s par canal, AES3 (64 × fs), MADI (64 / 32 canaux), Dante et AES67, ST 2110-30, word clock et PTP, latence des tampons, dérive d'horloges (clics) | C25, C32, C14 |
+
+Les deux leçons de la v18.4 (la tranche ; N-1, synchro labiale et départs) gardent leur place, dans « La console » et
+« Les départs ». Et dans **Le signal vidéo numérique**, la leçon qui manquait aux fondamentaux : **La compression vidéo :
+intra, inter, débits** (`cours/signal_compression.js`, calculs `cours/video_calc.js`, fiches `content/terms_video.js`) :
+2,07 Gb/s d'image active en 1080p50, la DCT et la quantification, le GOP (I, P, B, poids d'un GOP de 12 ≈ 2,8 images I), les
+codecs du car (XDCAM HD422 50 Mb/s, AVC-Intra, ProRes, H.264 et HEVC de contribution, JPEG XS, la diffusion à 7 Mb/s),
+taille des fichiers, latence et défauts (C14, C26, C33 ; niveau Intermédiaire).
+
+Chaque leçon a son schéma légendé, sa manipulation qui calcule (lectures tirées du modèle pur, verdict), son quiz de six
+questions à trois choix (chaque choix faux expliqué), son exercice en autonomie à valeurs tirées, ses fiches « ? », ses
+compétences et ses savoirs du référentiel ; le glossaire gagne dix entrées liées à ces leçons (décibel, micro statique,
+directivité, couple stéréo, liaison symétrique, limiteur, crête vraie, Dante / AES67, compression vidéo). Le parcours du
+son a maintenant trois niveaux (Débutant : décibel, micros, tranche ; Intermédiaire : couples, liaisons, dynamique, N-1 ;
+Avancé : loudness, numérique). Chiffres : EBU R68, R128, Tech 3341 et 3342, ITU-R BS.1770, AES3, AES10, AES67, IEC 61938 ;
+les débits des codecs, les sensibilités des micros, la ronflette captée par mètre de câble et le débit Dante par canal sont
+des ordres de grandeur, dits comme tels dans les leçons.
+
+**Vérification.** Tests unitaires `tests/unit/son.test.mjs` : les trois parties du son, la forme des huit leçons ajoutées
+(six questions expliquées, fiches, schéma et manipulation), les familles Son et Signal vidéo du lexique, et les calculs
+(décibels et sommes, directivité et canon, écarts et angles d'enregistrement des couples contre les valeurs publiées, MS,
+réjection et pontage, compresseur et genou, portes du loudness et LRA, crête vraie à fs/4, AES3 et MADI, débits et GOP de
+la compression) ; les suites générales (forme des leçons, exercices sur 40 tirages, parcours, référentiel) passent avec 71
+leçons. Suite `node tools/e2e.mjs cours-lecture` (`tests/e2e/lecture.mjs`) : l'en-tête et l'essentiel, la barre collante,
+les sections révélées en descendant puis toutes opaques en bas, l'ordre de lecture, le lien d'étape, le référentiel compact,
+le quiz redessiné qui reste visible, le sommaire en parties, le chapitre et Mon parcours révélés, les huit leçons (schéma,
+lectures de la manipulation, verdict, quiz, exercice, référentiel, fiches, sans valeur manquante), la manipulation des
+couples qui calcule (ORTF contre AB 60 cm), une fiche ouverte depuis la leçon, et 390 px sans défilement horizontal ; huit
+captures à relire. Les suites cours, parcours, referentiel, epure, accessibilite et reseau-termes passent.
+
+**Reste.** Faire relire les ordres de grandeur du son (sensibilités, ronflette, Dante) par un professionnel ; un exercice
+pratique dans le car pour les couples (placer et vérifier un ORTF en tribune) ; les mêmes sections révélées dans la caméra
+en 3D et les vues 3D si les classes y trouvent le même confort.
+
 ## v19.23 : le référentiel officiel cité dans l'application, et les leçons de la TMO
 
 **Pourquoi.** Le simulateur numérotait les compétences à sa façon (1.1 à 4.5, par bloc de la fiche RNCP37022) alors que le
@@ -2422,6 +2501,9 @@ node tools/shots.mjs dossier 1280 800 '["vision","hf"]'   # captures de postes
 | `ui/ma_progression.js` | Réglages → Ma progression : où elle est enregistrée et si ça marche, exporter dans un fichier, importer (fusion), effacer, vos données personnelles ; notification quand un enregistrement échoue |
 | `app/profile.js` | Profil Étudiant / Formateur, mémorisé ; classe `role-formateur` sur `body`, éléments `.role-only` |
 | `cours/index.js`, `cours/kit.js`, `cours/all.js`, un fichier par chapitre (`signal.js`, `sdi.js`, `synchro.js`, `camera.js`, `realisation.js`, `ralentis.js`, `son.js`, `reseau.js`, `hf.js`, `exploitation.js`) | La section Cours : dix chapitres et leurs leçons, ordre d'apprentissage, progression, tirage du quiz dans la banque de chaque leçon (`drawQuiz`, `QUIZ_N`), kit des schémas et manipulations |
+| `cours/son_calc.js`, `cours/son_bases.js`, `cours/son_traitement.js`, `content/terms_son.js` | Le son des bases à l'antenne (v19.24) : les calculs purs (décibels, directivité et canon, couples stéréo et angle d'enregistrement, MS, liaisons, compresseur, loudness EBU R128 avec ses portes, crête vraie, audio numérique), les sept leçons (décibel, micros, couples, liaisons, dynamique, loudness, numérique) rangées en parties par `cours/son.js`, leurs fiches « ? » (famille Son) |
+| `cours/video_calc.js`, `cours/signal_compression.js`, `content/terms_video.js` | La compression vidéo (v19.24) : débit de l'image active, taux, taille des fichiers, GOP (I, P, B), codecs du car ; la leçon du chapitre Le signal et ses fiches (codec et conteneur, GOP) |
+| `ui/reveal.js`, `styles/cours-lecture.css` | La page qui se dévoile au défilement (v19.24) : les sections `[data-reveal]` révélées par un IntersectionObserver (cascade pour ce qui est déjà à l'écran, tout visible sans observateur ou avec moins d'animations) ; la page de lecture d'une leçon : en-tête avec l'essentiel, barre des étapes collante, schéma légendé, colonne de lecture, cartes réservées aux blocs où l'on agit, mots de la leçon et référentiel compacts |
 | `cours/parcours.js` | Le parcours du Cours : niveaux de chaque chapitre (`PARCOURS`), état d'une leçon (étoiles, terminée), d'un niveau (conditions, ouvert, validé), suite conseillée (les fondamentaux d'abord), test de niveau (calcul pur) |
 | `cours/exo.js`, `cours/exos/` (un fichier par chapitre, le réseau en deux) | L'exercice en autonomie de chaque leçon : questions (nombre, choix, texte, ordre) tirées à chaque essai, vérification, aides et solution, points et score sur 100 |
 | `ui/cours_parcours.js`, `ui/cours_exo.js`, `styles/cours-parcours.css` | Mon parcours (suite, catégories), chemin d'un chapitre par niveau, aperçu d'une leçon fermée, étapes d'une leçon, test de niveau ; l'exercice une question à la fois et son bilan |
@@ -2439,7 +2521,7 @@ node tools/shots.mjs dossier 1280 800 '["vision","hf"]'   # captures de postes
 | `camlab/` | Module « La caméra en 3D » : caméra et plateau construits dans le code (`model.js`, `scene.js`), pastilles (`points.js`), 51 notions (`notions/`, une fiche par fichier, registres `ch1.js` … `ch89.js`), schémas (`figs.js`, `figs/`, `figkit.js`), manipulations (`labs.js`, `labs/`, commandes `controls.js`, optique `optics.js`, viseur simulé et traitement de l'image `vf.js`), affichage d'une fiche (`fiche.js`), progression (`progress.js`), quiz de chapitre (`quiz.js`), mise en service notée (`mes.js`) |
 | `entrepot/` | Module « L'entrepôt » (tuile de Jouer) : monter une régie mobile d'après un cahier des charges. Types (`types.js`), catalogue de matériel réel (`catalogue/`, un fichier par groupe : `blackmagic.js`, `panasonic.js`, `ross.js`, `reseau.js`, `divers.js`), montage (`build.js`), moteur (`engine.js`), missions notées (`missions.js`), résultat rendu (`suivi.js`), 3D (`scene.js` ; `scene/` : hall, appareils, câbles, bureau et ordinateur de la Carrière `bureau.js` ; vue en orbite `orbit.js`), panneaux (`ui/` : `stock.js`, `appareil.js`, menus de configuration `ui/config/` un fichier par famille, `synoptique.js`, `reseau.js`, `mission.js`), ouverture, boucle et mode Carrière (`index.js`) |
 | `carriere/` | La Carrière (mode de l'entrepôt) : les épisodes et leurs mails (`mails.js`), la boîte de réception et les missions lues dans la progression, calcul pur (`index.js`), la messagerie du bureau (`ui.js`), les mails qui arrivent et le lancement des missions au car (`installer.js`) |
-| `ui/cours_ui.js` | L'espace Cours : un seul sommaire (chapitres rangés par niveau), « Mon parcours », chemin d'un chapitre, leçons (quiz, exercice en autonomie, exercices pratiques, article de référence), glossaire, postes, matériel |
+| `ui/cours_ui.js` | L'espace Cours : un seul sommaire (chapitres rangés par niveau, parties), « Mon parcours », chemin d'un chapitre, la page de lecture d'une leçon qui se dévoile (en-tête, étapes collantes, schéma légendé, manipulation, explication, car, mots de la leçon, référentiel, quiz, exercice en autonomie, exercices pratiques), glossaire, postes, matériel |
 | `app/nav.js` | Navigation entre les trois entrées : menu du car (Échap), aiguillage des boutons « Aller au poste », « Commencer » (car lancé si besoin), changement de vacation, retour au bureau de l'entrepôt (Carrière) |
 | `ui/layer.js` | Espace plein écran (le Cours) : plaque, onglets, Fermer (Échap), ligne d'état |
 | `ui/guide.js` | Missions d'installation (liste des tâches), articles de référence des leçons, glossaire, postes, matériel, procédures maison, commandes |
