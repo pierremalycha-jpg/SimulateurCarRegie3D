@@ -98,6 +98,11 @@ import iDeviceMobile from '@phosphor-icons/core/bold/device-mobile-bold.svg';
 import iCellSignalFull from '@phosphor-icons/core/bold/cell-signal-full-bold.svg';
 import iWifiHigh from '@phosphor-icons/core/bold/wifi-high-bold.svg';
 import iBatteryFull from '@phosphor-icons/core/bold/battery-full-bold.svg';
+import iSignIn from '@phosphor-icons/core/bold/sign-in-bold.svg';
+import iSignOut from '@phosphor-icons/core/bold/sign-out-bold.svg';
+import iChartLineUp from '@phosphor-icons/core/bold/chart-line-up-bold.svg';
+import iUserCircle from '@phosphor-icons/core/bold/user-circle-bold.svg';
+import iKey from '@phosphor-icons/core/bold/key-bold.svg';
 
 /** nom dans l'application -> dessin SVG @type {Record<string, string>} */
 const SVG = {
@@ -130,6 +135,8 @@ const SVG = {
   telephone: iDeviceMobile, retourapp: iCaretLeft, signal: iCellSignalFull, wifi: iWifiHigh, batterie: iBatteryFull,
   // le parcours du Cours (ui/cours_parcours.js, ui/cours_exo.js) : niveaux fermés et ouverts, étoiles, étapes à ranger
   cadenas: iLockSimple, ouvert: iLockSimpleOpen, parcours: iPath, monter: iArrowUp, descendre: iArrowDown, etoilePleine: iStarFill,
+  // les comptes (comptes/, ui/compte_ui.js, ui/tableau_bord.js) : se connecter, se déconnecter, le compte, le tableau de bord, un mot de passe
+  connexion: iSignIn, deconnexion: iSignOut, compte: iUserCircle, tableau: iChartLineUp, cle: iKey,
 };
 export const ICON_NAMES = Object.keys(SVG);
 /**

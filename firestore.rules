@@ -1,0 +1,87 @@
+rules_version = '2';
+// ----------------------------------------------------------------------------------
+// Règles de Firestore du TIEE Simulator (v19.24) : qui lit et écrit quoi. À déployer dans le projet
+// Firebase de l'établissement (console Firebase → Firestore → Règles, coller ce fichier ; ou
+// « firebase deploy --only firestore:rules »). Tests : node tools/firebase-test.mjs (émulateur).
+//
+//   admin/profs      { emails }        adresses autorisées à ouvrir un compte professeur ; le document est
+//                                       créé une fois dans la console, ensuite les professeurs le tiennent
+//   comptes/<uid>    { role, ... }     la fiche d'un compte : un professeur crée celles des élèves
+//   classes/<id>     { nom, ... }      les classes
+//   secrets/<uid>    { identifiant, mdp } mot de passe provisoire d'un élève : professeurs seulement
+//   progress/<uid>   { json, v, updatedAt } progression : l'élève écrit la sienne, les professeurs la lisent
+//   config, review, sessions           configuration du car et relectures (espace formateur)
+// ----------------------------------------------------------------------------------
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function connecte() { return request.auth != null; }
+    function chemin(c, id) { return /databases/$(database)/documents/$(c)/$(id); }
+    function aCompte() { return connecte() && exists(chemin('comptes', request.auth.uid)); }
+    function moi() { return get(chemin('comptes', request.auth.uid)).data; }
+    function estProf() { return aCompte() && moi().role == 'prof'; }
+    // une adresse de professeur autorisée et confirmée (lien reçu par courriel)
+    function profAutorise() {
+      return connecte() && request.auth.token.email != null && request.auth.token.email_verified == true
+        && exists(chemin('admin', 'profs')) && request.auth.token.email.lower() in get(chemin('admin', 'profs')).data.emails;
+    }
+    function texte(v, max) { return v is string && v.size() <= max; }
+
+    match /admin/profs {
+      allow read: if estProf();
+      allow update: if estProf() && request.resource.data.keys().hasOnly(['emails'])
+        && request.resource.data.emails is list && request.resource.data.emails.size() <= 200;
+    }
+
+    match /comptes/{uid} {
+      allow read: if connecte() && (request.auth.uid == uid || estProf());
+      // un professeur autorisé ouvre son propre compte ; un professeur crée celui d'un élève
+      allow create: if (connecte() && request.auth.uid == uid && profAutorise()
+          && request.resource.data.role == 'prof' && request.resource.data.keys().hasOnly(['role', 'prenom', 'nom', 'email', 'creeLe'])
+          && texte(request.resource.data.prenom, 40) && texte(request.resource.data.nom, 60))
+        || (estProf() && request.auth.uid != uid && request.resource.data.role == 'eleve'
+          && request.resource.data.keys().hasOnly(['role', 'prenom', 'nom', 'identifiant', 'classe', 'creePar', 'creeLe'])
+          && texte(request.resource.data.prenom, 40) && texte(request.resource.data.nom, 40) && texte(request.resource.data.identifiant, 40)
+          && (request.resource.data.classe == null || texte(request.resource.data.classe, 40)));
+      // un professeur range un élève dans une classe, corrige son nom ; personne ne change de rôle
+      allow update: if estProf() && resource.data.role == 'eleve' && request.resource.data.role == 'eleve'
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['classe', 'prenom', 'nom'])
+        && (request.resource.data.classe == null || texte(request.resource.data.classe, 40))
+        && texte(request.resource.data.prenom, 40) && texte(request.resource.data.nom, 40);
+      allow delete: if estProf() && resource.data.role == 'eleve';
+    }
+
+    match /classes/{id} {
+      // l'élève lit sa propre classe (son nom s'affiche sur l'écran titre)
+      allow read: if estProf() || (aCompte() && moi().classe == id);
+      allow create, update: if estProf() && request.resource.data.keys().hasOnly(['nom', 'creePar', 'creeLe'])
+        && texte(request.resource.data.nom, 60) && request.resource.data.nom.size() > 0;
+      allow delete: if estProf();
+    }
+
+    match /secrets/{uid} {
+      allow read, delete: if estProf();
+      allow create, update: if estProf() && request.resource.data.keys().hasOnly(['identifiant', 'mdp', 'maj'])
+        && texte(request.resource.data.mdp, 64) && texte(request.resource.data.identifiant, 40);
+    }
+
+    match /progress/{uid} {
+      allow read: if connecte() && ((request.auth.uid == uid && aCompte()) || estProf());
+      allow create, update: if connecte() && request.auth.uid == uid && aCompte()
+        && request.resource.data.keys().hasOnly(['json', 'v', 'updatedAt']) && texte(request.resource.data.json, 1000000);
+      allow delete: if estProf();
+    }
+
+    // l'espace formateur : configuration du car (lue par tous les comptes), relectures, comptes rendus de session
+    match /config/{partie} {
+      allow read: if aCompte();
+      allow write: if estProf();
+    }
+    match /review/{uid} {
+      allow read: if estProf();
+      allow write: if estProf() && request.auth.uid == uid;
+    }
+    match /sessions/{id} {
+      allow read, write: if estProf();
+    }
+  }
+}

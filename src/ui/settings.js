@@ -16,6 +16,8 @@ import { JEU, saveJeu, setSfxVolume, sfx } from '../game/sfx.js';
 import { setQuestVisible } from '../game/quest.js';
 import { progressionSection } from './ma_progression.js';
 import { STYLE } from '../style.js';
+import { compteSection } from './compte_ui.js';
+import { COMPTE, estProf } from '../comptes/session.js';
 
 // ----------------------------------------------------------------------------------
 // Réglages : une seule fenêtre, la même depuis l'écran titre, l'écran Jouer et le menu du car.
@@ -69,11 +71,16 @@ export function openSettings() {
         field('Voix du réalisateur virtuel', selectEl([['0', 'Texte seulement'], ['1', 'Synthèse vocale']], S.directorVoice ? '1' : '0', (v) => { S.directorVoice = v === '1'; })),
         field('Étiquettes et câbles dans le stade', selectEl([['1', 'Afficher'], ['0', 'Masquer']], S.showLabels ? '1' : '0', (v) => emit('setLabels', v === '1')))),
       el('p', { class: 'note' }, (LIGHTING[S.lighting] || {}).desc || '')) : null,
+    compteSection(),
     progressionSection(),
-    section('Profil',
-      row('Je suis', seg('Profil', [['etudiant', 'Étudiant'], ['formateur', 'Formateur', 'Ajoute l\'espace formateur à ces réglages']], PROFILE.role, (v) => setRole(v))),
-      el('p', { class: 'note' }, 'Le profil Formateur ajoute l\'espace formateur : configuration du car, suivi des stagiaires, relecture technique.')),
+    // le profil : choisi sur l'ordinateur, ou imposé par le compte connecté (élève : Étudiant ; professeur : Formateur)
+    PROFILE.force ? section('Profil', el('p', {}, `Profil ${PROFILE.force === 'formateur' ? 'Formateur' : 'Étudiant'}, donné par ton compte.`))
+      : section('Profil',
+        row('Je suis', seg('Profil', [['etudiant', 'Étudiant'], ['formateur', 'Formateur', 'Ajoute l\'espace formateur à ces réglages']], PROFILE.role, (v) => setRole(v))),
+        el('p', { class: 'note' }, 'Le profil Formateur ajoute l\'espace formateur : configuration du car, suivi des stagiaires, relecture technique.')),
     el('section', { class: 'rg-sec role-only' }, el('h3', {}, 'Espace formateur'),
+      estProf() ? el('div', { class: 'hwrow' }, el('button', { type: 'button', class: 'btn primary', id: 'rg-tableau-bord', onclick: () => { modal.close(); emit('tableauBord'); } }, icon('tableau'), 'Tableau de bord des classes'))
+        : COMPTE.dispo ? el('p', { class: 'note' }, 'Le tableau de bord des classes (élèves, résultats, comptes) demande un compte professeur : Mon compte, ci-dessus.') : null,
       el('div', { class: 'hwrow' },
         el('button', { type: 'button', class: 'btn primary', id: 'rg-trainer', onclick: () => openTrainer('car') }, icon('formateur'), 'Configuration du car'),
         el('button', { type: 'button', class: 'btn', onclick: () => openTrainer('eleves') }, 'Suivi des stagiaires'),

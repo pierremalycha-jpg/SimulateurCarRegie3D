@@ -96,7 +96,7 @@ kbd, .key { font: 600 11.5px/1 var(--f-body); color: var(--muted); background: r
 .choice { background: var(--well); border: 1px solid var(--line); border-radius: var(--r); clip-path: none; box-shadow: none; padding: 14px 16px; transition: background .15s, border-color .15s; }
 .choice:hover { background: rgba(255,255,255,.08); border-color: var(--line2); box-shadow: none; }
 .choice b { font: 600 17px var(--f-disp); }
-select, input[type=text], input[type=number], input[type=search], textarea { background: rgba(255,255,255,.07); border: 1px solid var(--line); border-radius: var(--r-s); padding: 8px 12px; color: var(--fg); box-shadow: none; font-size: 14.5px; }
+select, input[type=text], input[type=number], input[type=search], input[type=password], input[type=email], textarea { background: rgba(255,255,255,.07); border: 1px solid var(--line); border-radius: var(--r-s); padding: 8px 12px; color: var(--fg); box-shadow: none; font-size: 14.5px; }
 select:focus-visible, input:focus-visible, textarea:focus-visible { outline: 0; border-color: var(--accent); box-shadow: var(--glow-c); }
 input[type=range] { accent-color: var(--accent); }
 .pill { background: rgba(255,255,255,.08); border: 0; border-radius: 999px; padding: 3px 10px; font: 600 12.5px var(--f-body); }

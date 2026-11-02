@@ -67,6 +67,12 @@ import { MARCHEURS } from './figurants/compound.js';
 import * as CARRIERE from './carriere/index.js';
 import { applyRole, PROFILE, setRole } from './app/profile.js';
 import { openCours } from './ui/cours_ui.js';
+import { initComptes, COMPTE } from './comptes/session.js';
+import { initActivite } from './comptes/activite.js';
+import { openConnexion, renderTitleCompte } from './ui/compte_ui.js';
+import { openTableauBord } from './ui/tableau_bord.js';
+import { bilanEleve, bilanClasse } from './comptes/bilan.js';
+import * as FIREBASE_COMPTES from './comptes/firebase.js';
 import { essaiExo } from './ui/cours_exo.js';
 import * as PARCOURS from './cours/parcours.js';
 import { CHAPTERS as COURS_CHAPTERS, allLessons, lessonById as coursLessonById, lessonDone as coursLessonDone } from './cours/index.js';
@@ -97,6 +103,8 @@ if (/[?&]lite/.test(location.search)) { S.lite = true; S.quality = 'basse'; }
 // écran titre : la construction se fait par étapes, chacune affichée avant la suivante
 applyRole();
 initTitle();
+// les comptes (v19.24) : session gardée par le navigateur, progression du compte ; temps de travail
+initComptes(); renderTitleCompte(); initActivite();
 initCamLab();
 initVues3d();
 initEntrepot();
@@ -284,6 +292,7 @@ window.__dbg.jeu = { XP, sfx, JEU, openJournal, currentGoal, renderQuest };
 window.__dbg.tel = { open: openTelephone, close: closeTelephone, state: telDebug };
 window.__dbg.carriere = CARRIERE; window.__dbg.mission = MISSION_RUN;
 window.__dbg.emission = emissionDebug;
+window.__dbg.comptes = { COMPTE, openConnexion, openTableauBord, bilanEleve, bilanClasse, fb: FIREBASE_COMPTES };
 window.__dbg.figurants = { etat: figurantsDebug, sauter: sauterFigurants, modules: { EQUIPE, MARCHEURS } };
 window.__dbg.style = { STYLE, chunks: () => THREE.ShaderChunk.lights_pars_begin.includes('celRamp') };
 window.__dbg.poste3d = { P3D, PUP, DESK, LSMS, ICOMS, voulu: poste3dVoulu };
