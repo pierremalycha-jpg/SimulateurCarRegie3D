@@ -763,3 +763,35 @@ body:not(.hud-map) #truckmap { display: none !important; }
 #station .p3d-hit:focus-visible { background: rgba(59,156,255,.28); box-shadow: inset 0 0 0 2px var(--accent); }
 
 @media (prefers-reduced-motion: reduce) { .ti-sweep, .onair-key, .qmark > .ico, .q-dot, .sheet, .quest, .banner, #toast { animation: none !important; } }
+
+/* ---------- les modules en 3D (vues 3D du Cours, la caméra en 3D, l'entrepôt) : les mêmes verres, les mêmes rayons ---------- */
+.v3, .camlab, .entrepot { background: var(--bg); }
+.v3-list, .cl-list { background: linear-gradient(90deg, rgba(12,14,19,.92), rgba(12,14,19,.7)); }
+.v3-side, .cl-side, .ep-side { background: var(--mat); backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur); border-left: 1px solid var(--line); box-shadow: none; }
+.v3-tag, .v3-tip, .cl-pin span, .ep-pin span { background: var(--mat); backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur); border: 1px solid rgba(255,255,255,.12); border-left: 1px solid rgba(255,255,255,.12); border-radius: 999px; padding: 3px 10px; font: 600 12.5px var(--f-body); }
+.v3-tag.hot { color: var(--fg); border-color: var(--accent); } .v3-tag.ok { border-color: var(--pvw); } .v3-tag.ko { border-color: var(--tally); }
+.v3-tag.rouge { border-color: #ff6b63; } .v3-tag.bleu { border-color: var(--accent); }
+.v3-tag.word { border: 0; border-radius: 6px; background: rgba(0,0,0,.6); }
+.ep-pin.ko span { border-color: var(--tally); }
+.ep-pin.cur span { background: var(--accent); color: #fff; border-color: var(--accent); }
+.cl-pin i, .ep-pin i { background: var(--amber); box-shadow: 0 0 0 2px rgba(12,14,19,.9), 0 4px 10px rgba(0,0,0,.4); }
+.ep-pin.ko i { background: var(--tally); }
+.v3-tab, .cl-tab { background: rgba(255,255,255,.08); border: 0; border-radius: 999px; padding: 6px 14px; color: var(--muted); font: 600 14px var(--f-body); }
+.v3-tab.on, .cl-tab.on, .v3-tab[aria-selected="true"], .cl-tab[aria-selected="true"] { background: var(--accent); color: #fff; }
+.v3-tools .btn.on, .ep-views .btn.on { background: var(--accent); color: #fff; border: 0; }
+.v3-li, .cl-ni { border-radius: var(--r-s); font-size: 14px; }
+.v3-li:hover, .cl-ni:hover { background: rgba(255,255,255,.07); }
+.v3-sp, .cl-sp { text-transform: none; letter-spacing: 0; font: 600 12.5px var(--f-body); color: var(--accent); }
+.v3-vue h4, .cl-sec h3, .cl-plus summary, .ep-sbody h3, .ep-cf h4 { font: 600 12.5px var(--f-body); letter-spacing: .06em; color: var(--dim); }
+.v3-steps, .v3-live, .v3-sel, .co-3d, .cl-fig, .cl-olivier, .cl-opt, .cl-todo, .ep-state, .ep-port, .ep-port-detail, .ep-pending, .ep-cfg-raw, .ep-exig li { background: var(--well); border: 1px solid var(--line); border-left: 1px solid var(--line); border-radius: var(--r-s); }
+.v3-live, .cl-olivier { background: var(--accent-d); border-color: transparent; }
+.ep-state.ok { border-color: rgba(52,199,89,.5); } .ep-state.ko { border-color: rgba(255,69,58,.5); }
+.ep-pending { background: var(--amber-d); border-color: transparent; }
+.cl-opt:hover { background: rgba(255,255,255,.1); border-color: var(--line2); }
+.cl-chip { background: rgba(255,255,255,.1); border: 0; border-radius: 999px; font: 600 13px var(--f-body); }
+.cl-chip:hover { background: rgba(255,255,255,.18); }
+.cl-ch summary b { border-radius: 6px; background: rgba(255,255,255,.1); }
+.co-json { background: rgba(0,0,0,.35); border-color: var(--line); border-radius: var(--r-s); color: var(--lcd); }
+.co-verdict { border-radius: var(--r-s); }
+.ep-cf-keys button { border: 0; border-radius: 8px; background: rgba(255,255,255,.1); font: 600 13px var(--f-body); }
+.ep-cf-keys button:hover { background: rgba(255,255,255,.18); }
