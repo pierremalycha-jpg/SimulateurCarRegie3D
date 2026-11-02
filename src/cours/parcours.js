@@ -35,7 +35,7 @@ export const TEST_MIN = 6, TEST_MAX = 12;
 export const PARCOURS = {
   signal: {
     debutant: ['signal-formats', 'signal-bits', 'signal-422'],
-    intermediaire: ['signal-niveaux'],
+    intermediaire: ['signal-niveaux', 'signal-compression'],
     avance: ['signal-couleur'],
   },
   sdi: {
@@ -62,8 +62,9 @@ export const PARCOURS = {
     intermediaire: ['ralentis-clips'],
   },
   son: {
-    debutant: ['son-tranche'],
-    intermediaire: ['son-n1'],
+    debutant: ['son-decibel', 'son-micros', 'son-tranche'],
+    intermediaire: ['son-stereo', 'son-liaisons', 'son-dynamique', 'son-n1'],
+    avance: ['son-loudness', 'son-numerique'],
   },
   reseau: {
     debutant: ['reseau-modele', 'reseau-etendue', 'reseau-ethernet', 'reseau-switch', 'reseau-ip'],

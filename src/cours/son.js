@@ -2,13 +2,17 @@
 import { el } from '../util.js';
 import { registerChapter } from './index.js';
 import { figure, sv, canvas, slider, choice, readout, fmtNum } from './kit.js';
+import { SON_BASES } from './son_bases.js';
+import { SON_TRAITEMENT } from './son_traitement.js';
 
 // ----------------------------------------------------------------------------------
-// Chapitre « Le son » : la tranche d'entrée de la console (gain, alimentation fantôme 48 V,
-// polarité, égaliseur, fader) puis les départs (N-1 des commentateurs, synchro labiale,
-// embedding vers la transmission). Les manipulations calculent sur de vrais échantillons : un
-// micro canon (foule et frappe de balle) écrêté à 0 dBFS, deux micros d'ambiance dont on inverse
-// la polarité (corrélation, perte en mono), les compositions des N-1 et le décalage son/image.
+// Chapitre « Le son », en trois parties (v19.24) : les bases (le décibel, les micros, les couples stéréo,
+// les niveaux et les liaisons : cours/son_bases.js), la console (la tranche d'entrée : gain, alimentation
+// fantôme 48 V, polarité, égaliseur, fader ; la dynamique : cours/son_traitement.js) et les départs (N-1
+// des commentateurs, synchro labiale, embedding vers la transmission ; le loudness ; l'audio numérique).
+// Les manipulations de ce fichier calculent sur de vrais échantillons : un micro canon (foule et frappe
+// de balle) écrêté à 0 dBFS, deux micros d'ambiance dont on inverse la polarité (corrélation, perte en
+// mono), les compositions des N-1 et le décalage son/image. Les calculs des autres leçons : son_calc.js.
 // ----------------------------------------------------------------------------------
 const C = { grey: '#8a949c', amber: '#ffd38a', red: '#ff8a80', green: '#7fd1a0', cyan: '#7fd3f3', box: '#1a2026', line: '#2a3238', tally: '#f0372c', pvw: '#33c46c' };
 // more.fill : la couleur du texte, passée en style (la classe du schéma imposerait sinon la sienne)
@@ -273,10 +277,27 @@ function figN1() {
   return f;
 }
 
+/** les parties du chapitre, dans l'ordre du sommaire, et leurs leçons dans l'ordre de lecture */
+export const PARTIES = [
+  ['Les bases', ['son-decibel', 'son-micros', 'son-stereo', 'son-liaisons']],
+  ['La console', ['son-tranche', 'son-dynamique']],
+  ['Les départs', ['son-n1', 'son-loudness', 'son-numerique']],
+];
+/**
+ * Range les leçons dans l'ordre des parties et note la partie de chacune (une leçon absente du tableau irait à la fin).
+ * @param {import('./index.js').Lesson[]} lecons
+ */
+function ranger(lecons) {
+  /** @type {import('./index.js').Lesson[]} */
+  const out = [];
+  for (const [nom, ids] of /** @type {[string, string[]][]} */ (PARTIES)) for (const id of ids) { const l = lecons.find((x) => x.id === id); if (l) out.push(Object.assign(l, { partie: nom })); }
+  return out.concat(lecons.filter((l) => !out.includes(l)));
+}
 registerChapter({
   id: 'son', title: 'Le son', icon: 'mixage',
-  intro: 'La console son du car : la tranche, les retours des commentateurs, la synchro labiale.',
-  lessons: [
+  intro: 'Le son du car, des bases à l\'antenne : le décibel et ses références, les micros et leur directivité, les couples stéréo, les niveaux et les liaisons ; puis la console (la tranche, la dynamique) et les départs (N-1, synchro labiale, loudness, audio numérique).',
+  lessons: ranger([
+    ...SON_BASES,
     {
       id: 'son-tranche', title: 'La tranche : gain, 48 V, phase, égaliseur, fader', minutes: '8 min',
       essentials: [
@@ -349,5 +370,6 @@ Le départ vers la chaîne est un signal SDI qui porte l'image et le son **embed
         { q: 'En sortie du car, en 1080p50, le son est en retard d\'une image sur la vidéo. Qu\'en conclure ?', choices: ['À corriger : 20 ms dépassent les 15 ms de retard permises à une étape', ['Rien à corriger : 20 ms restent sous les 60 ms tolérées', '60 ms, c\'est la tolérance de bout en bout, pour toute la chaîne ; le car n\'en est qu\'une étape, qui a droit à 15 ms de retard au plus.'], ['Gênant : le public remarque déjà un tel décalage', 'Selon l\'ITU-R BT.1359, un son en retard ne se remarque que vers 125 ms : 20 ms restent loin en dessous. Le problème est la part de l\'étape, pas la perception.']], answer: 0, why: 'Une image vaut 20 ms en 1080p50. L\'EBU R37 tolère 60 ms de retard de bout en bout, mais seulement 15 ms à chaque étape, et le car vise 0 ms : on retire l\'image de retard au son.' },
       ],
     },
-  ],
+    ...SON_TRAITEMENT,
+  ]),
 });

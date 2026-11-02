@@ -7,6 +7,8 @@ import '../content/terms_ctrlnet.js';
 import '../content/terms_fibre.js';
 import '../content/terms_ip.js';
 import '../content/terms_videohub.js';
+import '../content/terms_son.js';
+import '../content/terms_video.js';
 
 // ----------------------------------------------------------------------------------
 // Les liens du Cours avec le reste du simulateur : la leçon (ou la fiche « ? ») de chaque terme du
@@ -30,14 +32,20 @@ export const estLecon = (id) => !!lessonById(id);
 /** terme du glossaire (tel qu'écrit dans content/glossary.js) → leçon(s) puis fiche(s) « ? » */
 /** @type {Record<string, string | string[]>} */
 export const GLOSSAIRE = {
+  // le son, des bases à l'antenne (v19.24) ; la compression vidéo
+  'Décibel (dB, dBu, dBFS)': ['son-decibel', 'decibel'], 'Micro statique / dynamique': ['son-micros', 'micro-statique'], 'Directivité (cardioïde, canon)': ['son-micros', 'directivite'],
+  'Couple stéréo (XY, ORTF, AB, MS)': ['son-stereo', 'couple-stereo'], 'Liaison symétrique (XLR)': ['son-liaisons', 'symetrique'], 'Compresseur / limiteur / gate': ['son-dynamique', 'compresseur'],
+  'Crête vraie (dBTP)': ['son-loudness', 'dbtp'], 'MADI': ['son-numerique', 'madi'], 'Dante / AES67': ['son-numerique', 'dante'], 'Compression vidéo (codec, GOP)': ['signal-compression', 'codec'],
+  'Couple ORTF / XY': ['son-stereo', 'couple-stereo'], 'Micro canon': ['son-micros', 'directivite'], 'Compresseur': ['son-dynamique', 'compresseur'], 'Limiteur': ['son-dynamique', 'compresseur'],
+  'Gate / expandeur': ['son-dynamique', 'compresseur'], 'dBFS / dBTP': ['son-loudness', 'dbfs'], 'Corrélateur de phase': ['son-tranche', 'son-stereo'], 'Unité de commentaire': ['son-n1', 'son-numerique'],
   // les leçons de la TMO (v19.23)
-  'Synoptique': ['expl-synoptique'],  'Loudness (LUFS)': ['expl-pad', 'son-tranche'],  'EBU R128': ['expl-pad', 'son-tranche'],  'Nodal': ['expl-nodal', 'grille'],  'PAD (prêt à diffuser)': ['expl-pad'],
-  '(S,G)': ['reseau-multicast', 'mroute'], 'AES3 / AES67 / Dante': 'st2110-30', 'Bilan de liaison / marge': ['hf-bilan'], 'Black burst / tri-level': ['synchro-genlock', 'timing-ref'],
+  'Synoptique': ['expl-synoptique'],  'Loudness (LUFS)': ['son-loudness', 'expl-pad', 'lufs'],  'EBU R128': ['son-loudness', 'expl-pad', 'lufs'],  'Nodal': ['expl-nodal', 'grille'],  'PAD (prêt à diffuser)': ['expl-pad'],
+  '(S,G)': ['reseau-multicast', 'mroute'], 'AES3 / AES67 / Dante': ['son-numerique', 'aes3', 'st2110-30'], 'Bilan de liaison / marge': ['hf-bilan'], 'Black burst / tri-level': ['synchro-genlock', 'timing-ref'],
   BMCA: ['reseau-ptp', 'bmca'], BNC: ['sdi-cable', 'sdi-cest-quoi'], 'BT.709 / BT.2020': ['signal-couleur', 'cie1931'], 'Caméra HF': ['hf-bilan', 'hf-frequences'], 'CMAX / CINST': 'cmax', 'Codes 64-940': ['signal-niveaux', 'mv-pct'],
   COFDM: ['hf-cofdm'], 'Contrôleur SDN': 'sdn', 'Diversité': ['hf-antennes'], DSCP: ['reseau-qos', 'qos'], 'Écart 2022-7': 'ecart', ECMP: 'ecmp', 'Effet falaise': ['sdi-falaise', 'sdi-oeil', 'effet-falaise'],
   'Embedder / désembedder': ['sdi-embedded'], FEC: ['reseau-streaming', 'fec'], 'Fibre hybride SMPTE': ['camera-fibre', 'camera-systeme', 'cable-hybride'], 'Fibre monomode': ['camera-fibre', 'sdi-cable', 'fibre-monomode'],
   'Genlock / référence': ['synchro-genlock', 'timing-ref'], 'Grand maître PTP': ['reseau-ptp', 'grand-maitre'], Grille: ['sdi-grille', 'grille'], 'HDR / HLG / SDR': ['signal-couleur', 'hdr-hlg'], Holdover: 'holdover',
-  'Horloge frontière (BC)': ['reseau-ptp', 'bc'], IGMPv3: ['reseau-multicast', 'igmp'], 'JPEG XS': 'st2110-22', Latence: ['reseau-mesures', 'latence'], 'Leaf / ToR': 'leaf', 'MAC multicast': ['reseau-multicast', 'mac-mcast'],
+  'Horloge frontière (BC)': ['reseau-ptp', 'bc'], IGMPv3: ['reseau-multicast', 'igmp'], 'JPEG XS': ['signal-compression', 'st2110-22'], Latence: ['reseau-mesures', 'latence'], 'Leaf / ToR': 'leaf', 'MAC multicast': ['reseau-multicast', 'mac-mcast'],
   'Mire / barres': ['signal-niveaux', 'mire-75'], MTU: ['reseau-ethernet', 'mtu'], 'N-1 (mix-minus)': ['son-n1', 'sdi-embedded'], 'Niveau optique': ['camera-fibre', 'sdi-cable', 'niveau-optique'], 'NMOS IS-04 / IS-05': ['is-04', 'is-05'],
   'Numéro de séquence RTP': ['reseau-tcp-udp', 'rtp'], 'Offset PTP': ['reseau-ptp', 'offset'], OSPF: 'ospf', 'Parade RVB': ['signal-422', 'parade-rvb'], 'Passerelle IP ↔ SDI': 'passerelle-ip',
   'PIM-SSM': ['reseau-multicast', 'ssm', 'pim'], 'Point de croisement': 'point-croisement', PTP: ['reseau-ptp', 'ptp'], 'Quad-link / 2SI': ['signal-formats', '12g-sdi'], 'Querier IGMP': ['reseau-multicast', 'querier'],
@@ -65,7 +73,7 @@ export const POSTES = {
   synchro: { sdi: ['synchro-genlock', 'timing-ref'], ip: ['reseau-ptp', 'ptp'] },
   ccu: ['camera-systeme', 'camera-fibre', 'sdi-cable', 'sdi-cest-quoi'],
   hf: ['hf-bilan', 'hf-frequences', 'hf-antennes'],
-  son: ['son-tranche', 'son-n1', 'sdi-embedded'],
+  son: ['son-tranche', 'son-n1', 'son-decibel', 'son-micros', 'sdi-embedded'],
   transmission: ['expl-transmission', 'reseau-streaming', 'reseau-etendue', 'signal-formats', 'sdi-cest-quoi', '12g-sdi'],
   melangeur: ['real-melangeur', 'signal-422', 'signal-formats'],
   habillage: ['real-incrustations'],
