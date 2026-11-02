@@ -4,7 +4,7 @@ import { el } from '../util.js';
 import { $, modal, toast, ask, field } from './common.js';
 import { icon } from './icons.js';
 import { COMPTE, estProf, estEleve, nomDuCompte } from '../comptes/session.js';
-import { connecter, deconnecter, inscrireProf, renvoyerConfirmation, relireSession, mdpOublie, texteErreur } from '../comptes/firebase.js';
+import { connecter, deconnecter, inscrireProf, renvoyerConfirmation, relireSession, mdpOublie, texteErreur, confirmerAvecLien, nouveauMdpAvecLien } from '../comptes/firebase.js';
 import { guestProgress, absorbProgress, saveProgressNow, COMPTE_SH } from '../shared.js';
 import { motDePasseRefuse } from '../comptes/identifiants.js';
 
@@ -46,7 +46,7 @@ export function openConnexion(/** @type {'connexion' | 'prof'} */ vue = 'connexi
     const oubli = el('button', { type: 'button', class: 'linkbtn', onclick: async () => {
       const v = /** @type {HTMLInputElement} */ (id).value.trim();
       if (!v.includes('@')) { dire(msg, 'Élève : demande à ton professeur, il te donne un nouveau mot de passe. Professeur : tapez votre adresse e-mail, puis « Mot de passe oublié ? ».', true); return; }
-      try { await mdpOublie(v); dire(msg, `Un lien pour choisir un nouveau mot de passe est parti à ${v}.`, true); } catch (er) { dire(msg, texteErreur(er)); }
+      try { await mdpOublie(v); body.replaceChildren(); drawNouveauMdp(v); } catch (er) { dire(msg, texteErreur(er)); }
     } }, 'Mot de passe oublié ?');
     body.append(el('p', { class: 'cpt-intro' }, 'Connecte-toi pour retrouver ta progression sur n\'importe quel ordinateur. Ton identifiant et ton mot de passe te sont donnés par ton professeur.'),
       form, el('p', { class: 'cpt-liens' }, oubli, el('button', { type: 'button', class: 'linkbtn', id: 'cpt-prof', onclick: () => draw('prof') }, 'Professeur : ouvrir mon compte')));
@@ -72,11 +72,40 @@ export function openConnexion(/** @type {'connexion' | 'prof'} */ vue = 'connexi
   };
   const drawVerifier = () => {
     const msg = msgBox();
-    body.append(el('p', { class: 'cpt-intro' }, COMPTE.message || 'Confirmez votre adresse e-mail.'), msg,
+    // le lien du courriel, collé ici : l'application confirme l'adresse elle-même (la page de Firebase qui
+    // l'ouvre d'habitude peut refuser un lien abîmé par la messagerie : « The selected page mode is invalid »)
+    const lien = input({ id: 'cpt-lien', type: 'text', autocomplete: 'off', spellcheck: 'false', placeholder: 'https://…/__/auth/action?mode=verifyEmail&oobCode=…' });
+    const confirmer = async () => {
+      const v = /** @type {HTMLInputElement} */ (lien).value.trim();
+      if (!v) { dire(msg, 'Collez d\'abord le lien reçu par courriel.'); return; }
+      dire(msg, 'Confirmation…', true);
+      try { const ok = await confirmerAvecLien(v); dire(msg, ok ? 'Adresse confirmée. Ouverture du compte…' : 'Le lien est passé, mais l\'adresse n\'apparaît pas encore confirmée : réessayez dans un instant.', ok); }
+      catch (er) { dire(msg, er && er.code === 'lien-invalide' ? er.message : texteErreur(er)); }
+    };
+    body.append(el('p', { class: 'cpt-intro' }, COMPTE.message || 'Confirmez votre adresse e-mail.'),
+      el('form', { class: 'cpt-form', onsubmit: (e) => { e.preventDefault(); confirmer(); } },
+        field('Lien reçu par courriel (copiez-le : clic droit sur le lien, « Copier l\'adresse du lien »)', lien),
+        el('div', { class: 'hwrow' }, el('button', { type: 'submit', class: 'btn primary', id: 'cpt-confirmer' }, 'Confirmer mon adresse'))),
+      msg,
       el('div', { class: 'hwrow' },
-        el('button', { type: 'button', class: 'btn primary', onclick: async () => { try { await relireSession(); dire(msg, 'Vérification…', true); } catch (er) { dire(msg, texteErreur(er)); } } }, 'J\'ai confirmé mon adresse'),
+        el('button', { type: 'button', class: 'btn', onclick: async () => { try { const ok = await relireSession(); dire(msg, ok ? 'Adresse confirmée. Ouverture du compte…' : 'Adresse pas encore confirmée : collez le lien ci-dessus.', ok); } catch (er) { dire(msg, texteErreur(er)); } } }, 'J\'ai ouvert le lien'),
         el('button', { type: 'button', class: 'btn', onclick: async () => { try { await renvoyerConfirmation(); dire(msg, 'Lien renvoyé.', true); } catch (er) { dire(msg, texteErreur(er)); } } }, 'Renvoyer le lien'),
         el('button', { type: 'button', class: 'btn', onclick: () => deconnecter() }, 'Se déconnecter')));
+    setTimeout(() => /** @type {HTMLInputElement} */ (lien).focus(), 30);
+  };
+  // « mot de passe oublié » d'un professeur : le lien reçu et le nouveau mot de passe, dans l'application
+  const drawNouveauMdp = (/** @type {string} */ email) => {
+    const msg = msgBox();
+    const lien = input({ id: 'cpt-lien-mdp', type: 'text', autocomplete: 'off', spellcheck: 'false' });
+    const mdp = input({ id: 'cpt-nouveau-mdp', type: 'password', autocomplete: 'new-password' });
+    body.append(el('p', { class: 'cpt-intro' }, `Un lien est parti à ${email}. Copiez-le (clic droit, « Copier l'adresse du lien »), collez-le ici et choisissez votre nouveau mot de passe.`),
+      el('form', { class: 'cpt-form', onsubmit: async (e) => {
+        e.preventDefault();
+        const refus = motDePasseRefuse(/** @type {HTMLInputElement} */ (mdp).value); if (refus) { dire(msg, 'Mot de passe : ' + refus); return; }
+        try { await nouveauMdpAvecLien(/** @type {HTMLInputElement} */ (lien).value, /** @type {HTMLInputElement} */ (mdp).value); await connecter(email, /** @type {HTMLInputElement} */ (mdp).value); dire(msg, 'Mot de passe changé. Connexion…', true); }
+        catch (er) { dire(msg, er && er.code === 'lien-invalide' ? er.message : texteErreur(er)); }
+      } }, field('Lien reçu par courriel', lien), field('Nouveau mot de passe (6 caractères au moins)', mdp), msg,
+      el('div', { class: 'hwrow' }, el('button', { type: 'submit', class: 'btn primary' }, 'Changer le mot de passe'), el('button', { type: 'button', class: 'btn', onclick: () => draw('connexion') }, 'Retour'))));
   };
   draw(vue);
   modal.open('Se connecter', body, { width: 520 });

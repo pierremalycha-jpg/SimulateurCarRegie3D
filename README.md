@@ -411,7 +411,10 @@ Firestore), gratuit au volume d'une section de BTS.
   s'inscrit pas lui-même ; un mot de passe oublié se redemande au professeur ;
 - le **professeur** se connecte avec son **adresse e-mail** ; il ouvre son compte lui-même (« Professeur : ouvrir mon
   compte »), à condition que son adresse soit sur la **liste des professeurs** de l'établissement, puis la **confirme** par le
-  lien reçu (sans cela, quelqu'un d'autre pourrait ouvrir un compte à son adresse) ; « Mot de passe oublié ? » lui envoie un lien ;
+  lien reçu (sans cela, quelqu'un d'autre pourrait ouvrir un compte à son adresse) ; « Mot de passe oublié ? » lui envoie un lien.
+  Ces deux liens se **collent dans la fenêtre de connexion** : l'application applique elle-même le code du lien (`applyActionCode`,
+  `confirmPasswordReset`), sans la page de Firebase qui les ouvre d'habitude et qui refuse un lien abîmé par la messagerie
+  (« The selected page mode is invalid », vu au premier essai) ; un lien réécrit (`&amp;`, filtre de messagerie) est reconnu ;
 - le **rôle suit le compte** (`forceRole`, `src/app/profile.js`) : un compte élève reste Étudiant (le choix du profil
   disparaît des Réglages), un compte professeur est Formateur ; sans compte, le choix de l'ordinateur revient ;
 - **sans compte**, tout marche comme avant (« Continuer sans compte »), et tant que le projet Firebase n'est pas renseigné

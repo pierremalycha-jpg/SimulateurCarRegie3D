@@ -56,10 +56,13 @@ const champs = prof.locator('.cpt-form input');
 await champs.nth(0).fill('Pierre'); await champs.nth(1).fill('Malycha'); await champs.nth(2).fill('prof@lycee.fr'); await champs.nth(3).fill('secret123');
 await prof.click('.cpt-form button[type=submit]');
 T.check('ouverture du compte professeur : adresse à confirmer', await until(prof, () => /Confirmez votre adresse/.test(document.querySelector('.cpt')?.textContent || ''), null, 30000));
+// le lien du courriel, collé dans la fenêtre (abîmé comme par certaines messageries : « &amp; ») ; l'application confirme seule
 const codes = await (await fetch(`${AUTH}/emulator/v1/projects/${PROJET}/oobCodes`)).json();
 const lien = codes.oobCodes.filter((c) => c.email === 'prof@lycee.fr' && c.requestType === 'VERIFY_EMAIL').pop();
-await fetch(lien.oobLink.replace(/^http:\/\/[^/]+/, AUTH));
-await prof.click('text=J\'ai confirmé mon adresse');
+await prof.locator('.cpt').screenshot({ path: `${OUT}/02b-confirmer.png` });
+await prof.fill('#cpt-lien', 'https://exemple.fr/sans-code'); await prof.click('#cpt-confirmer');
+T.check('un lien qui n\'est pas le bon : refusé, avec la raison', await until(prof, () => /oobCode/.test(document.querySelector('.cpt-msg')?.textContent || ''), null, 10000));
+await prof.fill('#cpt-lien', lien.oobLink.replace(/&/g, '&amp;')); await prof.click('#cpt-confirmer');
 T.check('adresse confirmée : connecté comme professeur, profil Formateur imposé', await until(prof, () => window.__dbg.comptes.COMPTE.role === 'prof' && document.body.classList.contains('role-formateur') && !!document.querySelector('#ti-tableau'), null, 30000),
   await texte(prof, '#ti-compte'));
 

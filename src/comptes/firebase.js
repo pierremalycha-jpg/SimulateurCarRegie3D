@@ -3,6 +3,7 @@ import { initializeApp, deleteApp } from 'firebase/app';
 import {
   getAuth, initializeAuth, inMemoryPersistence, connectAuthEmulator, onIdTokenChanged, signInWithEmailAndPassword, signOut,
   createUserWithEmailAndPassword, sendEmailVerification, sendPasswordResetEmail, updatePassword, deleteUser, updateProfile,
+  applyActionCode, confirmPasswordReset,
 } from 'firebase/auth';
 import {
   getFirestore, connectFirestoreEmulator, doc, getDoc, setDoc, updateDoc, deleteDoc, onSnapshot, collection, query, where,
@@ -76,7 +77,7 @@ export function suivreSession(cb) {
       let snap = await getDoc(ref);
       if (!snap.exists()) {
         if (identifiantDeAdresse(u.email || '')) { cb({ etat: 'refuse', uid: u.uid, message: 'Ce compte d\'élève a été supprimé : demande à ton professeur.' }); await signOut(auth); return; }
-        if (!u.emailVerified) { cb({ etat: 'verifier', uid: u.uid, email: u.email || '', message: `Confirmez votre adresse ${u.email} : ouvrez le lien reçu par courriel, puis reconnectez-vous.` }); return; }
+        if (!u.emailVerified) { cb({ etat: 'verifier', uid: u.uid, email: u.email || '', message: `Confirmez votre adresse ${u.email} : copiez le lien reçu par courriel et collez-le ci-dessous.` }); return; }
         const [prenom, ...nom] = String(u.displayName || '').split(' ');
         try { await setDoc(ref, { role: 'prof', prenom: prenom || '', nom: nom.join(' '), email: (u.email || '').toLowerCase(), creeLe: serverTimestamp() }); }
         catch (e) { cb({ etat: 'refuse', uid: u.uid, email: u.email || '', message: `L'adresse ${u.email} n'est pas dans la liste des professeurs : demandez à un collègue de l'ajouter (Tableau de bord → Professeurs).` }); await signOut(auth); return; }
@@ -109,9 +110,39 @@ export async function inscrireProf(/** @type {{ email: string, mdp: string, pren
 export async function renvoyerConfirmation() { const { auth } = demarrer(); if (auth.currentUser) await sendEmailVerification(auth.currentUser); }
 /** relit l'état de l'adresse (après avoir cliqué le lien de confirmation) */
 export async function relireSession() {
-  const { auth } = demarrer(); const u = auth.currentUser; if (!u) return;
+  const { auth } = demarrer(); const u = auth.currentUser; if (!u) return false;
   // un nouveau jeton, qui porte maintenant email_verified : suivreSession est relancé
   await u.reload(); await u.getIdToken(true);
+  return !!(auth.currentUser && auth.currentUser.emailVerified);
+}
+/**
+ * Le code d'un lien reçu par courriel (confirmation d'adresse, nouveau mot de passe), collé tel quel : l'adresse
+ * entière, ou ce qu'un logiciel de messagerie en a fait (« &amp; », lien réécrit par un filtre qui garde l'original
+ * encodé dans un paramètre). La page de Firebase qui traite normalement ces liens n'est alors plus nécessaire.
+ * @returns {{ mode: string, code: string } | null}
+ */
+export function codeDuLien(/** @type {string} */ texte) {
+  let t = String(texte || '').trim().replace(/&amp;/g, '&');
+  for (let i = 0; i < 3 && /%26|%3D/i.test(t) && !/[?&]oobCode=/.test(t); i++) { try { t = decodeURIComponent(t); } catch (e) { break; } }
+  const code = (t.match(/[?&]oobCode=([A-Za-z0-9_-]{10,})/) || [])[1];
+  if (!code) return null;
+  return { mode: (t.match(/[?&]mode=([A-Za-z]+)/) || [])[1] || '', code };
+}
+/** confirme l'adresse du compte connecté avec le lien reçu, sans passer par la page de Firebase */
+export async function confirmerAvecLien(/** @type {string} */ lien) {
+  const c = codeDuLien(lien);
+  if (!c) throw Object.assign(new Error('Ce n\'est pas le lien reçu par courriel (il contient « oobCode= »).'), { code: 'lien-invalide' });
+  if (c.mode && c.mode !== 'verifyEmail') throw Object.assign(new Error('Ce lien ne sert pas à confirmer une adresse.'), { code: 'lien-invalide' });
+  const { auth } = demarrer();
+  await applyActionCode(auth, c.code);
+  return relireSession();
+}
+/** choisit un nouveau mot de passe avec le lien « mot de passe oublié » reçu, sans passer par la page de Firebase */
+export async function nouveauMdpAvecLien(/** @type {string} */ lien, /** @type {string} */ mdp) {
+  const c = codeDuLien(lien);
+  if (!c || (c.mode && c.mode !== 'resetPassword')) throw Object.assign(new Error('Ce n\'est pas le lien « mot de passe oublié » reçu par courriel.'), { code: 'lien-invalide' });
+  const { auth } = demarrer();
+  await confirmPasswordReset(auth, c.code, mdp);
 }
 export async function mdpOublie(/** @type {string} */ email) { const { auth } = demarrer(); await sendPasswordResetEmail(auth, email.trim().toLowerCase()); }
 
@@ -123,7 +154,8 @@ export function texteErreur(/** @type {any} */ e) {
     'auth/invalid-email': 'Identifiant ou adresse mal écrit.', 'auth/too-many-requests': 'Trop d\'essais : attendez quelques minutes avant de réessayer.',
     'auth/network-request-failed': 'Pas de connexion à Internet (ou le réseau bloque Firebase).', 'auth/email-already-in-use': 'Un compte existe déjà avec cette adresse.',
     'auth/weak-password': 'Mot de passe trop court (6 caractères au moins).', 'auth/user-disabled': 'Ce compte est désactivé.',
-    'permission-denied': 'Action refusée par les règles de la base (droits insuffisants).', unavailable: 'Le serveur des comptes ne répond pas (connexion ?).',
+    'auth/invalid-action-code': 'Ce lien a déjà servi ou n\'est plus valable : demandez-en un nouveau.', 'auth/expired-action-code': 'Ce lien a expiré : demandez-en un nouveau.',
+    'lien-invalide': '', 'permission-denied': 'Action refusée par les règles de la base (droits insuffisants).', unavailable: 'Le serveur des comptes ne répond pas (connexion ?).',
   };
   return M[c] || (e && e.message ? String(e.message).replace(/^Firebase: /, '') : 'Erreur inconnue.');
 }

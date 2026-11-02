@@ -30,11 +30,15 @@ async function ecrireAdmin(chemin, champs) {
   const r = await fetch(`http://${FH}:${FP}/v1/projects/${PROJET}/databases/(default)/documents/${chemin}`, { method: 'PATCH', headers: owner, body: JSON.stringify({ fields: champs }) });
   assert.ok(r.ok, await r.text());
 }
-async function confirmerAdresse(email) {
+/** le dernier lien envoyé par courriel à cette adresse (VERIFY_EMAIL, PASSWORD_RESET) */
+async function lienRecu(email, type) {
   const l = await (await fetch(`${AUTH}/emulator/v1/projects/${PROJET}/oobCodes`)).json();
-  const code = l.oobCodes.filter((c) => c.email === email && c.requestType === 'VERIFY_EMAIL').pop();
-  assert.ok(code, 'lien de confirmation envoyé');
-  const r = await fetch(code.oobLink.replace(/^http:\/\/[^/]+/, AUTH)); assert.ok(r.ok);
+  const code = l.oobCodes.filter((c) => c.email === email && c.requestType === type).pop();
+  assert.ok(code, 'lien envoyé : ' + type);
+  return code.oobLink;
+}
+async function confirmerAdresse(email) {
+  const r = await fetch((await lienRecu(email, 'VERIFY_EMAIL')).replace(/^http:\/\/[^/]+/, AUTH)); assert.ok(r.ok);
 }
 await fetch(`http://${FH}:${FP}/emulator/v1/projects/${PROJET}/databases/(default)/documents`, { method: 'DELETE' });
 await fetch(`${AUTH}/emulator/v1/projects/${PROJET}/accounts`, { method: 'DELETE' });
@@ -63,7 +67,10 @@ await check('un professeur autorisé : adresse à confirmer, puis compte profess
   await FB.inscrireProf({ email: 'prof@lycee.fr', mdp: 'secret123', prenom: 'Pierre', nom: 'Prof' });
   const v = await attendre((c) => c.etat === 'verifier');
   assert.match(v.message, /Confirmez/);
-  await confirmerAdresse('prof@lycee.fr'); await FB.relireSession();
+  // le lien collé dans l'application, abîmé comme par certaines messageries (« &amp; ») : confirmé sans la page de Firebase
+  await assert.rejects(FB.confirmerAvecLien('https://exemple.fr/pas-un-lien'), /oobCode/);
+  const lien = (await lienRecu('prof@lycee.fr', 'VERIFY_EMAIL')).replace(/&/g, '&amp;');
+  assert.equal(await FB.confirmerAvecLien(lien), true);
   const c = await attendre((x) => x.etat === 'connecte');
   assert.equal(c.role, 'prof'); assert.equal(c.prenom, 'Pierre');
 });
@@ -150,6 +157,22 @@ await check('l\'élève : le module le reconnaît comme élève (identifiant, cl
   const c = await attendre((x) => x.etat === 'connecte');
   assert.equal(c.role, 'eleve'); assert.equal(c.identifiant, 'tom.durand'); assert.equal(c.classe, null);
   await assert.rejects(FB.creerClasse('X', c.uid));
+  await FB.deconnecter();
+});
+await check('le code d\'un lien collé : adresse entière, « &amp; », lien réécrit par un filtre de messagerie', async () => {
+  const l = 'https://tieesimulatorbdd.firebaseapp.com/__/auth/action?mode=verifyEmail&oobCode=AbC_123-xyzXYZ&apiKey=k&lang=fr';
+  assert.deepEqual(FB.codeDuLien(l), { mode: 'verifyEmail', code: 'AbC_123-xyzXYZ' });
+  assert.deepEqual(FB.codeDuLien(l.replace(/&/g, '&amp;')), { mode: 'verifyEmail', code: 'AbC_123-xyzXYZ' });
+  assert.deepEqual(FB.codeDuLien('https://safelinks.protection.outlook.com/?url=' + encodeURIComponent(l) + '&data=x'), { mode: 'verifyEmail', code: 'AbC_123-xyzXYZ' });
+  assert.equal(FB.codeDuLien('bonjour'), null);
+});
+await check('mot de passe oublié d\'un professeur : le lien collé et le nouveau mot de passe, dans l\'application', async () => {
+  await FB.mdpOublie('prof@lycee.fr');
+  await assert.rejects(FB.nouveauMdpAvecLien(await lienRecu('prof@lycee.fr', 'VERIFY_EMAIL'), 'autre456'), /mot de passe oublié/);
+  await FB.nouveauMdpAvecLien(await lienRecu('prof@lycee.fr', 'PASSWORD_RESET'), 'nouveau789');
+  await FB.connecter('prof@lycee.fr', 'nouveau789');
+  const c = await attendre((x) => x.etat === 'connecte' && x.role === 'prof');
+  assert.equal(c.email, 'prof@lycee.fr');
   await FB.deconnecter();
 });
 await check('mauvais mot de passe : message en français', async () => {
