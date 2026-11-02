@@ -11,7 +11,7 @@ import { GLOSSAIRE, POSTES, premiere, cibleDuTerme, posteCible, titreDe, estLeco
 import { TERMS } from '../../src/content/netterms.js';
 import { GLOSSARY } from '../../src/content/glossary.js';
 import { STATION_LIST } from '../../src/content/stations.js';
-import { RATTACHEMENT, COMPETENCES } from '../../src/content/referentiel.js';
+import { RATTACHEMENT, COMPETENCES, SAVOIRS, TMO } from '../../src/content/referentiel.js';
 
 // une cible peut être une leçon déjà écrite, une leçon annoncée (rattachée au référentiel) ou une fiche « ? »
 const planned = new Set(Object.keys(RATTACHEMENT.cours));
@@ -82,13 +82,22 @@ test('liens : glossaire → leçon ou fiche, poste → leçon, cibles existantes
   for (const [t] of GLOSSARY) { const f = cibleDuTerme(t); if (f) assert.ok(lessonById(f) || TERMS[f], `${t} → ${f}`); }
 });
 
-test('référentiel : chaque leçon écrite est rattachée à des compétences connues', () => {
+test('référentiel : chaque leçon écrite est rattachée à des compétences officielles (C1 à C39) et à des savoirs connus', () => {
   const codes = new Set(COMPETENCES.map((c) => c.code));
   for (const { lesson } of allLessons()) {
     const list = RATTACHEMENT.cours[lesson.id];
     assert.ok(list && list.length, `${lesson.id} : sans compétence`);
     for (const c of list) assert.ok(codes.has(c), `${lesson.id} : compétence inconnue ${c}`);
+    // la leçon porte la même liste que le rattachement du livret (c'est elle qu'affiche le bloc Référentiel)
+    assert.deepEqual(lesson.competences, list, `${lesson.id} : competences ≠ RATTACHEMENT.cours`);
+    assert.ok(lesson.savoirs && lesson.savoirs.length, `${lesson.id} : sans savoir du référentiel`);
+    for (const s of lesson.savoirs) assert.ok(SAVOIRS[s], `${lesson.id} : savoir inconnu ${s}`);
   }
+  // les cinq leçons de la TMO (v19.23), dans le chapitre L'exploitation, travaillent des compétences de l'unité U4
+  const tmo = ['expl-synoptique', 'expl-energie', 'expl-nodal', 'expl-pad', 'expl-recette'];
+  for (const id of tmo) { const f = lessonById(id); assert.ok(f && f.chapter.id === 'exploitation', id); }
+  assert.ok(tmo.filter((id) => RATTACHEMENT.cours[id].some((c) => TMO.includes(c))).length >= 4, 'leçons TMO rattachées à l\'unité U4');
+  assert.ok(allLessons().length >= 62);
 });
 
 test('exercices pratiques : ids connus, chacun rangé une seule fois', async () => {
