@@ -31,15 +31,18 @@ T.check('Cours : l\'espace s\'ouvre par-dessus le titre, sur les leçons', await
 const lessons = await ev(() => window.__dbg.COURS.allLessons().map(({ chapter, lesson }) => ({ ch: chapter.id, id: lesson.id, title: lesson.title, n: lesson.quiz.length, demo: !!lesson.demo, fig: !!lesson.figure, terms: (lesson.terms || []).length })));
 T.log('leçons', lessons.length, lessons.map((l) => l.id).join(' '));
 T.check('au moins une leçon par chapitre', ['signal', 'sdi', 'reseau', 'hf'].every((c) => lessons.some((l) => l.ch === c)), JSON.stringify([...new Set(lessons.map((l) => l.ch))]));
-// répondre au quiz affiché : juste partout (ou faux à la question « faux »), puis valider
+// répondre au quiz affiché : juste partout (ou faux à la question « faux »), puis valider. Les clics passent par la
+// page (comme dans la suite parcours) : une manipulation lourde ralentit tant le rendu logiciel que l'attente de
+// Playwright dépasse son délai
+const clic = async (sel) => { const ok = await ev((s) => { const b = /** @type {HTMLElement | null} */ (document.querySelector(s)); if (b) b.click(); return !!b; }, sel); if (!ok) T.log('introuvable :', sel); };
 const answerQuiz = async (id, faux = -1) => {
   const qs = await ev(() => [...document.querySelectorAll('#layer .co-q')].map((q) => Number(/** @type {HTMLElement} */ (q).dataset.q)));
   const bank = await ev((lid) => window.__dbg.COURS.lessonById(lid).lesson.quiz.map((q) => q.answer), id);
   for (let k = 0; k < qs.length; k++) {
     const c = k === faux ? (bank[qs[k]] + 1) % 3 : bank[qs[k]];
-    await A.locator(`#layer .co-q[data-q="${qs[k]}"] .co-choice-btn[data-c="${c}"]`).click({ force: true, timeout: 5000 }).catch(() => {}); // force : une manipulation animée retarde le test de stabilité de Playwright
+    await clic(`#layer .co-q[data-q="${qs[k]}"] .co-choice-btn[data-c="${c}"]`);
   }
-  await A.locator('#layer .co-valider').click({ force: true, timeout: 5000 }).catch(() => {});
+  await clic('#layer .co-valider');
   await A.waitForTimeout(150);
   return qs;
 };

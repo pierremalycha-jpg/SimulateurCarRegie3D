@@ -224,7 +224,7 @@ function demoStereo(host) {
     const creux = premierCreuxHz(r.dt);
     read.set('En mono (L + R)', c.genre === 'espace' ? (Number.isFinite(creux) ? `filtre en peigne : premier creux à ${creux >= 1000 ? fmtNum(creux / 1000, 1) + ' kHz' : fmtNum(creux, 0) + ' Hz'} pour cette source` : 'source dans l\'axe : pas de creux') : c.genre === 'ms' ? 'parfait : le S s\'annule, il reste le M' : 'parfait : capsules coïncidentes, aucun déphasage');
     const eq = msVersXY(gS, directivite(c.a).a);
-    read.set('MS décodé : l\'équivalent XY', c.genre === 'ms' ? `deux ${eq.nom.toLowerCase()}s virtuels ouverts à ${fmtNum(eq.angle, 0)}° (S à ${dB(ratioDb(gS))} du M)` : '—');
+    read.set('MS décodé : l\'équivalent XY', c.genre === 'ms' ? `deux ${eq.nom.toLowerCase()}s virtuels ouverts à ${fmtNum(eq.angle, 0)}° (S à ${dB(ratioDb(gS))} du M)` : 'pas de matrice sur ce couple : choisissez MS');
     verdict.className = 'co-verdict ' + (Math.abs(r.pos) >= 100 ? 'warn' : 'ok');
     verdict.textContent = Math.abs(r.pos) >= 100 ? 'Cette source sort de l\'angle d\'enregistrement : elle est collée sur un haut-parleur. Un couple moins espacé ou moins ouvert l\'y ramènerait.' : c.genre === 'coincident' ? 'Un couple coïncident : l\'image ne tient qu\'aux écarts de niveau ; en mono, rien ne se creuse.' : c.genre === 'ms' ? 'Le MS : la largeur se règle après coup avec le niveau du S, et le mono est le M tel quel.' : c.a === 'omni' ? 'Deux omnis espacés : l\'image ne tient qu\'aux écarts de temps ; ample, mais le mono se creuse (peigne).' : 'Niveau et temps à la fois : l\'image est stable et naturelle, comme deux oreilles.';
   };

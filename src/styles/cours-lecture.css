@@ -61,8 +61,8 @@ body.q-basse .co-steps-bar { backdrop-filter: none; -webkit-backdrop-filter: non
 .co-lecon .co-ref .co-ref-lede { font-size: 14px; }
 .co-lecon .co-ref .co-ref-list { display: flex; flex-wrap: wrap; gap: 8px; }
 .co-lecon .co-ref .co-ref-list li { display: contents; }
-.co-lecon .co-ref .co-ref-comp { width: auto; flex: 0 1 auto; gap: 6px; padding: 7px 12px; border-radius: 999px; font-size: 14px; background: rgba(255,255,255,.07); }
-.co-lecon .co-ref .co-ref-comp span { flex: none; min-width: 0; }
+.co-lecon .co-ref .co-ref-comp { width: auto; max-width: 100%; box-sizing: border-box; flex: 0 1 auto; gap: 6px; padding: 7px 12px; border-radius: 999px; font-size: 14px; background: rgba(255,255,255,.07); }
+.co-lecon .co-ref .co-ref-comp span { flex: 0 1 auto; min-width: 0; white-space: normal; }
 .co-lecon .co-ref .co-ref-comp small { font-size: 12px; }
 .co-lecon .co-ref .co-ref-det { padding: 10px 16px; background: var(--well); border: 1px solid var(--line); border-radius: var(--r); }
 .co-lecon .co-ref .co-ref-det summary { font-size: 14px; }
