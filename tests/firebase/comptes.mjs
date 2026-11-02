@@ -168,7 +168,7 @@ await check('le code d\'un lien collé : adresse entière, « &amp; », lien ré
 });
 await check('mot de passe oublié d\'un professeur : le lien collé et le nouveau mot de passe, dans l\'application', async () => {
   await FB.mdpOublie('prof@lycee.fr');
-  await assert.rejects(FB.nouveauMdpAvecLien(await lienRecu('prof@lycee.fr', 'VERIFY_EMAIL'), 'autre456'), /mot de passe oublié/);
+  await assert.rejects(FB.nouveauMdpAvecLien('https://x.firebaseapp.com/__/auth/action?mode=verifyEmail&oobCode=AbCdEfGhIjKl', 'autre456'), /mot de passe oublié/);
   await FB.nouveauMdpAvecLien(await lienRecu('prof@lycee.fr', 'PASSWORD_RESET'), 'nouveau789');
   await FB.connecter('prof@lycee.fr', 'nouveau789');
   const c = await attendre((x) => x.etat === 'connecte' && x.role === 'prof');
