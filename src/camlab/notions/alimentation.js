@@ -51,6 +51,6 @@ export const ALIMENTATION = {
   ],
   see: ['connectique', 'fibre', 'ccu', 'cadreur'],
   ref: 'Fiche technique HXC-FB80 : consommation ≈ 19 W (corps), ≈ 32 W avec le viseur fourni ; DC IN XLR 4 broches, 10,5 à 17 V, 5,4 A au plus ; DC OUT 1,5 A au plus ; alimentation par câble hybride CCFN jusqu\'à 600 m (objectif portable, HXCU-FB80), 1000 m pour la HXC-P70 ; fibre monomode LC jusqu\'à 10 km avec alimentation locale. HXCU-FB80 : secteur 100 à 240 V',
-  competences: ['2.7', '3.4', '3.8'],
+  competences: ['C20', 'C4', 'C18'],
   cours: 'camera-systeme',
 };

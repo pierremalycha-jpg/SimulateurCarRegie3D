@@ -53,5 +53,5 @@ export const CCU = {
   ],
   see: ['fibre', 'rcp', 'genlock', 'sortie', 'alimentation', 'retours', 'tally'],
   ref: 'Fiche Sony HXCU-FB80 : REFERENCE IN (BNC ×2 avec boucle, tri-level 0,6 V c-à-c SMPTE 274M ou black burst), RET (VBS ×2, SDI ×2), PROMPTER (BNC ×2), sorties SDI HD/SD ×4 et 3G/4K/HD ×4, intercom en façade (XLR 5 broches), intercom/tally/programme (D-sub 25) ; 600 m en câble hybride avec la HXC-FB80 ; mode d\'emploi RCP-1500 : CAM PW',
-  competences: ['2.7', '2.1', '2.9'],
+  competences: ['C20', 'C8', 'C23'],
 };

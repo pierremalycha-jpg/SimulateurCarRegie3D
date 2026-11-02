@@ -51,5 +51,5 @@ export const VECTO = {
   ],
   see: ['waveform', 'balance', 'matrice', 'mires', 'lineup', 'moniteur', 'rcp'],
   ref: 'ITU-R BT.709 : Y′ = 0,2126 R′ + 0,7152 V′ + 0,0722 B′, Cb = (B′ − Y′) ÷ 1,8556, Cr = (R′ − Y′) ÷ 1,5748 ; ITU-R BT.601 (coefficients de la SD) ; barres 100/0/75/0 (nomenclature ITU-R BT.471) ; ligne des carnations à 123° (axe I) ; mode d\'emploi HXC-FB80 : OUTPUT/AUTO KNEE (BARS, CAM), PAINT P06 SATURATION et P14 USER MATRIX',
-  competences: ['2.2', '1.4'],
+  competences: ['C10', 'C32'],
 };

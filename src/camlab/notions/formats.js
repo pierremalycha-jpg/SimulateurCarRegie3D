@@ -54,5 +54,5 @@ export const FORMATS = {
   ],
   see: ['shutter', 'sortie', 'ccu', 'genlock', 'hfr', 'menu'],
   ref: 'Fiche technique HXC-FB80 : 1080/59,94P, 59,94i, 50P, 50i, 29,97PsF, 25PsF, 23,98PsF ; 720/59,94P, 50P ; 480/59,94i, 576/50i ; mode d\'emploi HXC-FB80 : page OUTPUT FORMAT (M09), écran STATUS ; SMPTE ST 274 (1080), ST 296 (720), RP 211 (PsF), ST 292-1 (HD-SDI, 1,485 Gb/s), ST 424 (3G-SDI, 2,97 Gb/s), ST 352 (identifiant de format) ; ITU-R BT.709',
-  competences: ['1.1', '1.4', '2.2'],
+  competences: ['C6', 'C32', 'C10'],
 };

@@ -53,6 +53,6 @@ export const LINEUP = {
   ],
   see: ['balance', 'noir', 'matrice', 'rcp', 'waveform', 'vecto', 'mires', 'fichiers'],
   ref: 'Mode d\'emploi HXC-FB80 : FILE F03 REFERENCE, PAINT P06 SATURATION et P14 USER MATRIX ; mode d\'emploi RCP-1500 : WHITE, boutons WHITE R, G, B et BLACK/FLARE R, G, B, master black ; luminance et différences de couleur ITU-R BT.709 ; méthode de la leçon « Le line-up » du Cours',
-  competences: ['1.4', '2.2', '3.9'],
+  competences: ['C32', 'C10', 'C19'],
   cours: 'expl-lineup',
 };

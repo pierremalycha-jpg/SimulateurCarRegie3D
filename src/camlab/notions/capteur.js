@@ -48,5 +48,5 @@ export const CAPTEUR = {
   ],
   see: ['prisme', 'gain', 'shutter', 'quantif', 'grandcapteur', 'focale'],
   ref: 'Sony HXC-FB80 : trois capteurs CMOS 2/3" 1920 × 1080, sensibilité F13 à 2000 lux (50i, 3200 K, réflectance 89,9 %), rapport signal sur bruit 60 dB ; zone image 2/3" 16:9 : 9,59 × 5,39 mm',
-  competences: ['2.9'],
+  competences: ['C23'],
 };

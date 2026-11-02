@@ -104,7 +104,7 @@ export const LESSON_REGIE_MOBILE = {
 - La documentation du constructeur donne l'adresse d'usine, le port du service, et comment revenir aux réglages d'usine (un bouton, un commutateur, un délai après la mise sous tension).`,
   car: { text: 'Dans l\'entrepôt (écran Jouer, lieu L\'entrepôt) : le stock, la baie, la table, le plateau ; chaque appareil a ses faces, ses connecteurs et ses menus de configuration ; le panneau Réseau montre les adresses effectives et le ping ; le cahier des charges donne la note.' },
   terms: ['vlan', 'qos', 'poe', 'dhcp'],
-  competences: ['1.1', '2.1', '2.10', '3.9'],
+  competences: ['C6', 'C8', 'C25', 'C19'], savoirs: ['D2', 'D6', 'K3', 'L2', 'H1'],
   exercises: [
     { id: 'x-entrepot', intro: 'Exercice noté, dans l\'entrepôt : le lycée commande une régie à trois caméras PTZ pour sa cérémonie. Vous sortez le matériel du stock, vous le posez, vous le câblez et vous le configurez (adresses, formats, pupitre, tally, enregistrement, micro embarqué) jusqu\'à ce que le cahier des charges soit rempli, dans le budget.' },
   ],

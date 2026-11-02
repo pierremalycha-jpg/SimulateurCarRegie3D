@@ -52,5 +52,5 @@ export const WAVEFORM = {
   ],
   see: ['vecto', 'moniteur', 'iris', 'exposition', 'noir', 'knee', 'viseur', 'lineup'],
   ref: 'ITU-R BT.709 : noir au code 64, blanc au code 940 en 10 bits (0 à 700 mV) ; SDI de −7 à 109 % (codes 4 à 1019) ; EBU R 103 : luminance de −1 à 103 %, R, V, B de −5 à 105 % ; ITU-R BT.2408 : HLG, blanc de référence à 75 % ; mode d\'emploi HXC-FB80 : menu OPERATION, page O06 ZEBRA',
-  competences: ['1.4', '2.2'],
+  competences: ['C32', 'C10'],
 };

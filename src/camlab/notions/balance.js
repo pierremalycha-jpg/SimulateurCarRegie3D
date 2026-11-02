@@ -50,5 +50,5 @@ export const BALANCE = {
   ],
   see: ['cc', 'noir', 'rcp', 'lineup', 'mires', 'gain', 'matrice'],
   ref: 'Mode d\'emploi HXC-FB80 : commutateurs WHITE BAL (PRST, A, B), WHT/BLK, OUTPUT/AUTO KNEE (BARS, CAM), bouton COLOR TEMP. ; messages ABB/AWB: EXECUTING et OK ; PRST 3200 K, COLOR TEMP. 5600 K ; page CC du menu',
-  competences: ['2.7', '1.4'],
+  competences: ['C20', 'C32'],
 };

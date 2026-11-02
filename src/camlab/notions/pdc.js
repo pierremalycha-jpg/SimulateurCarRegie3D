@@ -49,5 +49,5 @@ export const PDC = {
   ],
   see: ['iris', 'focale', 'point', 'nd', 'tirage', 'grandcapteur'],
   ref: 'Cercle de confusion 0,011 mm pour le format 2/3" ; hyperfocale H = f² ÷ (N × c) ; limites de netteté H·s ÷ (H ± s) ; Fujinon ZA12x4.5BERD : 4,5–54 mm, f/1,8',
-  competences: ['2.9'],
+  competences: ['C23'],
 };

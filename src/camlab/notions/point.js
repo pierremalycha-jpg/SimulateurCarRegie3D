@@ -46,5 +46,5 @@ export const POINT = {
   ],
   see: ['pdc', 'zoom', 'tirage', 'macro', 'viseur', 'cadreur'],
   ref: 'Fujinon ZA12x4.5BERD : distance minimale de mise au point 0,3 m ; repère Φ du plan focal sur le corps ; mode d\'emploi HXC-FB80, menu OPERATION (VF DETAIL, FOCUS ASSIST)',
-  competences: ['2.9'],
+  competences: ['C23'],
 };

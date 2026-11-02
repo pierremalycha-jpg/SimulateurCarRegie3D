@@ -50,5 +50,5 @@ export const RAMPING = {
   ],
   see: ['iris', 'zoom', 'doubleur', 'exposition', 'gain', 'focale'],
   ref: 'Fiche Fujinon ZA12x4.5BERD : ouverture maximale 1:1,8 (4,5–41 mm), 1:2,4 (54 mm) ; doubleur ×2 : 9–108 mm ; nombre d\'ouverture N = f ÷ D (pupille d\'entrée) ; mode d\'emploi HXC-FB80 : affichage IRIS du viseur',
-  competences: ['2.9', '1.4'],
+  competences: ['C23', 'C32'],
 };

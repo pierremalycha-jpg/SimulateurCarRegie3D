@@ -48,5 +48,5 @@ export const TIRAGE = {
   ],
   see: ['zoom', 'point', 'pdc', 'iris', 'monture', 'mires'],
   ref: 'Monture à baïonnette 2/3" (B4) : tirage 48,00 mm dans l\'air, norme BTA S-1005 ; notice de l\'objectif Fujinon ZA12x4.5',
-  competences: ['2.7'],
+  competences: ['C20'],
 };

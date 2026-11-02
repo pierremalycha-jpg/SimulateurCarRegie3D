@@ -52,5 +52,5 @@ export const DETAIL = {
   ],
   see: ['point', 'gain', 'olpf', 'viseur', 'matrice', 'moniteur'],
   ref: 'Mode d\'emploi HXC-FB80 : menu PAINT, pages P01 SW STATUS (DETAIL, LVL DEP, SKIN DTL), P09 DETAIL 1 (LEVEL, LIMITER, CRISP), P10 DETAIL 2 (H/V RATIO, FREQ, KNEE APT), P11 SD DETAIL, P12 SD CROSSCOLOR, P13 SKIN DETAIL ; menu OPERATION, page O04 VF DETAIL',
-  competences: ['2.9'],
+  competences: ['C23'],
 };

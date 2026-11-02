@@ -47,5 +47,5 @@ export const ND_FILTRES = {
   ],
   see: ['iris', 'exposition', 'cc', 'pdc', 'rcp', 'gain'],
   ref: 'Mode d\'emploi HXC-FB80 : bouton FILTER, positions 1 CLEAR, 2 1/4 ND, 3 1/16 ND, 4 1/64 ND ; densité optique d = −log10 de la transmission (0,6 · 1,2 · 1,8)',
-  competences: ['2.9'],
+  competences: ['C23'],
 };

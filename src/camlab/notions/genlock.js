@@ -54,6 +54,6 @@ export const GENLOCK = {
   ],
   see: ['ccu', 'sortie', 'connectique', 'formats', 'menu'],
   ref: 'SMPTE ST 274 (format 1080, synchro tri-level : ±300 mV, 44 périodes d\'horloge) ; ITU-R BT.1700 (black burst 625 lignes : top de 4,7 µs à −300 mV, salve à 4,43 MHz) ; fiche Sony HXCU-FB80 : REFERENCE IN, BNC ×2 avec boucle, tri-level 0,6 V c-à-c (SMPTE 274M) ou black burst 0,3 V ; mode d\'emploi HXC-FB80 : PROMPTER/GENLOCK, page M13 GENLOCK',
-  competences: ['1.4', '1.2', '2.2'],
+  competences: ['C32', 'C21', 'C10'],
   cours: 'synchro-genlock',
 };

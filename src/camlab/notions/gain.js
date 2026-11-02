@@ -54,5 +54,5 @@ export const GAIN = {
   ],
   see: ['capteur', 'exposition', 'iris', 'noir', 'balance', 'rcp', 'hfr'],
   ref: 'Fiche technique HXC-FB80 : sensibilité F12 (59,94 Hz), F13 (50 Hz) à 2000 lx, 3200 K, réflectance 89,9 % ; rapport signal sur bruit 60 dB ; gain −3 à +12 dB ; mode d\'emploi HXC-FB80 : commutateur GAIN L, M, H (0, 6 et 12 dB d\'usine, page SWITCH ASSIGN1), commandé par le RCP quand la caméra est reliée ; 20 × log10 : 6,02 dB par diaphragme',
-  competences: ['2.9', '1.4'],
+  competences: ['C23', 'C32'],
 };

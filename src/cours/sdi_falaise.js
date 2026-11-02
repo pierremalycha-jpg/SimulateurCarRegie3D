@@ -47,7 +47,7 @@ Entre deux lignes d'image, dans la suppression, le signal transporte des donnée
 - **La gigue.** Si la position des transitions varie trop, l'œil se ferme aussi sur les côtés : le récepteur ne sait plus quand lire le bit.`,
   car: { text: 'Dans le car SDI, presque tout arrive à la grille par des câbles coaxiaux : sorties des CCU, serveurs EVS, habillage, duplex. À la baie de brassage, un cordon oublié ou croisé se voit tout de suite au multiview ; à la baie de mesure, le PRISM montre l\'œil et compte les erreurs CRC. Dans le plan caméras, une liaison coaxiale trop longue est refusée.', station: 'mesure' },
   terms: ['oeil', 'effet-falaise', 'affaiblissement', 'egaliseur', 'crc-edh', 'vpid'],
-  competences: ['2.2', '2.13', '3.9'], article: 'liaisons',
+  competences: ['C10', 'C36', 'C19'], savoirs: ['C3', 'C7', 'C9'], article: 'liaisons',
   quiz: [
     { q: 'Une caméra est reliée en 12G-SDI par 90 m de câble coaxial. Que voit-on au multiview ?',
       choices: [['Une image un peu plus sombre et moins nette.', 'C\'était le cas en analogique. En numérique, l\'image ne se dégrade pas peu à peu : elle est parfaite, ou elle casse.'],

@@ -48,5 +48,5 @@ export const IRIS = {
   ],
   see: ['pdc', 'nd', 'exposition', 'ramping', 'rcp', 'gain'],
   ref: 'Nombre d\'ouverture N = f ÷ D (pupille d\'entrée) ; Fujinon ZA12x4.5BERD : f/1,8 (f/2,4 à 54 mm) à f/16 et C ; mode d\'emploi HXC-FB80 : commande de l\'iris par le RCP, affichage IRIS du viseur',
-  competences: ['2.9'],
+  competences: ['C23'],
 };

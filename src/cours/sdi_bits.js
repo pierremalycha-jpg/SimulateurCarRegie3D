@@ -110,7 +110,7 @@ export const SDI_BITS = {
 - Les analyseurs (PRISM) affichent l'œil, la gigue et comptent les erreurs CRC, et ils peuvent générer la checkfield pour tester une liaison avant le direct.`,
   car: { text: 'À la baie de mesure, le PRISM montre l\'œil de chaque liaison, mesure la gigue et compte les erreurs CRC. La mire du SPG sert de référence ; une liaison qui étincelle sur la checkfield est au bord de la falaise.', station: 'mesure' },
   terms: ['ui', 'gigue-alignement', 'oeil', 'reclocking', 'crc-edh', 'egaliseur'],
-  competences: ['2.2', '2.13', '2.10'], article: 'liaisons',
+  competences: ['C10', 'C36', 'C25'], savoirs: ['C9', 'C3'], article: 'liaisons',
   quiz: [
     { q: 'Pourquoi le flux SDI est-il embrouillé avant d\'être envoyé ?',
       choices: [['Pour le chiffrer : sans la clé, on ne peut pas lire l\'image.', 'Ce n\'est pas un chiffrement : le polynôme est public, et le récepteur désembrouille sans rien connaître de l\'émetteur.'],

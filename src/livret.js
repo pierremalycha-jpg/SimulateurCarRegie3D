@@ -99,7 +99,7 @@ export function livret(prog) {
   });
   const count = zero();
   const blocs = BLOCS.map((b) => {
-    const list = comps.filter((c) => c.code.startsWith(b.n + '.'));
+    const list = comps.filter((c) => c.bloc === b.n);
     const n = zero(); for (const c of list) { n[c.niveau]++; count[c.niveau]++; }
     return { ...b, comps: list, count: n };
   });

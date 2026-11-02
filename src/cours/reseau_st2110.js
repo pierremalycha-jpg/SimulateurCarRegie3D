@@ -83,7 +83,7 @@ Pour s'abonner, un récepteur a besoin de la description de chaque flux, son **S
 - Une **passerelle IP ↔ SDI** fait le pont avec le matériel SDI : elle sépare les essences d'un câble en flux, ou les réunit en un câble.`,
   car: { text: 'Dans le car IP (choisir « car IP » sur la feuille de service), au poste Réseau IP : l\'onglet Flux montre les flux vidéo et audio de chaque caméra, leur groupe, leur SDP et leur chemin sur les réseaux rouge et bleu.', station: 'reseau' },
   terms: ['st2110', 'essence', 'st2110-20', 'st2110-30', 'st2110-40', 'st2110-22', 'rtp', 'passerelle-ip'],
-  competences: ['2.11', '3.6', '2.10'], article: 'ipguide',
+  competences: ['C26', 'C12', 'C25'], savoirs: ['C10', 'K4', 'C5'], article: 'ipguide',
   quiz: [
     { q: 'Que transporte un flux ST 2110-20 ?',
       choices: [['L\'image, le son et le timecode ensemble, comme le SDI', 'C\'est le principe du SDI. En ST 2110, chaque essence a son propre flux.'], 'La vidéo active seule, non compressée', ['Le son en AES67', 'C\'est le rôle de ST 2110-30.']],
@@ -174,7 +174,7 @@ Le paquet de 1 200 octets de pixels pèse ainsi 1 286 octets sur le fil : **93 %
 - En UHD 2160p50, la ligne fait 9 600 octets : 8 paquets par ligne, 864 000 paquets par seconde, de l'ordre de 8,9 Gb/s sur le fil.`,
   car: { text: 'Au poste Réseau IP (car IP), onglet Mesures : la capture sur port miroir décode les paquets couche par couche, et l\'analyseur de flux donne les paquets par seconde, les pertes et les trous de séquence.', station: 'reseau' },
   terms: ['st2110-20', 'rtp', 'mtu', 'qos', 'debit', 'pertes'],
-  competences: ['3.6', '2.11'], article: 'ipguide',
+  competences: ['C12', 'C26'], savoirs: ['C4', 'K4'], article: 'ipguide',
   quiz: [
     { q: 'Combien de paquets de 1 200 octets de pixels faut-il pour une ligne 1080 en 4:2:2 10 bits ?',
       choices: [['2', 'Une ligne fait 1 920 × 2,5 = 4 800 octets.'], '4', ['1 080', 'C\'est le nombre de lignes d\'une image.']],
@@ -267,7 +267,7 @@ Un récepteur étroit ne garantit rien face à un émetteur large : ses tampons 
 - Le mode espacé suit l'ancienne logique du SDI (rien pendant la suppression) ; le linéaire est plus doux pour les commutateurs.`,
   car: { text: 'Au poste Réseau IP (car IP), onglet Mesures → analyseur de flux : CINST / CMAX et VRX / VRX_FULL de chaque flux vidéo, avec leur historique sur 60 s. Une liaison saturée fait monter CINST au-delà de CMAX.', station: 'reseau' },
   terms: ['st2110-21', 'cmax', 'vrx', 'sdp', 'charge', 'pertes'],
-  competences: ['2.2', '3.6', '2.11'], article: 'ipguide',
+  competences: ['C10', 'C12', 'C26'], savoirs: ['C4', 'C3', 'K4'], article: 'ipguide',
   quiz: [
     { q: 'Pourquoi un émetteur ST 2110 ne doit-il pas envoyer une image entière d\'un seul bloc ?',
       choices: [['Parce que le débit moyen serait trop élevé', 'Le débit moyen est le même ; c\'est la rafale qui pose problème.'], 'Parce que les rafales remplissent les files des commutateurs et le tampon du récepteur, jusqu\'aux pertes', ['Parce que PTP l\'interdit', 'PTP donne l\'heure ; le rythme est l\'affaire de ST 2110-21.']],
@@ -360,7 +360,7 @@ Deux limites :
 - Le contrôle (NMOS) passe par un troisième réseau, à part : il n'est pas doublé de la même façon.`,
   car: { text: 'Au poste Réseau IP (car IP) : la topologie montre les fabrics rouge et bleue ; l\'onglet Flux montre le chemin de chaque réception sur les deux réseaux, et Mesures l\'écart et les paquets réparés. Coupez une spine rouge : aucune image ne bouge.', station: 'reseau' },
   terms: ['reseaux-ab', 'st2022-7', 'ecart', 'sdp', 'pertes', 'rtp'],
-  competences: ['3.12', '3.6', '2.11'], article: 'ipguide',
+  competences: ['C30', 'C12', 'C26'], savoirs: ['K7', 'K2', 'C10'], article: 'ipguide',
   quiz: [
     { q: 'Le réseau rouge perd une spine en plein direct. Que voit-on à l\'antenne ?',
       choices: [['Une image noire le temps de basculer sur le bleu', 'Il n\'y a pas de bascule : les deux réseaux travaillent en permanence.'], 'Rien : chaque paquet manquant en rouge est pris sur le bleu', ['Une image dégradée, en définition réduite', 'Le bleu porte le flux complet, pas une version réduite.']],
@@ -442,7 +442,7 @@ Le car double tout : une fabric spine-leaf **rouge** et une **bleue**, identique
 - Le réseau de contrôle (NMOS, réglages) reste un réseau à part, plus modeste.`,
   car: { text: 'Au poste Réseau IP (car IP) : la topologie montre les deux fabrics (2 spines et 6 leaves par réseau) et la charge de chaque lien ; `show ip route` et `show ip ospf neighbor` dans le terminal d\'une leaf, `show ip mroute` pour le multicast.', station: 'reseau' },
   terms: ['spine-leaf', 'leaf', 'spine', 'ecmp', 'ospf', 'pim', 'charge'],
-  competences: ['3.6', '1.1', '2.10'], article: 'ipguide',
+  competences: ['C12', 'C6', 'C25'], savoirs: ['K2', 'K3', 'K5'], article: 'ipguide',
   quiz: [
     { q: 'Dans une architecture spine-leaf, combien de commutateurs traverse au plus un flux entre deux appareils de leaves différentes ?',
       choices: [['Un', 'Seulement si les deux appareils sont sur la même leaf.'], 'Trois : leaf, spine, leaf', ['Autant qu\'il y a de leaves', 'Chaque leaf est reliée à chaque spine : le chemin est toujours court.']],
@@ -533,7 +533,7 @@ Autour, d'autres spécifications : IS-07 (événements, le tally), IS-08 (corres
 - Les identifiants NMOS sont des UUID : stables d'un redémarrage à l'autre, ils permettent au contrôleur de retrouver les connexions.`,
   car: { text: 'Au poste Réseau IP (car IP), onglet Flux : chaque réception est faite par le contrôleur NMOS, avec son SDP et son chemin ; la panne « registre NMOS » empêche toute nouvelle connexion. L\'exercice de la passerelle se fait à la main, puis par NMOS.', station: 'reseau' },
   terms: ['nmos', 'is-04', 'is-05', 'registre', 'controleur', 'sdp'],
-  competences: ['3.6', '2.10', '3.12'], article: 'ipguide',
+  competences: ['C12', 'C25', 'C30'], savoirs: ['K4', 'K6', 'D6'], article: 'ipguide',
   quiz: [
     { q: 'À quoi sert le registre NMOS (IS-04) ?',
       choices: ['À tenir la liste des appareils et de leurs émetteurs et récepteurs', ['À transporter les images entre appareils', 'NMOS ne transporte aucune image : c\'est le réseau multicast.'], ['À donner l\'heure aux appareils', 'C\'est le rôle de PTP.']],

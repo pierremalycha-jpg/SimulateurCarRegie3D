@@ -48,8 +48,8 @@ test('les badges : premiers pas, exercices, compétences du livret', () => {
   P.tutor = { 'vision-exposition': { done: true, aided: 0, hints: 0 } };
   const ids = checkBadges(P).map((b) => b.id);
   assert.ok(ids.includes('premier-exercice') && ids.includes('sans-aide'), ids.join(','));
-  assert.ok(ids.includes('comp-1.4') && ids.includes('comp-2.9'), 'compétences 1.4 et 2.9 travaillées : ' + ids.join(','));
-  assert.ok(!ids.includes('comp-1.4-or'), 'pas encore consolidée');
+  assert.ok(ids.includes('comp-C32') && ids.includes('comp-C23'), 'compétences C32 et C23 travaillées : ' + ids.join(','));
+  assert.ok(!ids.includes('comp-C32-or'), 'pas encore consolidée');
   assert.equal(BADGES.filter((b) => b.comp).length, COMPETENCES.length * 2);
   for (const b of BADGES) assert.ok(b.title && b.desc && b.ico && ['bronze', 'argent', 'or'].includes(b.tier), b.id);
   assert.equal(new Set(BADGES.map((b) => b.id)).size, BADGES.length, 'identifiants uniques');

@@ -4,6 +4,7 @@ import { EQUIP } from './equip.js';
 import { setSoundPlan, applyAudioPatch } from './audio.js';
 import { applyOverrides } from './params.js';
 import { mergeGame } from './game/xp.js';
+import { ANCIEN } from './content/referentiel.js';
 import { normaliser as carriereNette, mergeCarriere } from './carriere/index.js';
 
 // ----------------------------------------------------------------------------------
@@ -34,9 +35,10 @@ export const MYREV = { domains: [], items: {}, params: {}, extra: [], updatedAt:
  * dans migrateProgress. 1 : sans numéro (jusqu'à la v19.3) ; 2 : numérotée, réussites « seul » (clean) des
  * parcours et des missions réseau (v19.4) ; 3 : la Carrière, dates de réception et de lecture des mails (v19.6) ;
  * 4 : le parcours du Cours, exercice en autonomie de chaque leçon (cours[id].exo) et tests de niveau (niveaux) (v19.18) ;
- * 5 : les émissions en direct conduites au car (emissions : score, médias lancés soi-même) (v19.19).
+ * 5 : les émissions en direct conduites au car (emissions : score, médias lancés soi-même) (v19.19) ;
+ * 6 : les badges de compétence portent les numéros officiels du référentiel (comp-C32 au lieu de comp-1.4) (v19.23).
  */
-export const PROG_VERSION = 5;
+export const PROG_VERSION = 6;
 export const PROG = { v: PROG_VERSION, missions: {}, visited: {}, scenarios: [], reports: [], perf: null, patchBest: 0, updatedAt: 0 };
 /** état du dernier enregistrement de la progression : sur cet ordinateur (local), sur le serveur de la page (remote) */
 export const SAVE = { local: /** @type {boolean | null} */ (null), remote: /** @type {boolean | null} */ (null), at: 0, error: '' };
@@ -162,6 +164,14 @@ export function migrateProgress(d) {
   }
   // v4 → v5 : les émissions en direct ([{ at, score, parVous, seul }]) ; une entrée abîmée est retirée
   if ('emissions' in p) p.emissions = Array.isArray(p.emissions) ? p.emissions.filter((e) => isObj(e) && Number.isFinite(e.score)) : [];
+  // v5 → v6 : les badges de compétence (game.badges : « comp-1.4 », « comp-1.4-or ») prennent le numéro officiel du référentiel (« comp-C32 »)
+  if (isObj(p.game) && isObj(p.game.badges)) {
+    for (const [k, at] of Object.entries(p.game.badges)) {
+      const m = /^comp-([1-4]\.\d{1,2})(-or)?$/.exec(k); const neuf = m && ANCIEN[m[1]];
+      if (!neuf) continue;
+      const nk = `comp-${neuf}${m[2] || ''}`; if (!p.game.badges[nk]) p.game.badges[nk] = at; delete p.game.badges[k];
+    }
+  }
   p.v = Math.max(v, PROG_VERSION);
   return p;
 }

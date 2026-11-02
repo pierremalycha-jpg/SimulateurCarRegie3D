@@ -53,5 +53,5 @@ export const HFR = {
   ],
   see: ['shutter', 'formats', 'exposition', 'gain', 'ccu', 'hdr', 'sortie'],
   ref: 'Fiche Sony HDC-5500 : HFR en HD à 3×, 4×, 6× et 8× (option), sensibilité f/11 à 2 000 lx en 1080/50p ; Sony HXC-FB80 : formats jusqu\'à 1080/50p et 59,94p ; temps de pose au plus 1 ÷ cadence ; lampes sur secteur 50 Hz : battement à 100 Hz ; serveur EVS XT4K (Cours, « Le serveur ralenti »)',
-  competences: ['2.7', '2.9'],
+  competences: ['C20', 'C23'],
 };

@@ -52,6 +52,6 @@ export const RETOURS = {
   ],
   see: ['tally', 'viseur', 'connectique', 'fibre', 'ccu', 'commandes'],
   ref: 'Mode d\'emploi HXC-FB80 : touche RET 1, sélecteur RET2 SEL (retour 2, 3 ou 4), touche RET de l\'objectif, page VF OUT (RET MIX VF, MIX VF MODE Y-MIX / WIRE (W) / WIRE (B), MIX VF LEVEL 0 à 80 %, PinP), prise PROMPTER/GENLOCK ; mode d\'emploi HXCU-FB80 : entrées de retour SDI-1, SDI-2, VBS-1, VBS-2, page RETURN SET (RET-1 à RET-4), entrées prompteur VBS et HD',
-  competences: ['2.9', '4.1'],
+  competences: ['C23', 'C5'],
   cours: 'camera-systeme',
 };

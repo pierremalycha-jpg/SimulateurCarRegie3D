@@ -58,5 +58,5 @@ export const OLPF = {
   ],
   see: ['prisme', 'capteur', 'nd', 'detail', 'defauts', 'iris'],
   ref: 'Échantillonnage : au moins deux photosites par période (Nyquist) ; photosite 2/3" HD : 9,59 mm ÷ 1920 = 5 µm, 100 paires de lignes par mm ; filtre passe-bas biréfringent (quartz) ; diffraction : coupure à 1 ÷ (λ N) ; loi de Wien : maximum à 2898 µm·K ÷ T, 906 nm à 3200 K ; LED infrarouge de télécommande : 940 nm',
-  competences: ['2.9', '1.4'],
+  competences: ['C23', 'C32'],
 };

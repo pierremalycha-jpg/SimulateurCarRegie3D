@@ -53,5 +53,5 @@ export const DEFAUTS = {
   ],
   see: ['frontale', 'prisme', 'doubleur', 'iris', 'monture', 'fichiers'],
   ref: 'Fiche technique Sony HXC-FB80 : ALAC (Auto Lens Aberration Compensation) ; mode d\'emploi HXC-FB80 : M02 WHITE SHADING, F04 LENS FILE ; norme BTA S-1005 (monture B4) : plans rouge +10 µm et bleu +5 µm',
-  competences: ['2.2', '3.9'],
+  competences: ['C10', 'C19'],
 };

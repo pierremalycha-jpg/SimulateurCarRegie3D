@@ -85,7 +85,7 @@ test('énergie : un bandeau sans entrée n\'alimente rien ; deux bandeaux en cas
 test('missions : chaque mission a un id, un brief, des compétences au bon format ; noter() rend une note sur 100', () => {
   for (const m of MISSIONS) {
     assert.ok(m.id && !bad(m.titre) && !bad(m.brief) && m.contraintes.length);
-    for (const c of m.competences) assert.match(c, /^[1-4]\.\d{1,2}$/);
+    for (const c of m.competences) assert.match(c, /^C\d{1,2}$/);
     for (const x of m.exigences) assert.ok(x.id && x.label && x.pts > 0 && typeof x.test === 'function');
   }
   vider('');

@@ -25,7 +25,9 @@ import { SEUIL_EXO } from './exo.js';
  * @property {string} [plus] pour aller plus loin (replié)
  * @property {{ text: string, station?: string, tab?: string, lesson?: string, arg?: any }} [car] où ça se voit dans le simulateur : poste (et onglet), parcours du chef de car
  * @property {string[]} [terms] fiches « ? » liées (identifiants de content/netterms.js et des fichiers terms_*.js)
- * @property {string[]} [competences] compétences du référentiel TIEE travaillées (content/referentiel.js, « 1.4 »…), pour le livret
+ * @property {string[]} [savoirs] savoirs du référentiel TIEE que la leçon enseigne (content/referentiel.js, « C9 », « K4 »…), cités en fin de leçon
+ * @property {string[]} [competences] compétences du référentiel TIEE travaillées (content/referentiel.js, numéros officiels « C32 »…), pour le livret ; la même liste
+ *   que RATTACHEMENT.cours (test unitaire)
  * @property {Array<{ id: string, intro: string }>} [exercises] exercices pratiques de la leçon : un parcours guidé d'Olivier
  *   (identifiant de src/tutor/lessons) ou un exercice noté (« x-atelier », « x-brassage », « x-reseau », « x-match », voir
  *   cours/exercices.js) ; intro : deux ou trois phrases qui relient la leçon au geste à faire dans le car

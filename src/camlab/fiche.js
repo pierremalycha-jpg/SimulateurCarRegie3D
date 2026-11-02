@@ -1,5 +1,6 @@
 // @ts-check
 import { el } from '../util.js';
+import { competence } from '../content/referentiel.js';
 import { emit } from '../state.js';
 import { rich } from '../ui/rich.js';
 import { lessonById } from '../cours/index.js';
@@ -114,7 +115,7 @@ export function renderFiche(id, ctx) {
   if (f.ref || f.competences) {
     node.append(el('footer', { class: 'cl-ref' },
       f.ref ? el('p', {}, el('b', {}, 'Référence : '), f.ref) : null,
-      f.competences ? el('p', {}, el('b', {}, 'Référentiel TIEE : '), 'compétence' + (f.competences.length > 1 ? 's ' : ' ') + f.competences.join(', ')) : null));
+      f.competences ? el('p', {}, el('b', {}, 'Référentiel TIEE : '), 'compétence' + (f.competences.length > 1 ? 's ' : ' ') + f.competences.map((c) => { const k = competence(c); return k ? `${c} (${k.titre.toLowerCase()})` : c; }).join(', ')) : null));
   }
   return { node, dispose() { for (const d of disposers) try { d(); } catch (e) { /* rien à libérer */ } } };
 }

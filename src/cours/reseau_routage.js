@@ -117,7 +117,7 @@ Les pannes, et comment les reconnaître :
 - \`ping\` vers la passerelle d'abord, puis au-delà : la première étape de tout dépannage de niveau 3.`,
   car: { text: 'Au poste Réseau (car SDI) : SW-CŒUR route entre les VLAN (passerelles 10.1.x.1). Le ping depuis le PC de supervision passe par la passerelle ; les pannes « passerelle fausse » et « masque faux » s\'y jouent, et l\'exercice de mise en service d\'une machine les fait éviter.', station: 'reseau' },
   terms: ['passerelle', 'routage', 'svi', 'sous-reseau', 'arp', 'ping'],
-  competences: ['3.6', '2.10', '2.13'], article: 'reseau',
+  competences: ['C12', 'C25', 'C36'], savoirs: ['K4', 'K2'], article: 'reseau',
   quiz: [
     { q: 'Le RCP 1 (10.1.20.31/24) envoie un paquet au NAS (10.1.60.20). À quelle adresse MAC la trame qui quitte le RCP est-elle adressée ?',
       choices: [['À celle du NAS', 'Le NAS est dans un autre sous-réseau : le RCP ne cherche pas sa MAC. Il ne la verra jamais.'], 'À celle de sa passerelle, le routeur 10.1.20.1', ['À FF:FF:FF:FF:FF:FF, la diffusion', 'La diffusion sert à la question ARP, pas au paquet lui-même.']],

@@ -85,12 +85,22 @@ test('v3 → v4 : l\'exercice en autonomie des leçons et les tests de niveau, f
 });
 
 test('v4 → v5 : les émissions en direct, nettoyées et fusionnées entre deux appareils', () => {
-  assert.equal(PROG_VERSION, 5);
+  assert.ok(PROG_VERSION >= 5);
   const p = migrateProgress({ v: 4, missions: {}, emissions: [{ at: 1, score: 72, parVous: 3, seul: true }, 'abîmé', { at: 2 }] });
-  assert.equal(p.v, 5);
+  assert.equal(p.v, PROG_VERSION);
   assert.deepEqual(p.emissions, [{ at: 1, score: 72, parVous: 3, seul: true }]);
   assert.deepEqual(migrateProgress({ v: 4, emissions: 'x' }).emissions, []);
   /** @type {any} */ (PROG).emissions = [{ at: 1, score: 72, parVous: 3, seul: true }];
   mergeProgress({ emissions: [{ at: 1, score: 72, parVous: 3, seul: true }, { at: 5, score: 40, parVous: 0, seul: false }] });
   assert.deepEqual(/** @type {any} */ (PROG).emissions.map((e) => e.at), [1, 5]);
+});
+
+test('v5 → v6 : les badges de compétence prennent les numéros officiels du référentiel (comp-1.4 → comp-C32)', () => {
+  assert.equal(PROG_VERSION, 6);
+  const p = migrateProgress({ v: 5, missions: {}, game: { badges: { 'comp-1.4': 10, 'comp-1.4-or': 20, 'comp-2.13': 30, 'comp-C8': 40, 'premier-pas': 50, 'comp-9.9': 60 } } });
+  assert.equal(p.v, 6);
+  assert.deepEqual(p.game.badges, { 'comp-C32': 10, 'comp-C32-or': 20, 'comp-C36': 30, 'comp-C8': 40, 'premier-pas': 50, 'comp-9.9': 60 });
+  // un badge déjà présent sous son nouveau nom garde sa date
+  assert.deepEqual(migrateProgress({ v: 5, game: { badges: { 'comp-1.4': 10, 'comp-C32': 5 } } }).game.badges, { 'comp-C32': 5 });
+  assert.equal(migrateProgress({ v: 5, game: 'abîmé' }).game, 'abîmé', 'un jeu mal formé est laissé tel quel');
 });

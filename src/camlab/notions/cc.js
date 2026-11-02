@@ -55,5 +55,5 @@ export const CC = {
   ],
   see: ['balance', 'nd', 'matrice', 'lineup', 'commandes', 'mires'],
   ref: 'Mode d\'emploi HXC-FB80 : bouton COLOR TEMP. (5600K ON/OFF d\'usine), fonction ELECTRICAL CC, positions A 3200K, B 4300K, C 5600K, D 6300K, affectable à COLOR TEMP. ou aux touches ASSIGN 1 à 3 (page SWITCH ASSIGN1), indicateurs CC et 5600K (VF DISPLAY) ; fiche technique HXC-FB80 : filtre CC électrique ; Sony HDC-5500 : roue CC optique (croix, 3200K, 4300K, 6300K) ; mired = 10⁶ ÷ T ; EBU Tech 3355 (TLCI)',
-  competences: ['2.9', '1.4'],
+  competences: ['C23', 'C32'],
 };

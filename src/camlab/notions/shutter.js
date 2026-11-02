@@ -54,5 +54,5 @@ export const SHUTTER = {
   ],
   see: ['exposition', 'capteur', 'formats', 'hfr', 'menu', 'commandes'],
   ref: 'Mode d\'emploi HXC-FB80 : commutateur SHUTTER (ON, OFF, SEL), vitesses en 50 Hz 1/60, 1/125, 1/250, 1/500, 1/1000, 1/2000 s (1/100 à 1/2000 en 59,94 Hz), mode ECS réglé à la molette, indicateur SHUTTER (VF DISPLAY) ; fiche technique HXC-FB80 : shutter lent 2 à 8 images (1080) ; secteur 50 Hz : lumière modulée à 100 Hz',
-  competences: ['2.9'],
+  competences: ['C23'],
 };

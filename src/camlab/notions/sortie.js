@@ -53,6 +53,6 @@ export const SORTIE = {
   ],
   see: ['quantif', 'formats', 'genlock', 'ccu', 'waveform', 'vecto', 'prisme'],
   ref: 'ITU-R BT.709 (Y\' = 0,2126 R\' + 0,7152 G\' + 0,0722 B\' ; 10 bits : Y\' 64 à 940, Cb et Cr 64 à 960 autour de 512) ; SMPTE ST 274 (1080 lignes, 2 640 × 1 125 en 50 Hz) et ST 296 (720p) ; ST 292-1 (HD-SDI, 1,485 Gb/s) ; ST 424 (3G-SDI, 2,97 Gb/s) ; fiche Sony HXCU-FB80 (sorties SDI)',
-  competences: ['2.2', '1.4', '2.9'],
+  competences: ['C10', 'C32', 'C23'],
   cours: 'sdi-cest-quoi',
 };

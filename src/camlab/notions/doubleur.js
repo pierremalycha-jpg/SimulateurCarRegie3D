@@ -51,5 +51,5 @@ export const DOUBLEUR = {
   ],
   see: ['zoom', 'focale', 'ramping', 'iris', 'monture', 'gain'],
   ref: 'Fiche Fujinon ZA12x4.5BERD : doubleur ×2 intégré, 9–108 mm, angle de champ 56,1° × 33,3° à 9 mm et 5,1° × 2,9° à 108 mm ; mode d\'emploi HXC-FB80 : indications EX et D.EXT de la page VF DISPLAY',
-  competences: ['2.9'],
+  competences: ['C23'],
 };

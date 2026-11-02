@@ -284,7 +284,7 @@ test('le viseur : le carré à −2 % se confond avec le noir, celui à +4 % se 
 // ---------------- le livret ----------------
 test('livret : la mise en service et les notions acquises comptent (sorte « camera »)', () => {
   const T = RATTACHEMENT.camera;
-  assert.deepEqual(T.mes, ['2.7', '2.9', '3.9', '2.10', '1.4']);
+  assert.deepEqual(T.mes, ['C20', 'C23', 'C19', 'C25', 'C32']);
   assert.ok(!NOTIONS.mes, 'aucune notion ne s\'appelle « mes »');
   const codes = new Set(COMPETENCES.map((c) => c.code));
   for (const [ref, list] of Object.entries(T)) {
@@ -304,10 +304,10 @@ test('livret : la mise en service et les notions acquises comptent (sorte « cam
   assert.equal(activityState({}, 'camera', 'mes').done, false);
   const L = livret(prog);
   const c = (code) => L.comps.find((x) => x.code === code);
-  // 2.9 : la mise en service et trois notions acquises (iris, focale, point)
-  assert.equal(c('2.9').niveau, 'consolidee');
-  assert.ok(c('3.9').acts.some((a) => a.kind === 'camera' && a.ref === 'mes' && a.done));
-  assert.ok(c('2.10').acts.some((a) => a.kind === 'camera' && a.ref === 'mes' && a.done));
+  // C23 (exploiter les équipements) : la mise en service et trois notions acquises (iris, focale, point)
+  assert.equal(c('C23').niveau, 'consolidee');
+  assert.ok(c('C19').acts.some((a) => a.kind === 'camera' && a.ref === 'mes' && a.done));
+  assert.ok(c('C25').acts.some((a) => a.kind === 'camera' && a.ref === 'mes' && a.done));
   assert.equal(livret({}).count.travaillee + livret({}).count.consolidee, 0);
 });
 

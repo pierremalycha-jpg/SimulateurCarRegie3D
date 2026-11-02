@@ -347,7 +347,7 @@ Sans genlock, une source tourne sur son quartz, juste à quelques dizaines de pp
 - Un câble de 100 m : ≈ 0,5 µs ; une image de synchroniseur : 20 ms, soit 40 000 fois plus.`,
       car: { text: 'Au poste Synchro (zone technique) : l\'heure maître, l\'état du SPG (verrouillé sur le GPS ou en holdover), ses sorties black burst et tri-level, le secours. Une CCU non verrouillée y apparaît en alarme, et « Re-verrouiller toutes les CCU » les remet en phase. À la baie de mesure, la tuile Timing du PRISM place une source par rapport à la référence, en lignes et en µs.', station: 'synchro' },
       terms: ['timing-ref', 'commutation-propre', 'holdover', 'derive'],
-      competences: ['1.2', '1.4', '3.12'],
+      competences: ['C21', 'C32', 'C30'], savoirs: ['H1', 'H2', 'C10'],
       article: 'timing',
       exercises: [
         { id: 'synchro-reference', intro: 'Au poste Synchro, vous simulez une perte du GPS, puis vous re-verrouillez des CCU qui ont perdu la référence. Comparez les deux cas : en holdover, rien ne change à l\'image ; une CCU décrochée, elle, saute à la commutation.' },
@@ -385,7 +385,7 @@ Le **drop-frame** est une affaire de 29,97 images/s, la cadence des Amériques e
 En **50 images/s**, le timecode ST 12-1 ne sait compter que jusqu'à 30 : il numérote les paires d'images de 00 à 24 et un bit (le drapeau de trame) distingue la deuxième image de chaque paire. Selon les machines, on lit donc 00 à 24 avec un repère, ou directement 00 à 49 ; une seconde fait 50 images, une minute 3 000.`,
       car: { text: 'Au poste Synchro, l\'heure maître affiche le timecode du SPG (LTC 25 i/s, heure locale). La scripte note chaque action avec ce timecode, et l\'opérateur ralenti retrouve le même instant sur toutes les entrées de l\'EVS, qui reçoit le LTC sur son entrée LTC IN.', station: 'synchro' },
       terms: ['st2059', 'ptp', 'supervision'],
-      competences: ['1.3', '2.5'],
+      competences: ['C27', 'C15'], savoirs: ['H1', 'E4', 'C10'],
       article: 'evsarch',
       quiz: [
         { q: 'Combien d\'images dans une minute à 50 images/s ?', choices: [['1 500', 'C\'est une minute à 25 images/s.'], '3 000', ['3 600', '3 600, ce sont les secondes d\'une heure.']], answer: 1, why: '60 s × 50 images = 3 000 images. À 25 images/s, on en compte 1 500.' },

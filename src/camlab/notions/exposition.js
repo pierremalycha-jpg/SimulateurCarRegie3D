@@ -53,5 +53,5 @@ export const EXPOSITION = {
   ],
   see: ['iris', 'nd', 'gain', 'shutter', 'pdc', 'waveform'],
   ref: 'Fiche technique HXC-FB80 : sensibilité F13 à 2000 lx (50 Hz) ; mode d\'emploi HXC-FB80 : bouton FILTER (CLEAR, 1/4, 1/16, 1/64 ND), commutateurs GAIN et SHUTTER, affichages du viseur (VF DISPLAY) ; diaphragmes : 2 log2 (N1 ÷ N2) pour l\'iris, log2 de la transmission pour le ND, dB ÷ 6,02 pour le gain, log2 du rapport des temps de pose',
-  competences: ['2.9', '1.4', '3.4'],
+  competences: ['C23', 'C32', 'C4'],
 };

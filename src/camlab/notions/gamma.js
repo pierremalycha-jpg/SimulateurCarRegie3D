@@ -53,5 +53,5 @@ export const GAMMA = {
   ],
   see: ['noir', 'knee', 'moniteur', 'hdr', 'waveform', 'matrice'],
   ref: 'ITU-R BT.709-6 (OETF : V = 4,5 L sous 0,018, sinon 1,099 L^0,45 − 0,099) ; ITU-R BT.1886 (EOTF de l\'écran de référence, gamma 2,4) ; mode d\'emploi HXC-FB80 : menu PAINT, pages P01 SW STATUS, P04 GAMMA (LEVEL, COARSE), P05 BLACK GAMMA (LEVEL, RANGE)',
-  competences: ['1.4', '2.9'],
+  competences: ['C32', 'C23'],
 };

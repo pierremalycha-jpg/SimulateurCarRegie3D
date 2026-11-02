@@ -51,6 +51,6 @@ export const TALLY = {
   ],
   see: ['retours', 'connectique', 'fibre', 'ccu', 'rcp', 'cadreur'],
   ref: 'Mode d\'emploi HXC-FB80 : commutateur TALLY du corps (ON, OFF ; rouge seulement, et pendant un CALL), bouton CALL (tally rouge de la CCU et du RCP), commutateur TALLY du viseur (HIGH, LOW, OFF), voyants R TALLY et G TALLY, commutateur INTERCOM MIC (PROD, OFF, ENG ; PANEL TYPE CE, page INTERCOM), bouton INTERCOM, prise INTERCOM XLR 5 broches ; page CALL/TALLY du menu MAINTENANCE',
-  competences: ['4.1', '2.9'],
+  competences: ['C5', 'C23'],
   cours: 'expl-intercom',
 };

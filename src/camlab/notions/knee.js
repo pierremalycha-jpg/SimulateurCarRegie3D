@@ -54,5 +54,5 @@ export const KNEE = {
   ],
   see: ['gamma', 'quantif', 'waveform', 'exposition', 'hdr', 'iris'],
   ref: 'ITU-R BT.709 (signal jusqu\'au code 1019, 109 %) ; EBU R 103 (tolérances des niveaux, environ 103 % en luminance) ; mode d\'emploi HXC-FB80 : menu PAINT, pages P01 SW STATUS, P07 KNEE (K POINT, K SLOPE, KNEE MAX, KNEE SAT, AUTO KNEE), P08 WHITE CLIP ; commutateur OUTPUT/AUTO KNEE',
-  competences: ['1.4', '2.2'],
+  competences: ['C32', 'C10'],
 };

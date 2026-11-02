@@ -53,5 +53,5 @@ export const BOX_PORTABLE = {
   ],
   see: ['zoom', 'focale', 'cadreur', 'monture', 'doubleur', 'ramping'],
   ref: 'Fiche Fujinon ZA12x4.5BERD (4,5–54 mm, 2,07 kg) ; fiches Fujinon UA24x7.8BERD (7,8–187 mm, 1,98 kg) et UA80x9BESM (9–720 mm, f/1,7 jusqu\'à 350 mm, 23,5 kg) ; capteur 2/3" de 9,59 × 5,39 mm',
-  competences: ['3.4', '2.7'],
+  competences: ['C4', 'C20'],
 };

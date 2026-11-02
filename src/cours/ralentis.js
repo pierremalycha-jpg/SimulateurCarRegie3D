@@ -312,7 +312,7 @@ Pourquoi un ralenti saccade : la sortie du serveur donne 50 images par seconde (
 - La vitesse se lit en pourcentage du temps réel : 33 % (exactement un tiers) pour une 3×, 50 % ou 25 % pour une caméra normale.`,
       car: { text: 'Au poste Ralentis (EVS), la télécommande LSM : la touche REC, DERN. ACTION, IN et OUT, les touches de caméras, le levier de vitesse et la molette jog ; la ligne d\'enregistrement de chaque caméra dit si elle est enregistrée et à quelle cadence.', station: 'evs' },
       terms: ['grille', 'timing-ref', 'st2110-40'],
-      competences: ['2.12', '2.9', '2.7'],
+      competences: ['C31', 'C23', 'C20'], savoirs: ['E2', 'E1', 'H1'],
       article: 'evsarch',
       exercises: [
         { id: 'evs-ralenti', intro: 'Au poste Ralentis, vous relancerez l\'enregistrement s\'il le faut, poserez l\'IN sur la dernière action, choisirez l\'angle le plus rapide, puis vous enverrez le ralenti à l\'antenne au mélangeur, en volet logo. Regardez la vitesse affichée sur la sortie du serveur : pour une caméra 3×, elle est réglée à 33 %, pour que chaque image enregistrée ne soit montrée qu\'une fois.' },
@@ -353,7 +353,7 @@ Une **playlist** est une suite de clips lue par un canal du serveur : le résum�
 Le travail pendant le match : l'opérateur LSM range les clips au fil des actions ; IPDirector les nomme et les classe ; à la mi-temps, la playlist du résumé est prête, envoyée à l'antenne par le mélangeur (entrée et sortie en volet logo) ou transférée au montage. Le producteur donne la durée attendue : on ajuste en retirant un clip ou en changeant une vitesse.`,
       car: { text: 'Au poste IPDirector, la base de clips à gauche (nom, mots-clés, note), le clip choisi au centre et la playlist à droite ; au poste Ralentis, les touches F de la télécommande LSM, la touche PLST qui passe les touches F en mode playlist, et PLAY.', station: 'ipdirector' },
       terms: ['st2110-40'],
-      competences: ['2.5', '2.12', '3.7', '3.14'],
+      competences: ['C15', 'C31', 'C13', 'C34'], savoirs: ['E3', 'E4', 'E7', 'E1'],
       article: 'evsarch',
       exercises: [
         { id: 'evs-clips', intro: 'À la télécommande LSM, vous délimiterez deux actions par un IN et un OUT, les rangerez sur deux touches F, puis vous les enchaînerez en playlist et lancerez la lecture. Lisez le nom que prend chaque clip sur sa touche : il donne la page, la banque, la touche et l\'angle.' },

@@ -53,5 +53,5 @@ export const RCP = {
   ],
   see: ['iris', 'noir', 'balance', 'gain', 'nd', 'menu', 'lineup', 'ccu'],
   ref: 'Mode d\'emploi Sony RCP-1500/1501/1530 : PANEL ACTIVE, CAM PW, BARS, CALL, AUTO IRIS, MASTER GAIN, fenêtres ND et CC, WHITE (balance des blancs automatique), boutons WHITE R, G, B et BLACK/FLARE R, G, B, bloc iris et master black à manche ; mode d\'emploi HXCU-FB80 : RCP par câble ou par le réseau (PoE)',
-  competences: ['2.9', '2.2', '1.4'],
+  competences: ['C23', 'C10', 'C32'],
 };

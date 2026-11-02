@@ -96,7 +96,7 @@ Le prix : **le retard**. Quand un segment se perd, tout ce qui suit attend sa re
 - Les numéros de séquence RTP (16 bits) servent au récepteur à compter les pertes : c'est la mesure « pertes » du poste Réseau IP.`,
   car: { text: 'Au poste Réseau IP (car IP), l\'analyseur montre les flux médias en UDP (port 5004, RTP), PTP sur les ports 319 et 320 ; les API NMOS et les interfaces web des appareils passent en TCP. Les pertes d\'un flux se lisent dans ses numéros de séquence RTP.', station: 'reseau' },
   terms: ['tcp', 'udp', 'port', 'rtp', 'pertes', 'latence'],
-  competences: ['2.11', '3.6', '2.10'], article: 'reseau',
+  competences: ['C26', 'C12', 'C25'], savoirs: ['K4', 'C4'], article: 'reseau',
   quiz: [
     { q: 'Par quels messages TCP ouvre-t-il une connexion ?',
       choices: ['SYN, SYN-ACK, ACK', ['Discover, Offer, Request, Ack', 'C\'est le DHCP, qui donne une adresse.'], ['Sync, Follow_Up, Delay_Req', 'Ce sont des messages PTP, qui mesurent l\'heure.']],
@@ -217,7 +217,7 @@ export const STREAMING = {
 - Pour tester un chemin avant une contribution : ping (aller-retour), traceroute (chemin), iperf en UDP (débit et pertes).`,
   car: { text: 'Au poste Transmission : la contribution du car part par la fibre de l\'opérateur (TX1, JPEG XS) et par satellite (TX2, HEVC). À l\'entrepôt, vMix ou une caméra diffusent en RTMP vers une plateforme par le routeur, et des caméras PTZ échangent en NDI|HX. La vue 3D « Du car à la régie finale » montre SRT sur Internet.', station: 'transmission' },
   terms: ['contribution', 'srt', 'rist', 'rtmp', 'hls', 'ndi', 'arq', 'rtp'],
-  competences: ['2.11', '3.4', '2.10'], article: 'reseau',
+  competences: ['C26', 'C4', 'C25'], savoirs: ['F1', 'K4', 'C8', 'C4'], article: 'reseau',
   quiz: [
     { q: 'Pour envoyer le programme du car à la régie finale par Internet, quel protocole choisir ?',
       choices: [['HLS', 'HLS distribue au public avec des dizaines de secondes de retard ; ce n\'est pas un protocole de contribution.'], 'SRT ou RIST', ['RTMP', 'RTMP sert à livrer une plateforme ; en TCP, il souffre des pertes d\'Internet.']],

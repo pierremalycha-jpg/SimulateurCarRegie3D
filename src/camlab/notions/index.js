@@ -54,7 +54,7 @@ import { CH89 } from './ch89.js';
  * @property {Question[]} [quiz]
  * @property {string[]} [see] notions liées
  * @property {string} [ref] norme ou document de référence
- * @property {string[]} [competences] compétences du référentiel RNCP37022 (numéros 1.1 à 4.5)
+ * @property {string[]} [competences] compétences du référentiel TIEE (numéros officiels C1 à C39, content/referentiel.js)
  * @property {string} [cours] fiche du Cours reprise (content/cours)
  * @property {boolean} [prevu] fiche annoncée, pas encore écrite
  */

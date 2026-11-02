@@ -101,7 +101,7 @@ Le **ping** mesure l'aller-retour (RTT) ; la latence dans un sens en est à peu 
 - On mesure toujours dans les conditions du direct : même heure, même débit, même chemin ; un ping la veille à minuit ne prouve rien.`,
   car: { text: 'Au poste Réseau IP (car IP), les mesures de chaque flux : débit, gigue et temps entre arrivées, pertes réparées par l\'autre réseau, latence ; au poste Réseau (car SDI), le ping et la charge des liens montants. La leçon « Le rythme d\'envoi : ST 2110-21 » détaille la gigue d\'un flux non compressé.', station: 'reseau' },
   terms: ['debit', 'latence', 'gigue', 'pertes', 'ping', 'traceroute'],
-  competences: ['1.2', '2.13', '3.6'], article: 'reseau',
+  competences: ['C21', 'C36', 'C12'], savoirs: ['C3', 'C4', 'K4'], article: 'reseau',
   quiz: [
     { q: 'Combien de temps faut-il au moins pour transférer un fichier de 100 Mo sur un lien à 1 Gb/s ?',
       choices: [['0,1 s', 'C\'est confondre octets et bits : 100 Mo font 800 Mb.'], 'Environ 0,8 s', ['100 s', 'Mille fois trop : 1 Gb/s, c\'est 1 000 Mb par seconde.']],
@@ -198,7 +198,7 @@ export const QOS = {
 - Pour vérifier : la table DSCP → file du commutateur, et les compteurs de paquets jetés par file.`,
   car: { text: 'Au poste Réseau IP (car IP) : « show qos maps » affiche la table DSCP → file ; « qos trust dscp » fait respecter le marquage, « qos map dscp 46 to traffic-class 7 » met PTP en priorité stricte. Une panne joue PTP laissé dans la file par défaut. Au poste Réseau (car SDI), chaque VLAN a sa classe (voix EF, commande CS4, gestion CS2, données, fichiers CS1) et les pertes se lisent par classe.', station: 'reseau' },
   terms: ['qos', 'cos', 'gigue', 'ptp', 'pertes', 'charge'],
-  competences: ['1.2', '3.6', '3.12'], article: 'reseau',
+  competences: ['C21', 'C12', 'C30'], savoirs: ['K4', 'C4', 'K7'], article: 'reseau',
   quiz: [
     { q: 'Quand la QoS a-t-elle un effet ?',
       choices: [['Tout le temps : elle accélère les paquets prioritaires', 'Un paquet ne va jamais plus vite que le lien ; sans file d\'attente, l\'ordre de service ne change rien.'], 'Quand un port de sortie est engorgé : elle décide qui passe d\'abord et qui perd', ['Seulement sur Internet', 'C\'est l\'inverse : sur Internet, personne ne respecte votre marquage.']],
