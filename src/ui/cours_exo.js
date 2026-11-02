@@ -41,7 +41,7 @@ export function exoSection(L, o = {}) {
   const box = el('section', { class: 'co-exoauto', id: 'co-exoauto', 'aria-label': 'Exercice en autonomie' });
   if (!X) return box;
   const redraw = (/** @type {string} */ focus) => {
-    const nb = exoSection(L, o); box.replaceWith(nb);
+    const nb = exoSection(L, o); if (box.classList.contains('co-reveal')) nb.classList.add('co-reveal', 'in'); box.replaceWith(nb);
     const f = /** @type {HTMLElement | null} */ (focus ? nb.querySelector(focus) : null); if (f) f.focus();
   };
   const p = /** @type {any} */ (coursProgress(L.id)).exo || null;

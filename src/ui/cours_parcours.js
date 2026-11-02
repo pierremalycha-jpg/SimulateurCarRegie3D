@@ -56,17 +56,17 @@ export function accueilParcours(/** @type {Go} */ go) {
 export function cheminChapitre(page, ch, /** @type {Go} */ go, modules = /** @type {HTMLElement[]} */ ([])) {
   const o = { libre: libre() };
   const b = bilanChapitre(ch.id, PROG, o);
-  page.append(el('p', { class: 'co-crumb' }, icon(ch.icon), ch.title, el('span', {}, ` · ${b.terminees} / ${b.lecons} leçons terminées`)),
+  page.append(el('header', { class: 'co-hero', 'data-reveal': '' }, el('p', { class: 'co-crumb' }, icon(ch.icon), ch.title, el('span', {}, ` · ${b.terminees} / ${b.lecons} leçons terminées`)),
     el('h2', {}, ch.title),
-    el('p', { class: 'lede' }, ch.intro));
+    el('p', { class: 'lede' }, ch.intro)));
   if (o.libre) page.append(el('p', { class: 'note pa-libre' }, icon('ouvert'), 'Profil Formateur : tous les niveaux sont ouverts. Au profil Étudiant, chacun s\'ouvre quand le précédent est validé.'));
-  if (modules.length) page.append(el('div', { class: 'pa-modules' }, ...modules));
+  if (modules.length) page.append(el('div', { class: 'pa-modules', 'data-reveal': '' }, ...modules));
   // la leçon à faire : la première non terminée du premier niveau ouvert et pas encore validé
   const courant = b.niveaux.find((n) => n.ouvert && !n.valide);
   const cible = courant ? courant.lecons[courant.etats.findIndex((e) => !e.terminee)] : null;
   b.niveaux.forEach((n, i) => {
     const etat = n.valide ? 'valide' : n.ouvert ? 'ouvert' : 'ferme';
-    const sec = el('section', { class: `pa-niv ${etat} pa-${n.niveau.id}`, 'data-niveau': n.niveau.id, 'aria-label': `Niveau ${n.niveau.titre}` });
+    const sec = el('section', { class: `pa-niv ${etat} pa-${n.niveau.id}`, 'data-niveau': n.niveau.id, 'aria-label': `Niveau ${n.niveau.titre}`, 'data-reveal': '' });
     sec.append(el('header', { class: 'pa-niv-h' },
       el('div', {}, el('h3', {}, n.ouvert ? null : icon('cadenas'), n.niveau.titre), el('small', {}, n.niveau.sous)),
       el('span', { class: 'pa-niv-etat' }, n.valide ? (n.parTest ? 'Validé par le test' : 'Validé') : n.ouvert ? `${n.terminees} / ${n.lecons.length} leçons` : 'Fermé'),
