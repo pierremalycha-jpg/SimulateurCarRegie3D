@@ -445,6 +445,10 @@ perdre de la qualité d'instruction ni des informations du Cours.
   calme avec un petit en-tête gris, les fiches « ? » en pastilles discrètes ; rien n'est retiré du contenu ;
 - **les postes** : en-tête de verre, touches arrondies, panneaux sans biseau ; les tallys gardent leurs couleurs pleines.
 
+**Le coût du verre.** Le flou d'arrière-plan se paie à chaque image ; en qualité Basse (`body.q-basse`, posée par `app/view.js`),
+les éléments toujours visibles (suivi des tâches, barres, invites, étiquettes) et les écrans posés devant la 3D (titre, Jouer)
+y renoncent et deviennent presque opaques : le rendu garde ses images par seconde sur un portable.
+
 **La 3D** (`render.js`, `style.js`) : un étalonnage plus doux (saturation et contraste presque neutres, noirs légèrement relevés,
 vignettage 14 % au lieu de 22 %), l'encre du style « dessin » plus fine (0,6 au lieu de 0,85) ; le style réaliste suit les mêmes
 réglages neutres.

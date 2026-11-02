@@ -35,7 +35,7 @@
   --glow-c: 0 0 0 3px rgba(59,156,255,.32);
   --glow-r: 0 0 0 3px rgba(255,69,58,.32);
   /* le verre dépoli, les rayons, l'ombre portée, la courbe des mouvements */
-  --mat: rgba(22,26,34,.74); --mat2: rgba(30,35,45,.78); --blur: blur(22px) saturate(1.5);
+  --mat: rgba(22,26,34,.74); --mat2: rgba(30,35,45,.78); --blur: blur(16px) saturate(1.4);
   --r-s: 10px; --r: 14px; --r-l: 20px; --r-xl: 26px;
   --shadow: 0 24px 70px rgba(0,0,0,.5), 0 2px 6px rgba(0,0,0,.25);
   --shadow-s: 0 8px 28px rgba(0,0,0,.35);
@@ -803,3 +803,10 @@ body:not(.hud-map) #truckmap { display: none !important; }
 @media (max-width: 820px) { .co-grid { grid-template-columns: minmax(0, 1fr); } .co-exo { grid-template-columns: auto minmax(0, 1fr); } .co-exo .btn { grid-column: 2; justify-self: start; } }
 @media (max-width: 720px) { .co-kpis, .co-kpis.pa-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 520px) { .jo-choix { grid-template-columns: minmax(0, 1fr); } }
+
+/* ---------- qualité Basse (ordinateur portable, body.q-basse) : pas de flou d'arrière-plan, qui coûte à chaque image sur les
+   éléments toujours visibles et sur les écrans posés devant la 3D ; les verres deviennent presque opaques ---------- */
+body.q-basse .quest, body.q-basse .toolbar, body.q-basse .statusbar, body.q-basse #onboard, body.q-basse #prompt, body.q-basse .qmark b, body.q-basse .icm, body.q-basse #toast, body.q-basse .banner, body.q-basse #truckmap, body.q-basse #touch .tbtn,
+body.q-basse #title, body.q-basse #start, body.q-basse .tel-widget, body.q-basse .ti-key, body.q-basse .p3d-tag, body.q-basse .p3d-views .btn, body.q-basse .v3-tag, body.q-basse .v3-tip, body.q-basse .cl-pin span, body.q-basse .ep-pin span, body.q-basse .v3-side, body.q-basse .cl-side, body.q-basse .ep-side, body.q-basse .direct, body.q-basse .ly-msg { backdrop-filter: none; -webkit-backdrop-filter: none; }
+body.q-basse .quest, body.q-basse .toolbar, body.q-basse .statusbar, body.q-basse #onboard, body.q-basse #prompt, body.q-basse .icm, body.q-basse #toast, body.q-basse .qmark b, body.q-basse .p3d-tag, body.q-basse .v3-tag, body.q-basse .v3-tip, body.q-basse .cl-pin span, body.q-basse .ep-pin span, body.q-basse .direct { background: rgba(22,26,34,.93); }
+body.q-basse .v3-side, body.q-basse .cl-side, body.q-basse .ep-side { background: rgba(22,26,34,.96); }
