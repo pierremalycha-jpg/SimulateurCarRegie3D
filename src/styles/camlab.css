@@ -21,10 +21,10 @@
 .cl-pins { position: absolute; inset: 0; pointer-events: none; }
 .cl-pin { position: absolute; left: 0; top: 0; display: flex; align-items: center; gap: 6px; margin: -12px 0 0 -12px; padding: 0; border: 0; background: none; color: var(--fg); cursor: pointer; pointer-events: auto; transition: opacity .2s; }
 .cl-pin i { display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; font: 700 11.5px var(--f-disp); font-style: normal; color: var(--accent-ink);
-  background: radial-gradient(circle at 40% 35%, #ffd27a, var(--accent) 60%, #c98400); box-shadow: 0 0 0 2px rgba(7,9,12,.8), 0 0 12px rgba(255,176,32,.55); }
+  background: radial-gradient(circle at 40% 35%, #ffd27a, var(--accent) 60%, #c98400); box-shadow: 0 0 0 2px rgba(7,9,12,.8), 0 0 12px rgba(255,179,64,.55); }
 .cl-pin span { display: none; padding: 3px 8px; font: 600 13px var(--f-disp); white-space: nowrap; background: rgba(11,16,19,.92); border: 1px solid #070a0c; border-left: 3px solid var(--accent); border-radius: 3px; }
 .cl-pin:hover span, .cl-pin:focus-visible span, .cl-pin.hover span, .cl-pin.cur span { display: block; }
-.cl-pin:focus-visible { outline: none; } .cl-pin:focus-visible i { box-shadow: 0 0 0 2px #fff, 0 0 14px rgba(255,176,32,.8); }
+.cl-pin:focus-visible { outline: none; } .cl-pin:focus-visible i { box-shadow: 0 0 0 2px #fff, 0 0 14px rgba(255,179,64,.8); }
 .cl-pin.occ { opacity: .38; } .cl-pin.occ:hover, .cl-pin.occ.hover { opacity: 1; }
 .cl-pin.dim { opacity: .3; } .cl-pin.dim:hover { opacity: 1; }
 .cl-pin.cur i { background: radial-gradient(circle at 40% 35%, #fff, #f3f1e8 60%, #c9c6b8); box-shadow: 0 0 0 2px rgba(7,9,12,.8), 0 0 16px rgba(255,255,255,.6); }
@@ -85,7 +85,7 @@
 .cf-s.r { text-anchor: end; } .cf-s.l { text-anchor: start; } .cf-bs.sm { font-size: 10px; }
 .cf-lbl { fill: var(--fg); font-size: 11.5px; text-anchor: middle; } .cf-lbl.l { text-anchor: start; }
 .cf-tick { fill: var(--muted); font-size: 10.5px; text-anchor: middle; font-family: var(--f-mono); } .cf-tick.l { text-anchor: start; } .cf-tick.ink { fill: #07090c; }
-.cf-body { fill: #3b4550; stroke: #59646f; } .cf-wedge { fill: rgba(255,176,32,.14); stroke: var(--fibre); stroke-width: 1.4; }
+.cf-body { fill: #3b4550; stroke: #59646f; } .cf-wedge { fill: rgba(255,179,64,.14); stroke: var(--fibre); stroke-width: 1.4; }
 .cf-dash { stroke: var(--muted); stroke-width: 1; stroke-dasharray: 4 3; } .cf-axis { stroke: var(--muted); stroke-width: 1; } .cf-zone { fill: var(--pvw); opacity: .85; }
 .cf-ray-w { stroke: #f3f1e8; stroke-width: 4; } .cf-ray-y { stroke: #ffd27a; stroke-width: 4; } .cf-ray-r { stroke: #ff5a4e; stroke-width: 4; } .cf-ray-g { stroke: var(--pvw); stroke-width: 4; } .cf-ray-b { stroke: #4ca0ff; stroke-width: 4; }
 .cf-sensor.r { stroke: #ff5a4e; } .cf-sensor.b { stroke: #4ca0ff; } .cf-dichro { stroke: var(--cyan); stroke-width: 2.5; }

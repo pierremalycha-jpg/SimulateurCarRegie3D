@@ -28,10 +28,10 @@
 .c89-star { fill: #121212; } .c89-star-o { fill: none; stroke: #121212; stroke-width: 1; }
 
 /* ---- schémas : grand capteur, HDR ---- */
-.c89-sens { fill: rgba(64,214,122,.25); stroke: var(--pvw); stroke-width: 1.5; } .c89-sens.s { fill: rgba(255,176,32,.12); stroke: var(--fibre); }
+.c89-sens { fill: rgba(64,214,122,.25); stroke: var(--pvw); stroke-width: 1.5; } .c89-sens.s { fill: rgba(255,179,64,.12); stroke: var(--fibre); }
 .c89-circ { fill: none; stroke: var(--pvw); stroke-dasharray: 3 3; } .c89-circ.s { stroke: var(--fibre); }
 .c89-sl { fill: #b9f5cf; font-size: 11px; font-weight: 700; text-anchor: middle; } .c89-sl.s { fill: #ffd27a; }
-.c89-uhd { fill: rgba(92,200,236,.12); stroke: var(--cyan); stroke-width: 1.5; } .c89-hd { fill: rgba(255,176,32,.22); stroke: var(--fibre); stroke-width: 1.5; }
+.c89-uhd { fill: rgba(92,200,236,.12); stroke: var(--cyan); stroke-width: 1.5; } .c89-hd { fill: rgba(255,179,64,.22); stroke: var(--fibre); stroke-width: 1.5; }
 .c89-sdr { fill: none; stroke: #ffd27a; stroke-width: 2.2; } .c89-hlg { fill: none; stroke: #5cc8ec; stroke-width: 2.2; }
 .c89-sdrl { fill: #ffd27a; font-size: 11px; } .c89-hlgl { fill: #5cc8ec; font-size: 11px; }
 .c89-sdrl.l, .c89-hlgl.l { text-anchor: start; } .c89-hlgl.r { text-anchor: end; }

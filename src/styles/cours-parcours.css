@@ -1,8 +1,8 @@
 /* le parcours du Cours (ui/cours_parcours.js, ui/cours_exo.js) : niveaux colorés, tuiles des catégories,
    chemin des leçons avec cadenas et étoiles, paliers, étapes d'une leçon, exercice en autonomie */
-.pa-debutant { --niv: #37f28b; --niv-d: #0b3a22; }
-.pa-intermediaire { --niv: #19d3ff; --niv-d: #0a3340; }
-.pa-avance { --niv: #ffd166; --niv-d: #3d3010; }
+.pa-debutant { --niv: #34c759; --niv-d: #0b3a22; }
+.pa-intermediaire { --niv: #3b9cff; --niv-d: #0a3340; }
+.pa-avance { --niv: #ffb340; --niv-d: #3d3010; }
 .pa-expert { --niv: #c99bff; --niv-d: #2c1a45; }
 .pa-pill { display: inline-flex; align-items: center; padding: 1px 7px; font: 600 11.5px var(--f-leg, var(--f-disp)); letter-spacing: .02em; color: var(--niv, var(--fg)); background: var(--niv-d, var(--well)); border: 1px solid var(--niv, var(--line2)); border-radius: 10px; white-space: nowrap; }
 .pa-libre { display: flex; align-items: center; gap: 6px; }
@@ -11,7 +11,7 @@
 /* étoiles */
 .pa-stars { display: inline-flex; gap: 1px; vertical-align: middle; }
 .pa-stars .ico { width: 18px; height: 18px; color: #3a4654; }
-.pa-stars .ico.on { color: var(--gold); filter: drop-shadow(0 0 3px rgba(255,209,102,.45)); }
+.pa-stars .ico.on { color: var(--gold); filter: drop-shadow(0 0 3px rgba(255,179,64,.45)); }
 .pa-stars.small .ico { width: 14px; height: 14px; }
 .pa-stars.mini { margin-left: auto; flex: none; }
 .pa-stars.mini .ico { width: 10px; height: 10px; }
@@ -30,7 +30,7 @@
 
 /* Mon parcours : continuer, puis les catégories */
 .pa-hero { padding: 0; }
-.pa-hero-in { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 14px; align-items: center; padding: 14px 16px; background: linear-gradient(135deg, rgba(55,242,139,.10), rgba(25,211,255,.08)); border: 1px solid #1e6b45; border-radius: 6px; box-shadow: 0 0 22px rgba(55,242,139,.10); }
+.pa-hero-in { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 14px; align-items: center; padding: 14px 16px; background: linear-gradient(135deg, rgba(52,199,89,.10), rgba(59,156,255,.08)); border: 1px solid #1e6b45; border-radius: 6px; box-shadow: 0 0 22px rgba(52,199,89,.10); }
 .pa-hero-in > div { display: grid; gap: 3px; min-width: 0; }
 .pa-hero-in small { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: 12.5px; color: var(--muted); }
 .pa-hero-in b { font: 700 20px/1.15 var(--f-disp); text-wrap: balance; }

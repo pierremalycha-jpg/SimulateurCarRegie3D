@@ -185,7 +185,7 @@ class Post {
         c = srgb(c);
         c = clamp((c - 0.5) * uCon + 0.5 + uLift * (1.0 - c), 0.0, 1.0);
         c += (h12(gl_FragCoord.xy + uTime) - 0.5) / 255.0;
-        gl_FragColor = vec4(c, 1.0); }`, { tSrc: { value: null }, tBloom: { value: null }, tAO: { value: null }, tDepth: { value: null }, uAO: { value: 0 }, uExp: { value: 1 }, uBloom: { value: 0.05 }, uVig: { value: 0.22 }, uSat: { value: 1.06 }, uCon: { value: 1.03 }, uLift: { value: new THREE.Vector3(0.012, 0.014, 0.02) }, uTime: { value: 0 }, uInk: { value: 0 }, uNear: { value: 0.1 }, uFar: { value: 3000 }, uPx: { value: 1 }, uTexel: { value: new THREE.Vector2() }, uFade: { value: new THREE.Vector2(60, 240) } });
+        gl_FragColor = vec4(c, 1.0); }`, { tSrc: { value: null }, tBloom: { value: null }, tAO: { value: null }, tDepth: { value: null }, uAO: { value: 0 }, uExp: { value: 1 }, uBloom: { value: 0.05 }, uVig: { value: 0.14 }, uSat: { value: 1.0 }, uCon: { value: 1.0 }, uLift: { value: new THREE.Vector3(0.016, 0.018, 0.026) }, uTime: { value: 0 }, uInk: { value: 0 }, uNear: { value: 0.1 }, uFar: { value: 3000 }, uPx: { value: 1 }, uTexel: { value: new THREE.Vector2() }, uFade: { value: new THREE.Vector2(60, 240) } });
     // ------------- occlusion ambiante (SSAO) : pré-passe normales + profondeur à demi-résolution -------------
     this.gbuf = null; this.aoRT = null; this.aoBlurRT = null;
     this.normalMat = new THREE.MeshNormalMaterial();
@@ -289,13 +289,14 @@ class Post {
       this.pass(this.mUp, this.up[i]);
     }
     const c = this.mComp.uniforms; c.tSrc.value = this.rt.texture; c.tBloom.value = this.up[0].texture; c.tAO.value = aoTex; c.uAO.value = ao ? (ao.strength ?? 1) : 0; c.uExp.value = exposure; c.uBloom.value = bloom; c.uTime.value = (S.frame % 64) * 1.7;
-    // style « dessin » : encre (plus fine et plus proche dans le car), couleurs franches, ombres un peu bleutées
+    // style « dessin » : encre (plus fine et plus proche dans le car), couleurs à peine plus franches, ombres un peu
+    // bleutées ; l'étalonnage reste doux (v19.22 : saturation et contraste presque neutres, noirs légèrement relevés)
     const cel = STYLE.cel;
     c.tDepth.value = this.rt.depthTexture; c.uNear.value = camera.near; c.uFar.value = camera.far; c.uTexel.value.set(1 / this.w, 1 / this.h);
     c.uInk.value = cel ? STYLE.encre * (inTruck ? 0.7 : 1) : 0; c.uPx.value = Math.max(1, this.h / 900);
     const haut = Math.max(0, camera.position.y - 25); // vu d'avion, les contours portent plus loin
     c.uFade.value.set(inTruck ? 6 : 70 + haut * 2.5, inTruck ? 14 : 260 + haut * 5);
-    c.uSat.value = cel ? 1.16 : 1.06; c.uCon.value = cel ? 1.05 : 1.03; c.uLift.value.set(cel ? 0.016 : 0.012, cel ? 0.02 : 0.014, cel ? 0.034 : 0.02);
+    c.uSat.value = cel ? 1.06 : 1.0; c.uCon.value = cel ? 1.02 : 1.0; c.uLift.value.set(cel ? 0.02 : 0.016, cel ? 0.024 : 0.018, cel ? 0.036 : 0.026);
     this.pass(this.mComp, null);
     r.toneMapping = tm;
   }

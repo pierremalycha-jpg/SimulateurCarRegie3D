@@ -29,7 +29,7 @@
 .jo-mode b { font: 600 17px var(--f-disp); }
 .jo-mode span { font-size: 13.5px; line-height: 1.45; color: var(--muted); }
 .jo-mode:hover:not(:disabled) { background: linear-gradient(#4a545e, #3b444d); }
-.jo-mode[aria-pressed="true"] { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent), 0 0 14px rgba(255,176,32,.18); }
+.jo-mode[aria-pressed="true"] { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent), 0 0 14px rgba(255,179,64,.18); }
 .jo-mode[aria-pressed="true"] .ico, .jo-mode[aria-pressed="true"] b { color: #ffd38a; }
 .jo-mode:disabled { cursor: not-allowed; opacity: .45; }
 /* l'équipe */

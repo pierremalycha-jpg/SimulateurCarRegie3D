@@ -13,9 +13,9 @@
 .c1-ramp { fill: rgba(240,55,44,.12); }
 .c1-curve { fill: none; stroke: var(--pvw); stroke-width: 2.6; stroke-linejoin: round; }
 .c1-curve.ext { stroke: var(--accent); stroke-dasharray: 6 4; }
-.c1-ext { fill: rgba(255,176,32,.35); stroke: var(--accent); stroke-width: 1.5; }
+.c1-ext { fill: rgba(255,179,64,.35); stroke: var(--accent); stroke-width: 1.5; }
 .c1-scene { fill: rgba(76,195,230,.08); stroke: var(--muted); }
-.c1-quarter { fill: rgba(255,176,32,.22); stroke: var(--accent); stroke-dasharray: 4 3; }
+.c1-quarter { fill: rgba(255,179,64,.22); stroke: var(--accent); stroke-dasharray: 4 3; }
 .c1-move { fill: none; stroke: var(--accent); stroke-width: 1.5; stroke-dasharray: 4 3; }
 .c1-white { fill: #ecece6; } .c1-black { fill: #121212; } .c1-dark { fill: #0b0d10; }
 .c1-fr { fill: #ff5a4e; } .c1-fb { fill: #4ca0ff; }

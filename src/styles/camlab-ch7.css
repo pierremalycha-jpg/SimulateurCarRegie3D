@@ -74,7 +74,7 @@
 .c7f-scope { fill: #05070a; stroke: #2b2e33; } .c7f-zero { stroke: rgba(150,210,180,.35); stroke-width: 1; } .c7f-wave { fill: none; stroke: #7fe8a6; stroke-width: 1.8; }
 .c7f-bnc { fill: #4a545e; stroke: #c8ced4; } .c7f-cable { fill: none; stroke: var(--cyan); stroke-width: 2.5; }
 .c7f-term { fill: var(--accent); } .c7f-termt { fill: #07090c; font: 700 8.5px var(--f-mono); text-anchor: middle; }
-.c7f-px { fill: #3b4550; stroke: #8a949e; } .c7f-c { fill: rgba(255,176,32,.16); stroke: var(--accent); }
+.c7f-px { fill: #3b4550; stroke: #8a949e; } .c7f-c { fill: rgba(255,179,64,.16); stroke: var(--accent); }
 .c7f-word { fill: #2a3036; stroke: #8a949e; } .c7f-word.c { stroke: var(--accent); } .c7f-scale { fill: #3b4550; }
 .c7f-num { fill: #5c4210; stroke: #ffd38a; }
 .c7f-tr { stroke-width: 3; } .c7f-tr.r { stroke: #ff5a4e; } .c7f-tr.g { stroke: var(--pvw); } .c7f-tr.b { stroke: #4ca0ff; }
