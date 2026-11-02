@@ -40,6 +40,11 @@ Tout est en français (code commenté en français, interface, commits).
   (essais manqués) ; toute nouvelle activité notée qui garde ses essais y prend sa ligne. Qui lit et écrit quoi :
   `firestore.rules` (tout changement de document s'y reflète et se teste : `node tools/firebase-test.mjs`, émulateur). Suite
   `node tools/e2e.mjs comptes`, tests `tests/unit/comptes.test.mjs`, `tests/firebase/comptes.mjs`.
+  Le car régie au tableau de bord (v19.25) : `PROG.car` (temps par activité et par poste, manipulation, gestes, exercices
+  pratiques, missions, ce qui est consulté, parties), compté par `comptes/suivi_car.js` sur les événements (`station`,
+  `tutor`, `missionCar`, `device`, `teleport`, `modalopen`, `faultNew`…), calculé par `bilanCar` ; un nouveau poste ou un
+  nouvel exercice y apparaît seul (catalogues lus dans le code : `ui/tableau_car.js`). L'envoi en ligne est limité à une fois
+  par minute (`ENVOI_MIN_MS`, forfait gratuit de Firebase) : ne pas enregistrer en ligne à chaque geste.
 - **TIEE Simulator**, réalisé par le BTS Audiovisuel de Saint-Quentin (logo `src/assets/logo-bts-av.png`),
   développé par Pierre MALYCHA : ces mentions restent sur l'écran titre et dans « À propos » (Réglages).
 - **Trois entrées, les mêmes partout** : Jouer · Cours · Réglages. Écran titre (`src/app/title.js`,

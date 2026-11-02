@@ -6,6 +6,7 @@ import { applyOverrides } from './params.js';
 import { mergeGame } from './game/xp.js';
 import { ANCIEN } from './content/referentiel.js';
 import { normaliser as carriereNette, mergeCarriere } from './carriere/index.js';
+import { car as carNet, mergeCar } from './comptes/car.js';
 
 // ----------------------------------------------------------------------------------
 // Données partagées de la page publiée (capacités db / user / assets / downloads),
@@ -37,9 +38,10 @@ export const MYREV = { domains: [], items: {}, params: {}, extra: [], updatedAt:
  * 4 : le parcours du Cours, exercice en autonomie de chaque leçon (cours[id].exo) et tests de niveau (niveaux) (v19.18) ;
  * 5 : les émissions en direct conduites au car (emissions : score, médias lancés soi-même) (v19.19) ;
  * 6 : les badges de compétence portent les numéros officiels du référentiel (comp-C32 au lieu de comp-1.4) (v19.23) ;
- * 7 : les comptes (v19.24) : essais du quiz de chaque leçon (cours[id].qn) et minutes de travail par jour (jours).
+ * 7 : les comptes (v19.24) : essais du quiz de chaque leçon (cours[id].qn) et minutes de travail par jour (jours) ;
+ * 8 : le suivi du car régie (v19.25, comptes/car.js) : temps par poste et de manipulation, exercices pratiques, sessions (car).
  */
-export const PROG_VERSION = 7;
+export const PROG_VERSION = 8;
 export const PROG = { v: PROG_VERSION, missions: {}, visited: {}, scenarios: [], reports: [], perf: null, patchBest: 0, updatedAt: 0 };
 /** état du dernier enregistrement de la progression : sur cet ordinateur (local), sur le serveur de la page (remote) */
 export const SAVE = { local: /** @type {boolean | null} */ (null), remote: /** @type {boolean | null} */ (null), at: 0, error: '' };
@@ -183,6 +185,8 @@ export function migrateProgress(d) {
     if (!isObj(p.jours)) p.jours = {};
     for (const [j, m] of Object.entries(p.jours)) if (!/^\d{4}-\d\d-\d\d$/.test(j) || !(Number(m) >= 0)) delete p.jours[j];
   }
+  // v7 → v8 : le suivi du car régie (absent tant que rien n'est fait au car), remis en forme s'il est abîmé
+  if ('car' in p) carNet(p);
   p.v = Math.max(v, PROG_VERSION);
   return p;
 }
@@ -243,6 +247,8 @@ export function mergeProgress(d) {
   }
   // minutes de travail par jour : la plus grande des deux (un appareil ne voit que son propre temps)
   if (d.jours) { const P = /** @type {any} */ (PROG); const J = P.jours = P.jours || {}; for (const [j, m] of Object.entries(d.jours)) if (Number(m) > (J[j] || 0)) J[j] = Number(m); }
+  // le suivi du car régie : le plus grand compte de chaque chose, les sessions des deux appareils
+  if (d.car) { const P = /** @type {any} */ (PROG); P.car = mergeCar(P.car, d.car); }
   // progression du jeu (XP, badges) : une récompense obtenue sur l'un des appareils l'est pour de bon
   if (d.game) { const G = /** @type {any} */ (PROG); G.game = mergeGame(G.game, d.game); }
   // l'entrepôt : meilleur résultat de chaque mission, derniers essais, et le montage le plus récent
@@ -294,7 +300,7 @@ export async function useAccount(acc) {
   // l'on quitte un compte (la session est déjà fermée : le serveur refuserait ; ui/compte_ui.js enregistre avant)
   const quitte = !!COMPTE_SH.uid && !acc;
   if (quitte) SH.readOnly = true;
-  if (PROG.updatedAt || Object.keys(S.missionsDone).length) { try { await saveProgress(); } catch (e) { /* enregistré au mieux */ } }
+  if (PROG.updatedAt || Object.keys(S.missionsDone).length) { try { await saveProgress(true); } catch (e) { /* enregistré au mieux */ } }
   if (enCours) await enCours;
   for (const u of configUnsubs) { try { u(); } catch (e) { /* déjà fermé */ } }
   configUnsubs = [];
@@ -333,7 +339,14 @@ function noteSave(/** @type {'local' | 'remote'} */ where, /** @type {boolean} *
   SAVE[where] = ok; if (ok) SAVE.at = Date.now(); else SAVE.error = String((err && (err.message || err.code)) || err || '').slice(0, 200);
   if (before !== ok) emit('progressSave', { where, ok, error: SAVE.error });
 }
-async function saveProgress() {
+/**
+ * Au plus un envoi en ligne par minute et par élève (v19.25) : le forfait gratuit de Firebase compte 20 000
+ * écritures par jour pour tout l'établissement. La copie de ce navigateur, elle, s'écrit à chaque fois ; ce qui
+ * est retenu part à la minute suivante, ou tout de suite par saveProgressNow (déconnexion, import, effacement).
+ */
+export const ENVOI_MIN_MS = 60000;
+let dernierEnvoi = 0, envoiT = /** @type {ReturnType<typeof setTimeout> | undefined} */ (undefined);
+async function saveProgress(force = false) {
   if (saving) { again = true; return; }
   PROG.missions = { ...S.missionsDone }; PROG.visited = { ...S.visited }; PROG.updatedAt = Date.now(); PROG.v = Math.max(PROG.v || 1, PROG_VERSION);
   PROG.scenarios = PROG.scenarios.slice(-20); PROG.reports = PROG.reports.slice(-50); if (PROG.rigs) PROG.rigs = PROG.rigs.slice(-20);
@@ -341,6 +354,9 @@ async function saveProgress() {
   // stockage du navigateur plein (photos du formateur, autres pages) ou désactivé : on le dit, la progression reste en mémoire
   noteSave('local', LS.set(PKEY, PROG), 'stockage du navigateur plein ou désactivé');
   if (!SH.db || !SH.uid || SH.readOnly) return;
+  const reste = ENVOI_MIN_MS - (Date.now() - dernierEnvoi);
+  if (!force && reste > 0) { clearTimeout(envoiT); envoiT = setTimeout(() => saveProgress(true), reste); return; }
+  clearTimeout(envoiT); dernierEnvoi = Date.now();
   saving = true;
   // le propriétaire de cet enregistrement : si le compte change pendant l'aller-retour avec le serveur (src/comptes/),
   // ce qui en revient n'est pas fusionné dans la progression du nouveau compte
@@ -364,7 +380,7 @@ async function saveProgress() {
 /** l'enregistrement en ligne en cours (null : aucun) */
 let enCours = /** @type {Promise<void> | null} */ (null);
 /** enregistre tout de suite (après un import, avant de quitter) */
-export function saveProgressNow() { clearTimeout(saveT); return saveProgress(); }
+export function saveProgressNow() { clearTimeout(saveT); return saveProgress(true); }
 
 // ---------------- exporter, importer, effacer ----------------
 export const EXPORT_FORMAT = 'tiee-simulator/progression';

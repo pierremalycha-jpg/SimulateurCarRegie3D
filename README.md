@@ -394,6 +394,51 @@ Tests :
   « Emmène-moi / Montre-moi » doit mettre en évidence un élément réel de la page, et « Fais-le pour moi » doit faire
   valider l'étape.
 
+## v19.25 : le tableau de bord complet, avec tout ce qui se fait au car régie
+
+**Pourquoi.** Le tableau de bord de la v19.24 montrait le Cours (leçons, quiz, exercices en autonomie) mais rien de ce que
+l'élève fait au car régie. Demande : voir ce qu'il y a fait et vu, combien de temps il est resté à chaque poste, s'il a
+manipulé et combien de temps, s'il a réalisé les exercices pratiques ; un tableau de bord « beaucoup plus complet ».
+
+**Ce qui est mesuré** (`src/comptes/suivi_car.js`, forme et calcul purs dans `src/comptes/car.js`, rangé dans `PROG.car`,
+progression **v8**) :
+
+- le **temps actif** au car régie, réparti : assis à un poste, dans le car à pied, dans le stade, une caméra en main, au plan
+  des caméras ; une seconde ne compte que si la page est visible et que l'élève a agi dans les deux dernières minutes ;
+- **poste par poste** : nombre d'ouvertures, temps assis, **temps de manipulation** (une action sur les commandes du poste,
+  interface 2D ou pupitre 3D, il y a moins de 5 secondes), nombre de **gestes** (clic, touche, molette, réglage), dernière visite ;
+- les **exercices pratiques d'Olivier** : commencés, finis, abandonnés, indices demandés, « Fais-le pour moi », mauvaises
+  réponses, temps passé ; les **missions spécifiques** lancées et finies, avec leur résultat ;
+- ce qu'il a **consulté** : le matériel ouvert dans la visionneuse, les destinations du stade, les fenêtres (fiches de poste,
+  synoptiques, plan) ; les **pannes** apparues et résolues pendant ses parties ;
+- ses **dernières parties** : date, mode (car vide, pré-installé, mission spécifique), durée active, postes ouverts.
+
+**Le tableau de bord** (`src/ui/tableau_bord.js`, vues du car dans `src/ui/tableau_car.js`, calcul `bilanCar` de
+`src/comptes/bilan.js`) :
+
+- **la classe**, trois vues : *Vue d'ensemble* (le tableau de la v19.24, plus le temps au car régie et les exercices pratiques
+  réussis de chaque élève) ; *Car régie : temps aux postes* (synthèse, puis une grille élèves × postes : temps assis et part de
+  manipulation, la case d'autant plus foncée que l'élève y est resté ; les postes que personne n'a ouverts) ; *Exercices
+  pratiques* (une grille exercice × élève : réussi seul, aidé, en cours, abandon) ;
+- **un élève**, cinq onglets : *Vue d'ensemble* (indicateurs, **activité des 14 derniers jours** en barres, difficultés) ;
+  *Car régie* (temps, poste par poste, matériel, lieux et fenêtres consultés, tâches du car vide, dernières parties) ;
+  *Exercices pratiques* (installer le car, aux postes avec Olivier rangés par chapitre, épreuves notées : état, essais,
+  temps, indices, « Fais-le pour moi », erreurs) ; *Cours* (parcours chapitre par chapitre, épreuves notées) ; *Livret* ;
+- l'export CSV du suivi gagne le temps au car, aux postes, de manipulation, les postes pratiqués, les exercices et épreuves réussis.
+
+**Tenir dans le forfait gratuit** : la progression part en ligne **au plus une fois par minute** et par élève (`ENVOI_MIN_MS`
+de `shared.js` ; la copie du navigateur, elle, s'écrit à chaque fois ; déconnexion, import et effacement envoient tout de
+suite). Le forfait Spark de Firebase compte, pour tout l'établissement, 20 000 écritures et 50 000 lectures par jour
+(remis à zéro vers 9 h, heure de Paris) et 1 Gio de données : de l'ordre de **300 heures d'élève actif par jour** (écritures,
+la limite qui compte), sans limite de nombre de comptes ; 100 créations de comptes par heure depuis une même adresse IP.
+
+**Vérification.** Tests unitaires (comptage d'une seconde au bon endroit, manipulation, élève absent ou onglet caché, fusion
+de deux appareils, migration v8, bilan du car avec l'état de chaque exercice). Suite `node tools/e2e.mjs comptes` (42
+vérifications) : l'élève entre au car pré-installé, s'assoit au poste son et manipule la console (temps assis, manipulation,
+gestes, partie comptés) ; le professeur voit le graphique d'activité, l'onglet Car régie (le poste son, la partie), les
+exercices pratiques, le livret, la grille élèves × postes de la classe et la grille des exercices ; accessibilité (axe) des
+nouvelles vues.
+
 ## v19.24 : les comptes élève et professeur, le tableau de bord des classes (Firebase)
 
 **Pourquoi.** Jusqu'ici, la progression restait dans le navigateur (ou dans un fichier exporté) et le profil Formateur se
@@ -2525,6 +2570,7 @@ node tools/shots.mjs dossier 1280 800 '["vision","hf"]'   # captures de postes
 | `styles/theme-jeu.css` | Le thème « épuré » (v19.22, inspiré de la direction artistique d'Apple) : jetons de couleur (un accent bleu, verre dépoli, grands rayons), composants communs (touches, fenêtres, onglets, afficheurs), HUD, écran titre, Jouer, menu, journal, badges, Cours, téléphone, postes en 3D |
 | `telephone/index.js`, `telephone/apps.js`, `telephone/modele.js`, `styles/telephone.css` | Le téléphone (Tab ou T) : lever et ranger, touches, accueil (objectif, niveau), applications par famille (Aller à, Missions, Olivier, outils du car, Cours, Progression, Réglages), boîtier 3D et écran HTML posé dessus (transformation projective `cssProjection`) |
 | `comptes/` (`config.js`, `firebase.js`, `session.js`, `identifiants.js`, `bilan.js`, `activite.js`) | Les comptes (v19.24) : projet Firebase de l'établissement, authentification et base (comptes, classes, progression, gestion des élèves par le professeur), session et rôle imposé, identifiants et mots de passe provisoires, bilan d'un élève et d'une classe avec ses difficultés (calcul pur), temps de travail |
+| `comptes/car.js`, `comptes/suivi_car.js`, `ui/tableau_car.js` | Le car régie dans le tableau de bord (v19.25) : ce qui se mesure (temps par activité et par poste, manipulation, gestes, exercices pratiques, missions, ce qui est consulté, pannes, parties ; forme et fusion pures), les écouteurs qui le comptent, les vues de la classe (grilles élèves × postes et élèves × exercices) et les onglets Car régie et Exercices pratiques d'un élève |
 | `ui/compte_ui.js`, `ui/tableau_bord.js`, `styles/comptes.css` | Se connecter (fenêtre, bande du compte de l'écran titre, Mon compte des Réglages) ; le tableau de bord du professeur (suivi des élèves, bilan, classes et comptes, fiches de connexion, professeurs) |
 | `app/title.js` | Écran titre TIEE Simulator : une page centrée, logo du BTS, trois entrées (Jouer, Cours, Réglages), progression du chargement, conseil d'Olivier, carte joueur, mentions |
 | `ui/settings.js` | Réglages : une seule fenêtre (ordinateur, partie en cours, ma progression, profil, espace formateur, aide, à propos) |

@@ -7,7 +7,8 @@ import { openLayer, closeLayer, layerOpen, showTab, layerSay } from './layer.js'
 import { livretPanel, livretCSV } from './livret.js';
 import { offerDownload } from '../shared.js';
 import { COMPTE, estProf } from '../comptes/session.js';
-import { bilanEleve, bilanClasse, duree, ESSAIS_DIFFICULTE } from '../comptes/bilan.js';
+import { bilanEleve, bilanClasse, duree, dureeS, ESSAIS_DIFFICULTE } from '../comptes/bilan.js';
+import { vueClasseCar, vueClasseExos, ongletCar, ongletExos, resumeCar, graphiqueJours, carDe } from './tableau_car.js';
 import { lireListe, nomComplet, motDePasseRefuse } from '../comptes/identifiants.js';
 import {
   suivreClasses, suivreEleves, suivreProgressions, secretsDe, creerClasse, renommerClasse, supprimerClasse,
@@ -29,7 +30,14 @@ const TB = {
   classes: /** @type {any[]} */ ([]), eleves: /** @type {any[]} */ ([]), progs: /** @type {Record<string, any>} */ ({}),
   classe: '', eleve: '', cleProgs: '', unsubs: /** @type {(() => void)[]} */ ([]), offProgs: () => {}, redessiner: () => {}, erreur: '',
   montrerMdp: false, secrets: /** @type {Record<string, any>} */ ({}), crees: /** @type {any[]} */ ([]),
+  // la vue de la classe (ensemble, car régie, exercices pratiques) et l'onglet de la fiche d'un élève
+  vue: 'ensemble', onglet: 'ensemble',
 };
+/** une rangée de touches à bascule (une seule allumée) */
+function bascule(label, options, valeur, choisir, id = '') {
+  return el('div', { class: 'seg tb-seg', role: 'group', 'aria-label': label, id },
+    ...options.map(([v, t]) => el('button', { type: 'button', 'data-v': v, 'aria-pressed': String(v === valeur), onclick: () => choisir(v) }, t)));
+}
 const SANS = '__sans__';
 const classeNom = (id) => (TB.classes.find((c) => c.id === id) || {}).nom || (id ? 'Classe supprimée' : 'Sans classe');
 const nomEleve = (e) => nomComplet(e) || e.identifiant || e.uid;
@@ -107,6 +115,10 @@ function pageSuivi(page) {
     return;
   }
   const C = bilanClasse(liste.map((e) => ({ uid: e.uid, nom: nomEleve(e), prog: TB.progs[e.uid] || null })));
+  page.append(bascule('Vue de la classe', [['ensemble', 'Vue d\'ensemble'], ['car', 'Car régie : temps aux postes'], ['exos', 'Exercices pratiques']], TB.vue, (v) => { TB.vue = v; TB.redessiner(); }, 'tb-vue-classe'));
+  const ouvrir = (uid) => { TB.eleve = uid; TB.onglet = TB.vue === 'ensemble' ? 'ensemble' : TB.vue; TB.redessiner(); };
+  if (liste.length && TB.vue === 'car') { page.append(vueClasseCar(C.eleves.map((x) => ({ uid: x.uid, nom: x.nom, prog: x.prog, identifiant: (liste.find((y) => y.uid === x.uid) || {}).identifiant })), ouvrir)); return; }
+  if (liste.length && TB.vue === 'exos') { page.append(vueClasseExos(C.eleves.map((x) => ({ uid: x.uid, nom: x.nom, prog: x.prog, identifiant: (liste.find((y) => y.uid === x.uid) || {}).identifiant })), ouvrir)); return; }
   page.append(el('div', { class: 'tb-kpis' },
     kpi('Élèves', `${C.effectif}`, C.jamais.length ? `${C.jamais.length} jamais connecté${C.jamais.length > 1 ? 's' : ''}` : 'tous connectés au moins une fois'),
     kpi('Leçons terminées', C.moyenneTerminees == null ? '—' : `${C.moyenneTerminees} / ${C.lecons}`, 'en moyenne par élève'),
@@ -120,16 +132,18 @@ function pageSuivi(page) {
   if (C.inactifs.length) page.append(el('p', { class: 'note' }, `Sans activité depuis plus de deux semaines : ${C.inactifs.join(', ')}.`));
   if (!liste.length) { page.append(el('p', { class: 'note' }, 'Pas encore d\'élève dans cette classe : onglet « Classes et comptes ».')); return; }
   const t = el('table', { class: 'tbl compact tb-table', id: 'tb-eleves' },
-    el('thead', {}, el('tr', {}, ...['Élève', 'Dernière activité', 'Cette semaine', 'Parcours du Cours', 'Exercices', 'Compétences', 'Niveau', 'Difficultés'].map((h) => el('th', { scope: 'col' }, h)))),
+    el('thead', {}, el('tr', {}, ...['Élève', 'Dernière activité', 'Cette semaine', 'Parcours du Cours', 'Exercices', 'Car régie', 'Exercices pratiques', 'Compétences', 'Niveau', 'Difficultés'].map((h) => el('th', { scope: 'col' }, h)))),
     el('tbody', {}, ...C.eleves.map((x) => {
-      const b = x.b; const e = liste.find((y) => y.uid === x.uid);
+      const b = x.b; const e = liste.find((y) => y.uid === x.uid); const r = resumeCar(x.prog);
       const fortes = b.difficultes.filter((d) => d.gravite === 'forte').length;
-      return el('tr', { class: 'tb-ligne' + (b.alertes ? ' alerte' : ''), tabindex: '0', 'data-uid': x.uid, onclick: () => { TB.eleve = x.uid; TB.redessiner(); }, onkeydown: (ev) => { if (ev.key === 'Enter') { TB.eleve = x.uid; TB.redessiner(); } } },
+      return el('tr', { class: 'tb-ligne' + (b.alertes ? ' alerte' : ''), tabindex: '0', 'data-uid': x.uid, onclick: () => ouvrir(x.uid), onkeydown: (ev) => { if (ev.key === 'Enter') ouvrir(x.uid); } },
         el('th', { scope: 'row' }, el('span', { class: 'tb-nom' }, x.nom), el('small', {}, e ? e.identifiant : '')),
         el('td', { class: b.inactif ? 'tb-dim' : '' }, b.jamais ? 'jamais' : quand(b.dernier)),
         el('td', {}, duree(b.minutes.semaine)),
         el('td', {}, el('span', { class: 'tb-parc' }, barre(b.lecons ? b.terminees / b.lecons : 0, `${b.terminees} leçons terminées sur ${b.lecons}`), `${b.terminees} / ${b.lecons}`)),
         el('td', {}, b.moyenneExos == null ? '—' : `${b.moyenneExos} / 100`),
+        el('td', {}, r.jeu ? `${dureeS(r.jeu)} · ${r.postes} poste${r.postes > 1 ? 's' : ''}` : '—'),
+        el('td', {}, r.exos.seul + r.exos.aide ? `${r.exos.seul + r.exos.aide} / ${r.exos.total}` + (r.exos.aide ? ` (${r.exos.aide} aidé${r.exos.aide > 1 ? 's' : ''})` : '') : r.exos.commence ? 'commencés' : '—'),
         el('td', {}, `${b.competences.consolidee + b.competences.travaillee}` + (b.competences.consolidee ? ` (${b.competences.consolidee} cons.)` : '')),
         el('td', {}, `${b.niveauN} · ${b.niveau}`),
         el('td', {}, b.alertes ? el('span', { class: 'tb-pastille ' + (fortes ? 'forte' : 'moyenne') }, fortes === b.alertes ? `${fortes} forte${fortes > 1 ? 's' : ''}` : `${b.alertes}${fortes ? ' dont ' + fortes + ' forte' + (fortes > 1 ? 's' : '') : ''}`) : b.difficultes.length ? el('span', { class: 'tb-pastille aide' }, 'aidé') : el('span', { class: 'tb-dim' }, '—')));
@@ -144,10 +158,12 @@ const kpi = (titre, valeur, sous, cls = '') => el('div', { class: 'tb-kpi ' + cl
 const fichier = (s) => String(s).normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^A-Za-z0-9]+/g, '-').replace(/^-|-$/g, '').toLowerCase() || 'classe';
 function csvSuivi(rows) {
   const q = (s) => (/[;"\n]/.test(String(s)) ? `"${String(s).replace(/"/g, '""')}"` : String(s));
-  const out = [['Élève', 'Dernière activité', 'Minutes (7 jours)', 'Minutes (total)', 'Leçons terminées', 'Leçons', 'Moyenne exercices', 'Quiz réussis', 'Compétences travaillées', 'Consolidées', 'XP', 'Niveau', 'Difficultés', 'Détail des difficultés'].join(';')];
+  const out = [['Élève', 'Dernière activité', 'Minutes (7 jours)', 'Minutes (total)', 'Leçons terminées', 'Leçons', 'Moyenne exercices', 'Quiz réussis', 'Car régie (min)', 'Aux postes (min)', 'Manipulation (min)', 'Postes pratiqués', 'Exercices pratiques réussis seul', 'Réussis aidé', 'Épreuves réussies', 'Compétences travaillées', 'Consolidées', 'XP', 'Niveau', 'Difficultés', 'Détail des difficultés'].join(';')];
   for (const x of rows) {
-    const b = x.b;
-    out.push([x.nom, b.dernier ? new Date(b.dernier).toISOString() : '', b.minutes.semaine, b.minutes.total, b.terminees, b.lecons, b.moyenneExos ?? '', b.quizReussis, b.competences.consolidee + b.competences.travaillee, b.competences.consolidee, b.xp, b.niveau, b.alertes, b.difficultes.map((d) => `${d.titre} : ${d.texte}`).join(' | ')].map(q).join(';'));
+    const b = x.b; const c = carDe(x.prog);
+    out.push([x.nom, b.dernier ? new Date(b.dernier).toISOString() : '', b.minutes.semaine, b.minutes.total, b.terminees, b.lecons, b.moyenneExos ?? '', b.quizReussis,
+      Math.round(c.temps.jeu / 60), Math.round(c.temps.poste / 60), Math.round(c.manip.s / 60), c.postesVus, c.exercices.seul, c.exercices.aide, c.epreuves.seul,
+      b.competences.consolidee + b.competences.travaillee, b.competences.consolidee, b.xp, b.niveau, b.alertes, b.difficultes.map((d) => `${d.titre} : ${d.texte}`).join(' | ')].map(q).join(';'));
   }
   return '﻿' + out.join('\r\n');
 }
@@ -156,16 +172,26 @@ function csvSuivi(rows) {
 function ficheEleve(page, e) {
   const prog = TB.progs[e.uid] || null; const b = bilanEleve(prog);
   page.append(el('div', { class: 'tb-tete' },
-    el('button', { type: 'button', class: 'btn small', id: 'tb-retour', onclick: () => { TB.eleve = ''; TB.redessiner(); } }, '← ' + classeNom(e.classe)),
+    el('button', { type: 'button', class: 'btn small', id: 'tb-retour', onclick: () => { TB.eleve = ''; TB.onglet = 'ensemble'; TB.redessiner(); } }, '← ' + classeNom(e.classe)),
     el('h2', {}, nomEleve(e)), el('span', { class: 'tb-dim' }, `${e.identifiant} · ${classeNom(e.classe)}`)));
   if (b.jamais) { page.append(el('p', { class: 'note' }, 'Cet élève ne s\'est pas encore connecté (ou n\'a encore rien fait).')); }
+  page.append(bascule('Partie du bilan', [['ensemble', 'Vue d\'ensemble'], ['car', 'Car régie'], ['exos', 'Exercices pratiques'], ['cours', 'Cours'], ['livret', 'Livret']], TB.onglet, (v) => { TB.onglet = v; TB.redessiner(); }, 'tb-onglets-eleve'));
+  const gerer = el('div', { class: 'hwrow' }, el('button', { type: 'button', class: 'btn small', onclick: () => { TB.classe = e.classe || SANS; showTab('comptes'); } }, icon('cle'), 'Gérer le compte (mot de passe, classe)'));
+  if (TB.onglet === 'car') { page.append(ongletCar(prog), gerer); return; }
+  if (TB.onglet === 'exos') { page.append(ongletExos(prog), gerer); return; }
+  if (TB.onglet === 'livret') { page.append(el('section', { class: 'tb-sec' }, livretPanel(prog || {})), gerer); return; }
+  if (TB.onglet === 'cours') { page.append(...coursEleve(b, prog), gerer); return; }
+  const c = carDe(prog);
   page.append(el('div', { class: 'tb-kpis' },
     kpi('Dernière activité', b.jamais ? '—' : quand(b.dernier), b.inactif ? 'plus de deux semaines' : '', b.inactif ? 'warn' : ''),
     kpi('Temps de travail', duree(b.minutes.semaine), `cette semaine · ${duree(b.minutes.total)} en tout`),
     kpi('Leçons terminées', `${b.terminees} / ${b.lecons}`, `${b.vues} ouverte${b.vues > 1 ? 's' : ''} · ${b.quizReussis} quiz réussi${b.quizReussis > 1 ? 's' : ''}`),
     kpi('Exercices', b.moyenneExos == null ? '—' : `${b.moyenneExos} / 100`, `${b.exosFaits} fait${b.exosFaits > 1 ? 's' : ''} · ${b.exosSeul} réussi${b.exosSeul > 1 ? 's' : ''} seul`),
     kpi('Compétences', `${b.competences.consolidee + b.competences.travaillee}`, `travaillée${b.competences.consolidee + b.competences.travaillee > 1 ? 's' : ''} · ${b.competences.consolidee} consolidée${b.competences.consolidee > 1 ? 's' : ''}`),
-    kpi('Niveau', `${b.niveauN}`, `${b.niveau} · ${b.xp} XP`)));
+    kpi('Niveau', `${b.niveauN}`, `${b.niveau} · ${b.xp} XP`),
+    kpi('Car régie', dureeS(c.temps.jeu), `${c.postesVus} / ${c.postesTotal} postes · ${dureeS(c.manip.s)} à manipuler`),
+    kpi('Exercices pratiques', `${c.exercices.seul + c.exercices.aide} / ${c.exercices.total}`, `${c.exercices.seul} seul · ${c.exercices.aide} aidé${c.exercices.aide > 1 ? 's' : ''} · épreuves ${c.epreuves.seul} / ${c.epreuves.total}`)));
+  page.append(el('section', { class: 'tb-sec' }, el('h3', {}, 'Activité des deux dernières semaines'), graphiqueJours(prog)));
   // les difficultés
   const D = b.difficultes;
   page.append(el('section', { class: 'tb-sec', id: 'tb-difficultes' }, el('h3', {}, 'Difficultés'),
@@ -173,18 +199,21 @@ function ficheEleve(page, e) {
       el('span', { class: 'tb-pastille ' + d.gravite }, d.gravite === 'forte' ? 'Forte' : d.gravite === 'moyenne' ? 'À surveiller' : 'Aidé'),
       el('b', {}, d.titre), el('span', {}, d.texte))))
       : el('p', { class: 'note' }, b.jamais ? 'Rien à signaler pour l\'instant.' : 'Aucune difficulté repérée : rien n\'a été manqué plusieurs fois.')));
+  page.append(gerer);
+}
+/** l'onglet « Cours » : le parcours chapitre par chapitre, les épreuves notées */
+function coursEleve(b, prog) {
+  const out = [];
   // le parcours, chapitre par chapitre
-  page.append(el('section', { class: 'tb-sec' }, el('h3', {}, 'Parcours du Cours'),
+  out.push(el('section', { class: 'tb-sec' }, el('h3', {}, 'Parcours du Cours'),
     el('table', { class: 'tbl compact tb-chap' }, el('thead', {}, el('tr', {}, ...['Chapitre', 'Leçons terminées', 'Niveau en cours', 'Étoiles'].map((h) => el('th', { scope: 'col' }, h)))),
       el('tbody', {}, ...b.chapitres.map((c) => el('tr', {}, el('th', { scope: 'row' }, c.titre),
         el('td', {}, el('span', { class: 'tb-parc' }, barre(c.lecons ? c.terminees / c.lecons : 0, `${c.terminees} sur ${c.lecons}`), `${c.terminees} / ${c.lecons}`)),
         el('td', {}, c.fini ? 'Terminé' : c.niveau || '—'), el('td', {}, `${c.etoiles} / ${c.max}`)))))));
   // les épreuves notées et le livret
   const ep = epreuves(prog || {});
-  if (ep.length) page.append(el('section', { class: 'tb-sec' }, el('h3', {}, 'Épreuves notées'), el('ul', { class: 'tb-ep' }, ...ep.map(([t, v]) => el('li', {}, el('b', {}, t), el('span', {}, v))))));
-  const det = el('details', { class: 'tb-sec tb-livret' }, el('summary', {}, el('h3', {}, 'Livret de compétences')));
-  det.addEventListener('toggle', () => { if (det.open && det.children.length === 1) det.append(livretPanel(prog || {})); }, { once: false });
-  page.append(det, el('div', { class: 'hwrow' }, el('button', { type: 'button', class: 'btn small', onclick: () => { TB.classe = e.classe || SANS; showTab('comptes'); } }, icon('cle'), 'Gérer le compte (mot de passe, classe)')));
+  out.push(el('section', { class: 'tb-sec' }, el('h3', {}, 'Épreuves notées'), ep.length ? el('ul', { class: 'tb-ep' }, ...ep.map(([t, v]) => el('li', {}, el('b', {}, t), el('span', {}, v)))) : el('p', { class: 'note' }, 'Aucune épreuve notée pour l\'instant.')));
+  return out;
 }
 /** les meilleurs résultats des épreuves notées : [titre, valeur] */
 function epreuves(P) {

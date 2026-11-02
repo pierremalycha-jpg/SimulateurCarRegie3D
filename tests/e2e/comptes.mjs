@@ -119,6 +119,19 @@ await eleve.keyboard.press('Escape');
 // l'élève bute sur un quiz (six essais), en réussit un autre ; la progression part en ligne
 await ev(eleve, () => { const P = window.__dbg.PROG; P.cours = { 'signal-422': { seen: true, qn: 6, quiz: { score: 1, total: 3 } }, 'sdi-bnc': { seen: true, qn: 1, quiz: { score: 3, total: 3 }, exo: { best: 85, seul: true, n: 1 } } }; P.jours = { [new Date().toISOString().slice(0, 10)]: 42 }; P.updatedAt = Date.now(); window.__dbg.emit('patchDone'); });
 
+// ---- l'élève joue au car régie : assis au poste son, il manipule la console ----
+// comme un élève : de l'écran titre à l'écran Jouer, puis la partie
+await ev(eleve, () => { try { localStorage.setItem('carregie.onboard', '1'); } catch (e) { /* */ } window.__dbg.title.enter('start'); window.__dbg.start('standard', 'jour', 'basse', false, 'HD', false); });
+await until(eleve, () => window.__dbg.S.mode !== 'start', null, 60000);
+await ev(eleve, () => window.__dbg.openStation('son'));
+await eleve.waitForSelector('#station:not([hidden])');
+for (let i = 0; i < 5; i++) { await eleve.mouse.click(640, 420); await eleve.waitForTimeout(900); }
+await eleve.waitForTimeout(2500);
+await ev(eleve, () => window.__dbg.closeStation());
+const car = await ev(eleve, () => { const c = window.__dbg.PROG.car || {}; return { son: (c.postes || {}).son, t: c.t, sessions: (c.sessions || []).length }; });
+T.check('car régie : le temps assis au poste son, la manipulation, les gestes et la partie sont comptés', !!car.son && car.son.n >= 1 && car.son.s >= 3 && car.son.m >= 1 && car.son.a >= 3 && car.sessions >= 1 && car.t.jeu >= car.son.s, JSON.stringify(car));
+await ev(eleve, () => window.__dbg.comptes.enregistrer());
+
 // ---- le professeur voit le bilan ----
 await prof.click('.ly-tabs .tab[data-k=suivi]');
 T.check('suivi : Léa signalée en difficulté (pastille forte)', await until(prof, () => { const tr = [...document.querySelectorAll('#tb-eleves tbody tr')].find((x) => /lea\.martin$/.test(x.querySelector('small')?.textContent || '')); return !!tr && !!tr.querySelector('.tb-pastille.forte'); }, null, 40000));
@@ -126,14 +139,34 @@ T.check('suivi : synthèse de la classe, « Où la classe bloque »', /Où la cl
 await prof.screenshot({ path: `${OUT}/06-suivi-classe.png` });
 await axe(prof, 'tableau de bord, suivi de la classe', '#layer');
 await prof.click('#tb-eleves tbody tr.alerte');
-T.check('bilan de l\'élève : la difficulté dite en clair (quiz, 6 essais), le parcours, le temps', await until(prof, () => { const t = document.querySelector('#tb-difficultes')?.textContent || ''; return /6 essais sans le réussir/.test(t); }, null, 20000) && /42 min/.test(await texte(prof, '.tb-kpis')), await texte(prof, '#tb-difficultes'));
+T.check('bilan de l\'élève : la difficulté dite en clair (quiz, 6 essais), le parcours, le temps', await until(prof, () => { const t = document.querySelector('#tb-difficultes')?.textContent || ''; return /6 essais sans le réussir/.test(t); }, null, 20000) && /4[2-4] min/.test(await texte(prof, '.tb-kpis')), await texte(prof, '#tb-difficultes'));
 await prof.screenshot({ path: `${OUT}/07-bilan-eleve.png`, fullPage: false });
 await axe(prof, 'tableau de bord, bilan d\'un élève', '#layer');
-await prof.click('.tb-livret summary');
-T.check('le livret de compétences de l\'élève s\'ouvre dans son bilan', await until(prof, () => !!document.querySelector('.tb-livret .lv'), null, 10000));
+// le bilan : l'activité, puis les onglets Car régie, Exercices pratiques, Cours, Livret
+T.check('bilan : le graphique d\'activité des 14 derniers jours', await ev(prof, () => document.querySelectorAll('.tb-jour').length === 14));
+await prof.click('#tb-onglets-eleve [data-v=car]');
+T.check('bilan, Car régie : le poste son avec son temps et sa manipulation, la partie jouée', await until(prof, () => { const tr = [...document.querySelectorAll('#tb-postes tbody tr')].find((x) => /du son/.test(x.querySelector('th')?.textContent || '')); return !!tr && /\d+ s|min/.test(tr.children[3].textContent) && /%/.test(tr.children[4].textContent) && document.querySelectorAll('#tb-sessions tbody tr').length >= 1; }, null, 40000),
+  await texte(prof, '#tb-postes tbody tr'));
+await prof.screenshot({ path: `${OUT}/08-eleve-car.png`, fullPage: false });
+await axe(prof, 'bilan d\'un élève, Car régie', '#layer');
+await prof.click('#tb-onglets-eleve [data-v=exos]');
+T.check('bilan, Exercices pratiques : les trois familles et l\'état de chaque exercice', await until(prof, () => document.querySelectorAll('.tb-exos').length >= 3 && document.querySelectorAll('.tb-exos .tb-statut').length > 20, null, 20000));
+await prof.screenshot({ path: `${OUT}/09-eleve-exos.png`, fullPage: false });
+await prof.click('#tb-onglets-eleve [data-v=livret]');
+T.check('le livret de compétences de l\'élève a son onglet', await until(prof, () => !!document.querySelector('#layer .lv'), null, 10000));
+// la classe au car régie : la grille élèves × postes
+await prof.click('#tb-retour');
+await prof.click('#tb-vue-classe [data-v=car]');
+T.check('classe, Car régie : la grille élèves × postes (colonne du son, la case de Léa remplie)', await until(prof, () => { const t = document.querySelector('#tb-matrice-postes'); return !!t && [...t.querySelectorAll('thead th')].some((h) => /du son/.test(h.textContent)) && [...t.querySelectorAll('tbody tr')].some((r) => /Léa Martin/.test(r.textContent) && !!r.querySelector('.tb-case b')); }, null, 20000));
+await prof.screenshot({ path: `${OUT}/10-classe-car.png`, fullPage: false });
+await axe(prof, 'classe, Car régie', '#layer');
+await prof.click('#tb-vue-classe [data-v=exos]');
+T.check('classe, Exercices pratiques : la vue s\'affiche', await until(prof, () => /Exercices pratiques|Aucun exercice pratique abordé/.test(document.querySelector('.tb-vue')?.textContent || ''), null, 20000));
+await prof.click('#tb-vue-classe [data-v=ensemble]');
+T.check('classe, vue d\'ensemble : les colonnes Car régie et Exercices pratiques', await until(prof, () => [...document.querySelectorAll('#tb-eleves thead th')].some((h) => h.textContent === 'Car régie'), null, 20000));
 
 // ---- nouveau mot de passe, puis reconnexion de l'élève ----
-await prof.click('text=Gérer le compte');
+await prof.click('#tb-eleves tbody tr.alerte'); await prof.click('text=Gérer le compte');
 await until(prof, () => !!document.querySelector('#tb-comptes'), null, 10000);
 await prof.locator('#tb-comptes tbody tr').filter({ has: prof.locator('td.tb-mono', { hasText: /^lea\.martin$/ }) }).locator('[data-act=mdp]').click();
 await prof.click('#ask [data-ask=ok]');
@@ -142,11 +175,19 @@ const lireMdp = () => ev(prof, () => { const r = [...document.querySelectorAll('
 await until(prof, (ancien) => { const r = [...document.querySelectorAll('#tb-crees tbody tr')].find((tr) => tr.children[2].textContent === 'lea.martin'); return !!r && r.children[3].textContent !== ancien; }, lea.mdp, 10000);
 const neuf = await lireMdp();
 T.check('le nouveau mot de passe s\'affiche à la place de l\'ancien', !!neuf && neuf !== lea.mdp, neuf);
+// en partie : la déconnexion demande confirmation (la partie continue sans compte)
 await ev(eleve, () => window.__dbg.emit('settings')); await eleve.click('#rg-deco');
+await eleve.waitForSelector('#ask [data-ask=ok]', { timeout: 10000 }); await eleve.click('#ask [data-ask=ok]');
 T.check('déconnexion : la progression de l\'ordinateur revient', await until(eleve, () => window.__dbg.comptes.COMPTE.etat === 'deconnecte' && !!(window.__dbg.PROG.cours || {})['signal-bits'] && !(window.__dbg.PROG.cours || {})['signal-422'], null, 30000));
 T.check('déconnexion : aucun échec d\'enregistrement signalé', await ev(eleve, () => !window.__toasts.some((t) => /pas pu être envoyée|ne s'enregistre plus/.test(t))), JSON.stringify(await ev(eleve, () => window.__toasts)));
-await eleve.click('#ti-connexion'); await eleve.fill('#cpt-id', 'lea.martin'); await eleve.fill('#cpt-mdp', neuf); await eleve.click('#cpt-go');
-T.check('reconnexion avec le nouveau mot de passe : la progression du compte revient', await until(eleve, () => window.__dbg.comptes.COMPTE.etat === 'connecte' && (window.__dbg.PROG.cours || {})['signal-422']?.qn === 6, null, 30000));
+// en partie, la fenêtre de connexion s'ouvre depuis le jeu (Réglages → Mon compte) ; on laisse la déconnexion finir de s'écrire
+await eleve.waitForTimeout(1500);
+await ev(eleve, () => window.__dbg.comptes.openConnexion()); await eleve.waitForSelector('#cpt-id'); await eleve.waitForTimeout(300);
+await eleve.fill('#cpt-id', 'lea.martin'); await eleve.fill('#cpt-mdp', neuf);
+await until(eleve, () => document.querySelector('#cpt-id')?.value === 'lea.martin' && !!document.querySelector('#cpt-mdp')?.value, null, 5000);
+await eleve.click('#cpt-go');
+T.check('reconnexion avec le nouveau mot de passe : la progression du compte revient', await until(eleve, () => window.__dbg.comptes.COMPTE.etat === 'connecte' && (window.__dbg.PROG.cours || {})['signal-422']?.qn === 6, null, 30000),
+  JSON.stringify(await ev(eleve, () => ({ etat: window.__dbg.comptes.COMPTE.etat, msg: document.querySelector('.cpt-msg')?.textContent, c: (window.__dbg.PROG.cours || {})['signal-422'], cours: Object.keys(window.__dbg.PROG.cours || {}) }))));
 
 // ---- le professeur : la liste des professeurs ----
 await prof.click('.ly-tabs .tab[data-k=profs]');

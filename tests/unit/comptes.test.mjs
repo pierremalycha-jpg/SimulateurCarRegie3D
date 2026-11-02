@@ -113,3 +113,75 @@ test('progression v7 : essais du quiz et minutes par jour, migrés, fusionnés e
   mergeProgress({ cours: { x: { seen: true, quiz: { score: 1, total: 3 }, qn: 5 } }, jours: { '2026-11-02': 4, '2026-11-01': 7 } });
   assert.equal(PROG.cours.x.qn, 5); assert.deepEqual(PROG.jours, { '2026-11-02': 10, '2026-11-01': 7 });
 });
+
+// ---------------- le car régie (v19.25) ----------------
+import { car, carVide, compterSeconde, mergeCar, ACTIF_MS, MANIP_MS } from '../../src/comptes/car.js';
+import { bilanCar, joursRecents, dureeS } from '../../src/comptes/bilan.js';
+
+test('car régie : chaque seconde active compte au bon endroit (poste, manipulation, dans le car, dans le stade)', () => {
+  const c = carVide(); const t = 1_000_000;
+  c.sessions.push({ at: t, s: 0, p: 'standard', postes: [] });
+  assert.equal(compterSeconde(c, { mode: 'station', station: 'son' }, t, t - 1000, t - 1000), true);
+  compterSeconde(c, { mode: 'station', station: 'son' }, t + 6000, t + 5000, t - 1000); // assis, sans geste depuis 7 s
+  compterSeconde(c, { mode: 'fps', inTruck: true }, t, t, 0);
+  compterSeconde(c, { mode: 'fps', inTruck: false }, t, t, 0);
+  compterSeconde(c, { mode: 'camop' }, t, t, 0);
+  assert.equal(compterSeconde(c, { mode: 'fps' }, t, t - ACTIF_MS - 1, 0), false, 'élève absent');
+  assert.equal(compterSeconde(c, { mode: 'fps' }, t, t, 0, false), false, 'onglet caché');
+  assert.equal(compterSeconde(c, { mode: 'start' }, t, t, 0), false, 'écran titre');
+  assert.deepEqual({ ...c.t }, { jeu: 5, poste: 2, car: 1, stade: 1, cadreur: 1 });
+  assert.deepEqual({ s: c.postes.son.s, m: c.postes.son.m }, { s: 2, m: 1 }, `manipulation : un geste il y a moins de ${MANIP_MS / 1000} s`);
+  assert.equal(c.sessions[0].s, 5);
+});
+test('car régie : forme remise en état, fusion entre deux appareils (le plus grand compte, les sessions des deux)', () => {
+  assert.deepEqual(car({ car: { t: 3, postes: [], sessions: {} } }), carVide());
+  const a = { ...carVide(), t: { jeu: 100 }, postes: { son: { n: 2, s: 50, m: 10, a: 30 } }, sessions: [{ at: 1, s: 40, postes: ['son'] }] };
+  const b = { ...carVide(), t: { jeu: 80, car: 20 }, postes: { son: { n: 3, s: 40, m: 12, a: 5 }, vision: { n: 1, s: 9, m: 2, a: 1 } }, exos: { 'p-son': { n: 1, f: 1 } }, sessions: [{ at: 1, s: 60, postes: ['vision'] }, { at: 2, s: 5, postes: [] }] };
+  const m = mergeCar(a, b);
+  assert.deepEqual(m.t, { jeu: 100, car: 20 });
+  assert.deepEqual(m.postes.son, { n: 3, s: 50, m: 12, a: 30 });
+  assert.equal(m.postes.vision.s, 9); assert.equal(m.exos['p-son'].f, 1);
+  assert.equal(m.sessions.length, 2); assert.equal(m.sessions[0].s, 60); assert.deepEqual(m.sessions[0].postes, ['son', 'vision']);
+  assert.equal(a.t.jeu, 100, 'pure : a n\'est pas modifié'); assert.equal(Object.keys(a.postes).length, 1);
+});
+test('progression v8 : PROG.car migré et fusionné', () => {
+  assert.ok(PROG_VERSION >= 8);
+  const p = migrateProgress({ v: 7, car: { postes: 'abîmé', t: { jeu: 12 } } });
+  assert.deepEqual(p.car.postes, {}); assert.equal(p.car.t.jeu, 12);
+  for (const k of Object.keys(PROG)) delete PROG[k];
+  Object.assign(PROG, { v: PROG_VERSION, missions: {}, visited: {}, scenarios: [], reports: [], car: { ...carVide(), t: { jeu: 5 } } });
+  mergeProgress({ car: { t: { jeu: 50, poste: 30 }, postes: { son: { n: 1, s: 30, m: 20, a: 9 } } } });
+  assert.equal(PROG.car.t.jeu, 50); assert.equal(PROG.car.postes.son.m, 20);
+});
+test('bilan du car régie : postes (pratiqués d\'abord), exercices et épreuves avec leur état, tâches, ce qui a été vu', () => {
+  const cat = {
+    postes: [{ id: 'son', titre: 'Son', zone: 'Car' }, { id: 'vision', titre: 'Vision', zone: 'Car' }, { id: 'evs', titre: 'EVS', zone: 'Car' }],
+    exos: [
+      { id: 'o-seul', titre: 'Seul', groupe: 'Le son', famille: 'postes' }, { id: 'o-aide', titre: 'Aidé', groupe: 'Le son', famille: 'postes' },
+      { id: 'o-ab', titre: 'Abandonné', groupe: 'Le son', famille: 'postes' }, { id: 'o-rien', titre: 'Rien', groupe: 'Le son', famille: 'postes' },
+      { id: 'i-cam', titre: 'Installer', groupe: 'Installer', famille: 'installer', taches: ['m1', 'm2'] },
+      { id: 'x-match', titre: 'Jour de match', groupe: 'Épreuves', famille: 'epreuves' },
+    ],
+    missionsCar: [{ id: 'm1', titre: 'Le compound' }, { id: 'm2', titre: 'Le plan' }],
+    lieux: ['Compound', 'Toit'], appareils: { ccu: 'CCU' },
+    epreuve: (id, P) => ({ done: (P.scenarios || []).some((s) => s.score >= 60), text: (P.scenarios || []).length ? 'meilleur score 40 %' : 'pas encore joué' }),
+  };
+  const P = {
+    missions: { m1: true }, scenarios: [{ score: 40 }],
+    tutor: { 'o-seul': { done: true, clean: true, hints: 1, wrong: 0 }, 'o-aide': { done: true, aided: 2, clean: false } },
+    car: { t: { jeu: 600, poste: 300 }, postes: { vision: { n: 2, s: 200, m: 80, a: 40 }, son: { n: 1, s: 100, m: 90, a: 12 } },
+      exos: { 'o-ab': { n: 2, f: 0, ab: 2, s: 120 } }, vus: { app: { ccu: 3 }, lieux: { 1: 2 }, fen: { 'Fiche : Son': 1 } }, pannes: { n: 3, ok: 2 }, sessions: [{ at: 5, s: 600, p: 'standard', mode: 'libre', postes: ['son'] }] },
+  };
+  const c = bilanCar(P, cat);
+  assert.deepEqual(c.postes.map((p) => p.id), ['vision', 'son', 'evs']);
+  assert.equal(c.postes[0].part, 0.4); assert.equal(c.postesVus, 2); assert.equal(c.manip.s, 170);
+  const st = Object.fromEntries(c.exos.map((e) => [e.id, e.statut]));
+  assert.deepEqual(st, { 'o-seul': 'seul', 'o-aide': 'aide', 'o-ab': 'abandon', 'o-rien': 'afaire', 'i-cam': 'commence', 'x-match': 'commence' });
+  assert.deepEqual(c.exercices, { total: 4, seul: 1, aide: 1, commence: 1 });
+  assert.equal(c.missionsCar.faites, 1);
+  assert.equal(c.vus.app[0].nom, 'CCU'); assert.equal(c.vus.lieux[0].nom, 'Toit');
+  assert.equal(c.sessions[0].mode, 'libre'); assert.deepEqual(c.pannes, { n: 3, ok: 2 });
+  assert.equal(bilanCar(null, cat).temps.jeu, 0, 'un élève qui n\'a rien fait');
+  assert.equal(joursRecents({ jours: {} }, 14).length, 14);
+  assert.equal(dureeS(30), '30 s'); assert.equal(dureeS(3900), '1 h 05');
+});

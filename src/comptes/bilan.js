@@ -139,3 +139,73 @@ export function bilanClasse(eleves, now = Date.now()) {
     eleves: B,
   };
 }
+
+// ---------------- le car régie (v19.25) ----------------
+/**
+ * @typedef {object} CatalogueCar ce que le simulateur propose (le tableau de bord le lit dans le code de l'application)
+ * @property {{ id: string, titre: string, zone: string }[]} postes les postes (content/stations.js)
+ * @property {{ id: string, titre: string, groupe: string, famille: string, taches?: string[] }[]} exos les missions spécifiques :
+ *   installer le car (taches : missions du car vide), exercices pratiques d'Olivier, épreuves notées (game/missions.js)
+ * @property {{ id: string, titre: string }[]} [missionsCar] les tâches du car vide (ui/guide.js, MISSIONS)
+ * @property {string[]} [lieux] les destinations du stade (app/teleport.js, DESTS)
+ * @property {Record<string, string>} [appareils] le nom du matériel (equipment/cabling.js, DEV_NAMES)
+ * @property {(id: string, prog: any) => { done: boolean, text: string }} [epreuve] l'état d'une épreuve notée (cours/exercices.js)
+ */
+/** l'état d'un exercice pratique : réussi seul, réussi avec « Fais-le pour moi », commencé, abandonné, à faire */
+export const STATUTS = { seul: 'Réussi seul', aide: 'Réussi avec aide', commence: 'Commencé', abandon: 'Abandonné', afaire: 'Pas commencé' };
+const tri = (o) => Object.entries(o || {}).map(([k, n]) => ({ k, n: Number(n) || 0 })).sort((a, b) => b.n - a.n);
+
+/**
+ * Ce qu'un élève a fait au car régie : temps (en secondes) par activité et par poste, manipulation,
+ * exercices pratiques et épreuves, tâches du car vide, ce qu'il a consulté, pannes, dernières parties.
+ * @param {any} prog @param {CatalogueCar} cat
+ */
+export function bilanCar(prog, cat) {
+  const P = prog || {};
+  const C = P.car && typeof P.car === 'object' ? P.car : {};
+  const t = C.t || {}, Po = C.postes || {}, Ex = C.exos || {}, Mi = C.missions || {}, V = C.vus || {};
+  const temps = { jeu: Number(t.jeu) || 0, car: Number(t.car) || 0, stade: Number(t.stade) || 0, poste: Number(t.poste) || 0, cadreur: Number(t.cadreur) || 0, plan: Number(t.plan) || 0 };
+  // les postes : tous ceux du simulateur, les plus pratiqués d'abord, ceux jamais ouverts ensuite
+  const postes = cat.postes.map((p) => { const x = Po[p.id] || {}; const s = Number(x.s) || 0, m = Math.min(s, Number(x.m) || 0); return { ...p, n: Number(x.n) || 0, s, m, a: Number(x.a) || 0, d: Number(x.d) || 0, part: s ? m / s : 0 }; })
+    .sort((a, b) => b.s - a.s || b.n - a.n || a.titre.localeCompare(b.titre, 'fr'));
+  // les exercices pratiques et les épreuves, avec leur état
+  const T = P.tutor || {};
+  const exos = cat.exos.map((e) => {
+    const x = Ex[e.id] || {}; const m = Mi[e.id] || {}; const tu = T[e.id] || {};
+    let statut = 'afaire', texte = '';
+    if (e.famille === 'installer' && e.taches && e.taches.length) {
+      const faites = e.taches.filter((k) => (P.missions || {})[k]).length;
+      statut = faites === e.taches.length ? 'seul' : faites || m.n ? 'commence' : 'afaire'; texte = `${faites} / ${e.taches.length} tâches`;
+    } else if (e.famille === 'epreuves' || (cat.epreuve && /^x-/.test(e.id))) {
+      const r = cat.epreuve ? cat.epreuve(e.id, P) : { done: false, text: '' };
+      statut = r.done ? 'seul' : (m.n || m.f || (r.text && !/^pas encore/.test(r.text))) ? 'commence' : 'afaire'; texte = r.text;
+    } else if (tu.done) { statut = tu.clean || !tu.aided ? 'seul' : 'aide'; texte = `${tu.hints || 0} indice${(tu.hints || 0) > 1 ? 's' : ''}, ${tu.wrong || 0} erreur${(tu.wrong || 0) > 1 ? 's' : ''}`; }
+    else if (x.n || tu.started || m.n) statut = x.ab && !x.f ? 'abandon' : 'commence';
+    return { ...e, statut, texte, essais: Math.max(Number(x.n) || 0, Number(m.n) || 0, tu.started ? 1 : 0), finis: Number(x.f) || (tu.done ? 1 : 0), abandons: Number(x.ab) || 0,
+      aide: Number(x.aide) || 0, ind: Number(x.ind) || 0, err: Number(x.err) || 0, s: Number(x.s) || 0, d: Math.max(Number(x.d) || 0, Number(m.d) || 0, Number(tu.at) || 0) };
+  });
+  const compte = (f) => { const l = exos.filter(f); return { total: l.length, seul: l.filter((e) => e.statut === 'seul').length, aide: l.filter((e) => e.statut === 'aide').length, commence: l.filter((e) => e.statut === 'commence' || e.statut === 'abandon').length }; };
+  const mc = cat.missionsCar || [];
+  const lieux = cat.lieux || [], app = cat.appareils || {};
+  return {
+    temps, postes, postesVus: postes.filter((p) => p.n || p.s).length, postesTotal: postes.length,
+    manip: { s: postes.reduce((a, p) => a + p.m, 0), actions: postes.reduce((a, p) => a + p.a, 0) },
+    exos, exercices: compte((e) => e.famille === 'postes'), epreuves: compte((e) => e.famille === 'epreuves'), installation: compte((e) => e.famille === 'installer'),
+    missionsCar: { total: mc.length, faites: mc.filter((m) => (P.missions || {})[m.id]).length, liste: mc.map((m) => ({ ...m, ok: !!(P.missions || {})[m.id] })) },
+    vus: {
+      app: tri(V.app).map((x) => ({ ...x, nom: app[x.k] || x.k })),
+      lieux: tri(V.lieux).map((x) => ({ ...x, nom: lieux[Number(x.k)] || `Lieu ${x.k}` })),
+      fen: tri(V.fen).map((x) => ({ ...x, nom: x.k })),
+    },
+    pannes: { n: Number((C.pannes || {}).n) || 0, ok: Number((C.pannes || {}).ok) || 0 },
+    sessions: (Array.isArray(C.sessions) ? C.sessions : []).slice(-15).reverse().map((s) => ({ at: Number(s.at) || 0, s: Number(s.s) || 0, p: String(s.p || ''), mode: String(s.mode || ''), postes: Array.isArray(s.postes) ? s.postes : [] })),
+  };
+}
+/** minutes de travail des n derniers jours, du plus ancien au plus récent : [{ jour, min }] (le graphique d'activité) */
+export function joursRecents(prog, n = 14, now = Date.now()) {
+  const J = (prog && prog.jours) || {}; const out = [];
+  for (let i = n - 1; i >= 0; i--) { const k = jour(now - i * 864e5); out.push({ jour: k, min: Number(J[k]) || 0 }); }
+  return out;
+}
+/** « 1 h 05 » à partir de secondes */
+export const dureeS = (/** @type {number} */ s) => (!s ? '—' : s < 60 ? `${Math.round(s)} s` : duree(s / 60));
