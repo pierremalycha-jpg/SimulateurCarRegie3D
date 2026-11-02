@@ -48,11 +48,11 @@ T.check('en descendant : d\'autres sections se dévoilent, la barre des étapes 
 await A.screenshot({ path: `${OUT}/02-lecon-milieu.png` });
 await scrollTo(1e6);
 const bas = await ev(() => ({ inn: document.querySelectorAll('#layer .co-reveal.in').length, tot: document.querySelectorAll('#layer .co-reveal').length, opaque: [...document.querySelectorAll('#layer .co-reveal')].every((e) => getComputedStyle(e).opacity === '1'), quizExo: !!document.querySelector('#layer .co-quiz + .co-exoauto') }));
-T.check('tout en bas : toutes les sections sont révélées et pleinement opaques ; le quiz précède l\'exercice', bas.inn === bas.tot && bas.opaque && bas.quizExo, JSON.stringify(bas));
+T.check('tout en bas : toutes les sections sont révélées (celles qu\'on a sautées aussi) et pleinement opaques ; le quiz précède l\'exercice', bas.inn === bas.tot && bas.opaque && bas.quizExo, JSON.stringify(bas));
 // le lien d'étape « Quiz » descend à la section, qui se révèle
 await scrollTo(0);
-await ev(() => /** @type {HTMLElement} */ (document.querySelector('#layer .pa-steps li:nth-child(2) a')).click()); await A.waitForTimeout(900);
-T.check('le lien « Quiz » de la barre descend au quiz, révélé', await ev(() => { const q = document.querySelector('#layer .co-quiz'); const r = q.getBoundingClientRect(); return q.classList.contains('in') && r.top < innerHeight && r.bottom > 0; }));
+await ev(() => /** @type {HTMLElement} */ (document.querySelector('#layer .pa-steps li:nth-child(2) a')).click());
+T.check('le lien « Quiz » de la barre descend au quiz, révélé, et tout ce qui le précède avec lui', await until(A, () => { const q = document.querySelector('#layer .co-quiz'); const r = q.getBoundingClientRect(); const avant = [...document.querySelectorAll('#layer .co-reveal')]; return q.classList.contains('in') && r.top < innerHeight && r.bottom > 0 && avant.slice(0, avant.indexOf(q)).every((e) => e.classList.contains('in')); }, null, 8000));
 // le référentiel est compact : les compétences en pastilles sur une ligne, les détails repliés
 T.check('référentiel compact : compétences en pastilles, savoir-faire et savoirs repliés', await ev(() => { const r = document.querySelector('#layer .co-ref'); const comps = [...r.querySelectorAll('.co-ref-comp')]; const det = r.querySelector('.co-ref-det'); return comps.length >= 2 && Math.abs(comps[0].getBoundingClientRect().top - comps[1].getBoundingClientRect().top) < 4 && det && !det.open; }));
 // le quiz redessiné reste visible (la classe de révélation suit)
@@ -61,7 +61,7 @@ T.check('après un clic dans le quiz (section redessinée), elle reste révélé
 await shot('03-lecon-entiere');
 
 // ---------------- le sommaire en parties, Mon parcours et le chapitre révélés ----------------
-const som = await ev(() => { const det = [...document.querySelectorAll('#layer .co-chap')].find((d) => d.querySelector('summary span')?.textContent === 'Le son'); return { parts: [...det.querySelectorAll('.co-part')].map((p) => p.textContent), lecons: det.querySelectorAll('.co-les[data-lesson]').length, niveaux: det.querySelectorAll('.co-niv').length }; });
+const som = await ev(() => { const det = [...document.querySelectorAll('#layer .co-chap')].find((d) => [...d.querySelectorAll('summary span')].some((sp) => sp.textContent === 'Le son')); return { parts: [...det.querySelectorAll('.co-part')].map((p) => p.textContent), lecons: det.querySelectorAll('.co-les[data-lesson]').length, niveaux: det.querySelectorAll('.co-niv').length }; });
 T.check('sommaire du son : trois parties (Les bases, La console, Les départs), neuf leçons, trois niveaux', som.lecons === 9 && som.niveaux === 3 && som.parts.includes('Les bases') && som.parts.includes('La console') && som.parts.includes('Les départs'), JSON.stringify(som));
 await ev(() => window.__dbg.emit('cours', { chapter: 'son' })); await A.waitForTimeout(700);
 T.check('le chemin du chapitre : en-tête, rappel du référentiel sous l\'introduction, niveaux à révéler', await ev(() => !!document.querySelector('#layer .co-page.co-chemin-page .co-hero') && document.querySelector('#layer .lede')?.nextElementSibling?.classList.contains('co-ref-chap') && document.querySelectorAll('#layer .pa-niv.co-reveal').length === 3));
