@@ -411,9 +411,11 @@ page, de haut en bas, sans rien perdre.
 - **Les sections se dévoilent au défilement** (`[data-reveal]` → `.co-reveal.in`, IntersectionObserver un peu avant le bord
   de l'écran) : le schéma, la manipulation, l'explication, le car, les mots de la leçon, le référentiel, le quiz, l'exercice,
   les exercices pratiques arrivent l'un après l'autre, remontés de quelques pixels et fondus, ce qui est déjà à l'écran en
-  cascade. L'opacité finale est toujours 1 ; moins d'animations (`prefers-reduced-motion`) ou un navigateur sans
-  observateur : tout est visible d'emblée ; sous un pilote de test (`navigator.webdriver`), la transition est coupée pour que
-  les captures se relisent. Une section redessinée (le quiz, l'exercice) garde sa révélation.
+  cascade. Quand une section entre, tout ce qui la précède est révélé avec elle (on lit de haut en bas : un saut par le lien
+  d'une étape ou un défilement rapide ne laisse rien de vide au-dessus). L'opacité finale est toujours 1 ; moins d'animations
+  (`prefers-reduced-motion`) ou un navigateur sans observateur : tout est visible d'emblée ; sous un pilote de test
+  (`navigator.webdriver`), ni transition ni déplacement, seule l'opacité bascule : les captures se relisent et les clics des
+  suites tombent où ils visent. Une section redessinée (le quiz, l'exercice) garde sa révélation.
 - **Le schéma** prend toute la largeur et porte sa **légende** (le titre accessible du SVG, écrit sous lui) : il se lit seul,
   avant l'explication. **L'explication** est une colonne de lecture (68 caractères, 16,5 px, interligne 1,68), sans cadre ;
   « Pour aller plus loin » et l'article de référence sont rangés dedans.
@@ -467,7 +469,9 @@ les sections révélées en descendant puis toutes opaques en bas, l'ordre de le
 le quiz redessiné qui reste visible, le sommaire en parties, le chapitre et Mon parcours révélés, les huit leçons (schéma,
 lectures de la manipulation, verdict, quiz, exercice, référentiel, fiches, sans valeur manquante), la manipulation des
 couples qui calcule (ORTF contre AB 60 cm), une fiche ouverte depuis la leçon, et 390 px sans défilement horizontal ; huit
-captures à relire. Les suites cours, parcours, referentiel, epure, accessibilite et reseau-termes passent.
+captures à relire. Les suites cours, parcours, referentiel, epure, accessibilite et reseau-termes passent ; le contrôle du
+Cours de reseau-termes visait encore l'ancien onglet Chapitres (retiré en v19) et lit maintenant la leçon qui cite l'article
+et ses mots de la leçon.
 
 **Reste.** Faire relire les ordres de grandeur du son (sensibilités, ronflette, Dante) par un professionnel ; un exercice
 pratique dans le car pour les couples (placer et vérifier un ORTF en tribune) ; les mêmes sections révélées dans la caméra
