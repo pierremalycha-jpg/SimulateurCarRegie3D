@@ -469,9 +469,10 @@ les sections révélées en descendant puis toutes opaques en bas, l'ordre de le
 le quiz redessiné qui reste visible, le sommaire en parties, le chapitre et Mon parcours révélés, les huit leçons (schéma,
 lectures de la manipulation, verdict, quiz, exercice, référentiel, fiches, sans valeur manquante), la manipulation des
 couples qui calcule (ORTF contre AB 60 cm), une fiche ouverte depuis la leçon, et 390 px sans défilement horizontal ; huit
-captures à relire. Les suites cours, parcours, referentiel, epure, accessibilite et reseau-termes passent ; le contrôle du
-Cours de reseau-termes visait encore l'ancien onglet Chapitres (retiré en v19) et lit maintenant la leçon qui cite l'article
-et ses mots de la leçon.
+captures à relire. Les suites cours (174 vérifications), parcours, referentiel, epure, accessibilite et reseau-termes
+passent ; le contrôle du Cours de reseau-termes visait encore l'ancien onglet Chapitres (retiré en v19) et lit maintenant la
+leçon qui cite l'article et ses mots de la leçon ; les clics du quiz de la suite cours passent par la page, comme dans la
+suite parcours (le rendu logiciel dépassait le délai de Playwright sur une leçon lourde).
 
 **Reste.** Faire relire les ordres de grandeur du son (sensibilités, ronflette, Dante) par un professionnel ; un exercice
 pratique dans le car pour les couples (placer et vérifier un ORTF en tribune) ; les mêmes sections révélées dans la caméra
