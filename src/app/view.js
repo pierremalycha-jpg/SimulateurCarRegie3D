@@ -43,6 +43,7 @@ export function createRenderer() {
 
 export function setQuality(v) {
   S.quality = v; setCloudQuality(v); MATIERE.setDetail(detailOk());
+  qualiteDocument();
   try { localStorage.setItem('carregie.quality', v); } catch (e) { /* stockage indisponible */ }
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, v === 'basse' ? 1 : 1.5));
   renderer.setSize(window.innerWidth, window.innerHeight, false);
@@ -61,3 +62,7 @@ export function updateNear() {
   else if (PL.fly) n = clamp(0.1 + Math.max(0, PL.pos.y - 6) * 0.03, 0.1, 4);
   if (Math.abs(pcam.near - n) > 0.004) { pcam.near = n; pcam.updateProjectionMatrix(); }
 }
+
+/** la qualité se lit aussi dans le document : en Basse, les feuilles de style renoncent au flou d'arrière-plan (body.q-basse) */
+function qualiteDocument() { if (typeof document !== 'undefined' && document.body) document.body.classList.toggle('q-basse', S.quality === 'basse'); }
+qualiteDocument();

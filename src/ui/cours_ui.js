@@ -188,7 +188,7 @@ function home(page, /** @type {import('./cours_parcours.js').Go} */ go) {
   const nextX = xs.find((x) => !exerciseDone(x.id) && leconOuverte(x.lesson.id, PROG, { libre: libre() }));
   const nextXi = nextX ? exerciseInfo(nextX.id) : null;
   page.append(el('h2', {}, 'Mon parcours'),
-    el('p', { class: 'lede' }, 'Chaque catégorie se fait par niveaux : Débutant, puis Intermédiaire, Avancé et Expert. Une leçon se termine par son quiz et un exercice en autonomie, où l\'aide se paie en points ; un niveau validé ouvre le suivant. Commencez par les fondamentaux.'),
+    el('p', { class: 'lede' }, 'Des niveaux à valider l\'un après l\'autre, du Débutant à l\'Expert. Chaque leçon se termine par son quiz et un exercice.'),
     ...(libre() ? [el('p', { class: 'note pa-libre' }, icon('ouvert'), 'Profil Formateur : tous les niveaux sont ouverts. Au profil Étudiant, on commence par le niveau Débutant de chaque catégorie.')] : []),
     P.hero,
     el('div', { class: 'co-kpis pa-kpis' },
@@ -205,7 +205,7 @@ function home(page, /** @type {import('./cours_parcours.js').Go} */ go) {
     el('section', { class: 'co-livret', 'aria-label': 'Livret de compétences' }, el('h4', {}, 'Mon livret de compétences (BTS MAV, option TIEE)'),
       el('div', { class: 'co-blocs' }, ...L.blocs.map((b) => { const w = b.count.consolidee + b.count.travaillee; const n = b.comps.length - b.count.absent; return el('div', { class: 'co-bloc' }, el('b', {}, b.id), el('span', {}, b.titre), bar(w, n, b.id), el('small', {}, `${w} / ${n} travaillées`)); })),
       el('div', { class: 'hwrow' }, el('button', { type: 'button', class: 'btn small', onclick: () => openLivret() }, 'Ouvrir le livret complet')),
-      el('p', { class: 'note' }, 'Une compétence est travaillée quand une leçon, un exercice ou une tâche qui la font pratiquer est réussi ; consolidée, avec trois réussites dont un exercice pratique fait seul. Le livret dit ce qui a été pratiqué ; la valider reste le rôle du formateur.')));
+      el('p', { class: 'note' }, 'Travaillée : une réussite qui la fait pratiquer. Consolidée : trois réussites, dont un exercice pratique fait seul. La valider reste le rôle du formateur.')));
 }
 function lessonPage(page, { chapter, lesson }, /** @type {import('./cours_parcours.js').Go} */ go, nav) {
   markSeen(lesson.id);
@@ -250,7 +250,7 @@ function lessonPage(page, { chapter, lesson }, /** @type {import('./cours_parcou
   page.append(exoSection(L, { onChange: maj, suite }));
   const xs = exercisesOf(L);
   if (xs.length) page.append(el('section', { class: 'co-exos', 'aria-label': 'Exercices pratiques dans le car' }, el('h4', {}, icon('chef'), xs.length > 1 ? 'Dans le car : exercices pratiques' : 'Dans le car : exercice pratique'),
-    el('p', { class: 'note' }, 'Pour aller plus loin : le geste dans le car, avec Olivier. Ils comptent pour le livret de compétences (« consolidée »).'),
+    el('p', { class: 'note' }, 'Le geste dans le car, avec Olivier : il compte pour le livret de compétences.'),
     ...xs.map((x) => exerciseCard(x, L))));
   const avant = ordre[i - 1] ? /** @type {any} */ (lessonById(ordre[i - 1])).lesson : null;
   page.append(el('div', { class: 'co-nextprev' },

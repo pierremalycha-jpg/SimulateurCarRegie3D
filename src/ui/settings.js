@@ -54,14 +54,14 @@ export function openSettings() {
         if (inGame) { startAudio(); AU.muted = v !== '1'; applyFaders(); emit('soundToggle'); } else setStart('stsnd', v);
       })),
       row('Volume du son', (() => { const r = el('input', { type: 'range', min: '0', max: '1', step: '0.05', value: String(volume()), 'aria-label': 'Volume du son' }); r.addEventListener('input', () => setVolume(+r.value)); return r; })()),
-      el('p', { class: 'note' }, 'Basse convient aux ordinateurs portables ; Haute demande une carte graphique dédiée. Le style Dessin (cel shading) ne coûte presque rien ; ses contours à l\'encre s\'affichent en qualité Moyenne et Haute. Le son dépend de l\'endroit : la foule dans le stade (lointaine derrière les tribunes, là où est garé le car), l\'écoute de la console au poste son, presque rien ailleurs dans le car. Les commentaires du match s\'affichent en texte au poste son.')),
+      el('p', { class: 'note' }, 'Basse pour un ordinateur portable, Haute pour une carte graphique dédiée. Le son dépend de l\'endroit où vous êtes : la foule au stade, la console au poste son.')),
     section('Jeu',
       row('Bruitages', seg('Bruitages', [['1', 'Activés'], ['0', 'Coupés']], JEU.sfx ? '1' : '0', (v) => { JEU.sfx = v === '1'; saveJeu(); if (JEU.sfx) sfx('confirm'); })),
       row('Volume des bruitages', (() => { const r = el('input', { type: 'range', min: '0', max: '1', step: '0.05', value: String(JEU.volume), 'aria-label': 'Volume des bruitages' }); r.addEventListener('input', () => setSfxVolume(+r.value)); r.addEventListener('change', () => sfx('confirm')); return r; })()),
       row('Objectif à l\'écran', seg('Objectif à l\'écran', [['1', 'Affiché'], ['0', 'Masqué']], JEU.quest ? '1' : '0', (v) => { setQuestVisible(v === '1'); saveJeu(); })),
       row('Repère 3D de l\'objectif', seg('Repère 3D', [['1', 'Affiché'], ['0', 'Masqué']], JEU.marker ? '1' : '0', (v) => { JEU.marker = v === '1'; saveJeu(); })),
       row('Mini-plan du car', seg('Mini-plan du car', [['0', 'Masqué'], ['1', 'Affiché']], JEU.minimap ? '1' : '0', (v) => { JEU.minimap = v === '1'; saveJeu(); })),
-      el('p', { class: 'note' }, 'Les bruitages de l\'interface sont indépendants du son du car (foule, console son). L\'objectif en cours s\'affiche en haut à gauche ; le journal des missions s\'ouvre avec L. Le mini-plan du car est masqué par défaut : le pupitre (Tab) a le plan complet.')),
+      el('p', { class: 'note' }, 'Les bruitages sont indépendants du son du car. Le journal des missions s\'ouvre avec L ; le téléphone (Tab) a le plan complet du car.')),
     inGame ? section('La partie en cours',
       el('div', { class: 'grid2' },
         field('Lumière', selectEl(Object.entries(LIGHTING).map(([k, v]) => [k, v.label]), S.lighting, (v) => emit('setLighting', v))),
@@ -72,13 +72,13 @@ export function openSettings() {
     progressionSection(),
     section('Profil',
       row('Je suis', seg('Profil', [['etudiant', 'Étudiant'], ['formateur', 'Formateur', 'Ajoute l\'espace formateur à ces réglages']], PROFILE.role, (v) => setRole(v))),
-      el('p', { class: 'note' }, 'Le profil Formateur ajoute ci-dessous l\'espace formateur : configuration du car, suivi des stagiaires, relecture technique.')),
+      el('p', { class: 'note' }, 'Le profil Formateur ajoute l\'espace formateur : configuration du car, suivi des stagiaires, relecture technique.')),
     el('section', { class: 'rg-sec role-only' }, el('h3', {}, 'Espace formateur'),
       el('div', { class: 'hwrow' },
         el('button', { type: 'button', class: 'btn primary', id: 'rg-trainer', onclick: () => openTrainer('car') }, icon('formateur'), 'Configuration du car'),
         el('button', { type: 'button', class: 'btn', onclick: () => openTrainer('eleves') }, 'Suivi des stagiaires'),
         el('button', { type: 'button', class: 'btn', onclick: () => openReview('me') }, 'Relecture technique')),
-      el('p', { class: 'note' }, 'Les pannes se déclenchent au poste Chef de car du car régie (onglet Simulateur de pannes), ou pour toute l\'équipe depuis la partie en coopération.')),
+      el('p', { class: 'note' }, 'Les pannes se déclenchent au poste Chef de car (Simulateur de pannes), ou pour toute l\'équipe en coopération.')),
     section('Aide',
       el('details', { class: 'rg-keys' }, el('summary', {}, 'Toutes les commandes du clavier'),
         el('div', { class: 'keys' }, ...CONTROLS_HELP.map(([k, d]) => el('div', {}, el('kbd', {}, k), el('span', {}, d))))),
@@ -89,7 +89,7 @@ export function openSettings() {
     section('À propos',
       el('p', {}, el('b', {}, 'TIEE Simulator'), ` version ${APP_VERSION}. Réalisé par le BTS Audiovisuel de Saint-Quentin (lycée Henri-Martin), pour l'option Techniques d'ingénierie et exploitation des équipements. Développé par Pierre MALYCHA.`),
       el('p', { class: 'note' }, 'Moteur 3D : three.js (licence MIT). Polices : Archivo, Archivo Narrow, B612 Mono, Barlow, JetBrains Mono, intégrées à la page (licence SIL OFL). Icônes : Phosphor (licence MIT).'),
-      el('p', { class: 'note' }, 'Simulation non officielle, sans lien avec les clubs ni avec les constructeurs cités. Joueurs fictifs, clubs sans blason. Les caractéristiques techniques sont des ordres de grandeur réalistes, donnés à titre pédagogique.')));
+      el('p', { class: 'note' }, 'Simulation non officielle, sans lien avec les clubs ni les constructeurs cités ; joueurs fictifs, clubs sans blason. Les chiffres sont des ordres de grandeur, donnés à titre pédagogique.')));
   modal.open('Réglages', body, { width: 820 });
 }
 on('settings', () => openSettings());

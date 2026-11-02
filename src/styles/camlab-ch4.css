@@ -6,7 +6,7 @@
 .cf .c4-ana { fill: none; stroke: var(--muted); stroke-width: 1.2; stroke-dasharray: 4 3; }
 .cf .c4-step { fill: none; stroke: var(--accent); stroke-width: 2; }
 .cf .c4-scale { fill: none; stroke: #59646f; }
-.cf .c4-res { fill: rgba(240,55,44,.75); } .cf .c4-sup { fill: rgba(255,176,32,.55); } .cf .c4-leg { fill: rgba(51,196,108,.35); } .cf .c4-sub { fill: rgba(76,195,230,.5); }
+.cf .c4-res { fill: rgba(240,55,44,.75); } .cf .c4-sup { fill: rgba(255,179,64,.55); } .cf .c4-leg { fill: rgba(51,196,108,.35); } .cf .c4-sub { fill: rgba(76,195,230,.5); }
 .cf .c4-grid { stroke: rgba(120,200,160,.22); stroke-width: 1; }
 .cf .c4-trace { stroke: #82f0aa; stroke-width: 3; stroke-linecap: round; }
 .cf .c4-sw { stroke: #59646f; stroke-width: 1; }

@@ -16,8 +16,8 @@ import * as THREE from 'three';
 export const STYLE = {
   /** cel shading actif */
   cel: true,
-  /** force du contour d'encre (post-traitement) */
-  encre: 0.85,
+  /** force du contour d'encre (post-traitement) ; v19.22 : plus fine, pour une image plus douce */
+  encre: 0.6,
 };
 const CLE = 'carregie.style';
 try { const v = localStorage.getItem(CLE); if (v === 'realiste') STYLE.cel = false; } catch (e) { /* stockage indisponible */ }
