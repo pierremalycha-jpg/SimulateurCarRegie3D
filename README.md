@@ -456,8 +456,10 @@ réglages neutres.
 **Vérification.** Suite `node tools/e2e.mjs epure` (`tests/e2e/epure.mjs`) : écran titre sans mire ni bandeau, touches en
 minuscules et arrondies, police de 15 px en Archivo, entrée principale bleue, cartes de mode en une ligne, aucun coin coupé,
 verre dépoli des fenêtres, HUD en pilules, menu aligné, téléphone, Olivier, Cours, Réglages ; huit captures à relire. Les suites
-jeu, navigation, telephone, cours, accessibilite et interfaces passent inchangées : aucun identifiant ni aucune classe
-qu'elles lisent n'a bougé.
+jeu, navigation, telephone, cours, accessibilite et interfaces passent sans qu'aucun identifiant ni aucune classe qu'elles lisent
+ait bougé ; trois d'entre elles ont demandé une retouche du thème : le Cours en une colonne sur téléphone (les `@media` de base
+étaient écrasées par le thème, chargé après), les contrastes AA relevés par axe-core (gris, bleu de remplissage, rouge de touche,
+encre des touches ambre), et le flou d'arrière-plan coupé en qualité Basse pour que la bande d'état arrive à temps.
 
 **Reste.** Faire relire les écrans par une classe (lisibilité des gris sur les projecteurs de salle), un mode clair si des
 étudiants le demandent, repasser les postes 2D un à un (mélangeur, réseau IP) dans le même esprit.
