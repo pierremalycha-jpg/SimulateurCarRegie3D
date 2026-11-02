@@ -394,6 +394,66 @@ Tests :
   « Emmène-moi / Montre-moi » doit mettre en évidence un élément réel de la page, et « Fais-le pour moi » doit faire
   valider l'étape.
 
+## v19.22 : une interface épurée, inspirée de la direction artistique d'Apple
+
+**Pourquoi.** L'interface « jeu vidéo » des versions 19.3 à 19.21 (fond nuit, néon cyan, panneaux à coins coupés, capitales
+espacées, LED décoratives) finissait par ressembler à un casino : des fenêtres dans tous les sens, des explications et des
+liens cliquables partout, une sur-stimulation permanente. Demande : une interface beaucoup plus épurée et fluide, inspirée de la
+direction artistique d'Apple, avec des dégradés, une police un peu plus grande, des menus et des fenêtres repensés, sans rien
+perdre de la qualité d'instruction ni des informations du Cours.
+
+**Le langage** (`src/styles/theme-jeu.css`, réécrit ; toujours chargé en dernier, il redéfinit les jetons et les composants) :
+
+- **un fond nuit neutre** et des panneaux de **verre dépoli** (`backdrop-filter`, 22 px de flou) aux **grands rayons** (10, 14,
+  20 px ; pilules pour les barres), une ombre portée douce ; plus aucun coin coupé (`--notch` et `--notch-s` valent `none`, les
+  autres feuilles les lisent encore), plus de contour lumineux, plus de LED ni de vis décoratives ;
+- **une seule couleur d'accent**, le bleu (`--accent`, `#3b9cff`) pour l'action et la sélection ; les anciens jetons `--neon` et
+  `--cyan` prennent sa valeur, si bien que toutes les feuilles suivent. Le rouge tally reste l'antenne, le vert le prêt, l'ambre
+  l'expérience, en teintes adoucies (`#ff453a`, `#34c759`, `#ffb340`) ; plus de couleur codée en dur dans les feuilles ;
+- **Archivo partout**, en plus grand (corps 15 px, touches 15 px, titres de 17 à 76 px, interlettrage négatif sur les grands
+  titres), **sans capitales espacées** sur les touches, les titres et les étiquettes ; les capitales restent aux seuls en-têtes de
+  groupe, petits et gris, comme dans les réglages d'iOS. Archivo Narrow et B612 Mono ne servent plus qu'aux textures 3D et aux
+  afficheurs (timecode) ;
+- **des dégradés** là où l'œil se pose : l'écran titre et l'écran Jouer (halos bleu et violet derrière le verre, le stade flouté
+  derrière), la grande touche de lancement (bleu du clair au profond), le fond d'écran du téléphone ;
+- **la hiérarchie par la taille, la graisse et l'espace**, pas par la couleur : un seul style de touche (grise translucide),
+  une touche principale pleine, des contrôles segmentés en pilule (onglets, choix), des listes à lignes arrondies.
+
+**Les écrans repensés.**
+
+- **L'écran titre** (`index.template.html`, `app/title.js`) : une page centrée, le logo, le nom, une ligne, trois grandes entrées
+  (Jouer en bleu), la barre de chargement qui s'efface quand le car est prêt, la carte joueur, le conseil d'Olivier en une phrase
+  grise, les mentions en pied. Disparus : le moniteur sur mire, les lignes de balayage, le bandeau en capitales, les LED des
+  touches ;
+- **Jouer** (`app/start.js`) : les cartes de mode portent **une ligne** (`court`), l'explication complète reste sur la touche de
+  lancement ; les étapes ne sont plus numérotées ; le bloc « affiche du soir » en verre devient une simple ligne (l'adversaire
+  et le car) ; les notes (équipe, émission, pied) sont raccourcies de moitié ;
+- **le HUD** : barre d'outils et bande d'état en pilules de verre (les touches clavier ne s'affichent plus dans la barre ;
+  elles restent dans Réglages → Aide et dans la prise en main), le suivi des tâches en carte arrondie, la carte-titre d'un lieu
+  en minuscules, la vignette deux fois plus discrète (22 %) ;
+- **le menu du car** (Échap) : une liste de lignes (icône, titre, sous-titre, touche), Reprendre en bleu ;
+- **le téléphone** : un fond d'écran en dégradés doux, des icônes plus douces, les noms en minuscules ;
+- **Olivier** : une boîte de verre arrondie, un portrait bleu plat, son nom en minuscules ;
+- **les fenêtres** (`.sheet`, `.ask`, fiches « ? », journal des missions, Réglages) : verre dépoli, en-tête sobre, bouton de
+  fermeture rond ; dans Réglages, chaque note tient en une ou deux lignes ;
+- **le Cours** (`ui/cours_ui.js`) : sommaire sans cadres (la sélection est une ligne bleutée), « Mon parcours » en deux
+  phrases, chaque section de leçon (l'essentiel, le schéma, la manipulation, dans le car, le quiz, l'exercice) dans une carte
+  calme avec un petit en-tête gris, les fiches « ? » en pastilles discrètes ; rien n'est retiré du contenu ;
+- **les postes** : en-tête de verre, touches arrondies, panneaux sans biseau ; les tallys gardent leurs couleurs pleines.
+
+**La 3D** (`render.js`, `style.js`) : un étalonnage plus doux (saturation et contraste presque neutres, noirs légèrement relevés,
+vignettage 14 % au lieu de 22 %), l'encre du style « dessin » plus fine (0,6 au lieu de 0,85) ; le style réaliste suit les mêmes
+réglages neutres.
+
+**Vérification.** Suite `node tools/e2e.mjs epure` (`tests/e2e/epure.mjs`) : écran titre sans mire ni bandeau, touches en
+minuscules et arrondies, police de 15 px en Archivo, entrée principale bleue, cartes de mode en une ligne, aucun coin coupé,
+verre dépoli des fenêtres, HUD en pilules, menu aligné, téléphone, Olivier, Cours, Réglages ; huit captures à relire. Les suites
+jeu, navigation, telephone, cours, accessibilite et interfaces passent inchangées : aucun identifiant ni aucune classe
+qu'elles lisent n'a bougé.
+
+**Reste.** Faire relire les écrans par une classe (lisibilité des gris sur les projecteurs de salle), un mode clair si des
+étudiants le demandent, repasser les postes 2D un à un (mélangeur, réseau IP) dans le même esprit.
+
 ## v19.21 : des graphismes repris (style « dessin » en cel shading, textes qui tiennent, bancs de touche peuplés)
 
 **Pourquoi.** Trois retours sur l'image : des panneaux de texte du stade dépassaient des tribunes ; l'ensemble faisait
@@ -2281,9 +2341,9 @@ node tools/shots.mjs dossier 1280 800 '["vision","hf"]'   # captures de postes
 | `game/missions.js`, `game/mission_run.js`, `ui/missions_ui.js` | La mission spécifique (Jouer → Car régie) : le catalogue par famille et la préparation du car (calcul pur), le déroulement (lancer, constater la fin, enchaîner ou arrêter), la liste à choisir |
 | `emission/` | L'émission en direct (car pré-installé) : le conducteur et le compte rendu, calcul pur (`conducteur.js`), les médias de l'IPDirector (`medias.js`), leurs images (`dessin.js`, texture d'un canal de l'EVS `video.js`) et leur musique (`musique.js`), l'état partagé (`etat.js`), l'équipe virtuelle des postes non occupés (`ia.js`), les panneaux (`panneau.js` : médias de l'IPDirector, conducteur, objectif), la boucle, l'horloge du direct et le compte rendu (`index.js`) ; styles `styles/emission.css` |
 | `game/fx.js`, `game/sfx.js` | Effets de jeu (barre d'XP, bannières de niveau et de badge, carte-titre, vignette, flash tally, alerte de panne) et bruitages synthétisés en WebAudio avec leur réglage |
-| `styles/theme-jeu.css` | Le thème « jeu vidéo » : jetons de couleur, composants communs, HUD, écran titre, Jouer, menu, journal, badges |
+| `styles/theme-jeu.css` | Le thème « épuré » (v19.22, inspiré de la direction artistique d'Apple) : jetons de couleur (un accent bleu, verre dépoli, grands rayons), composants communs (touches, fenêtres, onglets, afficheurs), HUD, écran titre, Jouer, menu, journal, badges, Cours, téléphone, postes en 3D |
 | `telephone/index.js`, `telephone/apps.js`, `telephone/modele.js`, `styles/telephone.css` | Le téléphone (Tab ou T) : lever et ranger, touches, accueil (objectif, niveau), applications par famille (Aller à, Missions, Olivier, outils du car, Cours, Progression, Réglages), boîtier 3D et écran HTML posé dessus (transformation projective `cssProjection`) |
-| `app/title.js` | Écran titre TIEE Simulator : logo du BTS, trois entrées (Jouer, Cours, Réglages), progression du chargement, conseils d'Olivier, mentions |
+| `app/title.js` | Écran titre TIEE Simulator : une page centrée, logo du BTS, trois entrées (Jouer, Cours, Réglages), progression du chargement, conseil d'Olivier, carte joueur, mentions |
 | `ui/settings.js` | Réglages : une seule fenêtre (ordinateur, partie en cours, ma progression, profil, espace formateur, aide, à propos) |
 | `ui/ma_progression.js` | Réglages → Ma progression : où elle est enregistrée et si ça marche, exporter dans un fichier, importer (fusion), effacer, vos données personnelles ; notification quand un enregistrement échoue |
 | `app/profile.js` | Profil Étudiant / Formateur, mémorisé ; classe `role-formateur` sur `body`, éléments `.role-only` |

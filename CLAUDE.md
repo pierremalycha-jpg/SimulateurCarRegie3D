@@ -11,6 +11,14 @@ Tout est en français (code commenté en français, interface, commits).
 - Vérifier : `npx eslint src tests tools && npx tsc -p tsconfig.json && npm test` (tests unitaires Node, rapides).
 
 ## Décisions d'interface (v19) à respecter
+- **Le style de l'interface (v19.22, décidé le 2 novembre 2026)** : épuré, inspiré de la direction artistique d'Apple. Un fond
+  nuit neutre, des panneaux de verre dépoli (`--mat`, `--blur`) aux grands rayons (`--r-s`, `--r`, `--r-l` ; pilules pour les
+  barres), **une seule couleur d'accent** (`--accent`, bleu ; `--neon` et `--cyan` en sont des alias) pour l'action et la
+  sélection, le rouge tally pour l'antenne, le vert pour le prêt, l'ambre pour l'expérience. Archivo partout (`--f-disp` =
+  `--f-body`), corps 15 px, **pas de capitales espacées** sur les touches, titres et étiquettes (seuls les petits en-têtes de
+  groupe gris y ont droit), **pas de coin coupé** (`--notch: none`), pas de contour lumineux, pas de LED décorative. Une
+  nouvelle feuille lit les jetons de `src/styles/theme-jeu.css` et ne code aucune couleur en dur ; un texte d'interface tient
+  en une ou deux lignes (l'explication longue va dans la leçon ou la fiche « ? »). Suite `node tools/e2e.mjs epure`.
 - **TIEE Simulator**, réalisé par le BTS Audiovisuel de Saint-Quentin (logo `src/assets/logo-bts-av.png`),
   développé par Pierre MALYCHA : ces mentions restent sur l'écran titre et dans « À propos » (Réglages).
 - **Trois entrées, les mêmes partout** : Jouer · Cours · Réglages. Écran titre (`src/app/title.js`,
@@ -142,8 +150,8 @@ Tout est en français (code commenté en français, interface, commits).
   bruitages WebAudio (`sfx.js`, réglage dans Réglages → Jeu). Le HUD est épuré : trois blocs (objectif avec le lieu,
   barre d'outils avec le niveau : Téléphone, Menu ; bande d'état TC · match · PGM · alarmes) et le retour PGM ; le mini-plan et le panneau du jour de match sont masqués (réglage, objectif). Toute nouvelle activité notée émet un événement et
   prend une ligne dans `progression.js`. Le thème visuel est `src/styles/theme-jeu.css` (chargé en dernier : il
-  redéfinit les jetons de couleur et les composants) ; une animation d'entrée n'anime que la position, jamais
-  l'opacité finale. L'ancienne carte `#mission` reste dans le code mais est masquée : l'objectif la remplace.
+  redéfinit les jetons de couleur et les composants ; depuis la v19.22, le style épuré ci-dessus) ; une animation d'entrée
+  n'anime que la position, jamais l'opacité finale. L'ancienne carte `#mission` reste dans le code mais est masquée : l'objectif la remplace.
 - **Le son (v19.4.1)** : ce que le joueur entend dépend de l'endroit (`src/audio.js` : `ecoute`, `setEar`) : la foule
   dans le stade (rumeur lointaine derrière les tribunes, devant le car), l'écoute de la console au poste son, presque
   rien ailleurs dans le car, silence à l'accueil ; volume dans Réglages. La console (vumètres, loudness, départs) n'en
