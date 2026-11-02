@@ -394,6 +394,104 @@ Tests :
   « Emmène-moi / Montre-moi » doit mettre en évidence un élément réel de la page, et « Fais-le pour moi » doit faire
   valider l'étape.
 
+## v19.24 : les comptes élève et professeur, le tableau de bord des classes (Firebase)
+
+**Pourquoi.** Jusqu'ici, la progression restait dans le navigateur (ou dans un fichier exporté) et le profil Formateur se
+choisissait d'un clic : impossible pour le professeur de suivre sa classe. Demande : des comptes élèves (identifiant et mot
+de passe, progression gardée en permanence, sur n'importe quel ordinateur), des comptes professeurs bien distincts, un
+tableau de bord où le professeur crée ses classes et les comptes de ses élèves, voit ce que chacun a validé et repère les
+difficultés (une leçon recommencée dix fois sans réussir, par exemple). Base retenue : **Firebase** (Authentication et
+Firestore), gratuit au volume d'une section de BTS.
+
+**Se connecter** (`src/ui/compte_ui.js`, `src/comptes/`) :
+
+- sur l'écran titre, une **bande du compte** sous le menu (« Pas connecté : la progression reste sur cet ordinateur ·
+  Se connecter », puis « Léa Martin · BTS MAV 1 · Se déconnecter ») ; dans les Réglages, la section **Mon compte** ;
+- l'**élève** se connecte avec l'**identifiant** et le **mot de passe** que lui donne son professeur (« lea.martin ») ; il ne
+  s'inscrit pas lui-même ; un mot de passe oublié se redemande au professeur ;
+- le **professeur** se connecte avec son **adresse e-mail** ; il ouvre son compte lui-même (« Professeur : ouvrir mon
+  compte »), à condition que son adresse soit sur la **liste des professeurs** de l'établissement, puis la **confirme** par le
+  lien reçu (sans cela, quelqu'un d'autre pourrait ouvrir un compte à son adresse) ; « Mot de passe oublié ? » lui envoie un lien ;
+- le **rôle suit le compte** (`forceRole`, `src/app/profile.js`) : un compte élève reste Étudiant (le choix du profil
+  disparaît des Réglages), un compte professeur est Formateur ; sans compte, le choix de l'ordinateur revient ;
+- **sans compte**, tout marche comme avant (« Continuer sans compte »), et tant que le projet Firebase n'est pas renseigné
+  (`src/comptes/config.js`), rien de tout cela ne s'affiche.
+
+**La progression d'un compte** (`useAccount`, `src/shared.js`) : à la connexion, celle du compte (sa copie dans ce navigateur,
+fusionnée avec celle du serveur) **remplace** celle en mémoire ; à la déconnexion, celle de l'ordinateur revient. Rien ne passe
+d'un compte à l'autre sur un ordinateur de salle partagé (une copie locale par compte : `carregie.progress.compte.<uid>`).
+L'élève qui jouait sans compte peut, sur demande, **reprendre la progression de cet ordinateur** dans son compte. La
+progression passe en **v7** : essais du quiz de chaque leçon (`cours[id].qn`) et **minutes de travail par jour** (`jours` :
+une minute compte quand la page est vue et que l'élève a agi dans les deux dernières minutes, `src/comptes/activite.js`).
+
+**Le tableau de bord** (`src/ui/tableau_bord.js`, Réglages → Espace formateur ou bande du compte, espace plein écran, données
+en direct) :
+
+- **Suivi des élèves** : pour la classe choisie, la synthèse (élèves et jamais connectés, leçons terminées et moyenne des
+  exercices, temps de travail de la semaine, élèves à suivre), **où la classe bloque** (les leçons où plusieurs élèves sont en
+  difficulté), puis un élève par ligne (dernière activité, temps de la semaine, parcours du Cours, exercices, compétences du
+  livret, niveau, difficultés) ; exports CSV du suivi et des livrets ;
+- le **bilan d'un élève** : dernière activité, temps de travail, leçons terminées, quiz réussis, exercices (réussis seul ou
+  non), compétences, niveau ; ses **difficultés** en clair ; son parcours chapitre par chapitre (niveau en cours, étoiles) ;
+  ses épreuves notées ; son livret de compétences ;
+- **Classes et comptes** : créer, renommer, supprimer (vide) une classe ; y **créer des élèves** un par un ou d'une liste
+  collée d'un tableur (« Léa Martin », « MARTIN Léa », « Martin;Léa ») ; l'**identifiant** se forme avec le prénom et le nom
+  (« lea.martin », « lea.martin2 » pour un homonyme), le **mot de passe provisoire** est tiré au hasard (« kavito47 » : trois
+  syllabes et deux chiffres, sans lettre ambiguë) ou choisi ; mots de passe masqués puis affichables ; **fiches de connexion**
+  à imprimer et découper, export CSV ; **nouveau mot de passe**, **changer de classe**, **supprimer** un compte (et sa
+  progression) ;
+- **Professeurs** : les adresses autorisées à ouvrir un compte professeur (ajouter un collègue, retirer une adresse). Un
+  professeur voit toutes les classes et tous les élèves de l'établissement.
+
+**Ce qui compte comme une difficulté** (`src/comptes/bilan.js`, calcul pur) : le quiz d'une leçon manqué **3 fois ou plus**
+sans être réussi en entier ; son exercice en autonomie essayé 3 fois ou plus sans atteindre 60 sur 100 ; une épreuve notée
+(émission en direct, jour de match, examen réseau, mise en service de la caméra, mission de l'entrepôt, montage de la caméra)
+essayée 3 fois sans réussite ; « **forte** » à partir de 6 essais. À part, en bleu : un exercice réussi seulement avec la
+solution, un exercice pratique terminé avec « Fais-le pour moi » (à refaire seul). Un élève sans activité depuis deux
+semaines est signalé.
+
+**Firebase** (`src/comptes/firebase.js`, SDK intégré à la page par esbuild, aucune ressource chargée d'ailleurs) :
+
+| Document | Contenu | Qui lit, qui écrit (`firestore.rules`) |
+|---|---|---|
+| `admin/profs` | adresses autorisées à ouvrir un compte professeur | créé une fois dans la console ; les professeurs le tiennent ensuite |
+| `comptes/<uid>` | rôle, prénom, nom, identifiant, classe | l'intéressé lit le sien ; les professeurs lisent tout, créent les élèves, les rangent ; personne ne change de rôle |
+| `classes/<id>` | nom de la classe | les professeurs ; l'élève lit la sienne |
+| `secrets/<uid>` | identifiant et mot de passe provisoire d'un élève | les professeurs seulement |
+| `progress/<uid>` | la progression (JSON) | l'élève écrit la sienne ; les professeurs lisent |
+| `config/*`, `review/*`, `sessions/*` | configuration du car, relectures, comptes rendus | lus par les comptes, écrits par les professeurs |
+
+Un élève a dans Firebase une adresse fabriquée : `lea.martin@eleves.tiee-simulator.invalid` (domaine réservé, aucun courrier
+ne part vers les élèves). Le professeur crée un compte d'élève par une **seconde instance** de l'application, sans perdre sa
+propre session ; le mot de passe provisoire est gardé dans `secrets/` pour réimprimer une fiche, en donner un nouveau ou
+supprimer le compte (le navigateur ne peut pas, sans serveur, agir sur le compte d'un autre). C'est un compromis assumé pour
+des comptes de classe : ces mots de passe ne servent qu'au simulateur, seuls les professeurs les lisent.
+
+**Mettre en service** (une fois, par le professeur responsable) :
+
+1. Console Firebase (console.firebase.google.com) : créer un projet ; **Authentication** → Méthode de connexion → activer
+   **Adresse e-mail/Mot de passe** ; **Firestore Database** → créer la base (région europe-west, mode production).
+2. Firestore → **Règles** : coller le contenu de `firestore.rules` et publier (ou `firebase deploy --only firestore:rules`).
+3. Firestore → Données : créer la collection **`admin`**, document **`profs`**, champ **`emails`** de type tableau, avec votre
+   adresse (en minuscules) comme premier élément.
+4. Paramètres du projet → Vos applications → **Web** (`</>`) : enregistrer l'application, copier la configuration
+   (`apiKey`, `authDomain`, `projectId`…) dans `src/comptes/config.js` (ces valeurs ne sont pas secrètes), reconstruire
+   (`node tools/build.mjs`) et republier l'exécutable.
+5. Dans le simulateur : écran titre → Se connecter → « Professeur : ouvrir mon compte », confirmer l'adresse, puis Réglages →
+   Tableau de bord des classes.
+
+**Vérification.** Tests unitaires `tests/unit/comptes.test.mjs` : identifiants (accents, homonymes, longueur), adresses,
+mots de passe (forme, variété), liste collée, difficultés et bilan d'un élève et d'une classe, temps de travail, progression v7
+(migration, fusion). Contre l'**émulateur Firebase** (Java, `node tools/firebase-test.mjs` ; aucun vrai projet touché) :
+`tests/firebase/comptes.mjs` (14 vérifications : adresse non autorisée refusée, confirmation obligatoire, création de classe et
+d'élèves, connexion par identifiant, **un élève ne lit ni n'écrit rien d'autre que le sien** (autres élèves, mots de passe,
+liste des comptes, rôle, classes, configuration), compte ouvert sans fiche sans droit, progression en JSON, nouveau mot de
+passe, suppression) ; suite de bout en bout `node tools/e2e.mjs comptes` (`tests/e2e/comptes.mjs`, deux navigateurs, 24
+vérifications : écran titre, ouverture du compte professeur, tableau de bord, liste collée, connexion de l'élève, progression
+séparée de celle de l'ordinateur, difficulté repérée et bilan, nouveau mot de passe, déconnexion) ; sept captures à relire.
+Reste à essayer sur le vrai projet de l'établissement (le domaine `.invalid` des élèves est accepté par l'émulateur ; à
+confirmer sur le service réel, sinon changer `DOMAINE_ELEVES` avant de créer des élèves).
+
 ## v19.23 : le référentiel officiel cité dans l'application, et les leçons de la TMO
 
 **Pourquoi.** Le simulateur numérotait les compétences à sa façon (1.1 à 4.5, par bloc de la fiche RNCP37022) alors que le
@@ -2417,6 +2515,8 @@ node tools/shots.mjs dossier 1280 800 '["vision","hf"]'   # captures de postes
 | `game/fx.js`, `game/sfx.js` | Effets de jeu (barre d'XP, bannières de niveau et de badge, carte-titre, vignette, flash tally, alerte de panne) et bruitages synthétisés en WebAudio avec leur réglage |
 | `styles/theme-jeu.css` | Le thème « épuré » (v19.22, inspiré de la direction artistique d'Apple) : jetons de couleur (un accent bleu, verre dépoli, grands rayons), composants communs (touches, fenêtres, onglets, afficheurs), HUD, écran titre, Jouer, menu, journal, badges, Cours, téléphone, postes en 3D |
 | `telephone/index.js`, `telephone/apps.js`, `telephone/modele.js`, `styles/telephone.css` | Le téléphone (Tab ou T) : lever et ranger, touches, accueil (objectif, niveau), applications par famille (Aller à, Missions, Olivier, outils du car, Cours, Progression, Réglages), boîtier 3D et écran HTML posé dessus (transformation projective `cssProjection`) |
+| `comptes/` (`config.js`, `firebase.js`, `session.js`, `identifiants.js`, `bilan.js`, `activite.js`) | Les comptes (v19.24) : projet Firebase de l'établissement, authentification et base (comptes, classes, progression, gestion des élèves par le professeur), session et rôle imposé, identifiants et mots de passe provisoires, bilan d'un élève et d'une classe avec ses difficultés (calcul pur), temps de travail |
+| `ui/compte_ui.js`, `ui/tableau_bord.js`, `styles/comptes.css` | Se connecter (fenêtre, bande du compte de l'écran titre, Mon compte des Réglages) ; le tableau de bord du professeur (suivi des élèves, bilan, classes et comptes, fiches de connexion, professeurs) |
 | `app/title.js` | Écran titre TIEE Simulator : une page centrée, logo du BTS, trois entrées (Jouer, Cours, Réglages), progression du chargement, conseil d'Olivier, carte joueur, mentions |
 | `ui/settings.js` | Réglages : une seule fenêtre (ordinateur, partie en cours, ma progression, profil, espace formateur, aide, à propos) |
 | `ui/ma_progression.js` | Réglages → Ma progression : où elle est enregistrée et si ça marche, exporter dans un fichier, importer (fusion), effacer, vos données personnelles ; notification quand un enregistrement échoue |
@@ -2507,4 +2607,5 @@ Hors de `src/` :
 | `partage/` | Modes d'emploi des versions à partager protégées par mot de passe : exécutable Windows (`LISEZMOI.txt`), application macOS (`LISEZMOI-mac.txt`) |
 | `tests/unit/` | Tests unitaires `node:test` ; `tests/helpers/` (DOM minimal, scène vide, réseau de test), `tests/register.mjs` (chargement des fichiers texte comme esbuild) |
 | `tests/e2e/` | Tests de bout en bout Playwright et leur harnais |
+| `tests/firebase/`, `firestore.rules`, `firebase.json` | Les comptes contre l'émulateur Firebase (`node tools/firebase-test.mjs`) ; règles de sécurité de Firestore à publier dans le projet de l'établissement |
 | `tools/` | Construction (`build.mjs`, `zip.mjs`), versions à partager : exécutable Windows et kit (`exe.mjs`, signature Authenticode `signature.mjs`), application macOS (`mac.mjs`, pièces `macapp.mjs`), pièces communes (`sea.mjs`, serveur protégé `protege.mjs`), icônes (`icon.mjs`), lanceur des tests de bout en bout (`e2e.mjs`), mesures et captures |
