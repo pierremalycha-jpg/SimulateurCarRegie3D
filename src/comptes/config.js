@@ -7,13 +7,14 @@
 // sécurité vient des règles de Firestore (firestore.rules, à déployer) et de l'authentification. Tant
 // qu'elles sont vides, le simulateur marche comme avant, sans compte (progression dans le navigateur).
 // ----------------------------------------------------------------------------------
+// projet « TieeSimulatorBDD » (base Firestore à Paris, europe-west9), application Web « TIEE Simulator »
 export const FIREBASE = {
-  apiKey: '',
-  authDomain: '',
-  projectId: '',
-  storageBucket: '',
-  messagingSenderId: '',
-  appId: '',
+  apiKey: 'AIzaSyDjzSmCJYSgMy37y_E5euU7Dll2bV8UK0I',
+  authDomain: 'tieesimulatorbdd.firebaseapp.com',
+  projectId: 'tieesimulatorbdd',
+  storageBucket: 'tieesimulatorbdd.firebasestorage.app',
+  messagingSenderId: '1002832903186',
+  appId: '1:1002832903186:web:e275ff45b4e3044a43eccb',
 };
 
 /**

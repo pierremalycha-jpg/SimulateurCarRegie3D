@@ -467,7 +467,13 @@ propre session ; le mot de passe provisoire est gardé dans `secrets/` pour réi
 supprimer le compte (le navigateur ne peut pas, sans serveur, agir sur le compte d'un autre). C'est un compromis assumé pour
 des comptes de classe : ces mots de passe ne servent qu'au simulateur, seuls les professeurs les lisent.
 
-**Mettre en service** (une fois, par le professeur responsable) :
+**En service** (2 novembre 2026) : projet Firebase **TieeSimulatorBDD** (`tieesimulatorbdd`), base Firestore à Paris
+(`europe-west9`, gratuite, protégée contre la suppression), connexion par adresse et mot de passe activée, règles publiées
+(`firebase deploy --only firestore,auth`), `admin/profs` créé avec l'adresse du responsable, configuration dans
+`src/comptes/config.js`. Vérifié sur le service réel : l'adresse fabriquée d'un élève (`.invalid`) est acceptée ; un compte
+sans fiche ne peut ni écrire de progression ni se donner le rôle professeur ; un inconnu ne lit rien.
+
+**Mettre en service un autre projet** (une fois, par le professeur responsable) :
 
 1. Console Firebase (console.firebase.google.com) : créer un projet ; **Authentication** → Méthode de connexion → activer
    **Adresse e-mail/Mot de passe** ; **Firestore Database** → créer la base (région europe-west, mode production).
@@ -490,8 +496,7 @@ passe, suppression) ; suite de bout en bout `node tools/e2e.mjs comptes` (`tests
 vérifications : écran titre, ouverture du compte professeur, tableau de bord, liste collée, connexion de l'élève, progression
 séparée de celle de l'ordinateur, difficulté repérée et bilan, nouveau mot de passe, déconnexion sans échec d'enregistrement,
 accessibilité axe-core de la connexion et des pages du tableau de bord) ; sept captures à relire.
-Reste à essayer sur le vrai projet de l'établissement (le domaine `.invalid` des élèves est accepté par l'émulateur ; à
-confirmer sur le service réel, sinon changer `DOMAINE_ELEVES` avant de créer des élèves).
+Reste à essayer avec une classe.
 
 ## v19.23 : le référentiel officiel cité dans l'application, et les leçons de la TMO
 
