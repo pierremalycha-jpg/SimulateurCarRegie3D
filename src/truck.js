@@ -3,7 +3,7 @@ import * as THREE from 'three';
 import { Builder, screenMaterial } from './geo.js';
 import { matiere } from './matiere.js';
 import { TRUCK } from './world.js';
-import { makeCanvas, tc } from './util.js';
+import { makeCanvas, tc, texteAjuste } from './util.js';
 import { S } from './state.js';
 import { buildAudioDesk } from './audiodesk.js';
 import { buildMelangeur3D } from './poste3d/icp.js';
@@ -68,7 +68,7 @@ function screen(name, w, h, lx, y, lz, rotY = 0, label) {
     // étiquette sous l'écran (UMD) : texture nette, dans le plan de l'écran
     const c = makeCanvas(512, 64); const g = c.getContext('2d');
     g.fillStyle = '#050607'; g.fillRect(0, 0, 512, 64);
-    g.fillStyle = '#e8f0e0'; g.font = '600 36px "Barlow Condensed", "Arial Narrow", sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(label, 256, 34);
+    g.fillStyle = '#e8f0e0'; g.textAlign = 'center'; g.textBaseline = 'middle'; texteAjuste(g, label, 256, 34, 488, 36, { weight: 600 });
     const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4;
     const umd = new THREE.Mesh(new THREE.PlaneGeometry(Math.min(w, 0.9), Math.min(w, 0.9) / 8), new THREE.MeshBasicMaterial({ map: t, toneMapped: false }));
     umd.position.copy(m.position); umd.rotation.y = rotY; umd.translateY(-h / 2 - 0.07); umd.translateZ(0.002);

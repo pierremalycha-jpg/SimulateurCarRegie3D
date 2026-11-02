@@ -7,7 +7,8 @@ import { personGeometries, kitMaterial, mergeIndexed } from '../people.js';
 // (people.js : un mesh instancié par membre, deux couleurs par instance), dans une scène donnée (le stade ou
 // l'intérieur du car). Chacun a sa tenue (maillot, col, pantalon, peau, cheveux, chaussures) et un casque d'ordres
 // s'il travaille au car. Les poses sont procédurales : marche, assis au pupitre (mains au travail, regard qui
-// va des écrans au bureau), debout bras croisés, la main à la radio, le bras tendu vers le mur d'écrans.
+// va des écrans au bureau), debout bras croisés, la main à la radio, le bras tendu vers le mur d'écrans, les bras
+// levés (un but, au banc de touche : banc.js).
 // ----------------------------------------------------------------------------------
 const PARTS = /** @type {Array<[string, string, number, number]>} */ ([
   ['torso', 'torso', 1, 0.82], ['pelvis', 'pelvis', 1, 0.85], ['head', 'head', 1, 0.6],
@@ -39,7 +40,7 @@ function casqueGeo() {
  * @property {number} [vitesse] m/s @property {number} [phase] cycle de marche (radians)
  * @property {number} [teteYaw] @property {number} [tetePitch] regard, relatif au corps
  * @property {number} [penche] buste penché en avant (radians)
- * @property {'marche' | 'bureau' | 'console' | 'pointe' | 'croise' | 'radio' | 'ballants'} [bras]
+ * @property {'marche' | 'bureau' | 'console' | 'pointe' | 'croise' | 'radio' | 'ballants' | 'leve'} [bras]
  * @property {number} [t] horloge (petits mouvements)
  */
 
@@ -143,6 +144,7 @@ export class Troupe {
       else if (bras === 'pointe') { ux = -0.45; fx = -1.0; uz = sg * 0.12; }
       else if (bras === 'croise') { ux = -0.25; uz = sg * 0.05; fx = -1.75; uy = -sg * 0.45; }
       else if (bras === 'radio' && s === 0) { ux = -0.35; uz = -0.35; fx = -2.1; uy = 0.4; }
+      else if (bras === 'leve') { ux = -2.75 + Math.sin(t * 7 + s * 1.3 + i) * 0.12; uz = sg * 0.28; fx = -0.25; } // un but : les bras en l'air
       else { ux = Math.sin(t * 0.9 + s + i) * 0.03; fx = -0.15; }
       _j.copy(_s).multiply(T(sg * 0.2, 0.43, 0)).multiply(RX(ux)).multiply(RZ(uz)).multiply(RY(uy));
       Pp.upperArm.setMatrixAt(k, _j);

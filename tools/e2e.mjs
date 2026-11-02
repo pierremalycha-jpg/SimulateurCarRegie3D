@@ -67,6 +67,7 @@ const SUITES = [
   ['telephone', 'telephone', [], 20],
   ['emission', 'emission', [], 30],
   ['figurants', 'figurants', [], 25],
+  ['graphismes', 'graphismes', [], 30],
 ];
 
 const args = process.argv.slice(2);

@@ -617,12 +617,12 @@ function drawOverlay() {
       const ch = EVS.ch[src === 'EVSA' ? 0 : 1];
       extra = ch.media ? `  ${ch.media.playing ? '▶' : '❚❚'} ${MEDIAS[ch.media.id].titre} −${Math.ceil(MEDIAS[ch.media.id].duree - ch.media.pos)} s` : ch.mode === 'live' ? `  E/E CAM ${ch.cam}` : `  ${ch.playing ? '▶ ' + Math.round(ch.speed * 100) + ' %' : '❚❚'} CAM ${ch.cam}`;
     }
-    g.fillText(label + (big ? extra : ''), t.x + t.w / 2, t.y + t.h - uh / 2 - 8);
-    if (!big && extra) { g.font = `500 14px ${FONT}`; g.fillStyle = '#aab4bd'; g.fillText(extra.trim(), t.x + t.w / 2, t.y + 16); }
+    g.fillText(label + (big ? extra : ''), t.x + t.w / 2, t.y + t.h - uh / 2 - 8, t.w - 44); // jamais plus large que l'UMD
+    if (!big && extra) { g.font = `500 14px ${FONT}`; g.fillStyle = '#aab4bd'; g.fillText(extra.trim(), t.x + t.w / 2, t.y + 16, t.w - 24); }
     // alarmes
     if (r.alarm && r.alarm !== 'MIRE' && r.alarm !== 'BARRES') {
       g.fillStyle = 'rgba(220,30,30,0.9)'; const aw = big ? 260 : 150; g.fillRect(t.x + t.w - aw - 10, t.y + 10, aw, big ? 36 : 24);
-      g.fillStyle = '#fff'; g.font = `700 ${big ? 24 : 16}px ${FONT}`; g.fillText(r.alarm, t.x + t.w - aw / 2 - 10, t.y + (big ? 28 : 22));
+      g.fillStyle = '#fff'; g.font = `700 ${big ? 24 : 16}px ${FONT}`; g.fillText(r.alarm, t.x + t.w - aw / 2 - 10, t.y + (big ? 28 : 22), aw - 12);
     }
     if (t.role === 'PVW') {
       g.setLineDash([10, 10]); g.strokeStyle = 'rgba(255,255,255,0.35)'; g.lineWidth = 1.5;

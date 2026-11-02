@@ -184,7 +184,7 @@ export function buildOBTruck(T) {
   for (const dx of [5.2, 6.6, 8.0]) for (const s of [-1, 1]) wheel(grp, T.cx + dx, 0.5, T.cz + s * 1.05);
   for (const s of [-1, 1]) { wheel(grp, T.x0 - 4.0, 0.5, T.cz + s * 1.05); wheel(grp, T.x0 - 0.9, 0.5, T.cz + s * 0.95, 0.5, 0.32, true); }
   // livrée des flancs (extensions et caisse) et faces avant / arrière, sur tôle nervurée
-  const lv1 = liveryTexture(13.5, 2.55, { seed: 3, vents: [0.06, 0.82], labels: [[0.79, 'PIED DE CAR →']] });
+  const lv1 = liveryTexture(13.5, 2.55, { seed: 3, vents: [0.575, 0.68], labels: [[0.79, 'PIED DE CAR →']] }); // grilles après la porte : le nom du car est devant
   const lv2 = liveryTexture(13.5, 2.55, { seed: 4, vents: [0.12, 0.5, 0.86] });
   decal(grp, lv1, 13.4, 2.45, T.cx + 0.5, yF + 1.38, T.z1 + 0.012, 0);
   decal(grp, lv2, 13.4, 2.45, T.cx + 0.5, yF + 1.38, T.z0 - 0.012, Math.PI);

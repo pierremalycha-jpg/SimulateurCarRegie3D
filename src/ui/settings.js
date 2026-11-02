@@ -15,6 +15,7 @@ import { openReport } from './report.js';
 import { JEU, saveJeu, setSfxVolume, sfx } from '../game/sfx.js';
 import { setQuestVisible } from '../game/quest.js';
 import { progressionSection } from './ma_progression.js';
+import { STYLE } from '../style.js';
 
 // ----------------------------------------------------------------------------------
 // Réglages : une seule fenêtre, la même depuis l'écran titre, l'écran Jouer et le menu du car.
@@ -46,11 +47,14 @@ export function openSettings() {
         try { localStorage.setItem('carregie.quality', v); } catch (e) { /* stockage indisponible */ }
         if (inGame) emit('setQuality', v); else setStart('stqual', v);
       })),
+      row('Style graphique', seg('Style graphique', [['dessin', 'Dessin', 'Cel shading : aplats de lumière, contours à l\'encre (par défaut)'], ['realiste', 'Réaliste', 'Lumière en dégradé, sans contours']], STYLE.cel ? 'dessin' : 'realiste', (v) => {
+        emit('setStyle', v === 'dessin'); // main.js : morceaux de shader, type d'ombre et matières des scènes ensemble
+      })),
       row('Son', seg('Son', [['1', 'Activé'], ['0', 'Coupé']], soundOn ? '1' : '0', (v) => {
         if (inGame) { startAudio(); AU.muted = v !== '1'; applyFaders(); emit('soundToggle'); } else setStart('stsnd', v);
       })),
       row('Volume du son', (() => { const r = el('input', { type: 'range', min: '0', max: '1', step: '0.05', value: String(volume()), 'aria-label': 'Volume du son' }); r.addEventListener('input', () => setVolume(+r.value)); return r; })()),
-      el('p', { class: 'note' }, 'Basse convient aux ordinateurs portables ; Haute demande une carte graphique dédiée. Le son dépend de l\'endroit : la foule dans le stade (lointaine derrière les tribunes, là où est garé le car), l\'écoute de la console au poste son, presque rien ailleurs dans le car. Les commentaires du match s\'affichent en texte au poste son.')),
+      el('p', { class: 'note' }, 'Basse convient aux ordinateurs portables ; Haute demande une carte graphique dédiée. Le style Dessin (cel shading) ne coûte presque rien ; ses contours à l\'encre s\'affichent en qualité Moyenne et Haute. Le son dépend de l\'endroit : la foule dans le stade (lointaine derrière les tribunes, là où est garé le car), l\'écoute de la console au poste son, presque rien ailleurs dans le car. Les commentaires du match s\'affichent en texte au poste son.')),
     section('Jeu',
       row('Bruitages', seg('Bruitages', [['1', 'Activés'], ['0', 'Coupés']], JEU.sfx ? '1' : '0', (v) => { JEU.sfx = v === '1'; saveJeu(); if (JEU.sfx) sfx('confirm'); })),
       row('Volume des bruitages', (() => { const r = el('input', { type: 'range', min: '0', max: '1', step: '0.05', value: String(JEU.volume), 'aria-label': 'Volume des bruitages' }); r.addEventListener('input', () => setSfxVolume(+r.value)); r.addEventListener('change', () => sfx('confirm')); return r; })()),

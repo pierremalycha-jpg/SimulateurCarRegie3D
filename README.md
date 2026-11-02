@@ -394,6 +394,84 @@ Tests :
   « Emmène-moi / Montre-moi » doit mettre en évidence un élément réel de la page, et « Fais-le pour moi » doit faire
   valider l'étape.
 
+## v19.21 : des graphismes repris (style « dessin » en cel shading, textes qui tiennent, bancs de touche peuplés)
+
+**Pourquoi.** Trois retours sur l'image : des panneaux de texte du stade dépassaient des tribunes ; l'ensemble faisait
+brut, peu professionnel ; les bancs de touche étaient vides. Demande : sans ajouter d'éléments au décor, une image plus
+propre et plus immersive, inspirée de jeux au rendu dessiné (Schedule I, Zelda Wind Waker), avec un effet de cel shading
+qui ne fasse pas ramer les machines modestes ; des entraîneurs et des remplaçants sur les bancs.
+
+**Aucun texte ne dépasse** (`util.js` : `texteAjuste`, `tailleAjustee`, calcul pur testé). Tout texte du décor est écrit
+dans sa case : la police descend jusqu'à ce qu'il tienne, et au plus petit le navigateur le resserre. Ce qui débordait :
+
+- l'enseigne « STADE BOLLAERT-DELELIS », large de 64 m pour une tribune qui en fait 116 mais posée à 40 m du centre :
+  elle dépassait de 14 m dans le vide, chevauchait le nom de la tribune, et son texte (150 px dans une texture de 96 px
+  de haut) était coupé en haut et en bas. Le nom du stade est maintenant **sur la façade de la tribune Lepagnot**, en
+  deux lignes avec le nom de la tribune, dans les limites de la façade ;
+- les **bandeaux au nom des tribunes** (front de la tribune haute) : un nom toutes les ~30 m, la texture aux proportions
+  du bandeau (les lettres étaient étirées jusqu'à 2,5 fois), un liseré sang et or ; au kop, les **banderoles du balcon
+  Xercès tombent entre deux noms** au lieu de les recouvrir, et les banderoles du premier rang passent au-dessus des
+  panneaux LED (elles étaient derrière) ;
+- les **panneaux LED** : « BIENVENUE À BOLLAERT » débordait sur le message voisin ; chaque message tient dans sa dalle
+  de 6 m, aux bonnes proportions ;
+- le **nom du car** (« CAR RÉGIE · HD ») commençait dans le vide, avant l'extension du flanc : il est posé entre le bord
+  de l'extension et la porte (les grilles de ventilation passent après la porte) ;
+- la signalétique (« ACCÈS TERRAIN · TUNNEL · LOCAL TECHNIQUE TV » sortait de son panneau ; le panneau du vestiaire
+  écrivait en rouge sur fond rouge), les étiquettes du stade, les étiquettes d'écrans du car (UMD), celles de l'atelier,
+  les étiquettes du multiview et de l'habillage (noms longs des clubs) ;
+- les textes sont redessinés quand les polices intégrées sont prêtes (`W.textes`).
+
+Chaque panneau écrit est inscrit avec la boîte qu'il ne doit pas dépasser (sa tribune, sa façade, le flanc du car :
+`W.panneaux`) ; la suite de bout en bout le vérifie.
+
+**Le style « dessin »** (`style.js`, par défaut ; Réglages → Sur cet ordinateur → Style graphique : Dessin ou
+Réaliste, mémorisé, appliqué tout de suite au stade et au car).
+
+- **La lumière en paliers.** La lumière directe (soleil, projecteurs, spots du car) passe par trois paliers adoucis
+  (ombre, demi-teinte, pleine lumière) au lieu d'un dégradé : des aplats francs, comme dans un dessin animé ; un peu du
+  dégradé d'origine est gardé pour que le relief des matières reste lisible. Les **ombres portées ont un bord net**.
+  C'est une réécriture des morceaux de shader de three.js (`ShaderChunk`) faite avant toute compilation : elle ne coûte
+  rien, et vaut aussi en qualité Basse, dans le Cours en 3D, à l'entrepôt et sur le téléphone.
+- **Des contours à l'encre** (qualité Moyenne et Haute, `render.js`) : la composition finale lit la profondeur de
+  l'image (résolue avec l'anticrénelage, sans passe de rendu en plus) et trace les silhouettes (un voisin nettement plus
+  loin) et les plis (dérivée seconde de 1/z, nulle sur un plan). Les traits s'effacent au loin (de 70 à 260 m, plus loin
+  vu d'avion ; de 6 à 14 m dans le car) pour que les tribunes ne deviennent pas un fouillis de lignes.
+- **Des couleurs plus franches** : saturation 1,16 au lieu de 1,06, contraste un peu relevé, ombres légèrement bleutées ;
+  des **nuages aux bords dessinés**, ventre ombré et sommet éclairé en deux aplats.
+- Les ombres du moteur passent en PCF (plus net et moins coûteux que le PCF doux). Le type d'ombre fait partie de la
+  clé des programmes de shader : changer de style recompile les matières sans jamais reprendre un programme de l'autre
+  style.
+
+**Des formes moins brutes, sans rien ajouter.** Les **abris de touche** (quatre boîtes bleu clair) deviennent des
+coques bombées en plexiglas fumé, cerclées d'un profilé sombre et d'un liseré sang et or, avec plancher et **neuf sièges
+baquets** (au lieu d'un bloc) ; les caissons des panneaux LED, les écrans d'angle et leurs poteaux (cylindres), la table
+du quatrième arbitre (plateau sombre), l'auvent du tunnel, les pupitres des commentateurs et les antennes HF ont des
+arêtes arrondies. Les **commentateurs**, deux boîtes surmontées d'une sphère, sont de vrais corps assis, casque sur les
+oreilles, qui suivent le ballon.
+
+**Les bancs de touche** (`figurants/banc.js`, troupe instanciée de `figurants/troupe.js`). Lens à gauche (x = −10),
+l'adversaire à droite, là où les joueurs reviennent à la mi-temps. Sur chaque banc : **sept remplaçants** en veste
+d'échauffement aux couleurs du club (manches du maillot, col du maillot), l'**entraîneur adjoint** et le **préparateur
+physique** en survêtement sombre, et l'**entraîneur** en costume, debout dans sa zone technique : il va et vient, croise
+les bras, montre le jeu. Tout le monde suit le ballon des yeux, et le buste se penche quand le jeu s'approche ; quand
+son équipe marque, **le banc se lève, bras en l'air**. Le banc visiteurs change de tenue avec l'adversaire. Les bancs
+sont vus aussi par les caméras du stade (mis à jour même quand on est dans le car, une image sur trois).
+
+**Ce qui change ailleurs.** `figurants/troupe.js` : la pose « bras levés » (`leve`). `figurants/index.js` : troisième
+troupe (bancs et commentateurs), `peindreBancs`. `geo.js` inchangé : les formes arrondies viennent de `Builder.cbox`.
+Coût : les paliers de lumière et les ombres nettes sont gratuits ; l'encre ajoute cinq lectures de profondeur par pixel
+dans la passe de composition, qui existait déjà.
+
+**À essayer en classe.** Le style par défaut (Dessin) et la force de l'encre (`STYLE.encre`) ; le style Réaliste reste
+au choix dans les réglages.
+
+Tests : `tests/unit/style.test.mjs` (nouveau : rampe en paliers, morceaux de shader réécrits et rétablis, type d'ombre et
+matières recompilées), `tests/unit/figurants.test.mjs` (bancs : places, tenues d'après le club, entraîneur dans sa zone,
+le banc qui se lève), `tests/unit/util.test.mjs` (taille de police ajustée) ; suite `node tools/e2e.mjs graphismes`
+(nouvelle : aucun panneau écrit hors de sa tribune, de sa façade ou du flanc du car, banderoles entre les noms, style
+Dessin par défaut puis Réaliste et retour, encre en Haute, bancs peuplés aux couleurs de Lens et de l'OM, le banc qui se
+lève sur un but, qualité Basse ; captures du stade, des bancs, des commentateurs, du compound, du car).
+
 ## v19.20 : un match qui ne se joue pas d'avance, de vrais adversaires, l'équipe à ses postes, un compound qui vit
 
 **Pourquoi.** Quatre retours après l'émission en direct : au début d'un match, trois joueurs tournaient autour du
@@ -2252,8 +2330,9 @@ node tools/shots.mjs dossier 1280 800 '["vision","hf"]'   # captures de postes
 | `equip.js` | Profil matériel (XVS-6000, XT4K, LSM, IPDirector) et répartition des canaux EVS |
 | `world.js` | Stade, éclairage, public (parcage visiteurs aux couleurs de l'adversaire), compound et extérieur du car, obstacles du compound |
 | `adversaire.js` | L'adversaire du soir : tiré au sort ou choisi, il repeint les joueurs et le parcage visiteurs, passe à l'habillage ; transmis par l'hôte en coopération |
-| `figurants/` | La vie autour du car : l'équipe à ses postes, qui laisse sa place quand on s'assoit (`equipe.js`), les techniciens et la sécurité du compound (`compound.js`), deux troupes instanciées aux poses procédurales (`troupe.js`), la boucle (`index.js`) |
-| `render.js` | Rendu physique : conversion des matériaux, environnement (ciel capturé, studio du car), post-traitement de la vue « œil » (halo, ACES, SSAO dans le car) |
+| `figurants/` | La vie autour du car : l'équipe à ses postes, qui laisse sa place quand on s'assoit (`equipe.js`), les techniciens et la sécurité du compound (`compound.js`), les bancs de touche et les commentateurs (`banc.js`), trois troupes instanciées aux poses procédurales (`troupe.js`), la boucle (`index.js`) |
+| `render.js` | Rendu physique : conversion des matériaux, environnement (ciel capturé, studio du car), post-traitement de la vue « œil » (halo, ACES, SSAO dans le car, contours à l'encre et couleurs du style « dessin ») |
+| `style.js` | Le style graphique : « dessin » (cel shading : lumière en paliers et ombres nettes par réécriture des morceaux de shader de three.js) ou « réaliste », réglage mémorisé |
 | `matiere.js` | Matières procédurales : recettes de relief, rugosité et teinte (cartes tuilables générées en code), matériau physique plaqué en triplanaire, relief coupé en qualité Basse |
 | `people.js` | Joueurs et arbitres articulés : géométries, tenues (nom et numéro, repeintes quand l'adversaire change), visage, animation de course |
 | `landscape.js` | Sol jusqu'à l'horizon (carte des parcelles), arbres instanciés en plans alpha, terrils |

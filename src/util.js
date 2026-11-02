@@ -75,6 +75,37 @@ export function makeCanvas(w, h) {
   return c;
 }
 
+// ----------------------------------------------------------------------------------
+// Textes du décor (enseignes, bandeaux de tribune, panneaux publicitaires, étiquettes) : un texte tient toujours
+// dans sa case. La police descend de la taille voulue jusqu'à ce que le texte tienne en largeur ; au plus petit,
+// fillText le resserre (son argument maxWidth). Calcul pur de la taille : tests/unit/util.test.mjs.
+// ----------------------------------------------------------------------------------
+export const POLICE_DECOR = '"Barlow Condensed", "Arial Narrow", sans-serif';
+/**
+ * La plus grande taille (≤ size, ≥ min) pour laquelle le texte mesure au plus maxW.
+ * @param {(s: number) => number} mesure largeur du texte à la taille s @param {number} maxW @param {number} size @param {number} min
+ */
+export function tailleAjustee(mesure, maxW, size, min) {
+  let s = size; const w = mesure(s);
+  if (w <= maxW) return s;
+  s = Math.max(min, Math.floor(s * maxW / w));
+  while (s > min && mesure(s) > maxW) s--;
+  return s;
+}
+/**
+ * Écrit un texte qui tient dans sa case (largeur maxW) ; renvoie la taille de police retenue.
+ * @param {CanvasRenderingContext2D} g @param {string} text @param {number} x @param {number} y @param {number} maxW @param {number} size
+ * @param {{ weight?: number | string, family?: string, min?: number, stroke?: boolean }} [o] stroke : contour (strokeStyle, lineWidth) sous le texte
+ */
+export function texteAjuste(g, text, x, y, maxW, size, o = {}) {
+  const fam = o.family || POLICE_DECOR, wt = o.weight ?? 700, min = o.min ?? Math.max(6, Math.round(size * 0.35));
+  const fs = tailleAjustee((s) => { g.font = `${wt} ${s}px ${fam}`; return g.measureText(text).width; }, maxW, size, min);
+  g.font = `${wt} ${fs}px ${fam}`;
+  if (o.stroke) g.strokeText(text, x, y, maxW);
+  g.fillText(text, x, y, maxW);
+  return fs;
+}
+
 export function roundRect(ctx, x, y, w, h, r) {
   ctx.beginPath();
   ctx.moveTo(x + r, y);
