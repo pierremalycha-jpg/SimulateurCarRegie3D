@@ -495,7 +495,7 @@ mots de passe (forme, variété), liste collée, difficultés et bilan d'un él�
 `tests/firebase/comptes.mjs` (16 vérifications : adresse non autorisée refusée, confirmation obligatoire, création de classe et
 d'élèves, connexion par identifiant, **un élève ne lit ni n'écrit rien d'autre que le sien** (autres élèves, mots de passe,
 liste des comptes, rôle, classes, configuration), compte ouvert sans fiche sans droit, progression en JSON, nouveau mot de
-passe, suppression) ; suite de bout en bout `node tools/e2e.mjs comptes` (`tests/e2e/comptes.mjs`, deux navigateurs, 31
+passe, suppression) ; suite de bout en bout `node tools/e2e.mjs comptes` (`tests/e2e/comptes.mjs`, deux navigateurs, 33
 vérifications : écran titre, ouverture du compte professeur, tableau de bord, liste collée, connexion de l'élève, progression
 séparée de celle de l'ordinateur, difficulté repérée et bilan, nouveau mot de passe, déconnexion sans échec d'enregistrement,
 accessibilité axe-core de la connexion et des pages du tableau de bord) ; sept captures à relire.

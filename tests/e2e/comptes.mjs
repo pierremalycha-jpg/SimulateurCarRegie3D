@@ -66,6 +66,15 @@ await prof.fill('#cpt-lien', lien.oobLink.replace(/&/g, '&amp;')); await prof.cl
 T.check('adresse confirmée : connecté comme professeur, profil Formateur imposé', await until(prof, () => window.__dbg.comptes.COMPTE.role === 'prof' && document.body.classList.contains('role-formateur') && !!document.querySelector('#ti-tableau'), null, 30000),
   await texte(prof, '#ti-compte'));
 
+// une seconde inscription à la même adresse : la fenêtre passe à la connexion, l'adresse déjà remplie
+await prof.click('#ti-deco'); await until(prof, () => !!document.querySelector('#ti-connexion'), null, 20000);
+await prof.click('#ti-connexion'); await prof.waitForSelector('#cpt-prof'); await prof.click('#cpt-prof');
+await champs.nth(0).fill('Pierre'); await champs.nth(1).fill('Malycha'); await champs.nth(2).fill('prof@lycee.fr'); await champs.nth(3).fill('secret123');
+await prof.click('.cpt-form button[type=submit]');
+T.check('inscription à une adresse qui a déjà un compte : on passe à la connexion, adresse remplie', await until(prof, () => document.querySelector('#cpt-id')?.value === 'prof@lycee.fr' && /déjà un compte/.test(document.querySelector('.cpt-msg')?.textContent || ''), null, 20000));
+await prof.fill('#cpt-mdp', 'secret123'); await prof.click('#cpt-go');
+T.check('reconnexion du professeur', await until(prof, () => window.__dbg.comptes.COMPTE.role === 'prof' && !!document.querySelector('#ti-tableau'), null, 30000));
+
 // ---- le tableau de bord : une classe, des élèves ----
 await prof.click('#ti-tableau');
 await prof.waitForSelector('.ly-tableau');

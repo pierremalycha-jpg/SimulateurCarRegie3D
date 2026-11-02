@@ -66,7 +66,11 @@ export function openConnexion(/** @type {'connexion' | 'prof'} */ vue = 'connexi
         const refus = motDePasseRefuse(/** @type {HTMLInputElement} */ (mdp).value); if (refus) { dire(msg, 'Mot de passe : ' + refus); return; }
         /** @type {HTMLButtonElement} */ (go).disabled = true;
         try { await inscrireProf({ email: val(email), mdp: /** @type {HTMLInputElement} */ (mdp).value, prenom: val(prenom), nom: val(nom) }); }
-        catch (er) { dire(msg, texteErreur(er)); /** @type {HTMLButtonElement} */ (go).disabled = false; }
+        catch (er) {
+          // l'adresse a déjà un compte (inscription faite) : on passe à la connexion, l'adresse déjà tapée
+          if (er && er.code === 'auth/email-already-in-use') { const v = val(email); draw('connexion'); const i = /** @type {HTMLInputElement | null} */ (body.querySelector('#cpt-id')); if (i) i.value = v; const m = body.querySelector('.cpt-msg'); if (m) dire(/** @type {HTMLElement} */ (m), 'Cette adresse a déjà un compte : connectez-vous avec son mot de passe (ou « Mot de passe oublié ? »).', true); setTimeout(() => /** @type {HTMLElement | null} */ (body.querySelector('#cpt-mdp'))?.focus(), 40); return; }
+          dire(msg, texteErreur(er)); /** @type {HTMLButtonElement} */ (go).disabled = false;
+        }
       } }, el('div', { class: 'grid2' }, field('Prénom', prenom), field('Nom', nom)), field('Adresse e-mail', email), field('Mot de passe (6 caractères au moins)', mdp), msg,
       el('div', { class: 'hwrow' }, go, el('button', { type: 'button', class: 'btn', onclick: () => draw('connexion') }, 'Retour'))));
   };
