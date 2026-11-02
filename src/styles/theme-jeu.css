@@ -16,7 +16,7 @@
   --bg: #0c0e13; --bg2: #12151c; --panel: #161a22; --panel2: #1c212b; --raise: #242a36; --line: rgba(255,255,255,.08); --line2: rgba(255,255,255,.16);
   --well: rgba(255,255,255,.045); --glass: #090b0f;
   --fg: #f5f6f8; --muted: #aab2bf; --dim: #929baa;
-  --accent: #3b9cff; --accent-d: rgba(59,156,255,.18); --accent-ink: #fff;
+  --accent: #3b9cff; --accent-d: rgba(59,156,255,.18); --accent-ink: #1a1205; /* l'encre sombre des touches ambre (camlab, entrepôt) */
   /* les surfaces pleines qui portent du texte blanc : un bleu plus profond (contraste AA 4,9:1), plus sombre encore au survol */
   --accent-fill: #1f6fd6; --accent-fill-h: #1b64c9;
   --neon: #3b9cff; --neon-d: rgba(59,156,255,.16); --cyan: #3b9cff; --cyan-d: rgba(59,156,255,.16);
@@ -778,6 +778,11 @@ body:not(.hud-map) #truckmap { display: none !important; }
 .ep-pin.ko span { border-color: var(--tally); }
 .ep-pin.cur span { background: var(--accent-fill); color: #fff; border-color: var(--accent); }
 .cl-pin i, .ep-pin i { background: var(--amber); box-shadow: 0 0 0 2px rgba(12,14,19,.9), 0 4px 10px rgba(0,0,0,.4); }
+.cl-pin i { color: #1a1205; }
+/* pastilles cachées ou d'un autre chapitre : un gris plein lisible plutôt qu'une transparence (le numéro reste à 4,5:1) */
+.cl-pin.occ, .cl-pin.dim { opacity: 1; }
+.cl-pin.occ i, .cl-pin.dim i { background: #3a3f4a; color: #e6e9ee; box-shadow: 0 0 0 2px rgba(12,14,19,.9); }
+.cl-pin.occ:hover i, .cl-pin.occ.hover i, .cl-pin.dim:hover i { background: var(--amber); color: #1a1205; }
 .ep-pin.ko i { background: var(--tally); }
 .v3-tab, .cl-tab { background: rgba(255,255,255,.08); border: 0; border-radius: 999px; padding: 6px 14px; color: var(--muted); font: 600 14px var(--f-body); }
 .v3-tab.on, .cl-tab.on, .v3-tab[aria-selected="true"], .cl-tab[aria-selected="true"] { background: var(--accent-fill); color: #fff; }
