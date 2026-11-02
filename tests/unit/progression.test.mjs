@@ -96,9 +96,9 @@ test('v4 → v5 : les émissions en direct, nettoyées et fusionnées entre deux
 });
 
 test('v5 → v6 : les badges de compétence prennent les numéros officiels du référentiel (comp-1.4 → comp-C32)', () => {
-  assert.equal(PROG_VERSION, 6);
+  assert.ok(PROG_VERSION >= 6);
   const p = migrateProgress({ v: 5, missions: {}, game: { badges: { 'comp-1.4': 10, 'comp-1.4-or': 20, 'comp-2.13': 30, 'comp-C8': 40, 'premier-pas': 50, 'comp-9.9': 60 } } });
-  assert.equal(p.v, 6);
+  assert.equal(p.v, PROG_VERSION);
   assert.deepEqual(p.game.badges, { 'comp-C32': 10, 'comp-C32-or': 20, 'comp-C36': 30, 'comp-C8': 40, 'premier-pas': 50, 'comp-9.9': 60 });
   // un badge déjà présent sous son nouveau nom garde sa date
   assert.deepEqual(migrateProgress({ v: 5, game: { badges: { 'comp-1.4': 10, 'comp-C32': 5 } } }).game.badges, { 'comp-C32': 5 });

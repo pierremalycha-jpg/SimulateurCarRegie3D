@@ -6,6 +6,7 @@ import { applyOverrides } from './params.js';
 import { mergeGame } from './game/xp.js';
 import { ANCIEN } from './content/referentiel.js';
 import { normaliser as carriereNette, mergeCarriere } from './carriere/index.js';
+import { car as carNet, mergeCar } from './comptes/car.js';
 
 // ----------------------------------------------------------------------------------
 // Données partagées de la page publiée (capacités db / user / assets / downloads),
@@ -36,9 +37,11 @@ export const MYREV = { domains: [], items: {}, params: {}, extra: [], updatedAt:
  * parcours et des missions réseau (v19.4) ; 3 : la Carrière, dates de réception et de lecture des mails (v19.6) ;
  * 4 : le parcours du Cours, exercice en autonomie de chaque leçon (cours[id].exo) et tests de niveau (niveaux) (v19.18) ;
  * 5 : les émissions en direct conduites au car (emissions : score, médias lancés soi-même) (v19.19) ;
- * 6 : les badges de compétence portent les numéros officiels du référentiel (comp-C32 au lieu de comp-1.4) (v19.23).
+ * 6 : les badges de compétence portent les numéros officiels du référentiel (comp-C32 au lieu de comp-1.4) (v19.23) ;
+ * 7 : les comptes (v19.24) : essais du quiz de chaque leçon (cours[id].qn) et minutes de travail par jour (jours) ;
+ * 8 : le suivi du car régie (v19.25, comptes/car.js) : temps par poste et de manipulation, exercices pratiques, sessions (car).
  */
-export const PROG_VERSION = 6;
+export const PROG_VERSION = 8;
 export const PROG = { v: PROG_VERSION, missions: {}, visited: {}, scenarios: [], reports: [], perf: null, patchBest: 0, updatedAt: 0 };
 /** état du dernier enregistrement de la progression : sur cet ordinateur (local), sur le serveur de la page (remote) */
 export const SAVE = { local: /** @type {boolean | null} */ (null), remote: /** @type {boolean | null} */ (null), at: 0, error: '' };
@@ -47,17 +50,21 @@ const LS = {
   get(k, d) { try { const v = localStorage.getItem('carregie.' + k); return v ? JSON.parse(v) : d; } catch (e) { return d; } },
   set(k, v) { try { localStorage.setItem('carregie.' + k, JSON.stringify(v)); return true; } catch (e) { return false; } },
 };
+// la progression de ce navigateur : « progress » sans compte, « progress.compte.<uid> » pour chaque compte (v19.24 :
+// sur un ordinateur de salle partagé, la progression d'un élève ne se mélange ni à celle d'un autre ni à celle de l'invité)
+let PKEY = 'progress';
 const withTimeout = (p, ms) => Promise.race([p, new Promise((r) => setTimeout(() => r(null), ms))]);
 
 export async function initShared() {
   // valeurs locales d'abord (fonctionne hors de claude.ai)
   for (const k of ['car', 'cabling', 'photos', 'review']) { const v = LS.get('config.' + k, null); if (v) CFG[k] = v; }
-  Object.assign(PROG, migrateProgress(LS.get('progress', {})) || {});
+  Object.assign(PROG, migrateProgress(LS.get(PKEY, {})) || {});
   Object.assign(MYREV, LS.get('review.me', {}));
   applyConfig();
   restoreProgress();
   const c = window.claude;
-  if (c && typeof c.use === 'function') {
+  // un compte de l'établissement déjà ouvert (src/comptes/) garde la main sur la progression
+  if (c && typeof c.use === 'function' && !COMPTE_SH.uid) {
     const get = (n) => withTimeout(c.use(n).catch(() => null), 12000);
     const [db, user, assets, downloads] = await Promise.all([get('db'), get('user'), get('assets'), get('downloads')]);
     Object.assign(SH, { db, user, assets, downloads });
@@ -172,6 +179,14 @@ export function migrateProgress(d) {
       const nk = `comp-${neuf}${m[2] || ''}`; if (!p.game.badges[nk]) p.game.badges[nk] = at; delete p.game.badges[k];
     }
   }
+  // v6 → v7 : essais du quiz d'une leçon (qn, entier) ; minutes de travail par jour ({ 'AAAA-MM-JJ': minutes })
+  if (isObj(p.cours)) for (const c of Object.values(p.cours)) if (isObj(c) && 'qn' in c && !(Number.isInteger(c.qn) && c.qn >= 0)) delete c.qn;
+  if ('jours' in p) {
+    if (!isObj(p.jours)) p.jours = {};
+    for (const [j, m] of Object.entries(p.jours)) if (!/^\d{4}-\d\d-\d\d$/.test(j) || !(Number(m) >= 0)) delete p.jours[j];
+  }
+  // v7 → v8 : le suivi du car régie (absent tant que rien n'est fait au car), remis en forme s'il est abîmé
+  if ('car' in p) carNet(p);
   p.v = Math.max(v, PROG_VERSION);
   return p;
 }
@@ -220,6 +235,8 @@ export function mergeProgress(d) {
     for (const [id, p] of Object.entries(d.cours)) {
       if (!p) continue; const m = /** @type {any} */ (C[id] || (C[id] = { seen: false, quiz: null })); m.seen = m.seen || !!p.seen; m.quiz = best(m.quiz, p.quiz);
       // l'exercice en autonomie : le meilleur score des deux appareils, réussi seul ici ou là-bas, les essais des deux
+      // essais du quiz : le plus grand compte des deux appareils (chacun compte les siens depuis la même base)
+      if (Number(p.qn) > (m.qn || 0)) m.qn = Number(p.qn);
       if (p.exo) m.exo = !m.exo ? p.exo : { best: Math.max(m.exo.best, p.exo.best), seul: !!(m.exo.seul || p.exo.seul), n: Math.max(m.exo.n || 0, p.exo.n || 0), at: Math.max(m.exo.at || 0, p.exo.at || 0) };
     }
   }
@@ -228,6 +245,10 @@ export function mergeProgress(d) {
     const P = /** @type {any} */ (PROG); const N = P.niveaux = P.niveaux || {};
     for (const [ch, t] of Object.entries(d.niveaux)) { const C = N[ch] = N[ch] || {}; for (const [n, r] of Object.entries(t || {})) { const m = C[n]; if (!m || r.score / r.total > m.score / m.total) C[n] = r; } }
   }
+  // minutes de travail par jour : la plus grande des deux (un appareil ne voit que son propre temps)
+  if (d.jours) { const P = /** @type {any} */ (PROG); const J = P.jours = P.jours || {}; for (const [j, m] of Object.entries(d.jours)) if (Number(m) > (J[j] || 0)) J[j] = Number(m); }
+  // le suivi du car régie : le plus grand compte de chaque chose, les sessions des deux appareils
+  if (d.car) { const P = /** @type {any} */ (PROG); P.car = mergeCar(P.car, d.car); }
   // progression du jeu (XP, badges) : une récompense obtenue sur l'un des appareils l'est pour de bon
   if (d.game) { const G = /** @type {any} */ (PROG); G.game = mergeGame(G.game, d.game); }
   // l'entrepôt : meilleur résultat de chaque mission, derniers essais, et le montage le plus récent
@@ -258,6 +279,57 @@ function restoreProgress() {
   Object.assign(S.missionsDone, PROG.missions);
   Object.assign(S.visited, PROG.visited);
 }
+
+// ---------------- les comptes (v19.24, src/comptes/) ----------------
+const SANS_COMPTE = { db: /** @type {any} */ (null), uid: /** @type {any} */ (null), isOwner: false, canEdit: false, readOnly: false };
+let configUnsubs = /** @type {(() => void)[]} */ ([]);
+/** le compte branché (null : sans compte) */
+export const COMPTE_SH = { uid: /** @type {string | null} */ (null) };
+/**
+ * Change de propriétaire de la progression : un compte (élève ou professeur, base Firestore de
+ * l'établissement) ou personne (null : la progression de ce navigateur, comme avant). Ce qui n'était pas
+ * encore enregistré l'est d'abord, puis la progression du nouveau propriétaire remplace celle en mémoire :
+ * sa copie dans ce navigateur, fusionnée avec celle du serveur. Rien ne passe d'un compte à l'autre.
+ * @param {{ uid: string, db: any, prof: boolean } | null} acc db : même interface que la base de la page publiée (doc, collection)
+ */
+export async function useAccount(acc) {
+  if ((acc ? acc.uid : null) === COMPTE_SH.uid) return;
+  clearTimeout(saveT);
+  if (enCours) await enCours;
+  // ce qui n'était pas encore enregistré l'est : en ligne si l'on change de compte, dans ce navigateur seulement si
+  // l'on quitte un compte (la session est déjà fermée : le serveur refuserait ; ui/compte_ui.js enregistre avant)
+  const quitte = !!COMPTE_SH.uid && !acc;
+  if (quitte) SH.readOnly = true;
+  if (PROG.updatedAt || Object.keys(S.missionsDone).length) { try { await saveProgress(true); } catch (e) { /* enregistré au mieux */ } }
+  if (enCours) await enCours;
+  for (const u of configUnsubs) { try { u(); } catch (e) { /* déjà fermé */ } }
+  configUnsubs = [];
+  if (!COMPTE_SH.uid) Object.assign(SANS_COMPTE, { db: SH.db, uid: SH.uid, isOwner: SH.isOwner, canEdit: SH.canEdit, readOnly: SH.readOnly });
+  COMPTE_SH.uid = acc ? acc.uid : null;
+  PKEY = acc ? 'progress.compte.' + acc.uid : 'progress';
+  if (acc) Object.assign(SH, { db: acc.db, uid: acc.uid, isOwner: acc.prof, canEdit: acc.prof, readOnly: false });
+  else Object.assign(SH, SANS_COMPTE);
+  for (const k of Object.keys(PROG)) delete /** @type {any} */ (PROG)[k];
+  Object.assign(PROG, { v: PROG_VERSION, missions: {}, visited: {}, scenarios: [], reports: [], perf: null, patchBest: 0, updatedAt: 0 }, migrateProgress(LS.get(PKEY, {})) || {});
+  for (const k of Object.keys(S.missionsDone)) delete S.missionsDone[k];
+  for (const k of Object.keys(S.visited)) delete S.visited[k];
+  SAVE.local = null; SAVE.remote = null; SAVE.at = 0; SAVE.error = '';
+  if (acc && acc.db) {
+    try { const snap = await acc.db.doc('progress/' + acc.uid).get(); if (snap.exists) mergeProgress(snap.data()); SAVE.remote = true; }
+    catch (e) { noteSave('remote', false, e); }
+    // la configuration du car écrite par un professeur de l'établissement (Réglages → Espace formateur)
+    for (const k of ['car', 'cabling', 'photos', 'review']) {
+      try { configUnsubs.push(acc.db.doc('config/' + k).onSnapshot((snap) => { if (snap.exists) { CFG[k] = structuredClone(snap.data()); LS.set('config.' + k, CFG[k]); applyConfig(); emit('config', k); } }, () => {})); } catch (e) { /* lecture refusée */ }
+    }
+  }
+  restoreProgress();
+  LS.set(PKEY, PROG);
+  emit('progressImport');
+}
+/** la progression enregistrée sans compte sur ce navigateur (pour la reprendre dans son compte) */
+export function guestProgress() { return migrateProgress(LS.get('progress', {})); }
+/** fusionne une progression dans celle du compte (reprise de la progression sans compte de cet ordinateur) */
+export function absorbProgress(d) { mergeProgress(d); restoreProgress(); saveProgressSoon(); emit('progressImport'); }
 /** @type {ReturnType<typeof setTimeout> | undefined} */ let saveT;
 let saving = false, again = false;
 export function saveProgressSoon() { clearTimeout(saveT); saveT = setTimeout(saveProgress, 2500); }
@@ -267,32 +339,48 @@ function noteSave(/** @type {'local' | 'remote'} */ where, /** @type {boolean} *
   SAVE[where] = ok; if (ok) SAVE.at = Date.now(); else SAVE.error = String((err && (err.message || err.code)) || err || '').slice(0, 200);
   if (before !== ok) emit('progressSave', { where, ok, error: SAVE.error });
 }
-async function saveProgress() {
+/**
+ * Au plus un envoi en ligne par minute et par élève (v19.25) : le forfait gratuit de Firebase compte 20 000
+ * écritures par jour pour tout l'établissement. La copie de ce navigateur, elle, s'écrit à chaque fois ; ce qui
+ * est retenu part à la minute suivante, ou tout de suite par saveProgressNow (déconnexion, import, effacement).
+ */
+export const ENVOI_MIN_MS = 60000;
+let dernierEnvoi = 0, envoiT = /** @type {ReturnType<typeof setTimeout> | undefined} */ (undefined);
+async function saveProgress(force = false) {
   if (saving) { again = true; return; }
   PROG.missions = { ...S.missionsDone }; PROG.visited = { ...S.visited }; PROG.updatedAt = Date.now(); PROG.v = Math.max(PROG.v || 1, PROG_VERSION);
   PROG.scenarios = PROG.scenarios.slice(-20); PROG.reports = PROG.reports.slice(-50); if (PROG.rigs) PROG.rigs = PROG.rigs.slice(-20);
-  { const P = /** @type {any} */ (PROG); if (P.emissions) P.emissions = P.emissions.slice(-20); }
+  { const P = /** @type {any} */ (PROG); if (P.emissions) P.emissions = P.emissions.slice(-20); if (P.jours) { const k = Object.keys(P.jours).sort(); for (const j of k.slice(0, Math.max(0, k.length - 400))) delete P.jours[j]; } }
   // stockage du navigateur plein (photos du formateur, autres pages) ou désactivé : on le dit, la progression reste en mémoire
-  noteSave('local', LS.set('progress', PROG), 'stockage du navigateur plein ou désactivé');
+  noteSave('local', LS.set(PKEY, PROG), 'stockage du navigateur plein ou désactivé');
   if (!SH.db || !SH.uid || SH.readOnly) return;
+  const reste = ENVOI_MIN_MS - (Date.now() - dernierEnvoi);
+  if (!force && reste > 0) { clearTimeout(envoiT); envoiT = setTimeout(() => saveProgress(true), reste); return; }
+  clearTimeout(envoiT); dernierEnvoi = Date.now();
   saving = true;
+  // le propriétaire de cet enregistrement : si le compte change pendant l'aller-retour avec le serveur (src/comptes/),
+  // ce qui en revient n'est pas fusionné dans la progression du nouveau compte
+  const db = SH.db, uid = SH.uid, cle = PKEY;
+  let fini = () => {};
+  enCours = new Promise((r) => { fini = r; });
   try {
     // fusion avant écriture : ce qu'un autre appareil a enregistré entre-temps sur le serveur n'est pas écrasé
     try {
-      const snap = await SH.db.doc('progress/' + SH.uid).get();
-      if (snap.exists) { mergeProgress(snap.data()); restoreProgress(); LS.set('progress', PROG); }
+      const snap = await db.doc('progress/' + uid).get();
+      if (snap.exists && SH.uid === uid && PKEY === cle) { mergeProgress(snap.data()); restoreProgress(); LS.set(PKEY, PROG); }
     } catch (e) { /* lecture impossible : on écrit ce qu'on a */ }
-    await SH.db.doc('progress/' + SH.uid).set(JSON.parse(JSON.stringify(PROG)));
-    noteSave('remote', true);
+    if (SH.uid === uid && PKEY === cle) { await db.doc('progress/' + uid).set(JSON.parse(JSON.stringify(PROG))); noteSave('remote', true); }
   } catch (e) {
     // invalid_argument : la page n'accepte pas d'écriture (lecture seule) ; on garde la copie de ce navigateur sans insister
-    if (e && e.code === 'invalid_argument') SH.readOnly = true; else noteSave('remote', false, e);
+    if (e && e.code === 'invalid_argument') SH.readOnly = true; else if (SH.uid === uid) noteSave('remote', false, e);
   }
-  saving = false;
+  saving = false; fini(); enCours = null;
   if (again) { again = false; saveProgressSoon(); }
 }
+/** l'enregistrement en ligne en cours (null : aucun) */
+let enCours = /** @type {Promise<void> | null} */ (null);
 /** enregistre tout de suite (après un import, avant de quitter) */
-export function saveProgressNow() { clearTimeout(saveT); return saveProgress(); }
+export function saveProgressNow() { clearTimeout(saveT); return saveProgress(true); }
 
 // ---------------- exporter, importer, effacer ----------------
 export const EXPORT_FORMAT = 'tiee-simulator/progression';
@@ -332,7 +420,7 @@ export async function eraseProgress() {
   Object.assign(PROG, empty);
   for (const k of Object.keys(S.missionsDone)) delete S.missionsDone[k];
   for (const k of Object.keys(S.visited)) delete S.visited[k];
-  try { localStorage.removeItem('carregie.progress'); } catch (e) { /* stockage indisponible */ }
+  try { localStorage.removeItem('carregie.' + PKEY); } catch (e) { /* stockage indisponible */ }
   if (SH.db && SH.uid && !SH.readOnly) {
     try { await SH.db.doc('progress/' + SH.uid).set(JSON.parse(JSON.stringify(PROG))); } catch (e) { return { ok: false, error: 'La copie du serveur n\'a pas pu être effacée : demandez-le au formateur.' }; }
   }

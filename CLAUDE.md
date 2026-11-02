@@ -11,7 +11,7 @@ Tout est en français (code commenté en français, interface, commits).
 - Vérifier : `npx eslint src tests tools && npx tsc -p tsconfig.json && npm test` (tests unitaires Node, rapides).
 
 ## Décisions d'interface (v19) à respecter
-- **La page de lecture d'une leçon (v19.24, décidée le 2 novembre 2026)** : une leçon se lit comme une page de présentation qui
+- **La page de lecture d'une leçon (v19.26, décidée le 2 novembre 2026)** : une leçon se lit comme une page de présentation qui
   se dévoile au défilement (`src/ui/reveal.js` : les sections `[data-reveal]` reçoivent `co-reveal` puis `in` en entrant à
   l'écran ; tout visible sans observateur, avec moins d'animations ou sous `navigator.webdriver` ; l'opacité finale est toujours
   1 ; une section redessinée garde ses classes). Structure fixe (`lessonPage` de `src/ui/cours_ui.js`, feuille
@@ -43,6 +43,21 @@ Tout est en français (code commenté en français, interface, commits).
   livret. Les leçons de la TMO (`src/cours/exploitation_tmo.js`, exercices `exos/exploitation_tmo.js`) : synoptique,
   énergie, nodal, PAD, recette. Toute nouvelle leçon cite ses compétences et ses savoirs ; un texte du référentiel ne se
   paraphrase pas, il se cite. Suite `node tools/e2e.mjs referentiel`.
+- **Les comptes (v19.24, décidé le 2 novembre 2026)** : Firebase (Authentication par adresse et mot de passe, Firestore),
+  `src/comptes/` (`config.js` : projet de l'établissement, valeurs publiques ; vides = sans compte, tout marche comme avant).
+  L'élève se connecte avec l'identifiant donné par son professeur (adresse fabriquée `<identifiant>@` `DOMAINE_ELEVES`, domaine
+  `.invalid`), ne s'inscrit pas ; le professeur ouvre son compte si son adresse est dans `admin/profs` et confirmée. Le rôle suit
+  le compte (`forceRole`). La progression change de propriétaire avec le compte (`useAccount` de `shared.js`, une copie locale
+  par compte) ; rien ne passe d'un compte à l'autre. Le tableau de bord du professeur (`ui/tableau_bord.js`) est rangé dans
+  Réglages → Espace formateur (plus la bande du compte de l'écran titre). Une difficulté se calcule dans `comptes/bilan.js`
+  (essais manqués) ; toute nouvelle activité notée qui garde ses essais y prend sa ligne. Qui lit et écrit quoi :
+  `firestore.rules` (tout changement de document s'y reflète et se teste : `node tools/firebase-test.mjs`, émulateur). Suite
+  `node tools/e2e.mjs comptes`, tests `tests/unit/comptes.test.mjs`, `tests/firebase/comptes.mjs`.
+  Le car régie au tableau de bord (v19.25) : `PROG.car` (temps par activité et par poste, manipulation, gestes, exercices
+  pratiques, missions, ce qui est consulté, parties), compté par `comptes/suivi_car.js` sur les événements (`station`,
+  `tutor`, `missionCar`, `device`, `teleport`, `modalopen`, `faultNew`…), calculé par `bilanCar` ; un nouveau poste ou un
+  nouvel exercice y apparaît seul (catalogues lus dans le code : `ui/tableau_car.js`). L'envoi en ligne est limité à une fois
+  par minute (`ENVOI_MIN_MS`, forfait gratuit de Firebase) : ne pas enregistrer en ligne à chaque geste.
 - **TIEE Simulator**, réalisé par le BTS Audiovisuel de Saint-Quentin (logo `src/assets/logo-bts-av.png`),
   développé par Pierre MALYCHA : ces mentions restent sur l'écran titre et dans « À propos » (Réglages).
 - **Trois entrées, les mêmes partout** : Jouer · Cours · Réglages. Écran titre (`src/app/title.js`,

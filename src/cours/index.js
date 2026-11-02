@@ -101,7 +101,8 @@ export function recordTest(chapitre, niveau, score, total) {
   if (!prev || score / total > prev.score / prev.total) C[niveau] = { score, total, at: Date.now() };
   PROG.updatedAt = Date.now(); saveProgressSoon(); emit('niveauTest', { chapitre, niveau, score, total });
 }
-export function recordQuiz(id, score, total) { const p = coursProgress(id); if (!p.quiz || score >= p.quiz.score) p.quiz = { score, total }; PROG.updatedAt = Date.now(); saveProgressSoon(); emit('quiz', { id, score, total }); }
+/** un quiz validé : le meilleur résultat reste ; les essais se comptent (qn, v19.24 : le tableau de bord du professeur repère un quiz manqué plusieurs fois) */
+export function recordQuiz(id, score, total) { const p = /** @type {any} */ (coursProgress(id)); p.qn = (p.qn || 0) + 1; if (!p.quiz || score >= p.quiz.score) p.quiz = { score, total }; PROG.updatedAt = Date.now(); saveProgressSoon(); emit('quiz', { id, score, total }); }
 /** leçon acquise : quiz réussi en entier */
 export const lessonDone = (id) => { const q = coursProgress(id).quiz; return !!q && q.score === q.total; };
 export const chapterDone = (ch) => ch.lessons.filter((l) => lessonDone(l.id)).length;

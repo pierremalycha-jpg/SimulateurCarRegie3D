@@ -394,7 +394,7 @@ Tests :
   « Emmène-moi / Montre-moi » doit mettre en évidence un élément réel de la page, et « Fais-le pour moi » doit faire
   valider l'étape.
 
-## v19.24 : le Cours qui se dévoile, et le son des bases à l'antenne
+## v19.26 : le Cours qui se dévoile, et le son des bases à l'antenne
 
 **Pourquoi.** Entre les schémas, les textes, les fiches « ? » et le référentiel, une leçon finissait par être une pile de
 cartes qu'on lisait d'un bloc : complet, mais dense. Demande : une interface plus agréable et plus facile à parcourir, qui
@@ -477,6 +477,158 @@ suite parcours (le rendu logiciel dépassait le délai de Playwright sur une le�
 **Reste.** Faire relire les ordres de grandeur du son (sensibilités, ronflette, Dante) par un professionnel ; un exercice
 pratique dans le car pour les couples (placer et vérifier un ORTF en tribune) ; les mêmes sections révélées dans la caméra
 en 3D et les vues 3D si les classes y trouvent le même confort.
+
+## v19.25 : le tableau de bord complet, avec tout ce qui se fait au car régie
+
+**Pourquoi.** Le tableau de bord de la v19.24 montrait le Cours (leçons, quiz, exercices en autonomie) mais rien de ce que
+l'élève fait au car régie. Demande : voir ce qu'il y a fait et vu, combien de temps il est resté à chaque poste, s'il a
+manipulé et combien de temps, s'il a réalisé les exercices pratiques ; un tableau de bord « beaucoup plus complet ».
+
+**Ce qui est mesuré** (`src/comptes/suivi_car.js`, forme et calcul purs dans `src/comptes/car.js`, rangé dans `PROG.car`,
+progression **v8**) :
+
+- le **temps actif** au car régie, réparti : assis à un poste, dans le car à pied, dans le stade, une caméra en main, au plan
+  des caméras ; une seconde ne compte que si la page est visible et que l'élève a agi dans les deux dernières minutes ;
+- **poste par poste** : nombre d'ouvertures, temps assis, **temps de manipulation** (une action sur les commandes du poste,
+  interface 2D ou pupitre 3D, il y a moins de 5 secondes), nombre de **gestes** (clic, touche, molette, réglage), dernière visite ;
+- les **exercices pratiques d'Olivier** : commencés, finis, abandonnés, indices demandés, « Fais-le pour moi », mauvaises
+  réponses, temps passé ; les **missions spécifiques** lancées et finies, avec leur résultat ;
+- ce qu'il a **consulté** : le matériel ouvert dans la visionneuse, les destinations du stade, les fenêtres (fiches de poste,
+  synoptiques, plan) ; les **pannes** apparues et résolues pendant ses parties ;
+- ses **dernières parties** : date, mode (car vide, pré-installé, mission spécifique), durée active, postes ouverts.
+
+**Le tableau de bord** (`src/ui/tableau_bord.js`, vues du car dans `src/ui/tableau_car.js`, calcul `bilanCar` de
+`src/comptes/bilan.js`) :
+
+- **la classe**, trois vues : *Vue d'ensemble* (le tableau de la v19.24, plus le temps au car régie et les exercices pratiques
+  réussis de chaque élève) ; *Car régie : temps aux postes* (synthèse, puis une grille élèves × postes : temps assis et part de
+  manipulation, la case d'autant plus foncée que l'élève y est resté ; les postes que personne n'a ouverts) ; *Exercices
+  pratiques* (une grille exercice × élève : réussi seul, aidé, en cours, abandon) ;
+- **un élève**, cinq onglets : *Vue d'ensemble* (indicateurs, **activité des 14 derniers jours** en barres, difficultés) ;
+  *Car régie* (temps, poste par poste, matériel, lieux et fenêtres consultés, tâches du car vide, dernières parties) ;
+  *Exercices pratiques* (installer le car, aux postes avec Olivier rangés par chapitre, épreuves notées : état, essais,
+  temps, indices, « Fais-le pour moi », erreurs) ; *Cours* (parcours chapitre par chapitre, épreuves notées) ; *Livret* ;
+- l'export CSV du suivi gagne le temps au car, aux postes, de manipulation, les postes pratiqués, les exercices et épreuves réussis.
+
+**Tenir dans le forfait gratuit** : la progression part en ligne **au plus une fois par minute** et par élève (`ENVOI_MIN_MS`
+de `shared.js` ; la copie du navigateur, elle, s'écrit à chaque fois ; déconnexion, import et effacement envoient tout de
+suite). Le forfait Spark de Firebase compte, pour tout l'établissement, 20 000 écritures et 50 000 lectures par jour
+(remis à zéro vers 9 h, heure de Paris) et 1 Gio de données : de l'ordre de **300 heures d'élève actif par jour** (écritures,
+la limite qui compte), sans limite de nombre de comptes ; 100 créations de comptes par heure depuis une même adresse IP.
+
+**Vérification.** Tests unitaires (comptage d'une seconde au bon endroit, manipulation, élève absent ou onglet caché, fusion
+de deux appareils, migration v8, bilan du car avec l'état de chaque exercice). Suite `node tools/e2e.mjs comptes` (42
+vérifications) : l'élève entre au car pré-installé, s'assoit au poste son et manipule la console (temps assis, manipulation,
+gestes, partie comptés) ; le professeur voit le graphique d'activité, l'onglet Car régie (le poste son, la partie), les
+exercices pratiques, le livret, la grille élèves × postes de la classe et la grille des exercices ; accessibilité (axe) des
+nouvelles vues.
+
+## v19.24 : les comptes élève et professeur, le tableau de bord des classes (Firebase)
+
+**Pourquoi.** Jusqu'ici, la progression restait dans le navigateur (ou dans un fichier exporté) et le profil Formateur se
+choisissait d'un clic : impossible pour le professeur de suivre sa classe. Demande : des comptes élèves (identifiant et mot
+de passe, progression gardée en permanence, sur n'importe quel ordinateur), des comptes professeurs bien distincts, un
+tableau de bord où le professeur crée ses classes et les comptes de ses élèves, voit ce que chacun a validé et repère les
+difficultés (une leçon recommencée dix fois sans réussir, par exemple). Base retenue : **Firebase** (Authentication et
+Firestore), gratuit au volume d'une section de BTS.
+
+**Se connecter** (`src/ui/compte_ui.js`, `src/comptes/`) :
+
+- sur l'écran titre, une **bande du compte** sous le menu (« Pas connecté : la progression reste sur cet ordinateur ·
+  Se connecter », puis « Léa Martin · BTS MAV 1 · Se déconnecter ») ; dans les Réglages, la section **Mon compte** ;
+- l'**élève** se connecte avec l'**identifiant** et le **mot de passe** que lui donne son professeur (« lea.martin ») ; il ne
+  s'inscrit pas lui-même ; un mot de passe oublié se redemande au professeur ;
+- le **professeur** se connecte avec son **adresse e-mail** ; il ouvre son compte lui-même (« Professeur : ouvrir mon
+  compte »), à condition que son adresse soit sur la **liste des professeurs** de l'établissement, puis la **confirme** par le
+  lien reçu (sans cela, quelqu'un d'autre pourrait ouvrir un compte à son adresse) ; « Mot de passe oublié ? » lui envoie un lien.
+  Ces deux liens se **collent dans la fenêtre de connexion** : l'application applique elle-même le code du lien (`applyActionCode`,
+  `confirmPasswordReset`), sans la page de Firebase qui les ouvre d'habitude et qui refuse un lien abîmé par la messagerie
+  (« The selected page mode is invalid », vu au premier essai) ; un lien réécrit (`&amp;`, filtre de messagerie) est reconnu ;
+- le **rôle suit le compte** (`forceRole`, `src/app/profile.js`) : un compte élève reste Étudiant (le choix du profil
+  disparaît des Réglages), un compte professeur est Formateur ; sans compte, le choix de l'ordinateur revient ;
+- **sans compte**, tout marche comme avant (« Continuer sans compte »), et tant que le projet Firebase n'est pas renseigné
+  (`src/comptes/config.js`), rien de tout cela ne s'affiche.
+
+**La progression d'un compte** (`useAccount`, `src/shared.js`) : à la connexion, celle du compte (sa copie dans ce navigateur,
+fusionnée avec celle du serveur) **remplace** celle en mémoire ; à la déconnexion, celle de l'ordinateur revient. Rien ne passe
+d'un compte à l'autre sur un ordinateur de salle partagé (une copie locale par compte : `carregie.progress.compte.<uid>`).
+L'élève qui jouait sans compte peut, sur demande, **reprendre la progression de cet ordinateur** dans son compte. La
+progression passe en **v7** : essais du quiz de chaque leçon (`cours[id].qn`) et **minutes de travail par jour** (`jours` :
+une minute compte quand la page est vue et que l'élève a agi dans les deux dernières minutes, `src/comptes/activite.js`).
+
+**Le tableau de bord** (`src/ui/tableau_bord.js`, Réglages → Espace formateur ou bande du compte, espace plein écran, données
+en direct) :
+
+- **Suivi des élèves** : pour la classe choisie, la synthèse (élèves et jamais connectés, leçons terminées et moyenne des
+  exercices, temps de travail de la semaine, élèves à suivre), **où la classe bloque** (les leçons où plusieurs élèves sont en
+  difficulté), puis un élève par ligne (dernière activité, temps de la semaine, parcours du Cours, exercices, compétences du
+  livret, niveau, difficultés) ; exports CSV du suivi et des livrets ;
+- le **bilan d'un élève** : dernière activité, temps de travail, leçons terminées, quiz réussis, exercices (réussis seul ou
+  non), compétences, niveau ; ses **difficultés** en clair ; son parcours chapitre par chapitre (niveau en cours, étoiles) ;
+  ses épreuves notées ; son livret de compétences ;
+- **Classes et comptes** : créer, renommer, supprimer (vide) une classe ; y **créer des élèves** un par un ou d'une liste
+  collée d'un tableur (« Léa Martin », « MARTIN Léa », « Martin;Léa ») ; l'**identifiant** se forme avec le prénom et le nom
+  (« lea.martin », « lea.martin2 » pour un homonyme), le **mot de passe provisoire** est tiré au hasard (« kavito47 » : trois
+  syllabes et deux chiffres, sans lettre ambiguë) ou choisi ; mots de passe masqués puis affichables ; **fiches de connexion**
+  à imprimer et découper, export CSV ; **nouveau mot de passe**, **changer de classe**, **supprimer** un compte (et sa
+  progression) ;
+- **Professeurs** : les adresses autorisées à ouvrir un compte professeur (ajouter un collègue, retirer une adresse). Un
+  professeur voit toutes les classes et tous les élèves de l'établissement.
+
+**Ce qui compte comme une difficulté** (`src/comptes/bilan.js`, calcul pur) : le quiz d'une leçon manqué **3 fois ou plus**
+sans être réussi en entier ; son exercice en autonomie essayé 3 fois ou plus sans atteindre 60 sur 100 ; une épreuve notée
+(émission en direct, jour de match, examen réseau, mise en service de la caméra, mission de l'entrepôt, montage de la caméra)
+essayée 3 fois sans réussite ; « **forte** » à partir de 6 essais. À part, en bleu : un exercice réussi seulement avec la
+solution, un exercice pratique terminé avec « Fais-le pour moi » (à refaire seul). Un élève sans activité depuis deux
+semaines est signalé.
+
+**Firebase** (`src/comptes/firebase.js`, SDK intégré à la page par esbuild, aucune ressource chargée d'ailleurs) :
+
+| Document | Contenu | Qui lit, qui écrit (`firestore.rules`) |
+|---|---|---|
+| `admin/profs` | adresses autorisées à ouvrir un compte professeur | créé une fois dans la console ; les professeurs le tiennent ensuite |
+| `comptes/<uid>` | rôle, prénom, nom, identifiant, classe | l'intéressé lit le sien ; les professeurs lisent tout, créent les élèves, les rangent ; personne ne change de rôle |
+| `classes/<id>` | nom de la classe | les professeurs ; l'élève lit la sienne |
+| `secrets/<uid>` | identifiant et mot de passe provisoire d'un élève | les professeurs seulement |
+| `progress/<uid>` | la progression (JSON) | l'élève écrit la sienne ; les professeurs lisent |
+| `config/*`, `review/*`, `sessions/*` | configuration du car, relectures, comptes rendus | lus par les comptes, écrits par les professeurs |
+
+Un élève a dans Firebase une adresse fabriquée : `lea.martin@eleves.tiee-simulator.invalid` (domaine réservé, aucun courrier
+ne part vers les élèves). Le professeur crée un compte d'élève par une **seconde instance** de l'application, sans perdre sa
+propre session ; le mot de passe provisoire est gardé dans `secrets/` pour réimprimer une fiche, en donner un nouveau ou
+supprimer le compte (le navigateur ne peut pas, sans serveur, agir sur le compte d'un autre). C'est un compromis assumé pour
+des comptes de classe : ces mots de passe ne servent qu'au simulateur, seuls les professeurs les lisent.
+
+**En service** (2 novembre 2026) : projet Firebase **TieeSimulatorBDD** (`tieesimulatorbdd`), base Firestore à Paris
+(`europe-west9`, gratuite, protégée contre la suppression), connexion par adresse et mot de passe activée, règles publiées
+(`firebase deploy --only firestore,auth`), `admin/profs` créé avec l'adresse du responsable, configuration dans
+`src/comptes/config.js`. Vérifié sur le service réel : l'adresse fabriquée d'un élève (`.invalid`) est acceptée ; un compte
+sans fiche ne peut ni écrire de progression ni se donner le rôle professeur ; un inconnu ne lit rien.
+
+**Mettre en service un autre projet** (une fois, par le professeur responsable) :
+
+1. Console Firebase (console.firebase.google.com) : créer un projet ; **Authentication** → Méthode de connexion → activer
+   **Adresse e-mail/Mot de passe** ; **Firestore Database** → créer la base (région europe-west, mode production).
+2. Firestore → **Règles** : coller le contenu de `firestore.rules` et publier (ou `firebase deploy --only firestore:rules`).
+3. Firestore → Données : créer la collection **`admin`**, document **`profs`**, champ **`emails`** de type tableau, avec votre
+   adresse (en minuscules) comme premier élément.
+4. Paramètres du projet → Vos applications → **Web** (`</>`) : enregistrer l'application, copier la configuration
+   (`apiKey`, `authDomain`, `projectId`…) dans `src/comptes/config.js` (ces valeurs ne sont pas secrètes), reconstruire
+   (`node tools/build.mjs`) et republier l'exécutable.
+5. Dans le simulateur : écran titre → Se connecter → « Professeur : ouvrir mon compte », confirmer l'adresse, puis Réglages →
+   Tableau de bord des classes.
+
+**Vérification.** Tests unitaires `tests/unit/comptes.test.mjs` : identifiants (accents, homonymes, longueur), adresses,
+mots de passe (forme, variété), liste collée, difficultés et bilan d'un élève et d'une classe, temps de travail, progression v7
+(migration, fusion). Contre l'**émulateur Firebase** (Java, `node tools/firebase-test.mjs` ; aucun vrai projet touché) :
+`tests/firebase/comptes.mjs` (16 vérifications : adresse non autorisée refusée, confirmation obligatoire, création de classe et
+d'élèves, connexion par identifiant, **un élève ne lit ni n'écrit rien d'autre que le sien** (autres élèves, mots de passe,
+liste des comptes, rôle, classes, configuration), compte ouvert sans fiche sans droit, progression en JSON, nouveau mot de
+passe, suppression) ; suite de bout en bout `node tools/e2e.mjs comptes` (`tests/e2e/comptes.mjs`, deux navigateurs, 33
+vérifications : écran titre, ouverture du compte professeur, tableau de bord, liste collée, connexion de l'élève, progression
+séparée de celle de l'ordinateur, difficulté repérée et bilan, nouveau mot de passe, déconnexion sans échec d'enregistrement,
+accessibilité axe-core de la connexion et des pages du tableau de bord) ; sept captures à relire.
+Reste à essayer avec une classe.
 
 ## v19.23 : le référentiel officiel cité dans l'application, et les leçons de la TMO
 
@@ -2501,14 +2653,17 @@ node tools/shots.mjs dossier 1280 800 '["vision","hf"]'   # captures de postes
 | `game/fx.js`, `game/sfx.js` | Effets de jeu (barre d'XP, bannières de niveau et de badge, carte-titre, vignette, flash tally, alerte de panne) et bruitages synthétisés en WebAudio avec leur réglage |
 | `styles/theme-jeu.css` | Le thème « épuré » (v19.22, inspiré de la direction artistique d'Apple) : jetons de couleur (un accent bleu, verre dépoli, grands rayons), composants communs (touches, fenêtres, onglets, afficheurs), HUD, écran titre, Jouer, menu, journal, badges, Cours, téléphone, postes en 3D |
 | `telephone/index.js`, `telephone/apps.js`, `telephone/modele.js`, `styles/telephone.css` | Le téléphone (Tab ou T) : lever et ranger, touches, accueil (objectif, niveau), applications par famille (Aller à, Missions, Olivier, outils du car, Cours, Progression, Réglages), boîtier 3D et écran HTML posé dessus (transformation projective `cssProjection`) |
+| `comptes/` (`config.js`, `firebase.js`, `session.js`, `identifiants.js`, `bilan.js`, `activite.js`) | Les comptes (v19.24) : projet Firebase de l'établissement, authentification et base (comptes, classes, progression, gestion des élèves par le professeur), session et rôle imposé, identifiants et mots de passe provisoires, bilan d'un élève et d'une classe avec ses difficultés (calcul pur), temps de travail |
+| `comptes/car.js`, `comptes/suivi_car.js`, `ui/tableau_car.js` | Le car régie dans le tableau de bord (v19.25) : ce qui se mesure (temps par activité et par poste, manipulation, gestes, exercices pratiques, missions, ce qui est consulté, pannes, parties ; forme et fusion pures), les écouteurs qui le comptent, les vues de la classe (grilles élèves × postes et élèves × exercices) et les onglets Car régie et Exercices pratiques d'un élève |
+| `ui/compte_ui.js`, `ui/tableau_bord.js`, `styles/comptes.css` | Se connecter (fenêtre, bande du compte de l'écran titre, Mon compte des Réglages) ; le tableau de bord du professeur (suivi des élèves, bilan, classes et comptes, fiches de connexion, professeurs) |
 | `app/title.js` | Écran titre TIEE Simulator : une page centrée, logo du BTS, trois entrées (Jouer, Cours, Réglages), progression du chargement, conseil d'Olivier, carte joueur, mentions |
 | `ui/settings.js` | Réglages : une seule fenêtre (ordinateur, partie en cours, ma progression, profil, espace formateur, aide, à propos) |
 | `ui/ma_progression.js` | Réglages → Ma progression : où elle est enregistrée et si ça marche, exporter dans un fichier, importer (fusion), effacer, vos données personnelles ; notification quand un enregistrement échoue |
 | `app/profile.js` | Profil Étudiant / Formateur, mémorisé ; classe `role-formateur` sur `body`, éléments `.role-only` |
 | `cours/index.js`, `cours/kit.js`, `cours/all.js`, un fichier par chapitre (`signal.js`, `sdi.js`, `synchro.js`, `camera.js`, `realisation.js`, `ralentis.js`, `son.js`, `reseau.js`, `hf.js`, `exploitation.js`) | La section Cours : dix chapitres et leurs leçons, ordre d'apprentissage, progression, tirage du quiz dans la banque de chaque leçon (`drawQuiz`, `QUIZ_N`), kit des schémas et manipulations |
-| `cours/son_calc.js`, `cours/son_bases.js`, `cours/son_traitement.js`, `content/terms_son.js` | Le son des bases à l'antenne (v19.24) : les calculs purs (décibels, directivité et canon, couples stéréo et angle d'enregistrement, MS, liaisons, compresseur, loudness EBU R128 avec ses portes, crête vraie, audio numérique), les sept leçons (décibel, micros, couples, liaisons, dynamique, loudness, numérique) rangées en parties par `cours/son.js`, leurs fiches « ? » (famille Son) |
-| `cours/video_calc.js`, `cours/signal_compression.js`, `content/terms_video.js` | La compression vidéo (v19.24) : débit de l'image active, taux, taille des fichiers, GOP (I, P, B), codecs du car ; la leçon du chapitre Le signal et ses fiches (codec et conteneur, GOP) |
-| `ui/reveal.js`, `styles/cours-lecture.css` | La page qui se dévoile au défilement (v19.24) : les sections `[data-reveal]` révélées par un IntersectionObserver (cascade pour ce qui est déjà à l'écran, tout visible sans observateur ou avec moins d'animations) ; la page de lecture d'une leçon : en-tête avec l'essentiel, barre des étapes collante, schéma légendé, colonne de lecture, cartes réservées aux blocs où l'on agit, mots de la leçon et référentiel compacts |
+| `cours/son_calc.js`, `cours/son_bases.js`, `cours/son_traitement.js`, `content/terms_son.js` | Le son des bases à l'antenne (v19.26) : les calculs purs (décibels, directivité et canon, couples stéréo et angle d'enregistrement, MS, liaisons, compresseur, loudness EBU R128 avec ses portes, crête vraie, audio numérique), les sept leçons (décibel, micros, couples, liaisons, dynamique, loudness, numérique) rangées en parties par `cours/son.js`, leurs fiches « ? » (famille Son) |
+| `cours/video_calc.js`, `cours/signal_compression.js`, `content/terms_video.js` | La compression vidéo (v19.26) : débit de l'image active, taux, taille des fichiers, GOP (I, P, B), codecs du car ; la leçon du chapitre Le signal et ses fiches (codec et conteneur, GOP) |
+| `ui/reveal.js`, `styles/cours-lecture.css` | La page qui se dévoile au défilement (v19.26) : les sections `[data-reveal]` révélées par un IntersectionObserver (cascade pour ce qui est déjà à l'écran, tout visible sans observateur ou avec moins d'animations) ; la page de lecture d'une leçon : en-tête avec l'essentiel, barre des étapes collante, schéma légendé, colonne de lecture, cartes réservées aux blocs où l'on agit, mots de la leçon et référentiel compacts |
 | `cours/parcours.js` | Le parcours du Cours : niveaux de chaque chapitre (`PARCOURS`), état d'une leçon (étoiles, terminée), d'un niveau (conditions, ouvert, validé), suite conseillée (les fondamentaux d'abord), test de niveau (calcul pur) |
 | `cours/exo.js`, `cours/exos/` (un fichier par chapitre, le réseau en deux) | L'exercice en autonomie de chaque leçon : questions (nombre, choix, texte, ordre) tirées à chaque essai, vérification, aides et solution, points et score sur 100 |
 | `ui/cours_parcours.js`, `ui/cours_exo.js`, `styles/cours-parcours.css` | Mon parcours (suite, catégories), chemin d'un chapitre par niveau, aperçu d'une leçon fermée, étapes d'une leçon, test de niveau ; l'exercice une question à la fois et son bilan |
@@ -2594,4 +2749,5 @@ Hors de `src/` :
 | `partage/` | Modes d'emploi des versions à partager protégées par mot de passe : exécutable Windows (`LISEZMOI.txt`), application macOS (`LISEZMOI-mac.txt`) |
 | `tests/unit/` | Tests unitaires `node:test` ; `tests/helpers/` (DOM minimal, scène vide, réseau de test), `tests/register.mjs` (chargement des fichiers texte comme esbuild) |
 | `tests/e2e/` | Tests de bout en bout Playwright et leur harnais |
+| `tests/firebase/`, `firestore.rules`, `firebase.json` | Les comptes contre l'émulateur Firebase (`node tools/firebase-test.mjs`) ; règles de sécurité de Firestore à publier dans le projet de l'établissement |
 | `tools/` | Construction (`build.mjs`, `zip.mjs`), versions à partager : exécutable Windows et kit (`exe.mjs`, signature Authenticode `signature.mjs`), application macOS (`mac.mjs`, pièces `macapp.mjs`), pièces communes (`sea.mjs`, serveur protégé `protege.mjs`), icônes (`icon.mjs`), lanceur des tests de bout en bout (`e2e.mjs`), mesures et captures |
