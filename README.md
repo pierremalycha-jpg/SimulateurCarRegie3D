@@ -394,6 +394,70 @@ Tests :
   « Emmène-moi / Montre-moi » doit mettre en évidence un élément réel de la page, et « Fais-le pour moi » doit faire
   valider l'étape.
 
+## v19.23 : le référentiel officiel cité dans l'application, et les leçons de la TMO
+
+**Pourquoi.** Le simulateur numérotait les compétences à sa façon (1.1 à 4.5, par bloc de la fiche RNCP37022) alors que le
+référentiel du BTS Métiers de l'audiovisuel (arrêté du 4 juin 2013 modifié, annexe I), les fiches de TP et les sujets de
+l'épreuve E4 **Techniques et mise en œuvre (TMO)** parlent de **C1 à C39**. Demande : passer en revue le référentiel, le citer
+directement dans l'application, indiquer dans les leçons et les chapitres quelle partie du référentiel est concernée, et
+ajouter les cours qui manquent pour la TMO.
+
+**Le référentiel dans le code** (`src/content/referentiel.js`, lu page par page dans le PDF officiel) :
+
+- les **39 compétences** avec leur numéro officiel, leur intitulé, leur **unité** (U3 pour l'épreuve E3 PTES : C6, C21, C27, C32 ;
+  **U4, la TMO : C8, C10, C11, C14, C15, C17, C20, C22, C23, C25, C26, C31, C36, C38**, les quatorze que les sujets cochent en
+  tête de page ; U51 : treize ; U52 : C2, C18, C39 ; U6 : C5, C9, C16, C28, C35), leurs **tâches** du référentiel des activités,
+  leurs **savoir-faire** (`SAVOIR_FAIRE`, SF01 à SF112, chacun porté par une compétence et une seule), leurs **savoirs** et le
+  **résultat attendu** en une phrase (pages 157 à 164) ; les quatre blocs de la fiche RNCP regroupent ces unités ;
+- les **épreuves** de l'option (`EPREUVES` : E1 à E6, coefficients du règlement d'examen, forme en CCF et forme ponctuelle,
+  ce que chaque épreuve évalue) ; pour la TMO : deux situations d'au moins 4 h en CCF (second semestre de première année,
+  janvier ou février de seconde année), ou 4 h de pratique plus 30 min de préparation en ponctuel ;
+- les **savoirs** A1 à L12 (`SAVOIRS`, douze familles) avec le **niveau taxonomique** demandé à l'option TIEE (1 information,
+  2 expression, 3 maîtrise d'outils, 4 maîtrise méthodologique) ;
+- la table **`ANCIEN`** (1.1 → C6, 1.4 → C32, 2.1 → C8…) et `codeOfficiel` ; la progression passe en **v6** (`migrateProgress`
+  renomme les badges `comp-1.4` en `comp-C32`, sans perte).
+
+Tout ce qui citait un numéro a été converti : rattachement des parcours, missions, phases, missions réseau, exercices et
+leçons, champ `competences` des leçons, des 51 notions de la caméra et des missions de l'entrepôt, badges, tests.
+
+**Le référentiel à l'écran** (`src/ui/referentiel_ui.js`) :
+
+- en **fin de chaque leçon**, le bloc « Référentiel BTS MAV, option TIEE » : les compétences travaillées (numéro, intitulé,
+  unité et épreuve, cliquables), la phrase « compétences évaluées à l'épreuve E4 (TMO) » quand c'est le cas, et, repliés, les
+  savoir-faire et les **savoirs** de la leçon (nouveau champ `savoirs` de chaque leçon, avec le niveau demandé) ;
+- en **tête de chaque chapitre**, sous l'introduction : les compétences que ses leçons font travailler (celles de la TMO
+  marquées) et les familles de savoirs couvertes ;
+- la page **« Le référentiel du BTS »** (entrée du sommaire sous « Mon parcours », bouton du bloc de leçon et de « Mon
+  parcours ») : le tableau des épreuves, ce que l'épreuve E4 attend et ses quatorze compétences, puis unité par unité chaque
+  compétence (résultat attendu, tâches, savoir-faire, savoirs, ancien numéro) avec **les leçons et activités du simulateur
+  qui la font travailler** et son niveau au livret, et la table des savoirs par famille ;
+- le **livret** : numéros officiels, unité et épreuve de chaque compétence, savoir-faire repliés ; trois compétences restent
+  hors simulateur (C7, C37, C39) ; les fiches de la caméra en 3D écrivent l'intitulé à côté du numéro.
+
+**Cinq leçons pour la TMO** dans le chapitre L'exploitation (`src/cours/exploitation_tmo.js`, exercices en autonomie
+`src/cours/exos/exploitation_tmo.js`, rangées dans le parcours du chapitre), chacune avec sa manipulation qui calcule, son
+quiz de cinq questions expliquées et son exercice à valeurs tirées :
+
+| Leçon | Niveau | Ce qu'on y fait | Compétences |
+|---|---|---|---|
+| Du cahier des charges au schéma de principe | Débutant | les trente minutes d'un sujet de TMO : lire, compter entrées, keyers, canaux DVE et renvois, choisir le mélangeur ou répartir sur deux régies, dessiner le synoptique et le tableau de câblage, le DOE | C6, C1 à C4 |
+| L'énergie du car : triphasé, équilibrage et sécurité | Intermédiaire | P17, 230 V / 400 V, P = U × I, répartir les charges sur trois phases, le courant du neutre, différentiel 30 mA et disjoncteur, régime TT et terre, habilitations NF C 18-510 | C8, C9, C30 |
+| Le nodal : renvois, commutations et duplex | Intermédiaire | le nodal et sa grille, les renvois d'un duplex (aller, retour et N-1, clean), le son embeddé, commuter sans interférer, le tableau d'affectation | C28, C15, C26, C25 |
+| Le PAD : conformer, vérifier, livrer | Avancé | MXF OP1a, XDCAM HD422 50 Mb/s, pistes et timecode (noir de tête, première image, dernière image), EBU R128 (−23 LUFS, −1 dBTP), EBU R103, fiche PAD, taille du fichier, archivage | C33, C13, C14, C34 |
+| Recette, maintenance et compte rendu | Avancé | recette et DOE, niveaux de maintenance 1 à 5, MTBF, MTTR et disponibilité, méthode curative, compte rendu d'intervention, coût | C38, C16, C35, C36 |
+
+Les chiffres cités viennent des normes (EBU R128, EBU R103, SMPTE ST 377, NF EN 13306, NF X 60-010, NF C 18-510,
+IEC 60309) ; les capacités des mélangeurs « type », les puissances du car, les MTBF et les prix de la manipulation sont des
+ordres de grandeur, dits comme tels. Le glossaire gagne « Nodal » et « PAD (prêt à diffuser) », liés à leurs leçons.
+
+**Vérification.** Tests unitaires : le référentiel (39 compétences dans l'ordre, unités et TMO telles que les sujets, 112
+savoir-faire portés une fois chacun, savoirs connus, coefficients des épreuves, table `ANCIEN`), chaque leçon avec des
+compétences officielles égales au rattachement du livret et des savoirs connus, les cinq exercices (40 tirages chacun), le
+parcours, la migration v6 des badges. Suite `node tools/e2e.mjs referentiel` (`tests/e2e/referentiel.mjs`) : la page du
+référentiel (7 épreuves, 14 compétences de la TMO, 39 cartes en 5 unités, 12 familles de savoirs), la carte C25 ouverte depuis
+la TMO (savoir-faire, leçons, ancien numéro), la leçon du nodal (compétences, épreuve, savoirs, manipulation qui recompte les
+renvois), le rappel du chapitre, les quatre autres leçons de la TMO, le livret aux numéros officiels ; cinq captures à relire.
+
 ## v19.22 : une interface épurée, inspirée de la direction artistique d'Apple
 
 **Pourquoi.** L'interface « jeu vidéo » des versions 19.3 à 19.21 (fond nuit, néon cyan, panneaux à coins coupés, capitales
@@ -2379,7 +2443,9 @@ node tools/shots.mjs dossier 1280 800 '["vision","hf"]'   # captures de postes
 | `app/nav.js` | Navigation entre les trois entrées : menu du car (Échap), aiguillage des boutons « Aller au poste », « Commencer » (car lancé si besoin), changement de vacation, retour au bureau de l'entrepôt (Carrière) |
 | `ui/layer.js` | Espace plein écran (le Cours) : plaque, onglets, Fermer (Échap), ligne d'état |
 | `ui/guide.js` | Missions d'installation (liste des tâches), articles de référence des leçons, glossaire, postes, matériel, procédures maison, commandes |
-| `content/referentiel.js` | Référentiel du BTS MAV option TIEE (fiche RNCP37022) : 4 blocs, 39 compétences numérotées 1.1 à 4.5, couverture par le car et modules qui la complèteront ; rattachement des parcours, missions, phases du jour de match, missions réseau, exercices et leçons |
+| `content/referentiel.js` | Le référentiel officiel du BTS MAV option TIEE (arrêté du 4 juin 2013 modifié, fiche RNCP37022) : épreuves et unités, 39 compétences C1 à C39 (unité, bloc, tâches, savoir-faire, savoirs, résultat attendu, couverture et modules prévus), 112 savoir-faire, savoirs A1 à L12 avec le niveau TIEE, table `ANCIEN` des numéros 1.1 à 4.5 ; rattachement des parcours, missions, phases du jour de match, missions réseau, exercices et leçons |
+| `ui/referentiel_ui.js` | Le référentiel cité dans le Cours : bloc « Référentiel BTS MAV, option TIEE » en fin de leçon (compétences, épreuve, savoir-faire, savoirs), rappel en tête de chapitre, page « Le référentiel du BTS » (épreuves, la TMO, chaque compétence avec ses activités dans le simulateur, les savoirs par famille) |
+| `cours/exploitation_tmo.js`, `cours/exos/exploitation_tmo.js` | Les cinq leçons de la TMO du chapitre L'exploitation (synoptique, énergie, nodal, PAD, recette et maintenance) et leurs exercices en autonomie |
 | `livret.js`, `ui/livret.js` | Livret de compétences : niveau de chaque compétence calculé d'après la progression (à travailler, travaillée, consolidée, hors simulateur), une activité ne comptant que réussie seule, « consolidée » demandant un exercice pratique (`estPratique`) ; affiché sur la page « Mon suivi » du Cours, depuis le chef de car et pour chaque stagiaire dans l'espace formateur, export CSV |
 | `prism_model.js` | Modèle de la liaison SDI pour le PRISM : normes, points de mesure, œil, gigue, timing, pannes |
 | `videohub.js` | Modèle de la grille Videohub 40 × 40 : plan des ports, étiquettes, verrous, protocole, pannes |

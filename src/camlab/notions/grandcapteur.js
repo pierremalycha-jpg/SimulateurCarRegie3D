@@ -52,5 +52,5 @@ export const GRANDCAPTEUR = {
   ],
   see: ['capteur', 'pdc', 'prisme', 'focale', 'monture', 'hdr'],
   ref: 'Capteur 2/3″ 16:9 : 9,59 × 5,39 mm, cercle image 11 mm ; Super 35 : environ 25 × 14 mm (ordre de grandeur selon les caméras) ; profondeur de champ par l\'hyperfocale H = f² ÷ (N × c), c proportionnel au capteur (0,011 mm en 2/3″) ; Fujinon UA125x8BESM (8–1 000 mm, f/1,7) ; Fujinon Duvo HZK25-1000mm (Super 35 : 25–1 000 mm, f/2,8 à f/5) ; Sony HDC-F5500 (Super 35, monture PL)',
-  competences: ['3.4', '2.7'],
+  competences: ['C4', 'C20'],
 };

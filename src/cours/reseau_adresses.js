@@ -110,7 +110,7 @@ export const ADRESSES = {
 - Dans le car IP, les liens entre leaves et spines sont des /31 : deux adresses, une à chaque bout, sans diffusion.`,
   car: { text: 'Au poste Réseau (car SDI) : un /24 par VLAN, 10.1.<VLAN>.0/24, passerelle en .1, et la même fin d\'adresse pour la caméra n sur toutes les lignes. Le réseau de contrôle du car IP est un /22 (10.20.0.0 à 10.20.3.255) ; ses liens entre leaves et spines sont des /31.', station: 'reseau' },
   terms: ['adresse-reseau', 'broadcast-ip', 'cidr', 'sous-reseau', 'passerelle'],
-  competences: ['3.6', '2.10'], article: 'reseau',
+  competences: ['C12', 'C25'], savoirs: ['K4'], article: 'reseau',
   quiz: [
     { q: 'Quelle est l\'adresse réseau de 10.1.20.130/26 ?',
       choices: [['10.1.20.0', 'Ce serait vrai en /24. En /26, le dernier nombre se découpe en blocs de 64 : 0, 64, 128, 192.'], '10.1.20.128', ['10.1.20.192', 'C\'est le début du bloc suivant : 130 est entre 128 et 191.']],
@@ -213,7 +213,7 @@ On rencontre aussi l'**anycast** : une même adresse portée par plusieurs serve
 - IPv6 et IPv4 cohabitent (double pile) : une machine a souvent les deux, et choisit selon ce que propose le DNS.`,
   car: { text: 'Au poste Réseau (car SDI) : tout le car est en adresses privées 10.1.x.x ; le VLAN 90 des invités reçoit ses adresses par DHCP ; une machine en 169.254 n\'a pas eu de réponse DHCP. Car IP : les flux en multicast 239.1.x.x et 239.2.x.x (rouge et bleu), PTP en 224.0.1.129.', station: 'reseau' },
   terms: ['types-adresses', 'adresses-privees', 'ipv6', 'broadcast-ip', 'groupe', 'dhcp'],
-  competences: ['3.6', '2.11'], article: 'reseau',
+  competences: ['C12', 'C26'], savoirs: ['K4'], article: 'reseau',
   quiz: [
     { q: 'Laquelle de ces adresses est privée ?',
       choices: [['172.32.1.10', 'La plage privée 172.16.0.0/12 s\'arrête à 172.31.255.255 : 172.32 est publique.'], '172.20.1.10', ['8.8.8.8', 'C\'est une adresse publique (un résolveur DNS bien connu).']],
@@ -339,7 +339,7 @@ Pour dépanner : si le ping vers **l'adresse** répond mais pas vers **le nom**,
 - Le serveur DHCP tient la liste des baux (adresse, MAC, nom, échéance) : c'est l'endroit où retrouver qui a quelle adresse.`,
   car: { text: 'Au poste Réseau (car SDI) : seul le VLAN 90 (invités) a un serveur DHCP, le routeur, qui prête 10.1.90.100 à 10.1.90.199 ; toutes les machines de production sont en adresse fixe. Une machine réglée en DHCP ailleurs n\'obtient rien. Dans le car IP, les nœuds NMOS trouvent le registre par DNS-SD (ou par son adresse saisie).', station: 'reseau' },
   terms: ['dhcp', 'dns', 'dns-sd', 'broadcast-ip', 'ping'],
-  competences: ['3.6', '2.3', '2.13'], article: 'reseau',
+  competences: ['C12', 'C11', 'C36'], savoirs: ['K4', 'K6'], article: 'reseau',
   quiz: [
     { q: 'Dans quel ordre passent les messages DHCP ?',
       choices: ['Discover, Offer, Request, Ack', ['Request, Offer, Discover, Ack', 'La machine ne peut rien demander avant de savoir qu\'un serveur existe : elle commence par chercher.'], ['Offer, Discover, Ack, Request', 'Le serveur ne propose rien avant d\'avoir été cherché, et l\'Ack conclut toujours.']],
@@ -431,7 +431,7 @@ L'ouverture automatique d'un port par le logiciel lui-même (**UPnP**) existe su
 - IPv6 se passe de NAT (assez d'adresses pour tous) ; il reste un pare-feu à régler.`,
   car: { text: 'Au poste Réseau (car SDI) : le routeur / pare-feu (10.1.10.254) fait sortir le car sur Internet et isole les invités de la production. Dans le simulateur lui-même, « Jouer par Internet » ouvre la box de l\'hôte par UPnP (une redirection automatique) et, si elle refuse, passe par un tunnel.', station: 'reseau' },
   terms: ['nat', 'port', 'pare-feu', 'adresses-privees', 'srt'],
-  competences: ['3.6', '2.11', '2.13'], article: 'reseau',
+  competences: ['C12', 'C26', 'C36'], savoirs: ['K4', 'K7'], article: 'reseau',
   quiz: [
     { q: 'Que fait une box pour qu\'un PC en 192.168.1.20 consulte un site web ?',
       choices: ['Elle remplace l\'adresse source privée par son adresse publique et note la correspondance', ['Elle donne au PC une adresse publique', 'Le PC garde son adresse privée ; seule la box en a une publique.'], ['Rien : les adresses privées circulent sur Internet', 'Elles ne sont jamais routées sur Internet : sans traduction, aucune réponse ne reviendrait.']],

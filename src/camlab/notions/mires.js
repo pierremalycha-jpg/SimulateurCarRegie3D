@@ -51,5 +51,5 @@ export const MIRES = {
   ],
   see: ['tirage', 'point', 'balance', 'lineup', 'waveform', 'vecto', 'moniteur', 'gamma'],
   ref: 'Barres 100/0/75/0 (nomenclature ITU-R BT.471) et barres HD SMPTE RP 219 (avec PLUGE) ; luminance BT.709 des barres à 75 % : 75, 70, 59, 54, 21, 16 et 5 % ; mode d\'emploi HXC-FB80 : commutateur OUTPUT/AUTO KNEE (BARS, CAM) ; mire du plateau du module : étoile de Siemens à 36 paires de secteurs, charte de onze gris',
-  competences: ['3.9', '2.2'],
+  competences: ['C19', 'C10'],
 };

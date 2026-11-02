@@ -49,5 +49,5 @@ export const MENU = {
   ],
   see: ['commandes', 'viseur', 'fichiers', 'rcp', 'shutter', 'gamma'],
   ref: 'Mode d\'emploi HXC-FB80 : TOP MENU (USER, USER MENU CUSTOMIZE, ALL, OPERATION, PAINT, MAINTENANCE, FILE, DIAGNOSIS) ; pages OPERATION 01 à 16, PAINT P01 à P14, MAINTENANCE M01 à M14, FILE F01 à F05 ; commutateur DISPLAY/MENU, molette, STATUS/CANCEL',
-  competences: ['2.7', '2.9'],
+  competences: ['C20', 'C23'],
 };

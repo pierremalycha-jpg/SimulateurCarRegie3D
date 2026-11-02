@@ -32,6 +32,8 @@ const BY_THEME = {
     ['Contrechamp', 'Plan pris du côté opposé du terrain : il inverse le sens du jeu à l\'écran. En direct on l\'évite, on le garde pour les ralentis.'],
     ['Plan de caméras', 'Le schéma des positions caméras du stade, avec pour chacune son type, son objectif, sa liaison et sa consigne (qui suit quoi). Dans le simulateur : touche P.'],
     ['Synoptique', 'Schéma de principe du car (vidéo, synchro, audio, intercom, réseaux, énergie) qui montre par où passe chaque signal ; on s\'en sert pour comprendre et dépanner. Dans le simulateur : touche Y.'],
+    ['Nodal', 'Le centre de commutation d\'un site : toutes les liaisons entre régies, plateaux, transmissions et extérieur y passent par une grille ; on y réserve des renvois et l\'on y commute sans gêner les autres liaisons.'],
+    ['PAD (prêt à diffuser)', 'Le fichier livré à la chaîne au format qu\'elle impose (conteneur MXF OP1a, codec, pistes audio, timecode de première image), vérifié (loudness EBU R128, niveaux EBU R103, noirs et silences) et accompagné de sa fiche PAD.'],
     ['Clean feed', 'Le programme sans habillage (sans les DSK), livré aux diffuseurs qui ajoutent leurs propres graphiques, et souvent à l\'écran géant.'],
     ['Signal international', 'L\'image et le son international (ambiances et effets, sans commentaire) livrés à tous les diffuseurs, qui y ajoutent leurs commentaires et leur habillage.'],
     ['ISO', 'Sortie ou enregistrement « isolé » d\'une caméra, à côté du programme : pour le montage, la VAR ou un diffuseur.'],

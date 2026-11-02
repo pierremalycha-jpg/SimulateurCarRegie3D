@@ -284,3 +284,40 @@ body:not(.role-formateur) .role-only { display: none !important; }
 .co-order li > span:not(.co-btns) { display: grid; gap: 1px; font-size: 13.5px; }
 .co-order small { font-size: 12px; color: var(--muted); }
 @media (max-width: 820px) { .co-mv4 { grid-template-columns: repeat(2, minmax(0, 1fr)); } .co-chain { grid-template-columns: minmax(0, 1fr); } }
+
+/* le référentiel du BTS cité dans le Cours (ui/referentiel_ui.js) : bloc de leçon, rappel de chapitre, page */
+.co-ref { padding: 10px 12px; background: var(--well); border-left: 3px solid var(--accent); border-radius: 2px; display: grid; gap: 8px; }
+.co-ref-lede { margin: 0; color: var(--muted); font-size: 13.5px; }
+.co-ref-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.co-ref-comp { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 8px; width: 100%; text-align: left; padding: 6px 10px; font: inherit; color: var(--fg); background: var(--glass); border: 1px solid var(--line); border-radius: 3px; cursor: pointer; }
+.co-ref-comp:hover, .co-ref-comp:focus-visible { border-color: var(--accent); }
+.co-ref-comp b { font-variant-numeric: tabular-nums; min-width: 3ch; }
+.co-ref-comp span { flex: 1; min-width: 12ch; }
+.co-ref-comp small, .co-ref-sav small, .co-ref-card summary small, .co-ref-fam summary small { color: var(--dim); font-size: 12px; }
+.co-ref-det summary { cursor: pointer; font-size: 13.5px; color: var(--muted); }
+.co-ref-sf { margin: 6px 0 0; padding-left: 18px; display: grid; gap: 3px; font-size: 13.5px; line-height: 1.45; }
+.co-ref-sf b { font-variant-numeric: tabular-nums; }
+.co-ref-sav b, .co-ref-chip b { margin-right: 2px; }
+.co-ref-chip { cursor: pointer; font: inherit; font-size: 13px; color: var(--fg); }
+.co-ref-chip.tmo { border-color: var(--accent); }
+.co-ref-fams { margin: 0; font-size: 13px; color: var(--muted); line-height: 1.45; }
+.co-ref-sec { display: grid; gap: 10px; }
+.co-ref-sec h3 small { font: 500 13px var(--f-body); color: var(--muted); }
+.co-ref-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.co-ref-table th, .co-ref-table td { text-align: left; vertical-align: top; padding: 6px 8px; border-bottom: 1px solid var(--line); line-height: 1.4; }
+.co-ref-table th { color: var(--muted); font-weight: 600; }
+.co-ref-table tr.tmo td { background: var(--accent-d, rgba(59,156,255,.12)); }
+.co-ref-tmo { padding: 10px 12px; background: var(--well); border-left: 3px solid var(--accent); border-radius: 2px; }
+.co-ref-tmo p { margin: 0 0 6px; line-height: 1.5; }
+.co-ref-card { padding: 8px 12px; background: var(--well); border: 1px solid var(--line); border-radius: 3px; }
+.co-ref-card summary { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; cursor: pointer; font-size: 14px; }
+.co-ref-card summary b { font-variant-numeric: tabular-nums; min-width: 3ch; }
+.co-ref-card summary > span:not(.pill) { flex: 1; min-width: 14ch; }
+.co-ref-card[open] summary { margin-bottom: 8px; }
+.co-ref-attendu, .co-ref-meta { margin: 0 0 6px; font-size: 13.5px; line-height: 1.45; color: var(--muted); }
+.co-ref-attendu b, .co-ref-meta b { color: var(--fg); font-weight: 600; }
+.co-ref-sim { margin-top: 10px; padding-top: 8px; border-top: 1px solid var(--line); display: grid; gap: 6px; }
+.co-ref-sim h5 { margin: 0; font: 600 12.5px var(--f-body); color: var(--dim); text-transform: uppercase; letter-spacing: .06em; }
+.co-ref-sim .note { margin: 0; }
+.co-ref-fam summary { cursor: pointer; font-size: 14px; }
+.co-refnav .ico { color: var(--accent); }

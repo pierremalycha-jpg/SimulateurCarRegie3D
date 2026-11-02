@@ -20,6 +20,7 @@ import { accueilParcours, cheminChapitre, apercuFerme, etapesLecon, pageTest, no
 import { exoSection, etoiles } from './cours_exo.js';
 import { exoOf } from '../cours/exo.js';
 import { PROG } from '../shared.js';
+import { refBlock, chapitreRef, pageReferentiel } from './referentiel_ui.js';
 
 // ----------------------------------------------------------------------------------
 // L'espace Cours, plein écran (touche G, menu titre, écran Jouer, pupitre, menu du car) : il s'ouvre
@@ -30,10 +31,11 @@ import { PROG } from '../shared.js';
 // schéma, manipulation, explication, dans le car, fiches « ? »), le quiz, l'exercice en autonomie
 // (ui/cours_exo.js), puis les exercices pratiques dans le car. Une leçon d'un niveau fermé (profil
 // Étudiant) n'en montre que l'aperçu et le chemin pour l'ouvrir. Une leçon qui a une vue 3D (src/vues3d) la
-// propose (« Voir en 3D ») ; le chapitre a alors son entrée « … en 3D » dans le sommaire.
+// propose (« Voir en 3D ») ; le chapitre a alors son entrée « … en 3D » dans le sommaire. Le référentiel du BTS
+// (ui/referentiel_ui.js) est cité en fin de leçon et en tête de chapitre, et a sa page (« Le référentiel du BTS »).
 // ----------------------------------------------------------------------------------
-/** vue : null (Mon parcours ou la leçon), « chapitre » (le chemin du chapitre), « test » (un test de niveau) */
-const UI = { lesson: /** @type {string | null} */ (null), chapter: /** @type {string | null} */ (null), vue: /** @type {null | 'chapitre' | 'test'} */ (null), demo: /** @type {{ destroy?: () => void } | null | void} */ (null), q: '' };
+/** vue : null (Mon parcours ou la leçon), « chapitre » (le chemin du chapitre), « test » (un test de niveau), « referentiel » (la page du référentiel, refCode : la compétence à montrer) */
+const UI = { lesson: /** @type {string | null} */ (null), chapter: /** @type {string | null} */ (null), vue: /** @type {null | 'chapitre' | 'test' | 'referentiel'} */ (null), refCode: /** @type {string | null} */ (null), demo: /** @type {{ destroy?: () => void } | null | void} */ (null), q: '' };
 /** l'essai de quiz en cours (gardé quand la page se redessine) : questions tirées, réponses choisies, corrigé affiché */
 /** @type {{ id: string, draw: { i: number, order: number[] }[], answers: (number | null)[], checked: boolean } | null} */
 let ESSAI = null;
@@ -43,15 +45,16 @@ const OLD_TAB = { chapitres: 'lecons', articles: 'lecons', procedures: 'lecons',
 const norm = (s) => String(s).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
 
 /**
- * @param {{ tab?: string, lesson?: string | null, chapter?: string | null, term?: string, poste?: string, fiche?: string, article?: string | null, home?: boolean } | string} [o]
+ * @param {{ tab?: string, lesson?: string | null, chapter?: string | null, term?: string, poste?: string, fiche?: string, article?: string | null, home?: boolean, referentiel?: boolean, code?: string } | string} [o]
  *   onglet (lecons, glossaire, postes, materiel), leçon ou chapitre à ouvrir ; term : fiche « ? » (la leçon qui
  *   la cite) ; poste : la leçon du poste (cours/liens.js) ; article : article de l'ancien guide (la leçon
- *   qui le cite) ; home : le suivi de la progression
+ *   qui le cite) ; home : le suivi de la progression ; referentiel : la page du référentiel (code : la compétence à montrer)
  */
 export function openCours(o = {}) {
   const opts = typeof o === 'string' ? { lesson: o } : { ...o };
   if (opts.tab === 'camera') opts.chapter = 'camera';
   if (opts.home) { UI.lesson = null; UI.chapter = null; UI.vue = null; finirTest(); }
+  if (opts.referentiel) { UI.lesson = null; UI.vue = 'referentiel'; UI.refCode = opts.code || null; finirTest(); opts.tab = 'lecons'; }
   if (opts.fiche && !opts.lesson && !opts.term) { if (estLecon(opts.fiche)) opts.lesson = opts.fiche; else if (TERMS[opts.fiche]) opts.term = opts.fiche; }
   if (opts.poste && !opts.lesson) { const id = posteCible(opts.poste, S.ipMode); if (estLecon(id)) opts.lesson = id; else if (TERMS[id]) opts.term = id; }
   if (opts.article) {
@@ -103,8 +106,9 @@ function lecons(box) {
     const found = UI.lesson ? lessonById(UI.lesson) : null;
     const ch = UI.chapter ? CHAPTERS.find((c) => c.id === UI.chapter) : null;
     if (UI.vue === 'test' && testEnCours()) pageTest(page, go);
+    else if (UI.vue === 'referentiel') pageReferentiel(page, go, { code: UI.refCode });
     else if (found) { if (leconOuverte(found.lesson.id, PROG, { libre: libre() })) lessonPage(page, found, go, nav); else apercuFerme(page, found, go); }
-    else if (UI.vue === 'chapitre' && ch) cheminChapitre(page, ch, go, modulesDe(ch).map(moduleBtn));
+    else if (UI.vue === 'chapitre' && ch) { cheminChapitre(page, ch, go, modulesDe(ch).map(moduleBtn)); const lede = page.querySelector('.lede'), ref = chapitreRef(ch, go); if (lede && ref) lede.after(ref); }
     else home(page, go);
     // un schéma qui contient des touches (ports, récepteurs, maillons) est un groupe, pas une image
     for (const s of page.querySelectorAll('svg[role="img"]')) if (s.querySelector('[tabindex], a, button')) s.setAttribute('role', 'group');
@@ -116,6 +120,7 @@ function lecons(box) {
     chapitre: (id) => { UI.lesson = null; UI.chapter = id; UI.vue = 'chapitre'; finirTest(); render(); },
     accueil: () => { UI.lesson = null; UI.vue = null; finirTest(); render(); },
     test: (chId, niveau) => { nouveauTest(chId, niveau); UI.lesson = null; UI.chapter = chId; UI.vue = 'test'; render(); },
+    referentiel: (code) => { UI.lesson = null; UI.vue = 'referentiel'; UI.refCode = code || null; finirTest(); render(); },
     render,
   };
   REDRAW = render;
@@ -139,8 +144,10 @@ function drawNav(nav, /** @type {import('./cours_parcours.js').Go} */ go) {
       if (!hits.length && !terms.length) list.append(el('p', { class: 'note' }, 'Rien ne correspond.'));
       return;
     }
-    const accueil = !UI.lesson && UI.vue !== 'chapitre' && UI.vue !== 'test';
+    const accueil = !UI.lesson && UI.vue !== 'chapitre' && UI.vue !== 'test' && UI.vue !== 'referentiel';
     list.append(el('button', { type: 'button', class: 'co-les co-home' + (accueil ? ' on' : ''), 'aria-current': accueil ? 'true' : null, onclick: () => go.accueil() }, icon('parcours'), 'Mon parcours'));
+    const ref = UI.vue === 'referentiel';
+    list.append(el('button', { type: 'button', class: 'co-les co-home co-refnav' + (ref ? ' on' : ''), 'aria-current': ref ? 'true' : null, onclick: () => go.referentiel(null) }, icon('livret'), 'Le référentiel du BTS'));
     for (const ch of CHAPTERS) {
       const N = etatNiveaux(ch.id, PROG, o);
       const done = N.reduce((s, n) => s + n.terminees, 0), tot = N.reduce((s, n) => s + n.lecons.length, 0);
@@ -204,7 +211,7 @@ function home(page, /** @type {import('./cours_parcours.js').Go} */ go) {
     ...((CFG.car.procedures || []).length ? [el('section', { class: 'co-procs', 'aria-label': 'Procédures du car' }, el('h4', {}, 'Les procédures du car'), (() => { const b = el('div'); proceduresSection(b); return b; })())] : []),
     el('section', { class: 'co-livret', 'aria-label': 'Livret de compétences' }, el('h4', {}, 'Mon livret de compétences (BTS MAV, option TIEE)'),
       el('div', { class: 'co-blocs' }, ...L.blocs.map((b) => { const w = b.count.consolidee + b.count.travaillee; const n = b.comps.length - b.count.absent; return el('div', { class: 'co-bloc' }, el('b', {}, b.id), el('span', {}, b.titre), bar(w, n, b.id), el('small', {}, `${w} / ${n} travaillées`)); })),
-      el('div', { class: 'hwrow' }, el('button', { type: 'button', class: 'btn small', onclick: () => openLivret() }, 'Ouvrir le livret complet')),
+      el('div', { class: 'hwrow' }, el('button', { type: 'button', class: 'btn small', onclick: () => openLivret() }, 'Ouvrir le livret complet'), el('button', { type: 'button', class: 'btn small co-ref-btn', onclick: () => go.referentiel(null) }, icon('livret'), 'Le référentiel du BTS')),
       el('p', { class: 'note' }, 'Travaillée : une réussite qui la fait pratiquer. Consolidée : trois réussites, dont un exercice pratique fait seul. La valider reste le rôle du formateur.')));
 }
 function lessonPage(page, { chapter, lesson }, /** @type {import('./cours_parcours.js').Go} */ go, nav) {
@@ -240,6 +247,8 @@ function lessonPage(page, { chapter, lesson }, /** @type {import('./cours_parcou
       L.car.station ? el('div', { class: 'hwrow' }, el('button', { class: 'btn small primary', onclick: () => emit('go', { station: L.car.station, tab: L.car.tab, label: 'Aller au poste' }) }, S.mode === 'start' ? 'Lancer le car et aller au poste' : 'Aller au poste')) : null));
   }
   if (L.article) page.append(el('div', { class: 'hwrow co-article' }, el('button', { type: 'button', class: 'btn small', onclick: () => openArticle(L.article) }, icon('guide'), 'Lire l\'article de référence')));
+  // le référentiel du BTS : les compétences de la leçon, leur épreuve (la TMO quand c'est le cas), savoir-faire et savoirs
+  const ref = refBlock(L, go); if (ref) page.append(ref);
   const terms = (L.terms || []).filter((id) => TERMS[id]);
   if (terms.length) page.append(el('section', { class: 'co-terms' }, el('h4', {}, 'Fiches « ? »'), el('div', { class: 'co-chips' }, ...terms.map((id) => el('span', { class: 'co-chip' }, TERMS[id].t, q(id))))));
   // la fin de la leçon : le quiz, puis l'exercice en autonomie ; ensuite, les exercices pratiques dans le car

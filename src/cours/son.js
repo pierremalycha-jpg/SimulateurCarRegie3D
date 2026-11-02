@@ -301,7 +301,7 @@ Viennent ensuite les traitements : le **passe-haut** coupe le grondement inutile
 - Le niveau du programme se mesure ensuite en **loudness** (EBU R128 : −23 LUFS intégré, crêtes vraies sous −1 dBTP).`,
       car: { text: 'En cabine son, la console (inspirée de la Studer Vista 1) : la vue ENTRÉE donne pour chaque tranche le gain, la touche 48V et la touche Ø ; les crête-mètres d\'entrée allument l\'OVL rouge ; le corrélateur suit les couples d\'ambiance.', station: 'son' },
       terms: ['st2110-30'],
-      competences: ['1.4', '2.9'],
+      competences: ['C32', 'C23'], savoirs: ['I6', 'I3', 'C12'],
       article: 'vista',
       exercises: [
         { id: 'son-tranche', intro: 'En cabine son, trois défauts vous attendent sur la console : un canon qui sature, une ambiance muette, une autre en opposition de phase. Vous les corrigerez dans la vue ENTRÉE des tranches, sans toucher aux faders : regardez l\'OVL s\'éteindre quand le gain baisse, l\'ambiance revenir avec le 48 V et le corrélateur remonter vers +1 quand la polarité est rétablie.' },
@@ -336,7 +336,7 @@ Le départ vers la chaîne est un signal SDI qui porte l'image et le son **embed
 - En production IP (ST 2110-30), chaque départ est un flux audio séparé de l'image, horodaté par le PTP : la synchro labiale reste une affaire de retards.`,
       car: { text: 'En cabine son, l\'onglet « Bus, N-1, départ » : la matrice des tranches vers PGM, INTL, N-1 COMM, N-1 STUDIO et N-1 BT, le panneau « Retard de ligne » et son afficheur de décalage, l\'embedder du départ avec le plan de son demandé par la chaîne. Le poste Transmission reçoit ce départ.', station: 'son' },
       terms: ['st2110-30', 'essence'],
-      competences: ['1.4', '2.2', '2.11'],
+      competences: ['C32', 'C10', 'C26'], savoirs: ['I1', 'C12', 'C5', 'C10'],
       article: 'timing',
       exercises: [
         { id: 'son-departs', intro: 'En cabine son, onglet « Bus, N-1, départ », vous corrigerez trois départs : un consultant envoyé dans son propre retour, un son décalé de l\'image, deux paires inversées dans l\'embedder. Vérifiez à chaque fois ce que reçoit l\'autre bout : le N-1 sans la voix de celui qui l\'écoute, un décalage revenu dans la tolérance, la paire 1 sur le programme et la paire 2 sur l\'international.' },

@@ -52,5 +52,5 @@ export const MONITEUR = {
   ],
   see: ['mires', 'waveform', 'vecto', 'gamma', 'noir', 'lineup', 'hdr'],
   ref: 'ITU-R BT.709 (primaires, blanc D65) ; ITU-R BT.1886 (courbe d\'affichage, gamma 2,4) ; ITU-R BT.2035 (environnement de référence : blanc à 100 cd/m², fond d\'environ 10 cd/m²) ; ITU-R BT.814 (PLUGE) et SMPTE RP 219 (barres HD, PLUGE à −2, +2 et +4 %) ; EBU Tech 3320 (moniteurs Grade 1, 2 et 3)',
-  competences: ['2.2', '3.9'],
+  competences: ['C10', 'C19'],
 };

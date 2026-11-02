@@ -20,6 +20,16 @@ Tout est en français (code commenté en français, interface, commits).
   groupe gris y ont droit), **pas de coin coupé** (`--notch: none`), pas de contour lumineux, pas de LED décorative. Une
   nouvelle feuille lit les jetons de `src/styles/theme-jeu.css` et ne code aucune couleur en dur ; un texte d'interface tient
   en une ou deux lignes (l'explication longue va dans la leçon ou la fiche « ? »). Suite `node tools/e2e.mjs epure`.
+- **Le référentiel officiel (v19.23, décidé le 2 novembre 2026)** : les compétences portent leurs numéros officiels **C1 à
+  C39** (arrêté du 4 juin 2013 modifié, pages 64 et 104 à 118 du référentiel ; ce sont les numéros des fiches de TP et des
+  sujets de TMO), plus jamais 1.1 à 4.5 (la table `ANCIEN` de `src/content/referentiel.js` convertit, `migrateProgress`
+  renomme les badges). Chaque compétence a son unité (U3, U4 = la TMO, U51, U52, U6), ses tâches, ses savoir-faire SF01 à
+  SF112 et ses savoirs (A1 à L12, avec le niveau demandé à l'option) ; une leçon porte `competences` (la même liste que
+  `RATTACHEMENT.cours`, test unitaire) et `savoirs`. Le référentiel est cité tel quel : bloc « Référentiel BTS MAV, option
+  TIEE » en fin de leçon, rappel en tête de chapitre, page « Le référentiel du BTS » du Cours (`src/ui/referentiel_ui.js`),
+  livret. Les leçons de la TMO (`src/cours/exploitation_tmo.js`, exercices `exos/exploitation_tmo.js`) : synoptique,
+  énergie, nodal, PAD, recette. Toute nouvelle leçon cite ses compétences et ses savoirs ; un texte du référentiel ne se
+  paraphrase pas, il se cite. Suite `node tools/e2e.mjs referentiel`.
 - **TIEE Simulator**, réalisé par le BTS Audiovisuel de Saint-Quentin (logo `src/assets/logo-bts-av.png`),
   développé par Pierre MALYCHA : ces mentions restent sur l'écran titre et dans « À propos » (Réglages).
 - **Trois entrées, les mêmes partout** : Jouer · Cours · Réglages. Écran titre (`src/app/title.js`,

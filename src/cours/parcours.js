@@ -77,9 +77,9 @@ export const PARCOURS = {
     avance: ['hf-cofdm'],
   },
   exploitation: {
-    debutant: ['expl-intercom'],
-    intermediaire: ['expl-lineup', 'expl-transmission', 'expl-depannage'],
-    avance: ['expl-regie-mobile'],
+    debutant: ['expl-intercom', 'expl-synoptique'],
+    intermediaire: ['expl-lineup', 'expl-energie', 'expl-transmission', 'expl-nodal', 'expl-depannage'],
+    avance: ['expl-regie-mobile', 'expl-pad', 'expl-recette'],
     expert: ['expl-match'],
   },
 };

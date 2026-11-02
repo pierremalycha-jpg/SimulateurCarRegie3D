@@ -50,6 +50,7 @@ const SUITES = [
   ['reseau-termes', 'termes', [], 20],
   ['cours', 'cours', [], 20],
   ['parcours', 'parcours', [], 20],
+  ['referentiel', 'referentiel', [], 20],
   ['camera', 'camera', [], 25],
   ['vues3d', 'vues3d', [], 25],
   ['entrepot', 'entrepot', [], 25],

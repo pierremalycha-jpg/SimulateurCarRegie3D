@@ -106,7 +106,7 @@ Sauter une couche fait perdre du temps : inutile de chercher une erreur de confi
 - Les noms des unités : bit (1), trame (2), paquet (3), segment ou datagramme (4), message ou données (7).`,
   car: { text: 'Au poste Réseau IP (car IP), l\'analyseur de trames déplie chaque paquet couche par couche, comme Wireshark : Ethernet II (adresses MAC), IPv4 (adresses, DSCP), UDP (ports), RTP (numéro, horodatage). Le dépannage du car SDI suit les mêmes étapes : voyant, VLAN, adresse, ping, service.', station: 'reseau' },
   terms: ['modele-osi', 'encapsulation', 'mtu', 'commutateur', 'routage', 'udp'],
-  competences: ['3.6', '2.10', '2.13'], article: 'reseau',
+  competences: ['C12', 'C25', 'C36'], savoirs: ['K1'], article: 'reseau',
   quiz: [
     { q: 'À quelle couche du modèle OSI travaille un commutateur Ethernet ordinaire ?',
       choices: [['Couche 1, physique', 'Le câble et le répéteur y travaillent : ils transportent des bits sans rien lire. Le commutateur, lui, lit des adresses.'], 'Couche 2, liaison : il lit l\'adresse MAC de destination', ['Couche 3, réseau', 'C\'est le niveau du routeur, qui lit l\'adresse IP. Un commutateur ordinaire ne la regarde pas.']],
@@ -207,7 +207,7 @@ export const ETENDUE = {
 - La fibre ne suit pas la ligne droite : on compte la longueur réelle du câble, souvent 20 à 50 % de plus que la distance à vol d'oiseau.`,
   car: { text: 'Au poste Transmission : TX1 part par la fibre de l\'opérateur (encodeur JPEG XS), TX2 par satellite (HEVC), avec un retard nettement plus grand. Le retour antenne revient avec plusieurs secondes de retard : on ne réalise jamais en le regardant.', station: 'transmission' },
   terms: ['lan-wan', 'latence', 'contribution', 'fibre-monomode'],
-  competences: ['2.10', '2.11', '3.4'], article: 'reseau',
+  competences: ['C25', 'C26', 'C4'], savoirs: ['K2', 'K3'], article: 'reseau',
   quiz: [
     { q: 'Le réseau du car, avec ses commutateurs et ses VLAN, est…',
       choices: ['Un LAN : un lieu, un exploitant qui choisit tout', ['Un MAN, parce qu\'il est mobile', 'L\'étendue se juge à la zone couverte, pas à la mobilité : le car couvre quelques dizaines de mètres.'], ['Un WAN, parce qu\'il sort sur Internet', 'Il a une sortie vers un WAN, mais le réseau du car lui-même reste local.']],
@@ -310,7 +310,7 @@ Puis un silence de 12 octets avant la trame suivante.
 - Temps pour poser une trame de 1 538 octets (1 500 de données, en-têtes, préambule et silence) : 12,3 µs à 1 Gb/s, 1,23 µs à 10 Gb/s.`,
   car: { text: 'Au poste Réseau (car SDI) : SW-CŒUR a 24 ports RJ45 Gigabit et 4 ports SFP ; SW-PROD et SW-VISION alimentent leurs appareils en PoE ; la vitesse négociée de chaque port s\'y lit. Dans le car IP, chaque leaf a 48 ports SFP28 (25 ou 10 GbE) et ses liens vers les spines sont en QSFP28 à 100 GbE.', station: 'reseau' },
   terms: ['ethernet', 'sfp', 'rj45', 'mtu', 'vitesse', 'poe'],
-  competences: ['2.10', '3.9', '3.6'], article: 'reseau',
+  competences: ['C25', 'C19', 'C12'], savoirs: ['K3', 'C7'], article: 'reseau',
   quiz: [
     { q: 'Jusqu\'à quelle longueur un lien Ethernet sur câble RJ45 est-il garanti ?',
       choices: [['10 m', 'C\'est l\'ordre de grandeur d\'un câble DAC entre deux baies, pas d\'un câble RJ45.'], '100 m', ['1 km', 'Au-delà de 100 m, il faut de la fibre (ou un équipement intermédiaire).']],

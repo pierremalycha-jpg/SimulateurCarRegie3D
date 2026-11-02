@@ -93,7 +93,7 @@ Le connecteur **ST 304** (type LEMO 3K.93C) branche tout d'un geste ; les deux f
 - Les tourets se raccordent par des **coupleurs** femelle-femelle : chaque raccord, c'est deux faces de plus à nettoyer.`,
   car: { text: 'À la baie CCU : le niveau optique et l\'alimentation de chaque voie ; dans l\'atelier de montage, la fibre se nettoie aux deux bouts avant d\'être branchée. La panne « fibre » de la CCU fait tomber l\'image d\'une caméra.', station: 'ccu' },
   terms: ['cable-hybride', 'fibre-monomode', 'niveau-optique', 'nettoyage-fibre'],
-  competences: ['2.10', '3.9', '2.13'],
+  competences: ['C25', 'C19', 'C36'], savoirs: ['C7', 'G8', 'C3'],
   quiz: [
     { q: 'Que contient le câble hybride SMPTE d\'une caméra de stade ?',
       choices: [['Une fibre pour l\'image et une pour le son', 'Les deux fibres vont chacune dans un sens : l\'image et le son montent ensemble vers le car.'], 'Deux fibres monomodes (une par sens) et du cuivre pour l\'énergie', ['Un coaxial SDI et une alimentation', 'Le coaxial ne porterait pas loin : le câble hybride est optique pour les signaux.']],

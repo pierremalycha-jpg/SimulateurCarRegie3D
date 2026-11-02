@@ -8,7 +8,7 @@ import { lessonById } from '../tutor/engine.js';
 import { MISSIONS } from './guide.js';
 import { NET_MISSIONS } from '../net/course.js';
 import { PHASES } from '../scenario.js';
-import { FICHE, MODULES } from '../content/referentiel.js';
+import { FICHE, MODULES, SAVOIR_FAIRE, epreuveDe } from '../content/referentiel.js';
 import { livret, NIVEAUX, CONSOLIDE } from '../livret.js';
 import { lessonById as coursLesson } from '../cours/index.js';
 import { NOTIONS } from '../camlab/notions/index.js';
@@ -55,7 +55,10 @@ function legend() {
 }
 
 function compRow(c) {
-  const main = el('div', { class: 'lv-main' }, el('div', { class: 'lv-t' }, c.titre, c.taches ? el('small', {}, ' · ' + c.taches) : null));
+  const e = epreuveDe(c.unite);
+  const main = el('div', { class: 'lv-main' }, el('div', { class: 'lv-t' }, c.titre, el('small', {}, ` · ${c.unite}${e ? `, ${e.id}${e.sigle ? ' ' + e.sigle : ''}` : ''}`), c.taches ? el('small', {}, ' · ' + c.taches) : null),
+    // les savoir-faire du référentiel, repliés
+    c.sf && c.sf.length ? el('details', { class: 'lv-sf' }, el('summary', {}, `${c.sf.length} savoir-faire`), el('ul', {}, ...c.sf.map((k) => el('li', {}, el('b', {}, k), ' ', SAVOIR_FAIRE[k] || '')))) : null);
   if (!c.total) main.append(el('p', { class: 'lv-later' }, 'Pas encore dans le simulateur.' + (c.prevu.length ? ` Prévu avec ${c.prevu.length > 1 ? 'les modules' : 'le module'} ${modules(c.prevu)}.` : '')));
   else {
     // les notions du module caméra tiennent sur une ligne : combien sont acquises, et lesquelles
@@ -99,7 +102,7 @@ export function livretPanel(prog, opts = {}) {
     bar(b.count),
     el('small', { class: 'lv-n' }, `${plural(b.count.consolidee + b.count.travaillee, 'travaillée', 'travaillées')} sur ${b.comps.length}` + (b.count.absent ? ` · ${b.count.absent} hors simulateur` : ''))));
   return el('div', { class: 'lv' },
-    el('p', { class: 'lv-intro' }, `${worked} compétence${worked > 1 ? 's' : ''} travaillée${worked > 1 ? 's' : ''} sur les ${inSim} que le simulateur fait pratiquer (${L.count.consolidee} consolidée${L.count.consolidee > 1 ? 's' : ''}). Le référentiel de l'option TIEE (fiche ${FICHE.code}) en compte ${L.total} ; les ${L.count.absent} autres arrivent avec les prochains modules.`),
+    el('p', { class: 'lv-intro' }, `${worked} compétence${worked > 1 ? 's' : ''} travaillée${worked > 1 ? 's' : ''} sur les ${inSim} que le simulateur fait pratiquer (${L.count.consolidee} consolidée${L.count.consolidee > 1 ? 's' : ''}). Le référentiel de l'option TIEE (arrêté du 4 juin 2013 modifié, fiche ${FICHE.code}) en compte ${L.total}, numérotées C1 à C39 comme dans les sujets de TMO ; les ${L.count.absent} autres arrivent avec les prochains modules.`),
     el('div', { class: 'lv-sum' }, ...cards),
     legend(),
     ...dets,

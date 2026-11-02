@@ -48,5 +48,5 @@ export const CONNECTIQUE = {
   ],
   see: ['fibre', 'alimentation', 'tally', 'retours', 'ccu', 'monture', 'viseur'],
   ref: 'Mode d\'emploi HXC-FB80, « Arrière » et « Avant gauche » : DC IN, INTERCOM, AUDIO 2 IN, EARPHONE, REMOTE, DC OUT, TEST OUT, PROMPTER/GENLOCK, SDI OUT, SDI I/O ; USB, VF, CCU, TRUNK, LENS, AUDIO 1 IN',
-  competences: ['2.7'],
+  competences: ['C20'],
 };

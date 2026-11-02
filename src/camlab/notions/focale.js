@@ -46,5 +46,5 @@ export const FOCALE = {
   ],
   see: ['zoom', 'doubleur', 'pdc', 'capteur', 'grandcapteur'],
   ref: 'Format 2/3" 16:9 : zone image 9,59 × 5,39 mm ; Fujinon ZA12x4.5BERD : 4,5–54 mm, angle de champ horizontal 94° à 4,5 mm, 10° à 54 mm',
-  competences: ['2.9'],
+  competences: ['C23'],
 };

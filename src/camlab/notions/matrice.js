@@ -53,5 +53,5 @@ export const MATRICE = {
   ],
   see: ['balance', 'prisme', 'vecto', 'lineup', 'gamma', 'fichiers'],
   ref: 'ITU-R BT.709-6 (primaires R 0,640 ; 0,330, V 0,300 ; 0,600, B 0,150 ; 0,060, blanc D65 0,3127 ; 0,3290 ; Y\' = 0,2126 R\' + 0,7152 G\' + 0,0722 B\') ; mode d\'emploi HXC-FB80 : menu PAINT, pages P01 SW STATUS (MATRIX), P06 SATURATION (LOW KEY SAT), P14 USER MATRIX (R-G, R-B, G-R, G-B, B-R, B-G)',
-  competences: ['1.2', '2.9'],
+  competences: ['C21', 'C23'],
 };

@@ -52,5 +52,5 @@ export const NOIR = {
   ],
   see: ['balance', 'gamma', 'waveform', 'rcp', 'lineup', 'moniteur'],
   ref: 'ITU-R BT.709 (noir à 0 %, code 64 en 10 bits) ; mode d\'emploi HXC-FB80 : menu PAINT, pages P01 SW STATUS (FLARE) et P02 VIDEO LEVEL (BLACK R, G, B, M ; FLARE R, G, B, M ; de −99 à +99) ; commande du master black et des noirs par le RCP',
-  competences: ['1.4', '2.9'],
+  competences: ['C32', 'C23'],
 };

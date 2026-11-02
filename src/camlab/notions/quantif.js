@@ -52,5 +52,5 @@ export const QUANTIF = {
   ],
   see: ['capteur', 'sortie', 'waveform', 'knee', 'noir', 'formats'],
   ref: 'ITU-R BT.709-6, partie 2 : quantification 10 bits (noir 64, blanc 940 ; Cb et Cr de 64 à 960 autour de 512 ; codes 0 à 3 et 1020 à 1023 réservés à la synchronisation) et 8 bits (16 et 235) ; SMPTE ST 292-1 et ST 424 (mots de 10 bits) ; EBU R 103 (tolérances des niveaux) ; mode d\'emploi HXC-FB80 : pages M09 OUTPUT FORMAT et M11 SDI OUT',
-  competences: ['1.4', '2.2'],
+  competences: ['C32', 'C10'],
 };

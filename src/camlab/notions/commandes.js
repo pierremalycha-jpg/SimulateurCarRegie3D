@@ -53,6 +53,6 @@ export const COMMANDES = {
   ],
   see: ['menu', 'gain', 'nd', 'balance', 'cc', 'rcp', 'viseur', 'retours'],
   ref: 'Mode d\'emploi HXC-FB80 : FILTER, COLOR TEMP. (ASSIGN CTEMP, 5600K), ASSIGN 1 à 3 (ASSIGNABLE 1/2/3, page SWITCH ASSIGN1, sans fonction d\'usine), GAIN L/M/H (0, 6, 12 dB d\'usine, de −6 à +12 dB), OUTPUT/AUTO KNEE, WHITE BAL (PRST 3200 K), WHT/BLK ; reliée à une CCU ou un RCP, SHUTTER, WHT/BLK, OUTPUT/AUTO KNEE, WHITE BAL, GAIN et FILTER sont commandés par l\'appareil relié',
-  competences: ['2.9', '2.7'],
+  competences: ['C23', 'C20'],
   cours: 'camera-systeme',
 };

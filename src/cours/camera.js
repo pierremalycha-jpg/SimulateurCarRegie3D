@@ -377,7 +377,7 @@ Qui règle quoi. L'**ingénieur vision** règle l'image au RCP : l'**iris** (joy
 - Niveau optique à la CCU : −5 à −15 dBm en exploitation, décrochage vers −20 dBm.`,
       car: { text: 'À la baie CCU, une ligne par voie : la caméra, sa liaison et sa longueur, puis l\'état, par exemple « ALIM. CCU · OPT. −5,6 dBm · RÉF. LOCK », ou l\'alarme (OPTIQUE : PAS DE SIGNAL, ALIM. COUPÉE, RÉF. NON VERROUILLÉE). « Voir la CCU » ouvre ses faces ; au poste vision, le RCP de chaque caméra.', station: 'ccu' },
       terms: ['ctrl-sdi', 'poe', 'tsl-umd', 'timing-ref'],
-      competences: ['2.7', '2.10', '2.9'],
+      competences: ['C20', 'C25', 'C23'], savoirs: ['G6', 'G8', 'D2', 'C7'],
       article: 'camsys',
       exercises: [
         { id: 'materiel-camera', intro: 'Dans la visionneuse de matériel, vous ouvrez l\'arrière de la tête de caméra puis celui de sa CCU et vous cliquez leurs connecteurs : la fibre hybride, l\'intercom du cadreur, l\'arrivée CAMERA, la référence et la sortie SDI vers la grille. Sur chaque face, retrouvez ce qui monte vers le car et ce qui descend vers la tête.' },
@@ -425,7 +425,7 @@ Qui règle quoi. L'**ingénieur vision** règle l'image au RCP : l'**iris** (joy
 - Sur une passerelle : protection collective d'abord (garde-corps), rien posé en bord de passerelle, outils attachés.
 - Masses de l'atelier, d'après les fiches constructeurs : pied 15 kg, tête 18 kg, adaptateur 15,5 kg, caméra 5 kg, objectif 23,5 kg, viseur 3,3 kg.`,
       car: { text: 'L\'atelier de montage (feuille de service, 09:30) fait refaire ces gestes sur la CAM 1, sur la passerelle de la tribune : les pièces dans leurs flight cases, la bulle et l\'équilibrage à la molette, le nettoyage de la fibre maintenu, puis la mise en service avec la vision. À la baie CCU, la voie de la caméra montée passe alors en « ALIM. CCU » avec son niveau optique.', station: 'ccu' },
-      competences: ['2.7', '4.2', '3.9'],
+      competences: ['C20', 'C9', 'C19'], savoirs: ['G6', 'G10', 'L6'],
       article: 'montage',
       exercises: [
         { id: 'atelier-montage', intro: 'Olivier vous accompagne dans l\'atelier, phase par phase : support, caméra et objectif, commandes, équilibrage, liaison, mise en service. À chaque pièce, regardez ce qu\'elle exige d\'être déjà verrouillé, et réglez l\'équilibre comme dans la leçon : la caméra doit tenir seule à l\'horizontale.' },

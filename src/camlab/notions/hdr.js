@@ -52,5 +52,5 @@ export const HDR = {
   ],
   see: ['grandcapteur', 'hfr', 'moniteur', 'waveform', 'capteur', 'formats', 'knee', 'sortie'],
   ref: 'ITU-R BT.2020 (3840 × 2160 et 7680 × 4320, primaires) ; ITU-R BT.2100 (HLG et PQ, 10 bits au moins, gamma du système 1,2 à 1 000 cd/m²) ; ITU-R BT.2408 (HLG : blanc de référence à 75 %, 203 cd/m², gris 18 % à 38 %) ; SMPTE ST 2084 (PQ) ; fiche Sony HDC-5500 (trois CMOS 2/3″ 4K, 3840 × 2160, BT.2020, HDR) ; Sony HXC-FB80 et HXCU-FB80 (capteurs 1920 × 1080 ; HDR HLG en HD et sortie 4K agrandie avec la CCU) ; mode d\'emploi HXC-FB80 : MAINTENANCE M09 OUTPUT FORMAT',
-  competences: ['3.4', '1.4'],
+  competences: ['C4', 'C32'],
 };

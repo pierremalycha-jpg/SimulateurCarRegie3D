@@ -164,7 +164,7 @@ La Videohub 40 × 40 12G du car SDI :
 - 12G-SDI en UHD, 3G-SDI en 1080p50 : chaque entrée détecte le format qu'elle reçoit.`,
     car: { text: 'Poste Grille : la façade de la Videohub (OUT, IN, molette, TAKE, CLEAR, LOCK), le logiciel Videohub Control avec « Utiliser TAKE » coché, le monitoring des 40 entrées et 40 sorties (cadenas sur les sorties verrouillées), la matrice 40 × 40, et Videohub Setup : étiquettes, verrous, réseau, et « Rappeler le routage du car », qui joue le rôle d\'un salvo.', station: 'grille' },
     terms: ['grille', 'point-croisement', 'take', 'verrou-sortie', 'etiquette', 'protocole-videohub', 'commutation-propre', 'reclocking'],
-    competences: ['2.10', '2.9', '3.12'],
+    competences: ['C25', 'C23', 'C30'], savoirs: ['D6', 'H1'],
     article: 'chaine',
     exercises: [
       { id: 'grille-routage', intro: 'Au poste Grille, le réalisateur veut une autre caméra sur la tuile 13 du multiview, puis la chaîne reçoit la mire au lieu du programme. Faites à chaque fois destination, source, TAKE, et vérifiez au multiview que la sortie a changé de source sans toucher aux autres.' },

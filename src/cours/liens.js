@@ -30,6 +30,8 @@ export const estLecon = (id) => !!lessonById(id);
 /** terme du glossaire (tel qu'écrit dans content/glossary.js) → leçon(s) puis fiche(s) « ? » */
 /** @type {Record<string, string | string[]>} */
 export const GLOSSAIRE = {
+  // les leçons de la TMO (v19.23)
+  'Synoptique': ['expl-synoptique'],  'Loudness (LUFS)': ['expl-pad', 'son-tranche'],  'EBU R128': ['expl-pad', 'son-tranche'],  'Nodal': ['expl-nodal', 'grille'],  'PAD (prêt à diffuser)': ['expl-pad'],
   '(S,G)': ['reseau-multicast', 'mroute'], 'AES3 / AES67 / Dante': 'st2110-30', 'Bilan de liaison / marge': ['hf-bilan'], 'Black burst / tri-level': ['synchro-genlock', 'timing-ref'],
   BMCA: ['reseau-ptp', 'bmca'], BNC: ['sdi-cable', 'sdi-cest-quoi'], 'BT.709 / BT.2020': ['signal-couleur', 'cie1931'], 'Caméra HF': ['hf-bilan', 'hf-frequences'], 'CMAX / CINST': 'cmax', 'Codes 64-940': ['signal-niveaux', 'mv-pct'],
   COFDM: ['hf-cofdm'], 'Contrôleur SDN': 'sdn', 'Diversité': ['hf-antennes'], DSCP: ['reseau-qos', 'qos'], 'Écart 2022-7': 'ecart', ECMP: 'ecmp', 'Effet falaise': ['sdi-falaise', 'sdi-oeil', 'effet-falaise'],

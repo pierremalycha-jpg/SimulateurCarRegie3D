@@ -50,6 +50,6 @@ export const CADREUR = {
   ],
   see: ['zoom', 'point', 'box-portable', 'viseur', 'tally', 'alimentation'],
   ref: 'Fiche technique HXC-FB80 : corps 3,4 kg, 6,8 kg avec objectif et viseur ; Fujinon ZA12x4.5BERD : 2,07 kg (RD, sans pare-soleil) ; couple = m × g × d, contrepoids m × g × h × sin θ ; masses du viseur et du prompteur, position de l\'axe : ordres de grandeur',
-  competences: ['2.9', '4.2'],
+  competences: ['C23', 'C9'],
   cours: 'camera-montage',
 };

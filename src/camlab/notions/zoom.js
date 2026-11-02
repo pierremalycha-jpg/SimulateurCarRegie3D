@@ -46,5 +46,5 @@ export const ZOOM = {
   ],
   see: ['focale', 'tirage', 'point', 'doubleur', 'cadreur'],
   ref: 'Fujinon ZA12x4.5BERD : zoom 12×, 4,5–54 mm, servo de zoom ; mode d\'emploi HXC-FB80, « Objectif » (bascule de zoom, sélecteur servo/manuel)',
-  competences: ['2.9'],
+  competences: ['C23'],
 };

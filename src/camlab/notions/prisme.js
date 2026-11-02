@@ -48,5 +48,5 @@ export const PRISME = {
   ],
   see: ['capteur', 'olpf', 'tirage', 'monture', 'matrice', 'defauts'],
   ref: 'Bloc prisme à trois voies, deux surfaces dichroïques ; Sony HXC-FB80 : trois capteurs CMOS 2/3" ; luminance BT.709 : Y = 0,2126 R + 0,7152 G + 0,0722 B',
-  competences: ['2.9'],
+  competences: ['C23'],
 };

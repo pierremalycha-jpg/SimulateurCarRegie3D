@@ -56,5 +56,5 @@ export const MONTURE = {
   ],
   see: ['tirage', 'connectique', 'box-portable', 'iris', 'doubleur', 'prisme'],
   ref: 'Norme BTA S-1005 (monture B4) : 48 mm dans l\'air, image de 11 mm de diagonale ; mode d\'emploi HXC-FB80 : monture à baïonnette 2/3", levier de verrouillage, caoutchouc de sécurité, prise LENS (12 broches) caméra hors tension, réglage du tirage après chaque montage',
-  competences: ['2.7', '4.2'],
+  competences: ['C20', 'C9'],
 };

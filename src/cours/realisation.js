@@ -487,7 +487,7 @@ Le **tally** est le signal que le mélangeur renvoie pour chaque source : **roug
 - Le mélangeur du car (Sony XVS-6000) a plusieurs étages **M/E** (mix/effects), chacun avec ses bus A et B, sa transition et quatre clés ; le dernier étage fait le programme.`,
       car: { text: 'Au poste Truquiste, les rangées A · PGM et B · PST, le module de transition (MIX, WIPE, CLIP, durée en images, CUT, AUTO TRANS) et la barre T. Le multiview, au-dessus du pupitre, encadre chaque source de la couleur de son tally.', station: 'melangeur' },
       terms: ['tsl-umd', 'commutation-propre', 'timing-ref'],
-      competences: ['2.12', '2.9'],
+      competences: ['C31', 'C23'], savoirs: ['H4', 'H5', 'H1'],
       article: 'timing',
       exercises: [
         { id: 'melangeur-commuter', intro: 'Au poste Truquiste, vous préparerez une caméra sur la rangée B · PST, puis vous couperez, enchaînerez en AUTO TRANS, pousserez la barre T et passerez un volet logo. À chaque geste, regardez le multiview : le cadre vert suit la source en preset, le cadre rouge celle à l\'antenne, et les deux sont rouges pendant l\'enchaîné.' },
@@ -523,7 +523,7 @@ L'**ordre des couches** décide qui recouvre qui. Dans chaque étage M/E du mél
       plus: `Un fill peut être **prémultiplié** (shaped : déjà multiplié par le key, noir là où le key est noir) ou non (unshaped). Le mélangeur doit le savoir : un fill prémultiplié traité comme non prémultiplié est multiplié deux fois par le key, et ses bords semi-transparents s'assombrissent (un halo noir autour des lettres). Le réglage se fait dans le menu du DSK (« shaped / unshaped », « additive »).`,
       car: { text: 'Au poste Habillage, la sortie fill + key du moteur graphique (damier = transparent) à gauche, le programme à droite : le bandeau n\'y apparaît que si le DSK 2 est ouvert. Au poste Truquiste, les touches DSK 1 (score) et DSK 2 (graphiques), et le panneau KEY 1 (image dans l\'image du M/E).', station: 'habillage' },
       terms: ['ycbcr', 'waveform', 'timing-ref'],
-      competences: ['2.6', '2.12'],
+      competences: ['C17', 'C31'], savoirs: ['H4', 'H5', 'G3'],
       article: 'chaine',
       exercises: [
         { id: 'melangeur-incrustations', intro: 'Vous ouvrirez le score sur le DSK 1 au poste Truquiste, puis vous préparerez, lancerez et retirerez un bandeau joueur au poste Habillage, sur le DSK 2. Regardez la sortie fill + key de l\'habillage : le bandeau n\'arrive au programme que lorsque son DSK est ouvert, et le score reste en place quand le bandeau sort, parce qu\'il est sur une autre couche.' },
@@ -560,7 +560,7 @@ Le **conducteur** est le déroulé minuté de l'émission : début d'antenne, av
 La **production** (chargé de production, producteur) représente le diffuseur dans le car : elle valide le conducteur, fait respecter les horaires de la chaîne (prise d'antenne, publicités à heure fixe, rendu d'antenne), décide des contenus (statistiques, interviews, résumés) et règle les imprévus avec la régie finale de la chaîne. Elle surveille le **retour antenne**, ce que la chaîne diffuse vraiment, quelques secondes après le programme du car.`,
       car: { text: 'Au poste Réalisateur, chaque bouton est un ordre (« Prépare… », TOP, ENCHAÎNE, SCORE) exécuté par le truquiste simulé ; au poste Scripte, le timecode maître, le temps de jeu, le conducteur et les notes d\'actions ; au poste Production, le programme et le retour antenne.', station: 'realisateur' },
       terms: ['tsl-umd', 'st2110-40'],
-      competences: ['2.8', '4.1', '3.11'],
+      competences: ['C22', 'C5', 'C29'], savoirs: ['I1', 'I2', 'H2'],
       article: 'icomguide',
       exercises: [
         { id: 'realisateur-ordres', intro: 'Au poste Réalisateur, vous donnerez les ordres au truquiste simulé : « Prépare », « Top », « Enchaîne », puis le score. Annoncez toujours avant de déclencher, et vérifiez au multiview que la caméra annoncée passe au vert avant votre top, puis au rouge.' },

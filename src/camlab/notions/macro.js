@@ -51,5 +51,5 @@ export const MACRO = {
   ],
   see: ['point', 'tirage', 'zoom', 'pdc', 'focale'],
   ref: 'Fiche Fujinon ZA12x4.5BERD : M.O.D. 0,3 m (depuis la lentille frontale), macro ; lentille mince : décalage de l\'image Δ = f² × (1/d − 1/d₀) (f, d et d₀ en mm) ; réglage du tirage : doubleur sur ×1, macro au repos (notice de l\'objectif)',
-  competences: ['2.9', '2.7'],
+  competences: ['C23', 'C20'],
 };

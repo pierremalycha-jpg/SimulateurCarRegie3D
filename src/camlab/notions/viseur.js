@@ -53,5 +53,5 @@ export const VISEUR = {
   ],
   see: ['point', 'menu', 'commandes', 'retours', 'iris', 'waveform', 'prisme', 'cadreur'],
   ref: 'Fiche technique et mode d\'emploi HXC-FB80 : viseur 7" 1920 × 1080 (155,5 × 87,5 mm), boutons BRIGHT, CONTRAST et PEAKING (sans effet sur la sortie), commutateur TALLY ; menu OPERATION, pages 03 VF MARKER, 04 VF DETAIL, 05 FOCUS ASSIST, 06 ZEBRA (ZEBRA1 70 %, ZEBRA2 100 %), 08 VF OUT ; extender numérique D.EXTENDER ×2 ou ×4 ; barres de couleur SMPTE RP 219',
-  competences: ['2.9', '1.4'],
+  competences: ['C23', 'C32'],
 };
