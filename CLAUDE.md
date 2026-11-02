@@ -11,6 +11,19 @@ Tout est en français (code commenté en français, interface, commits).
 - Vérifier : `npx eslint src tests tools && npx tsc -p tsconfig.json && npm test` (tests unitaires Node, rapides).
 
 ## Décisions d'interface (v19) à respecter
+- **La page de lecture d'une leçon (v19.24, décidée le 2 novembre 2026)** : une leçon se lit comme une page de présentation qui
+  se dévoile au défilement (`src/ui/reveal.js` : les sections `[data-reveal]` reçoivent `co-reveal` puis `in` en entrant à
+  l'écran ; tout visible sans observateur, avec moins d'animations ou sous `navigator.webdriver` ; l'opacité finale est toujours
+  1 ; une section redessinée garde ses classes). Structure fixe (`lessonPage` de `src/ui/cours_ui.js`, feuille
+  `src/styles/cours-lecture.css`, sélecteurs préfixés `.co-lecon`) : l'en-tête (`.co-hero` : fil d'Ariane, titre, l'essentiel en
+  trois phrases sans cadre), la barre des étapes collante (`.co-steps-bar`), le schéma légendé par son titre accessible
+  (`figure.co-figbox` + `.co-figcap`), la manipulation, l'explication en colonne de lecture (avec « Pour aller plus loin » et
+  l'article), « Dans le car », les mots de la leçon (`.co-terms`), le référentiel compact, le quiz puis l'exercice (adjacents :
+  `.co-quiz + .co-exoauto`), les exercices pratiques, la navigation. Les cartes ne servent qu'aux blocs où l'on agit ; le texte
+  n'a pas de cadre. Rien ne se retire du contenu pour gagner en lisibilité : on range, on espace, on rythme. Un chapitre long se
+  range en parties (`PARTIES` : le réseau, le son). Un fondamental qui manque s'ajoute dans son chapitre, avec sa manipulation
+  qui calcule depuis un module pur testé (`cours/son_calc.js`, `cours/video_calc.js`), ses six questions expliquées, son exercice,
+  ses fiches « ? » et son rattachement. Suite `node tools/e2e.mjs cours-lecture`, test `tests/unit/son.test.mjs`.
 - **Le style de l'interface (v19.22, décidé le 2 novembre 2026)** : épuré, inspiré de la direction artistique d'Apple. Un fond
   nuit neutre, des panneaux de verre dépoli (`--mat`, `--blur`) aux grands rayons (`--r-s`, `--r`, `--r-l` ; pilules pour les
   barres), **une seule couleur d'accent** (`--accent`, bleu ; `--neon` et `--cyan` en sont des alias ; `--accent-fill` pour une

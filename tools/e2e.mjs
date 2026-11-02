@@ -49,6 +49,7 @@ const SUITES = [
   ['reseau-ops', 'reseau-ops', [], 25],
   ['reseau-termes', 'termes', [], 20],
   ['cours', 'cours', [], 20],
+  ['cours-lecture', 'lecture', [], 20],
   ['parcours', 'parcours', [], 20],
   ['referentiel', 'referentiel', [], 20],
   ['camera', 'camera', [], 25],

@@ -140,7 +140,7 @@ export function glossarySection(box) {
       if (s && !(nz(t).includes(s) || nz(d).includes(s))) return;
       n++;
       const f = fiches[i];
-      list.appendChild(el('div', { class: 'item' }, el('div', { class: 'grow' }, el('div', { class: 't' }, t), el('div', { class: 's', style: { fontSize: '13px', color: '#c7d0d7' } }, d)),
+      list.appendChild(el('div', { class: 'item' }, el('div', { class: 'grow' }, el('div', { class: 't' }, t), el('div', { class: 's gl-def' }, d)),
         f ? el('button', { type: 'button', class: 'btn small', 'data-fiche': f, title: (estLecon(f) ? 'Ouvrir la leçon « ' : 'Ouvrir la fiche « ') + titreDe(f) + ' »', onclick: () => emit('cours', { fiche: f }) }, estLecon(f) ? 'Leçon' : 'Fiche « ? »') : null));
     });
     count.textContent = s ? `${n} terme${n > 1 ? 's' : ''} sur ${GLOSSARY.length}` : `${GLOSSARY.length} termes, de A à Z. ${nf} d'entre eux ont leur leçon ou leur fiche « ? », avec un schéma : boutons « Leçon » et « Fiche « ? » ».`;

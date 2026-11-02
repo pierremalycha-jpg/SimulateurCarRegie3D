@@ -21,6 +21,7 @@ import { exoSection, etoiles } from './cours_exo.js';
 import { exoOf } from '../cours/exo.js';
 import { PROG } from '../shared.js';
 import { refBlock, chapitreRef, pageReferentiel } from './referentiel_ui.js';
+import { revealIn } from './reveal.js';
 
 // ----------------------------------------------------------------------------------
 // L'espace Cours, plein écran (touche G, menu titre, écran Jouer, pupitre, menu du car) : il s'ouvre
@@ -33,9 +34,13 @@ import { refBlock, chapitreRef, pageReferentiel } from './referentiel_ui.js';
 // Étudiant) n'en montre que l'aperçu et le chemin pour l'ouvrir. Une leçon qui a une vue 3D (src/vues3d) la
 // propose (« Voir en 3D ») ; le chapitre a alors son entrée « … en 3D » dans le sommaire. Le référentiel du BTS
 // (ui/referentiel_ui.js) est cité en fin de leçon et en tête de chapitre, et a sa page (« Le référentiel du BTS »).
+// La page d'une leçon se lit comme une page de présentation (v19.24, styles/cours-lecture.css) : un en-tête
+// avec le titre et l'essentiel, une barre d'étapes qui reste en haut, puis les sections qui se dévoilent au
+// défilement (ui/reveal.js) : le schéma et sa légende, la manipulation, l'explication, le car, les mots de la
+// leçon, le référentiel, le quiz, l'exercice, les exercices pratiques.
 // ----------------------------------------------------------------------------------
 /** vue : null (Mon parcours ou la leçon), « chapitre » (le chemin du chapitre), « test » (un test de niveau), « referentiel » (la page du référentiel, refCode : la compétence à montrer) */
-const UI = { lesson: /** @type {string | null} */ (null), chapter: /** @type {string | null} */ (null), vue: /** @type {null | 'chapitre' | 'test' | 'referentiel'} */ (null), refCode: /** @type {string | null} */ (null), demo: /** @type {{ destroy?: () => void } | null | void} */ (null), q: '' };
+const UI = { lesson: /** @type {string | null} */ (null), chapter: /** @type {string | null} */ (null), vue: /** @type {null | 'chapitre' | 'test' | 'referentiel'} */ (null), refCode: /** @type {string | null} */ (null), demo: /** @type {{ destroy?: () => void } | null | void} */ (null), q: '', reveal: () => {} };
 /** l'essai de quiz en cours (gardé quand la page se redessine) : questions tirées, réponses choisies, corrigé affiché */
 /** @type {{ id: string, draw: { i: number, order: number[] }[], answers: (number | null)[], checked: boolean } | null} */
 let ESSAI = null;
@@ -93,7 +98,7 @@ function modulesDe(ch) {
   if (vs.length) out.push({ label: CHAP3D[ch.id] || 'En 3D', sub: vs.map((v) => v.titre).join(' · '), event: 'vue3d', arg: { chapitre: ch.id, from: 'cours', liste: true } });
   return out;
 }
-function stopDemo() { try { if (UI.demo && UI.demo.destroy) UI.demo.destroy(); } catch (e) { /* démonstration déjà démontée */ } UI.demo = null; }
+function stopDemo() { try { if (UI.demo && UI.demo.destroy) UI.demo.destroy(); } catch (e) { /* démonstration déjà démontée */ } UI.demo = null; try { UI.reveal(); } catch (e) { /* page déjà retirée */ } UI.reveal = () => {}; }
 
 // ---------------- l'onglet Leçons ----------------
 function lecons(box) {
@@ -105,14 +110,17 @@ function lecons(box) {
     page.replaceChildren();
     const found = UI.lesson ? lessonById(UI.lesson) : null;
     const ch = UI.chapter ? CHAPTERS.find((c) => c.id === UI.chapter) : null;
+    page.className = 'co-page';
     if (UI.vue === 'test' && testEnCours()) pageTest(page, go);
     else if (UI.vue === 'referentiel') pageReferentiel(page, go, { code: UI.refCode });
-    else if (found) { if (leconOuverte(found.lesson.id, PROG, { libre: libre() })) lessonPage(page, found, go, nav); else apercuFerme(page, found, go); }
-    else if (UI.vue === 'chapitre' && ch) { cheminChapitre(page, ch, go, modulesDe(ch).map(moduleBtn)); const lede = page.querySelector('.lede'), ref = chapitreRef(ch, go); if (lede && ref) lede.after(ref); }
-    else home(page, go);
+    else if (found) { if (leconOuverte(found.lesson.id, PROG, { libre: libre() })) { page.classList.add('co-lecon'); lessonPage(page, found, go, nav); } else apercuFerme(page, found, go); }
+    else if (UI.vue === 'chapitre' && ch) { page.classList.add('co-chemin-page'); cheminChapitre(page, ch, go, modulesDe(ch).map(moduleBtn)); const lede = page.querySelector('.lede'), ref = chapitreRef(ch, go); if (lede && ref) { ref.setAttribute('data-reveal', ''); lede.after(ref); } }
+    else { page.classList.add('co-accueil'); home(page, go); }
     // un schéma qui contient des touches (ports, récepteurs, maillons) est un groupe, pas une image
     for (const s of page.querySelectorAll('svg[role="img"]')) if (s.querySelector('[tabindex], a, button')) s.setAttribute('role', 'group');
     const sc = box.closest('.ly-scroll'); if (sc && page.getBoundingClientRect().top < 0) page.scrollIntoView({ block: 'start' });
+    // les sections se dévoilent au défilement (ui/reveal.js)
+    UI.reveal = revealIn(page);
   };
   /** @type {import('./cours_parcours.js').Go} */
   const go = {
@@ -194,22 +202,23 @@ function home(page, /** @type {import('./cours_parcours.js').Go} */ go) {
   // l'exercice pratique à faire dans le car : le premier non fait d'une leçon ouverte
   const nextX = xs.find((x) => !exerciseDone(x.id) && leconOuverte(x.lesson.id, PROG, { libre: libre() }));
   const nextXi = nextX ? exerciseInfo(nextX.id) : null;
-  page.append(el('h2', {}, 'Mon parcours'),
+  P.hero.setAttribute('data-reveal', ''); P.cats.setAttribute('data-reveal', '');
+  page.append(el('header', { class: 'co-hero', 'data-reveal': '' }, el('h2', {}, 'Mon parcours'),
     el('p', { class: 'lede' }, 'Des niveaux à valider l\'un après l\'autre, du Débutant à l\'Expert. Chaque leçon se termine par son quiz et un exercice.'),
-    ...(libre() ? [el('p', { class: 'note pa-libre' }, icon('ouvert'), 'Profil Formateur : tous les niveaux sont ouverts. Au profil Étudiant, on commence par le niveau Débutant de chaque catégorie.')] : []),
+    ...(libre() ? [el('p', { class: 'note pa-libre' }, icon('ouvert'), 'Profil Formateur : tous les niveaux sont ouverts. Au profil Étudiant, on commence par le niveau Débutant de chaque catégorie.')] : [])),
     P.hero,
-    el('div', { class: 'co-kpis pa-kpis' },
+    el('div', { class: 'co-kpis pa-kpis', 'data-reveal': '' },
       el('div', { class: 'co-kpi' }, el('b', {}, `${ld} / ${lt}`), el('span', {}, 'leçons terminées'), bar(ld, lt, 'Leçons terminées')),
       el('div', { class: 'co-kpi' }, el('b', {}, `${et} / ${em}`), el('span', {}, 'étoiles'), bar(et, em, 'Étoiles')),
       el('div', { class: 'co-kpi' }, el('b', {}, `${nvd} / ${nv.length}`), el('span', {}, 'niveaux validés'), bar(nvd, nv.length, 'Niveaux validés')),
       el('div', { class: 'co-kpi' }, el('b', {}, `${worked} / ${inSim}`), el('span', {}, 'compétences du BTS travaillées'), bar(worked, inSim, 'Compétences travaillées'))),
     P.cats,
-    el('section', { class: 'co-next', 'aria-label': 'Dans le car' }, el('h4', {}, icon('chef'), `Dans le car : ${xd} / ${xs.length} exercices pratiques faits`),
+    el('section', { class: 'co-next', 'aria-label': 'Dans le car', 'data-reveal': '' }, el('h4', {}, icon('chef'), `Dans le car : ${xd} / ${xs.length} exercices pratiques faits`),
       el('div', { class: 'co-next-row' },
         nextX && nextXi ? el('button', { type: 'button', class: 'co-next-item', onclick: () => go.lecon(nextX.lesson.id) }, el('small', {}, `Exercice pratique · ${nextX.lesson.title}`), el('b', {}, nextXi.title), el('span', {}, `${nextXi.duration} · ${nextXi.level}`)) : el('p', { class: 'note' }, 'Pas d\'exercice pratique à faire dans les leçons ouvertes.'))),
     // les procédures maison du formateur, quand il en a écrit (Espace formateur, onglet Procédures)
-    ...((CFG.car.procedures || []).length ? [el('section', { class: 'co-procs', 'aria-label': 'Procédures du car' }, el('h4', {}, 'Les procédures du car'), (() => { const b = el('div'); proceduresSection(b); return b; })())] : []),
-    el('section', { class: 'co-livret', 'aria-label': 'Livret de compétences' }, el('h4', {}, 'Mon livret de compétences (BTS MAV, option TIEE)'),
+    ...((CFG.car.procedures || []).length ? [el('section', { class: 'co-procs', 'aria-label': 'Procédures du car', 'data-reveal': '' }, el('h4', {}, 'Les procédures du car'), (() => { const b = el('div'); proceduresSection(b); return b; })())] : []),
+    el('section', { class: 'co-livret', 'aria-label': 'Livret de compétences', 'data-reveal': '' }, el('h4', {}, 'Mon livret de compétences (BTS MAV, option TIEE)'),
       el('div', { class: 'co-blocs' }, ...L.blocs.map((b) => { const w = b.count.consolidee + b.count.travaillee; const n = b.comps.length - b.count.absent; return el('div', { class: 'co-bloc' }, el('b', {}, b.id), el('span', {}, b.titre), bar(w, n, b.id), el('small', {}, `${w} / ${n} travaillées`)); })),
       el('div', { class: 'hwrow' }, el('button', { type: 'button', class: 'btn small', onclick: () => openLivret() }, 'Ouvrir le livret complet'), el('button', { type: 'button', class: 'btn small co-ref-btn', onclick: () => go.referentiel(null) }, icon('livret'), 'Le référentiel du BTS')),
       el('p', { class: 'note' }, 'Travaillée : une réussite qui la fait pratiquer. Consolidée : trois réussites, dont un exercice pratique fait seul. La valider reste le rôle du formateur.')));
@@ -221,44 +230,53 @@ function lessonPage(page, { chapter, lesson }, /** @type {import('./cours_parcou
   const ordre = ordreDe(chapter.id); const i = ordre.indexOf(L.id);
   // après un quiz ou un exercice : le sommaire et les étapes se mettent à jour, sans redessiner la page
   const maj = () => { drawNav(nav, go); const s = page.querySelector('.pa-steps-box'); if (s) s.replaceWith(etapesLecon(L.id)); };
-  page.append(el('p', { class: 'co-crumb' }, icon(chapter.icon), chapter.title, el('span', {}, ' · '), nv ? pastille(nv.niveau) : null, el('span', {}, `${L.partie ? ` · ${L.partie}` : ''} · leçon ${i + 1} / ${ordre.length}`)),
+  // l'en-tête : d'où l'on vient, le titre, l'essentiel en trois phrases ; puis la barre des étapes, qui reste en haut
+  page.append(el('header', { class: 'co-hero', 'data-reveal': '' },
+    el('p', { class: 'co-crumb' }, icon(chapter.icon), chapter.title, el('span', {}, ' · '), nv ? pastille(nv.niveau) : null, el('span', {}, `${L.partie ? ` · ${L.partie}` : ''} · leçon ${i + 1} / ${ordre.length}`)),
     el('h2', {}, L.title, L.minutes ? el('small', {}, L.minutes) : null),
-    etapesLecon(L.id),
-    el('section', { class: 'co-ess', id: 'co-lire', 'aria-label': 'L\'essentiel' }, el('h4', {}, 'L\'essentiel'), el('ul', {}, ...L.essentials.map((t) => el('li', {}, rich(t, 'co-rich'))))));
-  if (L.figure) { try { page.append(el('div', { class: 'co-figbox' }, L.figure())); } catch (e) { console.error(e); } }
+    el('section', { class: 'co-ess', id: 'co-lire', 'aria-label': 'L\'essentiel' }, el('h4', {}, 'L\'essentiel'), el('ul', {}, ...L.essentials.map((t) => el('li', {}, rich(t, 'co-rich')))))),
+  el('div', { class: 'co-steps-bar' }, etapesLecon(L.id)));
+  // le schéma, légendé par son titre accessible : il se lit seul, avant l'explication
+  if (L.figure) {
+    try {
+      const fig = L.figure();
+      const t = fig.querySelector ? fig.querySelector(':scope > title, svg > title') : null;
+      page.append(el('figure', { class: 'co-figbox', 'data-reveal': '' }, fig, t && t.textContent ? el('figcaption', { class: 'co-figcap' }, t.textContent) : null));
+    } catch (e) { console.error(e); }
+  }
   // la notion en 3D : la scène s'ouvre à l'étape tirée de cette leçon, et « Quitter » ramène ici
   const v3 = vuesDeLecon(L.id);
   if (v3.length) {
-    page.append(el('section', { class: 'co-3d', 'aria-label': 'Voir en 3D' }, el('h4', {}, icon('cube'), 'Voir en 3D'),
+    page.append(el('section', { class: 'co-3d', 'aria-label': 'Voir en 3D', 'data-reveal': '' }, el('h4', {}, icon('cube'), 'Voir en 3D'),
       ...v3.map((v) => el('div', { class: 'co-3d-item' },
         el('div', {}, el('b', {}, v.titre), el('p', {}, v.resume)),
         el('button', { type: 'button', class: 'btn small primary', 'data-vue': v.id, onclick: () => { closeLayer(false); emit('vue3d', { vue: v.id, lecon: L.id, from: 'cours' }); } }, 'Ouvrir la vue 3D')))));
   }
   if (L.demo) {
     const host = el('div', { class: 'co-demo-host' });
-    page.append(el('section', { class: 'co-demo', 'aria-label': 'Manipulation' }, el('h4', {}, icon('a_toi'), 'À vous : ', el('span', {}, L.demoTitle || 'essayez')), host));
+    page.append(el('section', { class: 'co-demo', 'aria-label': 'Manipulation', 'data-reveal': '' }, el('h4', {}, icon('a_toi'), 'À vous : ', el('span', {}, L.demoTitle || 'essayez')), host));
     try { UI.demo = L.demo(host); } catch (e) { console.error(e); host.append(el('p', { class: 'note' }, 'La manipulation n\'a pas pu démarrer dans ce navigateur.')); }
   }
-  page.append(el('section', { class: 'co-text' }, rich(L.body, 'co-rich')));
-  if (L.plus) page.append(el('details', { class: 'co-plus' }, el('summary', {}, 'Pour aller plus loin'), rich(L.plus, 'co-rich')));
+  page.append(el('section', { class: 'co-text', 'aria-label': 'L\'explication', 'data-reveal': '' }, el('h4', {}, 'L\'explication'), rich(L.body, 'co-rich'),
+    L.plus ? el('details', { class: 'co-plus' }, el('summary', {}, 'Pour aller plus loin'), rich(L.plus, 'co-rich')) : null,
+    L.article ? el('div', { class: 'hwrow co-article' }, el('button', { type: 'button', class: 'btn small', onclick: () => openArticle(L.article) }, icon('guide'), 'Lire l\'article de référence')) : null));
   if (L.car) {
     // « Aller au poste » : le car est lancé s'il ne l'est pas encore (app/nav.js)
-    page.append(el('section', { class: 'co-car' }, el('h4', {}, icon('car'), 'Dans le car'), el('p', {}, L.car.text),
+    page.append(el('section', { class: 'co-car', 'data-reveal': '' }, el('h4', {}, icon('car'), 'Dans le car'), el('p', {}, L.car.text),
       L.car.station ? el('div', { class: 'hwrow' }, el('button', { class: 'btn small primary', onclick: () => emit('go', { station: L.car.station, tab: L.car.tab, label: 'Aller au poste' }) }, S.mode === 'start' ? 'Lancer le car et aller au poste' : 'Aller au poste')) : null));
   }
-  if (L.article) page.append(el('div', { class: 'hwrow co-article' }, el('button', { type: 'button', class: 'btn small', onclick: () => openArticle(L.article) }, icon('guide'), 'Lire l\'article de référence')));
-  // le référentiel du BTS : les compétences de la leçon, leur épreuve (la TMO quand c'est le cas), savoir-faire et savoirs
-  const ref = refBlock(L, go); if (ref) page.append(ref);
+  // les mots de la leçon : les fiches « ? » qu'elle cite, en une ligne discrète ; puis le référentiel du BTS
   const terms = (L.terms || []).filter((id) => TERMS[id]);
-  if (terms.length) page.append(el('section', { class: 'co-terms' }, el('h4', {}, 'Fiches « ? »'), el('div', { class: 'co-chips' }, ...terms.map((id) => el('span', { class: 'co-chip' }, TERMS[id].t, q(id))))));
+  if (terms.length) page.append(el('section', { class: 'co-terms', 'aria-label': 'Les mots de la leçon', 'data-reveal': '' }, el('h4', {}, 'Les mots de la leçon'), el('div', { class: 'co-chips' }, ...terms.map((id) => el('span', { class: 'co-chip' }, TERMS[id].t, q(id))))));
+  const ref = refBlock(L, go); if (ref) { ref.setAttribute('data-reveal', ''); page.append(ref); }
   // la fin de la leçon : le quiz, puis l'exercice en autonomie ; ensuite, les exercices pratiques dans le car
   const apres = ordre[i + 1] || null;
   const apresOuverte = apres && leconOuverte(apres, PROG, { libre: libre() });
   const suite = apresOuverte ? { label: 'Leçon suivante', go: () => go.lecon(/** @type {string} */ (apres)) } : { label: 'Le parcours du chapitre', go: () => go.chapitre(chapter.id) };
-  page.append(quiz(L, maj));
-  page.append(exoSection(L, { onChange: maj, suite }));
+  const qz = quiz(L, maj); qz.setAttribute('data-reveal', ''); page.append(qz);
+  const ex = exoSection(L, { onChange: maj, suite }); ex.setAttribute('data-reveal', ''); page.append(ex);
   const xs = exercisesOf(L);
-  if (xs.length) page.append(el('section', { class: 'co-exos', 'aria-label': 'Exercices pratiques dans le car' }, el('h4', {}, icon('chef'), xs.length > 1 ? 'Dans le car : exercices pratiques' : 'Dans le car : exercice pratique'),
+  if (xs.length) page.append(el('section', { class: 'co-exos', 'aria-label': 'Exercices pratiques dans le car', 'data-reveal': '' }, el('h4', {}, icon('chef'), xs.length > 1 ? 'Dans le car : exercices pratiques' : 'Dans le car : exercice pratique'),
     el('p', { class: 'note' }, 'Le geste dans le car, avec Olivier : il compte pour le livret de compétences.'),
     ...xs.map((x) => exerciseCard(x, L))));
   const avant = ordre[i - 1] ? /** @type {any} */ (lessonById(ordre[i - 1])).lesson : null;
@@ -276,7 +294,7 @@ function quiz(L, onChange = () => {}) {
   const E = ESSAI;
   const box = el('section', { class: 'co-quiz', id: 'co-quiz', 'aria-label': 'Quiz' });
   // la section est redessinée en place ; le focus clavier revient sur l'élément visé
-  const redraw = (/** @type {string} */ focus) => { const nb = quiz(L, onChange); box.replaceWith(nb); const f = /** @type {HTMLElement | null} */ (nb.querySelector(focus)); if (f) f.focus(); };
+  const redraw = (/** @type {string} */ focus) => { const nb = quiz(L, onChange); if (box.classList.contains('co-reveal')) nb.classList.add('co-reveal', 'in'); box.replaceWith(nb); const f = /** @type {HTMLElement | null} */ (nb.querySelector(focus)); if (f) f.focus(); };
   box.append(el('h4', {}, 'Quiz', p.quiz ? el('small', {}, ` · meilleur score ${p.quiz.score} / ${p.quiz.total}`) : null),
     el('p', { class: 'co-quiz-help' }, `${E.draw.length} questions tirées parmi ${L.quiz.length}. Choisissez vos réponses, puis validez : le corrigé s'affiche à la fin.`));
   const text = (c) => (Array.isArray(c) ? c[0] : c);

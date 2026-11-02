@@ -1,5 +1,6 @@
 // @ts-check
 import { registerExos, entre, pick, fr } from '../exo.js';
+import { debitActif, taux, tailleOctets, gop, CODECS } from '../video_calc.js';
 
 // ----------------------------------------------------------------------------------
 // Exercices en autonomie du chapitre « Le signal vidéo numérique » : des débits, des codes, des
@@ -218,6 +219,58 @@ registerExos({
             choices: ['Ses hautes lumières, écrêtées à la prise de vue : il faut les recréer', ['Ses couleurs, qui sortent du triangle BT.2020', 'Le triangle BT.709 tient tout entier dans le BT.2020 : ses couleurs y sont toutes reproductibles.'], ['Son blanc, qui n\'est pas celui du BT.2020', 'BT.709 et BT.2020 ont le même blanc, le D65.']], answer: 0,
             aides: ['Comparez les deux triangles : lequel contient l\'autre ?', 'Le problème vient de la courbe SDR : qu\'a-t-elle fait de ce qui dépassait la lumière de référence ?'],
             solution: 'Les **hautes lumières** : la courbe SDR les a écrêtées en aplats. Monter en HDR demande d\'inventer ce qui n\'existe pas dans la source ; les couleurs, elles, tiennent dans le BT.2020.',
+          },
+        ]),
+      ];
+    },
+  },
+  'signal-compression': {
+    titre: 'Choisir un codec et dimensionner',
+    consigne: 'Le chef de car prépare l\'enregistrement et la contribution : des débits à calculer, des fichiers à dimensionner, un codec à choisir.',
+    gen: (rnd) => {
+      const F = pick(rnd, [{ w: 1920, h: 1080, nom: '1080p', ips: 50 }, { w: 1920, h: 1080, nom: '1080p', ips: 25 }, { w: 3840, h: 2160, nom: '2160p', ips: 50 }]);
+      const ech = pick(rnd, ['422', '420']), bits = pick(rnd, [8, 10]);
+      const brut = debitActif(F.w, F.h, ech, bits, F.ips);
+      const K = pick(rnd, CODECS.filter((c) => ['xdcam', 'h264', 'avci', 'diff'].includes(c.id)));
+      const t = taux(brut, K.mbs * 1e6);
+      const duree = pick(rnd, [10, 45, 90, 120]), deb = pick(rnd, [25, 50, 100]);
+      const go = tailleOctets(deb * 1e6, duree * 60) / 1e9;
+      const n = pick(rnd, [6, 12, 15, 24]), G = gop(n, 3);
+      const sit = pick(rnd, /** @type {Array<{ q: string, ok: string, faux: [string, string][] }>} */ ([
+        { q: 'Le PAD du résumé, à livrer à une chaîne française ce soir.', ok: 'XDCAM HD422 50 Mb/s en MXF OP1a', faux: [['H.264 7 Mb/s en MP4', 'C\'est le débit de diffusion : la chaîne va recompresser, et les défauts s\'ajouteront.'], ['JPEG XS', 'Un codec de transport en production, pas un format de fichier livré.']] },
+        { q: 'Les fichiers de montage d\'un documentaire tourné au stade, à couper à l\'image près.', ok: 'Un codec tout intra (AVC-Intra 100 ou ProRes 422 HQ)', faux: [['H.264 en GOP long à 10 Mb/s', 'Couper au milieu d\'un GOP oblige à recoder ; et 10 Mb/s ne tiendra pas plusieurs générations.'], ['Non compressé', '15 Go par minute : le stockage et les débits de disques ne suivraient pas.']] },
+        { q: 'La liaison du car vers la chaîne, sur un lien IP de 30 Mb/s garanti.', ok: 'H.264 ou HEVC de contribution, 4:2:2 10 bits, 15 à 25 Mb/s en CBR', faux: [['XDCAM HD422 50 Mb/s', '50 Mb/s ne passent pas dans 30.'], ['Du 4:2:0 8 bits à 7 Mb/s', 'C\'est une qualité de diffusion : la chaîne doit encore habiller, incruster et recompresser.']] },
+        { q: 'Faire passer un flux ST 2110 3G dans un lien 10 GbE vers une régie distante, sans perdre le direct.', ok: 'JPEG XS (ST 2110-22), vers 10:1', faux: [['HEVC en GOP long', 'Sa latence (des centaines de millisecondes) casse le direct et la synchro.'], ['Non compressé', '2,97 Gb/s par flux : trois caméras saturent le lien.']] },
+      ]));
+      return [
+        {
+          type: 'nombre', unite: 'Gb/s', answer: Math.round(brut / 1e9 * 1000) / 1000, tol: 0.01,
+          q: `Quel débit pour l'image active d'un **${F.nom}${F.ips}** en **${ech === '422' ? '4:2:2' : '4:2:0'} ${bits} bits**, non compressée ? (pixels × échantillons par pixel × bits × images par seconde)`,
+          pieges: [{ v: Math.round(debitActif(F.w, F.h, ech === '422' ? '420' : '422', bits, F.ips) / 1e9 * 1000) / 1000, why: `C'est l'autre échantillonnage : ${ech === '422' ? '2' : '1,5'} échantillon${ech === '422' ? 's' : ''} par pixel en ${ech === '422' ? '4:2:2' : '4:2:0'}.` }],
+          aides: [`${ech === '422' ? '4:2:2 : 2 échantillons par pixel' : '4:2:0 : 1,5 échantillon par pixel'} (un de luminance, et la couleur partagée).`, `${fr(F.w)} × ${fr(F.h)} × ${ech === '422' ? '2' : '1,5'} × ${bits} × ${F.ips}, puis en Gb/s.`],
+          solution: `${fr(F.w)} × ${fr(F.h)} × ${ech === '422' ? '2' : '1,5'} × ${bits} × ${F.ips} = **${fr(brut / 1e9, 2)} Gb/s**.`,
+        },
+        {
+          type: 'nombre', answer: Math.round(t * 10) / 10, tol: Math.max(0.3, t * 0.02),
+          q: `Ce même signal est codé en **${K.nom}** à **${K.mbs} Mb/s**. Quel taux de compression (brut ÷ compressé) ?`,
+          pieges: [{ v: Math.round(K.mbs * 1e6 / brut * 1000) / 1000, why: 'Le taux est le brut divisé par le compressé, un nombre supérieur à 1.' }],
+          aides: ['Le taux compare le débit brut au débit compressé.', `${fr(brut / 1e6, 0)} Mb/s ÷ ${K.mbs} Mb/s.`],
+          solution: `${fr(brut / 1e6, 0)} ÷ ${K.mbs} = **${fr(t, 1)}:1**.`,
+        },
+        {
+          type: 'nombre', unite: 'Go', answer: Math.round(go * 100) / 100, tol: Math.max(0.05, go * 0.01),
+          q: `Un enregistrement à **${deb} Mb/s** pendant **${duree} min**. Quelle taille de fichier, en Go (1 Go = 10⁹ octets) ?`,
+          pieges: [{ v: Math.round(go * 8 * 100) / 100, why: 'C\'est en gigabits : divisez par 8 pour des octets.' }, { v: Math.round(deb * duree / 8 * 100) / 100, why: 'La durée est en minutes : il faut des secondes (× 60).' }],
+          aides: ['Débit × durée donne des bits ; les octets, c\'est 8 fois moins.', `${deb} Mb/s × ${duree * 60} s ÷ 8.`],
+          solution: `${deb} × ${fr(duree * 60)} ÷ 8 = ${fr(go * 1000, 0)} Mo = **${fr(go, 2)} Go**.`,
+        },
+        pick(rnd, [
+          { type: 'choix', q: `${sit.q} Quel format ?`, choices: [sit.ok, ...sit.faux], answer: 0, aides: ['Pensez à ce qui vient après : montage, recompression, latence ?', 'Un fichier livré, un fichier de travail, une liaison, un flux de production : quatre usages, quatre codecs.'], solution: `**${sit.ok}.**` },
+          {
+            type: 'nombre', answer: Math.round(G.poids * 100) / 100, tol: 0.1,
+            q: `Un GOP de **${n} images** avec M = 3 (deux B entre deux références). En comptant une P au tiers d'une I et une B au dixième, combien pèse-t-il, en « images I » ?`,
+            aides: [`${G.I} I, ${G.P} P, ${G.B} B.`, `1 + ${G.P} × 1/3 + ${G.B} × 0,1.`],
+            solution: `${G.I} + ${G.P} ÷ 3 + ${G.B} × 0,1 = **${fr(G.poids, 2)} images I** au lieu de ${n} en tout intra : ${fr(n / G.poids, 1)} fois moins.`,
           },
         ]),
       ];

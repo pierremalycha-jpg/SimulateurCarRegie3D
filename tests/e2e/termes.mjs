@@ -93,9 +93,10 @@ await page.keyboard.press('Escape'); await page.waitForTimeout(200);
 // ---- Cours, chapitre réseau ----
 T.check('le poste est toujours ouvert', await ev(() => window.__dbg.S.mode === 'station' && document.querySelector('#modal').hidden));
 await ev(() => window.__dbg.openGuide('guide', 'reseau'));
-T.check('Cours, chapitre réseau : « ? » dans les tableaux et bouton du lexique', await until(page, () => ['spine', 'leaf', 'uplink', 'grand-maitre'].every((k) => document.querySelector(`#layer .prose .q[data-term="${k}"]`)) && [...document.querySelectorAll('#layer .btn')].some((b) => /Lexique/.test(b.textContent) && !b.hidden), null, 6000));
-await click('#layer .prose .q[data-term="uplink"]');
-T.check('fiche « uplink » depuis le Cours, par-dessus', /lien montant|uplink/i.test((await pop())?.t || '') && await ev(() => +getComputedStyle(document.querySelector('#termpop')).zIndex > +getComputedStyle(document.querySelector('#layer')).zIndex));
+T.check('Cours, chapitre réseau : la leçon qui cite l\'article, ses mots de la leçon avec leurs « ? »', await until(page, () => { const id = document.querySelector('#layer .co-les.on[data-lesson]')?.dataset.lesson || ''; return window.__dbg.COURS.lessonById(id)?.lesson.article === 'reseau' && document.querySelectorAll('#layer .co-terms .q[data-term]').length >= 2; }, null, 8000));
+const premierMot = await ev(() => { const q = document.querySelector('#layer .co-terms .q[data-term]'); return q ? (q.getAttribute('aria-label') || '').replace('Explication : ', '') : ''; });
+await click('#layer .co-terms .q[data-term]');
+T.check('la première fiche depuis la leçon, par-dessus le Cours', !!premierMot && (await pop())?.t === premierMot && await ev(() => +getComputedStyle(document.querySelector('#termpop')).zIndex > +getComputedStyle(document.querySelector('#layer')).zIndex), premierMot);
 await page.keyboard.press('Escape'); await page.keyboard.press('Escape'); await page.waitForTimeout(300);
 T.check('Échap deux fois : fiche puis Cours fermés, retour au poste', !(await pop()) && await ev(() => !document.querySelector('#layer') && document.querySelector('#modal').hidden && window.__dbg.S.mode === 'station'));
 

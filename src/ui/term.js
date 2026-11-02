@@ -11,6 +11,8 @@ import '../content/terms_ip.js';
 import './figs_mesure.js';
 import './figs_ctrlnet.js';
 import '../content/terms_videohub.js';
+import '../content/terms_son.js';
+import '../content/terms_video.js';
 import './figs_videohub.js';
 import { rich } from './rich.js';
 import { allLessons } from '../cours/index.js';
