@@ -65,7 +65,7 @@ details.tb-sec[open] > summary::after { content: ' · fermer'; }
 .tb-bar i { display: block; height: 100%; border-radius: inherit; background: var(--accent); }
 
 .tb-pastille { display: inline-block; padding: 2px 9px; border-radius: 999px; font: 600 12.5px/1.5 var(--f-body); white-space: nowrap; }
-.tb-pastille.forte { background: var(--tally-d); color: var(--tally); }
+.tb-pastille.forte { background: var(--tally-key); color: var(--fg); }
 .tb-pastille.moyenne { background: var(--amber-d); color: var(--amber); }
 .tb-pastille.aide { background: var(--accent-d); color: var(--accent); }
 
