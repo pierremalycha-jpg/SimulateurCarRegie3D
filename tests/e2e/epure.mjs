@@ -17,7 +17,7 @@ await until(page, () => document.getElementById('title').classList.contains('rea
 T.check('écran titre : le nom, trois entrées, ni moniteur à mire, ni balayage, ni bandeau', await ev(() => document.querySelectorAll('#title .ti-key').length === 3 && !document.querySelector('#title .ti-mon') && !document.querySelector('#title .ti-bg') && !document.querySelector('#title .ti-kicker') && /BTS Audiovisuel de Saint-Quentin/.test(document.getElementById('title').textContent)));
 T.check('touches en minuscules, grandes et arrondies', (await css('#ti-play', 'textTransform')) === 'none' && (await radius('#ti-play')) >= 12 && parseFloat(await css('#ti-play b', 'fontSize')) >= 18);
 T.check('police de base : 15 px, Archivo (plus d\'Archivo Narrow dans l\'interface)', parseFloat(await css('body', 'fontSize')) >= 15 && /Archivo/.test(await css('body', 'fontFamily')) && !/Narrow/.test(await css('#ti-name', 'fontFamily')));
-T.check('l\'entrée principale est bleue (plus de néon cyan)', await ev(() => { const c = getComputedStyle(document.getElementById('ti-play')).backgroundColor.match(/\d+/g).map(Number); return c[2] > c[0] && c[2] > 200 && c[1] < 200; }));
+T.check('l\'entrée principale est bleue (plus de néon cyan)', await ev(() => { const c = getComputedStyle(document.getElementById('ti-play')).backgroundColor.match(/\d+/g).map(Number); return c[2] > c[0] && c[2] > 180 && c[1] < 170; }));
 await shot('01-titre');
 
 // ---------------- Jouer ----------------

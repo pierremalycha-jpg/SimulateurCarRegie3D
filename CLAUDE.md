@@ -13,8 +13,9 @@ Tout est en français (code commenté en français, interface, commits).
 ## Décisions d'interface (v19) à respecter
 - **Le style de l'interface (v19.22, décidé le 2 novembre 2026)** : épuré, inspiré de la direction artistique d'Apple. Un fond
   nuit neutre, des panneaux de verre dépoli (`--mat`, `--blur`) aux grands rayons (`--r-s`, `--r`, `--r-l` ; pilules pour les
-  barres), **une seule couleur d'accent** (`--accent`, bleu ; `--neon` et `--cyan` en sont des alias) pour l'action et la
-  sélection, le rouge tally pour l'antenne, le vert pour le prêt, l'ambre pour l'expérience. Archivo partout (`--f-disp` =
+  barres), **une seule couleur d'accent** (`--accent`, bleu ; `--neon` et `--cyan` en sont des alias ; `--accent-fill` pour une
+  surface pleine sous du texte blanc) pour l'action et la sélection, le rouge tally pour l'antenne (`--tally-key` sous du
+  texte blanc), le vert pour le prêt, l'ambre pour l'expérience ; tout texte reste lisible à 4,5:1 (suite accessibilite). Archivo partout (`--f-disp` =
   `--f-body`), corps 15 px, **pas de capitales espacées** sur les touches, titres et étiquettes (seuls les petits en-têtes de
   groupe gris y ont droit), **pas de coin coupé** (`--notch: none`), pas de contour lumineux, pas de LED décorative. Une
   nouvelle feuille lit les jetons de `src/styles/theme-jeu.css` et ne code aucune couleur en dur ; un texte d'interface tient

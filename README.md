@@ -407,9 +407,13 @@ perdre de la qualité d'instruction ni des informations du Cours.
 - **un fond nuit neutre** et des panneaux de **verre dépoli** (`backdrop-filter`, 22 px de flou) aux **grands rayons** (10, 14,
   20 px ; pilules pour les barres), une ombre portée douce ; plus aucun coin coupé (`--notch` et `--notch-s` valent `none`, les
   autres feuilles les lisent encore), plus de contour lumineux, plus de LED ni de vis décoratives ;
-- **une seule couleur d'accent**, le bleu (`--accent`, `#3b9cff`) pour l'action et la sélection ; les anciens jetons `--neon` et
-  `--cyan` prennent sa valeur, si bien que toutes les feuilles suivent. Le rouge tally reste l'antenne, le vert le prêt, l'ambre
-  l'expérience, en teintes adoucies (`#ff453a`, `#34c759`, `#ffb340`) ; plus de couleur codée en dur dans les feuilles ;
+- **une seule couleur d'accent**, le bleu (`--accent`, `#3b9cff`) pour l'action et la sélection ; les surfaces pleines qui
+  portent du texte blanc (touche principale, Reprendre, interrupteurs allumés) prennent un bleu plus profond (`--accent-fill`,
+  `#1f6fd6` : contraste AA de 4,9:1, vérifié par la suite accessibilite) ; les anciens jetons `--neon` et `--cyan` prennent la
+  valeur de l'accent, si bien que toutes les feuilles suivent. Le rouge tally reste l'antenne, le vert le prêt, l'ambre
+  l'expérience, en teintes adoucies (`#ff453a`, `#34c759`, `#ffb340` ; le texte blanc sur rouge se pose sur `--tally-key`,
+  `#d9291e`) ; les gris (`--muted`, `--dim`) sont choisis pour rester lisibles à 4,5:1 sur les panneaux ; plus de couleur
+  codée en dur dans les feuilles ;
 - **Archivo partout**, en plus grand (corps 15 px, touches 15 px, titres de 17 à 76 px, interlettrage négatif sur les grands
   titres), **sans capitales espacées** sur les touches, les titres et les étiquettes ; les capitales restent aux seuls en-têtes de
   groupe, petits et gris, comme dans les réglages d'iOS. Archivo Narrow et B612 Mono ne servent plus qu'aux textures 3D et aux
