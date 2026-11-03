@@ -71,6 +71,7 @@ const SUITES = [
   ['emission', 'emission', [], 30],
   ['figurants', 'figurants', [], 25],
   ['graphismes', 'graphismes', [], 30],
+  ['profil', 'profil', [], 20],
 ];
 
 const args = process.argv.slice(2);

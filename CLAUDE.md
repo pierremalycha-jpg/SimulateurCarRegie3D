@@ -43,6 +43,16 @@ Tout est en français (code commenté en français, interface, commits).
   livret. Les leçons de la TMO (`src/cours/exploitation_tmo.js`, exercices `exos/exploitation_tmo.js`) : synoptique,
   énergie, nodal, PAD, recette. Toute nouvelle leçon cite ses compétences et ses savoirs ; un texte du référentiel ne se
   paraphrase pas, il se cite. Suite `node tools/e2e.mjs referentiel`.
+- **Le compte en ligne, le pass et le classement (v19.25, décidés le 3 novembre 2026)** : la progression se retrouve sur
+  n'importe quel ordinateur par un compte Firebase (`src/compte/` : REST, pas de bibliothèque ; `progress/<uid>` en JSON,
+  `profils/<uid>` public ; règles `firestore.rules` ; projet dans `firebase.web.json` ou `TIEE_FIREBASE`, sans lui tout reste
+  local). Connexion : la progression de l'ordinateur rejoint le compte, sauf si elle est à un autre compte ; déconnexion :
+  elle quitte l'ordinateur. 60 niveaux (`game/xp.js`), le pass (`game/pass.js` : une récompense par niveau, à récupérer puis
+  équiper ; objets dessinés par le code, `game/cosmetiques.js`), série et défis du jour (`game/defis.js`, chaque gain porte
+  sa sorte). L'espace Profil (`ui/profil_ui.js` : profil, pass, succès, classement) s'ouvre par la carte joueur, Réglages →
+  Mon compte et le téléphone (applications Profil, Classement), pas par une quatrième entrée. Le profil public ne porte
+  jamais d'adresse ; un nouveau champ public s'ajoute aussi aux règles (test unitaire). Tests `compte.test.mjs`,
+  `pass.test.mjs`, suite `node tools/e2e.mjs profil`.
 - **TIEE Simulator**, réalisé par le BTS Audiovisuel de Saint-Quentin (logo `src/assets/logo-bts-av.png`),
   développé par Pierre MALYCHA : ces mentions restent sur l'écran titre et dans « À propos » (Réglages).
 - **Trois entrées, les mêmes partout** : Jouer · Cours · Réglages. Écran titre (`src/app/title.js`,

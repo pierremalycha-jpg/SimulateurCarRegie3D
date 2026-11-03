@@ -15,6 +15,8 @@ import { profil } from '../game/pass.js';
 // Réglages résume l'état en une ligne. Sans projet Firebase, la fenêtre le dit (et le formateur peut y
 // coller la configuration de son projet pour cet ordinateur).
 // ----------------------------------------------------------------------------------
+/** remplace le contenu (les morceaux absents, null, sont laissés de côté : replaceChildren écrirait « null ») */
+const poser = (box, ...kids) => box.replaceChildren(...kids.filter((k) => k != null && k !== false));
 const champ = (label, input) => el('label', { class: 'cp-champ' }, el('span', {}, label), input);
 
 /** l'état du compte en une phrase */
@@ -109,7 +111,7 @@ function indisponibleVue(box) {
 }
 
 function dessiner(box) {
-  box.replaceChildren(
+  poser(box, 
     COMPTE.etat === 'indisponible' ? indisponibleVue(box) : connecte() ? connecteVue(box) : formulaire(box),
     isTrainer() && configLocale() ? el('p', { class: 'note' }, `Projet Firebase de cet ordinateur : ${(configFirebase() || { projectId: '' }).projectId}. `,
       el('button', { type: 'button', class: 'linkbtn', onclick: async () => { poserConfig(null); await initCompte(); dessiner(box); } }, 'Le retirer')) : null);

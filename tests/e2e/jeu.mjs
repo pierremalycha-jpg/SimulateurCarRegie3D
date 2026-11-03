@@ -24,7 +24,7 @@ await ev(() => window.__dbg.start('zero', 'jour', 'basse', false));
 await until(page, () => window.__dbg.S.mode === 'fps', null, 20000);
 T.check('objectif à l\'écran : la mission 1 du mode Tout à faire, sans « null »', await until(page, () => { const q = document.getElementById('quest'); return !!q && !q.hidden && /Installation du car/.test(q.textContent) && /Le compound/.test(q.textContent) && /Mission 1 \/ 22/.test(q.textContent) && !/null/.test(q.textContent); }, null, 8000));
 T.check('l\'ancienne carte de mission est masquée', await ev(() => { const m = document.getElementById('mission'); return !m || getComputedStyle(m).display === 'none'; }));
-T.check('barre d\'XP : niveau 1, 0 XP', await ev(() => document.querySelector('#xpbar .xp-lvl b')?.textContent === '1' && /0 \/ 120 XP/.test(document.querySelector('#xpbar .xp-txt')?.textContent || '')));
+T.check('barre d\'XP : niveau 1, 0 XP', await ev(() => document.querySelector('#xpbar .xp-lvl b')?.textContent === '1' && /0 \/ 65 XP/.test(document.querySelector('#xpbar .xp-txt')?.textContent || '')));
 T.check('repère 3D sur le pied de car, avec sa distance', await until(page, () => { const m = document.getElementById('qmark'); return !!m && !m.hidden && /compound/i.test(m.textContent) && /\d+ m/.test(m.textContent); }, null, 8000));
 T.check('barre d\'outils : le téléphone (Tab), qui contient les Missions', await ev(() => document.querySelector('#toolbar #tb-tel kbd')?.textContent === 'Tab' && !document.querySelector('#toolbar #tb-missions')));
 T.check('HUD épuré à l\'arrivée : objectif (avec le lieu), barre d\'outils (niveau compris), bande d\'état à trois cases, retour PGM, prise en main sur une ligne ; ni bandeau de lieu, ni PVW, ni i/s, ni toast, ni mini-plan', await ev(() => {
@@ -48,9 +48,9 @@ await page.keyboard.press('Escape');
 
 // ---------------- XP, niveau, badges ----------------
 const r = await ev(() => { const a = window.__dbg.jeu.XP.award({ pts: 30, label: 'Test' }); return { pts: a.pts, total: a.total, leveled: a.leveled, keys: Object.keys(window.__dbg.PROG.game.keys).length }; });
-T.check('une récompense : +30 XP, barre mise à jour', r.pts === 30 && r.total >= 30 && await until(page, () => /\d+ \/ 120 XP/.test(document.querySelector('#xpbar .xp-txt')?.textContent || '') && !!document.querySelector('#xpbar .xp-float'), null, 3000));
-const lv = await ev(() => window.__dbg.jeu.XP.award({ pts: 100, label: 'Niveau' }));
-T.check('passage au niveau 2 : bannière « Assistant technique », bruitage sans erreur', lv.leveled && lv.level.n === 2 && await until(page, () => { const b = document.getElementById('banner'); return !!b && !b.hidden && /Assistant technique/.test(b.textContent) && document.querySelector('#xpbar .xp-lvl b')?.textContent === '2'; }, null, 3000));
+T.check('une récompense : +30 XP, barre mise à jour', r.pts === 30 && r.total >= 30 && await until(page, () => /\d+ \/ 65 XP/.test(document.querySelector('#xpbar .xp-txt')?.textContent || '') && !!document.querySelector('#xpbar .xp-float'), null, 3000));
+const lv = await ev(() => window.__dbg.jeu.XP.award({ pts: 50, label: 'Niveau' }));
+T.check('passage au niveau 2 (65 XP) : bannière avec la récompense du pass, bruitage sans erreur', lv.leveled && lv.level.n === 2 && await until(page, () => { const b = document.getElementById('banner'); return !!b && !b.hidden && /Niveau 2/.test(b.textContent) && /Récompense débloquée/.test(b.textContent) && document.querySelector('#xpbar .xp-lvl b')?.textContent === '2'; }, null, 9000));
 await shot('05-niveau');
 await ev(() => window.__dbg.openStation('melangeur'));
 await until(page, () => window.__dbg.S.mode === 'station', null, 10000);

@@ -24,6 +24,8 @@ import { avatarEl } from './avatar.js';
 // compte : pas d'entrée de plus dans les menus. Feuille styles/profil.css (jetons du thème) ; les
 // couleurs des avatars et des bannières sont du contenu (game/cosmetiques.js).
 // ----------------------------------------------------------------------------------
+/** remplace le contenu (les morceaux absents, null, sont laissés de côté : replaceChildren écrirait « null ») */
+const poser = (box, ...kids) => box.replaceChildren(...kids.filter((k) => k != null && k !== false));
 const TABS = /** @type {[string, string][]} */ ([['profil', 'Mon profil'], ['pass', 'Le pass'], ['succes', 'Succès'], ['classement', 'Classement']]);
 const TIER = { bronze: 'Bronze', argent: 'Argent', or: 'Or' };
 const dateFr = (t) => new Date(t).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
@@ -45,7 +47,7 @@ export function carteProfil(pub, o = {}) {
       el('div', { class: 'pf-nom' },
         el('h3', {}, pub.pseudo || 'Technicien anonyme'),
         el('p', { class: 'pf-titre' }, pub.titre || L.title),
-        el('p', { class: 'pf-meta' }, el('span', { class: 'pf-niv' }, `Niveau ${pub.niveau || L.n}`), ` · ${pub.grade || L.title} · ${Number(pub.xp) || 0} XP`, pub.classe ? ` · ${pub.classe}` : '')),
+        el('p', { class: 'pf-meta' }, el('span', { class: 'pf-niv' }, `Niveau ${pub.niveau || L.n}`), `${(pub.titre || L.title) !== (pub.grade || L.title) ? ` · ${pub.grade || L.title}` : ''} · ${Number(pub.xp) || 0} XP`, pub.classe ? ` · ${pub.classe}` : '')),
       vitrine.length ? el('div', { class: 'pf-vitrine', 'aria-label': 'Badges en vitrine' }, ...vitrine.map((x) => el('span', { class: 'pf-vb ' + x.tier, title: x.desc }, icon(x.ico), el('small', {}, x.title)))) : null),
     o.moi ? el('div', { class: 'pf-xp' },
       el('div', { class: 'pc-bar', role: 'progressbar', 'aria-label': 'Progression vers le niveau suivant', 'aria-valuemin': '0', 'aria-valuemax': '100', 'aria-valuenow': String(Math.round(L.pct * 100)) }, el('i', { style: { width: `${Math.round(L.pct * 100)}%` } })),
@@ -146,7 +148,7 @@ function blocVitrine(redraw) {
 function pageProfil(box) {
   const redraw = () => { const y = scrollY(box); pageProfil(box); restoreY(box, y); };
   const n = aRecuperer().length;
-  box.replaceChildren(
+  poser(box, 
     carteProfil(profilPublic(PROG), { moi: true }),
     n ? el('button', { type: 'button', class: 'pf-attente', onclick: () => showTab('pass') }, icon('cadeau'), el('b', {}, `${n} récompense${n > 1 ? 's' : ''} à récupérer`), el('span', {}, 'Ouvrir le pass')) : null,
     blocCompte(), blocJour(), blocIdentite(redraw), blocApparence(redraw), blocVitrine(redraw));
@@ -178,7 +180,7 @@ function pagePass(box) {
         : atteint ? el('button', { type: 'button', class: 'btn small primary', onclick: () => { const g = recuperer(n); if (g.length) { toast(`Niveau ${n} : ${g.map((x) => objet(x.type, x.id).nom).join(', ')} récupéré !`, 'good', 3500); redraw(); } } }, icon('cadeau'), 'Récupérer')
           : el('span', { class: 'pf-pal-etat' }, icon('cadenas'), `${Math.max(0, xpPourNiveau(n) - xp)} XP`)));
   }
-  box.replaceChildren(
+  poser(box, 
     el('section', { class: 'pf-sec pf-pass-tete' },
       el('div', {}, el('h3', {}, 'Le pass du technicien'),
         el('p', { class: 'note' }, `Niveau ${L.n} sur ${NIVEAU_MAX} · ${L.title} · ${xp} XP. Chaque niveau donne une récompense pour ton profil ; les niveaux en 5 donnent les plus rares. Tout se gagne en jouant et en apprenant.`)),
@@ -203,7 +205,7 @@ function listeBadges(ids, dates = null, avecVerrou = true) {
 }
 function pageSucces(box) {
   const g = game(); const general = BADGES.filter((b) => !b.comp); const n = general.filter((b) => g.badges[b.id]).length;
-  box.replaceChildren(el('section', { class: 'pf-sec' }, el('h3', {}, `Mes succès · ${n} / ${general.length}`),
+  poser(box, el('section', { class: 'pf-sec' }, el('h3', {}, `Mes succès · ${n} / ${general.length}`),
     el('p', { class: 'note' }, 'Ils s\'affichent sur ton profil : les autres joueurs les voient depuis le classement.'),
     listeBadges(Object.keys(g.badges), g.badges)));
 }
@@ -212,17 +214,17 @@ function pageSucces(box) {
 const CL = { filtre: 'tous', liste: /** @type {Array<{ id: string, data: any }>} */ ([]), at: 0 };
 async function pageClassement(box) {
   if (!connecte()) {
-    box.replaceChildren(el('section', { class: 'pf-sec pf-vide' }, icon('classement'), el('h3', {}, 'Le classement des techniciens'),
+    poser(box, el('section', { class: 'pf-sec pf-vide' }, icon('classement'), el('h3', {}, 'Le classement des techniciens'),
       el('p', {}, compteDisponible() ? 'Connecte-toi pour voir le classement de ta promotion et y entrer.' : 'Le compte en ligne n\'est pas configuré sur ce simulateur : le classement est fermé.'),
       compteDisponible() ? el('button', { type: 'button', class: 'btn primary', onclick: () => openCompte() }, icon('connexion'), 'Se connecter') : null));
     return;
   }
-  box.replaceChildren(el('p', { class: 'note' }, 'Chargement du classement…'));
+  poser(box, el('p', { class: 'note' }, 'Chargement du classement…'));
   // le mien d'abord, pour qu'il y figure à jour
   publierBientot();
   if (Date.now() - CL.at > 20000) {
     const r = await classement();
-    if (!r.ok) { box.replaceChildren(el('section', { class: 'pf-sec pf-vide' }, icon('alarme'), el('p', {}, r.error || 'Classement indisponible.'), el('button', { type: 'button', class: 'btn', onclick: () => { CL.at = 0; pageClassement(box); } }, 'Réessayer'))); return; }
+    if (!r.ok) { poser(box, el('section', { class: 'pf-sec pf-vide' }, icon('alarme'), el('p', {}, r.error || 'Classement indisponible.'), el('button', { type: 'button', class: 'btn', onclick: () => { CL.at = 0; pageClassement(box); } }, 'Réessayer'))); return; }
     CL.liste = r.liste; CL.at = Date.now();
   }
   if (layerOpen() !== 'profil') return;
@@ -248,7 +250,7 @@ function dessinerClassement(box) {
       el('span', { class: 'pf-pts' }, `${Number(d.xp) || 0} XP`),
       el('span', { class: 'pf-nb' }, icon('medaille'), String(d.nbBadges || (d.badges || []).length || 0)));
   });
-  box.replaceChildren(
+  poser(box, 
     el('section', { class: 'pf-sec pf-cl-tete' }, el('div', {}, el('h3', {}, 'Classement'), el('p', { class: 'note' }, `Les techniciens connectés, par niveau (XP). ${liste.length} joueur${liste.length > 1 ? 's' : ''} au classement.`)),
       seg, el('button', { type: 'button', class: 'btn small', onclick: () => { CL.at = 0; pageClassement(box); } }, 'Actualiser')),
     profil().visible ? null : el('p', { class: 'note pf-cache' }, icon('cache'), 'Ton profil est caché : tu n\'apparais pas au classement (Mon profil → Mon identité).'),
@@ -259,7 +261,7 @@ async function voirJoueur(box, x) {
   let d = x.data;
   if (x.id !== COMPTE.uid) { const frais = await profilDe(x.id); if (frais) d = frais; }
   const stats = [[d.lecons, 'leçons acquises'], [d.exercices, 'exercices terminés'], [d.competences, 'compétences travaillées'], [d.meilleureSerie, 'jours de série (record)']];
-  box.replaceChildren(
+  poser(box, 
     el('button', { type: 'button', class: 'btn small pf-retour', onclick: () => dessinerClassement(box) }, icon('retourapp'), 'Retour au classement'),
     carteProfil(d),
     el('section', { class: 'pf-sec' }, el('div', { class: 'pf-stats' }, ...stats.map(([v, t]) => el('div', {}, el('b', {}, String(Number(v) || 0)), el('small', {}, t))))),

@@ -394,6 +394,78 @@ Tests :
   « Emmène-moi / Montre-moi » doit mettre en évidence un élément réel de la page, et « Fais-le pour moi » doit faire
   valider l'étape.
 
+## v19.25 : un compte en ligne, un pass de 60 niveaux, des profils et un classement
+
+**Pourquoi.** Un élève a téléchargé le simulateur sur un autre ordinateur, s'est « connecté »… et n'a pas retrouvé sa
+progression. Elle n'était enregistrée en ligne que sur la page publiée sur claude.ai : l'exécutable, le fichier à partager
+et le réseau local la gardaient dans le seul navigateur de l'ordinateur. Demande : la gérer depuis Firebase pour la
+retrouver partout ; rendre la progression plus récompensante (avatar, bannière, un pass de niveaux comme un pass de
+saison) ; montrer ses succès aux autres et voir leurs profils ; un classement des élèves par niveau.
+
+**Le compte en ligne** (`src/compte/`, Firebase par son interface REST, sans bibliothèque ajoutée) :
+
+- **Réglages → Mon compte** (`ui/compte_ui.js`) : se connecter, créer un compte (adresse, mot de passe de 6 caractères au
+  moins, pseudo), « mot de passe oublié » (mail de Firebase), synchroniser, se déconnecter, supprimer son compte.
+- **La progression entière** est dans `progress/<uid>` (Firestore, champ `data` en JSON) : lisible et modifiable par son
+  seul propriétaire. Avant chaque écriture, la copie en ligne est relue et fusionnée (`mergeProgress` : rien ne se perd
+  entre deux ordinateurs ouverts en même temps).
+- **À la connexion**, la progression faite sur l'ordinateur sans compte **rejoint le compte** ; mais si elle appartient à un
+  autre compte (`carregie.progress.owner`), elle est remplacée, jamais mélangée (salle de classe). **À la déconnexion**, elle
+  est enregistrée puis retirée de l'ordinateur. La session (jeton de renouvellement, jamais le mot de passe) est gardée :
+  on est reconnecté au lancement suivant. Hors ligne, on reste connecté et l'enregistrement reprend au retour d'Internet.
+- **Le projet Firebase** : `firebase.web.json` (clé d'API web et identifiant du projet, publics) ou la variable
+  `TIEE_FIREBASE`, intégrés à la construction (`tools/build.mjs`) ; sans eux, tout marche comme avant, sur l'ordinateur.
+  Le formateur peut aussi coller la configuration de son projet dans Mon compte (cet ordinateur seulement).
+  Mise en place : console Firebase → créer le projet ; Authentication → méthode « Adresse e-mail/Mot de passe » ;
+  Firestore → créer la base (région `eur3` ou `europe-west`) ; Paramètres du projet → ajouter une application Web et copier
+  `apiKey` et `projectId` dans `firebase.web.json` ; déployer les règles : `firebase deploy --only firestore:rules`
+  (`firebase.json`, `firestore.rules`). Pour le suivi en ligne, un formateur s'inscrit à la main dans `formateurs/<uid>`.
+- **Les règles** (`firestore.rules`) : `progress/<uid>` à soi seul (lu aussi par un formateur inscrit), `profils/<uid>` lu par
+  tout joueur connecté et écrit par son seul propriétaire avec des champs contrôlés (jamais d'adresse électronique).
+  Comme toute progression écrite par le client, l'XP n'est pas infalsifiable : les règles bornent les valeurs, le
+  formateur garde le livret et le suivi pour juger.
+
+**Une progression plus récompensante** (`game/xp.js`, `game/pass.js`, `game/defis.js`, `game/cosmetiques.js`) :
+
+- **60 niveaux** au lieu de 7 : XP cumulée = 5 (n − 1)² + 60 (n − 1) (65 XP pour le niveau 2, 945 pour le 10, 20 945 pour le
+  60), l'écart grandit de 10 XP par niveau. Les **grades** regroupent les niveaux : Stagiaire (1), Assistant technique (5),
+  Technicien (10), Technicien confirmé (18), Ingénieur d'exploitation (27), Chef de car (37), Directeur technique (48).
+- **Le pass du technicien** : chaque niveau de 2 à 60 donne un objet pour son profil (24 avatars dessinés avec les icônes du
+  métier, 17 bannières : mire de barres 75 %, zébras, forme d'onde, fibre monomode, gamut BT.2020, sang et or…, 8 cadres
+  d'avatar, 16 titres : « Pousse-câble », « Roi du brassage », « Maître du genlock »…) ; les niveaux en 5 donnent les plus
+  rares (cadres, bannières). Une récompense se **récupère** d'un clic (pastille sur la carte joueur et l'application Profil)
+  puis s'**équipe**. Gratuit, sans achat : seule l'XP fait avancer. Tout est dessiné par le code, aucune image de fichier.
+- **La série** : le premier gain du jour rapporte un bonus de régularité (10 XP, puis 5 de plus par jour d'affilée, 40 au
+  plus) ; badges à 3, 7 et 30 jours. **Les défis du jour** : trois, les mêmes pour toute la classe (tirés de la date) : un
+  défi d'XP (100 ou 250) et deux défis d'activité (acquérir une leçon, réussir un exercice en autonomie, résoudre une panne,
+  une mission réseau…), de 20 à 50 XP chacun, et 50 de plus pour les trois. Nouveaux badges : Journée parfaite, niveaux 10,
+  30 et 60.
+- La bannière de niveau dit la récompense débloquée ; les bonus ont leur « +n XP ».
+
+**Le profil et le classement** (`ui/profil_ui.js`, `ui/avatar.js`, `styles/profil.css`) : l'espace **Profil**, quatre onglets.
+
+- **Mon profil** : la carte (bannière, avatar dans son cadre, pseudo, titre, niveau, classe, trois badges en vitrine), la
+  série et les défis du jour, l'identité (pseudo, classe, visible au classement ou caché), l'apparence (objets gagnés ou
+  verrouillés avec leur niveau), la vitrine, le compte.
+- **Le pass** : les 59 paliers, récupérés, prêts (à récupérer) ou verrouillés avec l'XP qui manque ; « Tout récupérer ».
+- **Succès** : tous les badges, avec leur date d'obtention.
+- **Classement** : les joueurs connectés, du plus haut niveau au plus bas (XP), podium, ma ligne en évidence, filtre « Ma
+  classe » ; un clic ouvre **le profil d'un autre joueur** : sa carte, ses chiffres (leçons, exercices, compétences, record
+  de série) et ses succès. Le profil public (`profils/<uid>`, `profilPublic`) ne contient ni adresse ni réponses.
+- On y vient par **la carte joueur** (écran titre, Jouer, menu du car, téléphone : elle montre maintenant l'avatar et le
+  pseudo), par Réglages → Mon compte et par les applications **Profil** et **Classement** du téléphone : pas de quatrième
+  entrée dans les menus.
+
+**Progression v7** (`PROG_VERSION`) : le profil (`profil` : pseudo, objets portés, vitrine, classe, visibilité, récompenses
+récupérées ; fusionné par `mergeProfil`), les jours d'activité et les défis (`game.jours`, `game.defis`, fusionnés).
+
+**Vérification.** Tests unitaires `tests/unit/compte.test.mjs` (valeurs Firestore, configuration, client REST et erreurs en
+français, compte : création, fusion, propriétaire, déconnexion, reconnexion, suppression, sur un faux Firebase
+`tests/helpers/faux-firebase.mjs`), `tests/unit/pass.test.mjs` (chaque objet gagnable une fois, récupérer et équiper, profil
+public conforme à `firestore.rules`, série, défis), `xp.test.mjs` et `progression.test.mjs` mis à jour ; suite
+`node tools/e2e.mjs profil` (créer un compte, profil, pass, succès, classement, profil d'un autre, déconnexion, « autre
+ordinateur », reconnexion au rechargement).
+
 ## v19.24 : le Cours qui se dévoile, et le son des bases à l'antenne
 
 **Pourquoi.** Entre les schémas, les textes, les fiches « ? » et le référentiel, une leçon finissait par être une pile de
@@ -2502,6 +2574,9 @@ node tools/shots.mjs dossier 1280 800 '["vision","hf"]'   # captures de postes
 | `styles/theme-jeu.css` | Le thème « épuré » (v19.22, inspiré de la direction artistique d'Apple) : jetons de couleur (un accent bleu, verre dépoli, grands rayons), composants communs (touches, fenêtres, onglets, afficheurs), HUD, écran titre, Jouer, menu, journal, badges, Cours, téléphone, postes en 3D |
 | `telephone/index.js`, `telephone/apps.js`, `telephone/modele.js`, `styles/telephone.css` | Le téléphone (Tab ou T) : lever et ranger, touches, accueil (objectif, niveau), applications par famille (Aller à, Missions, Olivier, outils du car, Cours, Progression, Réglages), boîtier 3D et écran HTML posé dessus (transformation projective `cssProjection`) |
 | `app/title.js` | Écran titre TIEE Simulator : une page centrée, logo du BTS, trois entrées (Jouer, Cours, Réglages), progression du chargement, conseil d'Olivier, carte joueur, mentions |
+| `compte/config.js`, `compte/firestore.js`, `compte/firebase.js`, `compte/index.js` | Le compte en ligne (v19.25) : le projet Firebase (construction ou navigateur), les valeurs de Firestore (calcul pur), le client REST (Authentication, documents, requête triée, erreurs en français), le compte (session gardée, fusion à la connexion, propriétaire de la progression, déconnexion, profil public, classement) ; `firestore.rules`, `firebase.json` |
+| `game/pass.js`, `game/cosmetiques.js`, `game/defis.js` | Le pass du technicien (v19.25) : 60 niveaux et leur récompense, le profil (pseudo, objets portés, vitrine, récompenses récupérées, fusion, profil public) ; les avatars, bannières, cadres et titres ; la série de jours et les défis du jour (calcul pur) |
+| `ui/profil_ui.js`, `ui/compte_ui.js`, `ui/avatar.js`, `styles/profil.css` | L'espace Profil (Mon profil, Le pass, Succès, Classement, profil d'un autre joueur) et la fenêtre « Mon compte » (Réglages) ; l'avatar dans son cadre |
 | `ui/settings.js` | Réglages : une seule fenêtre (ordinateur, partie en cours, ma progression, profil, espace formateur, aide, à propos) |
 | `ui/ma_progression.js` | Réglages → Ma progression : où elle est enregistrée et si ça marche, exporter dans un fichier, importer (fusion), effacer, vos données personnelles ; notification quand un enregistrement échoue |
 | `app/profile.js` | Profil Étudiant / Formateur, mémorisé ; classe `role-formateur` sur `body`, éléments `.role-only` |

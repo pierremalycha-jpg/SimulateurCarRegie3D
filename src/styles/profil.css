@@ -15,7 +15,7 @@
 .pf-av.grand.cadre { box-shadow: 0 0 0 4px var(--bg); }
 
 /* ---------- la carte d'un profil : bannière, avatar, nom ---------- */
-.pf-page { max-width: 980px; margin: 0 auto; display: grid; gap: 22px; padding-bottom: 40px; }
+.pf-page { width: 100%; max-width: 980px; margin: 0 auto; display: grid; grid-template-columns: minmax(0, 1fr); gap: 22px; padding-bottom: 40px; }
 .pf-carte { position: relative; border-radius: var(--r-l); overflow: hidden; background: var(--panel); border: 1px solid var(--line); }
 .pf-ban { height: 132px; background-size: cover; }
 .pf-id { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 4px 18px; align-items: end; padding: 0 22px 18px; margin-top: -52px; }
@@ -42,7 +42,7 @@
 .pf-compte p { margin: 0; flex: 1; min-width: 0; }
 .pf-compte.invite { border-color: var(--accent-d); background: var(--accent-d); }
 .pf-compte.invite > .ico { color: var(--accent); }
-.pf-attente { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-radius: var(--r); border: 0; background: var(--amber-d); color: var(--fg); font: inherit; text-align: left; cursor: pointer; }
+.pf-attente { display: flex; justify-content: flex-start; align-items: center; gap: 12px; padding: 14px 16px; border-radius: var(--r); border: 0; background: var(--amber-d); color: var(--fg); font: inherit; text-align: left; cursor: pointer; }
 .pf-attente .ico { color: var(--amber); font-size: 22px; }
 .pf-attente span { margin-left: auto; color: var(--amber); font-weight: 600; }
 
