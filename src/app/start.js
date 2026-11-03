@@ -153,7 +153,8 @@ export function buildStart() {
   const concert = LIEUX.find((L) => L.id === 'concert');
   const lieu = (id, nom, cadre, live, icons, onclick) => el('li', {},
     el('button', { type: 'button', class: 'lx' + (live && PICK.lieu === id ? ' on' : ''), 'data-lieu': id, 'aria-pressed': live && PICK.lieu === id ? 'true' : 'false', onclick },
-      el('span', { class: 'lx-scr ' + (live ? 'live' : 'bars'), 'aria-hidden': 'true' },
+      // le Labo : ses deux icônes sur un fond de paillasse, plutôt que la pelouse du car
+      el('span', { class: 'lx-scr ' + (live ? (id === 'labo' ? 'live lab' : 'live') : 'bars'), 'aria-hidden': 'true' },
         el('span', { class: 'lx-sil' }, ...icons.map((n) => icon(n))),
         el('span', { class: 'lx-sig' }, live ? 'En service' : 'En préparation')),
       el('span', { class: 'lx-umd' }, el('i', { class: 'lx-tally' }), el('b', {}, nom), el('small', {}, live ? 'en service' : concert ? concert.prevu : '')),

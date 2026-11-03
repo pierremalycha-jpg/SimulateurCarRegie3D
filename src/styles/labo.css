@@ -7,6 +7,11 @@
 .labo[hidden], .labo [hidden] { display: none !important; }
 body.labo-on #modal.overlay { z-index: 46; }
 
+/* ---------- la tuile du Labo dans Jouer : ses icônes sur un fond sombre, pas la pelouse ---------- */
+.lx-scr.live.lab { background: radial-gradient(circle at 30% 30%, var(--accent-d), transparent 60%), radial-gradient(circle at 75% 70%, var(--amber-d), transparent 55%), var(--panel2); }
+.lx-scr.live.lab .lx-sil { display: flex; color: var(--fg); }
+.lx-scr.live.lab .lx-sil .ico { width: 40px; height: 40px; }
+
 /* ---------- la barre et les onglets ---------- */
 .lb-bar { display: flex; align-items: center; gap: 16px; padding: calc(10px + env(safe-area-inset-top, 0px)) 16px 10px; border-bottom: 1px solid var(--line); background: var(--mat); backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur); }
 .lb-id { display: flex; flex-direction: column; min-width: 0; }
