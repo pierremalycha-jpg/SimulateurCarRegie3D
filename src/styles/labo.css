@@ -106,7 +106,11 @@ body.labo-on #modal.overlay { z-index: 46; }
 .lb-diag li.bad::before { background: var(--tally); }
 .lb-net { grid-template-columns: 1fr 1fr; }
 
-/* ---------- la console dot2, sur tout l'espace ---------- */
+/* ---------- la console dot2 : tout l'espace, le panneau des défis à côté (repliable) ---------- */
+.labo.lb-console .lb-body { grid-template-columns: minmax(0, 1fr) min(360px, 30vw); }
+.labo.lb-console .lb-work { padding: 0; overflow: hidden; }
+.labo.lb-console.lb-replie .lb-body { grid-template-columns: minmax(0, 1fr); }
+.lb-replier { flex: none; }
 .lb-dot2 { display: block; height: 100%; position: relative; }
 .lb-dot2-frame { display: block; width: 100%; height: 100%; border: 0; background: var(--bg); }
 .lb-dot2-wait { position: absolute; inset: 0; display: grid; place-items: center; }

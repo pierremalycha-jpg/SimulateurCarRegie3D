@@ -120,24 +120,69 @@ await shot('10-dmx-reseau', 300);
 await A.click('#labo .lb-vues [data-vue="valeurs"]'); await A.waitForTimeout(200);
 T.check('les valeurs : un fader par canal de l\'appareil choisi', await ev(() => document.querySelectorAll('#labo .lb-fader').length === 8));
 
-// ---------------- la console dot2 ----------------
+// ---------------- la console dot2 : programmer pour de vrai ----------------
 await A.click('#labo .lb-tab[data-atelier="dot2"]');
-T.check('la console dot2 se charge dans son cadre, sur tout l\'espace (pas de panneau)', await until(A, () => { const f = document.querySelector('#labo .lb-dot2-frame'); return !!f && !!f.contentDocument && !!f.contentDocument.querySelector('#root *') && document.querySelector('#labo .lb-side').hidden; }, null, 60000));
+T.check('la console dot2 se charge dans son cadre, le panneau des défis à côté (cinq défis)', await until(A, () => { const f = document.querySelector('#labo .lb-dot2-frame'); return !!f && !!f.contentWindow && !!f.contentWindow.__laboDot2 && !!f.contentDocument.querySelector('.hw-key') && !document.querySelector('#labo .lb-side').hidden && document.querySelectorAll('#labo .lb-dcard').length === 5; }, null, 90000));
 await shot('11-dot2', 2500);
+// un défi : la console reçoit le show de départ (16 projecteurs, aucune cue)
+await A.click('#labo [data-defi="dot2-matricks"]'); await A.waitForTimeout(800);
+const app = () => ev(() => { const S = document.querySelector('#labo .lb-dot2-frame').contentWindow.__laboDot2.console.show; return { fixtures: S.fixtures.length, cues: S.main.cues.length, execs: Object.keys(S.executors).length }; });
+T.check('le défi charge le show de départ dans la console : 16 projecteurs, aucune cue', JSON.stringify(await app()) === JSON.stringify({ fixtures: 16, cues: 0, execs: 0 }), JSON.stringify(await app()));
+const q0 = await ev(() => window.__dbg.labo().RUN.items[0].q);
+const m = /cue \*\*(\d+)\*\*.*13 et 15\*\* en \*\*(\S+)\*\*.*14 et 16\*\* en \*\*(\S+)\*\*/i.exec(q0);
+T.check('la consigne donne la cue et les deux couleurs', !!m, q0);
+if (m) {
+  const [, n, ca, cb] = m; const PRE = { rouge: '5', bleu: '3', vert: '6' };
+  const F = A.frames().find((f) => f.url().startsWith('about:srcdoc'));
+  const touche = async (t) => { await F.locator('.hw-key').filter({ hasText: new RegExp(`^${t.replace('.', '\\.')}$`) }).first().click({ delay: 90 }); await A.waitForTimeout(120); };
+  const tape = async (seq) => { for (const t of seq.split(' ')) await touche(t); };
+  // comme un élève au pupitre : le groupe des lyres, MAtricks Odd, la couleur, MAtricks Even, l'autre couleur, Reset, Store
+  await tape('Group 9 At Full'); await tape('Please');
+  await tape('Macro 5 Please'); await tape(`Preset 4 . ${PRE[ca]} Please`);
+  await tape('Macro 6 Please'); await tape(`Preset 4 . ${PRE[cb]} Please`);
+  await tape('Macro 1 2 Please'); await tape(`Store Cue ${n} Please`);
+  await A.waitForTimeout(500);
+  T.check('au pupitre : la cue est enregistrée dans la séquence principale', (await app()).cues >= 1, JSON.stringify(await ev(() => document.querySelector('#labo .lb-dot2-frame').contentWindow.__laboDot2.console.history.slice(-8).map((h) => h.text))));
+  await A.click('#labo [data-k="defi:verifier"]'); await A.waitForTimeout(300);
+  T.check('« Vérifier mon programme » : le Labo relit le show et le juge juste', await ev(() => !!document.querySelector('#labo .lb-fb.ok')), await ev(() => document.querySelector('#labo .lb-fb')?.textContent));
+  await shot('12-dot2-verifie', 600);
+  await A.click('#labo [data-k="defi:suivante"]'); await A.waitForTimeout(200);
+  for (let k = 1; k < 3; k++) {
+    await ev(() => {
+      const L = window.__dbg.labo(); const it = L.RUN.items[L.RUN.k];
+      if (it.type === 'nombre') { const i = document.querySelector('#labo .lb-input'); i.value = String(it.answer); i.dispatchEvent(new Event('input')); }
+      if (it.type === 'choix') [...document.querySelectorAll('#labo .lb-ch')].find((x) => x.textContent === (Array.isArray(it.choices[it.answer]) ? it.choices[it.answer][0] : it.choices[it.answer])).click();
+      document.querySelector('#labo [data-k="defi:valider"]').click();
+    });
+    await A.waitForTimeout(200); await A.click('#labo [data-k="defi:suivante"]'); await A.waitForTimeout(250);
+  }
+  T.check('le défi « Une lyre sur deux » réussi seul (100 / 100), compté', await ev(() => { const d = window.__dbg.PROG.labo.defis['dot2-matricks']; return !!d && d.seul && d.best === 100; }));
+}
+// un autre défi : le show en cours a des cues, le Labo demande avant de le remplacer ; la solution charge un show qui marche
+await A.click('#labo .lb-back'); await A.waitForTimeout(200);
+await A.click('#labo [data-defi="dot2-cercle"]');
+T.check('un show programmé : confirmation avant de le remplacer', await until(A, () => !!document.querySelector('#ask'), null, 4000));
+await A.locator('#ask [data-ask="ok"]').click(); await A.waitForTimeout(600);
+await A.click('#labo [data-k="defi:solution"]'); await A.waitForTimeout(800);
+T.check('la solution charge dans la console un exécuteur qui fait le cercle', (await app()).execs === 1);
+await shot('13-dot2-solution', 1500);
+await A.click('#labo .lb-replier'); await A.waitForTimeout(200);
+T.check('« Masquer les défis » : la console prend toute la place', await ev(() => document.querySelector('#labo .lb-side').hidden && document.getElementById('labo').classList.contains('lb-replie')));
+await A.click('#labo .lb-replier'); await A.waitForTimeout(200);
 
 // ---------------- sortir : Échap ramène à Jouer, sur le Labo ----------------
-await A.mouse.click(10, 10).catch(() => {});
+await A.locator('#labo .lb-id h1').click();
 await A.keyboard.press('Escape'); await A.waitForTimeout(300);
 T.check('Échap : retour à Jouer, le lieu Labo et l\'atelier gardés', await ev(() => !window.__dbg.labo().LB.open && document.querySelector('.lx.on')?.dataset.lieu === 'labo' && document.querySelector('.jo-mode[aria-pressed="true"]')?.dataset.mode === 'labo:dot2'));
 T.check('l\'atelier Optique dit un défi réussi sur 3', await ev(() => /1 défi réussi sur 3/.test(document.querySelector('.jo-mode[data-mode="labo:optique"]').textContent)));
 
-// ---------------- depuis le Cours : l'exercice x-labo-dmx de la leçon « Unicast, diffusion, multicast » ----------------
-await ev(() => window.__dbg.emit('cours', { lesson: 'reseau-types' })); await A.waitForTimeout(800);
+// ---------------- depuis le Cours : l'exercice x-labo-dmx de la leçon « Le DMX » (chapitre La lumière) ----------------
+await ev(() => window.__dbg.emit('cours', { lesson: 'lumiere-dmx' })); await A.waitForTimeout(800);
 T.check('la leçon range l\'exercice « Le Labo : DMX et Art-Net »', await ev(() => /Le Labo : DMX et Art-Net/.test(document.getElementById('layer')?.textContent || '')));
-await ev(() => { window.__dbg.S.coursBack = 'reseau-types'; window.__dbg.emit('go', { labo: 'dmx' }); }); await A.waitForTimeout(500);
+await ev(() => { window.__dbg.S.coursBack = 'lumiere-dmx'; window.__dbg.emit('go', { labo: 'dmx' }); }); await A.waitForTimeout(500);
 T.check('« Ouvrir l\'atelier » : le Labo sur DMX, le Cours refermé', await ev(() => window.__dbg.labo().LB.open && window.__dbg.labo().LB.atelier === 'dmx' && !document.getElementById('layer')));
 await A.click('#labo .lb-quit'); await A.waitForTimeout(800);
-T.check('en sortant, retour à la leçon', await ev(() => !!document.getElementById('layer') && /Unicast, diffusion, multicast/.test(document.getElementById('layer').textContent)));
+T.check('en sortant, retour à la leçon', await ev(() => !!document.getElementById('layer') && /Le DMX/.test(document.getElementById('layer').textContent)));
 await A.keyboard.press('Escape'); await A.waitForTimeout(300);
 
 // ---------------- 390 px : rien ne déborde ----------------
@@ -146,7 +191,7 @@ for (const at of ['optique', 'photometrie', 'sensito', 'dmx']) {
   await ev((at) => window.__dbg.emit('labo', { atelier: at }), at); await A.waitForTimeout(400);
   const ov = await ev(() => { const L = document.getElementById('labo'); const w = L.clientWidth; return [...L.querySelectorAll('.lb-work *, .lb-side *')].filter((e) => { const r = e.getBoundingClientRect(); return r.width && r.right > w + 1 && !e.closest('.lb-tabs'); }).map((e) => e.className || e.tagName).slice(0, 4); });
   T.check(`390 px, ${at} : rien ne dépasse`, ov.length === 0, JSON.stringify(ov));
-  await A.screenshot({ path: `${OUT}/12-mobile-${at}.png` });
+  await A.screenshot({ path: `${OUT}/14-mobile-${at}.png` });
 }
 await ev(() => window.__dbg.labo().LB.open && document.querySelector('#labo .lb-quit').click());
 

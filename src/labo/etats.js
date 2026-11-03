@@ -21,6 +21,8 @@ export const INITIAL = {
     cam: { iso: 800, t: 1 / 50, N: 4, Tcam: 3200 },
   }),
   sensito: () => ({ courbe: 'bt709', e: 0, g: 0, ciel: 3 }),
+  // la console dot2 : le show qu'elle a enregistré (labo/ateliers/dot2.js le lit dans « simdot2.session »)
+  dot2: () => ({ show: null }),
   dmx: () => ({
     vue: 'patch', sel: 'f1',
     appareils: [
@@ -56,6 +58,7 @@ export const MESURES = {
     const g = signal(st.courbe, GRIS, st.e, st.g), b = signal(st.courbe, 0.9, st.e, st.g), c = signal(st.courbe, GRIS * Math.pow(2, st.ciel), st.e, st.g);
     return { vGris: g.V, vBlanc: b.V, vCiel: c.V, cielEcrete: c.ecrete || c.sature, plage: plage(st.courbe, st.e, st.g) };
   },
+  dot2: (st) => ({ show: st.show }),
   dmx: (st) => ({ plan: planUnivers(st.appareils), ligne: diagLigne(st.ligne), liaison: liaison(st.console, st.noeud) }),
 };
 
@@ -71,9 +74,14 @@ export function poser(st, /** @type {Record<string, any>} */ patch) {
     if (!o) continue;
     const last = parts[parts.length - 1];
     // un objet se fond dans celui qui est là (une scène ne donne que ce qu'elle change) ; une liste, une valeur remplacent
-    if (isPlain(v) && isPlain(o[last])) poser(o[last], v); else o[last] = clone(v);
+    if (isPlain(v) && isPlain(o[last])) fondre(o[last], v); else o[last] = clone(v);
   }
   return st;
+}
+/** fond un objet dans un autre, clé à clé (ici, les clés ne sont pas des chemins : « 1.1 » est un exécuteur) */
+function fondre(dst, src) {
+  for (const [k, v] of Object.entries(src)) { if (isPlain(v) && isPlain(dst[k])) fondre(dst[k], v); else dst[k] = clone(v); }
+  return dst;
 }
 /** l'état de départ d'un essai : l'état initial de l'atelier, la scène du défi posée dessus */
 export const etatPour = (/** @type {string} */ atelier, scene = {}) => poser(INITIAL[atelier](), scene);

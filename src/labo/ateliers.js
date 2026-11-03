@@ -6,7 +6,7 @@ import { defiReussi } from './suivi.js';
 // l'entrepôt. Chaque atelier fait manipuler une notion du Cours sur un modèle qui calcule vraiment
 // (labo/calc/) ; il a ses défis notés (labo/defis/, un fichier par atelier), rattachés aux
 // compétences du référentiel (champ competences, numéros officiels C1 à C39) et à ses savoirs.
-// La console lumière (dot2) est une manipulation libre : ses exercices sont dans l'application.
+// La console lumière (dot2) a des défis de programmation : le Labo relit le show qu'elle enregistre.
 // Un nouvel atelier s'ajoute ici (et son onglet apparaît seul dans le Labo et dans Jouer), avec son
 // module d'interface (labo/ateliers/<id>.js), ses défis et son test.
 // ----------------------------------------------------------------------------------
@@ -24,7 +24,7 @@ import { defiReussi } from './suivi.js';
  * @property {{ lecon?: string, camera?: string, titre: string }[]} liens leçons du Cours, notions de la caméra en 3D
  * @property {string[]} terms fiches « ? » (content/terms_labo.js)
  * @property {{ id: string, titre: string }[]} defis ses défis notés, dans l'ordre
- * @property {boolean} [libre] manipulation libre, sans défi noté (la console)
+ * @property {boolean} [libre] manipulation libre, sans défi noté
  */
 /** @type {Atelier[]} */
 export const ATELIERS = [
@@ -69,14 +69,14 @@ export const ATELIERS = [
     defis: [{ id: 'dmx-patch', titre: 'Patcher à la suite' }, { id: 'dmx-dip', titre: 'Adresser aux DIP' }, { id: 'dmx-ligne', titre: 'Une ligne DMX qui tient' }, { id: 'dmx-artnet', titre: 'Le nœud Art-Net' }],
   },
   {
-    id: 'dot2', titre: 'Console lumière dot2', court: 'Console dot2', ico: 'melangeur', libre: true,
-    resume: 'Une console sur le modèle de la dot2 : patch, groupes, presets, cues, exécuteurs, et le plateau en 3D.',
-    consigne: 'La console s\'ouvre en plein écran : patcher, programmer, restituer. Ses exercices sont dans l\'application.',
+    id: 'dot2', titre: 'Console lumière dot2', court: 'Console dot2', ico: 'melangeur',
+    resume: 'Une console sur le modèle de la dot2 : patch, groupes, presets, cues, exécuteurs, effets, macros, et le plateau en 3D.',
+    consigne: 'Programmer la console : le défi charge un show de départ, le Labo relit ce que vous avez enregistré. Ses exercices guidés restent dans l\'application.',
     notions: ['Patch et fiche des projecteurs', 'Groupes et presets', 'Cues et tracking', 'Exécuteurs et pages', 'Câblage DMX du plateau'],
     competences: ['C17', 'C31'], savoirs: ['G5', 'G3'],
-    liens: [],
+    liens: [{ lecon: 'lumiere-console', titre: 'La console : patch, groupes, presets, cues' }, { lecon: 'lumiere-lyres', titre: 'Les lyres : pan, tilt, roues et effets' }],
     terms: ['dmx512', 'tracking'],
-    defis: [],
+    defis: [{ id: 'dot2-couleurs', titre: 'Des couleurs sur les lyres' }, { id: 'dot2-matricks', titre: 'Une lyre sur deux (MAtricks)' }, { id: 'dot2-position', titre: 'Pointer un gobo' }, { id: 'dot2-cercle', titre: 'Un cercle de lyres' }, { id: 'dot2-chaser', titre: 'Un chaser de couleurs' }],
   },
 ];
 /** tous les défis notés, avec leur atelier */

@@ -176,3 +176,46 @@ test('livret, Cours et badges : chaque défi compte pour les compétences de son
   assert.ok(['laborantin', 'atelier-complet', 'labo-complet'].every((b) => BADGES.some((x) => x.id === b)));
   assert.ok(!BADGES.some((x) => x.id === 'entrepot' || x.id === 'embauche'));
 });
+
+test('la console : lire un show (tracking, renvois aux presets), couleurs, effets, 16 bits', async () => {
+  const H = await import('../../src/labo/calc/show.js');
+  const { SHOW_DEPART } = await import('../../src/labo/dot2/show_depart.js');
+  const S = JSON.parse(JSON.stringify(SHOW_DEPART));
+  assert.equal(S.fixtures.length, 16); assert.equal(H.typeDe(S, 13), 'gen-spot'); assert.equal(H.typeDe(S, 15), 'gen-wash');
+  // comme la console enregistre « Group 9 At Full ; Preset 4.5 ; Store Cue 1 », puis une cue 2 qui ne change que les wash
+  S.main.cues = [
+    { no: 1, values: Object.fromEntries(['13', '14'].map((f) => [f, { DIM: { v: 1 }, COLOR1: { p: '4.5' } }]).concat(['15', '16'].map((f) => [f, { DIM: { v: 1 }, COLORRGB1: { p: '4.5' }, COLORRGB2: { p: '4.5' }, COLORRGB3: { p: '4.5' }, COLORRGB5: { p: '4.5' } }]))) },
+    { no: 2, values: { 15: { COLORRGB1: { v: 0 }, COLORRGB2: { v: 0.2 }, COLORRGB3: { v: 1 } } } },
+  ];
+  const c1 = H.etatCue(S, 'main', 1), c2 = H.etatCue(S, 'main', 2);
+  assert.deepEqual(['13', '14', '15', '16'].map((f) => H.couleurDe(S, c1, f)), ['rouge', 'rouge', 'rouge', 'rouge'], 'les presets se résolvent');
+  assert.deepEqual(['13', '15', '16'].map((f) => H.couleurDe(S, c2, f)), ['rouge', 'bleu', 'rouge'], 'tracking : la cue 2 garde ce qu\'elle ne change pas');
+  assert.equal(H.valeur(c2, '13', 'DIM'), 1); assert.equal(H.etatCue(S, 'main', 3), null);
+  assert.equal(H.teinte(0, 1, 0), 'vert'); assert.equal(H.teinte(1, 1, 1), 'blanc'); assert.equal(H.teinte(1, 0, 1), 'magenta');
+  assert.equal(H.plageDe(H.ROUE_COULEURS, H.milieuPlage(H.ROUE_COULEURS, 'cyan')), 'cyan');
+  // un effet : cercle, droite, huit
+  const fx = (phase, mult = 1) => ({ form: 'sin', low: -0.02, high: 0.02, speed: 30, phase, mult });
+  const st = (dp, mult) => ({ 13: { PAN: { v: 0.5, fx: fx(0) }, TILT: { v: 0.6, fx: fx(dp, mult) } } });
+  assert.equal(H.effetPosition(st(90), '13').forme, 'cercle'); assert.equal(H.effetPosition(st(270), '13').forme, 'cercle');
+  assert.equal(H.effetPosition(st(0), '13').forme, 'droite'); assert.equal(H.effetPosition(st(45), '13').forme, 'ellipse');
+  assert.equal(H.effetPosition(st(0, 2), '13').forme, 'huit'); assert.equal(H.effetPosition(st(90, 2), '13').forme, 'arc'); assert.equal(H.effetPosition({ 13: { PAN: { v: 0.5 } } }, '13'), null);
+  assert.equal(H.tourEffet(30), 2); assert.equal(H.tourChaser(60, 4), 4);
+  // pan sur 540° : le centre, et le pas en 8 et 16 bits
+  assert.deepEqual(H.position16(0, [-270, 270]), { v16: 32768, grossier: 128, fin: 0 });
+  proche(H.pas([-270, 270]).huit, 2.12, 0.01); assert.ok(H.pas([-270, 270]).seize < 0.01);
+  proche(H.versDeg(H.versV(45, [-135, 135]), [-135, 135]), 45, 1e-9);
+  // le tracking et Cue Only
+  const cues = [{ no: 1, values: { a: { DIM: 0.5 } } }, { no: 2, values: { b: { DIM: 1 } } }, { no: 3, values: {} }];
+  assert.equal(H.suivre(cues)[2].a.DIM, 0.5, 'la valeur suit');
+  assert.equal(H.suivre(H.modifier(cues, 0, 'a', 'DIM', 0.8))[2].a.DIM, 0.8, 'tracking : la modification se propage');
+  assert.equal(H.suivre(H.modifier(cues, 0, 'a', 'DIM', 0.8, true))[1].a.DIM, 0.5, 'Cue Only : la cue suivante reste comme avant');
+});
+
+test('le crochet de la console : posé une fois, rien d\'autre ne change', async () => {
+  const fs = await import('node:fs');
+  const brut = fs.readFileSync(new URL('../../src/labo/dot2/simulateur_dot2.html', import.meta.url), 'utf8');
+  assert.equal(brut.split('this.restoreSession()}start(){').length, 2, 'le point d\'accroche existe une seule fois');
+  const crochet = 'this.restoreSession(),window.__laboDot2=this}start(){';
+  const patche = brut.replace('this.restoreSession()}start(){', crochet);
+  assert.equal(patche.length - brut.length, crochet.length - 'this.restoreSession()}start(){'.length);
+});

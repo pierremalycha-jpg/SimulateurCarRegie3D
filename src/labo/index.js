@@ -4,7 +4,7 @@ import { on, emit } from '../state.js';
 import { icon } from '../ui/icons.js';
 import { rich } from '../ui/rich.js';
 import { openTerm, termOpen, closeTerm } from '../ui/term.js';
-import { askOpen } from '../ui/common.js';
+import { askOpen, ask } from '../ui/common.js';
 import { PROG, saveProgressSoon } from '../shared.js';
 import { TERMS } from '../content/netterms.js';
 import { competence, SAVOIRS } from '../content/referentiel.js';
@@ -32,7 +32,7 @@ import * as DOT2 from './ateliers/dot2.js';
 // ({ atelier, lesson }) : depuis Jouer, le Cours (exercice x-labo-<id>) ou le module caméra.
 // ----------------------------------------------------------------------------------
 const MODULES = { optique: OPTIQUE, photometrie: PHOTO, sensito: SENSITO, dmx: DMX, dot2: DOT2 };
-export const LB = { open: false, atelier: ATELIERS[0].id, lesson: '', panneau: 'defis' };
+export const LB = { open: false, atelier: ATELIERS[0].id, lesson: '', panneau: 'defis', replie: false };
 /** @type {any} */ let R = null;
 let titleWasOpen = false;
 /** l'état de chaque atelier (gardé tant que la page vit) et sa vue */
@@ -76,7 +76,9 @@ function build() {
   const tabs = el('nav', { class: 'lb-tabs', role: 'tablist', 'aria-label': 'Les ateliers du Labo' },
     ...ATELIERS.map((A) => el('button', { type: 'button', role: 'tab', class: 'lb-tab', 'data-atelier': A.id, onclick: () => choisir(A.id) }, icon(A.ico), el('span', {}, A.court))));
   const quitter = el('button', { type: 'button', class: 'btn small lb-quit', title: 'Revenir à l\'écran Jouer (Échap)', onclick: () => closeLabo() }, 'Quitter', ' ', el('kbd', {}, 'Échap'));
-  const bar = el('header', { class: 'lb-bar' }, el('div', { class: 'lb-id' }, el('h1', {}, 'Le Labo'), el('small', { class: 'lb-sous' }, '')), tabs, quitter);
+  // à côté de la console, le panneau des défis se replie pour lui laisser toute la place
+  const replier = el('button', { type: 'button', class: 'btn small lb-replier', 'aria-pressed': 'false', onclick: () => { LB.replie = !LB.replie; dessinerSide(); } }, 'Masquer les défis');
+  const bar = el('header', { class: 'lb-bar' }, el('div', { class: 'lb-id' }, el('h1', {}, 'Le Labo'), el('small', { class: 'lb-sous' }, '')), tabs, replier, quitter);
   const work = el('main', { class: 'lb-work', 'aria-label': 'L\'atelier' });
   const sideTabs = el('div', { class: 'seg lb-sidetabs', role: 'tablist', 'aria-label': 'Défis ou explications' },
     el('button', { type: 'button', role: 'tab', 'data-p': 'defis', onclick: () => { LB.panneau = 'defis'; dessinerSide(); } }, 'Défis'),
@@ -87,7 +89,7 @@ function build() {
   const root = el('div', { id: 'labo', class: 'labo', role: 'dialog', 'aria-modal': 'true', 'aria-label': 'Le Labo', hidden: true }, bar, el('div', { class: 'lb-body' }, work, side), live);
   document.body.append(root);
   document.addEventListener('keydown', onKey, true);
-  R = { root, bar, tabs, work, side, sideTabs, sideBody, live };
+  R = { root, bar, tabs, work, side, sideTabs, sideBody, live, replier };
 }
 function onKey(e) {
   if (!LB.open || e.code !== 'Escape' || askOpen()) return;
@@ -107,6 +109,7 @@ function choisir(id) {
   for (const b of R.tabs.querySelectorAll('.lb-tab')) { const onT = /** @type {HTMLElement} */ (b).dataset.atelier === id; b.setAttribute('aria-selected', String(onT)); }
   R.bar.querySelector('.lb-sous').textContent = A.titre;
   R.root.classList.toggle('lb-plein', !!A.libre);
+  R.root.classList.toggle('lb-console', A.id === 'dot2');
   const V = VUES[id] || (VUES[id] = MODULES[id].creer(ctxDe(id)));
   R.work.replaceChildren(V.root);
   rendreAtelier();
@@ -118,7 +121,10 @@ function rendreAtelier() { const V = VUES[LB.atelier]; if (V) V.rendre(); }
 // ---------------- le panneau : défis et explications ----------------
 function dessinerSide() {
   const A = atelierById(LB.atelier);
-  R.side.hidden = !!A.libre;
+  const console = A.id === 'dot2';
+  R.side.hidden = !!A.libre || (console && LB.replie);
+  R.root.classList.toggle('lb-replie', console && LB.replie);
+  R.replier.hidden = !console; R.replier.textContent = LB.replie ? 'Afficher les défis' : 'Masquer les défis'; R.replier.setAttribute('aria-pressed', String(LB.replie));
   for (const b of R.sideTabs.querySelectorAll('button')) b.setAttribute('aria-selected', String(/** @type {HTMLElement} */ (b).dataset.p === LB.panneau));
   if (LB.panneau === 'comprendre') { R.sideBody.replaceChildren(comprendre(A)); return; }
   if (RUN && RUN.atelier === A.id) { dessinerDefi(); return; }
@@ -157,9 +163,13 @@ function comprendre(A) {
 }
 
 // ---------------- un essai de défi ----------------
-function commencer(id) {
+async function commencer(id) {
   const t = tirageDefi(id); if (!t) return;
   const d = /** @type {any} */ (ATELIERS.flatMap((A) => A.defis.map((x) => ({ ...x, atelier: A.id }))).find((x) => x.id === id));
+  // un atelier qui a son propre état (la console) : le défi y charge sa scène, après accord si l'on y a déjà travaillé
+  const V = /** @type {any} */ (VUES[d.atelier]);
+  if (V && V.programme && V.programme() && !(await ask('Le défi charge son show de départ dans la console : les cues et les exécuteurs du show en cours seront remplacés. Pour les garder, sauvegardez-le d\'abord (Backup, Save Show) ou exportez-le.', { title: 'Remplacer le show de la console', ok: 'Charger le show du défi', cancel: 'Annuler' }))) return;
+  if (V && V.preparer) V.preparer(t.scene);
   STATES[d.atelier] = etatPour(d.atelier, t.scene);
   // la vue de l'atelier lit l'état par son contexte : elle suit le nouvel objet
   RUN = { id, atelier: d.atelier, items: t.items, vues: t.vues, k: 0, etats: t.items.map(() => etatVide()), retour: null, saisie: '', choix: null, fini: false, res: null, aides: 0 };
@@ -179,6 +189,9 @@ function valider() {
   let v = null;
   if (it.type === 'nombre' || it.type === 'texte') v = RUN.saisie;
   if (it.type === 'choix') v = RUN.choix;
+  // la console : on relit son show au moment de vérifier
+  const V = /** @type {any} */ (VUES[RUN.atelier]);
+  if (it.type === 'reglage' && V && V.lire) STATES[RUN.atelier] = V.lire();
   const r = verifierItem(it, v, { st: etat(RUN.atelier), m: MESURES[RUN.atelier](etat(RUN.atelier)) });
   if (r.vide) { RUN.retour = { ok: false, why: it.type === 'choix' ? 'Choisissez une réponse.' : 'Écrivez une réponse.' }; dessinerDefi(); return; }
   if (r.ok) E.ok = true; else E.erreurs++;
@@ -189,7 +202,9 @@ function aide() { const E = RUN.etats[RUN.k]; if (E.aides < 2) { E.aides++; dess
 function solution() {
   const it = RUN.items[RUN.k], E = RUN.etats[RUN.k];
   E.solution = true; E.ok = true;
-  if (it.type === 'reglage' && it.corrige) { const verr = [...VERROUS]; VERROUS.clear(); poser(etat(RUN.atelier), it.corrige); for (const k of verr) VERROUS.add(k); rendreAtelier(); }
+  const V = /** @type {any} */ (VUES[RUN.atelier]);
+  if (it.type === 'reglage' && it.corrige && V && V.appliquer) { V.appliquer(it.corrige); STATES[RUN.atelier] = etatPour(RUN.atelier, it.corrige); }
+  else if (it.type === 'reglage' && it.corrige) { const verr = [...VERROUS]; VERROUS.clear(); poser(etat(RUN.atelier), it.corrige); for (const k of verr) VERROUS.add(k); rendreAtelier(); }
   RUN.retour = { ok: true, sol: true }; dessinerDefi();
 }
 function suivante() {
@@ -220,7 +235,8 @@ function dessinerDefi() {
   const zone = el('div', { class: 'lb-answer' });
   if (it.type === 'reglage') {
     if (it.fixe && Object.keys(it.fixe).length) zone.append(el('p', { class: 'lb-note' }, icon('cadenas'), ' Certains réglages sont imposés : leurs commandes sont verrouillées.'));
-    if (!fait) zone.append(el('button', { type: 'button', class: 'btn primary', 'data-k': 'defi:verifier', onclick: valider }, 'Vérifier mon réglage'));
+    if (!fait && RUN.atelier === 'dot2') zone.append(el('p', { class: 'lb-note' }, 'Programmez dans la console, puis vérifiez : le Labo lit le show de la console tel qu\'il est.'));
+    if (!fait) zone.append(el('button', { type: 'button', class: 'btn primary', 'data-k': 'defi:verifier', onclick: valider }, RUN.atelier === 'dot2' ? 'Vérifier mon programme' : 'Vérifier mon réglage'));
   } else if (it.type === 'nombre' || it.type === 'texte') {
     const inp = /** @type {HTMLInputElement} */ (el('input', { type: 'text', inputmode: it.type === 'nombre' ? 'decimal' : 'text', class: 'lb-input', 'aria-label': 'Votre réponse', placeholder: it.placeholder || '', value: RUN.saisie, disabled: fait ? '' : null, spellcheck: 'false', autocomplete: 'off' }));
     inp.addEventListener('input', () => { RUN.saisie = inp.value; });
