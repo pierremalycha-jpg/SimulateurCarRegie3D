@@ -276,7 +276,7 @@ async function voirJoueur(box, x) {
 export function openProfil(tab = 'profil') {
   if (layerOpen() === 'profil') { showTab(tab); return; }
   openLayer({ kind: 'profil', title: 'Profil', ico: 'profil', tabs: TABS, tab, show: (k, box) => {
-    box.classList.add('pf-page', 'pf-' + k);
+    box.classList.add('pf-page', 'pf-onglet-' + k);
     if (k === 'pass') pagePass(box); else if (k === 'succes') pageSucces(box); else if (k === 'classement') pageClassement(box); else pageProfil(box);
   } });
 }

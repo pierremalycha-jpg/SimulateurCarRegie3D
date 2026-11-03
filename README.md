@@ -418,7 +418,8 @@ saison) ; montrer ses succès aux autres et voir leurs profils ; un classement d
   Le formateur peut aussi coller la configuration de son projet dans Mon compte (cet ordinateur seulement).
   Mise en place : console Firebase → créer le projet ; Authentication → méthode « Adresse e-mail/Mot de passe » ;
   Firestore → créer la base (région `eur3` ou `europe-west`) ; Paramètres du projet → ajouter une application Web et copier
-  `apiKey` et `projectId` dans `firebase.web.json` ; déployer les règles : `firebase deploy --only firestore:rules`
+  `apiKey` et `projectId` dans `firebase.web.json` (ou dans la variable de dépôt `TIEE_FIREBASE`, lue par le workflow
+  `exe.yml` qui construit l'exécutable et l'application macOS) ; déployer les règles : `firebase deploy --only firestore:rules`
   (`firebase.json`, `firestore.rules`). Pour le suivi en ligne, un formateur s'inscrit à la main dans `formateurs/<uid>`.
 - **Les règles** (`firestore.rules`) : `progress/<uid>` à soi seul (lu aussi par un formateur inscrit), `profils/<uid>` lu par
   tout joueur connecté et écrit par son seul propriétaire avec des champs contrôlés (jamais d'adresse électronique).

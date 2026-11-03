@@ -103,4 +103,7 @@ await B.keyboard.press('Escape');
 // rechargement : la session gardée reconnecte sans rien demander
 await B.reload(); await until(B, () => !!window.__dbg, null, 180000);
 T.check('rechargement : reconnecté tout seul', await until(B, () => window.__dbg.COMPTE.etat === 'connecte' && window.__dbg.PROG.cours?.['signal-422'], null, 60000));
+// Firestore répond 404 pour un document qui n'existe pas encore (progression d'un nouveau compte) : le
+// navigateur le note dans la console, c'est attendu (compte/firebase.js le lit comme « pas de document »)
+for (let i = T.errors.length - 1; i >= 0; i--) if (/status of 404/.test(T.errors[i])) T.errors.splice(i, 1);
 await T.finish();

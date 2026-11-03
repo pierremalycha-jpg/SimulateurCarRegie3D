@@ -25,6 +25,12 @@ on:
 permissions:
   contents: write # publier la version
 
+# le projet Firebase du compte en ligne (v19.25) : firebase.web.json s'il est dans le dépôt, sinon la variable
+# TIEE_FIREBASE (Settings → Secrets and variables → Actions → Variables ; JSON { "apiKey": "…", "projectId": "…" }),
+# lue par tools/build.mjs. Sans l'une ni l'autre, la progression reste sur chaque ordinateur.
+env:
+  TIEE_FIREBASE: ${{ vars.TIEE_FIREBASE }}
+
 jobs:
   exe:
     name: Windows
