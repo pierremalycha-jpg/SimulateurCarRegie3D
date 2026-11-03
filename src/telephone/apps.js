@@ -22,6 +22,7 @@ import { openLivret } from '../ui/livret.js';
 import { closeStation } from '../ui/stations.js';
 import { currentGoal, playerCard } from '../game/quest.js';
 import { xpOf, levelOf, badgesWon } from '../game/xp.js';
+import { aRecuperer } from '../game/pass.js';
 import { TUTOR, lessonsFor, lessonBlocked } from '../tutor/engine.js';
 import { closeTelephone } from './index.js';
 import { EMI } from '../emission/etat.js';
@@ -30,7 +31,7 @@ import { panneauConducteur } from '../emission/panneau.js';
 // ----------------------------------------------------------------------------------
 // Les applications du téléphone, rangées dans les trois familles des menus (décision v19) : le
 // car (aller à, missions, Olivier, plan, synoptiques, matériel, équipe), le Cours (leçons,
-// glossaire, postes, progression), les réglages (réglages, commandes), plus trois interrupteurs
+// glossaire, postes, profil, classement, progression), les réglages (réglages, commandes), plus trois interrupteurs
 // (son, vol libre, retour PGM). Une application a soit une vue sur l'écran du téléphone (view),
 // soit une fenêtre à ouvrir (open) une fois le téléphone rangé.
 // ----------------------------------------------------------------------------------
@@ -61,6 +62,8 @@ export const APPS = [
   { id: 'cours', name: 'Cours', ico: 'cours', hue: 190, fam: 'cours', key: 'G', desc: 'Les leçons (au poste : la leçon du poste)', open: () => (station() ? emit('cours', { poste: station() }) : openCours()) },
   { id: 'glossaire', name: 'Glossaire', ico: 'lexique', hue: 230, fam: 'cours', desc: 'Les mots du métier', open: () => openCours({ tab: 'glossaire' }) },
   { id: 'postes', name: 'Les postes', ico: 'postes', hue: 170, fam: 'cours', desc: 'Les métiers du car, poste par poste', open: () => openCours({ tab: 'postes' }) },
+  { id: 'profil', name: 'Profil', ico: 'profil', hue: 280, fam: 'cours', desc: 'Ton profil : avatar, bannière, pass de niveaux, défis du jour, succès', open: () => emit('profil', { tab: aRecuperer().length ? 'pass' : 'profil' }) },
+  { id: 'classement', name: 'Classement', ico: 'classement', hue: 45, fam: 'cours', desc: 'Le classement des techniciens et le profil de chacun', open: () => emit('profil', { tab: 'classement' }) },
   { id: 'progression', name: 'Progression', ico: 'livret', hue: 50, fam: 'cours', desc: 'Niveau, badges, suivi du Cours, livret de compétences', view: progressionView },
   { id: 'reglages', name: 'Réglages', ico: 'reglages', hue: 210, fam: 'reglages', desc: 'Qualité, son, profil, jeu, ma progression', open: () => emit('settings') },
   { id: 'commandes', name: 'Commandes', ico: 'commandes', hue: 0, fam: 'reglages', key: 'H', desc: 'Toutes les touches du clavier', open: () => openCommandes() },
@@ -72,6 +75,7 @@ function appTile(a, launch) {
   const b = el('button', { type: 'button', class: 'tel-app' + (a.cls ? ' ' + a.cls : ''), 'data-app': a.id, title: a.desc + (a.key ? ` (touche ${a.key})` : ''), style: `--h:${a.hue}`, onclick: () => launch(a.id) },
     el('span', { class: 'tel-ico' }, icon(a.ico)), el('span', { class: 'tel-name' }, a.name));
   if (a.id === 'olivier' && TUTOR.lesson) b.classList.add('busy');
+  if (a.id === 'profil') { const n = aRecuperer().length; if (n) b.append(el('i', { class: 'tel-badge', 'aria-label': `${n} récompense${n > 1 ? 's' : ''} à récupérer` }, String(n))); }
   if (a.id === 'missions') { const n = hereCount(); if (n) b.append(el('i', { class: 'tel-badge', 'aria-label': `${n} à ce poste` }, String(n))); }
   return b;
 }

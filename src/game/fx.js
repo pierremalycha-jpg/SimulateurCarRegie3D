@@ -4,6 +4,8 @@ import { el } from '../util.js';
 import { $ } from '../ui/common.js';
 import { icon } from '../ui/icons.js';
 import { xpOf, levelOf } from './xp.js';
+import { paliersDu } from './pass.js';
+import { objet, NOM_TYPE } from './cosmetiques.js';
 import { whereAmI } from '../app/hud.js';
 
 // ----------------------------------------------------------------------------------
@@ -65,7 +67,17 @@ const pulse = (cls, ms) => { const hud = $('#hud'); if (!hud) return; hud.classL
 
 export function installFx() {
   build();
-  on('xp', (r) => { if (!r) return; renderXp(); floatXp(r.pts); if (r.leveled) banner('level', [icon('couronne'), el('small', {}, 'Niveau ' + r.level.n), el('b', {}, r.level.title), el('span', {}, 'Tu progresses : continue, le car compte sur toi.')]); });
+  on('xp', (r) => {
+    if (!r) return; renderXp(); floatXp(r.pts);
+    if (r.leveled) {
+      // la récompense du pass de ce niveau (game/pass.js), à récupérer dans le profil
+      const pals = paliersDu(r.level.n);
+      const quoi = pals.map((x) => `${NOM_TYPE[x.type].toLowerCase()} « ${objet(x.type, x.id).nom} »`).join(' et ');
+      banner('level', [icon('couronne'), el('small', {}, 'Niveau ' + r.level.n), el('b', {}, r.level.title), el('span', {}, quoi ? `Récompense débloquée : ${quoi}. Récupère-la dans ton profil (onglet Le pass).` : 'Tu progresses : continue, le car compte sur toi.')]);
+    }
+  });
+  // les bonus (série de jours, défis du jour) : un « +n XP » de plus, et une bannière pour un défi
+  on('xpBonus', (b) => { if (!b) return; setTimeout(() => floatXp(b.pts), 500); if (b.sorte === 'defi') banner('mission', [icon('defis'), el('small', {}, 'Défi du jour'), el('b', {}, b.label.replace(/^Défi du jour réussi : /, '')), el('span', {}, `+${b.pts} XP`)]); });
   on('badge', (b) => { if (!b) return; banner('badge ' + b.tier, [icon(b.ico), el('small', {}, 'Badge ' + ({ bronze: 'bronze', argent: 'argent', or: 'or' })[b.tier]), el('b', {}, b.title), el('span', {}, b.desc)]); });
   // une mission spécifique terminée (game/mission_run.js)
   on('missionCar', (e) => { if (e && e.type === 'fini') banner('mission', [icon('trophee'), el('small', {}, 'Mission réussie'), el('b', {}, e.titre), el('span', {}, e.resultat || 'Enchaîne sur une autre, ou arrête-toi là.')]); });

@@ -98,6 +98,29 @@ import iDeviceMobile from '@phosphor-icons/core/bold/device-mobile-bold.svg';
 import iCellSignalFull from '@phosphor-icons/core/bold/cell-signal-full-bold.svg';
 import iWifiHigh from '@phosphor-icons/core/bold/wifi-high-bold.svg';
 import iBatteryFull from '@phosphor-icons/core/bold/battery-full-bold.svg';
+import iSignIn from '@phosphor-icons/core/bold/sign-in-bold.svg';
+import iSignOut from '@phosphor-icons/core/bold/sign-out-bold.svg';
+import iChartLineUp from '@phosphor-icons/core/bold/chart-line-up-bold.svg';
+import iUserCircle from '@phosphor-icons/core/bold/user-circle-bold.svg';
+import iKey from '@phosphor-icons/core/bold/key-bold.svg';
+import iMicrophoneStage from '@phosphor-icons/core/bold/microphone-stage-bold.svg';
+import iTelevisionSimple from '@phosphor-icons/core/bold/television-simple-bold.svg';
+import iRocketLaunch from '@phosphor-icons/core/bold/rocket-launch-bold.svg';
+import iPaintBrush from '@phosphor-icons/core/bold/paint-brush-bold.svg';
+import iFire from '@phosphor-icons/core/bold/fire-bold.svg';
+import iGift from '@phosphor-icons/core/bold/gift-bold.svg';
+import iCalendarCheck from '@phosphor-icons/core/bold/calendar-check-bold.svg';
+import iCloudCheck from '@phosphor-icons/core/bold/cloud-check-bold.svg';
+import iCloudSlash from '@phosphor-icons/core/bold/cloud-slash-bold.svg';
+import iEye from '@phosphor-icons/core/bold/eye-bold.svg';
+import iEyeSlash from '@phosphor-icons/core/bold/eye-slash-bold.svg';
+import iHeadphones from '@phosphor-icons/core/bold/headphones-bold.svg';
+import iPlanet from '@phosphor-icons/core/bold/planet-bold.svg';
+import iDiamond from '@phosphor-icons/core/bold/diamond-bold.svg';
+import iShootingStar from '@phosphor-icons/core/bold/shooting-star-bold.svg';
+import iMoonStars from '@phosphor-icons/core/bold/moon-stars-bold.svg';
+import iFlagBanner from '@phosphor-icons/core/bold/flag-banner-bold.svg';
+import iIdentificationCard from '@phosphor-icons/core/bold/identification-card-bold.svg';
 
 /** nom dans l'application -> dessin SVG @type {Record<string, string>} */
 const SVG = {
@@ -130,6 +153,12 @@ const SVG = {
   telephone: iDeviceMobile, retourapp: iCaretLeft, signal: iCellSignalFull, wifi: iWifiHigh, batterie: iBatteryFull,
   // le parcours du Cours (ui/cours_parcours.js, ui/cours_exo.js) : niveaux fermés et ouverts, étoiles, étapes à ranger
   cadenas: iLockSimple, ouvert: iLockSimpleOpen, parcours: iPath, monter: iArrowUp, descendre: iArrowDown, etoilePleine: iStarFill,
+  // les comptes (comptes/, ui/compte_ui.js, ui/tableau_bord.js) : se connecter, se déconnecter, le compte, le tableau de bord, un mot de passe
+  connexion: iSignIn, deconnexion: iSignOut, compte: iUserCircle, tableau: iChartLineUp, cle: iKey,
+  // le profil, le pass et le classement (ui/profil_ui.js), les avatars (game/cosmetiques.js)
+  profil: iUserCircle, personnaliser: iPaintBrush, serie: iFire, cadeau: iGift, defis: iCalendarCheck,
+  nuage: iCloudCheck, horsnuage: iCloudSlash, visible: iEye, cache: iEyeSlash, micro: iMicrophoneStage, mire: iTelevisionSimple, fusee: iRocketLaunch,
+  casque: iHeadphones, planete: iPlanet, diamant: iDiamond, filante: iShootingStar, nuit: iMoonStars, banniere: iFlagBanner, carte: iIdentificationCard,
 };
 export const ICON_NAMES = Object.keys(SVG);
 /**

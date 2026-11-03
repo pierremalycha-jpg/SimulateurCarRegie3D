@@ -15,7 +15,9 @@ import { TRUCK, W } from '../world.js';
 import { PL } from '../app/player.js';
 import { pcam } from '../app/view.js';
 import { JEU } from './sfx.js';
-import { BAREME, LEVELS, xpOf, levelOf, badgesWon, BADGES, game, badgeBloc } from './xp.js';
+import { BAREME, xpOf, levelOf, badgesWon, BADGES, game, badgeBloc } from './xp.js';
+import { profil, aRecuperer, titrePorte } from './pass.js';
+import { avatarEl } from '../ui/avatar.js';
 import { BLOCS } from '../content/referentiel.js';
 import { PROG } from '../shared.js';
 import { avancement } from '../carriere/index.js';
@@ -259,18 +261,21 @@ function row(id, lessonId, chapter) {
 const LIVE = new Set();
 export function livePlayerCard(compact = false) { const c = playerCard(compact); LIVE.add(c); return c; }
 function refreshCards() { for (const c of [...LIVE]) { if (!c.isConnected && !c.parentNode) continue; const n = playerCard(c.classList.contains('compact')); c.replaceWith(n); LIVE.delete(c); LIVE.add(n); } }
-on('xp', refreshCards); on('badge', refreshCards); on('shared', refreshCards);
+on('xp', refreshCards); on('badge', refreshCards); on('shared', refreshCards); on('pass', refreshCards); on('compte', refreshCards); on('progressImport', refreshCards);
 export function playerCard(compact = false) {
   const xp = xpOf(), L = levelOf(xp), won = badgesWon().length;
-  return el('div', { class: 'pcard' + (compact ? ' compact' : '') },
-    el('div', { class: 'pc-lvl' }, el('small', {}, 'Niveau'), el('b', {}, String(L.n))),
+  const p = profil(), att = aRecuperer().length;
+  const card = el('div', { class: 'pcard pc-cliquable' + (compact ? ' compact' : ''), role: 'button', tabindex: '0', title: 'Mon profil, le pass et le classement', onclick: () => emit('profil', { tab: att ? 'pass' : 'profil' }) },
+    el('span', { class: 'pc-av' }, avatarEl(p, compact ? 'petit' : ''), el('span', { class: 'pc-lvl' }, el('small', {}, 'Niveau'), el('b', {}, String(L.n)))),
     el('div', { class: 'pc-main' },
-      el('div', { class: 'pc-title' }, L.title, el('span', { class: 'pc-xp' }, icon('eclair'), `${xp} XP`)),
+      el('div', { class: 'pc-title' }, p.pseudo ? el('span', { class: 'pc-pseudo' }, p.pseudo) : null, titrePorte(), el('span', { class: 'pc-xp' }, icon('eclair'), `${xp} XP`),
+        att ? el('span', { class: 'pc-cadeau', title: `${att} récompense${att > 1 ? 's' : ''} du pass à récupérer` }, icon('cadeau')) : null),
       el('div', { class: 'pc-bar', role: 'progressbar', 'aria-label': 'Progression vers le niveau suivant', 'aria-valuemin': '0', 'aria-valuemax': '100', 'aria-valuenow': String(Math.round(L.pct * 100)) }, el('i', { style: { width: `${Math.round(L.pct * 100)}%` } })),
-      el('small', { class: 'pc-next' }, L.next ? `${L.remaining} XP avant le niveau ${L.n + 1} · ${LEVEL_NAME(L.n + 1)}` : 'Niveau maximal atteint')),
+      el('small', { class: 'pc-next' }, L.next ? `Niveau ${L.n} · ${L.remaining} XP avant le niveau ${L.n + 1}${att ? ` · ${att} récompense${att > 1 ? 's' : ''} à récupérer` : ''}` : 'Niveau maximal atteint')),
     el('div', { class: 'pc-badges' }, icon('medaille'), el('b', {}, String(won)), el('small', {}, won > 1 ? 'badges' : 'badge')));
+  card.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); card.click(); } });
+  return card;
 }
-const LEVEL_NAME = (n) => { const l = LEVELS.find((x) => x.n === n); return l ? l.title : ''; };
 function badgesGrid() {
   const g = game();
   const card = (b) => el('div', { class: 'badge ' + b.tier + (g.badges[b.id] ? ' won' : ' locked'), title: b.desc }, el('span', { class: 'bd-ico' }, icon(b.ico)), el('b', {}, b.title), el('small', {}, g.badges[b.id] ? TIER[b.tier] + ' · obtenu' : b.desc));

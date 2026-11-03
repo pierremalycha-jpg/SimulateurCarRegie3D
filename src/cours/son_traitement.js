@@ -4,7 +4,7 @@ import { figure, sv, canvas, slider, choice, readout, fmtNum } from './kit.js';
 import { compresseur, gainRattrapage, gate, loudnessIntegre, plageLoudness, normaliser, creteEchantillons, debitPcm, dynamiqueDb, nyquist, debitAes3, canauxMadi, debitDante, latenceTampon, deriveEchantillons } from './son_calc.js';
 
 // ----------------------------------------------------------------------------------
-// Le traitement et le numérique du chapitre « Le son » (v19.24) : la dynamique (compresseur, limiteur,
+// Le traitement et le numérique du chapitre « Le son » (v19.26) : la dynamique (compresseur, limiteur,
 // gate : seuil, ratio, genou, attaque, relâchement, gain de rattrapage), le loudness (EBU R128 : LUFS,
 // momentané, court terme, intégré avec ses portes, plage de loudness, crête vraie en dBTP) et l'audio
 // numérique (48 kHz, 24 bits, AES3, MADI, Dante et AES67, latence des tampons, horloges). Les chiffres

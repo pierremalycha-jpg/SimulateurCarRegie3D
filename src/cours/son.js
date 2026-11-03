@@ -6,7 +6,7 @@ import { SON_BASES } from './son_bases.js';
 import { SON_TRAITEMENT } from './son_traitement.js';
 
 // ----------------------------------------------------------------------------------
-// Chapitre « Le son », en trois parties (v19.24) : les bases (le décibel, les micros, les couples stéréo,
+// Chapitre « Le son », en trois parties (v19.26) : les bases (le décibel, les micros, les couples stéréo,
 // les niveaux et les liaisons : cours/son_bases.js), la console (la tranche d'entrée : gain, alimentation
 // fantôme 48 V, polarité, égaliseur, fader ; la dynamique : cours/son_traitement.js) et les départs (N-1
 // des commentateurs, synchro labiale, embedding vers la transmission ; le loudness ; l'audio numérique).

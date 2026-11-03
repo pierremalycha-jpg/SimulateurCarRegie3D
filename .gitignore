@@ -20,3 +20,6 @@ captures-v18/
 .claude/worktrees/
 # marqueurs de travail des outils de débogage 3D (greffon Parallax)
 .parallax/
+# émulateurs Firebase (node tools/firebase-test.mjs)
+firestore-debug.log
+firebase-debug.log

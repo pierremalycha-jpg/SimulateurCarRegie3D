@@ -510,7 +510,7 @@ export const RATTACHEMENT = {
     'real-melangeur': ['C31', 'C23'], 'real-incrustations': ['C17', 'C31'], 'real-ordres': ['C22', 'C5', 'C29'],
     'ralentis-evs': ['C31', 'C23', 'C20'], 'ralentis-clips': ['C15', 'C31', 'C13', 'C34'],
     'son-tranche': ['C32', 'C23'], 'son-n1': ['C32', 'C10', 'C26'],
-    // les bases, la dynamique, le loudness et l'audio numérique du chapitre Le son (v19.24) ; la compression vidéo (Le signal)
+    // les bases, la dynamique, le loudness et l'audio numérique du chapitre Le son (v19.26) ; la compression vidéo (Le signal)
     'son-decibel': ['C32', 'C10'], 'son-micros': ['C23', 'C32'], 'son-stereo': ['C23', 'C32', 'C10'], 'son-liaisons': ['C25', 'C19', 'C32'],
     'son-dynamique': ['C23', 'C32'], 'son-loudness': ['C32', 'C10', 'C33'], 'son-numerique': ['C25', 'C32', 'C14'],
     'signal-compression': ['C14', 'C26', 'C33'],

@@ -1,0 +1,169 @@
+/* Le profil, le pass, les succès et le classement (v19.25, ui/profil_ui.js), la fenêtre « Mon compte »
+   (ui/compte_ui.js) et l'avatar de la carte joueur (game/quest.js). Jetons de styles/theme-jeu.css, aucune
+   couleur en dur : les couleurs des avatars, cadres et bannières sont du contenu (game/cosmetiques.js),
+   passées par les propriétés --av1, --av2, --ring et le fond en ligne de la bannière. */
+
+/* ---------- l'avatar dans son cadre ---------- */
+.pf-av { --s: 44px; position: relative; flex: none; display: inline-grid; place-items: center; width: var(--s); height: var(--s); border-radius: 50%; }
+.pf-av.cadre { background: var(--ring); padding: calc(var(--s) * .07); }
+.pf-av-in { display: grid; place-items: center; width: 100%; height: 100%; border-radius: 50%; background: linear-gradient(140deg, var(--av1), var(--av2)); color: var(--fg); }
+.pf-av-in .ico { width: 52%; height: 52%; }
+.pf-av-in .ico svg { width: 100%; height: 100%; fill: currentColor; filter: drop-shadow(0 1px 1px rgba(0,0,0,.35)); }
+.pf-av.grand { --s: 104px; }
+.pf-av.petit { --s: 36px; }
+.pf-av.mini { --s: 30px; }
+.pf-av.grand.cadre { box-shadow: 0 0 0 4px var(--bg); }
+
+/* ---------- la carte d'un profil : bannière, avatar, nom ---------- */
+.pf-page { width: 100%; max-width: 980px; margin: 0 auto; display: grid; grid-template-columns: minmax(0, 1fr); gap: 22px; padding-bottom: 40px; }
+.pf-carte { position: relative; border-radius: var(--r-l); overflow: hidden; background: var(--panel); border: 1px solid var(--line); }
+.pf-ban { height: 132px; background-size: cover; }
+.pf-id { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 4px 18px; align-items: end; padding: 0 22px 18px; margin-top: -52px; }
+.pf-id > .pf-av { grid-row: span 2; }
+.pf-nom { min-width: 0; padding-top: 58px; }
+.pf-nom h3 { margin: 0; font: 700 28px/1.1 var(--f-disp); letter-spacing: -.02em; overflow-wrap: anywhere; }
+.pf-titre { margin: 4px 0 0; color: var(--amber); font-weight: 600; }
+.pf-meta { margin: 4px 0 0; color: var(--muted); font-size: 14px; }
+.pf-niv { color: var(--fg); font-weight: 700; }
+.pf-vitrine { grid-column: 2; display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+.pf-vb { display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px 5px 8px; border-radius: 999px; background: var(--well); border: 1px solid var(--line); font-size: 13px; }
+.pf-vb.or .ico { color: var(--gold); } .pf-vb.argent .ico { color: var(--lcd); } .pf-vb.bronze .ico { color: var(--amber); }
+.pf-xp { padding: 0 22px 18px; display: grid; gap: 6px; }
+.pf-xp small { color: var(--muted); }
+
+/* ---------- blocs ---------- */
+.pf-sec { display: grid; gap: 12px; }
+.pf-sec h3 { margin: 0; font: 700 22px var(--f-disp); }
+.pf-sec h4 { margin: 0; display: flex; align-items: center; gap: 8px; font: 600 17px var(--f-disp); }
+.pf-sec h4 small { font: 500 13.5px var(--f-body); color: var(--muted); }
+.pf-sec .note { margin: 0; }
+.pf-compte { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-radius: var(--r); background: var(--well); border: 1px solid var(--line); }
+.pf-compte > .ico { color: var(--muted); font-size: 22px; }
+.pf-compte p { margin: 0; flex: 1; min-width: 0; }
+.pf-compte.invite { border-color: var(--accent-d); background: var(--accent-d); }
+.pf-compte.invite > .ico { color: var(--accent); }
+.pf-attente { display: flex; justify-content: flex-start; align-items: center; gap: 12px; padding: 14px 16px; border-radius: var(--r); border: 0; background: var(--amber-d); color: var(--fg); font: inherit; text-align: left; cursor: pointer; }
+.pf-attente .ico { color: var(--amber); font-size: 22px; }
+.pf-attente span { margin-left: auto; color: var(--amber); font-weight: 600; }
+
+/* la série et les défis du jour */
+.pf-jour { grid-template-columns: minmax(200px, 280px) minmax(0, 1fr); align-items: start; gap: 18px; }
+.pf-serie { display: flex; gap: 12px; align-items: center; padding: 16px; border-radius: var(--r); background: var(--well); border: 1px solid var(--line); }
+.pf-serie > .ico { font-size: 30px; color: var(--dim); }
+.pf-serie.on > .ico { color: var(--amber); }
+.pf-serie b { display: block; font: 700 18px var(--f-disp); }
+.pf-serie small { color: var(--muted); }
+.pf-defis { display: grid; gap: 8px; }
+.pf-defi { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px 12px; align-items: center; padding: 10px 14px; border-radius: var(--r-s); background: var(--well); }
+.pf-defi-t { display: flex; gap: 8px; align-items: center; min-width: 0; }
+.pf-defi-t .ico { color: var(--muted); }
+.pf-defi.fini .pf-defi-t .ico { color: var(--pvw); }
+.pf-defi-p { color: var(--amber); font-weight: 600; font-size: 14px; }
+.pf-defi-bar { display: block; height: 5px; border-radius: 3px; background: var(--line2); overflow: hidden; }
+.pf-defi-bar > i { display: block; height: 100%; background: var(--amber); border-radius: 3px; }
+.pf-defi.fini .pf-defi-bar > i { background: var(--pvw); }
+.pf-defi small { color: var(--muted); font-size: 12.5px; }
+
+/* identité */
+.pf-ident { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto; gap: 10px 12px; align-items: end; }
+.pf-msg { grid-column: 1 / -1; color: var(--muted); min-height: 1em; }
+.cp-champ { display: grid; gap: 5px; font-size: 13.5px; color: var(--muted); }
+.cp-champ input, .cp-champ textarea, .cp-cfg textarea { width: 100%; box-sizing: border-box; padding: 10px 12px; border-radius: var(--r-s); border: 1px solid var(--line2); background: var(--well); color: var(--fg); font: 15px var(--f-body); }
+.cp-champ input:focus { border-color: var(--accent); outline: none; box-shadow: var(--glow-c); }
+
+/* l'apparence : une grille d'objets */
+.pf-objets { display: grid; grid-template-columns: repeat(auto-fill, minmax(124px, 1fr)); gap: 10px; }
+.pf-objet { display: grid; justify-items: center; gap: 6px; padding: 14px 8px 10px; border-radius: var(--r); border: 1px solid var(--line); background: var(--well); color: var(--fg); font: inherit; cursor: pointer; text-align: center; transition: background .15s var(--ease), border-color .15s; }
+.pf-objet:hover:not([disabled]) { background: var(--raise); }
+.pf-objet.porte { border-color: var(--accent); background: var(--accent-d); }
+.pf-objet.verrou { cursor: default; }
+.pf-objet.verrou > :first-child { opacity: .35; filter: grayscale(1); }
+.pf-objet b { font-size: 13.5px; font-weight: 600; line-height: 1.2; }
+.pf-objet small { color: var(--muted); font-size: 12px; display: inline-flex; gap: 4px; align-items: center; }
+.pf-swatch { display: block; width: 100%; max-width: 110px; height: 44px; border-radius: var(--r-s); background-size: cover; }
+.pf-titre-ap { display: grid; place-items: center; min-height: 44px; color: var(--amber); font-weight: 600; font-size: 14px; line-height: 1.2; }
+
+/* badges : vitrine et succès */
+.pf-badges { display: grid; grid-template-columns: repeat(auto-fill, minmax(176px, 1fr)); gap: 10px; }
+.pf-badge { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 2px 10px; align-items: center; padding: 12px; border-radius: var(--r); border: 1px solid var(--line); background: var(--well); color: var(--fg); font: inherit; text-align: left; }
+button.pf-badge { cursor: pointer; }
+.pf-badge > .ico { grid-row: span 2; font-size: 24px; color: var(--dim); }
+.pf-badge b { font-size: 14px; } .pf-badge small { color: var(--muted); font-size: 12px; line-height: 1.3; }
+.pf-badge.won.bronze > .ico { color: var(--amber); } .pf-badge.won.argent > .ico { color: var(--lcd); } .pf-badge.won.or > .ico { color: var(--gold); }
+.pf-badge.locked { opacity: .6; }
+.pf-badge.porte { border-color: var(--accent); background: var(--accent-d); }
+.pf-succes { display: grid; gap: 16px; }
+
+/* ---------- le pass ---------- */
+.pf-pass-tete { grid-template-columns: minmax(0, 1fr) auto; align-items: end; }
+.pf-pass { display: grid; grid-template-columns: repeat(auto-fill, minmax(168px, 1fr)); gap: 12px; }
+.pf-palier { display: grid; gap: 8px; align-content: start; padding: 12px; border-radius: var(--r); border: 1px solid var(--line); background: var(--well); }
+.pf-palier header { display: flex; justify-content: space-between; align-items: baseline; gap: 6px; }
+.pf-palier header b { font: 700 15px var(--f-disp); }
+.pf-palier header small { font-size: 12px; color: var(--muted); }
+.pf-palier.rare header small { color: var(--accent); }
+.pf-palier.epique header small { color: var(--violet); }
+.pf-palier.legendaire header small { color: var(--gold); }
+.pf-palier.legendaire { border-color: var(--amber-d); }
+.pf-pal-ap { display: flex; justify-content: center; align-items: center; gap: 10px; min-height: 56px; }
+.pf-pal-ap .pf-av { --s: 52px; }
+.pf-palier p { margin: 0; font-size: 13px; color: var(--muted); line-height: 1.35; min-height: 2.7em; }
+.pf-pal-etat { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--muted); }
+.pf-palier.recu .pf-pal-etat { color: var(--pvw); }
+.pf-palier.verrou .pf-pal-ap { opacity: .45; }
+.pf-palier.pret { border-color: var(--amber); background: var(--amber-d); }
+.pf-palier.prochain { border-color: var(--accent); }
+
+/* ---------- le classement ---------- */
+.pf-cl-tete { grid-template-columns: minmax(0, 1fr) auto auto; align-items: end; }
+.pf-classement { display: grid; gap: 6px; }
+.pf-ligne { display: grid; grid-template-columns: 52px auto minmax(0, 1fr) auto 96px 56px; gap: 12px; align-items: center; padding: 10px 14px; border-radius: var(--r); border: 1px solid transparent; background: var(--well); color: var(--fg); font: inherit; text-align: left; cursor: pointer; transition: background .15s var(--ease); }
+.pf-ligne:hover { background: var(--raise); }
+.pf-ligne.moi { border-color: var(--accent); background: var(--accent-d); }
+.pf-rang { display: inline-flex; align-items: center; gap: 4px; font: 700 17px var(--f-disp); color: var(--muted); }
+.pf-ligne.p1 .pf-rang { color: var(--gold); } .pf-ligne.p2 .pf-rang { color: var(--lcd); } .pf-ligne.p3 .pf-rang { color: var(--amber); }
+.pf-qui { display: grid; min-width: 0; }
+.pf-qui b, .pf-qui small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pf-qui small { color: var(--muted); font-size: 12.5px; }
+.pf-lv { display: grid; justify-items: center; line-height: 1.1; }
+.pf-lv small { color: var(--muted); font-size: 11px; } .pf-lv b { font: 700 18px var(--f-disp); }
+.pf-pts { text-align: right; color: var(--amber); font-weight: 600; font-size: 14px; }
+.pf-nb { display: inline-flex; gap: 4px; align-items: center; color: var(--muted); font-size: 13px; }
+.pf-cache { display: flex; gap: 8px; align-items: center; }
+.pf-vide { justify-items: center; text-align: center; padding: 40px 16px; }
+.pf-vide > .ico { font-size: 40px; color: var(--muted); }
+.pf-retour { justify-self: start; }
+.pf-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+.pf-stats > div { display: grid; gap: 2px; padding: 12px; border-radius: var(--r); background: var(--well); text-align: center; }
+.pf-stats b { font: 700 24px var(--f-disp); } .pf-stats small { color: var(--muted); font-size: 12.5px; }
+
+/* ---------- la fenêtre « Mon compte » ---------- */
+.cp { display: grid; gap: 14px; }
+.cp-form, .cp-in, .cp-off { display: grid; gap: 12px; }
+.cp-form .seg { justify-self: start; }
+.cp-msg { min-height: 1.2em; }
+.cp-danger summary, .cp-cfg summary { cursor: pointer; color: var(--muted); }
+.cp-danger[open], .cp-cfg[open] { display: grid; gap: 10px; }
+
+/* ---------- la carte joueur : avatar, pseudo, récompense en attente (span.pc-lvl : passe devant .pcard.compact .pc-lvl du thème, chargé après) ---------- */
+.pcard.pc-cliquable { cursor: pointer; text-align: left; font: inherit; color: inherit; width: 100%; }
+.pcard.pc-cliquable:hover { background: var(--raise); }
+.pc-av { position: relative; display: inline-grid; }
+.pcard .pc-av span.pc-lvl { position: absolute; right: -6px; bottom: -4px; width: auto; min-width: 22px; height: 22px; padding: 0 6px; box-sizing: border-box; border-radius: 11px; box-shadow: 0 0 0 2px var(--panel); }
+.pcard .pc-av span.pc-lvl b { font: 700 12px/1 var(--f-disp); }
+.pcard .pc-av .pf-av { --s: 46px; }
+.pcard.compact .pc-av .pf-av { --s: 38px; }
+.pc-pseudo { font-weight: 700; margin-right: 6px; }
+.pc-cadeau { display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: var(--amber); color: var(--accent-ink); margin-left: 6px; vertical-align: middle; }
+.pc-cadeau .ico { width: 13px; height: 13px; }
+
+@media (max-width: 720px) {
+  .pf-jour, .pf-ident, .pf-pass-tete, .pf-cl-tete { grid-template-columns: minmax(0, 1fr); }
+  .pf-ligne { grid-template-columns: 34px auto minmax(0, 1fr) auto; }
+  .pf-ligne .pf-pts, .pf-ligne .pf-nb { display: none; }
+  .pf-id { padding: 0 16px 16px; gap: 4px 12px; }
+  .pf-av.grand { --s: 84px; }
+  .pf-nom h3 { font-size: 22px; }
+  .pf-vitrine { grid-column: 1 / -1; }
+  .pf-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}

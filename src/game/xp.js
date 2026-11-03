@@ -7,6 +7,7 @@ import { allLessons, CHAPTERS } from '../cours/index.js';
 import { etatNiveaux } from '../cours/parcours.js';
 import { fait as carriereFaite } from '../carriere/index.js';
 import { episodeById } from '../carriere/mails.js';
+import { jourDe, serie, bonusSerie, etatDefis, sorteDe, BONUS_DEFIS } from './defis.js';
 
 // ----------------------------------------------------------------------------------
 // La progression du joueur : des points d'expérience (XP) pour chaque activité réussie, des
@@ -20,17 +21,28 @@ import { episodeById } from '../carriere/mails.js';
 //   badges  : badge → date d'obtention
 //   count   : compteurs (pannes résolues, exercices terminés…)
 // ----------------------------------------------------------------------------------
-/** @typedef {{ keys: Record<string, { at: number, pts: number, label: string }>, extra: number, badges: Record<string, number>, count: Record<string, number>, log: Array<{ at: number, pts: number, label: string }> }} Game */
+/** @typedef {{ keys: Record<string, { at: number, pts: number, label: string }>, extra: number, badges: Record<string, number>, count: Record<string, number>, log: Array<{ at: number, pts: number, label: string, k?: string }>, jours: string[], defis: Record<string, string[]> }} Game */
 
-export const LEVELS = [
-  { n: 1, title: 'Stagiaire', xp: 0 },
-  { n: 2, title: 'Assistant technique', xp: 120 },
-  { n: 3, title: 'Technicien', xp: 320 },
-  { n: 4, title: 'Technicien confirmé', xp: 650 },
-  { n: 5, title: 'Ingénieur d\'exploitation', xp: 1100 },
-  { n: 6, title: 'Chef de car', xp: 1700 },
-  { n: 7, title: 'Directeur technique', xp: 2500 },
+/**
+ * Les niveaux (v19.25) : 60, comme les paliers d'un pass de saison ; chaque niveau donne une récompense
+ * (game/pass.js). Les premiers viennent vite (65 XP pour le niveau 2), puis l'écart grandit de 10 XP par
+ * niveau : XP cumulée du niveau n = 5 (n − 1)² + 60 (n − 1) (945 au niveau 10, 5 945 au 30, 20 945 au 60).
+ * Les grades (stagiaire → directeur technique) regroupent les niveaux.
+ */
+export const NIVEAU_MAX = 60;
+export const xpPourNiveau = (n) => { const k = Math.max(0, Math.min(NIVEAU_MAX, n) - 1); return 5 * k * k + 60 * k; };
+export const GRADES = [
+  { des: 1, title: 'Stagiaire' },
+  { des: 5, title: 'Assistant technique' },
+  { des: 10, title: 'Technicien' },
+  { des: 18, title: 'Technicien confirmé' },
+  { des: 27, title: 'Ingénieur d\'exploitation' },
+  { des: 37, title: 'Chef de car' },
+  { des: 48, title: 'Directeur technique' },
 ];
+/** le grade d'un niveau */
+export const gradeOf = (n) => { let g = GRADES[0]; for (const x of GRADES) if (n >= x.des) g = x; return g.title; };
+export const LEVELS = Array.from({ length: NIVEAU_MAX }, (_, i) => ({ n: i + 1, title: gradeOf(i + 1), xp: xpPourNiveau(i + 1) }));
 /** barème (points) : ce que rapporte chaque activité réussie */
 export const BAREME = {
   mission: 25,          // une tâche du car vide (Jouer → Car régie → Car vide)
@@ -71,7 +83,7 @@ export function levelOf(xp) {
   for (const l of LEVELS) if (xp >= l.xp) L = l;
   const next = LEVELS.find((l) => l.xp > L.xp) || null;
   const span = next ? next.xp - L.xp : 1;
-  return { n: L.n, title: L.title, from: L.xp, next: next ? next.xp : null, pct: next ? (xp - L.xp) / span : 1, remaining: next ? next.xp - xp : 0 };
+  return { n: L.n, title: L.title, grade: L.title, from: L.xp, next: next ? next.xp : null, pct: next ? (xp - L.xp) / span : 1, remaining: next ? next.xp - xp : 0 };
 }
 
 /** @param {any} [P] @returns {Game} */
@@ -80,6 +92,7 @@ export function game(P = PROG) {
   if (!G.game || typeof G.game !== 'object') G.game = {};
   const g = G.game;
   g.keys = g.keys || {}; g.extra = g.extra || 0; g.badges = g.badges || {}; g.count = g.count || {}; g.log = g.log || [];
+  if (!Array.isArray(g.jours)) g.jours = []; if (!g.defis || typeof g.defis !== 'object') g.defis = {};
   return g;
 }
 /** le total d'XP @param {any} [P] */
@@ -88,19 +101,38 @@ export function xpOf(P = PROG) { const g = game(P); return Object.values(g.keys)
 /**
  * Donne des points. Une clé donnée (ex. « mission:m1 ») ne rapporte qu'une fois ; sans clé, la
  * récompense est répétable. Renvoie ce qui a été gagné (null si déjà donné), et prévient (« xp »).
- * @param {{ key?: string, pts: number, label: string, P?: any, silent?: boolean }} o
+ * Le premier gain du jour ajoute le bonus de la série ; un gain qui achève un défi du jour ajoute
+ * celui du défi (game/defis.js). La sorte (« quiz », « panne »…) vient de la clé, ou de o.sorte.
+ * @param {{ key?: string, pts: number, label: string, sorte?: string, P?: any, silent?: boolean, at?: number }} o
  */
 export function award(o) {
   const P = o.P || PROG; const g = game(P);
   const pts = Math.max(0, Math.round(o.pts)); if (!pts) return null;
   if (o.key && g.keys[o.key]) return null;
   const before = levelOf(xpOf(P));
-  const at = Date.now();
+  const at = o.at || Date.now();
+  const k = o.sorte || sorteDe(o.key);
   if (o.key) g.keys[o.key] = { at, pts, label: o.label }; else g.extra += pts;
-  g.log.push({ at, pts, label: o.label }); if (g.log.length > 120) g.log.splice(0, g.log.length - 120);
+  g.log.push({ at, pts, label: o.label, k }); if (g.log.length > 200) g.log.splice(0, g.log.length - 200);
+  // la série et les défis du jour (sauf pour leurs propres récompenses)
+  const bonus = /** @type {Array<{ pts: number, label: string, sorte: string }>} */ ([]);
+  if (k !== 'serie' && k !== 'defi') {
+    const j = jourDe(at);
+    if (!g.jours.includes(j)) {
+      g.jours.push(j); g.jours.sort(); if (g.jours.length > 400) g.jours.splice(0, g.jours.length - 400);
+      const sr = serie(g.jours, j);
+      bonus.push({ pts: bonusSerie(sr.n), label: sr.n > 1 ? `Série de ${sr.n} jours : bonus de régularité` : 'Premier gain du jour : bonus de régularité', sorte: 'serie' });
+    }
+    const faits = g.defis[j] = g.defis[j] || [];
+    const etat = etatDefis(g, j);
+    for (const d of etat) if (d.fini && !faits.includes(d.defi.id)) { faits.push(d.defi.id); bonus.push({ pts: d.defi.pts, label: 'Défi du jour réussi : ' + d.defi.t, sorte: 'defi' }); }
+    if (etat.every((d) => d.fini) && !faits.includes('tous')) { faits.push('tous'); bonus.push({ pts: BONUS_DEFIS, label: 'Les trois défis du jour réussis', sorte: 'defi' }); }
+    const garder = Object.keys(g.defis).sort().slice(-14); for (const x of Object.keys(g.defis)) if (!garder.includes(x)) delete g.defis[x];
+  }
+  for (const b of bonus) { g.extra += b.pts; g.log.push({ at, pts: b.pts, label: b.label, k: b.sorte }); }
   const total = xpOf(P), level = levelOf(total);
-  const r = { pts, total, label: o.label, level, leveled: level.n > before.n, at };
-  if (P === PROG) { saveProgressSoon(); if (!o.silent) emit('xp', r); checkBadges(P); }
+  const r = { pts, total, label: o.label, level, leveled: level.n > before.n, from: before.n, at, bonus };
+  if (P === PROG) { saveProgressSoon(); if (!o.silent) { emit('xp', r); for (const b of bonus) emit('xpBonus', b); } checkBadges(P); }
   return r;
 }
 export function bump(name, by = 1, P = PROG) { const g = game(P); g.count[name] = (g.count[name] || 0) + by; return g.count[name]; }
@@ -133,6 +165,14 @@ export const BADGES = [
   { id: 'premier-niveau', title: 'Premier niveau', desc: 'Un niveau d\'un chapitre du Cours validé : toutes ses leçons terminées, quiz et exercices.', ico: 'cours', tier: 'bronze', test: ({ P }) => CHAPTERS.some((c) => etatNiveaux(c.id, P).some((n) => n.ok)) },
   { id: 'fondamentaux', title: 'Les fondamentaux', desc: 'Le niveau Débutant validé dans tous les chapitres du Cours.', ico: 'livret', tier: 'argent', test: ({ P }) => CHAPTERS.length > 0 && CHAPTERS.every((c) => { const n = etatNiveaux(c.id, P)[0]; return !!n && n.ok; }) },
   { id: 'expert', title: 'Expert', desc: 'Un niveau Expert du Cours validé (le réseau du car IP, le SDI bit à bit, le jour de match).', ico: 'trophee', tier: 'or', test: ({ P }) => CHAPTERS.some((c) => etatNiveaux(c.id, P).some((n) => n.niveau.id === 'expert' && n.ok)) },
+  // revenir : la série de jours d'activité, les défis du jour
+  { id: 'serie-3', title: 'Régulier', desc: 'Trois jours d\'activité d\'affilée.', ico: 'serie', tier: 'bronze', test: ({ g }) => serie(g.jours).best >= 3 },
+  { id: 'serie-7', title: 'Une semaine au car', desc: 'Sept jours d\'activité d\'affilée.', ico: 'serie', tier: 'argent', test: ({ g }) => serie(g.jours).best >= 7 },
+  { id: 'serie-30', title: 'Titulaire du poste', desc: 'Trente jours d\'activité d\'affilée.', ico: 'serie', tier: 'or', test: ({ g }) => serie(g.jours).best >= 30 },
+  { id: 'defis', title: 'Journée parfaite', desc: 'Les trois défis du jour réussis le même jour.', ico: 'defis', tier: 'argent', test: ({ g }) => Object.values(g.defis || {}).some((l) => l.includes('tous')) },
+  { id: 'niveau-10', title: 'Technicien', desc: 'Le niveau 10 atteint.', ico: 'couronne', tier: 'bronze', test: ({ P }) => levelOf(xpOf(P)).n >= 10 },
+  { id: 'niveau-30', title: 'Mi-saison', desc: 'Le niveau 30 atteint.', ico: 'couronne', tier: 'argent', test: ({ P }) => levelOf(xpOf(P)).n >= 30 },
+  { id: 'niveau-60', title: 'Pass complet', desc: 'Le niveau 60 atteint : toutes les récompenses du pass.', ico: 'couronne', tier: 'or', test: ({ P }) => levelOf(xpOf(P)).n >= 60 },
   { id: 'opticien', title: 'Opticien', desc: 'Vingt notions de la caméra en 3D acquises.', ico: 'ccu', tier: 'argent', test: ({ P }) => Object.values(((P.camera || {}).notions) || {}).filter((n) => n && n.total && n.score === n.total).length >= 20 },
   // une compétence du référentiel travaillée (bronze), consolidée (or) : le livret décide
   ...COMPETENCES.flatMap((c) => /** @type {Badge[]} */ ([
@@ -167,6 +207,8 @@ export function mergeGame(mine, theirs) {
   for (const [k, v] of Object.entries(t.badges)) if (!g.badges[k]) g.badges[k] = v;
   for (const [k, v] of Object.entries(t.count)) g.count[k] = Math.max(g.count[k] || 0, v);
   const seen = new Set(g.log.map((l) => l.at)); for (const l of t.log) if (!seen.has(l.at)) g.log.push(l);
-  g.log.sort((a, b) => a.at - b.at); g.log = g.log.slice(-120);
+  g.log.sort((a, b) => a.at - b.at); g.log = g.log.slice(-200);
+  g.jours = [...new Set([...g.jours, ...t.jours])].sort().slice(-400);
+  for (const [j, l] of Object.entries(t.defis)) g.defis[j] = [...new Set([...(g.defis[j] || []), ...(l || [])])];
   return g;
 }

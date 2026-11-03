@@ -1,0 +1,124 @@
+/* ==================================================================================================
+   Les comptes (v19.24) : la fenêtre de connexion et la bande du compte (ui/compte_ui.js), le tableau de
+   bord du professeur (ui/tableau_bord.js). Jetons de theme-jeu.css seulement, aucune couleur en dur.
+   ================================================================================================== */
+/* ---------- la connexion ---------- */
+.cpt { display: grid; gap: 14px; }
+.cpt-intro { margin: 0; color: var(--muted); }
+.cpt-form { display: grid; gap: 10px; }
+.cpt-form .field input, .cpt-in { width: 100%; }
+.cpt-msg { margin: 0; min-height: 1.4em; color: var(--tally); font-size: 14px; }
+.cpt-msg.ok { color: var(--muted); }
+.cpt-liens { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px 18px; margin: 0; font-size: 14px; }
+.cpt-ligne { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; margin: 0; }
+.cpt-ligne span:last-child { color: var(--muted); font-size: 14px; }
+
+/* la bande du compte sur l'écran titre */
+.ti-compte { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 8px 12px; width: min(560px, 100%);
+  padding: 8px 10px 8px 16px; background: var(--mat); -webkit-backdrop-filter: var(--blur); backdrop-filter: var(--blur); border-radius: 999px; }
+.ti-compte[hidden] { display: none; }
+.ti-compte > .ico { color: var(--accent); }
+.ti-compte .cpt-qui { flex: 1 1 180px; min-width: 0; font-size: 14px; color: var(--fg); }
+.ti-compte .btn { border-radius: 999px; }
+
+/* ---------- le tableau de bord ---------- */
+.tb { display: grid; gap: 18px; max-width: 1180px; margin: 0 auto; }
+.tb h2 { margin: 0; font: 600 22px/1.2 var(--f-disp); }
+.tb-tete { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 18px; }
+.tb-tete h2 { flex: 1 1 auto; }
+.tb-classe { display: flex; align-items: center; gap: 8px; }
+.tb-classe label { color: var(--muted); font-size: 14px; }
+.tb-classe select { min-width: 220px; }
+.tb-vide { display: grid; justify-items: start; gap: 12px; padding: 22px; background: var(--well); border: 1px solid var(--line); border-radius: var(--r); }
+.tb-vide p { margin: 0; }
+
+.tb-kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; }
+.tb-kpi { display: grid; gap: 2px; padding: 14px 16px; background: var(--well); border: 1px solid var(--line); border-radius: var(--r); }
+.tb-kpi small { color: var(--muted); font-size: 13px; }
+.tb-kpi b { font: 600 24px/1.2 var(--f-disp); color: var(--fg); }
+.tb-kpi span { color: var(--muted); font-size: 13px; }
+.tb-kpi.warn b { color: var(--amber); }
+.tb-kpi.ok b { color: var(--pvw); }
+
+.tb-sec { display: grid; gap: 10px; padding: 16px 18px; background: var(--well); border: 1px solid var(--line); border-radius: var(--r); }
+.tb-sec h3 { margin: 0; font: 600 16px/1.2 var(--f-disp); color: var(--fg); }
+.tb-sec .note { margin: 0; }
+details.tb-sec > summary { cursor: pointer; list-style: none; }
+details.tb-sec > summary::-webkit-details-marker { display: none; }
+details.tb-sec > summary h3 { display: inline; }
+details.tb-sec > summary::after { content: ' · ouvrir'; color: var(--accent); font-size: 14px; }
+details.tb-sec[open] > summary::after { content: ' · fermer'; }
+
+.tb-table tbody tr.tb-ligne { cursor: pointer; }
+.tb-table tbody tr.tb-ligne:hover, .tb-table tbody tr.tb-ligne:focus-visible { background: var(--accent-d); }
+.tb-table th[scope=row] { text-align: left; font-weight: 600; }
+.tb-table th[scope=row] small { display: block; color: var(--muted); font: 400 12.5px var(--f-mono); }
+.tb-nom { display: block; }
+.tb-dim { color: var(--muted); }
+.tb-mono { font-family: var(--f-mono); font-size: 13.5px; }
+.tb-actions { white-space: nowrap; }
+.tb-actions .btn + .btn { margin-left: 6px; }
+.tb-table select { max-width: 200px; }
+
+.tb-parc { display: inline-flex; align-items: center; gap: 8px; white-space: nowrap; }
+.tb-bar { display: inline-block; width: 90px; height: 6px; border-radius: 999px; background: var(--line2); overflow: hidden; }
+.tb-bar i { display: block; height: 100%; border-radius: inherit; background: var(--accent); }
+
+.tb-pastille { display: inline-block; padding: 2px 9px; border-radius: 999px; font: 600 12.5px/1.5 var(--f-body); white-space: nowrap; }
+.tb-pastille.forte { background: var(--tally-key); color: var(--fg); }
+.tb-pastille.moyenne { background: var(--amber-d); color: var(--amber); }
+.tb-pastille.aide { background: var(--accent-d); color: var(--accent); }
+
+.tb-diff, .tb-blocages, .tb-ep { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.tb-diff li { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 2px 12px; align-items: baseline; padding: 10px 12px; background: var(--well); border-radius: var(--r-s); }
+.tb-diff li > span:last-child { grid-column: 2; color: var(--muted); font-size: 14px; }
+.tb-blocages li, .tb-ep li { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; }
+.tb-blocages li span, .tb-ep li span { color: var(--muted); font-size: 14px; }
+.tb-ep li .btn { margin-left: auto; }
+
+.tb-ligneform { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.tb-ligneform input { flex: 1 1 160px; min-width: 0; }
+.tb-lot { display: grid; gap: 8px; }
+.tb-lot summary { cursor: pointer; color: var(--accent); }
+.tb-lot textarea { width: 100%; font-family: var(--f-mono); }
+.tb-crees { border-color: var(--accent); }
+@media (max-width: 700px) { .tb-diff li { grid-template-columns: 1fr; } .tb-diff li > span:last-child { grid-column: 1; } .tb-classe select { min-width: 0; } }
+
+/* ---------- le car régie dans le tableau de bord (v19.25, ui/tableau_car.js) ---------- */
+.tb-seg { justify-self: start; flex-wrap: wrap; }
+.tb-vue { display: grid; gap: 18px; }
+.tb-statut { display: inline-block; padding: 2px 9px; border-radius: 999px; font: 600 12.5px/1.5 var(--f-body); white-space: nowrap; }
+.tb-statut.st-seul { background: var(--pvw-d); color: var(--pvw); }
+.tb-statut.st-aide { background: var(--accent-d); color: var(--accent); }
+.tb-statut.st-commence, .tb-statut.st-abandon { background: var(--amber-d); color: var(--amber); }
+.tb-statut.st-afaire { color: var(--muted); }
+/* la grille élèves × postes : plus la case est foncée, plus l'élève y a passé de temps */
+.tb-matrice th[scope=col] { font-size: 12.5px; white-space: nowrap; }
+.tb-matrice td { text-align: center; }
+.tb-case { position: relative; }
+.tb-case::before { content: ''; position: absolute; inset: 0; background: var(--accent); opacity: calc(var(--k, 0) * .4); pointer-events: none; }
+.tb-case > * { position: relative; }
+.tb-case b { display: block; font: 600 13px var(--f-body); }
+.tb-case small { color: var(--fg); font-size: 12px; opacity: .85; }
+.tb-matrice-exos th[scope=row] small { display: block; color: var(--muted); font-size: 12px; font-weight: 400; }
+.tb-matrice-exos th[scope=col] .linkbtn { font-weight: 600; }
+.tb-exos th[scope=row] small, .tb-matrice-exos th[scope=row] small { display: block; color: var(--muted); font: 400 12.5px var(--f-body); }
+.tb-groupe th { background: var(--well); color: var(--muted); font: 600 13px var(--f-body); text-align: left; }
+.tb-jamais { color: var(--muted); }
+.tb-jamais th[scope=row] { font-weight: 400; }
+.tb-reste summary { cursor: pointer; color: var(--accent); }
+.tb-grille { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; }
+.tb-vus, .tb-taches { display: grid; gap: 4px; margin: 0; padding: 0; list-style: none; }
+.tb-vus li { display: flex; justify-content: space-between; gap: 10px; font-size: 14px; }
+.tb-vus li b { color: var(--muted); font-weight: 600; }
+.tb-taches { grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 6px 14px; }
+.tb-taches li { display: flex; gap: 8px; align-items: center; font-size: 14px; color: var(--muted); }
+.tb-taches li.ok { color: var(--fg); }
+/* l'activité des 14 derniers jours */
+.tb-jours { margin: 0; display: grid; gap: 6px; }
+.tb-jours-barres { display: grid; grid-template-columns: repeat(14, minmax(0, 1fr)); gap: 6px; align-items: end; height: 110px; }
+.tb-jour { display: grid; grid-template-rows: 1fr auto; gap: 4px; height: 100%; align-items: end; }
+.tb-jour i { display: block; min-height: 2px; border-radius: 4px 4px 0 0; background: var(--accent); }
+.tb-jour small { color: var(--muted); font-size: 11px; text-align: center; white-space: nowrap; overflow: hidden; }
+@media (max-width: 700px) { .tb-jour small { font-size: 9px; } }
+.tb-matrice th[scope=row] small, .tb-matrice th[scope=col] small { display: block; color: var(--muted); font: 400 12px var(--f-mono); }

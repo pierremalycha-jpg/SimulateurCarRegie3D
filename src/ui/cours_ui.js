@@ -34,7 +34,7 @@ import { revealIn } from './reveal.js';
 // Étudiant) n'en montre que l'aperçu et le chemin pour l'ouvrir. Une leçon qui a une vue 3D (src/vues3d) la
 // propose (« Voir en 3D ») ; le chapitre a alors son entrée « … en 3D » dans le sommaire. Le référentiel du BTS
 // (ui/referentiel_ui.js) est cité en fin de leçon et en tête de chapitre, et a sa page (« Le référentiel du BTS »).
-// La page d'une leçon se lit comme une page de présentation (v19.24, styles/cours-lecture.css) : un en-tête
+// La page d'une leçon se lit comme une page de présentation (v19.26, styles/cours-lecture.css) : un en-tête
 // avec le titre et l'essentiel, une barre d'étapes qui reste en haut, puis les sections qui se dévoilent au
 // défilement (ui/reveal.js) : le schéma et sa légende, la manipulation, l'explication, le car, les mots de la
 // leçon, le référentiel, le quiz, l'exercice, les exercices pratiques.

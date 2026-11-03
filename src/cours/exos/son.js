@@ -10,7 +10,7 @@ const fr = (v, d = 0) => frn(v, d).replace('-', '−');
 // −10 dBFS, prévoir l'écrêtage au-delà de 0 dBFS, lire un fader en rapport d'amplitude (20 log10),
 // remettre la tranche dans l'ordre ; retarder le son d'autant d'images que l'image (20 ms en 1080p50,
 // 40 ms en 1080i50), juger un décalage selon l'EBU R37 (40 ms d'avance, 60 ms de retard au plus de
-// bout en bout), composer un N-1. Chiffres des leçons (cours/son.js). Depuis la v19.24, les bases et le
+// bout en bout), composer un N-1. Chiffres des leçons (cours/son.js). Depuis la v19.26, les bases et le
 // traitement (cours/son_calc.js) : décibels et références, directivité et canon, couples stéréo (écarts,
 // angle d'enregistrement, MS), niveaux et liaisons, compresseur, loudness, audio numérique.
 // ----------------------------------------------------------------------------------
@@ -140,7 +140,7 @@ registerExos({
       ];
     },
   },
-  // ---------------- les bases (v19.24) ----------------
+  // ---------------- les bases (v19.26) ----------------
   'son-decibel': {
     titre: 'Compter en décibels',
     consigne: 'Avant le test de ligne, le chef de car vous fait vérifier les niveaux : des tensions à convertir, des sources à additionner, une distance à estimer.',
@@ -303,7 +303,7 @@ registerExos({
       ];
     },
   },
-  // ---------------- la dynamique, le loudness, le numérique (v19.24) ----------------
+  // ---------------- la dynamique, le loudness, le numérique (v19.26) ----------------
   'son-dynamique': {
     titre: 'Régler un compresseur',
     consigne: 'Le commentateur chuchote puis crie : vous réglez sa tranche. Des niveaux de sortie à prévoir, des réglages à choisir.',

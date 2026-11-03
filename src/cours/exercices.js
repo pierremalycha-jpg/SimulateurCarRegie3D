@@ -32,9 +32,9 @@ export const SPECIAL = {
 /** meilleur score d'une mission de l'entrepôt (PROG.entrepot.missions[id].best), ou null */
 export const entrepotBest = (P, id) => { const m = P && P.entrepot && P.entrepot.missions ? P.entrepot.missions[id] : null; return m && m.best != null ? Number(m.best.score ?? m.best) : null; };
 const best = (a) => (a && a.length ? Math.max(...a.map((x) => x.score || 0)) : null);
-/** résultat d'un exercice noté : { done, text } */
-export function specialState(id) {
-  const P = PROG; const N = P.net || { missions: {}, quiz: [], exams: [] };
+/** résultat d'un exercice noté : { done, text } (P : la progression d'un élève, celle de l'ordinateur par défaut) */
+export function specialState(id, P = /** @type {any} */ (PROG)) {
+  const N = P.net || { missions: {}, quiz: [], exams: [] };
   if (id === 'x-atelier') { const r = (P.rigs || []).slice().sort((a, b) => a.errs - b.errs || a.sec - b.sec)[0]; return r ? { done: true, text: `meilleur montage : ${r.errs} erreur${r.errs > 1 ? 's' : ''}, ${Math.floor(r.sec / 60)} min` } : { done: false, text: 'pas encore fait' }; }
   if (id === 'x-brassage') return P.patchBest ? { done: P.patchBest >= 100, text: `brassage réussi à ${P.patchBest} %` } : { done: false, text: 'pas encore fait' };
   if (id === 'x-reseau') { const n = NET_MISSIONS.filter((m) => (N.missions || {})[m.id]).length; const e = best(N.exams); return { done: n === NET_MISSIONS.length && e != null && e >= 60, text: n || e != null ? `${n} / ${NET_MISSIONS.length} missions${e != null ? ` · examen ${e} %` : ''}` : 'pas encore commencé' }; }

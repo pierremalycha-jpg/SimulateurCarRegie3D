@@ -32,7 +32,7 @@ export const estLecon = (id) => !!lessonById(id);
 /** terme du glossaire (tel qu'écrit dans content/glossary.js) → leçon(s) puis fiche(s) « ? » */
 /** @type {Record<string, string | string[]>} */
 export const GLOSSAIRE = {
-  // le son, des bases à l'antenne (v19.24) ; la compression vidéo
+  // le son, des bases à l'antenne (v19.26) ; la compression vidéo
   'Décibel (dB, dBu, dBFS)': ['son-decibel', 'decibel'], 'Micro statique / dynamique': ['son-micros', 'micro-statique'], 'Directivité (cardioïde, canon)': ['son-micros', 'directivite'],
   'Couple stéréo (XY, ORTF, AB, MS)': ['son-stereo', 'couple-stereo'], 'Liaison symétrique (XLR)': ['son-liaisons', 'symetrique'], 'Compresseur / limiteur / gate': ['son-dynamique', 'compresseur'],
   'Crête vraie (dBTP)': ['son-loudness', 'dbtp'], 'MADI': ['son-numerique', 'madi'], 'Dante / AES67': ['son-numerique', 'dante'], 'Compression vidéo (codec, GOP)': ['signal-compression', 'codec'],
