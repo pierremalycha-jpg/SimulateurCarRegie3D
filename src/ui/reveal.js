@@ -1,6 +1,6 @@
 // @ts-check
 // ----------------------------------------------------------------------------------
-// La page qui se dévoile au défilement (v19.24) : comme sur une page de présentation d'Apple, chaque
+// La page qui se dévoile au défilement (v19.26) : comme sur une page de présentation d'Apple, chaque
 // section d'une leçon arrive quand on descend jusqu'à elle, légèrement remontée et fondue. Mécanique :
 // les éléments marqués `data-reveal` reçoivent la classe `co-reveal`, puis `in` dès qu'ils entrent dans
 // la fenêtre (IntersectionObserver, un peu avant le bord pour que la lecture ne s'arrête jamais sur un

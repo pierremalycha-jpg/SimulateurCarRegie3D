@@ -1,145 +1,217 @@
 // @ts-check
-import { on, emit } from '../state.js';
+import { S, emit, on } from '../state.js';
 import { el } from '../util.js';
-import { modal, toast, ask } from './common.js';
+import { $, modal, toast, ask, field } from './common.js';
 import { icon } from './icons.js';
-import { isTrainer } from '../app/profile.js';
-import { SAVE } from '../shared.js';
-import { COMPTE, compteDisponible, connecte, creerCompte, seConnecter, seDeconnecter, motDePasseOublie, synchroniser, supprimerCompte, initCompte } from '../compte/index.js';
-import { lireConfig, poserConfig, configLocale, configFirebase } from '../compte/config.js';
-import { profil } from '../game/pass.js';
+import { COMPTE, estProf, nomDuCompte } from '../comptes/session.js';
+import { connecter, deconnecter, inscrireProf, renvoyerConfirmation, relireSession, mdpOublie, texteErreur, confirmerAvecLien, nouveauMdpAvecLien } from '../comptes/firebase.js';
+import { guestProgress, absorbProgress, saveProgressNow, COMPTE_SH } from '../shared.js';
+import { motDePasseRefuse } from '../comptes/identifiants.js';
+import { xpOf } from '../game/xp.js';
 
 // ----------------------------------------------------------------------------------
-// « Mon compte » (v19.25) : se connecter, créer un compte, se déconnecter, synchroniser. Une fenêtre,
-// ouverte depuis Réglages → Mon compte, le profil (onglet Mon profil) et le classement. La section des
-// Réglages résume l'état en une ligne. Sans projet Firebase, la fenêtre le dit (et le formateur peut y
-// coller la configuration de son projet pour cet ordinateur).
+// Se connecter (v19.24) : la fenêtre de connexion (identifiant d'élève ou adresse de professeur), l'ouverture
+// d'un compte professeur (adresse autorisée, confirmée par courriel), la bande du compte sur l'écran titre
+// et la section « Mon compte » des Réglages. Les comptes d'élèves sont créés par le professeur (tableau de
+// bord) : un élève ne s'inscrit pas lui-même. Sans projet Firebase renseigné, rien de tout cela ne s'affiche.
 // ----------------------------------------------------------------------------------
-/** remplace le contenu (les morceaux absents, null, sont laissés de côté : replaceChildren écrirait « null ») */
-const poser = (box, ...kids) => box.replaceChildren(...kids.filter((k) => k != null && k !== false));
-const champ = (label, input) => el('label', { class: 'cp-champ' }, el('span', {}, label), input);
+const input = (o) => el('input', { class: 'cpt-in', ...o });
+const msgBox = () => el('p', { class: 'cpt-msg', role: 'alert', 'aria-live': 'assertive' });
+const dire = (box, texte, bon = false) => { box.textContent = texte; box.classList.toggle('ok', bon); };
 
-/** l'état du compte en une phrase */
-export function etatCompte() {
-  if (COMPTE.etat === 'indisponible') return { ok: false, text: 'Compte en ligne non configuré sur ce simulateur : la progression reste sur cet ordinateur.' };
-  if (COMPTE.etat === 'connexion') return { ok: true, text: 'Connexion au compte…' };
-  if (COMPTE.etat === 'deconnecte') return { ok: false, text: 'Pas connecté : connectez-vous pour retrouver votre progression sur n\'importe quel ordinateur.' };
-  if (SAVE.remote === false) return { ok: false, text: `Connecté (${COMPTE.email}), mais l'enregistrement en ligne a échoué : nouvel essai au prochain enregistrement.` };
-  return { ok: true, text: `Connecté : ${COMPTE.email}. Votre progression est enregistrée dans votre compte.` };
-}
-
-function formulaire(box) {
-  let mode = 'connexion';
-  const msg = el('p', { class: 'note cp-msg', role: 'status', 'aria-live': 'polite' });
-  const email = /** @type {HTMLInputElement} */ (el('input', { type: 'email', id: 'cp-email', autocomplete: 'email', required: true, placeholder: 'prenom.nom@exemple.fr' }));
-  const mdp = /** @type {HTMLInputElement} */ (el('input', { type: 'password', id: 'cp-mdp', autocomplete: 'current-password', required: true, minlength: '6' }));
-  const pseudo = /** @type {HTMLInputElement} */ (el('input', { type: 'text', id: 'cp-pseudo', autocomplete: 'nickname', maxlength: '20', placeholder: 'Ton nom au classement', value: profil().pseudo }));
-  const rowPseudo = champ('Pseudo (affiché au classement)', pseudo);
-  const go = /** @type {HTMLButtonElement} */ (el('button', { type: 'submit', class: 'btn primary', id: 'cp-go' }, icon('connexion'), 'Se connecter'));
-  const oubli = el('button', { type: 'button', class: 'linkbtn', id: 'cp-oubli', onclick: async () => {
-    if (!email.value) { msg.textContent = 'Écrivez d\'abord votre adresse, puis « Mot de passe oublié ».'; email.focus(); return; }
-    const r = await motDePasseOublie(email.value);
-    msg.textContent = r.ok ? `Un mail pour choisir un nouveau mot de passe est parti vers ${email.value}.` : r.error;
-  } }, 'Mot de passe oublié ?');
-  const modes = el('div', { class: 'seg', role: 'group', 'aria-label': 'Connexion ou création de compte' });
-  const setMode = (m) => {
-    mode = m;
-    for (const b of modes.children) b.setAttribute('aria-pressed', String(/** @type {HTMLElement} */ (b).dataset.v === m));
-    rowPseudo.hidden = m !== 'creer'; oubli.hidden = m === 'creer';
-    mdp.autocomplete = m === 'creer' ? 'new-password' : 'current-password';
-    go.replaceChildren(icon('connexion'), m === 'creer' ? 'Créer mon compte' : 'Se connecter');
-    msg.textContent = '';
-  };
-  modes.append(
-    el('button', { type: 'button', 'data-v': 'connexion', onclick: () => setMode('connexion') }, 'J\'ai un compte'),
-    el('button', { type: 'button', 'data-v': 'creer', id: 'cp-mode-creer', onclick: () => setMode('creer') }, 'Créer un compte'));
-  const form = el('form', { class: 'cp-form', novalidate: true },
-    modes, champ('Adresse électronique', email), champ('Mot de passe (6 caractères au moins)', mdp), rowPseudo,
-    el('div', { class: 'hwrow' }, go, oubli), msg,
-    el('p', { class: 'note' }, 'La progression déjà faite sur cet ordinateur est ajoutée à votre compte : rien ne se perd. Sur un ordinateur partagé, pensez à vous déconnecter en partant.'));
-  form.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    if (!email.value || mdp.value.length < 6) { msg.textContent = 'Il faut l\'adresse et un mot de passe de 6 caractères au moins.'; return; }
-    go.disabled = true; msg.textContent = mode === 'creer' ? 'Création du compte…' : 'Connexion…';
-    const r = mode === 'creer' ? await creerCompte(email.value, mdp.value, pseudo.value) : await seConnecter(email.value, mdp.value);
-    go.disabled = false;
-    if (!r.ok) { msg.textContent = r.error || 'Échec.'; return; }
-    toast(mode === 'creer' ? 'Compte créé : ta progression est enregistrée en ligne' : 'Connecté : progression retrouvée', 'good', 4000);
-    dessiner(box);
-  });
-  setMode('connexion');
-  return form;
-}
-
-function connecteVue(box) {
-  const e = etatCompte();
-  const msg = el('p', { class: 'note cp-msg', role: 'status', 'aria-live': 'polite' });
-  return el('div', { class: 'cp-in' },
-    el('p', { class: 'mp-state ' + (e.ok ? 'ok' : 'err') }, icon(e.ok ? 'nuage' : 'alarme'), e.text),
-    COMPTE.erreur ? el('p', { class: 'note' }, COMPTE.erreur) : null,
-    el('div', { class: 'hwrow' },
-      el('button', { type: 'button', class: 'btn primary', id: 'cp-profil', onclick: () => { modal.close(); emit('profil', { tab: 'profil' }); } }, icon('profil'), 'Mon profil'),
-      el('button', { type: 'button', class: 'btn', id: 'cp-sync', onclick: async () => { msg.textContent = 'Synchronisation…'; const r = await synchroniser(); msg.textContent = r.ok ? 'Progression et profil enregistrés en ligne.' : r.error; } }, icon('nuage'), 'Synchroniser maintenant'),
-      el('button', { type: 'button', class: 'btn', id: 'cp-out', onclick: async () => {
-        if (!(await ask('Se déconnecter ? Votre progression est enregistrée dans votre compte, puis retirée de cet ordinateur.', { ok: 'Se déconnecter' }))) return;
-        await seDeconnecter(); toast('Déconnecté', '', 2500); dessiner(box);
-      } }, icon('deconnexion'), 'Se déconnecter')),
-    msg,
-    el('details', { class: 'cp-danger' }, el('summary', {}, 'Supprimer mon compte'),
-      el('p', { class: 'note' }, 'Efface le compte, sa progression en ligne et son profil public. La progression reste sur cet ordinateur (Réglages → Ma progression pour l\'exporter ou l\'effacer).'),
-      el('button', { type: 'button', class: 'btn danger', onclick: async () => {
-        if (!(await ask('Supprimer définitivement votre compte en ligne ?', { ok: 'Supprimer le compte', danger: true }))) return;
-        const r = await supprimerCompte(); msg.textContent = r.ok ? 'Compte supprimé.' : r.error; if (r.ok) dessiner(box);
-      } }, 'Supprimer définitivement')));
-}
-
-// sans projet Firebase : l'explication, et pour le formateur, la configuration de son projet sur cet ordinateur
-function indisponibleVue(box) {
-  const out = el('div', { class: 'cp-off' },
-    el('p', { class: 'mp-state err' }, icon('horsnuage'), 'Ce simulateur n\'a pas de compte en ligne configuré : la progression reste sur cet ordinateur (Réglages → Ma progression pour l\'exporter).'));
-  if (isTrainer()) {
-    const ta = /** @type {HTMLTextAreaElement} */ (el('textarea', { id: 'cp-config', rows: '5', spellcheck: 'false', placeholder: '{ "apiKey": "…", "projectId": "…" }  ou l\'objet firebaseConfig de la console Firebase' }));
-    const m = el('p', { class: 'note cp-msg', role: 'status' });
-    out.append(el('details', { class: 'cp-cfg' }, el('summary', {}, 'Formateur : brancher un projet Firebase sur cet ordinateur'),
-      el('p', { class: 'note' }, 'Collez la configuration web de votre projet (console Firebase → Paramètres du projet → Vos applications). Pour tous les ordinateurs, elle se met plutôt dans firebase.web.json avant la construction (README).'),
-      ta, el('div', { class: 'hwrow' }, el('button', { type: 'button', class: 'btn primary', onclick: async () => {
-        const c = lireConfig(ta.value); if (!c) { m.textContent = 'Configuration illisible : il faut au moins apiKey et projectId.'; return; }
-        poserConfig(c); await initCompte(); dessiner(box);
-      } }, 'Brancher ce projet')), m));
+/** la fenêtre de connexion (« prof » : ouvrir un compte professeur) */
+export function openConnexion(/** @type {'connexion' | 'prof'} */ vue = 'connexion') {
+  if (!COMPTE.dispo) {
+    modal.open('Se connecter', el('div', { class: 'cpt' }, el('p', {}, 'Les comptes en ligne ne sont pas activés sur cette version du simulateur : la progression reste dans ce navigateur.'),
+      el('p', { class: 'note role-only' }, 'Pour les activer : renseigner le projet Firebase de l\'établissement (README, « Les comptes »).')), { width: 520 });
+    return;
   }
-  return out;
-}
-
-function dessiner(box) {
-  poser(box, 
-    COMPTE.etat === 'indisponible' ? indisponibleVue(box) : connecte() ? connecteVue(box) : formulaire(box),
-    isTrainer() && configLocale() ? el('p', { class: 'note' }, `Projet Firebase de cet ordinateur : ${(configFirebase() || { projectId: '' }).projectId}. `,
-      el('button', { type: 'button', class: 'linkbtn', onclick: async () => { poserConfig(null); await initCompte(); dessiner(box); } }, 'Le retirer')) : null);
-}
-/** la fenêtre « Mon compte » */
-export function openCompte() {
-  const box = el('div', { class: 'cp' });
-  dessiner(box);
-  modal.open('Mon compte', box, { width: 560 });
-  const f = /** @type {HTMLInputElement | null} */ (box.querySelector('#cp-email'));
-  if (f && !matchMedia('(pointer: coarse)').matches) f.focus();
-}
-on('compteOuvrir', () => openCompte());
-
-const SEC = { paint: () => {} };
-on('compte', () => SEC.paint()); on('progressSave', () => SEC.paint());
-/** la section des Réglages */
-export function compteSection() {
-  const st = el('p', { class: 'mp-state', role: 'status' });
-  const btn = el('button', { type: 'button', class: 'btn primary', id: 'rg-compte', onclick: () => openCompte() });
-  const paint = () => {
-    const e = etatCompte(); st.className = 'mp-state ' + (e.ok ? 'ok' : 'err'); st.replaceChildren(icon(e.ok ? 'nuage' : 'horsnuage'), e.text);
-    btn.replaceChildren(icon(connecte() ? 'profil' : 'connexion'), connecte() ? 'Gérer mon compte' : compteDisponible() ? 'Se connecter ou créer un compte' : 'En savoir plus');
+  const body = el('div', { class: 'cpt' });
+  const draw = (/** @type {string} */ v) => {
+    body.replaceChildren();
+    if (COMPTE.etat === 'verifier') return drawVerifier();
+    if (v === 'prof') return drawProf();
+    const id = input({ id: 'cpt-id', type: 'text', autocomplete: 'username', autocapitalize: 'none', spellcheck: 'false', placeholder: 'prenom.nom' });
+    const mdp = input({ id: 'cpt-mdp', type: 'password', autocomplete: 'current-password' });
+    const msg = msgBox();
+    const go = el('button', { type: 'submit', class: 'btn primary', id: 'cpt-go' }, icon('connexion'), 'Se connecter');
+    const form = el('form', { class: 'cpt-form', onsubmit: async (e) => {
+      e.preventDefault();
+      if (!/** @type {HTMLInputElement} */ (id).value.trim() || !/** @type {HTMLInputElement} */ (mdp).value) { dire(msg, 'Identifiant et mot de passe, s\'il te plaît.'); return; }
+      /** @type {HTMLButtonElement} */ (go).disabled = true; dire(msg, 'Connexion…', true);
+      try { await connecter(/** @type {HTMLInputElement} */ (id).value, /** @type {HTMLInputElement} */ (mdp).value); dire(msg, 'Connecté. Chargement de ta progression…', true); }
+      catch (er) { dire(msg, texteErreur(er)); /** @type {HTMLButtonElement} */ (go).disabled = false; }
+    } },
+    field('Identifiant (ou adresse e-mail pour un professeur)', id), field('Mot de passe', mdp), msg,
+    el('div', { class: 'hwrow' }, go, el('button', { type: 'button', class: 'btn', onclick: () => modal.close() }, 'Continuer sans compte')));
+    const oubli = el('button', { type: 'button', class: 'linkbtn', onclick: async () => {
+      const v = /** @type {HTMLInputElement} */ (id).value.trim();
+      if (!v.includes('@')) { dire(msg, 'Élève : demande à ton professeur, il te donne un nouveau mot de passe. Professeur : tapez votre adresse e-mail, puis « Mot de passe oublié ? ».', true); return; }
+      try { await mdpOublie(v); body.replaceChildren(); drawNouveauMdp(v); } catch (er) { dire(msg, texteErreur(er)); }
+    } }, 'Mot de passe oublié ?');
+    body.append(el('p', { class: 'cpt-intro' }, 'Connecte-toi pour retrouver ta progression sur n\'importe quel ordinateur. Ton identifiant et ton mot de passe te sont donnés par ton professeur.'),
+      form, el('p', { class: 'cpt-liens' }, oubli, el('button', { type: 'button', class: 'linkbtn', id: 'cpt-prof', onclick: () => draw('prof') }, 'Professeur : ouvrir mon compte')));
+    if (COMPTE.etat === 'refuse' && COMPTE.message) dire(msg, COMPTE.message);
+    setTimeout(() => /** @type {HTMLInputElement} */ (id).focus(), 30);
   };
-  paint();
-  const sec = el('section', { class: 'rg-sec', id: 'rg-compte-sec' }, el('h3', {}, 'Mon compte'), st,
-    el('div', { class: 'hwrow' }, btn, el('button', { type: 'button', class: 'btn', onclick: () => { modal.close(); emit('profil', { tab: 'profil' }); } }, icon('profil'), 'Profil, pass et classement')));
-  // une seule fois pour toutes les fenêtres : la section affichée (s'il y en a une) se redessine
-  SEC.paint = paint;
+  const drawProf = () => {
+    const prenom = input({ type: 'text', autocomplete: 'given-name' }), nom = input({ type: 'text', autocomplete: 'family-name' });
+    const email = input({ type: 'email', autocomplete: 'email' }), mdp = input({ type: 'password', autocomplete: 'new-password' });
+    const msg = msgBox();
+    const go = el('button', { type: 'submit', class: 'btn primary' }, 'Ouvrir mon compte');
+    const val = (x) => /** @type {HTMLInputElement} */ (x).value.trim();
+    body.append(el('p', { class: 'cpt-intro' }, 'Votre adresse doit être sur la liste des professeurs de l\'établissement (un collègue l\'ajoute depuis son tableau de bord). Un lien de confirmation vous est envoyé.'),
+      el('form', { class: 'cpt-form', onsubmit: async (e) => {
+        e.preventDefault();
+        if (!val(prenom) || !val(nom) || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(val(email))) { dire(msg, 'Prénom, nom et une adresse e-mail valide.'); return; }
+        const refus = motDePasseRefuse(/** @type {HTMLInputElement} */ (mdp).value); if (refus) { dire(msg, 'Mot de passe : ' + refus); return; }
+        /** @type {HTMLButtonElement} */ (go).disabled = true;
+        try { await inscrireProf({ email: val(email), mdp: /** @type {HTMLInputElement} */ (mdp).value, prenom: val(prenom), nom: val(nom) }); }
+        catch (er) {
+          // l'adresse a déjà un compte (inscription faite) : on passe à la connexion, l'adresse déjà tapée
+          if (er && er.code === 'auth/email-already-in-use') { const v = val(email); draw('connexion'); const i = /** @type {HTMLInputElement | null} */ (body.querySelector('#cpt-id')); if (i) i.value = v; const m = body.querySelector('.cpt-msg'); if (m) dire(/** @type {HTMLElement} */ (m), 'Cette adresse a déjà un compte : connectez-vous avec son mot de passe (ou « Mot de passe oublié ? »).', true); setTimeout(() => /** @type {HTMLElement | null} */ (body.querySelector('#cpt-mdp'))?.focus(), 40); return; }
+          dire(msg, texteErreur(er)); /** @type {HTMLButtonElement} */ (go).disabled = false;
+        }
+      } }, el('div', { class: 'grid2' }, field('Prénom', prenom), field('Nom', nom)), field('Adresse e-mail', email), field('Mot de passe (6 caractères au moins)', mdp), msg,
+      el('div', { class: 'hwrow' }, go, el('button', { type: 'button', class: 'btn', onclick: () => draw('connexion') }, 'Retour'))));
+  };
+  const drawVerifier = () => {
+    const msg = msgBox();
+    // le lien du courriel, collé ici : l'application confirme l'adresse elle-même (la page de Firebase qui
+    // l'ouvre d'habitude peut refuser un lien abîmé par la messagerie : « The selected page mode is invalid »)
+    const lien = input({ id: 'cpt-lien', type: 'text', autocomplete: 'off', spellcheck: 'false', placeholder: 'https://…/__/auth/action?mode=verifyEmail&oobCode=…' });
+    const confirmer = async () => {
+      const v = /** @type {HTMLInputElement} */ (lien).value.trim();
+      if (!v) { dire(msg, 'Collez d\'abord le lien reçu par courriel.'); return; }
+      dire(msg, 'Confirmation…', true);
+      try { const ok = await confirmerAvecLien(v); dire(msg, ok ? 'Adresse confirmée. Ouverture du compte…' : 'Le lien est passé, mais l\'adresse n\'apparaît pas encore confirmée : réessayez dans un instant.', ok); }
+      catch (er) { dire(msg, er && er.code === 'lien-invalide' ? er.message : texteErreur(er)); }
+    };
+    body.append(el('p', { class: 'cpt-intro' }, COMPTE.message || 'Confirmez votre adresse e-mail.'),
+      el('form', { class: 'cpt-form', onsubmit: (e) => { e.preventDefault(); confirmer(); } },
+        field('Lien reçu par courriel (copiez-le : clic droit sur le lien, « Copier l\'adresse du lien »)', lien),
+        el('div', { class: 'hwrow' }, el('button', { type: 'submit', class: 'btn primary', id: 'cpt-confirmer' }, 'Confirmer mon adresse'))),
+      msg,
+      el('div', { class: 'hwrow' },
+        el('button', { type: 'button', class: 'btn', onclick: async () => { try { const ok = await relireSession(); dire(msg, ok ? 'Adresse confirmée. Ouverture du compte…' : 'Adresse pas encore confirmée : collez le lien ci-dessus.', ok); } catch (er) { dire(msg, texteErreur(er)); } } }, 'J\'ai ouvert le lien'),
+        el('button', { type: 'button', class: 'btn', onclick: async () => { try { await renvoyerConfirmation(); dire(msg, 'Lien renvoyé.', true); } catch (er) { dire(msg, texteErreur(er)); } } }, 'Renvoyer le lien'),
+        el('button', { type: 'button', class: 'btn', onclick: () => deconnecter() }, 'Se déconnecter')));
+    setTimeout(() => /** @type {HTMLInputElement} */ (lien).focus(), 30);
+  };
+  // « mot de passe oublié » d'un professeur : le lien reçu et le nouveau mot de passe, dans l'application
+  const drawNouveauMdp = (/** @type {string} */ email) => {
+    const msg = msgBox();
+    const lien = input({ id: 'cpt-lien-mdp', type: 'text', autocomplete: 'off', spellcheck: 'false' });
+    const mdp = input({ id: 'cpt-nouveau-mdp', type: 'password', autocomplete: 'new-password' });
+    body.append(el('p', { class: 'cpt-intro' }, `Un lien est parti à ${email}. Copiez-le (clic droit, « Copier l'adresse du lien »), collez-le ici et choisissez votre nouveau mot de passe.`),
+      el('form', { class: 'cpt-form', onsubmit: async (e) => {
+        e.preventDefault();
+        const refus = motDePasseRefuse(/** @type {HTMLInputElement} */ (mdp).value); if (refus) { dire(msg, 'Mot de passe : ' + refus); return; }
+        try { await nouveauMdpAvecLien(/** @type {HTMLInputElement} */ (lien).value, /** @type {HTMLInputElement} */ (mdp).value); await connecter(email, /** @type {HTMLInputElement} */ (mdp).value); dire(msg, 'Mot de passe changé. Connexion…', true); }
+        catch (er) { dire(msg, er && er.code === 'lien-invalide' ? er.message : texteErreur(er)); }
+      } }, field('Lien reçu par courriel', lien), field('Nouveau mot de passe (6 caractères au moins)', mdp), msg,
+      el('div', { class: 'hwrow' }, el('button', { type: 'submit', class: 'btn primary' }, 'Changer le mot de passe'), el('button', { type: 'button', class: 'btn', onclick: () => draw('connexion') }, 'Retour'))));
+  };
+  draw(vue);
+  modal.open('Se connecter', body, { width: 520 });
+  CX.body = body; CX.draw = draw;
+}
+// la fenêtre de connexion ouverte : quand la session change, connecté, elle se referme ; sinon, elle se redessine
+const CX = { body: /** @type {HTMLElement | null} */ (null), draw: /** @type {(v: string) => void} */ (() => {}) };
+on('compte', () => {
+  if (!CX.body || !CX.body.isConnected) { CX.body = null; return; }
+  if (COMPTE.etat === 'connecte') { CX.body = null; modal.close(); toast(`Bonjour ${COMPTE.prenom || nomDuCompte()} : ta progression est enregistrée en ligne.`, 'good', 4500); }
+  else if (COMPTE.etat === 'verifier' || COMPTE.etat === 'refuse') CX.draw('connexion');
+});
+
+// ---------------- la progression faite sans compte sur cet ordinateur (v19.27) ----------------
+// Avant la v19.27, seule la section des Réglages d'un compte élève proposait de la reprendre : un professeur qui
+// avait joué sans être connecté retrouvait un compte vide sur un autre ordinateur. À la connexion, élève ou
+// professeur, la fenêtre le propose maintenant une fois par compte (réponse gardée sur cet ordinateur) ; le
+// bouton reste dans Réglages → Mon compte.
+const lecons = (p) => Object.values(p.cours || {}).filter((c) => c && c.quiz && c.quiz.total && c.quiz.score === c.quiz.total).length;
+/** une progression qui contient quelque chose (leçons, exercices, missions, XP) */
+export function progressionNonVide(p) {
+  if (!p || typeof p !== 'object') return false;
+  if (['cours', 'missions', 'tutor', 'camera', 'net', 'entrepot', 'niveaux'].some((k) => p[k] && typeof p[k] === 'object' && Object.keys(p[k]).length)) return true;
+  return xpOf(p) > 0;
+}
+const resumeInvite = (p) => { const n = lecons(p), xp = xpOf(p); return [n ? `${n} leçon${n > 1 ? 's' : ''} acquise${n > 1 ? 's' : ''}` : '', `${xp} XP`].filter(Boolean).join(', '); };
+const cleReprise = (uid) => 'carregie.reprise.' + uid;
+const lireReprise = (uid) => { try { return localStorage.getItem(cleReprise(uid)); } catch (e) { return null; } };
+const noterReprise = (uid, v) => { try { localStorage.setItem(cleReprise(uid), v); } catch (e) { /* stockage indisponible */ } };
+/** reprend la progression de cet ordinateur dans le compte connecté, et l'envoie tout de suite en ligne */
+async function reprendre(invite) {
+  absorbProgress(invite);
+  if (COMPTE_SH.uid) noterReprise(COMPTE_SH.uid, 'reprise');
+  try { await saveProgressNow(); toast('Progression reprise dans ton compte et enregistrée en ligne : tu la retrouveras sur n\'importe quel ordinateur.', 'good', 5000); }
+  catch (e) { toast('Progression reprise dans ton compte ; l\'envoi en ligne se refera au prochain enregistrement.', '', 5000); }
+}
+let proposee = '';
+/** à la connexion : proposer de reprendre la progression faite sans compte (une fois par compte) */
+export async function proposerReprise() {
+  const uid = COMPTE_SH.uid;
+  if (COMPTE.etat !== 'connecte' || !uid || proposee === uid || lireReprise(uid)) return;
+  const invite = guestProgress();
+  if (!progressionNonVide(invite)) return;
+  proposee = uid;
+  const ok = await ask(`Cet ordinateur garde une progression faite sans être connecté (${resumeInvite(invite)}). La reprendre dans ton compte pour la retrouver partout ? Elle s'ajoute à celle du compte, rien ne s'efface. À ne faire que si c'est bien la tienne.`, { title: 'Reprendre la progression de cet ordinateur ?', ok: 'La reprendre' });
+  if (COMPTE_SH.uid !== uid) return;
+  if (ok === true) await reprendre(invite); else noterReprise(uid, 'refusee');
+}
+on('compte', () => { if (COMPTE.etat === 'connecte') setTimeout(() => { proposerReprise(); }, 800); });
+
+/** se déconnecter (au car, après confirmation : la partie continue sans compte) */
+export async function seDeconnecter() {
+  if (S.mode !== 'start' && !(await ask('La partie continue sans compte : ce que tu fais ensuite ne sera plus enregistré dans ton compte.', { title: 'Se déconnecter ?', ok: 'Se déconnecter' }))) return;
+  // la progression du compte part en ligne avant de fermer la session (après, le serveur refuserait)
+  try { await saveProgressNow(); } catch (e) { /* gardée dans ce navigateur */ }
+  try { await deconnecter(); toast('Déconnecté : la progression de ton compte est enregistrée.', '', 4000); } catch (e) { toast(texteErreur(e), 'bad'); }
+}
+
+/** une phrase sur le compte : « Léa Martin · BTS 1 », « Pierre Malycha · professeur » */
+const qui = () => [nomDuCompte(), estProf() ? 'professeur' : COMPTE.classeNom || ''].filter(Boolean).join(' · ');
+
+/** la bande du compte sur l'écran titre (#ti-compte) */
+export function renderTitleCompte() {
+  const box = $('#ti-compte'); if (!box) return;
+  box.hidden = !COMPTE.dispo || !COMPTE.pret;
+  if (box.hidden) return;
+  if (COMPTE.etat === 'connecte') {
+    box.replaceChildren(...[icon('compte'), el('span', { class: 'cpt-qui' }, qui()),
+      estProf() ? el('button', { type: 'button', class: 'btn small', id: 'ti-tableau', onclick: () => emit('tableauBord') }, icon('tableau'), 'Tableau de bord') : null,
+      el('button', { type: 'button', class: 'btn small', id: 'ti-deco', onclick: () => seDeconnecter() }, 'Se déconnecter')].filter((x) => !!x));
+  } else {
+    box.replaceChildren(icon('compte'), el('span', { class: 'cpt-qui' }, COMPTE.etat === 'verifier' ? 'Adresse à confirmer' : 'Pas connecté : la progression reste sur cet ordinateur'),
+      el('button', { type: 'button', class: 'btn small primary', id: 'ti-connexion', onclick: () => openConnexion() }, icon('connexion'), 'Se connecter'));
+  }
+}
+
+/** la section « Mon compte » des Réglages */
+export function compteSection() {
+  const sec = el('section', { class: 'rg-sec', id: 'rg-compte' }, el('h3', {}, 'Mon compte'));
+  if (!COMPTE.dispo) { sec.append(el('p', { class: 'note' }, 'Les comptes en ligne ne sont pas activés sur cette version : la progression reste dans ce navigateur (Ma progression, ci-dessous).')); return sec; }
+  if (COMPTE.etat !== 'connecte') {
+    sec.append(el('p', {}, 'Pas connecté : ta progression reste sur cet ordinateur.'),
+      el('div', { class: 'hwrow' }, el('button', { type: 'button', class: 'btn primary', onclick: () => openConnexion() }, icon('connexion'), 'Se connecter')));
+    return sec;
+  }
+  sec.append(el('p', { class: 'cpt-ligne' }, icon('compte'), el('b', {}, nomDuCompte()), el('span', {}, estProf() ? `professeur · ${COMPTE.email}` : `identifiant ${COMPTE.identifiant}${COMPTE.classeNom ? ' · ' + COMPTE.classeNom : ''}`)),
+    el('p', { class: 'note' }, estProf() ? 'Profil Formateur imposé par votre compte. Vos classes, vos élèves et leurs résultats : le tableau de bord.' : 'Ta progression est enregistrée en ligne : tu la retrouves sur n\'importe quel ordinateur en te connectant. Ton professeur voit tes résultats.'));
+  const row = el('div', { class: 'hwrow' });
+  if (estProf()) row.append(el('button', { type: 'button', class: 'btn primary', id: 'rg-tableau', onclick: () => { modal.close(); emit('tableauBord'); } }, icon('tableau'), 'Tableau de bord des classes'));
+  // la progression faite sans compte sur cet ordinateur : la reprendre dans son compte (une fois, sur demande)
+  const invite = COMPTE_SH.uid ? guestProgress() : null;
+  if (progressionNonVide(invite)) {
+    row.append(el('button', { type: 'button', class: 'btn', id: 'rg-reprise', onclick: async () => {
+      if (!(await ask(`La progression faite sans compte sur cet ordinateur (${resumeInvite(invite)}) s'ajoute à celle de ton compte (rien ne s'efface). À ne faire que si c'est bien la tienne.`, { title: 'Reprendre la progression de cet ordinateur ?', ok: 'La reprendre' }))) return;
+      await reprendre(invite);
+    } }, 'Reprendre la progression de cet ordinateur'));
+  }
+  row.append(el('button', { type: 'button', class: 'btn', id: 'rg-deco', onclick: () => { modal.close(); seDeconnecter(); } }, icon('deconnexion'), 'Se déconnecter'));
+  sec.append(row);
   return sec;
 }
+
+on('compte', renderTitleCompte);
+on('connexion', () => openConnexion());

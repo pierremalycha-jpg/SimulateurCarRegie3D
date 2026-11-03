@@ -4,7 +4,7 @@ import { figure, sv, canvas, slider, choice, readout, fmtNum } from './kit.js';
 import { ratioDb, dbRatio, dbuVolt, dbuDbv, ECART_PRO_CONSO, sommeDb, splA, splPa, DIRECTIVITES, directivite, rho, attenuationDb, canonDb, facteurDistance, COUPLES, couple, angleEnregistrement, msVersXY, premierCreuxHz, PLEIN_DL, PLEIN_DT, residuModeCommun, perteAdaptation } from './son_calc.js';
 
 // ----------------------------------------------------------------------------------
-// Les bases du chapitre « Le son » (v19.24), avant la console : le décibel et ses références (dBu, dBV, dBFS,
+// Les bases du chapitre « Le son » (v19.26), avant la console : le décibel et ses références (dBu, dBV, dBFS,
 // dB SPL), les micros (dynamique, statique, directivités, le canon), les couples stéréo (XY, ORTF, NOS, DIN,
 // AB, Blumlein, MS : écarts de niveau et de temps, angle d'enregistrement, mono), les niveaux et les
 // liaisons (micro, ligne, symétrique, XLR, impédances). Les chiffres viennent de cours/son_calc.js.

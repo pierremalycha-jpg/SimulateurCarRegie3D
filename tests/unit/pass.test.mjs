@@ -4,7 +4,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import '../helpers/dom.mjs';
-import { PASS, profil, recuperer, equiper, aRecuperer, debloque, regler, mergeProfil, profilPublic, pseudoPropre, rarete, paliersDu } from '../../src/game/pass.js';
+import { PASS, profil, recuperer, equiper, aRecuperer, debloque, regler, mergeProfil, profilPourCompte, pseudoPropre, rarete, paliersDu } from '../../src/game/pass.js';
 import { COSMETIQUES, PAR_DEFAUT, objet } from '../../src/game/cosmetiques.js';
 import { award, xpPourNiveau, NIVEAU_MAX, game } from '../../src/game/xp.js';
 import { serie, veille, jourDe, defisDuJour, etatDefis, DEFIS, DEFIS_XP, bonusSerie } from '../../src/game/defis.js';
@@ -56,25 +56,29 @@ test('le profil : pseudo propre, vitrine de trois badges gagnés, fusion', () =>
   assert.equal(pseudoPropre('x'.repeat(40)).length, 20);
   const P = auNiveau(3);
   game(P).badges = { 'premier-pas': 1, 'monteur': 2, 'brasseur': 3, 'sang-froid': 4 };
-  regler({ pseudo: 'Léo', classe: 'BTS1 TIEE', vitrine: ['premier-pas', 'erudit', 'monteur', 'brasseur', 'sang-froid'] }, P);
+  regler({ pseudo: 'Léo', vitrine: ['premier-pas', 'erudit', 'monteur', 'brasseur', 'sang-froid'] }, P);
   assert.deepEqual(profil(P).vitrine, ['premier-pas', 'monteur', 'brasseur'], 'badges gagnés seulement, trois au plus');
-  assert.equal(profil(P).classe, 'BTS1 TIEE');
   regler({ pseudo: '?' }, P); assert.equal(profil(P).pseudo, 'Léo', 'un pseudo invalide ne remplace pas');
   const m = mergeProfil({ pseudo: 'A', recus: { 2: 1 }, at: 5 }, { pseudo: 'B', recus: { 4: 1 }, at: 9 });
   assert.equal(m.pseudo, 'B'); assert.deepEqual(Object.keys(m.recus).sort(), ['2', '4']);
 });
 
-test('le profil public : ce que lisent les règles de Firestore, sans adresse', () => {
+test('le profil public d\'un compte : les champs que permettent les règles de Firestore, sans adresse', () => {
   const P = auNiveau(12);
-  regler({ pseudo: 'Léo', classe: 'BTS1' }, P);
-  const pub = profilPublic(P);
+  const compte = { role: 'eleve', prenom: 'Léa', nom: 'martin', classe: 'c1', classeNom: 'BTS 1 TIEE', email: 'lea@exemple.fr' };
+  let pub = profilPourCompte(P, compte);
+  assert.equal(pub.pseudo, 'Léa M.', 'sans pseudo : le prénom et l\'initiale du nom');
+  regler({ pseudo: 'Léo' }, P); pub = profilPourCompte(P, compte);
+  assert.equal(pub.pseudo, 'Léo');
   const regles = fs.readFileSync(new URL('../../firestore.rules', import.meta.url), 'utf8');
   const bloc = regles.slice(regles.indexOf('match /profils/'));
   const permis = [...bloc.slice(bloc.indexOf('hasOnly(['), bloc.indexOf('])')).matchAll(/'(\w+)'/g)].map((m) => m[1]);
   assert.deepEqual(Object.keys(pub).sort(), [...permis].sort(), 'mêmes champs que firestore.rules');
-  assert.equal(pub.niveau, 12); assert.ok(Number.isInteger(pub.xp) && Number.isInteger(pub.maj));
-  assert.ok(!JSON.stringify(pub).includes('@'));
+  assert.equal(pub.role, 'eleve'); assert.equal(pub.classe, 'c1'); assert.equal(pub.niveau, 12);
+  assert.ok(Number.isInteger(pub.xp) && Number.isInteger(pub.maj));
+  assert.ok(!JSON.stringify(pub).includes('@'), 'jamais l\'adresse');
   assert.equal(pub.titre, 'Technicien', 'le grade, par défaut');
+  assert.equal(profilPourCompte(P, { role: 'prof' }).classe, null);
 });
 
 test('la série de jours : d\'affilée jusqu\'à aujourd\'hui ou hier, record, bonus', () => {

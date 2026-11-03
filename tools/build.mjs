@@ -7,18 +7,7 @@ const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
 // navigateurs visés : esbuild adapte la syntaxe à ces versions, ou refuse de construire si c'est
 // impossible (Safari 15 : premier Safari qui accepte l'« await » au niveau du module)
 const TARGET = ['chrome100', 'edge100', 'firefox100', 'safari15'];
-// le projet Firebase des comptes en ligne (src/compte/config.js) : variable TIEE_FIREBASE (JSON, intégration
-// continue) ou fichier firebase.web.json (clé d'API web et identifiant du projet : publics, ce ne sont pas des
-// secrets ; les règles de firestore.rules protègent les données). Sans eux : pas de compte en ligne.
-function firebaseWeb() {
-  const src = process.env.TIEE_FIREBASE || (fs.existsSync('firebase.web.json') ? fs.readFileSync('firebase.web.json', 'utf8') : '');
-  if (!src.trim()) return null;
-  try { const c = JSON.parse(src); return c && c.apiKey && c.projectId ? { apiKey: String(c.apiKey), projectId: String(c.projectId), authDomain: String(c.authDomain || c.projectId + '.firebaseapp.com') } : null; }
-  catch (e) { console.warn('firebase.web.json (ou TIEE_FIREBASE) illisible : pas de compte en ligne dans cette construction'); return null; }
-}
-const FIREBASE = firebaseWeb();
-const define = { __APP_VERSION__: JSON.stringify(pkg.version), __TIEE_FIREBASE__: JSON.stringify(FIREBASE) };
-if (!FIREBASE) console.log('Compte en ligne : aucun projet Firebase (firebase.web.json absent), la progression reste sur chaque ordinateur.');
+const define = { __APP_VERSION__: JSON.stringify(pkg.version) };
 // filet de sécurité du chargement (src/boot.js) : script classique placé avant le programme
 const boot = esbuild.transformSync(fs.readFileSync('src/boot.js', 'utf8'), { minify, target: 'es2015', define, legalComments: 'none', charset: 'utf8' }).code;
 // polices intégrées à la page (paquets Fontsource, licence OFL) : même rendu en ligne, en fichier hors ligne

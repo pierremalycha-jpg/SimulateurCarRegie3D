@@ -1,6 +1,6 @@
 // @ts-check
 // ----------------------------------------------------------------------------------
-// Fiches « ? » du chapitre « Le son » (v19.24) : le décibel et ses références, les micros et leur
+// Fiches « ? » du chapitre « Le son » (v19.26) : le décibel et ses références, les micros et leur
 // directivité, les couples stéréo, la liaison symétrique, la dynamique, le loudness et la crête vraie,
 // les liaisons numériques (AES3, MADI, Dante). Même format que content/netterms.js ; références : EBU R68
 // (alignement), EBU R128 et ITU-R BS.1770 (loudness), AES3, AES10 (MADI), AES67, IEC 61938 (48 V),

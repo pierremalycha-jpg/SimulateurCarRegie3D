@@ -71,6 +71,8 @@ const SUITES = [
   ['emission', 'emission', [], 30],
   ['figurants', 'figurants', [], 25],
   ['graphismes', 'graphismes', [], 30],
+  // les comptes : contre l'émulateur Firebase (Java ; firebase-tools par npx ou FIREBASE_TOOLS), lancé par la suite elle-même
+  ['comptes', 'comptes', [], 20],
   ['profil', 'profil', [], 20],
 ];
 

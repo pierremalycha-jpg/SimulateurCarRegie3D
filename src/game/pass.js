@@ -11,8 +11,8 @@ import { livret } from '../livret.js';
 // palier donne un objet pour son profil (avatar, bannière, cadre, titre : game/cosmetiques.js). Les
 // paliers en 5 donnent les plus beaux (cadres, bannières rares). Une récompense se récupère d'un clic
 // une fois le niveau atteint, puis s'équipe. Gratuit, sans achat : seule l'XP fait avancer.
-// Le profil (PROG.profil) : pseudo, objets portés, vitrine de trois badges, classe, visibilité au
-// classement, récompenses récupérées (niveau → date). Il voyage avec la progression (compte, fichier).
+// Le profil (PROG.profil) : pseudo, objets portés, vitrine de trois badges, visibilité au classement,
+// récompenses récupérées (niveau → date). Il voyage avec la progression (compte, fichier).
 // ----------------------------------------------------------------------------------
 /** @typedef {import('./cosmetiques.js').TypeCosmetique} TypeCosmetique */
 /** @typedef {{ niveau: number, type: TypeCosmetique, id: string }} Palier */
@@ -40,7 +40,7 @@ export const NOM_RARETE = { commun: 'Commun', rare: 'Rare', epique: 'Épique', l
 export const paliersDu = (n) => PASS.filter((p) => p.niveau === n);
 
 // ---------------- le profil ----------------
-/** @typedef {{ pseudo: string, avatar: string, banniere: string, cadre: string, titre: string, vitrine: string[], classe: string, visible: boolean, recus: Record<string, number>, at: number }} Profil */
+/** @typedef {{ pseudo: string, avatar: string, banniere: string, cadre: string, titre: string, vitrine: string[], visible: boolean, recus: Record<string, number>, at: number }} Profil */
 /** le profil (créé à la première lecture) @param {any} [P] @returns {Profil} */
 export function profil(P = PROG) {
   const X = /** @type {any} */ (P);
@@ -48,7 +48,6 @@ export function profil(P = PROG) {
   const p = X.profil;
   for (const k of /** @type {Array<keyof typeof PAR_DEFAUT>} */ (Object.keys(PAR_DEFAUT))) if (typeof p[k] !== 'string' || !p[k]) p[k] = PAR_DEFAUT[k];
   if (typeof p.pseudo !== 'string') p.pseudo = '';
-  if (typeof p.classe !== 'string') p.classe = '';
   if (typeof p.visible !== 'boolean') p.visible = true;
   if (!Array.isArray(p.vitrine)) p.vitrine = [];
   if (!p.recus || typeof p.recus !== 'object') p.recus = {};
@@ -60,8 +59,6 @@ export function pseudoPropre(s) {
   const t = String(s || '').normalize('NFC').replace(/[^\p{L}\p{N} ._-]/gu, '').replace(/\s+/g, ' ').trim().slice(0, 20);
   return t.length >= 3 ? t : '';
 }
-/** une classe propre (« BTS1 TIEE 2026 ») : 0 à 24 caractères */
-export const classePropre = (s) => String(s || '').normalize('NFC').replace(/[^\p{L}\p{N} ._-]/gu, '').replace(/\s+/g, ' ').trim().slice(0, 24);
 
 /** le niveau atteint @param {any} [P] */
 export const niveauDe = (P = PROG) => levelOf(xpOf(P)).n;
@@ -91,11 +88,10 @@ export function equiper(type, id, P = PROG) {
   if (P === PROG) { saveProgressSoon(); emit('pass', { type: 'equipe', quoi: type, id }); }
   return true;
 }
-/** change le pseudo, la classe, la visibilité, la vitrine (champs donnés seulement) */
+/** change le pseudo, la visibilité, la vitrine (champs donnés seulement) */
 export function regler(o, P = PROG) {
   const p = profil(P);
   if ('pseudo' in o) p.pseudo = pseudoPropre(o.pseudo) || p.pseudo;
-  if ('classe' in o) p.classe = classePropre(o.classe);
   if ('visible' in o) p.visible = !!o.visible;
   if ('vitrine' in o) { const won = new Set(badgesWon(P).map((b) => b.id)); p.vitrine = [...new Set((o.vitrine || []).filter((id) => won.has(id)))].slice(0, 3); }
   p.at = Date.now();
@@ -126,9 +122,19 @@ export function profilPublic(P = PROG) {
   return {
     pseudo: p.pseudo || 'Technicien anonyme', avatar: p.avatar, banniere: p.banniere, cadre: p.cadre,
     titre: p.titre === 'grade' ? L.title : (objet('titre', p.titre) || { nom: L.title }).nom,
-    niveau: L.n, grade: L.title, xp, classe: p.classe, vitrine: p.vitrine.filter((id) => badges.includes(id)).slice(0, 3),
+    niveau: L.n, grade: L.title, xp, vitrine: p.vitrine.filter((id) => badges.includes(id)).slice(0, 3),
     badges, nbBadges: badges.length, lecons, exercices, competences, serie: sr.n, meilleureSerie: sr.best, maj: Date.now(),
   };
+}
+/**
+ * Le profil public d'un compte de l'établissement (comptes/profils.js, document profils/<uid>) : celui de
+ * profilPublic, avec le pseudo par défaut (prénom et initiale du nom), le rôle et la classe du compte.
+ * @param {any} P @param {{ role?: string, prenom?: string, nom?: string, classe?: string | null, classeNom?: string }} c
+ */
+export function profilPourCompte(P, c) {
+  const pub = profilPublic(P), p = profil(P);
+  const defaut = [String(c.prenom || '').trim(), c.nom ? String(c.nom).trim().charAt(0).toUpperCase() + '.' : ''].filter(Boolean).join(' ');
+  return { ...pub, pseudo: p.pseudo || pseudoPropre(defaut) || 'Technicien anonyme', role: c.role === 'prof' ? 'prof' : 'eleve', classe: c.classe || null, classeNom: String(c.classeNom || '').slice(0, 60) };
 }
 /** le texte du titre porté @param {any} [P] */
 export function titrePorte(P = PROG) { const p = profil(P); return p.titre === 'grade' ? levelOf(xpOf(P)).title : objet('titre', p.titre).nom; }

@@ -1,6 +1,6 @@
 // @ts-check
 // ----------------------------------------------------------------------------------
-// Les calculs du chapitre « Le son » (v19.24), purs et testés (tests/unit/son.test.mjs) : les décibels
+// Les calculs du chapitre « Le son » (v19.26), purs et testés (tests/unit/son.test.mjs) : les décibels
 // (rapports, dBu, dBV, dBFS, sommes, distance), la directivité des micros (diagrammes polaires du premier
 // ordre, canon à tube d'interférence, facteur de distance), les couples stéréo (écart de niveau et de temps
 // d'un couple pour une source, position de l'image, angle d'enregistrement, MS et son équivalent XY,

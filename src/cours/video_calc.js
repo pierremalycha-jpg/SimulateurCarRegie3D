@@ -1,6 +1,6 @@
 // @ts-check
 // ----------------------------------------------------------------------------------
-// Les calculs de la leçon « La compression vidéo » (v19.24), purs et testés : le débit de l'image active
+// Les calculs de la leçon « La compression vidéo » (v19.26), purs et testés : le débit de l'image active
 // (sans la suppression), le taux de compression, la taille d'un fichier, le poids d'un GOP selon les
 // images I, P et B, les codecs de référence du car et leurs débits (ordres de grandeur dits comme tels).
 // ----------------------------------------------------------------------------------

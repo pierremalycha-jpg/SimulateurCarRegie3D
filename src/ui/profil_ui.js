@@ -1,5 +1,5 @@
 // @ts-check
-import { on } from '../state.js';
+import { on, emit } from '../state.js';
 import { el } from '../util.js';
 import { toast } from './common.js';
 import { icon } from './icons.js';
@@ -7,10 +7,11 @@ import { openLayer, layerOpen, showTab, layerSay } from './layer.js';
 import { PROG } from '../shared.js';
 import { xpOf, levelOf, BADGES, game, badgeById, NIVEAU_MAX, xpPourNiveau } from '../game/xp.js';
 import { etatDefis, serie, bonusSerie, BONUS_DEFIS } from '../game/defis.js';
-import { PASS, profil, profilPublic, recuperer, equiper, regler, aRecuperer, debloque, niveauObjet, rarete, NOM_RARETE, paliersDu, pseudoPropre } from '../game/pass.js';
+import { PASS, profil, profilPourCompte, recuperer, equiper, regler, aRecuperer, debloque, niveauObjet, rarete, NOM_RARETE, paliersDu, pseudoPropre } from '../game/pass.js';
 import { COSMETIQUES, NOM_TYPE, objet } from '../game/cosmetiques.js';
-import { COMPTE, connecte, compteDisponible, classement, profilDe, publierBientot } from '../compte/index.js';
-import { openCompte } from './compte_ui.js';
+import { COMPTE, connecte, estEleve, estProf, nomDuCompte } from '../comptes/session.js';
+import { classement, profilDe, publierBientot } from '../comptes/profils.js';
+import { openConnexion } from './compte_ui.js';
 import { avatarEl } from './avatar.js';
 
 // ----------------------------------------------------------------------------------
@@ -47,7 +48,7 @@ export function carteProfil(pub, o = {}) {
       el('div', { class: 'pf-nom' },
         el('h3', {}, pub.pseudo || 'Technicien anonyme'),
         el('p', { class: 'pf-titre' }, pub.titre || L.title),
-        el('p', { class: 'pf-meta' }, el('span', { class: 'pf-niv' }, `Niveau ${pub.niveau || L.n}`), `${(pub.titre || L.title) !== (pub.grade || L.title) ? ` · ${pub.grade || L.title}` : ''} · ${Number(pub.xp) || 0} XP`, pub.classe ? ` · ${pub.classe}` : '')),
+        el('p', { class: 'pf-meta' }, el('span', { class: 'pf-niv' }, `Niveau ${pub.niveau || L.n}`), `${(pub.titre || L.title) !== (pub.grade || L.title) ? ` · ${pub.grade || L.title}` : ''} · ${Number(pub.xp) || 0} XP`, pub.classeNom ? ` · ${pub.classeNom}` : '')),
       vitrine.length ? el('div', { class: 'pf-vitrine', 'aria-label': 'Badges en vitrine' }, ...vitrine.map((x) => el('span', { class: 'pf-vb ' + x.tier, title: x.desc }, icon(x.ico), el('small', {}, x.title)))) : null),
     o.moi ? el('div', { class: 'pf-xp' },
       el('div', { class: 'pc-bar', role: 'progressbar', 'aria-label': 'Progression vers le niveau suivant', 'aria-valuemin': '0', 'aria-valuemax': '100', 'aria-valuenow': String(Math.round(L.pct * 100)) }, el('i', { style: { width: `${Math.round(L.pct * 100)}%` } })),
@@ -56,14 +57,15 @@ export function carteProfil(pub, o = {}) {
 
 // ---------------- Mon profil ----------------
 function blocCompte() {
-  if (COMPTE.etat === 'indisponible') return el('div', { class: 'pf-compte' }, icon('horsnuage'), el('p', {}, 'Le compte en ligne n\'est pas configuré sur ce simulateur : ta progression reste sur cet ordinateur et le classement est fermé.'));
+  if (!COMPTE.dispo) return el('div', { class: 'pf-compte' }, icon('horsnuage'), el('p', {}, 'Les comptes en ligne ne sont pas activés sur cette version : ta progression reste sur cet ordinateur et le classement est fermé.'));
   if (!connecte()) {
     return el('div', { class: 'pf-compte invite' }, icon('nuage'),
-      el('p', {}, el('b', {}, 'Crée ton compte'), ' pour retrouver ta progression sur n\'importe quel ordinateur, montrer ton profil et entrer au classement.'),
-      el('button', { type: 'button', class: 'btn primary', id: 'pf-connexion', onclick: () => openCompte() }, icon('connexion'), COMPTE.etat === 'connexion' ? 'Connexion…' : 'Se connecter'));
+      el('p', {}, el('b', {}, 'Connecte-toi'), ' pour retrouver ta progression sur n\'importe quel ordinateur, montrer ton profil et entrer au classement. Ton identifiant vient de ton professeur.'),
+      el('button', { type: 'button', class: 'btn primary', id: 'pf-connexion', onclick: () => openConnexion() }, icon('connexion'), 'Se connecter'));
   }
-  return el('div', { class: 'pf-compte' }, icon('nuage'), el('p', {}, `Connecté : ${COMPTE.email}. Ta progression et ton profil sont enregistrés en ligne.`),
-    el('button', { type: 'button', class: 'btn', onclick: () => openCompte() }, 'Mon compte'));
+  return el('div', { class: 'pf-compte' }, icon('nuage'),
+    el('p', {}, `Connecté : ${nomDuCompte()}. ${estProf() ? 'Les professeurs ne sont pas au classement : vous y voyez vos élèves.' : 'Ta progression et ton profil sont enregistrés en ligne.'}`),
+    el('button', { type: 'button', class: 'btn', onclick: () => emit('settings') }, 'Mon compte'));
 }
 function blocJour() {
   const g = game(); const sr = serie(g.jours); const d = etatDefis(g);
@@ -116,20 +118,18 @@ function blocApparence(redraw) {
 function blocIdentite(redraw) {
   const p = profil();
   const pseudo = /** @type {HTMLInputElement} */ (el('input', { type: 'text', id: 'pf-pseudo', maxlength: '20', value: p.pseudo, placeholder: 'Ton pseudo', autocomplete: 'nickname' }));
-  const classe = /** @type {HTMLInputElement} */ (el('input', { type: 'text', id: 'pf-classe', maxlength: '24', value: p.classe, placeholder: 'ex. BTS1 TIEE' }));
   const msg = el('small', { class: 'pf-msg', role: 'status', 'aria-live': 'polite' });
   const save = () => {
     if (pseudo.value && !pseudoPropre(pseudo.value)) { msg.textContent = 'Pseudo : 3 à 20 caractères (lettres, chiffres, espace, tiret).'; return; }
-    regler({ pseudo: pseudo.value, classe: classe.value }); msg.textContent = 'Enregistré.'; redraw();
+    regler({ pseudo: pseudo.value }); msg.textContent = 'Enregistré.'; redraw();
   };
   const vis = el('div', { class: 'seg', role: 'group', 'aria-label': 'Visible au classement' },
     ...[[true, 'Visible au classement'], [false, 'Caché']].map(([v, t]) => el('button', { type: 'button', 'aria-pressed': String(p.visible === v), onclick: () => { regler({ visible: v }); redraw(); } }, icon(v ? 'visible' : 'cache'), String(t))));
   return el('section', { class: 'pf-sec' }, el('h4', {}, icon('carte'), 'Mon identité'),
     el('form', { class: 'pf-ident', onsubmit: (e) => { e.preventDefault(); save(); } },
-      el('label', { class: 'cp-champ' }, el('span', {}, 'Pseudo'), pseudo),
-      el('label', { class: 'cp-champ' }, el('span', {}, 'Classe (pour filtrer le classement)'), classe),
+      el('label', { class: 'cp-champ' }, el('span', {}, 'Pseudo (facultatif)'), pseudo),
       el('button', { type: 'submit', class: 'btn', id: 'pf-ident-ok' }, 'Enregistrer'), msg),
-    vis, el('p', { class: 'note' }, 'Les autres joueurs voient ton pseudo, ton apparence, ton niveau et tes badges ; jamais ton adresse ni tes réponses. Caché, tu sors du classement.'));
+    vis, el('p', { class: 'note' }, 'Les autres comptes voient ton pseudo (sans pseudo : ton prénom et l\'initiale de ton nom), ton apparence, ton niveau et tes badges ; jamais ton adresse ni tes réponses. Caché, tu sors du classement.'));
 }
 function blocVitrine(redraw) {
   const p = profil(), g = game();
@@ -149,7 +149,7 @@ function pageProfil(box) {
   const redraw = () => { const y = scrollY(box); pageProfil(box); restoreY(box, y); };
   const n = aRecuperer().length;
   poser(box, 
-    carteProfil(profilPublic(PROG), { moi: true }),
+    carteProfil(monPublic(), { moi: true }),
     n ? el('button', { type: 'button', class: 'pf-attente', onclick: () => showTab('pass') }, icon('cadeau'), el('b', {}, `${n} récompense${n > 1 ? 's' : ''} à récupérer`), el('span', {}, 'Ouvrir le pass')) : null,
     blocCompte(), blocJour(), blocIdentite(redraw), blocApparence(redraw), blocVitrine(redraw));
 }
@@ -215,13 +215,13 @@ const CL = { filtre: 'tous', liste: /** @type {Array<{ id: string, data: any }>}
 async function pageClassement(box) {
   if (!connecte()) {
     poser(box, el('section', { class: 'pf-sec pf-vide' }, icon('classement'), el('h3', {}, 'Le classement des techniciens'),
-      el('p', {}, compteDisponible() ? 'Connecte-toi pour voir le classement de ta promotion et y entrer.' : 'Le compte en ligne n\'est pas configuré sur ce simulateur : le classement est fermé.'),
-      compteDisponible() ? el('button', { type: 'button', class: 'btn primary', onclick: () => openCompte() }, icon('connexion'), 'Se connecter') : null));
+      el('p', {}, COMPTE.dispo ? 'Connecte-toi pour voir le classement de ta promotion et y entrer.' : 'Les comptes en ligne ne sont pas activés sur cette version : le classement est fermé.'),
+      COMPTE.dispo ? el('button', { type: 'button', class: 'btn primary', onclick: () => openConnexion() }, icon('connexion'), 'Se connecter') : null));
     return;
   }
   poser(box, el('p', { class: 'note' }, 'Chargement du classement…'));
-  // le mien d'abord, pour qu'il y figure à jour
-  publierBientot();
+  // le mien, pour qu'il y figure à jour
+  publierBientot(true);
   if (Date.now() - CL.at > 20000) {
     const r = await classement();
     if (!r.ok) { poser(box, el('section', { class: 'pf-sec pf-vide' }, icon('alarme'), el('p', {}, r.error || 'Classement indisponible.'), el('button', { type: 'button', class: 'btn', onclick: () => { CL.at = 0; pageClassement(box); } }, 'Réessayer'))); return; }
@@ -230,30 +230,32 @@ async function pageClassement(box) {
   if (layerOpen() !== 'profil') return;
   dessinerClassement(box);
 }
+/** mon profil public, tel que les autres le voient */
+const monPublic = () => profilPourCompte(PROG, connecte() ? COMPTE : {});
 function dessinerClassement(box) {
-  const moi = profilPublic(PROG), maClasse = profil().classe;
-  // ma ligne : à jour (le document en ligne peut avoir quelques secondes de retard)
+  const moi = monPublic(), maClasse = estEleve() ? COMPTE.classe || '' : '', nomClasse = COMPTE.classeNom || '';
+  // ma ligne : à jour (le document en ligne peut avoir quelques minutes de retard) ; un professeur n'est pas classé
   const liste = CL.liste.filter((x) => x.id !== COMPTE.uid);
-  if (profil().visible) liste.push({ id: COMPTE.uid, data: moi });
+  if (estEleve() && profil().visible) liste.push({ id: /** @type {string} */ (COMPTE.uid), data: moi });
   liste.sort((a, b) => (Number(b.data.xp) || 0) - (Number(a.data.xp) || 0));
   const vue = CL.filtre === 'classe' && maClasse ? liste.filter((x) => (x.data.classe || '') === maClasse) : liste;
   const seg = el('div', { class: 'seg', role: 'group', 'aria-label': 'Qui afficher' },
     el('button', { type: 'button', 'aria-pressed': String(CL.filtre === 'tous'), onclick: () => { CL.filtre = 'tous'; dessinerClassement(box); } }, 'Tout le monde'),
-    el('button', { type: 'button', 'aria-pressed': String(CL.filtre === 'classe'), disabled: !maClasse, title: maClasse ? `Seulement ${maClasse}` : 'Indique ta classe dans Mon profil', onclick: () => { CL.filtre = 'classe'; dessinerClassement(box); } }, maClasse ? `Ma classe (${maClasse})` : 'Ma classe'));
+    el('button', { type: 'button', 'aria-pressed': String(CL.filtre === 'classe'), disabled: !maClasse, title: maClasse ? `Seulement ${nomClasse || 'ma classe'}` : 'Ton professeur ne t\'a pas encore rangé dans une classe', onclick: () => { CL.filtre = 'classe'; dessinerClassement(box); } }, nomClasse ? `Ma classe (${nomClasse})` : 'Ma classe'));
   const rows = vue.map((x, i) => {
     const d = x.data, mine = x.id === COMPTE.uid;
     return el('button', { type: 'button', class: 'pf-ligne' + (mine ? ' moi' : '') + (i < 3 ? ' podium p' + (i + 1) : ''), 'data-uid': x.id, onclick: () => voirJoueur(box, x) },
       el('span', { class: 'pf-rang' }, i < 3 ? icon('trophee') : null, String(i + 1)),
       avatarEl(d, 'petit'),
-      el('span', { class: 'pf-qui' }, el('b', {}, d.pseudo || 'Technicien anonyme', mine ? ' (toi)' : ''), el('small', {}, [d.titre, d.classe].filter(Boolean).join(' · '))),
+      el('span', { class: 'pf-qui' }, el('b', {}, d.pseudo || 'Technicien anonyme', mine ? ' (toi)' : ''), el('small', {}, [d.titre, d.classeNom].filter(Boolean).join(' · '))),
       el('span', { class: 'pf-lv' }, el('small', {}, 'Niveau'), el('b', {}, String(d.niveau || levelOf(Number(d.xp) || 0).n))),
       el('span', { class: 'pf-pts' }, `${Number(d.xp) || 0} XP`),
       el('span', { class: 'pf-nb' }, icon('medaille'), String(d.nbBadges || (d.badges || []).length || 0)));
   });
   poser(box, 
-    el('section', { class: 'pf-sec pf-cl-tete' }, el('div', {}, el('h3', {}, 'Classement'), el('p', { class: 'note' }, `Les techniciens connectés, par niveau (XP). ${liste.length} joueur${liste.length > 1 ? 's' : ''} au classement.`)),
+    el('section', { class: 'pf-sec pf-cl-tete' }, el('div', {}, el('h3', {}, 'Classement'), el('p', { class: 'note' }, `Les élèves de l'établissement, par niveau (XP). ${liste.length} élève${liste.length > 1 ? 's' : ''} au classement.`)),
       seg, el('button', { type: 'button', class: 'btn small', onclick: () => { CL.at = 0; pageClassement(box); } }, 'Actualiser')),
-    profil().visible ? null : el('p', { class: 'note pf-cache' }, icon('cache'), 'Ton profil est caché : tu n\'apparais pas au classement (Mon profil → Mon identité).'),
+    !estEleve() || profil().visible ? null : el('p', { class: 'note pf-cache' }, icon('cache'), 'Ton profil est caché : tu n\'apparais pas au classement (Mon profil → Mon identité).'),
     rows.length ? el('div', { class: 'pf-classement', role: 'list' }, ...rows.map((r) => { r.setAttribute('role', 'listitem'); return r; })) : el('p', { class: 'note' }, 'Personne dans cette classe pour l\'instant.'));
 }
 /** le profil d'un autre joueur, à la place du classement */

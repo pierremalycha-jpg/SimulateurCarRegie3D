@@ -1,6 +1,6 @@
 // @ts-check
 // ----------------------------------------------------------------------------------
-// Fiches « ? » de la compression vidéo (v19.24) : codec et conteneur, GOP (images I, P, B). Même format que
+// Fiches « ? » de la compression vidéo (v19.26) : codec et conteneur, GOP (images I, P, B). Même format que
 // content/netterms.js. Chiffres : cours/video_calc.js (ordres de grandeur dits comme tels).
 // ----------------------------------------------------------------------------------
 import { TERMS, CATS } from './netterms.js';

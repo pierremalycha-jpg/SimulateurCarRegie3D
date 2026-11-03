@@ -1,4 +1,4 @@
-// La page de lecture du Cours (v19.24) : une leçon se lit comme une page de présentation qui se dévoile au
+// La page de lecture du Cours (v19.26) : une leçon se lit comme une page de présentation qui se dévoile au
 // défilement (en-tête avec l'essentiel, barre d'étapes collante, sections révélées l'une après l'autre : schéma
 // légendé, manipulation, explication, car, mots de la leçon, référentiel compact, quiz, exercice), les leçons
 // ajoutées au chapitre Le son (décibel, micros, couples stéréo, liaisons, dynamique, loudness, audio numérique)

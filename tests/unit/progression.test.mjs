@@ -4,7 +4,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import '../helpers/dom.mjs';
-import { PROG, PROG_VERSION, migrateProgress, mergeProgress, exportProgress, importProgress, EXPORT_FORMAT, IMPORT_MAX } from '../../src/shared.js';
+import { PROG, PROG_VERSION, SH, migrateProgress, mergeProgress, exportProgress, importProgress, EXPORT_FORMAT, IMPORT_MAX, saveProgressSoon, flushProgress } from '../../src/shared.js';
 import { activityState } from '../../src/livret.js';
 
 test('mise à niveau : une progression sans numéro (v19.3) prend la version actuelle, les champs abîmés sont remis à vide', () => {
@@ -105,17 +105,33 @@ test('v5 → v6 : les badges de compétence prennent les numéros officiels du r
   assert.equal(migrateProgress({ v: 5, game: 'abîmé' }).game, 'abîmé', 'un jeu mal formé est laissé tel quel');
 });
 
-test('v6 → v7 : le profil (pseudo, apparence, récompenses du pass) ; mal formé, il est retiré ; il se fusionne', () => {
-  assert.equal(PROG_VERSION, 7);
-  assert.equal(migrateProgress({ v: 6, profil: 'abîmé' }).profil, undefined);
-  const p = migrateProgress({ v: 6, profil: { pseudo: 'Léa', recus: { 2: 5 } } });
-  assert.equal(p.v, 7); assert.equal(p.profil.pseudo, 'Léa');
+test('v8 → v9 : le profil (pseudo, apparence, récompenses du pass) ; mal formé, il est retiré ; il se fusionne', () => {
+  assert.equal(PROG_VERSION, 9);
+  assert.equal(migrateProgress({ v: 8, profil: 'abîmé' }).profil, undefined);
+  const p = migrateProgress({ v: 8, profil: { pseudo: 'Léa', recus: { 2: 5 } } });
+  assert.equal(p.v, 9); assert.equal(p.profil.pseudo, 'Léa');
   // fusion : les récompenses récupérées des deux côtés, les réglages les plus récents
   const P = /** @type {any} */ (PROG);
   P.profil = { pseudo: 'Ancien', avatar: 'casque', recus: { 2: 1 }, at: 10 };
-  mergeProgress({ v: 7, profil: { pseudo: 'Nouveau', avatar: 'camera', recus: { 3: 2 }, at: 20 } });
+  mergeProgress({ v: 9, profil: { pseudo: 'Nouveau', avatar: 'camera', recus: { 3: 2 }, at: 20 } });
   assert.equal(P.profil.pseudo, 'Nouveau'); assert.equal(P.profil.avatar, 'camera');
   assert.deepEqual(Object.keys(P.profil.recus).sort(), ['2', '3']);
-  mergeProgress({ v: 7, profil: { pseudo: 'Vieux', recus: {}, at: 5 } });
+  mergeProgress({ v: 9, profil: { pseudo: 'Vieux', recus: {}, at: 5 } });
   assert.equal(P.profil.pseudo, 'Nouveau', 'un profil plus ancien ne remplace pas les réglages');
+});
+
+test('fenêtre fermée ou cachée : ce qui attend part tout de suite en ligne, rien s\'il n\'y a rien de neuf (v19.27)', async () => {
+  const ecrits = [];
+  const db = { doc: (p) => ({ get: async () => ({ exists: false }), set: async (d) => { ecrits.push([p, d]); } }) };
+  const avant = { db: SH.db, uid: SH.uid, readOnly: SH.readOnly };
+  Object.assign(SH, { db, uid: 'u-test', readOnly: false });
+  try {
+    PROG.patchBest = 42;
+    saveProgressSoon();
+    const r = flushProgress();
+    assert.ok(r, 'quelque chose attendait : envoi');
+    await r;
+    assert.equal(ecrits.length, 1); assert.equal(ecrits[0][0], 'progress/u-test'); assert.equal(ecrits[0][1].patchBest, 42);
+    assert.equal(flushProgress(), null, 'plus rien à envoyer');
+  } finally { Object.assign(SH, avant); }
 });

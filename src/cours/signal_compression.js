@@ -4,7 +4,7 @@ import { figure, sv, slider, choice, readout, fmtNum } from './kit.js';
 import { IMAGES, debitActif, taux, tailleOctets, octets, gop, gainGop, CODECS } from './video_calc.js';
 
 // ----------------------------------------------------------------------------------
-// Leçon « La compression vidéo » du chapitre Le signal (v19.24) : pourquoi compresser (2 Gb/s d'image active en
+// Leçon « La compression vidéo » du chapitre Le signal (v19.26) : pourquoi compresser (2 Gb/s d'image active en
 // 1080p50 4:2:2 10 bits), l'intra (dans l'image : transformée, quantification, entropie) et l'inter (le GOP :
 // images I, P, B), les codecs du car (XDCAM HD422 50 Mb/s, AVC-Intra, ProRes, H.264 et HEVC de contribution,
 // JPEG XS), le débit contre la latence et la qualité. Calculs : cours/video_calc.js.

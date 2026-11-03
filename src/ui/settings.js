@@ -15,12 +15,13 @@ import { openReport } from './report.js';
 import { JEU, saveJeu, setSfxVolume, sfx } from '../game/sfx.js';
 import { setQuestVisible } from '../game/quest.js';
 import { progressionSection } from './ma_progression.js';
-import { compteSection } from './compte_ui.js';
 import { STYLE } from '../style.js';
+import { compteSection } from './compte_ui.js';
+import { COMPTE, estProf } from '../comptes/session.js';
 
 // ----------------------------------------------------------------------------------
 // Réglages : une seule fenêtre, la même depuis l'écran titre, l'écran Jouer et le menu du car.
-// Sur cet ordinateur (qualité, son), la partie en cours (lumière, affichage…), mon compte (en ligne), ma progression
+// Sur cet ordinateur (qualité, son), la partie en cours (lumière, affichage…), ma progression
 // (enregistrement, export, import, effacement, données personnelles), le profil, l'espace formateur
 // (profil Formateur), l'aide (commandes, diagnostic) et « À propos ».
 // ----------------------------------------------------------------------------------
@@ -72,10 +73,14 @@ export function openSettings() {
       el('p', { class: 'note' }, (LIGHTING[S.lighting] || {}).desc || '')) : null,
     compteSection(),
     progressionSection(),
-    section('Profil',
-      row('Je suis', seg('Profil', [['etudiant', 'Étudiant'], ['formateur', 'Formateur', 'Ajoute l\'espace formateur à ces réglages']], PROFILE.role, (v) => setRole(v))),
-      el('p', { class: 'note' }, 'Le profil Formateur ajoute l\'espace formateur : configuration du car, suivi des stagiaires, relecture technique.')),
+    // le profil : choisi sur l'ordinateur, ou imposé par le compte connecté (élève : Étudiant ; professeur : Formateur)
+    PROFILE.force ? section('Profil', el('p', {}, `Profil ${PROFILE.force === 'formateur' ? 'Formateur' : 'Étudiant'}, donné par ton compte.`))
+      : section('Profil',
+        row('Je suis', seg('Profil', [['etudiant', 'Étudiant'], ['formateur', 'Formateur', 'Ajoute l\'espace formateur à ces réglages']], PROFILE.role, (v) => setRole(v))),
+        el('p', { class: 'note' }, 'Le profil Formateur ajoute l\'espace formateur : configuration du car, suivi des stagiaires, relecture technique.')),
     el('section', { class: 'rg-sec role-only' }, el('h3', {}, 'Espace formateur'),
+      estProf() ? el('div', { class: 'hwrow' }, el('button', { type: 'button', class: 'btn primary', id: 'rg-tableau-bord', onclick: () => { modal.close(); emit('tableauBord'); } }, icon('tableau'), 'Tableau de bord des classes'))
+        : COMPTE.dispo ? el('p', { class: 'note' }, 'Le tableau de bord des classes (élèves, résultats, comptes) demande un compte professeur : Mon compte, ci-dessus.') : null,
       el('div', { class: 'hwrow' },
         el('button', { type: 'button', class: 'btn primary', id: 'rg-trainer', onclick: () => openTrainer('car') }, icon('formateur'), 'Configuration du car'),
         el('button', { type: 'button', class: 'btn', onclick: () => openTrainer('eleves') }, 'Suivi des stagiaires'),

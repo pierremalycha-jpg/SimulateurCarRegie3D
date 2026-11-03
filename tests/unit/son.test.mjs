@@ -1,4 +1,4 @@
-// Le chapitre « Le son » densifié (v19.24) : ses trois parties et neuf leçons ; les calculs purs des leçons
+// Le chapitre « Le son » densifié (v19.26) : ses trois parties et neuf leçons ; les calculs purs des leçons
 // (cours/son_calc.js : décibels, directivité, couples stéréo, liaisons, dynamique, loudness, numérique) et ceux de
 // la compression vidéo (cours/video_calc.js) ; la forme des leçons ajoutées (six questions, chaque choix faux
 // expliqué, fiches existantes) ; les fiches « ? » du son et de la vidéo dans le registre.
