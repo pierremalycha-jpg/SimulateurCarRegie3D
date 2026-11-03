@@ -1,7 +1,7 @@
 // @ts-check
 import { initializeApp, deleteApp } from 'firebase/app';
 import {
-  getAuth, initializeAuth, inMemoryPersistence, connectAuthEmulator, onIdTokenChanged, signInWithEmailAndPassword, signOut,
+  initializeAuth, inMemoryPersistence, indexedDBLocalPersistence, browserLocalPersistence, browserSessionPersistence, connectAuthEmulator, onIdTokenChanged, signInWithEmailAndPassword, signOut,
   createUserWithEmailAndPassword, sendEmailVerification, sendPasswordResetEmail, updatePassword, deleteUser, updateProfile,
   applyActionCode, confirmPasswordReset,
 } from 'firebase/auth';
@@ -40,7 +40,10 @@ function demarrer() {
   if (FB.app) return FB;
   const { config, emu } = reglages();
   FB.app = initializeApp(config);
-  FB.auth = getAuth(FB.app);
+  // la session gardée comme getAuth() (IndexedDB, puis stockage local, puis de session), mais sans le module des
+  // connexions par fenêtre surgissante ou redirection (inutile : adresse et mot de passe seulement) : il ouvre une
+  // iframe de Firebase et lui écrit, ce que Safari (WebKit) refuse sur une page ouverte en fichier (origine null)
+  FB.auth = initializeAuth(FB.app, { persistence: [indexedDBLocalPersistence, browserLocalPersistence, browserSessionPersistence] });
   FB.db = getFirestore(FB.app);
   if (emu) {
     connectAuthEmulator(FB.auth, emu.auth, { disableWarnings: true });
