@@ -11,7 +11,8 @@ import { lessonById as coursLesson, CHAPTERS } from '../cours/index.js';
 import { etatNiveaux, testPasse, niveauInfo } from '../cours/parcours.js';
 import { SEUIL_EXO, SEUIL_PARFAIT } from '../cours/exo.js';
 import { NOTIONS } from '../camlab/notions/index.js';
-import { MISSIONS as EP_MISSIONS } from '../entrepot/missions.js';
+import { defiById, atelierById } from '../labo/ateliers.js';
+import { SEUIL_DEFI } from '../labo/suivi.js';
 
 // ----------------------------------------------------------------------------------
 // Les activités du simulateur qui rapportent de l'XP (game/xp.js) : chaque événement du
@@ -67,15 +68,14 @@ export function installProgression() {
   on('scenarioDone', (r) => { if (r) award({ sorte: 'scenario', pts: r.score, label: 'Jour de match terminé : ' + r.score + ' %' }); });
   on('atelier', (e) => { if (!e || e.type !== 'done') return; if (!award({ key: 'atelier', pts: BAREME.atelier, label: 'Caméra montée à l\'atelier' })) award({ sorte: 'atelier', pts: BAREME.atelierRefait, label: 'Montage refait à l\'atelier' }); });
   on('patchDone', () => award({ key: 'brassage', pts: BAREME.brassage, label: 'Car vide brassé à 100 %' }));
-  // l'entrepôt : un montage rendu à 60/100 au moins (entrepot/suivi.js) ; refait : 25
-  on('entrepotRendu', (e) => {
-    if (!e || e.score < 60) return;
-    const name = title(/** @type {any} */ (EP_MISSIONS).map((x) => ({ id: x.id, title: x.titre })), e.id);
-    if (!award({ key: 'entrepot:' + e.id, pts: BAREME.entrepot, label: 'Mission de l\'entrepôt réussie : ' + name })) award({ sorte: 'entrepot', pts: BAREME.entrepotRefait, label: 'Montage rendu de nouveau : ' + name + ' (' + e.score + '/100)' });
+  // le Labo (src/labo/) : un défi d'atelier réussi à 60/100 (labo/defis.js) ; refait seul : 15
+  on('laboDefi', (e) => {
+    if (!e || e.score < SEUIL_DEFI) return;
+    const d = defiById(e.id); const A = d ? atelierById(d.atelier) : null;
+    const name = d ? `${d.titre}${A ? ' (' + A.titre + ')' : ''}` : e.id;
+    if (!e.seul) { award({ sorte: 'labo', pts: BAREME.laboAide, label: 'Défi du Labo réussi avec la solution : ' + name }); return; }
+    if (!award({ key: 'labo:' + e.id, pts: BAREME.labo, label: 'Défi du Labo réussi : ' + name })) award({ sorte: 'labo', pts: BAREME.laboRefait, label: 'Défi du Labo refait : ' + name + ' (' + e.score + '/100)' });
   });
-  // la Carrière (src/carriere/) : une mission réussie ne rapporte pas d'XP de plus (l'activité qu'elle reprend
-  // a déjà rapporté les siens) ; elle compte pour son badge
-  on('carriere', (e) => { if (e && e.type === 'fait') checkBadges(); });
   // le poste compte tout de suite pour les badges (la progression n'est copiée qu'à l'enregistrement)
   on('station', (id) => { PROG.visited[id] = true; award({ key: 'poste:' + id, pts: BAREME.poste, label: 'Poste découvert : ' + (STATION_INFO[id] ? STATION_INFO[id].title : id) }); });
   on('teleport', (i) => { const d = DESTS[i]; if (d && !d[4]) award({ key: 'lieu:' + i, pts: BAREME.lieu, label: 'Endroit découvert : ' + d[0] }); });

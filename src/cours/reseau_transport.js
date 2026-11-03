@@ -215,7 +215,7 @@ export const STREAMING = {
 - Les unités de transmission « cellulaires » des reporters agrègent plusieurs modems 4G/5G : la vidéo est répartie entre les liens et réassemblée au studio.
 - Un flux SRT se règle aussi en débit maximal (pour ne pas saturer le lien avec les retransmissions) et en taille de paquet (1 316 octets : sept paquets MPEG-TS de 188).
 - Pour tester un chemin avant une contribution : ping (aller-retour), traceroute (chemin), iperf en UDP (débit et pertes).`,
-  car: { text: 'Au poste Transmission : la contribution du car part par la fibre de l\'opérateur (TX1, JPEG XS) et par satellite (TX2, HEVC). À l\'entrepôt, vMix ou une caméra diffusent en RTMP vers une plateforme par le routeur, et des caméras PTZ échangent en NDI|HX. La vue 3D « Du car à la régie finale » montre SRT sur Internet.', station: 'transmission' },
+  car: { text: 'Au poste Transmission : la contribution du car part par la fibre de l\'opérateur (TX1, JPEG XS) et par satellite (TX2, HEVC). Dans une petite régie légère, vMix ou une caméra diffusent en RTMP vers une plateforme par le routeur, et des caméras PTZ échangent en NDI|HX. La vue 3D « Du car à la régie finale » montre SRT sur Internet.', station: 'transmission' },
   terms: ['contribution', 'srt', 'rist', 'rtmp', 'hls', 'ndi', 'arq', 'rtp'],
   competences: ['C26', 'C4', 'C25'], savoirs: ['F1', 'K4', 'C8', 'C4'], article: 'reseau',
   quiz: [

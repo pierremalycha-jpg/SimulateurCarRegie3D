@@ -72,6 +72,13 @@ export const PARCOURS = {
     avance: ['reseau-nat', 'reseau-streaming', 'reseau-multicast', 'reseau-mesures', 'reseau-qos', 'reseau-ptp'],
     expert: ['reseau-st2110', 'reseau-paquet', 'reseau-rythme', 'reseau-2022-7', 'reseau-spine-leaf', 'reseau-nmos'],
   },
+  // la lumière (v19.29) : les fondamentaux de chaque partie, puis s'en servir, le détail, le stade et le réseau
+  lumiere: {
+    debutant: ['lumiere-sources', 'lumiere-grandeurs', 'lumiere-projecteurs', 'lumiere-dmx'],
+    intermediaire: ['lumiere-distance', 'lumiere-couleur', 'lumiere-plateau', 'lumiere-ligne', 'lumiere-console'],
+    avance: ['lumiere-mesure', 'lumiere-lyres'],
+    expert: ['lumiere-stade', 'lumiere-reseau'],
+  },
   hf: {
     debutant: ['hf-frequences', 'hf-antennes'],
     intermediaire: ['hf-bilan'],

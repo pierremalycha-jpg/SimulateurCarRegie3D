@@ -160,7 +160,7 @@ const ADD = {
     t: 'RTMP', aka: 'Real-Time Messaging Protocol', cat: STREAM_CAT,
     short: 'Le protocole pour envoyer un direct vers une plateforme (YouTube, Twitch, Facebook) : sur TCP, port 1935, avec une clé de diffusion. Quelques secondes de retard.',
     body: "Né avec Flash, RTMP a survécu comme **protocole d'envoi** (ingest) : l'encodeur se connecte au serveur de la plateforme en **TCP sur le port 1935** (RTMPS, chiffré, en général sur le 443) et s'identifie par une **clé de diffusion**. La plateforme réencode et redistribue en HLS ou DASH.\n\nParce qu'il passe par TCP, une perte provoque une retransmission et un ralentissement : sur une connexion 4G chargée, le flux prend du retard ou se coupe. On garde de la marge : un débit d'envoi nettement sous le débit montant mesuré.",
-    car: 'À l\'entrepôt, vMix ou une caméra diffusent en RTMP vers une plateforme : il faut que le routeur donne accès à Internet et que la clé de diffusion soit saisie.',
+    car: 'Dans une petite régie légère, vMix ou une caméra diffusent en RTMP vers une plateforme : il faut que le routeur donne accès à Internet et que la clé de diffusion soit saisie.',
     see: ['tcp', 'hls', 'contribution', 'port'], ref: 'Adobe, RTMP Specification 1.0 (2012)',
   },
   hls: {
@@ -174,7 +174,7 @@ const ADD = {
     t: 'NDI', aka: 'Network Device Interface', cat: STREAM_CAT,
     short: 'Un format de production vidéo sur réseau local (vMix, caméras PTZ, logiciels) : peu compressé, trouvé seul sur le réseau, de l\'ordre de 100 à 150 Mb/s en 1080p.',
     body: "Créé par NewTek (aujourd'hui chez Vizrt), NDI transporte image, son, tally et commandes sur un réseau Ethernet ordinaire. Les sources s'annoncent par **mDNS** : il suffit d'être sur le même réseau pour les voir.\n\n**NDI** (plein débit) compresse peu : de l'ordre de 100 à 150 Mb/s en 1080p, environ une image de retard ; **NDI|HX** compresse en H.264 ou HEVC, autour de 10 à 20 Mb/s, avec plus de retard. Quelques sources NDI plein débit remplissent un lien Gigabit.\n\nC'est le monde de la production légère ; le car de production, lui, est en SDI ou en ST 2110.",
-    car: 'À l\'entrepôt, des caméras PTZ en NDI|HX et vMix sur le réseau du plateau.',
+    car: 'Dans une petite régie légère, des caméras PTZ en NDI|HX et vMix sur le réseau du plateau.',
     see: ['types-adresses', 'dns', 'debit'], ref: 'Vizrt, NDI SDK (ordres de grandeur)',
   },
   arq: {

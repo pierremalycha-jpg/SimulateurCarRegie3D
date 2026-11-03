@@ -48,10 +48,10 @@ const PROTO = {
 const SCENARIOS = [
   { q: 'Le car envoie le match à la régie finale par Internet, sur l\'accès fibre du stade, qui perd un peu.', ok: 'srt' },
   { q: 'Le car envoie le match à la régie finale par la fibre managée de l\'opérateur, débit garanti.', ok: 'rtp' },
-  { q: 'Le club veut le match en direct sur sa chaîne YouTube, depuis le PC vMix de l\'entrepôt.', ok: 'rtmp' },
+  { q: 'Le club veut le match en direct sur sa chaîne YouTube, depuis le PC vMix de sa petite régie de club.', ok: 'rtmp' },
   { q: 'Les abonnés regardent le match sur l\'application de la chaîne, sur leur téléphone.', ok: 'hls' },
   { q: 'Un consultant intervient en duplex depuis chez lui, dans son navigateur, et doit répondre au plateau sans délai.', ok: 'webrtc' },
-  { q: 'À l\'entrepôt, des caméras PTZ et le PC vMix échangent leurs images sur le réseau local Gigabit.', ok: 'ndi' },
+  { q: 'Dans une petite régie légère, des caméras PTZ et le PC vMix échangent leurs images sur le réseau local Gigabit.', ok: 'ndi' },
 ];
 
 // ---------------- PTP : l'élection du grand maître (BMCA) ----------------

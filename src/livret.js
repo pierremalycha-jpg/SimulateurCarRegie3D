@@ -16,7 +16,7 @@ import { BLOCS, COMPETENCES, RATTACHEMENT } from './content/referentiel.js';
 // d'une compétence reste au formateur.
 // ----------------------------------------------------------------------------------
 
-/** @typedef {'parcours' | 'mission' | 'phase' | 'reseau' | 'exercice' | 'cours' | 'exo' | 'camera'} Kind */
+/** @typedef {'parcours' | 'mission' | 'phase' | 'reseau' | 'exercice' | 'cours' | 'exo' | 'camera' | 'labo'} Kind */
 /** @typedef {'absent' | 'a_faire' | 'travaillee' | 'consolidee'} Niveau */
 /** @typedef {{ kind: Kind, ref: string, done: boolean, aided: boolean, pratique: boolean }} Activite */
 
@@ -31,11 +31,11 @@ export const NIVEAUX = { consolidee: 'Consolidée', travaillee: 'Travaillée', a
 
 /** @type {Record<Kind, Record<string, string[]>>} */
 // l'exercice en autonomie d'une leçon (v19.18) travaille les compétences de sa leçon
-const TABLES = { parcours: RATTACHEMENT.parcours, mission: RATTACHEMENT.missions, phase: RATTACHEMENT.phases, reseau: RATTACHEMENT.reseau, exercice: RATTACHEMENT.exercices, cours: RATTACHEMENT.cours, exo: RATTACHEMENT.cours, camera: RATTACHEMENT.camera };
+const TABLES = { parcours: RATTACHEMENT.parcours, mission: RATTACHEMENT.missions, phase: RATTACHEMENT.phases, reseau: RATTACHEMENT.reseau, exercice: RATTACHEMENT.exercices, cours: RATTACHEMENT.cours, exo: RATTACHEMENT.cours, camera: RATTACHEMENT.camera, labo: RATTACHEMENT.labo };
 /** compétences travaillées par une activité */
 export const codesOf = (/** @type {Kind} */ kind, /** @type {string} */ ref) => TABLES[kind][ref] || [];
 
-/** activités rattachées à chaque compétence, dans l'ordre parcours, missions, jour de match, réseau, exercices, cours, exercices du Cours, caméra */
+/** activités rattachées à chaque compétence, dans l'ordre parcours, missions, jour de match, réseau, exercices, cours, exercices du Cours, caméra, Labo */
 export const ACTIVITES = (() => {
   /** @type {Record<string, { kind: Kind, ref: string }[]>} */
   const m = Object.fromEntries(COMPETENCES.map((c) => [c.code, []]));
@@ -60,13 +60,14 @@ export function activityState(prog, /** @type {Kind} */ kind, /** @type {string}
       if (ref === 'mes') { const b = (C.mes || {}).best; return { done: !!b && (b.score || 0) >= SEUIL_SCORE, aided: false }; }
       const n = (C.notions || {})[ref]; return { done: !!(n && n.total && n.score === n.total), aided: false };
     }
+    // un défi d'un atelier du Labo (src/labo/) : 60 sur 100 sans demander de solution ; avec une solution : à refaire seul
+    case 'labo': { const d = ((P.labo || {}).defis || {})[ref]; return { done: !!(d && d.seul), aided: !!(d && !d.seul && (d.best || 0) >= SEUIL_SCORE) }; }
     case 'phase': return { done: (P.scenarios || []).some((s) => (s.phases || []).some((p) => p.id === ref && p.max > 0 && p.pts / p.max >= SEUIL_PHASE)), aided: false };
     case 'reseau': { const r = (N.missions || {})[ref]; const seul = !!r && !!(r.clean || !r.aided); return { done: seul, aided: !!r && !seul }; }
     case 'exercice': return {
       done: ref === 'brassage' ? (P.patchBest || 0) >= 100 : ref === 'atelier' ? (P.rigs || []).some((r) => r && (r.errs ?? 0) <= ATELIER_ERREURS)
         : ref === 'quiz2110' ? best(N.quiz) >= SEUIL_SCORE : ref === 'examenReseau' ? best(N.exams) >= SEUIL_SCORE
-          : ref === 'entrepot' ? Object.values((P.entrepot || {}).missions || {}).some((m) => m && m.best && (m.best.score ?? m.best) >= SEUIL_SCORE)
-            // l'émission en direct : 60 sur 100, les trois médias lancés soi-même (sinon : à refaire seul)
+          // l'émission en direct : 60 sur 100, les trois médias lancés soi-même (sinon : à refaire seul)
             : ref === 'emission' ? (P.emissions || []).some((e) => e && e.score >= SEUIL_SCORE && e.seul) : false,
       aided: ref === 'emission' && (P.emissions || []).some((e) => e && e.score >= SEUIL_SCORE && !e.seul) && !(P.emissions || []).some((e) => e && e.score >= SEUIL_SCORE && e.seul),
     };

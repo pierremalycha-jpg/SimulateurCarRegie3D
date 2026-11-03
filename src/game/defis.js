@@ -49,7 +49,8 @@ export const DEFIS = [
   { id: 'reseau', t: 'Réussir une mission réseau ST 2110', sortes: ['net'], n: 1, pts: 35 },
   { id: 'niveau', t: 'Valider un niveau du Cours ou réussir un test de niveau', sortes: ['niveau', 'test'], n: 1, pts: 40 },
   { id: 'antenne', t: 'Conduire une émission ou un jour de match', sortes: ['emission', 'scenario'], n: 1, pts: 40 },
-  { id: 'car', t: 'Réussir une tâche du car vide ou une mission de l\'entrepôt', sortes: ['mission', 'entrepot', 'brassage', 'atelier'], n: 1, pts: 30 },
+  { id: 'car', t: 'Réussir une tâche du car vide ou un montage à l\'atelier', sortes: ['mission', 'brassage', 'atelier'], n: 1, pts: 30 },
+  { id: 'labo', t: 'Réussir un défi d\'un atelier du Labo', sortes: ['labo'], n: 1, pts: 30 },
 ];
 /** les trois défis réussis rapportent en plus */
 export const BONUS_DEFIS = 50;

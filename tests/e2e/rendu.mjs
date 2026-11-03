@@ -46,17 +46,6 @@ await ev(() => { window.__dbg.teleport(0); const P = window.__dbg.PL; P.yaw = P.
 await ev(() => window.__dbg.teleport(11)); await shot('08-stade-angle', 2500);
 await ev(() => window.__dbg.teleport(13)); await shot('09-aerien', 3000);
 
-// ---------------- l'entrepôt ----------------
 await page.close(); // une seule page à la fois : le rendu logiciel est lent
-{
-  const B = await openPage(browser, { errors: T.errors, viewport: { width: 1280, height: 720 }, before: async (p) => p.addInitScript(() => { try { localStorage.setItem('carregie.quality', 'haute'); } catch (e) { /* stockage indisponible */ } }) });
-  await B.click('[data-lieu="entrepot"]'); await B.waitForTimeout(300);
-  await B.click('.jo-mode[data-mode="ep:conference"]'); await B.click('#st-antenne');
-  await until(B, () => window.__dbg.entrepot().R && !document.getElementById('entrepot').hidden && !document.querySelector('#entrepot .ep-loading'), null, 120000);
-  T.check('entrepôt : béton, bardage, acier, baie, table, moquette, cartons et flight cases en matières ; environnement du hall', await B.evaluate(() => { const R = window.__dbg.entrepot().R; const names = new Set(); R.hall.scene.traverse((o) => { const m = o.material; if (m && m.name) names.add(m.name); }); return ['ep-beton', 'ep-bardage', 'ep-acier', 'ep-baie', 'ep-table', 'ep-nez', 'ep-moquette', 'ep-carton', 'ep-flightcase'].every((n) => names.has(n)) && !!R.hall.scene.environment; }));
-  await B.evaluate(() => { const d = window.__dbg.entrepot(); d.act.sortir('he20'); d.act.sortir('atem-hd8-iso'); document.querySelector('.ep-zones [data-zone="table"]').click(); });
-  await B.waitForTimeout(2500); await B.screenshot({ path: `${OUT}/10-entrepot.png` });
-  await B.close();
-}
 
 await T.finish();

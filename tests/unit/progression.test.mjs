@@ -106,10 +106,10 @@ test('v5 → v6 : les badges de compétence prennent les numéros officiels du r
 });
 
 test('v8 → v9 : le profil (pseudo, apparence, récompenses du pass) ; mal formé, il est retiré ; il se fusionne', () => {
-  assert.equal(PROG_VERSION, 9);
+  assert.ok(PROG_VERSION >= 9);
   assert.equal(migrateProgress({ v: 8, profil: 'abîmé' }).profil, undefined);
   const p = migrateProgress({ v: 8, profil: { pseudo: 'Léa', recus: { 2: 5 } } });
-  assert.equal(p.v, 9); assert.equal(p.profil.pseudo, 'Léa');
+  assert.equal(p.v, PROG_VERSION); assert.equal(p.profil.pseudo, 'Léa');
   // fusion : les récompenses récupérées des deux côtés, les réglages les plus récents
   const P = /** @type {any} */ (PROG);
   P.profil = { pseudo: 'Ancien', avatar: 'casque', recus: { 2: 1 }, at: 10 };

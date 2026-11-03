@@ -3,6 +3,10 @@ import { lessonById, allLessons } from './index.js';
 import { TERMS } from '../content/netterms.js';
 // les fiches « ? » des autres postes complètent le registre (mesure vidéo, réseau de contrôle, grille)
 import '../content/terms_mesure.js';
+import '../content/terms_labo.js';
+import '../content/terms_lumiere_mesure.js';
+import '../content/terms_lumiere_eclairer.js';
+import '../content/terms_lumiere_commande.js';
 import '../content/terms_ctrlnet.js';
 import '../content/terms_fibre.js';
 import '../content/terms_ip.js';

@@ -189,7 +189,7 @@ export function matiere(key, o = {}) {
     polygonOffset: !!o.polygonOffset, polygonOffsetFactor: -(o.polygonOffset || 0), polygonOffsetUnits: -(o.polygonOffset || 0),
   });
   m.name = o.name || key;
-  // un matériau libéré (bac de l'entrepôt, scène refermée) sort de la liste des matières
+  // un matériau libéré (scène refermée) sort de la liste des matières
   const dispose0 = m.dispose.bind(m); m.dispose = () => { MATIERE.all.delete(m); dispose0(); };
   if (S.lite) return m; // mode allégé : uni, et jamais de relief
   if (o.uv) {

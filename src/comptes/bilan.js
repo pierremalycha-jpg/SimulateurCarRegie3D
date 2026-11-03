@@ -4,6 +4,7 @@ import { bilanChapitre, etatLecon } from '../cours/parcours.js';
 import { SEUIL_EXO } from '../cours/exo.js';
 import { livret } from '../livret.js';
 import { xpOf, levelOf } from '../game/xp.js';
+import { defiById } from '../labo/ateliers.js';
 
 // ----------------------------------------------------------------------------------
 // Le bilan d'un élève pour le tableau de bord du professeur (calcul pur, lu dans la progression
@@ -76,7 +77,8 @@ export function difficultes(prog) {
   serie('scenario', 'Le jour de match', (P.scenarios || []).map((s) => s && s.score));
   serie('examenReseau', 'L\'examen réseau', ((P.net || {}).exams || []).map((x) => x && x.score));
   serie('camera-mes', 'La mise en service de la caméra', (((P.camera || {}).mes || {}).runs || []).map((r) => r && r.score));
-  for (const [id, m] of Object.entries((P.entrepot || {}).missions || {})) if (m) serie('entrepot-' + id, `Mission de l'entrepôt « ${id} »`, (m.runs || []).map((r) => r && r.score));
+  // les défis du Labo : les derniers essais de chacun (labo/defis.js : runs)
+  for (const [id, d] of Object.entries((P.labo || {}).defis || {})) if (d) { const x = defiById(id); serie('labo-' + id, `Le défi du Labo « ${x ? x.titre : id} »`, d.runs || []); }
   // le montage de la caméra : réussi à 2 erreurs au plus ; on garde le moins d'erreurs
   { const a = (P.rigs || []).map((r) => r && r.errs).filter((e) => Number.isFinite(e)); if (a.length >= ESSAIS_DIFFICULTE && !a.some((e) => e <= 2)) out.push({ type: 'epreuve', id: 'atelier', titre: 'Le montage de la caméra', essais: a.length, gravite: grav(a.length), texte: `${pluriel(a.length, 'essai')}, jamais moins de ${Math.min(...a)} erreurs.` }); }
   // les exercices pratiques avec Olivier terminés grâce à « Fais-le pour moi »

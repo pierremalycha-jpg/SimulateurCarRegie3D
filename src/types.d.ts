@@ -6,6 +6,7 @@ declare module '*.bat' { const text: string; export default text; }
 declare module '*.command' { const text: string; export default text; }
 declare module '*.sh' { const text: string; export default text; }
 declare module '*.svg' { const text: string; export default text; }
+declare module '*.html' { const text: string; export default text; }
 
 /** version de l'application (package.json), posée à la construction par esbuild */
 declare const __APP_VERSION__: string;

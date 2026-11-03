@@ -394,6 +394,112 @@ Tests :
   « Emmène-moi / Montre-moi » doit mettre en évidence un élément réel de la page, et « Fais-le pour moi » doit faire
   valider l'étape.
 
+## v19.29 : un chapitre « La lumière » au Cours, et programmer la console dot2 pour de vrai
+
+**Le chapitre « La lumière »** (`cours/lumiere.js`), entre Le son et Le réseau, en trois parties et quatre niveaux :
+
+| Partie | Leçons (niveau) |
+| --- | --- |
+| La lumière et sa mesure (`cours/lumiere_mesure.js`) | Les sources : halogène, HMI, LED (Débutant) · Flux, intensité, éclairement, luminance (Débutant) · La distance et l'angle (Intermédiaire) · La couleur de la lumière : kelvins, mireds, gélatines (Intermédiaire) · Mesurer la lumière et exposer la caméra (Avancé) |
+| Éclairer pour la caméra (`cours/lumiere_eclairer.js`) | Les projecteurs (Débutant) · Éclairer un plateau de télévision (Intermédiaire) · Éclairer un stade pour la télévision (Expert) |
+| Commander la lumière (`cours/lumiere_commande.js`) | Le DMX (Débutant) · La ligne DMX (Intermédiaire) · La console : patch, groupes, presets, cues, tracking (Intermédiaire) · Les lyres : pan, tilt, 16 bits, roues et effets (Avancé) · La lumière sur le réseau : Art-Net et sACN (Expert) |
+
+Chaque leçon a sa page complète : l'essentiel, un schéma, une manipulation qui calcule avec les modèles du Labo
+(`labo/calc/photometrie.js`, `lumiere.js`, `dmx.js`, `show.js`), l'explication, « dans le car », ses fiches « ? »
+(`content/terms_lumiere_*.js`), un quiz et son exercice en autonomie (`cours/exos/lumiere_*.js`), ses compétences et ses
+savoirs du référentiel. Les ateliers du Labo y sont rangés comme exercices pratiques : Photométrie dans « La distance et
+l'angle », DMX et Art-Net dans « Le DMX », la console dot2 dans « La console ». Le chapitre ouvre aussi le Labo.
+
+**Programmer la console dot2** (`labo/defis/dot2.js`) : sept défis notés à côté de la console (le panneau des défis se
+replie pour lui laisser la place). Au début d'un défi, le Labo charge dans la console un show de départ
+(`labo/dot2/show_depart.js` : le plateau 1 patché, ses groupes et ses presets, aucune cue ; il demande avant de remplacer un
+show déjà programmé). L'élève programme comme sur la vraie console, puis « Vérifier mon programme » : le Labo relit le show
+de la console et le juge (`labo/calc/show.js` : la cue demandée, l'état suivi en tracking, les renvois aux presets, la
+couleur de chaque lyre, l'effet de position, le chaser). « La solution » charge un show qui marche.
+
+| Défi | Ce qu'on programme |
+| --- | --- |
+| Des couleurs sur les lyres | Une cue : les lyres wash d'une couleur (mélange RVB + blanc), les lyres spot d'une autre (roue de couleurs) |
+| Une lyre sur deux (MAtricks) | Une cue : 13 et 15 d'une couleur, 14 et 16 d'une autre, avec les macros MAtricks Odd et Even |
+| Pointer un gobo | Une cue : les spot à un pan et un tilt donnés (à 5° près), avec un gobo |
+| Un cercle de lyres | Un effet de position (pan et tilt déphasés de 90°) à une vitesse donnée, dans une couleur |
+| Un chaser de couleurs | Un exécuteur en chaser, quatre pas dans l'ordre demandé |
+| Une séquence en tracking | Deux cues dans Main : les faces, puis les contres avec un fondu (touche Time) ; la cue 2 ne réenregistre pas les faces, elles suivent |
+| Pages et group master | Une ambiance sur l'exécuteur d'une autre page (Store Exec 2.1), le group master des faces sur la page 1 (Store Group 2 Exec 1.3) |
+
+La console, comme une vraie, n'enregistre dans une cue que les valeurs **actives** du programmeur (touchées depuis le dernier
+Store) : c'est ce qui fait le tracking, et le défi de la séquence le vérifie. Son group master multiplie l'intensité du groupe.
+
+La console est gardée telle quelle dans le dépôt ; au chargement, le Labo pose un crochet d'une ligne dans sa page (elle
+publie son application sous `window.__laboDot2`) pour lire le show en mémoire, sans qu'il faille le sauvegarder (la console
+ne garde son show qu'à la sauvegarde, Backup).
+
+**Vérification.** Tests unitaires `tests/unit/labo.test.mjs` (la lecture d'un show, le tracking, les presets, les effets,
+le crochet ; chaque défi soluble et jamais juste d'avance), `cours.test.mjs`, `exos.test.mjs`, `parcours.test.mjs` (le
+chapitre, ses niveaux, ses exercices) ; suite `node tools/e2e.mjs labo` : au pupitre de la console, en cliquant ses touches,
+« Group 9 At Full », les macros MAtricks Odd et Even, deux presets de couleur, « Store Cue » ; puis une séquence de deux cues avec un fondu (« Store Cue 2 Time 4 ») ; le Labo juge les programmes justes.
+
+## v19.28 : le Labo remplace l'entrepôt (optique, photométrie, sensitométrie, DMX, console dot2)
+
+**Pourquoi.** Dans Jouer, l'entrepôt (monter une régie mobile de A à Z) et sa Carrière laissent la place à un **Labo** : des
+ateliers où l'on manipule les notions du Cours qui se comprennent mieux en les essayant (décidé le 3 novembre 2026).
+
+**Jouer → Le Labo** (`content/lieux.js`, `app/start.js`) : la tuile du milieu, entre le car régie et la salle de concert. Le
+mode, c'est l'atelier (un par touche, avec ses défis réussis) ; la touche de lancement ouvre le Labo sur cet atelier. Le
+Labo est un écran à part, par-dessus le reste (`labo/index.js`, `styles/labo.css`) : en haut, **un onglet par atelier** ; au
+centre, l'atelier (dessins, mesures, commandes) ; à droite, deux onglets, **Défis** et **Comprendre**. Échap ramène à Jouer
+sur le même atelier.
+
+**Les ateliers** (`labo/ateliers.js`, un module d'interface par atelier dans `labo/ateliers/`, un modèle pur par atelier
+dans `labo/calc/`) :
+
+| Atelier | Ce qu'on manipule | Ce que calcule le modèle |
+| --- | --- | --- |
+| Optique et profondeur de champ | Capteur (2/3", Super 35, plein format), focale 8 à 200 mm, iris f/1,4 à f/22, point, distances de trois sujets | Tache de flou de chaque sujet, zone nette, hyperfocale, angle et champ ; l'image de la caméra (chaque plan flouté par sa tache) et la vue de dessus |
+| Photométrie | Deux projecteurs (Fresnel 1 kW halogène, Fresnel HMI 575 W, panneau LED bicolore) : faisceau, gradateur, couleur, gélatine, distance, position, visée ; la caméra (ISO, iris, balance) | Intensité (cd), éclairement au luxmètre (E = I cos i ÷ d²), température du mélange en mireds, écart avec la balance, exposition (N² ÷ t = E × S ÷ 250), rapport de contraste |
+| Sensitométrie | Courbe (BT.709, BT.709 avec knee, S-Log3, HLG), exposition au tiers de diaph, gain, un ciel lumineux | La charte de gris rendue (écrêté, dans le bruit), la forme d'onde, la courbe de transfert, la plage utile au-dessus et au-dessous du gris |
+| DMX et Art-Net | Patch (modes, adresses, commutateurs DIP), valeurs des canaux, ligne (récepteurs, longueur, terminaison, Y, splitter), réseau (console et nœud : IP, masque, Art-Net ou sACN, Net / Sub-Net / Universe) | La carte de l'univers et les conflits, les valeurs 8 et 16 bits, la trame (44 par seconde pour 512 canaux), le diagnostic de la ligne, ce qui passe sur le réseau et pourquoi (Port-Address, univers compté à partir de 0, multicast sACN, débit) |
+| Console lumière dot2 | Le simulateur de console écrit à part (patch, groupes, presets, cues, exécuteurs, plateau en 3D, câblage DMX, ses exercices), gardé tel quel (`labo/dot2/simulateur_dot2.html`) et ouvert dans un cadre sur tout l'espace | Manipulation libre : pas de défi noté dans le Labo |
+
+Les chiffres sont ceux du Cours et du module caméra (54 mm à f/1,8, point à 3 m : net de 2,94 à 3,06 m) ; les projecteurs,
+le capteur de la sensitométrie et la ligne DMX sont des **ordres de grandeur**, dits comme tels.
+
+**Les défis notés** (`labo/defis.js`, un fichier par atelier dans `labo/defis/`) : quatorze, trois ou quatre par atelier
+noté. Chacun pose trois questions avec des valeurs tirées à chaque essai : au moins un **réglage** (on agit sur l'atelier,
+puis « Vérifier mon réglage » : c'est le modèle qui juge, et il dit ce qui manque) et des calculs ou des choix. Les règles de
+l'exercice en autonomie du Cours (`cours/exo.js`) : deux aides (un indice, la méthode) et chaque erreur coûtent un quart de
+la question, la solution ne rapporte rien (pour un réglage, elle règle l'atelier). Un réglage imposé par la question
+verrouille sa commande (« imposé »). Réussi à 60 sur 100 ; **seul** s'il n'a demandé aucune solution : c'est ce qui compte.
+Un test vérifie, sur des centaines de tirages, que chaque réglage a une solution et qu'aucun n'est juste d'avance.
+
+**Comprendre** : les notions de l'atelier, ses fiches « ? » (vingt-quatre nouvelles, `content/terms_labo.js` : hyperfocale,
+cercle de confusion, éclairement, mired, OETF, S-Log3, DMX512, Art-Net, sACN…), les liens vers les leçons du Cours et les
+notions de la caméra en 3D (en sortant, on revient au Labo), et le **référentiel cité** : les compétences et les savoirs de
+l'atelier (Optique : C23, C19 ; Photométrie : C17, C31, C23 ; Sensitométrie : C32, C10, C23 ; DMX : C25, C17, C12).
+
+**Dans le reste du simulateur** :
+
+- **Le Cours** : un exercice pratique par atelier noté (`x-labo-optique` dans « La chaîne caméra », `x-labo-sensito` dans
+  « Niveaux », `x-labo-photometrie` dans « Le line-up », `x-labo-dmx` dans « Unicast, diffusion, multicast ») ; « Ouvrir
+  l'atelier » ouvre le Labo, et l'on revient à la leçon en sortant. Fait quand tous les défis de l'atelier sont réussis seul.
+- **Le livret** : chaque défi est une activité pratique rattachée aux compétences de son atelier (`RATTACHEMENT.labo`).
+- **Le jeu** : 40 XP par défi réussi seul la première fois, 10 refait (5 avec la solution) ; badges Laborantin, Atelier
+  maîtrisé, Chef de labo ; un défi du jour « Réussir un défi d'un atelier du Labo ».
+- **Le tableau de bord** : le meilleur score de chaque défi et ses essais ; un défi manqué trois fois est une difficulté
+  (`comptes/bilan.js`).
+
+**Retirés** : `src/entrepot/`, `src/carriere/`, leurs feuilles de style, tests et suites, l'exercice `x-entrepot` de la leçon
+« Monter une régie mobile » (la leçon reste), les badges Régie mobile et Embauché (l'XP déjà gagnée reste), la visite guidée
+réduite de la Carrière.
+
+**Progression v10** (`PROG_VERSION`) : `labo.defis[id]` (meilleur score, réussi seul, essais, derniers scores), remis en
+forme et fusionné entre appareils sans rien perdre (`labo/suivi.js`) ; les champs `entrepot` et `carriere` sont retirés.
+
+**Vérification.** Test unitaire `tests/unit/labo.test.mjs` (modèles, défis solubles, suivi, migration, livret, Cours,
+badges) ; suite `node tools/e2e.mjs labo` (Jouer, chaque atelier, un défi avec la solution puis un défi seul jusqu'à l'XP
+et au badge, Comprendre et une fiche « ? », la console dot2 chargée, Échap, retour à la leçon, 390 px sans débordement) ;
+suites `navigation`, `navigateurs` et `rendu` mises à jour (le lieu Labo à la place de l'entrepôt).
+
 ## v19.27 : la progression retrouvée partout, un pass de 60 niveaux, des profils et un classement
 
 **Pourquoi.** Un professeur a installé le simulateur sur un autre ordinateur, s'est connecté à son compte (v19.24)… et n'a
@@ -2709,7 +2815,7 @@ node tools/shots.mjs dossier 1280 800 '["vision","hf"]'   # captures de postes
 | `diag.js` | Journal des erreurs (partagé avec `boot.js`) : erreurs non rattrapées, écouteurs d'événement, boucle de rendu, `console.error` ; version de l'application |
 | `ui/diag_ui.js` | Bandeau « Un problème est survenu » et fenêtre « Diagnostic technique » (texte à copier) |
 | `game/xp.js`, `game/progression.js` | Progression du joueur : XP (barème par activité), niveaux de technicien, badges (dont un par compétence du livret), fusion entre appareils ; accroches sur les événements du simulateur |
-| `game/quest.js` | Le suivi des tâches sur le côté (la mission en cours et ses tâches : car vide par groupe, étapes d'un exercice, plan de la visite, mission spécifique, jour de match, Carrière), le repère 3D, le journal des missions (touche L), la carte joueur |
+| `game/quest.js` | Le suivi des tâches sur le côté (la mission en cours et ses tâches : car vide par groupe, étapes d'un exercice, plan de la visite, mission spécifique, jour de match), le repère 3D, le journal des missions (touche L), la carte joueur |
 | `game/missions.js`, `game/mission_run.js`, `ui/missions_ui.js` | La mission spécifique (Jouer → Car régie) : le catalogue par famille et la préparation du car (calcul pur), le déroulement (lancer, constater la fin, enchaîner ou arrêter), la liste à choisir |
 | `emission/` | L'émission en direct (car pré-installé) : le conducteur et le compte rendu, calcul pur (`conducteur.js`), les médias de l'IPDirector (`medias.js`), leurs images (`dessin.js`, texture d'un canal de l'EVS `video.js`) et leur musique (`musique.js`), l'état partagé (`etat.js`), l'équipe virtuelle des postes non occupés (`ia.js`), les panneaux (`panneau.js` : médias de l'IPDirector, conducteur, objectif), la boucle, l'horloge du direct et le compte rendu (`index.js`) ; styles `styles/emission.css` |
 | `game/fx.js`, `game/sfx.js` | Effets de jeu (barre d'XP, bannières de niveau et de badge, carte-titre, vignette, flash tally, alerte de panne) et bruitages synthétisés en WebAudio avec leur réglage |
@@ -2732,7 +2838,7 @@ node tools/shots.mjs dossier 1280 800 '["vision","hf"]'   # captures de postes
 | `cours/parcours.js` | Le parcours du Cours : niveaux de chaque chapitre (`PARCOURS`), état d'une leçon (étoiles, terminée), d'un niveau (conditions, ouvert, validé), suite conseillée (les fondamentaux d'abord), test de niveau (calcul pur) |
 | `cours/exo.js`, `cours/exos/` (un fichier par chapitre, le réseau en deux) | L'exercice en autonomie de chaque leçon : questions (nombre, choix, texte, ordre) tirées à chaque essai, vérification, aides et solution, points et score sur 100 |
 | `ui/cours_parcours.js`, `ui/cours_exo.js`, `styles/cours-parcours.css` | Mon parcours (suite, catégories), chemin d'un chapitre par niveau, aperçu d'une leçon fermée, étapes d'une leçon, test de niveau ; l'exercice une question à la fois et son bilan |
-| `cours/exercices.js` | Les exercices pratiques de chaque leçon : parcours d'Olivier (chacun dans une seule leçon) et exercices notés (atelier, car vide, formation réseau, jour de match, mise en service de la caméra, régie de l'entrepôt), leur état |
+| `cours/exercices.js` | Les exercices pratiques de chaque leçon : parcours d'Olivier (chacun dans une seule leçon) et exercices notés (atelier, car vide, formation réseau, jour de match, mise en service de la caméra, défis des ateliers du Labo), leur état |
 | `cours/liens.js` | Les liens du Cours avec le reste : terme du glossaire → leçon ou fiche « ? », poste → leçon (bouton « Cours », touche G) |
 | `cours/sdi_falaise.js`, `cours/lab_sdi.js`, `cours/figs_sdi.js` | Leçon « La falaise numérique » : diagramme de l'œil et image qui casse avec la longueur du câble, défis d'Olivier |
 | `cours/sdi_mots.js`, `cours/sdi_bits.js` | Les mots d'une ligne SDI (EAV/SAV, XYZ, LN, CRC-18, paquets audio ST 299-1, vidéo active), embrouillage et NRZI (calcul pur) ; la leçon « Du mot au bit » |
@@ -2744,10 +2850,13 @@ node tools/shots.mjs dossier 1280 800 '["vision","hf"]'   # captures de postes
 | `vues3d/index.js`, `vues3d/orbite.js`, `vues3d/kit.js`, `vues3d/materiel.js`, `styles/vues3d.css` | Le moteur des vues 3D du Cours : second contexte WebGL, orbite, étiquettes, clic sur un objet, panneau (En 3D, La leçon), liste ; matières et pièces, flux animés, appareils et câbles réseau |
 | `vues3d/catalogue.js`, `vues3d/vues/`, `vues3d/l2.js`, `vues3d/l2anim.js` | Les vingt vues (une par fichier : étapes, commandes, scène) rattachées aux chapitres et aux leçons ; le petit réseau de niveau 2 (table MAC, VLAN, trunk) et son animation |
 | `camlab/` | Module « La caméra en 3D » : caméra et plateau construits dans le code (`model.js`, `scene.js`), pastilles (`points.js`), 51 notions (`notions/`, une fiche par fichier, registres `ch1.js` … `ch89.js`), schémas (`figs.js`, `figs/`, `figkit.js`), manipulations (`labs.js`, `labs/`, commandes `controls.js`, optique `optics.js`, viseur simulé et traitement de l'image `vf.js`), affichage d'une fiche (`fiche.js`), progression (`progress.js`), quiz de chapitre (`quiz.js`), mise en service notée (`mes.js`) |
-| `entrepot/` | Module « L'entrepôt » (tuile de Jouer) : monter une régie mobile d'après un cahier des charges. Types (`types.js`), catalogue de matériel réel (`catalogue/`, un fichier par groupe : `blackmagic.js`, `panasonic.js`, `ross.js`, `reseau.js`, `divers.js`), montage (`build.js`), moteur (`engine.js`), missions notées (`missions.js`), résultat rendu (`suivi.js`), 3D (`scene.js` ; `scene/` : hall, appareils, câbles, bureau et ordinateur de la Carrière `bureau.js` ; vue en orbite `orbit.js`), panneaux (`ui/` : `stock.js`, `appareil.js`, menus de configuration `ui/config/` un fichier par famille, `synoptique.js`, `reseau.js`, `mission.js`), ouverture, boucle et mode Carrière (`index.js`) |
-| `carriere/` | La Carrière (mode de l'entrepôt) : les épisodes et leurs mails (`mails.js`), la boîte de réception et les missions lues dans la progression, calcul pur (`index.js`), la messagerie du bureau (`ui.js`), les mails qui arrivent et le lancement des missions au car (`installer.js`) |
+| `labo/` (`index.js`, `ateliers.js`, `etats.js`, `defis.js`, `suivi.js`, `kit.js`), `styles/labo.css` | Le Labo (v19.28, lieu de Jouer qui remplace l'entrepôt) : un onglet par atelier, le panneau Défis (une question à la fois, deux aides, la solution, le score) et Comprendre (notions, fiches « ? », liens du Cours, référentiel cité) ; le catalogue des ateliers (compétences, savoirs, défis) ; l'état et les mesures de chaque atelier, `poser` (calcul pur) ; le moteur des défis sur celui de l'exercice du Cours, plus le réglage jugé par le modèle ; le suivi `PROG.labo` (noter, fusionner) ; les commandes liées à l'état et verrouillables |
+| `labo/calc/` (`optique.js`, `photometrie.js`, `sensito.js`, `dmx.js`) | Les modèles purs des ateliers : profondeur de champ, hyperfocale, tache de flou, champ ; intensité, éclairement, gradateur, gélatines, mireds, exposition, contraste ; courbes BT.709, knee, S-Log3, HLG, plage utile, gain ; univers, empreintes, 16 bits, DIP, trame, ligne, Art-Net, sACN |
+| `labo/calc/lumiere.js`, `labo/calc/show.js`, `labo/dot2/show_depart.js` | La lumière en calcul pur (familles de sources, angle solide, angle de champ, scintillement, uniformité) ; la console (lire un show de la dot2 : tracking, presets, couleur d'une lyre, effets, chaser ; pan et tilt sur 16 bits) ; le show de départ des défis de la console (v19.29) |
+| `cours/lumiere.js`, `cours/lumiere_mesure.js`, `cours/lumiere_eclairer.js`, `cours/lumiere_commande.js`, `cours/exos/lumiere_*.js`, `content/terms_lumiere_*.js` | Le chapitre « La lumière » (v19.29) : trois parties, treize leçons, leurs exercices en autonomie et leurs fiches « ? » |
+| `labo/ateliers/` (un fichier par atelier), `labo/defis/` (un fichier par atelier), `labo/dot2/simulateur_dot2.html`, `content/terms_labo.js` | L'interface de chaque atelier (dessins en canvas, commandes, afficheurs) ; ses défis notés ; la console dot2 (page complète gardée telle quelle, ouverte dans un cadre) ; les fiches « ? » du Labo |
 | `ui/cours_ui.js` | L'espace Cours : un seul sommaire (chapitres rangés par niveau, parties), « Mon parcours », chemin d'un chapitre, la page de lecture d'une leçon qui se dévoile (en-tête, étapes collantes, schéma légendé, manipulation, explication, car, mots de la leçon, référentiel, quiz, exercice en autonomie, exercices pratiques), glossaire, postes, matériel |
-| `app/nav.js` | Navigation entre les trois entrées : menu du car (Échap), aiguillage des boutons « Aller au poste », « Commencer » (car lancé si besoin), changement de vacation, retour au bureau de l'entrepôt (Carrière) |
+| `app/nav.js` | Navigation entre les trois entrées : menu du car (Échap), aiguillage des boutons « Aller au poste », « Commencer » (car lancé si besoin), ouverture du Labo depuis une leçon, changement de vacation |
 | `ui/layer.js` | Espace plein écran (le Cours) : plaque, onglets, Fermer (Échap), ligne d'état |
 | `ui/guide.js` | Missions d'installation (liste des tâches), articles de référence des leçons, glossaire, postes, matériel, procédures maison, commandes |
 | `content/referentiel.js` | Le référentiel officiel du BTS MAV option TIEE (arrêté du 4 juin 2013 modifié, fiche RNCP37022) : épreuves et unités, 39 compétences C1 à C39 (unité, bloc, tâches, savoir-faire, savoirs, résultat attendu, couverture et modules prévus), 112 savoir-faire, savoirs A1 à L12 avec le niveau TIEE, table `ANCIEN` des numéros 1.1 à 4.5 ; rattachement des parcours, missions, phases du jour de match, missions réseau, exercices et leçons |
@@ -2761,10 +2870,10 @@ node tools/shots.mjs dossier 1280 800 '["vision","hf"]'   # captures de postes
 | `ui/prism.js` | L'instrument de mesure en tuiles (poste vision et baie de mesure) |
 | `ui/prism_station.js` | La baie de mesure (poste `mesure`) |
 | `ui/st_ctrlnet.js` | Le poste Réseau de contrôle (car SDI) : six onglets |
-| `content/lieux.js` | Les lieux de l'écran Jouer : le car régie, la salle de concert en préparation (fiche « Ce qui se prépare ») |
+| `content/lieux.js` | Les lieux de l'écran Jouer : le car régie, le Labo, la salle de concert en préparation (fiche « Ce qui se prépare ») |
 | `ui/icons.js` | Icônes Phosphor intégrées au build (`icon(nom)`), toujours à côté d'un libellé |
 | `tutor/` | Chef de car : moteur des parcours (`engine.js`), lecture du réseau pour expliquer et vérifier (`net_helpers.js`), parcours réseau ST 2110 (`lessons/reseau.js`, `lessons/reseau_leaf.js`, `lessons/reseau_ops.js`), parcours des postes, compétences et matériel (`lessons/realisation.js`, `image.js`, `ralentis.js`, `son.js`, `liaisons.js`, `exploitation.js`, `materiel.js`, outils communs `kit.js`), présentation de chaque poste (`lessons/postes.js`) |
-| `ui/tutor_ui.js` | Le chef de car en boîte de dialogue en bas de l'écran : accueil du car vide, exercices du poste où l'on est, visite guidée (tour du car puis chaque poste ; réduite aux postes d'une mission de la Carrière), retour à la leçon du Cours, étapes, mise en évidence, gestes « Fais-le pour moi » hors des postes (caméra, visionneuse, atelier), commandes vers le terminal, voix |
+| `ui/tutor_ui.js` | Le chef de car en boîte de dialogue en bas de l'écran : accueil du car vide, exercices du poste où l'on est, visite guidée (tour du car puis chaque poste), retour à la leçon du Cours, étapes, mise en évidence, gestes « Fais-le pour moi » hors des postes (caméra, visionneuse, atelier), commandes vers le terminal, voix |
 | `app/` | Application : vue et qualité graphique (`view.js`), joueur et déplacements (`player.js`), visée et interactions (`interact.js`), cadreur (`camop.js`), téléportation et postes (`teleport.js`), barre d'outils et d'état (`hud.js`), clavier / souris / tactile (`input.js`), écran Jouer, modes du car (car vide, pré-installé, mission spécifique) et lancement avec le car préparé (`start.js`), diagnostic de performance (`perf.js`), profileur `?perf` (`profiler.js`) |
 | `data/` | Catalogues techniques : caméras, objectifs, liaisons, formats (`cameras.js`) ; positions et antennes du stade (`stadium.js`) ; HF COFDM (`rf.js`) ; exposition et lumières (`exposure.js`) ; équipes (`match.js` : Lens et l'adversaire du soir) ; clubs de Ligue 1, tenues, joueurs fictifs, niveaux fictifs (`clubs.js`) |
 | `content/` | Contenus pédagogiques : fiches de poste (`stations.js`), glossaire (`glossary.js`), fiches des termes réseau et ST 2110 (`netterms.js`), chapitres du guide (`guide.js`), commandes (`controls.js`) |

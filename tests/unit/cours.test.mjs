@@ -18,7 +18,7 @@ const planned = new Set(Object.keys(RATTACHEMENT.cours));
 const cible = (id) => !!(lessonById(id) || planned.has(id) || TERMS[id]);
 
 test('chapitres dans l\'ordre pédagogique ; chaque leçon a sa forme', () => {
-  assert.deepEqual(CHAPTERS.map((c) => c.id), ['signal', 'sdi', 'synchro', 'camera', 'realisation', 'ralentis', 'son', 'reseau', 'hf', 'exploitation']);
+  assert.deepEqual(CHAPTERS.map((c) => c.id), ['signal', 'sdi', 'synchro', 'camera', 'realisation', 'ralentis', 'son', 'lumiere', 'reseau', 'hf', 'exploitation']);
   const ids = new Set();
   // préfixe des leçons : l'id du chapitre, abrégé pour les plus longs
   const PREFIX = { realisation: 'real', exploitation: 'expl' };

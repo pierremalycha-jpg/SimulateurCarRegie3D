@@ -7,8 +7,7 @@ import { parseIp, parseMask, netOf, ipStr } from '../net/ctrlnet.js';
 // Leçon « Monter une régie mobile : du cahier des charges au câblage » (chapitre L'exploitation).
 // La manipulation : le plan d'adressage d'une petite régie à trois caméras PTZ (sorties du carton
 // avec la même adresse d'usine), un pupitre et un mélangeur ; on donne une adresse à chacun, le
-// masque, et l'on voit qui joint qui, les conflits, le budget PoE+ du switch. L'exercice noté est
-// le module L'entrepôt (x-entrepot) : la même régie, à monter pour de vrai.
+// masque, et l'on voit qui joint qui, les conflits, le budget PoE+ du switch.
 // ----------------------------------------------------------------------------------
 /** les machines de la manipulation, avec ce qu'elles valent en sortant du carton */
 const MACHINES = [
@@ -102,12 +101,9 @@ export const LESSON_REGIE_MOBILE = {
   plus: `- Le plan d'adressage s'écrit avant le câblage, et se colle sur la baie : adresse, masque, passerelle, port du switch, pour chaque machine.
 - Sur un switch administrable, un **VLAN** par usage (commande, NDI, invités) et une **QoS** qui fait passer la commande avant les fichiers.
 - La documentation du constructeur donne l'adresse d'usine, le port du service, et comment revenir aux réglages d'usine (un bouton, un commutateur, un délai après la mise sous tension).`,
-  car: { text: 'Dans l\'entrepôt (écran Jouer, lieu L\'entrepôt) : le stock, la baie, la table, le plateau ; chaque appareil a ses faces, ses connecteurs et ses menus de configuration ; le panneau Réseau montre les adresses effectives et le ping ; le cahier des charges donne la note.' },
+  car: { text: 'Dans le car, le réseau de contrôle (poste Réseau) pose les mêmes questions à plus grande échelle : chaque appareil sort d\'usine avec son adresse, on lui donne celle du plan d\'adressage, le masque et la passerelle, puis on vérifie qui joint qui. Les exercices d\'Olivier sur le réseau de contrôle le font pas à pas.' },
   terms: ['vlan', 'qos', 'poe', 'dhcp'],
   competences: ['C6', 'C8', 'C25', 'C19'], savoirs: ['D2', 'D6', 'K3', 'L2', 'H1'],
-  exercises: [
-    { id: 'x-entrepot', intro: 'Exercice noté, dans l\'entrepôt : le lycée commande une régie à trois caméras PTZ pour sa cérémonie. Vous sortez le matériel du stock, vous le posez, vous le câblez et vous le configurez (adresses, formats, pupitre, tally, enregistrement, micro embarqué) jusqu\'à ce que le cahier des charges soit rempli, dans le budget.' },
-  ],
   quiz: [
     { q: 'Trois caméras PTZ neuves de la même marque sont branchées en même temps sur le switch. Le pupitre n\'en joint aucune. Pourquoi ?', choices: ['Elles ont la même adresse d\'usine : en conflit, aucune ne répond sûrement', ['Le switch n\'est pas assez rapide', 'La commande d\'une PTZ demande quelques kilobits par seconde : le débit n\'est pas en cause.'], ['Les câbles réseau sont trop longs', 'Jusqu\'à 100 m, un câble Ethernet ne pose pas de problème.']], answer: 0, why: 'Une série sort du carton avec la même adresse : on met les caméras en service une par une, en changeant l\'adresse de chacune.' },
     { q: 'Le mélangeur est en DHCP d\'usine, il n\'y a pas de routeur. L\'ordinateur en 192.168.0.50/24 ne le trouve pas. Que s\'est-il passé ?', choices: [['Le mélangeur est en panne', 'Il marche : il n\'a juste pas d\'adresse utilisable.'], 'Sans serveur DHCP, le mélangeur s\'est replié sur une adresse 169.254.x.x, hors du sous-réseau de l\'ordinateur', ['Le port 9910 est fermé', 'Le port ne sert à rien tant que l\'adresse n\'est pas joignable.']], answer: 1, why: 'Sans DHCP, on donne au mélangeur une adresse fixe dans le même sous-réseau, ou on ajoute un routeur qui distribue les adresses.' },

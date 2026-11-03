@@ -23,10 +23,8 @@ import { buildToolbar } from './hud.js';
 import { setupTouch } from './input.js';
 import { icon } from '../ui/icons.js';
 import { LIEUX } from '../content/lieux.js';
-import { MISSIONS } from '../entrepot/missions.js';
-import { montageEnregistre } from '../entrepot/build.js';
 import { PROG } from '../shared.js';
-import { commencee, nonLus, enCours } from '../carriere/index.js';
+import { ATELIERS, atelierById, bilanAtelier } from '../labo/ateliers.js';
 import { missionPicker } from '../ui/missions_ui.js';
 import { setLanceur } from '../ui/tutor_ui.js';
 import { missionById, premiereAFaire } from '../game/missions.js';
@@ -57,7 +55,6 @@ function selector(id, label, options, value, onChange) {
  * @property {boolean} [ip] car IP (ST 2110)
  * @property {boolean} [sdi] car SDI exigé
  * @property {boolean} [visite] la visite guidée d'Olivier
- * @property {{ id: string, tour: boolean, postes: string[] }} [carriere] la mission de la Carrière qui l'a lancée
  * @property {'vide' | 'libre' | 'mission'} [modeCar] le mode du car (car vide, pré-installé, mission spécifique)
  * @property {import('../game/missions.js').Prepa} [prepa] le car préparé pour une mission spécifique
  */
@@ -96,7 +93,7 @@ export function buildStart() {
   updFmt();
   // le choix : le lieu, le mode, seul ou en coopération
   // emission : le car pré-installé joue une émission en direct (src/emission/), sinon le match en continu
-  const PICK = { lieu: 'car', mode: 'installe', team: 'solo', ep: 'carriere', mission: premiereAFaire(PROG), emission: true, adversaire: 'hasard', poste: 'libre' };
+  const PICK = { lieu: 'car', mode: 'installe', team: 'solo', atelier: ATELIERS[0].id, mission: premiereAFaire(PROG), emission: true, adversaire: 'hasard', poste: 'libre' };
   // l'adversaire (tiré au sort par défaut) et le poste où l'on commence : gardés dans ce navigateur
   try { PICK.adversaire = localStorage.getItem('carregie.adversaire') || 'hasard'; PICK.poste = localStorage.getItem('carregie.poste') || 'libre'; } catch (e) { /* stockage indisponible */ }
   if (PICK.adversaire !== 'hasard' && !CLUBS.some((c) => c.id === PICK.adversaire)) PICK.adversaire = 'hasard';
@@ -106,22 +103,22 @@ export function buildStart() {
   try { if (localStorage.getItem('carregie.chefIntro') !== '1') PICK.mode = 'zero'; } catch (e) { /* stockage indisponible */ }
   const run = (preset, prepa) => start(preset, light.value, qual.value, snd.value === '1', fmt.value, infra.value === 'ip', prepa);
   const go = () => {
-    if (PICK.lieu === 'entrepot') { emit('entrepot', PICK.ep === 'carriere' ? { carriere: true } : { mission: PICK.ep === 'reprendre' ? '' : PICK.ep, reprendre: PICK.ep === 'reprendre' }); return; }
+    if (PICK.lieu === 'labo') { emit('labo', { atelier: PICK.atelier }); return; }
     const M = MODES.find((m) => m.id === PICK.mode) || MODES[0];
     if (PICK.team === 'coop') { openSessionPanel(); return; }
     // la mission spécifique : game/mission_run.js prépare le car et lance la tâche
     if (M.id === 'mission') { emit('missionCar', { type: 'lancer', id: PICK.mission }); return; }
-    S.chefTour = false; S.visite = false; S.carriere = null; S.modeCar = /** @type {any} */ (M.modeCar);
+    S.chefTour = false; S.visite = false; S.modeCar = /** @type {any} */ (M.modeCar);
     S.emission = M.id === 'installe' && PICK.emission;
     S.adversaire = PICK.adversaire; S.poste = M.id === 'installe' ? PICK.poste : 'libre';
     run(M.preset);
   };
   // depuis le Cours (exercices pratiques) : la vacation demandée, avec les conditions de captation choisies ici ;
-  // depuis la Carrière : la visite guidée réduite au tour du car et aux postes de la mission ; une mission
+  // une mission
   // spécifique : le car préparé pour elle (son infrastructure l'emporte sur le choix de l'écran)
   SHEET.go = (preset, o = {}) => {
     if (o.ip) infra.value = 'ip'; else if (o.sdi) infra.value = 'sdi';
-    S.chefTour = !!o.visite; S.visite = !!o.visite; S.carriere = o.carriere || null; S.modeCar = o.modeCar || null; S.emission = false;
+    S.chefTour = !!o.visite; S.visite = !!o.visite; S.modeCar = o.modeCar || null; S.emission = false;
     S.adversaire = 'hasard'; S.poste = 'libre';
     run(preset, o.prepa);
   };
@@ -133,7 +130,7 @@ export function buildStart() {
     start: async () => {
       for (let i = 0; i < 25 && !(SES.hostPeer && !SES.hostPeer.sameTab && SES.hostPeer.presence.cfg); i++) await new Promise((r) => setTimeout(r, 120));
       const h = SES.hostPeer && !SES.hostPeer.sameTab && SES.hostPeer.presence.cfg;
-      S.chefTour = false; S.visite = false; S.carriere = null; S.modeCar = 'libre'; S.emission = h ? !!h.emission : PICK.emission;
+      S.chefTour = false; S.visite = false; S.modeCar = 'libre'; S.emission = h ? !!h.emission : PICK.emission;
       // en coopération, chacun prend le poste de son rôle (fiche de rôle) ; l'adversaire est celui de l'hôte
       S.adversaire = h ? h.adversaire || 'hasard' : PICK.adversaire; S.poste = 'libre';
       start('standard', h ? h.light : light.value, qual.value, snd.value === '1', h ? h.fmt : fmt.value, h ? !!h.ip : infra.value === 'ip');
@@ -156,7 +153,8 @@ export function buildStart() {
   const concert = LIEUX.find((L) => L.id === 'concert');
   const lieu = (id, nom, cadre, live, icons, onclick) => el('li', {},
     el('button', { type: 'button', class: 'lx' + (live && PICK.lieu === id ? ' on' : ''), 'data-lieu': id, 'aria-pressed': live && PICK.lieu === id ? 'true' : 'false', onclick },
-      el('span', { class: 'lx-scr ' + (live ? 'live' : 'bars'), 'aria-hidden': 'true' },
+      // le Labo : ses deux icônes sur un fond de paillasse, plutôt que la pelouse du car
+      el('span', { class: 'lx-scr ' + (live ? (id === 'labo' ? 'live lab' : 'live') : 'bars'), 'aria-hidden': 'true' },
         el('span', { class: 'lx-sil' }, ...icons.map((n) => icon(n))),
         el('span', { class: 'lx-sig' }, live ? 'En service' : 'En préparation')),
       el('span', { class: 'lx-umd' }, el('i', { class: 'lx-tally' }), el('b', {}, nom), el('small', {}, live ? 'en service' : concert ? concert.prevu : '')),
@@ -193,30 +191,23 @@ export function buildStart() {
   const teamSeg = el('div', { class: 'seg jo-team-seg', role: 'group', 'aria-label': 'Seul ou en équipe' });
   const teamNote = el('p', { class: 'note' });
   const lan = lanAvailable();
-  // les « modes » de l'entrepôt : la Carrière (le mode scénarisé : des mails proposent les missions), les
-  // cahiers des charges, le bac à sable (le mode libre), et le montage enregistré
-  const carriereDesc = () => {
-    if (!commencee(PROG)) return 'Tu commences stagiaire. Au bureau de l\'entrepôt, des mails te proposent un poste sur une prestation : accepte la mission, réussis-la, la suivante arrive.';
-    const n = nonLus(PROG), ep = enCours(PROG);
-    return [n ? `${n} mail${n > 1 ? 's' : ''} non lu${n > 1 ? 's' : ''} au bureau.` : 'Ta boîte de réception est à jour.', ep ? `Mission en cours : ${ep.mission.titre}.` : 'Pas de mission en cours.'].join(' ');
+  // les ateliers du Labo (labo/ateliers.js) : chacun s'ouvre dans le Labo, qui a un onglet par atelier
+  const atelierDesc = (A) => {
+    if (A.libre) return A.resume;
+    const b = bilanAtelier(PROG, A.id);
+    return A.resume + (b.total ? ` ${b.reussis} défi${b.reussis > 1 ? 's' : ''} réussi${b.reussis > 1 ? 's' : ''} sur ${b.total}.` : '');
   };
-  const epModes = () => [
-    { id: 'carriere', ico: 'chef', title: 'Carrière', desc: carriereDesc(), lamp: 'Carrière', go: commencee(PROG) ? 'Retourner au bureau' : 'Commencer ma carrière' },
-    ...MISSIONS.map((x) => ({ id: x.id, ico: 'materiel', title: x.titre, desc: `${x.client}. ${x.brief}`, lamp: 'Mission', go: 'Entrer dans l\'entrepôt' })),
-    { id: '', ico: 'processeur', title: 'Bac à sable', desc: 'Pas de commande : sortez le matériel que vous voulez, câblez, configurez, et regardez ce qui marche.', lamp: 'Libre', go: 'Entrer dans l\'entrepôt' },
-    ...(montageEnregistre() ? [{ id: 'reprendre', ico: 'plan', title: 'Reprendre le montage', desc: 'Votre dernier montage, tel que vous l\'avez laissé.', lamp: 'Reprise', go: 'Reprendre' }] : []),
-  ];
   const draw = () => {
     for (const b of lieuxWall.querySelectorAll('.lx')) { const on = /** @type {HTMLElement} */ (b).dataset.lieu === PICK.lieu; b.classList.toggle('on', on); b.setAttribute('aria-pressed', String(on)); }
-    if (PICK.lieu === 'entrepot') {
+    if (PICK.lieu === 'labo') {
       emBox.hidden = true; pickBox.hidden = true;
-      const L = epModes(); if (!L.some((m) => m.id === PICK.ep)) PICK.ep = L[0].id;
-      modes.replaceChildren(...L.map((m) => el('button', { type: 'button', class: 'jo-mode', 'data-mode': 'ep:' + (m.id || 'libre'), 'aria-pressed': String(m.id === PICK.ep), onclick: () => { PICK.ep = m.id; draw(); } }, icon(m.ico), el('b', {}, m.title), el('span', {}, m.desc))));
+      if (!atelierById(PICK.atelier)) PICK.atelier = ATELIERS[0].id;
+      modes.replaceChildren(...ATELIERS.map((A) => el('button', { type: 'button', class: 'jo-mode', 'data-mode': 'labo:' + A.id, 'aria-pressed': String(A.id === PICK.atelier), onclick: () => { PICK.atelier = A.id; draw(); } }, icon(A.ico), el('b', {}, A.titre), el('span', {}, atelierDesc(A)))));
       teamSeg.replaceChildren(el('button', { type: 'button', 'data-v': 'solo', 'aria-pressed': 'true' }, 'Solo'), el('button', { type: 'button', 'data-v': 'coop', 'aria-pressed': 'false', disabled: '' }, 'Coopération'));
-      teamNote.textContent = 'L\'entrepôt se monte seul : le matériel, le câblage et la configuration sont à vous.';
-      const N = L.find((m) => m.id === PICK.ep) || L[0];
-      lamp.textContent = N.lamp; goTitle.textContent = N.go;
-      goDesc.textContent = N.id === 'reprendre' ? N.desc : N.id === 'carriere' ? 'Lire tes mails à l\'ordinateur du bureau, accepter une mission (à l\'entrepôt ou au car régie), la réussir : la suivante arrive.' : 'Sortir le matériel du stock, le poser, le câbler et le configurer jusqu\'à ce que le cahier des charges soit rempli.';
+      teamNote.textContent = 'Le Labo se fait seul : chaque atelier a sa manipulation libre et ses défis notés.';
+      const A = atelierById(PICK.atelier) || ATELIERS[0];
+      lamp.textContent = 'Labo'; goTitle.textContent = 'Entrer dans l\'atelier';
+      goDesc.textContent = A.consigne;
       return;
     }
     const M = MODES.find((m) => m.id === PICK.mode) || MODES[0];
@@ -244,18 +235,17 @@ export function buildStart() {
     for (const b of pickBox.querySelectorAll('.mc-item')) b.setAttribute('aria-pressed', String(/** @type {HTMLElement} */ (b).dataset.mission === id));
     goTitle.textContent = 'Lancer la mission'; goDesc.textContent = `${m.titre} · ${m.duree}. ${m.resume}`;
   };
-  const entrepot = LIEUX.find((L) => L.id === 'entrepot');
+  const labo = LIEUX.find((L) => L.id === 'labo');
   const lieuxWall = el('ul', { class: 'lx-wall jo-lieux' },
     lieu('car', 'Car régie', 'Captation sportive au stade', true, ['car', 'terrain'], () => { PICK.lieu = 'car'; draw(); modes.querySelector('[aria-pressed="true"]')?.focus(); }),
-    entrepot ? lieu('entrepot', entrepot.nom, entrepot.cadre, true, entrepot.icons, () => { PICK.lieu = 'entrepot'; draw(); modes.querySelector('[aria-pressed="true"]')?.focus(); }) : null,
+    labo ? lieu('labo', labo.nom, labo.cadre, true, labo.icons, () => { PICK.lieu = 'labo'; draw(); modes.querySelector('[aria-pressed="true"]')?.focus(); }) : null,
     concert ? lieu('concert', 'Salle de concert', concert.cadre, false, concert.icons, () => teaser(concert)) : null);
   draw();
-  // la Carrière ouverte d'ailleurs (retour au bureau après le rechargement) : en quittant le bureau, on la retrouve
-  // dans Jouer ; elle avance (mails reçus, progression lue sur le serveur) : sa touche le dit
-  on('entrepot', (e) => {
+  // en sortant du Labo : l'écran Jouer le retrouve, avec ses défis à jour
+  on('labo', (e) => {
     if (!e) return;
-    if (e.type === 'open' && e.carriere) { PICK.lieu = 'entrepot'; PICK.ep = 'carriere'; draw(); }
-    if (e.type === 'close') draw();
+    if (e.type === 'open' && e.atelier) { PICK.lieu = 'labo'; PICK.atelier = e.atelier; draw(); }
+    if (e.type === 'close') { if (e.atelier && atelierById(e.atelier)) PICK.atelier = e.atelier; draw(); }
   });
   on('shared', () => draw());
   const step = (n, title, ...kids) => el('section', { class: 'jo-step', 'aria-label': title }, el('h2', {}, el('span', { class: 'jo-n' }, String(n)), title), ...kids);
