@@ -7,7 +7,7 @@ export default [
   js.configs.recommended,
   {
     files: ['src/**/*.js'],
-    languageOptions: { ecmaVersion: 2022, sourceType: 'module', globals: { ...globals.browser, __APP_VERSION__: 'readonly' } },
+    languageOptions: { ecmaVersion: 2022, sourceType: 'module', globals: { ...globals.browser, __APP_VERSION__: 'readonly', __TIEE_FIREBASE__: 'readonly' } },
   },
   {
     files: ['tools/**/*.mjs', 'lan/**/*.mjs', 'tests/**/*.mjs', 'eslint.config.js'],

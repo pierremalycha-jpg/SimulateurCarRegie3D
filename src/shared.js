@@ -6,6 +6,7 @@ import { applyOverrides } from './params.js';
 import { mergeGame } from './game/xp.js';
 import { ANCIEN } from './content/referentiel.js';
 import { normaliser as carriereNette, mergeCarriere } from './carriere/index.js';
+import { mergeProfil } from './game/pass.js';
 
 // ----------------------------------------------------------------------------------
 // Données partagées de la page publiée (capacités db / user / assets / downloads),
@@ -36,11 +37,28 @@ export const MYREV = { domains: [], items: {}, params: {}, extra: [], updatedAt:
  * parcours et des missions réseau (v19.4) ; 3 : la Carrière, dates de réception et de lecture des mails (v19.6) ;
  * 4 : le parcours du Cours, exercice en autonomie de chaque leçon (cours[id].exo) et tests de niveau (niveaux) (v19.18) ;
  * 5 : les émissions en direct conduites au car (emissions : score, médias lancés soi-même) (v19.19) ;
- * 6 : les badges de compétence portent les numéros officiels du référentiel (comp-C32 au lieu de comp-1.4) (v19.23).
+ * 6 : les badges de compétence portent les numéros officiels du référentiel (comp-C32 au lieu de comp-1.4) (v19.23) ;
+ * 7 : le profil (pseudo, apparence, récompenses du pass récupérées : profil) et les jours d'activité et défis du jour
+ *     (game.jours, game.defis) ; les niveaux passent à 60 (v19.25).
  */
-export const PROG_VERSION = 6;
+export const PROG_VERSION = 7;
 export const PROG = { v: PROG_VERSION, missions: {}, visited: {}, scenarios: [], reports: [], perf: null, patchBest: 0, updatedAt: 0 };
-/** état du dernier enregistrement de la progression : sur cet ordinateur (local), sur le serveur de la page (remote) */
+/**
+ * Le compte en ligne (src/compte/, Firebase) : quand on y est connecté, la progression s'y enregistre au lieu
+ * du serveur de la page. lire() rend la progression enregistrée (ou null), ecrire() la remplace.
+ */
+export const NUAGE = { actif: false, uid: '', lire: async () => /** @type {any} */ (null), ecrire: async (/** @type {any} */ d) => {} };
+/** où la progression s'enregistre en ligne : le compte, le serveur de la page publiée, ou nulle part */
+function distant() {
+  if (NUAGE.actif) return { lire: () => NUAGE.lire(), ecrire: (d) => NUAGE.ecrire(d), compte: true };
+  if (SH.db && SH.uid && !SH.readOnly) {
+    const doc = SH.db.doc('progress/' + SH.uid);
+    return { lire: async () => { const snap = await doc.get(); return snap.exists ? snap.data() : null; }, ecrire: (d) => doc.set(d), compte: false };
+  }
+  return null;
+}
+export const enLigne = () => !!distant();
+/** état du dernier enregistrement de la progression : sur cet ordinateur (local), en ligne (remote : compte ou serveur de la page) */
 export const SAVE = { local: /** @type {boolean | null} */ (null), remote: /** @type {boolean | null} */ (null), at: 0, error: '' };
 
 const LS = {
@@ -172,6 +190,8 @@ export function migrateProgress(d) {
       const nk = `comp-${neuf}${m[2] || ''}`; if (!p.game.badges[nk]) p.game.badges[nk] = at; delete p.game.badges[k];
     }
   }
+  // v6 → v7 : le profil (absent tant qu'il n'est pas réglé) ; mal formé, il est retiré
+  if ('profil' in p && !isObj(p.profil)) delete p.profil;
   p.v = Math.max(v, PROG_VERSION);
   return p;
 }
@@ -230,6 +250,8 @@ export function mergeProgress(d) {
   }
   // progression du jeu (XP, badges) : une récompense obtenue sur l'un des appareils l'est pour de bon
   if (d.game) { const G = /** @type {any} */ (PROG); G.game = mergeGame(G.game, d.game); }
+  // le profil : les récompenses du pass récupérées des deux côtés, les réglages les plus récents
+  if (d.profil) { const P = /** @type {any} */ (PROG); P.profil = mergeProfil(P.profil, d.profil); }
   // l'entrepôt : meilleur résultat de chaque mission, derniers essais, et le montage le plus récent
   if (d.entrepot) {
     const N = /** @type {any} */ (PROG).entrepot = /** @type {any} */ (PROG).entrepot || {};
@@ -255,6 +277,8 @@ export function mergeProgress(d) {
   }
 }
 function restoreProgress() {
+  for (const k of Object.keys(S.missionsDone)) if (!PROG.missions[k]) delete S.missionsDone[k];
+  for (const k of Object.keys(S.visited)) if (!PROG.visited[k]) delete S.visited[k];
   Object.assign(S.missionsDone, PROG.missions);
   Object.assign(S.visited, PROG.visited);
 }
@@ -274,19 +298,20 @@ async function saveProgress() {
   { const P = /** @type {any} */ (PROG); if (P.emissions) P.emissions = P.emissions.slice(-20); }
   // stockage du navigateur plein (photos du formateur, autres pages) ou désactivé : on le dit, la progression reste en mémoire
   noteSave('local', LS.set('progress', PROG), 'stockage du navigateur plein ou désactivé');
-  if (!SH.db || !SH.uid || SH.readOnly) return;
+  const D = distant();
+  if (!D) return;
   saving = true;
   try {
-    // fusion avant écriture : ce qu'un autre appareil a enregistré entre-temps sur le serveur n'est pas écrasé
+    // fusion avant écriture : ce qu'un autre appareil a enregistré entre-temps en ligne n'est pas écrasé
     try {
-      const snap = await SH.db.doc('progress/' + SH.uid).get();
-      if (snap.exists) { mergeProgress(snap.data()); restoreProgress(); LS.set('progress', PROG); }
+      const d = await D.lire();
+      if (d) { mergeProgress(d); restoreProgress(); LS.set('progress', PROG); }
     } catch (e) { /* lecture impossible : on écrit ce qu'on a */ }
-    await SH.db.doc('progress/' + SH.uid).set(JSON.parse(JSON.stringify(PROG)));
+    await D.ecrire(JSON.parse(JSON.stringify(PROG)));
     noteSave('remote', true);
   } catch (e) {
-    // invalid_argument : la page n'accepte pas d'écriture (lecture seule) ; on garde la copie de ce navigateur sans insister
-    if (e && e.code === 'invalid_argument') SH.readOnly = true; else noteSave('remote', false, e);
+    // invalid_argument : la page publiée n'accepte pas d'écriture (lecture seule) ; on garde la copie de ce navigateur sans insister
+    if (!D.compte && e && e.code === 'invalid_argument') SH.readOnly = true; else noteSave('remote', false, e);
   }
   saving = false;
   if (again) { again = false; saveProgressSoon(); }
@@ -317,7 +342,7 @@ export function importProgress(text) {
   const wrapped = isObj(d) && d.format === EXPORT_FORMAT;
   const p = wrapped ? d.progression : d;
   // une progression brute a au moins l'un de ses champs habituels
-  if (!isObj(p) || (!wrapped && !['missions', 'visited', 'cours', 'tutor', 'game', 'camera', 'net', 'carriere', 'niveaux', 'emissions'].some((k) => k in p))) return { ok: false, error: 'Ce fichier ne contient pas de progression du TIEE Simulator.' };
+  if (!isObj(p) || (!wrapped && !['missions', 'visited', 'cours', 'tutor', 'game', 'camera', 'net', 'carriere', 'niveaux', 'emissions', 'profil'].some((k) => k in p))) return { ok: false, error: 'Ce fichier ne contient pas de progression du TIEE Simulator.' };
   mergeProgress(p);
   restoreProgress();
   saveProgressSoon();
@@ -333,10 +358,26 @@ export async function eraseProgress() {
   for (const k of Object.keys(S.missionsDone)) delete S.missionsDone[k];
   for (const k of Object.keys(S.visited)) delete S.visited[k];
   try { localStorage.removeItem('carregie.progress'); } catch (e) { /* stockage indisponible */ }
-  if (SH.db && SH.uid && !SH.readOnly) {
-    try { await SH.db.doc('progress/' + SH.uid).set(JSON.parse(JSON.stringify(PROG))); } catch (e) { return { ok: false, error: 'La copie du serveur n\'a pas pu être effacée : demandez-le au formateur.' }; }
+  const D = distant();
+  if (D) {
+    try { await D.ecrire(JSON.parse(JSON.stringify(PROG))); } catch (e) { return { ok: false, error: D.compte ? 'La copie de votre compte n\'a pas pu être effacée : réessayez une fois connecté à Internet.' : 'La copie du serveur n\'a pas pu être effacée : demandez-le au formateur.' }; }
   }
   return { ok: true };
+}
+/**
+ * Remplace la progression de ce navigateur par une autre (celle d'un compte qui se connecte, ou une
+ * progression vide quand on se déconnecte) : rien n'est fusionné, rien n'est écrit en ligne.
+ * @param {any} d
+ */
+export function remplacerProgression(d) {
+  clearTimeout(saveT);
+  const p = migrateProgress(d) || {};
+  const empty = { v: PROG_VERSION, missions: {}, visited: {}, scenarios: [], reports: [], perf: null, patchBest: 0, updatedAt: Date.now() };
+  for (const k of Object.keys(PROG)) delete /** @type {any} */ (PROG)[k];
+  Object.assign(PROG, empty, p);
+  restoreProgress();
+  noteSave('local', LS.set('progress', PROG), 'stockage du navigateur plein ou désactivé');
+  emit('progressImport');
 }
 export function addReport(where, text) {
   PROG.reports.push({ at: Date.now(), where: String(where).slice(0, 120), text: String(text).slice(0, 1000) });

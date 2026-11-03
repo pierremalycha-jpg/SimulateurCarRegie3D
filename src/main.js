@@ -78,6 +78,9 @@ import { toggleChef } from './ui/tutor_ui.js';
 import { installSfx, sfx, JEU, applyJeu } from './game/sfx.js';
 import { installProgression } from './game/progression.js';
 import { installFx } from './game/fx.js';
+import { initCompte, COMPTE } from './compte/index.js';
+import { openProfil } from './ui/profil_ui.js';
+import { openCompte } from './ui/compte_ui.js';
 import { renderQuest, updateQuestMarker, openJournal, currentGoal } from './game/quest.js';
 import * as XP from './game/xp.js';
 import { report, ERRS } from './diag.js';
@@ -258,7 +261,8 @@ initTruckMap((st) => goToStation(st), () => PL);
 installInput();
 installSfx(); applyJeu(); installProgression(); installFx();
 installPerfTest();
-initShared();
+// le compte en ligne (Firebase) reprend sa session une fois la progression de l'ordinateur chargée
+initShared().then(() => initCompte()).catch((e) => report(e, 'compte en ligne'));
 // la configuration du car peut arriver après le démarrage : on recalcule la répartition EVS
 on('config', (part) => { if (part === 'car' && S.mode !== 'start') { defaultRouting(false); emit('router', {}); } updBrand(); });
 function updBrand() { paintTruckSign(CFG.car.name); const w2 = $('#where2'); if (w2 && CFG.car.name && !S.inTruck) w2.textContent = CFG.car.name; }
@@ -273,7 +277,7 @@ setDiagInfo(() => {
   const mem = renderer.info.memory;
   return { gl: `${gl.getParameter(gl.VERSION)} · ${name} · texture max ${gl.getParameter(gl.MAX_TEXTURE_SIZE)} · ${mem.geometries} géométries, ${mem.textures} textures`, fps: `${FPS.shown} i/s` };
 });
-window.__dbg = { RENDER, openReview, openSessionPanel, SES, S, M, MIX, EVS, ROUTER, P, W, T, PL, pcam, COMMUT, CMT, applyAudio: applyAll, voiceGain, ecoute, earState, setMonitor, stripRms, corrNow, EX, teleport, openStation, closeStation, openPlan, closePlan, takeCamera, releaseCamera, start, openGuide, renderer, applyLighting, openDevice, openEquipmentIndex, openTrainer, CFG, SH, AU, SC, NET, FAB, NC, AN, emit, injectFault, clearFaults, ACTIVE, FAULTS, truckBlocked, truckFloorAt, goToStation, TRUCK, AT, atelierDebug, beginAtelier, endAtelier, avOk, AVATARS, avatarPositions, profSnapshot, profReset, TUTOR, toggleChef, startChefLesson, chefDoForMe, chefNext, stopChefLesson, PROG };
+window.__dbg = { RENDER, openReview, openSessionPanel, SES, S, M, MIX, EVS, ROUTER, P, W, T, PL, pcam, COMMUT, CMT, applyAudio: applyAll, voiceGain, ecoute, earState, setMonitor, stripRms, corrNow, EX, teleport, openStation, closeStation, openPlan, closePlan, takeCamera, releaseCamera, start, openGuide, renderer, applyLighting, openDevice, openEquipmentIndex, openTrainer, CFG, SH, AU, SC, NET, FAB, NC, AN, emit, injectFault, clearFaults, ACTIVE, FAULTS, truckBlocked, truckFloorAt, goToStation, TRUCK, AT, atelierDebug, beginAtelier, endAtelier, avOk, AVATARS, avatarPositions, profSnapshot, profReset, TUTOR, toggleChef, startChefLesson, chefDoForMe, chefNext, stopChefLesson, PROG, COMPTE, openProfil, openCompte };
 window.__dbg.diag = { ERRS, report, diagText, openDiag, el }; window.__dbg.on = on;
 window.__dbg.title = { enter: enterFrom, show: showTitle };
 window.__dbg.nav = { openMenu, restart };

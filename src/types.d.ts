@@ -9,6 +9,8 @@ declare module '*.svg' { const text: string; export default text; }
 
 /** version de l'application (package.json), posée à la construction par esbuild */
 declare const __APP_VERSION__: string;
+/** le projet Firebase des comptes en ligne (tools/build.mjs : TIEE_FIREBASE ou firebase.web.json), null sans lui */
+declare const __TIEE_FIREBASE__: { apiKey: string, projectId: string, authDomain?: string } | null;
 
 interface Window {
   XLSX?: any;

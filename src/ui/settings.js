@@ -15,11 +15,12 @@ import { openReport } from './report.js';
 import { JEU, saveJeu, setSfxVolume, sfx } from '../game/sfx.js';
 import { setQuestVisible } from '../game/quest.js';
 import { progressionSection } from './ma_progression.js';
+import { compteSection } from './compte_ui.js';
 import { STYLE } from '../style.js';
 
 // ----------------------------------------------------------------------------------
 // Réglages : une seule fenêtre, la même depuis l'écran titre, l'écran Jouer et le menu du car.
-// Sur cet ordinateur (qualité, son), la partie en cours (lumière, affichage…), ma progression
+// Sur cet ordinateur (qualité, son), la partie en cours (lumière, affichage…), mon compte (en ligne), ma progression
 // (enregistrement, export, import, effacement, données personnelles), le profil, l'espace formateur
 // (profil Formateur), l'aide (commandes, diagnostic) et « À propos ».
 // ----------------------------------------------------------------------------------
@@ -69,6 +70,7 @@ export function openSettings() {
         field('Voix du réalisateur virtuel', selectEl([['0', 'Texte seulement'], ['1', 'Synthèse vocale']], S.directorVoice ? '1' : '0', (v) => { S.directorVoice = v === '1'; })),
         field('Étiquettes et câbles dans le stade', selectEl([['1', 'Afficher'], ['0', 'Masquer']], S.showLabels ? '1' : '0', (v) => emit('setLabels', v === '1')))),
       el('p', { class: 'note' }, (LIGHTING[S.lighting] || {}).desc || '')) : null,
+    compteSection(),
     progressionSection(),
     section('Profil',
       row('Je suis', seg('Profil', [['etudiant', 'Étudiant'], ['formateur', 'Formateur', 'Ajoute l\'espace formateur à ces réglages']], PROFILE.role, (v) => setRole(v))),

@@ -1,0 +1,47 @@
+rules_version = '2';
+// ----------------------------------------------------------------------------------
+// Règles de sécurité du compte en ligne du TIEE Simulator (src/compte/, v19.25).
+//   progress/<uid>   : la progression d'un joueur ; lui seul la lit et l'écrit (un formateur inscrit
+//                      dans formateurs/<uid> peut la lire pour le suivi).
+//   profils/<uid>    : le profil public (classement) ; lu par tout joueur connecté, écrit par son seul
+//                      propriétaire, avec des champs contrôlés (pas d'adresse électronique).
+//   formateurs/<uid> : la liste des formateurs, tenue à la main dans la console Firebase.
+// Déployer : firebase deploy --only firestore:rules (README, « Le compte en ligne »).
+// ----------------------------------------------------------------------------------
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function connecte() { return request.auth != null; }
+    function moi(uid) { return connecte() && request.auth.uid == uid; }
+    function formateur() { return connecte() && exists(/databases/$(database)/documents/formateurs/$(request.auth.uid)); }
+    function texte(v, max) { return v is string && v.size() <= max; }
+
+    match /progress/{uid} {
+      allow read: if moi(uid) || formateur();
+      allow delete: if moi(uid);
+      allow create, update: if moi(uid)
+        && request.resource.data.keys().hasOnly(['data', 'v', 'maj'])
+        && request.resource.data.data is string && request.resource.data.data.size() < 900000
+        && request.resource.data.v is int && request.resource.data.maj is int;
+    }
+
+    match /profils/{uid} {
+      allow read: if connecte();
+      allow delete: if moi(uid);
+      allow create, update: if moi(uid)
+        && request.resource.data.keys().hasOnly(['pseudo', 'avatar', 'banniere', 'cadre', 'titre', 'niveau', 'grade', 'xp', 'classe', 'vitrine',
+             'badges', 'nbBadges', 'lecons', 'exercices', 'competences', 'serie', 'meilleureSerie', 'maj'])
+        && texte(request.resource.data.pseudo, 30) && texte(request.resource.data.classe, 30)
+        && texte(request.resource.data.avatar, 40) && texte(request.resource.data.banniere, 40) && texte(request.resource.data.cadre, 40)
+        && texte(request.resource.data.titre, 60) && texte(request.resource.data.grade, 60)
+        && request.resource.data.niveau is int && request.resource.data.niveau >= 1 && request.resource.data.niveau <= 60
+        && request.resource.data.xp is int && request.resource.data.xp >= 0 && request.resource.data.xp < 1000000
+        && request.resource.data.badges is list && request.resource.data.badges.size() <= 200
+        && request.resource.data.vitrine is list && request.resource.data.vitrine.size() <= 3;
+    }
+
+    match /formateurs/{uid} {
+      allow read: if moi(uid);
+      allow write: if false;
+    }
+  }
+}

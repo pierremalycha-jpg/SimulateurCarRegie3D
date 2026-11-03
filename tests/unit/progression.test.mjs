@@ -96,11 +96,26 @@ test('v4 → v5 : les émissions en direct, nettoyées et fusionnées entre deux
 });
 
 test('v5 → v6 : les badges de compétence prennent les numéros officiels du référentiel (comp-1.4 → comp-C32)', () => {
-  assert.equal(PROG_VERSION, 6);
+  assert.ok(PROG_VERSION >= 6);
   const p = migrateProgress({ v: 5, missions: {}, game: { badges: { 'comp-1.4': 10, 'comp-1.4-or': 20, 'comp-2.13': 30, 'comp-C8': 40, 'premier-pas': 50, 'comp-9.9': 60 } } });
-  assert.equal(p.v, 6);
+  assert.equal(p.v, PROG_VERSION);
   assert.deepEqual(p.game.badges, { 'comp-C32': 10, 'comp-C32-or': 20, 'comp-C36': 30, 'comp-C8': 40, 'premier-pas': 50, 'comp-9.9': 60 });
   // un badge déjà présent sous son nouveau nom garde sa date
   assert.deepEqual(migrateProgress({ v: 5, game: { badges: { 'comp-1.4': 10, 'comp-C32': 5 } } }).game.badges, { 'comp-C32': 5 });
   assert.equal(migrateProgress({ v: 5, game: 'abîmé' }).game, 'abîmé', 'un jeu mal formé est laissé tel quel');
+});
+
+test('v6 → v7 : le profil (pseudo, apparence, récompenses du pass) ; mal formé, il est retiré ; il se fusionne', () => {
+  assert.equal(PROG_VERSION, 7);
+  assert.equal(migrateProgress({ v: 6, profil: 'abîmé' }).profil, undefined);
+  const p = migrateProgress({ v: 6, profil: { pseudo: 'Léa', recus: { 2: 5 } } });
+  assert.equal(p.v, 7); assert.equal(p.profil.pseudo, 'Léa');
+  // fusion : les récompenses récupérées des deux côtés, les réglages les plus récents
+  const P = /** @type {any} */ (PROG);
+  P.profil = { pseudo: 'Ancien', avatar: 'casque', recus: { 2: 1 }, at: 10 };
+  mergeProgress({ v: 7, profil: { pseudo: 'Nouveau', avatar: 'camera', recus: { 3: 2 }, at: 20 } });
+  assert.equal(P.profil.pseudo, 'Nouveau'); assert.equal(P.profil.avatar, 'camera');
+  assert.deepEqual(Object.keys(P.profil.recus).sort(), ['2', '3']);
+  mergeProgress({ v: 7, profil: { pseudo: 'Vieux', recus: {}, at: 5 } });
+  assert.equal(P.profil.pseudo, 'Nouveau', 'un profil plus ancien ne remplace pas les réglages');
 });
