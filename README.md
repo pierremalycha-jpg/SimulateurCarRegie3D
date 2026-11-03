@@ -394,6 +394,46 @@ Tests :
   « Emmène-moi / Montre-moi » doit mettre en évidence un élément réel de la page, et « Fais-le pour moi » doit faire
   valider l'étape.
 
+## v19.29 : un chapitre « La lumière » au Cours, et programmer la console dot2 pour de vrai
+
+**Le chapitre « La lumière »** (`cours/lumiere.js`), entre Le son et Le réseau, en trois parties et quatre niveaux :
+
+| Partie | Leçons (niveau) |
+| --- | --- |
+| La lumière et sa mesure (`cours/lumiere_mesure.js`) | Les sources : halogène, HMI, LED (Débutant) · Flux, intensité, éclairement, luminance (Débutant) · La distance et l'angle (Intermédiaire) · La couleur de la lumière : kelvins, mireds, gélatines (Intermédiaire) · Mesurer la lumière et exposer la caméra (Avancé) |
+| Éclairer pour la caméra (`cours/lumiere_eclairer.js`) | Les projecteurs (Débutant) · Éclairer un plateau de télévision (Intermédiaire) · Éclairer un stade pour la télévision (Expert) |
+| Commander la lumière (`cours/lumiere_commande.js`) | Le DMX (Débutant) · La ligne DMX (Intermédiaire) · La console : patch, groupes, presets, cues, tracking (Intermédiaire) · Les lyres : pan, tilt, 16 bits, roues et effets (Avancé) · La lumière sur le réseau : Art-Net et sACN (Expert) |
+
+Chaque leçon a sa page complète : l'essentiel, un schéma, une manipulation qui calcule avec les modèles du Labo
+(`labo/calc/photometrie.js`, `lumiere.js`, `dmx.js`, `show.js`), l'explication, « dans le car », ses fiches « ? »
+(`content/terms_lumiere_*.js`), un quiz et son exercice en autonomie (`cours/exos/lumiere_*.js`), ses compétences et ses
+savoirs du référentiel. Les ateliers du Labo y sont rangés comme exercices pratiques : Photométrie dans « La distance et
+l'angle », DMX et Art-Net dans « Le DMX », la console dot2 dans « La console ». Le chapitre ouvre aussi le Labo.
+
+**Programmer la console dot2** (`labo/defis/dot2.js`) : cinq défis notés à côté de la console (le panneau des défis se
+replie pour lui laisser la place). Au début d'un défi, le Labo charge dans la console un show de départ
+(`labo/dot2/show_depart.js` : le plateau 1 patché, ses groupes et ses presets, aucune cue ; il demande avant de remplacer un
+show déjà programmé). L'élève programme comme sur la vraie console, puis « Vérifier mon programme » : le Labo relit le show
+de la console et le juge (`labo/calc/show.js` : la cue demandée, l'état suivi en tracking, les renvois aux presets, la
+couleur de chaque lyre, l'effet de position, le chaser). « La solution » charge un show qui marche.
+
+| Défi | Ce qu'on programme |
+| --- | --- |
+| Des couleurs sur les lyres | Une cue : les lyres wash d'une couleur (mélange RVB + blanc), les lyres spot d'une autre (roue de couleurs) |
+| Une lyre sur deux (MAtricks) | Une cue : 13 et 15 d'une couleur, 14 et 16 d'une autre, avec les macros MAtricks Odd et Even |
+| Pointer un gobo | Une cue : les spot à un pan et un tilt donnés (à 5° près), avec un gobo |
+| Un cercle de lyres | Un effet de position (pan et tilt déphasés de 90°) à une vitesse donnée, dans une couleur |
+| Un chaser de couleurs | Un exécuteur en chaser, quatre pas dans l'ordre demandé |
+
+La console est gardée telle quelle dans le dépôt ; au chargement, le Labo pose un crochet d'une ligne dans sa page (elle
+publie son application sous `window.__laboDot2`) pour lire le show en mémoire, sans qu'il faille le sauvegarder (la console
+ne garde son show qu'à la sauvegarde, Backup).
+
+**Vérification.** Tests unitaires `tests/unit/labo.test.mjs` (la lecture d'un show, le tracking, les presets, les effets,
+le crochet ; chaque défi soluble et jamais juste d'avance), `cours.test.mjs`, `exos.test.mjs`, `parcours.test.mjs` (le
+chapitre, ses niveaux, ses exercices) ; suite `node tools/e2e.mjs labo` : au pupitre de la console, en cliquant ses touches,
+« Group 9 At Full », les macros MAtricks Odd et Even, deux presets de couleur, « Store Cue » ; le Labo juge le programme juste.
+
 ## v19.28 : le Labo remplace l'entrepôt (optique, photométrie, sensitométrie, DMX, console dot2)
 
 **Pourquoi.** Dans Jouer, l'entrepôt (monter une régie mobile de A à Z) et sa Carrière laissent la place à un **Labo** : des
@@ -2807,6 +2847,8 @@ node tools/shots.mjs dossier 1280 800 '["vision","hf"]'   # captures de postes
 | `camlab/` | Module « La caméra en 3D » : caméra et plateau construits dans le code (`model.js`, `scene.js`), pastilles (`points.js`), 51 notions (`notions/`, une fiche par fichier, registres `ch1.js` … `ch89.js`), schémas (`figs.js`, `figs/`, `figkit.js`), manipulations (`labs.js`, `labs/`, commandes `controls.js`, optique `optics.js`, viseur simulé et traitement de l'image `vf.js`), affichage d'une fiche (`fiche.js`), progression (`progress.js`), quiz de chapitre (`quiz.js`), mise en service notée (`mes.js`) |
 | `labo/` (`index.js`, `ateliers.js`, `etats.js`, `defis.js`, `suivi.js`, `kit.js`), `styles/labo.css` | Le Labo (v19.28, lieu de Jouer qui remplace l'entrepôt) : un onglet par atelier, le panneau Défis (une question à la fois, deux aides, la solution, le score) et Comprendre (notions, fiches « ? », liens du Cours, référentiel cité) ; le catalogue des ateliers (compétences, savoirs, défis) ; l'état et les mesures de chaque atelier, `poser` (calcul pur) ; le moteur des défis sur celui de l'exercice du Cours, plus le réglage jugé par le modèle ; le suivi `PROG.labo` (noter, fusionner) ; les commandes liées à l'état et verrouillables |
 | `labo/calc/` (`optique.js`, `photometrie.js`, `sensito.js`, `dmx.js`) | Les modèles purs des ateliers : profondeur de champ, hyperfocale, tache de flou, champ ; intensité, éclairement, gradateur, gélatines, mireds, exposition, contraste ; courbes BT.709, knee, S-Log3, HLG, plage utile, gain ; univers, empreintes, 16 bits, DIP, trame, ligne, Art-Net, sACN |
+| `labo/calc/lumiere.js`, `labo/calc/show.js`, `labo/dot2/show_depart.js` | La lumière en calcul pur (familles de sources, angle solide, angle de champ, scintillement, uniformité) ; la console (lire un show de la dot2 : tracking, presets, couleur d'une lyre, effets, chaser ; pan et tilt sur 16 bits) ; le show de départ des défis de la console (v19.29) |
+| `cours/lumiere.js`, `cours/lumiere_mesure.js`, `cours/lumiere_eclairer.js`, `cours/lumiere_commande.js`, `cours/exos/lumiere_*.js`, `content/terms_lumiere_*.js` | Le chapitre « La lumière » (v19.29) : trois parties, treize leçons, leurs exercices en autonomie et leurs fiches « ? » |
 | `labo/ateliers/` (un fichier par atelier), `labo/defis/` (un fichier par atelier), `labo/dot2/simulateur_dot2.html`, `content/terms_labo.js` | L'interface de chaque atelier (dessins en canvas, commandes, afficheurs) ; ses défis notés ; la console dot2 (page complète gardée telle quelle, ouverte dans un cadre) ; les fiches « ? » du Labo |
 | `ui/cours_ui.js` | L'espace Cours : un seul sommaire (chapitres rangés par niveau, parties), « Mon parcours », chemin d'un chapitre, la page de lecture d'une leçon qui se dévoile (en-tête, étapes collantes, schéma légendé, manipulation, explication, car, mots de la leçon, référentiel, quiz, exercice en autonomie, exercices pratiques), glossaire, postes, matériel |
 | `app/nav.js` | Navigation entre les trois entrées : menu du car (Échap), aiguillage des boutons « Aller au poste », « Commencer » (car lancé si besoin), ouverture du Labo depuis une leçon, changement de vacation |

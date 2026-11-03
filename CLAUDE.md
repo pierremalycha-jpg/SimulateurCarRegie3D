@@ -151,7 +151,11 @@ Tout est en français (code commenté en français, interface, commits).
   solution posée), aides et solution qui coûtent ; réussi à 60, compté **seul** sans solution. Suivi `PROG.labo`
   (`labo/suivi.js`, progression v10), XP et badges, défi du jour, livret (`RATTACHEMENT.labo`), tableau de bord, exercice
   `x-labo-<id>` dans une leçon du Cours (`cours/exercices.js`). La console dot2 (`labo/dot2/simulateur_dot2.html`, écrite à
-  part) se garde **telle quelle** dans un cadre, sans défi noté. Un nouvel atelier : son entrée dans `ateliers.js`, son
+  part) se garde **telle quelle** dans le dépôt ; au chargement, le Labo y pose un crochet d'une ligne (`CROCHET` de
+  `labo/ateliers/dot2.js` : l'application publiée sous `window.__laboDot2`) pour lire le show en mémoire et y charger un show.
+  Ses défis de programmation (v19.29, `labo/defis/dot2.js`) partent du show de départ `labo/dot2/show_depart.js` (plateau 1
+  patché, groupes, presets, aucune cue) et se jugent en relisant le show (`labo/calc/show.js` : tracking, renvois aux presets,
+  couleur d'une lyre, effet de position, chaser) : on juge le résultat programmé, pas les touches. Un nouvel atelier : son entrée dans `ateliers.js`, son
   modèle pur, son état, son interface, ses défis, ses fiches ; le test vérifie que chaque réglage a une solution et n'est
   jamais juste d'avance. Test `tests/unit/labo.test.mjs`, suite `node tools/e2e.mjs labo`.
 - **La caméra en 3D** (`src/camlab/`, ouverte depuis le chapitre La caméra du Cours) : 51 notions écrites, une
@@ -160,6 +164,11 @@ Tout est en français (code commenté en français, interface, commits).
   `index.js`), styles `src/styles/camlab-<groupe>.css`. Le moule est vérifié par `tests/unit/camlab.test.mjs`
   (compétences du référentiel, leçon `cours` existante). Notions acquises et quiz : `progress.js`, `quiz.js` ;
   exercice noté « Mise en service » : `mes.js` (exercice pratique `x-camera` de la leçon `camera-systeme`).
+- **Le chapitre « La lumière »** (v19.29, décidé le 3 novembre 2026) : `cours/lumiere.js` et ses trois parties
+  (`lumiere_mesure.js` : sources, grandeurs, distance, couleur, mesure ; `lumiere_eclairer.js` : projecteurs, plateau, stade ;
+  `lumiere_commande.js` : DMX, ligne, console, lyres, Art-Net et sACN), exercices `cours/exos/lumiere_*.js`, fiches
+  `content/terms_lumiere_*.js`. Les manipulations calculent avec les modèles du Labo (`labo/calc/`) : leçons et ateliers disent
+  les mêmes chiffres. Les ateliers du Labo y sont les exercices pratiques (`x-labo-photometrie`, `x-labo-dmx`, `x-labo-dot2`).
 - **Les vues 3D du Cours** (`src/vues3d/`, v19.16, décidé le 26 octobre 2026) : une notion technique qui se
   comprend mieux en la voyant (câble, appareils, réseau, lieu) a sa vue ; une notion de calcul ou de courbe reste en
   2D (tableau de pertinence dans le README). Une vue = un fichier de `vues/` (id, chapitre, `lecons`, `etapes` avec
