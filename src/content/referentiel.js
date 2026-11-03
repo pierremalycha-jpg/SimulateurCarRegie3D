@@ -16,6 +16,7 @@
 // absente ou incomplète (ROADMAP.md).
 // ----------------------------------------------------------------------------------
 import { NOTIONS, ORDRE } from '../camlab/notions/index.js';
+import { DEFIS_LABO, atelierById } from '../labo/ateliers.js';
 
 export const FICHE = {
   code: 'RNCP37022',
@@ -406,8 +407,10 @@ export const codeOfficiel = (/** @type {string} */ code) => (competence(code) ? 
 //   missions  : missions du guide (ui/guide.js) ; m6 et m14 (repérage) ne sont pas rattachées
 //   phases    : phases du scénario jour de match (scenario.js), réussies à 60 % au moins
 //   reseau    : missions du parcours réseau ST 2110 (net/course.js)
-//   exercices : brassage complet, montage caméra à l'atelier, quiz ST 2110 et examen réseau (60 %), régie de l'entrepôt,
+//   exercices : brassage complet, montage caméra à l'atelier, quiz ST 2110 et examen réseau (60 %),
 //               émission en direct (60 %, médias lancés soi-même)
+//   labo      : les défis notés des ateliers du Labo (src/labo/), réussis seul à 60 sur 100 ; un défi travaille
+//               les compétences de son atelier (champ competences de labo/ateliers.js)
 //   cours     : leçons de la section Cours (src/cours), acquises quand le quiz est réussi en entier
 //   camera    : module « La caméra en 3D » (src/camlab) : la mise en service notée (« mes », réussie à
 //               60 sur 100) et chaque notion écrite, acquise quand ses trois questions sont réussies du
@@ -489,9 +492,6 @@ export const RATTACHEMENT = {
     atelier: ['C20', 'C9'],
     quiz2110: ['C12'],
     examenReseau: ['C36', 'C12'],
-    // l'entrepôt : une régie mobile montée de A à Z d'après un cahier des charges (traduire la commande,
-    // mettre en place et rendre opérant, interconnecter, tester)
-    entrepot: ['C6', 'C8', 'C25', 'C19'],
     // l'émission en direct : suivre le conducteur (3.11), lancer les médias depuis l'IPDirector (2.5 : le médiaflow),
     // exploiter le serveur et le mélangeur en direct (2.9), suivre les annonces de l'intercom (4.1)
     emission: ['C29', 'C15', 'C23', 'C5'],
@@ -527,4 +527,6 @@ export const RATTACHEMENT = {
     mes: ['C20', 'C23', 'C19', 'C25', 'C32'],
     ...cameraNotions(),
   },
+  // les défis du Labo : chacun travaille les compétences de son atelier
+  labo: Object.fromEntries(DEFIS_LABO.map((d) => [d.id, [...(atelierById(d.atelier) || { competences: [] }).competences]])),
 };

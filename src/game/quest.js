@@ -19,16 +19,13 @@ import { BAREME, xpOf, levelOf, badgesWon, BADGES, game, badgeBloc } from './xp.
 import { profil, aRecuperer, titrePorte } from './pass.js';
 import { avatarEl } from '../ui/avatar.js';
 import { BLOCS } from '../content/referentiel.js';
-import { PROG } from '../shared.js';
-import { avancement } from '../carriere/index.js';
-import { episodeById } from '../carriere/mails.js';
 import { EMI } from '../emission/etat.js';
 import { goalEmission } from '../emission/panneau.js';
 
 // ----------------------------------------------------------------------------------
 // L'objectif à l'écran, comme dans un jeu : en haut à gauche, ce qu'il y a à faire maintenant
 // (l'étape de l'exercice d'Olivier, la mission d'installation, la phase du jour de match, le
-// poste suivant de la visite guidée, la mission de la Carrière) ; dans la 3D, un repère sur l'endroit où aller. Le journal
+// poste suivant de la visite guidée) ; dans la 3D, un repère sur l'endroit où aller. Le journal
 // des missions (touche L, bouton Missions) liste ce qu'on peut faire ici et toutes les missions
 // du Cours, avec l'XP qu'elles rapportent, et les badges.
 // ----------------------------------------------------------------------------------
@@ -88,7 +85,7 @@ export function currentGoal() {
     const todo = isAction(s) && !TUTOR.done;
     // en visite guidée, le suivi montre le plan de la visite ; sinon les étapes de l'exercice
     const tasks = S.visite ? tachesVisite() : l.steps.map((x, i) => ({ t: x.title, done: i < TUTOR.i || (i === TUTOR.i && TUTOR.done), now: i === TUTOR.i }));
-    return { kind: 'exercice', tag: S.carriere ? 'Carrière' : S.visite ? 'Visite guidée' : M ? 'Mission spécifique' : 'Exercice', title: l.title, sub: `Étape ${TUTOR.i + 1} / ${l.steps.length}`, text: s.title, prog: (TUTOR.i + (TUTOR.done ? 1 : 0)) / l.steps.length, todo, tasks,
+    return { kind: 'exercice', tag: S.visite ? 'Visite guidée' : M ? 'Mission spécifique' : 'Exercice', title: l.title, sub: `Étape ${TUTOR.i + 1} / ${l.steps.length}`, text: s.title, prog: (TUTOR.i + (TUTOR.done ? 1 : 0)) / l.steps.length, todo, tasks,
       station: g && g.station ? g.station : undefined, target: g && g.station ? () => stationPos(g.station) : undefined, key: `x:${l.id}:${TUTOR.i}:${TUTOR.done}:${S.visite}` };
   }
   // une mission spécifique terminée : enchaîner ou s'arrêter (game/mission_run.js)
@@ -113,13 +110,6 @@ export function currentGoal() {
     if (!m) return { kind: 'fini', tag: 'Installation', title: 'Installation terminée', text: 'Toutes les missions sont réussies. Les exercices d\'Olivier t\'attendent dans le journal (L).', prog: 1, tasks: tachesVide(null), key: 'z:done' };
     const done = MISSIONS.filter((x) => S.missionsDone[x.id]).length;
     return { kind: 'mission', tag: 'Installation du car', title: m.title, sub: `Mission ${MISSIONS.indexOf(m) + 1} / ${MISSIONS.length} · +${BAREME.mission} XP`, text: m.text, prog: done / MISSIONS.length, todo: true, tasks: tachesVide(m), target: MISSION_WHERE[m.id], key: `z:${m.id}` };
-  }
-  // une mission de la Carrière (src/carriere/) : où on en est, et le retour au bureau quand elle est réussie
-  const ep = S.carriere ? episodeById(S.carriere.id) : null;
-  if (ep) {
-    const A = avancement(ep, PROG); const reste = A.points.find((p) => !p.ok);
-    return { kind: A.fait ? 'fini' : 'visite', tag: 'Carrière', title: ep.mission.titre, sub: `${ep.poste} · ${A.n} / ${A.total}`, prog: A.n / A.total, tasks: tachesVisite(),
-      text: A.fait ? 'Mission accomplie : retourne au bureau de l\'entrepôt, un mail t\'attend (Olivier, touche J).' : `À voir : ${reste ? reste.label : ''}. Olivier t'y emmène (touche J).`, key: `c:${ep.id}:${A.n}` };
   }
   if (S.visite) return { kind: 'visite', tag: 'Visite guidée', title: 'Continuer la visite', text: 'Olivier t\'attend : ouvre son panneau (J) pour le poste suivant.', tasks: tachesVisite(), key: 'v' };
   // rien en cours : ce qu'on peut faire ici, et la touche du journal
@@ -237,7 +227,7 @@ export function updateQuestMarker() {
 
 // ---------------- le journal des missions (touche L) ----------------
 const TIER = { bronze: 'Bronze', argent: 'Argent', or: 'Or' };
-const xpOfExercise = (id) => (id === 'x-atelier' ? BAREME.atelier : id === 'x-brassage' ? BAREME.brassage : id === 'x-reseau' ? BAREME.reseau * 14 : id === 'x-camera' ? BAREME.mes : id === 'x-entrepot' ? BAREME.entrepot : id === 'x-match' ? 100 : BAREME.exercice);
+const xpOfExercise = (id) => (id === 'x-atelier' ? BAREME.atelier : id === 'x-brassage' ? BAREME.brassage : id === 'x-reseau' ? BAREME.reseau * 14 : id === 'x-camera' ? BAREME.mes : id.startsWith('x-labo-') ? BAREME.labo : id === 'x-match' ? 100 : BAREME.exercice);
 function startExercise(id, lessonId) {
   modal.close();
   const info = exerciseInfo(id);

@@ -26,8 +26,6 @@ import { livePlayerCard } from '../game/quest.js';
 // lancé s'il ne l'est pas encore, puis on va à l'exercice, au poste ou à la vacation demandés.
 // ----------------------------------------------------------------------------------
 const PRESET_NAME = { standard: 'le car prêt à l\'antenne', vierge: 'l\'installation du car', atelier: 'l\'atelier de montage', brassage: 'le car vide', scenario: 'le jour de match', grand: 'le grand dispositif' };
-/** après le rechargement : le bureau de l'entrepôt en mode Carrière (src/carriere/) */
-const CARRIERE = 'carriere';
 /** après le rechargement : une mission spécifique (« mission:<id> », game/mission_run.js) */
 const MISSION = 'mission:';
 const NEXT_KEY = 'carregie.next';
@@ -41,15 +39,15 @@ const NEXT_KEY = 'carregie.next';
  * @property {string} [preset] vacation à lancer
  * @property {boolean} [ip] demande le car IP
  * @property {string} [camera] le module « La caméra en 3D » ('mes' : sur l'exercice Mise en service)
- * @property {string} [entrepot] le module L'entrepôt, sur cette mission ('' : bac à sable)
+ * @property {string} [labo] le Labo, sur cet atelier (src/labo/)
  */
 /** @param {Target} g */
 async function go(g) {
   if (!g) return;
   if (g.preset) { await play(g.preset); return; }
   // le module caméra s'ouvre par-dessus tout, sans le car ; en sortant, retour à la leçon d'où l'on vient
-  // l'entrepôt aussi : un mode à part, sans le car
-  if (g.entrepot !== undefined) { closeLayer(false); const lesson = S.coursBack || ''; S.coursBack = null; emit('entrepot', { mission: g.entrepot || '', lesson }); return; }
+  // le Labo aussi : un espace à part, sans le car
+  if (g.labo) { closeLayer(false); const lesson = S.coursBack || ''; S.coursBack = null; emit('labo', { atelier: g.labo, lesson }); return; }
   if (g.camera) { closeLayer(false); const lesson = S.coursBack || undefined; S.coursBack = null; emit('camera', { from: 'cours', mes: g.camera === 'mes', lesson }); return; }
   if (!leaveTitle()) return;
   if (g.lesson) { closeLayer(false); await beginLesson(g.lesson); return; }
@@ -93,16 +91,14 @@ async function play(preset) {
 
 /**
  * Quitte la partie : le simulateur se recharge sur l'écran titre, ou lance directement la vacation
- * demandée (ou le bureau de l'entrepôt de la Carrière : 'carriere' ; une mission spécifique :
- * 'mission:<id>'). La progression est enregistrée avant (enregistrement différé de 2,5 s).
+ * demandée (une mission spécifique : 'mission:<id>'). La progression est enregistrée avant (enregistrement différé de 2,5 s).
  * @param {string} [preset]
  * @param {string} [label] le nom de la mission spécifique
  */
 export async function restart(preset = '', label = '') {
-  const back = preset === CARRIERE;
-  const what = back ? 'Retourner au bureau de l\'entrepôt ?' : preset.startsWith(MISSION) ? `Lancer la mission « ${label || preset.slice(MISSION.length)} » ?` : preset ? `Lancer ${PRESET_NAME[preset] || preset} ?` : 'Revenir à l\'accueil ?';
+  const what = preset.startsWith(MISSION) ? `Lancer la mission « ${label || preset.slice(MISSION.length)} » ?` : preset ? `Lancer ${PRESET_NAME[preset] || preset} ?` : 'Revenir à l\'accueil ?';
   const ok = await ask(`${what}\n\nLa partie en cours s'arrête et le simulateur se recharge, le temps de reconstruire le stade. Ta progression est enregistrée.${SES.active ? '\n\nTu quittes aussi la partie à plusieurs.' : ''}`,
-    { title: back ? 'Retour à l\'entrepôt' : preset.startsWith(MISSION) ? 'Mission suivante' : preset ? 'Changer de vacation' : 'Retour à l\'accueil', ok: back ? 'Retourner à l\'entrepôt' : preset.startsWith(MISSION) ? 'Lancer la mission' : preset ? 'Relancer le simulateur' : 'Revenir à l\'accueil', cancel: 'Continuer la partie' });
+    { title: preset.startsWith(MISSION) ? 'Mission suivante' : preset ? 'Changer de vacation' : 'Retour à l\'accueil', ok: preset.startsWith(MISSION) ? 'Lancer la mission' : preset ? 'Relancer le simulateur' : 'Revenir à l\'accueil', cancel: 'Continuer la partie' });
   if (!ok) return;
   closeLayer(false); if (modal.isOpen) modal.close();
   saveProgressSoon();
@@ -113,12 +109,11 @@ export async function restart(preset = '', label = '') {
   // rechargement refusé (page intégrée) : on le dit
   setTimeout(() => { msg.textContent = 'Le simulateur n\'a pas pu se recharger tout seul : rechargez la page (touche F5).'; }, 9000);
 }
-/** après un « Changer de vacation » : la vacation demandée se lance dès que le car est prêt (ou le bureau de la Carrière) */
+/** après un « Changer de vacation » : la vacation demandée se lance dès que le car est prêt */
 export function resumeAfterReload() {
   let preset = ''; try { preset = sessionStorage.getItem(NEXT_KEY) || ''; sessionStorage.removeItem(NEXT_KEY); } catch (e) { /* rien à reprendre */ }
-  if (!preset || !(PRESET_NAME[preset] || preset === CARRIERE || preset.startsWith(MISSION)) || !TITLE.ready) return;
+  if (!preset || !(PRESET_NAME[preset] || preset.startsWith(MISSION)) || !TITLE.ready) return;
   enterFrom('start');
-  if (preset === CARRIERE) { emit('entrepot', { carriere: true }); return; }
   if (preset.startsWith(MISSION)) { emit('missionCar', { type: 'lancer', id: preset.slice(MISSION.length) }); return; }
   launch(preset);
 }

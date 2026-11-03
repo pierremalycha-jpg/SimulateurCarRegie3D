@@ -4,6 +4,7 @@ import { lessonById as tutorLesson, progressOf } from '../tutor/engine.js';
 import { NET_MISSIONS } from '../net/course.js';
 import { allLessons } from './index.js';
 import { mesBest, MES_SEUIL } from '../camlab/progress.js';
+import { ATELIERS, bilanAtelier } from '../labo/ateliers.js';
 
 // ----------------------------------------------------------------------------------
 // Les exercices pratiques du Cours. Deux sortes :
@@ -11,7 +12,8 @@ import { mesBest, MES_SEUIL } from '../camlab/progress.js';
 //     il explique, on agit, il vérifie ; « Commencer » lance le car si besoin et ouvre le poste ;
 //   - les exercices notés (« x-… ») : une vacation à part (atelier, car vide, jour de match) ou la
 //     formation réseau, avec un résultat enregistré ; ou la mise en service de la caméra de
-//     plateau, dans le module « La caméra en 3D » (x-camera, src/camlab/mes.js).
+//     plateau, dans le module « La caméra en 3D » (x-camera, src/camlab/mes.js) ; ou les défis d'un
+//     atelier du Labo (x-labo-<atelier>, src/labo/), qui s'ouvre sur l'atelier.
 // Chaque exercice est rangé dans une leçon : soit dans la leçon elle-même (champ exercises des
 // chapitres écrits dans cours/*.js), soit ici, pour les leçons écrites avant les exercices (BY_LESSON).
 // Un exercice n'est rangé qu'une fois. Les présentations de postes (« Présente-moi ») et la prise
@@ -26,11 +28,10 @@ export const SPECIAL = {
   'x-brassage': { title: 'Le car vide : tout brasser, noté', summary: 'Rien n\'est brassé : reliez chaque liaison au bon endroit en suivant la liste de câblage, jusqu\'à ce que le multiview soit complet.', duration: '20 min', level: 'intermédiaire', go: { preset: 'brassage', label: 'Lancer le car vide' } },
   'x-reseau': { title: 'Formation réseau ST 2110 : 14 missions, quiz, examen', summary: 'Dans le poste Réseau IP : de la lecture de la topologie au dépannage, puis un quiz et un examen de trois pannes cachées.', duration: '2 h', level: 'avancé', go: { station: 'reseau', tab: 'learn', ip: true, label: 'Ouvrir la formation' } },
   'x-camera': { title: 'Mise en service de la caméra de plateau, notée', summary: 'Dans le module « La caméra en 3D » : de l\'objectif démonté au fichier de scène, avec la fibre, la CCU, le RCP, le viseur, le tirage, les balances et l\'exposition. L\'ordre, chaque geste et le temps sont notés sur 100.', duration: '10 min', level: 'intermédiaire', go: { camera: 'mes', label: 'Ouvrir la mise en service' } },
-  'x-entrepot': { title: 'L\'entrepôt : monter la régie de la cérémonie, notée', summary: 'Dans l\'entrepôt : trois caméras PTZ, un pupitre, un mélangeur, un enregistreur, un embedder pour le micro de la salle. Sortir le matériel, le poser, le câbler, le configurer (adresses, formats, tally) jusqu\'à remplir le cahier des charges.', duration: '30 min', level: 'intermédiaire', go: { entrepot: 'conference', label: 'Entrer dans l\'entrepôt' } },
+  // les ateliers notés du Labo (labo/ateliers.js) : un exercice par atelier, fait quand tous ses défis sont réussis seul
+  ...Object.fromEntries(ATELIERS.filter((A) => !A.libre).map((A) => ['x-labo-' + A.id, { title: `Le Labo : ${A.titre}, ${A.defis.length} défis notés`, summary: `${A.resume} Des valeurs tirées à chaque essai, deux aides, la solution qui ne rapporte rien.`, duration: `${A.defis.length * 5} min`, level: 'intermédiaire', go: { labo: A.id, label: 'Ouvrir l\'atelier' } }])),
   'x-match': { title: 'Jour de match : line-up, test de ligne, direct avec pannes', summary: 'De 17 h 30 à l\'antenne : line-up des caméras, test de ligne avec la chaîne, puis le direct, avec des pannes à résoudre. Chronométré et noté.', duration: '30 min', level: 'avancé', go: { preset: 'scenario', label: 'Lancer le jour de match' } },
 };
-/** meilleur score d'une mission de l'entrepôt (PROG.entrepot.missions[id].best), ou null */
-export const entrepotBest = (P, id) => { const m = P && P.entrepot && P.entrepot.missions ? P.entrepot.missions[id] : null; return m && m.best != null ? Number(m.best.score ?? m.best) : null; };
 const best = (a) => (a && a.length ? Math.max(...a.map((x) => x.score || 0)) : null);
 /** résultat d'un exercice noté : { done, text } (P : la progression d'un élève, celle de l'ordinateur par défaut) */
 export function specialState(id, P = /** @type {any} */ (PROG)) {
@@ -39,7 +40,7 @@ export function specialState(id, P = /** @type {any} */ (PROG)) {
   if (id === 'x-brassage') return P.patchBest ? { done: P.patchBest >= 100, text: `brassage réussi à ${P.patchBest} %` } : { done: false, text: 'pas encore fait' };
   if (id === 'x-reseau') { const n = NET_MISSIONS.filter((m) => (N.missions || {})[m.id]).length; const e = best(N.exams); return { done: n === NET_MISSIONS.length && e != null && e >= 60, text: n || e != null ? `${n} / ${NET_MISSIONS.length} missions${e != null ? ` · examen ${e} %` : ''}` : 'pas encore commencé' }; }
   if (id === 'x-camera') { const b = mesBest(P); return b ? { done: b.score >= MES_SEUIL, text: `meilleur résultat ${b.score} / 100, ${b.errs} erreur${b.errs > 1 ? 's' : ''}, ${Math.floor(b.sec / 60)} min ${String(b.sec % 60).padStart(2, '0')} s` } : { done: false, text: 'pas encore faite' }; }
-  if (id === 'x-entrepot') { const b = entrepotBest(P, 'conference'); return b != null ? { done: b >= 60, text: `meilleur résultat ${b} / 100` } : { done: false, text: 'pas encore faite' }; }
+  if (id.startsWith('x-labo-')) { const b = bilanAtelier(P, id.slice(7)); return b.total ? { done: b.reussis === b.total, text: b.reussis ? `${b.reussis} / ${b.total} défis réussis seul` : 'pas encore réussi' } : { done: false, text: '' }; }
   if (id === 'x-match') { const b = best(P.scenarios); return b != null ? { done: b >= 60, text: `meilleur score ${b} %` } : { done: false, text: 'pas encore joué' }; }
   return { done: false, text: '' };
 }
@@ -50,10 +51,12 @@ export const BY_LESSON = {
   // la mise en service : la chaîne caméra entière (tête, objectif, fibre, CCU, RCP) que la leçon décrit
   'camera-systeme': [
     { id: 'x-camera', intro: 'Exercice noté, dans le module « La caméra en 3D » : la caméra du plateau sort de son flight-case et vous la mettez en service seul, de l\'objectif au fichier de scène. Vous y retrouvez la leçon : la fibre nettoyée et branchée avant d\'alimenter, le niveau optique lu à la CCU, puis tout ce que la vision règle au RCP. Chaque erreur d\'ordre ou de geste est expliquée dans le bilan.' },
+    { id: 'x-labo-optique', intro: 'Au Labo, atelier Optique : une caméra et trois sujets. Vous isolez un sujet entre deux plans flous, vous gardez tout net à focale imposée (l\'hyperfocale), puis vous trouvez la focale d\'un cadre. Regardez la vue de dessus : la zone nette s\'étend plus loin derrière le point que devant, et fond quand la focale s\'allonge.' },
   ],
   'signal-niveaux': [
     { id: 'vision-exposition', intro: 'Au poste vision, une caméra a l\'iris fermé : vous déverrouillez son RCP (PANEL ACTIVE), puis vous rouvrez l\'iris au joystick, cran par cran. Réglez en regardant le waveform plutôt que le moniteur : la moyenne de l\'image doit remonter entre 35 et 55 %, et les blancs rester sous la ligne des 100 %.' },
     { id: 'prism-waveform', intro: 'Au poste vision, vous mettez une tuile du PRISM en waveform et vous lisez les niveaux au curseur, en mV et en % (700 mV = 100 % = code 940). La parade RVB montre ensuite un noir qui tire au rouge : vous le corrigez au RCP, jusqu\'à ce que les trois traces repartent du même niveau en bas de l\'échelle.' },
+    { id: 'x-labo-sensito', intro: 'Au Labo, atelier Sensitométrie : une charte de gris devant la caméra. Vous placez le gris 18 % à sa valeur de référence (41 % en BT.709, 38 % en HLG), vous gardez un ciel lumineux sous l\'écrêtage, puis vous comptez les diaphs que garde chaque courbe. Sur la forme d\'onde, un diaph de plus ne monte pas toujours le signal d\'autant : c\'est la courbe qui décide.' },
   ],
   'signal-couleur': [
     { id: 'vision-balance', intro: 'Au poste vision, vous envoyez les barres d\'une caméra pour vérifier la chaîne, puis vous corrigez une caméra qui dérive vers le rouge par une balance des blancs automatique (AWB). Sur la parade RVB, regardez un blanc : rouge, vert et bleu doivent revenir à la même hauteur, sinon le blanc n\'est plus le blanc de référence de l\'espace de couleur.' },
@@ -65,6 +68,12 @@ export const BY_LESSON = {
   'sdi-cable': [
     { id: 'brassage-cordons', intro: 'À la baie de brassage, vous passez en « car vide », puis vous câblez au cordon une caméra vers la grille, sa référence depuis le distributeur (DA) et le départ vers le codeur de transmission. Observez ce que change la baie normalée : sans cordon, chaque sortie est déjà reliée à l\'entrée prévue ; un cordon sert à dévier un signal.' },
     { id: 'x-brassage', intro: 'Exercice noté : rien n\'est brassé, et vous reliez chaque liaison à sa place en suivant la liste de câblage, jusqu\'à ce que le multiview soit complet. Chaque cordon est un passage de plus dans la baie : vérifiez la prise de départ et la prise d\'arrivée avant de brancher, une erreur se voit aussitôt au multiview.' },
+  ],
+  'expl-lineup': [
+    { id: 'x-labo-photometrie', intro: 'Au Labo, atelier Photométrie : un projecteur, un sujet, un luxmètre. Vous obtenez un niveau précis au sujet, vous exposez la caméra d\'après le luxmètre, vous accordez la couleur de la lumière à la balance des blancs (gélatines, mireds), puis vous réglez un rapport de contraste. C\'est la lumière que le line-up suppose bien réglée.' },
+  ],
+  'reseau-types': [
+    { id: 'x-labo-dmx', intro: 'Au Labo, atelier DMX et Art-Net : vous patchez des projecteurs à la suite, vous réglez une adresse aux commutateurs DIP, vous rendez fiable une ligne DMX, puis vous configurez un nœud Art-Net (même sous-réseau, univers compté à partir de 0). Art-Net part en diffusion ou en unicast, sACN en multicast : c\'est cette leçon.' },
   ],
   'reseau-ip': [
     { id: 'ctrlnet-bases', intro: 'Au poste Réseau du car SDI, vous ouvrez la fiche du RCP 1 pour lire son adresse (10.1.20.31) et son masque (/24), puis vous lancez deux pings : vers la CCU 1, dans le même sous-réseau, et depuis le PC de supervision, dans un autre VLAN. Regardez le chemin affiché : direct quand la partie réseau est la même, par la passerelle et le routage du SW-CŒUR sinon.' },

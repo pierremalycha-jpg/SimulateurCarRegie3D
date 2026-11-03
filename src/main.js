@@ -56,15 +56,13 @@ import { buildStart, start } from './app/start.js';
 import { initTitle, loadStep, tick, titleReady, enterFrom, showTitle } from './app/title.js';
 import './ui/settings.js';
 import { initCamLab, camlabOpen, camlabDebug } from './camlab/index.js';
-import { initEntrepot, entrepotOpen, entrepotDebug } from './entrepot/index.js';
+import { initLabo, laboOpen, laboDebug } from './labo/index.js';
 import { initVues3d, vues3dOpen, vues3dDebug } from './vues3d/index.js';
-import { installCarriere } from './carriere/installer.js';
 import { installMissionRun, RUN as MISSION_RUN } from './game/mission_run.js';
 import { installEmission, updateEmission, emissionDebug } from './emission/index.js';
 import { installFigurants, updateFigurants, figurantsDebug, sauterFigurants } from './figurants/index.js';
 import { EQUIPE } from './figurants/equipe.js';
 import { MARCHEURS } from './figurants/compound.js';
-import * as CARRIERE from './carriere/index.js';
 import { applyRole, PROFILE, setRole } from './app/profile.js';
 import { openCours } from './ui/cours_ui.js';
 import { initComptes, COMPTE } from './comptes/session.js';
@@ -110,8 +108,7 @@ initTitle();
 initComptes(); renderTitleCompte(); initActivite(); initSuiviCar();
 initCamLab();
 initVues3d();
-initEntrepot();
-installCarriere();
+initLabo();
 installMissionRun();
 installEmission();
 loadStep('Chargement des polices', 6); await tick();
@@ -184,7 +181,7 @@ function frame(now) {
 }
 function step(now) {
   // module « La caméra » ou vue 3D du Cours ouverts : le simulateur attend, sans rien calculer ni dessiner
-  if (camlabOpen() || entrepotOpen() || vues3dOpen()) { last = now; setEar({ mode: 'start' }); return; }
+  if (camlabOpen() || laboOpen() || vues3dOpen()) { last = now; setEar({ mode: 'start' }); return; }
   let dt = (now - last) / 1000; last = now;
   const realDt = Math.max(0.001, dt); // le compteur d'images par seconde mesure le temps réel, pas le pas de simulation borné
   dt = clamp(dt, 0.001, 0.05);
@@ -288,12 +285,12 @@ window.__dbg = { RENDER, openReview, openSessionPanel, SES, S, M, MIX, EVS, ROUT
 window.__dbg.diag = { ERRS, report, diagText, openDiag, el }; window.__dbg.on = on;
 window.__dbg.title = { enter: enterFrom, show: showTitle };
 window.__dbg.nav = { openMenu, restart };
-window.__dbg.openCours = openCours; window.__dbg.PROFILE = PROFILE; window.__dbg.setRole = setRole; window.__dbg.camlab = camlabDebug; window.__dbg.vues3d = vues3dDebug; window.__dbg.entrepot = entrepotDebug;
+window.__dbg.openCours = openCours; window.__dbg.PROFILE = PROFILE; window.__dbg.setRole = setRole; window.__dbg.camlab = camlabDebug; window.__dbg.vues3d = vues3dDebug; window.__dbg.labo = laboDebug;
 window.__dbg.COURS = { CHAPTERS: COURS_CHAPTERS, allLessons, lessonById: coursLessonById, lessonDone: coursLessonDone, PARCOURS, essai: essaiExo };
 window.__dbg.CTRL = CTRL; window.__dbg.MATIERE = MATIERE;
 window.__dbg.jeu = { XP, sfx, JEU, openJournal, currentGoal, renderQuest };
 window.__dbg.tel = { open: openTelephone, close: closeTelephone, state: telDebug };
-window.__dbg.carriere = CARRIERE; window.__dbg.mission = MISSION_RUN;
+window.__dbg.mission = MISSION_RUN;
 window.__dbg.emission = emissionDebug;
 window.__dbg.comptes = { COMPTE, openConnexion, openTableauBord, bilanEleve, bilanClasse, fb: FIREBASE_COMPTES, profils: PROFILS_COMPTES, enregistrer: () => saveProgressNow() };
 window.__dbg.figurants = { etat: figurantsDebug, sauter: sauterFigurants, modules: { EQUIPE, MARCHEURS } };

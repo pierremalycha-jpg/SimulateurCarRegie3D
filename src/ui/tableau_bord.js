@@ -10,6 +10,7 @@ import { COMPTE, estProf } from '../comptes/session.js';
 import { bilanEleve, bilanClasse, duree, dureeS, ESSAIS_DIFFICULTE } from '../comptes/bilan.js';
 import { vueClasseCar, vueClasseExos, ongletCar, ongletExos, resumeCar, graphiqueJours, carDe } from './tableau_car.js';
 import { lireListe, nomComplet, motDePasseRefuse } from '../comptes/identifiants.js';
+import { defiById } from '../labo/ateliers.js';
 import {
   suivreClasses, suivreEleves, suivreProgressions, secretsDe, creerClasse, renommerClasse, supprimerClasse,
   creerEleve, changerMdp, changerClasse, supprimerEleve, listeProfs, ajouterProf, retirerProf, texteErreur,
@@ -223,7 +224,7 @@ function epreuves(P) {
   const add = (t, a, unite = ' / 100') => { const v = best(a); if (v != null) out.push([t, `meilleur ${v}${unite}${n(a)}`]); };
   add('Émission en direct', P.emissions); add('Jour de match', P.scenarios, ' %'); add('Examen réseau', (P.net || {}).exams, ' %'); add('Quiz ST 2110', (P.net || {}).quiz, ' %');
   add('Mise en service de la caméra', ((P.camera || {}).mes || {}).runs);
-  for (const [id, m] of Object.entries((P.entrepot || {}).missions || {})) if (m) add(`Entrepôt, mission « ${id} »`, m.runs);
+  for (const [id, d] of Object.entries((P.labo || {}).defis || {})) if (d) { const x = defiById(id); add(`Labo, défi « ${x ? x.titre : id} »`, (d.runs || []).map((score) => ({ score }))); }
   if ((P.rigs || []).length) out.push(['Montage de la caméra', `meilleur : ${Math.min(...P.rigs.map((r) => r.errs ?? 99))} erreur(s) (${P.rigs.length} essai${P.rigs.length > 1 ? 's' : ''})`]);
   if (P.patchBest) out.push(['Brassage', `${P.patchBest} %`]);
   return out;

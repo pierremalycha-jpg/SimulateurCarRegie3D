@@ -133,7 +133,7 @@ const lecons = (p) => Object.values(p.cours || {}).filter((c) => c && c.quiz && 
 /** une progression qui contient quelque chose (leçons, exercices, missions, XP) */
 export function progressionNonVide(p) {
   if (!p || typeof p !== 'object') return false;
-  if (['cours', 'missions', 'tutor', 'camera', 'net', 'entrepot', 'niveaux'].some((k) => p[k] && typeof p[k] === 'object' && Object.keys(p[k]).length)) return true;
+  if (['cours', 'missions', 'tutor', 'camera', 'net', 'labo', 'niveaux'].some((k) => p[k] && typeof p[k] === 'object' && Object.keys(p[k]).length)) return true;
   return xpOf(p) > 0;
 }
 const resumeInvite = (p) => { const n = lecons(p), xp = xpOf(p); return [n ? `${n} leçon${n > 1 ? 's' : ''} acquise${n > 1 ? 's' : ''}` : '', `${xp} XP`].filter(Boolean).join(', '); };

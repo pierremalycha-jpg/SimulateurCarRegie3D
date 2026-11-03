@@ -66,8 +66,8 @@ const INSTALLER = [
 ];
 /** les épreuves notées qui se jouent dans le car (le brassage est rangé avec l'installation) */
 const EPREUVES = /** @type {Array<[string, Prepa]>} */ ([['x-match', { preset: 'scenario' }], ['x-atelier', { preset: 'atelier' }], ['x-reseau', { preset: 'standard', ip: true }]]);
-/** hors du car : la caméra en 3D et l'entrepôt ont leur propre écran (Cours, Jouer → L'entrepôt) */
-const HORS_CAR = new Set(['x-camera', 'x-entrepot']);
+/** hors du car : la caméra en 3D et les ateliers du Labo ont leur propre écran (Cours, Jouer → Le Labo) */
+const HORS_CAR = new Set(['x-camera']);
 
 /** le catalogue entier, dans l'ordre de présentation @returns {MissionCar[]} */
 export function catalogue() {

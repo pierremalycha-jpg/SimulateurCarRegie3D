@@ -16,7 +16,7 @@
   --bg: #0c0e13; --bg2: #12151c; --panel: #161a22; --panel2: #1c212b; --raise: #242a36; --line: rgba(255,255,255,.08); --line2: rgba(255,255,255,.16);
   --well: rgba(255,255,255,.045); --glass: #090b0f;
   --fg: #f5f6f8; --muted: #aab2bf; --dim: #929baa;
-  --accent: #3b9cff; --accent-d: rgba(59,156,255,.18); --accent-ink: #1a1205; /* l'encre sombre des touches ambre (camlab, entrepôt) */
+  --accent: #3b9cff; --accent-d: rgba(59,156,255,.18); --accent-ink: #1a1205; /* l'encre sombre des touches ambre (camlab, Labo) */
   /* les surfaces pleines qui portent du texte blanc : un bleu plus profond (contraste AA 4,9:1), plus sombre encore au survol */
   --accent-fill: #1f6fd6; --accent-fill-h: #1b64c9;
   --neon: #3b9cff; --neon-d: rgba(59,156,255,.16); --cyan: #3b9cff; --cyan-d: rgba(59,156,255,.16);
@@ -773,8 +773,8 @@ body:not(.hud-map) #truckmap { display: none !important; }
 
 @media (prefers-reduced-motion: reduce) { .ti-sweep, .onair-key, .qmark > .ico, .q-dot, .sheet, .quest, .banner, #toast { animation: none !important; } }
 
-/* ---------- les modules en 3D (vues 3D du Cours, la caméra en 3D, l'entrepôt) : les mêmes verres, les mêmes rayons ---------- */
-.v3, .camlab, .entrepot { background: var(--bg); }
+/* ---------- les modules en 3D (vues 3D du Cours, la caméra en 3D, le Labo) : les mêmes verres, les mêmes rayons ---------- */
+.v3, .camlab, .labo { background: var(--bg); }
 .v3-list, .cl-list { background: linear-gradient(90deg, rgba(12,14,19,.92), rgba(12,14,19,.7)); }
 .v3-side, .cl-side, .ep-side { background: var(--mat); backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur); border-left: 1px solid var(--line); box-shadow: none; }
 .v3-tag, .v3-tip, .cl-pin span, .ep-pin span { background: var(--mat); backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur); border: 1px solid rgba(255,255,255,.12); border-left: 1px solid rgba(255,255,255,.12); border-radius: 999px; padding: 3px 10px; font: 600 12.5px var(--f-body); }

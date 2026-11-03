@@ -330,7 +330,7 @@ const CONTROL_HINT = {
 
 /**
  * Dessine une face (le format de devices.js : body, group, text, port, led, btn, lcd, knob, sw…) dans
- * un conteneur, pour un autre module que la visionneuse (l'entrepôt). st : état en direct (voyants,
+ * un conteneur, pour un autre module que la visionneuse. st : état en direct (voyants,
  * afficheurs) ; conns : par port, { ok, color } pour l'anneau de couleur ; onPick(id) au clic.
  * @param {HTMLElement} host @param {{ w: number, h: number, items: any[] }} v
  * @param {Partial<ReturnType<typeof liveState>>} [st] @param {Record<string, { ok: boolean, color: string }>} [conns] @param {(id: string) => void} [onPick]

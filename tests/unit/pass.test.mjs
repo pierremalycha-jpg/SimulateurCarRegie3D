@@ -101,14 +101,15 @@ test('les défis du jour : trois, stables pour une date, un défi d\'XP, réussi
   // sur un mois, les défis changent
   const tirages = new Set(); for (let d = 1; d <= 30; d++) tirages.add(defisDuJour(`2026-11-${String(d).padStart(2, '0')}`).map((x) => x.id).join());
   assert.ok(tirages.size > 10);
-  // le 1er janvier 2026 : 250 XP, exercice en autonomie, mission réseau
+  // le 1er janvier 2026 : 250 XP, deux leçons acquises, un défi du Labo (v19.28)
   const P = fresh(); const at = new Date(2026, 0, 1, 9).getTime();
-  assert.deepEqual(defisDuJour('2026-01-01').map((d) => d.id), ['xp250', 'exo', 'reseau']);
-  award({ P, key: 'exo:son-n1', pts: 30, label: 'exo', at });
+  assert.deepEqual(defisDuJour('2026-01-01').map((d) => d.id), ['xp250', 'deux-lecons', 'labo']);
+  award({ P, key: 'quiz:son-n1', pts: 30, label: 'leçon', at });
+  award({ P, key: 'quiz:son-loudness', pts: 30, label: 'leçon', at });
   let e = etatDefis(game(P), '2026-01-01');
-  assert.ok(e[1].fini && e[1].recu, 'l\'exercice : réussi, sa récompense donnée');
+  assert.ok(e[1].fini && e[1].recu, 'les deux leçons : réussi, sa récompense donnée');
   assert.ok(!e[2].fini);
-  award({ P, key: 'net:m1', pts: 40, label: 'réseau', at });
+  award({ P, key: 'labo:opt-isoler', pts: 40, label: 'défi du Labo', at });
   award({ P, pts: 200, label: 'gros', sorte: 'scenario', at });
   e = etatDefis(game(P), '2026-01-01');
   assert.ok(e.every((d) => d.fini && d.recu), JSON.stringify(e.map((d) => [d.defi.id, d.val, d.but])));

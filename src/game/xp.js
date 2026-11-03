@@ -5,8 +5,8 @@ import { livret } from '../livret.js';
 import { COMPETENCES, blocOf } from '../content/referentiel.js';
 import { allLessons, CHAPTERS } from '../cours/index.js';
 import { etatNiveaux } from '../cours/parcours.js';
-import { fait as carriereFaite } from '../carriere/index.js';
-import { episodeById } from '../carriere/mails.js';
+import { ATELIERS, DEFIS_LABO } from '../labo/ateliers.js';
+import { defiReussi } from '../labo/suivi.js';
 import { jourDe, serie, bonusSerie, etatDefis, sorteDe, BONUS_DEFIS } from './defis.js';
 
 // ----------------------------------------------------------------------------------
@@ -14,7 +14,7 @@ import { jourDe, serie, bonusSerie, etatDefis, sorteDe, BONUS_DEFIS } from './de
 // niveaux de technicien (stagiaire → directeur technique) et des badges. Tout est relié au
 // référentiel TIEE : les badges de compétence suivent le livret (src/livret.js), les points
 // viennent des mêmes activités (missions, exercices d'Olivier, quiz, pannes, jour de match,
-// caméra en 3D, réseau, atelier, brassage, entrepôt). Calcul pur, sans interface : enregistré
+// caméra en 3D, réseau, atelier, brassage, Labo). Calcul pur, sans interface : enregistré
 // dans PROG.game avec le reste de la progression ; l'affichage est dans game/hud.js.
 //   keys    : récompenses données une seule fois (clé → points), ex. « mission:m1 »
 //   extra   : points des récompenses répétables (une panne résolue, un exercice refait)
@@ -69,8 +69,9 @@ export const BAREME = {
   atelier: 80,          // montage à l'atelier terminé
   atelierRefait: 25,
   brassage: 80,         // car vide brassé à 100 %
-  entrepot: 100,        // mission de l'entrepôt réussie (≥ 60/100)
-  entrepotRefait: 25,
+  labo: 40,             // défi d'un atelier du Labo réussi seul (≥ 60/100), la première fois
+  laboRefait: 10,       // un défi refait seul (d'autres valeurs tirées)
+  laboAide: 5,          // réussi avec une solution demandée
   emission: 100,        // une émission en direct conduite jusqu'au générique de fin (≥ 60/100, médias lancés soi-même)
   emissionRefaite: 25,
   poste: 5,             // un poste découvert
@@ -157,8 +158,10 @@ export const BADGES = [
   { id: 'jour-de-match', title: 'Jour de match', desc: 'Un jour de match joué à 60 % au moins.', ico: 'antenne', tier: 'or', test: ({ P }) => (P.scenarios || []).some((s) => (s.score || 0) >= 60) },
   { id: 'reseau', title: 'Ingénieur réseau', desc: 'Les 14 missions de la formation ST 2110 réussies.', ico: 'reseau', tier: 'or', test: ({ P }) => Object.keys((P.net || {}).missions || {}).length >= 14 },
   { id: 'cameraman', title: 'Mise en service', desc: 'La caméra de plateau mise en service (60/100 au moins).', ico: 'vision', tier: 'argent', test: ({ P }) => !!(P.camera && P.camera.mes && P.camera.mes.best && P.camera.mes.best.score >= 60) },
-  { id: 'entrepot', title: 'Régie mobile', desc: 'Une mission de l\'entrepôt réussie.', ico: 'materiel', tier: 'or', test: ({ P }) => Object.values((P.entrepot || {}).missions || {}).some((m) => m && m.best && (m.best.score ?? m.best) >= 60) },
-  { id: 'embauche', title: 'Embauché', desc: 'La mission de stagiaire de la Carrière réussie : le tour du car et ses six postes.', ico: 'chef', tier: 'bronze', test: ({ P }) => { const ep = episodeById('stagiaire'); return !!ep && !!P.carriere && carriereFaite(ep, P); } },
+  // le Labo : un défi, un atelier entier, tous les ateliers notés
+  { id: 'laborantin', title: 'Laborantin', desc: 'Un défi du Labo réussi seul.', ico: 'vision', tier: 'bronze', test: ({ P }) => DEFIS_LABO.some((d) => defiReussi(P, d.id)) },
+  { id: 'atelier-complet', title: 'Atelier maîtrisé', desc: 'Tous les défis d\'un atelier du Labo réussis seul.', ico: 'lumiere', tier: 'argent', test: ({ P }) => ATELIERS.some((A) => A.defis.length > 0 && A.defis.every((d) => defiReussi(P, d.id))) },
+  { id: 'labo-complet', title: 'Chef de labo', desc: 'Tous les défis de tous les ateliers du Labo réussis seul.', ico: 'trophee', tier: 'or', test: ({ P }) => DEFIS_LABO.length > 0 && DEFIS_LABO.every((d) => defiReussi(P, d.id)) },
   { id: 'curieux', title: 'Curieux', desc: 'Dix leçons du Cours acquises (quiz 3/3).', ico: 'cours', tier: 'bronze', test: ({ P }) => Object.values(P.cours || {}).filter((c) => c && c.quiz && c.quiz.total && c.quiz.score === c.quiz.total).length >= 10 },
   { id: 'erudit', title: 'Érudit', desc: 'Toutes les leçons du Cours acquises.', ico: 'livret', tier: 'or', test: ({ P }) => { const ids = allLessons().map((x) => x.lesson.id); const C = P.cours || {}; return ids.length > 0 && ids.every((id) => C[id] && C[id].quiz && C[id].quiz.total && C[id].quiz.score === C[id].quiz.total); } },
   // le parcours du Cours (v19.18) : un niveau validé par ses leçons (pas sauté par un test), les fondamentaux de tous les chapitres, un niveau Expert

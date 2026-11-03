@@ -19,7 +19,7 @@ test('le catalogue : trois familles, chaque mission une fois, rien hors du car',
   assert.deepEqual(FAMILLES.map((f) => f.id), ['installer', 'postes', 'epreuves']);
   for (const f of FAMILLES) assert.ok(all.some((m) => m.famille === f.id), `la famille ${f.id} a des missions`);
   assert.equal(new Set(all.map((m) => m.id)).size, all.length, 'identifiants uniques');
-  assert.ok(!all.some((m) => m.id === 'x-camera' || m.id === 'x-entrepot'), 'la caméra en 3D et l\'entrepôt ont leur propre écran');
+  assert.ok(!all.some((m) => m.id === 'x-camera' || m.id.startsWith('x-labo-')), 'la caméra en 3D et le Labo ont leur propre écran');
   for (const m of all) assert.ok(m.titre && m.resume && m.duree && m.niveau && m.prepa && m.prepa.preset, m.id);
   assert.ok(missionById('i-reseau') && missionById('x-match') && missionById('vision-exposition'));
   assert.equal(missionById('nimporte'), null);

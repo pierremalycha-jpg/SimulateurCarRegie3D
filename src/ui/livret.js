@@ -12,6 +12,7 @@ import { FICHE, MODULES, SAVOIR_FAIRE, epreuveDe } from '../content/referentiel.
 import { livret, NIVEAUX, CONSOLIDE } from '../livret.js';
 import { lessonById as coursLesson } from '../cours/index.js';
 import { NOTIONS } from '../camlab/notions/index.js';
+import { defiById, atelierById } from '../labo/ateliers.js';
 
 // ----------------------------------------------------------------------------------
 // Le livret de compétences à l'écran : un résumé par bloc (épreuve, barre des niveaux), puis
@@ -23,8 +24,8 @@ import { NOTIONS } from '../camlab/notions/index.js';
 /** progression de ce navigateur, avec les missions réussies depuis le dernier enregistrement */
 export const liveProg = () => ({ ...PROG, missions: { ...PROG.missions, ...S.missionsDone } });
 
-const KIND = { parcours: 'Parcours', mission: 'Mission', phase: 'Jour de match', reseau: 'Réseau ST 2110', exercice: 'Exercice', cours: 'Cours', exo: 'Exercice du Cours', camera: 'Caméra 3D' };
-const EXO = { brassage: 'Brassage complet du car', atelier: 'Monter une caméra à l\'atelier', quiz2110: 'Quiz ST 2110 réussi', examenReseau: 'Examen réseau réussi', entrepot: 'Une régie mobile montée dans l\'entrepôt (mission réussie)' };
+const KIND = { parcours: 'Parcours', mission: 'Mission', phase: 'Jour de match', reseau: 'Réseau ST 2110', exercice: 'Exercice', cours: 'Cours', exo: 'Exercice du Cours', camera: 'Caméra 3D', labo: 'Labo' };
+const EXO = { brassage: 'Brassage complet du car', atelier: 'Monter une caméra à l\'atelier', quiz2110: 'Quiz ST 2110 réussi', examenReseau: 'Examen réseau réussi' };
 const ORDER = /** @type {const} */ (['consolidee', 'travaillee', 'a_faire', 'absent']);
 const PILL = { consolidee: 'pill ok', travaillee: 'pill warn', a_faire: 'pill', absent: 'pill lv-off' };
 
@@ -38,6 +39,7 @@ export function activityLabel(a) {
     case 'reseau': return find(NET_MISSIONS);
     case 'cours': { const f = coursLesson(a.ref); return f ? f.lesson.title : a.ref; }
     case 'exo': { const f = coursLesson(a.ref); return f ? `Exercice en autonomie : ${f.lesson.title}` : a.ref; }
+    case 'labo': { const d = defiById(a.ref); const A = d ? atelierById(d.atelier) : null; return d ? `Défi du Labo : ${d.titre}${A ? ' (' + A.titre + ')' : ''}` : a.ref; }
     case 'camera': return a.ref === 'mes' ? 'Mise en service de la caméra de plateau (notée)' : NOTIONS[a.ref] ? `Notion « ${NOTIONS[a.ref].t} »` : a.ref;
     default: return EXO[a.ref] || a.ref;
   }

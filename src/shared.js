@@ -5,7 +5,7 @@ import { setSoundPlan, applyAudioPatch } from './audio.js';
 import { applyOverrides } from './params.js';
 import { mergeGame } from './game/xp.js';
 import { ANCIEN } from './content/referentiel.js';
-import { normaliser as carriereNette, mergeCarriere } from './carriere/index.js';
+import { normaliserLabo, mergeLabo } from './labo/suivi.js';
 import { car as carNet, mergeCar } from './comptes/car.js';
 import { mergeProfil } from './game/pass.js';
 
@@ -42,9 +42,11 @@ export const MYREV = { domains: [], items: {}, params: {}, extra: [], updatedAt:
  * 7 : les comptes (v19.24) : essais du quiz de chaque leçon (cours[id].qn) et minutes de travail par jour (jours) ;
  * 8 : le suivi du car régie (v19.25, comptes/car.js) : temps par poste et de manipulation, exercices pratiques, sessions (car) ;
  * 9 : le profil (pseudo, apparence, récompenses du pass récupérées : profil) et les jours d'activité et défis du jour
- *     (game.jours, game.defis) ; les niveaux passent à 60 (v19.27, game/pass.js).
+ *     (game.jours, game.defis) ; les niveaux passent à 60 (v19.27, game/pass.js) ;
+ * 10 : le Labo remplace l'entrepôt et la Carrière (v19.28) : les défis de ses ateliers (labo.defis[id] : meilleur score,
+ *      réussi seul, nombre d'essais, derniers scores) ; les champs entrepot et carriere sont retirés.
  */
-export const PROG_VERSION = 9;
+export const PROG_VERSION = 10;
 export const PROG = { v: PROG_VERSION, missions: {}, visited: {}, scenarios: [], reports: [], perf: null, patchBest: 0, updatedAt: 0 };
 /** état du dernier enregistrement de la progression : sur cet ordinateur (local), sur le serveur de la page (remote) */
 export const SAVE = { local: /** @type {boolean | null} */ (null), remote: /** @type {boolean | null} */ (null), at: 0, error: '' };
@@ -161,8 +163,6 @@ export function migrateProgress(d) {
     if (!isObj(p.net.missions)) p.net.missions = {};
     for (const k of ['quiz', 'exams']) if (!Array.isArray(p.net[k])) p.net[k] = [];
   }
-  // v2 → v3 : la Carrière (absente tant qu'elle n'est pas commencée) ; mal formée, elle est remise en forme
-  if ('carriere' in p) p.carriere = carriereNette(p.carriere);
   // v3 → v4 : l'exercice en autonomie d'une leçon ({ best, seul, n }) et les tests de niveau ({ chapitre: { niveau: { score, total } } })
   if (isObj(p.cours)) for (const [id, c] of Object.entries(p.cours)) if (isObj(c) && 'exo' in c && !(isObj(c.exo) && Number.isFinite(c.exo.best))) delete p.cours[id].exo;
   if ('niveaux' in p) {
@@ -192,6 +192,9 @@ export function migrateProgress(d) {
   if ('car' in p) carNet(p);
   // v8 → v9 : le profil (absent tant qu'il n'est pas réglé) ; mal formé, il est retiré
   if ('profil' in p && !isObj(p.profil)) delete p.profil;
+  // v9 → v10 : l'entrepôt et la Carrière sont retirés (v19.28) ; le Labo (absent tant qu'aucun défi n'est tenté), remis en forme
+  delete p.entrepot; delete p.carriere;
+  if ('labo' in p) p.labo = normaliserLabo(p.labo);
   p.v = Math.max(v, PROG_VERSION);
   return p;
 }
@@ -258,20 +261,8 @@ export function mergeProgress(d) {
   if (d.game) { const G = /** @type {any} */ (PROG); G.game = mergeGame(G.game, d.game); }
   // le profil : les récompenses du pass récupérées des deux côtés, les réglages les plus récents
   if (d.profil) { const P = /** @type {any} */ (PROG); P.profil = mergeProfil(P.profil, d.profil); }
-  // l'entrepôt : meilleur résultat de chaque mission, derniers essais, et le montage le plus récent
-  if (d.entrepot) {
-    const N = /** @type {any} */ (PROG).entrepot = /** @type {any} */ (PROG).entrepot || {};
-    const M = N.missions = N.missions || {};
-    for (const [id, r] of Object.entries(d.entrepot.missions || {})) {
-      if (!r) continue; const m = M[id] = M[id] || { best: null, runs: [] }; m.runs = m.runs || [];
-      const seenE = new Set(m.runs.map((x) => x.at)); for (const x of r.runs || []) if (!seenE.has(x.at)) m.runs.push(x);
-      m.runs = m.runs.sort((a, b) => (a.at || 0) - (b.at || 0)).slice(-10);
-      m.best = best(m.best, r.best);
-    }
-    if (d.entrepot.build && (!N.build || (d.entrepot.build.at || 0) > (N.build.at || 0))) N.build = d.entrepot.build;
-  }
-  // la Carrière : un mail reçu ou lu sur l'un des appareils l'est pour de bon (la date la plus ancienne)
-  if (d.carriere) { const P = /** @type {any} */ (PROG); P.carriere = mergeCarriere(P.carriere, d.carriere); }
+  // le Labo : le meilleur score de chaque défi, réussi seul sur l'un des appareils, les essais des deux
+  if (d.labo) { const P = /** @type {any} */ (PROG); P.labo = mergeLabo(P.labo, d.labo); }
   // module caméra : notions, quiz de chapitre, mise en service (meilleur résultat et derniers essais)
   if (d.camera) {
     const K = /** @type {any} */ (PROG.camera = PROG.camera || {});
@@ -427,7 +418,7 @@ export function importProgress(text) {
   const wrapped = isObj(d) && d.format === EXPORT_FORMAT;
   const p = wrapped ? d.progression : d;
   // une progression brute a au moins l'un de ses champs habituels
-  if (!isObj(p) || (!wrapped && !['missions', 'visited', 'cours', 'tutor', 'game', 'camera', 'net', 'carriere', 'niveaux', 'emissions', 'profil'].some((k) => k in p))) return { ok: false, error: 'Ce fichier ne contient pas de progression du TIEE Simulator.' };
+  if (!isObj(p) || (!wrapped && !['missions', 'visited', 'cours', 'tutor', 'game', 'camera', 'net', 'labo', 'niveaux', 'emissions', 'profil'].some((k) => k in p))) return { ok: false, error: 'Ce fichier ne contient pas de progression du TIEE Simulator.' };
   mergeProgress(p);
   restoreProgress();
   saveProgressSoon();

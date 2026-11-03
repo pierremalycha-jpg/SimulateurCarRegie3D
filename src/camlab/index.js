@@ -509,7 +509,7 @@ function route(o) {
 /**
  * Ouvre le module. o.notion ou o.point : ouvrir directement une fiche ; o.quiz : le quiz d'un
  * chapitre ; o.mes : l'exercice « Mise en service » (o.variante : son éclairage) ; o.from :
- * 'cours' pour y revenir en sortant, o.lesson : la leçon du Cours où revenir.
+ * 'cours' (ou 'labo') pour y revenir en sortant, o.lesson : la leçon du Cours (ou l'atelier du Labo) où revenir.
  */
 export async function openCameraLab(o = {}) {
   if (CL.open) { if (o.lesson) backLesson = o.lesson; if (R) route(o); return; }
@@ -542,6 +542,8 @@ export function closeCameraLab(next = null) {
   else if (next && next.go) emit('go', next.go);
   // venu de l'espace Cours (chapitre La caméra, ou une leçon) : on y revient
   else if (from === 'cours') emit('cours', back ? { lesson: back } : { tab: 'camera' });
+  // venu du Labo (lien « Dans le Cours » d'un atelier) : on y revient, sur cet atelier
+  else if (from === 'labo') emit('labo', { atelier: back });
 }
 /** accès de débogage et de test */
 export const camlabDebug = () => R;

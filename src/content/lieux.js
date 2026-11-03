@@ -2,8 +2,9 @@
 // ----------------------------------------------------------------------------------
 // Les lieux de l'écran Jouer (feuille de route : ROADMAP.md). Le car régie est en service ; la
 // salle de concert est en préparation : son écran ouvre une fiche « Ce qui se prépare ». Les
-// périodes sont indicatives. L'entrepôt (monter une régie mobile de A à Z) est un mode à part, qui
-// s'ouvre d'ici : son module (src/entrepot/) remplace le car.
+// périodes sont indicatives. Le Labo (des ateliers pour manipuler les notions du Cours : optique,
+// photométrie, sensitométrie, DMX, la console lumière) est un espace à part, qui s'ouvre d'ici
+// (src/labo/) : il remplace le car.
 // ----------------------------------------------------------------------------------
 /**
  * @typedef {object} Lieu
@@ -27,7 +28,7 @@ export const LIEUX = [
     id: 'car', nom: 'Car régie', cadre: 'Captation sportive au stade', etat: 'service', icons: ['car', 'terrain'],
   },
   {
-    id: 'entrepot', nom: 'L\'entrepôt', cadre: 'Monter une régie mobile de A à Z', etat: 'service', icons: ['materiel', 'processeur'],
+    id: 'labo', nom: 'Le Labo', cadre: 'Des ateliers pour manipuler les notions du Cours', etat: 'service', icons: ['vision', 'lumiere'],
   },
   {
     id: 'concert', nom: 'Salle de concert', cadre: 'Son et lumière de scène', etat: 'prepa', version: 'v22 et v23', prevu: 'fin 2027',
