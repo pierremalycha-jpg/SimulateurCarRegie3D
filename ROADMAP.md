@@ -7,14 +7,15 @@ Rattachement au référentiel, compétence par compétence, et plan de modules :
 https://claude.ai/artifact/CC1su9aPGFspDxWwi8qSGP (page privée).
 
 **Vision.** Un simulateur où chaque compétence de l'option TIEE du BTS MAV se pratique sur un lieu
-réaliste, de la préparation du matériel à l'entrepôt jusqu'au direct, en passant par le câblage, les
+réaliste, de la préparation du matériel jusqu'au direct, en passant par le câblage, les
 réglages et la panne. Son nom : **TIEE Simulator**, réalisé par le BTS Audiovisuel de Saint-Quentin (lycée
 Henri-Martin), développé par Pierre MALYCHA.
 
 **Règles du chantier.**
 
 - Un moteur, plusieurs lieux : signaux, matériel, tuteur, pannes et suivi sont communs.
-- La préparation nourrit l'exploitation : ce qu'on prépare à l'entrepôt part sur le lieu.
+- La préparation nourrit l'exploitation : ce qu'on prépare part sur le lieu.
+- Le Labo fait manipuler une notion du Cours sur un modèle qui calcule : il complète les lieux, il ne les remplace pas.
 - Un lieu fini avant le suivant : chaque version livre un événement jouable de bout en bout.
 - Vérifié par des pros et en classe : un relecteur professionnel par lieu, un test avec des étudiants.
 - Aligné sur le référentiel : chaque parcours est rattaché aux compétences de l'option TIEE, numérotées C1 à C39
@@ -25,6 +26,7 @@ Calendrier indicatif, calé sur l'année scolaire (les épreuves ont lieu en mai
 | Version | Période | Contenu |
 |---|---|---|
 | Postes en 3D, lots 4 et 5 | nov. 2026 – janv. 2027 (proposé) | Lot 4 : les baies (CCU, grille, synchro, brassage avec cordons tirés en 3D, mesure, HF, transmission), face avant puis face arrière. Lot 5 : les postes « à écran » (réalisateur, scripte, habillage, production, chef de car, IPDirector, réseau) : la vue assise, l'interface 2D dans l'écran de l'ordinateur |
+| v19.28 | nov. 2026 (fait) | Le Labo remplace l'entrepôt et la Carrière dans Jouer : un onglet par atelier, chacun sur un modèle qui calcule (optique et profondeur de champ ; photométrie : intensité, éclairement, gradateur, gélatines, mireds, exposition, contraste ; sensitométrie : courbes BT.709, knee, S-Log3, HLG, plage utile ; DMX et Art-Net : patch, DIP, 16 bits, ligne, nœud Art-Net et sACN) avec 14 défis notés (valeurs tirées, réglage jugé par le modèle, aides et solution) rattachés au référentiel ; la console dot2 intégrée telle quelle ; fiches « ? », exercices du Cours, livret, XP, badges, tableau de bord ; progression v10. Reste : la sensitométrie de la pellicule et du capteur mesurée (charte filmée), un atelier colorimétrie (vecteurscope, gamut), des leçons du Cours pour la photométrie et le DMX, des défis notés sur la console dot2 |
 | v19.27 | nov. 2026 (fait) | La progression retrouvée partout : à la connexion (élève ou professeur), la progression faite sans compte sur l'ordinateur est proposée à la reprise, et ce qui attend part en ligne à la fermeture de la fenêtre ; une progression plus récompensante : 60 niveaux et un pass du technicien (une récompense par niveau : avatars, bannières, cadres, titres), série de jours et trois défis du jour ; l'espace Profil (profil, pass, succès, classement des élèves) et le profil des autres élèves, sur les comptes de la v19.24 ; suite profil. Reste : déployer les règles (profils) dans TieeSimulatorBDD ; des saisons (un pass par année scolaire) ; vérifier côté serveur les gains les plus gros (fonctions Firebase) si le classement devient un enjeu |
 | v19.26 | nov. 2026 (fait) | Le Cours qui se dévoile : la page d'une leçon se lit comme une page de présentation (en-tête avec l'essentiel en trois phrases, barre des étapes collante, sections révélées au défilement, schéma légendé, colonne de lecture, cartes réservées aux blocs où l'on agit, mots de la leçon et référentiel compacts), sans rien retirer ; le chapitre Le son passe de deux à neuf leçons en trois parties (décibel, micros et directivité, couples stéréo XY / ORTF / AB / MS avec l'angle d'enregistrement calculé, niveaux et liaisons symétriques, compresseur et limiteur, loudness EBU R128 et crête vraie, audio numérique AES3 / MADI / Dante), plus la compression vidéo dans Le signal ; calculs purs testés, fiches « ? » Son et Signal vidéo, suite cours-lecture. Reste : faire relire les ordres de grandeur du son par un professionnel ; un exercice pratique dans le car pour les couples ; les mêmes sections révélées dans la caméra en 3D et les vues 3D |
 | v19.25 | nov. 2026 (fait) | Le tableau de bord complet : ce que chaque élève fait au car régie (temps actif par activité et par poste, temps de manipulation et gestes, exercices pratiques commencés, finis, abandonnés, aidés, missions spécifiques, matériel, lieux et fenêtres consultés, pannes, dernières parties) ; la classe en grilles élèves × postes et élèves × exercices ; la fiche d'un élève en onglets (vue d'ensemble avec l'activité des 14 derniers jours, car régie, exercices pratiques, cours, livret) ; progression v8 ; envoi en ligne limité à une fois par minute (forfait gratuit : de l'ordre de 300 heures d'élève actif par jour). Reste : la même chose pour l'entrepôt et la caméra en 3D ; essayer les seuils (5 s de manipulation, 2 min d'absence) avec une classe |
@@ -48,7 +50,7 @@ Calendrier indicatif, calé sur l'année scolaire (les épreuves ont lieu en mai
 | v19.8 | oct. 2026 (fait) | Trois façons de jouer au car régie : car vide (Olivier propose d'abord la visite), car pré-installé (jeu libre, sans chef ni missions), mission spécifique (une tâche choisie par famille, le car préparé pour elle, enchaîner ou arrêter) ; le suivi des tâches sur le côté ; Olivier en boîte de dialogue en bas de l'écran ; la tâche « réseau de contrôle » du car vide vérifie enfin l'adresse du plan |
 | v19.7 | oct. 2026 (fait) | Jouer par Internet : depuis le salon, l'hôte obtient un lien en un clic (analyse du réseau, ouverture de la box par UPnP, adresse publique vérifiée, sinon tunnel Cloudflare gratuit et sans compte) ; l'invité ouvre le lien dans son navigateur ou le colle dans son salon, et chacun voit l'avatar de l'autre ; ce qui vient d'Internet doit porter la clé du lien. À essayer avec une vraie box et un vrai invité |
 | v19.6 | oct. 2026 (fait) | La Carrière, mode scénarisé de l'entrepôt (lot 1) : le bureau et son ordinateur dans le hall, une messagerie où des mails proposent un poste sur une prestation, l'ordre de mission, deux épisodes (stagiaire : visite du car réduite à six postes ; assistant technique : la conférence montée à l'entrepôt), retour au bureau depuis le car, badge « Embauché », progression v3 |
-| Carrière, lots 2 et 3 | à planifier (R7) | Lot 2 : marcher dans l'entrepôt à la première personne (déplacement, E pour l'ordinateur, les rayonnages et la baie ; la vue en orbite reste pour câbler et sur tablette). Lot 3 : la saison complète (environ huit mails : car vide, atelier, mise en service de la caméra, formation réseau, plateau TV, vMix, jour de match), avec le compte rendu dans le mail de retour |
+| Carrière, lots 2 et 3 | abandonné (v19.28 : l'entrepôt et la Carrière sont retirés au profit du Labo) | Lot 2 : marcher dans l'entrepôt à la première personne (déplacement, E pour l'ordinateur, les rayonnages et la baie ; la vue en orbite reste pour câbler et sur tablette). Lot 3 : la saison complète (environ huit mails : car vide, atelier, mise en service de la caméra, formation réseau, plateau TV, vMix, jour de match), avec le compte rendu dans le mail de retour |
 | v19.5 | oct. 2026 (fait) | Un rendu de jeu vidéo sans ressource externe : matières procédurales (relief, rugosité, teinte) plaquées en triplanaire, boîtes chanfreinées, occlusion ambiante cuite par sommet, SSAO dans le car, intérieur du car en pénombre avec spots et accessoires, car régie et tracteur retravaillés, compound habillé, arbres en plans alpha, béton des tribunes ; qualité Basse inchangée. 19.5.1 : moiré et faces qui sautent corrigés, entrepôt en matières avec environnement, afficheurs de timecode et conducteurs dans le car |
 | v19.4.1 | oct. 2026 (fait) | Un son supportable, à sa place : l'écoute suit le joueur (la foule dans le stade, rumeur lointaine derrière les tribunes et devant le car, l'écoute de la console au poste son, presque rien ailleurs dans le car, silence à l'accueil), montée douce au lancement, volume du son dans les Réglages ; commentaires sans voix de synthèse (fil écrit au poste son) |
 | v19.4 | oct. 2026 (fait) | Consolider le car régie : quiz des leçons en banque (5 questions par leçon, 3 tirées, réponses mélangées, corrigé à la validation), réponses mélangées dans la caméra en 3D, livret qui ne compte que les réussites seules et demande un exercice pratique pour « consolidée », XP sur les seules pannes cachées, progression numérotée, fusionnée avant écriture, échec signalé, export / import / effacement et données personnelles (Réglages → Ma progression), polices intégrées (plus de Google Fonts), fuite mémoire des caméras corrigée, serveur réseau local durci |
@@ -62,7 +64,7 @@ Calendrier indicatif, calé sur l'année scolaire (les épreuves ont lieu en mai
 | v18.3 | oct. 2026 (fait) | Écran titre avec chargement par étapes ; instrument de mesure type PRISM au poste vision et dans une baie de mesure (waveform, parade, vecteurscope, diamant, split diamant, œil, gigue) ; grille Videohub 40×40 avec monitoring ; réseau de contrôle Gigabit du car SDI (VLAN, QoS, pannes) ; les trois reliés : sans réseau, RCP, grille, IPDirector et mélangeur ne commandent plus |
 | Modules du car | nov. 2026 – janv. 2027 | Les compétences que le car ne travaille pas encore (blocs 3 et 4) : M1 livret de compétences, M2 « La commande du diffuseur » (dossier initial, choix et chiffrage du dispositif), M3 « Après le coup de sifflet » (clips, PAD, archive), M4 « Recette et maintenance » (get-in sécurisé, réception, recette, maintenance préventive) |
 | v20 | févr. – mars 2027 | Socle multi-lieux : format de lieu, moteur de signaux unique (vidéo, audio, commande, réseau, énergie), catalogue de matériel unique, lieux chargés à la demande, un tuteur par métier, livret de compétences ouvert à tous les lieux |
-| v21 | avr. – juin 2027 | Entrepôt, la préparation d'une prestation (le module existe depuis v19.2) : flight cases, budget électrique en triphasé (P17, équilibrage des phases), chargement du camion, check-list de départ et de retour, liste de colisage, ce qu'on emporte part sur le car régie (un oubli devient un problème sur place), éditeur de pannes pour le formateur |
+| v21 | avr. – juin 2027 | La préparation d'une prestation (l'entrepôt de la v19.2 est retiré en v19.28 : à reconstruire si on la garde) : flight cases, budget électrique en triphasé (P17, équilibrage des phases), chargement du camion, check-list de départ et de retour, liste de colisage, ce qu'on emporte part sur le car régie (un oubli devient un problème sur place), éditeur de pannes pour le formateur |
 | v22 | juil. – sept. 2027 | Salle de concert, le son : façade, retours, Dante, diffusion et calage, niveaux sonores, captation |
 | v23 | oct. – déc. 2027 | Salle de concert, la lumière : console DMX, Art-Net et sACN, projecteurs, plan de feu, électricité et accroche |
 | v24 | 2028 | Édition 2028-2029 : épreuve blanche, bilan des mesures, veille sur le référentiel (fiche enregistrée jusqu'au 31 août 2027) |
@@ -72,6 +74,12 @@ pannes, une documentation exportable, la relecture d'un professionnel du domaine
 et 30 images par seconde sur le PC le plus faible de l'établissement.
 
 **Décidé.**
+
+- 3 novembre 2026 (v19.28) : dans Jouer, **le Labo remplace l'entrepôt** ; l'entrepôt et sa Carrière sont retirés du code
+  (supprimés, pas masqués). Le Labo a un onglet par atelier ; un atelier fait manipuler une notion du Cours sur un modèle pur
+  testé (`labo/calc/`), avec ses défis notés (au moins un réglage jugé par le modèle, valeurs tirées, aides et solution comme
+  l'exercice en autonomie), rattachés aux compétences ; il s'ouvre aussi depuis sa leçon. La console dot2, écrite à part, est
+  gardée telle quelle dans un cadre, sans défi noté. Les lieux restent le car régie et la salle de concert en préparation.
 
 - 2 novembre 2026 (v19.26) : une leçon du Cours se lit comme **une page qui se dévoile** au défilement (ui/reveal.js, styles/cours-lecture.css) :
   l'en-tête donne le titre et l'essentiel, la barre des étapes reste collée en haut, chaque section arrive quand on y descend ;
@@ -166,9 +174,8 @@ et 30 images par seconde sur le PC le plus faible de l'établissement.
 - R3 : le public (TIEE seul, ou aussi les options Son et Image) ; le concert sert surtout ces deux options.
 - R4 : brancher le vrai matériel de l'établissement.
 - R5 : les relecteurs professionnels.
-- R7 : la suite de la Carrière (marche à la première personne dans l'entrepôt, saison complète) avant, pendant ou
-  après les quatre modules du car ; ses épisodes peuvent porter les modules (M2, la commande du diffuseur, par un
-  mail de client).
+- R7 (3 novembre 2026) : les prochains ateliers du Labo : colorimétrie (vecteurscope, gamut BT.709 et BT.2020), son
+  (filtres, phase, couples stéréo), fibre et bilan optique ? Des défis notés sur la console dot2 (lire son état depuis le cadre) ?
 - R6 : protéger le rôle de formateur en coopération : il se choisit librement dans le salon (une panne forcée
   n'est acceptée que de l'hôte ou du formateur depuis la v19.4) ; un code donné par le formateur, ou le profil
   Formateur de l'ordinateur qui héberge ?

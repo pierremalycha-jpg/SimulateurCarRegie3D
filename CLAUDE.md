@@ -81,9 +81,9 @@ Tout est en français (code commenté en français, interface, commits).
   Une application s'affiche sur l'écran (`view`) ou range le téléphone et ouvre sa fenêtre (`open`). Boîtier 3D
   (`modele.js` : `Builder` + `matiere()`, son propre petit rendu WebGL par-dessus tout), écran HTML posé sur la vitre
   par une transformation projective (`cssProjection`, à l'échelle 1 au repos ; pas de `CSS3DRenderer` : clics perdus). Un nouvel outil devient une application, pas un bouton du HUD ; les
-  touches historiques (P, Y, K, G, L, J, H, M, V) restent des raccourcis. L'entrepôt n'a pas encore son téléphone.
+  touches historiques (P, Y, K, G, L, J, H, M, V) restent des raccourcis. Le Labo n'a pas de téléphone (il a ses onglets).
   Suite `node tools/e2e.mjs telephone`.
-- **Jouer** : le lieu (car régie ; l'entrepôt ; salle de concert en préparation, `src/content/lieux.js`), le
+- **Jouer** : le lieu (car régie ; le Labo ; salle de concert en préparation, `src/content/lieux.js`), le
   mode, solo ou coopération (salon `src/ui/session_ui.js`), conditions de captation repliées. Les modes du car
   (décidés le 24 octobre 2026) : **Car vide** (tout à faire ; Olivier propose d'abord la visite guidée, puis aide sur
   demande), **Car pré-installé** (jeu libre : ni chef de car, ni missions ; par défaut l'**émission en direct**, sinon
@@ -91,7 +91,7 @@ Tout est en français (code commenté en français, interface, commits).
   **Mission spécifique** (une tâche choisie dans `src/game/missions.js`, rangée par famille : installer le car, aux
   postes avec Olivier, épreuves notées ; le car est préparé pour elle (`prepa`) ; à la fin, « Mission suivante »
   (sans recharger si le car convient, `memeCar`) ou « Arrêter » ; déroulement `src/game/mission_run.js`, liste
-  `src/ui/missions_ui.js`). Pour l'entrepôt : la Carrière, ses missions, le bac à sable, la reprise du montage. Les
+  `src/ui/missions_ui.js`). Pour le Labo : un mode par atelier. Les
   exercices restent rangés dans leur leçon du Cours ; la Mission spécifique propose les mêmes (mêmes identifiants,
   rien ne compte deux fois).
 - **L'émission en direct** (`src/emission/`, v19.19, décidée le 28 octobre 2026) : au car pré-installé, le match se
@@ -140,23 +140,20 @@ Tout est en français (code commenté en français, interface, commits).
   tout est ouvert. Suite `node tools/e2e.mjs parcours`. Un long chapitre se
   range en parties (v19.17 : `PARTIES` de `cours/reseau.js`, champ `partie` des leçons, titres dans le sommaire) ; les
   calculs des bases du réseau sont dans `cours/ip_calc.js`.
-- **L'entrepôt** (`src/entrepot/`, tuile « L'entrepôt » de Jouer, décidé le 22 octobre 2026) : monter une
-  régie mobile de A à Z d'après un cahier des charges. Catalogue de matériel réel (`catalogue/`, un fichier par
-  groupe, points non vérifiés dans `averifier`), montage (`build.js`), moteur pur et seul juge de ce qui marche
-  (`engine.js` : énergie, câbles, IP, vidéo, services, tally, alertes), missions notées (`missions.js`), résultat
-  rendu (`suivi.js` → exercice `x-entrepot`, livret), 3D (`scene.js`), panneaux (`ui/` : stock, appareil, menus
-  de configuration `ui/config/` un fichier par famille, synoptique, réseau, cahier des charges). Les menus règlent
-  les clés que lit le moteur (un réglage sans effet le dit) ; une nouvelle mission se rattache à des compétences. Tests
-  `tests/unit/entrepot*.test.mjs`, suite `node tools/e2e.mjs entrepot`. La préparation logistique (flight cases,
-  phases électriques, camion, lien avec le car) reste à faire (ROADMAP.md, v21).
-- **La Carrière** (`src/carriere/`, premier mode de l'entrepôt, décidé le 23 octobre 2026) : le mode scénarisé (le
-  mode libre est le bac à sable). Au bureau du hall (`entrepot/scene/bureau.js`), l'ordinateur reçoit des mails
-  qui proposent un poste sur une prestation (`mails.js` : un épisode = l'offre, son ordre de mission, le mail de
-  retour ; `requis` pour l'ordre). Une mission reprend une activité qui existe (visite guidée réduite, mission de
-  l'entrepôt…) et n'est réussie que si elle l'est (`index.js`, calcul pur, lu dans la progression) : pas d'XP ni de
-  livret en double. `PROG.carriere` ne garde que les dates de réception et de lecture. Depuis le car, retour au
-  bureau par `restart('carriere')`. Ne pas l'appeler « Scénario » (c'est le jour de match). Tests
-  `tests/unit/carriere.test.mjs`, suite `node tools/e2e.mjs carriere`.
+- **Le Labo** (`src/labo/`, v19.28, décidé le 3 novembre 2026) : il **remplace l'entrepôt et la Carrière** (retirés du
+  code ; ne pas les recréer). Lieu « Le Labo » de Jouer, un écran à part par-dessus le reste (`labo/index.js`,
+  `styles/labo.css`) : un onglet par atelier (`labo/ateliers.js` : compétences, savoirs, fiches, liens, défis), l'atelier au
+  centre (`labo/ateliers/<id>.js` : canvas et commandes de `labo/kit.js`, liées à l'état par chemin pointé et verrouillables),
+  à droite Défis et Comprendre (notions, fiches « ? » de `content/terms_labo.js`, liens du Cours, référentiel cité). Un
+  atelier calcule sur un modèle pur testé (`labo/calc/` : optique, photométrie, sensitométrie, DMX) ; son état et ses mesures
+  sont dans `labo/etats.js`. Ses défis notés (`labo/defis/<id>.js`, moteur `labo/defis.js` sur celui de `cours/exo.js`) :
+  trois questions tirées, au moins un **réglage** jugé par le modèle (`fixe` verrouille ce qui est imposé, `corrige` est la
+  solution posée), aides et solution qui coûtent ; réussi à 60, compté **seul** sans solution. Suivi `PROG.labo`
+  (`labo/suivi.js`, progression v10), XP et badges, défi du jour, livret (`RATTACHEMENT.labo`), tableau de bord, exercice
+  `x-labo-<id>` dans une leçon du Cours (`cours/exercices.js`). La console dot2 (`labo/dot2/simulateur_dot2.html`, écrite à
+  part) se garde **telle quelle** dans un cadre, sans défi noté. Un nouvel atelier : son entrée dans `ateliers.js`, son
+  modèle pur, son état, son interface, ses défis, ses fiches ; le test vérifie que chaque réglage a une solution et n'est
+  jamais juste d'avance. Test `tests/unit/labo.test.mjs`, suite `node tools/e2e.mjs labo`.
 - **La caméra en 3D** (`src/camlab/`, ouverte depuis le chapitre La caméra du Cours) : 51 notions écrites, une
   fiche par fichier (`notions/<id>.js`) rangée dans le registre de son groupe (`notions/ch1.js` … `ch89.js`),
   schéma dans `figs/`, manipulation dans `labs/` (elle pilote la 3D par `ctx.lens`, clés listées dans
@@ -179,7 +176,7 @@ Tout est en français (code commenté en français, interface, commits).
   **boîte de dialogue en bas de l'écran** (`#chef.dlg` : portrait, nom, texte, gestes ; elle passe en haut si
   l'élément montré est dessous, se réduit en une ligne ; pas de petite fenêtre déplaçable) ; il ne propose que les
   exercices du poste où l'on est ; en fin d'exercice, « Revenir à la leçon » (ou « Mission suivante »). La **visite
-  guidée** : proposée par Olivier au début du car vide (et la mission de stagiaire de la Carrière) : le tour du car,
+  guidée** : proposée par Olivier au début du car vide : le tour du car,
   puis la présentation de chaque poste ; son plan est dans le suivi des tâches.
 - **Livret de compétences** : référentiel TIEE dans `src/content/referentiel.js` (RATTACHEMENT : parcours,
   missions, phases, réseau, exercices, cours, camera), calcul pur dans `src/livret.js`, affichage
