@@ -519,6 +519,12 @@ export const RATTACHEMENT = {
     // les leçons de la TMO (v19.23) : du cahier des charges au synoptique, l'énergie, le nodal, le PAD, la recette et la maintenance
     'expl-synoptique': ['C6', 'C1', 'C2', 'C3', 'C4'], 'expl-energie': ['C8', 'C9', 'C30'], 'expl-nodal': ['C28', 'C15', 'C26', 'C25'],
     'expl-pad': ['C33', 'C13', 'C14', 'C34'], 'expl-recette': ['C38', 'C16', 'C35', 'C36'],
+    // le chapitre La lumière (v19.29) : sources et mesure, éclairer pour la caméra, commander la lumière
+    'lumiere-sources': ['C17', 'C23'], 'lumiere-grandeurs': ['C23', 'C17'], 'lumiere-distance': ['C17', 'C23'],
+    'lumiere-couleur': ['C32', 'C17', 'C23'], 'lumiere-mesure': ['C23', 'C32', 'C10'],
+    'lumiere-projecteurs': ['C17', 'C31'], 'lumiere-plateau': ['C31', 'C17', 'C23'], 'lumiere-stade': ['C21', 'C17', 'C6'],
+    'lumiere-dmx': ['C25', 'C17'], 'lumiere-ligne': ['C25', 'C19', 'C36'], 'lumiere-console': ['C17', 'C31', 'C23'],
+    'lumiere-lyres': ['C17', 'C31'], 'lumiere-reseau': ['C12', 'C25', 'C26'],
   },
   camera: {
     // la mise en service : rendre opérant (2.7), exploiter (2.9) et tester (3.9) la caméra ; interconnecter

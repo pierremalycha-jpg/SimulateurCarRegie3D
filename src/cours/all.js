@@ -8,6 +8,7 @@ import './camera.js';
 import './realisation.js';
 import './ralentis.js';
 import './son.js';
+import './lumiere.js';
 import './reseau.js';
 import './hf.js';
 import './exploitation.js';

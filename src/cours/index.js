@@ -49,7 +49,7 @@ import { SEUIL_EXO } from './exo.js';
 /** @type {Chapter[]} */
 export const CHAPTERS = [];
 /** ordre des chapitres (les autres viennent après, dans l'ordre d'enregistrement) */
-const ORDER = ['signal', 'sdi', 'synchro', 'camera', 'realisation', 'ralentis', 'son', 'reseau', 'hf', 'exploitation'];
+const ORDER = ['signal', 'sdi', 'synchro', 'camera', 'realisation', 'ralentis', 'son', 'lumiere', 'reseau', 'hf', 'exploitation'];
 export function registerChapter(ch) {
   if (CHAPTERS.some((c) => c.id === ch.id)) return;
   CHAPTERS.push(ch);

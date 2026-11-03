@@ -69,11 +69,15 @@ export const BY_LESSON = {
     { id: 'brassage-cordons', intro: 'À la baie de brassage, vous passez en « car vide », puis vous câblez au cordon une caméra vers la grille, sa référence depuis le distributeur (DA) et le départ vers le codeur de transmission. Observez ce que change la baie normalée : sans cordon, chaque sortie est déjà reliée à l\'entrée prévue ; un cordon sert à dévier un signal.' },
     { id: 'x-brassage', intro: 'Exercice noté : rien n\'est brassé, et vous reliez chaque liaison à sa place en suivant la liste de câblage, jusqu\'à ce que le multiview soit complet. Chaque cordon est un passage de plus dans la baie : vérifiez la prise de départ et la prise d\'arrivée avant de brancher, une erreur se voit aussitôt au multiview.' },
   ],
-  'expl-lineup': [
-    { id: 'x-labo-photometrie', intro: 'Au Labo, atelier Photométrie : un projecteur, un sujet, un luxmètre. Vous obtenez un niveau précis au sujet, vous exposez la caméra d\'après le luxmètre, vous accordez la couleur de la lumière à la balance des blancs (gélatines, mireds), puis vous réglez un rapport de contraste. C\'est la lumière que le line-up suppose bien réglée.' },
+  // le chapitre La lumière (v19.29) : les ateliers du Labo dans les leçons dont ils font manipuler les notions
+  'lumiere-distance': [
+    { id: 'x-labo-photometrie', intro: 'Au Labo, atelier Photométrie : un projecteur, un sujet, un luxmètre. Vous obtenez un niveau précis au sujet en jouant sur la distance et le faisceau, vous exposez la caméra d\'après le luxmètre, vous accordez la couleur de la lumière à la balance des blancs, puis vous réglez un rapport de contraste. Regardez le luxmètre quand vous reculez : deux fois plus loin, quatre fois moins.' },
   ],
-  'reseau-types': [
-    { id: 'x-labo-dmx', intro: 'Au Labo, atelier DMX et Art-Net : vous patchez des projecteurs à la suite, vous réglez une adresse aux commutateurs DIP, vous rendez fiable une ligne DMX, puis vous configurez un nœud Art-Net (même sous-réseau, univers compté à partir de 0). Art-Net part en diffusion ou en unicast, sACN en multicast : c\'est cette leçon.' },
+  'lumiere-dmx': [
+    { id: 'x-labo-dmx', intro: 'Au Labo, atelier DMX et Art-Net : vous patchez des projecteurs à la suite, vous réglez une adresse aux commutateurs DIP, vous rendez fiable une ligne DMX, puis vous configurez un nœud Art-Net. La carte de l\'univers montre chaque canal occupé : un chevauchement s\'y voit en rouge.' },
+  ],
+  'lumiere-console': [
+    { id: 'x-labo-dot2', intro: 'Au Labo, la console dot2 : le show de départ a ses projecteurs patchés, ses groupes et ses presets. Vous programmez vous-même des cues (couleurs, une lyre sur deux avec les macros MAtricks, un cercle, un chaser, des positions), puis le Labo relit le show enregistré et le note. Pensez au tracking : une cue ne garde que ce qui change.' },
   ],
   'reseau-ip': [
     { id: 'ctrlnet-bases', intro: 'Au poste Réseau du car SDI, vous ouvrez la fiche du RCP 1 pour lire son adresse (10.1.20.31) et son masque (/24), puis vous lancez deux pings : vers la CCU 1, dans le même sous-réseau, et depuis le PC de supervision, dans un autre VLAN. Regardez le chemin affiché : direct quand la partie réseau est la même, par la passerelle et le routage du SW-CŒUR sinon.' },
