@@ -67,7 +67,7 @@ await ev(() => window.__dbg.emit('cours', { chapter: 'son' })); await A.waitForT
 T.check('le chemin du chapitre : en-tête, rappel du référentiel sous l\'introduction, niveaux à révéler', await ev(() => !!document.querySelector('#layer .co-page.co-chemin-page .co-hero') && document.querySelector('#layer .lede')?.nextElementSibling?.classList.contains('co-ref-chap') && document.querySelectorAll('#layer .pa-niv.co-reveal').length === 3));
 await shot('04-chapitre-son');
 await ev(() => window.__dbg.emit('cours', { home: true })); await A.waitForTimeout(600);
-T.check('Mon parcours : en-tête, sections révélées, dix catégories', await ev(() => !!document.querySelector('#layer .co-page.co-accueil .co-hero') && document.querySelectorAll('#layer .co-accueil .co-reveal').length >= 5 && document.querySelectorAll('#layer .pa-cat').length === 10));
+T.check('Mon parcours : en-tête, sections révélées, onze catégories', await ev(() => !!document.querySelector('#layer .co-page.co-accueil .co-hero') && document.querySelectorAll('#layer .co-accueil .co-reveal').length >= 5 && document.querySelectorAll('#layer .pa-cat').length === 11));
 
 // ---------------- les leçons ajoutées : manipulation qui lit, quiz, exercice, référentiel ----------------
 await ev(() => window.__dbg.setRole('formateur')); await A.waitForTimeout(200);

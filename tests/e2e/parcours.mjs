@@ -29,7 +29,7 @@ const clic = async (sel) => {
 // ---------------- Mon parcours ----------------
 await A.click('#ti-cours'); await A.waitForTimeout(600);
 const acc = await ev(() => ({ h: document.querySelector('#layer .co-page h2')?.textContent, cats: document.querySelectorAll('#layer .pa-cat').length, hero: document.querySelector('#layer .pa-hero b')?.textContent || '', kpis: document.querySelectorAll('#layer .pa-kpis .co-kpi').length, nul: /\bnull\b/.test(document.querySelector('#layer .co-page')?.textContent || '') }));
-T.check('Mon parcours : la suite conseillée, une tuile par catégorie, quatre compteurs', acc.h === 'Mon parcours' && acc.cats === 10 && acc.kpis === 4 && !acc.nul, JSON.stringify(acc));
+T.check('Mon parcours : la suite conseillée, une tuile par catégorie, quatre compteurs', acc.h === 'Mon parcours' && acc.cats === 11 && acc.kpis === 4 && !acc.nul, JSON.stringify(acc));
 const premiere = await ev(() => window.__dbg.COURS.PARCOURS.PARCOURS.signal.debutant[0]);
 T.check('la suite conseillée : la première leçon Débutant du premier chapitre', acc.hero === await ev((id) => window.__dbg.COURS.lessonById(id).lesson.title, premiere), acc.hero);
 await shot('01-mon-parcours');
