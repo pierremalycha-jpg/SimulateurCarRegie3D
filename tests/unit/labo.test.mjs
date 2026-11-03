@@ -219,3 +219,17 @@ test('le crochet de la console : posé une fois, rien d\'autre ne change', async
   const patche = brut.replace('this.restoreSession()}start(){', crochet);
   assert.equal(patche.length - brut.length, crochet.length - 'this.restoreSession()}start(){'.length);
 });
+
+test('la séquence de la console : une cue 2 qui réenregistre les faces est refusée, et l\'on dit pourquoi', async () => {
+  const { SHOW_DEPART } = await import('../../src/labo/dot2/show_depart.js');
+  const t = tirageDefi('dot2-sequence', rnd); const it = t.items[0];
+  const bon = JSON.parse(JSON.stringify(it.corrige.show));
+  assert.ok(verifierItem(it, null, { st: { show: bon }, m: {} }).ok);
+  const refait = JSON.parse(JSON.stringify(bon)); const c1 = refait.main.cues[0], c2 = refait.main.cues[1];
+  for (const f of ['1', '2', '3', '4']) c2.values[f] = { DIM: { ...c1.values[f].DIM } };
+  const r = verifierItem(it, null, { st: { show: refait }, m: {} });
+  assert.ok(!r.ok && /réenregistre les faces/.test(r.why), r.why);
+  const sansFondu = JSON.parse(JSON.stringify(bon)); sansFondu.main.cues[1].fade = 0;
+  assert.ok(/fondu/.test(verifierItem(it, null, { st: { show: sansFondu }, m: {} }).why));
+  assert.ok(!verifierItem(it, null, { st: { show: JSON.parse(JSON.stringify(SHOW_DEPART)) }, m: {} }).ok);
+});

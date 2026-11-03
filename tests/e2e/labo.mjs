@@ -122,7 +122,7 @@ T.check('les valeurs : un fader par canal de l\'appareil choisi', await ev(() =>
 
 // ---------------- la console dot2 : programmer pour de vrai ----------------
 await A.click('#labo .lb-tab[data-atelier="dot2"]');
-T.check('la console dot2 se charge dans son cadre, le panneau des défis à côté (cinq défis)', await until(A, () => { const f = document.querySelector('#labo .lb-dot2-frame'); return !!f && !!f.contentWindow && !!f.contentWindow.__laboDot2 && !!f.contentDocument.querySelector('.hw-key') && !document.querySelector('#labo .lb-side').hidden && document.querySelectorAll('#labo .lb-dcard').length === 5; }, null, 90000));
+T.check('la console dot2 se charge dans son cadre, le panneau des défis à côté (sept défis)', await until(A, () => { const f = document.querySelector('#labo .lb-dot2-frame'); return !!f && !!f.contentWindow && !!f.contentWindow.__laboDot2 && !!f.contentDocument.querySelector('.hw-key') && !document.querySelector('#labo .lb-side').hidden && document.querySelectorAll('#labo .lb-dcard').length === 7; }, null, 90000));
 await shot('11-dot2', 2500);
 // un défi : la console reçoit le show de départ (16 projecteurs, aucune cue)
 await A.click('#labo [data-defi="dot2-matricks"]'); await A.waitForTimeout(800);
@@ -157,6 +157,24 @@ if (m) {
     await A.waitForTimeout(200); await A.click('#labo [data-k="defi:suivante"]'); await A.waitForTimeout(250);
   }
   T.check('le défi « Une lyre sur deux » réussi seul (100 / 100), compté', await ev(() => { const d = window.__dbg.PROG.labo.defis['dot2-matricks']; return !!d && d.seul && d.best === 100; }));
+  // la séquence en tracking : deux cues, le programmeur vidé entre les deux, un fondu donné par la touche Time
+  await A.click('#labo .lb-back'); await A.waitForTimeout(200);
+  await A.click('#labo [data-defi="dot2-sequence"]');
+  if (await until(A, () => !!document.querySelector('#ask'), null, 3000)) await A.locator('#ask [data-ask="ok"]').click();
+  await A.waitForTimeout(600);
+  const qs = await ev(() => window.__dbg.labo().RUN.items[0].q);
+  const ms = /à \*\*(\d+) %\*\*.*à \*\*(\d+) %\*\*.*fondu de (\d+) s/.exec(qs);
+  T.check('séquence : la consigne donne les deux niveaux et le fondu', !!ms, qs);
+  if (ms) {
+    const [, X, Y, Fd] = ms; const chiffres = (n) => String(n).split('').join(' ');
+    await tape(`Group 2 At ${chiffres(X)} Please`); await tape('Store Cue 1 Please');
+    // sans retoucher les faces : seules les valeurs actives (les contres) vont dans la cue 2
+    await tape(`Group 3 At ${chiffres(Y)} Please`); await tape(`Store Cue 2 Time ${Fd} Please`);
+    await A.waitForTimeout(300);
+    await A.click('#labo [data-k="defi:verifier"]'); await A.waitForTimeout(300);
+    T.check('séquence au pupitre : la cue 2 ne garde que les contres, les faces suivent, le fondu est juste', await ev(() => !!document.querySelector('#labo .lb-fb.ok')), await ev(() => document.querySelector('#labo .lb-fb')?.textContent + ' | ' + JSON.stringify(document.querySelector('#labo .lb-dot2-frame').contentWindow.__laboDot2.console.history.slice(-6).map((h) => h.text))));
+    await shot('12b-dot2-sequence', 500);
+  }
 }
 // un autre défi : le show en cours a des cues, le Labo demande avant de le remplacer ; la solution charge un show qui marche
 await A.click('#labo .lb-back'); await A.waitForTimeout(200);

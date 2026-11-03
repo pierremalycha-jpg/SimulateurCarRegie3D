@@ -76,7 +76,7 @@ export const ATELIERS = [
     competences: ['C17', 'C31'], savoirs: ['G5', 'G3'],
     liens: [{ lecon: 'lumiere-console', titre: 'La console : patch, groupes, presets, cues' }, { lecon: 'lumiere-lyres', titre: 'Les lyres : pan, tilt, roues et effets' }],
     terms: ['dmx512', 'tracking'],
-    defis: [{ id: 'dot2-couleurs', titre: 'Des couleurs sur les lyres' }, { id: 'dot2-matricks', titre: 'Une lyre sur deux (MAtricks)' }, { id: 'dot2-position', titre: 'Pointer un gobo' }, { id: 'dot2-cercle', titre: 'Un cercle de lyres' }, { id: 'dot2-chaser', titre: 'Un chaser de couleurs' }],
+    defis: [{ id: 'dot2-couleurs', titre: 'Des couleurs sur les lyres' }, { id: 'dot2-matricks', titre: 'Une lyre sur deux (MAtricks)' }, { id: 'dot2-position', titre: 'Pointer un gobo' }, { id: 'dot2-cercle', titre: 'Un cercle de lyres' }, { id: 'dot2-chaser', titre: 'Un chaser de couleurs' }, { id: 'dot2-sequence', titre: 'Une séquence en tracking' }, { id: 'dot2-pages', titre: 'Pages et group master' }],
   },
 ];
 /** tous les défis notés, avec leur atelier */

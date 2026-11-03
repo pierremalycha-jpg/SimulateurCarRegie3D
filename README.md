@@ -410,7 +410,7 @@ Chaque leçon a sa page complète : l'essentiel, un schéma, une manipulation qu
 savoirs du référentiel. Les ateliers du Labo y sont rangés comme exercices pratiques : Photométrie dans « La distance et
 l'angle », DMX et Art-Net dans « Le DMX », la console dot2 dans « La console ». Le chapitre ouvre aussi le Labo.
 
-**Programmer la console dot2** (`labo/defis/dot2.js`) : cinq défis notés à côté de la console (le panneau des défis se
+**Programmer la console dot2** (`labo/defis/dot2.js`) : sept défis notés à côté de la console (le panneau des défis se
 replie pour lui laisser la place). Au début d'un défi, le Labo charge dans la console un show de départ
 (`labo/dot2/show_depart.js` : le plateau 1 patché, ses groupes et ses presets, aucune cue ; il demande avant de remplacer un
 show déjà programmé). L'élève programme comme sur la vraie console, puis « Vérifier mon programme » : le Labo relit le show
@@ -424,6 +424,11 @@ couleur de chaque lyre, l'effet de position, le chaser). « La solution » charg
 | Pointer un gobo | Une cue : les spot à un pan et un tilt donnés (à 5° près), avec un gobo |
 | Un cercle de lyres | Un effet de position (pan et tilt déphasés de 90°) à une vitesse donnée, dans une couleur |
 | Un chaser de couleurs | Un exécuteur en chaser, quatre pas dans l'ordre demandé |
+| Une séquence en tracking | Deux cues dans Main : les faces, puis les contres avec un fondu (touche Time) ; la cue 2 ne réenregistre pas les faces, elles suivent |
+| Pages et group master | Une ambiance sur l'exécuteur d'une autre page (Store Exec 2.1), le group master des faces sur la page 1 (Store Group 2 Exec 1.3) |
+
+La console, comme une vraie, n'enregistre dans une cue que les valeurs **actives** du programmeur (touchées depuis le dernier
+Store) : c'est ce qui fait le tracking, et le défi de la séquence le vérifie. Son group master multiplie l'intensité du groupe.
 
 La console est gardée telle quelle dans le dépôt ; au chargement, le Labo pose un crochet d'une ligne dans sa page (elle
 publie son application sous `window.__laboDot2`) pour lire le show en mémoire, sans qu'il faille le sauvegarder (la console
@@ -432,7 +437,7 @@ ne garde son show qu'à la sauvegarde, Backup).
 **Vérification.** Tests unitaires `tests/unit/labo.test.mjs` (la lecture d'un show, le tracking, les presets, les effets,
 le crochet ; chaque défi soluble et jamais juste d'avance), `cours.test.mjs`, `exos.test.mjs`, `parcours.test.mjs` (le
 chapitre, ses niveaux, ses exercices) ; suite `node tools/e2e.mjs labo` : au pupitre de la console, en cliquant ses touches,
-« Group 9 At Full », les macros MAtricks Odd et Even, deux presets de couleur, « Store Cue » ; le Labo juge le programme juste.
+« Group 9 At Full », les macros MAtricks Odd et Even, deux presets de couleur, « Store Cue » ; puis une séquence de deux cues avec un fondu (« Store Cue 2 Time 4 ») ; le Labo juge les programmes justes.
 
 ## v19.28 : le Labo remplace l'entrepôt (optique, photométrie, sensitométrie, DMX, console dot2)
 

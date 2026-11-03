@@ -34,6 +34,12 @@ const showAvec = (main, executors = {}) => { const s = clone(SHOW_DEPART); s.mai
 const dit = (show, st, f) => `${f} : ${couleurDe(show, st, f)}, ${Math.round(valeur(st, f, 'DIM') * 100)} %`;
 const sansShow = { ok: false, mesure: 'la console n\'a encore rien enregistré', why: 'Programmez dans la console : elle enregistre son show toute seule une seconde après chaque changement.' };
 
+/** un group master au format de la console : un exécuteur qui limite l'intensité d'un groupe (son fader multiplie) */
+const groupMaster = (id, label, fixtures) => ({ ...exec(id, label, []), kind: 'group', buttons: ['Toggle'], groupFixtures: fixtures });
+const FACES = ['1', '2', '3', '4'], CONTRES = ['5', '6'];
+const pc = (v) => `${Math.round(v * 100)} %`;
+const proche = (a, b, tol = 0.02) => Math.abs(a - b) <= tol;
+
 registerDefis({
   'dot2-couleurs': {
     consigne: 'Le réalisateur veut une ambiance de couleur pour l\'ouverture : les lyres wash d\'une couleur, les lyres spot d\'une autre.',
@@ -230,6 +236,90 @@ registerDefis({
             type: 'nombre', q: `Et l'**octet grossier** (le premier des deux canaux) de cette valeur ${fr(p16.v16)} ?`, answer: p16.grossier, tol: 0,
             aides: ['L\'octet grossier compte les paquets de 256.', `${fr(p16.v16)} ÷ 256, partie entière.`],
             solution: `${fr(p16.v16)} ÷ 256 = **${p16.grossier}** (reste ${p16.fin} : l'octet fin).`,
+          },
+        ],
+      };
+    },
+  },
+  'dot2-sequence': {
+    consigne: 'L\'ouverture du journal : la face s\'allume, puis les contres arrivent en fondu. Une séquence de deux cues, en tracking.',
+    gen(rnd) {
+      const X = pick(rnd, [60, 70, 80, 90]), Y = pick(rnd, [40, 50, 60, 70]), F = pick(rnd, [2, 3, 4, 5]);
+      const D = pick(rnd, [0, 1, 2, 3]), F2 = pick(rnd, [2, 3, 5, 8]), Z = pick(rnd, [40, 50, 60]);
+      const cues = [cue(1, 'Face', Object.fromEntries(FACES.map((f) => [f, { DIM: { v: X / 100 } }]))), { ...cue(2, 'Contres', Object.fromEntries(CONTRES.map((f) => [f, { DIM: { v: Y / 100 } }]))), fade: F }];
+      return {
+        scene: { show: clone(SHOW_DEPART) },
+        items: [
+          {
+            type: 'reglage', q: `Dans Main : la **cue 1**, les faces (groupe 2 « Faces ZEP ») à **${X} %** ; la **cue 2**, les contres (groupe 3) à **${Y} %**, avec un **fondu de ${F} s**. En tracking, la cue 2 n'enregistre que les contres : les faces y restent à ${X} % par le suivi, sans être réenregistrées.`,
+            check: (st) => {
+              const S = st.show; if (!S) return sansShow;
+              const E1 = etatCue(S, 'main', 1), E2 = etatCue(S, 'main', 2);
+              if (!E1 || !E2) return { ok: false, mesure: `${E1 ? '' : 'pas de cue 1'}${!E1 && !E2 ? ', ' : ''}${E2 ? '' : 'pas de cue 2'} dans Main`, why: 'Il faut les deux cues dans la séquence principale.' };
+              const c2 = S.main.cues.find((q) => Math.abs(q.no - 2) < 1e-6);
+              const okFaces = FACES.every((f) => proche(valeur(E1, f, 'DIM'), X / 100) && proche(valeur(E2, f, 'DIM'), X / 100));
+              const okContres = CONTRES.every((f) => proche(valeur(E2, f, 'DIM'), Y / 100));
+              const okFondu = Math.abs((c2.fade || 0) - F) <= 0.25;
+              const refait = FACES.some((f) => c2.values && c2.values[f] && c2.values[f].DIM);
+              const mesure = `cue 1 : faces ${pc(valeur(E1, '1', 'DIM'))} ; cue 2 : faces ${pc(valeur(E2, '1', 'DIM'))}, contres ${pc(valeur(E2, '5', 'DIM'))}, fondu ${c2.fade || 0} s${refait ? ', les faces réenregistrées dans la cue 2' : ''}`;
+              const why = !okFaces ? `Les faces doivent être à ${X} % dans la cue 1 (et le rester dans la cue 2).` : !okContres ? `Les contres doivent être à ${Y} % dans la cue 2.` : !okFondu ? `Le fondu de la cue 2 doit faire ${F} s : Store Cue 2 Time ${F}.` : 'La cue 2 réenregistre les faces (elles ont été retouchées après la cue 1) : ne les touchez pas pour la cue 2, en tracking elles suivent toutes seules.';
+              return { ok: okFaces && okContres && okFondu && !refait, mesure, why };
+            },
+            corrige: { show: showAvec(cues) },
+            aides: [`Group 2 At ${X}, Store Cue 1. Après un Store, les valeurs du programmeur ne sont plus « actives » : le Store suivant n'enregistre que ce que vous touchez ensuite.`, `Sans retoucher les faces : Group 3 At ${Y}, puis Store Cue 2 Time ${F} (la touche Time donne le fondu de la cue).`],
+            solution: `Group 2 At ${X} ; Store Cue 1 ; Group 3 At ${Y} ; Store Cue 2 Time ${F}. La cue 2 ne garde que les contres (les seules valeurs actives), les faces y restent par le tracking. La solution charge ce show dans la console.`,
+          },
+          {
+            type: 'nombre', q: `Une cue a un **delay de ${D} s** et un **fondu de ${F2} s**. Combien de secondes après le Go est-elle complète ?`, answer: D + F2, tol: 0, unite: 's',
+            pieges: [{ v: F2, why: 'Le fondu ne commence qu\'après le delay : on les additionne.' }].filter((x) => x.v !== D + F2),
+            aides: ['Le delay retarde le départ du fondu.', `${D} s d'attente, puis ${F2} s de fondu.`],
+            solution: `${D} + ${F2} = **${D + F2} s**.`,
+          },
+          {
+            type: 'choix', q: `Après coup, on règle la face de la **cue 1** à **${Z} %**, en **tracking**, sans toucher la cue 2. Que montre la cue 2 ?`, choices: [`Les faces à ${Z} % : la cue 2 ne les enregistre pas, elle suit la cue 1`, [`Les faces à ${X} %, comme avant`, 'Ce serait le cas en Cue Only, ou si la cue 2 avait réenregistré les faces.'], ['Les faces éteintes', 'Rien ne les éteint : la cue 2 ne parle pas des faces, elle garde ce qui vient d\'avant.']], answer: 0,
+            aides: ['Que contient vraiment la cue 2 ?', 'En tracking, une valeur suit jusqu\'à ce qu\'une cue la change.'],
+            solution: `Les faces à **${Z} %** : la cue 2 ne contient que les contres, les faces y arrivent par le tracking depuis la cue 1. En Cue Only, la console aurait protégé la cue 2 en y écrivant l'ancienne valeur.`,
+          },
+        ],
+      };
+    },
+  },
+  'dot2-pages': {
+    consigne: 'Préparer le pupitre pour l\'émission : une ambiance sur une autre page d\'exécuteurs, et un fader qui limite la face.',
+    gen(rnd) {
+      const pg = pick(rnd, [2, 3]), ex = entre(rnd, 1, 4), g = pick(rnd, [3, 4, 5]), c = pick(rnd, ['rouge', 'vert', 'bleu', 'magenta', 'cyan']);
+      const v = pick(rnd, [60, 70, 80, 90, 100]), m = pick(rnd, [25, 40, 50, 75]);
+      const id = `${pg}.${ex}`, gid = `1.${g}`;
+      const amb = cue(1, 'Ambiance', Object.fromEntries(WASHS.map((f) => [f, { ...plein, ...couleurWash(c) }])));
+      return {
+        scene: { show: clone(SHOW_DEPART) },
+        items: [
+          {
+            type: 'reglage', q: `Sur la **page ${pg}**, l'**exécuteur ${ex}** (${id}) : une cue où les lyres wash (groupe 8) sont en **${c}** à **100 %**. Sur la **page 1**, l'**exécuteur ${g}** (${gid}) : le **group master** du groupe 2 « Faces ZEP ».`,
+            check: (st) => {
+              const S = st.show; if (!S) return sansShow;
+              const E = (S.executors || {})[id], G = (S.executors || {})[gid];
+              const T = E && E.kind === 'cuelist' && E.cues && E.cues.length ? etatCue(S, id, [...E.cues].sort((a, b) => a.no - b.no)[0].no) : null;
+              const okE = !!T && WASHS.every((f) => couleurDe(S, T, f) === c && valeur(T, f, 'DIM') >= 0.95);
+              const gf = G && G.kind === 'group' ? (G.groupFixtures || []).map(String).sort().join(',') : '';
+              const okG = gf === FACES.join(',');
+              const vus = Object.entries(S.executors || {}).map(([k, x]) => `${k} ${x.kind === 'group' ? 'group master' : `${(x.cues || []).length} cue(s)`}`).join(', ') || 'aucun exécuteur';
+              return { ok: okE && okG, mesure: `exécuteurs : ${vus}${T ? ` ; ${id} : lyres wash ${couleurDe(S, T, '15')}` : ''}`, why: !E ? `Rien sur l'exécuteur ${id} : Store Exec ${pg}.${ex} (ou Page ${pg}, puis Store et la touche de l'exécuteur).` : !okE ? `L'exécuteur ${id} doit avoir les lyres wash en ${c} à 100 %.` : `Il manque le group master des faces sur l'exécuteur ${gid} : Store Group 2 Exec 1.${g}.` };
+            },
+            corrige: { show: showAvec([], { [id]: exec(id, 'Ambiance', [amb]), [gid]: groupMaster(gid, 'Faces ZEP', [1, 2, 3, 4]) }) },
+            aides: [`Group 8 At Full, la couleur ${c}, puis Store Exec ${pg}.${ex} : l'exécuteur ${ex} de la page ${pg}.`, `Clear, puis Store Group 2 Exec 1.${g} : un groupe stocké sur un exécuteur devient son group master.`],
+            solution: `Group 8 At Full, couleur ${c}, Store Exec ${pg}.${ex} ; Clear ; Store Group 2 Exec 1.${g}. La solution charge ce show dans la console.`,
+          },
+          {
+            type: 'nombre', q: `Une face est programmée à **${v} %** dans une cue. Le group master de son groupe est à **${m} %**. Quelle intensité sort ?`, answer: v * m / 100, tol: 0.5, unite: '%',
+            pieges: [{ v: Math.min(v, m), why: 'Le group master ne plafonne pas : il multiplie (proportionnel), comme un fader général du groupe.' }].filter((x) => Math.abs(x.v - v * m / 100) > 0.5),
+            aides: ['Le group master multiplie l\'intensité du groupe.', `${v} % × ${m} %.`],
+            solution: `${v} % × ${m} % = **${Math.round(v * m) / 100} %** : le group master agit comme un fader général du groupe.`,
+          },
+          {
+            type: 'choix', q: `L'exécuteur 1.1 joue une séquence. On passe à la **page ${pg}**. Que devient-il ?`, choices: ['Il continue de jouer : un exécuteur actif reste en place quand on change de page', ['Il s\'arrête net', 'Changer de page ne coupe rien : ce serait la touche Off de l\'exécuteur.'], [`Il est remplacé par l'exécuteur ${pg}.1`, 'L\'exécuteur de la nouvelle page attend que l\'actif soit relâché ; on ne perd pas ce qui joue.']], answer: 0,
+            aides: ['Une page change ce que commandent les faders, pas ce qui joue.', 'Pensez au direct : on ne coupe pas la lumière en changeant de page.'],
+            solution: 'Il **continue de jouer** et garde son fader (Auto Fix) tant qu\'il est actif ; les autres faders prennent les exécuteurs de la nouvelle page.',
           },
         ],
       };
