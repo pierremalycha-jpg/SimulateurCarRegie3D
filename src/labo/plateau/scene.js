@@ -95,7 +95,9 @@ function creer() {
   const outils = el('div', { class: 'lb-outils', role: 'toolbar', 'aria-label': 'La vue' }, bFit, bG, bD, bTags);
   const aide = el('p', { class: 'lb-aide3d' }, 'Glissez un objet pour le déplacer · le fond pour déplacer la vue · molette pour zoomer');
   const cap = el('span', { class: 'lb-pip-cap' });
-  const bGrand = btn('Agrandir', 'Agrandir l\'image de la caméra', () => { E.grand = !E.grand; pip.classList.toggle('grand', E.grand); if (E.host) E.host.classList.toggle('lb-grand', E.grand); bGrand.textContent = E.grand ? 'Réduire' : 'Agrandir'; demander(); }, 'lb-pip-btn');
+  const bGrand = btn('Agrandir', 'Agrandir l\'image de la caméra', () => agrandir(!E.grand), 'lb-pip-btn');
+  /** agrandit (ou réduit) l'image de la caméra dans son coin */
+  function agrandir(on) { E.grand = !!on; pip.classList.toggle('grand', E.grand); if (E.host) E.host.classList.toggle('lb-grand', E.grand); bGrand.textContent = E.grand ? 'Réduire' : 'Agrandir'; demander(); }
   const pip = el('div', { class: 'lb-pip', role: 'img', 'aria-label': 'L\'image de la caméra' }, el('span', { class: 'lb-pip-t' }, 'Image de la caméra'), cap, bGrand);
   const nogl = el('p', { class: 'lb-nogl' }, 'La 3D n\'est pas disponible ici (pas de WebGL) : les réglages et les mesures restent utilisables.');
 
@@ -340,5 +342,5 @@ function creer() {
     const r = canvas.getBoundingClientRect();
     return { x: r.left + (E.v3b.x + 1) / 2 * r.width, y: r.top + (1 - E.v3b.y) / 2 * r.height };
   }
-  return { ok: E.ok, monter, demander, cadrer: cadrerVue, tourner, voler, animer, arreter, ecran, canvas, etat: E };
+  return { ok: E.ok, monter, demander, cadrer: cadrerVue, tourner, voler, animer, arreter, agrandir, ecran, canvas, etat: E };
 }

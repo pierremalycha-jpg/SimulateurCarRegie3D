@@ -45,8 +45,13 @@ T.check('focale 135 mm à f/2, point sur B : la légende de l\'image suit, B net
 
 // ---------------- la visite des notions d'optique : la focale balaie, la vue vole ----------------
 await A.click('#labo .lb-outils .lb-vi-btn'); await A.waitForTimeout(1600);
-T.check('Optique, Notions : la focale et le champ ; la focale balaie sa plage, le champ au sol suit', await ev(() => document.querySelector('#labo .lb-vi-k').textContent === '1 / 5' && /focale/i.test(document.querySelector('#labo .lb-vi-t').textContent)) && await (async () => { const f = (await st('optique')).f; await A.waitForTimeout(1200); return (await st('optique')).f !== f; })());
+T.check('Optique, Notions : la focale et le champ ; la focale balaie sa plage, le cadre à B est posé', await ev(() => document.querySelector('#labo .lb-vi-k').textContent === '1 / 7' && /focale/i.test(document.querySelector('#labo .lb-vi-t').textContent) && !!window.__dbg.labo().plateau().etat.A.scene.getObjectByName('cadre')) && await (async () => { const f = (await st('optique')).f; await A.waitForTimeout(1200); return (await st('optique')).f !== f; })());
 await shot('03b-notion-focale', 200);
+await A.click('#labo .lb-visite .lb-vi-nav .btn.primary'); await A.waitForTimeout(1500);
+T.check('le point et la tranche nette : les trois plans dans le repère de la caméra, le point court', await ev(() => { const S = window.__dbg.labo().plateau().etat.A.scene; return document.querySelector('#labo .lb-vi-k').textContent === '2 / 7' && !!S.getObjectByName('plan de netteté') && !!S.getObjectByName('limite proche') && !!S.getObjectByName('limite lointaine'); }) && await (async () => { const s0 = (await st('optique')).s; await A.waitForTimeout(1000); return (await st('optique')).s !== s0; })());
+await A.click('#labo .lb-visite .lb-vi-nav .btn.primary'); await A.waitForTimeout(1500);
+T.check('la tache de flou : trois disques au-dessus des sujets, l\'image agrandie, le cercle lu', await ev(() => { const P = window.__dbg.labo().plateau(); let n = 0; P.etat.A.scene.traverse((o) => { if (o.name === 'tache') n++; }); return document.querySelector('#labo .lb-vi-k').textContent === '3 / 7' && n === 3 && document.querySelector('#labo .lb-pip').classList.contains('grand') && /cercle 0,025 mm/.test(document.querySelector('#labo .lb-vi-lire').textContent); }));
+await shot('03c-notion-tache', 200);
 await A.click('#labo .lb-visite .lb-vi-head .btn'); await A.waitForTimeout(300);
 await ev(() => window.__dbg.labo().changer('optique', { f: 35, N: 4, s: 4 }));
 

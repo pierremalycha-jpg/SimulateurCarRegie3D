@@ -115,7 +115,7 @@ test('photométrie sur le plateau : hauteur et incidence réelle, le fond derri�
 test('la visite des notions : des étapes complètes, qui regardent quelque part et lisent les mesures sans trou', async () => {
   const { ETAPES_PHOTO, ETAPES_OPTIQUE } = await import('../../src/labo/plateau/notions.js');
   const bad = (t) => !t || /undefined|NaN|\[object|null\b/.test(t);
-  for (const [atelier, etapes, cles] of [['photometrie', ETAPES_PHOTO, ['flux', 'intensite', 'eclairement', 'inverse', 'cosinus', 'luminance', 'couleur', 'exposition', 'contraste']], ['optique', ETAPES_OPTIQUE, ['focale', 'iris', 'point', 'hyperfocale', 'capteur']]]) {
+  for (const [atelier, etapes, cles] of [['photometrie', ETAPES_PHOTO, ['flux', 'intensite', 'eclairement', 'inverse', 'cosinus', 'luminance', 'couleur', 'exposition', 'contraste']], ['optique', ETAPES_OPTIQUE, ['focale', 'point', 'tache', 'iris', 'focale-pdc', 'hyperfocale', 'capteur']]]) {
     assert.deepEqual(etapes.map((E) => E.id), cles, `${atelier} : les notions dans l'ordre`);
     for (const E of etapes) {
       assert.ok(E.titre && E.texte.length > 120 && E.lecon, `${E.id} : titre, texte, leçon`);

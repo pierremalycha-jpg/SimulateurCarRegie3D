@@ -2,20 +2,23 @@
 import * as THREE from 'three';
 import { kelvinRGBNorm } from '../../util.js';
 import { fr } from '../kit.js';
-import { IRIS, CAPTEURS, distTxt } from '../calc/optique.js';
+import { IRIS, CAPTEURS, distTxt, hyperfocale } from '../calc/optique.js';
 import { SOURCES, H_CELLULE, FOND, luminance } from '../calc/photometrie.js';
 import { familleById } from '../calc/lumiere.js';
 import { mondePhoto, mondeOptique, azimutDeCote, azimutDuCote, couleurLumiere } from './calc.js';
-import { balayage, cycle, ensemble, particules, carre, pinceau } from './visite.js';
+import { balayage, cycle, ensemble, particules, carre, pinceau, cadre, tranche, tacheFlou } from './visite.js';
 
 // ----------------------------------------------------------------------------------
 // Les notions expliquées sur le plateau (v19.30), une liste par atelier (plateau/visite.js les joue) :
 // chaque étape dit où regarder (la vue vole), ce qui se règle, ce qui s'anime et ce qu'on lit en direct.
 // Photométrie, dans l'ordre des grandeurs : le flux (lumens), l'intensité (candelas), l'éclairement (lux),
 // l'inverse du carré, le cosinus de l'incidence, la luminance (candelas par mètre carré), la couleur
-// (kelvins, mireds), du luxmètre au diaphragme, le rapport de contraste. Optique : la focale et le champ,
-// l'iris et la zone nette, le point, l'hyperfocale, le capteur et le cercle de confusion. Les chiffres
-// viennent des mesures de l'atelier (labo/etats.js) : rien n'est écrit à la main.
+// (kelvins, mireds), du luxmètre au diaphragme, le rapport de contraste. Optique : la focale et le champ (le
+// cadre couvert à la distance du sujet), le point (les plans de la tranche nette qui glissent), la tache de
+// flou et le cercle de confusion (un disque au-dessus de chaque sujet, comparé à l'anneau de la limite),
+// l'iris (la tranche qui s'épaissit), la focale et la profondeur, l'hyperfocale (la limite lointaine part à
+// l'infini), le capteur (agrandi dix fois près de la caméra, avec son cercle). Les chiffres viennent des
+// mesures de l'atelier (labo/etats.js) : rien n'est écrit à la main.
 // ----------------------------------------------------------------------------------
 const lx = (v) => `${fr(Math.round(v), 0)} lx`;
 const V3 = (x, y, z) => new THREE.Vector3(x, y, z);
@@ -135,43 +138,104 @@ export const ETAPES_PHOTO = [
 void FOND;
 
 const capteurNom = (id) => (id === '2/3' ? '2/3"' : id === 's35' ? 'Super 35' : 'plein format');
+const nF = (v) => fr(v, v < 10 && !Number.isInteger(v) ? 1 : 0);
+/** l'azimut qui regarde la scène depuis l'arrière de la caméra (les disques et les plans se présentent de face) */
+const azDerriere = (_st) => azimutDuCote(Math.atan2(0, -1));
+/** la tranche nette posée dans le repère de la caméra, depuis les mesures : limites bornées à la portée du plateau */
+function poserTranche(T, st, m) {
+  const ta = Math.tan(m.angle * Math.PI / 360), max = 30 - st.cam.z;
+  const z0 = Math.min(m.proche, max), z1 = Math.min(isFinite(m.loin) ? m.loin : max, max), zs = Math.min(st.s, max);
+  T.maj(zs, zs * ta + 0.3, z0, z0 * ta + 0.3, z1, z1 * ta + 0.3);
+  T.textes(`le point · ${distTxt(st.s)}`, `net dès ${distTxt(m.proche)}`, isFinite(m.loin) ? `net jusqu'à ${distTxt(m.loin)}` : 'net jusqu\'à l\'infini');
+}
+/** les taches de flou des trois sujets, posées au-dessus de leur tête, tournées vers la caméra */
+function poserTaches(D, st, m) {
+  for (const k of ['A', 'B', 'C']) {
+    const w = mondeOptique(st.cam, st.sujets[k], st.lat[k]), x = m.sujets[k];
+    D[k].poser(V3(w.x, 2.55, w.z), V3(st.cam.x, 2.55, st.cam.z));
+    D[k].maj(x.tache / m.K.c, x.net, x.net ? `${k} · net (tache ${fr(x.tache, 3)} mm)` : `${k} · tache ${fr(x.tache, 3)} mm = ${fr(x.tache / m.K.c, 1)} cercles`);
+  }
+}
+const tachesDe = (scene, A) => Object.fromEntries(['A', 'B', 'C'].map((k) => [k, tacheFlou(scene, A, 0x3b9cff, k)]));
 /** @type {import('./visite.js').Etape[]} */
 export const ETAPES_OPTIQUE = [
   {
     id: 'focale', titre: 'La focale et le champ', lecon: 'camera-systeme',
-    texte: 'La **focale** (mm) et la taille du capteur font l\'**angle de champ** : 2 × arctan(largeur du capteur ÷ 2f). Une courte focale embrasse large, une longue serre le cadre.\n\nLe champ couvert à une distance d vaut d × largeur du capteur ÷ f. Regardez le coin au sol s\'ouvrir et se fermer pendant que la focale parcourt sa plage.',
-    vue: (st) => ({ cible: [st.cam.x, 0, st.cam.z + 4.5], demi: 5.5 }),
-    lire: (st, m) => `${fr(st.f, st.f < 20 ? 1 : 0)} mm sur ${capteurNom(st.capteur)} : ${fr(m.angle, 1)}° · champ ${fr(m.sujets.B.champ.w, 2)} × ${fr(m.sujets.B.champ.h, 2)} m à ${distTxt(st.sujets.B)}`,
-    anim: ({ ctx }) => balayage(ctx, 'f', 18, 85, 9, { log: true, step: 0.5 }),
+    texte: 'La **focale** (mm) et la taille du capteur font l\'**angle de champ** : 2 × arctan(largeur du capteur ÷ 2f). Une courte focale embrasse large, une longue serre le cadre.\n\nLe cadre couvert à une distance d vaut d × largeur du capteur ÷ f : c\'est le rectangle posé à la distance de B. Regardez-le se refermer et le coin au sol se fermer pendant que la focale parcourt sa plage.',
+    scene: { N: 4 },
+    vue: (st) => ({ cible: [st.cam.x, 0.8, st.cam.z + Math.min(6, st.sujets.B * 1.1)], demi: 4.2 }),
+    lire: (st, m) => `${fr(st.f, st.f < 20 ? 1 : 0)} mm sur ${capteurNom(st.capteur)} : ${fr(m.angle, 1)}° · cadre ${fr(m.sujets.B.champ.w, 2)} × ${fr(m.sujets.B.champ.h, 2)} m à ${distTxt(st.sujets.B)}`,
+    anim: ({ ctx, A, S }) => {
+      const c = cadre(S.rig, A, 0x3b9cff, 'le cadre à B');
+      return ensemble(balayage(ctx, 'f', 18, 85, 9, { log: true, step: 0.5 }), { update() { const st = ctx.st, m = ctx.m(); const ch = m.sujets.B.champ; c.poser(V3(0, 1.55, st.sujets.B), V3(0, 0, -1)); c.taille(ch.w, ch.h); c.texte(`à ${distTxt(st.sujets.B)} : ${fr(ch.w, 2)} × ${fr(ch.h, 2)} m`); }, dispose() { c.dispose(); } });
+    },
   },
   {
-    id: 'iris', titre: 'L\'iris et la zone nette', lecon: 'camera-systeme',
-    texte: 'Fermer l\'**iris** (un nombre f plus grand) resserre le cône de rayons qui arrive au capteur : les taches de flou rétrécissent, la **zone nette** (en bleu au sol) s\'étend. Ouvrir fait l\'inverse : le sujet se détache sur un fond flou.\n\nChaque cran d\'iris divise la lumière par deux : la profondeur de champ se paie en lumière.',
-    scene: (st) => ({ s: st.sujets.B }),
-    vue: (st) => ({ cible: [st.cam.x, 0, st.cam.z + Math.min(8, st.sujets.B * 1.4)], demi: 4.5 }),
-    lire: (st, m) => `f/${fr(st.N, st.N < 10 && !Number.isInteger(st.N) ? 1 : 0)} : net de ${distTxt(m.proche)} à ${distTxt(m.loin)}${isFinite(m.loin) ? ` (${fr((m.loin - m.proche) * 100, 0)} cm)` : ''}`,
-    anim: ({ ctx }) => cycle(ctx, 'N', IRIS.slice(0, 7), 1.5),
-  },
-  {
-    id: 'point', titre: 'Le point', lecon: 'camera-systeme',
-    texte: 'Faire le **point**, c\'est choisir la distance qui sera nette : le trait bleu. La zone nette s\'étend plus loin derrière le point que devant (environ un tiers devant, deux tiers derrière, tant qu\'on est loin de l\'hyperfocale).\n\nUn sujet hors de la zone a une tache de flou plus grande que le cercle de confusion : il est flou dans l\'image du coin.',
-    vue: (st) => ({ cible: [st.cam.x, 0, st.cam.z + (st.sujets.A + st.sujets.C) / 2], demi: 4.5 }),
+    id: 'point', titre: 'Le point et la tranche nette', lecon: 'camera-systeme',
+    texte: 'Faire le **point**, c\'est choisir la distance qui sera nette : le plan bleu. Autour de lui, une **tranche d\'espace** reste nette, entre une limite proche et une limite lointaine ; elle s\'étend plus loin derrière le point que devant.\n\nLe point court de A à C : regardez la tranche glisser et chaque sujet passer net puis flou, au sol comme dans l\'image.',
+    scene: { f: 35, N: 4 },
+    vue: (st) => ({ cible: [st.cam.x, 0.9, st.cam.z + (st.sujets.A + st.sujets.C) / 2], demi: 5, az: azDerriere(st) }),
     lire: (st, m) => `point à ${distTxt(st.s)} : net de ${distTxt(m.proche)} à ${distTxt(m.loin)} · A ${m.sujets.A.net ? 'net' : 'flou'}, B ${m.sujets.B.net ? 'net' : 'flou'}, C ${m.sujets.C.net ? 'net' : 'flou'}`,
-    anim: ({ ctx }) => balayage(ctx, 's', Math.max(0.5, ctx.st.sujets.A), Math.min(60, ctx.st.sujets.C), 10, { log: true, step: 0.01 }),
+    anim: ({ ctx, A, S }) => {
+      const T = tranche(S.rig, A, 0x3b9cff);
+      return ensemble(balayage(ctx, 's', Math.max(0.5, ctx.st.sujets.A), Math.min(60, ctx.st.sujets.C * 1.15), 11, { log: true, step: 0.01 }), { update() { poserTranche(T, ctx.st, ctx.m()); }, dispose() { T.dispose(); } });
+    },
+  },
+  {
+    id: 'tache', titre: 'La tache de flou et le cercle de confusion', lecon: 'camera-systeme', grand: true,
+    texte: 'Un point hors du plan de netteté ne fait pas un point sur le capteur mais une **tache** : t = f² × |d − s| ÷ (N × d × (s − f)). Au-dessus de chaque sujet, l\'anneau est le **cercle de confusion** admis (deux photosites en HD) et le disque, sa tache, à la même échelle : tant que le disque tient dans l\'anneau, l\'œil voit net.\n\nL\'image de la caméra, agrandie, en est la preuve : c\'est elle qui compte.',
+    scene: (st) => ({ f: 35, N: 2.8, s: st.sujets.B }),
+    vue: (st) => ({ cible: [st.cam.x, 1.4, st.cam.z + (st.sujets.A + st.sujets.C) / 2], demi: 4.5, az: azDerriere(st) }),
+    lire: (st, m) => `cercle ${fr(m.K.c, 3)} mm · A ${fr(m.sujets.A.tache, 3)} mm (${fr(m.sujets.A.tache / m.K.c, 1)} ×) · B ${fr(m.sujets.B.tache, 3)} mm · C ${fr(m.sujets.C.tache, 3)} mm (${fr(m.sujets.C.tache / m.K.c, 1)} ×)`,
+    anim: ({ ctx, scene, A }) => {
+      const D = tachesDe(scene, A);
+      return ensemble(balayage(ctx, 's', Math.max(0.5, ctx.st.sujets.A * 0.9), Math.min(60, ctx.st.sujets.C * 1.2), 12, { log: true, step: 0.01 }), { update() { poserTaches(D, ctx.st, ctx.m()); }, dispose() { for (const d of Object.values(D)) d.dispose(); } });
+    },
+  },
+  {
+    id: 'iris', titre: 'L\'iris et la profondeur de champ', lecon: 'camera-systeme', grand: true,
+    texte: 'Fermer l\'**iris** (un nombre f plus grand) resserre le cône de rayons qui arrive au capteur : les taches rétrécissent, la **tranche nette** s\'épaissit. Ouvrir fait l\'inverse : le sujet se détache sur un fond flou.\n\nChaque cran divise la lumière par deux : la profondeur de champ se paie en lumière. L\'iris parcourt ses crans ; les disques et la tranche suivent, l\'image aussi.',
+    scene: (st) => ({ f: 35, s: st.sujets.B }),
+    vue: (st) => ({ cible: [st.cam.x, 1.2, st.cam.z + (st.sujets.A + st.sujets.C) / 2], demi: 5, az: azDerriere(st) }),
+    lire: (st, m) => `f/${nF(st.N)} : net de ${distTxt(m.proche)} à ${distTxt(m.loin)}${isFinite(m.loin) ? ` (${fr((m.loin - m.proche) * 100, 0)} cm)` : ''} · A ${fr(m.sujets.A.tache / m.K.c, 1)} ×, C ${fr(m.sujets.C.tache / m.K.c, 1)} × le cercle`,
+    anim: ({ ctx, scene, A, S }) => {
+      const T = tranche(S.rig, A, 0x3b9cff), D = tachesDe(scene, A);
+      return ensemble(cycle(ctx, 'N', IRIS.slice(0, 7), 1.8), { update() { const st = ctx.st, m = ctx.m(); poserTranche(T, st, m); poserTaches(D, st, m); }, dispose() { T.dispose(); for (const d of Object.values(D)) d.dispose(); } });
+    },
+  },
+  {
+    id: 'focale-pdc', titre: 'La focale et la profondeur de champ', lecon: 'camera-systeme',
+    texte: 'À iris et point égaux, une **focale longue** amincit la tranche nette : la profondeur de champ suit le carré de la focale. Un 135 mm à f/2 isole un visage dans quelques centimètres ; un 18 mm garde presque tout net.\n\nC\'est l\'outil du portrait, et le piège du plan large : la focale balaie sa plage, la tranche se referme puis s\'ouvre.',
+    scene: (st) => ({ f: 35, N: 2.8, s: st.sujets.B }),
+    vue: (st) => ({ cible: [st.cam.x, 0.9, st.cam.z + (st.sujets.A + st.sujets.C) / 2], demi: 5, az: azDerriere(st) }),
+    lire: (st, m) => `${fr(st.f, st.f < 20 ? 1 : 0)} mm à f/${nF(st.N)}, point à ${distTxt(st.s)} : net de ${distTxt(m.proche)} à ${distTxt(m.loin)}${isFinite(m.loin) ? ` (${fr((m.loin - m.proche) * 100, 0)} cm)` : ''}`,
+    anim: ({ ctx, A, S }) => {
+      const T = tranche(S.rig, A, 0x3b9cff);
+      return ensemble(balayage(ctx, 'f', 18, 135, 10, { log: true, step: 0.5 }), { update() { poserTranche(T, ctx.st, ctx.m()); }, dispose() { T.dispose(); } });
+    },
   },
   {
     id: 'hyperfocale', titre: 'L\'hyperfocale', lecon: 'camera-systeme',
-    texte: 'Le point fait à l\'**hyperfocale** H donne la plus grande zone nette possible : de H ÷ 2 jusqu\'à l\'infini. H = f² ÷ (N × c) + f, avec c le cercle de confusion du capteur.\n\nC\'est le réglage d\'un plan large qu\'on veut net de près jusqu\'au fond : la focale courte et l\'iris fermé rapprochent H.',
-    scene: (st, m) => ({ s: Math.min(60, Math.round(m.H * 100) / 100) }),
-    vue: (st, m) => ({ cible: [st.cam.x, 0, st.cam.z + Math.min(14, m.H * 0.8)], demi: Math.min(9, Math.max(4, m.H * 0.6)) }),
-    lire: (st, m) => `H = ${st.f}² ÷ (${fr(st.N, 1)} × ${fr(m.K.c, 3)}) + ${st.f} = ${distTxt(m.H)} : net de ${distTxt(m.H / 2)} à l'infini`,
+    texte: 'Le point fait à l\'**hyperfocale** H donne la plus grande tranche nette possible : de H ÷ 2 jusqu\'à l\'infini. H = f² ÷ (N × c) + f, avec c le cercle de confusion du capteur.\n\nC\'est le réglage d\'un plan large qu\'on veut net de près jusqu\'au fond. L\'iris parcourt ses crans et le point se refait chaque fois à H : regardez la limite proche se rapprocher et la lointaine rester à l\'infini.',
+    // une focale courte : l'hyperfocale tient sur le plateau
+    scene: (st) => ({ f: 24, N: 4, s: Math.min(60, Math.round(hyperfocale(24, 4, CAPTEURS[st.capteur].c) * 100) / 100) }),
+    vue: (st, m) => ({ cible: [st.cam.x, 0.9, st.cam.z + Math.min(12, Math.max(4, m.H * 0.7))], demi: Math.min(9, Math.max(4.5, m.H * 0.55)), az: azDerriere(st) }),
+    lire: (st, m) => `f/${nF(st.N)} : H = ${fr(st.f, st.f < 20 ? 1 : 0)}² ÷ (${nF(st.N)} × ${fr(m.K.c, 3)}) + ${fr(st.f, st.f < 20 ? 1 : 0)} = ${distTxt(m.H)} · point à H, net de ${distTxt(m.H / 2)} à l'infini`,
+    anim: ({ ctx, A, S }) => {
+      const T = tranche(S.rig, A, 0x3b9cff); const Ns = [2.8, 4, 5.6, 8, 11]; let acc = 2.4, i = -1;
+      return { update(dt) { acc += dt; if (acc >= 2.4) { acc = 0; i = (i + 1) % Ns.length; const st = ctx.st; const H = hyperfocale(st.f, Ns[i], CAPTEURS[st.capteur].c); ctx.changer({ N: Ns[i], s: Math.min(60, Math.round(H * 100) / 100) }); } poserTranche(T, ctx.st, ctx.m()); }, dispose() { T.dispose(); } };
+    },
   },
   {
     id: 'capteur', titre: 'Le capteur et le cercle de confusion', lecon: 'camera-systeme',
-    texte: 'Un **grand capteur** demande une focale plus longue pour le même cadre, et c\'est elle qui amincit la zone nette. Le **cercle de confusion** admis (deux photosites en HD) grandit avec le capteur.\n\nÀ focale égale, le capteur change l\'angle de champ et le cercle ; à cadre égal, c\'est la profondeur de champ qui change. Les trois capteurs se succèdent.',
-    vue: (st) => ({ cible: [st.cam.x, 0, st.cam.z + 4], demi: 5 }),
-    lire: (st, m) => `${CAPTEURS[st.capteur].nom} : ${fr(m.K.w, 1)} × ${fr(m.K.h, 1)} mm, c = ${fr(m.K.c, 3)} mm · ${fr(m.angle, 1)}° au ${st.f} mm · net de ${distTxt(m.proche)} à ${distTxt(m.loin)}`,
-    anim: ({ ctx }) => cycle(ctx, 'capteur', ['2/3', 's35', 'ff'], 2.6),
+    texte: 'Près de la caméra, le **capteur** agrandi dix fois : 2/3" (9,6 mm de large), Super 35 (24,9 mm), plein format (36 mm). À focale égale, un petit capteur voit plus serré ; à cadre égal, il demande une focale plus courte, et c\'est elle qui épaissit la tranche nette.\n\nLe **cercle de confusion** admis grandit avec le capteur (0,011, 0,025, 0,030 mm : deux photosites en HD). Les trois capteurs se succèdent, point sur B.',
+    scene: (st) => ({ f: 35, N: 4, s: st.sujets.B }),
+    vue: (st) => ({ cible: [st.cam.x, 1.5, st.cam.z + 1.2], demi: 2.6, az: azDerriere(st) }),
+    lire: (st, m) => `${CAPTEURS[st.capteur].nom} : ${fr(m.K.w, 1)} × ${fr(m.K.h, 1)} mm, c = ${fr(m.K.c, 3)} mm · ${fr(m.angle, 1)}° au ${fr(st.f, 0)} mm · net de ${distTxt(m.proche)} à ${distTxt(m.loin)}`,
+    anim: ({ ctx, scene, A, S }) => {
+      const c = cadre(S.rig, A, 0x3b9cff, 'le capteur, × 10', 0.18), D = tachesDe(scene, A);
+      return ensemble(cycle(ctx, 'capteur', ['2/3', 's35', 'ff'], 2.8), { update() { const st = ctx.st, m = ctx.m(); c.poser(V3(0, 2.3, -0.3), V3(0, 0, -1)); c.taille(m.K.w / 100, m.K.h / 100); c.texte(`${capteurNom(st.capteur)} : ${fr(m.K.w, 1)} × ${fr(m.K.h, 1)} mm, cercle ${fr(m.K.c, 3)} mm`); poserTaches(D, st, m); }, dispose() { c.dispose(); for (const d of Object.values(D)) d.dispose(); } });
+    },
   },
 ];
 void mondeOptique;

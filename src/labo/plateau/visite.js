@@ -24,6 +24,7 @@ import { COUCHE_REPERES } from './pieces.js';
  * @property {string} [lecon] la leçon du Cours où lire la suite
  * @property {Record<string, any> | ((st: any, m: any) => Record<string, any>)} [scene] les réglages posés à l'entrée
  * @property {(st: any, m: any) => { cible?: number[], demi?: number, az?: number }} vue où regarder
+ * @property {boolean} [grand] l'image de la caméra agrandie pendant l'étape (c'est elle qui montre)
  * @property {(st: any, m: any) => string} [lire] la lecture en direct
  * @property {(o: { ctx: any, scene: THREE.Scene, A: any, S: any, P: any }) => ({ update?: (dt: number, t: number) => void, dispose?: () => void } | void)} [anim] ce qui s'anime pendant l'étape (S : les objets de l'atelier)
  */
@@ -42,7 +43,7 @@ export function creerVisite(P, ctx, etapes, acces) {
   const carte = el('section', { class: 'lb-visite', hidden: true, 'aria-label': 'Les notions, en 3D' },
     el('div', { class: 'lb-vi-head' }, num, titre, fermerB), corps, lire, el('div', { class: 'lb-vi-nav' }, prev, next, lecon));
   const bouton = el('button', { type: 'button', class: 'btn small lb-vi-btn', 'aria-pressed': 'false', title: 'Les notions expliquées sur le plateau, une à une', onclick: () => (V.ouverte ? fermer() : ouvrir(Math.max(0, V.k))) }, icon('cours'), 'Notions');
-  const V = { k: -1, ouverte: false, /** @type {any} */ anim: null, tLire: 0 };
+  const V = { k: -1, ouverte: false, /** @type {any} */ anim: null, tLire: 0, grandAvant: false };
   carte.addEventListener('keydown', (e) => { if (e.key === 'ArrowRight') { e.preventDefault(); aller(V.k + 1); } else if (e.key === 'ArrowLeft') { e.preventDefault(); aller(V.k - 1); } });
 
   function arreterAnim() {
@@ -61,6 +62,7 @@ export function creerVisite(P, ctx, etapes, acces) {
     if (E.scene) ctx.changer(typeof E.scene === 'function' ? E.scene(ctx.st, ctx.m()) : E.scene);
     const { scene, A, S } = acces();
     try { P.voler(E.vue(ctx.st, ctx.m())); } catch (e) { console.error(e); }
+    P.agrandir(!!E.grand);
     if (E.anim) { try { V.anim = E.anim({ ctx, scene, A, S, P }) || null; } catch (e) { console.error(e); V.anim = null; } }
     V.tLire = 0;
     P.animer('visite', (dt, t) => { if (V.anim && V.anim.update) V.anim.update(dt, t); V.tLire += dt; if (V.tLire > 0.15) { V.tLire = 0; majLire(); } });
@@ -73,6 +75,7 @@ export function creerVisite(P, ctx, etapes, acces) {
     carte.scrollTop = 0;
   }
   function ouvrir(i = 0) {
+    if (!V.ouverte) V.grandAvant = !!P.etat.grand;
     V.ouverte = true; carte.hidden = false; bouton.setAttribute('aria-pressed', 'true'); bouton.classList.add('on');
     const host = carte.parentElement; if (host) host.classList.add('lb-visite-on');
     aller(i);
@@ -81,6 +84,7 @@ export function creerVisite(P, ctx, etapes, acces) {
   function fermer() {
     if (!V.ouverte) return;
     V.ouverte = false; arreterAnim(); carte.hidden = true; bouton.setAttribute('aria-pressed', 'false'); bouton.classList.remove('on');
+    P.agrandir(V.grandAvant);
     const host = carte.parentElement; if (host) host.classList.remove('lb-visite-on');
     P.cadrer();
     bouton.focus({ preventScroll: true });
@@ -172,5 +176,56 @@ export function pinceau(scene, couleur) {
   return {
     maj(o, coins) { const p = /** @type {THREE.BufferAttribute} */ (geo.attributes.position); coins.forEach((c, i) => { p.setXYZ(i * 2, o.x, o.y, o.z); p.setXYZ(i * 2 + 1, c.x, c.y, c.z); }); p.needsUpdate = true; },
     dispose() { scene.remove(m); geo.dispose(); /** @type {any} */ (m.material).dispose(); },
+  };
+}
+
+/** un rectangle posé dans la scène (le champ couvert à une distance, le capteur agrandi) : poser(centre, normale), taille(w, h) */
+export function cadre(parent, A, couleur, texte = '', opacite = 0.1) {
+  const g = new THREE.Group(); g.name = 'cadre';
+  const face = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), matRep(couleur, opacite)); face.layers.set(COUCHE_REPERES); face.renderOrder = 3; face.userData.passe = true;
+  const bord = new THREE.LineSegments(new THREE.EdgesGeometry(face.geometry), new THREE.LineBasicMaterial({ color: couleur, transparent: true, opacity: 0.9, toneMapped: false })); bord.layers.set(COUCHE_REPERES); bord.renderOrder = 3;
+  g.add(face, bord); parent.add(g);
+  const L = texte ? etiquette(g, texte, 'accent', [0, 0.7, 0]) : null;
+  if (L) A.etiquettes.push(L);
+  const C = new THREE.Vector3();
+  return {
+    groupe: g,
+    poser(centre, normale) { g.position.copy(centre); C.copy(centre).add(normale); g.lookAt(C); },
+    taille(w, h) { g.scale.set(Math.max(0.01, w), Math.max(0.01, h), 1); if (L) L.dec = [0, h / 2 + 0.15, 0]; },
+    texte(t) { if (L) L.set(t); },
+    dispose() { parent.remove(g); face.geometry.dispose(); face.material.dispose(); bord.geometry.dispose(); bord.material.dispose(); if (L) { L.el.remove(); const i = A.etiquettes.indexOf(L); if (i >= 0) A.etiquettes.splice(i, 1); } },
+  };
+}
+/**
+ * la tranche nette, dans le repère de la caméra (enfants de son rig, qui regarde +z) : le plan de netteté (le point) et les
+ * deux limites, des plans debout de la largeur du champ ; maj(s, ws, z0, w0, z1, w1, h) avec les demi-largeurs
+ */
+export function tranche(rig, A, couleur) {
+  const plan = (op, nom) => { const m = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), matRep(couleur, op)); m.name = nom; m.layers.set(COUCHE_REPERES); m.renderOrder = 3; m.userData.passe = true; const e = new THREE.LineSegments(new THREE.EdgesGeometry(m.geometry), new THREE.LineBasicMaterial({ color: couleur, transparent: true, opacity: 0.75, toneMapped: false })); e.layers.set(COUCHE_REPERES); m.add(e); rig.add(m); return m; };
+  const net = plan(0.26, 'plan de netteté'), pr = plan(0.12, 'limite proche'), lo = plan(0.12, 'limite lointaine');
+  const Ls = { net: etiquette(net, 'le point', 'accent', [0, 1.25, 0]), pr: etiquette(pr, 'limite proche', '', [0, 1.25, 0]), lo: etiquette(lo, 'limite lointaine', '', [0, 1.25, 0]) };
+  A.etiquettes.push(Ls.net, Ls.pr, Ls.lo);
+  const pose = (m, z, w, h) => { m.position.set(0, h / 2, z); m.scale.set(Math.max(0.2, 2 * w), h, 1); };
+  return {
+    maj(s, ws, z0, w0, z1, w1, h = 2.2) { pose(net, s, ws, h); pose(pr, z0, w0, h); pose(lo, z1, w1, h); },
+    textes(a, b, c) { Ls.net.set(a); Ls.pr.set(b); Ls.lo.set(c); },
+    dispose() { for (const m of [net, pr, lo]) { rig.remove(m); m.geometry.dispose(); /** @type {any} */ (m.material).dispose(); } for (const L of Object.values(Ls)) { L.el.remove(); const i = A.etiquettes.indexOf(L); if (i >= 0) A.etiquettes.splice(i, 1); } },
+  };
+}
+/**
+ * la tache de flou d'un sujet, montrée au-dessus de sa tête à la même échelle qu'un anneau : l'anneau est le cercle de
+ * confusion (la limite admise), le disque la tache de ce sujet ; net tant que le disque tient dans l'anneau. maj(ratio, net)
+ */
+export function tacheFlou(scene, A, couleur, nom) {
+  const R = 0.14;
+  const g = new THREE.Group(); g.name = 'tache';
+  const anneau = new THREE.Mesh(new THREE.RingGeometry(R * 0.9, R, 40), matRep(couleur, 0.95)); anneau.layers.set(COUCHE_REPERES); anneau.renderOrder = 4;
+  const disque = new THREE.Mesh(new THREE.CircleGeometry(1, 40), matRep(couleur, 0.32)); disque.layers.set(COUCHE_REPERES); disque.renderOrder = 3;
+  g.add(anneau, disque); scene.add(g);
+  const L = etiquette(g, nom, '', [0, R + 0.12, 0]); A.etiquettes.push(L);
+  return {
+    poser(centre, vers) { g.position.copy(centre); g.lookAt(vers); },
+    maj(ratio, net, texte) { const r = Math.max(0.02, Math.min(4.5, ratio)) * R; disque.scale.set(r, r, 1); L.set(texte, net ? 'ok' : ''); },
+    dispose() { scene.remove(g); anneau.geometry.dispose(); anneau.material.dispose(); disque.geometry.dispose(); disque.material.dispose(); L.el.remove(); const i = A.etiquettes.indexOf(L); if (i >= 0) A.etiquettes.splice(i, 1); },
   };
 }
