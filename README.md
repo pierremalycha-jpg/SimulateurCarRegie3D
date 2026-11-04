@@ -400,7 +400,7 @@ Tests :
 Ils posent une caméra, des sujets et des projecteurs sur un plateau de télévision vu en isométrie (caméra orthographique,
 élévation fixe, quarts de tour animés, zoom vers le pointeur, pincement, double clic pour recentrer), dessiné en low-poly
 polygonal : des formes à facettes (prismes à six ou huit faces, cônes, icosaèdres pour les têtes, les mains et les
-feuillages, les surfaces organiques légèrement froissées par un bruit déterministe), les arêtes franches, fusionnées par un
+feuillages, les surfaces organiques franchement froissées par un bruit déterministe), les arêtes franches, fusionnées par un
 `Builder` en mode `ao`, lues à plat (`matPlate()` : la matière de `matiere()` sans son relief, en `flatShading`), le cel
 shading du style « dessin », des ombres portées ; une plante en pot et des malles donnent l'échelle. On **prend un objet et on le pose au sol** : le pointeur est projeté sur le plan du sol, l'objet suit sans
 sauter, et l'atelier relit sa place dans son état (la distance le long de l'axe et l'écart latéral d'un sujet, la distance et

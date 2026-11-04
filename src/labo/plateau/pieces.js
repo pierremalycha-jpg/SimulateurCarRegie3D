@@ -66,8 +66,8 @@ function forme(b, geo, x, y, z, color, o = {}) {
 }
 /** une boîte franche (arêtes vives) */
 const boite = (b, w, h, d, x, y, z, color, o = {}) => forme(b, new THREE.BoxGeometry(w, h, d), x, y, z, color, { occ: [w, h, d], ...o });
-/** un prisme (cylindre à peu de faces) debout : rt en haut, rb en bas, h de haut ; seg faces */
-const prisme = (b, rt, rb, h, x, y, z, color, seg = 6, o = {}) => forme(b, new THREE.CylinderGeometry(rt, rb, h, seg), x, y, z, color, { occ: [Math.max(rt, rb) * 2, h, Math.max(rt, rb) * 2], ...o });
+/** un prisme (cylindre à peu de faces) debout : rt en haut, rb en bas, h de haut ; seg faces ; froissé si o.froisse ; o.face : une face plate vers +z */
+const prisme = (b, rt, rb, h, x, y, z, color, seg = 6, o = {}) => forme(b, froisse(new THREE.CylinderGeometry(rt, rb, h, seg, 1, false, o.face ? Math.PI / seg : 0), o.froisse ?? 0, o.graine ?? 1), x, y, z, color, { occ: [Math.max(rt, rb) * 2, h, Math.max(rt, rb) * 2], ...o });
 /** un cône (pointe en haut) */
 const cone = (b, r, h, x, y, z, color, seg = 5, o = {}) => forme(b, new THREE.ConeGeometry(r, h, seg), x, y, z, color, o);
 /** un icosaèdre (une boule à facettes), froissé ou non */
@@ -113,11 +113,11 @@ export function lampes(n, w, y, z, cx = 0) {
 export const caisse = (x, z, rot = 0) => piece('caisse', (b) => { boite(b, 0.56, 0.36, 0.4, x, 0.18, z, COUL.caisse, { rot: [0, rot, 0] }); for (const [sx, sz] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) boite(b, 0.08, 0.38, 0.08, x + Math.cos(rot) * sx * 0.25 - Math.sin(rot) * sz * 0.17, 0.19, z + Math.sin(rot) * sx * 0.25 + Math.cos(rot) * sz * 0.17, COUL.metal, { rot: [0, rot, 0], menu: true }); });
 /** une plante en pot : le motif du low-poly (pot en prisme, feuillage en icosaèdres froissés) */
 export const plante = (x, z, graine = 1) => piece('plante', (b) => {
-  prisme(b, 0.19, 0.14, 0.34, x, 0.17, z, COUL.pot, 7); prisme(b, 0.17, 0.17, 0.02, x, 0.35, z, COUL.terre, 7);
+  prisme(b, 0.19, 0.14, 0.34, x, 0.17, z, COUL.pot, 6, { froisse: 0.012, graine: graine + 4 }); prisme(b, 0.17, 0.17, 0.02, x, 0.35, z, COUL.terre, 6);
   prisme(b, 0.015, 0.025, 0.5, x, 0.58, z, COUL.tige, 5);
-  boule(b, 0.3, x, 0.98, z, COUL.feuille, { froisse: 0.05, graine, detail: 1 });
-  boule(b, 0.22, x + 0.2, 0.78, z - 0.12, COUL.feuille2, { froisse: 0.04, graine: graine + 1, detail: 1 });
-  boule(b, 0.2, x - 0.18, 0.82, z + 0.14, COUL.feuille2, { froisse: 0.04, graine: graine + 2, detail: 1 });
+  boule(b, 0.3, x, 0.98, z, COUL.feuille, { froisse: 0.09, graine, detail: 1 });
+  boule(b, 0.22, x + 0.2, 0.78, z - 0.12, COUL.feuille2, { froisse: 0.07, graine: graine + 1, detail: 1 });
+  boule(b, 0.2, x - 0.18, 0.82, z + 0.14, COUL.feuille2, { froisse: 0.07, graine: graine + 2, detail: 1 });
 });
 /**
  * les lumières de travail du plateau, en unités physiques (lx) : un ciel doux et une clé qui porte les ombres,
@@ -134,22 +134,25 @@ export function lumieresTravail(couche, ciel = 170, cle = 250) {
 }
 
 // ---------------- les gens ----------------
-/** un sujet debout, l'avant en +z (le nez le dit) ; couleur : son haut. Tronc et jambes en prismes, tête et mains en icosaèdres froissés */
+/**
+ * un sujet debout, l'avant en +z (le nez le dit) ; couleur : son haut. Tronc, hanches et jambes en prismes à cinq faces (une
+ * face plate devant) froissés, tête, épaules et mains en icosaèdres bien froissés : les facettes se voient
+ */
 export function personnage(couleur, graine = 1) {
   const g = new THREE.Group(); g.name = 'personnage';
   const corps = piece('corps', (b) => {
     for (const s of [-1, 1]) {
       cone(b, 0.085, 0.3, s * 0.1, 0.045, 0.06, COUL.chaussure, 5, { rot: [Math.PI / 2, 0, 0] });
-      prisme(b, 0.085, 0.06, 0.82, s * 0.1, 0.46, 0, COUL.pantalon, 6);
-      boule(b, 0.085, s * 0.25, 1.45, 0, couleur, { froisse: 0.006, graine: graine + 3 });
-      prisme(b, 0.055, 0.045, 0.52, s * 0.3, 1.17, 0, couleur, 5);
-      boule(b, 0.055, s * 0.3, 0.88, 0, COUL.peau, { froisse: 0.005, graine: graine + 4 });
+      prisme(b, 0.085, 0.06, 0.82, s * 0.1, 0.46, 0, COUL.pantalon, 5, { face: true, froisse: 0.008, graine: graine + 5 + s });
+      boule(b, 0.085, s * 0.25, 1.45, 0, couleur, { froisse: 0.014, graine: graine + 3 });
+      prisme(b, 0.055, 0.045, 0.52, s * 0.3, 1.17, 0, couleur, 5, { froisse: 0.006, graine: graine + 7 + s });
+      boule(b, 0.055, s * 0.3, 0.88, 0, COUL.peau, { froisse: 0.01, graine: graine + 4 });
     }
-    prisme(b, 0.2, 0.17, 0.2, 0, 0.95, 0, COUL.pantalon, 6);
-    prisme(b, 0.23, 0.17, 0.5, 0, 1.28, 0, couleur, 6, { occ: [0.46, 0.5, 0.4] });
-    prisme(b, 0.06, 0.07, 0.12, 0, 1.56, 0, COUL.peau, 6);
-    forme(b, froisse(new THREE.IcosahedronGeometry(0.13, 1), 0.006, graine), 0, 1.72, 0, COUL.peau, { ech: [1, 1.12, 1], occ: [0.26, 0.3, 0.26] });
-    forme(b, froisse(new THREE.SphereGeometry(0.135, 7, 4, 0, Math.PI * 2, 0, Math.PI * 0.55), 0.006, graine + 1), 0, 1.75, -0.015, COUL.cheveux, { ech: [1, 1.1, 1] });
+    prisme(b, 0.2, 0.17, 0.2, 0, 0.95, 0, COUL.pantalon, 5, { face: true, froisse: 0.01, graine: graine + 9 });
+    prisme(b, 0.24, 0.17, 0.5, 0, 1.28, 0, couleur, 5, { face: true, froisse: 0.014, graine: graine + 10, occ: [0.48, 0.5, 0.42] });
+    prisme(b, 0.06, 0.07, 0.12, 0, 1.56, 0, COUL.peau, 5, { face: true });
+    forme(b, froisse(new THREE.IcosahedronGeometry(0.13, 1), 0.014, graine), 0, 1.72, 0, COUL.peau, { ech: [1, 1.12, 1], occ: [0.26, 0.3, 0.26] });
+    forme(b, froisse(new THREE.SphereGeometry(0.135, 7, 4, 0, Math.PI * 2, 0, Math.PI * 0.55), 0.012, graine + 1), 0, 1.75, -0.015, COUL.cheveux, { ech: [1, 1.1, 1] });
     cone(b, 0.022, 0.05, 0, 1.7, 0.145, COUL.peau, 4, { rot: [Math.PI / 2, 0, 0], menu: true });
   });
   g.add(corps); g.userData.corps = corps;
