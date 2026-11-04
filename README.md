@@ -394,6 +394,53 @@ Tests :
   « Emmène-moi / Montre-moi » doit mettre en évidence un élément réel de la page, et « Fais-le pour moi » doit faire
   valider l'étape.
 
+## v19.30 : le matching à la mire, un outil pour le plateau
+
+**Un outil à part, pour les vraies caméras** (`src/matching/`, page `dist/matching.html` servie par `node tools/matching.mjs`,
+sans dépendance) : deux caméras filment la même mire ColorChecker sous la même lumière, la page mesure chaque pastille sur la
+caméra de référence (A) et sur celle à raccorder (B), puis dit quoi régler sur B dans l'ordre du line-up, et l'applique
+d'un clic sur une Panasonic. Né d'une question du plateau : raccorder des PTZ Panasonic AW-HE130 et AW-UE20 sur une Sony
+HXC-FB80 (HXCU-FB80, RCP-1500).
+
+| Étape | Ce que la page mesure | Ce qu'elle dit de régler sur B |
+| --- | --- | --- |
+| Les noirs | le noir de chaque voie, extrapolé de l'escalier des gris | master black, R et B pedestal, en pas du menu |
+| La balance | les gains relatifs des voies et la température de couleur du gris (McCamy) | R GAIN et B GAIN, ou le décalage en mireds et la nouvelle valeur en kelvins |
+| L'exposition | le blanc de la mire | ouvrir ou fermer le diaph, en diaphragmes |
+| Le gamma | l'exposant de l'escalier des gris (V = noir + gain · L^g, un exposant pour les trois voies) | l'exposant du menu (HE130 : 0,30 à 0,75 ; Sony : MASTER GAMMA) |
+| La matrice | une matrice 3 × 3 qui conserve le blanc, ajustée aux moindres carrés sur les 18 couleurs linéarisées | R-G, R-B, G-R, G-B, B-R, B-G (USER MATRIX Sony, LINEAR MATRIX Panasonic) ; ou la saturation seule |
+| Ce qui reste | l'écart de chaque pastille après la matrice, teinte par teinte | multi-matrix (Sony) ou 12 axes (Panasonic), par axe du vecteurscope |
+
+Le score : ΔE (CIE76, Lab) moyen et maximum avant, et prévu après ; raccordé sous 2. La parade des six gris et le
+vecteurscope des dix-huit couleurs montrent A, B, et B prévue après réglage.
+
+**Les sources d'images** : une caméra ou une carte d'acquisition USB vue comme une webcam (`getUserMedia`, d'où la page sur
+`localhost`), un fichier image, l'instantané IP d'une Panasonic (`/cgi-bin/camera`) par le relais, ou la démonstration (deux
+caméras simulées par `calc.js`, B avec ses défauts et des échelles de menu cachées : on applique, on remesure, on voit la
+page apprendre). On pointe les quatre coins de la zone des pastilles ; une homographie place la grille, 49 points par pastille.
+
+**Les caméras** (`cameras.js`) : Panasonic AW-HE130 pilotée par HTTP (`panasonic.js`, spécification d'interface « HD Integrated
+Camera » V1.06 : ORI / OBI, OTP, ORP / OBP, OSA:6A, OSE:31 et OSD:A4 à A9, OSD:B0, OSD:B1 avec sa table de 121 températures,
+OAW, OWS ; « Lire la caméra » relit les valeurs en cours), AW-UE20 (syntaxe des HE40 / UE70, à vérifier sur la caméra ; sans
+matrice : le résidu se corrige en aval par une LUT), Sony HXC-FB80 au RCP-1500 (valeurs affichées, « Je l'ai réglé » ; pas
+d'accès public à la CCU, l'adaptateur CNA-1 le permettrait sur licence Sony), et « autre caméra » en valeurs physiques.
+Les échelles des menus (pas par dB, par point, par coefficient) ne sont pas publiées : la page part d'estimations et les
+**apprend** à chaque tour (`estimerEchelle` : ce qu'elle a demandé, ce qu'elle remesure, amorti, signe libre, bornée).
+
+**Le relais** (`tools/matching.mjs`) : la page parle aux caméras par `/relais?url=…`, seulement en http vers une adresse privée
+et un chemin `/cgi-bin/` ; le serveur n'écoute que sur `localhost`.
+
+**Ce qui reste honnête** : un prisme 2/3" trois capteurs et une PTZ à petit capteur n'ont pas les mêmes sensibilités
+spectrales, la mire se raccorde, un maillot sous LED ou une carnation peuvent encore dévier : on finit sur un visage ; le
+raccord vaut pour la lumière sous laquelle il a été fait ; les familles de gamma Sony et Panasonic n'ont pas la même forme,
+la page prend la plus proche et montre le résidu. Les valeurs de la ColorChecker sont les valeurs usuelles publiées.
+
+**Vérification.** Tests unitaires `tests/unit/matching.test.mjs` (BT.709, Lab, température, courbe des gris, matrice,
+diagnostic sur caméras simulées avec et sans bruit, échelle apprise, homographie, profils, commandes Panasonic en
+aller-retour) ; suite `node tools/e2e.mjs matching` (serveur et relais, démonstration en trois tours jusqu'au raccord, coins
+à la main, fausse caméra Panasonic : instantané par le relais, lecture des réglages, commandes reçues, refus du relais,
+téléphone).
+
 ## v19.29 : un chapitre « La lumière » au Cours, et programmer la console dot2 pour de vrai
 
 **Le chapitre « La lumière »** (`cours/lumiere.js`), entre Le son et Le réseau, en trois parties et quatre niveaux :
@@ -2852,6 +2899,7 @@ node tools/shots.mjs dossier 1280 800 '["vision","hf"]'   # captures de postes
 | `camlab/` | Module « La caméra en 3D » : caméra et plateau construits dans le code (`model.js`, `scene.js`), pastilles (`points.js`), 51 notions (`notions/`, une fiche par fichier, registres `ch1.js` … `ch89.js`), schémas (`figs.js`, `figs/`, `figkit.js`), manipulations (`labs.js`, `labs/`, commandes `controls.js`, optique `optics.js`, viseur simulé et traitement de l'image `vf.js`), affichage d'une fiche (`fiche.js`), progression (`progress.js`), quiz de chapitre (`quiz.js`), mise en service notée (`mes.js`) |
 | `labo/` (`index.js`, `ateliers.js`, `etats.js`, `defis.js`, `suivi.js`, `kit.js`), `styles/labo.css` | Le Labo (v19.28, lieu de Jouer qui remplace l'entrepôt) : un onglet par atelier, le panneau Défis (une question à la fois, deux aides, la solution, le score) et Comprendre (notions, fiches « ? », liens du Cours, référentiel cité) ; le catalogue des ateliers (compétences, savoirs, défis) ; l'état et les mesures de chaque atelier, `poser` (calcul pur) ; le moteur des défis sur celui de l'exercice du Cours, plus le réglage jugé par le modèle ; le suivi `PROG.labo` (noter, fusionner) ; les commandes liées à l'état et verrouillables |
 | `labo/calc/` (`optique.js`, `photometrie.js`, `sensito.js`, `dmx.js`) | Les modèles purs des ateliers : profondeur de champ, hyperfocale, tache de flou, champ ; intensité, éclairement, gradateur, gélatines, mireds, exposition, contraste ; courbes BT.709, knee, S-Log3, HLG, plage utile, gain ; univers, empreintes, 16 bits, DIP, trame, ligne, Art-Net, sACN |
+| `matching/` (`calc.js`, `mires.js`, `cameras.js`, `panasonic.js`, `app.js`, `matching.css`, `index.template.html`), `tools/matching.mjs` | Le matching à la mire (v19.30, page à part `dist/matching.html`) : le calcul pur (BT.709, Lab et ΔE, température de couleur, courbe des gris à exposant partagé, matrice aux moindres carrés qui conserve le blanc, saturation, résidus par teinte, échelle apprise, homographie, caméra simulée), la ColorChecker, les profils de caméras (bornes, échelles estimées, pilotage), les commandes HTTP des Panasonic AW, la page (sources d'images, pointage des coins, parade et vecteurscope, consignes et application, journal des tours), le serveur et son relais vers les caméras |
 | `labo/calc/lumiere.js`, `labo/calc/show.js`, `labo/dot2/show_depart.js` | La lumière en calcul pur (familles de sources, angle solide, angle de champ, scintillement, uniformité) ; la console (lire un show de la dot2 : tracking, presets, couleur d'une lyre, effets, chaser ; pan et tilt sur 16 bits) ; le show de départ des défis de la console (v19.29) |
 | `cours/lumiere.js`, `cours/lumiere_mesure.js`, `cours/lumiere_eclairer.js`, `cours/lumiere_commande.js`, `cours/exos/lumiere_*.js`, `content/terms_lumiere_*.js` | Le chapitre « La lumière » (v19.29) : trois parties, treize leçons, leurs exercices en autonomie et leurs fiches « ? » |
 | `labo/ateliers/` (un fichier par atelier), `labo/defis/` (un fichier par atelier), `labo/dot2/simulateur_dot2.html`, `content/terms_labo.js` | L'interface de chaque atelier (dessins en canvas, commandes, afficheurs) ; ses défis notés ; la console dot2 (page complète gardée telle quelle, ouverte dans un cadre) ; les fiches « ? » du Labo |

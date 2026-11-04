@@ -158,6 +158,16 @@ Tout est en français (code commenté en français, interface, commits).
   couleur d'une lyre, effet de position, chaser) : on juge le résultat programmé, pas les touches. Un nouvel atelier : son entrée dans `ateliers.js`, son
   modèle pur, son état, son interface, ses défis, ses fiches ; le test vérifie que chaque réglage a une solution et n'est
   jamais juste d'avance. Test `tests/unit/labo.test.mjs`, suite `node tools/e2e.mjs labo`.
+- **Le matching à la mire (v19.30, décidé le 4 novembre 2026)** : un outil **à part** pour les vraies caméras du plateau,
+  `src/matching/` construit en `dist/matching.html` (document complet, Archivo et B612 Mono) et servi par `node tools/matching.mjs`
+  (localhost, relais `/relais?url=` vers une adresse privée et `/cgi-bin/` seulement) ; ce n'est pas une entrée du simulateur.
+  Tout le calcul est pur et testé (`matching/calc.js` : courbe des gris V = noir + gain · L^g à exposant partagé, matrice
+  3 × 3 qui conserve le blanc sous la forme R-G … B-G, ΔE CIE76, échelle apprise `estimerEchelle`) ; la page (`app.js`) ne fait
+  que le DOM et les sources d'images. Une caméra = un profil de `cameras.js` (réglages, bornes, grandeur, échelle estimée,
+  pilotage `cgi` / `manuel` / `aucun`) ; les commandes Panasonic sont dans `panasonic.js` et suivent la spécification
+  d'interface citée en tête (un code se vérifie, il ne se devine pas) ; un modèle non vérifié sur la caméra porte `aVerifier`.
+  Les consignes vont dans l'ordre du line-up ; une échelle de menu non publiée est une estimation que la page affine en
+  remesurant, jamais une valeur affirmée. Test `tests/unit/matching.test.mjs`, suite `node tools/e2e.mjs matching`.
 - **La caméra en 3D** (`src/camlab/`, ouverte depuis le chapitre La caméra du Cours) : 51 notions écrites, une
   fiche par fichier (`notions/<id>.js`) rangée dans le registre de son groupe (`notions/ch1.js` … `ch89.js`),
   schéma dans `figs/`, manipulation dans `labs/` (elle pilote la 3D par `ctx.lens`, clés listées dans
