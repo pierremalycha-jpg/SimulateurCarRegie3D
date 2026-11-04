@@ -394,6 +394,50 @@ Tests :
   « Emmène-moi / Montre-moi » doit mettre en évidence un élément réel de la page, et « Fais-le pour moi » doit faire
   valider l'étape.
 
+## v19.30 : le Labo en 3D, un plateau isométrique low-poly pour l'optique et la photométrie
+
+**Le plateau 3D** (`src/labo/plateau/`) : les ateliers Optique et Photométrie ne dessinent plus leur vue de dessus en 2D.
+Ils posent une caméra, des sujets et des projecteurs sur un plateau de télévision vu en isométrie (caméra orthographique,
+élévation fixe, quarts de tour animés, zoom vers le pointeur, pincement, double clic pour recentrer), dessiné en low-poly :
+des boîtes aux arêtes à peine arrondies et des cylindres à peu de faces, fusionnés par un `Builder` en mode `ao`, lus à plat
+(`matPlate()` : la matière de `matiere()` sans son relief, en `flatShading`), le cel shading du style « dessin », des
+ombres portées. On **prend un objet et on le pose au sol** : le pointeur est projeté sur le plan du sol, l'objet suit sans
+sauter, et l'atelier relit sa place dans son état (la distance le long de l'axe et l'écart latéral d'un sujet, la distance et
+l'angle d'un projecteur autour du sujet, la place de la caméra), d'où tout se recalcule comme avec les curseurs, qui restent.
+Un défi qui impose un réglage verrouille aussi l'objet (curseur « interdit », annonce). Les étiquettes (pilules de verre
+accrochées aux objets) disent ce qui compte : « A · 2 m · flou · hors champ », « Principale · 892 lx · 4,00 m ».
+
+| Atelier | Ce qu'on prend | Ce qu'on voit au sol | Ce que montre l'image de la caméra |
+| --- | --- | --- | --- |
+| Optique et profondeur de champ | la caméra, les sujets A, B, C | le champ (le coin bleu), la zone nette (la dalle verte, de la limite proche à la limite lointaine), le point, l'hyperfocale, l'axe gradué, « net jusqu'à l'infini » | chaque plan flouté selon sa propre tache, les lampes du fond en disques, la pancarte lettrée (sa mire de traits fins) nette ou non |
+| Photométrie | la caméra, la principale, le débouchage | la flaque de chaque projecteur sur le sol et sur le sujet (de vrais projecteurs du rendu : candelas dans l'axe, cône ouvert à l'angle de champ, couleur de leur température, ombres), son cône de lumière, la ligne pointillée de sa distance | le sujet exposé et balancé comme la caméra est réglée, le zébra au-dessus de 90 %, la profondeur de champ d'un 35 mm au diaphragme réglé |
+
+**L'image de la caméra** (`plateau/dof.js`) : la scène est rendue une seconde fois depuis l'œil de la caméra posée sur le
+plateau (angle de champ de la focale sur le capteur), dans une cible qui garde la profondeur, puis composée dans un coin du
+plateau (agrandissable) en appliquant par pixel : le **flou de profondeur de champ** (la profondeur donne la distance de ce
+qui est vu, la formule de la leçon sa tache, t = f² |d − s| ÷ (N d (s − f)), jugée à la définition HD où le cercle de
+confusion vaut deux photosites ; chaque pixel cueille ses voisins sur un disque de ce diamètre, un voisin ne comptant que si
+sa propre tache déborde jusqu'ici), l'**exposition** physique (la lumière du rendu est en candelas et en lux ; multiplier par
+π ÷ Eref met un gris 18 % reçu sous l'éclairement qu'il faut pour le diaphragme, la sensibilité et le temps de pose à 18 %,
+puis la courbe ACES), la **balance des blancs** de la caméra (les gains inverses de sa température : une lumière de même
+température sort blanche, une plus chaude tire vers l'orange) et le **zébra**. Le plateau vu de haut s'expose de lui-même sur
+la lumière la plus forte, comme un œil. Les calculs purs sont dans `plateau/calc.js` (isométrie et cadrage, lecture des
+positions, exposition, tache en pixels, projecteur du rendu) ; l'état des ateliers (`labo/etats.js`) porte la place de la
+caméra (`cam.x`, `cam.z`) et l'écart latéral des sujets (`lat`), et dit si un sujet est dans le champ ; les défis et leurs
+scènes ne changent pas.
+
+**Le moteur** (`plateau/scene.js`) : un seul rendu WebGL, partagé par les ateliers et monté dans celui qui est affiché ; un
+rendu à la demande (un réglage, un geste, une animation : rien ne tourne quand rien ne bouge) ; les repères (champ, zone,
+cônes, anneau) vivent sur une couche que l'image de la caméra ne voit pas ; les étiquettes restent dans le cadre et
+s'effacent sous l'image ; sans WebGL, un mot, et les commandes et les mesures restent. Un nouvel atelier en 3D donne au
+moteur un adaptateur : sa scène, ses objets à prendre, ses étiquettes, ce qu'il faut cadrer, son image de caméra, son
+exposition.
+
+**Vérification.** `tests/unit/plateau.test.mjs` (isométrie et cadrage, lecture des positions aller et retour, exposition,
+tache en pixels, projecteur du rendu, l'état des ateliers et les scènes des défis) ; suite `node tools/e2e.mjs labo-plateau`
+(prendre un sujet, la caméra, un projecteur à la souris et relire l'état ; un réglage imposé qui ne bouge pas ; tourner,
+zoomer, recentrer, étiquettes, agrandir l'image ; 390 px) ; la suite `labo` inchangée (les défis se jouent comme avant).
+
 ## v19.29 : un chapitre « La lumière » au Cours, et programmer la console dot2 pour de vrai
 
 **Le chapitre « La lumière »** (`cours/lumiere.js`), entre Le son et Le réseau, en trois parties et quatre niveaux :
@@ -2854,7 +2898,8 @@ node tools/shots.mjs dossier 1280 800 '["vision","hf"]'   # captures de postes
 | `labo/calc/` (`optique.js`, `photometrie.js`, `sensito.js`, `dmx.js`) | Les modèles purs des ateliers : profondeur de champ, hyperfocale, tache de flou, champ ; intensité, éclairement, gradateur, gélatines, mireds, exposition, contraste ; courbes BT.709, knee, S-Log3, HLG, plage utile, gain ; univers, empreintes, 16 bits, DIP, trame, ligne, Art-Net, sACN |
 | `labo/calc/lumiere.js`, `labo/calc/show.js`, `labo/dot2/show_depart.js` | La lumière en calcul pur (familles de sources, angle solide, angle de champ, scintillement, uniformité) ; la console (lire un show de la dot2 : tracking, presets, couleur d'une lyre, effets, chaser ; pan et tilt sur 16 bits) ; le show de départ des défis de la console (v19.29) |
 | `cours/lumiere.js`, `cours/lumiere_mesure.js`, `cours/lumiere_eclairer.js`, `cours/lumiere_commande.js`, `cours/exos/lumiere_*.js`, `content/terms_lumiere_*.js` | Le chapitre « La lumière » (v19.29) : trois parties, treize leçons, leurs exercices en autonomie et leurs fiches « ? » |
-| `labo/ateliers/` (un fichier par atelier), `labo/defis/` (un fichier par atelier), `labo/dot2/simulateur_dot2.html`, `content/terms_labo.js` | L'interface de chaque atelier (dessins en canvas, commandes, afficheurs) ; ses défis notés ; la console dot2 (page complète gardée telle quelle, ouverte dans un cadre) ; les fiches « ? » du Labo |
+| `labo/ateliers/` (un fichier par atelier), `labo/defis/` (un fichier par atelier), `labo/dot2/simulateur_dot2.html`, `content/terms_labo.js` | L'interface de chaque atelier (dessins en canvas ou plateau 3D, commandes, afficheurs) ; ses défis notés ; la console dot2 (page complète gardée telle quelle, ouverte dans un cadre) ; les fiches « ? » du Labo |
+| `labo/plateau/calc.js`, `labo/plateau/scene.js`, `labo/plateau/pieces.js`, `labo/plateau/dof.js` | Le plateau 3D du Labo (v19.30) : les calculs purs (isométrie, cadrage, lecture des positions, exposition, tache en pixels, projecteur du rendu) ; le moteur isométrique partagé (rendu à la demande, glisser-poser au sol, étiquettes, image de la caméra composée) ; les pièces low-poly (sol, cyclo, sujets, caméra, projecteurs, repères) ; l'image de la caméra (flou de profondeur de champ par pixel, exposition, balance des blancs, zébra) |
 | `ui/cours_ui.js` | L'espace Cours : un seul sommaire (chapitres rangés par niveau, parties), « Mon parcours », chemin d'un chapitre, la page de lecture d'une leçon qui se dévoile (en-tête, étapes collantes, schéma légendé, manipulation, explication, car, mots de la leçon, référentiel, quiz, exercice en autonomie, exercices pratiques), glossaire, postes, matériel |
 | `app/nav.js` | Navigation entre les trois entrées : menu du car (Échap), aiguillage des boutons « Aller au poste », « Commencer » (car lancé si besoin), ouverture du Labo depuis une leçon, changement de vacation |
 | `ui/layer.js` | Espace plein écran (le Cours) : plaque, onglets, Fermer (Échap), ligne d'état |

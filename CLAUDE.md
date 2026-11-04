@@ -143,7 +143,7 @@ Tout est en français (code commenté en français, interface, commits).
 - **Le Labo** (`src/labo/`, v19.28, décidé le 3 novembre 2026) : il **remplace l'entrepôt et la Carrière** (retirés du
   code ; ne pas les recréer). Lieu « Le Labo » de Jouer, un écran à part par-dessus le reste (`labo/index.js`,
   `styles/labo.css`) : un onglet par atelier (`labo/ateliers.js` : compétences, savoirs, fiches, liens, défis), l'atelier au
-  centre (`labo/ateliers/<id>.js` : canvas et commandes de `labo/kit.js`, liées à l'état par chemin pointé et verrouillables),
+  centre (`labo/ateliers/<id>.js` : canvas ou plateau 3D, et commandes de `labo/kit.js`, liées à l'état par chemin pointé et verrouillables),
   à droite Défis et Comprendre (notions, fiches « ? » de `content/terms_labo.js`, liens du Cours, référentiel cité). Un
   atelier calcule sur un modèle pur testé (`labo/calc/` : optique, photométrie, sensitométrie, DMX) ; son état et ses mesures
   sont dans `labo/etats.js`. Ses défis notés (`labo/defis/<id>.js`, moteur `labo/defis.js` sur celui de `cours/exo.js`) :
@@ -169,6 +169,18 @@ Tout est en français (code commenté en français, interface, commits).
   `lumiere_commande.js` : DMX, ligne, console, lyres, Art-Net et sACN), exercices `cours/exos/lumiere_*.js`, fiches
   `content/terms_lumiere_*.js`. Les manipulations calculent avec les modèles du Labo (`labo/calc/`) : leçons et ateliers disent
   les mêmes chiffres. Les ateliers du Labo y sont les exercices pratiques (`x-labo-photometrie`, `x-labo-dmx`, `x-labo-dot2`).
+- **Le plateau 3D du Labo** (`src/labo/plateau/`, v19.30, décidé le 4 novembre 2026) : les ateliers Optique et Photométrie se
+  jouent sur un plateau vu en isométrie et dessiné en low-poly. Le moteur (`scene.js` : un seul rendu WebGL partagé, monté dans
+  l'atelier affiché, rendu à la demande ; caméra orthographique, quarts de tour, zoom, recentrer ; glisser-poser au sol ;
+  étiquettes en pilules) reçoit de l'atelier un **adaptateur** (scène, objets à prendre, étiquettes, cadre, image de la caméra,
+  exposition). Les pièces (`pieces.js`) : Builder en mode `ao`, `matPlate()` = `matiere()` sans relief, lu à plat, aucun
+  fichier de texture ; les repères (champ, zone nette, cônes, anneau) vivent sur la couche 1, que l'image de la caméra ne voit
+  pas. L'image de la caméra (`dof.js`) est rendue pour de vrai : flou par pixel depuis la profondeur avec la formule de la
+  leçon (jugée à la définition HD), exposition π ÷ Eref, balance des blancs, zébra ; les lumières sont en unités physiques
+  (candelas, lux). Les calculs sont purs (`calc.js`, test `tests/unit/plateau.test.mjs`). L'état des ateliers porte la place
+  des objets (`cam.x`, `cam.z`, `lat`) ; un objet déplacé écrit l'état par `ctx.changer` (donc un réglage imposé par un défi
+  verrouille aussi l'objet) ; les défis et leurs scènes ne changent pas. Un nouvel atelier en 3D suit ce moule. Suite
+  `node tools/e2e.mjs labo-plateau`.
 - **Les vues 3D du Cours** (`src/vues3d/`, v19.16, décidé le 26 octobre 2026) : une notion technique qui se
   comprend mieux en la voyant (câble, appareils, réseau, lieu) a sa vue ; une notion de calcul ou de courbe reste en
   2D (tableau de pertinence dans le README). Une vue = un fichier de `vues/` (id, chapitre, `lecons`, `etapes` avec
