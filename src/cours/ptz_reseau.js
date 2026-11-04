@@ -113,15 +113,15 @@ function demoEasyIp(host) {
 // 5. PoE et PoE+ : classes et budget
 // ======================================================================================
 function figPoe() {
-  const f = figure(720, 250, `Le PoE : le switch envoie le courant par les paires du câble réseau. En PoE (IEEE 802.3af), ${POE.af.pse} W au départ du port, ${POE.af.pd} W à l'arrivée ; en PoE+ (802.3at), ${POE.at.pse} W et ${POE.at.pd} W : la différence se perd dans 100 m de câble. Les classes : 1 = 4 W, 2 = 7 W, 3 = 15,4 W, 4 = 30 W. Les caméras AW-HE130 et AW-UE20 et le pupitre AW-RP150 demandent du PoE+ (classe 4). En bas, le budget d'un switch de 124 W : quatre appareils de classe 4 réservent 120 W ; un cinquième resterait éteint.`);
+  const f = figure(720, 250, `Le PoE : le switch envoie le courant par les paires du câble réseau. En PoE (IEEE 802.3af), ${POE.af.pse} W au départ du port, ${POE.af.pd} W à l'arrivée ; en PoE+ (802.3at), ${POE.at.pse} W et ${POE.at.pd} W : la différence se perd dans 100 m de câble. Les classes : 1 = 4 W, 2 = 7 W, 3 = 15,4 W, 4 = 30 W. Les caméras AW-HE130 et AW-UE20 et le pupitre AW-RP150 demandent du PoE+ (classe 4). En bas, le budget d'un switch de 125 W : quatre appareils de classe 4 réservent 120 W ; un cinquième resterait éteint.`);
   f.append(txt(10, 16, 'Le courant par le câble réseau : le switch détecte, lit la classe, réserve', 'co-t', 'start'));
   const rows = [['PoE (802.3af)', POE.af.pse, POE.af.pd, 'classes 0 à 3'], ['PoE+ (802.3at)', POE.at.pse, POE.at.pd, 'classe 4 : caméras, pupitre']];
   rows.forEach(([n, a, b, c], i) => { const y = 40 + i * 52; f.append(box(20, y, 680, 42, i ? C.amber : C.grey), txt(40, y + 26, /** @type {string} */ (n), 'co-t', 'start'), txt(250, y + 26, `${fmtNum(/** @type {number} */ (a), 1)} W au port`, 'co-s', 'start'), txt(390, y + 26, `${fmtNum(/** @type {number} */ (b), 2)} W à l'appareil`, 'co-s', 'start'), txt(560, y + 26, /** @type {string} */ (c), 'co-s', 'start', { fill: C.dim })); });
   // le budget
-  const x0 = 20, W = 680, y = 170, k = W / 124;
+  const x0 = 20, W = 680, y = 170, k = W / 125;
   f.append(sv('rect', { x: x0, y, width: W, height: 26, rx: 4, fill: C.box, stroke: C.grey }));
   [['CAM 1', C.cyan], ['CAM 2', C.cyan], ['CAM 3', C.violet], ['Pupitre', C.amber]].forEach(([n, col], i) => { f.append(sv('rect', { x: x0 + i * 30 * k, y, width: 30 * k - 2, height: 26, rx: 3, fill: col, 'fill-opacity': 0.55 }), txt(x0 + i * 30 * k + 15 * k, y + 17, `${n} · 30 W`, 'co-s')); });
-  f.append(txt(x0, y + 46, 'budget du switch : 124 W · réservé : 120 W (allocation par classe) · consommé : ≈ 92 W', 'co-s', 'start'));
+  f.append(txt(x0, y + 46, 'budget du switch : 125 W · réservé : 120 W (allocation par classe) · consommé : ≈ 92 W', 'co-s', 'start'));
   return f;
 }
 function demoPoe(host) {
@@ -189,12 +189,12 @@ function demoWeb(host) {
 // 7. Le pupitre AW-RP150 : son adresse, ses caméras, ses commandes
 // ======================================================================================
 function figPupitre() {
-  const f = figure(720, 270, `Le pupitre AW-RP150 et son menu CONNECT SETTING. RP IP SET : l'adresse, le masque et la passerelle du pupitre, dans le réseau des caméras. MANUAL IP SET : une ligne par numéro de caméra, l'adresse IP et le port HTTP. AUTO IP SET : le pupitre attribue les adresses lui-même (on ne le lance pas en même temps qu'Easy IP Setup). À droite, ce que fait un geste : le joystick vers la droite envoie à la caméra la requête http://192.168.10.11/cgi-bin/aw_ptz?cmd=%23PTS7550&res=1, pan vers la droite à la vitesse 25 sur 49, tilt à l'arrêt ; la caméra répond et bouge. Le pupitre pilote 200 caméras en IP, 5 en série ; ses 10 touches appellent les numéros 1 à 10.`);
-  f.append(txt(10, 16, 'CONNECT SETTING : d\'abord le pupitre, puis une adresse et un port par caméra', 'co-t', 'start'));
-  f.append(box(20, 36, 300, 220, C.violet), txt(170, 56, 'AW-RP150 · CONNECT SETTING', 'co-t'));
+  const f = figure(720, 270, `Le pupitre AW-RP150 : la touche SYSTEM ouvre sur l'écran CONNECT SETTING (chaque numéro de caméra en LAN), MANUAL IP SET, AUTO IP SET et RP IP SET. RP IP SET : l'adresse, le masque et la passerelle du pupitre, dans le réseau des caméras. MANUAL IP SET : une ligne par numéro de caméra, l'adresse IP et le port HTTP. AUTO IP SET : le pupitre attribue les adresses lui-même (on ne le lance pas en même temps qu'Easy IP Setup). À droite, ce que fait un geste : le joystick vers la droite envoie à la caméra la requête http://192.168.10.11/cgi-bin/aw_ptz?cmd=%23PTS7550&res=1, pan vers la droite à la vitesse 25 sur 49, tilt à l'arrêt ; la caméra répond et bouge. Le pupitre pilote 200 caméras en IP, 5 en série ; ses 10 touches appellent les numéros 1 à 10.`);
+  f.append(txt(10, 16, 'Touche SYSTEM : le pupitre, le mode LAN, puis une adresse et un port par caméra', 'co-t', 'start'));
+  f.append(box(20, 36, 300, 220, C.violet), txt(170, 56, 'AW-RP150 · SYSTEM', 'co-t'));
   f.append(txt(36, 82, 'RP IP SET', 'co-s', 'start', { fill: C.white }), txt(36, 98, '192.168.10.10 / 255.255.255.0, passerelle .1', 'co-s', 'start'));
-  f.append(txt(36, 124, 'MANUAL IP SET', 'co-s', 'start', { fill: C.white }));
-  [['CAM1', '192.168.10.11', '80'], ['CAM2', '192.168.10.12', '80'], ['CAM3', '192.168.10.13', '80']].forEach(([n, ip, p], i) => f.append(txt(36, 142 + i * 16, `${n}   ${ip}   port ${p}`, 'co-s', 'start')));
+  f.append(txt(36, 116, 'CONNECT SETTING : CAM1 à CAM3 en LAN', 'co-s', 'start', { fill: C.white }), txt(36, 132, 'MANUAL IP SET', 'co-s', 'start', { fill: C.white }));
+  [['CAM1', '192.168.10.11', '80'], ['CAM2', '192.168.10.12', '80'], ['CAM3', '192.168.10.13', '80']].forEach(([n, ip, p], i) => f.append(txt(36, 148 + i * 16, `${n}   ${ip}   port ${p}`, 'co-s', 'start')));
   f.append(txt(36, 206, 'AUTO IP SET', 'co-s', 'start', { fill: C.white }), txt(36, 222, 'adresses attribuées par le pupitre', 'co-s', 'start'), txt(36, 238, '(pas en même temps qu\'Easy IP Setup)', 'co-s', 'start', { fill: C.dim }));
   // la commande
   f.append(ligne(320, 140, 380, 140, C.cyan), box(380, 90, 320, 100, C.cyan), txt(540, 112, 'Un geste au joystick =', 'co-t'), txt(540, 132, 'une requête HTTP à la caméra :', 'co-s'));
@@ -319,7 +319,7 @@ Puis **Save** : la caméra redémarre son réseau avec ses nouveaux réglages. L
 
 **La classe.** Au branchement, le switch **détecte** que l'appareil accepte le PoE (une résistance de signature), puis lit sa **classe** : 1 (4 W), 2 (7 W), 3 (15,4 W), 4 (30 W, le PoE+). Il n'envoie le courant qu'ensuite. Une **AW-HE130**, une **AW-UE20** et le pupitre **AW-RP150** sont en classe 4 : sur un port limité au PoE (15,4 W), ils ne démarrent pas.
 
-**Le budget.** Le switch a une puissance totale pour tous ses ports (124 W sur le switch du banc, un ordre de grandeur courant). S'il **alloue par classe**, il réserve 30 W à chaque appareil de classe 4, même s'il en consomme moins : deux AW-HE130 (environ 25 W chacune en PoE+), une AW-UE20 (environ 17 W) et le pupitre réservent 120 W pour une consommation d'environ 90 W. Quand le budget est atteint, les ports suivants restent sans courant.
+**Le budget.** Le switch a une puissance totale pour tous ses ports (125 W sur le switch du banc, comme un switch PoE+ administrable à 8 ports courant en régie). S'il **alloue par classe**, il réserve 30 W à chaque appareil de classe 4, même s'il en consomme moins : deux AW-HE130 (environ 25 W chacune en PoE+), une AW-UE20 (environ 17 W) et le pupitre réservent 120 W pour une consommation d'environ 90 W. Quand le budget est atteint, les ports suivants restent sans courant.
 
 **Quand le budget ne suffit pas.** On choisit un switch plus puissant, on répartit sur deux switchs, ou l'on alimente un appareil par son **bloc 12 V** (le pupitre, posé sur la table, s'y prête bien). Un appareil qui a son bloc ne demande plus de PoE.
 
@@ -390,11 +390,16 @@ Un bon mot de passe : au moins 8 caractères, ni le nom ni celui d'usine ; on le
     demo: demoPupitre,
     body: `Le **AW-RP150** est le pupitre de commande des tourelles Panasonic : un **joystick** (pan, tilt), une commande de **zoom**, les réglages de l'image (iris, gain, balance, détail), les **touches de caméra** et un **écran tactile** de 7 pouces. Il s'alimente en **PoE+** ou par son bloc 12 V. Il pilote jusqu'à **200 caméras en IP**, et 5 par liaison série RS-422.
 
-**Mettre le pupitre en réseau.** Dans le menu **CONNECT SETTING** :
+**La face avant** (mode d'emploi) : en haut à gauche, les réglages de caméra (molettes IRIS et sa touche AUTO, M.PED, R/B GAIN, R/B PED ; touches A/3200K, B/5600K, ATW/VAR, ABB, BARS) ; au centre, l'écran tactile et, dessous, les molettes **F1 à F4** ; les touches de menu **PAINT**, **FUNCTION**, **MAINTENANCE**, **PMEM/TMEM**, **SYSTEM** (un second appui revient à l'écran d'état) ; en bas, **CAMERA/GROUP SELECTION 1 à 10** ; à droite, **ENABLE** (qui déverrouille le joystick et le levier), le joystick et son levier à bascule (zoom, ou point avec ZOOM/FOCUS). L'écran d'état montre le numéro, le modèle, le TALLY, l'IRIS, le ZOOM et le FOCUS de la caméra choisie.
+
+**La face arrière** : **IP CONT** (RJ45, le réseau et le PoE+), **SERIAL CONT 1 à 5** (RJ45 aussi, RS-422 et tally vers une caméra : pas de PoE+ ici), **3G SDI IN** et **ACTIVE THRU** (l'image de retour, affichée sur l'écran), **TALLY/GPIO 1** et **GPIO 2** (Sub-D 25 broches : le tally du mélangeur entre par la première), **DC 12V IN** (XLR 4 broches).
+
+**Mettre le pupitre en réseau.** Touche **SYSTEM**, puis sur l'écran :
 - **RP IP SET** : l'adresse, le masque et la passerelle du pupitre. Il doit être **dans le réseau des caméras** : le banc n'a pas de routeur. Sur le banc, le pupitre arrive en 192.168.0.9 (l'adresse des exemples de mise en service Panasonic) ; on le met à l'adresse de la fiche.
+- **CONNECT SETTING** : pour chaque numéro de caméra, le mode de liaison (**CNNCT MD**) : **LAN**, SERIAL ou NONE. Un numéro qui n'est pas en LAN n'est pas piloté par le réseau.
 - **MANUAL IP SET** : une ligne par **numéro de caméra** : son adresse IP et son **port HTTP**. CAM1 → 192.168.10.11, port 80, et ainsi de suite.
 - **AUTO IP SET** : le pupitre attribue les adresses lui-même ; pratique pour un banc neuf, mais on ne le lance pas en même temps qu'Easy IP Setup, et l'on perd la maîtrise du plan.
-La touche d'une caméra s'allume quand la liaison tient. Si elle reste éteinte : l'adresse, le port, le réseau, ou une caméra sans **compte administrateur** (l'AW-UE20 se voit mais ne se pilote pas tant qu'il n'existe pas).
+La touche d'une caméra s'allume quand la liaison tient (en rouge quand elle est à l'antenne, si le tally du mélangeur arrive sur TALLY/GPIO 1). Si elle reste éteinte : l'adresse, le port, le réseau, ou une caméra sans **compte administrateur** (l'AW-UE20 se voit mais ne se pilote pas tant qu'il n'existe pas).
 
 **Ce que fait un geste.** Le pupitre parle à la caméra en **HTTP**, comme un navigateur. Pousser le joystick à droite envoie :
 \`http://192.168.10.11/cgi-bin/aw_ptz?cmd=%23PTS7550&res=1\`

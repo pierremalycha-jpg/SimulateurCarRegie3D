@@ -1,7 +1,9 @@
 // @ts-check
 import { el } from '../../util.js';
 import { afficheur, fr } from '../kit.js';
-import { MODELES, POE, SWITCH, FENETRE_EASYIP, COMPTE_USINE, cameras, appareil, enMarche, depuis, adresse, reglerEasyIp, ouvrirUrl, verifierCompte, joint, camDuNumero, ipOk, prefixe, adresseHote, dansReseau, tosDe } from '../calc/ptz.js';
+import { vueCablage } from './ptz_cablage.js';
+import { vuePupitre } from './ptz_pupitre.js';
+import { MODELES, POE, SWITCH, FENETRE_EASYIP, COMPTE_USINE, cameras, appareil, depuis, adresse, reglerEasyIp, ouvrirUrl, verifierCompte, joint, ipOk, prefixe, adresseHote, dansReseau, tosDe } from '../calc/ptz.js';
 
 // ----------------------------------------------------------------------------------
 // L'atelier « Caméras PTZ » (v19.30) : le banc de mise en service du BTS, en quatre vues.
@@ -16,21 +18,22 @@ import { MODELES, POE, SWITCH, FENETRE_EASYIP, COMPTE_USINE, cameras, appareil, 
 // Tout se calcule dans labo/calc/ptz.js ; ce qui se tape dans un formulaire reste ici (U) jusqu'à
 // « Save », « Set » ou « OK ».
 // ----------------------------------------------------------------------------------
-const VUES = [['banc', 'Le banc'], ['pc', 'Le PC technique'], ['pupitre', 'Le pupitre AW-RP150'], ['fiche', 'La fiche du banc']];
+const VUES = [['cablage', 'Le câblage'], ['banc', 'Le switch'], ['pc', 'Le PC technique'], ['pupitre', 'Le pupitre AW-RP150'], ['fiche', 'La fiche du banc']];
 const APPS = [['reseau', 'Connexion réseau (IPv4)'], ['easyip', 'Easy IP Setup'], ['web', 'Navigateur']];
 
 /** la mise en service pas à pas : comment faire chaque étape dans l'atelier (l'état dit si elle est faite) */
 export const COMMENT = {
-  cabler: 'Dans « Le banc », choisissez pour chaque appareil un port du switch (une prise RJ45 par appareil). Le PC est sur le secteur ; les caméras et le pupitre prennent leur courant par le câble.',
-  alimenter: 'Les AW-HE130, AW-UE20 et le pupitre AW-RP150 demandent du PoE+ (IEEE 802.3at, classe 4 : 30 W réservés par port). Un port en PoE simple (15,4 W) ne les démarre pas. Surveillez le budget du switch.',
+  cabler: 'Dans « Le câblage », prenez un câble réseau RJ45 : touchez la prise LAN de l\'appareil, puis un port du switch. Attention, chaque caméra a deux prises RJ45 : LAN (le réseau et le PoE+) et RS-422 (une liaison série) ; le pupitre en a six (IP CONT et SERIAL CONT 1 à 5). Seules LAN et IP CONT font de l\'Ethernet.',
+  alimenter: 'Dans « Le switch », les AW-HE130, AW-UE20 et le pupitre AW-RP150 demandent du PoE+ (IEEE 802.3at, classe 4 : 30 W réservés par port). Un port en PoE simple (15,4 W) ne les démarre pas. Surveillez le budget ; à défaut, le bloc 12 V de l\'appareil (câble « Bloc secteur 12 V »).',
+  video: 'Dans « Le câblage », prenez un coaxial BNC : la sortie SDI de chaque caméra vers l\'entrée de même numéro du mélangeur (pas G/L IN, qui est une entrée de synchronisation). Puis le câble GPIO : les GPIO du mélangeur vers ceux du pupitre, pour le tally.',
   pc: 'Dans « Le PC technique », application Connexion réseau : « Utiliser l\'adresse IP suivante », l\'adresse et le masque de la fiche, puis OK. Le PC doit être dans le sous-réseau des caméras pour ouvrir leur page web.',
   chercher: 'Ouvrez Easy IP Setup et cliquez sur « Search ». La recherche part en diffusion : elle trouve les caméras du même segment même si leur adresse n\'est pas dans le sous-réseau du PC, et les distingue par leur adresse MAC (relevez-la sur l\'étiquette de la caméra, dans « Le banc »).',
   adresser: 'Sélectionnez une caméra dans la liste, « Network Settings », tapez l\'adresse, le masque et la passerelle de la fiche, puis « Save ». Les trois caméras sortent du carton en 192.168.0.10 : on les distingue par leur MAC, et on les règle une par une. Une caméra réglée sur « 20min » disparaît de la liste passé 20 minutes sous tension : on la redémarre.',
   compte: 'Dans Easy IP Setup, « Access Camera » ouvre la page de la caméra dans le navigateur (ou tapez http://adresse). L\'AW-UE20 demande de créer le compte administrateur au premier accès ; l\'AW-HE130 a un compte d\'usine (admin, 12345) à changer dans Setup → User mng.',
-  pupitre: 'Dans « Le pupitre », CONNECT SETTING → RP IP SET : l\'adresse, le masque et la passerelle de la fiche, puis SET.',
-  enregistrer: 'Toujours dans CONNECT SETTING, MANUAL IP SET : pour les caméras 1, 2 et 3, l\'adresse IP et le port HTTP (80) de CAM 1, 2 et 3, puis SET. La touche de chaque caméra s\'allume quand la liaison tient.',
+  pupitre: 'Dans « Le pupitre », la touche SYSTEM, puis RP IP SET sur l\'écran : l\'adresse, le masque et la passerelle de la fiche, puis SET.',
+  enregistrer: 'Touche SYSTEM : CONNECT SETTING, les caméras 1, 2 et 3 en LAN ; puis MANUAL IP SET, pour chacune l\'adresse IP et le port HTTP (80) de CAM 1, 2 et 3, et SET. La touche de chaque caméra s\'allume en vert quand la liaison tient.',
   qos: 'Dans la page web de chaque caméra, Setup → Network → Advanced : Diffserv à 34 (AF41). Puis dans « Le banc », la qualité de service du switch : confiance DSCP et file prioritaire. Essayez avec un transfert de fichiers vers le PC et les flux des caméras allumés.',
-  recette: 'Au pupitre, appuyez sur la touche de chaque caméra et bougez-la au joystick : la caméra répond si la liaison tient. Notez dans la fiche qui joint qui.',
+  recette: 'Au pupitre, allumez ENABLE, appuyez sur la touche de chaque caméra et bougez-la au joystick : la caméra répond si la liaison tient. Mettez une entrée au programme du mélangeur : sa touche s\'allume en rouge (tally).',
 };
 
 export function creer(/** @type {import('../kit.js').Ctx} */ ctx) {
@@ -310,77 +313,10 @@ export function creer(/** @type {import('../kit.js').Ctx} */ ctx) {
   }
 
   // ======================================================================
-  // le pupitre AW-RP150 : l'écran tactile, les touches de caméra, le joystick
+  // le pupitre AW-RP150 (labo/ateliers/ptz_pupitre.js)
   // ======================================================================
-  const vRp = el('div', { class: 'lb-vue' });
-  function dessinerRp(m) {
-    const rp = appareil(st(), 'rp'), on = enMarche(st(), 'rp'), L = m.pupitre, sel = st().rp.sel;
-    const menus = [['camera', 'CAMERA'], ['rpip', 'RP IP SET'], ['manual', 'MANUAL IP SET']];
-    let ecran;
-    if (!on) ecran = el('div', { class: 'tz-rp-off' }, 'Écran éteint : le pupitre n\'est pas alimenté.');
-    else {
-      const onglets = el('nav', { class: 'tz-rp-tabs', 'aria-label': 'Menus du pupitre' }, ...menus.map(([k, t]) => el('button', { type: 'button', 'aria-pressed': String(U.rpMenu === k), 'data-k': 'rp:m:' + k, onclick: () => { U.rpMenu = k; U.rpMsg = ''; local(); } }, t)));
-      let page;
-      if (U.rpMenu === 'rpip') {
-        if (!U.rpIp) U.rpIp = { ip: rp.ip, masque: rp.masque, passerelle: rp.passerelle };
-        const F = U.rpIp, dis = lock('appareils.rp') || lock('appareils');
-        const set = () => {
-          if (!ipOk(F.ip) || prefixe(F.masque) == null || !adresseHote(F.ip, F.masque)) { U.rpMsg = 'ADRESSE OU MASQUE INVALIDE'; local(); return; }
-          if (F.passerelle && (!ipOk(F.passerelle) || !dansReseau(F.ip, F.masque, F.passerelle))) { U.rpMsg = 'PASSERELLE HORS DU SOUS-RÉSEAU'; local(); return; }
-          U.rpMsg = 'SET : le pupitre redémarre son réseau.'; U.rpIp = null;
-          ctx.changer({ 'appareils.rp.ip': F.ip.trim(), 'appareils.rp.masque': F.masque.trim(), 'appareils.rp.passerelle': F.passerelle.trim() });
-        };
-        page = el('div', { class: 'tz-rp-page' }, el('h5', {}, 'CONNECT SETTING · RP IP SET'),
-          el('div', { class: 'tz-form' }, champ('IP ADDRESS', F.ip, (v) => { F.ip = v; }, { k: 'rp:ip', enter: set, disabled: dis }), champ('SUBNET MASK', F.masque, (v) => { F.masque = v; }, { k: 'rp:masque', enter: set, disabled: dis }), champ('DEFAULT GATEWAY', F.passerelle, (v) => { F.passerelle = v; }, { k: 'rp:passerelle', enter: set, disabled: dis })),
-          el('div', { class: 'tz-acts' }, bouton('SET', set, { primary: true, k: 'rp:ipset', disabled: dis })));
-      } else if (U.rpMenu === 'manual') {
-        const lignes = Array.from({ length: 5 }, (_, i) => {
-          const n = i + 1, cur = (st().rp.cams || {})[n] || { ip: '', port: 80 };
-          const F = U.rpCams[n] || (U.rpCams[n] = { ip: cur.ip, port: String(cur.port || 80) });
-          const l = L.find((x) => x.n === n);
-          return el('tr', {}, el('th', { scope: 'row' }, `CAM${n}`),
-            el('td', {}, el('input', { type: 'text', value: F.ip, 'aria-label': `Adresse IP de la caméra ${n}`, 'data-k': `rp:cam${n}:ip`, spellcheck: 'false', autocomplete: 'off', oninput: (e) => { F.ip = e.target.value; } })),
-            el('td', {}, el('input', { type: 'text', inputmode: 'numeric', value: F.port, 'aria-label': `Port de la caméra ${n}`, 'data-k': `rp:cam${n}:port`, oninput: (e) => { F.port = e.target.value; } })),
-            el('td', { class: l ? (l.ok ? 'ok' : 'bad') : '' }, !l ? '—' : l.ok ? 'connectée' : l.pb));
-        });
-        const set = () => {
-          const cams = {};
-          for (const [k, F] of Object.entries(U.rpCams)) { if (!F.ip.trim()) continue; if (!ipOk(F.ip.trim())) { U.rpMsg = `CAM${k} : ADRESSE INVALIDE`; local(); return; } cams[k] = { ip: F.ip.trim(), port: Math.round(Number(F.port)) || 80 }; }
-          U.rpMsg = 'SET : liste des caméras enregistrée.'; ctx.changer({ 'rp.cams': cams });
-        };
-        page = el('div', { class: 'tz-rp-page' }, el('h5', {}, 'CONNECT SETTING · MANUAL IP SET'),
-          el('table', { class: 'tz-table tz-rp-table' }, el('thead', {}, el('tr', {}, el('th', {}, 'CAM'), el('th', {}, 'IP ADDRESS'), el('th', {}, 'PORT'), el('th', {}, 'STATUS'))), el('tbody', {}, ...lignes)),
-          el('div', { class: 'tz-acts' }, bouton('SET', set, { primary: true, k: 'rp:camset' })),
-          el('p', { class: 'tz-note' }, 'Le pupitre en pilote 200 en IP (5 sur ses liaisons série) ; ses 10 touches de caméra appellent les numéros 1 à 10. AUTO IP SET, lui, attribue les adresses tout seul : on ne le lance pas en même temps qu\'Easy IP Setup.'));
-      } else {
-        const cam = camDuNumero(st(), sel), c = cam ? appareil(st(), cam) : null, p = cam ? U.pos[cam] || { pan: 0, tilt: 0, zoom: 0 } : null;
-        page = el('div', { class: 'tz-rp-page' }, el('h5', {}, `CAMERA · CAM${sel}`),
-          el('dl', { class: 'tz-dl' }, el('dt', {}, 'IP'), el('dd', {}, ((st().rp.cams || {})[sel] || {}).ip || '—'), el('dt', {}, 'STATUS'), el('dd', {}, c ? `${c.nom} (${MODELES[c.modele].nom}) connectée` : (L.find((x) => x.n === sel) || { pb: 'pas enregistrée' }).pb),
-            p ? [el('dt', {}, 'PAN / TILT'), el('dd', {}, `${fr(p.pan, 0)}° / ${fr(p.tilt, 0)}°`), el('dt', {}, 'ZOOM'), el('dd', {}, `${fr(p.zoom, 0)} %`)] : null),
-          U.rpCmd ? el('p', { class: 'tz-cmd' }, el('small', {}, 'Dernière commande envoyée'), el('code', {}, U.rpCmd)) : null);
-      }
-      ecran = el('div', { class: 'tz-rp-screen' }, el('div', { class: 'tz-rp-status' }, el('span', {}, `RP ${rp.ip}`), el('span', {}, `${L.filter((x) => x.ok).length} caméra(s) connectée(s)`)), onglets, page, U.rpMsg ? el('p', { class: 'tz-rp-msg', role: 'status' }, U.rpMsg) : null);
-    }
-    // les touches de caméra : allumées quand la liaison tient
-    const touches = el('div', { class: 'tz-rp-keys', role: 'group', 'aria-label': 'Touches de sélection de caméra' }, ...Array.from({ length: 10 }, (_, i) => {
-      const n = i + 1, l = L.find((x) => x.n === n);
-      return el('button', { type: 'button', class: 'tz-rp-key' + (l && l.ok ? ' ok' : l ? ' bad' : ''), 'aria-pressed': String(n === sel), 'aria-label': `Caméra ${n}${l ? (l.ok ? ', connectée' : ', pas de liaison') : ''}`, disabled: !on ? true : null, onclick: () => { U.rpMenu = 'camera'; ctx.changer({ 'rp.sel': n }); } }, String(n));
-    }));
-    // le joystick : la vraie commande HTTP Panasonic (#PTS : vitesses pan et tilt de 01 à 99, 50 à l'arrêt)
-    const bouger = (dp, dt, dz) => {
-      const cam = camDuNumero(st(), sel); if (!cam) { U.rpMsg = `CAM${sel} : PAS DE LIAISON`; local(); return; }
-      const c = appareil(st(), cam), p = U.pos[cam] || (U.pos[cam] = { pan: 0, tilt: 0, zoom: 0 });
-      p.pan = Math.max(-175, Math.min(175, p.pan + dp)); p.tilt = Math.max(-30, Math.min(90, p.tilt + dt)); p.zoom = Math.max(0, Math.min(100, p.zoom + dz));
-      const cmd = dz ? `%23Z${dz > 0 ? 75 : 25}` : `%23PTS${String(50 + Math.sign(dp) * 25).padStart(2, '0')}${String(50 + Math.sign(dt) * 25).padStart(2, '0')}`;
-      U.rpCmd = `http://${adresse(c)}${c.http !== 80 ? ':' + c.http : ''}/cgi-bin/aw_ptz?cmd=${cmd}&res=1`; U.rpMsg = '';
-      const t = st().rp.testees || [];
-      if (!t.includes(cam)) ctx.changer({ 'rp.testees': [...t, cam] }); else local();
-    };
-    const joy = el('div', { class: 'tz-joy', role: 'group', 'aria-label': 'Joystick et zoom' },
-      bouton('▲', () => bouger(0, 10, 0), { aria: 'Tilt vers le haut', disabled: !on }), el('div', { class: 'tz-joy-mid' }, bouton('◀', () => bouger(-15, 0, 0), { aria: 'Pan vers la gauche', disabled: !on }), bouton('▶', () => bouger(15, 0, 0), { aria: 'Pan vers la droite', disabled: !on })), bouton('▼', () => bouger(0, -10, 0), { aria: 'Tilt vers le bas', disabled: !on }),
-      el('div', { class: 'tz-joy-mid' }, bouton('W', () => bouger(0, 0, -10), { aria: 'Zoom large', disabled: !on }), bouton('T', () => bouger(0, 0, 10), { aria: 'Zoom serré', disabled: !on })));
-    vRp.replaceChildren(el('div', { class: 'tz-rp' }, el('div', { class: 'tz-rp-left' }, el('div', { class: 'tz-rp-label' }, el('b', {}, 'AW-RP150'), el('small', {}, 'écran tactile 7 pouces')), ecran, touches), joy));
-  }
+  const rpv = vuePupitre(ctx, { local: () => local(), lock, pos: U.pos });
+  const vRp = rpv.root;
 
   // ======================================================================
   // la fiche du banc : le plan à appliquer, la recette
@@ -404,19 +340,22 @@ export function creer(/** @type {import('../kit.js').Ctx} */ ctx) {
   // ---------------- l'ensemble ----------------
   const onglets = el('div', { class: 'seg lb-vues', role: 'tablist', 'aria-label': 'Les vues de l\'atelier' },
     ...VUES.map(([id, t]) => el('button', { type: 'button', role: 'tab', 'data-vue': id, onclick: () => ctx.changer({ vue: id }) }, t)));
-  const panneaux = { banc: vBanc, pc: vPc, pupitre: vRp, fiche: vFiche };
+  const cab = vueCablage(ctx, { local: () => local(), lock });
+  const vCab = cab.root;
+  const panneaux = { cablage: vCab, banc: vBanc, pc: vPc, pupitre: vRp, fiche: vFiche };
   function rendre() {
     const m = ctx.m(), v = st().vue;
     for (const b of onglets.querySelectorAll('button')) { const on = /** @type {HTMLElement} */ (b).dataset.vue === v; b.setAttribute('aria-selected', String(on)); /** @type {HTMLButtonElement} */ (b).disabled = lock('vue') && !on; }
     for (const [k, p] of Object.entries(panneaux)) p.hidden = k !== v;
     // un nouvel état (un défi, une solution) : les formulaires repartent de ce qui est en service
-    if (st() !== dernier) { dernier = st(); U.ipv4 = null; U.rpIp = null; U.rpCams = {}; U.dlg = null; U.page = null; U.url = ''; U.logins.clear(); U.form = {}; U.eipMsg = U.webMsg = U.rpMsg = U.ipv4Msg = U.rpCmd = ''; U.sel = ''; }
+    if (st() !== dernier) { dernier = st(); U.ipv4 = null; U.rpIp = null; U.rpCams = {}; U.dlg = null; U.page = null; U.url = ''; U.logins.clear(); U.form = {}; U.eipMsg = U.webMsg = U.rpMsg = U.ipv4Msg = U.rpCmd = ''; U.sel = ''; cab.reset(); rpv.reset(); }
+    if (v === 'cablage') cab.rendre();
     if (v === 'banc') dessinerBanc(m);
     if (v === 'pc') dessinerPc(m);
-    if (v === 'pupitre') dessinerRp(m);
+    if (v === 'pupitre') rpv.rendre();
     if (v === 'fiche') dessinerFiche(m);
   }
   let dernier = null;
-  const root = el('div', { class: 'lb-atelier lb-ptz' }, el('div', { class: 'lb-stage lb-wide' }, onglets, vBanc, vPc, vRp, vFiche));
+  const root = el('div', { class: 'lb-atelier lb-ptz' }, el('div', { class: 'lb-stage lb-wide' }, onglets, vCab, vBanc, vPc, vRp, vFiche));
   return { root, rendre, etapes: () => ctx.m().etapes, comment: COMMENT, aller: (e) => ctx.changer(e.pc ? { vue: e.vue, pcApp: e.pc } : { vue: e.vue }) };
 }

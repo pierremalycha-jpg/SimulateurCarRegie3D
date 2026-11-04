@@ -21,6 +21,8 @@ function auPlan() {
   const st = branche(), P = st.plan;
   for (const a of st.appareils) { const ip = a.id === 'pc' ? P.pc : a.id === 'rp' ? P.rp : P.cams[a.id]; Object.assign(a, { ip, masque: P.masque, passerelle: P.passerelle }); if (a.id.startsWith('cam')) a.compte = { user: 'regie', usine: false }; }
   st.rp.cams = { 1: { ip: P.cams.cam1, port: 80 }, 2: { ip: P.cams.cam2, port: 80 }, 3: { ip: P.cams.cam3, port: 80 } };
+  st.rp.modes = { 1: 'LAN', 2: 'LAN', 3: 'LAN' };
+  st.video = { cam1: { prise: 'sdi', entree: 1 }, cam2: { prise: 'sdi', entree: 2 }, cam3: { prise: 'sdi', entree: 3 } }; st.tally = true;
   return st;
 }
 
@@ -37,7 +39,7 @@ test('les réglages d\'usine Panasonic et le PoE (IEEE 802.3af / 802.3at)', () =
 test('alimentation : PoE+ exigé, budget par classe, bloc 12 V', () => {
   const st = branche();
   const A = Z.alimentation(st);
-  assert.equal(A.reserve, 120, '4 appareils de classe 4');
+  assert.equal(A.reserve, 120, '4 appareils de classe 4'); assert.equal(A.budget, 125);
   assert.ok(st.appareils.every((a) => A.par[a.id].alimente));
   st.switch.ports = st.switch.ports.map((p) => (p.n === 2 ? { ...p, poe: 'af' } : p));
   assert.match(Z.alimentation(st).par.cam1.pb, /PoE\+/, 'PoE simple : l\'AW-HE130 ne démarre pas');
@@ -115,9 +117,9 @@ test('QoS : marquer, faire confiance et ranger — les trois', () => {
   assert.equal(Z.tosDe(34), 136); assert.equal(Z.dscpAF(4, 1), 34); assert.equal(Z.DSCP.EF, 46);
 });
 
-test('la mise en service pas à pas : dix étapes, toutes faites au plan, la recette', () => {
+test('la mise en service pas à pas : onze étapes, toutes faites au plan, la recette', () => {
   const st = Z.bancUsine();
-  assert.equal(Z.etapes(st).length, 10);
+  assert.equal(Z.etapes(st).length, 11);
   assert.ok(Z.etapes(st).every((e) => !e.fait), 'rien de fait au carton');
   const P = auPlan();
   P.easyip.cherche = true;
@@ -127,6 +129,11 @@ test('la mise en service pas à pas : dix étapes, toutes faites au plan, la rec
   const E = Z.etapes(P);
   assert.deepEqual(E.filter((e) => !e.fait).map((e) => e.id), []);
   assert.ok(Z.recette(P).ok);
+  // le tally : l'entrée 2 au programme allume la touche 2 du pupitre ; sans câble GPIO, rien
+  P.pgm = 2; assert.deepEqual([Z.tallyRouge(P).cam, Z.tallyRouge(P).n], ['cam2', 2]);
+  P.tally = false; assert.equal(Z.tallyRouge(P).n, 0);
+  // CONNECT SETTING : un numéro en SERIAL n'est pas piloté par le réseau
+  P.rp.modes[1] = 'SERIAL'; assert.match(Z.liaisonsPupitre(P).find((l) => l.n === 1).pb, /CONNECT SETTING/);
 });
 
 test('les calculs des leçons : champ, matériel, commande HTTP, flux', () => {
@@ -167,4 +174,35 @@ test('le chapitre : dix leçons rangées par niveau, les symptômes du dépannag
   assert.equal(lessonById('ptz-easyip').chapter.id, 'ptz');
   const s = (p) => symptomes(p);
   assert.deepEqual([s('debranche').lien, s('poe').vu, s('vlan').vu, s('masque').vu, s('masque').pc, s('port').pc, s('port').rp], [false, false, false, true, false, true, false]);
+});
+
+test('le câblage : la fiche doit entrer, le RS-422 n\'est pas l\'Ethernet, G/L IN ne sort pas d\'image', () => {
+  const st = Z.bancUsine();
+  const ok = (r, msg) => { assert.ok(r.ok, `${msg} : ${r.pb}`); Z.majTension(Object.assign(st, {})); for (const [k, v] of Object.entries(r.patch)) { const parts = k.split('.'); let o = st; for (let i = 0; i < parts.length - 1; i++) o = Array.isArray(o) ? o.find((x) => x.id === parts[i]) : o[parts[i]]; o[parts[parts.length - 1]] = v; } };
+  // un câble réseau : de la prise LAN au port 2
+  ok(Z.brancher(st, 'rj45', 'cam1:lan', 'sw:p2'), 'CAM 1 au port 2');
+  assert.equal(Z.appareil(st, 'cam1').port, 2);
+  assert.ok(!Z.brancher(st, 'rj45', 'cam2:lan', 'sw:p2').ok, 'port déjà pris');
+  assert.ok(!Z.brancher(st, 'bnc', 'cam2:lan', 'mix:in1').ok, 'un BNC n\'entre pas dans une RJ45');
+  // le piège : la prise RS-422, RJ45 elle aussi
+  ok(Z.brancher(st, 'rj45', 'cam2:rs422', 'sw:p3'), 'le câble entre');
+  Z.majTension(st);
+  assert.match(Z.alimentation(st).par.cam2.pb, /RS-422/);
+  assert.ok(!Z.alimentation(st).par.cam2.lien);
+  // la vidéo
+  st.appareils.find((a) => a.id === 'cam1').secteur = true;
+  ok(Z.brancher(st, 'bnc', 'cam1:gl', 'mix:in1'), 'G/L IN vers l\'entrée 1 : le câble entre');
+  assert.match(Z.imageMelangeur(st).parCam.cam1.pb, /synchronisation/);
+  ok(Z.brancher(st, 'bnc', 'mix:in1', 'cam1:sdi'), 'la sortie SDI vers l\'entrée 1');
+  assert.ok(Z.imageMelangeur(st).parCam.cam1.ok);
+  assert.ok(!Z.brancher(st, 'bnc', 'cam3:sdi', 'mix:in1').ok, 'l\'entrée 1 est prise');
+  // le tally, le bloc, débrancher
+  ok(Z.brancher(st, 'gpio', 'mix:gpio', 'rp:gpio'), 'tally');
+  assert.ok(st.tally);
+  assert.deepEqual(Z.debrancher(st, 'rp:gpio'), { tally: false });
+  assert.deepEqual(Z.debrancher(st, 'sw:p2'), { 'appareils.cam1.port': 0, 'appareils.cam1.prise': 'lan' });
+  assert.ok(Z.cablesPoses(st).some((c) => c.type === 'dc' && c.a.startsWith('cam1:')));
+  // chaque prise des modèles du banc a une sérigraphie et une fiche
+  for (const m of ['he130', 'ue20', 'rp150', 'pc']) for (const P of Z.PRISES[m]) assert.ok(P.serigraphie && P.fiche && P.role, `${m} : ${P.id}`);
+  assert.ok(Z.PRISES.he130.some((P) => P.role === 'rs422' && P.fiche === 'rj45'), 'AW-HE130 : RS-422 en RJ45');
 });

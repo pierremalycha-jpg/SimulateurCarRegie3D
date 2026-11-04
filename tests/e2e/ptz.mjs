@@ -23,29 +23,51 @@ const etape = async (id) => (await etapes())[id];
 await A.click('.lx[data-lieu="labo"]'); await A.waitForTimeout(300);
 T.check('Jouer : le Labo propose l\'atelier Caméras PTZ', await ev(() => !!document.querySelector('.jo-mode[data-mode="labo:ptz"]')));
 await A.click('.jo-mode[data-mode="labo:ptz"]'); await A.click('#st-antenne');
-T.check('l\'atelier s\'ouvre sur le banc, le panneau sur « Pas à pas »', await until(A, () => window.__dbg.labo().LB.open && document.querySelector('#labo .lb-tab[aria-selected="true"]')?.dataset.atelier === 'ptz' && !!document.querySelector('#labo .tz-ports') && !!document.querySelector('#labo .lb-steps'), null, 20000));
-T.check('dix étapes, aucune faite, la première dépliée', await ev(() => document.querySelectorAll('#labo .lb-step').length === 10 && !document.querySelector('#labo .lb-step.ok') && !!document.querySelector('#labo .lb-step.cur .lb-step-body')));
-await shot('01-banc-carton', 600);
+T.check('l\'atelier s\'ouvre sur le câblage (faces arrière), le panneau sur « Pas à pas »', await until(A, () => window.__dbg.labo().LB.open && document.querySelector('#labo .lb-tab[aria-selected="true"]')?.dataset.atelier === 'ptz' && !!document.querySelector('#labo .tz-scene') && !!document.querySelector('#labo .lb-steps'), null, 20000));
+T.check('onze étapes, aucune faite, la première dépliée', await ev(() => document.querySelectorAll('#labo .lb-step').length === 11 && !document.querySelector('#labo .lb-step.ok') && !!document.querySelector('#labo .lb-step.cur .lb-step-body')));
+T.check('les faces arrière : l\'AW-HE130 et ses prises sérigraphiées (SDI OUT, G/L IN, LAN, RS-422, DC 12V IN), le pupitre (IP CONT, SERIAL CONT 1 à 5, TALLY/GPIO 1)', await ev(() => ['cam1:sdi', 'cam1:gl', 'cam1:lan', 'cam1:rs422', 'cam1:dc', 'cam3:sdi', 'rp:lan', 'rp:s5', 'rp:gpio', 'mix:in4', 'sw:p8'].filter((e) => !document.querySelector(`#labo [data-pr="${e}"]`)).length === 0 && /SERIAL CONT 1/.test(document.querySelector('#labo [data-pr="rp:s1"]')?.getAttribute('aria-label') || '')), await ev(() => ['cam1:sdi', 'cam1:gl', 'cam1:lan', 'cam1:rs422', 'cam1:dc', 'cam3:sdi', 'rp:lan', 'rp:s5', 'rp:gpio', 'mix:in4', 'sw:p8'].filter((e) => !document.querySelector(`#labo [data-pr="${e}"]`)).join(',') + ' | ' + document.querySelector('#labo [data-pr="rp:s1"]')?.getAttribute('aria-label')));
+await shot('01-cablage-carton', 600);
 
-// ---------------- 1-2. brancher et alimenter ----------------
-const ids = ['pc', 'cam1', 'cam2', 'cam3', 'rp'];
-for (let i = 0; i < ids.length; i++) { await A.selectOption(k(`appareils.${ids[i]}.port`), String(i + 1)); await A.waitForTimeout(80); }
-T.check('tout est branché et alimenté en PoE+ (étapes 1 et 2)', (await etape('cabler')) && (await etape('alimenter')));
-T.check('le switch réserve 120 W (4 × 30 W) sur 124', await ev(() => /120 W réservés/.test(document.querySelector('#labo .tz-switch + .lb-reads')?.textContent || '')));
+// ---------------- 1. câbler au switch, par les prises ----------------
+const pr = async (e) => { await A.click(`#labo [data-pr="${e}"]`); await A.waitForTimeout(90); };
+await pr('cam1:rs422'); await pr('sw:p2');
+T.check('le piège : le câble du switch dans la prise RS-422 de l\'AW-HE130 entre, mais pas d\'Ethernet', await ev(() => /liaison série/.test(document.querySelector('#labo .tz-msg')?.textContent || '') && !window.__dbg.labo().mesures('ptz').alim.par.cam1.lien));
+await pr('cam1:rs422');
+T.check('toucher une prise câblée la débranche', await ev(() => window.__dbg.labo().STATES.ptz.appareils.find((a) => a.id === 'cam1').port === 0));
+await pr('cam1:lan'); await pr('sw:p2');
+await clic('cable:bnc'); await pr('cam2:lan');
+T.check('un coaxial BNC n\'entre pas dans une prise RJ45', await ev(() => /n'entre pas/.test(document.querySelector('#labo .tz-msg')?.textContent || '')));
+await clic('cable:rj45');
+for (const [e, p] of [['pc:lan', 'sw:p1'], ['cam2:lan', 'sw:p3'], ['cam3:lan', 'sw:p4'], ['rp:lan', 'sw:p5']]) { await pr(e); await pr(p); }
+T.check('tout est câblé par les prises LAN et alimenté en PoE+ (étapes 1 et 2)', (await etape('cabler')) && (await etape('alimenter')));
+T.check('les câbles se dessinent (5 câbles réseau)', await ev(() => document.querySelectorAll('#labo .tz-cable.rj45').length === 5));
+// ---------------- 2 bis. la vidéo et le tally ----------------
+await clic('cable:bnc');
+await pr('cam1:gl'); await pr('mix:in1');
+T.check('G/L IN vers le mélangeur : le câble entre, aucune image n\'en sort', await ev(() => /synchronisation/.test(document.querySelector('#labo .tz-msg')?.textContent || '') && !window.__dbg.labo().mesures('ptz').etapes.find((e) => e.id === 'video').fait));
+await pr('cam1:gl');
+for (const [e, p] of [['cam1:sdi', 'mix:in1'], ['cam2:sdi', 'mix:in2'], ['cam3:sdi', 'mix:in3']]) { await pr(e); await pr(p); }
+await clic('cable:gpio'); await pr('mix:gpio'); await pr('rp:gpio2');
+T.check('le tally sur GPIO 2 est refusé (extension)', await ev(() => /TALLY\/GPIO 1/.test(document.querySelector('#labo .tz-msg')?.textContent || '')));
+await pr('mix:gpio'); await pr('rp:gpio');
+T.check('la vidéo et le tally câblés (étape 3)', await etape('video'));
+await shot('02-cablage-fait');
+await ev(() => window.__dbg.labo().changer('ptz', { vue: 'banc' })); await A.waitForTimeout(200);
+T.check('le switch réserve 120 W (4 × 30 W) sur 125', await ev(() => /120 W réservés/.test(document.querySelector('#labo .tz-switch + .lb-reads')?.textContent || '') && /125 W/.test(document.querySelector('#labo .tz-switch + .lb-reads')?.textContent || '')));
 await A.selectOption(k('switch.ports.2.poe'), 'af'); await A.waitForTimeout(120);
 T.check('un port en PoE simple : l\'AW-HE130 s\'éteint, la raison est dite', await ev(() => /demande du PoE\+/.test(document.querySelector('#labo .tz-app[data-etat="lien"]')?.textContent || '')));
 await A.selectOption(k('switch.ports.2.poe'), 'at'); await A.waitForTimeout(120);
-await shot('02-banc-branche');
+await shot('03-switch');
 
 // ---------------- 3. le PC dans le réseau de la fiche ----------------
 await A.click('#labo .lb-step.cur [data-k="pas:aller"]'); await A.waitForTimeout(200);
 T.check('« Y aller » mène au PC, application Connexion réseau', await ev(() => window.__dbg.labo().STATES.ptz.vue === 'pc' && !!document.querySelector('#labo [data-k="pc:ip"]')));
 await remplir('pc:ip', '192.168.10.300'); await clic('pc:ok');
-T.check('une adresse impossible est refusée', await ev(() => /pas une adresse IPv4/.test(document.querySelector('#labo .tz-msg')?.textContent || '')));
+T.check('une adresse impossible est refusée', await ev(() => /pas une adresse IPv4/.test(document.querySelector('#labo .tz-win .tz-msg')?.textContent || '')));
 await remplir('pc:ip', '192.168.10.100'); await clic('pc:ok');
-T.check('une passerelle hors du sous-réseau est refusée', await ev(() => /passerelle/.test(document.querySelector('#labo .tz-msg')?.textContent || '')));
+T.check('une passerelle hors du sous-réseau est refusée', await ev(() => /passerelle/.test(document.querySelector('#labo .tz-win .tz-msg')?.textContent || '')));
 await remplir('pc:passerelle', '192.168.10.1'); await clic('pc:ok');
-T.check('le PC en 192.168.10.100 / 24 (étape 3)', await etape('pc'));
+T.check('le PC en 192.168.10.100 / 24 (étape 4)', await etape('pc'));
 
 // ---------------- 4-5. Easy IP Setup : chercher, puis adresser une par une ----------------
 await clic('pcApp:easyip'); await clic('eip:search', 200);
@@ -57,7 +79,7 @@ for (const [id, ip] of [['cam1', '192.168.10.11'], ['cam2', '192.168.10.12'], ['
   if (id === 'cam1') await shot('04-network-settings', 100);
   await clic('eip:save', 200);
 }
-T.check('les trois caméras au plan (étapes 4 et 5)', (await etape('chercher')) && (await etape('adresser')));
+T.check('les trois caméras au plan (étapes 5 et 6)', (await etape('chercher')) && (await etape('adresser')));
 
 // ---------------- 6. les comptes : créer celui de l'AW-UE20, changer ceux des AW-HE130 ----------------
 await clic('eip:cam3'); await clic('eip:access', 300);
@@ -72,7 +94,7 @@ for (const ip of ['192.168.10.11', '192.168.10.12']) {
   await clic('web:setup'); await clic('web:m:user');
   await remplir('web:uuser', 'regie'); await remplir('web:umdp', 'Tiee-Banc-24'); await remplir('web:umdp2', 'Tiee-Banc-24'); await clic('web:uset', 200);
 }
-T.check('trois comptes administrateurs, plus de compte d\'usine (étape 6)', await etape('compte'));
+T.check('trois comptes administrateurs, plus de compte d\'usine (étape 7)', await etape('compte'));
 
 // ---------------- la page web : port HTTP, puis Diffserv ----------------
 await entrer('192.168.10.11', 'regie', 'Tiee-Banc-24');
@@ -97,30 +119,43 @@ T.check('avec :8080, la page répond', await ev(() => !document.querySelector('#
 
 // ---------------- 7-8. le pupitre ----------------
 await ev(() => window.__dbg.labo().changer('ptz', { vue: 'pupitre' })); await A.waitForTimeout(200);
-await clic('rp:m:rpip'); await remplir('rp:ip', '192.168.10.10'); await clic('rp:ipset', 200);
+await clic('rp:b:system'); await clic('rp:sys:rpip'); await remplir('rp:ip', '192.168.10.10'); await clic('rp:ipset', 200);
 T.check('la passerelle d\'usine du pupitre, hors du nouveau réseau, est refusée', await ev(() => /PASSERELLE/.test(document.querySelector('#labo .tz-rp-msg')?.textContent || '')));
 await remplir('rp:passerelle', '192.168.10.1'); await clic('rp:ipset', 200);
-T.check('le pupitre en 192.168.10.10 (étape 7)', await etape('pupitre'));
-await clic('rp:m:manual');
+T.check('le pupitre en 192.168.10.10 (étape 8)', await etape('pupitre'));
+await clic('rp:retour'); await clic('rp:sys:manual');
 for (const [n, ip] of [[1, '192.168.10.11'], [2, '192.168.10.12'], [3, '192.168.10.13']]) await remplir(`rp:cam${n}:ip`, ip);
 await clic('rp:camset', 200);
+T.check('sans CONNECT SETTING, les numéros ne sont pas en LAN', await ev(() => /CONNECT SETTING/.test(document.querySelector('#labo .tz-rp-table')?.textContent || '')));
+await clic('rp:retour'); await clic('rp:sys:connect');
+for (const n of [1, 2, 3]) await clic(`rp:mode${n}:LAN`, 100);
+await clic('rp:retour'); await clic('rp:sys:manual');
 T.check('CAM 2 appelée sur le port 80 : refusée, la raison est dite', await ev(() => /port 8080/.test(document.querySelector('#labo .tz-rp-table')?.textContent || '')));
 await remplir('rp:cam2:port', '8080'); await clic('rp:camset', 200);
-T.check('trois caméras enregistrées, leurs touches allumées (étape 8)', (await etape('enregistrer')) && await ev(() => document.querySelectorAll('#labo .tz-rp-key.ok').length === 3));
+T.check('trois caméras enregistrées, leurs touches allumées (étape 9)', (await etape('enregistrer')) && await ev(() => document.querySelectorAll('#labo .tz-rp-key.ok').length === 3));
 await shot('07-pupitre');
 
 // ---------------- 9. la QoS du switch ----------------
 await ev(() => window.__dbg.labo().changer('ptz', { vue: 'banc', transfert: 90 })); await A.waitForTimeout(200);
 T.check('lien engorgé, une seule file : la vidéo perd des paquets', await ev(() => !window.__dbg.labo().mesures('ptz').qos.ok));
 await clic('switch.qos.confiance:dscp'); await clic('switch.qos.files:prio', 200);
-T.check('confiance DSCP et file prioritaire : la vidéo passe (étape 9)', (await etape('qos')) && await ev(() => window.__dbg.labo().mesures('ptz').qos.ok));
+T.check('confiance DSCP et file prioritaire : la vidéo passe (étape 10)', (await etape('qos')) && await ev(() => window.__dbg.labo().mesures('ptz').qos.ok));
 await shot('08-qos');
 
 // ---------------- 10. la recette au joystick ----------------
 await ev(() => window.__dbg.labo().changer('ptz', { vue: 'pupitre' })); await A.waitForTimeout(150);
+await A.click('#labo .tz-rp-key[aria-label^="Caméra 1,"]'); await A.waitForTimeout(80); await A.click('#labo [aria-label="Pan vers la droite"]'); await A.waitForTimeout(80);
+T.check('ENABLE éteint : le joystick est verrouillé', await ev(() => /ENABLE/.test(document.querySelector('#labo .tz-rp-msg')?.textContent || '')));
+await clic('rp:enable');
 for (const n of [1, 2, 3]) { await A.click(`#labo .tz-rp-key[aria-label^="Caméra ${n},"]`); await A.waitForTimeout(80); await A.click('#labo [aria-label="Pan vers la droite"]'); await A.waitForTimeout(80); }
-T.check('la commande HTTP Panasonic est affichée', await ev(() => /cgi-bin\/aw_ptz\?cmd=%23PTS7550&res=1/.test(document.querySelector('#labo .tz-cmd')?.textContent || '')));
-T.check('les dix étapes sont faites, la recette réussie', await ev(() => window.__dbg.labo().mesures('ptz').etapes.every((e) => e.fait) && window.__dbg.labo().mesures('ptz').recette.ok));
+T.check('la commande HTTP Panasonic est affichée (pan à droite à la vitesse de F1, tilt à l\'arrêt)', await ev(() => { const m = /cgi-bin\/aw_ptz\?cmd=%23PTS(\d\d)50&res=1/.exec(document.querySelector('#labo .tz-cmd')?.textContent || ''); return !!m && Number(m[1]) > 50; }), await ev(() => document.querySelector('#labo .tz-cmd')?.textContent));
+await clic('rp:b:pmem'); await clic('rp:pmstore'); await clic('rp:pm1');
+T.check('PMEM/TMEM : la position actuelle enregistrée sur le preset 1', await ev(() => !!document.querySelector('#labo .tz-pm.rempli.actuel')));
+await clic('rp:b:pmem');
+await clic('pgm:2', 150);
+T.check('l\'entrée 2 au programme : la touche 2 du pupitre en rouge (tally), TALLY sur l\'écran d\'état', await ev(() => !!document.querySelector('#labo .tz-rp-key.air[aria-label^="Caméra 2,"]')));
+await shot('08-pupitre-tally');
+T.check('les onze étapes sont faites, la recette réussie', await ev(() => window.__dbg.labo().mesures('ptz').etapes.every((e) => e.fait) && window.__dbg.labo().mesures('ptz').recette.ok));
 await ev(() => window.__dbg.labo().changer('ptz', { vue: 'fiche' })); await A.waitForTimeout(150);
 await shot('09-fiche-recette');
 
@@ -168,9 +203,9 @@ await shot('13-lecon', 500);
 await A.keyboard.press('Escape'); await A.waitForTimeout(300);
 await ev(() => window.__dbg.emit('labo', { atelier: 'ptz' })); await A.waitForTimeout(300);
 await A.setViewportSize({ width: 390, height: 844 }); await A.waitForTimeout(300);
-for (const v of ['banc', 'pc', 'pupitre', 'fiche']) {
+for (const v of ['cablage', 'banc', 'pc', 'pupitre', 'fiche']) {
   await ev((x) => window.__dbg.labo().changer('ptz', { vue: x }), v); await A.waitForTimeout(250);
-  const ov = await ev(() => { const L = document.getElementById('labo'); const w = L.clientWidth; return [...L.querySelectorAll('.lb-work *, .lb-side *')].filter((e) => { const r = e.getBoundingClientRect(); return r.width && r.right > w + 1 && !e.closest('.lb-tabs') && !e.closest('.tz-tablewrap'); }).map((e) => e.className || e.tagName).slice(0, 4); });
+  const ov = await ev(() => { const L = document.getElementById('labo'); const w = L.clientWidth; return [...L.querySelectorAll('.lb-work *, .lb-side *')].filter((e) => { const r = e.getBoundingClientRect(); return r.width && r.right > w + 1 && !e.closest('.lb-tabs') && !e.closest('.tz-tablewrap') && !e.closest('.tz-scroll'); }).map((e) => e.className || e.tagName).slice(0, 4); });
   T.check(`390 px, ${v} : rien ne dépasse`, ov.length === 0, JSON.stringify(ov));
   await shot('14-mobile-' + v);
 }

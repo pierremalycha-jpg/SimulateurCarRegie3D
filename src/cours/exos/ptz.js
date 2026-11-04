@@ -147,7 +147,7 @@ registerExos({
     titre: 'Le budget PoE d\'un switch',
     consigne: 'Vous vérifiez qu\'un switch PoE+ peut alimenter les tourelles et le pupitre d\'une régie.',
     gen(rnd) {
-      const b = pick(rnd, [65, 90, 124, 185, 240, 370]), n = entre(rnd, 2, 12), k = pick(rnd, [1, 2, 3, 4]);
+      const b = pick(rnd, [65, 90, 125, 185, 240, 370]), n = entre(rnd, 2, 12), k = pick(rnd, [1, 2, 3, 4]);
       const nMax = Math.floor(b / 30);
       return [
         {

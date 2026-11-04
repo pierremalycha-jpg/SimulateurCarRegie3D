@@ -27,8 +27,10 @@ function bancPret(P, o = {}) {
   const pose = (id, ip) => { const a = B.appareils.find((x) => x.id === id); Object.assign(a, { ip, masque: P.masque, passerelle: P.passerelle }); };
   pose('pc', P.pc); pose('rp', P.rp);
   for (const c of cameras(B)) { pose(c.id, P.cams[c.id]); c.compte = { user: 'regie' }; }
-  if (o.pupitre !== false) B.rp.cams = { 1: { ip: P.cams.cam1, port: 80 }, 2: { ip: P.cams.cam2, port: 80 }, 3: { ip: P.cams.cam3, port: 80 } };
+  if (o.pupitre !== false) { B.rp.cams = { 1: { ip: P.cams.cam1, port: 80 }, 2: { ip: P.cams.cam2, port: 80 }, 3: { ip: P.cams.cam3, port: 80 } }; B.rp.modes = { 1: 'LAN', 2: 'LAN', 3: 'LAN' }; }
   B.easyip.cherche = true;
+  B.video = { cam1: { prise: 'sdi', entree: 1 }, cam2: { prise: 'sdi', entree: 2 }, cam3: { prise: 'sdi', entree: 3 } };
+  B.tally = true;
   return B;
 }
 /** le réglage juste d'un appareil, en chemins (pour la solution) */
@@ -151,9 +153,9 @@ registerDefis({
               const pb = ['cam1', 'cam2', 'cam3'].map((id, k) => { const l = L.find((x) => x.n === k + 1); return !l ? `CAM${k + 1} : pas enregistrée` : !l.ok ? `CAM${k + 1} : ${l.pb}` : l.cam !== id ? `CAM${k + 1} appelle ${st.appareils.find((a) => a.id === l.cam).nom}` : ''; }).filter(Boolean);
               return { ok: !pb.length, mesure: pb.length ? pb[0] : 'trois caméras connectées', why: pb.join(' ; ') };
             },
-            corrige: { 'appareils.rp.ip': P.rp, 'appareils.rp.masque': P.masque, 'appareils.rp.passerelle': P.passerelle, 'rp.cams': { 1: { ip: P.cams.cam1, port: qui === 'cam1' ? port : 80 }, 2: { ip: P.cams.cam2, port: qui === 'cam2' ? port : 80 }, 3: { ip: P.cams.cam3, port: qui === 'cam3' ? port : 80 } } },
-            aides: ['CONNECT SETTING → RP IP SET pour le pupitre, puis MANUAL IP SET pour les caméras.', `Le port de ${nomQui} se lit dans Easy IP Setup (colonne Port No.) ou dans sa page web : c'est ${port}.`],
-            solution: `RP IP SET : ${P.rp} / ${P.masque}, passerelle ${P.passerelle}. MANUAL IP SET : 1 → ${P.cams.cam1}, 2 → ${P.cams.cam2}, 3 → ${P.cams.cam3}, port 80, sauf ${nomQui} : port **${port}**.`,
+            corrige: { 'appareils.rp.ip': P.rp, 'appareils.rp.masque': P.masque, 'appareils.rp.passerelle': P.passerelle, 'rp.modes': { 1: 'LAN', 2: 'LAN', 3: 'LAN' }, 'rp.cams': { 1: { ip: P.cams.cam1, port: qui === 'cam1' ? port : 80 }, 2: { ip: P.cams.cam2, port: qui === 'cam2' ? port : 80 }, 3: { ip: P.cams.cam3, port: qui === 'cam3' ? port : 80 } } },
+            aides: ['Bouton SYSTEM : RP IP SET pour le pupitre ; CONNECT SETTING, les numéros 1 à 3 en LAN ; MANUAL IP SET pour les caméras.', `Le port de ${nomQui} se lit dans Easy IP Setup (colonne Port No.) ou dans sa page web : c'est ${port}.`],
+            solution: `RP IP SET : ${P.rp} / ${P.masque}, passerelle ${P.passerelle}. CONNECT SETTING : 1, 2 et 3 en LAN. MANUAL IP SET : 1 → ${P.cams.cam1}, 2 → ${P.cams.cam2}, 3 → ${P.cams.cam3}, port 80, sauf ${nomQui} : port **${port}**.`,
           },
           {
             type: 'texte', q: `Quelle adresse tapez-vous dans le navigateur du PC pour ouvrir la page web de ${nomQui} ?`, accept: [`http://${ipQui}:${port}`, `http://${ipQui}:${port}/`, `${ipQui}:${port}`, `${ipQui}:${port}/`], forme: 'ip', placeholder: 'http://192.168.10.11',
@@ -226,10 +228,15 @@ registerDefis({
         doublon: (c) => { const o = c === 'cam1' ? 'cam2' : 'cam1'; B.appareils.find((a) => a.id === c).ip = P.cams[o]; },
         port: (c) => { const k = ['cam1', 'cam2', 'cam3'].indexOf(c) + 1; B.rp.cams[k] = { ...B.rp.cams[k], port: 8080 }; },
         compte: () => { B.appareils.find((a) => a.id === 'cam3').compte = null; },
+        prise: (c) => { B.appareils.find((a) => a.id === c).prise = 'rs422'; },
+        video: (c) => { B.video[c] = { ...B.video[c], prise: 'gl' }; },
+        mode: (c) => { B.rp.modes[['cam1', 'cam2', 'cam3'].indexOf(c) + 1] = 'SERIAL'; },
       };
-      const sortes = tirer(rnd, ['poe', 'vlan', 'masque', 'doublon', 'port', 'compte'], 3);
+      const sortes = tirer(rnd, ['poe', 'vlan', 'masque', 'doublon', 'port', 'compte', 'prise', 'video', 'mode'], 3);
       const cibles = tirer(rnd, ['cam1', 'cam2', 'cam3'], 3);
-      sortes.forEach((s, k) => PANNES[s](s === 'compte' ? 'cam3' : cibles[k]));
+      // la prise RS-422 n'existe que sur l'AW-HE130 ; le compte manquant, sur l'AW-UE20
+      const cibleDe = (s, k) => (s === 'compte' ? 'cam3' : s === 'prise' && cibles[k] === 'cam3' ? (cibles.find((c, j) => j !== k && c !== 'cam3') || 'cam1') : cibles[k]);
+      sortes.forEach((s, k) => PANNES[s](cibleDe(s, k)));
       const SYMPT = [
         ['Le voyant de lien du port est allumé, mais la caméra est éteinte', 'Le PoE du port (mode ou budget)', [['L\'adresse IP de la caméra', 'Une caméra éteinte ne répond à rien : avant l\'adresse, il faut le courant.'], ['Le compte administrateur', 'Le compte se règle dans la page web : la caméra doit d\'abord démarrer.']]],
         ['La caméra est allumée, son adresse est juste, mais Easy IP Setup ne la trouve pas', 'Le VLAN de son port : elle n\'est pas sur le segment du PC', [['Son masque', 'Easy IP Setup trouve une caméra même hors du sous-réseau du PC : le masque n\'empêche pas la recherche.'], ['Son port HTTP', 'La recherche ne passe pas par le serveur web de la caméra.']]],
@@ -250,9 +257,9 @@ registerDefis({
               if (r.ok && horsPlan.length) return { ok: false, mesure: 'recette réussie, mais pas au plan', why: `${horsPlan.map((c) => c.nom).join(', ')} n'${horsPlan.length > 1 ? 'ont' : 'a'} pas l'adresse de la fiche.` };
               return { ok: r.ok, mesure: r.ok ? 'recette réussie' : `${r.pb.length} point${r.pb.length > 1 ? 's' : ''} à reprendre`, why: r.pb.slice(0, 2).join(' ; ') };
             },
-            corrige: { 'switch.ports': ok.switch.ports, ...Object.fromEntries(ok.appareils.flatMap((a) => [[`appareils.${a.id}.ip`, a.ip], [`appareils.${a.id}.masque`, a.masque], [`appareils.${a.id}.compte`, a.compte || null], [`appareils.${a.id}.http`, a.http]])), 'rp.cams': ok.rp.cams },
+            corrige: { 'switch.ports': ok.switch.ports, ...Object.fromEntries(ok.appareils.flatMap((a) => [[`appareils.${a.id}.ip`, a.ip], [`appareils.${a.id}.masque`, a.masque], [`appareils.${a.id}.compte`, a.compte || null], [`appareils.${a.id}.http`, a.http], [`appareils.${a.id}.prise`, 'lan']])), 'rp.cams': ok.rp.cams, 'rp.modes': ok.rp.modes, video: ok.video },
             aides: ['Couche par couche : le lien et le courant (Le banc), puis le VLAN, puis l\'adresse et le masque, puis le port et le compte.', 'La fiche du banc dit, pour chaque caméra, ce qui bloque : lisez la première raison de chaque ligne.'],
-            solution: `Les trois pannes : ${sortes.map((s, k) => ({ poe: `port de ${cibles[k].toUpperCase().replace('CAM', 'CAM ')} en PoE simple (repasser en PoE+)`, vlan: `port de ${cibles[k].toUpperCase().replace('CAM', 'CAM ')} dans le VLAN 20 (le remettre en 1)`, masque: `masque de ${cibles[k].toUpperCase().replace('CAM', 'CAM ')} en 255.255.255.252 (remettre ${P.masque})`, doublon: `${cibles[k].toUpperCase().replace('CAM', 'CAM ')} à l'adresse d'une autre caméra (remettre ${P.cams[cibles[k]]})`, port: `pupitre qui appelle ${cibles[k].toUpperCase().replace('CAM', 'CAM ')} sur le port 8080 (remettre 80)`, compte: 'CAM 3 sans compte administrateur (le créer dans sa page web)' })[s]).join(' ; ')}.`,
+            solution: `Les trois pannes : ${sortes.map((s, k) => ({ prise: `câble du switch dans la prise RS-422 de ${cibleDe(s, k).toUpperCase().replace('CAM', 'CAM ')} (le passer dans la prise LAN)`, video: `câble vidéo de ${cibles[k].toUpperCase().replace('CAM', 'CAM ')} sur G/L IN (le passer sur la sortie SDI)`, mode: `au pupitre, la caméra ${['cam1', 'cam2', 'cam3'].indexOf(cibles[k]) + 1} en SERIAL dans CONNECT SETTING (la passer en LAN)`, poe: `port de ${cibles[k].toUpperCase().replace('CAM', 'CAM ')} en PoE simple (repasser en PoE+)`, vlan: `port de ${cibles[k].toUpperCase().replace('CAM', 'CAM ')} dans le VLAN 20 (le remettre en 1)`, masque: `masque de ${cibles[k].toUpperCase().replace('CAM', 'CAM ')} en 255.255.255.252 (remettre ${P.masque})`, doublon: `${cibles[k].toUpperCase().replace('CAM', 'CAM ')} à l'adresse d'une autre caméra (remettre ${P.cams[cibles[k]]})`, port: `pupitre qui appelle ${cibles[k].toUpperCase().replace('CAM', 'CAM ')} sur le port 8080 (remettre 80)`, compte: 'CAM 3 sans compte administrateur (le créer dans sa page web)' })[s]).join(' ; ')}.`,
           },
           {
             type: 'choix', q: `${sy}. Que vérifiez-vous d'abord ?`, choices: [bon, ...faux], answer: 0,

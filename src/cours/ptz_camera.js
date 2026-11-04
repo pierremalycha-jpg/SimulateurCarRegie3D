@@ -21,7 +21,7 @@ const deg = (v, d = 1) => `${fmtNum(v, d)}°`;
 // ======================================================================================
 function figTourelle() {
   const h = OPTIQUES.he130, u = OPTIQUES.ue20;
-  const f = figure(720, 280, `Une caméra PTZ vue de face et de dos. De face : le socle fixe, la tête qui tourne autour de l'axe vertical (le pan) et qui s'incline autour de l'axe horizontal (le tilt), l'objectif zoom au centre de la tête. De dos : la sortie SDI (BNC) et la sortie HDMI vers le mélangeur, la prise réseau RJ45 qui porte la commande, le flux IP et l'alimentation PoE+, et la prise 12 V pour un bloc secteur. À droite, les deux modèles du BTS : AW-HE130, ${h.fmin} à ${h.fmax} mm, zoom ${fmtNum(rapportZoom('he130'))}×, de ${deg(angleH('he130', h.fmin), 0)} à ${deg(angleH('he130', h.fmax))} de champ horizontal environ ; AW-UE20, ${u.fmin} à ${u.fmax} mm, zoom ${fmtNum(rapportZoom('ue20'))}×, de ${deg(angleH('ue20', u.fmin), 0)} à ${deg(angleH('ue20', u.fmax))}.`);
+  const f = figure(720, 280, `Une caméra PTZ vue de face et de dos. De face : le socle fixe, la tête qui tourne autour de l'axe vertical (le pan) et qui s'incline autour de l'axe horizontal (le tilt), l'objectif zoom au centre de la tête. Le panneau de connexion de l'AW-HE130 (sérigraphies du mode d'emploi) : SDI OUT (BNC, vers le mélangeur), VIDEO OUT (BNC, composite analogique), G/L IN (BNC, entrée de synchronisation), HDMI, MIC/LINE (mini-jack), LAN (RJ45 : commande, flux IP, PoE+), RS-422 (RJ45 aussi, mais liaison série), DC 12V IN (bloc secteur). À droite, les deux modèles du BTS : AW-HE130, ${h.fmin} à ${h.fmax} mm, zoom ${fmtNum(rapportZoom('he130'))}×, de ${deg(angleH('he130', h.fmin), 0)} à ${deg(angleH('he130', h.fmax))} de champ horizontal environ ; AW-UE20, ${u.fmin} à ${u.fmax} mm, zoom ${fmtNum(rapportZoom('ue20'))}×, de ${deg(angleH('ue20', u.fmin), 0)} à ${deg(angleH('ue20', u.fmax))}.`);
   f.append(txt(10, 16, 'Pan, tilt, zoom : une caméra et son objectif sur une tourelle motorisée', 'co-t', 'start'));
   // la face
   const cx = 130, cy = 150;
@@ -33,9 +33,9 @@ function figTourelle() {
   f.append(sv('path', { d: `M${cx + 62} ${cy - 30} A 50 50 0 0 1 ${cx + 62} ${cy + 40}`, fill: 'none', stroke: C.green, strokeWidth: 1.6, 'stroke-dasharray': '5 4' }), txt(cx + 80, cy + 8, 'tilt', 'co-t', 'start', { fill: C.green }));
   // le dos
   const bx = 290, by = 70;
-  f.append(box(bx, by, 170, 150, C.grey), txt(bx + 85, by - 8, 'à l\'arrière', 'co-s'));
-  const prises = [['SDI (BNC)', C.amber, 'vidéo → mélangeur'], ['HDMI', C.amber, 'vidéo → moniteur'], ['LAN (RJ45)', C.cyan, 'IP + PoE+'], ['DC 12 V', C.grey, 'bloc secteur']];
-  prises.forEach(([n, col, r], i) => { const y = by + 22 + i * 32; f.append(sv('rect', { x: bx + 12, y: y - 10, width: 18, height: 16, rx: 3, fill: /** @type {string} */ (col) }), txt(bx + 38, y + 3, /** @type {string} */ (n), 'co-s', 'start'), txt(bx + 38, y + 16, /** @type {string} */ (r), 'co-s', 'start', { fill: C.dim })); });
+  f.append(box(bx - 10, by - 30, 190, 240, C.grey), txt(bx + 85, by - 38, 'AW-HE130 : panneau de connexion', 'co-s'));
+  const prises = [['SDI OUT', C.amber, 'BNC → mélangeur'], ['VIDEO OUT', C.dim, 'BNC, composite'], ['G/L IN', C.dim, 'BNC, synchro (entrée)'], ['HDMI', C.amber, '→ moniteur'], ['MIC/LINE', C.dim, 'mini-jack 3,5 mm'], ['LAN', C.cyan, 'RJ45 : IP + PoE+'], ['RS-422', C.red, 'RJ45 : série, pas l\'Ethernet'], ['DC 12V IN', C.grey, 'bloc secteur']];
+  prises.forEach(([n, col, r], i) => { const y = by - 12 + i * 28; f.append(sv('rect', { x: bx, y: y - 9, width: 16, height: 14, rx: 3, fill: /** @type {string} */ (col) }), txt(bx + 24, y + 2, /** @type {string} */ (n), 'co-s', 'start'), txt(bx + 24, y + 14, /** @type {string} */ (r), 'co-s', 'start', { fill: C.dim })); });
   // les deux modèles
   const mx = 490;
   [['he130', 'AW-HE130 (×2)', 'trois capteurs 1/2,86 pouce, Full HD'], ['ue20', 'AW-UE20', 'un capteur 4K 1/2,8 pouce']].forEach(([m, n, cap], i) => {
@@ -124,8 +124,8 @@ function demoSysteme(host) {
     read.set('Consommation (ordre de grandeur)', `≈ ${B.conso} W`);
     read.set('Budget de switch qui suffit', b ? `${b} W (budget courant d'un switch PoE+)` : 'au-delà des switchs courants : deux switchs');
     read.set('Câbles', `${B.rj45} RJ45, ${B.sdi} SDI (${B.cams} caméra${B.cams > 1 ? 's' : ''} vers le mélangeur${rp ? ', 1 retour de contrôle vers le pupitre' : ''})`);
-    verdict.className = 'co-verdict ' + (B.reserve <= 124 ? 'ok' : 'ko');
-    verdict.textContent = B.reserve <= 124 ? `Le switch du banc (124 W) suffit : ${B.reserve} W réservés.` : `Le switch du banc (124 W) ne suffit plus : ${B.reserve} W à réserver. Un switch plus puissant, ou des appareils sur leur bloc 12 V.`;
+    verdict.className = 'co-verdict ' + (B.reserve <= 125 ? 'ok' : 'ko');
+    verdict.textContent = B.reserve <= 125 ? `Le switch du banc (125 W) suffit : ${B.reserve} W réservés.` : `Le switch du banc (125 W) ne suffit plus : ${B.reserve} W à réserver. Un switch plus puissant, ou des appareils sur leur bloc 12 V.`;
   };
   host.append(
     el('div', { class: 'co-ctl' },
@@ -157,7 +157,9 @@ export const PTZ_CAMERA = [
 - **SDI** (3G-SDI, prise BNC) : l'image vers le mélangeur, sur câble coaxial, jusqu'à une centaine de mètres ; c'est le chemin de la régie.
 - **HDMI** : pour un moniteur ou un petit mélangeur, sur quelques mètres.
 - **IP** : la caméra peut aussi envoyer son image compressée sur le réseau (H.264, et selon le modèle H.265, RTSP, SRT, NDI|HX), pour un enregistreur ou un logiciel.
-- **LAN** (RJ45) : la **commande** (pupitre, page web) et, en **PoE+**, le **courant** ; la prise 12 V sert quand on alimente la caméra par son bloc secteur.
+- **LAN** (RJ45) : la **commande** (pupitre, page web) et, en **PoE+**, le **courant** ; la prise **DC 12V IN** sert quand on alimente la caméra par son bloc secteur.
+
+**Le panneau de connexion de l'AW-HE130**, avec ses sérigraphies : **SDI OUT** (BNC), **VIDEO OUT** (BNC, une sortie composite analogique, qui ne va pas dans une entrée SDI), **G/L IN** (BNC, une **entrée** de synchronisation : le genlock, la référence venue du mélangeur ou du générateur), **HDMI**, **MIC/LINE** (mini-jack 3,5 mm), **LAN**, **RS-422** et **DC 12V IN**. Trois BNC qui se ressemblent : seule SDI OUT donne l'image au mélangeur. Deux RJ45 qui se ressemblent : seule **LAN** fait de l'Ethernet et reçoit le PoE+ ; **RS-422** est une liaison série vers un pupitre (câble droit, 1 000 m au plus). L'AW-UE20 a 3G SDI OUT, HDMI, USB, MIC/LINE, LAN, RS-422 et 12V IN.
 
 **Les positions mémorisées.** Une PTZ retient des **presets** : un cadre (pan, tilt, zoom, point) rappelé d'une touche du pupitre, à la vitesse réglée. C'est ce qui permet à un seul opérateur de suivre une émission : le plan du présentateur, le plan large, l'invité.`,
     plus: `Une tourelle bouge **sans à-coups** à faible vitesse : c'est ce qui permet de faire un mouvement à l'antenne. Pour un rappel de preset hors antenne, on prend la vitesse la plus grande.

@@ -266,6 +266,87 @@ body.labo-on #modal.overlay { z-index: 46; }
 .tz-joy { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 14px; border-radius: var(--r); background: var(--panel2); }
 .tz-joy .btn { min-width: 52px; }
 .tz-joy-mid { display: flex; gap: 6px; }
+/* le câblage : le banc vu de derrière (SVG), les prises cliquables, les câbles */
+.tz-cab-tete { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; }
+.tz-scroll { overflow-x: auto; border-radius: var(--r); background: var(--glass); }
+.tz-scene { display: block; width: 100%; min-width: 760px; height: auto; font-family: var(--f-body); }
+.tz-scene .tz-t { fill: var(--fg); font-size: 14px; font-weight: 600; }
+.tz-scene .tz-s { fill: var(--muted); font-size: 12px; }
+.tz-boitier { fill: var(--panel2); stroke: var(--line2); }
+.tz-pr { cursor: pointer; outline: none; }
+.tz-pr-corps { fill: var(--raise); stroke: var(--dim); stroke-width: 1.2; }
+.tz-pr-trou { fill: var(--bg); }
+.tz-pr-t { fill: var(--muted); font-size: 10.5px; }
+.tz-pr:hover .tz-pr-corps, .tz-pr:focus-visible .tz-pr-corps { stroke: var(--accent); stroke-width: 2; }
+.tz-pr:focus-visible .tz-pr-t, .tz-pr:hover .tz-pr-t { fill: var(--fg); }
+.tz-pr.sel .tz-pr-corps { fill: var(--accent-d); stroke: var(--accent); stroke-width: 2.4; }
+.tz-pr.pose .tz-pr-corps { stroke: var(--fg); }
+.tz-led-l, .tz-led-p { fill: var(--raise); }
+.tz-pr.lien .tz-led-l { fill: var(--pvw); }
+.tz-pr.poe .tz-led-p { fill: var(--amber); }
+.tz-pr.mort .tz-led-l { fill: var(--tally); }
+.tz-sil-socle { fill: var(--raise); stroke: var(--line2); }
+.tz-sil-corps { fill: var(--fg); stroke: var(--dim); }
+.tz-sil.ue20 .tz-sil-corps { fill: var(--muted); }
+.tz-sil-obj { fill: var(--bg); stroke: var(--dim); }
+.tz-sil-verre { fill: var(--accent-d); }
+.tz-cables { pointer-events: none; }
+.tz-cable { fill: none; stroke-width: 3.5; stroke-linecap: round; opacity: .9; }
+.tz-cable.rj45 { stroke: var(--accent); }
+.tz-cable.bnc { stroke: var(--amber); }
+.tz-cable.dc { stroke: var(--dim); }
+.tz-cable.gpio { stroke: var(--violet); }
+.tz-bloc { fill: var(--raise); stroke: var(--dim); }
+.tz-liste { margin: 0; padding: 0; list-style: none; display: grid; gap: 4px; font-size: 13.5px; color: var(--muted); }
+.tz-liste li { padding-left: 14px; position: relative; }
+.tz-liste li::before { content: ""; position: absolute; left: 0; top: .55em; width: 8px; height: 3px; border-radius: 2px; background: var(--dim); }
+.tz-liste .tz-l-rj45::before { background: var(--accent); } .tz-liste .tz-l-bnc::before { background: var(--amber); } .tz-liste .tz-l-gpio::before { background: var(--violet); }
+/* le pupitre AW-RP150, face avant (labo/ateliers/ptz_pupitre.js) */
+.tz-rp2 { display: flex; flex-direction: column; gap: 14px; padding: 16px; border-radius: var(--r-l); background: var(--panel); }
+.tz-rp-haut { display: grid; grid-template-columns: minmax(230px, 260px) minmax(0, 1fr) 132px; gap: 14px; align-items: start; }
+.tz-rp-bas { display: grid; grid-template-columns: minmax(0, 1fr) 200px; gap: 14px; align-items: start; }
+.tz-rp-regl, .tz-rp-centre, .tz-rp-sel { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.tz-rp-mols { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.tz-mol { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 6px; border-radius: var(--r-s); background: var(--panel2); }
+.tz-mol-n { font-size: 12px; color: var(--muted); }
+.tz-mol-c { display: flex; align-items: center; gap: 4px; }
+.tz-mol-c .tz-rk { width: 28px; height: 28px; padding: 0; }
+.tz-mol-v { min-width: 3.2em; text-align: center; font: 600 13px var(--f-mono); }
+.tz-rp-touches, .tz-rp-menus, .tz-rp-users { display: flex; flex-wrap: wrap; gap: 6px; }
+.tz-rp-menus { flex-direction: column; }
+.tz-rk { padding: 7px 10px; border: 0; border-radius: 8px; background: var(--raise); color: var(--fg); font: 600 12.5px var(--f-body); cursor: pointer; box-shadow: inset 0 -2px 0 var(--bg); }
+.tz-rk:hover:not(:disabled) { background: var(--panel2); }
+.tz-rk[aria-pressed="true"] { background: var(--accent-fill); color: var(--key-ink); }
+.tz-rk:disabled { opacity: .5; cursor: default; }
+.tz-rk-item { text-align: left; }
+.tz-rk-back { align-self: flex-start; background: none; box-shadow: none; color: var(--accent); padding: 2px 0; }
+.tz-rk-set { min-width: 6em; }
+.tz-rp-fs { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; max-width: 640px; }
+.tz-rp-fs .tz-mol-c .tz-rk { width: 24px; height: 24px; }
+.tz-rp-fs .tz-mol-v { min-width: 2.8em; font-size: 11.5px; white-space: nowrap; }
+.tz-rp2 .tz-rp-screen { aspect-ratio: auto; min-height: 260px; overflow: visible; }
+.tz-rp-etat .tz-dl { grid-template-columns: max-content minmax(0, 1fr) max-content minmax(0, 1fr); }
+.tz-rp-etat { display: flex; flex-direction: column; gap: 8px; }
+.tz-rp-cam { display: flex; gap: 12px; align-items: baseline; }
+.tz-rp-cam b { font: 700 20px var(--f-mono); }
+.tz-rp-tally { margin-left: auto; padding: 2px 8px; border-radius: 6px; background: var(--raise); color: var(--muted); font: 600 12px var(--f-mono); }
+.tz-rp-tally.on { background: var(--tally-key); color: var(--key-ink); }
+.tz-rp-f { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px; margin-top: auto; padding-top: 6px; border-top: 1px solid var(--line2); font: 500 12px var(--f-mono); color: var(--muted); }
+.tz-rp-warn { margin: 0; color: var(--amber); }
+.tz-rp-liste { display: flex; flex-direction: column; gap: 6px; max-width: 300px; }
+.tz-pmem { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 6px; max-width: 420px; }
+.tz-pm { height: 36px; border: 1px solid var(--line2); border-radius: 6px; background: var(--bg); color: var(--muted); font: 600 13px var(--f-mono); cursor: pointer; }
+.tz-pm.rempli { background: var(--raise); color: var(--fg); }
+.tz-pm.actuel { border-color: var(--amber); color: var(--amber); }
+.tz-rp-cap { font-size: 11.5px; color: var(--dim); }
+.tz-rp-key { position: relative; }
+.tz-rp-led { position: absolute; top: 4px; left: 50%; width: 14px; height: 3px; margin-left: -7px; border-radius: 2px; background: var(--bg); }
+.tz-rp-key.ok .tz-rp-led { background: var(--pvw); }
+.tz-rp-key.bad .tz-rp-led { background: var(--amber); }
+.tz-rp-key.air .tz-rp-led { background: var(--tally); }
+.tz-joy-pad { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.tz-joy-tete { width: 34px; height: 34px; border-radius: 50%; background: radial-gradient(circle at 35% 35%, var(--muted), var(--raise)); }
+.tz-pgm { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; padding: 10px 12px; border-radius: var(--r); background: var(--panel); }
 /* le pas à pas (panneau de droite) */
 .lb-steps { margin: 8px 0 0; padding: 0; list-style: none; display: grid; gap: 6px; }
 .lb-step { display: grid; grid-template-columns: 26px minmax(0, 1fr); gap: 10px; padding: 10px; border-radius: var(--r-s); background: var(--panel2); font-size: 14px; }
@@ -295,6 +376,9 @@ body.labo-on #modal.overlay { z-index: 46; }
   .labo.lb-plein .lb-body { overflow: hidden; }
   .tz-ports { grid-template-columns: repeat(4, minmax(0, 1fr)); }
   .tz-rp { grid-template-columns: minmax(0, 1fr); }
+  .tz-rp-haut, .tz-rp-bas { grid-template-columns: minmax(0, 1fr); }
+  .tz-rp-menus { flex-direction: row; }
+  .tz-rp-f, .tz-rp-fs { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .tz-cam-body { grid-template-columns: minmax(0, 1fr); }
   .tz-cam-menu { flex-direction: row; flex-wrap: wrap; }
   .tz-rp-keys { grid-template-columns: repeat(5, minmax(0, 1fr)); }

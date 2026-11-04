@@ -50,7 +50,7 @@ export function materiel(n130, nUe20, pupitre = true) {
   return { ports: poe.length + 1, reserve, conso, rj45: poe.length + 1, sdi: cams + (pupitre ? 1 : 0), cams, portsPoe: poe.length };
 }
 /** le plus petit budget de switch (W) parmi des modèles courants qui porte cette réserve */
-export const BUDGETS = [65, 124, 185, 240, 370, 740];
+export const BUDGETS = [65, 125, 185, 240, 370, 740];
 export const budgetPour = (w) => BUDGETS.find((b) => b >= w) || null;
 /** le PoE dont un appareil a besoin, en clair */
 export const besoinPoe = (m) => POE[MODELES[m].poe];

@@ -38,7 +38,7 @@ export const INITIAL = {
     noeud: { ip: '2.0.0.50', masque: '255.0.0.0', protocole: 'artnet', net: 0, sub: 0, uni: 0, sacn: 1 },
   }),
   // le banc des caméras PTZ (labo/calc/ptz.js) : la vue choisie, l'application ouverte sur le PC
-  ptz: () => ({ vue: 'banc', pcApp: 'reseau', ...bancUsine() }),
+  ptz: () => ({ vue: 'cablage', pcApp: 'reseau', ...bancUsine() }),
 };
 
 /** les mesures d'un atelier pour cet état */

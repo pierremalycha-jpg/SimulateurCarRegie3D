@@ -397,14 +397,16 @@ Tests :
 ## v19.30 : les caméras PTZ du BTS, au Labo et au Cours
 
 **L'atelier « Caméras PTZ » du Labo** (`labo/ateliers/ptz.js`, modèle pur `labo/calc/ptz.js`) : le banc de mise en service
-du BTS, deux AW-HE130, une AW-UE20, un pupitre AW-RP150, un PC technique avec Easy IP Setup et un switch PoE+ administrable
-à 8 ports. Quatre vues, dont les écrans suivent la disposition et les libellés des écrans Panasonic :
+du BTS, deux AW-HE130, une AW-UE20, un pupitre AW-RP150, un PC technique avec Easy IP Setup, un switch PoE+ administrable
+à 8 ports (125 W, comme un NETGEAR M4250-10G2F-PoE+) et un mélangeur. Cinq vues, dont les écrans et les faces suivent la
+disposition et les libellés des modes d'emploi Panasonic :
 
 | Vue | Ce qu'on y fait |
 | --- | --- |
-| Le banc | Brancher chaque appareil sur un port ; le PoE de chaque port (coupé, PoE 802.3af, PoE+ 802.3at), son VLAN ; le budget du switch (30 W réservés par appareil de classe 4) ; le bloc 12 V de chaque appareil ; l'horloge du banc ; la QoS du port du PC (confiance DSCP, files, lien à 100 Mb/s ou 1 Gb/s, une copie de fichiers) |
+| Le câblage | Le banc vu de derrière (`labo/ateliers/ptz_cablage.js`) : la face avant du switch (ports et voyants lien, PoE), chaque appareil dessiné avec sa face arrière et ses prises sérigraphiées (AW-HE130 : SDI OUT, VIDEO OUT, G/L IN, HDMI, MIC/LINE, LAN, RS-422, DC 12V IN ; AW-UE20 : 3G SDI OUT, HDMI, USB, MIC/LINE, LAN, RS-422, 12V IN ; AW-RP150 : IP CONT, SERIAL CONT 1 à 5, 3G SDI IN, ACTIVE THRU, TALLY/GPIO 1, GPIO 2, DC 12V IN), le mélangeur (SDI IN 1 à 4, PGM OUT, REF OUT, GPI/TALLY). On prend un câble (RJ45, coaxial BNC, bloc 12 V, GPIO), on touche une prise puis l'autre ; une fiche qui n'entre pas est refusée ; le câble se dessine. Les pièges du vrai matériel : RS-422 est une RJ45 comme LAN mais pas de l'Ethernet ; G/L IN et VIDEO OUT sont des BNC comme SDI OUT mais ne donnent pas d'image au mélangeur ; le tally entre par TALLY/GPIO 1, pas GPIO 2 |
+| Le switch | Brancher chaque appareil sur un port ; le PoE de chaque port (coupé, PoE 802.3af, PoE+ 802.3at), son VLAN ; le budget du switch (30 W réservés par appareil de classe 4) ; le bloc 12 V de chaque appareil ; l'horloge du banc ; la QoS du port du PC (confiance DSCP, files, lien à 100 Mb/s ou 1 Gb/s, une copie de fichiers) |
 | Le PC technique | La carte réseau (IPv4) ; Easy IP Setup (Search, Network Settings, Access Camera ; liste par MAC) ; le navigateur et la page web de la caméra : création du compte (AW-UE20), compte d'usine à changer (AW-HE130), Live, Setup → Basic, User mng., Network (DHCP, IP, masque, passerelle, port HTTP, fenêtre d'Easy IP) et Advanced (Diffserv, flux H.264) |
-| Le pupitre AW-RP150 | L'écran tactile : CAMERA, RP IP SET, MANUAL IP SET (adresse et port de chaque numéro) ; les dix touches de caméra, allumées quand la liaison tient ; le joystick et le zoom, qui affichent la vraie commande HTTP envoyée (`/cgi-bin/aw_ptz?cmd=%23PTS7550&res=1`) |
+| Le pupitre AW-RP150 | Sa face avant (`labo/ateliers/ptz_pupitre.js`) : molettes IRIS (AUTO), M.PED, R/B GAIN, R/B PED et touches A/3200K, B/5600K, ATW/VAR, ABB, BARS ; l'écran tactile et les molettes F1 à F4 ; les touches PAINT, FUNCTION, MAINTENANCE, PMEM/TMEM, SYSTEM ; CAMERA/GROUP SELECTION 1 à 10 (voyant vert : liaison, rouge : antenne) ; ENABLE, le joystick et son levier ZOOM/FOCUS. L'écran : l'écran d'état (numéro, modèle, TALLY, IRIS, ZOOM, FOCUS), SYSTEM → CONNECT SETTING (CNNCT MD : LAN, SERIAL, NONE), MANUAL IP SET, AUTO IP SET, RP IP SET ; PMEM/TMEM (enregistrer, rappeler un preset). Chaque geste affiche la vraie commande HTTP (`/cgi-bin/aw_ptz?cmd=%23PTS7550&res=1`). Un sélecteur de programme du mélangeur allume le tally |
 | La fiche du banc | Le plan d'adressage à appliquer et la recette : chaque caméra jointe par le PC et pilotée par le pupitre |
 
 Ce que le modèle simule : deux appareils se joignent s'ils sont dans le même VLAN, chacun voit l'autre dans son sous-réseau
@@ -415,14 +417,14 @@ compte administrateur est vue par le pupitre mais pas pilotée ; la vidéo ne pa
 fait confiance et a une file prioritaire (les files de `cours/ip_calc.js`).
 
 **Le pas à pas.** Un troisième onglet du panneau de droite, « Pas à pas » (pour un atelier dont la vue rend `etapes()`) : les
-dix étapes de la mise en service (brancher, alimenter, adresser le PC, chercher, adresser les caméras, comptes, adresser le
+onze étapes de la mise en service (brancher par la prise LAN, alimenter, câbler la vidéo et le tally, adresser le PC, chercher, adresser les caméras, comptes, adresser le
 pupitre, enregistrer les caméras, QoS, recette au joystick), cochées seules d'après l'état, la suivante dépliée avec la
 manière de la faire et un bouton « Y aller ». L'atelier s'ouvre la première fois sur ce panneau.
 
 **Cinq défis notés** (`labo/defis/ptz.js`) : trois caméras sorties du carton (dont une AW-UE20 qui a passé ses 20 minutes) ;
 le budget PoE d'un switch trop faible ; enregistrer les caméras au pupitre (dont une sur un autre port HTTP) ; la vidéo
 d'abord (DSCP et files sur un lien engorgé) ; la recette du lundi matin (trois pannes tirées parmi PoE, VLAN, masque, doublon,
-port, compte).
+port, compte, câble dans la prise RS-422, vidéo sur G/L IN, numéro du pupitre en SERIAL).
 
 **Le chapitre « Les caméras PTZ »** (`cours/ptz.js`, après La caméra), dix leçons en trois parties et quatre niveaux :
 
@@ -441,7 +443,10 @@ l'exercice pratique de la leçon Easy IP Setup (`x-labo-ptz`). La leçon « Mont
 4,5 à 90 mm, trois capteurs 1/2,86 pouce, compte d'usine admin / 12345, fenêtre d'Easy IP « Unlimited » depuis le
 micrologiciel 2.00 ; AW-UE20 : 3,9 à 46,8 mm, capteur 4K 1/2,8 pouce, compte à créer au premier accès, fenêtre « 20min »
 d'usine ; AW-RP150 : 200 caméras en IP, 5 en série, écran 7 pouces ; commandes HTTP de la spécification d'interface des
-caméras intégrées (vitesses 01 à 99, 50 à l'arrêt). L'adresse du pupitre (192.168.0.9) est celle des exemples de mise en
+caméras intégrées (vitesses 01 à 99, 50 à l'arrêt) ; les prises et sérigraphies des modes d'emploi AW-HE130 (VQT5L27A),
+AW-UE20 (DVQP2657) et AW-RP150 (DVQP1819, dont les menus SYSTEM, CONNECT SETTING, PMEM/TMEM). La place exacte des prises sur
+les panneaux n'a pas pu être relevée sur une photo : l'ordre dessiné est celui des modes d'emploi. L'affectation des molettes
+F1 à F4 est simplifiée ; AUTO IP SET, SCENE, USER et MAINTENANCE sont affichés mais pas simulés. L'adresse du pupitre (192.168.0.9) est celle des exemples de mise en
 service Panasonic. Les angles de champ sont calculés depuis le type du capteur (ordre de grandeur). La règle du mot de passe
 est une bonne pratique du banc, pas une exigence du constructeur.
 

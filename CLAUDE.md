@@ -172,7 +172,9 @@ Tout est en français (code commenté en français, interface, commits).
 - **Les caméras PTZ** (v19.30, décidé le 4 novembre 2026) : le matériel du BTS (deux AW-HE130, une AW-UE20, le pupitre
   AW-RP150, Easy IP Setup sur un PC, un switch PoE+). Au Labo, l'atelier `ptz` (`labo/ateliers/ptz.js`, modèle pur
   `labo/calc/ptz.js` : PoE et budget par classe, qui joint qui, Easy IP Setup par diffusion et sa fenêtre de 20 minutes,
-  page web et compte, pupitre, QoS, `etapes`, `recette`) : écrans proches des vrais (libellés Panasonic), un onglet
+  page web et compte, pupitre, QoS, `etapes`, `recette` ; les prises `PRISES` et le câblage `brancher`) : le câblage par les
+  faces arrière (`ptz_cablage.js`, prises sérigraphiées des modes d'emploi), la face avant du pupitre (`ptz_pupitre.js` :
+  menus SYSTEM, CONNECT SETTING, PMEM/TMEM), écrans proches des vrais (libellés Panasonic), un onglet
   « Pas à pas » au panneau pour un atelier dont la vue rend `etapes()`, cinq défis (`labo/defis/ptz.js`). Au Cours, le
   chapitre `ptz` (`cours/ptz.js` et ses trois parties, `cours/ptz_calc.js`, `cours/exos/ptz.js`, `content/terms_ptz.js`).
   Un chiffre du constructeur vient de ses documents ; sinon il est dit ordre de grandeur. Tests `tests/unit/ptz.test.mjs`,

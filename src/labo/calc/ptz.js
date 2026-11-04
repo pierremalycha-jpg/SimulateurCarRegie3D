@@ -66,8 +66,163 @@ export const MODELES = {
   },
   pc: { nom: 'PC technique', type: 'pc', poe: null, classe: null, conso: 0, usine: { ip: '192.168.1.20', masque: '255.255.255.0', passerelle: '192.168.1.1', http: 0 } },
 };
-/** le switch du banc : un switch PoE+ administrable à 8 ports (budget : ordre de grandeur d'un modèle courant) */
-export const SWITCH = { ports: 8, budget: 124 };
+/** le switch du banc : un switch PoE+ administrable à 8 ports, 125 W de budget (comme un NETGEAR M4250-10G2F-PoE+) */
+export const SWITCH = { ports: 8, budget: 125 };
+
+// ---------------- les prises (faces arrière) et les câbles ----------------
+/**
+ * @typedef {object} Prise
+ * @property {string} id
+ * @property {string} serigraphie ce qui est imprimé à côté de la prise
+ * @property {'rj45' | 'bnc' | 'hdmi' | 'dc' | 'dsub' | 'usb' | 'mini' | 'xlr'} fiche
+ * @property {'lan' | 'rs422' | 'sdi' | 'video' | 'ref' | 'hdmi' | 'dc' | 'audio' | 'usb' | 'gpio' | 'gpio2' | 'sdi-in' | 'sdi-out' | 'ir'} role
+ * @property {string} [note] ce qu'elle fait, en clair
+ */
+/**
+ * Les prises de chaque appareil, avec leur sérigraphie, d'après les modes d'emploi Panasonic (AW-HE130 VQT5L27A,
+ * AW-UE20 DVQP2657, AW-RP150 DVQP1819). L'ordre est celui de la liste du mode d'emploi, pas forcément la place exacte
+ * sur le panneau. La prise RS-422 est une RJ45, comme LAN : c'est une liaison série (câble droit, 1 000 m au plus),
+ * pas de l'Ethernet. L'AW-HE130 n'a pas de prise de tally : sa lampe s'allume par la broche 2 du RS-422 ou par commande.
+ * @type {Record<string, Prise[]>}
+ */
+export const PRISES = {
+  he130: [
+    { id: 'sdi', serigraphie: 'SDI OUT', fiche: 'bnc', role: 'sdi', note: '3G/HD/SD-SDI, vers le mélangeur' },
+    { id: 'video', serigraphie: 'VIDEO OUT', fiche: 'bnc', role: 'video', note: 'sortie composite analogique (NTSC/PAL)' },
+    { id: 'gl', serigraphie: 'G/L IN', fiche: 'bnc', role: 'ref', note: 'entrée de synchronisation (genlock, black burst)' },
+    { id: 'hdmi', serigraphie: 'HDMI', fiche: 'hdmi', role: 'hdmi', note: 'vers un moniteur, sur quelques mètres' },
+    { id: 'mic', serigraphie: 'MIC/LINE', fiche: 'mini', role: 'audio', note: 'mini-jack stéréo 3,5 mm' },
+    { id: 'lan', serigraphie: 'LAN', fiche: 'rj45', role: 'lan', note: 'commande IP, flux, PoE+ (IEEE 802.3at)' },
+    { id: 'rs422', serigraphie: 'RS-422', fiche: 'rj45', role: 'rs422', note: 'commande série (câble droit, 1 000 m au plus)' },
+    { id: 'dc', serigraphie: 'DC 12V IN', fiche: 'dc', role: 'dc', note: 'le bloc secteur fourni' },
+  ],
+  ue20: [
+    { id: 'sdi', serigraphie: '3G SDI OUT', fiche: 'bnc', role: 'sdi', note: '3G-SDI, vers le mélangeur' },
+    { id: 'hdmi', serigraphie: 'HDMI', fiche: 'hdmi', role: 'hdmi', note: 'vers un moniteur' },
+    { id: 'usb', serigraphie: 'USB', fiche: 'usb', role: 'usb', note: 'webcam (UVC) vers un ordinateur' },
+    { id: 'mic', serigraphie: 'MIC/LINE', fiche: 'mini', role: 'audio', note: 'mini-jack stéréo 3,5 mm' },
+    { id: 'lan', serigraphie: 'LAN', fiche: 'rj45', role: 'lan', note: 'commande IP, flux, PoE+ (IEEE 802.3at)' },
+    { id: 'rs422', serigraphie: 'RS-422', fiche: 'rj45', role: 'rs422', note: 'commande série' },
+    { id: 'dc', serigraphie: '12V IN', fiche: 'dc', role: 'dc', note: 'le bloc secteur' },
+  ],
+  rp150: [
+    { id: 'lan', serigraphie: 'IP CONT', fiche: 'rj45', role: 'lan', note: 'commande IP des caméras, PoE+ (100BASE-TX)' },
+    ...[1, 2, 3, 4, 5].map((n) => ({ id: 's' + n, serigraphie: `SERIAL CONT ${n}`, fiche: /** @type {'rj45'} */ ('rj45'), role: /** @type {'rs422'} */ ('rs422'), note: 'RS-422 et tally vers une caméra ; pas de PoE+ ici' })),
+    { id: 'sdiin', serigraphie: '3G SDI IN', fiche: 'bnc', role: 'sdi-in', note: 'image affichée sur l\'écran du pupitre' },
+    { id: 'thru', serigraphie: 'ACTIVE THRU', fiche: 'bnc', role: 'sdi-out', note: 'recopie de l\'entrée SDI' },
+    { id: 'gpio', serigraphie: 'TALLY/GPIO 1', fiche: 'dsub', role: 'gpio', note: 'Sub-D 25 : 10 entrées de tally, GPI, GPIO' },
+    { id: 'gpio2', serigraphie: 'GPIO 2', fiche: 'dsub', role: 'gpio2', note: 'Sub-D 25 : GPI et GPIO (extension)' },
+    { id: 'dc', serigraphie: 'DC 12V IN', fiche: 'xlr', role: 'dc', note: 'XLR 4 broches, 10,8 à 13,2 V' },
+  ],
+  pc: [{ id: 'lan', serigraphie: 'LAN', fiche: 'rj45', role: 'lan', note: 'la carte réseau du PC' }],
+};
+/** les types de câbles du banc : la fiche qu'ils ont à chaque bout */
+export const CABLES = {
+  rj45: { nom: 'Câble réseau RJ45 (catégorie 6)', fiche: 'rj45' },
+  bnc: { nom: 'Câble coaxial 75 Ω, BNC (SDI)', fiche: 'bnc' },
+  dc: { nom: 'Bloc secteur 12 V', fiche: 'dc' },
+  gpio: { nom: 'Câble GPIO (tally)', fiche: 'dsub' },
+};
+/** le mélangeur du banc : ses entrées SDI, sa sortie programme, sa référence, ses GPIO */
+export const MELANGEUR = [
+  { id: 'in1', serigraphie: 'SDI IN 1', fiche: 'bnc', role: 'sdi-in' }, { id: 'in2', serigraphie: 'SDI IN 2', fiche: 'bnc', role: 'sdi-in' },
+  { id: 'in3', serigraphie: 'SDI IN 3', fiche: 'bnc', role: 'sdi-in' }, { id: 'in4', serigraphie: 'SDI IN 4', fiche: 'bnc', role: 'sdi-in' },
+  { id: 'pgm', serigraphie: 'PGM OUT', fiche: 'bnc', role: 'sdi-out' }, { id: 'ref', serigraphie: 'REF OUT', fiche: 'bnc', role: 'ref' },
+  { id: 'gpio', serigraphie: 'GPI / TALLY', fiche: 'dsub', role: 'gpio' },
+];
+/** les prises d'une extrémité : « sw » (le switch), « mix » (le mélangeur), ou un appareil du banc */
+export function prisesDe(st, dev) {
+  if (dev === 'sw') return Array.from({ length: SWITCH.ports }, (_, i) => ({ id: 'p' + (i + 1), serigraphie: String(i + 1), fiche: /** @type {'rj45'} */ ('rj45'), role: /** @type {'lan'} */ ('lan') }));
+  if (dev === 'mix') return MELANGEUR;
+  const a = app(st, dev); return a ? PRISES[a.modele] || [] : [];
+}
+/** une extrémité « appareil:prise » lue */
+const bout = (st, e) => { const [dev, id] = String(e).split(':'); const P = prisesDe(st, dev).find((x) => x.id === id); return P ? { dev, id, P } : null; };
+/** le nom d'une extrémité, en clair (« CAM 1 : LAN ») */
+export function nomBout(st, e) { const b = bout(st, e); if (!b) return e; const n = b.dev === 'sw' ? 'Switch, port' : b.dev === 'mix' ? 'Mélangeur :' : `${app(st, b.dev).nom} :`; return `${n} ${b.P.serigraphie}`; }
+/**
+ * Les câbles posés, lus dans l'état (pour les dessiner) : le câble réseau de chaque appareil vers son port, le coaxial de
+ * chaque caméra vers le mélangeur, le bloc 12 V, le tally, le retour image du pupitre, la synchro.
+ * @returns {Array<{ type: keyof CABLES, a: string, b?: string }>}
+ */
+export function cablesPoses(st) {
+  /** @type {Array<{ type: any, a: string, b?: string }>} */ const L = [];
+  for (const a of st.appareils) {
+    if (a.port) L.push({ type: 'rj45', a: `${a.id}:${a.prise || 'lan'}`, b: `sw:p${a.port}` });
+    const dc = (PRISES[a.modele] || []).find((x) => x.role === 'dc');
+    if (a.secteur && dc) L.push({ type: 'dc', a: `${a.id}:${dc.id}` });
+  }
+  for (const [cam, v] of Object.entries(st.video || {})) if (v && v.entree && v.prise) L.push({ type: 'bnc', a: `${cam}:${v.prise}`, b: `mix:in${v.entree}` });
+  const gl = (cam) => (PRISES[app(st, cam).modele] || []).find((x) => x.role === 'ref');
+  for (const cam of Object.keys(st.genlock || {})) if (st.genlock[cam] && gl(cam)) L.push({ type: 'bnc', a: 'mix:ref', b: `${cam}:${gl(cam).id}` });
+  const rp = app(st, 'rp'), R = PRISES.rp150 || [];
+  const g = R.find((x) => x.role === 'gpio'), si = R.find((x) => x.role === 'sdi-in');
+  if (st.tally && g) L.push({ type: 'gpio', a: 'mix:gpio', b: `rp:${g.id}` });
+  if (st.retour && si && rp) L.push({ type: 'bnc', a: 'mix:pgm', b: `rp:${si.id}` });
+  return L;
+}
+/** le câble branché sur une extrémité (ou null) */
+export const cableSur = (st, e) => cablesPoses(st).find((c) => c.a === e || c.b === e) || null;
+/**
+ * Poser un câble entre deux prises (ou sur une seule, pour le bloc 12 V). Rend le réglage à poser, ou pourquoi c'est
+ * impossible : la fiche du câble doit entrer dans les deux prises, et la liaison doit avoir un sens sur ce banc.
+ * @param {keyof CABLES} type @param {string} e1 @param {string} [e2]
+ * @returns {{ ok: boolean, pb: string, patch: Record<string, any>, note?: string }}
+ */
+export function brancher(st, type, e1, e2) {
+  const C = CABLES[type], A = bout(st, e1), B = e2 ? bout(st, e2) : null;
+  const non = (pb) => ({ ok: false, pb, patch: {} });
+  if (!C || !A) return non('Choisissez une prise.');
+  if (type === 'dc') {
+    if (A.P.role !== 'dc') return non(`Le bloc 12 V se branche sur l'entrée d'alimentation (DC 12V IN), pas sur ${A.P.serigraphie}.`);
+    return { ok: true, pb: '', patch: { [`appareils.${A.dev}.secteur`]: true }, note: `${app(st, A.dev).nom} est alimenté par son bloc 12 V : il ne demande plus de PoE.` };
+  }
+  if (A.P.fiche !== C.fiche) return non(`La fiche ${ficheNom(C.fiche)} n'entre pas dans la prise ${A.P.serigraphie} (${ficheNom(A.P.fiche)}).`);
+  if (!B) return non('Choisissez la seconde prise.');
+  if (B.P.fiche !== C.fiche) return non(`La fiche ${ficheNom(C.fiche)} n'entre pas dans la prise ${B.P.serigraphie} (${ficheNom(B.P.fiche)}).`);
+  if (A.dev === B.dev) return non('Un câble relie deux appareils différents.');
+  const [x, y] = A.dev === 'sw' || A.dev === 'mix' ? [B, A] : [A, B]; // x : l'appareil, y : le switch ou le mélangeur
+  if (type === 'rj45') {
+    if (y.dev !== 'sw') return non(x.P.role === 'rs422' || y.P.role === 'rs422' ? 'Une liaison série RS-422 caméra–pupitre existe (5 caméras au plus), mais ce banc pilote tout en IP : reliez chaque appareil au switch.' : 'Sur ce banc, chaque câble réseau va d\'un appareil au switch.');
+    const n = Number(y.id.slice(1)), occ = st.appareils.find((a) => a.port === n && a.id !== x.dev);
+    if (occ) return non(`Le port ${n} est déjà pris par ${occ.nom}.`);
+    const note = x.P.role === 'rs422' ? `Le câble entre, mais ${x.P.serigraphie} est une liaison série : le switch n'y trouve ni Ethernet ni appareil PoE.${x.dev === 'rp' ? ' Le mode d\'emploi du pupitre interdit d\'y brancher du PoE+.' : ''}` : '';
+    return { ok: true, pb: '', patch: { [`appareils.${x.dev}.port`]: n, [`appareils.${x.dev}.prise`]: x.id }, note };
+  }
+  if (type === 'bnc') {
+    if (y.dev !== 'mix') return non('Ce coaxial relie une caméra (ou le pupitre) au mélangeur.');
+    const X = app(st, x.dev), MX = X ? MODELES[X.modele] : null;
+    if (MX && MX.type === 'camera') {
+      if (y.P.role === 'sdi-in') {
+        const n = Number(y.id.slice(2)), occ = Object.entries(st.video || {}).find(([c, v]) => c !== x.dev && v && v.entree === n);
+        if (occ) return non(`L'entrée ${n} reçoit déjà ${app(st, occ[0]).nom}.`);
+        const note = x.P.role === 'ref' ? `${x.P.serigraphie} est une entrée de synchronisation : rien n'en sort vers le mélangeur.` : x.P.role === 'video' ? `${x.P.serigraphie} est une sortie composite analogique : l'entrée SDI du mélangeur ne la lit pas.` : '';
+        return { ok: true, pb: '', patch: { [`video.${x.dev}`]: { prise: x.id, entree: n } }, note };
+      }
+      if (y.P.role === 'ref' && x.P.role === 'ref') return { ok: true, pb: '', patch: { [`genlock.${x.dev}`]: true }, note: `${X.nom} se synchronise sur la référence du mélangeur (genlock).` };
+      return non(y.P.role === 'ref' ? 'La référence du mélangeur va à l\'entrée de synchronisation de la caméra (G/L IN).' : 'La sortie programme du mélangeur ne va pas à une caméra.');
+    }
+    if (x.dev === 'rp' && x.P.role === 'sdi-in' && y.P.role === 'sdi-out') return { ok: true, pb: '', patch: { retour: true }, note: 'Le pupitre affiche l\'image du programme sur son entrée SDI.' };
+    return non('Cette liaison coaxiale n\'a pas de sens sur ce banc.');
+  }
+  if (type === 'gpio') {
+    if (y.dev !== 'mix' || x.dev !== 'rp' || x.P.role !== 'gpio') return non(x.P.role === 'gpio2' ? 'GPIO 2 est prévue pour une extension : le tally entre par TALLY/GPIO 1.' : 'Le tally va des GPIO du mélangeur à la prise TALLY/GPIO 1 du pupitre.');
+    return { ok: true, pb: '', patch: { tally: true }, note: 'Le mélangeur dit au pupitre quelle caméra est à l\'antenne.' };
+  }
+  return non('Câble inconnu.');
+}
+/** débrancher le câble d'une prise : le réglage à poser */
+export function debrancher(st, e) {
+  const c = cableSur(st, e); if (!c) return {};
+  const [dev] = c.a.split(':');
+  if (c.type === 'rj45') return { [`appareils.${dev}.port`]: 0, [`appareils.${dev}.prise`]: 'lan' };
+  if (c.type === 'dc') return { [`appareils.${dev}.secteur`]: false };
+  if (c.type === 'gpio') return { tally: false };
+  if (c.a === 'mix:pgm') return { retour: false };
+  if (c.a === 'mix:ref') return { [`genlock.${c.b.split(':')[0]}`]: false };
+  return { [`video.${dev}`]: { prise: '', entree: 0 } };
+}
+export const ficheNom = (f) => ({ rj45: 'RJ45', bnc: 'BNC', hdmi: 'HDMI', dc: 'd\'alimentation', dsub: 'D-Sub', usb: 'USB', mini: 'mini-jack', xlr: 'XLR' })[f] || f;
 /** la fenêtre d'Easy IP Setup après la mise sous tension, en minutes (réglage d'usine de la caméra) */
 export const FENETRE_EASYIP = 20;
 /** la règle du banc pour un mot de passe (bonne pratique, pas une exigence du constructeur) */
@@ -108,6 +263,7 @@ export const hote = (reseau, n) => ipStr(((parseIp(reseau) || 0) + n) >>> 0);
  * @property {keyof MODELES} modele
  * @property {string} mac
  * @property {number} port port du switch (0 : débranché)
+ * @property {string} [prise] la prise de l'appareil où arrive le câble du switch (« lan » ; une autre prise RJ45, comme RS-422, ne fait pas d'Ethernet)
  * @property {string} ip
  * @property {string} masque
  * @property {string} passerelle
@@ -136,7 +292,7 @@ export const macDe = (k) => `08-00-23-${['4A', '5B', '6C', '7D', '8E', '9F'][k %
 export function appareilUsine(id, nom, modele, k, port = 0) {
   const M = MODELES[modele];
   /** @type {Appareil} */
-  const a = { id, nom, modele, mac: macDe(k), port, ...M.usine };
+  const a = { id, nom, modele, mac: macDe(k), port, prise: 'lan', ...M.usine };
   if (M.type === 'camera') Object.assign(a, { secteur: false, dhcp: false, compte: M.compte ? { ...M.compte } : null, periode: M.periode, t0: null, dscp: 0, flux: false, debit: 20 });
   if (M.type === 'pupitre') Object.assign(a, { secteur: false, t0: null });
   if (M.type === 'pc') Object.assign(a, { t0: 0 });
@@ -144,7 +300,7 @@ export function appareilUsine(id, nom, modele, k, port = 0) {
 }
 /** le plan d'adressage type (la fiche de configuration du banc) */
 export function planType(reseau = '192.168.10.0', p = 24) {
-  return { reseau, p, masque: masqueDe(p), passerelle: hote(reseau, 1), pc: hote(reseau, 100), rp: hote(reseau, 10), cams: { cam1: hote(reseau, 11), cam2: hote(reseau, 12), cam3: hote(reseau, 13) }, http: 80, dscp: 34, vlan: 1 };
+  return { reseau, p, masque: masqueDe(p), passerelle: hote(reseau, 1), pc: hote(reseau, 100), rp: hote(reseau, 10), cams: { cam1: hote(reseau, 11), cam2: hote(reseau, 12), cam3: hote(reseau, 13) }, http: 80, dscp: 34, vlan: 1, video: { cam1: 1, cam2: 2, cam3: 3 } };
 }
 /** le banc, état de départ : tout est sorti du carton et posé sur la table, rien n'est branché */
 export function bancUsine() {
@@ -159,8 +315,16 @@ export function bancUsine() {
       appareilUsine('rp', 'Pupitre', 'rp150', 4, 0),
     ],
     // le pupitre : une adresse et un port par numéro de caméra ; les caméras testées (bougées depuis le pupitre)
-    rp: { cams: /** @type {Record<string, { ip: string, port: number }>} */ ({}), sel: 1, testees: /** @type {string[]} */ ([]) },
+    rp: { cams: /** @type {Record<string, { ip: string, port: number }>} */ ({}), modes: /** @type {Record<string, string>} */ ({}), sel: 1, testees: /** @type {string[]} */ ([]) },
+    // le programme du mélangeur : l'entrée à l'antenne (0 : aucune)
+    pgm: 0,
     easyip: { cherche: false },
+    // la vidéo : de quelle prise de chaque caméra part le câble coaxial, vers quelle entrée SDI du mélangeur (0 : aucune) ;
+    // le tally : le câble des GPIO du mélangeur vers le pupitre
+    video: /** @type {Record<string, { prise: string, entree: number }>} */ ({ cam1: { prise: '', entree: 0 }, cam2: { prise: '', entree: 0 }, cam3: { prise: '', entree: 0 } }),
+    tally: false,
+    retour: false,
+    genlock: /** @type {Record<string, boolean>} */ ({}),
     transfert: 0,
     plan: planType(),
   };
@@ -189,7 +353,10 @@ export function alimentation(st) {
     par[a.id] = r;
     if (!P) { r.pb = 'débranché'; r.alimente = !M.poe || !!a.secteur; continue; }
     if (pris.has(P.n)) { r.pb = `le port ${P.n} est déjà pris`; r.alimente = !M.poe || !!a.secteur; continue; }
-    pris.add(P.n); r.lien = true;
+    pris.add(P.n);
+    // le câble du switch dans une autre prise RJ45 de l'appareil (RS-422) : pas d'Ethernet, pas de PoE
+    if (a.prise && a.prise !== 'lan') { const S = (PRISES[a.modele] || []).find((x) => x.id === a.prise); r.pb = `le câble du port ${P.n} est branché dans la prise ${S ? S.serigraphie : a.prise} de ${a.nom} : ce n'est pas la prise réseau (LAN)`; r.alimente = !M.poe || !!a.secteur; continue; }
+    r.lien = true;
     if (!M.poe) { r.alimente = true; continue; } // le PC est sur le secteur
     if (a.secteur) { r.alimente = true; continue; } // sur son bloc 12 V : rien à réserver sur le switch
     if (P.poe === 'off') { r.pb = `pas de PoE sur le port ${P.n}`; continue; }
@@ -336,6 +503,9 @@ export function liaisonsPupitre(st) {
   return Object.entries(st.rp.cams || {}).map(([k, r]) => {
     const n = Number(k);
     if (!r || !r.ip) return { n, ip: '', port: 80, cam: null, ok: false, pb: 'pas d\'adresse' };
+    // SYSTEM → CONNECT SETTING : le numéro doit être en LAN (CNNCT MD) pour être piloté par le réseau
+    const mode = modeNumero(st, n);
+    if (mode !== 'LAN') return { n, ip: r.ip, port: r.port, cam: null, ok: false, pb: `CONNECT SETTING : la caméra ${n} est en ${mode}, pas en LAN` };
     const cam = st.appareils.find((a) => MODELES[a.modele].type === 'camera' && adresse(a) === r.ip && enMarche(st, a.id));
     if (!cam) return { n, ip: r.ip, port: r.port, cam: null, ok: false, pb: `aucune caméra ne répond à ${r.ip}` };
     const j = joint(st, 'rp', cam.id);
@@ -345,6 +515,19 @@ export function liaisonsPupitre(st) {
     if (!cam.compte) return { n, ip: r.ip, port: r.port, cam: cam.id, ok: false, pb: `${cam.nom} n'a pas encore de compte administrateur : le pupitre la voit mais ne peut pas la piloter` };
     return { n, ip: r.ip, port: r.port, cam: cam.id, ok: true, pb: '' };
   }).sort((a, b) => a.n - b.n);
+}
+/** le mode de liaison d'un numéro de caméra (CONNECT SETTING, « CNNCT MD ») : LAN, SERIAL ou NONE (pas encore affecté) */
+export const modeNumero = (st, n) => ((st.rp && st.rp.modes) || {})[n] || 'NONE';
+/**
+ * Le tally : la caméra dont l'image est au programme du mélangeur (st.pgm : son entrée), si le câble de tally relie le
+ * mélangeur au pupitre ; le numéro du pupitre qui la pilote (sa touche s'allume en rouge).
+ */
+export function tallyRouge(st) {
+  const I = imageMelangeur(st), e = I.entrees[st.pgm || 0];
+  if (!e || !e.ok) return { cam: null, n: 0, pb: st.pgm ? 'aucune image sur l\'entrée au programme' : 'rien au programme' };
+  if (!st.tally) return { cam: e.cam, n: 0, pb: 'le mélangeur n\'est pas relié au pupitre (TALLY/GPIO 1)' };
+  const L = liaisonsPupitre(st).find((l) => l.ok && l.cam === e.cam);
+  return { cam: e.cam, n: L ? L.n : 0, pb: L ? '' : 'la caméra au programme n\'est pas enregistrée au pupitre' };
 }
 /** la caméra pilotée par le numéro n du pupitre (null si la liaison ne tient pas) */
 export function camDuNumero(st, n) { const L = liaisonsPupitre(st).find((x) => x.n === n); return L && L.ok ? L.cam : null; }
@@ -375,6 +558,30 @@ export const DSCP = { DF: 0, CS1: 8, AF11: 10, AF21: 18, AF31: 26, CS4: 32, AF41
 /** le DSCP d'une classe AFxy : 8x + 2y */
 export const dscpAF = (x, y) => 8 * x + 2 * y;
 
+// ---------------- la vidéo et le tally ----------------
+/**
+ * Ce qui arrive aux entrées SDI du mélangeur : pour chaque entrée, la caméra câblée et si son image arrive. Une image
+ * arrive si le câble part de la sortie SDI de la caméra et que la caméra est alimentée (par PoE ou son bloc).
+ * @returns {{ entrees: Record<number, { cam: string, ok: boolean, pb: string }>, parCam: Record<string, { entree: number, ok: boolean, pb: string }> }}
+ */
+export function imageMelangeur(st) {
+  const A = alimentation(st);
+  /** @type {Record<number, { cam: string, ok: boolean, pb: string }>} */ const entrees = {};
+  /** @type {Record<string, { entree: number, ok: boolean, pb: string }>} */ const parCam = {};
+  for (const c of cameras(st)) {
+    const v = (st.video || {})[c.id] || { prise: '', entree: 0 };
+    let pb = '';
+    if (!v.entree || !v.prise) pb = 'pas de câble vers le mélangeur';
+    else if (v.prise !== 'sdi') { const S = (PRISES[c.modele] || []).find((x) => x.id === v.prise); pb = `le câble part de la prise ${S ? S.serigraphie : v.prise} : ${S && S.role === 'ref' ? 'c\'est une entrée de synchronisation, aucune image n\'en sort' : S && S.role === 'video' ? 'c\'est la sortie composite analogique, l\'entrée SDI ne la lit pas' : 'ce n\'est pas la sortie SDI'}`; }
+    else if (!A.par[c.id].alimente) pb = `${c.nom} est éteinte`;
+    else if (entrees[v.entree]) pb = `l'entrée ${v.entree} reçoit déjà ${app(st, entrees[v.entree].cam).nom}`;
+    const ok = !pb;
+    parCam[c.id] = { entree: v.entree, ok, pb };
+    if (v.entree && !entrees[v.entree]) entrees[v.entree] = { cam: c.id, ok, pb };
+  }
+  return { entrees, parCam };
+}
+
 // ---------------- la mise en service, pas à pas ----------------
 /**
  * Les étapes de la mise en service du banc, d'après la fiche de configuration (st.plan) : chacune dit si elle
@@ -387,9 +594,13 @@ export function etapes(st) {
   const liste = (ids) => ids.map(nomDe).join(', ');
   const E = [];
   const nonBranches = st.appareils.filter((a) => !A.par[a.id].lien).map((a) => a.id);
-  E.push({ id: 'cabler', titre: 'Brancher chaque appareil sur un port du switch', vue: 'banc', fait: !nonBranches.length, reste: nonBranches.length ? `à brancher : ${liste(nonBranches)}` : '' });
+  E.push({ id: 'cabler', titre: 'Brancher chaque appareil sur un port du switch, par sa prise LAN', vue: 'cablage', fait: !nonBranches.length, reste: nonBranches.length ? `à brancher : ${liste(nonBranches)}` : '' });
   const eteints = st.appareils.filter((a) => A.par[a.id].lien && !A.par[a.id].alimente).map((a) => a.id);
   E.push({ id: 'alimenter', titre: 'Alimenter les caméras et le pupitre en PoE+', vue: 'banc', fait: !nonBranches.length && !eteints.length, reste: eteints.length ? `${liste(eteints)} : ${A.par[eteints[0]].pb}` : nonBranches.length ? 'branchez d\'abord tout le monde' : '' });
+  const I = imageMelangeur(st);
+  const malVideo = cams.filter((c) => !I.parCam[c.id].ok || I.parCam[c.id].entree !== (P.video || {})[c.id]);
+  const videoOk = !malVideo.length && !!st.tally;
+  E.push({ id: 'video', titre: 'Câbler la vidéo : la sortie SDI de chaque caméra vers son entrée du mélangeur (CAM n → entrée n), et le tally vers le pupitre', vue: 'cablage', fait: videoOk, reste: malVideo.length ? malVideo.map((c) => `${c.nom} : ${I.parCam[c.id].ok ? `sur l'entrée ${I.parCam[c.id].entree} au lieu de ${(P.video || {})[c.id]}` : I.parCam[c.id].pb}`).join(' ; ') : !st.tally ? 'le tally du mélangeur n\'est pas relié au pupitre' : '' });
   const pc = app(st, 'pc');
   const pcOk = pc.ip === P.pc && prefixe(pc.masque) === P.p && !pc.dhcp;
   E.push({ id: 'pc', titre: `Adresser le PC technique : ${P.pc} / ${P.masque}`, vue: 'pc', pc: 'reseau', fait: pcOk, reste: pcOk ? '' : `le PC est en ${pc.dhcp ? 'DHCP' : pc.ip + ' / ' + pc.masque}` });
@@ -410,12 +621,14 @@ export function etapes(st) {
   E.push({ id: 'recette', titre: 'La recette : bouger chaque caméra depuis le pupitre', vue: 'pupitre', fait: !nonTestees.length && !manque.length, reste: nonTestees.length ? `pas encore bougées : ${liste(nonTestees.map((c) => c.id))}` : '' });
   return E;
 }
-/** la recette du banc : chaque caméra jointe par le PC et pilotée par le pupitre */
+/** la recette du banc : chaque caméra jointe par le PC, pilotée par le pupitre, son image au mélangeur ; le tally */
 export function recette(st) {
   const cams = cameras(st);
-  const L = liaisonsPupitre(st);
+  const L = liaisonsPupitre(st), I = imageMelangeur(st);
   const pb = [];
+  if (!st.tally) pb.push('Tally : le mélangeur n\'est pas relié au pupitre (GPIO)');
   for (const c of cams) {
+    if (!I.parCam[c.id].ok) pb.push(`${c.nom} → mélangeur : ${I.parCam[c.id].pb}`);
     const j = joint(st, 'pc', c.id); if (!j.ok) pb.push(`PC → ${c.nom} : ${j.pb}`);
     if (!L.some((l) => l.ok && l.cam === c.id)) { const l = L.find((x) => x.cam === c.id); pb.push(`Pupitre → ${c.nom} : ${l ? l.pb : 'pas enregistrée au pupitre'}`); }
   }
