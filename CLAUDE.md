@@ -170,11 +170,12 @@ Tout est en français (code commenté en français, interface, commits).
   `content/terms_lumiere_*.js`. Les manipulations calculent avec les modèles du Labo (`labo/calc/`) : leçons et ateliers disent
   les mêmes chiffres. Les ateliers du Labo y sont les exercices pratiques (`x-labo-photometrie`, `x-labo-dmx`, `x-labo-dot2`).
 - **Le plateau 3D du Labo** (`src/labo/plateau/`, v19.30, décidé le 4 novembre 2026) : les ateliers Optique et Photométrie se
-  jouent sur un plateau vu en isométrie et dessiné en low-poly. Le moteur (`scene.js` : un seul rendu WebGL partagé, monté dans
+  jouent sur un plateau vu en isométrie et dessiné en low-poly **polygonal** : des facettes (prismes, cônes, icosaèdres
+  froissés), pas des cubes. Le moteur (`scene.js` : un seul rendu WebGL partagé, monté dans
   l'atelier affiché, rendu à la demande ; caméra orthographique, quarts de tour, zoom, recentrer ; glisser-poser au sol ;
   étiquettes en pilules) reçoit de l'atelier un **adaptateur** (scène, objets à prendre, étiquettes, cadre, image de la caméra,
-  exposition). Les pièces (`pieces.js`) : Builder en mode `ao`, `matPlate()` = `matiere()` sans relief, lu à plat, aucun
-  fichier de texture ; les repères (champ, zone nette, cônes, anneau) vivent sur la couche 1, que l'image de la caméra ne voit
+  exposition). Les pièces (`pieces.js`) : Builder en mode `ao`, formes à facettes (`prisme`, `cone`, `boule`, `froisse`),
+  `matPlate()` = `matiere()` sans relief, lu à plat, aucun fichier de texture ; les repères (champ, zone nette, cônes, anneau) vivent sur la couche 1, que l'image de la caméra ne voit
   pas. L'image de la caméra (`dof.js`) est rendue pour de vrai : flou par pixel depuis la profondeur avec la formule de la
   leçon (jugée à la définition HD), exposition π ÷ Eref, balance des blancs, zébra ; les lumières sont en unités physiques
   (candelas, lux). Les calculs sont purs (`calc.js`, test `tests/unit/plateau.test.mjs`). L'état des ateliers porte la place

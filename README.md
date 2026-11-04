@@ -398,10 +398,11 @@ Tests :
 
 **Le plateau 3D** (`src/labo/plateau/`) : les ateliers Optique et Photométrie ne dessinent plus leur vue de dessus en 2D.
 Ils posent une caméra, des sujets et des projecteurs sur un plateau de télévision vu en isométrie (caméra orthographique,
-élévation fixe, quarts de tour animés, zoom vers le pointeur, pincement, double clic pour recentrer), dessiné en low-poly :
-des boîtes aux arêtes à peine arrondies et des cylindres à peu de faces, fusionnés par un `Builder` en mode `ao`, lus à plat
-(`matPlate()` : la matière de `matiere()` sans son relief, en `flatShading`), le cel shading du style « dessin », des
-ombres portées. On **prend un objet et on le pose au sol** : le pointeur est projeté sur le plan du sol, l'objet suit sans
+élévation fixe, quarts de tour animés, zoom vers le pointeur, pincement, double clic pour recentrer), dessiné en low-poly
+polygonal : des formes à facettes (prismes à six ou huit faces, cônes, icosaèdres pour les têtes, les mains et les
+feuillages, les surfaces organiques légèrement froissées par un bruit déterministe), les arêtes franches, fusionnées par un
+`Builder` en mode `ao`, lues à plat (`matPlate()` : la matière de `matiere()` sans son relief, en `flatShading`), le cel
+shading du style « dessin », des ombres portées ; une plante en pot et des malles donnent l'échelle. On **prend un objet et on le pose au sol** : le pointeur est projeté sur le plan du sol, l'objet suit sans
 sauter, et l'atelier relit sa place dans son état (la distance le long de l'axe et l'écart latéral d'un sujet, la distance et
 l'angle d'un projecteur autour du sujet, la place de la caméra), d'où tout se recalcule comme avec les curseurs, qui restent.
 Un défi qui impose un réglage verrouille aussi l'objet (curseur « interdit », annonce). Les étiquettes (pilules de verre
@@ -2899,7 +2900,7 @@ node tools/shots.mjs dossier 1280 800 '["vision","hf"]'   # captures de postes
 | `labo/calc/lumiere.js`, `labo/calc/show.js`, `labo/dot2/show_depart.js` | La lumière en calcul pur (familles de sources, angle solide, angle de champ, scintillement, uniformité) ; la console (lire un show de la dot2 : tracking, presets, couleur d'une lyre, effets, chaser ; pan et tilt sur 16 bits) ; le show de départ des défis de la console (v19.29) |
 | `cours/lumiere.js`, `cours/lumiere_mesure.js`, `cours/lumiere_eclairer.js`, `cours/lumiere_commande.js`, `cours/exos/lumiere_*.js`, `content/terms_lumiere_*.js` | Le chapitre « La lumière » (v19.29) : trois parties, treize leçons, leurs exercices en autonomie et leurs fiches « ? » |
 | `labo/ateliers/` (un fichier par atelier), `labo/defis/` (un fichier par atelier), `labo/dot2/simulateur_dot2.html`, `content/terms_labo.js` | L'interface de chaque atelier (dessins en canvas ou plateau 3D, commandes, afficheurs) ; ses défis notés ; la console dot2 (page complète gardée telle quelle, ouverte dans un cadre) ; les fiches « ? » du Labo |
-| `labo/plateau/calc.js`, `labo/plateau/scene.js`, `labo/plateau/pieces.js`, `labo/plateau/dof.js` | Le plateau 3D du Labo (v19.30) : les calculs purs (isométrie, cadrage, lecture des positions, exposition, tache en pixels, projecteur du rendu) ; le moteur isométrique partagé (rendu à la demande, glisser-poser au sol, étiquettes, image de la caméra composée) ; les pièces low-poly (sol, cyclo, sujets, caméra, projecteurs, repères) ; l'image de la caméra (flou de profondeur de champ par pixel, exposition, balance des blancs, zébra) |
+| `labo/plateau/calc.js`, `labo/plateau/scene.js`, `labo/plateau/pieces.js`, `labo/plateau/dof.js` | Le plateau 3D du Labo (v19.30) : les calculs purs (isométrie, cadrage, lecture des positions, exposition, tache en pixels, projecteur du rendu) ; le moteur isométrique partagé (rendu à la demande, glisser-poser au sol, étiquettes, image de la caméra composée) ; les pièces low-poly polygonales à facettes (sol, cyclo, sujets, caméra, projecteurs, plante, repères) ; l'image de la caméra (flou de profondeur de champ par pixel, exposition, balance des blancs, zébra) |
 | `ui/cours_ui.js` | L'espace Cours : un seul sommaire (chapitres rangés par niveau, parties), « Mon parcours », chemin d'un chapitre, la page de lecture d'une leçon qui se dévoile (en-tête, étapes collantes, schéma légendé, manipulation, explication, car, mots de la leçon, référentiel, quiz, exercice en autonomie, exercices pratiques), glossaire, postes, matériel |
 | `app/nav.js` | Navigation entre les trois entrées : menu du car (Échap), aiguillage des boutons « Aller au poste », « Commencer » (car lancé si besoin), ouverture du Labo depuis une leçon, changement de vacation |
 | `ui/layer.js` | Espace plein écran (le Cours) : plaque, onglets, Fermer (Échap), ligne d'état |

@@ -5,7 +5,7 @@ import { commandes, afficheur, jetons, fr } from '../kit.js';
 import { SOURCES, GELS } from '../calc/photometrie.js';
 import { CAPTEURS } from '../calc/optique.js';
 import { plateau, etiquetteNom } from '../plateau/scene.js';
-import { sol, cyclo, caisse, lumieresTravail, personnage, luxmetre, camera3d, projecteur, ligne } from '../plateau/pieces.js';
+import { sol, cyclo, caisse, plante, lumieresTravail, personnage, luxmetre, camera3d, projecteur, ligne } from '../plateau/pieces.js';
 import { mondePhoto, lecturePhoto, borne, LIM, expositionImage, expositionPlateau, capVers, spotDepuis, couleurLumiere, balanceBlancs } from '../plateau/calc.js';
 
 // ----------------------------------------------------------------------------------
@@ -55,7 +55,7 @@ export function creer(/** @type {import('../kit.js').Ctx} */ ctx) {
   const verrou = (cles) => cles.some((k) => ctx.verrous.has(k) || [...ctx.verrous].some((v) => k.startsWith(v + '.')));
   function construire() {
     const scene = new THREE.Scene(); scene.name = 'plateau photométrie'; scene.background = new THREE.Color(num(T.panel));
-    scene.add(sol(16, 17, 0, 1.5), cyclo(16, 6, 8.5), caisse(-5.6, 5.5, 0.4), caisse(-5.7, 5.9, 0.2), caisse(5.5, -2, -0.3), lumieresTravail(1));
+    scene.add(sol(16, 17, 0, 1.5), cyclo(16, 6, 8.5), caisse(-5.6, 5.5, 0.4), plante(-4.6, 6.3, 3), plante(5.2, 5.8, 7), caisse(5.5, -2, -0.3), lumieresTravail(1));
     // un peu de lumière parasite, vue par l'image de la caméra : le plateau n'est jamais tout à fait noir
     const parasite = new THREE.HemisphereLight(0xd4dbe6, 0x4a5058, 6); parasite.name = 'lumière parasite'; scene.add(parasite);
     const sujet = personnage(0x6f7682); sujet.name = 'sujet'; sujet.add(luxmetre()); scene.add(sujet);
