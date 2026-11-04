@@ -6,33 +6,48 @@ import { S } from '../../state.js';
 import { RADIANCE_TRAVAIL } from './calc.js';
 
 // ----------------------------------------------------------------------------------
-// Les pièces du plateau 3D du Labo (v19.30), en low-poly polygonal : des formes à facettes (prismes à
-// six ou huit faces, cônes, icosaèdres pour les têtes, les mains et les feuillages), les arêtes franches,
-// les surfaces organiques légèrement froissées (chaque sommet décalé d'un bruit déterministe, les facettes
-// cessent d'être régulières), le tout fusionné par un Builder en mode ao (occlusion cuite dans les couleurs
-// par sommet) et lu à plat (flatShading : chaque facette a sa teinte, dans le style « dessin » du
-// simulateur). Pas de relief procédural : une matière de matiere() dont le relief est coupé (il lisserait
-// les facettes). Le sol et le cyclo (sa courbe du pied en quatre pans), les sujets (tronc en prisme, tête en
-// icosaèdre, pancarte lettrée dessinée dans un canevas), la caméra sur son pied, les projecteurs sur leur pied
-// (tête octogonale orientable, lentille qui s'allume, vrai projecteur du rendu et cône de lumière), une plante
-// et des caisses pour l'échelle, les lampes du fond (qui deviennent des disques dans le flou), les lumières
-// de travail, et les repères posés au sol (champ, zone nette, traits, ligne d'axe, anneau). Tout ce qui n'est
-// qu'un repère vit sur la couche 1 : la caméra du plateau le voit, l'image de la caméra non.
+// Les pièces du plateau 3D du Labo (v19.30), dans le style low-poly des illustrations : de grandes facettes
+// nettes et peu nombreuses, une lumière douce et claire (ciel pastel, ombres douces, pas de paliers de cel
+// shading ici : chaque facette prend la teinte que lui donne son orientation), des couleurs franches sur des
+// neutres clairs. Les sujets sont taillés à larges pans propres (tronc et jambes en prismes à quatre faces
+// effilés, tête en icosaèdre au menton resserré, mains en plaquettes), sans bruit ; les feuillages sont de gros
+// icosaèdres froissés (chaque sommet décalé d'un bruit déterministe : des cristaux irréguliers) ; le sol est une
+// dalle à grandes facettes, chacune de sa teinte, à peine bosselée. Tout est fusionné par un Builder en mode ao
+// (occlusion cuite dans les couleurs par sommet) et lu à plat (flatShading). Pas de relief procédural : une
+// matière de matiere() dont le relief est coupé. Le cyclo (sa courbe du pied en quatre pans), la caméra sur son
+// pied, les projecteurs sur leur pied (tête octogonale orientable, lentille qui s'allume, vrai projecteur du
+// rendu et cône de lumière), une plante et des malles pour l'échelle, les lampes du fond (qui deviennent des
+// disques dans le flou), les lumières de travail, et les repères posés au sol (champ, zone nette, traits, ligne
+// d'axe, anneau). Tout ce qui n'est qu'un repère vit sur la couche 1 : la caméra du plateau le voit, l'image de
+// la caméra non.
 // ----------------------------------------------------------------------------------
 /** la couche des repères (vus de haut seulement) */
 export const COUCHE_REPERES = 1;
 export const COUL = {
-  sol: 0x9aa1ab, bord: 0x4f5864, cyclo: 0xe2e5ea, pied: 0x3b424c, corps: 0x262b33, metal: 0x8a919b, peau: 0xe7b394, cheveux: 0x3a2a22,
-  pantalon: 0x2f3640, chaussure: 0x1e2229, fresnel: 0x30363f, hmi: 0x4b5563, led: 0x2c3138, lentille: 0x1b1f26, caisse: 0x8a6a46, cellule: 0xf2f3ee,
-  pot: 0xb8714a, terre: 0x3b2f27, feuille: 0x3f9a5a, feuille2: 0x2f7d47, tige: 0x4a3b2a,
+  sol: 0xc9cfd6, bord: 0x8a949f, cyclo: 0xf3f5f7, pied: 0x5b6470, corps: 0x2d333c, metal: 0x9aa3ad, peau: 0xf0c3a0, cheveux: 0x5a3a2a,
+  col: 0x2b3340, pantalon: 0x8c7b5a, chaussure: 0x3a2c22, fresnel: 0x3b4350, hmi: 0x55606e, led: 0x343a44, lentille: 0x1b1f26, caisse: 0xa06a3c, cellule: 0xf6f7f2,
+  pot: 0xd48a4e, terre: 0x4a3b2e, feuille: 0x6fd14a, feuille2: 0x47b23a, tige: 0x8a5a33, ciel: 0xd4e3eb,
 };
+/** le ciel du plateau : un dégradé pastel derrière la scène (le canevas est transparent), et la couleur du fond de l'image de la caméra */
+export const CIEL = 'linear-gradient(180deg, #e3ecf2 0%, #c9d8e1 100%)';
 
-/** une matière plate : celle de matiere(), sans son relief (le low-poly se lit à plat), lue en flatShading */
+/**
+ * une matière plate : celle de matiere(), sans son relief (le low-poly se lit à plat), lue en flatShading, et sans les
+ * paliers du cel shading du simulateur (style.js réécrit les morceaux de shader pour tout le monde : ici, la lumière
+ * directe et les ombres retrouvent leur dégradé continu, celui des illustrations low-poly)
+ */
 export function matPlate(o = {}) {
-  const m = matiere('plastique', { color: 0xffffff, vertexColors: true, roughness: 0.88, ...o });
+  const m = matiere('plastique', { color: 0xffffff, vertexColors: true, roughness: 0.95, ...o });
   // sortie de la liste des reliefs : un changement de qualité ne lui en remet pas
   m.userData.detailOn = false; MATIERE.all.delete(m);
-  m.flatShading = true; m.needsUpdate = true;
+  m.flatShading = true;
+  m.onBeforeCompile = (sh) => {
+    sh.fragmentShader = sh.fragmentShader
+      .split('celRamp( saturate( dot( geometryNormal, directLight.direction ) ) )').join('saturate( dot( geometryNormal, directLight.direction ) )')
+      .replace(/celOmbre\( (getShadow\([^;]*?\)) \)/g, '$1');
+  };
+  m.customProgramCacheKey = () => 'plateau-doux';
+  m.needsUpdate = true;
   return m;
 }
 let MAT = null;
@@ -90,8 +105,30 @@ export function froisse(geo, amp, graine = 1) {
 }
 
 // ---------------- le décor ----------------
-/** le sol du plateau : une dalle claire, son bord sombre ; w × d mètres, centrée en (cx, cz), le dessus à y = 0 */
-export const sol = (w, d, cx, cz) => piece('sol', (b) => { boite(b, w, 0.12, d, cx, -0.06, cz, COUL.sol); boite(b, w + 0.5, 0.08, d + 0.5, cx, -0.1, cz, COUL.bord); }, { ao: 0.5, ombre: false });
+/**
+ * le sol du plateau : une dalle claire à grandes facettes irrégulières (la grille est déplacée dans le plan, chaque
+ * facette a sa teinte, le relief ne dépasse pas le centimètre : les repères posés dessus restent visibles), sur un
+ * socle sombre ; w × d mètres, centrée en (cx, cz), le dessus à y = 0
+ */
+export function sol(w, d, cx, cz, graine = 1) {
+  const g = new THREE.Group(); g.name = 'sol';
+  const nx = Math.max(2, Math.round(w / 1.7)), nz = Math.max(2, Math.round(d / 1.7));
+  const geo = new THREE.PlaneGeometry(w, d, nx, nz); geo.rotateX(-Math.PI / 2);
+  const p = /** @type {THREE.BufferAttribute} */ (geo.attributes.position); const cw = w / nx, cd = d / nz;
+  for (let i = 0; i < p.count; i++) {
+    const x = p.getX(i), z = p.getZ(i); const bordX = Math.abs(Math.abs(x) - w / 2) < 1e-4, bordZ = Math.abs(Math.abs(z) - d / 2) < 1e-4;
+    if (!bordX) p.setX(i, x + bruit(x, 0, z, 0, graine) * cw * 0.18);
+    if (!bordZ) p.setZ(i, z + bruit(x, 0, z, 1, graine) * cd * 0.18);
+    p.setY(i, bruit(x, 0, z, 2, graine) * 0.006);
+  }
+  const ng = geo.toNonIndexed(); const n = ng.attributes.position.count;
+  const c = new THREE.Color(COUL.sol); const col = new Float32Array(n * 3);
+  for (let f = 0; f < n / 3; f++) { const t = 1 + bruit(f, 1, 0, 3, graine) * 0.07; for (let k = 0; k < 3; k++) { col[(f * 3 + k) * 3] = c.r * t; col[(f * 3 + k) * 3 + 1] = c.g * t; col[(f * 3 + k) * 3 + 2] = c.b * t; } }
+  ng.setAttribute('color', new THREE.BufferAttribute(col, 3)); ng.computeVertexNormals();
+  const dalle = new THREE.Mesh(ng, matPieces()); dalle.name = 'dalle'; dalle.position.set(cx, 0, cz); dalle.receiveShadow = true;
+  g.add(dalle, piece('socle', (b) => { boite(b, w + 0.5, 0.16, d + 0.5, cx, -0.085, cz, COUL.bord); }, { ao: 0.5, ombre: false }));
+  return g;
+}
 /** le cyclo : un mur clair au fond (en z), son pied courbe en quatre pans, deux retours */
 export const cyclo = (w, h, z, cx = 0) => piece('cyclo', (b) => {
   const R = 1.4, n = 4;
@@ -111,22 +148,23 @@ export function lampes(n, w, y, z, cx = 0) {
 }
 /** une caisse de plateau (une malle à coins), posée au sol */
 export const caisse = (x, z, rot = 0) => piece('caisse', (b) => { boite(b, 0.56, 0.36, 0.4, x, 0.18, z, COUL.caisse, { rot: [0, rot, 0] }); for (const [sx, sz] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) boite(b, 0.08, 0.38, 0.08, x + Math.cos(rot) * sx * 0.25 - Math.sin(rot) * sz * 0.17, 0.19, z + Math.sin(rot) * sx * 0.25 + Math.cos(rot) * sz * 0.17, COUL.metal, { rot: [0, rot, 0], menu: true }); });
-/** une plante en pot : le motif du low-poly (pot en prisme, feuillage en icosaèdres froissés) */
+/** une plante en pot, le motif du low-poly : un pot en prisme, un tronc effilé, un feuillage en gros icosaèdres froissés (des cristaux) */
 export const plante = (x, z, graine = 1) => piece('plante', (b) => {
-  prisme(b, 0.19, 0.14, 0.34, x, 0.17, z, COUL.pot, 6, { froisse: 0.012, graine: graine + 4 }); prisme(b, 0.17, 0.17, 0.02, x, 0.35, z, COUL.terre, 6);
-  prisme(b, 0.015, 0.025, 0.5, x, 0.58, z, COUL.tige, 5);
-  boule(b, 0.3, x, 0.98, z, COUL.feuille, { froisse: 0.09, graine, detail: 1 });
-  boule(b, 0.22, x + 0.2, 0.78, z - 0.12, COUL.feuille2, { froisse: 0.07, graine: graine + 1, detail: 1 });
-  boule(b, 0.2, x - 0.18, 0.82, z + 0.14, COUL.feuille2, { froisse: 0.07, graine: graine + 2, detail: 1 });
+  prisme(b, 0.2, 0.15, 0.36, x, 0.18, z, COUL.pot, 6); prisme(b, 0.18, 0.18, 0.02, x, 0.37, z, COUL.terre, 6);
+  prisme(b, 0.03, 0.055, 0.9, x, 0.8, z, COUL.tige, 5);
+  b.rod([x, 0.95, z], [x + 0.22, 1.25, z - 0.1], 0.02, COUL.tige, 4); b.rod([x, 1.0, z], [x - 0.2, 1.22, z + 0.12], 0.02, COUL.tige, 4);
+  boule(b, 0.36, x, 1.55, z, COUL.feuille, { froisse: 0.085, graine, detail: 1 });
+  boule(b, 0.25, x + 0.28, 1.3, z - 0.14, COUL.feuille2, { froisse: 0.06, graine: graine + 1, detail: 1 });
+  boule(b, 0.23, x - 0.27, 1.28, z + 0.16, COUL.feuille2, { froisse: 0.06, graine: graine + 2, detail: 1 });
 });
 /**
  * les lumières de travail du plateau, en unités physiques (lx) : un ciel doux et une clé qui porte les ombres,
  * posées sur une couche (0 : vues par toutes les caméras ; 1 : par la vue de haut seulement)
  */
-export function lumieresTravail(couche, ciel = 170, cle = 250) {
+export function lumieresTravail(couche, ciel = 340, cle = 270) {
   const g = new THREE.Group(); g.name = 'lumières de travail';
-  const h = new THREE.HemisphereLight(0xd4dbe6, 0x4a5058, ciel); h.layers.set(couche);
-  const k = new THREE.DirectionalLight(0xfff3e2, cle); k.position.set(-9, 16, -7); k.layers.set(couche);
+  const h = new THREE.HemisphereLight(0xe9f0f7, 0xb8b2aa, ciel); h.layers.set(couche);
+  const k = new THREE.DirectionalLight(0xfff6e8, cle); k.position.set(-9, 18, -8); k.layers.set(couche);
   k.castShadow = ombres(); const r = S.quality === 'haute' ? 2048 : 1024; k.shadow.mapSize.set(r, r);
   Object.assign(k.shadow.camera, { left: -22, right: 22, top: 22, bottom: -22, near: 1, far: 60 }); k.shadow.bias = -0.0005; k.shadow.normalBias = 0.03;
   g.add(h, k, k.target);
@@ -134,26 +172,36 @@ export function lumieresTravail(couche, ciel = 170, cle = 250) {
 }
 
 // ---------------- les gens ----------------
+/** une tête : un icosaèdre dont le bas se resserre vers le menton (de grands pans propres, sans bruit) */
+function tete(r) {
+  const g = new THREE.IcosahedronGeometry(r, 1); const p = /** @type {THREE.BufferAttribute} */ (g.attributes.position);
+  for (let i = 0; i < p.count; i++) { const y = p.getY(i); if (y < 0) { const k = 1 + 0.42 * y / r; p.setX(i, p.getX(i) * k); p.setZ(i, p.getZ(i) * k); } }
+  p.needsUpdate = true; g.computeVertexNormals(); return g;
+}
+/** un coin (cône à quatre faces couché, la pointe vers +z, une face à plat) : chaussure, nez */
+const coinGeo = (r, h) => new THREE.ConeGeometry(r, h, 4).rotateY(Math.PI / 4).rotateX(Math.PI / 2);
 /**
- * un sujet debout, l'avant en +z (le nez le dit) ; couleur : son haut. Tronc, hanches et jambes en prismes à cinq faces (une
- * face plate devant) froissés, tête, épaules et mains en icosaèdres bien froissés : les facettes se voient
+ * un sujet debout, l'avant en +z (le nez le dit) ; couleur : son haut. Taillé à larges pans, comme un personnage de jeu
+ * low-poly : tronc et hanches en prismes à quatre faces effilés et aplatis (les épaules larges, la taille étroite), jambes
+ * et bras en prismes à quatre faces effilés (les bras un peu écartés), mains en plaquettes, chaussures en coins, tête en
+ * icosaèdre au menton resserré, cheveux en calotte à six pans, col sombre
  */
-export function personnage(couleur, graine = 1) {
+export function personnage(couleur) {
   const g = new THREE.Group(); g.name = 'personnage';
   const corps = piece('corps', (b) => {
     for (const s of [-1, 1]) {
-      cone(b, 0.085, 0.3, s * 0.1, 0.045, 0.06, COUL.chaussure, 5, { rot: [Math.PI / 2, 0, 0] });
-      prisme(b, 0.085, 0.06, 0.82, s * 0.1, 0.46, 0, COUL.pantalon, 5, { face: true, froisse: 0.008, graine: graine + 5 + s });
-      boule(b, 0.085, s * 0.25, 1.45, 0, couleur, { froisse: 0.014, graine: graine + 3 });
-      prisme(b, 0.055, 0.045, 0.52, s * 0.3, 1.17, 0, couleur, 5, { froisse: 0.006, graine: graine + 7 + s });
-      boule(b, 0.055, s * 0.3, 0.88, 0, COUL.peau, { froisse: 0.01, graine: graine + 4 });
+      forme(b, coinGeo(0.085, 0.3), s * 0.1, 0.045, 0.07, COUL.chaussure);
+      prisme(b, 0.1, 0.075, 0.84, s * 0.1, 0.47, 0, COUL.pantalon, 4, { face: true, ech: [1, 1, 0.9] });
+      prisme(b, 0.078, 0.055, 0.56, s * 0.26, 1.22, 0, couleur, 4, { face: true, rot: [0, 0, s * 0.1], ech: [1, 1, 0.8] });
+      boite(b, 0.08, 0.035, 0.11, s * 0.3, 0.92, 0.01, COUL.peau, { rot: [0, 0, s * 0.1], menu: true });
     }
-    prisme(b, 0.2, 0.17, 0.2, 0, 0.95, 0, COUL.pantalon, 5, { face: true, froisse: 0.01, graine: graine + 9 });
-    prisme(b, 0.24, 0.17, 0.5, 0, 1.28, 0, couleur, 5, { face: true, froisse: 0.014, graine: graine + 10, occ: [0.48, 0.5, 0.42] });
-    prisme(b, 0.06, 0.07, 0.12, 0, 1.56, 0, COUL.peau, 5, { face: true });
-    forme(b, froisse(new THREE.IcosahedronGeometry(0.13, 1), 0.014, graine), 0, 1.72, 0, COUL.peau, { ech: [1, 1.12, 1], occ: [0.26, 0.3, 0.26] });
-    forme(b, froisse(new THREE.SphereGeometry(0.135, 7, 4, 0, Math.PI * 2, 0, Math.PI * 0.55), 0.012, graine + 1), 0, 1.75, -0.015, COUL.cheveux, { ech: [1, 1.1, 1] });
-    cone(b, 0.022, 0.05, 0, 1.7, 0.145, COUL.peau, 4, { rot: [Math.PI / 2, 0, 0], menu: true });
+    prisme(b, 0.25, 0.21, 0.16, 0, 0.94, 0, COUL.pantalon, 4, { face: true, ech: [1, 1, 0.62] });
+    prisme(b, 0.3, 0.2, 0.52, 0, 1.28, 0, couleur, 4, { face: true, ech: [1, 1, 0.58], occ: [0.42, 0.52, 0.24] });
+    prisme(b, 0.085, 0.1, 0.05, 0, 1.555, 0, COUL.col, 5, { face: true });
+    prisme(b, 0.05, 0.055, 0.1, 0, 1.6, 0, COUL.peau, 5, { face: true });
+    forme(b, tete(0.125), 0, 1.76, 0, COUL.peau, { ech: [1, 1.12, 1], occ: [0.25, 0.28, 0.25] });
+    forme(b, new THREE.SphereGeometry(0.13, 6, 3, 0, Math.PI * 2, 0, Math.PI * 0.5), 0, 1.79, -0.012, COUL.cheveux, { ech: [1.04, 1.1, 1.04] });
+    forme(b, coinGeo(0.02, 0.045), 0, 1.745, 0.125, COUL.peau, { menu: true });
   });
   g.add(corps); g.userData.corps = corps;
   return g;
@@ -172,11 +220,11 @@ export function pancarte(lettre, couleur, police) {
   for (let i = 0; i < 7; i++) g.fillRect(182 + i * 8, 116, 2, 36);
   const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4;
   const m = new THREE.Mesh(new THREE.PlaneGeometry(0.5, 0.36), matPlate({ vertexColors: false, map: t, roughness: 0.95 }));
-  m.name = 'pancarte ' + lettre; m.position.set(0, 1.1, 0.215); m.castShadow = true;
+  m.name = 'pancarte ' + lettre; m.position.set(0, 1.12, 0.21); m.castShadow = true;
   return m;
 }
 /** la cellule d'un luxmètre, posée sur la poitrine, tournée vers l'avant */
-export const luxmetre = () => piece('luxmètre', (b) => { boite(b, 0.1, 0.14, 0.03, 0, 1.38, 0.2, COUL.corps); boule(b, 0.03, 0, 1.42, 0.215, COUL.cellule, { detail: 1 }); }, { ao: 0.03 });
+export const luxmetre = () => piece('luxmètre', (b) => { boite(b, 0.1, 0.14, 0.03, 0, 1.4, 0.19, COUL.corps); boule(b, 0.03, 0, 1.44, 0.205, COUL.cellule, { detail: 1 }); }, { ao: 0.03 });
 
 // ---------------- la caméra ----------------
 /** une caméra d'épaule sur pied, l'objectif vers +z ; corps (ce qu'on prend pour la déplacer) et œil (où l'image se forme) */
@@ -257,9 +305,9 @@ const plat = (m, nom, y) => { m.layers.set(COUCHE_REPERES); m.renderOrder = 2; m
 /** un coin de champ posé au sol depuis l'origine vers +z : maj(demiLargeur, longueur) */
 export function coin(couleur, opacite = 0.1) {
   const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(9), 3));
-  const m = plat(new THREE.Mesh(geo, matRepere(couleur, opacite)), 'champ', 0.012);
+  const m = plat(new THREE.Mesh(geo, matRepere(couleur, opacite)), 'champ', 0.022);
   const bord = new THREE.LineSegments(new THREE.BufferGeometry(), new THREE.LineBasicMaterial({ color: couleur, transparent: true, opacity: 0.5, toneMapped: false }));
-  bord.geometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array(12), 3)); plat(bord, 'bord du champ', 0.013); m.add(bord);
+  bord.geometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array(12), 3)); plat(bord, 'bord du champ', 0.001); m.add(bord);
   m.userData.maj = (w, L) => {
     const p = /** @type {THREE.BufferAttribute} */ (geo.attributes.position); p.set([0, 0, 0, -w, 0, L, w, 0, L]); p.needsUpdate = true;
     const q = /** @type {THREE.BufferAttribute} */ (bord.geometry.attributes.position); q.set([0, 0, 0, -w, 0, L, 0, 0, 0, w, 0, L]); q.needsUpdate = true;
@@ -269,26 +317,26 @@ export function coin(couleur, opacite = 0.1) {
 /** une dalle trapézoïdale au sol entre z0 (demi-largeur w0) et z1 (w1) : maj(z0, w0, z1, w1) */
 export function dalle(couleur, opacite = 0.18) {
   const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(12), 3)); geo.setIndex([0, 1, 2, 0, 2, 3]);
-  const m = plat(new THREE.Mesh(geo, matRepere(couleur, opacite)), 'dalle', 0.014);
+  const m = plat(new THREE.Mesh(geo, matRepere(couleur, opacite)), 'dalle', 0.024);
   m.userData.maj = (z0, w0, z1, w1) => { const p = /** @type {THREE.BufferAttribute} */ (geo.attributes.position); p.set([-w0, 0, z0, w0, 0, z0, w1, 0, z1, -w1, 0, z1]); p.needsUpdate = true; };
   return m;
 }
 /** un trait en travers (à z, de demi-largeur w) : maj(z, w) */
 export function trait(couleur, epaisseur = 0.05) {
-  const m = plat(new THREE.Mesh(new THREE.BoxGeometry(1, 0.01, epaisseur), matRepere(couleur, 0.9)), 'trait', 0.016);
+  const m = plat(new THREE.Mesh(new THREE.BoxGeometry(1, 0.01, epaisseur), matRepere(couleur, 0.9)), 'trait', 0.027);
   m.userData.maj = (z, w) => { m.position.z = z; m.scale.x = Math.max(0.2, 2 * w); };
   return m;
 }
 /** une ligne pointillée au sol de l'origine vers +z : maj(L) */
 export function ligne(couleur, opacite = 0.45) {
   const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.BufferAttribute(new Float32Array([0, 0, 0, 0, 0, 1]), 3));
-  const m = plat(new THREE.Line(geo, new THREE.LineDashedMaterial({ color: couleur, transparent: true, opacity: opacite, dashSize: 0.25, gapSize: 0.25, toneMapped: false })), 'ligne', 0.015);
+  const m = plat(new THREE.Line(geo, new THREE.LineDashedMaterial({ color: couleur, transparent: true, opacity: opacite, dashSize: 0.25, gapSize: 0.25, toneMapped: false })), 'ligne', 0.026);
   m.userData.maj = (L) => { m.scale.z = Math.max(0.01, L); const p = /** @type {THREE.BufferAttribute} */ (geo.attributes.position); p.setZ(1, 1); p.needsUpdate = true; /** @type {any} */ (m).computeLineDistances(); /** @type {any} */ (m.geometry.attributes.lineDistance).array[1] = L; /** @type {any} */ (m.geometry.attributes.lineDistance).needsUpdate = true; };
   return m;
 }
 /** l'anneau posé sous l'objet qu'on survole ou qu'on déplace */
 export function anneau(couleur) {
   const g = new THREE.RingGeometry(0.5, 0.58, 32); g.rotateX(-Math.PI / 2);
-  const m = plat(new THREE.Mesh(g, matRepere(couleur, 0.85)), 'anneau', 0.018); m.visible = false;
+  const m = plat(new THREE.Mesh(g, matRepere(couleur, 0.85)), 'anneau', 0.03); m.visible = false;
   return m;
 }

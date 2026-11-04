@@ -98,11 +98,11 @@ export const capVers = (de, vers) => Math.atan2(vers.x - de.x, vers.z - de.z);
 
 // ---------------- la lumière du rendu ----------------
 /** la lumière de travail du plateau (lx), ordre de grandeur d'un plateau allumé pour s'installer */
-export const LUX_TRAVAIL = 400;
+export const LUX_TRAVAIL = 650;
 /** l'exposition du rendu pour qu'un gris 18 % sous Eref lux sorte à 18 % : π ÷ Eref */
 export const expositionImage = (Eref) => Math.PI / Math.max(1e-3, Eref);
 /** l'exposition du plateau vu de haut : sur la lumière de travail, ou sur la lumière la plus forte si elle domine */
-export const expositionPlateau = (Emax = 0, base = LUX_TRAVAIL) => Math.PI / Math.max(base, 0.8 * Emax);
+export const expositionPlateau = (Emax = 0, base = LUX_TRAVAIL) => Math.PI / Math.max(base, 0.35 * Emax);
 /** la radiance d'une source qui paraît blanche sous la lumière de travail (pour les matières lumineuses du décor) */
 export const RADIANCE_TRAVAIL = LUX_TRAVAIL / Math.PI;
 /** angle de champ vertical (degrés) d'une focale f (mm) sur un capteur de hauteur h (mm) */

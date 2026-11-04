@@ -5,7 +5,7 @@ import { commandes, afficheur, jetons, fr } from '../kit.js';
 import { SOURCES, GELS } from '../calc/photometrie.js';
 import { CAPTEURS } from '../calc/optique.js';
 import { plateau, etiquetteNom } from '../plateau/scene.js';
-import { sol, cyclo, caisse, plante, lumieresTravail, personnage, luxmetre, camera3d, projecteur, ligne } from '../plateau/pieces.js';
+import { sol, cyclo, caisse, plante, lumieresTravail, personnage, luxmetre, camera3d, projecteur, ligne, COUL } from '../plateau/pieces.js';
 import { mondePhoto, lecturePhoto, borne, LIM, expositionImage, expositionPlateau, capVers, spotDepuis, couleurLumiere, balanceBlancs } from '../plateau/calc.js';
 
 // ----------------------------------------------------------------------------------
@@ -54,11 +54,11 @@ export function creer(/** @type {import('../kit.js').Ctx} */ ctx) {
   /** @type {any} */ let SC = null;
   const verrou = (cles) => cles.some((k) => ctx.verrous.has(k) || [...ctx.verrous].some((v) => k.startsWith(v + '.')));
   function construire() {
-    const scene = new THREE.Scene(); scene.name = 'plateau photométrie'; scene.background = new THREE.Color(num(T.panel));
+    const scene = new THREE.Scene(); scene.name = 'plateau photométrie'; scene.background = null;
     scene.add(sol(16, 17, 0, 1.5), cyclo(16, 6, 8.5), caisse(-5.6, 5.5, 0.4), plante(-4.6, 6.3, 3), plante(5.2, 5.8, 7), caisse(5.5, -2, -0.3), lumieresTravail(1));
     // un peu de lumière parasite, vue par l'image de la caméra : le plateau n'est jamais tout à fait noir
     const parasite = new THREE.HemisphereLight(0xd4dbe6, 0x4a5058, 6); parasite.name = 'lumière parasite'; scene.add(parasite);
-    const sujet = personnage(0x6f7682); sujet.name = 'sujet'; sujet.add(luxmetre()); scene.add(sujet);
+    const sujet = personnage(0x5c7a9a); sujet.name = 'sujet'; sujet.add(luxmetre()); scene.add(sujet);
     const rig = camera3d(); scene.add(rig);
     const etq = /** @type {Record<string, any>} */ ({ cam: etiquetteNom(rig, 'Caméra', '', [0, 2.35, 0]), sujet: etiquetteNom(sujet, 'Luxmètre', 'amber', [0, 2.1, 0]) });
     /** les projecteurs, par poste et par modèle (construits à la demande) */
@@ -97,7 +97,7 @@ export function creer(/** @type {import('../kit.js').Ctx} */ ctx) {
       image: () => {
         const { st, m } = SC.last;
         oeil.copy(rig.userData.oeil); rig.localToWorld(oeil); dir.copy(FACE).sub(oeil); const s = dir.length(); dir.normalize();
-        return { position: oeil, direction: dir, f: 35, hCap: CAPTEURS.s35.h, N: st.cam.N, s, expo: expositionImage(m.Eref), wb: balanceBlancs(kelvinRGBNorm(st.cam.Tcam)), zebra: true, dof: true, legende: `f/${fr(st.cam.N, st.cam.N < 3 && !Number.isInteger(st.cam.N) ? 1 : 0)} · ${st.cam.iso} ISO · 1/50 s · ${fr(st.cam.Tcam, 0)} K` };
+        return { position: oeil, direction: dir, f: 35, hCap: CAPTEURS.s35.h, N: st.cam.N, s, expo: expositionImage(m.Eref), wb: balanceBlancs(kelvinRGBNorm(st.cam.Tcam)), zebra: true, dof: true, ciel: COUL.ciel, legende: `f/${fr(st.cam.N, st.cam.N < 3 && !Number.isInteger(st.cam.N) ? 1 : 0)} · ${st.cam.iso} ISO · 1/50 s · ${fr(st.cam.Tcam, 0)} K` };
       },
       exposition: () => { const m = SC.last ? SC.last.m : null; return expositionPlateau(m ? Math.max(m.e1, m.e2) : 0); },
     });

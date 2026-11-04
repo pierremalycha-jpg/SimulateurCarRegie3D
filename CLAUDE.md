@@ -170,8 +170,10 @@ Tout est en français (code commenté en français, interface, commits).
   `content/terms_lumiere_*.js`. Les manipulations calculent avec les modèles du Labo (`labo/calc/`) : leçons et ateliers disent
   les mêmes chiffres. Les ateliers du Labo y sont les exercices pratiques (`x-labo-photometrie`, `x-labo-dmx`, `x-labo-dot2`).
 - **Le plateau 3D du Labo** (`src/labo/plateau/`, v19.30, décidé le 4 novembre 2026) : les ateliers Optique et Photométrie se
-  jouent sur un plateau vu en isométrie et dessiné en low-poly **polygonal** : des facettes (prismes, cônes, icosaèdres
-  froissés), pas des cubes. Le moteur (`scene.js` : un seul rendu WebGL partagé, monté dans
+  jouent sur un plateau vu en isométrie et dessiné dans le style des **illustrations low-poly** : de grandes facettes nettes
+  (prismes effilés, icosaèdres, feuillages froissés), pas des cubes ; une lumière douce et claire (ciel pastel derrière le
+  canevas transparent, ombres douces, pas de paliers de cel shading sur le plateau : `matPlate()` les retire), des couleurs
+  franches sur des neutres clairs. Le moteur (`scene.js` : un seul rendu WebGL partagé, monté dans
   l'atelier affiché, rendu à la demande ; caméra orthographique, quarts de tour, zoom, recentrer ; glisser-poser au sol ;
   étiquettes en pilules) reçoit de l'atelier un **adaptateur** (scène, objets à prendre, étiquettes, cadre, image de la caméra,
   exposition). Les pièces (`pieces.js`) : Builder en mode `ao`, formes à facettes (`prisme`, `cone`, `boule`, `froisse`),

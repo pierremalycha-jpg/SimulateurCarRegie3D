@@ -4,7 +4,7 @@ import { el } from '../../util.js';
 import { commandes, afficheur, jetons, fr } from '../kit.js';
 import { CAPTEURS, IRIS, FOCALE, distTxt } from '../calc/optique.js';
 import { plateau, etiquette, etiquetteNom } from '../plateau/scene.js';
-import { sol, cyclo, lampes, caisse, plante, lumieresTravail, personnage, pancarte, camera3d, coin, dalle, trait, ligne } from '../plateau/pieces.js';
+import { sol, cyclo, lampes, caisse, plante, lumieresTravail, personnage, pancarte, camera3d, coin, dalle, trait, ligne, COUL } from '../plateau/pieces.js';
 import { mondeOptique, lectureOptique, borne, LIM, expositionImage, expositionPlateau, LUX_TRAVAIL, capVers } from '../plateau/calc.js';
 
 // ----------------------------------------------------------------------------------
@@ -41,7 +41,7 @@ export function creer(/** @type {import('../kit.js').Ctx} */ ctx) {
   /** @type {any} */ let SC = null;
   /** la scène, construite à la première demande */
   function construire() {
-    const scene = new THREE.Scene(); scene.name = 'plateau optique'; scene.background = new THREE.Color(num(T.panel));
+    const scene = new THREE.Scene(); scene.name = 'plateau optique'; scene.background = null;
     scene.add(sol(20, 38, 0, 14), cyclo(20, 9, FOND), lampes(13, 18, 3.6, FOND), caisse(-7.4, 3, 0.3), caisse(-7.3, 3.9, 0.1), plante(8.6, 15, 2), plante(-8.4, 26, 5), caisse(7.3, 12, -0.2), lumieresTravail(0));
     const rig = camera3d(); scene.add(rig);
     const champ = coin(num(T.accent), 0.08), zone = dalle(num(T.ok), 0.22), point = trait(num(T.accent)), hyper = trait(num(T.violet), 0.04), axe = ligne(num(T.fg), 0.3);
@@ -54,7 +54,7 @@ export function creer(/** @type {import('../kit.js').Ctx} */ ctx) {
       point: etiquetteNom(anc.point, 'Point', 'accent'), hyper: etiquetteNom(anc.hyper, 'Hyperfocale', 'violet'), inf: etiquette(anc.inf, 'Net jusqu\'à l\'infini', 'ok'),
     });
     for (const S of SUJETS) {
-      const g = personnage(num(T[S.c]), S.k.charCodeAt(0)); g.name = 'sujet ' + S.k; g.add(pancarte(S.k, T[S.c], T.font));
+      const g = personnage(num(T[S.c])); g.name = 'sujet ' + S.k; g.add(pancarte(S.k, T[S.c], T.font));
       g.userData.glisser = {
         nom: 'Sujet ' + S.k, cles: ['sujets.' + S.k, 'lat.' + S.k],
         bouger: (x, z) => { const l = lectureOptique(ctx.st.cam, x, z); ctx.changer({ ['sujets.' + S.k]: r2(borne(l.d, LIM.sujet)), ['lat.' + S.k]: r2(borne(l.lat, LIM.lat)) }); },
@@ -86,7 +86,7 @@ export function creer(/** @type {import('../kit.js').Ctx} */ ctx) {
       image: () => {
         const { st, m } = SC.last;
         oeil.copy(rig.userData.oeil); rig.localToWorld(oeil); dir.set(0, 0, 1).applyQuaternion(rig.quaternion);
-        return { position: oeil, direction: dir, f: st.f, hCap: m.K.h, N: st.N, s: st.s, expo: expositionImage(LUX_TRAVAIL), wb: [1, 1, 1], zebra: false, dof: true, legende: `${fr(st.f, st.f < 20 ? 1 : 0)} mm · f/${fr(st.N, st.N < 10 && !Number.isInteger(st.N) ? 1 : 0)} · point à ${distTxt(st.s)}` };
+        return { position: oeil, direction: dir, f: st.f, hCap: m.K.h, N: st.N, s: st.s, expo: expositionImage(LUX_TRAVAIL), wb: [1, 1, 1], zebra: false, dof: true, ciel: COUL.ciel, legende: `${fr(st.f, st.f < 20 ? 1 : 0)} mm · f/${fr(st.N, st.N < 10 && !Number.isInteger(st.N) ? 1 : 0)} · point à ${distTxt(st.s)}` };
       },
       exposition: () => expositionPlateau(0),
     });

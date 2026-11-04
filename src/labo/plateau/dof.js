@@ -38,6 +38,7 @@ import { fovVertical } from './calc.js';
  * @property {boolean} [zebra] hachures au-dessus de 95 %
  * @property {boolean} [dof] flou de profondeur de champ
  * @property {string} [legende] le texte sous l'image
+ * @property {number} [ciel] la couleur du fond derrière le décor (hex)
  */
 const VERT = /* glsl */ `
 varying vec2 vUv;
@@ -98,7 +99,7 @@ export class ImageCamera {
     this.quad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), this.mat); this.quad.frustumCulled = false;
     this.scene2 = new THREE.Scene(); this.scene2.add(this.quad);
     this.cam2 = new THREE.Camera();
-    this.vise = new THREE.Vector3();
+    this.vise = new THREE.Vector3(); this.fond = new THREE.Color();
   }
   /** rend l'image dans la cible, à w × h pixels d'appareil */
   rendre(/** @type {THREE.Scene} */ scene, /** @type {ImageSpec} */ im, w, h) {
@@ -111,7 +112,11 @@ export class ImageCamera {
     const tm = R.toneMapping, ex = R.toneMappingExposure;
     // en demi-flottants : la radiance brute, exposée dans le second passage ; sinon exposée ici, écrêtée à 1
     R.toneMapping = this.hdr ? THREE.NoToneMapping : THREE.LinearToneMapping; R.toneMappingExposure = this.hdr ? 1 : im.expo;
+    // le fond : la couleur du ciel, ramenée à l'exposition de l'image (elle sort telle quelle)
+    this.fond.set(im.ciel ?? 0x000000); if (this.hdr) this.fond.multiplyScalar(1 / Math.max(1e-6, im.expo));
+    R.setClearColor(this.fond, 1);
     R.setRenderTarget(this.rt); R.render(scene, cam); R.setRenderTarget(null);
+    R.setClearColor(0x000000, 0);
     R.toneMapping = tm; R.toneMappingExposure = ex;
     const u = this.mat.uniforms;
     u.uNear.value = cam.near; u.uFar.value = cam.far; u.uFocus.value = im.s; u.uF.value = im.f; u.uN.value = im.N; u.uHcap.value = im.hCap;

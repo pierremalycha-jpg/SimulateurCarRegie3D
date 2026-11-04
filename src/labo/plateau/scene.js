@@ -2,12 +2,11 @@
 import * as THREE from 'three';
 import { el, clamp } from '../../util.js';
 import { S } from '../../state.js';
-import { typeOmbre } from '../../style.js';
 import { icon } from '../../ui/icons.js';
 import { jetons } from '../kit.js';
 import { AZIMUTS, directionIso, baseIso, cadrer, expositionPlateau } from './calc.js';
 import { ImageCamera } from './dof.js';
-import { anneau, COUCHE_REPERES } from './pieces.js';
+import { anneau, COUCHE_REPERES, CIEL } from './pieces.js';
 
 // ----------------------------------------------------------------------------------
 // Le moteur du plateau 3D du Labo (v19.30) : un seul rendu WebGL, partagé par les ateliers qui ont un
@@ -74,11 +73,12 @@ function creer() {
   const canvas = /** @type {HTMLCanvasElement} */ (el('canvas', { class: 'lb-gl', tabindex: '-1', role: 'img', 'aria-label': 'Le plateau en 3D : glisser un objet pour le déplacer, le fond pour déplacer la vue, molette pour zoomer' }));
   /** @type {THREE.WebGLRenderer | null} */ let renderer = null;
   try {
-    renderer = new THREE.WebGLRenderer({ canvas, antialias: !S.lite, powerPreference: 'high-performance' });
+    renderer = new THREE.WebGLRenderer({ canvas, antialias: !S.lite, alpha: true, powerPreference: 'high-performance' });
+    renderer.setClearColor(0x000000, 0);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, S.quality === 'haute' ? 2 : S.lite || S.quality === 'basse' ? 1 : 1.5));
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.shadowMap.enabled = S.quality !== 'basse' && !S.lite; renderer.shadowMap.type = typeOmbre();
+    renderer.shadowMap.enabled = S.quality !== 'basse' && !S.lite; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
   } catch (e) { renderer = null; }
   const cam = new THREE.OrthographicCamera(-1, 1, 1, -1, 1, 400); cam.name = 'vue isométrique'; cam.layers.enable(COUCHE_REPERES);
   const image = renderer ? new ImageCamera(renderer) : null;
@@ -112,6 +112,7 @@ function creer() {
     if (E.host !== host) {
       E.host = host;
       host.replaceChildren(...(E.ok ? [canvas, tags, outils, aide, pip] : [nogl])); host.classList.toggle('lb-grand', E.grand);
+      host.style.background = CIEL;
       if (ro) { ro.disconnect(); ro.observe(host); }
     }
     if (!E.ok || !A) return;
