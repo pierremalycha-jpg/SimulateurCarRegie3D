@@ -5,6 +5,8 @@ import { commandes, fr } from '../kit.js';
 import { SOURCES, GELS, H_CELLULE, FOND } from '../calc/photometrie.js';
 import { CAPTEURS } from '../calc/optique.js';
 import { plateau, etiquetteNom } from '../plateau/scene.js';
+import { creerVisite } from '../plateau/visite.js';
+import { ETAPES_PHOTO } from '../plateau/notions.js';
 import { sol, cyclo, caisse, plante, lumieresTravail, personnage, luxmetre, camera3d, projecteur, ligne, COUL } from '../plateau/pieces.js';
 import { mondePhoto, lecturePhoto, borne, LIM, expositionImage, expositionPlateau, capVers, spotDepuis, couleurLumiere, balanceBlancs } from '../plateau/calc.js';
 
@@ -110,7 +112,10 @@ export function creer(/** @type {import('../kit.js').Ctx} */ ctx) {
       },
       exposition: () => { const m = SC.last ? SC.last.m : null; return expositionPlateau(m ? Math.max(m.e1, m.e2) : 0); },
     });
-    SC = { scene, sujet, rig, projs, lignes, etq, A, projecteurDe, last: null };
+    SC = { scene, sujet, rig, projs, lignes, etq, A, projecteurDe, last: null, visite: null };
+    // la visite des notions : sa touche dans la barre d'outils, sa carte sur le plateau
+    const visite = creerVisite(P, ctx, ETAPES_PHOTO, () => ({ scene, A, S: SC }));
+    A.outils = [visite.bouton]; A.panneau = visite.carte; SC.visite = visite;
   }
   /** pose la caméra, le sujet, les projecteurs et leurs lignes depuis l'état ; règle les lumières du rendu */
   function placer(m, st) {
@@ -176,5 +181,5 @@ export function creer(/** @type {import('../kit.js').Ctx} */ ctx) {
     el('div', { class: 'lb-reads lb-fiches' }, rE.box, r1.box, r2a.box, rT.box),
     el('p', { class: 'lb-note' }, 'Prenez un projecteur ou la caméra et posez-les où vous voulez : la distance et l\'angle se relisent de leur place, la flaque de lumière suit ; la hauteur se règle au curseur. Dans le coin, l\'image de la caméra, exposée et balancée comme elle est réglée (hachures : au-dessus de 90 %).'),
     ctrls);
-  return { root, rendre };
+  return { root, rendre, etapes: ETAPES_PHOTO, visite: (k = 0) => { if (!SC) rendre(); if (SC && SC.visite) SC.visite.ouvrir(k); } };
 }

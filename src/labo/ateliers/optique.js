@@ -4,6 +4,8 @@ import { el } from '../../util.js';
 import { commandes, afficheur, jetons, fr } from '../kit.js';
 import { CAPTEURS, IRIS, FOCALE, distTxt } from '../calc/optique.js';
 import { plateau, etiquette, etiquetteNom } from '../plateau/scene.js';
+import { creerVisite } from '../plateau/visite.js';
+import { ETAPES_OPTIQUE } from '../plateau/notions.js';
 import { sol, cyclo, lampes, caisse, plante, lumieresTravail, personnage, pancarte, camera3d, coin, dalle, trait, ligne, COUL } from '../plateau/pieces.js';
 import { mondeOptique, lectureOptique, borne, LIM, expositionImage, expositionPlateau, LUX_TRAVAIL, capVers } from '../plateau/calc.js';
 
@@ -90,7 +92,9 @@ export function creer(/** @type {import('../kit.js').Ctx} */ ctx) {
       },
       exposition: () => expositionPlateau(0),
     });
-    SC = { scene, rig, sujets, champ, zone, point, hyper, axe, anc, etq, A, last: null };
+    SC = { scene, rig, sujets, champ, zone, point, hyper, axe, anc, etq, A, last: null, visite: null };
+    const visite = creerVisite(P, ctx, ETAPES_OPTIQUE, () => ({ scene, A, S: SC }));
+    A.outils = [visite.bouton]; A.panneau = visite.carte; SC.visite = visite;
   }
 
   /** pose les objets et les repères depuis l'état, écrit les étiquettes */
@@ -137,5 +141,5 @@ export function creer(/** @type {import('../kit.js').Ctx} */ ctx) {
     rTaches,
     el('p', { class: 'lb-note' }, 'Prenez un sujet ou la caméra et posez-les où vous voulez : au sol, le champ, la zone nette (en bleu), le point et l\'hyperfocale ; dans le coin, l\'image de la caméra.'),
     ctrls);
-  return { root, rendre };
+  return { root, rendre, etapes: ETAPES_OPTIQUE, visite: (k = 0) => { if (!SC) rendre(); if (SC && SC.visite) SC.visite.ouvrir(k); } };
 }

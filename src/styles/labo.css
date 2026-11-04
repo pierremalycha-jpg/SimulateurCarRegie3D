@@ -90,7 +90,8 @@ body.labo-on #modal.overlay { z-index: 46; }
 .lb-tag.accent::before { background: var(--accent); } .lb-tag.amber::before { background: var(--amber); } .lb-tag.ok::before { background: var(--pvw); } .lb-tag.violet::before { background: var(--violet); }
 .lb-tag.ok small { color: var(--pvw); }
 .lb-tag.dim { color: var(--muted); }
-.lb-outils { position: absolute; left: 12px; top: 12px; display: flex; gap: 6px; }
+.lb-outils { position: absolute; left: 12px; top: 12px; right: 12px; display: flex; flex-wrap: wrap; gap: 6px; pointer-events: none; }
+.lb-outils > * { pointer-events: auto; }
 .lb-outils .btn { background: var(--mat); backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur); box-shadow: var(--shadow-s); }
 .lb-outils .btn.on { color: var(--accent); }
 .lb-outils .lb-ico { padding-left: 8px; padding-right: 8px; }
@@ -106,6 +107,24 @@ body.labo-on #modal.overlay { z-index: 46; }
 .lb-read-l { display: grid; gap: 3px; margin-top: 2px; }
 .lb-read-l small { display: block; color: var(--dim); font-size: 12.5px; line-height: 1.35; }
 .lb-read-l small b { color: var(--muted); font-weight: 600; }
+/* la visite des notions : une carte posée sur le plateau */
+.lb-visite { position: absolute; left: 12px; bottom: 12px; width: min(400px, calc(100% - 24px)); max-height: calc(100% - 72px); overflow: auto; padding: 14px 16px; border-radius: var(--r); background: var(--mat); backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur); box-shadow: 0 0 0 1px var(--line) inset, var(--shadow-s); color: var(--fg); display: flex; flex-direction: column; gap: 8px; }
+.lb-visite[hidden] { display: none; }
+.lb-vi-head { display: flex; align-items: baseline; gap: 8px; }
+.lb-vi-k { color: var(--muted); font-size: 12.5px; font-variant-numeric: tabular-nums; flex: none; }
+.lb-vi-t { flex: 1; font: 700 16px/1.2 var(--f-disp); }
+.lb-vi-head .btn { flex: none; align-self: center; }
+.lb-vi-body { font-size: 14px; line-height: 1.45; }
+.lb-vi-body p { margin: 0 0 6px; }
+.lb-vi-lire { margin: 0; padding: 8px 10px; border-radius: var(--r-s); background: var(--well); font: 600 13.5px/1.35 var(--f-body); font-variant-numeric: tabular-nums; }
+.lb-vi-lire[hidden] { display: none; }
+.lb-vi-nav { display: flex; gap: 6px; align-items: center; }
+.lb-vi-nav .linkbtn { margin-left: auto; }
+.lb-plateau.lb-visite-on .lb-aide3d { display: none; }
+.lb-outils .lb-vi-btn svg { width: 16px; height: 16px; }
+.lb-visite-liste { margin: 0 0 8px; padding: 0; list-style: none; display: grid; gap: 6px; }
+.lb-notion { display: inline-flex; align-items: center; gap: 6px; padding: 0; border: 0; background: none; color: var(--accent); font: 500 14px var(--f-body); cursor: pointer; text-align: left; }
+.lb-notion svg { width: 16px; height: 16px; flex: none; }
 .lb-nogl { position: absolute; inset: 0; margin: 0; display: grid; place-items: center; padding: 24px; text-align: center; color: var(--muted); }
 .lb-3d .lb-note { margin-top: -4px; }
 
@@ -200,6 +219,8 @@ body.labo-on #modal.overlay { z-index: 46; }
 @media (max-width: 900px) {
   .lb-plateau { height: clamp(300px, 62vw, 520px); }
   .lb-aide3d { display: none; }
+  .lb-visite { left: 8px; right: 8px; bottom: 8px; width: auto; max-height: 60%; padding: 10px 12px; }
+  .lb-plateau.lb-visite-on .lb-pip { display: none; }
   .lb-pip { width: 44%; min-width: 150px; }
   .lb-bar { flex-wrap: wrap; gap: 8px 12px; }
   .lb-tabs { order: 3; flex-basis: 100%; }

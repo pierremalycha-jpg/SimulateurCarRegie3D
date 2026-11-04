@@ -43,6 +43,13 @@ T.check('glisser la caméra : elle change de place, les sujets restent où ils s
 await ev(() => { const L = window.__dbg.labo(); L.changer('optique', { f: 135, N: 2, s: L.STATES.optique.sujets.B }); }); await A.waitForTimeout(300);
 T.check('focale 135 mm à f/2, point sur B : la légende de l\'image suit, B net', await ev(() => /135 mm · f\/2/.test(document.querySelector('#labo .lb-pip-cap').textContent) && document.querySelectorAll('#labo .lb-taches li.ok').length >= 1));
 
+// ---------------- la visite des notions d'optique : la focale balaie, la vue vole ----------------
+await A.click('#labo .lb-outils .lb-vi-btn'); await A.waitForTimeout(1600);
+T.check('Optique, Notions : la focale et le champ ; la focale balaie sa plage, le champ au sol suit', await ev(() => document.querySelector('#labo .lb-vi-k').textContent === '1 / 5' && /focale/i.test(document.querySelector('#labo .lb-vi-t').textContent)) && await (async () => { const f = (await st('optique')).f; await A.waitForTimeout(1200); return (await st('optique')).f !== f; })());
+await shot('03b-notion-focale', 200);
+await A.click('#labo .lb-visite .lb-vi-head .btn'); await A.waitForTimeout(300);
+await ev(() => window.__dbg.labo().changer('optique', { f: 35, N: 4, s: 4 }));
+
 // ---------------- la vue : tourner, recentrer, zoomer, étiquettes, agrandir ----------------
 await A.click('#labo .lb-outils [aria-label="Tourner à droite"]');
 T.check('un quart de tour à droite : la vue tourne de 90°', await until(A, () => { const c = document.querySelector('#labo canvas.lb-gl'); return !!c; }, null, 5000) && await (async () => { await A.waitForTimeout(900); return true; })());
@@ -80,11 +87,38 @@ const mondeP1 = (() => { const a = p1.p1.phi * Math.PI / 180; const n = Math.hyp
 T.check('glisser la caméra autour du sujet : les projecteurs restent en place, leurs angles se relisent', await glisser('La caméra', -80, -20) && await (async () => { const p = await st('photometrie'); const a = p.p1.phi * Math.PI / 180; const n = Math.hypot(p.cam.x, p.cam.z); const ux = p.cam.x / n, uz = p.cam.z / n; const m = { x: p.p1.d * (Math.cos(a) * ux + Math.sin(a) * uz), z: p.p1.d * (Math.cos(a) * uz - Math.sin(a) * ux) }; return (p.cam.x !== p1.cam.x || p.cam.z !== p1.cam.z) && Math.abs(m.x - mondeP1.x) < 0.08 && Math.abs(m.z - mondeP1.z) < 0.08 && p.p1.phi !== p1.p1.phi; })(), JSON.stringify((await st('photometrie')).cam));
 await shot('06-photometrie-deux', 300);
 
+// ---------------- la visite des notions : la vue vole, la scène s'anime, les chiffres se lisent ----------------
+const vueDe = () => ev(() => { const P = window.__dbg.labo().plateau(); const V = P.etat.A.vue; return { c: V.cible.toArray().map((v) => +v.toFixed(2)), demi: +V.demi.toFixed(2), anims: P.etat.anims.size, images: P.etat.images }; });
+const v0 = await vueDe();
+await A.click('#labo .lb-outils .lb-vi-btn'); await A.waitForTimeout(300);
+T.check('Notions : la carte s\'ouvre sur la première notion (le flux, les lumens), avec sa lecture en direct et la leçon', await ev(() => { const c = document.querySelector('#labo .lb-visite'); return !c.hidden && document.querySelector('#labo .lb-vi-k').textContent === '1 / 9' && /lumens/.test(document.querySelector('#labo .lb-vi-t').textContent) && /lm/.test(document.querySelector('#labo .lb-vi-lire').textContent) && !document.querySelector('#labo .lb-visite .linkbtn').hidden; }));
+await A.waitForTimeout(1500);
+const v1 = await vueDe();
+T.check('la vue vole vers le projecteur et la lumière s\'anime (des images se dessinent)', (v1.c.join() !== v0.c.join() || v1.demi !== v0.demi) && v1.anims === 1 && v1.images > v0.images + 2 && await ev(() => !!window.__dbg.labo().plateau().etat.A.scene.getObjectByName('particules')), JSON.stringify([v0, v1]));
+await shot('09-notion-flux', 300);
+await A.click('#labo .lb-visite .lb-vi-nav .btn.primary'); await A.waitForTimeout(1200);
+T.check('Suivante : l\'intensité (une étape à la fois), le faisceau balaie sa plage', await ev(() => document.querySelector('#labo .lb-vi-k').textContent === '2 / 9' && /candelas/.test(document.querySelector('#labo .lb-vi-t').textContent)) && await (async () => { const a = (await st('photometrie')).p1.angle; await A.waitForTimeout(1200); return (await st('photometrie')).p1.angle !== a; })());
+await A.click('#labo .lb-visite .lb-vi-nav .btn.primary'); await A.waitForTimeout(1200);
+T.check('les lux : le projecteur est posé pour la démonstration, le mètre carré est là', await until(A, () => { const L = window.__dbg.labo(); return document.querySelector('#labo .lb-vi-k').textContent === '3 / 9' && L.STATES.photometrie.p1.phi === 12 && !!L.plateau().etat.A.scene.getObjectByName('carré') && [...document.querySelectorAll('#labo .lb-tag:not([hidden])')].some((x) => /1 m²/.test(x.textContent)); }, null, 6000), await ev(() => JSON.stringify({ k: document.querySelector('#labo .lb-vi-k').textContent, phi: window.__dbg.labo().STATES.photometrie.p1.phi, tags: [...document.querySelectorAll('#labo .lb-tag:not([hidden])')].map((x) => x.textContent) })));
+await shot('10-notion-lux', 300);
+await A.click('#labo .lb-visite .lb-vi-nav .btn.primary'); await A.waitForTimeout(1200);
+T.check('l\'inverse du carré : deux carrés et le pinceau, le projecteur va et vient', await ev(() => { const S = window.__dbg.labo().plateau().etat.A.scene; let n = 0; S.traverse((o) => { if (o.name === 'carré') n++; }); return n === 2 && !!S.getObjectByName('pinceau'); }));
+await A.click('#labo .lb-visite .lb-vi-x, #labo .lb-visite .lb-vi-head .btn'); await A.waitForTimeout(400);
+T.check('Fermer : la carte se range, l\'animation s\'arrête, les objets de la démonstration disparaissent', await ev(() => { const P = window.__dbg.labo().plateau(); const S = P.etat.A.scene; return document.querySelector('#labo .lb-visite').hidden && P.etat.anims.size === 0 && !S.getObjectByName('carré') && !S.getObjectByName('particules'); }));
+await A.click('#labo .lb-sidetabs [data-p="comprendre"]'); await A.waitForTimeout(200);
+T.check('Comprendre : la liste des neuf notions, chacune ouvre la visite à son étape', await ev(() => document.querySelectorAll('#labo .lb-visite-liste [data-etape]').length === 9) && await (async () => { await A.click('#labo .lb-visite-liste [data-etape="luminance"]'); await A.waitForTimeout(500); return ev(() => !document.querySelector('#labo .lb-visite').hidden && document.querySelector('#labo .lb-vi-k').textContent === '6 / 9'); })());
+await A.click('#labo .lb-visite .lb-vi-head .btn'); await A.waitForTimeout(300);
+await A.click('#labo .lb-sidetabs [data-p="defis"]'); await A.waitForTimeout(200);
+
 // ---------------- un défi impose : l'objet ne se déplace pas ----------------
+// la caméra est reculée : la principale « de face » du défi (à 6 m) reste devant elle, visible
+await ev(() => window.__dbg.labo().changer('photometrie', { 'cam.x': 0, 'cam.z': -8 })); await A.waitForTimeout(300);
 await A.click('#labo [data-defi="pho-niveau"]'); await A.waitForTimeout(500);
 T.check('le défi « Le bon niveau » impose la principale de face : sa position est verrouillée', await ev(() => { const L = window.__dbg.labo(); return L.VERROUS.has('p1.phi') && L.STATES.photometrie.p1.phi === 0; }));
-await A.mouse.move(...Object.values(await sous('Principale'))); await A.waitForTimeout(150);
-T.check('la survoler : le curseur dit qu\'elle est imposée', await ev(() => document.querySelector('#labo canvas.lb-gl').style.cursor === 'not-allowed'));
+// la vue se pose sur la principale (hors du coin de l'image), puis on la survole
+await ev(() => { const P = window.__dbg.labo().plateau(); const g = P.etat.A.glissables.find((x) => x.userData.glisser && x.userData.glisser.nom === 'Principale' && x.visible); const V = P.etat.A.vue; V.vol = null; V.cible.set(g.position.x, 1.2, g.position.z); V.demi = 2.6; P.demander(); }); await A.waitForTimeout(600);
+const sp = await sous('Principale'); await A.mouse.move(sp.x - 3, sp.y - 3); await A.waitForTimeout(120); await A.mouse.move(sp.x, sp.y); await A.waitForTimeout(150);
+T.check('la survoler : le curseur dit qu\'elle est imposée', await until(A, () => document.querySelector('#labo canvas.lb-gl').style.cursor === 'not-allowed', null, 3000), await ev(() => { const P = window.__dbg.labo().plateau(); return JSON.stringify({ hot: P.etat.hot && P.etat.hot.name, cursor: P.canvas.style.cursor, ptrs: P.etat.ptrs.size, drag: !!P.etat.drag, pan: !!P.etat.pan, cam: window.__dbg.labo().STATES.photometrie.cam }); }));
 const q0 = await st('photometrie');
 T.check('la glisser ne la déplace pas (ni distance ni angle)', await glisser('Principale', 80, 40) && await (async () => { const q = await st('photometrie'); return q.p1.phi === 0 && q.p1.d === q0.p1.d; })());
 await shot('07-defi-impose', 300);

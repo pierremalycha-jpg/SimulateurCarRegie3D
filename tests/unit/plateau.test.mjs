@@ -111,3 +111,19 @@ test('photométrie sur le plateau : hauteur et incidence réelle, le fond derri�
   assert.ok(m.fond > 0 && m.ecartFond > 0 && m.L18 > 0, 'fond, écart au fond, luminance du gris');
   proche(m.L18, 0.18 * m.E / Math.PI, 1e-9, 'L = ρE/π');
 });
+
+test('la visite des notions : des étapes complètes, qui regardent quelque part et lisent les mesures sans trou', async () => {
+  const { ETAPES_PHOTO, ETAPES_OPTIQUE } = await import('../../src/labo/plateau/notions.js');
+  const bad = (t) => !t || /undefined|NaN|\[object|null\b/.test(t);
+  for (const [atelier, etapes, cles] of [['photometrie', ETAPES_PHOTO, ['flux', 'intensite', 'eclairement', 'inverse', 'cosinus', 'luminance', 'couleur', 'exposition', 'contraste']], ['optique', ETAPES_OPTIQUE, ['focale', 'iris', 'point', 'hyperfocale', 'capteur']]]) {
+    assert.deepEqual(etapes.map((E) => E.id), cles, `${atelier} : les notions dans l'ordre`);
+    for (const E of etapes) {
+      assert.ok(E.titre && E.texte.length > 120 && E.lecon, `${E.id} : titre, texte, leçon`);
+      const st = etatPour(atelier, {}); let m = MESURES[atelier](st);
+      if (E.scene) { poser(st, typeof E.scene === 'function' ? E.scene(st, m) : E.scene); m = MESURES[atelier](st); }
+      const v = E.vue(st, m);
+      assert.ok(Array.isArray(v.cible) && v.cible.length === 3 && v.cible.every(Number.isFinite) && v.demi > 1 && v.demi < 40, `${E.id} : une vue`);
+      if (E.lire) assert.ok(!bad(E.lire(st, m)), `${E.id} : lecture « ${E.lire(st, m)} »`);
+    }
+  }
+});

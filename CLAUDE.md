@@ -178,7 +178,11 @@ Tout est en français (code commenté en français, interface, commits).
   repères : pas de couleur de décor, pas de sujet coloré. La photométrie y est complète (quatre fiches : au luxmètre,
   chaque projecteur, la couleur ; hauteur `p.h` et incidence réelle, flux, angle solide, angle de champ, puissance, courant,
   IRC, luminance du gris 18 %, fond derrière le sujet) : une notion de photométrie qui manque s'ajoute au modèle pur
-  (`calc/photometrie.js`, `calc/lumiere.js`), aux mesures de `etats.js` et à sa fiche. Le moteur (`scene.js` : un seul rendu WebGL partagé, monté dans
+  (`calc/photometrie.js`, `calc/lumiere.js`), aux mesures de `etats.js` et à sa fiche. **Les notions se visitent sur le
+  plateau** (`plateau/visite.js` : la carte, les vols, les animations ; `plateau/notions.js` : une liste d'étapes par
+  atelier, id, titre, texte, leçon, réglages posés, vue, lecture, animation) comme dans la caméra en 3D : la vue vole vers ce
+  que l'étape explique, la scène s'anime (particules, mètre carré, pinceau, balayage d'un réglage), les chiffres se lisent
+  en direct ; une notion nouvelle est une étape de plus, testée (`plateau.test.mjs`). Le moteur (`scene.js` : un seul rendu WebGL partagé, monté dans
   l'atelier affiché, rendu à la demande ; caméra orthographique, quarts de tour, zoom, recentrer ; glisser-poser au sol ;
   étiquettes en pilules) reçoit de l'atelier un **adaptateur** (scène, objets à prendre, étiquettes, cadre, image de la caméra,
   exposition). Les pièces (`pieces.js`) : Builder en mode `ao`, formes à facettes (`prisme`, `cone`, `boule`, `froisse`),

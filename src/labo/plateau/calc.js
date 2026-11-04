@@ -62,6 +62,10 @@ export function cadrer(points, az, aspect, marge = 1.2, min = 2.5) {
   return { cible: [c[0] + B.dir[0] * t, 0, c[2] + B.dir[2] * t], demi };
 }
 
+/** l'azimut de la vue (parmi les quatre) qui regarde une ligne de direction beta (rad, atan2(x, z)) le plus de côté */
+export const azimutDeCote = (beta) => AZIMUTS.reduce((b, az) => (Math.abs(Math.cos(az * Math.PI / 180 - beta)) < Math.abs(Math.cos(b * Math.PI / 180 - beta)) ? az : b), AZIMUTS[0]);
+/** l'azimut de la vue (parmi les quatre) dont l'œil est le plus du côté de la direction beta (rad, atan2(x, z)) */
+export const azimutDuCote = (beta) => AZIMUTS.reduce((b, az) => (Math.cos(az * Math.PI / 180 - beta) > Math.cos(b * Math.PI / 180 - beta) ? az : b), AZIMUTS[0]);
 /** borne une valeur dans [a, b] @param {number} v @param {[number, number]} ab */
 export const borne = (v, [a, b]) => Math.min(Math.max(v, a), b);
 /** @typedef {[number, number]} Bornes */

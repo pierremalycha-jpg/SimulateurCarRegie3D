@@ -432,6 +432,21 @@ La hauteur d'un projecteur (`p1.h`, `p2.h`, 1,45 m par défaut : à la hauteur d
 et les défis gardent leurs chiffres) entre dans la distance et l'incidence réelles (`geometrieProjecteur`, `eclairageSujet`) ;
 le fond se calcule en relisant le faisceau hors de son axe (`eclairageFond`).
 
+**Les notions, en 3D sur le plateau** (`plateau/visite.js`, `plateau/notions.js`) : comme la caméra en 3D, chaque notion
+est une étape qu'on lit dans une carte posée sur le plateau (touche « Notions » de la barre d'outils, ou la liste du panneau
+« Comprendre ») pendant que **la vue vole** vers ce qu'elle explique et que **la scène s'anime** : de la lumière qui part de
+la source, un mètre carré posé au sujet, le pinceau qui s'élargit avec la distance, un réglage qui balaie sa plage pendant
+qu'on regarde ce qu'il change, et les chiffres du modèle lus en direct sous le texte. « La leçon » ouvre la leçon du Cours.
+
+| Atelier | Les notions, dans l'ordre | Ce qui s'anime |
+| --- | --- | --- |
+| Photométrie | le flux (lumens) · l'intensité (candelas) · l'éclairement (lux) · la distance, l'inverse du carré · l'incidence, la loi du cosinus · la luminance (cd/m²) · la couleur (kelvins, mireds) · du luxmètre au diaphragme · le rapport de contraste | la vue s'approche du projecteur, la lumière part de la lentille dans son cône ; le faisceau se resserre et l'intensité grimpe ; un mètre carré posé à la cellule reçoit ses lumens ; un carré de 1 m et un carré de 2 m deux fois plus loin, le projecteur va et vient ; le projecteur tourne autour du sujet et la cellule reçoit le cosinus ; la lumière repart du visage vers la caméra ; le gradateur descend et le faisceau rougit ; l'iris parcourt ses crans et l'image s'expose ; le débouchage monte et descend |
+| Optique | la focale et le champ · l'iris et la zone nette · le point · l'hyperfocale · le capteur et le cercle de confusion | la focale balaie sa plage et le coin au sol s'ouvre ; l'iris parcourt ses crans et la zone nette s'étend ; le point court de A à C ; le point se fait à l'hyperfocale ; les trois capteurs se succèdent |
+
+Une notion nouvelle s'ajoute comme une étape (id, titre, texte, leçon, réglages posés, vue, lecture, animation) ; le moteur
+sait voler (`voler`), animer (`animer`) et, si le navigateur ne donne pas d'image à une page qu'il croit au repos, en dessine
+une quand même.
+
 **L'image de la caméra** (`plateau/dof.js`) : la scène est rendue une seconde fois depuis l'œil de la caméra posée sur le
 plateau (angle de champ de la focale sur le capteur), dans une cible qui garde la profondeur, puis composée dans un coin du
 plateau (agrandissable) en appliquant par pixel : le **flou de profondeur de champ** (la profondeur donne la distance de ce
@@ -457,7 +472,8 @@ exposition.
 tache en pixels, projecteur du rendu, hauteur et incidence réelle, fond derrière le sujet, la fiche complète, l'état des
 ateliers et les scènes des défis) ; suite `node tools/e2e.mjs labo-plateau`
 (prendre un sujet, la caméra, un projecteur à la souris et relire l'état ; un réglage imposé qui ne bouge pas ; tourner,
-zoomer, recentrer, étiquettes, agrandir l'image ; 390 px) ; la suite `labo` inchangée (les défis se jouent comme avant).
+zoomer, recentrer, étiquettes, agrandir l'image ; la visite des notions : la vue vole, la lumière s'anime, le mètre carré,
+les deux carrés et le pinceau, une étape à la fois, la liste du panneau Comprendre ; 390 px) ; la suite `labo` inchangée (les défis se jouent comme avant).
 
 ## v19.29 : un chapitre « La lumière » au Cours, et programmer la console dot2 pour de vrai
 
@@ -2920,7 +2936,7 @@ node tools/shots.mjs dossier 1280 800 '["vision","hf"]'   # captures de postes
 | `labo/calc/lumiere.js`, `labo/calc/show.js`, `labo/dot2/show_depart.js` | La lumière en calcul pur (familles de sources, angle solide, angle de champ, scintillement, uniformité) ; la console (lire un show de la dot2 : tracking, presets, couleur d'une lyre, effets, chaser ; pan et tilt sur 16 bits) ; le show de départ des défis de la console (v19.29) |
 | `cours/lumiere.js`, `cours/lumiere_mesure.js`, `cours/lumiere_eclairer.js`, `cours/lumiere_commande.js`, `cours/exos/lumiere_*.js`, `content/terms_lumiere_*.js` | Le chapitre « La lumière » (v19.29) : trois parties, treize leçons, leurs exercices en autonomie et leurs fiches « ? » |
 | `labo/ateliers/` (un fichier par atelier), `labo/defis/` (un fichier par atelier), `labo/dot2/simulateur_dot2.html`, `content/terms_labo.js` | L'interface de chaque atelier (dessins en canvas ou plateau 3D, commandes, afficheurs) ; ses défis notés ; la console dot2 (page complète gardée telle quelle, ouverte dans un cadre) ; les fiches « ? » du Labo |
-| `labo/plateau/calc.js`, `labo/plateau/scene.js`, `labo/plateau/pieces.js`, `labo/plateau/dof.js` | Le plateau 3D du Labo (v19.30) : les calculs purs (isométrie, cadrage, lecture des positions, exposition, tache en pixels, projecteur du rendu) ; le moteur isométrique partagé (rendu à la demande, glisser-poser au sol, étiquettes, image de la caméra composée) ; les pièces low-poly à grandes facettes (sol, cyclo, sujets, caméra, projecteurs, plante, repères) ; l'image de la caméra (flou de profondeur de champ par pixel, exposition, balance des blancs, zébra) |
+| `labo/plateau/calc.js`, `labo/plateau/scene.js`, `labo/plateau/pieces.js`, `labo/plateau/dof.js`, `labo/plateau/visite.js`, `labo/plateau/notions.js` | Le plateau 3D du Labo (v19.30) : les calculs purs (isométrie, cadrage, lecture des positions, exposition, tache en pixels, projecteur du rendu) ; le moteur isométrique partagé (rendu à la demande, glisser-poser au sol, étiquettes, image de la caméra composée) ; les pièces low-poly à grandes facettes (sol, cyclo, sujets, caméra, projecteurs, plante, repères) ; l'image de la caméra (flou de profondeur de champ par pixel, exposition, balance des blancs, zébra) ; la visite des notions (carte, vols, animations : particules, carré, pinceau, balayage d'un réglage) et les étapes des deux ateliers |
 | `ui/cours_ui.js` | L'espace Cours : un seul sommaire (chapitres rangés par niveau, parties), « Mon parcours », chemin d'un chapitre, la page de lecture d'une leçon qui se dévoile (en-tête, étapes collantes, schéma légendé, manipulation, explication, car, mots de la leçon, référentiel, quiz, exercice en autonomie, exercices pratiques), glossaire, postes, matériel |
 | `app/nav.js` | Navigation entre les trois entrées : menu du car (Échap), aiguillage des boutons « Aller au poste », « Commencer » (car lancé si besoin), ouverture du Labo depuis une leçon, changement de vacation |
 | `ui/layer.js` | Espace plein écran (le Cours) : plaque, onglets, Fermer (Échap), ligne d'état |

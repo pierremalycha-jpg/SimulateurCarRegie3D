@@ -44,7 +44,9 @@ import { anneau, COUCHE_REPERES, CIEL } from './pieces.js';
  * @property {(cles: string[]) => boolean} verrou l'un de ces chemins est imposé par le défi en cours
  * @property {() => number} [exposition] l'exposition du plateau vu de haut
  * @property {(t: string) => void} [dire] une annonce (lecteurs d'écran)
- * @property {{ az: number, azCible: number, cible: THREE.Vector3, demi: number, cadre: boolean }} [vue] la vue gardée (posée par le moteur)
+ * @property {HTMLElement[]} [outils] des touches de plus dans la barre d'outils du plateau
+ * @property {HTMLElement} [panneau] un panneau posé sur le plateau (la visite des notions)
+ * @property {{ az: number, azCible: number, cible: THREE.Vector3, demi: number, cadre: boolean, vol: any }} [vue] la vue gardée (posée par le moteur)
  */
 const CLE_TAGS = 'carregie.lbtags';
 const CLE_AIDE = 'carregie.lbaide';
@@ -100,7 +102,9 @@ function creer() {
   const E = {
     ok: !!renderer, renderer, canvas, cam, image, ring, tags, pip, cap, outils, aide, nogl,
     /** @type {HTMLElement | null} */ host: null, /** @type {Adaptateur | null} */ A: null,
-    tagsOn: true, grand: false, raf: 0, last: 0, drag: null, pan: null, pinch: null, ptrs: new Map(), hoverT: 0, hot: null, bouge: 0, lastTap: 0,
+    tagsOn: true, grand: false, raf: 0, last: 0, t: 0, drag: null, pan: null, pinch: null, ptrs: new Map(), hoverT: 0, hot: null, bouge: 0, lastTap: 0,
+    /** @type {Map<string, (dt: number, t: number) => void>} */ anims: new Map(), extras: /** @type {HTMLElement[]} */ ([]),
+    images: 0, sauts: 0, garde: 0,
     ray: new THREE.Raycaster(), v2: new THREE.Vector2(), pt: new THREE.Vector3(), v3: new THREE.Vector3(), v3b: new THREE.Vector3(),
   };
   try { if (localStorage.getItem(CLE_TAGS) === '0') E.tagsOn = false; if (localStorage.getItem(CLE_AIDE) === '1') aide.classList.add('vu'); } catch (e) { /* stockage indisponible */ }
@@ -119,30 +123,56 @@ function creer() {
     if (!E.ok || !A) return;
     if (E.A !== A) {
       if (E.A) { E.A.scene.remove(ring); for (const L of E.A.etiquettes) L.el.remove(); }
-      E.A = A; E.hot = null; E.drag = null; E.pan = null; ring.visible = false;
+      for (const x of E.extras) x.remove(); E.extras = [];
+      E.A = A; E.hot = null; E.drag = null; E.pan = null; ring.visible = false; E.anims.clear();
       A.scene.add(ring);
       for (const L of A.etiquettes) tags.append(L.el);
-      if (!A.vue) A.vue = { az: AZIMUTS[0], azCible: AZIMUTS[0], cible: new THREE.Vector3(), demi: 6, cadre: false };
+      for (const b of A.outils || []) { outils.append(b); E.extras.push(b); }
+      if (A.panneau) { host.append(A.panneau); E.extras.push(A.panneau); }
+      if (!A.vue) A.vue = { az: AZIMUTS[0], azCible: AZIMUTS[0], cible: new THREE.Vector3(), demi: 6, cadre: false, vol: null };
     }
     // des étiquettes ajoutées après coup
     for (const L of A.etiquettes) if (!L.el.isConnected) tags.append(L.el);
     if (!A.vue.cadre) { A.vue.cadre = true; cadrerVue(true); }
     demander();
   }
-  const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(() => demander()) : null;
-  function demander() { if (!E.raf && E.ok) E.raf = requestAnimationFrame(rendu); }
+  // au redimensionnement, les étiquettes se cachent jusqu'à l'image suivante (leurs places ne valent plus)
+  const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(() => { if (E.A) for (const L of E.A.etiquettes) L.el.hidden = true; demander(); }) : null;
+  /**
+   * demande une image ; si le navigateur ne la donne pas dans le tiers de seconde (une page qu'il croit au repos, un rendu
+   * logiciel sans écran), on la dessine quand même : une animation avance toujours
+   */
+  function demander() {
+    if (E.raf || !E.ok) return;
+    E.raf = requestAnimationFrame(rendu);
+    clearTimeout(E.garde); E.garde = setTimeout(() => { if (E.raf) { cancelAnimationFrame(E.raf); rendu(performance.now()); } }, 350);
+  }
   function poserTags(on) {
     E.tagsOn = on; tags.hidden = !on; bTags.setAttribute('aria-pressed', String(on)); bTags.classList.toggle('on', on);
     try { localStorage.setItem(CLE_TAGS, on ? '1' : '0'); } catch (e) { /* stockage indisponible */ }
     demander();
   }
   function tourner(sens) { const V = E.A && E.A.vue; if (!V) return; V.azCible += 90 * sens; demander(); }
+  const ease = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
+  /** vole en douceur vers une vue : cible [x, y, z] (m), demi-hauteur du cadre (m), azimut (degrés) ; chaque champ est facultatif */
+  function voler(v, dur = 1.1) {
+    const V = E.A && E.A.vue; if (!V) return;
+    V.vol = { de: { c: V.cible.clone(), d: V.demi }, a: { c: v.cible ? new THREE.Vector3(v.cible[0], v.cible[1], v.cible[2]) : V.cible.clone(), d: clamp(v.demi ?? V.demi, 1.2, 40) }, k: 0, dur };
+    if (v.az != null) { let az = v.az; while (az - V.azCible > 180) az -= 360; while (az - V.azCible < -180) az += 360; V.azCible = az; }
+    demander();
+  }
+  /** fait tourner une animation (appelée à chaque image tant qu'elle est là) */
+  function animer(id, fn) { E.anims.set(id, fn); demander(); }
+  function arreter(id) { E.anims.delete(id); }
   /** cadre la caméra et les objets de l'atelier */
   function cadrerVue(tout = false) {
     const A = E.A; if (!A || !A.vue) return;
     const w = canvas.clientWidth || 800, h = canvas.clientHeight || 500;
     const { cible, demi } = cadrer(A.cadre(), A.vue.azCible, w / h, 1.22, 3);
-    A.vue.cible.set(cible[0], cible[1], cible[2]); A.vue.demi = demi; if (tout) A.vue.az = A.vue.azCible;
+    // le cadre laisse le coin de l'image de la caméra libre : la scène glisse un peu vers le haut et la gauche
+    const B = baseIso(A.vue.azCible), d2 = demi * 1.06, dx = d2 * (w / h) * 0.1, dy = d2 * 0.1;
+    A.vue.cible.set(cible[0] + B.droite[0] * dx - B.haut[0] * dy, cible[1] + B.droite[1] * dx - B.haut[1] * dy, cible[2] + B.droite[2] * dx - B.haut[2] * dy);
+    A.vue.demi = d2; A.vue.vol = null; if (tout) A.vue.az = A.vue.azCible;
     demander();
   }
 
@@ -182,6 +212,7 @@ function creer() {
     canvas.setPointerCapture(e.pointerId); E.ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY });
     E.bouge = 0;
     if (E.ptrs.size === 2) { const [a, b] = [...E.ptrs.values()]; E.pinch = { d: Math.hypot(a.x - b.x, a.y - b.y), demi: E.A.vue.demi, mx: (a.x + b.x) / 2, my: (a.y + b.y) / 2 }; E.drag = null; E.pan = null; return; }
+    E.A.vue.vol = null;
     poserCam();
     const hit = e.button === 0 ? sousPointeur(e.clientX, e.clientY) : null;
     if (hit) {
@@ -228,7 +259,7 @@ function creer() {
   canvas.addEventListener('pointerleave', () => { if (!E.drag && E.hot) { E.hot = null; ring.visible = false; demander(); } });
   canvas.addEventListener('contextmenu', (e) => e.preventDefault());
   canvas.addEventListener('wheel', (e) => {
-    const A = E.A; if (!A) return; e.preventDefault();
+    const A = E.A; if (!A) return; e.preventDefault(); A.vue.vol = null;
     poserCam(); const p0 = auSol(e.clientX, e.clientY); const a = p0 ? [p0.x, p0.z] : null;
     A.vue.demi = clamp(A.vue.demi * Math.exp(e.deltaY * 0.0012), 1.2, 40);
     poserCam(); const p1 = auSol(e.clientX, e.clientY);
@@ -252,14 +283,17 @@ function creer() {
 
   // ---------------- le rendu ----------------
   function rendu(now) {
-    E.raf = 0;
+    E.raf = 0; clearTimeout(E.garde); E.garde = 0; E.images++;
     const A = E.A, R = renderer, host = E.host;
-    if (!R || !A || !host || !host.isConnected || host.offsetParent === null) return;
+    if (!R || !A || !host || !host.isConnected || host.offsetParent === null) { E.sauts++; return; }
     const dt = Math.min(0.1, Math.max(0.001, (now - (E.last || now)) / 1000)); E.last = now;
     const w = canvas.clientWidth || host.clientWidth || 640, h = canvas.clientHeight || host.clientHeight || 400;
     if (canvas.width !== Math.round(w * R.getPixelRatio()) || canvas.height !== Math.round(h * R.getPixelRatio())) R.setSize(w, h, false);
-    const V = A.vue;
+    const V = A.vue; E.t += dt;
     if (V.az !== V.azCible) { V.az += (V.azCible - V.az) * (1 - Math.exp(-dt * 9)); if (Math.abs(V.azCible - V.az) < 0.03) V.az = V.azCible; else demander(); }
+    if (V.vol) { const F = V.vol; F.k = Math.min(1, F.k + dt / F.dur); const e = ease(F.k); V.cible.lerpVectors(F.de.c, F.a.c, e); V.demi = Math.exp(Math.log(F.de.d) + (Math.log(F.a.d) - Math.log(F.de.d)) * e); if (F.k >= 1) V.vol = null; else demander(); }
+    for (const fn of E.anims.values()) { try { fn(dt, E.t); } catch (err) { console.error(err); E.anims.clear(); } }
+    if (E.anims.size) demander();
     poserCam();
     // l'anneau sous l'objet pris ou survolé
     if (E.hot) { ring.visible = true; E.hot.getWorldPosition(E.v3); ring.position.set(E.v3.x, 0.018, E.v3.z); } else ring.visible = false;
@@ -280,8 +314,9 @@ function creer() {
     R.toneMapping = THREE.ACESFilmicToneMapping; R.toneMappingExposure = A.exposition ? A.exposition() : expositionPlateau(0);
     R.autoClear = true; R.render(A.scene, cam);
     if (cadre && image) { image.composer(cadre.x, cadre.y, cadre.w, cadre.h, cadre.r); R.setViewport(0, 0, w, h); }
-    // les étiquettes (pas sous l'image de la caméra)
+    // les étiquettes (pas sous l'image de la caméra) ; une étiquette ajoutée depuis la dernière image entre dans la page
     if (E.tagsOn) for (const L of A.etiquettes) {
+      if (!L.el.isConnected) tags.append(L.el);
       let vis = L.on;
       if (vis) {
         const t = /** @type {any} */ (L.cible);
@@ -305,5 +340,5 @@ function creer() {
     const r = canvas.getBoundingClientRect();
     return { x: r.left + (E.v3b.x + 1) / 2 * r.width, y: r.top + (1 - E.v3b.y) / 2 * r.height };
   }
-  return { ok: E.ok, monter, demander, cadrer: cadrerVue, tourner, ecran, canvas, etat: E };
+  return { ok: E.ok, monter, demander, cadrer: cadrerVue, tourner, voler, animer, arreter, ecran, canvas, etat: E };
 }
