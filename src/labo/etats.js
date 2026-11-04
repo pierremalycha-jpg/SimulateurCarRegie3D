@@ -14,11 +14,14 @@ const clone = (x) => JSON.parse(JSON.stringify(x));
 const isPlain = (x) => !!x && typeof x === 'object' && !Array.isArray(x);
 
 export const INITIAL = {
-  optique: () => ({ capteur: 's35', f: 35, N: 4, s: 4, sujets: { A: 2, B: 4, C: 9 } }),
+  // le plateau 3D (v19.30) : la caméra posée en cam (m, elle regarde vers +z), chaque sujet à sa distance le long de
+  // l'axe (sujets, ce que l'optique utilise) et à son écart latéral (lat, positif à droite de l'image)
+  optique: () => ({ capteur: 's35', f: 35, N: 4, s: 4, sujets: { A: 2, B: 4, C: 9 }, lat: { A: -0.6, B: 0.05, C: 0.85 }, cam: { x: 0, z: 0 } }),
   photometrie: () => ({
     p1: { on: true, source: 'fresnel', angle: 30, niveau: 1, Tled: 5600, gel: 'aucune', d: 4, phi: -35, alpha: 0 },
     p2: { on: false, source: 'led', angle: 50, niveau: 0.6, Tled: 3200, gel: 'aucune', d: 2.5, phi: 45, alpha: 0 },
-    cam: { iso: 800, t: 1 / 50, N: 4, Tcam: 3200 },
+    // la caméra : ses réglages, et sa place sur le plateau 3D (le sujet est au centre, elle le regarde)
+    cam: { iso: 800, t: 1 / 50, N: 4, Tcam: 3200, x: 0, z: -4 },
   }),
   sensito: () => ({ courbe: 'bt709', e: 0, g: 0, ciel: 3 }),
   // la console dot2 : le show qu'elle a enregistré (labo/ateliers/dot2.js le lit dans « simdot2.session »)
@@ -43,7 +46,8 @@ export const MESURES = {
   optique: (st) => {
     const K = CAPTEURS[st.capteur] || CAPTEURS['2/3'];
     const [proche, loin] = limites(st.f, st.N, K.c, st.s);
-    const sujets = Object.fromEntries(Object.entries(st.sujets).map(([k, d]) => [k, { d, tache: tache(st.f, st.N, st.s, d), net: net(st.f, st.N, K.c, st.s, d), champ: champ(K, st.f, d) }]));
+    // dansChamp : l'écart latéral du sujet tient dans la largeur du champ à sa distance
+    const sujets = Object.fromEntries(Object.entries(st.sujets).map(([k, d]) => { const ch = champ(K, st.f, d); const lat = st.lat && Number.isFinite(st.lat[k]) ? st.lat[k] : 0; return [k, { d, tache: tache(st.f, st.N, st.s, d), net: net(st.f, st.N, K.c, st.s, d), champ: ch, lat, dansChamp: Math.abs(lat) <= ch.w / 2 }]; }));
     return { K, H: hyperfocale(st.f, st.N, K.c), proche, loin, angle: angleH(K, st.f), sujets };
   },
   photometrie: (st) => {
