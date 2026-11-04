@@ -160,7 +160,9 @@ Tout est en français (code commenté en français, interface, commits).
   jamais juste d'avance. Test `tests/unit/labo.test.mjs`, suite `node tools/e2e.mjs labo`.
 - **Le matching à la mire (v19.30, décidé le 4 novembre 2026)** : un outil **à part** pour les vraies caméras du plateau,
   `src/matching/` construit en `dist/matching.html` (document complet, Archivo et B612 Mono) et servi par `node tools/matching.mjs`
-  (localhost, relais `/relais?url=` vers une adresse privée et `/cgi-bin/` seulement) ; ce n'est pas une entrée du simulateur.
+  (localhost, relais `/relais?url=` vers une adresse privée et `/cgi-bin/` seulement), **et qui marche aussi ouvert d'un
+  double-clic** (sans serveur : commandes directes en `no-cors`, valeurs en cours entrées à la main) ; ce n'est pas une entrée
+  du simulateur. Parcours retenu : une image du signal de la FB80 en référence, la PTZ calée dessus.
   Tout le calcul est pur et testé (`matching/calc.js` : courbe des gris V = noir + gain · L^g à exposant partagé, matrice
   3 × 3 qui conserve le blanc sous la forme R-G … B-G, ΔE CIE76, échelle apprise `estimerEchelle`) ; la page (`app.js`) ne fait
   que le DOM et les sources d'images. Une caméra = un profil de `cameras.js` (réglages, bornes, grandeur, échelle estimée,

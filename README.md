@@ -414,8 +414,16 @@ HXC-FB80 (HXCU-FB80, RCP-1500).
 Le score : ΔE (CIE76, Lab) moyen et maximum avant, et prévu après ; raccordé sous 2. La parade des six gris et le
 vecteurscope des dix-huit couleurs montrent A, B, et B prévue après réglage.
 
-**Les sources d'images** : une caméra ou une carte d'acquisition USB vue comme une webcam (`getUserMedia`, d'où la page sur
-`localhost`), un fichier image, l'instantané IP d'une Panasonic (`/cgi-bin/camera`) par le relais, ou la démonstration (deux
+**Le parcours retenu** : une image du signal de la FB80 avec la mire sert de référence (A), la PTZ, prise par la carte
+d'acquisition, se cale dessus (B). **Ouverte d'un double-clic**, `dist/matching.html` marche sans serveur : la carte
+d'acquisition se lit (`getUserMedia` sur une page locale), les commandes partent directement à la Panasonic (le navigateur les
+envoie sans laisser lire la réponse), et les valeurs en cours de la caméra, qu'on ne peut plus lire, s'entrent à la main dans
+le panneau « Valeurs en cours » (« Préparer la Panasonic » passe la balance en AWB A et la matrice sur User). Avec
+`node tools/matching.mjs`, la page lit en plus les réglages et l'instantané IP. « Copier les consignes » emporte le raccord
+en texte.
+
+**Les sources d'images** : une caméra ou une carte d'acquisition USB vue comme une webcam (une seule en direct à la fois : la
+même carte sert aux deux caméras), un fichier image, l'instantané IP d'une Panasonic (`/cgi-bin/camera`) par le relais, ou la démonstration (deux
 caméras simulées par `calc.js`, B avec ses défauts et des échelles de menu cachées : on applique, on remesure, on voit la
 page apprendre). On pointe les quatre coins de la zone des pastilles ; une homographie place la grille, 49 points par pastille.
 
@@ -438,8 +446,8 @@ la page prend la plus proche et montre le résidu. Les valeurs de la ColorChecke
 **Vérification.** Tests unitaires `tests/unit/matching.test.mjs` (BT.709, Lab, température, courbe des gris, matrice,
 diagnostic sur caméras simulées avec et sans bruit, échelle apprise, homographie, profils, commandes Panasonic en
 aller-retour) ; suite `node tools/e2e.mjs matching` (serveur et relais, démonstration en trois tours jusqu'au raccord, coins
-à la main, fausse caméra Panasonic : instantané par le relais, lecture des réglages, commandes reçues, refus du relais,
-téléphone).
+à la main, fausse caméra Panasonic : instantané par le relais, lecture des réglages, commandes reçues, refus du relais, la
+page ouverte en `file://` : valeurs en cours à la main, commandes directes, préparation, copie des consignes ; téléphone).
 
 ## v19.29 : un chapitre « La lumière » au Cours, et programmer la console dot2 pour de vrai
 
