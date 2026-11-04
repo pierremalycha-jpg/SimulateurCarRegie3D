@@ -78,6 +78,16 @@ export const ATELIERS = [
     terms: ['dmx512', 'tracking'],
     defis: [{ id: 'dot2-couleurs', titre: 'Des couleurs sur les lyres' }, { id: 'dot2-matricks', titre: 'Une lyre sur deux (MAtricks)' }, { id: 'dot2-position', titre: 'Pointer un gobo' }, { id: 'dot2-cercle', titre: 'Un cercle de lyres' }, { id: 'dot2-chaser', titre: 'Un chaser de couleurs' }, { id: 'dot2-sequence', titre: 'Une séquence en tracking' }, { id: 'dot2-pages', titre: 'Pages et group master' }],
   },
+  {
+    id: 'ptz', titre: 'Caméras PTZ et réseau', court: 'Caméras PTZ', ico: 'ccu',
+    resume: 'Le banc du BTS : deux AW-HE130, une AW-UE20, un pupitre AW-RP150, un PC avec Easy IP Setup et un switch PoE+ à configurer.',
+    consigne: 'Mettre le banc en service pas à pas (câble, PoE+, adresses, comptes, pupitre, QoS, recette), puis les défis : adresser, alimenter, enregistrer, prioriser, dépanner.',
+    notions: ['Adresse IP, masque, passerelle, port HTTP', 'Easy IP Setup : recherche par diffusion, fenêtre de 20 minutes', 'PoE et PoE+ : classes et budget du switch', 'Le pupitre : adresses et ports des caméras', 'QoS : DSCP, confiance et files du switch', 'VLAN et recette'],
+    competences: ['C12', 'C25', 'C8', 'C21'], savoirs: ['K2', 'K3', 'K4', 'K7'],
+    liens: [{ lecon: 'ptz-adresse', titre: 'Adresser une caméra PTZ' }, { lecon: 'ptz-easyip', titre: 'Easy IP Setup' }, { lecon: 'ptz-poe', titre: 'PoE et PoE+' }, { lecon: 'ptz-pupitre', titre: 'Le pupitre AW-RP150' }, { lecon: 'ptz-qos', titre: 'La QoS d\'un réseau de PTZ' }],
+    terms: ['ptz', 'poe', 'classe-poe', 'easy-ip-setup', 'sous-reseau', 'passerelle', 'port-http', 'compte-admin', 'dscp', 'vlan', 'conflit-ip'],
+    defis: [{ id: 'ptz-adresser', titre: 'Trois caméras sorties du carton' }, { id: 'ptz-poe', titre: 'Le budget PoE du switch' }, { id: 'ptz-pupitre', titre: 'Enregistrer les caméras au pupitre' }, { id: 'ptz-qos', titre: 'La vidéo d\'abord' }, { id: 'ptz-panne', titre: 'La recette du lundi matin' }],
+  },
 ];
 /** tous les défis notés, avec leur atelier */
 export const DEFIS_LABO = ATELIERS.flatMap((A) => A.defis.map((d) => ({ ...d, atelier: A.id })));

@@ -3,6 +3,7 @@ import { CAPTEURS, hyperfocale, limites, tache, net, champ, angleH } from './cal
 import { eclairage, melange, dominante, eclairementPour, diaphs as ecartDiaphs, contraste } from './calc/photometrie.js';
 import { GRIS, signal, plage } from './calc/sensito.js';
 import { planUnivers, diagLigne, liaison } from './calc/dmx.js';
+import { bancUsine, majTension, alimentation, doublons, rechercheEasyIp, liaisonsPupitre, qos, etapes, recette } from './calc/ptz.js';
 
 // ----------------------------------------------------------------------------------
 // L'état de chaque atelier du Labo (ce que l'élève règle) et ses mesures (ce que le modèle en
@@ -36,6 +37,8 @@ export const INITIAL = {
     console: { ip: '2.0.0.1', masque: '255.0.0.0', protocole: 'artnet', univers: 1 },
     noeud: { ip: '2.0.0.50', masque: '255.0.0.0', protocole: 'artnet', net: 0, sub: 0, uni: 0, sacn: 1 },
   }),
+  // le banc des caméras PTZ (labo/calc/ptz.js) : la vue choisie, l'application ouverte sur le PC
+  ptz: () => ({ vue: 'banc', pcApp: 'reseau', ...bancUsine() }),
 };
 
 /** les mesures d'un atelier pour cet état */
@@ -60,6 +63,8 @@ export const MESURES = {
   },
   dot2: (st) => ({ show: st.show }),
   dmx: (st) => ({ plan: planUnivers(st.appareils), ligne: diagLigne(st.ligne), liaison: liaison(st.console, st.noeud) }),
+  // le banc : la minute de mise sous tension de chaque appareil suit l'alimentation (majTension), puis tout se calcule
+  ptz: (st) => { majTension(st); return { alim: alimentation(st), doublons: doublons(st), easyip: rechercheEasyIp(st), pupitre: liaisonsPupitre(st), qos: qos(st), etapes: etapes(st), recette: recette(st) }; },
 };
 
 /** applique un réglage { chemin: valeur } à un état (le modifie et le rend) */
