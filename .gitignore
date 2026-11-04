@@ -2,6 +2,8 @@ node_modules/
 *.zip
 # produits par node tools/build.mjs : rien de la page construite dans le dépôt public (v19.10)
 dist/index.html
+# le matching à la mire (v19.30), page à part construite par le même script
+dist/matching.html
 # réseau local
 dist/index-lan.html
 dist/car-regie-serveur-lan.mjs

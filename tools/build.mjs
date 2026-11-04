@@ -16,10 +16,11 @@ const boot = esbuild.transformSync(fs.readFileSync('src/boot.js', 'utf8'), { min
 // qui venaient de Google Fonts avant la v19.4 : plus aucune requête vers un service de polices
 const FONTS = [['Archivo', 'archivo', [400, 500, 600, 700]], ['Archivo Narrow', 'archivo-narrow', [500, 600, 700]], ['B612 Mono', 'b612-mono', [400, 700]],
   ['Barlow', 'barlow', [500]], ['Barlow Condensed', 'barlow-condensed', [500, 600, 700]], ['Barlow Semi Condensed', 'barlow-semi-condensed', [600]], ['JetBrains Mono', 'jetbrains-mono', [400, 600]]];
-const fontCss = FONTS.flatMap(([family, pkg, weights]) => weights.map((w) => {
+const fontFaces = (fonts) => fonts.flatMap(([family, pkg, weights]) => weights.map((w) => {
   const b64 = fs.readFileSync(`node_modules/@fontsource/${pkg}/files/${pkg}-latin-${w}-normal.woff2`).toString('base64');
   return `@font-face{font-family:"${family}";font-style:normal;font-weight:${w};font-display:swap;src:url(data:font/woff2;base64,${b64}) format("woff2")}`;
 })).join('');
+const fontCss = fontFaces(FONTS);
 const raw = fs.readFileSync('src/index.template.html', 'utf8');
 for (const m of ['<!--BOOT-->', '<!--FONTS-->', '/*STYLES*/']) if (!raw.includes(m)) throw new Error(`src/index.template.html : marqueur ${m} introuvable`);
 // styles propres à une fonction (menu, PRISM, Videohub, réseau du car…) : src/styles/*.css, par ordre alphabétique
@@ -76,3 +77,15 @@ const zip = makeZip([
 ]);
 fs.writeFileSync('dist/car-regie-reseau-local.zip', zip);
 console.log('dist/car-regie-reseau-local.zip', (zip.length / 1024).toFixed(0) + ' KB');
+
+// le matching à la mire (v19.30) : une page à part (src/matching/), document complet, servie par tools/matching.mjs
+// (qui relaie aussi les commandes vers les caméras Panasonic) ; Archivo et B612 Mono seulement
+{
+  const tplM = fs.readFileSync('src/matching/index.template.html', 'utf8');
+  for (const m of ['<!--FONTS-->', '/*STYLES*/', '<!--APP-->']) if (!tplM.includes(m)) throw new Error(`src/matching/index.template.html : marqueur ${m} introuvable`);
+  const js = (await esbuild.build({ entryPoints: ['src/matching/app.js'], bundle: true, format: 'esm', write: false, minify, target: TARGET, define, legalComments: 'none', charset: 'utf8' })).outputFiles[0].text.replace(/<\/script/g, '<\\/script');
+  const fontsM = fontFaces(FONTS.filter(([f]) => f === 'Archivo' || f === 'B612 Mono'));
+  const page = tplM.replace('<!--FONTS-->', () => `<style>${fontsM}</style>`).replace('/*STYLES*/', () => fs.readFileSync('src/matching/matching.css', 'utf8')).replace('<!--APP-->', () => `<script type="module">\n${js}\n</script>`);
+  fs.writeFileSync('dist/matching.html', page);
+  console.log('dist/matching.html', (page.length / 1024).toFixed(0) + ' KB');
+}
