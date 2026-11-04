@@ -75,6 +75,36 @@ body.labo-on #modal.overlay { z-index: 46; }
 .lb-note { margin: 0; color: var(--muted); font-size: 13px; }
 .lb-note svg { width: 14px; height: 14px; vertical-align: -2px; }
 
+/* ---------- le plateau 3D (v19.30) : Optique et Photométrie en isométrie ---------- */
+.lb-atelier.lb-3d { grid-template-columns: minmax(0, 1fr); gap: 14px; }
+.lb-3d .lb-ctls { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 12px; align-items: start; }
+.lb-3d .lb-ctls > .lb-group { margin: 0; }
+.lb-plateau { position: relative; height: clamp(360px, calc(100vh - 290px), 760px); border-radius: var(--r-l); overflow: hidden; background: var(--panel); touch-action: none; user-select: none; -webkit-user-select: none; }
+.lb-gl { position: absolute; inset: 0; width: 100%; height: 100%; display: block; outline: none; }
+.lb-tags { position: absolute; inset: 0; pointer-events: none; }
+.lb-tag { position: absolute; left: 0; top: 0; translate: -50% -100%; display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; background: var(--mat); backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur); box-shadow: 0 1px 0 var(--line) inset, var(--shadow-s); color: var(--fg); font: 600 12.5px/1.25 var(--f-disp); white-space: nowrap; }
+.lb-tag[hidden] { display: none; }
+.lb-tag b { font-weight: 700; }
+.lb-tag small { font-size: 12px; font-weight: 500; color: var(--muted); font-variant-numeric: tabular-nums; }
+.lb-tag::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--muted); flex: none; }
+.lb-tag.accent::before { background: var(--accent); } .lb-tag.amber::before { background: var(--amber); } .lb-tag.ok::before { background: var(--pvw); } .lb-tag.violet::before { background: var(--violet); }
+.lb-tag.ok small { color: var(--pvw); }
+.lb-tag.dim { color: var(--muted); }
+.lb-outils { position: absolute; left: 12px; top: 12px; display: flex; gap: 6px; }
+.lb-outils .btn { background: var(--mat); backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur); box-shadow: var(--shadow-s); }
+.lb-outils .btn.on { color: var(--accent); }
+.lb-outils .lb-ico { padding-left: 8px; padding-right: 8px; }
+.lb-outils .lb-ico svg { width: 16px; height: 16px; }
+.lb-aide3d { position: absolute; left: 12px; bottom: 12px; margin: 0; padding: 5px 11px; border-radius: 999px; background: var(--mat); color: var(--muted); font-size: 12.5px; pointer-events: none; max-width: calc(100% - 24px); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lb-pip { position: absolute; right: 12px; bottom: 12px; width: min(38%, 440px); min-width: 200px; aspect-ratio: 16 / 9; border-radius: 14px; box-shadow: 0 0 0 1px var(--line2), var(--shadow-s); transition: width .25s var(--ease); }
+.lb-pip.grand { width: min(64%, 900px); }
+.lb-pip-t { position: absolute; left: 10px; top: 8px; font: 600 12px var(--f-disp); color: var(--fg); text-shadow: 0 1px 2px rgba(0,0,0,.7); }
+.lb-pip-cap { position: absolute; left: 10px; bottom: 7px; right: 10px; font: 500 12px var(--f-body); color: var(--fg); text-shadow: 0 1px 2px rgba(0,0,0,.7); font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lb-pip-btn { position: absolute; right: 8px; top: 7px; background: var(--mat); }
+.lb-plateau.lb-grand .lb-aide3d { display: none; }
+.lb-nogl { position: absolute; inset: 0; margin: 0; display: grid; place-items: center; padding: 24px; text-align: center; color: var(--muted); }
+.lb-3d .lb-note { margin-top: -4px; }
+
 /* ---------- DMX : le patch, les DIP, les faders, la ligne, le réseau ---------- */
 .lb-vues { align-self: flex-start; flex-wrap: wrap; }
 .lb-vue { display: flex; flex-direction: column; gap: 14px; }
@@ -164,6 +194,9 @@ body.labo-on #modal.overlay { z-index: 46; }
   .lb-atelier { grid-template-columns: minmax(0, 1fr); }
 }
 @media (max-width: 900px) {
+  .lb-plateau { height: clamp(300px, 62vw, 520px); }
+  .lb-aide3d { display: none; }
+  .lb-pip { width: 44%; min-width: 150px; }
   .lb-bar { flex-wrap: wrap; gap: 8px 12px; }
   .lb-tabs { order: 3; flex-basis: 100%; }
   .lb-body { grid-template-columns: minmax(0, 1fr); overflow: auto; }

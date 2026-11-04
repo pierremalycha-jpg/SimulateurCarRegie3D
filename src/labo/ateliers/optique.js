@@ -1,149 +1,141 @@
 // @ts-check
+import * as THREE from 'three';
 import { el } from '../../util.js';
-import { commandes, afficheur, jetons, toile, fr, teinte, arrondi } from '../kit.js';
+import { commandes, afficheur, jetons, fr } from '../kit.js';
 import { CAPTEURS, IRIS, FOCALE, distTxt } from '../calc/optique.js';
+import { plateau, etiquette, etiquetteNom } from '../plateau/scene.js';
+import { sol, cyclo, lampes, caisse, lumieresTravail, personnage, pancarte, camera3d, coin, dalle, trait, ligne } from '../plateau/pieces.js';
+import { mondeOptique, lectureOptique, borne, LIM, expositionImage, expositionPlateau, LUX_TRAVAIL, capVers } from '../plateau/calc.js';
 
 // ----------------------------------------------------------------------------------
-// L'atelier « Optique et profondeur de champ » : une caméra et trois sujets (A, B, C) à des
-// distances réglables, un mur au fond (à 30 m) et ses lampes. Deux dessins : l'image de la
-// caméra (chaque plan flouté par sa propre tache de flou, du plus loin au plus près) et la vue
-// de dessus (le champ, la zone nette, le point, l'hyperfocale). Les commandes : le capteur, la
-// focale, l'iris, le point, les distances des sujets. Tout vient de labo/calc/optique.js.
+// L'atelier « Optique et profondeur de champ » sur le plateau 3D (v19.30) : une caméra sur pied et trois
+// sujets (A, B, C) qu'on prend et qu'on pose où l'on veut sur un plateau vu en isométrie, un cyclo au fond
+// (à 30 m de la place de départ de la caméra) et ses lampes. Au sol, devant la caméra : le champ (le coin
+// bleu), la zone nette (la dalle verte, de la limite proche à la limite lointaine), le point (le trait bleu),
+// l'hyperfocale (le trait violet) ; chaque sujet dit sa distance, net ou flou, hors champ. Dans le coin,
+// l'image de la caméra, rendue pour de vrai : chaque plan flouté selon sa propre tache (plateau/dof.js), les
+// lampes du fond en disques. Les commandes : le capteur, la focale, l'iris, le point, les distances des
+// sujets (un sujet déplacé à la main les met à jour). Tout vient de labo/calc/optique.js ; l'état porte la
+// place de la caméra (cam) et l'écart latéral des sujets (lat), labo/etats.js.
 // ----------------------------------------------------------------------------------
 const FOND = 30;
-const W = 640, H = 360;
-/** les sujets : position latérale (m), couleur (jeton), lettre */
-const SUJETS = [{ k: 'A', x: -0.75, c: 'amber' }, { k: 'B', x: 0.05, c: 'accent' }, { k: 'C', x: 0.85, c: 'ok' }];
-
-/** floute un calque d'un disque de rayon r (px) et le pose sur g ; filtre du navigateur s'il existe, sinon copies décalées */
-function poserFlou(g, src, r) {
-  if (r < 0.4) { g.drawImage(src, 0, 0, W, H); return; }
-  if ('filter' in g) { g.save(); g.filter = `blur(${(r * 0.6).toFixed(2)}px)`; g.drawImage(src, 0, 0, W, H); g.restore(); return; }
-  g.save(); g.globalAlpha = 1 / 12;
-  for (let i = 0; i < 12; i++) { const a = i / 12 * Math.PI * 2; g.drawImage(src, Math.cos(a) * r * 0.7, Math.sin(a) * r * 0.7, W, H); }
-  g.restore();
-}
+/** les sujets : lettre, couleur (jeton) */
+const SUJETS = [{ k: 'A', c: 'amber' }, { k: 'B', c: 'accent' }, { k: 'C', c: 'ok' }];
+const num = (hex) => parseInt(String(hex).replace('#', ''), 16);
+const r2 = (v) => Math.round(v * 100) / 100;
 
 export function creer(/** @type {import('../kit.js').Ctx} */ ctx) {
   const T = jetons();
   const C = commandes(ctx);
-  const img = toile(W, H, 'L\'image de la caméra : les sujets A, B et C, nets ou flous selon la zone nette', 'lb-cam');
-  const dessus = toile(W, 210, 'Vue de dessus : la caméra, le champ, la zone nette, le point et les sujets', 'lb-top');
-  // calques de travail (un par plan), à la taille de l'image en pixels CSS × densité
-  const calque = () => { const c = document.createElement('canvas'); c.width = img.c.width; c.height = img.c.height; return c; };
-  const calques = { fond: calque(), A: calque(), B: calque(), C: calque() };
-
+  const P = plateau();
+  const stage = el('div', { class: 'lb-plateau' });
   const rH = afficheur('Hyperfocale'), rZone = afficheur('Zone nette'), rAngle = afficheur('Angle de champ'), rChamp = afficheur('Champ à B');
   const rTaches = el('ul', { class: 'lb-taches', 'aria-live': 'polite' });
-
   const ctrls = el('div', { class: 'lb-ctls' },
     C.touches('capteur', 'Capteur', Object.values(CAPTEURS).map((K) => [K.id, K.id === '2/3' ? '2/3"' : K.id === 's35' ? 'Super 35' : 'Plein format', K.nom])),
     C.curseur('f', 'Focale', { min: FOCALE.min, max: FOCALE.max, log: true, step: 0.5, fmt: (v) => fr(v, v < 20 ? 1 : 0), unite: 'mm' }),
     C.touches('N', 'Iris', IRIS.map((n) => [n, 'f/' + fr(n, n < 10 && !Number.isInteger(n) ? 1 : 0)])),
     C.curseur('s', 'Point', { min: 0.3, max: 60, log: true, step: 0.01, fmt: (v) => distTxt(v) }),
-    el('h4', { class: 'lb-sub' }, 'Les sujets'),
     ...SUJETS.map((S) => C.curseur('sujets.' + S.k, `Sujet ${S.k}`, { min: 0.5, max: 25, log: true, step: 0.05, fmt: (v) => distTxt(v) })));
 
-  // ---- l'image de la caméra ----
-  function peindreImage(m) {
-    const st = ctx.st, K = m.K, dpr = img.c.width / W;
-    const proj = (x, y, d) => ({ x: W / 2 + (x / d) * st.f / K.w * W, y: H / 2 - ((y - 1.5) / d) * st.f / K.h * H, k: st.f / K.h * H / d });
-    const flouPx = (d) => { const t = m.sujets[d] ? m.sujets[d].tache : null; return t; };
-    const tachePx = (tmm) => tmm / K.h * H / 2;
-    // le fond : un mur à 30 m, des briques et des lampes (elles deviennent des disques dans le flou)
-    const f = /** @type {CanvasRenderingContext2D} */ (calques.fond.getContext('2d'));
-    f.setTransform(dpr, 0, 0, dpr, 0, 0); f.clearRect(0, 0, W, H);
-    const sol = proj(0, 0, FOND).y;
-    const grd = f.createLinearGradient(0, 0, 0, H); grd.addColorStop(0, T.panel); grd.addColorStop(1, T.raise);
-    f.fillStyle = grd; f.fillRect(0, 0, W, H);
-    f.strokeStyle = T.line; f.lineWidth = 1;
-    const brique = proj(0, 0.3, FOND).k * 0.3;
-    if (brique > 3) for (let y = sol; y > -brique; y -= brique) { f.beginPath(); f.moveTo(0, y); f.lineTo(W, y); f.stroke(); }
-    f.fillStyle = T.fibre;
-    for (let i = -6; i <= 6; i++) { const p = proj(i * 1.6, 3.2 + (i % 2) * 0.6, FOND); f.beginPath(); f.arc(p.x, p.y, Math.max(1.2, p.k * 0.06), 0, Math.PI * 2); f.fill(); }
-    // le sol, devant le mur
-    f.fillStyle = T.bg; f.fillRect(0, sol, W, H - sol);
-    const g = img.g; g.save(); g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, img.c.width, img.c.height); g.restore();
-    poserFlou(g, calques.fond, tachePx(fondTache(st, m)));
-    // les sujets, du plus loin au plus près
-    const ordre = SUJETS.slice().sort((a, b) => st.sujets[b.k] - st.sujets[a.k]);
-    for (const S of ordre) {
-      const d = st.sujets[S.k], c = /** @type {CanvasRenderingContext2D} */ (calques[S.k].getContext('2d'));
-      c.setTransform(dpr, 0, 0, dpr, 0, 0); c.clearRect(0, 0, W, H);
-      const pied = proj(S.x, 0, d), tete = proj(S.x, 1.75, d), k = pied.k;
-      if (pied.x < -k * 2 || pied.x > W + k * 2) continue;
-      // une silhouette et une pancarte avec sa lettre
-      c.fillStyle = T.dim;
-      c.beginPath(); c.arc(tete.x, tete.y + k * 0.12, k * 0.11, 0, Math.PI * 2); c.fill();
-      arrondi(c, pied.x - k * 0.2, tete.y + k * 0.25, k * 0.4, k * 0.8, k * 0.08); c.fill();
-      c.fillRect(pied.x - k * 0.16, tete.y + k * 0.95, k * 0.12, k * 0.8); c.fillRect(pied.x + k * 0.04, tete.y + k * 0.95, k * 0.12, k * 0.8);
-      c.fillStyle = T[S.c]; arrondi(c, pied.x - k * 0.24, tete.y + k * 0.4, k * 0.48, k * 0.36, k * 0.04); c.fill();
-      c.fillStyle = T.bg; c.font = `700 ${Math.max(6, k * 0.3)}px ${T.font}`; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(S.k, pied.x, tete.y + k * 0.59);
-      // une mire de traits fins sur la pancarte : la netteté se juge là
-      c.strokeStyle = T.bg; c.lineWidth = Math.max(0.5, k * 0.008);
-      for (let i = 0; i < 6; i++) { const yy = tete.y + k * 0.44 + i * k * 0.012; c.beginPath(); c.moveTo(pied.x + k * 0.08, yy); c.lineTo(pied.x + k * 0.2, yy); c.stroke(); }
-      poserFlou(g, calques[S.k], tachePx(flouPx(S.k)));
-    }
-    // les repères du cadre (tiers), discrets
-    g.strokeStyle = teinte(T.fg, 0.12); g.lineWidth = 1;
-    for (const t of [1 / 3, 2 / 3]) { g.beginPath(); g.moveTo(W * t, 0); g.lineTo(W * t, H); g.stroke(); g.beginPath(); g.moveTo(0, H * t); g.lineTo(W, H * t); g.stroke(); }
-  }
-  const fondTache = (st, m) => { const s = st.s * 1000, d = FOND * 1000; return s <= st.f ? 1 : st.f * st.f * Math.abs(d - s) / (st.N * d * (s - st.f)); };
-
-  // ---- la vue de dessus ----
-  function peindreDessus(m) {
-    const st = ctx.st, g = dessus.g, w = dessus.w, h = dessus.h;
-    const max = Math.max(12, Math.min(FOND, Math.max(st.sujets.A, st.sujets.B, st.sujets.C, st.s) * 1.25));
-    const x0 = 40, sx = (w - x0 - 20) / max, cy = h / 2;
-    const X = (d) => x0 + Math.min(d, max) * sx;
-    g.clearRect(0, 0, w, h);
-    g.fillStyle = T.panel; g.fillRect(0, 0, w, h);
-    // l'échelle
-    g.strokeStyle = T.line; g.fillStyle = T.dim; g.font = `12px ${T.font}`; g.textAlign = 'center';
-    const pas = max > 20 ? 5 : max > 10 ? 2 : 1;
-    for (let d = 0; d <= max; d += pas) { g.beginPath(); g.moveTo(X(d), h - 18); g.lineTo(X(d), h - 12); g.stroke(); g.fillText(`${d} m`, X(d), h - 2); }
-    // la zone nette
-    const z0 = X(m.proche), z1 = X(m.loin);
-    g.fillStyle = teinte(T.ok, 0.16); g.fillRect(z0, 14, Math.max(2, z1 - z0), h - 40);
-    g.strokeStyle = T.ok; g.setLineDash([4, 4]); g.beginPath(); g.moveTo(z0, 14); g.lineTo(z0, h - 26); g.moveTo(z1, 14); g.lineTo(z1, h - 26); g.stroke(); g.setLineDash([]);
-    if (!isFinite(m.loin)) { g.fillStyle = T.ok; g.textAlign = 'right'; g.fillText('→ ∞', w - 4, 26); }
-    // le champ : deux demi-droites depuis la caméra
-    const a = m.angle * Math.PI / 360;
-    g.strokeStyle = T.muted; g.lineWidth = 1;
-    const rayon = max * sx, dy = Math.tan(a) * rayon;
-    g.beginPath(); g.moveTo(x0, cy); g.lineTo(x0 + rayon, cy - Math.min(dy, cy - 6)); g.moveTo(x0, cy); g.lineTo(x0 + rayon, cy + Math.min(dy, cy - 6)); g.stroke();
-    // le point
-    g.strokeStyle = T.accent; g.lineWidth = 2; g.beginPath(); g.moveTo(X(st.s), 10); g.lineTo(X(st.s), h - 26); g.stroke(); g.lineWidth = 1;
-    g.fillStyle = T.accent; g.textAlign = 'center'; g.fillText('point', X(st.s), 10);
-    // l'hyperfocale, si elle tient dans la vue
-    if (m.H < max) { g.strokeStyle = T.violet; g.setLineDash([2, 3]); g.beginPath(); g.moveTo(X(m.H), 20); g.lineTo(X(m.H), h - 26); g.stroke(); g.setLineDash([]); g.fillStyle = T.violet; g.fillText('H', X(m.H), h - 30); }
-    // la caméra
-    g.fillStyle = T.fg; arrondi(g, x0 - 30, cy - 9, 24, 18, 4); g.fill(); g.beginPath(); g.moveTo(x0 - 6, cy - 6); g.lineTo(x0, cy - 9); g.lineTo(x0, cy + 9); g.lineTo(x0 - 6, cy + 6); g.fill();
-    // les sujets
+  /** @type {any} */ let SC = null;
+  /** la scène, construite à la première demande */
+  function construire() {
+    const scene = new THREE.Scene(); scene.name = 'plateau optique'; scene.background = new THREE.Color(num(T.panel));
+    scene.add(sol(20, 38, 0, 14), cyclo(20, 9, FOND), lampes(13, 18, 3.6, FOND), caisse(-7.4, 3, 0.3), caisse(-7.5, 3.5, 0.1), caisse(7.3, 11, -0.2), lumieresTravail(0));
+    const rig = camera3d(); scene.add(rig);
+    const champ = coin(num(T.accent), 0.08), zone = dalle(num(T.ok), 0.22), point = trait(num(T.accent)), hyper = trait(num(T.violet), 0.04), axe = ligne(num(T.fg), 0.3);
+    const anc = { point: new THREE.Object3D(), hyper: new THREE.Object3D(), inf: new THREE.Object3D() };
+    rig.add(champ, zone, point, hyper, axe, anc.point, anc.hyper, anc.inf);
+    const verrou = (cles) => cles.some((k) => ctx.verrous.has(k) || [...ctx.verrous].some((v) => k.startsWith(v + '.')));
+    const sujets = /** @type {Record<string, THREE.Group>} */ ({});
+    const etq = /** @type {Record<string, any>} */ ({
+      cam: etiquetteNom(rig, 'Caméra', '', [0, 2.35, 0]),
+      point: etiquetteNom(anc.point, 'Point', 'accent'), hyper: etiquetteNom(anc.hyper, 'Hyperfocale', 'violet'), inf: etiquette(anc.inf, 'Net jusqu\'à l\'infini', 'ok'),
+    });
     for (const S of SUJETS) {
-      const d = st.sujets[S.k], ok = m.sujets[S.k].net, px = X(d), py = cy + (S.x / Math.max(d, 1)) * 60;
-      g.fillStyle = T[S.c]; g.beginPath(); g.arc(px, py, 8, 0, Math.PI * 2); g.fill();
-      g.fillStyle = T.bg; g.font = `700 11px ${T.font}`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(S.k, px, py + 0.5); g.textBaseline = 'alphabetic';
-      g.fillStyle = ok ? T.ok : T.muted; g.font = `12px ${T.font}`; g.fillText(ok ? 'net' : 'flou', px, py + 22);
+      const g = personnage(num(T[S.c])); g.name = 'sujet ' + S.k; g.add(pancarte(S.k, T[S.c], T.font));
+      g.userData.glisser = {
+        nom: 'Sujet ' + S.k, cles: ['sujets.' + S.k, 'lat.' + S.k],
+        bouger: (x, z) => { const l = lectureOptique(ctx.st.cam, x, z); ctx.changer({ ['sujets.' + S.k]: r2(borne(l.d, LIM.sujet)), ['lat.' + S.k]: r2(borne(l.lat, LIM.lat)) }); },
+        fin: () => { const x = ctx.m().sujets[S.k]; ctx.dire(`Sujet ${S.k} à ${distTxt(x.d)} : ${x.net ? 'net' : 'flou'}${x.dansChamp ? '' : ', hors champ'}.`); },
+      };
+      scene.add(g); sujets[S.k] = g;
+      etq[S.k] = etiquetteNom(g, S.k, S.c, [0, 2.1, 0]);
     }
+    // les sujets restent où ils sont pendant qu'on déplace la caméra : leur place est notée quand on la prend,
+    // leurs distances et leurs écarts se relisent depuis la nouvelle place (sans dérive d'arrondi)
+    let monde = /** @type {{ x: number, z: number }[]} */ ([]);
+    rig.userData.glisser = {
+      nom: 'La caméra', cles: ['cam.x', 'cam.z'],
+      debut: () => { const st = ctx.st; monde = SUJETS.map((S) => mondeOptique(st.cam, st.sujets[S.k], st.lat[S.k])); },
+      bouger: (x, z) => {
+        x = borne(x, LIM.camX); z = Math.max(-3, Math.min(z, Math.min(...monde.map((p) => p.z)) - LIM.sujet[0], FOND - 2));
+        const patch = /** @type {Record<string, number>} */ ({ 'cam.x': r2(x), 'cam.z': r2(z) });
+        SUJETS.forEach((S, i) => { const l = lectureOptique({ x, z }, monde[i].x, monde[i].z); patch['sujets.' + S.k] = r2(borne(l.d, LIM.sujet)); patch['lat.' + S.k] = r2(borne(l.lat, LIM.lat)); });
+        ctx.changer(patch);
+      },
+      fin: () => ctx.dire(`Caméra posée ; sujet B à ${distTxt(ctx.st.sujets.B)}.`),
+    };
+    // les pancartes se redessinent quand la police de l'interface est là
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { for (const S of SUJETS) { const g = sujets[S.k]; const old = g.children.find((c) => c.name.startsWith('pancarte')); if (old) { g.remove(old); /** @type {any} */ (old).material.map.dispose(); /** @type {any} */ (old).material.dispose(); } g.add(pancarte(S.k, T[S.c], T.font)); } P.demander(); }).catch(() => {});
+    const oeil = new THREE.Vector3(), dir = new THREE.Vector3(0, 0, 1);
+    const A = /** @type {import('../plateau/scene.js').Adaptateur} */ ({
+      scene, glissables: [rig, ...Object.values(sujets)], etiquettes: Object.values(etq), verrou, dire: ctx.dire,
+      cadre: () => { const st = ctx.st; const pts = [[st.cam.x - 1.2, 0, st.cam.z - 1.2], [st.cam.x + 1.2, 2.2, st.cam.z + 0.6]]; for (const S of SUJETS) { const p = mondeOptique(st.cam, st.sujets[S.k], st.lat[S.k]); pts.push([p.x - 0.8, 0, p.z - 0.8], [p.x + 0.8, 2.3, p.z + 0.8]); } return pts; },
+      image: () => {
+        const { st, m } = SC.last;
+        oeil.copy(rig.userData.oeil); rig.localToWorld(oeil); dir.set(0, 0, 1).applyQuaternion(rig.quaternion);
+        return { position: oeil, direction: dir, f: st.f, hCap: m.K.h, N: st.N, s: st.s, expo: expositionImage(LUX_TRAVAIL), wb: [1, 1, 1], zebra: false, dof: true, legende: `${fr(st.f, st.f < 20 ? 1 : 0)} mm · f/${fr(st.N, st.N < 10 && !Number.isInteger(st.N) ? 1 : 0)} · point à ${distTxt(st.s)}` };
+      },
+      exposition: () => expositionPlateau(0),
+    });
+    SC = { scene, rig, sujets, champ, zone, point, hyper, axe, anc, etq, A, last: null };
+  }
+
+  /** pose les objets et les repères depuis l'état, écrit les étiquettes */
+  function placer(m, st) {
+    const { rig, sujets, anc, etq } = SC;
+    rig.position.set(st.cam.x, 0, st.cam.z);
+    for (const S of SUJETS) {
+      const g = sujets[S.k], p = mondeOptique(st.cam, st.sujets[S.k], st.lat[S.k]); const x = m.sujets[S.k];
+      g.position.set(p.x, 0, p.z); g.rotation.y = capVers(p, st.cam);
+      etq[S.k].set(`${distTxt(x.d)} · ${x.net ? 'net' : 'flou'}${x.dansChamp ? '' : ' · hors champ'}`, S.c + (x.net ? ' ok' : ''));
+    }
+    const max = Math.max(12, Math.min(FOND - st.cam.z, Math.max(st.sujets.A, st.sujets.B, st.sujets.C, st.s) * 1.25));
+    const ta = Math.tan(m.angle * Math.PI / 360);
+    SC.champ.userData.maj(max * ta, max);
+    const z0 = Math.min(m.proche, max), z1 = Math.min(isFinite(m.loin) ? m.loin : max, max);
+    SC.zone.userData.maj(z0, z0 * ta, z1, z1 * ta);
+    SC.point.visible = st.s <= max; SC.point.userData.maj(st.s, st.s * ta + 0.3);
+    SC.hyper.visible = m.H < max; SC.hyper.userData.maj(m.H, m.H * ta + 0.3);
+    SC.axe.userData.maj(max);
+    anc.point.position.set(st.s * ta + 0.5, 0, st.s); anc.hyper.position.set(m.H * ta + 0.5, 0, m.H); anc.inf.position.set(0, 0, max + 0.6);
+    etq.cam.set(`${fr(st.f, st.f < 20 ? 1 : 0)} mm · f/${fr(st.N, st.N < 10 && !Number.isInteger(st.N) ? 1 : 0)}`);
+    etq.point.set(distTxt(st.s)); etq.point.on = st.s <= max;
+    etq.hyper.set(distTxt(m.H)); etq.hyper.on = m.H < max;
+    etq.inf.on = !isFinite(m.loin);
   }
 
   function rendre() {
-    const m = ctx.m();
+    const m = ctx.m(), st = ctx.st;
     C.refresh();
     rH.set(distTxt(m.H), `au point H, net de ${distTxt(m.H / 2)} à l'infini`);
     rZone.set(`${distTxt(m.proche)} → ${distTxt(m.loin)}`, isFinite(m.loin) ? `${fr((m.loin - m.proche) * 100, 0)} cm de profondeur` : 'jusqu\'à l\'infini');
     rAngle.set(`${fr(m.angle, 1)}°`, `cercle de confusion ${fr(m.K.c, 3)} mm`);
-    const cb = m.sujets.B.champ; rChamp.set(`${fr(cb.w, 2)} × ${fr(cb.h, 2)} m`, `à ${distTxt(ctx.st.sujets.B)}`);
-    rTaches.replaceChildren(...SUJETS.map((S) => { const x = m.sujets[S.k]; return el('li', { class: x.net ? 'ok' : '' }, el('b', {}, S.k), ` ${distTxt(x.d)} : tache ${fr(x.tache, 3)} mm, ${x.net ? 'net' : `flou (${fr(x.tache / m.K.c, 1)} fois le cercle)`}`); }));
-    peindreImage(m); peindreDessus(m);
+    const cb = m.sujets.B.champ; rChamp.set(`${fr(cb.w, 2)} × ${fr(cb.h, 2)} m`, `à ${distTxt(st.sujets.B)}`);
+    rTaches.replaceChildren(...SUJETS.map((S) => { const x = m.sujets[S.k]; return el('li', { class: x.net ? 'ok' : '' }, el('b', {}, S.k), ` ${distTxt(x.d)} : tache ${fr(x.tache, 3)} mm, ${x.net ? 'net' : `flou (${fr(x.tache / m.K.c, 1)} fois le cercle)`}${x.dansChamp ? '' : ' · hors champ'}`); }));
+    if (!P.ok) { P.monter(stage, null); return; }
+    if (!SC) construire();
+    SC.last = { m, st };
+    placer(m, st);
+    P.monter(stage, SC.A); P.demander();
   }
-  const root = el('div', { class: 'lb-atelier lb-optique' },
-    el('div', { class: 'lb-stage' },
-      el('figure', { class: 'lb-fig' }, img.c, el('figcaption', {}, 'L\'image de la caméra')),
-      el('figure', { class: 'lb-fig' }, dessus.c, el('figcaption', {}, 'Vue de dessus : le champ, la zone nette (en vert), le point (en bleu), l\'hyperfocale (H)')),
-      el('div', { class: 'lb-reads' }, rZone.box, rH.box, rAngle.box, rChamp.box),
-      rTaches),
+  const root = el('div', { class: 'lb-atelier lb-3d lb-optique' },
+    stage,
+    el('div', { class: 'lb-reads' }, rZone.box, rH.box, rAngle.box, rChamp.box),
+    rTaches,
+    el('p', { class: 'lb-note' }, 'Prenez un sujet ou la caméra et posez-les où vous voulez : au sol, le champ (bleu), la zone nette (vert), le point et l\'hyperfocale ; dans le coin, l\'image de la caméra.'),
     ctrls);
   return { root, rendre };
 }

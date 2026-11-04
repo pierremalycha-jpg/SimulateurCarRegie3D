@@ -19,6 +19,7 @@ import * as PHOTO from './ateliers/photometrie.js';
 import * as SENSITO from './ateliers/sensito.js';
 import * as DMX from './ateliers/dmx.js';
 import * as DOT2 from './ateliers/dot2.js';
+import { plateau } from './plateau/scene.js';
 
 // ----------------------------------------------------------------------------------
 // Le Labo (v19.28) : l'espace de Jouer qui remplace l'entrepôt. Un écran à part, par-dessus tout
@@ -292,4 +293,4 @@ export function closeLabo(retour = true) {
   if (retour && lesson) emit('cours', { lesson });
 }
 /** accès de débogage et de test */
-export const laboDebug = () => ({ R, LB, STATES, RUN, VERROUS, choisir, commencer, valider, solution, suivante, changer });
+export const laboDebug = () => ({ R, LB, STATES, RUN, VERROUS, choisir, commencer, valider, solution, suivante, changer, plateau });
