@@ -79,6 +79,13 @@ export const PARCOURS = {
     avance: ['lumiere-mesure', 'lumiere-lyres'],
     expert: ['lumiere-stade', 'lumiere-reseau'],
   },
+  // les caméras PTZ (v19.30) : la tourelle, le système et l'adresse ; la mise en service ; les flux et la QoS ; la recette
+  ptz: {
+    debutant: ['ptz-tourelle', 'ptz-systeme', 'ptz-adresse'],
+    intermediaire: ['ptz-easyip', 'ptz-poe', 'ptz-web', 'ptz-pupitre'],
+    avance: ['ptz-flux', 'ptz-qos'],
+    expert: ['ptz-recette'],
+  },
   hf: {
     debutant: ['hf-frequences', 'hf-antennes'],
     intermediaire: ['hf-bilan'],

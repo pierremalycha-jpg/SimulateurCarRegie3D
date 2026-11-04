@@ -16,3 +16,4 @@ import './reseau_ip.js';
 import './hf.js';
 import './exploitation.js';
 import './exploitation_tmo.js';
+import './ptz.js';
