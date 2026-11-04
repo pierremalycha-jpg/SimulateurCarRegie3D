@@ -47,6 +47,7 @@ import { anneau, COUCHE_REPERES, CIEL } from './pieces.js';
  * @property {{ az: number, azCible: number, cible: THREE.Vector3, demi: number, cadre: boolean }} [vue] la vue gardée (posée par le moteur)
  */
 const CLE_TAGS = 'carregie.lbtags';
+const CLE_AIDE = 'carregie.lbaide';
 const PLAN = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
 const num = (hex) => parseInt(String(hex).replace('#', ''), 16) || 0x3b9cff;
 
@@ -102,7 +103,7 @@ function creer() {
     tagsOn: true, grand: false, raf: 0, last: 0, drag: null, pan: null, pinch: null, ptrs: new Map(), hoverT: 0, hot: null, bouge: 0, lastTap: 0,
     ray: new THREE.Raycaster(), v2: new THREE.Vector2(), pt: new THREE.Vector3(), v3: new THREE.Vector3(), v3b: new THREE.Vector3(),
   };
-  try { if (localStorage.getItem(CLE_TAGS) === '0') E.tagsOn = false; } catch (e) { /* stockage indisponible */ }
+  try { if (localStorage.getItem(CLE_TAGS) === '0') E.tagsOn = false; if (localStorage.getItem(CLE_AIDE) === '1') aide.classList.add('vu'); } catch (e) { /* stockage indisponible */ }
   E.ray.layers.set(0);
   poserTags(E.tagsOn);
 
@@ -214,7 +215,11 @@ function creer() {
   });
   const fin = (e) => {
     const p = E.ptrs.get(e.pointerId); E.ptrs.delete(e.pointerId); if (E.ptrs.size < 2) E.pinch = null;
-    if (E.drag) { if (E.drag.g.fin) E.drag.g.fin(); E.drag = null; }
+    if (E.drag) {
+      if (E.drag.g.fin) E.drag.g.fin(); E.drag = null;
+      // l'aide a servi : elle se range
+      if (E.bouge >= 6 && !aide.classList.contains('vu')) { aide.classList.add('vu'); try { localStorage.setItem(CLE_AIDE, '1'); } catch (e2) { /* stockage indisponible */ } }
+    }
     E.pan = null; canvas.style.cursor = '';
     if (p && E.bouge < 6 && e.type === 'pointerup') { const now = performance.now(); if (now - E.lastTap < 320) { E.lastTap = 0; cadrerVue(); } else E.lastTap = now; }
     survol(e);

@@ -6,7 +6,7 @@ import assert from 'node:assert/strict';
 import * as C from '../../src/labo/plateau/calc.js';
 import { INITIAL, MESURES, poser, etatPour } from '../../src/labo/etats.js';
 import { tache, CAPTEURS } from '../../src/labo/calc/optique.js';
-import { eclairage, eclairementPour } from '../../src/labo/calc/photometrie.js';
+import { eclairage, eclairementPour, geometrieProjecteur, eclairageSujet, eclairageFond, H_CELLULE, FOND } from '../../src/labo/calc/photometrie.js';
 
 const proche = (a, b, tol, msg) => assert.ok(Math.abs(a - b) <= tol, `${msg || ''} : ${a} au lieu de ${b}`);
 const norme = (v) => Math.hypot(...v);
@@ -92,4 +92,22 @@ test('l\'état des ateliers : la caméra et les sujets ont leur place, les défi
   assert.equal(p.cam.z, -4); assert.equal(p.cam.x, 0); assert.equal(p.cam.N, 4);
   const sp = etatPour('photometrie', { cam: { iso: 400, N: 2.8 } });
   assert.equal(sp.cam.z, -4, 'la scène d\'un défi garde la place de la caméra'); assert.equal(sp.cam.iso, 400);
+});
+
+test('photométrie sur le plateau : hauteur et incidence réelle, le fond derrière le sujet, les mesures complètes', () => {
+  const p = { source: 'fresnel', angle: 30, niveau: 1, gel: 'aucune', d: 4, phi: -35, alpha: 0, on: true };
+  const g0 = geometrieProjecteur({ ...p, h: H_CELLULE });
+  proche(g0.d3, 4, 1e-9, 'à la hauteur de la cellule : la distance au sol'); proche(g0.incidence, 35, 1e-9, 'l\'incidence est l\'angle au sol');
+  proche(eclairageSujet({ ...p, h: H_CELLULE }).E, eclairage({ ...p, incidence: 35 }).E, 1e-9, 'le même éclairement qu\'avant');
+  const g1 = geometrieProjecteur({ ...p, phi: 0, h: H_CELLULE + 4 });
+  proche(g1.d3, Math.SQRT2 * 4, 1e-9, 'quatre mètres plus haut : √2 fois plus loin'); proche(g1.incidence, 45, 1e-9, 'à 45°');
+  assert.ok(eclairageSujet({ ...p, phi: 0, h: H_CELLULE + 4 }).E < eclairageSujet({ ...p, phi: 0, h: H_CELLULE }).E / 2, 'plus haut : moins de lumière (distance et cosinus)');
+  const f = eclairageFond({ ...p, phi: 0, h: H_CELLULE }), s = eclairageSujet({ ...p, phi: 0, h: H_CELLULE });
+  proche(f.distance, 4 + FOND, 1e-9, 'de face : le fond est à d + FOND'); proche(f.E / s.E, (4 / (4 + FOND)) ** 2, 1e-9, 'inverse du carré, dans l\'axe');
+  assert.ok(eclairageFond({ ...p, phi: 60, h: H_CELLULE }).E < f.E, 'de côté, le fond reçoit moins');
+  const st = etatPour('photometrie', {}); const m = MESURES.photometrie(st);
+  for (const k of ['flux', 'omega', 'champ', 'watts', 'courant', 'irc', 'fond', 'd3', 'incidence']) assert.ok(k in m.r1, `r1.${k}`);
+  proche(m.r1.watts, 1000, 1e-9); proche(m.r1.courant, 1000 / 230, 1e-9); proche(m.r1.champ, 30 * Math.sqrt(Math.log2(10)), 1e-9);
+  assert.ok(m.fond > 0 && m.ecartFond > 0 && m.L18 > 0, 'fond, écart au fond, luminance du gris');
+  proche(m.L18, 0.18 * m.E / Math.PI, 1e-9, 'L = ρE/π');
 });

@@ -170,10 +170,15 @@ Tout est en français (code commenté en français, interface, commits).
   `content/terms_lumiere_*.js`. Les manipulations calculent avec les modèles du Labo (`labo/calc/`) : leçons et ateliers disent
   les mêmes chiffres. Les ateliers du Labo y sont les exercices pratiques (`x-labo-photometrie`, `x-labo-dmx`, `x-labo-dot2`).
 - **Le plateau 3D du Labo** (`src/labo/plateau/`, v19.30, décidé le 4 novembre 2026) : les ateliers Optique et Photométrie se
-  jouent sur un plateau vu en isométrie et dessiné dans le style des **illustrations low-poly** : de grandes facettes nettes
-  (prismes effilés, icosaèdres, feuillages froissés), pas des cubes ; une lumière douce et claire (ciel pastel derrière le
-  canevas transparent, ombres douces, pas de paliers de cel shading sur le plateau : `matPlate()` les retire), des couleurs
-  franches sur des neutres clairs. Le moteur (`scene.js` : un seul rendu WebGL partagé, monté dans
+  jouent sur un plateau vu en isométrie et dessiné dans le style des **illustrations low-poly, en blanc et gris** (décidé le
+  4 novembre 2026) : de grandes facettes nettes (prismes effilés, icosaèdres, feuillages froissés), pas des cubes ; une lumière
+  douce et claire (ciel clair derrière le canevas transparent, ombres douces, pas de paliers de cel shading sur le plateau :
+  `matPlate()` les retire) ; un décor et des mannequins monochromes (palette `COUL` de `pieces.js`), la caméra et les
+  projecteurs en gris sombre ; **la seule couleur est celle de la lumière** (température des projecteurs) et l'accent bleu des
+  repères : pas de couleur de décor, pas de sujet coloré. La photométrie y est complète (quatre fiches : au luxmètre,
+  chaque projecteur, la couleur ; hauteur `p.h` et incidence réelle, flux, angle solide, angle de champ, puissance, courant,
+  IRC, luminance du gris 18 %, fond derrière le sujet) : une notion de photométrie qui manque s'ajoute au modèle pur
+  (`calc/photometrie.js`, `calc/lumiere.js`), aux mesures de `etats.js` et à sa fiche. Le moteur (`scene.js` : un seul rendu WebGL partagé, monté dans
   l'atelier affiché, rendu à la demande ; caméra orthographique, quarts de tour, zoom, recentrer ; glisser-poser au sol ;
   étiquettes en pilules) reçoit de l'atelier un **adaptateur** (scène, objets à prendre, étiquettes, cadre, image de la caméra,
   exposition). Les pièces (`pieces.js`) : Builder en mode `ao`, formes à facettes (`prisme`, `cone`, `boule`, `froisse`),

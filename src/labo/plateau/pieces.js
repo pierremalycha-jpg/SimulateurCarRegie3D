@@ -6,10 +6,11 @@ import { S } from '../../state.js';
 import { RADIANCE_TRAVAIL } from './calc.js';
 
 // ----------------------------------------------------------------------------------
-// Les pièces du plateau 3D du Labo (v19.30), dans le style low-poly des illustrations : de grandes facettes
-// nettes et peu nombreuses, une lumière douce et claire (ciel pastel, ombres douces, pas de paliers de cel
-// shading ici : chaque facette prend la teinte que lui donne son orientation), des couleurs franches sur des
-// neutres clairs. Les sujets sont taillés à larges pans propres (tronc et jambes en prismes à quatre faces
+// Les pièces du plateau 3D du Labo (v19.30), dans le style low-poly des illustrations, en blanc et gris : de
+// grandes facettes nettes et peu nombreuses, une lumière douce et claire (ciel clair, ombres douces, pas de
+// paliers de cel shading ici : chaque facette prend la teinte que lui donne son orientation), un décor et des
+// sujets monochromes comme une maquette (la caméra et les projecteurs en gris sombre) ; la seule couleur qui
+// reste est celle de la lumière des projecteurs (leur température) et l'accent bleu des repères. Les sujets sont taillés à larges pans propres (tronc et jambes en prismes à quatre faces
 // effilés, tête en icosaèdre au menton resserré, mains en plaquettes), sans bruit ; les feuillages sont de gros
 // icosaèdres froissés (chaque sommet décalé d'un bruit déterministe : des cristaux irréguliers) ; le sol est une
 // dalle à grandes facettes, chacune de sa teinte, à peine bosselée. Tout est fusionné par un Builder en mode ao
@@ -24,12 +25,12 @@ import { RADIANCE_TRAVAIL } from './calc.js';
 /** la couche des repères (vus de haut seulement) */
 export const COUCHE_REPERES = 1;
 export const COUL = {
-  sol: 0xc9cfd6, bord: 0x8a949f, cyclo: 0xf3f5f7, pied: 0x5b6470, corps: 0x2d333c, metal: 0x9aa3ad, peau: 0xf0c3a0, cheveux: 0x5a3a2a,
-  col: 0x2b3340, pantalon: 0x8c7b5a, chaussure: 0x3a2c22, fresnel: 0x3b4350, hmi: 0x55606e, led: 0x343a44, lentille: 0x1b1f26, caisse: 0xa06a3c, cellule: 0xf6f7f2,
-  pot: 0xd48a4e, terre: 0x4a3b2e, feuille: 0x6fd14a, feuille2: 0x47b23a, tige: 0x8a5a33, ciel: 0xd4e3eb,
+  sol: 0xe8ebee, bord: 0xb3bac2, cyclo: 0xf7f8fa, pied: 0x3a3f47, corps: 0x2a2e35, metal: 0x8b939c, peau: 0xf1f3f5, cheveux: 0xd2d7dd,
+  col: 0xc7cdd4, pantalon: 0xdce0e5, chaussure: 0xbcc3ca, fresnel: 0x3a3f47, hmi: 0x4a5059, led: 0x343941, lentille: 0x1f232a, caisse: 0xe2e5e9, cellule: 0xffffff,
+  pot: 0xd8dce1, terre: 0xc2c8ce, feuille: 0xeef0f3, feuille2: 0xe1e4e8, tige: 0xcdd2d8, ciel: 0xeef1f4, sujet: 0xe4e7eb, repere: 0x6b7480,
 };
-/** le ciel du plateau : un dégradé pastel derrière la scène (le canevas est transparent), et la couleur du fond de l'image de la caméra */
-export const CIEL = 'linear-gradient(180deg, #e3ecf2 0%, #c9d8e1 100%)';
+/** le ciel du plateau : un dégradé clair derrière la scène (le canevas est transparent), et la couleur du fond de l'image de la caméra */
+export const CIEL = 'linear-gradient(180deg, #f4f6f8 0%, #e1e5e9 100%)';
 
 /**
  * une matière plate : celle de matiere(), sans son relief (le low-poly se lit à plat), lue en flatShading, et sans les
@@ -213,7 +214,7 @@ export function personnage(couleur) {
 export function pancarte(lettre, couleur, police) {
   const c = document.createElement('canvas'); c.width = 256; c.height = 184;
   const g = /** @type {CanvasRenderingContext2D} */ (c.getContext('2d'));
-  g.fillStyle = couleur; g.beginPath(); if (typeof g.roundRect === 'function') g.roundRect(0, 0, 256, 184, 22); else g.rect(0, 0, 256, 184); g.fill();
+  g.fillStyle = couleur || '#f7f8fa'; g.beginPath(); if (typeof g.roundRect === 'function') g.roundRect(0, 0, 256, 184, 22); else g.rect(0, 0, 256, 184); g.fill();
   g.fillStyle = '#0c0e13'; g.font = `700 150px ${police}`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(lettre, 96, 98);
   g.fillStyle = '#0c0e13';
   for (let i = 0; i < 9; i++) g.fillRect(182, 36 + i * 8, 50, 2);
@@ -254,12 +255,14 @@ export function camera3d() {
 export function projecteur(type) {
   const g = new THREE.Group(); g.name = 'projecteur ' + type;
   const pied = piece('pied de projecteur', (b) => {
-    prisme(b, 0.02, 0.028, 1.75, 0, 0.875, 0, COUL.pied, 6);
+    prisme(b, 0.03, 0.034, 0.9, 0, 0.45, 0, COUL.pied, 6);
     for (let i = 0; i < 3; i++) { const a = Math.PI / 2 + i * 2 * Math.PI / 3; const x = Math.cos(a) * 0.48, z = Math.sin(a) * 0.48; b.rod([0, 0.5, 0], [x, 0, z], 0.014, COUL.pied, 5); b.rod([0, 0.08, 0], [x * 0.62, 0.3, z * 0.62], 0.009, COUL.metal, 4); cone(b, 0.035, 0.05, x, 0.025, z, COUL.chaussure, 5, { menu: true }); }
-    prisme(b, 0.04, 0.04, 0.06, 0, 1.78, 0, COUL.metal, 6);
     if (type === 'hmi') boite(b, 0.22, 0.14, 0.32, 0.16, 0.75, 0.02, COUL.hmi);
   });
-  const tete = new THREE.Object3D(); tete.name = 'tête'; tete.position.set(0, 1.85, 0); tete.rotation.order = 'YXZ';
+  // la colonne coulissante (de 0 à 1 m, étirée jusqu'à la tête) et son bouton
+  const colonne = piece('colonne', (b) => { prisme(b, 0.02, 0.024, 1, 0, 0.5, 0, COUL.metal, 6); }, { ao: 0 });
+  const bouton = piece('bouton', (b) => { prisme(b, 0.04, 0.04, 0.06, 0, 0, 0, COUL.metal, 6); }, { ao: 0 });
+  const tete = new THREE.Object3D(); tete.name = 'tête'; tete.position.set(0, 1.45, 0); tete.rotation.order = 'YXZ';
   const coque = type === 'led' ? COUL.led : type === 'hmi' ? COUL.hmi : COUL.fresnel;
   const corps = piece('tête de projecteur', (b) => {
     for (const s of [-1, 1]) boite(b, 0.03, 0.44, 0.04, s * (type === 'led' ? 0.34 : 0.2), -0.02, 0, COUL.metal);
@@ -283,8 +286,10 @@ export function projecteur(type) {
   const cone3 = new THREE.Mesh(geoCone, new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.12, depthWrite: false, side: THREE.DoubleSide, blending: THREE.AdditiveBlending, toneMapped: false }));
   cone3.name = 'cône'; cone3.layers.set(COUCHE_REPERES); cone3.renderOrder = 3; cone3.position.set(0, 0, 0.26); cone3.userData.passe = true;
   tete.add(corps, lentille, spot, cible, cone3);
-  g.add(pied, tete);
+  g.add(pied, colonne, bouton, tete);
   g.userData.tete = tete; g.userData.corps = corps; g.userData.pied = pied; g.userData.spot = spot; g.userData.cone = cone3; g.userData.lentille = lentille;
+  /** pose la tête à h mètres : la colonne s'étire jusqu'à elle */
+  g.userData.hauteur = (h) => { tete.position.y = h; colonne.scale.y = Math.max(0.05, h - 0.1); bouton.position.y = h - 0.1; };
   /**
    * règle le projecteur : allumé, couleur [r, g, b] (0..1), intensité (cd), demi-angle du cône (rad), pénombre, longueur du cône (m),
    * part de puissance (pour l'éclat de la lentille, 0..1)

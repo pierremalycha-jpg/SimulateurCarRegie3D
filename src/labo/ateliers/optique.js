@@ -19,8 +19,8 @@ import { mondeOptique, lectureOptique, borne, LIM, expositionImage, expositionPl
 // place de la caméra (cam) et l'écart latéral des sujets (lat), labo/etats.js.
 // ----------------------------------------------------------------------------------
 const FOND = 30;
-/** les sujets : lettre, couleur (jeton) */
-const SUJETS = [{ k: 'A', c: 'amber' }, { k: 'B', c: 'accent' }, { k: 'C', c: 'ok' }];
+/** les sujets : leur lettre (ils sont blancs, comme le décor : la pancarte les nomme) */
+const SUJETS = [{ k: 'A' }, { k: 'B' }, { k: 'C' }];
 const num = (hex) => parseInt(String(hex).replace('#', ''), 16);
 const r2 = (v) => Math.round(v * 100) / 100;
 
@@ -44,24 +44,24 @@ export function creer(/** @type {import('../kit.js').Ctx} */ ctx) {
     const scene = new THREE.Scene(); scene.name = 'plateau optique'; scene.background = null;
     scene.add(sol(20, 38, 0, 14), cyclo(20, 9, FOND), lampes(13, 18, 3.6, FOND), caisse(-7.4, 3, 0.3), caisse(-7.3, 3.9, 0.1), plante(8.6, 15, 2), plante(-8.4, 26, 5), caisse(7.3, 12, -0.2), lumieresTravail(0));
     const rig = camera3d(); scene.add(rig);
-    const champ = coin(num(T.accent), 0.08), zone = dalle(num(T.ok), 0.22), point = trait(num(T.accent)), hyper = trait(num(T.violet), 0.04), axe = ligne(num(T.fg), 0.3);
+    const champ = coin(COUL.repere, 0.035), zone = dalle(num(T.accent), 0.2), point = trait(num(T.accent)), hyper = trait(COUL.repere, 0.04), axe = ligne(COUL.repere, 0.5);
     const anc = { point: new THREE.Object3D(), hyper: new THREE.Object3D(), inf: new THREE.Object3D() };
     rig.add(champ, zone, point, hyper, axe, anc.point, anc.hyper, anc.inf);
     const verrou = (cles) => cles.some((k) => ctx.verrous.has(k) || [...ctx.verrous].some((v) => k.startsWith(v + '.')));
     const sujets = /** @type {Record<string, THREE.Group>} */ ({});
     const etq = /** @type {Record<string, any>} */ ({
       cam: etiquetteNom(rig, 'Caméra', '', [0, 2.35, 0]),
-      point: etiquetteNom(anc.point, 'Point', 'accent'), hyper: etiquetteNom(anc.hyper, 'Hyperfocale', 'violet'), inf: etiquette(anc.inf, 'Net jusqu\'à l\'infini', 'ok'),
+      point: etiquetteNom(anc.point, 'Point', 'accent'), hyper: etiquetteNom(anc.hyper, 'Hyperfocale'), inf: etiquette(anc.inf, 'Net jusqu\'à l\'infini', 'ok'),
     });
     for (const S of SUJETS) {
-      const g = personnage(num(T[S.c])); g.name = 'sujet ' + S.k; g.add(pancarte(S.k, T[S.c], T.font));
+      const g = personnage(COUL.sujet); g.name = 'sujet ' + S.k; g.add(pancarte(S.k, '', T.font));
       g.userData.glisser = {
         nom: 'Sujet ' + S.k, cles: ['sujets.' + S.k, 'lat.' + S.k],
         bouger: (x, z) => { const l = lectureOptique(ctx.st.cam, x, z); ctx.changer({ ['sujets.' + S.k]: r2(borne(l.d, LIM.sujet)), ['lat.' + S.k]: r2(borne(l.lat, LIM.lat)) }); },
         fin: () => { const x = ctx.m().sujets[S.k]; ctx.dire(`Sujet ${S.k} à ${distTxt(x.d)} : ${x.net ? 'net' : 'flou'}${x.dansChamp ? '' : ', hors champ'}.`); },
       };
       scene.add(g); sujets[S.k] = g;
-      etq[S.k] = etiquetteNom(g, S.k, S.c, [0, 2.1, 0]);
+      etq[S.k] = etiquetteNom(g, S.k, '', [0, 2.1, 0]);
     }
     // les sujets restent où ils sont pendant qu'on déplace la caméra : leur place est notée quand on la prend,
     // leurs distances et leurs écarts se relisent depuis la nouvelle place (sans dérive d'arrondi)
@@ -78,7 +78,7 @@ export function creer(/** @type {import('../kit.js').Ctx} */ ctx) {
       fin: () => ctx.dire(`Caméra posée ; sujet B à ${distTxt(ctx.st.sujets.B)}.`),
     };
     // les pancartes se redessinent quand la police de l'interface est là
-    if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { for (const S of SUJETS) { const g = sujets[S.k]; const old = g.children.find((c) => c.name.startsWith('pancarte')); if (old) { g.remove(old); /** @type {any} */ (old).material.map.dispose(); /** @type {any} */ (old).material.dispose(); } g.add(pancarte(S.k, T[S.c], T.font)); } P.demander(); }).catch(() => {});
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { for (const S of SUJETS) { const g = sujets[S.k]; const old = g.children.find((c) => c.name.startsWith('pancarte')); if (old) { g.remove(old); /** @type {any} */ (old).material.map.dispose(); /** @type {any} */ (old).material.dispose(); } g.add(pancarte(S.k, '', T.font)); } P.demander(); }).catch(() => {});
     const oeil = new THREE.Vector3(), dir = new THREE.Vector3(0, 0, 1);
     const A = /** @type {import('../plateau/scene.js').Adaptateur} */ ({
       scene, glissables: [rig, ...Object.values(sujets)], etiquettes: Object.values(etq), verrou, dire: ctx.dire,
@@ -100,7 +100,7 @@ export function creer(/** @type {import('../kit.js').Ctx} */ ctx) {
     for (const S of SUJETS) {
       const g = sujets[S.k], p = mondeOptique(st.cam, st.sujets[S.k], st.lat[S.k]); const x = m.sujets[S.k];
       g.position.set(p.x, 0, p.z); g.rotation.y = capVers(p, st.cam);
-      etq[S.k].set(`${distTxt(x.d)} · ${x.net ? 'net' : 'flou'}${x.dansChamp ? '' : ' · hors champ'}`, S.c + (x.net ? ' ok' : ''));
+      etq[S.k].set(`${distTxt(x.d)} · ${x.net ? 'net' : 'flou'}${x.dansChamp ? '' : ' · hors champ'}`, x.net ? 'ok' : '');
     }
     const max = Math.max(12, Math.min(FOND - st.cam.z, Math.max(st.sujets.A, st.sujets.B, st.sujets.C, st.s) * 1.25));
     const ta = Math.tan(m.angle * Math.PI / 360);
@@ -135,7 +135,7 @@ export function creer(/** @type {import('../kit.js').Ctx} */ ctx) {
     stage,
     el('div', { class: 'lb-reads' }, rZone.box, rH.box, rAngle.box, rChamp.box),
     rTaches,
-    el('p', { class: 'lb-note' }, 'Prenez un sujet ou la caméra et posez-les où vous voulez : au sol, le champ (bleu), la zone nette (vert), le point et l\'hyperfocale ; dans le coin, l\'image de la caméra.'),
+    el('p', { class: 'lb-note' }, 'Prenez un sujet ou la caméra et posez-les où vous voulez : au sol, le champ, la zone nette (en bleu), le point et l\'hyperfocale ; dans le coin, l\'image de la caméra.'),
     ctrls);
   return { root, rendre };
 }

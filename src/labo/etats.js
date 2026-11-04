@@ -1,6 +1,7 @@
 // @ts-check
 import { CAPTEURS, hyperfocale, limites, tache, net, champ, angleH } from './calc/optique.js';
-import { eclairage, melange, dominante, eclairementPour, diaphs as ecartDiaphs, contraste } from './calc/photometrie.js';
+import { SOURCES, eclairageSujet, eclairageFond, melange, dominante, eclairementPour, diaphs as ecartDiaphs, contraste, luminance } from './calc/photometrie.js';
+import { familleById, flux, courant, angleSolide, angleChampDe } from './calc/lumiere.js';
 import { GRIS, signal, plage } from './calc/sensito.js';
 import { planUnivers, diagLigne, liaison } from './calc/dmx.js';
 
@@ -18,8 +19,9 @@ export const INITIAL = {
   // l'axe (sujets, ce que l'optique utilise) et à son écart latéral (lat, positif à droite de l'image)
   optique: () => ({ capteur: 's35', f: 35, N: 4, s: 4, sujets: { A: 2, B: 4, C: 9 }, lat: { A: -0.6, B: 0.05, C: 0.85 }, cam: { x: 0, z: 0 } }),
   photometrie: () => ({
-    p1: { on: true, source: 'fresnel', angle: 30, niveau: 1, Tled: 5600, gel: 'aucune', d: 4, phi: -35, alpha: 0 },
-    p2: { on: false, source: 'led', angle: 50, niveau: 0.6, Tled: 3200, gel: 'aucune', d: 2.5, phi: 45, alpha: 0 },
+    // h : la hauteur de la tête (m) ; à la hauteur de la cellule (1,45 m), l'incidence est celle de l'angle au sol
+    p1: { on: true, source: 'fresnel', angle: 30, niveau: 1, Tled: 5600, gel: 'aucune', d: 4, phi: -35, alpha: 0, h: 1.45 },
+    p2: { on: false, source: 'led', angle: 50, niveau: 0.6, Tled: 3200, gel: 'aucune', d: 2.5, phi: 45, alpha: 0, h: 1.45 },
     // la caméra : ses réglages, et sa place sur le plateau 3D (le sujet est au centre, elle le regarde)
     cam: { iso: 800, t: 1 / 50, N: 4, Tcam: 3200, x: 0, z: -4 },
   }),
@@ -41,6 +43,7 @@ export const INITIAL = {
   }),
 };
 
+const geometrieVide = { d3: 0, elev: 0, incidence: 0 };
 /** les mesures d'un atelier pour cet état */
 export const MESURES = {
   optique: (st) => {
@@ -51,12 +54,20 @@ export const MESURES = {
     return { K, H: hyperfocale(st.f, st.N, K.c), proche, loin, angle: angleH(K, st.f), sujets };
   },
   photometrie: (st) => {
-    const un = (p) => (p.on ? eclairage({ source: p.source, angle: p.angle, niveau: p.niveau, Tled: p.Tled, gel: p.gel, d: p.d, alpha: p.alpha, incidence: p.phi }) : { E: 0, T: 0, I: 0, I0: 0, theta: 0, diametre: 0 });
+    // chaque projecteur : ce qu'il donne à la cellule (distance réelle, incidence au sol et en hauteur), sa fiche (flux,
+    // angle solide, angle de champ, puissance, courant, IRC) et ce qu'il laisse sur le fond derrière le sujet
+    const un = (p) => {
+      const S = SOURCES[p.source] || SOURCES.fresnel, F = familleById(S.type);
+      const r = p.on ? eclairageSujet(p) : { E: 0, T: 0, I: 0, I0: 0, theta: 0, diametre: 0, ...geometrieVide };
+      const theta = r.theta || S.angles[0];
+      return { ...r, flux: flux(S.watts, S.type), omega: angleSolide(theta), champ: angleChampDe(theta), watts: S.watts, courant: courant(S.watts), irc: F.irc, fond: p.on ? eclairageFond(p).E : 0 };
+    };
     const r1 = un(st.p1), r2 = un(st.p2);
     const mix = melange([r1, r2]);
     const Eref = eclairementPour(st.cam.N, st.cam.iso, st.cam.t);
     const c = contraste(r1.E, r2.E);
-    return { r1, r2, e1: r1.E, e2: r2.E, E: mix.E, T: mix.T, Eref, expo: mix.E > 0 ? ecartDiaphs(mix.E, Eref) : -Infinity, dom: mix.T > 0 ? dominante(mix.T, st.cam.Tcam) : 0, ratio: c.rapport, ratioDiaphs: c.diaphs };
+    const fond = r1.fond + r2.fond;
+    return { r1, r2, e1: r1.E, e2: r2.E, E: mix.E, T: mix.T, Eref, expo: mix.E > 0 ? ecartDiaphs(mix.E, Eref) : -Infinity, dom: mix.T > 0 ? dominante(mix.T, st.cam.Tcam) : 0, ratio: c.rapport, ratioDiaphs: c.diaphs, fond, ecartFond: fond > 0 && mix.E > 0 ? Math.log2(mix.E / fond) : Infinity, L18: luminance(mix.E, 0.18) };
   },
   sensito: (st) => {
     const g = signal(st.courbe, GRIS, st.e, st.g), b = signal(st.courbe, 0.9, st.e, st.g), c = signal(st.courbe, GRIS * Math.pow(2, st.ciel), st.e, st.g);

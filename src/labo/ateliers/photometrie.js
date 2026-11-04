@@ -1,8 +1,8 @@
 // @ts-check
 import * as THREE from 'three';
 import { el, kelvinRGBNorm } from '../../util.js';
-import { commandes, afficheur, jetons, fr } from '../kit.js';
-import { SOURCES, GELS } from '../calc/photometrie.js';
+import { commandes, fr } from '../kit.js';
+import { SOURCES, GELS, H_CELLULE, FOND } from '../calc/photometrie.js';
 import { CAPTEURS } from '../calc/optique.js';
 import { plateau, etiquetteNom } from '../plateau/scene.js';
 import { sol, cyclo, caisse, plante, lumieresTravail, personnage, luxmetre, camera3d, projecteur, ligne, COUL } from '../plateau/pieces.js';
@@ -12,26 +12,34 @@ import { mondePhoto, lecturePhoto, borne, LIM, expositionImage, expositionPlatea
 // L'atelier « Photométrie » sur le plateau 3D (v19.30) : un sujet au centre du plateau, la cellule d'un
 // luxmètre sur sa poitrine (tournée vers la caméra), une caméra sur pied et deux projecteurs sur pied (la
 // principale et le débouchage) qu'on prend et qu'on pose où l'on veut : distance et angle autour du sujet
-// se relisent de leur place. Chaque projecteur est un vrai projecteur du rendu (candelas, angle de
-// faisceau, couleur de sa température) : sa flaque au sol et sur le sujet suit le modèle, son cône de
-// lumière la dessine. Dans le coin, l'image de la caméra, exposée d'après le diaphragme, la sensibilité et le
-// temps de pose (π ÷ Eref), balancée à sa température, avec le zébra au-dessus de 95 % et la profondeur de
-// champ d'un 35 mm Super 35 au diaphragme réglé. Les afficheurs : éclairement de chacun, total, température
-// du mélange, écart avec la balance, exposition, rapport de contraste. Tout vient de labo/calc/photometrie.js.
+// se relisent de leur place ; leur hauteur se règle (la colonne s'étire), et l'incidence réelle en tient
+// compte. Chaque projecteur est un vrai projecteur du rendu (candelas, angle de faisceau, couleur de sa
+// température) : sa flaque au sol et sur le sujet suit le modèle, son cône de lumière la dessine. Dans le
+// coin, l'image de la caméra, exposée d'après le diaphragme, la sensibilité et le temps de pose (π ÷ Eref),
+// balancée à sa température, avec le zébra et la profondeur de champ d'un 35 mm Super 35 au diaphragme réglé.
+// Quatre fiches disent toute la photométrie du plateau : au sujet (éclairement, exposition, luminance du
+// gris 18 %, fond derrière le sujet, rapport de contraste), chaque projecteur (éclairement, intensité, angles
+// de faisceau et de champ, angle solide, distance réelle et incidence, flaque, flux, puissance, courant, IRC,
+// température) et la couleur du mélange (kelvins, mireds, dominante). Tout vient de labo/calc/photometrie.js
+// et labo/calc/lumiere.js.
 // ----------------------------------------------------------------------------------
 const lx = (v) => `${fr(Math.round(v), 0)} lx`;
-const num = (hex) => parseInt(String(hex).replace('#', ''), 16);
 const r2 = (v) => Math.round(v * 100) / 100;
 const SUJET = { x: 0, z: 0 };
-const FACE = new THREE.Vector3(0, 1.45, 0);
+const FACE = new THREE.Vector3(0, H_CELLULE, 0);
 const NOMS = { p1: 'Principale', p2: 'Débouchage' };
 
 export function creer(/** @type {import('../kit.js').Ctx} */ ctx) {
-  const T = jetons();
   const C = commandes(ctx);
   const P = plateau();
   const stage = el('div', { class: 'lb-plateau' });
-  const r1 = afficheur('Principale'), r2a = afficheur('Débouchage'), rE = afficheur('Au luxmètre'), rT = afficheur('Couleur de la lumière'), rX = afficheur('Exposition'), rR = afficheur('Contraste');
+  /** une fiche de mesure : un titre, une valeur, des lignes d'explication (chacune « nom : valeur ») */
+  const fiche = (titre) => {
+    const v = el('b', { class: 'lb-read-v' }); const l = el('div', { class: 'lb-read-l' });
+    const box = el('div', { class: 'lb-read' }, el('span', { class: 'lb-read-t' }, titre), v, l);
+    return { box, set: (/** @type {string} */ val, /** @type {Array<[string, string] | string>} */ lignes = [], /** @type {'' | 'ok' | 'warn' | 'bad'} */ etat = '') => { v.textContent = val; l.replaceChildren(...lignes.map((x) => (Array.isArray(x) ? el('small', {}, el('b', {}, x[0] + ' : '), x[1]) : el('small', {}, x)))); box.dataset.etat = etat; } };
+  };
+  const rE = fiche('Au luxmètre'), r1 = fiche('Principale'), r2a = fiche('Débouchage'), rT = fiche('Couleur de la lumière');
 
   const proj = (p, nom) => el('fieldset', { class: 'lb-group' }, el('legend', {}, nom),
     p === 'p2' ? C.caseA('p2.on', 'Allumé') : null,
@@ -41,6 +49,7 @@ export function creer(/** @type {import('../kit.js').Ctx} */ ctx) {
     C.curseur(p + '.Tled', 'Couleur (LED)', { min: 2800, max: 6500, step: 50, fmt: (v) => fr(v, 0) + ' K' }),
     C.liste(p + '.gel', 'Gélatine', GELS.map((g) => [g.id, g.nom])),
     C.curseur(p + '.d', 'Distance', { min: 1, max: 15, step: 0.05, log: true, fmt: (v) => fr(v, 2) + ' m' }),
+    C.curseur(p + '.h', 'Hauteur', { min: 1, max: 3.5, step: 0.05, fmt: (v) => (Math.abs(v - H_CELLULE) < 0.03 ? 'à hauteur de la cellule' : `${fr(v, 2)} m${v > H_CELLULE ? ', en plongée' : ''}`) }),
     C.curseur(p + '.phi', 'Position', { min: -80, max: 80, step: 1, fmt: (v) => (v === 0 ? 'de face' : `${fr(Math.abs(v), 0)}° ${v < 0 ? 'à gauche' : 'à droite'}`) }),
     C.curseur(p + '.alpha', 'Visée', { min: 0, max: 40, step: 1, fmt: (v) => (v === 0 ? 'sur le sujet' : `${fr(v, 0)}° à côté`) }));
   const ctrls = el('div', { class: 'lb-ctls' },
@@ -49,7 +58,7 @@ export function creer(/** @type {import('../kit.js').Ctx} */ ctx) {
       C.touches('cam.iso', 'Sensibilité', [[400, '400'], [800, '800'], [1600, '1600']].map(([v, t]) => [v, `${t} ISO`])),
       C.touches('cam.N', 'Iris', [1.4, 2, 2.8, 4, 5.6, 8, 11].map((n) => [n, 'f/' + fr(n, Number.isInteger(n) ? 0 : 1)])),
       C.curseur('cam.Tcam', 'Balance des blancs', { min: 2800, max: 6500, step: 50, fmt: (v) => fr(v, 0) + ' K' }),
-      el('p', { class: 'lb-note' }, 'Temps de pose : 1/50 s. Cellule plate, C = 250. Image : 35 mm sur Super 35.')));
+      el('p', { class: 'lb-note' }, `Temps de pose : 1/50 s. Cellule plate à ${fr(H_CELLULE, 2)} m, C = 250. Image : 35 mm sur Super 35. Le fond est à ${fr(FOND, 1)} m derrière le sujet.`)));
 
   /** @type {any} */ let SC = null;
   const verrou = (cles) => cles.some((k) => ctx.verrous.has(k) || [...ctx.verrous].some((v) => k.startsWith(v + '.')));
@@ -58,12 +67,12 @@ export function creer(/** @type {import('../kit.js').Ctx} */ ctx) {
     scene.add(sol(16, 17, 0, 1.5), cyclo(16, 6, 8.5), caisse(-5.6, 5.5, 0.4), plante(-4.6, 6.3, 3), plante(5.2, 5.8, 7), caisse(5.5, -2, -0.3), lumieresTravail(1));
     // un peu de lumière parasite, vue par l'image de la caméra : le plateau n'est jamais tout à fait noir
     const parasite = new THREE.HemisphereLight(0xd4dbe6, 0x4a5058, 6); parasite.name = 'lumière parasite'; scene.add(parasite);
-    const sujet = personnage(0x5c7a9a); sujet.name = 'sujet'; sujet.add(luxmetre()); scene.add(sujet);
+    const sujet = personnage(COUL.sujet); sujet.name = 'sujet'; sujet.add(luxmetre()); scene.add(sujet);
     const rig = camera3d(); scene.add(rig);
-    const etq = /** @type {Record<string, any>} */ ({ cam: etiquetteNom(rig, 'Caméra', '', [0, 2.35, 0]), sujet: etiquetteNom(sujet, 'Luxmètre', 'amber', [0, 2.1, 0]) });
+    const etq = /** @type {Record<string, any>} */ ({ cam: etiquetteNom(rig, 'Caméra', '', [0, 2.35, 0]), sujet: etiquetteNom(sujet, 'Luxmètre', '', [0, 2.1, 0]) });
     /** les projecteurs, par poste et par modèle (construits à la demande) */
     const projs = { p1: {}, p2: {} };
-    const lignes = { p1: ligne(num(T.fg), 0.35), p2: ligne(num(T.fg), 0.35) };
+    const lignes = { p1: ligne(COUL.repere, 0.5), p2: ligne(COUL.repere, 0.5) };
     scene.add(lignes.p1, lignes.p2);
     const glissables = [rig];
     const prendre = (p) => ({
@@ -109,13 +118,13 @@ export function creer(/** @type {import('../kit.js').Ctx} */ ctx) {
     rig.position.set(st.cam.x, 0, st.cam.z); rig.rotation.y = capVers(st.cam, SUJET);
     sujet.rotation.y = capVers(SUJET, st.cam);
     etq.cam.set(`f/${fr(st.cam.N, st.cam.N < 3 && !Number.isInteger(st.cam.N) ? 1 : 0)} · ${st.cam.iso} ISO · ${fr(st.cam.Tcam, 0)} K`);
-    etq.sujet.set(lx(m.E), 'amber' + (Number.isFinite(m.expo) && Math.abs(m.expo) <= 1 / 3 ? ' ok' : ''));
+    etq.sujet.set(lx(m.E), Number.isFinite(m.expo) && Math.abs(m.expo) <= 1 / 3 ? 'ok' : '');
     for (const p of ['p1', 'p2']) {
       const S = st[p], r = p === 'p1' ? m.r1 : m.r2, type = SOURCES[S.source] ? S.source : 'fresnel';
       const g = projecteurDe(p, type);
       for (const [t, o] of Object.entries(projs[p])) /** @type {THREE.Object3D} */ (o).visible = t === type;
       const w = mondePhoto(st.cam, S.d, S.phi, SUJET);
-      g.position.set(w.x, 0, w.z);
+      g.position.set(w.x, 0, w.z); g.userData.hauteur(Number.isFinite(S.h) ? S.h : H_CELLULE);
       const cap = capVers(w, SUJET); const tete = g.userData.tete;
       tete.rotation.set(Math.atan2(tete.position.y - FACE.y, S.d), cap + Math.sign(S.phi || 1) * S.alpha * Math.PI / 180, 0, 'YXZ');
       const sp = spotDepuis(r);
@@ -134,14 +143,28 @@ export function creer(/** @type {import('../kit.js').Ctx} */ ctx) {
       const tl = /** @type {HTMLElement | null} */ (ctrls.querySelector(`[data-k="${p}.Tled"]`)); if (tl && tl.closest('.lb-ctl')) /** @type {HTMLElement} */ (tl.closest('.lb-ctl')).hidden = !led;
       const fa = /** @type {HTMLElement | null} */ (ctrls.querySelector(`[data-k="${p}.angle"]`)); if (fa && fa.closest('.lb-ctl')) /** @type {HTMLElement} */ (fa.closest('.lb-ctl')).hidden = led;
     }
-    const lit = (r, p) => (p.on ? `${lx(r.E)}` : 'éteint');
-    r1.set(lit(m.r1, st.p1), st.p1.on ? `${fr(m.r1.I0, 0)} cd dans l'axe, faisceau ${fr(m.r1.theta, 0)}° (${fr(m.r1.diametre, 1)} m de large au sujet)` : '');
-    r2a.set(lit(m.r2, st.p2), st.p2.on ? `${fr(m.r2.I0, 0)} cd dans l'axe, faisceau ${fr(m.r2.theta, 0)}°` : '');
-    rE.set(lx(m.E), `il faut ${lx(m.Eref)} pour f/${fr(st.cam.N, st.cam.N < 3 && !Number.isInteger(st.cam.N) ? 1 : 0)}, ${st.cam.iso} ISO, 1/50 s`);
-    const dom = Math.round(m.dom);
-    rT.set(m.T > 0 ? `${fr(Math.round(m.T / 10) * 10, 0)} K` : '—', m.T > 0 ? `${dom > 0 ? '+' : ''}${dom} mireds par rapport à la caméra : ${Math.abs(dom) <= 20 ? 'neutre' : dom > 0 ? 'tire vers l\'orange' : 'tire vers le bleu'}` : '', m.T > 0 ? (Math.abs(dom) <= 20 ? 'ok' : 'warn') : '');
-    rX.set(Number.isFinite(m.expo) ? `${m.expo > 0 ? '+' : ''}${fr(m.expo, 2)} diaph` : '—', Number.isFinite(m.expo) ? (Math.abs(m.expo) <= 1 / 3 ? 'exposé juste' : m.expo > 0 ? 'surexposé' : 'sous-exposé') : 'pas de lumière', Number.isFinite(m.expo) && Math.abs(m.expo) <= 1 / 3 ? 'ok' : 'warn');
-    rR.set(st.p1.on && st.p2.on && m.e2 > 0 ? `${fr(m.ratio, 2)}:1` : '—', st.p1.on && st.p2.on && m.e2 > 0 ? `${fr(m.ratioDiaphs, 2)} diaph entre côté éclairé et côté ombre` : 'allumez les deux projecteurs');
+    const dom = Math.round(m.dom), juste = Number.isFinite(m.expo) && Math.abs(m.expo) <= 1 / 3;
+    const nF = (v) => fr(v, v < 3 && !Number.isInteger(v) ? 1 : 0);
+    rE.set(lx(m.E), [
+      ['Exposition', Number.isFinite(m.expo) ? `${m.expo > 0 ? '+' : ''}${fr(m.expo, 2)} diaph, ${juste ? 'exposé juste' : m.expo > 0 ? 'surexposé' : 'sous-exposé'} (il faut ${lx(m.Eref)} pour f/${nF(st.cam.N)}, ${st.cam.iso} ISO, 1/50 s)` : `pas de lumière (il faut ${lx(m.Eref)})`],
+      ['Luminance d\'un gris 18 %', `${fr(m.L18, m.L18 < 10 ? 1 : 0)} cd/m² (L = ρE ÷ π)`],
+      ['Fond derrière le sujet', m.fond > 0 ? `${lx(m.fond)}, ${fr(m.ecartFond, 1)} diaph sous le sujet` : 'rien'],
+      ['Contraste', st.p1.on && st.p2.on && m.e2 > 0 ? `${fr(m.ratio, 2)}:1, soit ${fr(m.ratioDiaphs, 2)} diaph entre côté éclairé et côté ombre` : 'allumez les deux projecteurs'],
+    ], juste ? 'ok' : Number.isFinite(m.expo) ? 'warn' : '');
+    const ficheProj = (R, r, p) => {
+      if (!p.on) { R.set('éteint', [['Flux', `${fr(r.flux, 0)} lm à pleine puissance (${fr(r.watts, 0)} W, ${fr(r.courant, 1)} A à 230 V, IRC ${r.irc[0]}–${r.irc[1]})`]]); return; }
+      R.set(lx(r.E), [
+        ['Intensité', `${fr(r.I0, 0)} cd dans l'axe · faisceau ${fr(r.theta, 0)}° (50 %), champ ${fr(r.champ, 0)}° (10 %) · ${fr(r.omega, 2)} sr`],
+        ['Au sujet', `${fr(r.d3, 2)} m de la tête à la cellule, incidence ${fr(r.incidence, 0)}° · flaque de ${fr(r.diametre, 1)} m`],
+        ['Flux', `${fr(r.flux, 0)} lm à pleine puissance (${fr(r.watts, 0)} W, ${fr(r.courant, 1)} A à 230 V, IRC ${r.irc[0]}–${r.irc[1]})`],
+        ['Couleur', `${fr(Math.round(r.T / 10) * 10, 0)} K · sur le fond : ${lx(r.fond)}`],
+      ]);
+    };
+    ficheProj(r1, m.r1, st.p1); ficheProj(r2a, m.r2, st.p2);
+    rT.set(m.T > 0 ? `${fr(Math.round(m.T / 10) * 10, 0)} K` : '—', m.T > 0 ? [
+      ['Mireds', `${fr(1e6 / m.T, 0)} (la caméra : ${fr(1e6 / st.cam.Tcam, 0)})`],
+      ['Dominante', `${dom > 0 ? '+' : ''}${dom} mireds par rapport à la caméra : ${Math.abs(dom) <= 20 ? 'neutre' : dom > 0 ? 'tire vers l\'orange' : 'tire vers le bleu'}`],
+    ] : [], m.T > 0 ? (Math.abs(dom) <= 20 ? 'ok' : 'warn') : '');
     if (!P.ok) { P.monter(stage, null); return; }
     if (!SC) construire();
     SC.last = { m, st };
@@ -150,8 +173,8 @@ export function creer(/** @type {import('../kit.js').Ctx} */ ctx) {
   }
   const root = el('div', { class: 'lb-atelier lb-3d lb-photometrie' },
     stage,
-    el('div', { class: 'lb-reads' }, rE.box, r1.box, r2a.box, rT.box, rX.box, rR.box),
-    el('p', { class: 'lb-note' }, 'Prenez un projecteur ou la caméra et posez-les où vous voulez : la distance et l\'angle se relisent de leur place, la flaque de lumière suit. Dans le coin, l\'image de la caméra, exposée et balancée comme elle est réglée (hachures : au-dessus de 90 %).'),
+    el('div', { class: 'lb-reads lb-fiches' }, rE.box, r1.box, r2a.box, rT.box),
+    el('p', { class: 'lb-note' }, 'Prenez un projecteur ou la caméra et posez-les où vous voulez : la distance et l\'angle se relisent de leur place, la flaque de lumière suit ; la hauteur se règle au curseur. Dans le coin, l\'image de la caméra, exposée et balancée comme elle est réglée (hachures : au-dessus de 90 %).'),
     ctrls);
   return { root, rendre };
 }

@@ -399,13 +399,16 @@ Tests :
 **Le plateau 3D** (`src/labo/plateau/`) : les ateliers Optique et Photométrie ne dessinent plus leur vue de dessus en 2D.
 Ils posent une caméra, des sujets et des projecteurs sur un plateau de télévision vu en isométrie (caméra orthographique,
 élévation fixe, quarts de tour animés, zoom vers le pointeur, pincement, double clic pour recentrer), dans le style des
-illustrations low-poly : de grandes facettes nettes et peu nombreuses, une lumière douce et claire (un ciel pastel derrière
-la scène, des ombres douces, et pas de paliers de cel shading sur le plateau : chaque facette prend la teinte que lui donne
-son orientation), des couleurs franches sur des neutres clairs. Les sujets sont taillés à larges pans propres (tronc et
-jambes en prismes à quatre faces effilés, tête en icosaèdre au menton resserré, mains en plaquettes), les feuillages sont de
-gros icosaèdres froissés par un bruit déterministe (des cristaux), le sol une dalle à grandes facettes irrégulières, chacune
-de sa teinte ; tout est fusionné par un `Builder` en mode `ao` et lu à plat (`matPlate()` : la matière de `matiere()` sans
-son relief, en `flatShading`) ; une plante en pot et des malles donnent l'échelle. On **prend un objet et on le pose au sol** : le pointeur est projeté sur le plan du sol, l'objet suit sans
+illustrations low-poly et **en blanc et gris**, comme une maquette : de grandes facettes nettes et peu nombreuses, une
+lumière douce et claire (un ciel clair derrière la scène, des ombres douces, et pas de paliers de cel shading sur le plateau :
+chaque facette prend la teinte que lui donne son orientation), un décor et des sujets monochromes, la caméra et les
+projecteurs en gris sombre ; la seule couleur qui reste est celle de la lumière (la température des projecteurs, leurs
+flaques et leurs cônes) et l'accent bleu des repères (zone nette, point, anneau). Les sujets sont des mannequins taillés à
+larges pans (tronc et jambes en prismes à quatre faces effilés, tête en icosaèdre au menton resserré, mains en plaquettes),
+nommés par leur pancarte ; les feuillages sont de gros icosaèdres froissés par un bruit déterministe (des cristaux), le sol une
+dalle à grandes facettes irrégulières, chacune de sa teinte ; tout est fusionné par un `Builder` en mode `ao` et lu à plat
+(`matPlate()` : la matière de `matiere()` sans son relief, en `flatShading`). L'aide du plateau se range après le premier
+geste. On **prend un objet et on le pose au sol** : le pointeur est projeté sur le plan du sol, l'objet suit sans
 sauter, et l'atelier relit sa place dans son état (la distance le long de l'axe et l'écart latéral d'un sujet, la distance et
 l'angle d'un projecteur autour du sujet, la place de la caméra), d'où tout se recalcule comme avec les curseurs, qui restent.
 Un défi qui impose un réglage verrouille aussi l'objet (curseur « interdit », annonce). Les étiquettes (pilules de verre
@@ -414,7 +417,20 @@ accrochées aux objets) disent ce qui compte : « A · 2 m · flou · hors champ
 | Atelier | Ce qu'on prend | Ce qu'on voit au sol | Ce que montre l'image de la caméra |
 | --- | --- | --- | --- |
 | Optique et profondeur de champ | la caméra, les sujets A, B, C | le champ (le coin bleu), la zone nette (la dalle verte, de la limite proche à la limite lointaine), le point, l'hyperfocale, l'axe gradué, « net jusqu'à l'infini » | chaque plan flouté selon sa propre tache, les lampes du fond en disques, la pancarte lettrée (sa mire de traits fins) nette ou non |
-| Photométrie | la caméra, la principale, le débouchage | la flaque de chaque projecteur sur le sol et sur le sujet (de vrais projecteurs du rendu : candelas dans l'axe, cône ouvert à l'angle de champ, couleur de leur température, ombres), son cône de lumière, la ligne pointillée de sa distance | le sujet exposé et balancé comme la caméra est réglée, le zébra au-dessus de 90 %, la profondeur de champ d'un 35 mm au diaphragme réglé |
+| Photométrie | la caméra, la principale, le débouchage (leur hauteur au curseur : la colonne s'étire) | la flaque de chaque projecteur sur le sol et sur le sujet (de vrais projecteurs du rendu : candelas dans l'axe, cône ouvert à l'angle de champ, couleur de leur température, ombres), son cône de lumière, la ligne pointillée de sa distance | le sujet exposé et balancé comme la caméra est réglée, le zébra au-dessus de 90 %, la profondeur de champ d'un 35 mm au diaphragme réglé |
+
+**Toute la photométrie du plateau**, en quatre fiches sous le plateau (`labo/etats.js`, `labo/calc/photometrie.js`,
+`labo/calc/lumiere.js`) :
+
+| Fiche | Ce qu'elle dit |
+| --- | --- |
+| Au luxmètre | l'éclairement total à la cellule (lx) ; l'exposition en diaphs pour le diaphragme, la sensibilité et le temps de pose réglés (N² ÷ t = E × S ÷ 250) ; la luminance d'un gris 18 % (L = ρE ÷ π, cd/m²) ; le fond derrière le sujet (ce que les faisceaux, visés sur le sujet, laissent sur un mur à 8,5 m : lux et écart en diaphs) ; le rapport de contraste principale / débouchage et son écart en diaphs |
+| Principale, Débouchage | l'éclairement donné à la cellule ; l'intensité dans l'axe (cd), l'angle de faisceau (50 %), l'angle de champ (10 %, 1,82 fois plus), l'angle solide du faisceau (sr) ; la distance réelle de la tête à la cellule et l'incidence (angle au sol et hauteur : cos i = cos ε × cos φ), la flaque au sujet ; le flux (lm) à pleine puissance, la puissance (W), le courant à 230 V (A), l'IRC de la famille ; la température (K) et ce qu'il laisse sur le fond |
+| Couleur de la lumière | la température du mélange (K), ses mireds et ceux de la caméra, la dominante vue par la caméra |
+
+La hauteur d'un projecteur (`p1.h`, `p2.h`, 1,45 m par défaut : à la hauteur de la cellule, l'incidence est l'angle au sol,
+et les défis gardent leurs chiffres) entre dans la distance et l'incidence réelles (`geometrieProjecteur`, `eclairageSujet`) ;
+le fond se calcule en relisant le faisceau hors de son axe (`eclairageFond`).
 
 **L'image de la caméra** (`plateau/dof.js`) : la scène est rendue une seconde fois depuis l'œil de la caméra posée sur le
 plateau (angle de champ de la focale sur le capteur), dans une cible qui garde la profondeur, puis composée dans un coin du
@@ -438,7 +454,8 @@ moteur un adaptateur : sa scène, ses objets à prendre, ses étiquettes, ce qu'
 exposition.
 
 **Vérification.** `tests/unit/plateau.test.mjs` (isométrie et cadrage, lecture des positions aller et retour, exposition,
-tache en pixels, projecteur du rendu, l'état des ateliers et les scènes des défis) ; suite `node tools/e2e.mjs labo-plateau`
+tache en pixels, projecteur du rendu, hauteur et incidence réelle, fond derrière le sujet, la fiche complète, l'état des
+ateliers et les scènes des défis) ; suite `node tools/e2e.mjs labo-plateau`
 (prendre un sujet, la caméra, un projecteur à la souris et relire l'état ; un réglage imposé qui ne bouge pas ; tourner,
 zoomer, recentrer, étiquettes, agrandir l'image ; 390 px) ; la suite `labo` inchangée (les défis se jouent comme avant).
 
