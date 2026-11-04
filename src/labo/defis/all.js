@@ -7,3 +7,4 @@ import './photometrie.js';
 import './sensito.js';
 import './dmx.js';
 import './dot2.js';
+import './ptz.js';

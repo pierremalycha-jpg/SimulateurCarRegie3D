@@ -55,6 +55,7 @@ const SUITES = [
   ['camera', 'camera', [], 25],
   ['vues3d', 'vues3d', [], 25],
   ['labo', 'labo', [], 25],
+  ['ptz', 'ptz', [], 25],
   ['modes-car', 'modes-car', [], 30],
   ['chef-postes', 'chef-postes', [], 60],
   ['jeu', 'jeu', [], 20],

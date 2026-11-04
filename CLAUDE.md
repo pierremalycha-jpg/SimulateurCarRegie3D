@@ -169,6 +169,16 @@ Tout est en français (code commenté en français, interface, commits).
   `lumiere_commande.js` : DMX, ligne, console, lyres, Art-Net et sACN), exercices `cours/exos/lumiere_*.js`, fiches
   `content/terms_lumiere_*.js`. Les manipulations calculent avec les modèles du Labo (`labo/calc/`) : leçons et ateliers disent
   les mêmes chiffres. Les ateliers du Labo y sont les exercices pratiques (`x-labo-photometrie`, `x-labo-dmx`, `x-labo-dot2`).
+- **Les caméras PTZ** (v19.30, décidé le 4 novembre 2026) : le matériel du BTS (deux AW-HE130, une AW-UE20, le pupitre
+  AW-RP150, Easy IP Setup sur un PC, un switch PoE+). Au Labo, l'atelier `ptz` (`labo/ateliers/ptz.js`, modèle pur
+  `labo/calc/ptz.js` : PoE et budget par classe, qui joint qui, Easy IP Setup par diffusion et sa fenêtre de 20 minutes,
+  page web et compte, pupitre, QoS, `etapes`, `recette` ; les prises `PRISES` et le câblage `brancher`) : le câblage par les
+  faces arrière (`ptz_cablage.js`, prises sérigraphiées des modes d'emploi), la face avant du pupitre (`ptz_pupitre.js` :
+  menus SYSTEM, CONNECT SETTING, PMEM/TMEM), écrans proches des vrais (libellés Panasonic), un onglet
+  « Pas à pas » au panneau pour un atelier dont la vue rend `etapes()`, cinq défis (`labo/defis/ptz.js`). Au Cours, le
+  chapitre `ptz` (`cours/ptz.js` et ses trois parties, `cours/ptz_calc.js`, `cours/exos/ptz.js`, `content/terms_ptz.js`).
+  Un chiffre du constructeur vient de ses documents ; sinon il est dit ordre de grandeur. Tests `tests/unit/ptz.test.mjs`,
+  suite `node tools/e2e.mjs ptz`.
 - **Les vues 3D du Cours** (`src/vues3d/`, v19.16, décidé le 26 octobre 2026) : une notion technique qui se
   comprend mieux en la voyant (câble, appareils, réseau, lieu) a sa vue ; une notion de calcul ou de courbe reste en
   2D (tableau de pertinence dans le README). Une vue = un fichier de `vues/` (id, chapitre, `lecons`, `etapes` avec

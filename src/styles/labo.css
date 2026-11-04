@@ -159,6 +159,206 @@ body.labo-on #modal.overlay { z-index: 46; }
 .lb-ref { margin: 0 0 8px; padding: 0; list-style: none; display: grid; gap: 4px; font-size: 14px; }
 .lb-ref b { color: var(--accent); }
 
+
+/* ---------- l'atelier Caméras PTZ (v19.30) : le banc, le PC, le pupitre, la fiche ---------- */
+.lb-atelier.lb-ptz { grid-template-columns: minmax(0, 1fr); }
+.tz-ports { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 8px; padding: 12px; border-radius: var(--r); background: var(--panel); }
+.tz-port { display: flex; flex-direction: column; gap: 6px; align-items: stretch; min-width: 0; }
+.tz-rj { position: relative; display: grid; place-items: center; height: 40px; border-radius: 6px; background: var(--glass); box-shadow: inset 0 0 0 1px var(--line2); }
+.tz-rj b { font: 600 14px var(--f-body); color: var(--muted); font-variant-numeric: tabular-nums; }
+.tz-rj i { position: absolute; top: 5px; width: 8px; height: 5px; border-radius: 2px; background: var(--raise); }
+.tz-led-l { left: 6px; } .tz-led-p { right: 6px; }
+.tz-port[data-etat="lien"] .tz-led-l, .tz-port[data-etat="on"] .tz-led-l { background: var(--pvw); }
+.tz-port[data-etat="on"] .tz-led-p { background: var(--amber); }
+.tz-occ { color: var(--muted); font-size: 12.5px; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tz-mini { display: flex; flex-direction: column; gap: 2px; font-size: 12px; color: var(--dim); min-width: 0; }
+.tz-mini select, .tz-mini input { width: 100%; min-width: 0; box-sizing: border-box; font: 500 14px var(--f-body); }
+.tz-row { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; }
+.tz-row > .lb-read { flex: 1 1 200px; }
+.tz-apps { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 10px; }
+.tz-app { box-sizing: border-box; width: 100%; min-width: 0; display: flex; flex-direction: column; gap: 6px; padding: 12px; border-radius: var(--r); background: var(--panel); box-shadow: inset 3px 0 0 var(--raise); }
+.tz-app[data-etat="on"] { box-shadow: inset 3px 0 0 var(--pvw); }
+.tz-app[data-etat="lien"] { box-shadow: inset 3px 0 0 var(--amber); }
+.tz-app header { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; }
+.tz-app header b { font: 600 15px var(--f-disp); }
+.tz-mod { color: var(--muted); font-size: 13px; }
+.tz-mac, .tz-etat, .tz-note { margin: 0; font-size: 13px; color: var(--muted); }
+.tz-etat { color: var(--fg); }
+.tz-etat small { color: var(--amber); }
+.tz-mac code, .tz-cmd code { font: 500 12.5px var(--f-mono); color: var(--fg); }
+.tz-mac code { white-space: nowrap; }
+.tz-check { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--muted); }
+.tz-check input { accent-color: var(--accent); width: 16px; height: 16px; }
+.tz-qos .tz-row { margin-top: 4px; }
+.tz-field { display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: var(--muted); min-width: 0; }
+.tz-field input, .tz-field select { font: 500 15px var(--f-body); min-width: 0; }
+.tz-field input[type="range"] { accent-color: var(--accent); }
+.tz-form { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; }
+.tz-acts { display: flex; flex-wrap: wrap; gap: 8px; }
+.tz-msg { margin: 0; padding: 8px 12px; border-radius: var(--r-s); background: var(--well); font-size: 14px; }
+.tz-msg.ok { box-shadow: inset 3px 0 0 var(--pvw); }
+.tz-msg.bad { box-shadow: inset 3px 0 0 var(--amber); }
+.tz-radios { display: flex; flex-wrap: wrap; gap: 6px 16px; margin: 0; padding: 0; border: 0; font-size: 14px; }
+.tz-radios legend { padding: 0; margin-bottom: 4px; color: var(--muted); font-size: 13px; float: left; width: 100%; }
+.tz-radios input { accent-color: var(--accent); }
+/* le PC : un bureau, des fenêtres, une barre des tâches */
+.tz-bureau { display: flex; flex-direction: column; gap: 10px; padding: 12px; border-radius: var(--r); background: var(--glass); }
+.tz-win { border-radius: var(--r-s); background: var(--panel); box-shadow: var(--shadow-s); overflow: hidden; }
+.tz-wtitle { padding: 8px 14px; background: var(--panel2); font: 600 14px var(--f-body); }
+.tz-wbody { display: flex; flex-direction: column; gap: 12px; padding: 14px; }
+.tz-taskbar { display: flex; flex-wrap: wrap; gap: 6px; padding: 6px; border-radius: var(--r-s); background: var(--panel2); }
+.tz-taskbar button { padding: 6px 12px; border: 0; border-radius: 8px; background: none; color: var(--muted); font: 500 14px var(--f-body); cursor: pointer; }
+.tz-taskbar button[aria-selected="true"] { background: var(--raise); color: var(--fg); }
+.tz-tool .btn { min-width: 9em; }
+.tz-tablewrap { overflow-x: auto; }
+.tz-table { width: 100%; border-collapse: collapse; font-size: 14px; font-variant-numeric: tabular-nums; }
+.tz-table th { text-align: left; padding: 6px 10px; color: var(--dim); font-weight: 500; border-bottom: 1px solid var(--line2); white-space: nowrap; }
+.tz-table td { padding: 7px 10px; border-bottom: 1px solid var(--line); }
+.tz-table tbody tr[tabindex] { cursor: pointer; }
+.tz-table tbody tr.sel { background: var(--accent-d); }
+.tz-table td.ok { color: var(--pvw); }
+.tz-table td.bad { color: var(--amber); }
+.tz-vide { color: var(--muted); }
+.tz-dlg { display: flex; flex-direction: column; gap: 10px; padding: 14px; border-radius: var(--r-s); background: var(--panel2); box-shadow: var(--shadow-s); }
+.tz-dlg h5, .tz-cam h5, .tz-rp-page h5 { margin: 0; font: 600 15px var(--f-disp); }
+.tz-url { display: flex; gap: 8px; align-items: flex-end; }
+.tz-url .tz-field { flex: 1; }
+.tz-page { min-height: 220px; padding: 12px; border-radius: var(--r-s); background: var(--bg2); }
+.tz-err b { display: block; font: 600 17px var(--f-disp); margin-bottom: 6px; }
+.tz-err p { margin: 0; color: var(--muted); }
+.tz-cam { display: flex; flex-direction: column; gap: 12px; }
+.tz-cam-head { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; padding-bottom: 8px; border-bottom: 1px solid var(--line2); }
+.tz-cam-head b { font: 700 16px var(--f-disp); }
+.tz-cam-head > span { color: var(--muted); }
+.tz-cam-head .seg { margin-left: auto; }
+.tz-cam-body { display: grid; grid-template-columns: 150px minmax(0, 1fr); gap: 14px; }
+.tz-cam-menu { display: flex; flex-direction: column; gap: 4px; }
+.tz-cam-menu button { text-align: left; padding: 7px 10px; border: 0; border-radius: 8px; background: none; color: var(--muted); font: 500 14px var(--f-body); cursor: pointer; }
+.tz-cam-menu button[aria-pressed="true"] { background: var(--raise); color: var(--fg); }
+.tz-cam-main > div { display: flex; flex-direction: column; gap: 12px; }
+.tz-live { display: grid; place-items: end start; aspect-ratio: 16 / 9; max-width: 520px; padding: 10px; border-radius: var(--r-s); background: linear-gradient(160deg, var(--raise), var(--glass)); }
+.tz-live span { font: 500 13px var(--f-mono); color: var(--fg); }
+.tz-dl { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 4px 14px; margin: 0; font-size: 14px; }
+.tz-dl dt { color: var(--muted); }
+.tz-dl dd { margin: 0; }
+/* le pupitre AW-RP150 */
+.tz-rp { display: grid; grid-template-columns: minmax(0, 1fr) 200px; gap: 16px; align-items: start; padding: 16px; border-radius: var(--r-l); background: var(--panel); }
+.tz-rp-left { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.tz-rp-label { display: flex; gap: 10px; align-items: baseline; }
+.tz-rp-label b { font: 700 16px var(--f-disp); }
+.tz-rp-label small { color: var(--muted); }
+.tz-rp-screen, .tz-rp-off { aspect-ratio: 800 / 480; max-width: 640px; padding: 10px 12px; border-radius: 8px; background: var(--glass); box-shadow: inset 0 0 0 1px var(--line2); display: flex; flex-direction: column; gap: 8px; overflow: auto; font-size: 14px; }
+.tz-rp-off { place-items: center; display: grid; color: var(--dim); }
+.tz-rp-status { display: flex; justify-content: space-between; color: var(--muted); font: 500 12.5px var(--f-mono); }
+.tz-rp-tabs { display: flex; flex-wrap: wrap; gap: 6px; }
+.tz-rp-tabs button { padding: 6px 12px; border: 0; border-radius: 6px; background: var(--raise); color: var(--muted); font: 600 13px var(--f-body); cursor: pointer; }
+.tz-rp-tabs button[aria-pressed="true"] { background: var(--accent-fill); color: var(--key-ink); }
+.tz-rp-page { display: flex; flex-direction: column; gap: 8px; }
+.tz-rp-table input { width: 100%; min-width: 0; box-sizing: border-box; font: 500 14px var(--f-body); }
+.tz-rp-msg { margin: 0; color: var(--amber); font: 500 13px var(--f-mono); }
+.tz-cmd { display: flex; flex-direction: column; gap: 2px; margin: 0; overflow-wrap: anywhere; }
+.tz-cmd small { color: var(--muted); }
+.tz-rp-keys { display: grid; grid-template-columns: repeat(10, minmax(0, 1fr)); gap: 6px; max-width: 640px; }
+.tz-rp-key { height: 38px; border: 0; border-radius: 8px; background: var(--raise); color: var(--muted); font: 600 15px var(--f-body); cursor: pointer; box-shadow: inset 0 -3px 0 var(--raise); }
+.tz-rp-key.ok { color: var(--fg); box-shadow: inset 0 -3px 0 var(--pvw); }
+.tz-rp-key.bad { box-shadow: inset 0 -3px 0 var(--amber); }
+.tz-rp-key[aria-pressed="true"] { background: var(--accent-fill); color: var(--key-ink); }
+.tz-joy { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 14px; border-radius: var(--r); background: var(--panel2); }
+.tz-joy .btn { min-width: 52px; }
+.tz-joy-mid { display: flex; gap: 6px; }
+/* le câblage : le banc vu de derrière (SVG), les prises cliquables, les câbles */
+.tz-cab-tete { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; }
+.tz-scroll { overflow-x: auto; border-radius: var(--r); background: var(--glass); }
+.tz-scene { display: block; width: 100%; min-width: 760px; height: auto; font-family: var(--f-body); }
+.tz-scene .tz-t { fill: var(--fg); font-size: 14px; font-weight: 600; }
+.tz-scene .tz-s { fill: var(--muted); font-size: 12px; }
+.tz-boitier { fill: var(--panel2); stroke: var(--line2); }
+.tz-pr { cursor: pointer; outline: none; }
+.tz-pr-corps { fill: var(--raise); stroke: var(--dim); stroke-width: 1.2; }
+.tz-pr-trou { fill: var(--bg); }
+.tz-pr-t { fill: var(--muted); font-size: 10.5px; }
+.tz-pr:hover .tz-pr-corps, .tz-pr:focus-visible .tz-pr-corps { stroke: var(--accent); stroke-width: 2; }
+.tz-pr:focus-visible .tz-pr-t, .tz-pr:hover .tz-pr-t { fill: var(--fg); }
+.tz-pr.sel .tz-pr-corps { fill: var(--accent-d); stroke: var(--accent); stroke-width: 2.4; }
+.tz-pr.pose .tz-pr-corps { stroke: var(--fg); }
+.tz-led-l, .tz-led-p { fill: var(--raise); }
+.tz-pr.lien .tz-led-l { fill: var(--pvw); }
+.tz-pr.poe .tz-led-p { fill: var(--amber); }
+.tz-pr.mort .tz-led-l { fill: var(--tally); }
+.tz-sil-socle { fill: var(--raise); stroke: var(--line2); }
+.tz-sil-corps { fill: var(--fg); stroke: var(--dim); }
+.tz-sil.ue20 .tz-sil-corps { fill: var(--muted); }
+.tz-sil-obj { fill: var(--bg); stroke: var(--dim); }
+.tz-sil-verre { fill: var(--accent-d); }
+.tz-cables { pointer-events: none; }
+.tz-cable { fill: none; stroke-width: 3.5; stroke-linecap: round; opacity: .9; }
+.tz-cable.rj45 { stroke: var(--accent); }
+.tz-cable.bnc { stroke: var(--amber); }
+.tz-cable.dc { stroke: var(--dim); }
+.tz-cable.gpio { stroke: var(--violet); }
+.tz-bloc { fill: var(--raise); stroke: var(--dim); }
+.tz-liste { margin: 0; padding: 0; list-style: none; display: grid; gap: 4px; font-size: 13.5px; color: var(--muted); }
+.tz-liste li { padding-left: 14px; position: relative; }
+.tz-liste li::before { content: ""; position: absolute; left: 0; top: .55em; width: 8px; height: 3px; border-radius: 2px; background: var(--dim); }
+.tz-liste .tz-l-rj45::before { background: var(--accent); } .tz-liste .tz-l-bnc::before { background: var(--amber); } .tz-liste .tz-l-gpio::before { background: var(--violet); }
+/* le pupitre AW-RP150, face avant (labo/ateliers/ptz_pupitre.js) */
+.tz-rp2 { display: flex; flex-direction: column; gap: 14px; padding: 16px; border-radius: var(--r-l); background: var(--panel); }
+.tz-rp-haut { display: grid; grid-template-columns: minmax(230px, 260px) minmax(0, 1fr) 132px; gap: 14px; align-items: start; }
+.tz-rp-bas { display: grid; grid-template-columns: minmax(0, 1fr) 200px; gap: 14px; align-items: start; }
+.tz-rp-regl, .tz-rp-centre, .tz-rp-sel { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.tz-rp-mols { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.tz-mol { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 6px; border-radius: var(--r-s); background: var(--panel2); }
+.tz-mol-n { font-size: 12px; color: var(--muted); }
+.tz-mol-c { display: flex; align-items: center; gap: 4px; }
+.tz-mol-c .tz-rk { width: 28px; height: 28px; padding: 0; }
+.tz-mol-v { min-width: 3.2em; text-align: center; font: 600 13px var(--f-mono); }
+.tz-rp-touches, .tz-rp-menus, .tz-rp-users { display: flex; flex-wrap: wrap; gap: 6px; }
+.tz-rp-menus { flex-direction: column; }
+.tz-rk { padding: 7px 10px; border: 0; border-radius: 8px; background: var(--raise); color: var(--fg); font: 600 12.5px var(--f-body); cursor: pointer; box-shadow: inset 0 -2px 0 var(--bg); }
+.tz-rk:hover:not(:disabled) { background: var(--panel2); }
+.tz-rk[aria-pressed="true"] { background: var(--accent-fill); color: var(--key-ink); }
+.tz-rk:disabled { opacity: .5; cursor: default; }
+.tz-rk-item { text-align: left; }
+.tz-rk-back { align-self: flex-start; background: none; box-shadow: none; color: var(--accent); padding: 2px 0; }
+.tz-rk-set { min-width: 6em; }
+.tz-rp-fs { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; max-width: 640px; }
+.tz-rp-fs .tz-mol-c .tz-rk { width: 24px; height: 24px; }
+.tz-rp-fs .tz-mol-v { min-width: 2.8em; font-size: 11.5px; white-space: nowrap; }
+.tz-rp2 .tz-rp-screen { aspect-ratio: auto; min-height: 260px; overflow: visible; }
+.tz-rp-etat .tz-dl { grid-template-columns: max-content minmax(0, 1fr) max-content minmax(0, 1fr); }
+.tz-rp-etat { display: flex; flex-direction: column; gap: 8px; }
+.tz-rp-cam { display: flex; gap: 12px; align-items: baseline; }
+.tz-rp-cam b { font: 700 20px var(--f-mono); }
+.tz-rp-tally { margin-left: auto; padding: 2px 8px; border-radius: 6px; background: var(--raise); color: var(--muted); font: 600 12px var(--f-mono); }
+.tz-rp-tally.on { background: var(--tally-key); color: var(--key-ink); }
+.tz-rp-f { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px; margin-top: auto; padding-top: 6px; border-top: 1px solid var(--line2); font: 500 12px var(--f-mono); color: var(--muted); }
+.tz-rp-warn { margin: 0; color: var(--amber); }
+.tz-rp-liste { display: flex; flex-direction: column; gap: 6px; max-width: 300px; }
+.tz-pmem { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 6px; max-width: 420px; }
+.tz-pm { height: 36px; border: 1px solid var(--line2); border-radius: 6px; background: var(--bg); color: var(--muted); font: 600 13px var(--f-mono); cursor: pointer; }
+.tz-pm.rempli { background: var(--raise); color: var(--fg); }
+.tz-pm.actuel { border-color: var(--amber); color: var(--amber); }
+.tz-rp-cap { font-size: 11.5px; color: var(--dim); }
+.tz-rp-key { position: relative; }
+.tz-rp-led { position: absolute; top: 4px; left: 50%; width: 14px; height: 3px; margin-left: -7px; border-radius: 2px; background: var(--bg); }
+.tz-rp-key.ok .tz-rp-led { background: var(--pvw); }
+.tz-rp-key.bad .tz-rp-led { background: var(--amber); }
+.tz-rp-key.air .tz-rp-led { background: var(--tally); }
+.tz-joy-pad { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.tz-joy-tete { width: 34px; height: 34px; border-radius: 50%; background: radial-gradient(circle at 35% 35%, var(--muted), var(--raise)); }
+.tz-pgm { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; padding: 10px 12px; border-radius: var(--r); background: var(--panel); }
+/* le pas à pas (panneau de droite) */
+.lb-steps { margin: 8px 0 0; padding: 0; list-style: none; display: grid; gap: 6px; }
+.lb-step { display: grid; grid-template-columns: 26px minmax(0, 1fr); gap: 10px; padding: 10px; border-radius: var(--r-s); background: var(--panel2); font-size: 14px; }
+.lb-step.ok { color: var(--muted); }
+.lb-step.cur { box-shadow: inset 3px 0 0 var(--accent); }
+.lb-step-n { display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; background: var(--raise); font: 600 13px var(--f-body); }
+.lb-step.ok .lb-step-n { background: var(--pvw-d); color: var(--pvw); }
+.lb-step small { color: var(--pvw); }
+.lb-step-body { display: flex; flex-direction: column; gap: 8px; margin-top: 6px; align-items: flex-start; }
+.lb-step-body p { margin: 0; color: var(--fg); }
+.lb-step-body .lb-note { color: var(--amber); }
+
 /* ---------- petits écrans : le panneau sous l'atelier, les commandes sous la scène ---------- */
 @media (max-width: 1100px) {
   .lb-atelier { grid-template-columns: minmax(0, 1fr); }
@@ -174,4 +374,12 @@ body.labo-on #modal.overlay { z-index: 46; }
   .lb-prow { grid-template-columns: minmax(0, 1.6fr) minmax(0, 1.2fr) 5.5em; }
   .lb-prow > :nth-child(4), .lb-prow > :nth-child(5) { display: none; }
   .labo.lb-plein .lb-body { overflow: hidden; }
+  .tz-ports { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .tz-rp { grid-template-columns: minmax(0, 1fr); }
+  .tz-rp-haut, .tz-rp-bas { grid-template-columns: minmax(0, 1fr); }
+  .tz-rp-menus { flex-direction: row; }
+  .tz-rp-f, .tz-rp-fs { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .tz-cam-body { grid-template-columns: minmax(0, 1fr); }
+  .tz-cam-menu { flex-direction: row; flex-wrap: wrap; }
+  .tz-rp-keys { grid-template-columns: repeat(5, minmax(0, 1fr)); }
 }

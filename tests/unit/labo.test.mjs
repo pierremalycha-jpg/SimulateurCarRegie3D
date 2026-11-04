@@ -14,6 +14,8 @@ import * as D from '../../src/labo/calc/dmx.js';
 import { competence, SAVOIRS, RATTACHEMENT } from '../../src/content/referentiel.js';
 import { TERMS } from '../../src/content/netterms.js';
 import '../../src/content/terms_labo.js';
+import '../../src/content/terms_ptz.js';
+import '../../src/cours/liens.js';
 import '../../src/content/terms_video.js';
 import '../../src/content/terms_mesure.js';
 import { activityState, ACTIVITES } from '../../src/livret.js';
@@ -29,7 +31,7 @@ let graine = 7;
 const rnd = () => { graine = (graine * 16807) % 2147483647; return graine / 2147483647; };
 
 test('le catalogue : des ateliers rattachés au référentiel, des fiches et des liens qui existent', () => {
-  assert.deepEqual(ATELIERS.map((A) => A.id), ['optique', 'photometrie', 'sensito', 'dmx', 'dot2']);
+  assert.deepEqual(ATELIERS.map((A) => A.id), ['optique', 'photometrie', 'sensito', 'dmx', 'dot2', 'ptz']);
   for (const A of ATELIERS) {
     assert.ok(A.competences.length && A.competences.every((c) => competence(c)), `${A.id} : compétences officielles`);
     assert.ok(A.savoirs.every((s) => SAVOIRS[s]), `${A.id} : savoirs`);

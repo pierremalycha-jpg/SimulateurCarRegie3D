@@ -525,6 +525,10 @@ export const RATTACHEMENT = {
     'lumiere-projecteurs': ['C17', 'C31'], 'lumiere-plateau': ['C31', 'C17', 'C23'], 'lumiere-stade': ['C21', 'C17', 'C6'],
     'lumiere-dmx': ['C25', 'C17'], 'lumiere-ligne': ['C25', 'C19', 'C36'], 'lumiere-console': ['C17', 'C31', 'C23'],
     'lumiere-lyres': ['C17', 'C31'], 'lumiere-reseau': ['C12', 'C25', 'C26'],
+    // le chapitre Les caméras PTZ (v19.30) : la caméra et son système, mettre en réseau, exploiter et dépanner
+    'ptz-tourelle': ['C20', 'C23'], 'ptz-systeme': ['C6', 'C25', 'C8'],
+    'ptz-adresse': ['C12', 'C25'], 'ptz-easyip': ['C12', 'C11', 'C8'], 'ptz-poe': ['C25', 'C9', 'C8'], 'ptz-web': ['C12', 'C11'], 'ptz-pupitre': ['C25', 'C23', 'C8'],
+    'ptz-flux': ['C26', 'C14', 'C25'], 'ptz-qos': ['C21', 'C12', 'C30'], 'ptz-recette': ['C38', 'C36', 'C19'],
   },
   camera: {
     // la mise en service : rendre opérant (2.7), exploiter (2.9) et tester (3.9) la caméra ; interconnecter

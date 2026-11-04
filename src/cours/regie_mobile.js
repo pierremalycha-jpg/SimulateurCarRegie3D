@@ -13,8 +13,8 @@ import { parseIp, parseMask, netOf, ipStr } from '../net/ctrlnet.js';
 const MACHINES = [
   { id: 'cam1', nom: 'CAM 1 (AW-HE130)', usine: '192.168.0.10', poe: 25, role: 'caméra PTZ : HTTP sur le port 80' },
   { id: 'cam2', nom: 'CAM 2 (AW-HE130)', usine: '192.168.0.10', poe: 25, role: 'caméra PTZ' },
-  { id: 'cam3', nom: 'CAM 3 (AW-HE20)', usine: '192.168.0.10', poe: 19, role: 'caméra PTZ' },
-  { id: 'rp150', nom: 'Pupitre AW-RP150', usine: '192.168.0.9', poe: 13, role: 'il appelle chaque caméra à l\'adresse qu\'on lui a donnée' },
+  { id: 'cam3', nom: 'CAM 3 (AW-UE20)', usine: '192.168.0.10', poe: 17, role: 'caméra PTZ' },
+  { id: 'rp150', nom: 'Pupitre AW-RP150', usine: '192.168.0.9', poe: 25, role: 'il appelle chaque caméra à l\'adresse qu\'on lui a donnée' },
   { id: 'atem', nom: 'Mélangeur ATEM', usine: 'DHCP', poe: 0, role: 'en DHCP d\'usine : sans serveur DHCP, il se replie sur 169.254.x.x' },
 ];
 const BUDGET_POE = 300;
@@ -62,7 +62,7 @@ function demoAdressage(host) {
 function figRegieMobile() {
   const f = figure(440, 190, 'Une régie mobile à trois caméras PTZ : les caméras envoient leur image en SDI au mélangeur et sont pilotées en IP par le pupitre à travers un switch PoE+ qui les alimente ; le programme part vers un enregistreur et un embedder ajoute le micro de la salle');
   const box = (x, y, w, t, s) => { f.append(sv('rect', { x, y, width: w, height: 32, rx: 3, fill: '#1a2128', stroke: '#8a949c' }), sv('text', { x: x + w / 2, y: y + 14, textAnchor: 'middle', class: 'co-t', style: 'font-size: 11.5px' }, t)); if (s) f.append(sv('text', { x: x + w / 2, y: y + 27, textAnchor: 'middle', class: 'co-s' }, s)); };
-  for (let i = 0; i < 3; i++) box(4, 6 + i * 44, 78, `CAM ${i + 1} PTZ`, i < 2 ? 'AW-HE130' : 'AW-HE20');
+  for (let i = 0; i < 3; i++) box(4, 6 + i * 44, 78, `CAM ${i + 1} PTZ`, i < 2 ? 'AW-HE130' : 'AW-UE20');
   box(150, 6, 70, 'Pupitre', 'AW-RP150'); box(240, 6, 70, 'Routeur', 'Internet · DHCP'); box(150, 50, 70, 'Switch PoE+', '24 ports · 300 W');
   box(260, 50, 80, 'Mélangeur', 'ATEM HD8 ISO'); box(360, 50, 76, 'Enregistreur', 'HyperDeck');
   box(150, 110, 70, 'Micro salle', 'XLR'); box(260, 110, 80, 'Embedder', 'Teranex A→SDI'); box(360, 110, 76, 'Moniteur', 'multiview');

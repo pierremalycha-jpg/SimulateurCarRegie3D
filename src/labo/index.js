@@ -19,6 +19,7 @@ import * as PHOTO from './ateliers/photometrie.js';
 import * as SENSITO from './ateliers/sensito.js';
 import * as DMX from './ateliers/dmx.js';
 import * as DOT2 from './ateliers/dot2.js';
+import * as PTZ from './ateliers/ptz.js';
 
 // ----------------------------------------------------------------------------------
 // Le Labo (v19.28) : l'espace de Jouer qui remplace l'entrepôt. Un écran à part, par-dessus tout
@@ -26,12 +27,14 @@ import * as DOT2 from './ateliers/dot2.js';
 // (labo/ateliers.js) ; au centre, l'atelier (labo/ateliers/<id>.js : ses dessins et ses commandes,
 // sur l'état et les mesures de labo/etats.js) ; à droite, deux onglets : « Défis » (les défis notés
 // de l'atelier, et l'essai en cours : une question à la fois, deux aides, la solution, le score) et
-// « Comprendre » (les notions, les fiches « ? », les liens vers le Cours, le référentiel cité).
+// « Comprendre » (les notions, les fiches « ? », les liens vers le Cours, le référentiel cité). Un atelier
+// qui a une mise en service (sa vue rend etapes() : les caméras PTZ) a un troisième onglet, « Pas à pas » :
+// les étapes cochées d'après l'état, comment faire la suivante, et un bouton qui y mène.
 // Un défi impose ses réglages (fixe) : leurs commandes se verrouillent le temps de la question.
 // La console dot2 occupe tout l'espace (pas de panneau). Ouvert par l'événement « labo »
 // ({ atelier, lesson }) : depuis Jouer, le Cours (exercice x-labo-<id>) ou le module caméra.
 // ----------------------------------------------------------------------------------
-const MODULES = { optique: OPTIQUE, photometrie: PHOTO, sensito: SENSITO, dmx: DMX, dot2: DOT2 };
+const MODULES = { optique: OPTIQUE, photometrie: PHOTO, sensito: SENSITO, dmx: DMX, dot2: DOT2, ptz: PTZ };
 export const LB = { open: false, atelier: ATELIERS[0].id, lesson: '', panneau: 'defis', replie: false };
 /** @type {any} */ let R = null;
 let titleWasOpen = false;
@@ -67,6 +70,7 @@ function changer(id, patch) {
   const a = /** @type {HTMLElement | null} */ (document.activeElement);
   const cle = a && R && R.work.contains(a) ? (a.dataset.k ? `[data-k="${a.dataset.k}"]${a.dataset.v ? `[data-v="${a.dataset.v}"]` : ''}` : a.getAttribute('aria-label') ? `[aria-label="${a.getAttribute('aria-label')}"]` : '') : '';
   rendreAtelier();
+  if (LB.panneau === 'pasapas' && R.side.contains(document.activeElement) === false) dessinerSide();
   if (cle) { const b = /** @type {HTMLElement | null} */ (R.work.querySelector(cle)); if (b && b !== document.activeElement && !(/** @type {any} */ (b).disabled)) b.focus({ preventScroll: true }); }
   if (RUN && !RUN.fini && RUN.atelier === id && RUN.retour && !RUN.retour.ok && RUN.items[RUN.k].type === 'reglage') { RUN.retour = null; dessinerDefi(); }
 }
@@ -82,6 +86,7 @@ function build() {
   const work = el('main', { class: 'lb-work', 'aria-label': 'L\'atelier' });
   const sideTabs = el('div', { class: 'seg lb-sidetabs', role: 'tablist', 'aria-label': 'Défis ou explications' },
     el('button', { type: 'button', role: 'tab', 'data-p': 'defis', onclick: () => { LB.panneau = 'defis'; dessinerSide(); } }, 'Défis'),
+    el('button', { type: 'button', role: 'tab', 'data-p': 'pasapas', onclick: () => { LB.panneau = 'pasapas'; dessinerSide(); } }, 'Pas à pas'),
     el('button', { type: 'button', role: 'tab', 'data-p': 'comprendre', onclick: () => { LB.panneau = 'comprendre'; dessinerSide(); } }, 'Comprendre'));
   const sideBody = el('div', { class: 'lb-sidebody' });
   const side = el('aside', { class: 'lb-side', 'aria-label': 'Défis et explications' }, sideTabs, sideBody);
@@ -110,6 +115,8 @@ function choisir(id) {
   R.bar.querySelector('.lb-sous').textContent = A.titre;
   R.root.classList.toggle('lb-plein', !!A.libre);
   R.root.classList.toggle('lb-console', A.id === 'dot2');
+  // un atelier à mise en service s'ouvre la première fois sur son « Pas à pas »
+  if (!VUES[id] && !RUN && id === 'ptz') LB.panneau = 'pasapas';
   const V = VUES[id] || (VUES[id] = MODULES[id].creer(ctxDe(id)));
   R.work.replaceChildren(V.root);
   rendreAtelier();
@@ -125,8 +132,12 @@ function dessinerSide() {
   R.side.hidden = !!A.libre || (console && LB.replie);
   R.root.classList.toggle('lb-replie', console && LB.replie);
   R.replier.hidden = !console; R.replier.textContent = LB.replie ? 'Afficher les défis' : 'Masquer les défis'; R.replier.setAttribute('aria-pressed', String(LB.replie));
-  for (const b of R.sideTabs.querySelectorAll('button')) b.setAttribute('aria-selected', String(/** @type {HTMLElement} */ (b).dataset.p === LB.panneau));
+  const V = /** @type {any} */ (VUES[A.id]);
+  const pas = !!(V && V.etapes);
+  if (!pas && LB.panneau === 'pasapas') LB.panneau = 'defis';
+  for (const b of R.sideTabs.querySelectorAll('button')) { const p = /** @type {HTMLElement} */ (b).dataset.p; b.setAttribute('aria-selected', String(p === LB.panneau)); /** @type {HTMLElement} */ (b).hidden = p === 'pasapas' && !pas; }
   if (LB.panneau === 'comprendre') { R.sideBody.replaceChildren(comprendre(A)); return; }
+  if (LB.panneau === 'pasapas') { R.sideBody.replaceChildren(pasAPas(V)); return; }
   if (RUN && RUN.atelier === A.id) { dessinerDefi(); return; }
   R.sideBody.replaceChildren(listeDefis(A));
 }
@@ -144,6 +155,20 @@ function listeDefis(A) {
         el('div', {}, el('b', {}, d.titre), el('small', {}, txt), el('span', { class: 'lb-dcons' }, DEFIS[d.id] ? DEFIS[d.id].consigne : '')),
         el('button', { type: 'button', class: 'btn small' + (e && e.seul ? '' : ' primary'), 'data-defi': d.id, onclick: () => commencer(d.id) }, e ? 'Refaire' : 'Commencer'));
     })));
+}
+/** la mise en service pas à pas : les étapes cochées d'après l'état de l'atelier, la suivante dépliée */
+function pasAPas(V) {
+  const E = V.etapes(), k = E.findIndex((e) => !e.fait), n = E.filter((e) => e.fait).length;
+  const enDefi = RUN && !RUN.fini && RUN.atelier === LB.atelier;
+  return el('div', { class: 'lb-pas' },
+    el('p', { class: 'lb-lede' }, 'La mise en service du banc, dans l\'ordre. Chaque étape se coche seule quand l\'atelier la voit faite.'),
+    enDefi ? el('p', { class: 'lb-note' }, 'Un défi est en cours : ses réglages remplacent ceux de la fiche.') : null,
+    el('p', { class: 'lb-note' }, k < 0 ? `Les ${E.length} étapes sont faites : le banc est en service.` : `${n} étape${n > 1 ? 's' : ''} faite${n > 1 ? 's' : ''} sur ${E.length}.`),
+    el('ol', { class: 'lb-steps' }, ...E.map((e, i) => el('li', { class: 'lb-step' + (e.fait ? ' ok' : '') + (i === k ? ' cur' : ''), 'aria-current': i === k ? 'step' : null },
+      el('span', { class: 'lb-step-n', 'aria-hidden': 'true' }, e.fait ? '✓' : String(i + 1)),
+      el('div', {}, el('b', {}, e.titre), e.fait ? el('small', {}, ' · fait') : null,
+        i === k ? el('div', { class: 'lb-step-body' }, el('p', {}, (V.comment || {})[e.id] || ''), e.reste ? el('p', { class: 'lb-note' }, 'Il reste : ', e.reste, '.') : null,
+          el('button', { type: 'button', class: 'btn small primary', 'data-k': 'pas:aller', onclick: () => V.aller(e) }, 'Y aller')) : null)))));
 }
 function comprendre(A) {
   const lien = (L) => el('button', { type: 'button', class: 'lb-lien', onclick: () => {
@@ -292,4 +317,4 @@ export function closeLabo(retour = true) {
   if (retour && lesson) emit('cours', { lesson });
 }
 /** accès de débogage et de test */
-export const laboDebug = () => ({ R, LB, STATES, RUN, VERROUS, choisir, commencer, valider, solution, suivante, changer });
+export const laboDebug = () => ({ R, LB, STATES, RUN, VERROUS, choisir, commencer, valider, solution, suivante, changer, mesures: (id) => (MESURES[id] ? MESURES[id](etat(id)) : {}) });

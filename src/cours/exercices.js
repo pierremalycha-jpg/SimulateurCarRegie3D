@@ -76,6 +76,9 @@ export const BY_LESSON = {
   'lumiere-dmx': [
     { id: 'x-labo-dmx', intro: 'Au Labo, atelier DMX et Art-Net : vous patchez des projecteurs à la suite, vous réglez une adresse aux commutateurs DIP, vous rendez fiable une ligne DMX, puis vous configurez un nœud Art-Net. La carte de l\'univers montre chaque canal occupé : un chevauchement s\'y voit en rouge.' },
   ],
+  'ptz-easyip': [
+    { id: 'x-labo-ptz', intro: 'Au Labo, atelier Caméras PTZ : le banc du BTS (deux AW-HE130, une AW-UE20, le pupitre AW-RP150, le PC technique et son switch PoE+). Le panneau « Pas à pas » vous mène de la première prise au joystick : brancher, alimenter, adresser le PC, chercher et adresser les caméras avec Easy IP Setup, créer les comptes, régler le pupitre, la QoS, la recette. Puis cinq défis notés, dont une recette à dépanner.' },
+  ],
   'lumiere-console': [
     { id: 'x-labo-dot2', intro: 'Au Labo, la console dot2 : le show de départ a ses projecteurs patchés, ses groupes et ses presets. Vous programmez vous-même des cues (couleurs, une lyre sur deux avec les macros MAtricks, un cercle, un chaser, des positions), puis le Labo relit le show enregistré et le note. Pensez au tracking : une cue ne garde que ce qui change.' },
   ],

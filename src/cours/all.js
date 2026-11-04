@@ -5,6 +5,7 @@ import './signal.js';
 import './sdi.js';
 import './synchro.js';
 import './camera.js';
+import './ptz.js';
 import './realisation.js';
 import './ralentis.js';
 import './son.js';

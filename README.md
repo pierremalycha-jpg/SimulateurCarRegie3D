@@ -394,6 +394,67 @@ Tests :
   « Emmène-moi / Montre-moi » doit mettre en évidence un élément réel de la page, et « Fais-le pour moi » doit faire
   valider l'étape.
 
+## v19.30 : les caméras PTZ du BTS, au Labo et au Cours
+
+**L'atelier « Caméras PTZ » du Labo** (`labo/ateliers/ptz.js`, modèle pur `labo/calc/ptz.js`) : le banc de mise en service
+du BTS, deux AW-HE130, une AW-UE20, un pupitre AW-RP150, un PC technique avec Easy IP Setup, un switch PoE+ administrable
+à 8 ports (125 W, comme un NETGEAR M4250-10G2F-PoE+) et un mélangeur. Cinq vues, dont les écrans et les faces suivent la
+disposition et les libellés des modes d'emploi Panasonic :
+
+| Vue | Ce qu'on y fait |
+| --- | --- |
+| Le câblage | Le banc vu de derrière (`labo/ateliers/ptz_cablage.js`) : la face avant du switch (ports et voyants lien, PoE), chaque appareil dessiné avec sa face arrière et ses prises sérigraphiées (AW-HE130 : SDI OUT, VIDEO OUT, G/L IN, HDMI, MIC/LINE, LAN, RS-422, DC 12V IN ; AW-UE20 : 3G SDI OUT, HDMI, USB, MIC/LINE, LAN, RS-422, 12V IN ; AW-RP150 : IP CONT, SERIAL CONT 1 à 5, 3G SDI IN, ACTIVE THRU, TALLY/GPIO 1, GPIO 2, DC 12V IN), le mélangeur (SDI IN 1 à 4, PGM OUT, REF OUT, GPI/TALLY). On prend un câble (RJ45, coaxial BNC, bloc 12 V, GPIO), on touche une prise puis l'autre ; une fiche qui n'entre pas est refusée ; le câble se dessine. Les pièges du vrai matériel : RS-422 est une RJ45 comme LAN mais pas de l'Ethernet ; G/L IN et VIDEO OUT sont des BNC comme SDI OUT mais ne donnent pas d'image au mélangeur ; le tally entre par TALLY/GPIO 1, pas GPIO 2 |
+| Le switch | Brancher chaque appareil sur un port ; le PoE de chaque port (coupé, PoE 802.3af, PoE+ 802.3at), son VLAN ; le budget du switch (30 W réservés par appareil de classe 4) ; le bloc 12 V de chaque appareil ; l'horloge du banc ; la QoS du port du PC (confiance DSCP, files, lien à 100 Mb/s ou 1 Gb/s, une copie de fichiers) |
+| Le PC technique | La carte réseau (IPv4) ; Easy IP Setup (Search, Network Settings, Access Camera ; liste par MAC) ; le navigateur et la page web de la caméra : création du compte (AW-UE20), compte d'usine à changer (AW-HE130), Live, Setup → Basic, User mng., Network (DHCP, IP, masque, passerelle, port HTTP, fenêtre d'Easy IP) et Advanced (Diffserv, flux H.264) |
+| Le pupitre AW-RP150 | Sa face avant (`labo/ateliers/ptz_pupitre.js`) : molettes IRIS (AUTO), M.PED, R/B GAIN, R/B PED et touches A/3200K, B/5600K, ATW/VAR, ABB, BARS ; l'écran tactile et les molettes F1 à F4 ; les touches PAINT, FUNCTION, MAINTENANCE, PMEM/TMEM, SYSTEM ; CAMERA/GROUP SELECTION 1 à 10 (voyant vert : liaison, rouge : antenne) ; ENABLE, le joystick et son levier ZOOM/FOCUS. L'écran : l'écran d'état (numéro, modèle, TALLY, IRIS, ZOOM, FOCUS), SYSTEM → CONNECT SETTING (CNNCT MD : LAN, SERIAL, NONE), MANUAL IP SET, AUTO IP SET, RP IP SET ; PMEM/TMEM (enregistrer, rappeler un preset). Chaque geste affiche la vraie commande HTTP (`/cgi-bin/aw_ptz?cmd=%23PTS7550&res=1`). Un sélecteur de programme du mélangeur allume le tally |
+| La fiche du banc | Le plan d'adressage à appliquer et la recette : chaque caméra jointe par le PC et pilotée par le pupitre |
+
+Ce que le modèle simule : deux appareils se joignent s'ils sont dans le même VLAN, chacun voit l'autre dans son sous-réseau
+et l'adresse n'est pas en double (pas de routeur sur le banc) ; Easy IP Setup cherche en diffusion sur le segment (il trouve
+une caméra hors du sous-réseau du PC, pas au-delà d'un VLAN) et une caméra réglée sur « 20min » n'est plus affichée passé
+20 minutes sous tension (couper puis rendre son PoE la redémarre) ; le navigateur frappe au port de l'URL ; une caméra sans
+compte administrateur est vue par le pupitre mais pas pilotée ; la vidéo ne passe d'abord que si la caméra marque, le switch
+fait confiance et a une file prioritaire (les files de `cours/ip_calc.js`).
+
+**Le pas à pas.** Un troisième onglet du panneau de droite, « Pas à pas » (pour un atelier dont la vue rend `etapes()`) : les
+onze étapes de la mise en service (brancher par la prise LAN, alimenter, câbler la vidéo et le tally, adresser le PC, chercher, adresser les caméras, comptes, adresser le
+pupitre, enregistrer les caméras, QoS, recette au joystick), cochées seules d'après l'état, la suivante dépliée avec la
+manière de la faire et un bouton « Y aller ». L'atelier s'ouvre la première fois sur ce panneau.
+
+**Cinq défis notés** (`labo/defis/ptz.js`) : trois caméras sorties du carton (dont une AW-UE20 qui a passé ses 20 minutes) ;
+le budget PoE d'un switch trop faible ; enregistrer les caméras au pupitre (dont une sur un autre port HTTP) ; la vidéo
+d'abord (DSCP et files sur un lien engorgé) ; la recette du lundi matin (trois pannes tirées parmi PoE, VLAN, masque, doublon,
+port, compte, câble dans la prise RS-422, vidéo sur G/L IN, numéro du pupitre en SERIAL).
+
+**Le chapitre « Les caméras PTZ »** (`cours/ptz.js`, après La caméra), dix leçons en trois parties et quatre niveaux :
+
+| Partie | Leçons (niveau) |
+| --- | --- |
+| La caméra et son système (`cours/ptz_camera.js`) | La caméra PTZ : tourelle, zoom et sorties (Débutant) · Le système : vidéo, commande, courant et tally (Débutant) |
+| Mettre en réseau (`cours/ptz_reseau.js`) | Adresser une caméra : adresse, masque, passerelle, port (Débutant) · Easy IP Setup (Intermédiaire) · PoE et PoE+ (Intermédiaire) · La page web de la caméra (Intermédiaire) · Le pupitre AW-RP150 (Intermédiaire) |
+| Exploiter et dépanner (`cours/ptz_exploiter.js`) | Les flux IP : codecs, protocoles, débits (Avancé) · La QoS : DSCP, confiance, files (Avancé) · La recette et le dépannage (Expert) |
+
+Les manipulations calculent avec le modèle de l'atelier et `cours/ptz_calc.js` (champ d'une tourelle, matériel d'un banc,
+commande HTTP, charge d'un lien) ; fiches « ? » `content/terms_ptz.js` ; exercices `cours/exos/ptz.js` ; l'atelier est
+l'exercice pratique de la leçon Easy IP Setup (`x-labo-ptz`). La leçon « Monter une régie mobile » nomme désormais l'AW-UE20.
+
+**Les chiffres et leurs sources.** Modes d'emploi et FAQ Panasonic : 192.168.0.10 / 255.255.255.0 d'usine ; PoE+ IEEE
+802.3at pour les trois appareils (consommations en PoE+ : ordres de grandeur d'après les courants annoncés) ; AW-HE130 :
+4,5 à 90 mm, trois capteurs 1/2,86 pouce, compte d'usine admin / 12345, fenêtre d'Easy IP « Unlimited » depuis le
+micrologiciel 2.00 ; AW-UE20 : 3,9 à 46,8 mm, capteur 4K 1/2,8 pouce, compte à créer au premier accès, fenêtre « 20min »
+d'usine ; AW-RP150 : 200 caméras en IP, 5 en série, écran 7 pouces ; commandes HTTP de la spécification d'interface des
+caméras intégrées (vitesses 01 à 99, 50 à l'arrêt) ; les prises et sérigraphies des modes d'emploi AW-HE130 (VQT5L27A),
+AW-UE20 (DVQP2657) et AW-RP150 (DVQP1819, dont les menus SYSTEM, CONNECT SETTING, PMEM/TMEM). La place exacte des prises sur
+les panneaux n'a pas pu être relevée sur une photo : l'ordre dessiné est celui des modes d'emploi. L'affectation des molettes
+F1 à F4 est simplifiée ; AUTO IP SET, SCENE, USER et MAINTENANCE sont affichés mais pas simulés. L'adresse du pupitre (192.168.0.9) est celle des exemples de mise en
+service Panasonic. Les angles de champ sont calculés depuis le type du capteur (ordre de grandeur). La règle du mot de passe
+est une bonne pratique du banc, pas une exigence du constructeur.
+
+**Vérification.** Tests unitaires `tests/unit/ptz.test.mjs` (alimentation, qui joint qui, Easy IP Setup et sa fenêtre, page
+web, pupitre, QoS, étapes, calculs des leçons, défis solubles et jamais justes d'avance), `labo.test.mjs`, `cours.test.mjs`,
+`exos.test.mjs` ; suite `node tools/e2e.mjs ptz` : toute la mise en service faite à la main dans l'interface jusqu'à la
+recette, un défi réussi seul (avec le redémarrage de la caméra par son PoE), un défi avec la solution, la leçon, 390 px.
+
 ## v19.29 : un chapitre « La lumière » au Cours, et programmer la console dot2 pour de vrai
 
 **Le chapitre « La lumière »** (`cours/lumiere.js`), entre Le son et Le réseau, en trois parties et quatre niveaux :
@@ -2853,6 +2914,8 @@ node tools/shots.mjs dossier 1280 800 '["vision","hf"]'   # captures de postes
 | `labo/` (`index.js`, `ateliers.js`, `etats.js`, `defis.js`, `suivi.js`, `kit.js`), `styles/labo.css` | Le Labo (v19.28, lieu de Jouer qui remplace l'entrepôt) : un onglet par atelier, le panneau Défis (une question à la fois, deux aides, la solution, le score) et Comprendre (notions, fiches « ? », liens du Cours, référentiel cité) ; le catalogue des ateliers (compétences, savoirs, défis) ; l'état et les mesures de chaque atelier, `poser` (calcul pur) ; le moteur des défis sur celui de l'exercice du Cours, plus le réglage jugé par le modèle ; le suivi `PROG.labo` (noter, fusionner) ; les commandes liées à l'état et verrouillables |
 | `labo/calc/` (`optique.js`, `photometrie.js`, `sensito.js`, `dmx.js`) | Les modèles purs des ateliers : profondeur de champ, hyperfocale, tache de flou, champ ; intensité, éclairement, gradateur, gélatines, mireds, exposition, contraste ; courbes BT.709, knee, S-Log3, HLG, plage utile, gain ; univers, empreintes, 16 bits, DIP, trame, ligne, Art-Net, sACN |
 | `labo/calc/lumiere.js`, `labo/calc/show.js`, `labo/dot2/show_depart.js` | La lumière en calcul pur (familles de sources, angle solide, angle de champ, scintillement, uniformité) ; la console (lire un show de la dot2 : tracking, presets, couleur d'une lyre, effets, chaser ; pan et tilt sur 16 bits) ; le show de départ des défis de la console (v19.29) |
+| `labo/calc/ptz.js`, `labo/ateliers/ptz.js`, `labo/defis/ptz.js` | L'atelier Caméras PTZ (v19.30) : le modèle du banc (PoE et budget, qui joint qui, Easy IP Setup et sa fenêtre de 20 minutes, page web et compte, pupitre, QoS, étapes de la mise en service, recette), son interface (le banc, le PC, le pupitre, la fiche) et ses cinq défis ; le « Pas à pas » du panneau (`labo/index.js`) |
+| `cours/ptz.js`, `cours/ptz_camera.js`, `cours/ptz_reseau.js`, `cours/ptz_exploiter.js`, `cours/ptz_calc.js`, `cours/exos/ptz.js`, `content/terms_ptz.js` | Le chapitre « Les caméras PTZ » (v19.30) : trois parties, dix leçons, leurs calculs, leurs exercices en autonomie et leurs fiches « ? » |
 | `cours/lumiere.js`, `cours/lumiere_mesure.js`, `cours/lumiere_eclairer.js`, `cours/lumiere_commande.js`, `cours/exos/lumiere_*.js`, `content/terms_lumiere_*.js` | Le chapitre « La lumière » (v19.29) : trois parties, treize leçons, leurs exercices en autonomie et leurs fiches « ? » |
 | `labo/ateliers/` (un fichier par atelier), `labo/defis/` (un fichier par atelier), `labo/dot2/simulateur_dot2.html`, `content/terms_labo.js` | L'interface de chaque atelier (dessins en canvas, commandes, afficheurs) ; ses défis notés ; la console dot2 (page complète gardée telle quelle, ouverte dans un cadre) ; les fiches « ? » du Labo |
 | `ui/cours_ui.js` | L'espace Cours : un seul sommaire (chapitres rangés par niveau, parties), « Mon parcours », chemin d'un chapitre, la page de lecture d'une leçon qui se dévoile (en-tête, étapes collantes, schéma légendé, manipulation, explication, car, mots de la leçon, référentiel, quiz, exercice en autonomie, exercices pratiques), glossaire, postes, matériel |

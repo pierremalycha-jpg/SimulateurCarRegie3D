@@ -17,11 +17,11 @@ const shot = async (n, w = 400) => { await A.waitForTimeout(w); await A.screensh
 // ---------------- Jouer : le lieu « Le Labo » et ses ateliers ----------------
 T.check('Jouer : trois lieux, le Labo à la place de l\'entrepôt', await ev(() => [...document.querySelectorAll('#start .jo-lieux .lx')].map((b) => b.dataset.lieu).join(',') === 'car,labo,concert'));
 await A.click('.lx[data-lieu="labo"]'); await A.waitForTimeout(300);
-T.check('le Labo : un mode par atelier (5), la coopération désactivée', await ev(() => [...document.querySelectorAll('#start .jo-mode')].map((b) => b.dataset.mode).join(',') === 'labo:optique,labo:photometrie,labo:sensito,labo:dmx,labo:dot2' && document.querySelector('.jo-team-seg [data-v="coop"]').disabled));
+T.check('le Labo : un mode par atelier (6), la coopération désactivée', await ev(() => [...document.querySelectorAll('#start .jo-mode')].map((b) => b.dataset.mode).join(',') === 'labo:optique,labo:photometrie,labo:sensito,labo:dmx,labo:dot2,labo:ptz' && document.querySelector('.jo-team-seg [data-v="coop"]').disabled));
 await shot('01-jouer');
 await A.click('.jo-mode[data-mode="labo:optique"]'); await A.click('#st-antenne');
-T.check('l\'atelier Optique s\'ouvre plein écran, la boucle du car en pause', await until(A, () => window.__dbg.labo().LB.open && !document.getElementById('labo').hidden && document.querySelectorAll('#labo .lb-tab').length === 5 && !!document.querySelector('#labo .lb-optique canvas'), null, 20000));
-T.check('cinq onglets, celui d\'Optique sélectionné', await ev(() => document.querySelector('#labo .lb-tab[aria-selected="true"]')?.dataset.atelier === 'optique'));
+T.check('l\'atelier Optique s\'ouvre plein écran, la boucle du car en pause', await until(A, () => window.__dbg.labo().LB.open && !document.getElementById('labo').hidden && document.querySelectorAll('#labo .lb-tab').length === 6 && !!document.querySelector('#labo .lb-optique canvas'), null, 20000));
+T.check('six onglets, celui d\'Optique sélectionné', await ev(() => document.querySelector('#labo .lb-tab[aria-selected="true"]')?.dataset.atelier === 'optique'));
 await shot('02-optique', 800);
 
 // ---------------- Optique : les commandes changent les mesures ----------------
