@@ -73,6 +73,7 @@ const SUITES = [
   // les comptes : contre l'émulateur Firebase (Java ; firebase-tools par npx ou FIREBASE_TOOLS), lancé par la suite elle-même
   ['comptes', 'comptes', [], 20],
   ['profil', 'profil', [], 20],
+  ['matching', 'matching', [], 15],
 ];
 
 const args = process.argv.slice(2);
