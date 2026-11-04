@@ -128,6 +128,39 @@ const codes = await page.evaluate(async (pc) => {
 }, PORT_CAM);
 R.check('relais : 400 sans url, 403 hors réseau privé, hors /cgi-bin/ et en https, 200 vers la caméra', codes.join(',') === '400,403,403,403,200', codes.join(','));
 
+// ---- la page ouverte d'un double-clic (file://), sans serveur : démonstration, valeurs en cours à la main, commandes directes ----
+const F = await b.newPage({ viewport: { width: 1280, height: 900 } });
+F.setDefaultTimeout(180000);
+F.on('pageerror', (e) => R.errors.push('FILE PAGEERROR: ' + e.message));
+F.on('console', (m) => { if (m.type() === 'error' && !/net::|favicon|status of 40[03]|Failed to fetch/.test(m.text())) R.errors.push('file: ' + m.text()); });
+await F.goto('file://' + path.join(ROOT, 'dist', 'matching.html'));
+await F.waitForFunction('!!window.__dbgMatching');
+R.check('file:// : la page s\'ouvre, sans relais', await F.evaluate(async () => !!document.querySelector('.carte.a') && !(await window.__dbgMatching.relaisPresent())));
+R.check('file:// : la référence propose d\'abord l\'image de la FB80, la PTZ la carte d\'acquisition', await F.evaluate(() => /Image de la FB80/.test(document.querySelector('.carte.a .sources .btn').textContent) && /Carte d'acquisition/.test(document.querySelector('.carte.b .sources .btn').textContent) && /FB80/.test(document.querySelector('.carte.a h3').textContent) && /PTZ/.test(document.querySelector('.carte.b h3').textContent)));
+await F.locator('.carte.a [data-source=demo]').click();
+await F.locator('.carte.b [data-source=demo]').click();
+R.check('file:// : la démonstration donne un diagnostic', await until(F, () => !!window.__dbgMatching.S.diag, null, 20000));
+await F.locator('.carte.b [data-source=ip]').click();
+R.check('file:// : l\'instantané IP explique qu\'il faut la carte d\'acquisition ou un fichier', await until(F, () => /carte d'acquisition/.test(document.querySelector('.carte.b .message').textContent), null, 5000));
+await F.locator('.carte.b [data-lire]').click();
+R.check('file:// : « Lire la caméra » renvoie aux valeurs en cours à entrer, dépliées', await until(F, () => document.querySelector('.carte.b .courant').open && /valeurs en cours/.test(document.querySelector('.carte.b .message').textContent), null, 5000));
+R.check('file:// : douze champs de valeurs en cours pour la Panasonic, aucun pour la Sony', await F.evaluate(() => document.querySelectorAll('.carte.b [data-courant]').length === 12 && document.querySelector('.carte.a .courant').hidden));
+await F.evaluate(() => { document.querySelector('.carte.b .courant').open = true; });
+await F.locator('.carte.b [data-courant=gainR]').fill('12');
+R.check('file:// : une valeur entrée se retrouve dans la consigne (« en cours +12 »)', await until(F, () => window.__dbgMatching.S.cams.B.courant.gainR === 12 && /en cours \+12/.test(document.querySelector('#raccord').textContent), null, 5000));
+// la démonstration mise de côté : une vraie adresse, la commande part directement (no-cors) à la fausse caméra
+await F.evaluate(() => { window.__dbgMatching.S.cams.B.source = 'fichier'; });
+await F.locator('.carte.b input[type=text]').fill(`127.0.0.1:${PORT_CAM}`);
+const avantDirect = recues.length;
+await F.locator('#raccord .reglage:nth-child(2) .cote .btn').first().click();
+R.check('file:// : Appliquer envoie ORI directement à la caméra, depuis +12 en cours', await until(F, () => /Fait/.test(document.querySelector('#raccord .reglage:nth-child(2) .cote .btn').textContent), null, 20000) && recues.slice(avantDirect).some((c) => /^ORI:/.test(c) && parseInt(c.slice(4), 16) - 0x96 > 12), recues.slice(avantDirect).join(' '));
+const avantPrep = recues.length;
+await F.locator('.carte.b [data-preparer]').click();
+R.check('file:// : Préparer la Panasonic envoie AWB A et matrice User', await until(F, (n) => window.__dbgMatching.S.cams.B.message.includes('préparée'), null, 20000) && recues.slice(avantPrep).join(' ') === 'OAW:1 OSE:31:3', recues.slice(avantPrep).join(' '));
+await F.locator('#raccord [data-copier]').click();
+R.check('file:// : « Copier les consignes » (texte prêt, bouton « Copié » ou alerte)', await until(F, () => /Copié/.test(document.querySelector('#raccord [data-copier]').textContent) || !document.querySelector('#alerte').hidden, null, 5000));
+await F.screenshot({ path: OUT + '/m6-file.png', fullPage: true });
+
 // ---- téléphone ----
 await page.setViewportSize({ width: 390, height: 780 });
 await page.waitForTimeout(300);

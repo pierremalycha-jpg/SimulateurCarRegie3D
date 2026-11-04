@@ -1,13 +1,17 @@
 // @ts-check
 // ----------------------------------------------------------------------------------
 // Le matching à la mire (v19.30) : la page. Deux caméras (A la référence, B à raccorder) filment la même
-// mire ; on prend une image de chacune (caméra ou carte d'acquisition vue comme une webcam, fichier,
-// instantané IP d'une Panasonic par le relais de tools/matching.mjs, ou la démonstration), on pointe les
+// mire ; on prend une image de chacune (une image du signal de la FB80 pour A ; la carte d'acquisition vue
+// comme une webcam pour la PTZ ; un fichier ; l'instantané IP d'une Panasonic par le relais de
+// tools/matching.mjs ; ou la démonstration), on pointe les
 // quatre coins de la zone des pastilles, la page moyenne chaque pastille, dessine la parade des gris et le
 // vecteurscope des couleurs, puis donne, dans l'ordre du line-up, ce qu'il faut régler sur B (calc.js) : en
 // unités du menu de la caméra (cameras.js), appliqué d'un clic sur une Panasonic (panasonic.js), à entrer
 // au RCP sur la Sony. Après chaque tour, « J'ai réglé B : remesurer » : la page remesure, apprend l'échelle
 // réelle des réglages et affine. Tout le calcul est dans calc.js ; ici, le DOM et les sources d'images.
+// La page marche aussi ouverte d'un double-clic (file://), sans serveur : les commandes partent alors
+// directement à la caméra (le navigateur les envoie sans laisser lire la réponse), et les valeurs en cours
+// de la caméra, qu'on ne peut plus lire, s'entrent à la main.
 // ----------------------------------------------------------------------------------
 import { MIRES, MIRE_DEFAUT, neutres, colorees } from './mires.js';
 import { CAMERAS, CAMERA_DEFAUT_A, CAMERA_DEFAUT_B, borner, enUnites, formatValeur } from './cameras.js';
@@ -75,12 +79,23 @@ async function relais(url) {
 }
 async function relaisPresent() {
   if (S.relais != null) return S.relais;
+  if (!/^https?:$/.test(location.protocol)) return (S.relais = false); // page ouverte d'un double-clic : pas de serveur derrière
   try { const r = await fetch('/relais', { cache: 'no-store' }); S.relais = r.status === 400; } catch (e) { S.relais = false; }
   return S.relais;
 }
+/** sans serveur : la commande part directement à la caméra ; le navigateur l'envoie (mode no-cors) mais ne laisse pas lire
+ * la réponse ; la caméra l'exécute quand même. Seule une caméra injoignable se remarque. */
+async function envoyerDirect(c, cmds) {
+  for (const cmd of cmds) {
+    try { await fetch(urlCommande(c.adresse, cmd), { mode: 'no-cors', cache: 'no-store' }); } catch (e) { throw new Error(`La caméra ${c.adresse} ne répond pas (${cmd})`, { cause: e }); }
+    await new Promise((res) => setTimeout(res, 40));
+  }
+  return [];
+}
 /** envoie des commandes à une Panasonic, l'une après l'autre ; lève une erreur si la caméra refuse */
 async function envoyer(c, cmds) {
-  const fam = modele(c).famille; if (!fam || !c.adresse) throw new Error('adresse de la caméra manquante');
+  const fam = modele(c).famille; if (!fam || !c.adresse) throw new Error('Indiquez l\'adresse IP de la caméra');
+  if (!(await relaisPresent())) return envoyerDirect(c, cmds);
   const reponses = [];
   for (const cmd of cmds) {
     const t = (await (await relais(urlCommande(c.adresse, cmd))).text()).trim();
@@ -91,21 +106,27 @@ async function envoyer(c, cmds) {
   }
   return reponses;
 }
-/** lit les valeurs en cours des réglages d'une Panasonic */
+/** lit les valeurs en cours des réglages d'une Panasonic (par le relais seulement : sans serveur, on les entre à la main) */
 async function lireCamera(c) {
   const fam = modele(c).famille; if (!fam) return;
+  if (!(await relaisPresent())) { c.el.courant.open = true; throw new Error('Page ouverte sans le serveur : le navigateur ne laisse pas lire la caméra. Entrez ses valeurs en cours ci-dessous (après une balance automatique, les gains sont à 0).'); }
+  if (!c.adresse) throw new Error('Indiquez l\'adresse IP de la caméra');
   const noms = ['gainR', 'gainB', 'pedestal', 'pedestalR', 'pedestalB', 'gamma', 'temperature', 'saturation', 'matrice.rg', 'matrice.rb', 'matrice.gr', 'matrice.gb', 'matrice.br', 'matrice.bg'];
   for (const nom of noms) {
     const q = requete(fam, nom); if (!q) continue;
     const lu = lireReponse(fam, (await (await relais(urlCommande(c.adresse, q))).text()).trim());
     if (lu && 'reglage' in lu) c.courant[lu.reglage] = lu.valeur;
   }
+  rafraichirCourant(c);
 }
+/** prépare une Panasonic à la peinture manuelle : balance en AWB A (les gains R et B agissent), matrice sur User */
+async function preparerCamera(c) { await envoyer(c, ['OAW:1', 'OSE:31:3']); }
 
 // ---------------- les sources d'images ----------------
 function arreterFlux(c) { if (c.flux) { for (const t of c.flux.getTracks()) t.stop(); c.flux = null; } const v = c.el.video; v.srcObject = null; v.hidden = true; }
 async function ouvrirWebcam(c, deviceId) {
   arreterFlux(c);
+  const autre = S.cams[c.lettre === 'A' ? 'B' : 'A']; if (autre.flux) { arreterFlux(autre); dire(autre, 'Vidéo arrêtée (une seule entrée en direct à la fois) : l\'image figée reste.'); }
   if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) throw new Error('Pas de caméra dans ce navigateur (il faut une page en https ou sur localhost)');
   c.flux = await navigator.mediaDevices.getUserMedia({ video: { deviceId: deviceId ? { exact: deviceId } : undefined, width: { ideal: 1920 }, height: { ideal: 1080 } }, audio: false });
   const v = c.el.video; v.srcObject = c.flux; v.hidden = false; await v.play().catch(() => {});
@@ -126,8 +147,8 @@ function chargerFichier(c, fichier, garderCoins = false) {
   });
 }
 async function instantane(c, garderCoins = false) {
-  if (!c.adresse) throw new Error('Indiquez l\'adresse de la caméra');
-  if (!(await relaisPresent())) throw new Error('L\'instantané passe par le relais : lancez « node tools/matching.mjs » et ouvrez la page qu\'il affiche');
+  if (!(await relaisPresent())) throw new Error('Page ouverte sans le serveur : le navigateur ne laisse pas mesurer une image venue de la caméra. Enregistrez l\'image depuis la page web de la caméra puis « Image… », ou passez par la carte d\'acquisition.');
+  if (!c.adresse) throw new Error('Indiquez l\'adresse IP de la caméra');
   const blob = await (await relais(urlInstantane(c.adresse))).blob();
   await chargerFichier(c, blob, garderCoins);
 }
@@ -338,14 +359,14 @@ async function appliquer(c, nom, unites, texte) {
   const r = modele(c).reglages[nom.split('.')[0]];
   const cible = borner(r, (c.courant[nom] ?? 0) + unites);
   const cmds = commandes(fam, nom, cible); if (!cmds) throw new Error(`${nom} : pas de commande sur ce modèle`);
-  await envoyer(c, cmds); c.courant[nom] = cible;
+  await envoyer(c, cmds); c.courant[nom] = cible; rafraichirCourant(c);
   noterApplique(c, nom, unites, texte);
 }
 async function appliquerAbsolu(c, nom, valeur, texte) {
   if (c.source === 'demo') { appliquerDemo(nom, 0, valeur); c.courant[nom] = valeur; S.appliques.push(texte); return; }
   const fam = modele(c).famille; if (!fam) return;
   const cmds = commandes(fam, nom, valeur); if (!cmds) throw new Error(`${nom} : pas de commande sur ce modèle`);
-  await envoyer(c, cmds); c.courant[nom] = valeur; S.appliques.push(texte);
+  await envoyer(c, cmds); c.courant[nom] = valeur; rafraichirCourant(c); S.appliques.push(texte);
 }
 
 function dessinerRaccord() {
@@ -433,6 +454,7 @@ function dessinerRaccord() {
   }
   root.append(h('div', { class: 'actions' },
     h('button', { class: 'btn prim', onclick: remesurer }, 'J\'ai réglé la caméra B : remesurer'),
+    h('button', { class: 'btn', 'data-copier': true, onclick: copierConsignes }, 'Copier les consignes'),
     h('span', { class: 'gris petit' }, 'la page remesure B, compare à ce qu\'elle a demandé, apprend l\'échelle des réglages et affine')));
 }
 const nomPastille = (id) => (S.mire.pastilles.find((p) => p.id === id) || { nom: id }).nom;
@@ -470,55 +492,86 @@ function carte(c) {
   const devices = /** @type {HTMLSelectElement} */ (h('select', { 'aria-label': 'Caméra ou carte d\'acquisition', hidden: true, onchange: (ev) => ouvrirWebcam(c, ev.target.value).catch((e) => dire(c, String(e.message || e), true)) }));
   const video = h('video', { playsinline: true, muted: true, hidden: true });
   const canvas = h('canvas', { class: 'coins', hidden: true, onclick: (ev) => clicImage(c, ev) });
-  const vide = h('div', { class: 'vide' }, 'Choisissez une source, puis cliquez les quatre coins de la zone des pastilles : en haut à gauche, en haut à droite, en bas à droite, en bas à gauche.');
+  const vide = h('div', { class: 'vide' }, c.lettre === 'A' ? 'Chargez une image du signal de la FB80 avec la mire (ou capturez-la par la carte d\'acquisition), puis cliquez les quatre coins de la zone des pastilles : en haut à gauche, en haut à droite, en bas à droite, en bas à gauche.' : 'Branchez la PTZ sur la carte d\'acquisition et capturez (ou chargez une image), puis cliquez les quatre coins de la zone des pastilles, dans le même ordre.');
   const etat = h('div', { class: 'etat' }, '');
   const image = h('div', { class: 'image' }, video, canvas, vide, etat);
   const note = h('p', { class: 'note' }, m.note || '');
   const message = h('div', { class: 'message' }, '');
   const pastilles = h('div', { class: 'pastilles' });
   const sourceBtn = (id, texte, action) => h('button', { class: 'btn', 'data-source': id, onclick: async (ev) => { c.source = id; marquerSource(c); try { await action(ev); } catch (e) { dire(c, String(e.message || e), true); } } }, texte);
-  const fichier = h('label', { class: 'btn fichier' }, 'Image…', h('input', { type: 'file', accept: 'image/*', 'aria-label': `Image de la caméra ${c.lettre}`, onchange: async (ev) => { const f = ev.target.files[0]; if (!f) return; c.source = 'fichier'; marquerSource(c); try { await chargerFichier(c, f); dire(c, `${f.name} : placez la mire.`); } catch (e) { dire(c, String(e.message || e), true); } } }));
+  const fichier = h('label', { class: 'btn fichier' + (c.lettre === 'A' ? ' prim' : ''), 'data-source': 'fichier' }, c.lettre === 'A' ? 'Image de la FB80…' : 'Image…', h('input', { type: 'file', accept: 'image/*', 'aria-label': `Image de la caméra ${c.lettre}`, onchange: async (ev) => { const f = ev.target.files[0]; if (!f) return; c.source = 'fichier'; marquerSource(c); try { await chargerFichier(c, f); dire(c, `${f.name} : placez la mire.`); } catch (e) { dire(c, String(e.message || e), true); } } }));
+  const webcam = sourceBtn('webcam', c.lettre === 'A' ? 'Carte d\'acquisition' : 'Carte d\'acquisition / caméra', async () => {
+    await ouvrirWebcam(c, devices.value || undefined);
+    const list = (await navigator.mediaDevices.enumerateDevices()).filter((d) => d.kind === 'videoinput');
+    devices.replaceChildren(...list.map((d, i) => h('option', { value: d.deviceId }, d.label || `Caméra ${i + 1}`))); devices.hidden = list.length < 2;
+    dire(c, 'Vidéo en direct : cadrez la mire, puis « Capturer ».');
+  });
+  if (c.lettre === 'B') webcam.classList.add('prim');
   const sources = h('div', { class: 'sources' },
-    sourceBtn('webcam', 'Caméra / carte d\'acquisition', async () => {
-      await ouvrirWebcam(c, devices.value || undefined);
-      const list = (await navigator.mediaDevices.enumerateDevices()).filter((d) => d.kind === 'videoinput');
-      devices.replaceChildren(...list.map((d, i) => h('option', { value: d.deviceId }, d.label || `Caméra ${i + 1}`))); devices.hidden = list.length < 2;
-      dire(c, 'Vidéo en direct : cadrez la mire, puis « Capturer ».');
-    }),
-    fichier,
+    ...(c.lettre === 'A' ? [fichier, webcam] : [webcam, fichier]),
     sourceBtn('ip', 'Instantané IP', async () => { await instantane(c); dire(c, 'Instantané reçu : placez la mire.'); }),
-    sourceBtn('demo', 'Démonstration', async () => { if (c.lettre === 'B') { S.demoB = null; c.courant = {}; } demo(c); dire(c, c.lettre === 'A' ? 'Caméra de référence simulée (BT.709).' : 'Caméra simulée avec des défauts : noir, balance, exposition, gamma, matrice. Appliquez, puis remesurez.'); }));
+    sourceBtn('demo', 'Démonstration', async () => { if (c.lettre === 'B') { S.demoB = null; c.courant = {}; rafraichirCourant(c); } demo(c); dire(c, c.lettre === 'A' ? 'Caméra de référence simulée (BT.709).' : 'Caméra simulée avec des défauts : noir, balance, exposition, gamma, matrice. Appliquez, puis remesurez.'); }));
+  // les valeurs en cours d'une Panasonic : lues par le relais, ou entrées à la main (page sans serveur)
+  const CHAMPS = [['gainR', 'R GAIN'], ['gainB', 'B GAIN'], ['pedestal', 'PEDESTAL'], ['pedestalR', 'R PED.'], ['pedestalB', 'B PED.'], ['gamma', 'GAMMA'], ['matrice.rg', 'R-G'], ['matrice.rb', 'R-B'], ['matrice.gr', 'G-R'], ['matrice.gb', 'G-B'], ['matrice.br', 'B-R'], ['matrice.bg', 'B-G']];
+  const courant = h('details', { class: 'courant' }, h('summary', null, 'Valeurs en cours de la caméra'),
+    h('p', { class: 'note' }, 'Ce que la caméra affiche aujourd\'hui : la page part de là pour donner la nouvelle valeur. Après une balance automatique, les gains R et B sont à 0 ; une caméra d\'usine a sa matrice à 0 et son gamma à 0,45.'),
+    h('div', { class: 'grille' }, ...CHAMPS.map(([nom, lib]) => h('label', null, h('span', null, lib), h('input', { type: 'number', step: nom === 'gamma' ? '0.01' : '1', 'data-courant': nom, 'aria-label': `${lib} en cours`, oninput: (ev) => { const v = parseFloat(ev.target.value); if (Number.isFinite(v)) c.courant[nom] = v; else delete c.courant[nom]; dessinerRaccord(); } })))),
+    h('div', { class: 'actions' }, h('button', { class: 'btn petit', 'data-preparer': true, onclick: async (ev) => { const b = ev.currentTarget; b.disabled = true; try { await preparerCamera(c); dire(c, 'Caméra préparée : balance en AWB A, matrice sur User.'); } catch (e) { dire(c, String(e.message || e), true); } b.disabled = false; } }, 'Préparer la Panasonic (AWB A, matrice User)')));
   const actions = h('div', { class: 'actions' },
     h('button', { class: 'btn prim', onclick: () => { try { capturerVideo(c); dire(c, 'Image figée : placez la mire.'); } catch (e) { dire(c, String(e.message || e), true); } } }, 'Capturer'),
     h('button', { class: 'btn', onclick: () => { c.coins = []; c.mesure = null; dessinerPastilles(c); if (c.image) dessinerImage(c); diagnostiquer(); } }, 'Effacer les coins'),
     h('button', { class: 'btn', onclick: () => { if (c.coinsDemo) { c.coins = c.coinsDemo.map((p) => ({ ...p })); mesurer(c); } else if (c.coins.length === 4) mesurer(c); else dire(c, 'Placez d\'abord les quatre coins.'); } }, 'Mesurer'),
     h('button', { class: 'btn', 'data-lire': true, onclick: async (ev) => { const b = ev.currentTarget; b.disabled = true; try { await lireCamera(c); dire(c, 'Réglages en cours lus : ' + Object.entries(c.courant).map(([k, v]) => `${k} ${v}`).join(', ')); dessinerRaccord(); } catch (e) { dire(c, String(e.message || e), true); } b.disabled = false; } }, 'Lire la caméra'));
   const el = h('div', { class: `carte ${c.lettre.toLowerCase()}` },
-    h('div', { class: 'titre' }, h('div', { class: 'lettre' }, c.lettre), h('div', null, h('h3', null, c.lettre === 'A' ? 'Caméra de référence' : 'Caméra à raccorder'), h('div', { class: 'role' }, c.lettre === 'A' ? 'celle qu\'on ne touche plus' : 'celle qu\'on règle sur A'))),
+    h('div', { class: 'titre' }, h('div', { class: 'lettre' }, c.lettre), h('div', null, h('h3', null, c.lettre === 'A' ? 'La référence : l\'image de la FB80' : 'La PTZ à caler'), h('div', { class: 'role' }, c.lettre === 'A' ? 'une image de son signal, avec la mire ; on n\'y touche plus' : 'réglée jusqu\'à rejoindre A'))),
     h('div', { class: 'champs' }, h('label', { class: 'champ' }, h('span', null, 'Modèle'), select), h('label', { class: 'champ' }, h('span', null, 'Adresse IP (Panasonic)'), adresse), h('label', { class: 'champ large', hidden: true }, h('span', null, 'Entrée vidéo'), devices)),
-    note, sources, image, actions, pastilles, message);
-  c.el = { root: el, select, adresse, devices, video, canvas, vide, etat, image, note, message, pastilles, actions };
+    note, sources, image, actions, pastilles, message, courant);
+  c.el = { root: el, select, adresse, devices, video, canvas, vide, etat, image, note, message, pastilles, actions, courant };
   rafraichirCarte(c);
   return el;
+}
+/** les champs des valeurs en cours suivent c.courant */
+function rafraichirCourant(c) {
+  if (!c.el) return;
+  for (const i of c.el.courant.querySelectorAll('[data-courant]')) { const v = c.courant[i.dataset.courant]; if (document.activeElement !== i) i.value = v == null ? '' : String(v); }
 }
 function marquerSource(c) { c.el.root.querySelectorAll('[data-source]').forEach((b) => b.classList.toggle('actif', b.dataset.source === c.source)); }
 function rafraichirCarte(c) {
   const m = modele(c), cgi = m.pilotage === 'cgi';
   c.el.adresse.disabled = !cgi; c.el.note.textContent = (m.note || '') + (m.aVerifier ? ' Modèle à vérifier sur la caméra.' : '');
   c.el.root.querySelector('[data-source=ip]').disabled = !cgi; c.el.root.querySelector('[data-lire]').disabled = !cgi;
-  c.el.devices.parentElement.hidden = c.el.devices.hidden;
+  c.el.courant.hidden = !cgi; c.el.devices.parentElement.hidden = c.el.devices.hidden;
+  rafraichirCourant(c);
+}
+/** le texte des consignes, à coller dans un compte rendu ou à emporter au RCP */
+function texteConsignes() {
+  const d = S.diag; if (!d) return '';
+  const lignes = [`Matching à la mire — ${new Date().toLocaleString('fr-FR')}`, `Référence A : ${modele(S.cams.A).nom} · à caler B : ${modele(S.cams.B).nom}`, `ΔE moyen ${f2(d.ecart.avant.moyen)} (max ${f2(d.ecart.avant.max)} sur ${nomPastille(d.ecart.avant.pire)}) ; prévu après réglage ${f2(d.ecart.apres.moyen)}`, ''];
+  for (const bloc of document.querySelectorAll('#raccord .reglage')) {
+    lignes.push(`${bloc.querySelector('.n').textContent}. ${bloc.querySelector('h3').textContent} — ${bloc.querySelector('.lu').textContent}`);
+    for (const l of bloc.querySelectorAll('.ligne')) lignes.push(`   ${l.querySelector('.lib').textContent} : ${l.querySelector('.val').textContent}${l.querySelector('.approx') ? ' (' + l.querySelector('.approx').textContent + ')' : ''}`);
+    for (const t of bloc.querySelectorAll('.teintes .t')) lignes.push(`   ${t.textContent}`);
+  }
+  return lignes.join('\n');
+}
+async function copierConsignes(ev) {
+  const b = ev.currentTarget, t = texteConsignes(); if (!t) return;
+  try { await navigator.clipboard.writeText(t); b.textContent = 'Copié'; } catch (e) {
+    const ta = /** @type {HTMLTextAreaElement} */ (h('textarea', { style: 'position:fixed;left:-9999px' }, t)); document.body.append(ta); ta.select(); try { document.execCommand('copy'); b.textContent = 'Copié'; } catch (e2) { alerte('Impossible de copier : sélectionnez le texte du raccord.'); } ta.remove();
+  }
+  setTimeout(() => { b.textContent = 'Copier les consignes'; }, 2500);
 }
 function page() {
   charger();
   const app = $('#app');
   app.append(
-    h('header', { class: 'en-tete' }, h('h1', null, 'Matching à la mire'), h('span', { class: 'sous' }, 'TIEE Simulator · raccorder deux caméras sur une ColorChecker')),
-    h('p', { class: 'essentiel' }, h('b', null, 'La même mire, la même lumière, les deux caméras.'), ' La page mesure chaque pastille sur la caméra de référence et sur celle à raccorder, puis dit quoi régler sur la seconde, dans l\'ordre du line-up : les noirs, la balance, l\'exposition, le gamma, la matrice. On applique, on remesure, elle affine.'),
+    h('header', { class: 'en-tete' }, h('h1', null, 'Matching à la mire'), h('span', { class: 'sous' }, 'TIEE Simulator · caler une PTZ sur la FB80 avec une ColorChecker')),
+    h('p', { class: 'essentiel' }, h('b', null, 'La même mire, la même lumière, les deux caméras.'), ' Une image du signal de la FB80 avec la mire sert de référence ; la PTZ, prise par la carte d\'acquisition, se cale dessus. La page mesure chaque pastille sur les deux, puis dit quoi régler sur la PTZ dans l\'ordre du line-up : les noirs, la balance, l\'exposition, le gamma, la matrice. On applique, on remesure, elle affine.'),
     h('ol', { class: 'etapes' }, ...['Deux images', 'La mire placée', 'Les mesures', 'Le raccord'].map((t, i) => h('li', null, h('span', { class: 'n' }, String(i + 1)), t))),
     h('div', { id: 'alerte', class: 'message erreur', role: 'alert', hidden: true }),
     h('h2', null, '1 · Les caméras'),
     h('div', { class: 'cameras' }, carte(S.cams.A), carte(S.cams.B)),
-    h('p', { class: 'note' }, 'La vidéo en direct demande une page sur localhost ou en https ; une carte d\'acquisition USB (SDI vers UVC) se présente comme une webcam. Mesurez toutes les caméras par le même chemin : la mesure est relative, le chemin ne compte pas s\'il est le même.'),
+    h('p', { class: 'note' }, 'Avec une seule carte d\'acquisition USB (SDI vers UVC, vue comme une webcam) : branchez la FB80, « Carte d\'acquisition » puis « Capturer » sur A ; branchez la PTZ, capturez sur B. L\'image de la FB80 peut aussi être un fichier enregistré depuis la carte (une capture du signal, pas une photo de l\'écran). Mesurez les deux par le même chemin : la mesure est relative, le chemin ne compte pas s\'il est le même. Ouverte d\'un double-clic, la page marche sans serveur ; avec « node tools/matching.mjs », elle lit en plus les réglages de la Panasonic et son instantané.'),
     h('h2', null, '2 · La mesure'),
     h('div', { class: 'mesure' },
       h('div', { class: 'scope' }, h('h3', null, 'Parade des gris'), h('canvas', { id: 'parade', width: 560, height: 260, 'aria-label': 'Parade des six gris, rouge, vert, bleu' }), h('div', { class: 'legende' }, h('span', { class: 'ia' }, h('i'), 'A : trait'), h('span', { class: 'ib' }, h('i'), 'B : barre'))),
@@ -529,6 +582,7 @@ function page() {
     h('div', { id: 'journal', class: 'journal' }),
     h('p', { class: 'pied' }, `TIEE Simulator ${typeof __APP_VERSION__ === 'string' ? __APP_VERSION__ : ''} · BTS Audiovisuel de Saint-Quentin · les échelles des menus sont estimées puis apprises ; vérifiez toujours sur un visage.`));
   diagnostiquer(); dessinerJournal();
+  relaisPresent().then(() => { for (const c of [S.cams.A, S.cams.B]) rafraichirCarte(c); });
 }
 page();
 
