@@ -16,6 +16,11 @@
 //     grandeur : la couleur perçue d'un mélange n'est pas exactement là).
 //   - Exposition au luxmètre (cellule plate) : N² ÷ t = E × S ÷ C, C = 250 (constante d'étalonnage
 //     des cellules plates en lux ; 1 000 lx, ISO 800, 1/50 s : f/8).
+//   - Sur le plateau (v19.31) : un projecteur est posé à d mètres du sujet (au sol) et à phi degrés de la
+//     direction de la caméra, sa tête à h mètres ; la cellule du luxmètre est à H_CELLULE, tournée vers la
+//     caméra. La distance qui compte est celle de la tête à la cellule, et l'incidence combine l'angle au sol
+//     et l'élévation : cos i = cos ε × cos φ. Le fond (un mur à FOND mètres derrière le sujet, face à lui)
+//     reçoit ce que le faisceau, visé sur le sujet, laisse passer : hors de l'axe, plus loin, en incidence.
 // Les projecteurs sont des ordres de grandeur de fiches constructeur (Fresnel 1 kW halogène,
 // Fresnel HMI 575 W, panneau LED bicolore), pas les mesures d'un modèle précis.
 // ----------------------------------------------------------------------------------
@@ -115,4 +120,40 @@ export const luminance = (E, rho) => rho * E / Math.PI;
 export function contraste(Ep, Ed) {
   if (Ed <= 0) return { rapport: Infinity, diaphs: Infinity };
   const r = (Ep + Ed) / Ed; return { rapport: r, diaphs: Math.log2(r) };
+}
+
+// ---------------- le plateau : hauteur, incidence réelle, fond ----------------
+/** la hauteur de la cellule du luxmètre au sujet (m) et la distance du fond derrière le sujet (m), sur le plateau du Labo */
+export const H_CELLULE = 1.45;
+export const FOND = 8.5;
+const clamp1 = (v) => Math.max(-1, Math.min(1, v));
+/**
+ * la géométrie d'un projecteur posé à d (m, au sol) et phi (degrés) du sujet, sa tête à h (m, H_CELLULE si absent) :
+ * la distance de la tête à la cellule, l'élévation (rad, positive au-dessus de la cellule) et l'incidence sur la cellule (degrés)
+ */
+export function geometrieProjecteur(p) {
+  const h = Number.isFinite(p.h) ? p.h : H_CELLULE;
+  const dz = h - H_CELLULE, d = Math.max(1e-6, p.d), d3 = Math.hypot(d, dz), elev = Math.atan2(dz, d);
+  const incidence = Math.acos(clamp1(Math.cos(elev) * Math.cos(rad(p.phi || 0)))) * 180 / Math.PI;
+  return { d3, elev, incidence };
+}
+/** l'éclairement reçu à la cellule par un projecteur réglé et posé (distance et angle au sol, hauteur), avec sa géométrie */
+export function eclairageSujet(p) {
+  const g = geometrieProjecteur(p);
+  return { ...eclairage({ ...p, d: g.d3, incidence: g.incidence }), ...g };
+}
+/**
+ * l'éclairement que ce projecteur, visé sur le sujet (à alpha degrés près), laisse sur le fond : un mur à fond mètres
+ * derrière le sujet, face à lui, au point à la hauteur de la cellule. Le monde : le sujet à l'origine, la caméra vers −z,
+ * le projecteur au sol en (−d sin φ, −d cos φ), comme sur le plateau (plateau/calc.js).
+ */
+export function eclairageFond(p, fond = FOND) {
+  const h = Number.isFinite(p.h) ? p.h : H_CELLULE, a = rad(p.phi || 0), g = geometrieProjecteur(p);
+  const px = -p.d * Math.sin(a), pz = -p.d * Math.cos(a);
+  const yaw = Math.atan2(-px, -pz) + Math.sign(p.phi || 1) * rad(p.alpha || 0);
+  const ax = Math.sin(yaw) * Math.cos(g.elev), ay = -Math.sin(g.elev), az = Math.cos(yaw) * Math.cos(g.elev);
+  const vx = -px, vy = H_CELLULE - h, vz = fond - pz; const L = Math.hypot(vx, vy, vz) || 1e-6;
+  const alpha = Math.acos(clamp1((ax * vx + ay * vy + az * vz) / L)) * 180 / Math.PI;
+  const incidence = Math.acos(clamp1(Math.max(0, vz / L))) * 180 / Math.PI;
+  return { ...eclairage({ ...p, d: L, alpha, incidence }), distance: L, alphaFond: alpha, incidenceFond: incidence };
 }

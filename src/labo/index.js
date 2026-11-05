@@ -19,6 +19,7 @@ import * as PHOTO from './ateliers/photometrie.js';
 import * as SENSITO from './ateliers/sensito.js';
 import * as DMX from './ateliers/dmx.js';
 import * as DOT2 from './ateliers/dot2.js';
+import { plateau } from './plateau/scene.js';
 
 // ----------------------------------------------------------------------------------
 // Le Labo (v19.28) : l'espace de Jouer qui remplace l'entrepôt. Un écran à part, par-dessus tout
@@ -48,6 +49,8 @@ let RUN = null;
 export const laboOpen = () => LB.open;
 export function initLabo() {
   on('labo', (o) => { if (o && o.type) return; openLabo(o || {}); });
+  // la carte de la visite des notions renvoie à la leçon du Cours
+  on('laboLecon', (o) => { if (!LB.open || !o || !o.lesson) return; closeLabo(false); emit('cours', { lesson: o.lesson }); });
 }
 
 const etat = (id) => STATES[id] || (STATES[id] = INITIAL[id] ? INITIAL[id]() : {});
@@ -150,7 +153,12 @@ function comprendre(A) {
     if (L.camera) { closeLabo(false); emit('camera', { notion: L.camera, from: 'labo', lesson: A.id }); return; }
     closeLabo(false); emit('cours', { lesson: L.lecon });
   } }, icon(L.camera ? 'vision' : 'cours'), L.titre);
+  const V = /** @type {any} */ (VUES[A.id]);
+  const visite = V && V.etapes && V.visite ? el('ol', { class: 'lb-visite-liste' }, ...V.etapes.map((E, k) => el('li', {}, el('button', { type: 'button', class: 'lb-notion', 'data-etape': E.id, onclick: () => V.visite(k) }, icon('vision'), E.titre)))) : null;
   return el('div', { class: 'lb-comp' },
+    visite ? el('h3', {}, 'Les notions, en 3D sur le plateau') : null,
+    visite ? el('p', { class: 'lb-note' }, 'Chaque notion est expliquée sur le plateau : la vue vole vers ce qu\'elle montre, la scène s\'anime, les chiffres se lisent en direct.') : null,
+    visite,
     el('h3', {}, 'Ce qu\'on y manipule'),
     el('ul', { class: 'lb-notions' }, ...A.notions.map((n) => el('li', {}, n))),
     A.terms.length ? el('h3', {}, 'Fiches « ? »') : null,
@@ -292,4 +300,4 @@ export function closeLabo(retour = true) {
   if (retour && lesson) emit('cours', { lesson });
 }
 /** accès de débogage et de test */
-export const laboDebug = () => ({ R, LB, STATES, RUN, VERROUS, choisir, commencer, valider, solution, suivante, changer });
+export const laboDebug = () => ({ R, LB, STATES, RUN, VERROUS, choisir, commencer, valider, solution, suivante, changer, plateau });
