@@ -475,8 +475,9 @@ ateliers et les scènes des défis) ; suite `node tools/e2e.mjs labo-plateau`
 zoomer, recentrer, étiquettes, agrandir l'image ; la visite des notions : la vue vole, la lumière s'anime, le mètre carré,
 les deux carrés et le pinceau, une étape à la fois, la liste du panneau Comprendre ; 390 px) ; la suite `labo` inchangée (les défis se jouent comme avant).
 
-**Version publiée** : 19.31.0, exécutable Windows et application macOS dans la Release `v19.31.0` (construite par le
-workflow `exe.yml` à l'envoi de l'étiquette, depuis cette branche).
+**Version publiée** : 19.31.0, exécutable Windows et application macOS construits par le workflow `exe.yml` (« Run
+workflow » sur la branche : fichiers de l'exécution, gardés 30 jours) ; une Release `v19.31.0` à l'envoi de l'étiquette
+depuis `main`, une fois fusionné.
 
 ## v19.29 : un chapitre « La lumière » au Cours, et programmer la console dot2 pour de vrai
 
