@@ -11,7 +11,7 @@ import { sol, cyclo, caisse, plante, lumieresTravail, personnage, luxmetre, came
 import { mondePhoto, lecturePhoto, borne, LIM, expositionImage, expositionPlateau, capVers, spotDepuis, couleurLumiere, balanceBlancs } from '../plateau/calc.js';
 
 // ----------------------------------------------------------------------------------
-// L'atelier « Photométrie » sur le plateau 3D (v19.30) : un sujet au centre du plateau, la cellule d'un
+// L'atelier « Photométrie » sur le plateau 3D (v19.31) : un sujet au centre du plateau, la cellule d'un
 // luxmètre sur sa poitrine (tournée vers la caméra), une caméra sur pied et deux projecteurs sur pied (la
 // principale et le débouchage) qu'on prend et qu'on pose où l'on veut : distance et angle autour du sujet
 // se relisent de leur place ; leur hauteur se règle (la colonne s'étire), et l'incidence réelle en tient

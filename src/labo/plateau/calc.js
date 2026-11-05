@@ -2,7 +2,7 @@
 import { tache } from '../calc/optique.js';
 
 // ----------------------------------------------------------------------------------
-// Le plateau 3D du Labo (v19.30) : les calculs purs qui le posent, sans three.js ni DOM (testés en
+// Le plateau 3D du Labo (v19.31) : les calculs purs qui le posent, sans three.js ni DOM (testés en
 // Node, tests/unit/plateau.test.mjs) :
 //   - l'isométrie : l'œil regarde la cible depuis une direction fixe (élévation arctan(1/√2) ≈ 35,26°,
 //     azimut par quarts de tour) à travers une caméra orthographique ; cadrer() choisit la cible et la

@@ -1,4 +1,4 @@
-// Le plateau 3D du Labo (v19.30) : les calculs qui le posent (isométrie et cadrage, lecture des positions
+// Le plateau 3D du Labo (v19.31) : les calculs qui le posent (isométrie et cadrage, lecture des positions
 // des sujets et des projecteurs, exposition de l'image, tache de flou à l'écran, projecteur du rendu) et
 // l'état des ateliers Optique et Photométrie qui y gagnent la place de la caméra et des sujets.
 import { test } from 'node:test';

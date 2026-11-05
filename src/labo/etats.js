@@ -15,7 +15,7 @@ const clone = (x) => JSON.parse(JSON.stringify(x));
 const isPlain = (x) => !!x && typeof x === 'object' && !Array.isArray(x);
 
 export const INITIAL = {
-  // le plateau 3D (v19.30) : la caméra posée en cam (m, elle regarde vers +z), chaque sujet à sa distance le long de
+  // le plateau 3D (v19.31) : la caméra posée en cam (m, elle regarde vers +z), chaque sujet à sa distance le long de
   // l'axe (sujets, ce que l'optique utilise) et à son écart latéral (lat, positif à droite de l'image)
   optique: () => ({ capteur: 's35', f: 35, N: 4, s: 4, sujets: { A: 2, B: 4, C: 9 }, lat: { A: -0.6, B: 0.05, C: 0.85 }, cam: { x: 0, z: 0 } }),
   photometrie: () => ({

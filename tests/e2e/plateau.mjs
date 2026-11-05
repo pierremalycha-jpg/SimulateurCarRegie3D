@@ -1,4 +1,4 @@
-// Le plateau 3D du Labo (v19.30) : les ateliers Optique et Photométrie en isométrie low-poly. Le rendu
+// Le plateau 3D du Labo (v19.31) : les ateliers Optique et Photométrie en isométrie low-poly. Le rendu
 // WebGL se monte dans l'atelier, l'image de la caméra se compose dans son coin ; un sujet, la caméra, un
 // projecteur se prennent à la souris et se posent au sol (l'état se relit de leur place : distances, écarts,
 // angles) ; un réglage imposé par un défi ne se déplace pas ; la vue tourne par quarts de tour, se recentre,

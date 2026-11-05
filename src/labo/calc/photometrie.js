@@ -16,7 +16,7 @@
 //     grandeur : la couleur perçue d'un mélange n'est pas exactement là).
 //   - Exposition au luxmètre (cellule plate) : N² ÷ t = E × S ÷ C, C = 250 (constante d'étalonnage
 //     des cellules plates en lux ; 1 000 lx, ISO 800, 1/50 s : f/8).
-//   - Sur le plateau (v19.30) : un projecteur est posé à d mètres du sujet (au sol) et à phi degrés de la
+//   - Sur le plateau (v19.31) : un projecteur est posé à d mètres du sujet (au sol) et à phi degrés de la
 //     direction de la caméra, sa tête à h mètres ; la cellule du luxmètre est à H_CELLULE, tournée vers la
 //     caméra. La distance qui compte est celle de la tête à la cellule, et l'incidence combine l'angle au sol
 //     et l'élévation : cos i = cos ε × cos φ. Le fond (un mur à FOND mètres derrière le sujet, face à lui)

@@ -6,7 +6,7 @@ import { S } from '../../state.js';
 import { RADIANCE_TRAVAIL } from './calc.js';
 
 // ----------------------------------------------------------------------------------
-// Les pièces du plateau 3D du Labo (v19.30), dans le style low-poly des illustrations, en blanc et gris : de
+// Les pièces du plateau 3D du Labo (v19.31), dans le style low-poly des illustrations, en blanc et gris : de
 // grandes facettes nettes et peu nombreuses, une lumière douce et claire (ciel clair, ombres douces, pas de
 // paliers de cel shading ici : chaque facette prend la teinte que lui donne son orientation), un décor et des
 // sujets monochromes comme une maquette (la caméra et les projecteurs en gris sombre) ; la seule couleur qui

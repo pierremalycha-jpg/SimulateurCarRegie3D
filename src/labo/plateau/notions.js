@@ -9,7 +9,7 @@ import { mondePhoto, mondeOptique, azimutDeCote, azimutDuCote, couleurLumiere } 
 import { balayage, cycle, ensemble, particules, carre, pinceau, cadre, tranche, tacheFlou } from './visite.js';
 
 // ----------------------------------------------------------------------------------
-// Les notions expliquées sur le plateau (v19.30), une liste par atelier (plateau/visite.js les joue) :
+// Les notions expliquées sur le plateau (v19.31), une liste par atelier (plateau/visite.js les joue) :
 // chaque étape dit où regarder (la vue vole), ce qui se règle, ce qui s'anime et ce qu'on lit en direct.
 // Photométrie, dans l'ordre des grandeurs : le flux (lumens), l'intensité (candelas), l'éclairement (lux),
 // l'inverse du carré, le cosinus de l'incidence, la luminance (candelas par mètre carré), la couleur

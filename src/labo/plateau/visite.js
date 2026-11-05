@@ -8,7 +8,7 @@ import { etiquette } from './scene.js';
 import { COUCHE_REPERES } from './pieces.js';
 
 // ----------------------------------------------------------------------------------
-// La visite des notions sur le plateau 3D (v19.30) : comme la caméra en 3D, chaque notion est une étape
+// La visite des notions sur le plateau 3D (v19.31) : comme la caméra en 3D, chaque notion est une étape
 // qu'on lit dans une carte posée sur le plateau pendant que la vue vole vers ce qu'elle explique (près du
 // projecteur pour les lumens, sur la cellule pour les lux, sur le visage pour la luminance…) et que la scène
 // s'anime : de la lumière qui part de la source (particules), un mètre carré posé au sujet, le pinceau qui

@@ -75,7 +75,7 @@ body.labo-on #modal.overlay { z-index: 46; }
 .lb-note { margin: 0; color: var(--muted); font-size: 13px; }
 .lb-note svg { width: 14px; height: 14px; vertical-align: -2px; }
 
-/* ---------- le plateau 3D (v19.30) : Optique et Photométrie en isométrie ---------- */
+/* ---------- le plateau 3D (v19.31) : Optique et Photométrie en isométrie ---------- */
 .lb-atelier.lb-3d { grid-template-columns: minmax(0, 1fr); gap: 14px; }
 .lb-3d .lb-ctls { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 12px; align-items: start; }
 .lb-3d .lb-ctls > .lb-group { margin: 0; }

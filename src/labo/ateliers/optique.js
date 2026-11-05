@@ -10,7 +10,7 @@ import { sol, cyclo, lampes, caisse, plante, lumieresTravail, personnage, pancar
 import { mondeOptique, lectureOptique, borne, LIM, expositionImage, expositionPlateau, LUX_TRAVAIL, capVers } from '../plateau/calc.js';
 
 // ----------------------------------------------------------------------------------
-// L'atelier « Optique et profondeur de champ » sur le plateau 3D (v19.30) : une caméra sur pied et trois
+// L'atelier « Optique et profondeur de champ » sur le plateau 3D (v19.31) : une caméra sur pied et trois
 // sujets (A, B, C) qu'on prend et qu'on pose où l'on veut sur un plateau vu en isométrie, un cyclo au fond
 // (à 30 m de la place de départ de la caméra) et ses lampes. Au sol, devant la caméra : le champ (le coin
 // bleu), la zone nette (la dalle verte, de la limite proche à la limite lointaine), le point (le trait bleu),

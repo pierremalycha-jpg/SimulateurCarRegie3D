@@ -3,7 +3,7 @@ import * as THREE from 'three';
 import { fovVertical } from './calc.js';
 
 // ----------------------------------------------------------------------------------
-// L'image de la caméra du plateau 3D (v19.30) : la scène est rendue une seconde fois depuis l'œil de la
+// L'image de la caméra du plateau 3D (v19.31) : la scène est rendue une seconde fois depuis l'œil de la
 // caméra posée sur le plateau (angle de champ tiré de la focale et du capteur), dans une cible de rendu qui
 // garde la profondeur ; un second passage dessine cette image dans un coin du plateau en lui appliquant,
 // pixel par pixel :

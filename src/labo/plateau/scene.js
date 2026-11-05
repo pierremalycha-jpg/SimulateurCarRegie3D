@@ -9,7 +9,7 @@ import { ImageCamera } from './dof.js';
 import { anneau, COUCHE_REPERES, CIEL } from './pieces.js';
 
 // ----------------------------------------------------------------------------------
-// Le moteur du plateau 3D du Labo (v19.30) : un seul rendu WebGL, partagé par les ateliers qui ont un
+// Le moteur du plateau 3D du Labo (v19.31) : un seul rendu WebGL, partagé par les ateliers qui ont un
 // plateau (Optique, Photométrie), monté dans l'atelier affiché. Une vue isométrique (caméra orthographique,
 // élévation fixe, azimut par quarts de tour animés) qu'on fait glisser, zoomer à la molette ou au pincement,
 // recentrer (bouton, double clic) ; des objets qu'on prend et qu'on pose au sol (le pointeur est projeté sur

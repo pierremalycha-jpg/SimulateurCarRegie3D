@@ -169,7 +169,7 @@ Tout est en français (code commenté en français, interface, commits).
   `lumiere_commande.js` : DMX, ligne, console, lyres, Art-Net et sACN), exercices `cours/exos/lumiere_*.js`, fiches
   `content/terms_lumiere_*.js`. Les manipulations calculent avec les modèles du Labo (`labo/calc/`) : leçons et ateliers disent
   les mêmes chiffres. Les ateliers du Labo y sont les exercices pratiques (`x-labo-photometrie`, `x-labo-dmx`, `x-labo-dot2`).
-- **Le plateau 3D du Labo** (`src/labo/plateau/`, v19.30, décidé le 4 novembre 2026) : les ateliers Optique et Photométrie se
+- **Le plateau 3D du Labo** (`src/labo/plateau/`, v19.31, décidé le 4 novembre 2026) : les ateliers Optique et Photométrie se
   jouent sur un plateau vu en isométrie et dessiné dans le style des **illustrations low-poly, en blanc et gris** (décidé le
   4 novembre 2026) : de grandes facettes nettes (prismes effilés, icosaèdres, feuillages froissés), pas des cubes ; une lumière
   douce et claire (ciel clair derrière le canevas transparent, ombres douces, pas de paliers de cel shading sur le plateau :
