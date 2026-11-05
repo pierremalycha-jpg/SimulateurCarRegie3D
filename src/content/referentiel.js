@@ -525,6 +525,25 @@ export const RATTACHEMENT = {
     'lumiere-projecteurs': ['C17', 'C31'], 'lumiere-plateau': ['C31', 'C17', 'C23'], 'lumiere-stade': ['C21', 'C17', 'C6'],
     'lumiere-dmx': ['C25', 'C17'], 'lumiere-ligne': ['C25', 'C19', 'C36'], 'lumiere-console': ['C17', 'C31', 'C23'],
     'lumiere-lyres': ['C17', 'C31'], 'lumiere-reseau': ['C12', 'C25', 'C26'],
+    // v19.30 : les fondamentaux ajoutés, chapitre par chapitre (une ligne par leçon, entre les deux repères de son chapitre)
+    // — la lumière (v19.30)
+    // — fin de la lumière
+    // — la caméra (v19.30)
+    // — fin de la caméra
+    // — le signal (v19.30)
+    // — fin du signal
+    // — le SDI et la synchro (v19.30)
+    // — fin du SDI et de la synchro
+    // — le son (v19.30)
+    // — fin du son
+    // — la réalisation et les ralentis (v19.30)
+    // — fin de la réalisation et des ralentis
+    // — le réseau (v19.30)
+    // — fin du réseau
+    // — le réseau : transport, mesures, car IP (v19.30)
+    // — fin du réseau : transport, mesures, car IP
+    // — la HF et l'exploitation (v19.30)
+    // — fin de la HF et de l'exploitation
   },
   camera: {
     // la mise en service : rendre opérant (2.7), exploiter (2.9) et tester (3.9) la caméra ; interconnecter

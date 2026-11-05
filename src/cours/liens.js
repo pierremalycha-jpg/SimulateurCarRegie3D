@@ -13,6 +13,11 @@ import '../content/terms_ip.js';
 import '../content/terms_videohub.js';
 import '../content/terms_son.js';
 import '../content/terms_video.js';
+import '../content/terms_camera.js';
+import '../content/terms_sdi.js';
+import '../content/terms_real.js';
+import '../content/terms_expl.js';
+import '../content/terms_reseau_flux.js';
 
 // ----------------------------------------------------------------------------------
 // Les liens du Cours avec le reste du simulateur : la leçon (ou la fiche « ? ») de chaque terme du

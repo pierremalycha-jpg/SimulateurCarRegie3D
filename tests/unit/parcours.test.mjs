@@ -44,8 +44,8 @@ test('au départ : les Débutant ouverts, le reste fermé ; au profil Formateur 
     assert.ok(etatNiveaux(ch.id, P, { libre: true }).every((x) => x.ouvert), `${ch.id} : libre`);
   }
   assert.ok(leconOuverte('reseau-modele', P) && !leconOuverte('reseau-nmos', P) && leconOuverte('reseau-nmos', P, { libre: true }));
-  // les fondamentaux d'abord : la première leçon Débutant du premier chapitre
-  assert.deepEqual(suivante(P), { id: PARCOURS.signal.debutant[0], raison: 'commencer' });
+  // les fondamentaux d'abord, en suivant le fil rouge : le premier tour commence par l'arrivée au car
+  assert.deepEqual(suivante(P), { id: PARCOURS.exploitation.debutant[0], raison: 'commencer' });
 });
 
 test('une leçon : étoiles (quiz, exercice réussi, exercice presque parfait) et terminée', () => {
@@ -67,14 +67,16 @@ test('un niveau s\'ouvre quand le précédent est validé : leçons terminées e
   let N = etatNiveaux('signal', faible);
   assert.ok(N[0].terminees === deb.length && N[0].moyenne < SEUIL_MOYENNE && !N[0].valide && !N[1].ouvert);
   assert.deepEqual(conditions(N[0]).map((c) => c.ok), [true, false]);
-  assert.equal(suivante(faible).raison, 'ameliorer', 'refaire l\'exercice le plus faible');
+  // le fil rouge passe par le signal après la lumière, la caméra (et l'arrivée au car) : ces étapes faites, il revient au signal
+  const avant = ['exploitation', 'lumiere', 'camera'].flatMap((c) => PARCOURS[c].debutant);
+  assert.equal(suivante(prog({ ...tout(avant, 100), ...tout(deb, 62) })).raison, 'ameliorer', 'refaire l\'exercice le plus faible');
   // un exercice refait sans aide fait passer la moyenne
   const bon = prog({ ...tout(deb, 62), [deb[0]]: 100, [deb[1]]: 90 });
   N = etatNiveaux('signal', bon);
   assert.ok(N[0].valide && N[1].ouvert && !N[2].ouvert);
   assert.ok(leconOuverte(PARCOURS.signal.intermediaire[0], bon));
-  // les fondamentaux d'abord : le Débutant du chapitre suivant passe avant l'Intermédiaire du signal
-  const s = suivante(bon);
+  // les fondamentaux d'abord : le Débutant du chapitre suivant sur le fil passe avant l'Intermédiaire du signal
+  const s = suivante(prog({ ...tout(avant, 100), ...tout(deb, 62), [deb[0]]: 100, [deb[1]]: 90 }));
   assert.equal(niveauDe(s.id).niveau.id, 'debutant');
   assert.equal(niveauDe(s.id).chapter.id, 'sdi');
   const b = bilanChapitre('signal', bon);

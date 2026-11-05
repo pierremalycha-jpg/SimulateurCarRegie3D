@@ -4,10 +4,12 @@ import { rich } from './rich.js';
 import { icon } from './icons.js';
 import { PROG } from '../shared.js';
 import { CHAPTERS, lessonById, recordTest } from '../cours/index.js';
-import { etatNiveaux, etatLecon, niveauDe, bilanChapitre, conditions, suivante, leconsDuTest, tirerTest, testPasse, aReussir, NIVEAUX, SEUIL_TEST } from '../cours/parcours.js';
+import { etatNiveaux, etatLecon, niveauDe, bilanChapitre, conditions, suivante, leconsDuTest, tirerTest, testPasse, aReussir, NIVEAUX, SEUIL_TEST, filRouge, etapeDe } from '../cours/parcours.js';
+import { HISTOIRE, TOURS } from '../cours/fil_rouge.js';
 import { SEUIL_EXO } from '../cours/exo.js';
 import { isTrainer } from '../app/profile.js';
 import { etoiles } from './cours_exo.js';
+import { empreinteQ, note20, noteTexte, mention } from '../notes.js';
 
 // ----------------------------------------------------------------------------------
 // Le parcours du Cours à l'écran (cours/parcours.js), à la façon de Duolingo : sur « Mon parcours », la
@@ -49,7 +51,33 @@ export function accueilParcours(/** @type {Go} */ go) {
       echelle(b.niveaux),
       el('span', { class: 'co-bar', role: 'img', 'aria-label': `Leçons terminées : ${b.terminees} sur ${b.lecons}` }, el('i', { style: { width: `${b.lecons ? Math.round(100 * b.terminees / b.lecons) : 0}%` } })),
       el('span', { class: 'pa-cat-n' }, `${b.terminees} / ${b.lecons} leçons`, el('span', {}, icon('etoilePleine', 'on'), `${b.etoiles} / ${b.max}`))))));
-  return { hero, cats, bilans: B };
+  return { hero, cats, bilans: B, fil: filSection(go, next ? next.id : null) };
+}
+/**
+ * Le fil rouge (v19.30, cours/fil_rouge.js) : l'histoire, les quatre tours et les étapes du tour en cours (celui de la
+ * leçon conseillée), faites, en cours ou à venir ; une étape ouvre le parcours de son chapitre.
+ */
+function filSection(/** @type {Go} */ go, /** @type {string | null} */ courante) {
+  const F = filRouge();
+  const ici = courante ? etapeDe(courante) : null;
+  const t = ici ? ici.t : TOURS.length - 1;
+  const fait = (/** @type {typeof F[number]} */ x) => x.lecons.every((id) => etatLecon(id, PROG).terminee);
+  const tourFait = (k) => F.filter((x) => x.t === k).every(fait);
+  const etapes = F.filter((x) => x.t === t);
+  const ch = (id) => CHAPTERS.find((c) => c.id === id);
+  return el('section', { class: 'pa-fil', 'aria-label': 'Le fil rouge' },
+    el('h4', {}, icon('parcours'), HISTOIRE.titre),
+    el('p', { class: 'pa-fil-intro' }, HISTOIRE.intro),
+    el('ol', { class: 'pa-tours', 'aria-label': 'Les quatre tours' }, ...TOURS.map((tour, k) => el('li', { class: (k === t ? 'on' : '') + (tourFait(k) ? ' ok' : ''), 'aria-current': k === t ? 'step' : null },
+      tourFait(k) ? icon('fait') : el('span', { class: 'pa-dot' }, String(k + 1)), el('span', {}, tour.titre.split(' : ')[1] || tour.titre)))),
+    el('p', { class: 'pa-fil-but' }, el('b', {}, TOURS[t].titre), ' · ', TOURS[t].but),
+    el('ol', { class: 'pa-fil-etapes' }, ...etapes.map((x) => {
+      const c = ch(x.etape.chapitre); const st = fait(x) ? 'ok' : ici && ici.etape.chapitre === x.etape.chapitre && ici.t === x.t ? 'cur' : 'next';
+      return el('li', { class: 'pa-fil-e st-' + st },
+        el('button', { type: 'button', class: 'pa-fil-btn', 'data-chapitre': x.etape.chapitre, onclick: () => (st === 'cur' && courante ? go.lecon(courante) : go.chapitre(x.etape.chapitre)) },
+          el('span', { class: 'pa-disc' }, st === 'ok' ? icon('fait') : String(x.e + 1)),
+          el('span', { class: 'pa-fil-t' }, el('b', {}, x.etape.titre), el('small', {}, `${c ? c.title : x.etape.chapitre} · ${x.lecons.length} leçon${x.lecons.length > 1 ? 's' : ''}`), st === 'cur' ? el('span', {}, x.etape.recit) : null)));
+    })));
 }
 
 // ---------------- le chemin d'un chapitre ----------------
@@ -126,12 +154,12 @@ export function etapesLecon(/** @type {string} */ id) {
 }
 
 // ---------------- le test de niveau ----------------
-/** @type {{ ch: string, niveau: string, lecons: string[], draw: ReturnType<typeof tirerTest>, answers: (number | null)[], checked: boolean } | null} */
+/** @type {{ ch: string, niveau: string, lecons: string[], draw: ReturnType<typeof tirerTest>, answers: (number | null)[], checked: boolean, t0: number } | null} */
 let TEST = null;
 export function nouveauTest(ch, niveau) {
   const lecons = leconsDuTest(ch, niveau, PROG);
   const draw = tirerTest(lecons);
-  TEST = { ch, niveau, lecons, draw, answers: draw.map(() => null), checked: false };
+  TEST = { ch, niveau, lecons, draw, answers: draw.map(() => null), checked: false, t0: Date.now() };
   return TEST;
 }
 export const testEnCours = () => TEST;
@@ -160,13 +188,18 @@ export function pageTest(page, /** @type {Go} */ go) {
   const score = T.draw.filter((d, qi) => T.answers[qi] === /** @type {any} */ (lessonById(d.lesson)).lesson.quiz[d.i].answer).length;
   if (!T.checked) {
     const all = T.answers.every((x) => x != null);
-    box.append(el('div', { class: 'co-score' }, el('button', { type: 'button', class: 'btn primary co-valider', disabled: !all, onclick: () => { T.checked = true; recordTest(T.ch, T.niveau, score, n); redraw('.co-score'); } }, 'Valider le test'),
+    box.append(el('div', { class: 'co-score' }, el('button', { type: 'button', class: 'btn primary co-valider', disabled: !all, onclick: () => {
+      T.checked = true;
+      // le carnet de notes : les questions posées (leçon, question, choix fait, empreinte) et la durée
+      recordTest(T.ch, T.niveau, score, n, { sec: Math.round((Date.now() - T.t0) / 1000), q: T.draw.map((d, qi) => [d.lesson, d.i, T.answers[qi], empreinteQ(/** @type {any} */ (lessonById(d.lesson)).lesson.quiz[d.i])]) });
+      redraw('.co-score');
+    } }, 'Valider le test'),
       all ? null : el('small', {}, `${T.answers.filter((x) => x != null).length} / ${n} répondues`),
       el('button', { type: 'button', class: 'btn small', onclick: () => { finirTest(); go.chapitre(T.ch); } }, 'Abandonner')));
   } else {
     const ok = testPasse(score, n);
     box.append(el('div', { class: 'co-score pa-test-res' + (ok ? ' ok' : ''), tabindex: '-1', role: 'status' },
-      el('b', {}, `${score} / ${n}`), ok ? ` : réussi, le niveau ${nv.titre} est ouvert.` : ` : il en fallait ${need}. Faites les leçons du niveau, ou retentez le test (d'autres questions).`,
+      el('b', {}, `${score} / ${n}`), el('span', { class: 'co-note' }, ` · note ${noteTexte(note20(score, n))} (${mention(note20(score, n))})`), ok ? ` : réussi, le niveau ${nv.titre} est ouvert.` : ` : il en fallait ${need}. Faites les leçons du niveau, ou retentez le test (d'autres questions).`,
       ok ? el('button', { type: 'button', class: 'btn primary', onclick: () => { finirTest(); go.chapitre(T.ch); } }, 'Voir le parcours') : el('button', { type: 'button', class: 'btn', onclick: () => { nouveauTest(T.ch, T.niveau); redraw('.co-choice-btn'); } }, 'Refaire le test'),
       ok ? null : el('button', { type: 'button', class: 'btn small', onclick: () => { finirTest(); go.chapitre(T.ch); } }, 'Retour au parcours')));
   }

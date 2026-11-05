@@ -1,6 +1,7 @@
 // @ts-check
-import { CHAPTERS, lessonById } from './index.js';
+import { CHAPTERS, lessonById, indicesBase } from './index.js';
 import { exoOf, SEUIL_EXO, SEUIL_PARFAIT } from './exo.js';
+import { etapesDuFil } from './fil_rouge.js';
 import { shuffled } from '../util.js';
 
 // ----------------------------------------------------------------------------------
@@ -183,16 +184,25 @@ export function conditions(/** @type {ReturnType<typeof etatNiveaux>[number]} */
   ];
 }
 
+// ---------------- le fil rouge (v19.30, cours/fil_rouge.js) ----------------
+/** les étapes du fil rouge qui ont des leçons, tour après tour (un tour par niveau) */
+export const filRouge = () => etapesDuFil((ch, niv) => (niveauxDe(ch).find((x) => x.niveau.id === niv) || { lecons: [] }).lecons, CHAPTERS.map((c) => c.id));
+/** l'étape du fil rouge d'une leçon */
+export const etapeDe = (/** @type {string} */ id) => filRouge().find((x) => x.lecons.includes(id)) || null;
+
 /**
- * La suite conseillée : les fondamentaux d'abord. Parmi les niveaux ouverts, le plus bas de tous les
- * chapitres (tous les Débutant, puis les Intermédiaire…), dans l'ordre des chapitres ; dans ce niveau, la
- * première leçon non terminée, sinon l'exercice le plus faible si la moyenne manque.
+ * La suite conseillée : les fondamentaux d'abord, en suivant le fil rouge. Tour après tour (tous les Débutant, puis les
+ * Intermédiaire…), étape après étape dans l'ordre de la chaîne (de la lumière à l'antenne) : le premier niveau ouvert et
+ * pas encore validé ; dans ce niveau, la première leçon non terminée, sinon l'exercice le plus faible si la moyenne manque.
  * @returns {{ id: string, raison: 'commencer' | 'quiz' | 'exercice' | 'ameliorer' } | null}
  */
 export function suivante(prog, o = {}) {
   const cand = [];
-  for (const ch of CHAPTERS) for (const n of etatNiveaux(ch.id, prog, o)) if (n.ouvert && !n.valide) cand.push({ ch, n });
-  cand.sort((a, b) => a.n.k - b.n.k);
+  const etats = new Map(CHAPTERS.map((ch) => [ch.id, etatNiveaux(ch.id, prog, o)]));
+  for (const x of filRouge()) {
+    const n = (etats.get(x.etape.chapitre) || []).find((y) => y.niveau.id === x.tour.niveau);
+    if (n && n.ouvert && !n.valide) cand.push({ n });
+  }
   for (const { n } of cand) {
     const k = n.etats.findIndex((e) => !e.terminee);
     if (k >= 0) { const e = n.etats[k]; return { id: n.lecons[k], raison: !e.quiz && e.exo == null ? 'commencer' : !e.quiz ? 'quiz' : 'exercice' }; }
@@ -220,7 +230,8 @@ export function tirerTest(/** @type {string[]} */ lecons, rnd = Math.random) {
   const total = Math.max(TEST_MIN, Math.min(TEST_MAX, 2 * lecons.length));
   const out = [];
   // tour à tour dans chaque leçon (mélangées), une question neuve à chaque passage
-  const pools = shuffled(banks, rnd).map((b) => ({ id: b.id, quiz: b.quiz, rest: shuffled(b.quiz.map((_, i) => i), rnd) }));
+  // les questions du quiz de chaque leçon (niveaux 1 et 2) : le test vérifie les fondamentaux, pas le défi
+  const pools = shuffled(banks, rnd).map((b) => ({ id: b.id, quiz: b.quiz, rest: shuffled(indicesBase(b.quiz).length ? indicesBase(b.quiz) : b.quiz.map((_, i) => i), rnd) }));
   while (out.length < total && pools.some((p) => p.rest.length)) {
     for (const p of pools) { if (out.length >= total) break; const i = p.rest.shift(); if (i != null) out.push({ lesson: p.id, i, order: shuffled(p.quiz[i].choices.map((_, c) => c), rnd) }); }
   }

@@ -1,9 +1,10 @@
 // @ts-check
-import { el } from '../util.js';
+import { el, mulberry32 } from '../util.js';
 import { rich } from './rich.js';
 import { icon } from './icons.js';
 import { exoOf, tirage, verifier, lireNombre, pointsItem, scoreExo, seul, etatVide, reponse, COUT, SEUIL_EXO, SEUIL_PARFAIT } from '../cours/exo.js';
 import { coursProgress, recordExo } from '../cours/index.js';
+import { nouvelleGraine, empreinteItems, reponseCourte, note20, noteTexte, mention, REPONSES_MAX } from '../notes.js';
 
 // ----------------------------------------------------------------------------------
 // L'exercice en autonomie d'une leçon (cours/exo.js), à la fin de la page, après le quiz : une question
@@ -17,9 +18,12 @@ import { coursProgress, recordExo } from '../cours/index.js';
  * @typedef {{ id: string, items: import('../cours/exo.js').ExoItem[], vues: (number[] | null)[], k: number,
  *   etats: import('../cours/exo.js').EtatItem[], saisie: string, choix: number | null, ordre: number[] | null,
  *   retour: { ok: boolean, why?: string } | null, faux: string[], fini: boolean, score: number }} Essai
- * faux : les réponses déjà refusées à la question en cours (on ne paie pas deux fois la même erreur)
+ * faux : les réponses déjà refusées à la question en cours (on ne paie pas deux fois la même erreur) ; g : la graine du
+ * tirage (le carnet de notes la garde : le tableau de bord retire le même exercice) ; essais : les réponses proposées à
+ * chaque question ; t0 : le début de l'essai
+ * @typedef {Essai & { g: number, essais: string[][], t0: number }} EssaiNote
  */
-/** @type {Essai | null} */
+/** @type {EssaiNote | null} */
 let RUN = null;
 const pct = (v) => `${Math.round(v * 100)} %`;
 /** trois étoiles, pleines ou vides, avec leur texte pour les lecteurs d'écran */
@@ -47,7 +51,11 @@ export function exoSection(L, o = {}) {
   const p = /** @type {any} */ (coursProgress(L.id)).exo || null;
   box.append(el('h4', {}, icon('entrainement'), 'Exercice en autonomie', p ? el('small', {}, ` · meilleur score ${p.best} / 100`) : null));
   const R = RUN && RUN.id === L.id ? RUN : null;
-  const commencer = () => { const t = tirage(X); RUN = { id: L.id, items: t.items, vues: t.vues, k: 0, etats: t.items.map(() => etatVide()), saisie: '', choix: null, ordre: t.vues[0] && t.items[0].type === 'ordre' ? [...t.vues[0]] : null, retour: null, faux: [], fini: false, score: 0 }; redraw('.pa-q-input, .pa-q-choices button, .pa-ordre button'); };
+  const commencer = () => {
+    const g = nouvelleGraine(); const t = tirage(X, mulberry32(g));
+    RUN = { id: L.id, g, t0: Date.now(), essais: t.items.map(() => []), items: t.items, vues: t.vues, k: 0, etats: t.items.map(() => etatVide()), saisie: '', choix: null, ordre: t.vues[0] && t.items[0].type === 'ordre' ? [...t.vues[0]] : null, retour: null, faux: [], fini: false, score: 0 };
+    redraw('.pa-q-input, .pa-q-choices button, .pa-ordre button');
+  };
   if (!R) {
     box.append(el('div', { class: 'pa-exo-intro' },
       el('b', {}, X.titre), el('p', {}, X.consigne),
@@ -73,6 +81,9 @@ export function exoSection(L, o = {}) {
     const r = verifier(it, v);
     if (r.vide) { R.retour = { ok: false, why: it.type === 'nombre' ? 'Écrivez un nombre (la virgule ou le point conviennent).' : it.type === 'choix' ? 'Choisissez une réponse.' : 'Écrivez votre réponse.' }; redraw('.pa-q-input'); return; }
     const cle = it.type === 'nombre' ? String(lireNombre(v)) : it.type === 'texte' ? String(v).trim().toLowerCase() : JSON.stringify(v);
+    // la réponse proposée, pour le carnet de notes (le professeur voit ce qui a été essayé)
+    const tente = R.essais[R.k]; const court = reponseCourte(v);
+    if (tente.length < REPONSES_MAX && !tente.includes(court)) tente.push(court);
     if (r.ok) { st.ok = true; R.retour = { ok: true }; } else { if (!R.faux.includes(cle)) { st.erreurs++; R.faux.push(cle); } R.retour = { ok: false, why: r.why }; if (it.type === 'choix') R.choix = null; }
     redraw(st.ok ? '.pa-next' : '.pa-q-input, .pa-q-choices button.sel, .pa-verif');
   };
@@ -107,7 +118,12 @@ export function exoSection(L, o = {}) {
   // les boutons
   const derniere = R.k === R.items.length - 1;
   const suite = () => {
-    if (derniere) { R.fini = true; R.score = scoreExo(R.items, R.etats); recordExo(L.id, R.score, seul(R.etats)); if (o.onChange) o.onChange(); redraw('.pa-bilan'); return; }
+    if (derniere) {
+      R.fini = true; R.score = scoreExo(R.items, R.etats);
+      recordExo(L.id, R.score, seul(R.etats), { g: R.g, h: empreinteItems(R.items), sec: Math.round((Date.now() - R.t0) / 1000),
+        r: R.items.map((x, j) => { const e = R.etats[j]; return [Math.round(pointsItem(x, e) * 100), e.erreurs, e.aides, e.solution ? 1 : 0, R.essais[j]]; }) });
+      if (o.onChange) o.onChange(); redraw('.pa-bilan'); return;
+    }
     R.k++; R.saisie = ''; R.choix = null; R.retour = null; R.faux = []; const n = R.items[R.k]; R.ordre = n.type === 'ordre' ? [...(R.vues[R.k] || [])] : null;
     redraw('.pa-q-input, .pa-q-choices button, .pa-ordre button:not([disabled])');
   };
@@ -128,6 +144,7 @@ function bilan(R, X, L, refaire, o) {
   const msg = R.score >= SEUIL_PARFAIT ? 'Excellent : presque sans aide.' : ok ? 'Exercice réussi. Refaites-le avec moins d\'aide pour gagner la dernière étoile et monter la moyenne du niveau.' : `Pas encore réussi : il faut ${SEUIL_EXO} sur 100. Relisez la leçon et refaites l'exercice, avec d'autres valeurs.`;
   return el('div', { class: 'pa-bilan' + (ok ? ' ok' : ''), tabindex: '-1', role: 'status' },
     el('div', { class: 'pa-bilan-score' }, el('b', {}, `${R.score}`), el('span', {}, '/ 100'), etoiles(etoilesExo(R.score), 2)),
+    el('p', { class: 'co-note', 'data-note': String(note20(R.score, 100)) }, `Note : ${noteTexte(note20(R.score, 100))} (${mention(note20(R.score, 100))})`),
     el('p', {}, msg, best && best.best > R.score ? ` Votre meilleur score reste ${best.best}.` : ''),
     !seul(R.etats) && ok ? el('p', { class: 'note' }, 'Une solution a été demandée : l\'exercice compte pour le niveau, mais pas encore pour le livret de compétences (à refaire sans solution).') : null,
     el('ol', { class: 'pa-detail' }, ...R.items.map((it, j) => { const e = R.etats[j]; const pts = pointsItem(it, e); return el('li', { class: pts >= 1 ? 'ok' : pts > 0 ? 'mi' : 'ko' }, el('span', {}, `Question ${j + 1}`), el('small', {}, e.solution ? 'solution demandée' : [e.aides ? `${e.aides} aide${e.aides > 1 ? 's' : ''}` : '', e.erreurs ? `${e.erreurs} erreur${e.erreurs > 1 ? 's' : ''}` : ''].filter(Boolean).join(', ') || 'du premier coup'), el('b', {}, `${Math.round(pts * 100)} %`)); })),

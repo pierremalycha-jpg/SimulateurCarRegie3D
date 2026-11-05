@@ -8,6 +8,7 @@ import { ANCIEN } from './content/referentiel.js';
 import { normaliserLabo, mergeLabo } from './labo/suivi.js';
 import { car as carNet, mergeCar } from './comptes/car.js';
 import { mergeProfil } from './game/pass.js';
+import { normaliserNotes, mergeNotes, ajouterNote } from './notes.js';
 
 // ----------------------------------------------------------------------------------
 // Données partagées de la page publiée (capacités db / user / assets / downloads),
@@ -45,8 +46,10 @@ export const MYREV = { domains: [], items: {}, params: {}, extra: [], updatedAt:
  *     (game.jours, game.defis) ; les niveaux passent à 60 (v19.27, game/pass.js) ;
  * 10 : le Labo remplace l'entrepôt et la Carrière (v19.28) : les défis de ses ateliers (labo.defis[id] : meilleur score,
  *      réussi seul, nombre d'essais, derniers scores) ; les champs entrepot et carriere sont retirés.
+ * 11 : le carnet de notes (v19.30, src/notes.js) : chaque essai noté, sa note sur 20 et le détail des réponses (notes) ;
+ *      le défi d'une leçon (cours[id].defi : meilleur score, essais dn).
  */
-export const PROG_VERSION = 10;
+export const PROG_VERSION = 11;
 export const PROG = { v: PROG_VERSION, missions: {}, visited: {}, scenarios: [], reports: [], perf: null, patchBest: 0, updatedAt: 0 };
 /** état du dernier enregistrement de la progression : sur cet ordinateur (local), sur le serveur de la page (remote) */
 export const SAVE = { local: /** @type {boolean | null} */ (null), remote: /** @type {boolean | null} */ (null), at: 0, error: '' };
@@ -195,6 +198,9 @@ export function migrateProgress(d) {
   // v9 → v10 : l'entrepôt et la Carrière sont retirés (v19.28) ; le Labo (absent tant qu'aucun défi n'est tenté), remis en forme
   delete p.entrepot; delete p.carriere;
   if ('labo' in p) p.labo = normaliserLabo(p.labo);
+  // v10 → v11 : le carnet de notes (absent tant qu'aucun essai n'est noté), remis en forme ; le défi d'une leçon
+  if ('notes' in p) p.notes = normaliserNotes(p.notes);
+  if (isObj(p.cours)) for (const c of Object.values(p.cours)) if (isObj(c) && 'defi' in c && !(isObj(c.defi) && Number(c.defi.total) > 0)) delete c.defi;
   p.v = Math.max(v, PROG_VERSION);
   return p;
 }
@@ -246,8 +252,13 @@ export function mergeProgress(d) {
       // essais du quiz : le plus grand compte des deux appareils (chacun compte les siens depuis la même base)
       if (Number(p.qn) > (m.qn || 0)) m.qn = Number(p.qn);
       if (p.exo) m.exo = !m.exo ? p.exo : { best: Math.max(m.exo.best, p.exo.best), seul: !!(m.exo.seul || p.exo.seul), n: Math.max(m.exo.n || 0, p.exo.n || 0), at: Math.max(m.exo.at || 0, p.exo.at || 0) };
+      // le défi (v19.30) : le meilleur des deux, les essais du plus grand compte
+      if (p.defi) m.defi = best(m.defi, p.defi);
+      if (Number(p.dn) > (m.dn || 0)) m.dn = Number(p.dn);
     }
   }
+  // le carnet de notes : les essais des deux appareils
+  if (d.notes) { const P = /** @type {any} */ (PROG); P.notes = mergeNotes(P.notes, d.notes); }
   // tests de niveau : le meilleur résultat de chaque test (un niveau ouvert sur un appareil l'est sur l'autre)
   if (d.niveaux) {
     const P = /** @type {any} */ (PROG); const N = P.niveaux = P.niveaux || {};
@@ -418,7 +429,7 @@ export function importProgress(text) {
   const wrapped = isObj(d) && d.format === EXPORT_FORMAT;
   const p = wrapped ? d.progression : d;
   // une progression brute a au moins l'un de ses champs habituels
-  if (!isObj(p) || (!wrapped && !['missions', 'visited', 'cours', 'tutor', 'game', 'camera', 'net', 'labo', 'niveaux', 'emissions', 'profil'].some((k) => k in p))) return { ok: false, error: 'Ce fichier ne contient pas de progression du TIEE Simulator.' };
+  if (!isObj(p) || (!wrapped && !['missions', 'visited', 'cours', 'tutor', 'game', 'camera', 'net', 'labo', 'niveaux', 'emissions', 'profil', 'notes'].some((k) => k in p))) return { ok: false, error: 'Ce fichier ne contient pas de progression du TIEE Simulator.' };
   mergeProgress(p);
   restoreProgress();
   saveProgressSoon();
@@ -444,6 +455,16 @@ export function addReport(where, text) {
   saveProgressSoon();
 }
 export function addScenarioResult(r) { PROG.scenarios.push({ at: Date.now(), ...r }); saveProgressSoon(); }
+/**
+ * Un essai noté entre au carnet de notes (src/notes.js) : la note sur 20 et le détail des réponses, que le tableau de bord
+ * du professeur relit. Prévient l'interface (« note ») ; renvoie la ligne gardée (null si elle n'est pas exploitable).
+ * @param {Partial<import('./notes.js').Note>} n
+ */
+export function addNote(n) {
+  const o = ajouterNote(PROG, n); if (!o) return null;
+  PROG.updatedAt = Date.now(); saveProgressSoon(); emit('note', o);
+  return o;
+}
 /** une émission en direct terminée (src/emission/) : score sur 100, médias lancés soi-même, réussie seul */
 export function addEmissionResult(r) { const P = /** @type {any} */ (PROG); (P.emissions = P.emissions || []).push({ at: Date.now(), ...r }); saveProgressSoon(); }
 export function setPerf(p) { PROG.perf = { ...p, at: Date.now() }; saveProgressSoon(); }

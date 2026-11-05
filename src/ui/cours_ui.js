@@ -8,14 +8,15 @@ import { TERMS } from '../content/netterms.js';
 import { openLayer, layerOpen, showTab, closeLayer } from './layer.js';
 import { glossarySection, postesSection, materielSection, proceduresSection, openArticle } from './guide.js';
 import { CFG } from '../shared.js';
-import { CHAPTERS, lessonById, allLessons, coursProgress, markSeen, recordQuiz, drawQuiz } from '../cours/index.js';
+import { CHAPTERS, lessonById, allLessons, coursProgress, markSeen, recordQuiz, recordDefi, drawQuiz, aDefi, indicesDefi, nivQ } from '../cours/index.js';
+import { empreinteQ, note20, noteTexte, mention } from '../notes.js';
 import { posteCible, estLecon } from '../cours/liens.js';
 import { exercisesOf, exerciseInfo, exerciseDone, specialState, allExercises } from '../cours/exercices.js';
 import { TUTOR } from '../tutor/engine.js';
 import { livret } from '../livret.js';
 import { liveProg, openLivret } from './livret.js';
 import { vuesDuChapitre, vuesDeLecon, CHAP3D } from '../vues3d/catalogue.js';
-import { niveauDe, leconOuverte, etatLecon, etatNiveaux, ordreDe } from '../cours/parcours.js';
+import { niveauDe, leconOuverte, etatLecon, etatNiveaux, ordreDe, etapeDe } from '../cours/parcours.js';
 import { accueilParcours, cheminChapitre, apercuFerme, etapesLecon, pageTest, nouveauTest, testEnCours, finirTest, pastille, libre } from './cours_parcours.js';
 import { exoSection, etoiles } from './cours_exo.js';
 import { exoOf } from '../cours/exo.js';
@@ -41,9 +42,11 @@ import { revealIn } from './reveal.js';
 // ----------------------------------------------------------------------------------
 /** vue : null (Mon parcours ou la leçon), « chapitre » (le chemin du chapitre), « test » (un test de niveau), « referentiel » (la page du référentiel, refCode : la compétence à montrer) */
 const UI = { lesson: /** @type {string | null} */ (null), chapter: /** @type {string | null} */ (null), vue: /** @type {null | 'chapitre' | 'test' | 'referentiel'} */ (null), refCode: /** @type {string | null} */ (null), demo: /** @type {{ destroy?: () => void } | null | void} */ (null), q: '', reveal: () => {} };
-/** l'essai de quiz en cours (gardé quand la page se redessine) : questions tirées, réponses choisies, corrigé affiché */
-/** @type {{ id: string, draw: { i: number, order: number[] }[], answers: (number | null)[], checked: boolean } | null} */
-let ESSAI = null;
+/** l'essai de quiz en cours (gardé quand la page se redessine) : questions tirées, réponses choisies, corrigé affiché ;
+ * mode : le quiz de la leçon (« base », niveaux 1 et 2) ou son défi (« defi », niveau 3) ; t0 : début de l'essai */
+/** @typedef {{ id: string, mode: 'base' | 'defi', draw: { i: number, order: number[] }[], answers: (number | null)[], checked: boolean, t0: number }} EssaiQuiz */
+/** @type {Record<'base' | 'defi', EssaiQuiz | null>} */
+const ESSAIS = { base: null, defi: null };
 const TABS = /** @type {[string, string][]} */ ([['lecons', 'Leçons'], ['glossaire', 'Glossaire'], ['postes', 'Postes'], ['materiel', 'Matériel']]);
 // anciens onglets (chapitres du guide, procédures, caméra) : tout est maintenant dans les leçons
 const OLD_TAB = { chapitres: 'lecons', articles: 'lecons', procedures: 'lecons', camera: 'lecons', notions: 'lecons' };
@@ -202,11 +205,12 @@ function home(page, /** @type {import('./cours_parcours.js').Go} */ go) {
   // l'exercice pratique à faire dans le car : le premier non fait d'une leçon ouverte
   const nextX = xs.find((x) => !exerciseDone(x.id) && leconOuverte(x.lesson.id, PROG, { libre: libre() }));
   const nextXi = nextX ? exerciseInfo(nextX.id) : null;
-  P.hero.setAttribute('data-reveal', ''); P.cats.setAttribute('data-reveal', '');
+  P.hero.setAttribute('data-reveal', ''); P.cats.setAttribute('data-reveal', ''); P.fil.setAttribute('data-reveal', '');
   page.append(el('header', { class: 'co-hero', 'data-reveal': '' }, el('h2', {}, 'Mon parcours'),
     el('p', { class: 'lede' }, 'Des niveaux à valider l\'un après l\'autre, du Débutant à l\'Expert. Chaque leçon se termine par son quiz et un exercice.'),
     ...(libre() ? [el('p', { class: 'note pa-libre' }, icon('ouvert'), 'Profil Formateur : tous les niveaux sont ouverts. Au profil Étudiant, on commence par le niveau Débutant de chaque catégorie.')] : [])),
     P.hero,
+    P.fil,
     el('div', { class: 'co-kpis pa-kpis', 'data-reveal': '' },
       el('div', { class: 'co-kpi' }, el('b', {}, `${ld} / ${lt}`), el('span', {}, 'leçons terminées'), bar(ld, lt, 'Leçons terminées')),
       el('div', { class: 'co-kpi' }, el('b', {}, `${et} / ${em}`), el('span', {}, 'étoiles'), bar(et, em, 'Étoiles')),
@@ -231,11 +235,26 @@ function lessonPage(page, { chapter, lesson }, /** @type {import('./cours_parcou
   // après un quiz ou un exercice : le sommaire et les étapes se mettent à jour, sans redessiner la page
   const maj = () => { drawNav(nav, go); const s = page.querySelector('.pa-steps-box'); if (s) s.replaceWith(etapesLecon(L.id)); };
   // l'en-tête : d'où l'on vient, le titre, l'essentiel en trois phrases ; puis la barre des étapes, qui reste en haut
+  const fil = etapeDe(L.id);
   page.append(el('header', { class: 'co-hero', 'data-reveal': '' },
     el('p', { class: 'co-crumb' }, icon(chapter.icon), chapter.title, el('span', {}, ' · '), nv ? pastille(nv.niveau) : null, el('span', {}, `${L.partie ? ` · ${L.partie}` : ''} · leçon ${i + 1} / ${ordre.length}`)),
     el('h2', {}, L.title, L.minutes ? el('small', {}, L.minutes) : null),
+    fil ? el('p', { class: 'co-fil', title: fil.etape.recit }, icon('parcours'), el('span', {}, `Fil rouge · ${fil.tour.titre.split(' : ')[0]}, étape ${fil.e + 1} / ${fil.n} : `), el('b', {}, fil.etape.titre)) : null,
     el('section', { class: 'co-ess', id: 'co-lire', 'aria-label': 'L\'essentiel' }, el('h4', {}, 'L\'essentiel'), el('ul', {}, ...L.essentials.map((t) => el('li', {}, rich(t, 'co-rich')))))),
   el('div', { class: 'co-steps-bar' }, etapesLecon(L.id)));
+  // le point de départ (v19.30) : la situation dans le car, ce que l'on saura faire, ce qu'il faut savoir avant
+  const pre = (L.prerequis || []).map((id) => lessonById(id)).filter(Boolean);
+  if (L.situation || (L.objectifs || []).length || pre.length) {
+    page.append(el('section', { class: 'co-depart', 'aria-label': 'Le point de départ', 'data-reveal': '' },
+      L.situation ? el('div', { class: 'co-situation' }, el('h4', {}, icon('car'), 'La situation'), rich(L.situation.texte, 'co-rich')) : null,
+      (L.objectifs || []).length ? el('div', { class: 'co-objectifs' }, el('h4', {}, icon('objectif'), 'À la fin de la leçon, vous saurez'), el('ul', {}, ...(L.objectifs || []).map((t) => el('li', {}, rich(t, 'co-rich'))))) : null,
+      pre.length ? el('div', { class: 'co-prereq' }, el('h4', {}, icon('parcours'), 'Avant de commencer'), el('div', { class: 'co-chips' }, ...pre.map((f) => {
+        const ok = etatLecon(/** @type {any} */ (f).lesson.id, PROG).terminee;
+        return el('button', { type: 'button', class: 'co-chip co-pre' + (ok ? ' ok' : ''), 'data-lesson': /** @type {any} */ (f).lesson.id, title: ok ? 'Leçon terminée' : 'À revoir si besoin', onclick: () => go.lecon(/** @type {any} */ (f).lesson.id) }, ok ? icon('fait') : null, /** @type {any} */ (f).lesson.title);
+      }))) : null));
+  }
+  // en clair : une image de la vie courante pour entrer dans la notion (le débutant commence ici)
+  if (L.analogie) page.append(el('section', { class: 'co-clair', 'aria-label': 'En clair', 'data-reveal': '' }, el('h4', {}, icon('indice'), 'En clair'), rich(L.analogie, 'co-rich')));
   // le schéma, légendé par son titre accessible : il se lit seul, avant l'explication
   if (L.figure) {
     try {
@@ -260,6 +279,13 @@ function lessonPage(page, { chapter, lesson }, /** @type {import('./cours_parcou
   page.append(el('section', { class: 'co-text', 'aria-label': 'L\'explication', 'data-reveal': '' }, el('h4', {}, 'L\'explication'), rich(L.body, 'co-rich'),
     L.plus ? el('details', { class: 'co-plus' }, el('summary', {}, 'Pour aller plus loin'), rich(L.plus, 'co-rich')) : null,
     L.article ? el('div', { class: 'hwrow co-article' }, el('button', { type: 'button', class: 'btn small', onclick: () => openArticle(L.article) }, icon('guide'), 'Lire l\'article de référence')) : null));
+  // à retenir, les pièges, et la réponse à la situation du départ
+  if ((L.retenir || []).length || (L.pieges || []).length || L.situation) {
+    page.append(el('section', { class: 'co-retenir', 'aria-label': 'À retenir', 'data-reveal': '' },
+      (L.retenir || []).length ? el('div', { class: 'co-ret' }, el('h4', {}, icon('livret'), 'À retenir'), el('ul', {}, ...(L.retenir || []).map((t) => el('li', {}, rich(t, 'co-rich'))))) : null,
+      (L.pieges || []).length ? el('div', { class: 'co-pieges' }, el('h4', {}, icon('alarme'), 'Les pièges'), el('ul', {}, ...(L.pieges || []).map((t) => el('li', {}, rich(t, 'co-rich'))))) : null,
+      L.situation ? el('details', { class: 'co-resolution' }, el('summary', {}, 'Retour à la situation : la réponse'), rich(L.situation.reponse, 'co-rich')) : null));
+  }
   if (L.car) {
     // « Aller au poste » : le car est lancé s'il ne l'est pas encore (app/nav.js)
     page.append(el('section', { class: 'co-car', 'data-reveal': '' }, el('h4', {}, icon('car'), 'Dans le car'), el('p', {}, L.car.text),
@@ -275,6 +301,8 @@ function lessonPage(page, { chapter, lesson }, /** @type {import('./cours_parcou
   const suite = apresOuverte ? { label: 'Leçon suivante', go: () => go.lecon(/** @type {string} */ (apres)) } : { label: 'Le parcours du chapitre', go: () => go.chapitre(chapter.id) };
   const qz = quiz(L, maj); qz.setAttribute('data-reveal', ''); page.append(qz);
   const ex = exoSection(L, { onChange: maj, suite }); ex.setAttribute('data-reveal', ''); page.append(ex);
+  // le défi (v19.30) : les questions de niveau 3, pour aller plus loin ; facultatif, il ne ferme ni n'ouvre rien
+  if (aDefi(L)) { const df = quiz(L, maj, 'defi'); df.setAttribute('data-reveal', ''); page.append(df); }
   const xs = exercisesOf(L);
   if (xs.length) page.append(el('section', { class: 'co-exos', 'aria-label': 'Exercices pratiques dans le car', 'data-reveal': '' }, el('h4', {}, icon('chef'), xs.length > 1 ? 'Dans le car : exercices pratiques' : 'Dans le car : exercice pratique'),
     el('p', { class: 'note' }, 'Le geste dans le car, avec Olivier : il compte pour le livret de compétences.'),
@@ -285,18 +313,25 @@ function lessonPage(page, { chapter, lesson }, /** @type {import('./cours_parcou
     apresOuverte ? el('button', { class: 'btn small primary', onclick: () => go.lecon(/** @type {string} */ (apres)) }, /** @type {any} */ (lessonById(/** @type {string} */ (apres))).lesson.title + ' ▶')
       : el('button', { class: 'btn small primary', onclick: () => go.chapitre(chapter.id) }, apres ? 'Le parcours du chapitre (niveau suivant fermé) ▶' : 'Le parcours du chapitre ▶')));
 }
-// le quiz : trois questions tirées dans la banque de la leçon, réponses mélangées. On choisit ses réponses
-// (on peut changer d'avis), puis « Valider » donne le score et le corrigé de chaque question : pourquoi la
-// bonne réponse est juste, pourquoi le choix fait est faux. « Refaire le quiz » tire d'autres questions.
-function quiz(L, onChange = () => {}) {
-  const p = coursProgress(L.id);
-  if (!ESSAI || ESSAI.id !== L.id) { const draw = drawQuiz(L.quiz); ESSAI = { id: L.id, draw, answers: draw.map(() => null), checked: false }; }
-  const E = ESSAI;
-  const box = el('section', { class: 'co-quiz', id: 'co-quiz', 'aria-label': 'Quiz' });
+// le quiz : trois questions tirées dans la banque de la leçon (niveaux 1 et 2), réponses mélangées. On choisit ses réponses
+// (on peut changer d'avis), puis « Valider » donne le score, la note sur 20 et le corrigé de chaque question : pourquoi la
+// bonne réponse est juste, pourquoi le choix fait est faux. « Refaire le quiz » tire d'autres questions. Le défi (mode
+// « defi ») pose de la même façon les questions de niveau 3 : il est facultatif. Chaque essai validé entre au carnet de
+// notes (src/notes.js), avec les questions posées et les choix faits : le professeur les relit au tableau de bord.
+function quiz(L, onChange = () => {}, /** @type {'base' | 'defi'} */ mode = 'base') {
+  const p = /** @type {any} */ (coursProgress(L.id));
+  const defi = mode === 'defi';
+  const nouveau = (prev = /** @type {number[]} */ ([])) => { const draw = drawQuiz(L.quiz, prev, Math.random, { niv: mode }); return { id: L.id, mode, draw, answers: draw.map(() => null), checked: false, t0: Date.now() }; };
+  if (!ESSAIS[mode] || /** @type {EssaiQuiz} */ (ESSAIS[mode]).id !== L.id) ESSAIS[mode] = nouveau();
+  const E = /** @type {EssaiQuiz} */ (ESSAIS[mode]);
+  const best = defi ? p.defi : p.quiz;
+  const box = el('section', { class: defi ? 'co-quiz co-defi' : 'co-quiz', id: defi ? 'co-defi' : 'co-quiz', 'aria-label': defi ? 'Défi' : 'Quiz' });
   // la section est redessinée en place ; le focus clavier revient sur l'élément visé
-  const redraw = (/** @type {string} */ focus) => { const nb = quiz(L, onChange); if (box.classList.contains('co-reveal')) nb.classList.add('co-reveal', 'in'); box.replaceWith(nb); const f = /** @type {HTMLElement | null} */ (nb.querySelector(focus)); if (f) f.focus(); };
-  box.append(el('h4', {}, 'Quiz', p.quiz ? el('small', {}, ` · meilleur score ${p.quiz.score} / ${p.quiz.total}`) : null),
-    el('p', { class: 'co-quiz-help' }, `${E.draw.length} questions tirées parmi ${L.quiz.length}. Choisissez vos réponses, puis validez : le corrigé s'affiche à la fin.`));
+  const redraw = (/** @type {string} */ focus) => { const nb = quiz(L, onChange, mode); if (box.classList.contains('co-reveal')) nb.classList.add('co-reveal', 'in'); box.replaceWith(nb); const f = /** @type {HTMLElement | null} */ (nb.querySelector(focus)); if (f) f.focus(); };
+  box.append(el('h4', {}, defi ? icon('eclair') : null, defi ? 'Pour aller plus loin : le défi' : 'Quiz', best ? el('small', {}, ` · meilleur score ${best.score} / ${best.total} (${noteTexte(note20(best.score, best.total))})`) : null),
+    el('p', { class: 'co-quiz-help' }, defi
+      ? `Facultatif : ${E.draw.length} questions plus difficiles (plusieurs étapes, des cas limites), pour qui veut aller plus loin. Elles ne ferment rien : la leçon se termine sans elles.`
+      : `${E.draw.length} questions tirées parmi ${L.quiz.length - indicesDefi(L.quiz).length}. Choisissez vos réponses, puis validez : le corrigé et la note s'affichent à la fin.`));
   const text = (c) => (Array.isArray(c) ? c[0] : c);
   const items = E.draw.map(({ i, order }, qi) => {
     const Q = L.quiz[i];
@@ -308,7 +343,7 @@ function quiz(L, onChange = () => {}) {
     }, text(Q.choices[ci])));
     const a = E.answers[qi];
     const why = E.checked && a != null ? el('div', { class: 'co-why' }, rich((a === Q.answer ? '**Exact.** ' + Q.why : `**Non, c'est « ${text(Q.choices[Q.answer])} ».** ${whyOf(a)}` + (whyOf(a) !== Q.why ? ' ' + Q.why : '')), 'co-rich')) : null;
-    return el('div', { class: 'co-q', 'data-q': String(i) }, el('p', {}, `${qi + 1}. ${Q.q}`), el('div', { class: 'co-choices', role: 'group', 'aria-label': `Question ${qi + 1}` }, ...btns), why);
+    return el('div', { class: 'co-q', 'data-q': String(i), 'data-niv': String(nivQ(Q)) }, el('p', {}, `${qi + 1}. ${Q.q}`), el('div', { class: 'co-choices', role: 'group', 'aria-label': `Question ${qi + 1}` }, ...btns), why);
   });
   box.append(...items);
   const n = E.draw.length, score = E.draw.filter(({ i }, qi) => E.answers[qi] === L.quiz[i].answer).length;
@@ -316,11 +351,21 @@ function quiz(L, onChange = () => {}) {
   if (!E.checked) {
     box.append(el('div', { class: 'co-score' }, el('button', {
       type: 'button', class: 'btn small primary co-valider', disabled: !all,
-      onclick: () => { if (!E.answers.every((x) => x != null)) return; E.checked = true; recordQuiz(L.id, score, n); onChange(); redraw('.co-score'); },
+      onclick: () => {
+        if (!E.answers.every((x) => x != null)) return;
+        E.checked = true;
+        const detail = { q: E.draw.map(({ i }, qi) => [i, E.answers[qi], empreinteQ(L.quiz[i])]), sec: Math.round((Date.now() - E.t0) / 1000) };
+        if (defi) recordDefi(L.id, score, n, detail); else recordQuiz(L.id, score, n, detail);
+        onChange(); redraw('.co-score');
+      },
     }, 'Valider mes réponses'), all ? null : el('small', {}, `${E.answers.filter((x) => x != null).length} / ${n} répondues`)));
   } else {
-    box.append(el('p', { class: 'co-score', tabindex: '-1', role: 'status' }, el('b', {}, `${score} / ${n}`), score === n ? (etatLecon(L.id, PROG).terminee ? ' : quiz réussi, leçon terminée.' : exoOf(L.id) ? ' : quiz réussi. Reste l\'exercice en autonomie, juste en dessous.' : ' : quiz réussi, leçon terminée.') : ' : relisez l\'essentiel et refaites le quiz (d\'autres questions seront tirées).',
-      el('button', { type: 'button', class: 'btn small', onclick: () => { const prev = E.draw.map((d) => d.i); const draw = drawQuiz(L.quiz, prev); ESSAI = { id: L.id, draw, answers: draw.map(() => null), checked: false }; redraw('.co-choice-btn'); } }, 'Refaire le quiz')));
+    const nt = note20(score, n);
+    const fin = defi
+      ? (score === n ? ' : défi réussi, bravo.' : ' : relisez « Pour aller plus loin » et retentez le défi (d\'autres questions si la banque en a).')
+      : score === n ? (etatLecon(L.id, PROG).terminee ? ' : quiz réussi, leçon terminée.' : exoOf(L.id) ? ' : quiz réussi. Reste l\'exercice en autonomie, juste en dessous.' : ' : quiz réussi, leçon terminée.') : ' : relisez l\'essentiel et refaites le quiz (d\'autres questions seront tirées).';
+    box.append(el('p', { class: 'co-score', tabindex: '-1', role: 'status' }, el('b', {}, `${score} / ${n}`), el('span', { class: 'co-note', 'data-note': String(nt) }, ` · note ${noteTexte(nt)} (${mention(nt)})`), fin,
+      el('button', { type: 'button', class: 'btn small', onclick: () => { ESSAIS[mode] = nouveau(E.draw.map((d) => d.i)); redraw('.co-choice-btn'); } }, defi ? 'Retenter le défi' : 'Refaire le quiz')));
   }
   return box;
 }
